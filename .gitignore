@@ -1,0 +1,26 @@
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.xcworkspace
+*.v11.suo
+
+# Unreal Engine
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.Target.cs
+.Build.cs
+
+# Logs and Autosaves
+*.log
+*.bak
+
+# MacOS
+.DS_Store
