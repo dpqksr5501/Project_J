@@ -11,7 +11,7 @@
  * Can be extended with custom logic for the MMORPG structure.
  */
 UCLASS()
-class PROJECT_J_API UProject_JAbilitySystemComponent : public UAbilitySystemComponent
+class PROJECT_JGAS_API UProject_JAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 	

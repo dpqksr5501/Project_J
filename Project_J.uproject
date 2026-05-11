@@ -13,6 +13,21 @@
 				"AIModule",
 				"UMG"
 			]
+		},
+		{
+			"Name": "Project_JCore",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "Project_JGAS",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "Project_JCharacter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

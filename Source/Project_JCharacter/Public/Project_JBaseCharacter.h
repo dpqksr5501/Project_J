@@ -12,7 +12,7 @@ class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
 
 UCLASS(Abstract)
-class PROJECT_J_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
+class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
 {
 	GENERATED_BODY()
 

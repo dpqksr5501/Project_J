@@ -10,7 +10,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "Project_J.h"
+#include "Project_JGameplayTags.h"
+#include "AbilitySystemComponent.h"
+#include "TimerManager.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -55,8 +57,8 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::DoJumpStart);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::DoJumpEnd);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Move);
@@ -121,6 +123,16 @@ void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
 
 void AProject_JPlayerCharacter::DoJumpStart()
 {
+	// 착지 타이머 초기화 및 상태 해제
+	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
+	bIsLanding = false;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+	}
+
 	// signal the character to jump
 	Jump();
 }
@@ -135,13 +147,32 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	// 착지하는 순간의 Z축 하강 속도를 가져옵니다.
-	float FallSpeed = GetCharacterMovement()->Velocity.Z;
+	// 착지 시점의 Z축 하강 속도의 절대값을 저장 (하드 랜딩, 소프트 랜딩 구분을 위해 츄저 테이블로 전달됨)
+	LastFallSpeed = FMath::Abs(GetCharacterMovement()->Velocity.Z);
+	bIsLanding = true;
 
-	// -300.0f 는 예시이며, 점프 높이에 따라 -500.0f 등으로 조절
-	if (FallSpeed < -300.0f)
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
-		// 애니메이션 재생을 위해 블루프린트(Character BP)로 신호를 보내기
+		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+	}
+
+	// 0.35초 뒤에 착지 상태 해제
+	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, 0.35f, false);
+
+	// 블루프린트로 이벤트 전달 (필요한 경우 유지)
+	if (LastFallSpeed > 300.0f)
+	{
 		K2_OnRealLanded();
+	}
+}
+
+void AProject_JPlayerCharacter::OnLandingTimerFinished()
+{
+	bIsLanding = false;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
 	}
 }

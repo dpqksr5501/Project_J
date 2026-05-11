@@ -18,7 +18,7 @@
  * Base Attribute Set for characters in Project J.
  */
 UCLASS()
-class PROJECT_J_API UProject_JAttributeSet : public UAttributeSet
+class PROJECT_JGAS_API UProject_JAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 

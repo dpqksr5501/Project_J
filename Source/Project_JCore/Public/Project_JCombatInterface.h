@@ -16,22 +16,22 @@ class UProject_JCombatInterface : public UInterface
 /**
  * Interface for characters or actors that can participate in combat.
  */
-class PROJECT_J_API IProject_JCombatInterface
+class PROJECT_JCORE_API IProject_JCombatInterface
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	// 예시: 캐릭터 레벨 반환
+	// ?�시: 캐릭???�벨 반환
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	int32 GetCharacterLevel() const;
 
-	// 예시: 무기나 공격 이펙트가 스폰될 소켓의 위치 반환
+	// ?�시: 무기??공격 ?�펙?��? ?�폰???�켓???�치 반환
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	FVector GetCombatSocketLocation(const FName& SocketName);
 
-	// 예시: 사망 상태 확인
+	// ?�시: ?�망 ?�태 ?�인
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	bool IsDead() const;
 };

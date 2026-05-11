@@ -10,6 +10,6 @@ public class Project_JEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
-		ExtraModuleNames.Add("Project_J");
+		ExtraModuleNames.AddRange(new string[] { "Project_J", "Project_JCore", "Project_JGAS", "Project_JCharacter" });
 	}
 }

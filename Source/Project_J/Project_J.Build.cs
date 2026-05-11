@@ -21,17 +21,17 @@ public class Project_J : ModuleRules
 			"Slate",
 			"GameplayAbilities",
 			"GameplayTags",
-			"GameplayTasks"
+			"GameplayTasks",
+			"Project_JCore",
+			"Project_JGAS",
+			"Project_JCharacter"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Project_J",
-			"Project_J/Character",
-			"Project_J/AbilitySystem",
 			"Project_J/Game",
-			"Project_J/Interfaces",
 			"Project_J/Variant_Platforming",
 			"Project_J/Variant_Platforming/Animation",
 			"Project_J/Variant_Combat",

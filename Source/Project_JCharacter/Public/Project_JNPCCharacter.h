@@ -11,7 +11,7 @@
  * Does NOT inherit from MotionMatchingCharacter, as they do not use motion matching.
  */
 UCLASS()
-class PROJECT_J_API AProject_JNPCCharacter : public AProject_JBaseCharacter
+class PROJECT_JCHARACTER_API AProject_JNPCCharacter : public AProject_JBaseCharacter
 {
 	GENERATED_BODY()
 
