@@ -19,7 +19,6 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 namespace
 {
 	constexpr float JumpStartDuration = 0.2f;
-	constexpr float FallOffStartDuration = 0.2f;
 	constexpr float LandingDuration = 0.35f;
 }
 
@@ -194,6 +193,11 @@ void AProject_JPlayerCharacter::DoJumpEnd()
 	StopJumping();
 }
 
+void AProject_JPlayerCharacter::FinishFallOffStart()
+{
+	StopFallOffStart();
+}
+
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
@@ -263,7 +267,7 @@ void AProject_JPlayerCharacter::StartFallOffStart()
 	bIsInAir = true;
 	bIsFallOffStart = true;
 	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
-	GetWorldTimerManager().SetTimer(FallOffStartTimerHandle, this, &AProject_JPlayerCharacter::OnFallOffStartFinished, FallOffStartDuration, false);
+	GetWorldTimerManager().SetTimer(FallOffStartTimerHandle, this, &AProject_JPlayerCharacter::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{

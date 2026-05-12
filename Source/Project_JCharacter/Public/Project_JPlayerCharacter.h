@@ -121,6 +121,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
+	void FinishFallOffStart();
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -144,6 +147,10 @@ public:
 	/** True briefly when entering air from walking/running off ground instead of a jump. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jumping")
 	bool bIsFallOffStart = false;
+
+	/** How long FallOffStart stays true unless landing or an animation notify finishes it first. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float FallOffStartDuration = 0.6f;
 
 	/** 츄저 테이블용: 실시간 Z축 속도 (상승/하강 판별) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
