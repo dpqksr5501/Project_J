@@ -16,11 +16,20 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
+namespace
+{
+	constexpr float JumpStartDuration = 0.2f;
+	constexpr float FallOffStartDuration = 0.2f;
+	constexpr float LandingDuration = 0.35f;
+}
+
 AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
+
+	PrimaryActorTick.bCanEverTick = true; // Tick 활성화
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -51,11 +60,41 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
+void AProject_JPlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 1. 실시간 Z축 속도 업데이트
+	VerticalSpeed = GetVelocity().Z;
+
+	// 2. 실시간 수평 이동 속도 업데이트 (VectorLengthXY)
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0; // Z축 제외
+	GroundSpeed = Velocity.Size();
+
+	const bool bIsCurrentlyInAir = IsInAirForAnimation();
+	if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
+	{
+		StartFallOffStart();
+	}
+	else if (bIsCurrentlyInAir)
+	{
+		bIsInAir = true;
+	}
+	else if (!bIsJumping)
+	{
+		bIsInAir = false;
+		bSuppressFallOffStart = false;
+	}
+
+	bWasInAir = bIsCurrentlyInAir;
+}
+
 void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
+
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::DoJumpStart);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::DoJumpEnd);
@@ -102,10 +141,10 @@ void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
+		// get right vector
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
+		// add movement
 		AddMovementInput(ForwardDirection, Forward);
 		AddMovementInput(RightDirection, Right);
 	}
@@ -124,13 +163,25 @@ void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
 void AProject_JPlayerCharacter::DoJumpStart()
 {
 	// 착지 타이머 초기화 및 상태 해제
+	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
 	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
+	StopFallOffStart();
 	bIsLanding = false;
-	
+	bIsInAir = true;
+	bWasInAir = true;
+	bSuppressFallOffStart = true;
+
+	// 명시적인 점프 트리거 활성화 및 0.2초 타이머 설정
+	bIsJumping = true;
+	GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &AProject_JPlayerCharacter::OnJumpTimerFinished, JumpStartDuration, false);
+
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
+		{
+			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		}
 	}
 
 	// signal the character to jump
@@ -147,6 +198,14 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	// 천장에 부딪히는 등 예상치 못하게 빨리 착지했을 때를 대비해 점프 트리거 즉시 해제
+	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+	StopFallOffStart();
+	bIsJumping = false;
+	bIsInAir = false;
+	bWasInAir = false;
+	bSuppressFallOffStart = false;
+
 	// 착지 시점의 Z축 하강 속도의 절대값을 저장 (하드 랜딩, 소프트 랜딩 구분을 위해 츄저 테이블로 전달됨)
 	LastFallSpeed = FMath::Abs(GetCharacterMovement()->Velocity.Z);
 	bIsLanding = true;
@@ -158,7 +217,7 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 	}
 
 	// 0.35초 뒤에 착지 상태 해제
-	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, 0.35f, false);
+	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, LandingDuration, false);
 
 	// 블루프린트로 이벤트 전달 (필요한 경우 유지)
 	if (LastFallSpeed > 300.0f)
@@ -170,9 +229,53 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 void AProject_JPlayerCharacter::OnLandingTimerFinished()
 {
 	bIsLanding = false;
-	
+
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
 	}
+}
+
+void AProject_JPlayerCharacter::OnJumpTimerFinished()
+{
+	bIsJumping = false;
+
+	if (!IsInAirForAnimation() && !bIsLanding)
+	{
+		bIsInAir = false;
+		bWasInAir = false;
+		bSuppressFallOffStart = false;
+	}
+}
+
+void AProject_JPlayerCharacter::OnFallOffStartFinished()
+{
+	StopFallOffStart();
+}
+
+bool AProject_JPlayerCharacter::IsInAirForAnimation() const
+{
+	return GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling;
+}
+
+void AProject_JPlayerCharacter::StartFallOffStart()
+{
+	bIsInAir = true;
+	bIsFallOffStart = true;
+	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
+	GetWorldTimerManager().SetTimer(FallOffStartTimerHandle, this, &AProject_JPlayerCharacter::OnFallOffStartFinished, FallOffStartDuration, false);
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
+		{
+			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		}
+	}
+}
+
+void AProject_JPlayerCharacter::StopFallOffStart()
+{
+	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
+	bIsFallOffStart = false;
 }
