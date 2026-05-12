@@ -18,7 +18,6 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 namespace
 {
-	constexpr float JumpStartDuration = 0.2f;
 	constexpr float LandingDuration = 0.35f;
 }
 
@@ -172,7 +171,7 @@ void AProject_JPlayerCharacter::DoJumpStart()
 
 	// 명시적인 점프 트리거 활성화 및 0.2초 타이머 설정
 	bIsJumping = true;
-	GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &AProject_JPlayerCharacter::OnJumpTimerFinished, JumpStartDuration, false);
+	GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &AProject_JPlayerCharacter::OnJumpTimerFinished, FMath::Max(0.1f, JumpStartMaxDuration), false);
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -196,6 +195,12 @@ void AProject_JPlayerCharacter::DoJumpEnd()
 void AProject_JPlayerCharacter::FinishFallOffStart()
 {
 	StopFallOffStart();
+}
+
+void AProject_JPlayerCharacter::FinishJumpStart()
+{
+	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
+	OnJumpTimerFinished();
 }
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)

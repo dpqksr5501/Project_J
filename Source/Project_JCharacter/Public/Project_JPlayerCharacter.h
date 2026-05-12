@@ -124,6 +124,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
 	void FinishFallOffStart();
 
+	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
+	void FinishJumpStart();
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -143,6 +146,10 @@ public:
 	/** 츄저 테이블(Chooser Table)에서 읽어갈 점프 시작 상태 플래그 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jumping")
 	bool bIsJumping = false;
+
+	/** Failsafe timeout for clearing JumpStart if the Anim Blueprint does not call FinishJumpStart. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
+	float JumpStartMaxDuration = 1.0f;
 
 	/** True briefly when entering air from walking/running off ground instead of a jump. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jumping")
