@@ -13,6 +13,7 @@
 #include "Project_JGameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "TimerManager.h"
+#include "InputCoreTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -58,6 +59,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
+
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -69,6 +71,41 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0; // Z축 제외
 	GroundSpeed = Velocity.Size();
+
+	if (bIsCombatMode && GroundSpeed > 3.0f)
+	{
+		const FRotator BaseRotation = GetController() ? GetController()->GetControlRotation() : GetActorRotation();
+		const FRotator BaseYawRotation(0.0f, BaseRotation.Yaw, 0.0f);
+		const FVector ForwardDirection = FRotationMatrix(BaseYawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(BaseYawRotation).GetUnitAxis(EAxis::Y);
+		const FVector MovementDirection2D = Velocity.GetSafeNormal2D();
+
+		const float ForwardAmount = FVector::DotProduct(MovementDirection2D, ForwardDirection);
+		const float RightAmount = FVector::DotProduct(MovementDirection2D, RightDirection);
+		CombatForwardSpeed = FVector::DotProduct(Velocity, ForwardDirection);
+		CombatRightSpeed = FVector::DotProduct(Velocity, RightDirection);
+		float NewMovementDirection = FMath::RadiansToDegrees(FMath::Atan2(RightAmount, ForwardAmount));
+
+		if (ForwardAmount < -0.1f)
+		{
+			if (FMath::Abs(RightAmount) < 0.05f)
+			{
+				NewMovementDirection = MovementDirection < -90.0f ? -180.0f : 180.0f;
+			}
+			else
+			{
+				NewMovementDirection = RightAmount > 0.0f ? FMath::Abs(NewMovementDirection) : -FMath::Abs(NewMovementDirection);
+			}
+		}
+
+		MovementDirection = NewMovementDirection;
+	}
+	else
+	{
+		MovementDirection = 0.0f;
+		CombatForwardSpeed = 0.0f;
+		CombatRightSpeed = 0.0f;
+	}
 
 	const bool bIsCurrentlyInAir = IsInAirForAnimation();
 	if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
@@ -108,6 +145,9 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+
+	// Temporary: Bind Tab key directly to Toggle Combat Mode for testing
+	PlayerInputComponent->BindKey(EKeys::Tab, IE_Pressed, this, &AProject_JPlayerCharacter::ToggleCombatMode);
 }
 
 void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
@@ -201,6 +241,54 @@ void AProject_JPlayerCharacter::FinishJumpStart()
 {
 	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
 	OnJumpTimerFinished();
+}
+
+void AProject_JPlayerCharacter::ToggleCombatMode()
+{
+	SetCombatMode(!bIsCombatMode);
+}
+
+void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
+{
+	if (bIsCombatMode == bInCombatMode)
+	{
+		return;
+	}
+
+	bIsCombatMode = bInCombatMode;
+
+	// Update Gameplay Tags
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		if (bIsCombatMode)
+		{
+			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+		}
+		else
+		{
+			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+		}
+	}
+
+	// Update movement rotation settings for Strafe vs Free movement
+	if (bIsCombatMode)
+	{
+		// Face the camera's yaw direction
+		bUseControllerRotationYaw = true;
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			MoveComp->bOrientRotationToMovement = false;
+		}
+	}
+	else
+	{
+		// Face the movement direction
+		bUseControllerRotationYaw = false;
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			MoveComp->bOrientRotationToMovement = true;
+		}
+	}
 }
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)

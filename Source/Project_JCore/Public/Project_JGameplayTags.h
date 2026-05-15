@@ -19,6 +19,13 @@ public:
 	FGameplayTag State_Movement_Landing;
 	FGameplayTag State_Movement_InAir;
 
+	// Combat States
+	FGameplayTag State_CombatMode;
+	FGameplayTag State_Attacking;
+	FGameplayTag State_Dodging;
+	FGameplayTag State_HitReacting;
+	FGameplayTag State_Dead;
+
 private:
 	static FProject_JGameplayTags GameplayTags;
 };

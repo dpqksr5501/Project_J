@@ -16,4 +16,30 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FName("State.Movement.InAir"),
 		FString("Character is currently in the air")
 	);
+
+	// Combat Tags
+	GameplayTags.State_CombatMode = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.CombatMode"),
+		FString("Character is in combat mode")
+	);
+
+	GameplayTags.State_Attacking = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Attacking"),
+		FString("Character is attacking")
+	);
+
+	GameplayTags.State_Dodging = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Dodging"),
+		FString("Character is dodging")
+	);
+
+	GameplayTags.State_HitReacting = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.HitReacting"),
+		FString("Character is reacting to a hit")
+	);
+
+	GameplayTags.State_Dead = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Dead"),
+		FString("Character is dead")
+	);
 }

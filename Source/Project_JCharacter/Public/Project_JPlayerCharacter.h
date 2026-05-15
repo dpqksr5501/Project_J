@@ -127,6 +127,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
 	void FinishJumpStart();
 
+	/** Toggles the combat mode on or off */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	virtual void ToggleCombatMode();
+
+	/** Sets the combat mode to the specified state */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	virtual void SetCombatMode(bool bInCombatMode);
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -170,5 +178,34 @@ public:
 	/** 착지 시점의 하강 속도 절대값 (하드/소프트 착지 분기용) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	float LastFallSpeed = 0.0f;
-};
 
+	// --- Combat States ---
+
+	/** True if the character is currently in combat mode (weapon drawn) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsCombatMode = false;
+
+	/** True if the character is currently attacking */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsAttacking = false;
+
+	/** True if the character is currently dodging */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsDodging = false;
+
+	/** True if the character is currently reacting to a hit */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsHitReacting = false;
+
+	/** 로컬 이동 각도 (-180 ~ 180) : 전투 중 전진/후진/좌우 스트레이프 판별용 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
+	float MovementDirection = 0.0f;
+
+	/** Camera-relative forward movement speed for combat blend spaces. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
+	float CombatForwardSpeed = 0.0f;
+
+	/** Camera-relative right movement speed for combat blend spaces. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
+	float CombatRightSpeed = 0.0f;
+};
