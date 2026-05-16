@@ -256,9 +256,12 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 	const FVector2D MoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
 	MoveInputSize = MoveInput.Size();
 	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
-	bHasSideMoveInput = bHasMoveInput && FMath::Abs(MoveInput.X) > SideMoveInputThreshold;
+	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
 	MoveInputTurnAngle = 0.0f;
 	bSharpTurnRequested = false;
+	bStartRequested = false;
+	bStopRequested = false;
+	bUseStartDatabase = false;
 
 	if (bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
 	{
@@ -269,21 +272,17 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
 	}
 
-	if (bHasMoveInput)
-	{
-		MoveInputHeldTime += DeltaTime;
-	}
-	else
-	{
-		MoveInputHeldTime = 0.0f;
-	}
-
 	const bool bCanRequestGroundMove = !bIsInAir && !bIsLanding && !bIsJumping && !bIsFallOffStart;
 	if (!bCanRequestGroundMove)
 	{
 		ClearMovementRequests();
 		PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 		return;
+	}
+
+	if (!bPrevHasMoveInput && bHasMoveInput)
+	{
+		MoveInputHeldTime = 0.0f;
 	}
 
 	bSharpTurnRequested =
@@ -293,73 +292,9 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 		GroundSpeed >= SharpTurnMinSpeed &&
 		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
 
+	bStartRequested = !bPrevHasMoveInput && bHasMoveInput;
+	bStopRequested = bPrevHasMoveInput && !bHasMoveInput && GroundSpeed > StopIntentSpeedThreshold;
 	bUseStartDatabase = bHasMoveInput && MoveInputHeldTime < StartToLoopDelay;
-	bStartToLoopRequested = bHasMoveInput && MoveInputHeldTime >= StartToLoopDelay;
-	bCanEnterGroundLoop = bStartToLoopRequested && !bStopRequested && !bIsInAir && !bIsLanding && !bLandingRequested;
-
-	if (!bPrevHasMoveInput && bHasMoveInput)
-	{
-		bStartRequested = true;
-		StartRequestTimer = StartRequestDuration;
-		MoveInputHeldTime = 0.0f;
-		bUseStartDatabase = true;
-		bStartToLoopRequested = false;
-		bCanEnterGroundLoop = false;
-		bStartWasSprinting = bIsSprinting;
-
-		bStopRequested = false;
-		StopRequestTimer = 0.0f;
-		StopStartSpeed = 0.0f;
-	}
-
-	if (bPrevHasMoveInput && !bHasMoveInput && GroundSpeed > StopIntentSpeedThreshold)
-	{
-		bStopRequested = true;
-		StopRequestTimer = StopRequestDuration;
-		StopStartSpeed = GroundSpeed;
-
-		bStartRequested = false;
-		StartRequestTimer = 0.0f;
-	}
-
-	if (bHasMoveInput)
-	{
-		bStopRequested = false;
-		StopRequestTimer = 0.0f;
-		StopStartSpeed = 0.0f;
-	}
-	else
-	{
-		bStartRequested = false;
-		StartRequestTimer = 0.0f;
-		bUseStartDatabase = false;
-		bStartToLoopRequested = false;
-		bCanEnterGroundLoop = false;
-	}
-
-	if (bStartRequested)
-	{
-		StartRequestTimer = FMath::Max(0.0f, StartRequestTimer - DeltaTime);
-		if (StartRequestTimer <= 0.0f)
-		{
-			bStartRequested = false;
-		}
-	}
-
-	if (bStopRequested)
-	{
-		StopRequestTimer = FMath::Max(0.0f, StopRequestTimer - DeltaTime);
-		if (StopRequestTimer <= 0.0f || GroundSpeed <= IdleSpeedThreshold)
-		{
-			bStopRequested = false;
-		}
-	}
-
-	bJustStartedMoving = bStartRequested;
-	bWantsToStop = bStopRequested;
-	bUseStartDatabase = bUseStartDatabase && bHasMoveInput;
-	bStartToLoopRequested = bStartToLoopRequested && bHasMoveInput;
-	bCanEnterGroundLoop = bCanEnterGroundLoop && bHasMoveInput;
 
 	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 }
@@ -368,18 +303,10 @@ void AProject_JPlayerCharacter::ClearMovementRequests()
 {
 	bStartRequested = false;
 	bStopRequested = false;
-	StartRequestTimer = 0.0f;
-	StopRequestTimer = 0.0f;
-	StopStartSpeed = 0.0f;
-	MoveInputHeldTime = 0.0f;
 	bUseStartDatabase = false;
-	bStartToLoopRequested = false;
-	bCanEnterGroundLoop = false;
-	bHasSideMoveInput = false;
+	MoveInputHeldTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
-	bJustStartedMoving = false;
-	bWantsToStop = false;
 }
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
@@ -580,6 +507,7 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 	LandStartGroundSpeed = GroundSpeed;
 	LandStartFallSpeed = ImpactFallSpeed;
 	bLandWasSprinting = bIsSprinting || LandStartGroundSpeed >= RunToSprintSpeedThreshold;
+	bLandWasMoving = LandStartGroundSpeed > IdleSpeedThreshold || bHasMoveInput;
 	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
 	bIsLanding = true;
 	bLandingRequested = true;

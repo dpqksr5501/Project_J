@@ -57,6 +57,7 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	LandStartGroundSpeed = 0.0f;
 	LandStartFallSpeed = 0.0f;
 	bLandWasSprinting = false;
+	bLandWasMoving = false;
 	bUseHeavyLand = false;
 
 	bIsInAir = false;
@@ -69,30 +70,21 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bCanEnterGround = true;
 
 	MoveInputSize = 0.0f;
-	MoveInputTurnAngle = 0.0f;
 	MoveInputHeldTime = 0.0f;
+	MoveInputTurnAngle = 0.0f;
 	bHasMoveInput = false;
-	bHasSideMoveInput = false;
 	bSharpTurnRequested = false;
 	bPrevHasMoveInput = false;
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bStopRequested = false;
-	bStartToLoopRequested = false;
-	bCanEnterGroundLoop = false;
-	StartRequestTimer = 0.0f;
-	StopRequestTimer = 0.0f;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
-	bJustStartedMoving = false;
-	bWantsToStop = false;
 
 	bIsSprinting = false;
-	bStartWasSprinting = false;
-	StopStartSpeed = 0.0f;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -127,6 +119,7 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	LandStartGroundSpeed = 0.0f;
 	LandStartFallSpeed = 0.0f;
 	bLandWasSprinting = false;
+	bLandWasMoving = false;
 	bUseHeavyLand = false;
 
 	const UCharacterMovementComponent* MovementComponent = OwningCharacter->GetCharacterMovement();
@@ -140,30 +133,21 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bCanEnterGround = !bIsInAir;
 
 	MoveInputSize = 0.0f;
-	MoveInputTurnAngle = 0.0f;
 	MoveInputHeldTime = 0.0f;
+	MoveInputTurnAngle = 0.0f;
 	bHasMoveInput = GroundSpeed > 3.0f;
-	bHasSideMoveInput = false;
 	bSharpTurnRequested = false;
 	bPrevHasMoveInput = bHasMoveInput;
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bStopRequested = false;
-	bStartToLoopRequested = bHasMoveInput;
-	bCanEnterGroundLoop = bStartToLoopRequested;
-	StartRequestTimer = 0.0f;
-	StopRequestTimer = 0.0f;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
-	bJustStartedMoving = false;
-	bWantsToStop = false;
 
 	bIsSprinting = false;
-	bStartWasSprinting = false;
-	StopStartSpeed = 0.0f;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -188,6 +172,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	LandStartGroundSpeed = PlayerCharacter.LandStartGroundSpeed;
 	LandStartFallSpeed = PlayerCharacter.LandStartFallSpeed;
 	bLandWasSprinting = PlayerCharacter.bLandWasSprinting;
+	bLandWasMoving = PlayerCharacter.bLandWasMoving;
 	bUseHeavyLand = PlayerCharacter.bUseHeavyLand;
 
 	bIsInAir = PlayerCharacter.bIsInAir;
@@ -200,30 +185,21 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	bCanEnterGround = PlayerCharacter.bCanEnterGround;
 
 	MoveInputSize = PlayerCharacter.MoveInputSize;
-	MoveInputTurnAngle = PlayerCharacter.MoveInputTurnAngle;
 	MoveInputHeldTime = PlayerCharacter.MoveInputHeldTime;
+	MoveInputTurnAngle = PlayerCharacter.MoveInputTurnAngle;
 	bHasMoveInput = PlayerCharacter.bHasMoveInput;
-	bHasSideMoveInput = PlayerCharacter.bHasSideMoveInput;
 	bSharpTurnRequested = PlayerCharacter.bSharpTurnRequested;
 	bPrevHasMoveInput = PlayerCharacter.bPrevHasMoveInput;
 	bStartRequested = PlayerCharacter.bStartRequested;
 	bUseStartDatabase = PlayerCharacter.bUseStartDatabase;
 	bStopRequested = PlayerCharacter.bStopRequested;
-	bStartToLoopRequested = PlayerCharacter.bStartToLoopRequested;
-	bCanEnterGroundLoop = PlayerCharacter.bCanEnterGroundLoop;
-	StartRequestTimer = PlayerCharacter.StartRequestTimer;
-	StopRequestTimer = PlayerCharacter.StopRequestTimer;
 	StopIntentSpeedThreshold = PlayerCharacter.StopIntentSpeedThreshold;
 	IdleSpeedThreshold = PlayerCharacter.IdleSpeedThreshold;
 	RunToSprintSpeedThreshold = PlayerCharacter.RunToSprintSpeedThreshold;
 	SharpTurnAngleThreshold = PlayerCharacter.SharpTurnAngleThreshold;
 	SharpTurnMinSpeed = PlayerCharacter.SharpTurnMinSpeed;
-	bJustStartedMoving = PlayerCharacter.bJustStartedMoving;
-	bWantsToStop = PlayerCharacter.bWantsToStop;
 
 	bIsSprinting = PlayerCharacter.bIsSprinting;
-	bStartWasSprinting = PlayerCharacter.bStartWasSprinting;
-	StopStartSpeed = PlayerCharacter.StopStartSpeed;
 
 	bIsCombatMode = PlayerCharacter.bIsCombatMode;
 	bIsAttacking = PlayerCharacter.bIsAttacking;

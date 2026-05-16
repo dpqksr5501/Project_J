@@ -66,6 +66,9 @@ public:
 	bool bLandWasSprinting = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	bool bLandWasMoving = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
 	bool bUseHeavyLand = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
@@ -95,17 +98,14 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float MoveInputSize = 0.0f;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	float MoveInputHeldTime = 0.0f;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
 	float MoveInputTurnAngle = 0.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float MoveInputHeldTime = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bHasMoveInput = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bHasSideMoveInput = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
 	bool bSharpTurnRequested = false;
@@ -123,18 +123,6 @@ public:
 	bool bStopRequested = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bStartToLoopRequested = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bCanEnterGroundLoop = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float StartRequestTimer = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float StopRequestTimer = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float StopIntentSpeedThreshold = 80.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
@@ -149,20 +137,8 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
 	float SharpTurnMinSpeed = 500.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bJustStartedMoving = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bWantsToStop = false;
-
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
 	bool bIsSprinting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
-	float StopStartSpeed = 0.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
 	bool bIsCombatMode = false;

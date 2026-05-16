@@ -248,16 +248,7 @@ public:
 	float MoveInputDeadZone = 0.1f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float SideMoveInputThreshold = 0.25f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.01", UIMin = "0.01"))
-	float StartRequestDuration = 0.35f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartToLoopDelay = 0.22f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.01", UIMin = "0.01"))
-	float StopRequestDuration = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
@@ -277,15 +268,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	float MoveInputSize = 0.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	float MoveInputHeldTime = 0.0f;
+
 	/** Signed input-direction delta in degrees. W->D is positive, W->A is negative. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	float MoveInputTurnAngle = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bHasMoveInput = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bHasSideMoveInput = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	bool bSharpTurnRequested = false;
@@ -302,33 +293,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float StartRequestTimer = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float MoveInputHeldTime = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float StopRequestTimer = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartToLoopRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bCanEnterGroundLoop = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float StopStartSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bJustStartedMoving = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bWantsToStop = false;
-
 	/** 착지 시점의 하강 속도 절대값 (하드/소프트 착지 분기용) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	float LastFallSpeed = 0.0f;
@@ -341,6 +305,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bLandWasSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	bool bLandWasMoving = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bUseHeavyLand = false;
