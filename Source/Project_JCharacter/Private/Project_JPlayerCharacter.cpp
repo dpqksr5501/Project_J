@@ -531,7 +531,7 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
 
 	// 블루프린트로 이벤트 전달 (필요한 경우 유지)
-	if (LastFallSpeed > 300.0f)
+	if (LastFallSpeed > RealLandingEventSpeedThreshold)
 	{
 		K2_OnRealLanded();
 	}

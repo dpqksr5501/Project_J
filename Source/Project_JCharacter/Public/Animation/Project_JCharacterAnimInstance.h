@@ -122,6 +122,9 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float GenericMoveInputSpeedThreshold = 3.0f;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float StopIntentSpeedThreshold = 80.0f;
 

@@ -135,7 +135,7 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
 	MoveInputTurnAngle = 0.0f;
-	bHasMoveInput = GroundSpeed > 3.0f;
+	bHasMoveInput = GroundSpeed > GenericMoveInputSpeedThreshold;
 	bSharpTurnRequested = false;
 	bPrevHasMoveInput = bHasMoveInput;
 	bStartRequested = false;
