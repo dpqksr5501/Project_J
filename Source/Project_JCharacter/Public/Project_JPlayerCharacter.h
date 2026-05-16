@@ -119,6 +119,8 @@ protected:
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 
+	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
+
 	// C++?먯꽌 '吏꾩쭨 李⑹?'濡??먯젙?섏뿀????釉붾（?꾨┛??ABP)濡??좏샇瑜?蹂대궡湲??꾪븳 ?대깽??	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
 	void K2_OnRealLanded();
@@ -193,6 +195,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float LandingRequestDuration = 0.45f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float HeavyLandSpeedThreshold = 650.0f;
+
 	/** True while the character should be treated as airborne by the Anim Blueprint. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir = false;
@@ -231,19 +236,10 @@ public:
 	float SprintSpeed = 700.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float NonCombatMovementYawInterpSpeed = 12.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float SprintMovementYawInterpSpeed = 10.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkRotationRateYaw = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintRotationRateYaw = 500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
-	bool bSmoothNonCombatMovementDirection = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;
@@ -272,8 +268,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RunToSprintSpeedThreshold = 500.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SharpTurnAngleThreshold = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SharpTurnMinSpeed = 500.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	float MoveInputSize = 0.0f;
+
+	/** Signed input-direction delta in degrees. W->D is positive, W->A is negative. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
+	float MoveInputTurnAngle = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bHasMoveInput = false;
@@ -281,11 +287,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bHasSideMoveInput = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
+	bool bSharpTurnRequested = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bPrevHasMoveInput = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStartRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bUseStartDatabase = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;
@@ -303,6 +315,9 @@ public:
 	bool bStartToLoopRequested = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bCanEnterGroundLoop = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStartWasSprinting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
@@ -314,15 +329,21 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bWantsToStop = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float SmoothedMovementYaw = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bHasSmoothedMovementYaw = false;
-
 	/** 착지 시점의 하강 속도 절대값 (하드/소프트 착지 분기용) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	float LastFallSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	float LandStartGroundSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	float LandStartFallSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	bool bLandWasSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	bool bUseHeavyLand = false;
 
 	// --- Combat States ---
 

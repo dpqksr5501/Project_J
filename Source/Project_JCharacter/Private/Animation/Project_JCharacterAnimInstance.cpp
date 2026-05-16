@@ -2,6 +2,7 @@
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
+#include "GameFramework/Controller.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
@@ -37,6 +38,8 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		UpdateFromGenericCharacter(DeltaSeconds);
 	}
+
+	UpdateAimOffset();
 }
 
 void UProject_JCharacterAnimInstance::CacheOwningCharacter()
@@ -51,6 +54,10 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	GroundSpeed = 0.0f;
 	VerticalSpeed = 0.0f;
 	LastFallSpeed = 0.0f;
+	LandStartGroundSpeed = 0.0f;
+	LandStartFallSpeed = 0.0f;
+	bLandWasSprinting = false;
+	bUseHeavyLand = false;
 
 	bIsInAir = false;
 	bIsPhysicallyInAir = false;
@@ -62,18 +69,24 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bCanEnterGround = true;
 
 	MoveInputSize = 0.0f;
+	MoveInputTurnAngle = 0.0f;
 	MoveInputHeldTime = 0.0f;
 	bHasMoveInput = false;
 	bHasSideMoveInput = false;
+	bSharpTurnRequested = false;
 	bPrevHasMoveInput = false;
 	bStartRequested = false;
+	bUseStartDatabase = false;
 	bStopRequested = false;
 	bStartToLoopRequested = false;
+	bCanEnterGroundLoop = false;
 	StartRequestTimer = 0.0f;
 	StopRequestTimer = 0.0f;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
+	SharpTurnAngleThreshold = 60.0f;
+	SharpTurnMinSpeed = 500.0f;
 	bJustStartedMoving = false;
 	bWantsToStop = false;
 
@@ -92,6 +105,9 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	CombatInputRight = 0.0f;
 	CombatForwardSpeed = 0.0f;
 	CombatRightSpeed = 0.0f;
+	AimYaw = 0.0f;
+	AimPitch = 0.0f;
+	AimOffsetAlpha = 0.0f;
 }
 
 void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeconds)
@@ -107,6 +123,11 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	const FVector Velocity = OwningCharacter->GetVelocity();
 	GroundSpeed = FVector(Velocity.X, Velocity.Y, 0.0f).Size();
 	VerticalSpeed = Velocity.Z;
+	LastFallSpeed = 0.0f;
+	LandStartGroundSpeed = 0.0f;
+	LandStartFallSpeed = 0.0f;
+	bLandWasSprinting = false;
+	bUseHeavyLand = false;
 
 	const UCharacterMovementComponent* MovementComponent = OwningCharacter->GetCharacterMovement();
 	bIsInAir = MovementComponent ? MovementComponent->IsFalling() : false;
@@ -119,18 +140,24 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bCanEnterGround = !bIsInAir;
 
 	MoveInputSize = 0.0f;
+	MoveInputTurnAngle = 0.0f;
 	MoveInputHeldTime = 0.0f;
 	bHasMoveInput = GroundSpeed > 3.0f;
 	bHasSideMoveInput = false;
+	bSharpTurnRequested = false;
 	bPrevHasMoveInput = bHasMoveInput;
 	bStartRequested = false;
+	bUseStartDatabase = false;
 	bStopRequested = false;
 	bStartToLoopRequested = bHasMoveInput;
+	bCanEnterGroundLoop = bStartToLoopRequested;
 	StartRequestTimer = 0.0f;
 	StopRequestTimer = 0.0f;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
+	SharpTurnAngleThreshold = 60.0f;
+	SharpTurnMinSpeed = 500.0f;
 	bJustStartedMoving = false;
 	bWantsToStop = false;
 
@@ -158,6 +185,10 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	GroundSpeed = PlayerCharacter.GroundSpeed;
 	VerticalSpeed = PlayerCharacter.VerticalSpeed;
 	LastFallSpeed = PlayerCharacter.LastFallSpeed;
+	LandStartGroundSpeed = PlayerCharacter.LandStartGroundSpeed;
+	LandStartFallSpeed = PlayerCharacter.LandStartFallSpeed;
+	bLandWasSprinting = PlayerCharacter.bLandWasSprinting;
+	bUseHeavyLand = PlayerCharacter.bUseHeavyLand;
 
 	bIsInAir = PlayerCharacter.bIsInAir;
 	bIsPhysicallyInAir = PlayerCharacter.bIsPhysicallyInAir;
@@ -169,18 +200,24 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	bCanEnterGround = PlayerCharacter.bCanEnterGround;
 
 	MoveInputSize = PlayerCharacter.MoveInputSize;
+	MoveInputTurnAngle = PlayerCharacter.MoveInputTurnAngle;
 	MoveInputHeldTime = PlayerCharacter.MoveInputHeldTime;
 	bHasMoveInput = PlayerCharacter.bHasMoveInput;
 	bHasSideMoveInput = PlayerCharacter.bHasSideMoveInput;
+	bSharpTurnRequested = PlayerCharacter.bSharpTurnRequested;
 	bPrevHasMoveInput = PlayerCharacter.bPrevHasMoveInput;
 	bStartRequested = PlayerCharacter.bStartRequested;
+	bUseStartDatabase = PlayerCharacter.bUseStartDatabase;
 	bStopRequested = PlayerCharacter.bStopRequested;
 	bStartToLoopRequested = PlayerCharacter.bStartToLoopRequested;
+	bCanEnterGroundLoop = PlayerCharacter.bCanEnterGroundLoop;
 	StartRequestTimer = PlayerCharacter.StartRequestTimer;
 	StopRequestTimer = PlayerCharacter.StopRequestTimer;
 	StopIntentSpeedThreshold = PlayerCharacter.StopIntentSpeedThreshold;
 	IdleSpeedThreshold = PlayerCharacter.IdleSpeedThreshold;
 	RunToSprintSpeedThreshold = PlayerCharacter.RunToSprintSpeedThreshold;
+	SharpTurnAngleThreshold = PlayerCharacter.SharpTurnAngleThreshold;
+	SharpTurnMinSpeed = PlayerCharacter.SharpTurnMinSpeed;
 	bJustStartedMoving = PlayerCharacter.bJustStartedMoving;
 	bWantsToStop = PlayerCharacter.bWantsToStop;
 
@@ -199,4 +236,50 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	CombatInputRight = PlayerCharacter.CombatInputRight;
 	CombatForwardSpeed = PlayerCharacter.CombatForwardSpeed;
 	CombatRightSpeed = PlayerCharacter.CombatRightSpeed;
+}
+
+void UProject_JCharacterAnimInstance::UpdateAimOffset()
+{
+	if (!OwningCharacter || !OwningCharacter->GetController())
+	{
+		AimYaw = 0.0f;
+		AimPitch = 0.0f;
+		AimOffsetAlpha = 0.0f;
+		return;
+	}
+
+	const FRotator ControlRotation = OwningCharacter->GetControlRotation();
+	const FRotator ActorRotation = OwningCharacter->GetActorRotation();
+
+	const float RawAimYaw = FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, ControlRotation.Yaw);
+	const float RawAimPitch = FRotator::NormalizeAxis(ControlRotation.Pitch);
+
+	AimYaw = FMath::Clamp(RawAimYaw, -MaxAimYaw, MaxAimYaw);
+	AimPitch = FMath::Clamp(RawAimPitch, -MaxAimPitch, MaxAimPitch);
+	AimOffsetAlpha = CalculateAimOffsetAlpha();
+}
+
+float UProject_JCharacterAnimInstance::CalculateAimOffsetAlpha() const
+{
+	if (bIsInAir || bIsLanding || bIsAttacking || bIsDodging || bIsHitReacting)
+	{
+		return 0.0f;
+	}
+
+	if (bIsCombatMode)
+	{
+		return CombatAimAlpha;
+	}
+
+	if (bIsSprinting)
+	{
+		return SprintAimAlpha;
+	}
+
+	if (bHasMoveInput)
+	{
+		return MovingAimAlpha;
+	}
+
+	return StandingAimAlpha;
 }

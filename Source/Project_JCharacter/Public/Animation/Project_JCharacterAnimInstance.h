@@ -31,6 +31,8 @@ protected:
 	void ResetAnimationState();
 	void UpdateFromGenericCharacter(float DeltaSeconds);
 	void UpdateFromPlayerCharacter(float DeltaSeconds, const AProject_JPlayerCharacter& PlayerCharacter);
+	void UpdateAimOffset();
+	float CalculateAimOffsetAlpha() const;
 
 public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
@@ -53,6 +55,18 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
 	float LastFallSpeed = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	float LandStartGroundSpeed = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	float LandStartFallSpeed = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	bool bLandWasSprinting = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	bool bUseHeavyLand = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
 	bool bIsInAir = false;
@@ -81,6 +95,9 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float MoveInputSize = 0.0f;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
+	float MoveInputTurnAngle = 0.0f;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float MoveInputHeldTime = 0.0f;
 
@@ -90,6 +107,9 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bHasSideMoveInput = false;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
+	bool bSharpTurnRequested = false;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bPrevHasMoveInput = false;
 
@@ -97,10 +117,16 @@ public:
 	bool bStartRequested = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bUseStartDatabase = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStartToLoopRequested = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bCanEnterGroundLoop = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float StartRequestTimer = 0.0f;
@@ -116,6 +142,12 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float RunToSprintSpeedThreshold = 500.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
+	float SharpTurnAngleThreshold = 60.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
+	float SharpTurnMinSpeed = 500.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bJustStartedMoving = false;
@@ -164,4 +196,31 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
 	float CombatRightSpeed = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
+	float AimYaw = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
+	float AimPitch = 0.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
+	float AimOffsetAlpha = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MaxAimYaw = 90.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MaxAimPitch = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float StandingAimAlpha = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float MovingAimAlpha = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float SprintAimAlpha = 0.15f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float CombatAimAlpha = 1.0f;
 };

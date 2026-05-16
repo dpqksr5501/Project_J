@@ -153,7 +153,6 @@ void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
 void AProject_JPlayerCharacter::StopMoveInput()
 {
 	CachedMoveInput = FVector2D::ZeroVector;
-	bHasSmoothedMovementYaw = false;
 }
 
 void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
@@ -173,32 +172,7 @@ void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
 	{
 		// find out which way is forward
 		const FRotator Rotation = GetController()->GetControlRotation();
-		float MovementYaw = Rotation.Yaw;
-		const bool bShouldSmoothMovementYaw = bSmoothNonCombatMovementDirection && !bUseControllerRotationYaw && !CachedMoveInput.IsNearlyZero(MoveInputDeadZone);
-
-		if (bShouldSmoothMovementYaw)
-		{
-			if (!bHasSmoothedMovementYaw)
-			{
-				SmoothedMovementYaw = MovementYaw;
-				bHasSmoothedMovementYaw = true;
-			}
-			else
-			{
-				const FRotator CurrentYaw(0.0f, SmoothedMovementYaw, 0.0f);
-				const FRotator TargetYaw(0.0f, MovementYaw, 0.0f);
-				const float YawInterpSpeed = bIsSprinting ? SprintMovementYawInterpSpeed : NonCombatMovementYawInterpSpeed;
-				SmoothedMovementYaw = FMath::RInterpTo(CurrentYaw, TargetYaw, GetWorld()->GetDeltaSeconds(), YawInterpSpeed).Yaw;
-				MovementYaw = SmoothedMovementYaw;
-			}
-		}
-		else
-		{
-			SmoothedMovementYaw = MovementYaw;
-			bHasSmoothedMovementYaw = false;
-		}
-
-		const FRotator YawRotation(0, MovementYaw, 0);
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -224,6 +198,8 @@ void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
 
 void AProject_JPlayerCharacter::DoJumpStart()
 {
+	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
+
 	// 착지 타이머 초기화 및 상태 해제
 	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
 	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
@@ -242,7 +218,10 @@ void AProject_JPlayerCharacter::DoJumpStart()
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
-		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		if (bHadLandingState)
+		{
+			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		}
 		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
 		{
 			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
@@ -278,6 +257,17 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 	MoveInputSize = MoveInput.Size();
 	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
 	bHasSideMoveInput = bHasMoveInput && FMath::Abs(MoveInput.X) > SideMoveInputThreshold;
+	MoveInputTurnAngle = 0.0f;
+	bSharpTurnRequested = false;
+
+	if (bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
+	{
+		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
+		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
+		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
+		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
+		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+	}
 
 	if (bHasMoveInput)
 	{
@@ -292,17 +282,29 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 	if (!bCanRequestGroundMove)
 	{
 		ClearMovementRequests();
+		PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 		return;
 	}
 
+	bSharpTurnRequested =
+		bIsSprinting &&
+		bHasMoveInput &&
+		bPrevHasMoveInput &&
+		GroundSpeed >= SharpTurnMinSpeed &&
+		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
+
+	bUseStartDatabase = bHasMoveInput && MoveInputHeldTime < StartToLoopDelay;
 	bStartToLoopRequested = bHasMoveInput && MoveInputHeldTime >= StartToLoopDelay;
+	bCanEnterGroundLoop = bStartToLoopRequested && !bStopRequested && !bIsInAir && !bIsLanding && !bLandingRequested;
 
 	if (!bPrevHasMoveInput && bHasMoveInput)
 	{
 		bStartRequested = true;
 		StartRequestTimer = StartRequestDuration;
 		MoveInputHeldTime = 0.0f;
+		bUseStartDatabase = true;
 		bStartToLoopRequested = false;
+		bCanEnterGroundLoop = false;
 		bStartWasSprinting = bIsSprinting;
 
 		bStopRequested = false;
@@ -330,7 +332,9 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 	{
 		bStartRequested = false;
 		StartRequestTimer = 0.0f;
+		bUseStartDatabase = false;
 		bStartToLoopRequested = false;
+		bCanEnterGroundLoop = false;
 	}
 
 	if (bStartRequested)
@@ -353,7 +357,11 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 
 	bJustStartedMoving = bStartRequested;
 	bWantsToStop = bStopRequested;
+	bUseStartDatabase = bUseStartDatabase && bHasMoveInput;
 	bStartToLoopRequested = bStartToLoopRequested && bHasMoveInput;
+	bCanEnterGroundLoop = bCanEnterGroundLoop && bHasMoveInput;
+
+	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 }
 
 void AProject_JPlayerCharacter::ClearMovementRequests()
@@ -364,8 +372,12 @@ void AProject_JPlayerCharacter::ClearMovementRequests()
 	StopRequestTimer = 0.0f;
 	StopStartSpeed = 0.0f;
 	MoveInputHeldTime = 0.0f;
+	bUseStartDatabase = false;
 	bStartToLoopRequested = false;
+	bCanEnterGroundLoop = false;
 	bHasSideMoveInput = false;
+	bSharpTurnRequested = false;
+	MoveInputTurnAngle = 0.0f;
 	bJustStartedMoving = false;
 	bWantsToStop = false;
 }
@@ -550,6 +562,7 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	const float ImpactFallSpeed = FMath::Abs(GetVelocity().Z);
+	const bool bHadInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
 
 	Super::Landed(Hit);
 
@@ -564,6 +577,10 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 
 	// 착지 시점의 Z축 하강 속도의 절대값을 저장 (하드 랜딩, 소프트 랜딩 구분을 위해 츄저 테이블로 전달됨)
 	LastFallSpeed = ImpactFallSpeed;
+	LandStartGroundSpeed = GroundSpeed;
+	LandStartFallSpeed = ImpactFallSpeed;
+	bLandWasSprinting = bIsSprinting || LandStartGroundSpeed >= RunToSprintSpeedThreshold;
+	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
 	bIsLanding = true;
 	bLandingRequested = true;
 	bCanEnterLand = true;
@@ -571,8 +588,15 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
-		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		if (bHadInAirState)
+		{
+			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		}
+
+		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing))
+		{
+			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		}
 	}
 
 	// 0.35초 뒤에 착지 상태 해제
@@ -587,6 +611,8 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 
 void AProject_JPlayerCharacter::OnLandingTimerFinished()
 {
+	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
+
 	bIsLanding = false;
 	bLandingRequested = false;
 	bIsInAir = false;
@@ -597,7 +623,10 @@ void AProject_JPlayerCharacter::OnLandingTimerFinished()
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
-		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		if (bHadLandingState)
+		{
+			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		}
 	}
 }
 
