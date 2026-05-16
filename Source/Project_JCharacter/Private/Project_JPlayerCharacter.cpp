@@ -4,6 +4,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
@@ -12,15 +13,12 @@
 #include "InputActionValue.h"
 #include "Project_JGameplayTags.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "TimerManager.h"
 #include "InputCoreTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
-
-namespace
-{
-	constexpr float LandingDuration = 0.35f;
-}
 
 AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 {
@@ -36,13 +34,13 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, WalkRotationRateYaw, 0.0f);
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
@@ -72,42 +70,8 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	Velocity.Z = 0; // Z축 제외
 	GroundSpeed = Velocity.Size();
 
-	if (bIsCombatMode && GroundSpeed > 3.0f)
-	{
-		const FRotator BaseRotation = GetController() ? GetController()->GetControlRotation() : GetActorRotation();
-		const FRotator BaseYawRotation(0.0f, BaseRotation.Yaw, 0.0f);
-		const FVector ForwardDirection = FRotationMatrix(BaseYawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(BaseYawRotation).GetUnitAxis(EAxis::Y);
-		const FVector MovementDirection2D = Velocity.GetSafeNormal2D();
-
-		const float ForwardAmount = FVector::DotProduct(MovementDirection2D, ForwardDirection);
-		const float RightAmount = FVector::DotProduct(MovementDirection2D, RightDirection);
-		CombatForwardSpeed = FVector::DotProduct(Velocity, ForwardDirection);
-		CombatRightSpeed = FVector::DotProduct(Velocity, RightDirection);
-		float NewMovementDirection = FMath::RadiansToDegrees(FMath::Atan2(RightAmount, ForwardAmount));
-
-		if (ForwardAmount < -0.1f)
-		{
-			if (FMath::Abs(RightAmount) < 0.05f)
-			{
-				NewMovementDirection = MovementDirection < -90.0f ? -180.0f : 180.0f;
-			}
-			else
-			{
-				NewMovementDirection = RightAmount > 0.0f ? FMath::Abs(NewMovementDirection) : -FMath::Abs(NewMovementDirection);
-			}
-		}
-
-		MovementDirection = NewMovementDirection;
-	}
-	else
-	{
-		MovementDirection = 0.0f;
-		CombatForwardSpeed = 0.0f;
-		CombatRightSpeed = 0.0f;
-	}
-
 	const bool bIsCurrentlyInAir = IsInAirForAnimation();
+	bIsPhysicallyInAir = bIsCurrentlyInAir;
 	if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
 	{
 		StartFallOffStart();
@@ -116,13 +80,34 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	{
 		bIsInAir = true;
 	}
-	else if (!bIsJumping)
+	else if (!bIsJumping && !bLandingRequested && !bIsLanding)
 	{
 		bIsInAir = false;
 		bSuppressFallOffStart = false;
 	}
 
 	bWasInAir = bIsCurrentlyInAir;
+	bCanEnterLand = bLandingRequested;
+	bCanEnterGround = !bIsInAir && !bIsLanding && !bLandingRequested;
+	UpdateMovementRequestState(DeltaTime);
+
+	const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
+	CombatInputRight = CombatMoveInput.X;
+	CombatInputForward = CombatMoveInput.Y;
+
+	if (bUseControllerRotationYaw && bHasMoveInput)
+	{
+		const float DesiredSpeed = GetCharacterMovement() ? GetCharacterMovement()->MaxWalkSpeed : WalkSpeed;
+		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
+		CombatForwardSpeed = CombatMoveInput.Y * DesiredSpeed;
+		MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatMoveInput.X, CombatMoveInput.Y));
+	}
+	else
+	{
+		MovementDirection = 0.0f;
+		CombatForwardSpeed = 0.0f;
+		CombatRightSpeed = 0.0f;
+	}
 }
 
 void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -136,6 +121,8 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::StopMoveInput);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AProject_JPlayerCharacter::StopMoveInput);
 		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Look);
 
 		// Looking
@@ -148,6 +135,10 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 
 	// Temporary: Bind Tab key directly to Toggle Combat Mode for testing
 	PlayerInputComponent->BindKey(EKeys::Tab, IE_Pressed, this, &AProject_JPlayerCharacter::ToggleCombatMode);
+	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Pressed, this, &AProject_JPlayerCharacter::StartSprint);
+	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Released, this, &AProject_JPlayerCharacter::StopSprint);
+	PlayerInputComponent->BindKey(EKeys::RightShift, IE_Pressed, this, &AProject_JPlayerCharacter::StartSprint);
+	PlayerInputComponent->BindKey(EKeys::RightShift, IE_Released, this, &AProject_JPlayerCharacter::StopSprint);
 }
 
 void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
@@ -157,6 +148,12 @@ void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
 
 	// route the input
 	DoMove(MovementVector.X, MovementVector.Y);
+}
+
+void AProject_JPlayerCharacter::StopMoveInput()
+{
+	CachedMoveInput = FVector2D::ZeroVector;
+	bHasSmoothedMovementYaw = false;
 }
 
 void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
@@ -170,11 +167,38 @@ void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
 
 void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
 {
+	CachedMoveInput = FVector2D(Right, Forward);
+
 	if (GetController() != nullptr)
 	{
 		// find out which way is forward
 		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		float MovementYaw = Rotation.Yaw;
+		const bool bShouldSmoothMovementYaw = bSmoothNonCombatMovementDirection && !bUseControllerRotationYaw && !CachedMoveInput.IsNearlyZero(MoveInputDeadZone);
+
+		if (bShouldSmoothMovementYaw)
+		{
+			if (!bHasSmoothedMovementYaw)
+			{
+				SmoothedMovementYaw = MovementYaw;
+				bHasSmoothedMovementYaw = true;
+			}
+			else
+			{
+				const FRotator CurrentYaw(0.0f, SmoothedMovementYaw, 0.0f);
+				const FRotator TargetYaw(0.0f, MovementYaw, 0.0f);
+				const float YawInterpSpeed = bIsSprinting ? SprintMovementYawInterpSpeed : NonCombatMovementYawInterpSpeed;
+				SmoothedMovementYaw = FMath::RInterpTo(CurrentYaw, TargetYaw, GetWorld()->GetDeltaSeconds(), YawInterpSpeed).Yaw;
+				MovementYaw = SmoothedMovementYaw;
+			}
+		}
+		else
+		{
+			SmoothedMovementYaw = MovementYaw;
+			bHasSmoothedMovementYaw = false;
+		}
+
+		const FRotator YawRotation(0, MovementYaw, 0);
 
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -205,6 +229,9 @@ void AProject_JPlayerCharacter::DoJumpStart()
 	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
 	StopFallOffStart();
 	bIsLanding = false;
+	bLandingRequested = false;
+	bCanEnterLand = false;
+	bCanEnterGround = false;
 	bIsInAir = true;
 	bWasInAir = true;
 	bSuppressFallOffStart = true;
@@ -243,9 +270,155 @@ void AProject_JPlayerCharacter::FinishJumpStart()
 	OnJumpTimerFinished();
 }
 
+void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
+{
+	bPrevHasMoveInput = bHasMoveInput;
+
+	const FVector2D MoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
+	MoveInputSize = MoveInput.Size();
+	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
+	bHasSideMoveInput = bHasMoveInput && FMath::Abs(MoveInput.X) > SideMoveInputThreshold;
+
+	if (bHasMoveInput)
+	{
+		MoveInputHeldTime += DeltaTime;
+	}
+	else
+	{
+		MoveInputHeldTime = 0.0f;
+	}
+
+	const bool bCanRequestGroundMove = !bIsInAir && !bIsLanding && !bIsJumping && !bIsFallOffStart;
+	if (!bCanRequestGroundMove)
+	{
+		ClearMovementRequests();
+		return;
+	}
+
+	bStartToLoopRequested = bHasMoveInput && MoveInputHeldTime >= StartToLoopDelay;
+
+	if (!bPrevHasMoveInput && bHasMoveInput)
+	{
+		bStartRequested = true;
+		StartRequestTimer = StartRequestDuration;
+		MoveInputHeldTime = 0.0f;
+		bStartToLoopRequested = false;
+		bStartWasSprinting = bIsSprinting;
+
+		bStopRequested = false;
+		StopRequestTimer = 0.0f;
+		StopStartSpeed = 0.0f;
+	}
+
+	if (bPrevHasMoveInput && !bHasMoveInput && GroundSpeed > StopIntentSpeedThreshold)
+	{
+		bStopRequested = true;
+		StopRequestTimer = StopRequestDuration;
+		StopStartSpeed = GroundSpeed;
+
+		bStartRequested = false;
+		StartRequestTimer = 0.0f;
+	}
+
+	if (bHasMoveInput)
+	{
+		bStopRequested = false;
+		StopRequestTimer = 0.0f;
+		StopStartSpeed = 0.0f;
+	}
+	else
+	{
+		bStartRequested = false;
+		StartRequestTimer = 0.0f;
+		bStartToLoopRequested = false;
+	}
+
+	if (bStartRequested)
+	{
+		StartRequestTimer = FMath::Max(0.0f, StartRequestTimer - DeltaTime);
+		if (StartRequestTimer <= 0.0f)
+		{
+			bStartRequested = false;
+		}
+	}
+
+	if (bStopRequested)
+	{
+		StopRequestTimer = FMath::Max(0.0f, StopRequestTimer - DeltaTime);
+		if (StopRequestTimer <= 0.0f || GroundSpeed <= IdleSpeedThreshold)
+		{
+			bStopRequested = false;
+		}
+	}
+
+	bJustStartedMoving = bStartRequested;
+	bWantsToStop = bStopRequested;
+	bStartToLoopRequested = bStartToLoopRequested && bHasMoveInput;
+}
+
+void AProject_JPlayerCharacter::ClearMovementRequests()
+{
+	bStartRequested = false;
+	bStopRequested = false;
+	StartRequestTimer = 0.0f;
+	StopRequestTimer = 0.0f;
+	StopStartSpeed = 0.0f;
+	MoveInputHeldTime = 0.0f;
+	bStartToLoopRequested = false;
+	bHasSideMoveInput = false;
+	bJustStartedMoving = false;
+	bWantsToStop = false;
+}
+
+void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
+{
+	bUseControllerRotationYaw = bEnableCombatRotation;
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->bOrientRotationToMovement = !bEnableCombatRotation;
+	}
+}
+
+void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
+{
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		const bool bCanSprint = bIsSprinting && !bIsAttacking && !bIsDodging && !bIsHitReacting;
+		MoveComp->MaxWalkSpeed = bCanSprint ? SprintSpeed : WalkSpeed;
+		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? SprintRotationRateYaw : WalkRotationRateYaw, 0.0f);
+	}
+}
+
+void AProject_JPlayerCharacter::StartSprint()
+{
+	bIsSprinting = true;
+	UpdateMaxWalkSpeed();
+}
+
+void AProject_JPlayerCharacter::StopSprint()
+{
+	bIsSprinting = false;
+	UpdateMaxWalkSpeed();
+}
+
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
-	SetCombatMode(!bIsCombatMode);
+	if (bIsCombatMode)
+	{
+		CancelCombatIntroMontage();
+		SetCombatMode(false);
+		return;
+	}
+
+	if (bIsPlayingCombatIntro || bPendingCombatModeFromIntro)
+	{
+		CancelCombatIntroMontage();
+		ApplyCombatRotationMode(false);
+		return;
+	}
+
+	BeginCombatModeWithIntro();
 }
 
 void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
@@ -273,39 +446,128 @@ void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
 	// Update movement rotation settings for Strafe vs Free movement
 	if (bIsCombatMode)
 	{
-		// Face the camera's yaw direction
-		bUseControllerRotationYaw = true;
-		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-		{
-			MoveComp->bOrientRotationToMovement = false;
-		}
+		ApplyCombatRotationMode(true);
 	}
 	else
 	{
-		// Face the movement direction
-		bUseControllerRotationYaw = false;
-		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		CancelCombatIntroMontage();
+		ApplyCombatRotationMode(false);
+	}
+}
+
+void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
+{
+	if (bIsCombatMode || bIsPlayingCombatIntro || bPendingCombatModeFromIntro || bIsHitReacting)
+	{
+		return;
+	}
+
+	ApplyCombatRotationMode(true);
+	PlayCombatIntroMontage();
+
+	if (!bPendingCombatModeFromIntro)
+	{
+		SetCombatMode(true);
+	}
+}
+
+void AProject_JPlayerCharacter::PlayCombatIntroMontage()
+{
+	if (!CombatIntroMontage || bIsPlayingCombatIntro || bIsHitReacting)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	const float Duration = PlayAnimMontage(CombatIntroMontage, CombatIntroMontagePlayRate);
+	if (Duration <= 0.0f)
+	{
+		return;
+	}
+
+	bIsPlayingCombatIntro = true;
+	bPendingCombatModeFromIntro = true;
+
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+	AnimInstance->Montage_SetEndDelegate(EndDelegate, CombatIntroMontage);
+}
+
+void AProject_JPlayerCharacter::CancelCombatIntroMontage()
+{
+	if (bIsPlayingCombatIntro)
+	{
+		StopAnimMontage(CombatIntroMontage);
+	}
+
+	bIsPlayingCombatIntro = false;
+	bPendingCombatModeFromIntro = false;
+}
+
+void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage == CombatIntroMontage)
+	{
+		bIsPlayingCombatIntro = false;
+
+		if (bPendingCombatModeFromIntro)
 		{
-			MoveComp->bOrientRotationToMovement = true;
+			bPendingCombatModeFromIntro = false;
+
+			if (!bInterrupted && !bIsHitReacting)
+			{
+				SetCombatMode(true);
+			}
+			else if (!bIsCombatMode)
+			{
+				ApplyCombatRotationMode(false);
+			}
 		}
+	}
+}
+
+void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
+{
+	if (!bInterruptCombatIntroOnHit || !bIsPlayingCombatIntro)
+	{
+		return;
+	}
+
+	StopAnimMontage(CombatIntroMontage);
+	bIsPlayingCombatIntro = false;
+	bPendingCombatModeFromIntro = false;
+	if (!bIsCombatMode)
+	{
+		ApplyCombatRotationMode(false);
 	}
 }
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
+	const float ImpactFallSpeed = FMath::Abs(GetVelocity().Z);
+
 	Super::Landed(Hit);
 
 	// 천장에 부딪히는 등 예상치 못하게 빨리 착지했을 때를 대비해 점프 트리거 즉시 해제
 	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
 	StopFallOffStart();
 	bIsJumping = false;
-	bIsInAir = false;
+	bIsInAir = true;
+	bIsPhysicallyInAir = false;
 	bWasInAir = false;
 	bSuppressFallOffStart = false;
 
 	// 착지 시점의 Z축 하강 속도의 절대값을 저장 (하드 랜딩, 소프트 랜딩 구분을 위해 츄저 테이블로 전달됨)
-	LastFallSpeed = FMath::Abs(GetCharacterMovement()->Velocity.Z);
+	LastFallSpeed = ImpactFallSpeed;
 	bIsLanding = true;
+	bLandingRequested = true;
+	bCanEnterLand = true;
+	bCanEnterGround = false;
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -314,7 +576,7 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 	}
 
 	// 0.35초 뒤에 착지 상태 해제
-	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, LandingDuration, false);
+	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
 
 	// 블루프린트로 이벤트 전달 (필요한 경우 유지)
 	if (LastFallSpeed > 300.0f)
@@ -326,6 +588,12 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 void AProject_JPlayerCharacter::OnLandingTimerFinished()
 {
 	bIsLanding = false;
+	bLandingRequested = false;
+	bIsInAir = false;
+	bWasInAir = false;
+	bSuppressFallOffStart = false;
+	bCanEnterLand = false;
+	bCanEnterGround = true;
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
