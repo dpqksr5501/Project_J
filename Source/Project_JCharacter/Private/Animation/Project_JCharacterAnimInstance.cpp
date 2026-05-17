@@ -237,25 +237,5 @@ void UProject_JCharacterAnimInstance::UpdateAimOffset()
 
 float UProject_JCharacterAnimInstance::CalculateAimOffsetAlpha() const
 {
-	if (bIsInAir || bIsLanding || bIsAttacking || bIsDodging || bIsHitReacting)
-	{
-		return 0.0f;
-	}
-
-	if (bIsCombatMode)
-	{
-		return CombatAimAlpha;
-	}
-
-	if (bIsSprinting)
-	{
-		return SprintAimAlpha;
-	}
-
-	if (bHasMoveInput)
-	{
-		return MovingAimAlpha;
-	}
-
-	return StandingAimAlpha;
+	return 1.0f;
 }
