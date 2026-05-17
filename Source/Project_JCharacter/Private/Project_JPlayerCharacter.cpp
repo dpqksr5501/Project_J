@@ -95,7 +95,7 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	CombatInputRight = CombatMoveInput.X;
 	CombatInputForward = CombatMoveInput.Y;
 
-	if (bUseControllerRotationYaw && bHasMoveInput)
+	if (bIsCombatMode && bHasMoveInput)
 	{
 		const float DesiredSpeed = GetCharacterMovement() ? GetCharacterMovement()->MaxWalkSpeed : WalkSpeed;
 		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
