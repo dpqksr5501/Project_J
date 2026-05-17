@@ -250,13 +250,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;
 
-	/** How long initial Start rows stay available in CT_Ground_Locomotion after movement input begins. */
+	/** How long Start rows stay available in CT_Ground_Locomotion after movement input begins. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartToLoopDelay = 0.45f;
-
-	/** How long sprint transition rows stay available after sprint is toggled while already moving. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float SprintTransitionDatabaseDuration = 0.35f;
+	float StartToLoopDelay = 0.22f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
@@ -279,9 +275,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	float MoveInputHeldTime = 0.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float SprintTransitionElapsedTime = 0.0f;
-
 	/** Signed input-direction delta in degrees. W->D is positive, W->A is negative. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	float MoveInputTurnAngle = 0.0f;
@@ -302,19 +295,7 @@ public:
 	bool bUseStartDatabase = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bUseSprintTransitionDatabase = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bSprintTransitionToSprint = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
-	bool bPrevIsSprinting = false;
 
 	/** 착지 시점의 하강 속도 절대값 (하드/소프트 착지 분기용) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
