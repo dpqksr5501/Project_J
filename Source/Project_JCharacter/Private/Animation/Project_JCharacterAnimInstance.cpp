@@ -42,6 +42,17 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	UpdateAimOffset();
 }
 
+void UProject_JCharacterAnimInstance::MarkGroundStartFinished()
+{
+	if (OwningPlayerCharacter)
+	{
+		OwningPlayerCharacter->MarkGroundStartFinished();
+	}
+
+	bGroundStartFinished = true;
+	bUseStartDatabase = false;
+}
+
 void UProject_JCharacterAnimInstance::CacheOwningCharacter()
 {
 	OwningPawn = TryGetPawnOwner();
@@ -77,6 +88,7 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bPrevHasMoveInput = false;
 	bStartRequested = false;
 	bUseStartDatabase = false;
+	bGroundStartFinished = false;
 	bStopRequested = false;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
@@ -140,6 +152,7 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bPrevHasMoveInput = bHasMoveInput;
 	bStartRequested = false;
 	bUseStartDatabase = false;
+	bGroundStartFinished = false;
 	bStopRequested = false;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
@@ -192,6 +205,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	bPrevHasMoveInput = PlayerCharacter.bPrevHasMoveInput;
 	bStartRequested = PlayerCharacter.bStartRequested;
 	bUseStartDatabase = PlayerCharacter.bUseStartDatabase;
+	bGroundStartFinished = PlayerCharacter.bGroundStartFinished;
 	bStopRequested = PlayerCharacter.bStopRequested;
 	StopIntentSpeedThreshold = PlayerCharacter.StopIntentSpeedThreshold;
 	IdleSpeedThreshold = PlayerCharacter.IdleSpeedThreshold;

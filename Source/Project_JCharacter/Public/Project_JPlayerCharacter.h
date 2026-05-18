@@ -171,6 +171,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
 
+	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
+	void MarkGroundStartFinished();
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -250,9 +253,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;
 
-	/** How long Start rows stay available in CT_Ground_Locomotion after movement input begins. */
+	/** Fallback max time for Start rows if the StartFinished notify is not received. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartToLoopDelay = 0.22f;
+	float StartToLoopDelay = 0.75f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
@@ -293,6 +296,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bUseStartDatabase = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bGroundStartFinished = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;

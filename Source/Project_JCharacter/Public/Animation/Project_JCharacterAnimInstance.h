@@ -26,6 +26,9 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Animation|Movement")
+	void MarkGroundStartFinished();
+
 protected:
 	void CacheOwningCharacter();
 	void ResetAnimationState();
@@ -118,6 +121,9 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bUseStartDatabase = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bGroundStartFinished = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;

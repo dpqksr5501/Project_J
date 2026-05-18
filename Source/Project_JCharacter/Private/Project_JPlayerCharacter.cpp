@@ -283,6 +283,12 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 	if (!bPrevHasMoveInput && bHasMoveInput)
 	{
 		MoveInputHeldTime = 0.0f;
+		bGroundStartFinished = false;
+	}
+
+	if (!bHasMoveInput)
+	{
+		bGroundStartFinished = false;
 	}
 
 	bSharpTurnRequested =
@@ -294,7 +300,7 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 
 	bStartRequested = !bPrevHasMoveInput && bHasMoveInput;
 	bStopRequested = bPrevHasMoveInput && !bHasMoveInput && GroundSpeed > StopIntentSpeedThreshold;
-	bUseStartDatabase = bHasMoveInput && MoveInputHeldTime < StartToLoopDelay;
+	bUseStartDatabase = bHasMoveInput && !bGroundStartFinished && MoveInputHeldTime < StartToLoopDelay;
 
 	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 }
@@ -304,9 +310,16 @@ void AProject_JPlayerCharacter::ClearMovementRequests()
 	bStartRequested = false;
 	bStopRequested = false;
 	bUseStartDatabase = false;
+	bGroundStartFinished = false;
 	MoveInputHeldTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
+}
+
+void AProject_JPlayerCharacter::MarkGroundStartFinished()
+{
+	bGroundStartFinished = true;
+	bUseStartDatabase = false;
 }
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
