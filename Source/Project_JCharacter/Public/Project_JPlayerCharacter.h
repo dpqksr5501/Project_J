@@ -257,6 +257,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartToLoopDelay = 0.75f;
 
+	/** Minimum time Start rows should remain available even if a Motion Matching notify fires immediately. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MinStartDatabaseTime = 0.12f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
 
@@ -299,6 +303,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bGroundStartFinished = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bPendingGroundStartFinish = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bStartWasSprinting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;

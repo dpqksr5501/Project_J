@@ -89,6 +89,8 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bGroundStartFinished = false;
+	bPendingGroundStartFinish = false;
+	bStartWasSprinting = false;
 	bStopRequested = false;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
@@ -153,6 +155,8 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bGroundStartFinished = false;
+	bPendingGroundStartFinish = false;
+	bStartWasSprinting = false;
 	bStopRequested = false;
 	StopIntentSpeedThreshold = 80.0f;
 	IdleSpeedThreshold = 30.0f;
@@ -206,6 +210,8 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	bStartRequested = PlayerCharacter.bStartRequested;
 	bUseStartDatabase = PlayerCharacter.bUseStartDatabase;
 	bGroundStartFinished = PlayerCharacter.bGroundStartFinished;
+	bPendingGroundStartFinish = PlayerCharacter.bPendingGroundStartFinish;
+	bStartWasSprinting = PlayerCharacter.bStartWasSprinting;
 	bStopRequested = PlayerCharacter.bStopRequested;
 	StopIntentSpeedThreshold = PlayerCharacter.StopIntentSpeedThreshold;
 	IdleSpeedThreshold = PlayerCharacter.IdleSpeedThreshold;

@@ -126,6 +126,12 @@ public:
 	bool bGroundStartFinished = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bPendingGroundStartFinish = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bStartWasSprinting = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))

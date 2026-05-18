@@ -280,15 +280,28 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 		return;
 	}
 
-	if (!bPrevHasMoveInput && bHasMoveInput)
+	const bool bStartedMoving = !bPrevHasMoveInput && bHasMoveInput;
+	const bool bStoppedMoving = bPrevHasMoveInput && !bHasMoveInput;
+
+	if (bStartedMoving)
 	{
 		MoveInputHeldTime = 0.0f;
 		bGroundStartFinished = false;
+		bPendingGroundStartFinish = false;
+		bStartWasSprinting = bIsSprinting;
 	}
 
 	if (!bHasMoveInput)
 	{
 		bGroundStartFinished = false;
+		bPendingGroundStartFinish = false;
+		bStartWasSprinting = false;
+	}
+
+	if (bPendingGroundStartFinish && MoveInputHeldTime >= MinStartDatabaseTime)
+	{
+		bGroundStartFinished = true;
+		bPendingGroundStartFinish = false;
 	}
 
 	bSharpTurnRequested =
@@ -298,8 +311,8 @@ void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
 		GroundSpeed >= SharpTurnMinSpeed &&
 		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
 
-	bStartRequested = !bPrevHasMoveInput && bHasMoveInput;
-	bStopRequested = bPrevHasMoveInput && !bHasMoveInput && GroundSpeed > StopIntentSpeedThreshold;
+	bStartRequested = bStartedMoving;
+	bStopRequested = bStoppedMoving && GroundSpeed > StopIntentSpeedThreshold;
 	bUseStartDatabase = bHasMoveInput && !bGroundStartFinished && MoveInputHeldTime < StartToLoopDelay;
 
 	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
@@ -311,6 +324,8 @@ void AProject_JPlayerCharacter::ClearMovementRequests()
 	bStopRequested = false;
 	bUseStartDatabase = false;
 	bGroundStartFinished = false;
+	bPendingGroundStartFinish = false;
+	bStartWasSprinting = false;
 	MoveInputHeldTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
@@ -318,6 +333,13 @@ void AProject_JPlayerCharacter::ClearMovementRequests()
 
 void AProject_JPlayerCharacter::MarkGroundStartFinished()
 {
+	if (MoveInputHeldTime < MinStartDatabaseTime)
+	{
+		bPendingGroundStartFinish = true;
+		return;
+	}
+
+	bPendingGroundStartFinish = false;
 	bGroundStartFinished = true;
 	bUseStartDatabase = false;
 }
