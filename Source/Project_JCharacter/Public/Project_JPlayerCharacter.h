@@ -12,6 +12,7 @@ class UCameraComponent;
 class UInputAction;
 class UAnimMontage;
 struct FInputActionValue;
+class UProject_JCombatComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -31,6 +32,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	/** Job-specific combat component (dynamically cached at runtime) */
+	UPROPERTY(Transient, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UProject_JCombatComponent* ActiveCombatComponent;
 	
 protected:
 
@@ -58,12 +63,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* ToggleCombatAction;
 
+	/** Attack Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* AttackAction;
+
 public:
 
 	/** Constructor */
 	AProject_JPlayerCharacter();	
 
 protected:
+
+	virtual void BeginPlay() override;
 
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -173,6 +184,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Animation")
 	void InterruptCombatIntroForHit();
 
+	/** Triggers the active combat component's attack */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void TriggerPlayerAttack();
+
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartSprint();
 
@@ -189,6 +204,9 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns ActiveCombatComponent subobject **/
+	FORCEINLINE class UProject_JCombatComponent* GetActiveCombatComponent() const { return ActiveCombatComponent; }
 
 	/** 츄저 테이블(Chooser Table)에서 읽어갈 착지 상태 플래그 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")

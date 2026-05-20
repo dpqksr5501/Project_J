@@ -1,6 +1,7 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Project_JCombatComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -57,6 +58,13 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
+void AProject_JPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Dynamically find and cache the active combat component if added in Blueprint
+	ActiveCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
+}
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
@@ -134,6 +142,9 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 
 		// Toggle Combat Mode
 		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::ToggleCombatMode);
+
+		// Player Melee Attack
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::TriggerPlayerAttack);
 	}
 	else
 	{
@@ -404,6 +415,19 @@ void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
 
 	bIsCombatMode = bInCombatMode;
 
+	// Update weapon visibility
+	if (ActiveCombatComponent)
+	{
+		if (bIsCombatMode)
+		{
+			ActiveCombatComponent->EquipWeapon();
+		}
+		else
+		{
+			ActiveCombatComponent->UnequipWeapon();
+		}
+	}
+
 	// Update Gameplay Tags
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -635,4 +659,12 @@ void AProject_JPlayerCharacter::StopFallOffStart()
 {
 	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
 	bIsFallOffStart = false;
+}
+
+void AProject_JPlayerCharacter::TriggerPlayerAttack()
+{
+	if (ActiveCombatComponent)
+	{
+		ActiveCombatComponent->Attack();
+	}
 }
