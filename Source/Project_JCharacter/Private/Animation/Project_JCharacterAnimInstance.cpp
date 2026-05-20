@@ -204,7 +204,12 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 {
 	(void)DeltaSeconds;
 
-	const UProject_JLocomotionAnimStateComponent* AnimState = PlayerCharacter.GetLocomotionAnimStateComponent();
+	if (!LocomotionAnimStateComponent || LocomotionAnimStateComponent->GetOwner() != &PlayerCharacter)
+	{
+		LocomotionAnimStateComponent = PlayerCharacter.GetLocomotionAnimStateComponent();
+	}
+
+	const UProject_JLocomotionAnimStateComponent* AnimState = LocomotionAnimStateComponent.Get();
 	if (AnimState)
 	{
 		GroundSpeed = AnimState->GroundSpeed;

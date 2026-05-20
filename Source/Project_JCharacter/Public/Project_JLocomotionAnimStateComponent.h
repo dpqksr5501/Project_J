@@ -7,13 +7,16 @@
 #include "Project_JLocomotionAnimStateComponent.generated.h"
 
 class AProject_JPlayerCharacter;
+class UAbilitySystemComponent;
+class UCharacterMovementComponent;
+class USkeletalMeshComponent;
 struct FHitResult;
 
 /**
  * Owns the player locomotion state consumed by animation graphs and Chooser Tables.
  *
- * PlayerCharacter keeps compatibility mirrors for existing CT bindings, while this
- * component owns the state-machine logic so MMORPG-scale character code can stay modular.
+ * This component owns the state-machine logic so MMORPG-scale character code can
+ * keep animation-facing locomotion separate from player input and combat flow.
  */
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Character), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UActorComponent
@@ -37,14 +40,22 @@ public:
 	bool ConsumeRealLandingEventRequested();
 
 protected:
+	void CacheOwnerReferences();
 	AProject_JPlayerCharacter* GetPlayerOwner() const;
+	UCharacterMovementComponent* GetCachedMovementComponent() const;
+	UAbilitySystemComponent* GetCachedAbilitySystemComponent() const;
 	bool IsInAirForAnimation() const;
+	bool ShouldUseLocalInputState() const;
+	bool IsDedicatedServerContext() const;
+	bool WasRecentlyRendered() const;
 	void StartFallOffStart();
 	void StopFallOffStart();
 	void OnLandingTimerFinished();
 	void OnJumpTimerFinished();
 	void OnFallOffStartFinished();
 	void UpdateMovementRequestState(float DeltaTime);
+	void UpdateRemoteMovementRequestState(float DeltaTime);
+	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void ClearMovementRequests();
 
 public:
@@ -86,6 +97,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnMinSpeed = 500.0f;
+
+	/** Remote proxies do not have authoritative local input, so derive request state from replicated movement instead. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network")
+	bool bUseInputDerivedRequestsForRemotePlayers = false;
+
+	/** Minimum replicated movement speed treated as movement input for remote proxies. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteMoveSpeedThreshold = 3.0f;
+
+	/** Window used by WasRecentlyRendered for future update-rate throttling decisions. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Visibility", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RecentlyRenderedTolerance = 0.25f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Optimization|State")
+	bool bUsingLocalInputState = true;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Optimization|State")
+	bool bRecentlyRendered = true;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Optimization|State")
+	bool bDedicatedServerContext = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bIsLanding = false;
@@ -189,6 +221,15 @@ public:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> CachedPlayerOwner = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UCharacterMovementComponent> CachedMovementComponent = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAbilitySystemComponent> CachedAbilitySystemComponent = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMeshComponent> CachedMeshComponent = nullptr;
 
 	FTimerHandle LandingTimerHandle;
 	FTimerHandle JumpTimerHandle;

@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "TimerManager.h"
 
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
@@ -17,20 +18,30 @@ void UProject_JLocomotionAnimStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
+	CacheOwnerReferences();
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
+	if (!CachedPlayerOwner || !CachedMovementComponent)
+	{
+		CacheOwnerReferences();
+	}
+
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
 	{
 		return;
 	}
 
-	const FVector Velocity = PlayerOwner->GetVelocity();
+	const FVector Velocity = CachedMovementComponent ? CachedMovementComponent->Velocity : PlayerOwner->GetVelocity();
+	const FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
 	VerticalSpeed = Velocity.Z;
-	GroundSpeed = FVector(Velocity.X, Velocity.Y, 0.0f).Size();
+	GroundSpeed = HorizontalVelocity.Size();
+
+	bUsingLocalInputState = ShouldUseLocalInputState();
+	bRecentlyRendered = WasRecentlyRendered();
+	bDedicatedServerContext = IsDedicatedServerContext();
 
 	const bool bIsCurrentlyInAir = IsInAirForAnimation();
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
@@ -51,26 +62,17 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	bWasInAir = bIsCurrentlyInAir;
 	bCanEnterLand = bLandingRequested;
 	bCanEnterGround = !bIsInAir && !bIsLanding && !bLandingRequested;
-	UpdateMovementRequestState(DeltaTime);
 
-	const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
-	CombatInputRight = CombatMoveInput.X;
-	CombatInputForward = CombatMoveInput.Y;
-
-	if (PlayerOwner->bIsCombatMode && bHasMoveInput)
+	if (bUsingLocalInputState)
 	{
-		const UCharacterMovementComponent* MoveComp = PlayerOwner->GetCharacterMovement();
-		const float DesiredSpeed = MoveComp ? MoveComp->MaxWalkSpeed : PlayerOwner->WalkSpeed;
-		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
-		CombatForwardSpeed = CombatMoveInput.Y * DesiredSpeed;
-		MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatMoveInput.X, CombatMoveInput.Y));
+		UpdateMovementRequestState(DeltaTime);
 	}
 	else
 	{
-		MovementDirection = 0.0f;
-		CombatForwardSpeed = 0.0f;
-		CombatRightSpeed = 0.0f;
+		UpdateRemoteMovementRequestState(DeltaTime);
 	}
+
+	UpdateCombatMovementState(HorizontalVelocity);
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
@@ -83,8 +85,11 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 
 	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
 
-	GetWorld()->GetTimerManager().ClearTimer(JumpTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(LandingTimerHandle);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(JumpTimerHandle);
+		World->GetTimerManager().ClearTimer(LandingTimerHandle);
+	}
 	StopFallOffStart();
 	bIsLanding = false;
 	bLandingRequested = false;
@@ -95,9 +100,12 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 	bSuppressFallOffStart = true;
 
 	bIsJumping = true;
-	GetWorld()->GetTimerManager().SetTimer(JumpTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished, FMath::Max(0.1f, JumpStartMaxDuration), false);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(JumpTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished, FMath::Max(0.1f, JumpStartMaxDuration), false);
+	}
 
-	if (UAbilitySystemComponent* ASC = PlayerOwner->GetAbilitySystemComponent())
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
 	{
 		if (bHadLandingState)
 		{
@@ -118,10 +126,13 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 		return;
 	}
 
-	const float ImpactFallSpeed = FMath::Abs(PlayerOwner->GetVelocity().Z);
+	const float ImpactFallSpeed = FMath::Abs(CachedMovementComponent ? CachedMovementComponent->Velocity.Z : PlayerOwner->GetVelocity().Z);
 	const bool bHadInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
 
-	GetWorld()->GetTimerManager().ClearTimer(JumpTimerHandle);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(JumpTimerHandle);
+	}
 	StopFallOffStart();
 	bIsJumping = false;
 	bIsInAir = true;
@@ -140,7 +151,7 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 	bCanEnterLand = true;
 	bCanEnterGround = false;
 
-	if (UAbilitySystemComponent* ASC = PlayerOwner->GetAbilitySystemComponent())
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
 	{
 		if (bHadInAirState)
 		{
@@ -153,7 +164,10 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 		}
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(LandingTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(LandingTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
+	}
 	bRealLandingEventRequested = LastFallSpeed > RealLandingEventSpeedThreshold;
 }
 
@@ -210,16 +224,50 @@ bool UProject_JLocomotionAnimStateComponent::ConsumeRealLandingEventRequested()
 	return bRequested;
 }
 
+void UProject_JLocomotionAnimStateComponent::CacheOwnerReferences()
+{
+	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
+	CachedMovementComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCharacterMovement() : nullptr;
+	CachedAbilitySystemComponent = CachedPlayerOwner ? CachedPlayerOwner->GetAbilitySystemComponent() : nullptr;
+	CachedMeshComponent = CachedPlayerOwner ? CachedPlayerOwner->GetMesh() : nullptr;
+}
+
 AProject_JPlayerCharacter* UProject_JLocomotionAnimStateComponent::GetPlayerOwner() const
 {
 	return CachedPlayerOwner ? CachedPlayerOwner.Get() : Cast<AProject_JPlayerCharacter>(GetOwner());
 }
 
+UCharacterMovementComponent* UProject_JLocomotionAnimStateComponent::GetCachedMovementComponent() const
+{
+	return CachedMovementComponent.Get();
+}
+
+UAbilitySystemComponent* UProject_JLocomotionAnimStateComponent::GetCachedAbilitySystemComponent() const
+{
+	return CachedAbilitySystemComponent.Get();
+}
+
 bool UProject_JLocomotionAnimStateComponent::IsInAirForAnimation() const
 {
+	const UCharacterMovementComponent* MoveComp = GetCachedMovementComponent();
+	return MoveComp && MoveComp->IsFalling();
+}
+
+bool UProject_JLocomotionAnimStateComponent::ShouldUseLocalInputState() const
+{
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	const UCharacterMovementComponent* MoveComp = PlayerOwner ? PlayerOwner->GetCharacterMovement() : nullptr;
-	return MoveComp && MoveComp->MovementMode == EMovementMode::MOVE_Falling;
+	return PlayerOwner && (PlayerOwner->IsLocallyControlled() || bUseInputDerivedRequestsForRemotePlayers);
+}
+
+bool UProject_JLocomotionAnimStateComponent::IsDedicatedServerContext() const
+{
+	const AActor* Owner = GetOwner();
+	return Owner && Owner->GetNetMode() == NM_DedicatedServer;
+}
+
+bool UProject_JLocomotionAnimStateComponent::WasRecentlyRendered() const
+{
+	return !CachedMeshComponent || CachedMeshComponent->WasRecentlyRendered(RecentlyRenderedTolerance);
 }
 
 void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
@@ -232,10 +280,13 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
 
 	bIsInAir = true;
 	bIsFallOffStart = true;
-	GetWorld()->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(FallOffStartTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
+		World->GetTimerManager().SetTimer(FallOffStartTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
+	}
 
-	if (UAbilitySystemComponent* ASC = PlayerOwner->GetAbilitySystemComponent())
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
 	{
 		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
 		{
@@ -255,7 +306,6 @@ void UProject_JLocomotionAnimStateComponent::StopFallOffStart()
 
 void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 {
-	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
 
 	bIsLanding = false;
@@ -266,14 +316,11 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	bCanEnterLand = false;
 	bCanEnterGround = true;
 
-	if (PlayerOwner)
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
 	{
-		if (UAbilitySystemComponent* ASC = PlayerOwner->GetAbilitySystemComponent())
+		if (bHadLandingState)
 		{
-			if (bHadLandingState)
-			{
-				ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-			}
+			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
 		}
 	}
 }
@@ -369,6 +416,70 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 	bUseStartDatabase = bHasMoveInput && !bGroundStartFinished && MoveInputHeldTime < StartToLoopDelay;
 
 	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(float DeltaTime)
+{
+	bPrevHasMoveInput = bHasMoveInput;
+	bHasMoveInput = GroundSpeed > RemoteMoveSpeedThreshold;
+	MoveInputSize = bHasMoveInput ? 1.0f : 0.0f;
+	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
+
+	bSharpTurnRequested = false;
+	bStartRequested = false;
+	bStopRequested = false;
+	bUseStartDatabase = false;
+	bPendingGroundStartFinish = false;
+	bStartWasSprinting = false;
+	MoveInputTurnAngle = 0.0f;
+	bGroundStartFinished = bHasMoveInput;
+	PreviousMoveInputForTurn = FVector2D::ZeroVector;
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVector& HorizontalVelocity)
+{
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner)
+	{
+		MovementDirection = 0.0f;
+		CombatInputForward = 0.0f;
+		CombatInputRight = 0.0f;
+		CombatForwardSpeed = 0.0f;
+		CombatRightSpeed = 0.0f;
+		return;
+	}
+
+	if (!PlayerOwner->bIsCombatMode || !bHasMoveInput)
+	{
+		MovementDirection = 0.0f;
+		CombatInputForward = 0.0f;
+		CombatInputRight = 0.0f;
+		CombatForwardSpeed = 0.0f;
+		CombatRightSpeed = 0.0f;
+		return;
+	}
+
+	if (bUsingLocalInputState)
+	{
+		const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
+		const float DesiredSpeed = CachedMovementComponent ? CachedMovementComponent->MaxWalkSpeed : PlayerOwner->WalkSpeed;
+		CombatInputRight = CombatMoveInput.X;
+		CombatInputForward = CombatMoveInput.Y;
+		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
+		CombatForwardSpeed = CombatMoveInput.Y * DesiredSpeed;
+		MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatMoveInput.X, CombatMoveInput.Y));
+		return;
+	}
+
+	const FVector Forward = PlayerOwner->GetActorForwardVector();
+	const FVector Right = PlayerOwner->GetActorRightVector();
+	CombatForwardSpeed = FVector::DotProduct(HorizontalVelocity, Forward);
+	CombatRightSpeed = FVector::DotProduct(HorizontalVelocity, Right);
+
+	const float MaxSpeed = CachedMovementComponent ? FMath::Max(CachedMovementComponent->MaxWalkSpeed, 1.0f) : FMath::Max(PlayerOwner->WalkSpeed, 1.0f);
+	CombatInputForward = FMath::Clamp(CombatForwardSpeed / MaxSpeed, -1.0f, 1.0f);
+	CombatInputRight = FMath::Clamp(CombatRightSpeed / MaxSpeed, -1.0f, 1.0f);
+	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatRightSpeed, CombatForwardSpeed));
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
