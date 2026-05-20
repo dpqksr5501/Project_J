@@ -53,6 +53,27 @@ void UProject_JCharacterAnimInstance::MarkGroundStartFinished()
 	bUseStartDatabase = false;
 }
 
+void UProject_JCharacterAnimInstance::MarkLandingFinished()
+{
+	if (OwningPlayerCharacter)
+	{
+		OwningPlayerCharacter->FinishLanding();
+	}
+
+	bIsLanding = false;
+	bCanEnterGround = true;
+}
+
+void UProject_JCharacterAnimInstance::MarkSprintTransitionFinished()
+{
+	if (OwningPlayerCharacter)
+	{
+		OwningPlayerCharacter->FinishSprintTransition();
+	}
+
+	bUseSprintTransition = false;
+}
+
 void UProject_JCharacterAnimInstance::CacheOwningCharacter()
 {
 	OwningPawn = TryGetPawnOwner();
@@ -99,6 +120,7 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	SharpTurnMinSpeed = 500.0f;
 
 	bIsSprinting = false;
+	bUseSprintTransition = false;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -220,6 +242,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	SharpTurnMinSpeed = PlayerCharacter.SharpTurnMinSpeed;
 
 	bIsSprinting = PlayerCharacter.bIsSprinting;
+	bUseSprintTransition = PlayerCharacter.bUseSprintTransition;
 
 	bIsCombatMode = PlayerCharacter.bIsCombatMode;
 	bIsAttacking = PlayerCharacter.bIsAttacking;

@@ -221,6 +221,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bCanEnterGround = true;
 
+	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
+	void FinishLanding();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float LandingRequestDuration = 0.45f;
 
@@ -275,6 +278,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	bool bUseSprintTransition = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Movement|Sprint")
+	void FinishSprintTransition();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;

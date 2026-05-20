@@ -29,6 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|Movement")
 	void MarkGroundStartFinished();
 
+	UFUNCTION(BlueprintCallable, Category = "Animation|Landing")
+	void MarkLandingFinished();
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Sprint")
+	void MarkSprintTransitionFinished();
+
 protected:
 	void CacheOwningCharacter();
 	void ResetAnimationState();
@@ -154,6 +160,9 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
 	bool bIsSprinting = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
+	bool bUseSprintTransition = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
 	bool bIsCombatMode = false;

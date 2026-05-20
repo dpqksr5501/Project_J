@@ -377,14 +377,35 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 void AProject_JPlayerCharacter::StartSprint()
 {
+	if (bIsSprinting) return;
+
+	const bool bWasMoving = GroundSpeed > StopIntentSpeedThreshold;
 	bIsSprinting = true;
 	UpdateMaxWalkSpeed();
+
+	if (bWasMoving)
+	{
+		bUseSprintTransition = true;
+	}
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
+	if (!bIsSprinting) return;
+
+	const bool bWasMoving = GroundSpeed > StopIntentSpeedThreshold;
 	bIsSprinting = false;
 	UpdateMaxWalkSpeed();
+
+	if (bWasMoving)
+	{
+		bUseSprintTransition = true;
+	}
+}
+
+void AProject_JPlayerCharacter::FinishSprintTransition()
+{
+	bUseSprintTransition = false;
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
@@ -615,6 +636,12 @@ void AProject_JPlayerCharacter::OnLandingTimerFinished()
 			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
 		}
 	}
+}
+
+void AProject_JPlayerCharacter::FinishLanding()
+{
+	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
+	OnLandingTimerFinished();
 }
 
 void AProject_JPlayerCharacter::OnJumpTimerFinished()
