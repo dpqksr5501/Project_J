@@ -176,7 +176,10 @@ void ACombatCharacter::ResetHP()
 	CurrentHP = MaxHP;
 
 	// update the life bar
-	LifeBarWidget->SetLifePercentage(1.0f);
+	if (LifeBarWidget)
+	{
+		LifeBarWidget->SetLifePercentage(1.0f);
+	}
 }
 
 void ACombatCharacter::ComboAttack()
@@ -456,7 +459,10 @@ float ACombatCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 	else
 	{
 		// update the life bar
-		LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
 
 		// enable partial ragdoll physics, but keep the pelvis vertical
 		GetMesh()->SetPhysicsBlendWeight(0.5f);
@@ -485,7 +491,7 @@ void ACombatCharacter::BeginPlay()
 
 	// get the life bar from the widget component
 	LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
-	check(LifeBarWidget);
+	ensureMsgf(LifeBarWidget, TEXT("LifeBarWidget is null! Ensure Widget Class is set to UCombatLifeBar in BP character."));
 
 	// initialize the camera
 	GetCameraBoom()->TargetArmLength = DefaultCameraDistance;
@@ -494,7 +500,10 @@ void ACombatCharacter::BeginPlay()
 	MeshStartingTransform = GetMesh()->GetRelativeTransform();
 
 	// set the life bar color
-	LifeBarWidget->SetBarColor(LifeBarColor);
+	if (LifeBarWidget)
+	{
+		LifeBarWidget->SetBarColor(LifeBarColor);
+	}
 
 	// reset HP to maximum
 	ResetHP();

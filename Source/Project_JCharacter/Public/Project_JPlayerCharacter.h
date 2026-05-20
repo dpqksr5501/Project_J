@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -49,6 +49,14 @@ protected:
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MouseLookAction;
+
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* SprintAction;
+
+	/** Toggle Combat Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* ToggleCombatAction;
 
 public:
 
@@ -121,7 +129,7 @@ protected:
 
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
 
-	// C++?먯꽌 '吏꾩쭨 李⑹?'濡??먯젙?섏뿀????釉붾（?꾨┛??ABP)濡??좏샇瑜?蹂대궡湲??꾪븳 ?대깽??	
+	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
 	void K2_OnRealLanded();
 

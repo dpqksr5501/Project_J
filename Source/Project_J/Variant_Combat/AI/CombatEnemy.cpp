@@ -292,7 +292,10 @@ float ACombatEnemy::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
 	else
 	{
 		// update the life bar
-		LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		if (LifeBarWidget)
+		{
+			LifeBarWidget->SetLifePercentage(CurrentHP / MaxHP);
+		}
 
 		// enable partial ragdoll physics, but keep the pelvis vertical
 		GetMesh()->SetPhysicsBlendWeight(0.5f);
@@ -328,10 +331,13 @@ void ACombatEnemy::BeginPlay()
 
 	// get the life bar widget from the widget comp
 	LifeBarWidget = Cast<UCombatLifeBar>(LifeBar->GetUserWidgetObject());
-	check(LifeBarWidget);
+	ensureMsgf(LifeBarWidget, TEXT("LifeBarWidget is null! Ensure Widget Class is set to UCombatLifeBar in BP character."));
 
 	// fill the life bar
-	LifeBarWidget->SetLifePercentage(1.0f);
+	if (LifeBarWidget)
+	{
+		LifeBarWidget->SetLifePercentage(1.0f);
+	}
 }
 
 void ACombatEnemy::EndPlay(EEndPlayReason::Type EndPlayReason)

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
 #include "Engine/LocalPlayer.h"
@@ -127,18 +127,18 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Look);
+
+		// Sprinting
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::StartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::StopSprint);
+
+		// Toggle Combat Mode
+		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::ToggleCombatMode);
 	}
 	else
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
-
-	// Temporary: Bind Tab key directly to Toggle Combat Mode for testing
-	PlayerInputComponent->BindKey(EKeys::Tab, IE_Pressed, this, &AProject_JPlayerCharacter::ToggleCombatMode);
-	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Pressed, this, &AProject_JPlayerCharacter::StartSprint);
-	PlayerInputComponent->BindKey(EKeys::LeftShift, IE_Released, this, &AProject_JPlayerCharacter::StopSprint);
-	PlayerInputComponent->BindKey(EKeys::RightShift, IE_Pressed, this, &AProject_JPlayerCharacter::StartSprint);
-	PlayerInputComponent->BindKey(EKeys::RightShift, IE_Released, this, &AProject_JPlayerCharacter::StopSprint);
 }
 
 void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
