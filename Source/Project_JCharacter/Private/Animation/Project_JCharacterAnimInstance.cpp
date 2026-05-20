@@ -5,6 +5,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JPlayerCharacter.h"
 
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
@@ -48,6 +49,10 @@ void UProject_JCharacterAnimInstance::MarkGroundStartFinished()
 	{
 		OwningPlayerCharacter->MarkGroundStartFinished();
 	}
+	else if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->MarkGroundStartFinished();
+	}
 
 	bGroundStartFinished = true;
 	bUseStartDatabase = false;
@@ -59,19 +64,13 @@ void UProject_JCharacterAnimInstance::MarkLandingFinished()
 	{
 		OwningPlayerCharacter->FinishLanding();
 	}
+	else if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->FinishLanding();
+	}
 
 	bIsLanding = false;
 	bCanEnterGround = true;
-}
-
-void UProject_JCharacterAnimInstance::MarkSprintTransitionFinished()
-{
-	if (OwningPlayerCharacter)
-	{
-		OwningPlayerCharacter->FinishSprintTransition();
-	}
-
-	bUseSprintTransition = false;
 }
 
 void UProject_JCharacterAnimInstance::CacheOwningCharacter()
@@ -79,6 +78,7 @@ void UProject_JCharacterAnimInstance::CacheOwningCharacter()
 	OwningPawn = TryGetPawnOwner();
 	OwningCharacter = Cast<ACharacter>(OwningPawn);
 	OwningPlayerCharacter = Cast<AProject_JPlayerCharacter>(OwningCharacter);
+	LocomotionAnimStateComponent = OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionAnimStateComponent() : nullptr;
 }
 
 void UProject_JCharacterAnimInstance::ResetAnimationState()
@@ -120,7 +120,6 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	SharpTurnMinSpeed = 500.0f;
 
 	bIsSprinting = false;
-	bUseSprintTransition = false;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -205,44 +204,56 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 {
 	(void)DeltaSeconds;
 
-	GroundSpeed = PlayerCharacter.GroundSpeed;
-	VerticalSpeed = PlayerCharacter.VerticalSpeed;
-	LastFallSpeed = PlayerCharacter.LastFallSpeed;
-	LandStartGroundSpeed = PlayerCharacter.LandStartGroundSpeed;
-	LandStartFallSpeed = PlayerCharacter.LandStartFallSpeed;
-	bLandWasSprinting = PlayerCharacter.bLandWasSprinting;
-	bLandWasMoving = PlayerCharacter.bLandWasMoving;
-	bUseHeavyLand = PlayerCharacter.bUseHeavyLand;
+	const UProject_JLocomotionAnimStateComponent* AnimState = PlayerCharacter.GetLocomotionAnimStateComponent();
+	if (AnimState)
+	{
+		GroundSpeed = AnimState->GroundSpeed;
+		VerticalSpeed = AnimState->VerticalSpeed;
+		LastFallSpeed = AnimState->LastFallSpeed;
+		LandStartGroundSpeed = AnimState->LandStartGroundSpeed;
+		LandStartFallSpeed = AnimState->LandStartFallSpeed;
+		bLandWasSprinting = AnimState->bLandWasSprinting;
+		bLandWasMoving = AnimState->bLandWasMoving;
+		bUseHeavyLand = AnimState->bUseHeavyLand;
 
-	bIsInAir = PlayerCharacter.bIsInAir;
-	bIsPhysicallyInAir = PlayerCharacter.bIsPhysicallyInAir;
-	bIsJumping = PlayerCharacter.bIsJumping;
-	bIsFallOffStart = PlayerCharacter.bIsFallOffStart;
-	bIsLanding = PlayerCharacter.bIsLanding;
-	bLandingRequested = PlayerCharacter.bLandingRequested;
-	bCanEnterLand = PlayerCharacter.bCanEnterLand;
-	bCanEnterGround = PlayerCharacter.bCanEnterGround;
+		bIsInAir = AnimState->bIsInAir;
+		bIsPhysicallyInAir = AnimState->bIsPhysicallyInAir;
+		bIsJumping = AnimState->bIsJumping;
+		bIsFallOffStart = AnimState->bIsFallOffStart;
+		bIsLanding = AnimState->bIsLanding;
+		bLandingRequested = AnimState->bLandingRequested;
+		bCanEnterLand = AnimState->bCanEnterLand;
+		bCanEnterGround = AnimState->bCanEnterGround;
 
-	MoveInputSize = PlayerCharacter.MoveInputSize;
-	MoveInputHeldTime = PlayerCharacter.MoveInputHeldTime;
-	MoveInputTurnAngle = PlayerCharacter.MoveInputTurnAngle;
-	bHasMoveInput = PlayerCharacter.bHasMoveInput;
-	bSharpTurnRequested = PlayerCharacter.bSharpTurnRequested;
-	bPrevHasMoveInput = PlayerCharacter.bPrevHasMoveInput;
-	bStartRequested = PlayerCharacter.bStartRequested;
-	bUseStartDatabase = PlayerCharacter.bUseStartDatabase;
-	bGroundStartFinished = PlayerCharacter.bGroundStartFinished;
-	bPendingGroundStartFinish = PlayerCharacter.bPendingGroundStartFinish;
-	bStartWasSprinting = PlayerCharacter.bStartWasSprinting;
-	bStopRequested = PlayerCharacter.bStopRequested;
-	StopIntentSpeedThreshold = PlayerCharacter.StopIntentSpeedThreshold;
-	IdleSpeedThreshold = PlayerCharacter.IdleSpeedThreshold;
-	RunToSprintSpeedThreshold = PlayerCharacter.RunToSprintSpeedThreshold;
-	SharpTurnAngleThreshold = PlayerCharacter.SharpTurnAngleThreshold;
-	SharpTurnMinSpeed = PlayerCharacter.SharpTurnMinSpeed;
+		MoveInputSize = AnimState->MoveInputSize;
+		MoveInputHeldTime = AnimState->MoveInputHeldTime;
+		MoveInputTurnAngle = AnimState->MoveInputTurnAngle;
+		bHasMoveInput = AnimState->bHasMoveInput;
+		bSharpTurnRequested = AnimState->bSharpTurnRequested;
+		bPrevHasMoveInput = AnimState->bPrevHasMoveInput;
+		bStartRequested = AnimState->bStartRequested;
+		bUseStartDatabase = AnimState->bUseStartDatabase;
+		bGroundStartFinished = AnimState->bGroundStartFinished;
+		bPendingGroundStartFinish = AnimState->bPendingGroundStartFinish;
+		bStartWasSprinting = AnimState->bStartWasSprinting;
+		bStopRequested = AnimState->bStopRequested;
+		StopIntentSpeedThreshold = AnimState->StopIntentSpeedThreshold;
+		IdleSpeedThreshold = AnimState->IdleSpeedThreshold;
+		RunToSprintSpeedThreshold = AnimState->RunToSprintSpeedThreshold;
+		SharpTurnAngleThreshold = AnimState->SharpTurnAngleThreshold;
+		SharpTurnMinSpeed = AnimState->SharpTurnMinSpeed;
+		MovementDirection = AnimState->MovementDirection;
+		CombatInputForward = AnimState->CombatInputForward;
+		CombatInputRight = AnimState->CombatInputRight;
+		CombatForwardSpeed = AnimState->CombatForwardSpeed;
+		CombatRightSpeed = AnimState->CombatRightSpeed;
+	}
+	else
+	{
+		UpdateFromGenericCharacter(DeltaSeconds);
+	}
 
 	bIsSprinting = PlayerCharacter.bIsSprinting;
-	bUseSprintTransition = PlayerCharacter.bUseSprintTransition;
 
 	bIsCombatMode = PlayerCharacter.bIsCombatMode;
 	bIsAttacking = PlayerCharacter.bIsAttacking;
@@ -250,11 +261,6 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	bIsHitReacting = PlayerCharacter.bIsHitReacting;
 	bIsPlayingCombatIntro = PlayerCharacter.bIsPlayingCombatIntro;
 	bPendingCombatModeFromIntro = PlayerCharacter.bPendingCombatModeFromIntro;
-	MovementDirection = PlayerCharacter.MovementDirection;
-	CombatInputForward = PlayerCharacter.CombatInputForward;
-	CombatInputRight = PlayerCharacter.CombatInputRight;
-	CombatForwardSpeed = PlayerCharacter.CombatForwardSpeed;
-	CombatRightSpeed = PlayerCharacter.CombatRightSpeed;
 }
 
 void UProject_JCharacterAnimInstance::UpdateAimOffset()

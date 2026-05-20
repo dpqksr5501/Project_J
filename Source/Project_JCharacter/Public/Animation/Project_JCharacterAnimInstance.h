@@ -9,6 +9,7 @@
 class ACharacter;
 class APawn;
 class AProject_JPlayerCharacter;
+class UProject_JLocomotionAnimStateComponent;
 
 /**
  * Native animation data bridge for Project J characters.
@@ -32,9 +33,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|Landing")
 	void MarkLandingFinished();
 
-	UFUNCTION(BlueprintCallable, Category = "Animation|Sprint")
-	void MarkSprintTransitionFinished();
-
 protected:
 	void CacheOwningCharacter();
 	void ResetAnimationState();
@@ -52,6 +50,9 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
 	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
+	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
 	float DeltaTime = 0.0f;
@@ -160,9 +161,6 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
 	bool bIsSprinting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
-	bool bUseSprintTransition = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
 	bool bIsCombatMode = false;

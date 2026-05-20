@@ -2,6 +2,7 @@
 
 #include "Project_JPlayerCharacter.h"
 #include "Project_JCombatComponent.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,7 +17,6 @@
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "TimerManager.h"
 #include "InputCoreTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -56,6 +56,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -70,51 +72,9 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 1. 실시간 Z축 속도 업데이트
-	VerticalSpeed = GetVelocity().Z;
-
-	// 2. 실시간 수평 이동 속도 업데이트 (VectorLengthXY)
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0; // Z축 제외
-	GroundSpeed = Velocity.Size();
-
-	const bool bIsCurrentlyInAir = IsInAirForAnimation();
-	bIsPhysicallyInAir = bIsCurrentlyInAir;
-	if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
+	if (LocomotionAnimStateComponent)
 	{
-		StartFallOffStart();
-	}
-	else if (bIsCurrentlyInAir)
-	{
-		bIsInAir = true;
-	}
-	else if (!bIsJumping && !bLandingRequested && !bIsLanding)
-	{
-		bIsInAir = false;
-		bSuppressFallOffStart = false;
-	}
-
-	bWasInAir = bIsCurrentlyInAir;
-	bCanEnterLand = bLandingRequested;
-	bCanEnterGround = !bIsInAir && !bIsLanding && !bLandingRequested;
-	UpdateMovementRequestState(DeltaTime);
-
-	const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
-	CombatInputRight = CombatMoveInput.X;
-	CombatInputForward = CombatMoveInput.Y;
-
-	if (bIsCombatMode && bHasMoveInput)
-	{
-		const float DesiredSpeed = GetCharacterMovement() ? GetCharacterMovement()->MaxWalkSpeed : WalkSpeed;
-		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
-		CombatForwardSpeed = CombatMoveInput.Y * DesiredSpeed;
-		MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatMoveInput.X, CombatMoveInput.Y));
-	}
-	else
-	{
-		MovementDirection = 0.0f;
-		CombatForwardSpeed = 0.0f;
-		CombatRightSpeed = 0.0f;
+		LocomotionAnimStateComponent->UpdateState(DeltaTime);
 	}
 }
 
@@ -163,7 +123,10 @@ void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
 
 void AProject_JPlayerCharacter::StopMoveInput()
 {
-	CachedMoveInput = FVector2D::ZeroVector;
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->ClearMoveInput();
+	}
 }
 
 void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
@@ -177,7 +140,10 @@ void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
 
 void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
 {
-	CachedMoveInput = FVector2D(Right, Forward);
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->SetMoveInput(FVector2D(Right, Forward));
+	}
 
 	if (GetController() != nullptr)
 	{
@@ -209,37 +175,11 @@ void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
 
 void AProject_JPlayerCharacter::DoJumpStart()
 {
-	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
-
-	// 착지 타이머 초기화 및 상태 해제
-	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
-	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
-	StopFallOffStart();
-	bIsLanding = false;
-	bLandingRequested = false;
-	bCanEnterLand = false;
-	bCanEnterGround = false;
-	bIsInAir = true;
-	bWasInAir = true;
-	bSuppressFallOffStart = true;
-
-	// 명시적인 점프 트리거 활성화 및 0.2초 타이머 설정
-	bIsJumping = true;
-	GetWorldTimerManager().SetTimer(JumpTimerHandle, this, &AProject_JPlayerCharacter::OnJumpTimerFinished, FMath::Max(0.1f, JumpStartMaxDuration), false);
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	if (LocomotionAnimStateComponent)
 	{
-		if (bHadLandingState)
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
+		LocomotionAnimStateComponent->HandleJumpStarted();
 	}
 
-	// signal the character to jump
 	Jump();
 }
 
@@ -251,108 +191,26 @@ void AProject_JPlayerCharacter::DoJumpEnd()
 
 void AProject_JPlayerCharacter::FinishFallOffStart()
 {
-	StopFallOffStart();
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->FinishFallOffStart();
+	}
 }
 
 void AProject_JPlayerCharacter::FinishJumpStart()
 {
-	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
-	OnJumpTimerFinished();
-}
-
-void AProject_JPlayerCharacter::UpdateMovementRequestState(float DeltaTime)
-{
-	bPrevHasMoveInput = bHasMoveInput;
-
-	const FVector2D MoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
-	MoveInputSize = MoveInput.Size();
-	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
-	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
-	MoveInputTurnAngle = 0.0f;
-	bSharpTurnRequested = false;
-	bStartRequested = false;
-	bStopRequested = false;
-	bUseStartDatabase = false;
-
-	if (bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
+	if (LocomotionAnimStateComponent)
 	{
-		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
-		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
-		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
-		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
-		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+		LocomotionAnimStateComponent->FinishJumpStart();
 	}
-
-	const bool bCanRequestGroundMove = !bIsInAir && !bIsLanding && !bIsJumping && !bIsFallOffStart;
-	if (!bCanRequestGroundMove)
-	{
-		ClearMovementRequests();
-		PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
-		return;
-	}
-
-	const bool bStartedMoving = !bPrevHasMoveInput && bHasMoveInput;
-	const bool bStoppedMoving = bPrevHasMoveInput && !bHasMoveInput;
-
-	if (bStartedMoving)
-	{
-		MoveInputHeldTime = 0.0f;
-		bGroundStartFinished = false;
-		bPendingGroundStartFinish = false;
-		bStartWasSprinting = bIsSprinting;
-	}
-
-	if (!bHasMoveInput)
-	{
-		bGroundStartFinished = false;
-		bPendingGroundStartFinish = false;
-		bStartWasSprinting = false;
-	}
-
-	if (bPendingGroundStartFinish && MoveInputHeldTime >= MinStartDatabaseTime)
-	{
-		bGroundStartFinished = true;
-		bPendingGroundStartFinish = false;
-	}
-
-	bSharpTurnRequested =
-		bIsSprinting &&
-		bHasMoveInput &&
-		bPrevHasMoveInput &&
-		GroundSpeed >= SharpTurnMinSpeed &&
-		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
-
-	bStartRequested = bStartedMoving;
-	bStopRequested = bStoppedMoving && GroundSpeed > StopIntentSpeedThreshold;
-	bUseStartDatabase = bHasMoveInput && !bGroundStartFinished && MoveInputHeldTime < StartToLoopDelay;
-
-	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
-}
-
-void AProject_JPlayerCharacter::ClearMovementRequests()
-{
-	bStartRequested = false;
-	bStopRequested = false;
-	bUseStartDatabase = false;
-	bGroundStartFinished = false;
-	bPendingGroundStartFinish = false;
-	bStartWasSprinting = false;
-	MoveInputHeldTime = 0.0f;
-	bSharpTurnRequested = false;
-	MoveInputTurnAngle = 0.0f;
 }
 
 void AProject_JPlayerCharacter::MarkGroundStartFinished()
 {
-	if (MoveInputHeldTime < MinStartDatabaseTime)
+	if (LocomotionAnimStateComponent)
 	{
-		bPendingGroundStartFinish = true;
-		return;
+		LocomotionAnimStateComponent->MarkGroundStartFinished();
 	}
-
-	bPendingGroundStartFinish = false;
-	bGroundStartFinished = true;
-	bUseStartDatabase = false;
 }
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
@@ -377,35 +235,14 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 void AProject_JPlayerCharacter::StartSprint()
 {
-	if (bIsSprinting) return;
-
-	const bool bWasMoving = GroundSpeed > StopIntentSpeedThreshold;
 	bIsSprinting = true;
 	UpdateMaxWalkSpeed();
-
-	if (bWasMoving)
-	{
-		bUseSprintTransition = true;
-	}
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
-	if (!bIsSprinting) return;
-
-	const bool bWasMoving = GroundSpeed > StopIntentSpeedThreshold;
 	bIsSprinting = false;
 	UpdateMaxWalkSpeed();
-
-	if (bWasMoving)
-	{
-		bUseSprintTransition = true;
-	}
-}
-
-void AProject_JPlayerCharacter::FinishSprintTransition()
-{
-	bUseSprintTransition = false;
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
@@ -568,124 +405,25 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
-	const float ImpactFallSpeed = FMath::Abs(GetVelocity().Z);
-	const bool bHadInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
-
 	Super::Landed(Hit);
 
-	// 천장에 부딪히는 등 예상치 못하게 빨리 착지했을 때를 대비해 점프 트리거 즉시 해제
-	GetWorldTimerManager().ClearTimer(JumpTimerHandle);
-	StopFallOffStart();
-	bIsJumping = false;
-	bIsInAir = true;
-	bIsPhysicallyInAir = false;
-	bWasInAir = false;
-	bSuppressFallOffStart = false;
-
-	// 착지 시점의 Z축 하강 속도의 절대값을 저장 (하드 랜딩, 소프트 랜딩 구분을 위해 츄저 테이블로 전달됨)
-	LastFallSpeed = ImpactFallSpeed;
-	LandStartGroundSpeed = GroundSpeed;
-	LandStartFallSpeed = ImpactFallSpeed;
-	bLandWasSprinting = bIsSprinting || LandStartGroundSpeed >= RunToSprintSpeedThreshold;
-	bLandWasMoving = LandStartGroundSpeed > IdleSpeedThreshold || bHasMoveInput;
-	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
-	bIsLanding = true;
-	bLandingRequested = true;
-	bCanEnterLand = true;
-	bCanEnterGround = false;
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	if (LocomotionAnimStateComponent)
 	{
-		if (bHadInAirState)
+		LocomotionAnimStateComponent->HandleLanded(Hit);
+
+		if (LocomotionAnimStateComponent->ConsumeRealLandingEventRequested())
 		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-
-		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing))
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-	}
-
-	// 0.35초 뒤에 착지 상태 해제
-	GetWorldTimerManager().SetTimer(LandingTimerHandle, this, &AProject_JPlayerCharacter::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
-
-	// 블루프린트로 이벤트 전달 (필요한 경우 유지)
-	if (LastFallSpeed > RealLandingEventSpeedThreshold)
-	{
-		K2_OnRealLanded();
-	}
-}
-
-void AProject_JPlayerCharacter::OnLandingTimerFinished()
-{
-	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
-
-	bIsLanding = false;
-	bLandingRequested = false;
-	bIsInAir = false;
-	bWasInAir = false;
-	bSuppressFallOffStart = false;
-	bCanEnterLand = false;
-	bCanEnterGround = true;
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		if (bHadLandingState)
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+			K2_OnRealLanded();
 		}
 	}
 }
 
 void AProject_JPlayerCharacter::FinishLanding()
 {
-	GetWorldTimerManager().ClearTimer(LandingTimerHandle);
-	OnLandingTimerFinished();
-}
-
-void AProject_JPlayerCharacter::OnJumpTimerFinished()
-{
-	bIsJumping = false;
-
-	if (!IsInAirForAnimation() && !bIsLanding)
+	if (LocomotionAnimStateComponent)
 	{
-		bIsInAir = false;
-		bWasInAir = false;
-		bSuppressFallOffStart = false;
+		LocomotionAnimStateComponent->FinishLanding();
 	}
-}
-
-void AProject_JPlayerCharacter::OnFallOffStartFinished()
-{
-	StopFallOffStart();
-}
-
-bool AProject_JPlayerCharacter::IsInAirForAnimation() const
-{
-	return GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Falling;
-}
-
-void AProject_JPlayerCharacter::StartFallOffStart()
-{
-	bIsInAir = true;
-	bIsFallOffStart = true;
-	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
-	GetWorldTimerManager().SetTimer(FallOffStartTimerHandle, this, &AProject_JPlayerCharacter::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-	}
-}
-
-void AProject_JPlayerCharacter::StopFallOffStart()
-{
-	GetWorldTimerManager().ClearTimer(FallOffStartTimerHandle);
-	bIsFallOffStart = false;
 }
 
 void AProject_JPlayerCharacter::TriggerPlayerAttack()

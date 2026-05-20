@@ -13,6 +13,7 @@ class UInputAction;
 class UAnimMontage;
 struct FInputActionValue;
 class UProject_JCombatComponent;
+class UProject_JLocomotionAnimStateComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -36,6 +37,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** Job-specific combat component (dynamically cached at runtime) */
 	UPROPERTY(Transient, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProject_JCombatComponent* ActiveCombatComponent;
+
+	/** Owns locomotion animation state consumed by AnimInstance and Chooser Tables. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UProject_JLocomotionAnimStateComponent* LocomotionAnimStateComponent;
 	
 protected:
 
@@ -79,7 +84,6 @@ protected:
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// 매 프레임 속도 연산을 위해 Tick 추가
 	virtual void Tick(float DeltaTime) override;
 
 protected:
@@ -95,24 +99,6 @@ protected:
 	// 기본 착지 이벤트 오버라이드(모션매칭)
 	virtual void Landed(const FHitResult& Hit) override;
 
-	// 착지 타이머 종료 시 호출
-	void OnLandingTimerFinished();
-
-	// 점프 타이머 종료 시 호출
-	void OnJumpTimerFinished();
-
-	void OnFallOffStartFinished();
-
-	bool IsInAirForAnimation() const;
-
-	void StartFallOffStart();
-
-	void StopFallOffStart();
-
-	void UpdateMovementRequestState(float DeltaTime);
-
-	void ClearMovementRequests();
-
 	void PlayCombatIntroMontage();
 
 	void CancelCombatIntroMontage();
@@ -123,22 +109,6 @@ protected:
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 
 	void UpdateMaxWalkSpeed();
-
-	// 착지 타이머 핸들
-	FTimerHandle LandingTimerHandle;
-
-	// 점프 타이머 핸들
-	FTimerHandle JumpTimerHandle;
-
-	FTimerHandle FallOffStartTimerHandle;
-
-	bool bWasInAir = false;
-
-	bool bSuppressFallOffStart = false;
-
-	FVector2D CachedMoveInput = FVector2D::ZeroVector;
-
-	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
 
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
@@ -208,61 +178,11 @@ public:
 	/** Returns ActiveCombatComponent subobject **/
 	FORCEINLINE class UProject_JCombatComponent* GetActiveCombatComponent() const { return ActiveCombatComponent; }
 
-	/** 츄저 테이블(Chooser Table)에서 읽어갈 착지 상태 플래그 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bIsLanding = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bLandingRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bCanEnterLand = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bCanEnterGround = true;
+	/** Returns LocomotionAnimStateComponent subobject **/
+	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float LandingRequestDuration = 0.45f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float HeavyLandSpeedThreshold = 650.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float RealLandingEventSpeedThreshold = 300.0f;
-
-	/** True while the character should be treated as airborne by the Anim Blueprint. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	bool bIsInAir = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	bool bIsPhysicallyInAir = false;
-
-	/** 츄저 테이블(Chooser Table)에서 읽어갈 점프 시작 상태 플래그 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jumping")
-	bool bIsJumping = false;
-
-	/** Failsafe timeout for clearing JumpStart if the Anim Blueprint does not call FinishJumpStart. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
-	float JumpStartMaxDuration = 1.0f;
-
-	/** True briefly when entering air from walking/running off ground instead of a jump. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Jumping")
-	bool bIsFallOffStart = false;
-
-	/** How long FallOffStart stays true unless landing or an animation notify finishes it first. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float FallOffStartDuration = 0.6f;
-
-	/** 츄저 테이블용: 실시간 Z축 속도 (상승/하강 판별) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	float VerticalSpeed = 0.0f;
-
-	/** 츄저 테이블용: 실시간 수평 이동 속도 (Idle/Run 판별) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	float GroundSpeed = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkSpeed = 500.0f;
@@ -278,94 +198,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
-	bool bUseSprintTransition = false;
-
-	UFUNCTION(BlueprintCallable, Category = "Movement|Sprint")
-	void FinishSprintTransition();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float MoveInputDeadZone = 0.1f;
-
-	/** Fallback max time for Start rows if the StartFinished notify is not received. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartToLoopDelay = 0.75f;
-
-	/** Minimum time Start rows should remain available even if a Motion Matching notify fires immediately. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float MinStartDatabaseTime = 0.12f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StopIntentSpeedThreshold = 80.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float IdleSpeedThreshold = 30.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float RunToSprintSpeedThreshold = 500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float SharpTurnAngleThreshold = 60.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float SharpTurnMinSpeed = 500.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float MoveInputSize = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	float MoveInputHeldTime = 0.0f;
-
-	/** Signed input-direction delta in degrees. W->D is positive, W->A is negative. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
-	float MoveInputTurnAngle = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bHasMoveInput = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
-	bool bSharpTurnRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bPrevHasMoveInput = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bUseStartDatabase = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bGroundStartFinished = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bPendingGroundStartFinish = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStopRequested = false;
-
-	/** 착지 시점의 하강 속도 절대값 (하드/소프트 착지 분기용) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	float LastFallSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	float LandStartGroundSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	float LandStartFallSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bLandWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bLandWasMoving = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
-	bool bUseHeavyLand = false;
 
 	// --- Combat States ---
 
@@ -385,7 +217,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bIsHitReacting = false;
 
-	/** 로컬 이동 각도 (-180 ~ 180) : 전투 중 전진/후진/좌우 스트레이프 판별용 */
 	/** Upper-body montage played when entering combat mode. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	UAnimMontage* CombatIntroMontage = nullptr;
@@ -405,21 +236,4 @@ public:
 	/** If true, hit reactions can stop the combat intro montage. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bInterruptCombatIntroOnHit = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
-	float MovementDirection = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
-	float CombatInputForward = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
-	float CombatInputRight = 0.0f;
-
-	/** Camera-relative forward movement speed for combat blend spaces. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
-	float CombatForwardSpeed = 0.0f;
-
-	/** Camera-relative right movement speed for combat blend spaces. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
-	float CombatRightSpeed = 0.0f;
 };
