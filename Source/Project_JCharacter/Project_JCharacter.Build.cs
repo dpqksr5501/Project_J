@@ -19,7 +19,6 @@ public class Project_JCharacter : ModuleRules
 			"Project_JCore",
 			"Project_JGAS"
 		});
-
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}
 }

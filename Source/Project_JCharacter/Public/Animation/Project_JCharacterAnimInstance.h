@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
 class ACharacter;
@@ -32,6 +33,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Landing")
 	void MarkLandingFinished();
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|Events")
+	void HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType);
 
 protected:
 	void CacheOwningCharacter();
@@ -105,6 +109,9 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
 	bool bCanEnterGround = true;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	bool bCanExitLanding = true;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float MoveInputSize = 0.0f;
 
@@ -141,11 +148,17 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	bool bIsStopping = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float GenericMoveInputSpeedThreshold = 3.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float StopIntentSpeedThreshold = 80.0f;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
+	float StopRequestDuration = 0.35f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float IdleSpeedThreshold = 30.0f;
@@ -161,6 +174,9 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
 	bool bIsSprinting = false;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
+	bool bWantsSprint = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
 	bool bIsCombatMode = false;

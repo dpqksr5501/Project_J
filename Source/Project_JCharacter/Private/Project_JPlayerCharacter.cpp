@@ -18,6 +18,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "InputCoreTypes.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -58,6 +59,13 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
+}
+
+void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, JumpStartEventCounter, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -180,6 +188,7 @@ void AProject_JPlayerCharacter::DoJumpStart()
 		LocomotionAnimStateComponent->HandleJumpStarted();
 	}
 
+	NotifyJumpStartForRemoteClients();
 	Jump();
 }
 
@@ -233,16 +242,52 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 	}
 }
 
+void AProject_JPlayerCharacter::NotifyJumpStartForRemoteClients()
+{
+	if (HasAuthority())
+	{
+		++JumpStartEventCounter;
+		ForceNetUpdate();
+		return;
+	}
+
+	ServerNotifyJumpStarted();
+}
+
+void AProject_JPlayerCharacter::ServerNotifyJumpStarted_Implementation()
+{
+	++JumpStartEventCounter;
+	ForceNetUpdate();
+}
+
+void AProject_JPlayerCharacter::OnRep_JumpStartEventCounter()
+{
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
+	}
+}
+
 void AProject_JPlayerCharacter::StartSprint()
 {
 	bIsSprinting = true;
 	UpdateMaxWalkSpeed();
+
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleSprintStarted();
+	}
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
 	bIsSprinting = false;
 	UpdateMaxWalkSpeed();
+
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleSprintStopped();
+	}
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()

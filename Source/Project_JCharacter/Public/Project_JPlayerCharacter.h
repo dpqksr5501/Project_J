@@ -77,6 +77,8 @@ public:
 	/** Constructor */
 	AProject_JPlayerCharacter();	
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -109,6 +111,13 @@ protected:
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 
 	void UpdateMaxWalkSpeed();
+	void NotifyJumpStartForRemoteClients();
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyJumpStarted();
+
+	UFUNCTION()
+	void OnRep_JumpStartEventCounter();
 
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
@@ -236,4 +245,8 @@ public:
 	/** If true, hit reactions can stop the combat intro montage. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bInterruptCombatIntroOnHit = true;
+
+private:
+	UPROPERTY(ReplicatedUsing = OnRep_JumpStartEventCounter)
+	uint8 JumpStartEventCounter = 0;
 };

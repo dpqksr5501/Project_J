@@ -73,6 +73,51 @@ void UProject_JCharacterAnimInstance::MarkLandingFinished()
 	bCanEnterGround = true;
 }
 
+void UProject_JCharacterAnimInstance::HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType)
+{
+	if (OwningPlayerCharacter)
+	{
+		if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
+		{
+			AnimState->HandleAnimationEvent(EventType);
+		}
+	}
+	else if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleAnimationEvent(EventType);
+	}
+
+	switch (EventType)
+	{
+	case EProject_JLocomotionAnimEvent::GroundStartFinished:
+		bGroundStartFinished = true;
+		bUseStartDatabase = false;
+		break;
+	case EProject_JLocomotionAnimEvent::StopFinished:
+		bStopRequested = false;
+		bIsStopping = false;
+		break;
+	case EProject_JLocomotionAnimEvent::JumpStartFinished:
+		bIsJumping = false;
+		break;
+	case EProject_JLocomotionAnimEvent::FallOffStartFinished:
+		bIsFallOffStart = false;
+		break;
+	case EProject_JLocomotionAnimEvent::LandingFinished:
+		bIsLanding = false;
+		bCanEnterGround = true;
+		break;
+	case EProject_JLocomotionAnimEvent::HitReactFinished:
+		bIsHitReacting = false;
+		break;
+	case EProject_JLocomotionAnimEvent::AttackFinished:
+		bIsAttacking = false;
+		break;
+	default:
+		break;
+	}
+}
+
 void UProject_JCharacterAnimInstance::CacheOwningCharacter()
 {
 	OwningPawn = TryGetPawnOwner();
@@ -98,8 +143,9 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bIsFallOffStart = false;
 	bIsLanding = false;
 	bLandingRequested = false;
-	bCanEnterLand = false;
-	bCanEnterGround = true;
+		bCanEnterLand = false;
+		bCanEnterGround = true;
+		bCanExitLanding = true;
 
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
@@ -113,13 +159,16 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bPendingGroundStartFinish = false;
 	bStartWasSprinting = false;
 	bStopRequested = false;
+	bIsStopping = false;
 	StopIntentSpeedThreshold = 80.0f;
+	StopRequestDuration = 0.35f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
 
 	bIsSprinting = false;
+	bWantsSprint = false;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -166,6 +215,7 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bLandingRequested = false;
 	bCanEnterLand = false;
 	bCanEnterGround = !bIsInAir;
+	bCanExitLanding = true;
 
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
@@ -179,13 +229,16 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bPendingGroundStartFinish = false;
 	bStartWasSprinting = false;
 	bStopRequested = false;
+	bIsStopping = false;
 	StopIntentSpeedThreshold = 80.0f;
+	StopRequestDuration = 0.35f;
 	IdleSpeedThreshold = 30.0f;
 	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
 
 	bIsSprinting = false;
+	bWantsSprint = false;
 
 	bIsCombatMode = false;
 	bIsAttacking = false;
@@ -229,6 +282,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 		bLandingRequested = AnimState->bLandingRequested;
 		bCanEnterLand = AnimState->bCanEnterLand;
 		bCanEnterGround = AnimState->bCanEnterGround;
+		bCanExitLanding = AnimState->bCanExitLanding;
 
 		MoveInputSize = AnimState->MoveInputSize;
 		MoveInputHeldTime = AnimState->MoveInputHeldTime;
@@ -241,8 +295,11 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 		bGroundStartFinished = AnimState->bGroundStartFinished;
 		bPendingGroundStartFinish = AnimState->bPendingGroundStartFinish;
 		bStartWasSprinting = AnimState->bStartWasSprinting;
+		bWantsSprint = AnimState->bWantsSprint;
 		bStopRequested = AnimState->bStopRequested;
+		bIsStopping = AnimState->bIsStopping;
 		StopIntentSpeedThreshold = AnimState->StopIntentSpeedThreshold;
+		StopRequestDuration = AnimState->StopRequestDuration;
 		IdleSpeedThreshold = AnimState->IdleSpeedThreshold;
 		RunToSprintSpeedThreshold = AnimState->RunToSprintSpeedThreshold;
 		SharpTurnAngleThreshold = AnimState->SharpTurnAngleThreshold;
@@ -259,6 +316,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 	}
 
 	bIsSprinting = PlayerCharacter.bIsSprinting;
+	bWantsSprint = bWantsSprint || bIsSprinting;
 
 	bIsCombatMode = PlayerCharacter.bIsCombatMode;
 	bIsAttacking = PlayerCharacter.bIsAttacking;

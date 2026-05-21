@@ -9,8 +9,21 @@
 class AProject_JPlayerCharacter;
 class UAbilitySystemComponent;
 class UCharacterMovementComponent;
+class UCapsuleComponent;
 class USkeletalMeshComponent;
 struct FHitResult;
+
+UENUM(BlueprintType)
+enum class EProject_JLocomotionAnimEvent : uint8
+{
+	GroundStartFinished,
+	StopFinished,
+	JumpStartFinished,
+	FallOffStartFinished,
+	LandingFinished,
+	HitReactFinished,
+	AttackFinished
+};
 
 /**
  * Owns the player locomotion state consumed by animation graphs and Chooser Tables.
@@ -30,14 +43,19 @@ public:
 
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
+	void HandleReplicatedJumpStarted();
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding();
+	void FinishStop();
 	void FinishJumpStart();
 	void FinishFallOffStart();
 	void MarkGroundStartFinished();
 	void SetMoveInput(const FVector2D& InMoveInput);
 	void ClearMoveInput();
+	void HandleSprintStarted();
+	void HandleSprintStopped();
 	bool ConsumeRealLandingEventRequested();
+	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
 protected:
 	void CacheOwnerReferences();
@@ -48,6 +66,12 @@ protected:
 	bool ShouldUseLocalInputState() const;
 	bool IsDedicatedServerContext() const;
 	bool WasRecentlyRendered() const;
+	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
+	bool IsRemoteGroundedByProbe() const;
+	FVector2D GetMovementInputForState() const;
+	void UpdateLocalAirState(bool bIsCurrentlyInAir);
+	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
+	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
 	void StartFallOffStart();
 	void StopFallOffStart();
 	void OnLandingTimerFinished();
@@ -57,10 +81,14 @@ protected:
 	void UpdateRemoteMovementRequestState(float DeltaTime);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void ClearMovementRequests();
+	void ClearTransientAnimationRequests();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float LandingRequestDuration = 0.45f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandingMinHoldTime = 0.16f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HeavyLandSpeedThreshold = 650.0f;
@@ -70,6 +98,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float JumpStartMaxDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float ReplicatedJumpStartDuration = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float FallOffStartDuration = 0.6f;
@@ -85,6 +116,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float StopRequestDuration = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
@@ -105,6 +139,31 @@ public:
 	/** Minimum replicated movement speed treated as movement input for remote proxies. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteMoveSpeedThreshold = 3.0f;
+
+	/** Corrects simulated proxies that report Falling while their capsule is still on/near walkable ground. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network")
+	bool bUseRemoteGroundProbe = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteGroundProbeDistance = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteGroundedVerticalSpeedTolerance = 20.0f;
+
+	/** Remote landing can be missed if replicated Falling lasts for only a tiny window. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteLandingMinAirTime = 0.08f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteLandingMinFallSpeed = 120.0f;
+
+	/** Hidden simulated proxies can update animation-facing state less often. Visible and local players still update every frame. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float HiddenRemoteUpdateInterval = 0.0f;
+
+	/** Dedicated servers do not need animation-only state polling every frame. Event handlers still run. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network")
+	bool bSkipDedicatedServerAnimStateUpdate = true;
 
 	/** Window used by WasRecentlyRendered for future update-rate throttling decisions. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Visibility", meta = (ClampMin = "0.0", UIMin = "0.0"))
@@ -130,6 +189,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bCanEnterGround = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	bool bCanExitLanding = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir = false;
@@ -182,8 +244,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStartWasSprinting = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	bool bWantsSprint = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bIsStopping = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	float LastFallSpeed = 0.0f;
@@ -226,6 +294,9 @@ private:
 	TObjectPtr<UCharacterMovementComponent> CachedMovementComponent = nullptr;
 
 	UPROPERTY(Transient)
+	TObjectPtr<UCapsuleComponent> CachedCapsuleComponent = nullptr;
+
+	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> CachedAbilitySystemComponent = nullptr;
 
 	UPROPERTY(Transient)
@@ -240,4 +311,9 @@ private:
 	bool bWasInAir = false;
 	bool bSuppressFallOffStart = false;
 	bool bRealLandingEventRequested = false;
+	bool bSprintInputHeld = false;
+	float HiddenRemoteUpdateAccumulator = 0.0f;
+	float RemoteAirborneTime = 0.0f;
+	float LandingElapsedTime = 0.0f;
+	float StopElapsedTime = 0.0f;
 };
