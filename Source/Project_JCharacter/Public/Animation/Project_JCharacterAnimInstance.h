@@ -418,7 +418,6 @@ protected:
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
 	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
 	float CalculateMotionMatchingUpdateInterval() const;
-	float CalculateViewerDistanceSquared() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);

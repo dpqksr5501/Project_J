@@ -349,8 +349,7 @@ bool UProject_JCharacterAnimInstance::CopyPlayerThreadSafeData(FProject_JAnimThr
 
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
 {
-	const bool bDedicatedServer = OwningCharacter && OwningCharacter->GetNetMode() == NM_DedicatedServer;
-	const bool bMotionMatchingEnabled = OwningCharacter && !bDedicatedServer;
+	const bool bMotionMatchingEnabled = OwningCharacter && !IsDedicatedServerAnimationContext();
 	const bool bUpdateMotionMatchingThisFrame = bMotionMatchingEnabled && ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime);
 	PublishChooserProperties(Data);
 
@@ -369,7 +368,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const
 {
-	if (!OwningCharacter || OwningCharacter->GetNetMode() == NM_DedicatedServer)
+	if (!OwningCharacter || IsDedicatedServerAnimationContext())
 	{
 		return nullptr;
 	}
@@ -436,7 +435,7 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	bChooserStopRequested = Data.bStopRequested;
 	bChooserSharpTurnRequested = Data.bSharpTurnRequested;
 	bChooserWantsSprint = Data.bWantsSprint;
-	bChooserIsRemoteProxy = OwningPlayerCharacter && !OwningPlayerCharacter->IsLocallyControlled();
+	bChooserIsRemoteProxy = OwningPlayerCharacter && !IsLocallyControlledCharacter();
 	bChooserUseSprintLocomotion =
 		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.bUseSprintLocomotion;
@@ -517,7 +516,7 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 
 bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds)
 {
-	if (!OwningCharacter || OwningCharacter->GetNetMode() == NM_DedicatedServer)
+	if (!OwningCharacter || IsDedicatedServerAnimationContext())
 	{
 		MotionMatchingUpdateAccumulator = 0.0f;
 		return false;
@@ -542,7 +541,7 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 
 float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() const
 {
-	if (!OwningCharacter || OwningCharacter->IsLocallyControlled())
+	if (!OwningCharacter || IsLocallyControlledCharacter())
 	{
 		return 0.0f;
 	}
@@ -559,26 +558,6 @@ float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() c
 	}
 
 	return FarMotionMatchingUpdateInterval;
-}
-
-float UProject_JCharacterAnimInstance::CalculateViewerDistanceSquared() const
-{
-	const UWorld* World = OwningCharacter ? OwningCharacter->GetWorld() : nullptr;
-	if (!World || !OwningCharacter)
-	{
-		return 0.0f;
-	}
-
-	const APlayerController* PlayerController = World->GetFirstPlayerController();
-	if (!PlayerController)
-	{
-		return 0.0f;
-	}
-
-	FVector ViewLocation = FVector::ZeroVector;
-	FRotator ViewRotation = FRotator::ZeroRotator;
-	PlayerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
-	return FVector::DistSquared(ViewLocation, OwningCharacter->GetActorLocation());
 }
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
@@ -630,15 +609,15 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 		return true;
 	}
 
-	if (bSkipDedicatedServerAnimationDataUpdate && OwningCharacter->GetNetMode() == NM_DedicatedServer)
+	if (bSkipDedicatedServerAnimationDataUpdate && IsDedicatedServerAnimationContext())
 	{
 		ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
 		PublishThreadSafeDataToProxy(ThreadSafeData);
 		return true;
 	}
 
-	const bool bLocallyControlled = OwningCharacter->IsLocallyControlled();
-	const bool bRecentlyRendered = !OwningCharacter->GetMesh() || OwningCharacter->GetMesh()->WasRecentlyRendered(RecentlyRenderedTolerance);
+	const bool bLocallyControlled = IsLocallyControlledCharacter();
+	const bool bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
 	if (bLocallyControlled || bRecentlyRendered || HiddenRemoteUpdateInterval <= 0.0f)
 	{
 		HiddenRemoteUpdateAccumulator = 0.0f;
