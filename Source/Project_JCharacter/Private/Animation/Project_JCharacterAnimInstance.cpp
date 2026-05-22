@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "IObjectChooser.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
@@ -296,9 +297,10 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 
 void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const
 {
-	Data.Input.bHasMoveInput = Data.Movement.bIsAccelerating || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold;
-	Data.Ground.bUseSprintLocomotion = Data.Movement.GroundSpeed >= SprintLocomotionSpeedThreshold;
-	Data.Ground.GroundMotionMode = Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold
+	const float MoveInputSpeedThreshold = GetEffectiveGenericMoveInputSpeedThreshold();
+	Data.Input.bHasMoveInput = Data.Movement.bIsAccelerating || Data.Movement.GroundSpeed > MoveInputSpeedThreshold;
+	Data.Ground.bUseSprintLocomotion = Data.Movement.GroundSpeed >= GetEffectiveSprintLocomotionSpeedThreshold();
+	Data.Ground.GroundMotionMode = Data.Movement.GroundSpeed > MoveInputSpeedThreshold
 		? EProject_JGroundMotionMode::Locomotion
 		: EProject_JGroundMotionMode::Idle;
 }
@@ -317,7 +319,7 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	Data.Ground.bUseSprintLocomotion =
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.Ground.bWantsSprint &&
-		(Data.Input.bHasMoveInput || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold);
+		(Data.Input.bHasMoveInput || Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold());
 	Data.Combat.bIsCombatMode = OwningPlayerCharacter->bIsCombatMode;
 	Data.Combat.bIsAttacking = OwningPlayerCharacter->bIsAttacking;
 	Data.Combat.bIsDodging = OwningPlayerCharacter->bIsDodging;
@@ -379,7 +381,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	}
 
 	const UProject_JMotionMatchingAssetSet* AssetSet = OwningPlayerCharacter
-		? OwningPlayerCharacter->MotionMatchingAssetSet.Get()
+		? OwningPlayerCharacter->GetMotionMatchingAssetSet()
 		: nullptr;
 	UPoseSearchDatabase* IdleDatabase = AssetSet && AssetSet->IdlePoseSearchDatabase
 		? AssetSet->IdlePoseSearchDatabase.Get()
@@ -400,7 +402,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? OwningPlayerCharacter->MotionMatchingChooserTable.Get()
 			: MotionMatchingChooserTable.Get());
 
-	if (bDisableMotionMatchingBeyondFarDistance && CalculateViewerDistanceSquared() > FMath::Square(FarMotionMatchingDistance))
+	if (ShouldDisableMotionMatchingBeyondFarDistance() && CalculateViewerDistanceSquared() > FMath::Square(GetEffectiveFarMotionMatchingDistance()))
 	{
 		return nullptr;
 	}
@@ -561,17 +563,17 @@ float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() c
 	}
 
 	const float DistanceSquared = CalculateViewerDistanceSquared();
-	if (DistanceSquared <= FMath::Square(NearMotionMatchingDistance))
+	if (DistanceSquared <= FMath::Square(GetEffectiveNearMotionMatchingDistance()))
 	{
 		return 0.0f;
 	}
 
-	if (DistanceSquared <= FMath::Square(MidMotionMatchingDistance))
+	if (DistanceSquared <= FMath::Square(GetEffectiveMidMotionMatchingDistance()))
 	{
-		return MidMotionMatchingUpdateInterval;
+		return GetEffectiveMidMotionMatchingUpdateInterval();
 	}
 
-	return FarMotionMatchingUpdateInterval;
+	return GetEffectiveFarMotionMatchingUpdateInterval();
 }
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
@@ -611,7 +613,7 @@ float UProject_JCharacterAnimInstance::CalculateAimOffsetAlpha(const FProject_JA
 		return SprintAimAlpha;
 	}
 
-	return Data.GroundSpeed > GenericMoveInputSpeedThreshold ? MovingAimAlpha : StandingAimAlpha;
+	return Data.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold() ? MovingAimAlpha : StandingAimAlpha;
 }
 
 bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
@@ -632,14 +634,15 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 
 	const bool bLocallyControlled = IsLocallyControlledCharacter();
 	const bool bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
-	if (bLocallyControlled || bRecentlyRendered || HiddenRemoteUpdateInterval <= 0.0f)
+	const float EffectiveHiddenRemoteUpdateInterval = GetEffectiveHiddenRemoteUpdateInterval();
+	if (bLocallyControlled || bRecentlyRendered || EffectiveHiddenRemoteUpdateInterval <= 0.0f)
 	{
 		HiddenRemoteUpdateAccumulator = 0.0f;
 		return false;
 	}
 
 	HiddenRemoteUpdateAccumulator += DeltaSeconds;
-	if (HiddenRemoteUpdateAccumulator < HiddenRemoteUpdateInterval)
+	if (HiddenRemoteUpdateAccumulator < EffectiveHiddenRemoteUpdateInterval)
 	{
 		FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 		ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false);
@@ -648,4 +651,99 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 
 	HiddenRemoteUpdateAccumulator = 0.0f;
 	return false;
+}
+
+const UProject_JLocomotionProfile* UProject_JCharacterAnimInstance::GetLocomotionProfile() const
+{
+	return OwningPlayerCharacter ? OwningPlayerCharacter->LocomotionProfile.Get() : nullptr;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveGenericMoveInputSpeedThreshold() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->GenericMoveInputSpeedThreshold;
+	}
+
+	return GenericMoveInputSpeedThreshold;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveSprintLocomotionSpeedThreshold() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->SprintLocomotionSpeedThreshold;
+	}
+
+	return SprintLocomotionSpeedThreshold;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->AnimInstanceHiddenRemoteUpdateInterval;
+	}
+
+	return HiddenRemoteUpdateInterval;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveNearMotionMatchingDistance() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->NearMotionMatchingDistance;
+	}
+
+	return NearMotionMatchingDistance;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingDistance() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->MidMotionMatchingDistance;
+	}
+
+	return MidMotionMatchingDistance;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingDistance() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->FarMotionMatchingDistance;
+	}
+
+	return FarMotionMatchingDistance;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->MidMotionMatchingUpdateInterval;
+	}
+
+	return MidMotionMatchingUpdateInterval;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingUpdateInterval() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->FarMotionMatchingUpdateInterval;
+	}
+
+	return FarMotionMatchingUpdateInterval;
+}
+
+bool UProject_JCharacterAnimInstance::ShouldDisableMotionMatchingBeyondFarDistance() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->bDisableMotionMatchingBeyondFarDistance;
+	}
+
+	return bDisableMotionMatchingBeyondFarDistance;
 }

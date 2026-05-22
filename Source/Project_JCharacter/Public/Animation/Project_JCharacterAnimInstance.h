@@ -18,6 +18,7 @@ class AProject_JPlayerCharacter;
 class UChooserTable;
 class UPoseSearchDatabase;
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JLocomotionProfile;
 struct FAnimNode_Base;
 struct FAnimationUpdateContext;
 
@@ -422,6 +423,16 @@ protected:
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);
+	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
+	float GetEffectiveGenericMoveInputSpeedThreshold() const;
+	float GetEffectiveSprintLocomotionSpeedThreshold() const;
+	float GetEffectiveHiddenRemoteUpdateInterval() const;
+	float GetEffectiveNearMotionMatchingDistance() const;
+	float GetEffectiveMidMotionMatchingDistance() const;
+	float GetEffectiveFarMotionMatchingDistance() const;
+	float GetEffectiveMidMotionMatchingUpdateInterval() const;
+	float GetEffectiveFarMotionMatchingUpdateInterval() const;
+	bool ShouldDisableMotionMatchingBeyondFarDistance() const;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")

@@ -4,6 +4,7 @@
 #include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
@@ -78,6 +79,8 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 void AProject_JPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ApplyLocomotionProfile();
 
 	// Dynamically find and cache the active combat component if added in Blueprint
 	ActiveCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
@@ -261,14 +264,45 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	}
 }
 
+void AProject_JPlayerCharacter::ApplyLocomotionProfile()
+{
+	if (LocomotionProfile && LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = LocomotionProfile->SprintLocomotionSpeedThreshold;
+		LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = LocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
+	}
+
+	UpdateMaxWalkSpeed();
+}
+
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		const bool bCanSprint = bIsSprinting && !bIsAttacking && !bIsDodging && !bIsHitReacting;
-		MoveComp->MaxWalkSpeed = bCanSprint ? SprintSpeed : WalkSpeed;
-		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? SprintRotationRateYaw : WalkRotationRateYaw, 0.0f);
+		MoveComp->MaxWalkSpeed = bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed();
+		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
 	}
+}
+
+float AProject_JPlayerCharacter::GetEffectiveWalkSpeed() const
+{
+	return LocomotionProfile ? LocomotionProfile->WalkSpeed : WalkSpeed;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveSprintSpeed() const
+{
+	return LocomotionProfile ? LocomotionProfile->SprintSpeed : SprintSpeed;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveWalkRotationRateYaw() const
+{
+	return LocomotionProfile ? LocomotionProfile->WalkRotationRateYaw : WalkRotationRateYaw;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveSprintRotationRateYaw() const
+{
+	return LocomotionProfile ? LocomotionProfile->SprintRotationRateYaw : SprintRotationRateYaw;
 }
 
 void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
@@ -308,6 +342,16 @@ void AProject_JPlayerCharacter::ServerSetSprinting_Implementation(bool bNewIsSpr
 float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 {
 	return LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
+}
+
+const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatchingAssetSet() const
+{
+	if (LocomotionProfile && LocomotionProfile->MotionMatchingAssetSet)
+	{
+		return LocomotionProfile->MotionMatchingAssetSet.Get();
+	}
+
+	return MotionMatchingAssetSet.Get();
 }
 
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)

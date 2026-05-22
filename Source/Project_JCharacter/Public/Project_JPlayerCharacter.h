@@ -16,6 +16,7 @@ class UProject_JCombatComponent;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
+class UProject_JLocomotionProfile;
 class UChooserTable;
 class UPoseSearchDatabase;
 
@@ -139,9 +140,14 @@ protected:
 
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 
+	void ApplyLocomotionProfile();
 	void UpdateMaxWalkSpeed();
 	void ApplySprintState(bool bNewIsSprinting);
 	void ApplySprintAnimationState();
+	float GetEffectiveWalkSpeed() const;
+	float GetEffectiveSprintSpeed() const;
+	float GetEffectiveWalkRotationRateYaw() const;
+	float GetEffectiveSprintRotationRateYaw() const;
 	float GetMoveInputDeadZoneForAnimation() const;
 	void UpdateMoveStartReplicationState(const FVector2D& MoveInput);
 	void ResetMoveStartReplicationState();
@@ -247,6 +253,8 @@ public:
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
+	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding(bool bForceFinish = false);
 
@@ -261,6 +269,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintRotationRateYaw = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Locomotion")
+	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
