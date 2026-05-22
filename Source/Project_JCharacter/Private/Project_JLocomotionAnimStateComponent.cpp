@@ -457,20 +457,13 @@ void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 	if ((bIsLanding || bLandingRequested || bCanEnterLand) && bLandWasSprinting)
 	{
 		bLandWasSprinting = false;
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(LandingTimerHandle);
-			World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
-		}
-
-		bLandingFinishPendingExit = false;
-		OnLandingTimerFinished();
+		FinishLandingImmediately();
 	}
 }
 
 bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
 {
-	const bool bInLandingRecovery = bIsLanding || bLandingRequested || bCanEnterLand;
+	const bool bInLandingRecovery = IsLandingStateActive();
 	const bool bCanCancelLandingIntoJump =
 		bInLandingRecovery &&
 		!bIsPhysicallyInAir &&
@@ -487,6 +480,41 @@ bool UProject_JLocomotionAnimStateComponent::ConsumeRealLandingEventRequested()
 	const bool bRequested = bRealLandingEventRequested;
 	bRealLandingEventRequested = false;
 	return bRequested;
+}
+
+bool UProject_JLocomotionAnimStateComponent::IsLandingStateActive() const
+{
+	return bIsLanding || bLandingRequested || bCanEnterLand;
+}
+
+void UProject_JLocomotionAnimStateComponent::ClearLandingTimers()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(LandingTimerHandle);
+		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::FinishLandingImmediately()
+{
+	ClearLandingTimers();
+	bLandingFinishPendingExit = false;
+	OnLandingTimerFinished();
+}
+
+FVector UProject_JLocomotionAnimStateComponent::CalculateMoveWorldDirection(const FVector2D& MoveInput) const
+{
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner || MoveInput.SizeSquared() <= FMath::Square(MoveInputDeadZone))
+	{
+		return FVector::ZeroVector;
+	}
+
+	const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
+	const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
+	return (ForwardDirection * MoveInput.Y + RightDirection * MoveInput.X).GetSafeNormal();
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType)
@@ -815,14 +843,8 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	if (ShouldUseLocalInputState() && bLandWasMoving)
 	{
 		const FVector2D LandingMoveInput = GetMovementInputForState();
-		if (LandingMoveInput.SizeSquared() > FMath::Square(MoveInputDeadZone))
-		{
-			const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
-			const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
-			const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
-			InitialLandingMoveWorldDirection = (ForwardDirection * LandingMoveInput.Y + RightDirection * LandingMoveInput.X).GetSafeNormal();
-			PreviousLandingMoveWorldDirection = InitialLandingMoveWorldDirection;
-		}
+		InitialLandingMoveWorldDirection = CalculateMoveWorldDirection(LandingMoveInput);
+		PreviousLandingMoveWorldDirection = InitialLandingMoveWorldDirection;
 	}
 	bIsLanding = true;
 	bLandingRequested = true;
@@ -851,7 +873,7 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	if (UWorld* World = GetWorld())
 	{
 		const float LandingFallbackDuration = bLandWasMoving ? LandingRequestDuration : StandLandingRequestDuration;
-		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
+		ClearLandingTimers();
 		World->GetTimerManager().SetTimer(LandingTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished, FMath::Max(0.05f, LandingFallbackDuration), false);
 	}
 	bLandingFinishPendingExit = false;
@@ -948,14 +970,7 @@ void UProject_JLocomotionAnimStateComponent::CompleteLanding()
 		return;
 	}
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(LandingTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
-	}
-
-	bLandingFinishPendingExit = false;
-	OnLandingTimerFinished();
+	FinishLandingImmediately();
 }
 
 void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
@@ -1056,14 +1071,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 
 	if ((bIsLanding || bLandingRequested || bCanEnterLand) && !bLandWasMoving && bHasMoveInput)
 	{
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(LandingTimerHandle);
-			World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
-		}
 		bLandWasMoving = true;
-		bLandingFinishPendingExit = false;
-		OnLandingTimerFinished();
+		FinishLandingImmediately();
 		return;
 	}
 
@@ -1073,10 +1082,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 		bHasMoveInput &&
 		LandingElapsedTime >= SprintLandingTurnCancelMinTime)
 	{
-		const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
-		const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
-		const FVector CurrentLandingMoveWorldDirection = (ForwardDirection * MoveInput.Y + RightDirection * MoveInput.X).GetSafeNormal();
+		const FVector CurrentLandingMoveWorldDirection = CalculateMoveWorldDirection(MoveInput);
 
 		const FVector ReferenceLandingMoveWorldDirection = !InitialLandingMoveWorldDirection.IsNearlyZero()
 			? InitialLandingMoveWorldDirection
@@ -1088,13 +1094,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 			const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
 			if (DirectionAngle >= SprintLandingTurnCancelAngle)
 			{
-				if (UWorld* World = GetWorld())
-				{
-					World->GetTimerManager().ClearTimer(LandingTimerHandle);
-					World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
-				}
-				bLandingFinishPendingExit = false;
-				OnLandingTimerFinished();
+				FinishLandingImmediately();
 				return;
 			}
 		}

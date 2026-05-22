@@ -85,6 +85,10 @@ protected:
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
 	void StartFallOffStart();
 	void StopFallOffStart();
+	bool IsLandingStateActive() const;
+	void ClearLandingTimers();
+	void FinishLandingImmediately();
+	FVector CalculateMoveWorldDirection(const FVector2D& MoveInput) const;
 	void OnLandingTimerFinished();
 	void OnJumpTimerFinished();
 	void OnFallOffStartFinished();
@@ -122,10 +126,10 @@ public:
 	float JumpStartMaxDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float JumpStartMinHoldTime = 0.0f;
+	float JumpStartMinHoldTime = 0.16f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float JumpStartNotifyIgnoreTime = 0.08f;
+	float JumpStartNotifyIgnoreTime = 0.16f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IgnoreLandingAfterJumpStartTime = 0.05f;
