@@ -463,11 +463,11 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 	}
 }
 
-void AProject_JPlayerCharacter::FinishLanding()
+void AProject_JPlayerCharacter::FinishLanding(bool bForceFinish)
 {
 	if (LocomotionAnimStateComponent)
 	{
-		LocomotionAnimStateComponent->FinishLanding();
+		LocomotionAnimStateComponent->FinishLanding(bForceFinish);
 	}
 }
 

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
@@ -45,13 +45,24 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UProject_JCharacterAnimInstance::MarkGroundStartFinished()
 {
+	UProject_JLocomotionAnimStateComponent* EventAnimState = nullptr;
 	if (OwningPlayerCharacter)
 	{
 		OwningPlayerCharacter->MarkGroundStartFinished();
+		EventAnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent();
 	}
 	else if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->MarkGroundStartFinished();
+		EventAnimState = LocomotionAnimStateComponent.Get();
+	}
+
+	if (EventAnimState)
+	{
+		LocomotionAnimStateComponent = EventAnimState;
+		bGroundStartFinished = EventAnimState->bGroundStartFinished;
+		bUseStartDatabase = EventAnimState->bUseStartDatabase;
+		return;
 	}
 
 	bGroundStartFinished = true;
@@ -60,52 +71,103 @@ void UProject_JCharacterAnimInstance::MarkGroundStartFinished()
 
 void UProject_JCharacterAnimInstance::MarkLandingFinished()
 {
+	UProject_JLocomotionAnimStateComponent* EventAnimState = nullptr;
 	if (OwningPlayerCharacter)
 	{
-		OwningPlayerCharacter->FinishLanding();
+		OwningPlayerCharacter->FinishLanding(true);
+		EventAnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent();
 	}
 	else if (LocomotionAnimStateComponent)
 	{
-		LocomotionAnimStateComponent->FinishLanding();
+		LocomotionAnimStateComponent->FinishLanding(true);
+		EventAnimState = LocomotionAnimStateComponent.Get();
+	}
+
+	if (EventAnimState)
+	{
+		LocomotionAnimStateComponent = EventAnimState;
+		bIsLanding = EventAnimState->bIsLanding;
+		bCanEnterGround = EventAnimState->bCanEnterGround;
+		bLandingFinished = EventAnimState->bLandingFinished;
+		return;
 	}
 
 	bIsLanding = false;
 	bCanEnterGround = true;
+	bLandingFinished = true;
 }
 
 void UProject_JCharacterAnimInstance::HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType)
 {
+	UProject_JLocomotionAnimStateComponent* EventAnimState = nullptr;
 	if (OwningPlayerCharacter)
 	{
-		if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
+		EventAnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent();
+		if (EventAnimState)
 		{
-			AnimState->HandleAnimationEvent(EventType);
+			EventAnimState->HandleAnimationEvent(EventType);
 		}
 	}
 	else if (LocomotionAnimStateComponent)
 	{
-		LocomotionAnimStateComponent->HandleAnimationEvent(EventType);
+		EventAnimState = LocomotionAnimStateComponent.Get();
+		EventAnimState->HandleAnimationEvent(EventType);
+	}
+
+	if (EventAnimState)
+	{
+		LocomotionAnimStateComponent = EventAnimState;
 	}
 
 	switch (EventType)
 	{
 	case EProject_JLocomotionAnimEvent::GroundStartFinished:
-		bGroundStartFinished = true;
-		bUseStartDatabase = false;
+		if (EventAnimState)
+		{
+			bGroundStartFinished = EventAnimState->bGroundStartFinished;
+			bUseStartDatabase = EventAnimState->bUseStartDatabase;
+		}
+		else
+		{
+			bGroundStartFinished = true;
+			bUseStartDatabase = false;
+		}
 		break;
 	case EProject_JLocomotionAnimEvent::StopFinished:
-		bStopRequested = false;
-		bIsStopping = false;
+		if (EventAnimState)
+		{
+			bStopRequested = EventAnimState->bStopRequested;
+			bIsStopping = EventAnimState->bIsStopping;
+		}
+		else
+		{
+			bStopRequested = false;
+			bIsStopping = false;
+		}
 		break;
 	case EProject_JLocomotionAnimEvent::JumpStartFinished:
-		bIsJumping = false;
+		if (EventAnimState)
+		{
+			bIsJumping = EventAnimState->bIsJumping;
+		}
 		break;
 	case EProject_JLocomotionAnimEvent::FallOffStartFinished:
-		bIsFallOffStart = false;
+		if (EventAnimState)
+		{
+			bIsFallOffStart = EventAnimState->bIsFallOffStart;
+		}
+		else
+		{
+			bIsFallOffStart = false;
+		}
 		break;
 	case EProject_JLocomotionAnimEvent::LandingFinished:
-		bIsLanding = false;
-		bCanEnterGround = true;
+		if (EventAnimState)
+		{
+			bIsLanding = EventAnimState->bIsLanding;
+			bCanEnterGround = EventAnimState->bCanEnterGround;
+			bLandingFinished = EventAnimState->bLandingFinished;
+		}
 		break;
 	case EProject_JLocomotionAnimEvent::HitReactFinished:
 		bIsHitReacting = false;
@@ -143,9 +205,10 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bIsFallOffStart = false;
 	bIsLanding = false;
 	bLandingRequested = false;
-		bCanEnterLand = false;
-		bCanEnterGround = true;
-		bCanExitLanding = true;
+	bCanEnterLand = false;
+	bCanEnterGround = true;
+	bCanExitLanding = true;
+	bLandingFinished = true;
 
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
@@ -156,14 +219,11 @@ void UProject_JCharacterAnimInstance::ResetAnimationState()
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bGroundStartFinished = false;
-	bPendingGroundStartFinish = false;
-	bStartWasSprinting = false;
 	bStopRequested = false;
 	bIsStopping = false;
 	StopIntentSpeedThreshold = 80.0f;
 	StopRequestDuration = 0.35f;
 	IdleSpeedThreshold = 30.0f;
-	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
 
@@ -216,6 +276,7 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bCanEnterLand = false;
 	bCanEnterGround = !bIsInAir;
 	bCanExitLanding = true;
+	bLandingFinished = true;
 
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
@@ -226,14 +287,11 @@ void UProject_JCharacterAnimInstance::UpdateFromGenericCharacter(float DeltaSeco
 	bStartRequested = false;
 	bUseStartDatabase = false;
 	bGroundStartFinished = false;
-	bPendingGroundStartFinish = false;
-	bStartWasSprinting = false;
 	bStopRequested = false;
 	bIsStopping = false;
 	StopIntentSpeedThreshold = 80.0f;
 	StopRequestDuration = 0.35f;
 	IdleSpeedThreshold = 30.0f;
-	RunToSprintSpeedThreshold = 500.0f;
 	SharpTurnAngleThreshold = 60.0f;
 	SharpTurnMinSpeed = 500.0f;
 
@@ -283,6 +341,7 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 		bCanEnterLand = AnimState->bCanEnterLand;
 		bCanEnterGround = AnimState->bCanEnterGround;
 		bCanExitLanding = AnimState->bCanExitLanding;
+		bLandingFinished = AnimState->bLandingFinished;
 
 		MoveInputSize = AnimState->MoveInputSize;
 		MoveInputHeldTime = AnimState->MoveInputHeldTime;
@@ -293,15 +352,12 @@ void UProject_JCharacterAnimInstance::UpdateFromPlayerCharacter(float DeltaSecon
 		bStartRequested = AnimState->bStartRequested;
 		bUseStartDatabase = AnimState->bUseStartDatabase;
 		bGroundStartFinished = AnimState->bGroundStartFinished;
-		bPendingGroundStartFinish = AnimState->bPendingGroundStartFinish;
-		bStartWasSprinting = AnimState->bStartWasSprinting;
 		bWantsSprint = AnimState->bWantsSprint;
 		bStopRequested = AnimState->bStopRequested;
 		bIsStopping = AnimState->bIsStopping;
 		StopIntentSpeedThreshold = AnimState->StopIntentSpeedThreshold;
 		StopRequestDuration = AnimState->StopRequestDuration;
 		IdleSpeedThreshold = AnimState->IdleSpeedThreshold;
-		RunToSprintSpeedThreshold = AnimState->RunToSprintSpeedThreshold;
 		SharpTurnAngleThreshold = AnimState->SharpTurnAngleThreshold;
 		SharpTurnMinSpeed = AnimState->SharpTurnMinSpeed;
 		MovementDirection = AnimState->MovementDirection;

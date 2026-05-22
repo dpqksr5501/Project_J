@@ -45,7 +45,7 @@ public:
 	void HandleJumpStarted();
 	void HandleReplicatedJumpStarted();
 	void HandleLanded(const FHitResult& Hit);
-	void FinishLanding();
+	void FinishLanding(bool bForceFinish = false);
 	void FinishStop();
 	void FinishJumpStart();
 	void FinishFallOffStart();
@@ -66,6 +66,7 @@ protected:
 	bool ShouldUseLocalInputState() const;
 	bool IsDedicatedServerContext() const;
 	bool WasRecentlyRendered() const;
+	bool IsSprintRequestedForAnimation() const;
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
 	FVector2D GetMovementInputForState() const;
@@ -77,6 +78,11 @@ protected:
 	void OnLandingTimerFinished();
 	void OnJumpTimerFinished();
 	void OnFallOffStartFinished();
+	void CompleteGroundStart();
+	void CompleteStop();
+	void CompleteJumpStart();
+	void CompleteFallOffStart();
+	void CompleteLanding();
 	void UpdateMovementRequestState(float DeltaTime);
 	void UpdateRemoteMovementRequestState(float DeltaTime);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
@@ -85,7 +91,7 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float LandingRequestDuration = 0.45f;
+	float LandingRequestDuration = 1.8f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LandingMinHoldTime = 0.16f;
@@ -99,6 +105,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float JumpStartMaxDuration = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float JumpStartMinHoldTime = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float IgnoreLandingAfterJumpStartTime = 0.25f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float ReplicatedJumpStartDuration = 0.35f;
 
@@ -109,10 +121,13 @@ public:
 	float MoveInputDeadZone = 0.1f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartToLoopDelay = 0.75f;
+	float StartToLoopDelay = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MinStartDatabaseTime = 0.12f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartIntentGraceTime = 0.05f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
@@ -123,8 +138,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float RunToSprintSpeedThreshold = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Finished", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float FinishedExitWindow = 0.10f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnAngleThreshold = 60.0f;
@@ -193,6 +208,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bCanExitLanding = true;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
+	bool bLandingFinished = true;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir = false;
 
@@ -237,12 +255,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bGroundStartFinished = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bPendingGroundStartFinish = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
-	bool bStartWasSprinting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bWantsSprint = false;
@@ -305,6 +317,11 @@ private:
 	FTimerHandle LandingTimerHandle;
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
+	FTimerHandle GroundStartExitTimerHandle;
+	FTimerHandle StopExitTimerHandle;
+	FTimerHandle JumpStartExitTimerHandle;
+	FTimerHandle FallOffStartExitTimerHandle;
+	FTimerHandle LandingExitTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
@@ -312,8 +329,19 @@ private:
 	bool bSuppressFallOffStart = false;
 	bool bRealLandingEventRequested = false;
 	bool bSprintInputHeld = false;
+	bool bStartWindowActive = false;
+	float StartWindowElapsedTime = 0.0f;
+	float JumpStartElapsedTime = 0.0f;
+	bool bIgnoreNextLandingForJumpStart = false;
+	bool bResolvedMoveInputLastUpdate = false;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float RemoteAirborneTime = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
+	bool bPendingGroundStartFinish = false;
+	bool bGroundStartFinishPendingExit = false;
+	bool bStopFinishPendingExit = false;
+	bool bJumpStartFinishPendingExit = false;
+	bool bFallOffStartFinishPendingExit = false;
+	bool bLandingFinishPendingExit = false;
 };

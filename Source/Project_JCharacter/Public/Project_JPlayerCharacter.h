@@ -191,7 +191,7 @@ public:
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
-	void FinishLanding();
+	void FinishLanding(bool bForceFinish = false);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkSpeed = 500.0f;

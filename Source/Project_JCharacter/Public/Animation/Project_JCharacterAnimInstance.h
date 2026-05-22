@@ -112,6 +112,9 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
 	bool bCanExitLanding = true;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
+	bool bLandingFinished = true;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float MoveInputSize = 0.0f;
 
@@ -140,12 +143,6 @@ public:
 	bool bGroundStartFinished = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bPendingGroundStartFinish = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	bool bStopRequested = false;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
@@ -162,9 +159,6 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
 	float IdleSpeedThreshold = 30.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float RunToSprintSpeedThreshold = 500.0f;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
 	float SharpTurnAngleThreshold = 60.0f;
