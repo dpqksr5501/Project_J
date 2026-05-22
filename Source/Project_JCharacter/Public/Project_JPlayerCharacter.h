@@ -13,6 +13,7 @@ class UInputAction;
 class UAnimMontage;
 struct FInputActionValue;
 class UProject_JCombatComponent;
+class UProject_JCharacterAnimProfile;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
@@ -253,6 +254,7 @@ public:
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
+	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
 	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
@@ -269,6 +271,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintRotationRateYaw = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile")
+	TObjectPtr<UProject_JCharacterAnimProfile> CharacterAnimProfile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Locomotion")
 	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;

@@ -4,6 +4,7 @@
 #include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -266,10 +267,13 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 {
-	if (LocomotionProfile && LocomotionAnimStateComponent)
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
 	{
-		LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = LocomotionProfile->SprintLocomotionSpeedThreshold;
-		LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = LocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
+		if (LocomotionAnimStateComponent)
+		{
+			LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = EffectiveLocomotionProfile->SprintLocomotionSpeedThreshold;
+			LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = EffectiveLocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
+		}
 	}
 
 	UpdateMaxWalkSpeed();
@@ -287,22 +291,42 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 float AProject_JPlayerCharacter::GetEffectiveWalkSpeed() const
 {
-	return LocomotionProfile ? LocomotionProfile->WalkSpeed : WalkSpeed;
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	{
+		return EffectiveLocomotionProfile->WalkSpeed;
+	}
+
+	return WalkSpeed;
 }
 
 float AProject_JPlayerCharacter::GetEffectiveSprintSpeed() const
 {
-	return LocomotionProfile ? LocomotionProfile->SprintSpeed : SprintSpeed;
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	{
+		return EffectiveLocomotionProfile->SprintSpeed;
+	}
+
+	return SprintSpeed;
 }
 
 float AProject_JPlayerCharacter::GetEffectiveWalkRotationRateYaw() const
 {
-	return LocomotionProfile ? LocomotionProfile->WalkRotationRateYaw : WalkRotationRateYaw;
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	{
+		return EffectiveLocomotionProfile->WalkRotationRateYaw;
+	}
+
+	return WalkRotationRateYaw;
 }
 
 float AProject_JPlayerCharacter::GetEffectiveSprintRotationRateYaw() const
 {
-	return LocomotionProfile ? LocomotionProfile->SprintRotationRateYaw : SprintRotationRateYaw;
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	{
+		return EffectiveLocomotionProfile->SprintRotationRateYaw;
+	}
+
+	return SprintRotationRateYaw;
 }
 
 void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
@@ -344,11 +368,24 @@ float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 	return LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
 }
 
+const UProject_JLocomotionProfile* AProject_JPlayerCharacter::GetLocomotionProfile() const
+{
+	if (CharacterAnimProfile && CharacterAnimProfile->LocomotionProfile)
+	{
+		return CharacterAnimProfile->LocomotionProfile.Get();
+	}
+
+	return LocomotionProfile.Get();
+}
+
 const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatchingAssetSet() const
 {
-	if (LocomotionProfile && LocomotionProfile->MotionMatchingAssetSet)
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
 	{
-		return LocomotionProfile->MotionMatchingAssetSet.Get();
+		if (EffectiveLocomotionProfile->MotionMatchingAssetSet)
+		{
+			return EffectiveLocomotionProfile->MotionMatchingAssetSet.Get();
+		}
 	}
 
 	return MotionMatchingAssetSet.Get();

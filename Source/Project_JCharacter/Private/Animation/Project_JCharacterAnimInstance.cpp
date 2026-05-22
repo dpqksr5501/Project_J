@@ -655,7 +655,7 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 
 const UProject_JLocomotionProfile* UProject_JCharacterAnimInstance::GetLocomotionProfile() const
 {
-	return OwningPlayerCharacter ? OwningPlayerCharacter->LocomotionProfile.Get() : nullptr;
+	return OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionProfile() : nullptr;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveGenericMoveInputSpeedThreshold() const
