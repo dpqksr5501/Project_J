@@ -410,6 +410,10 @@ public:
 protected:
 	void CacheOwnerReferences();
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
+	void CopyMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void CopyAnimStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
+	bool CopyPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);

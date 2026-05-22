@@ -235,6 +235,30 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 		return Data;
 	}
 
+	CopyMovementThreadSafeData(Data);
+	if (LocomotionAnimStateComponent)
+	{
+		CopyAnimStateThreadSafeData(Data);
+	}
+	else
+	{
+		ApplyGenericMovementFallback(Data);
+	}
+
+	const bool bHasAimData = CopyPlayerThreadSafeData(Data);
+
+	Data.SyncLegacyFieldsFromStructuredData();
+	if (bHasAimData)
+	{
+		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
+		Data.SyncLegacyFieldsFromStructuredData();
+	}
+
+	return Data;
+}
+
+void UProject_JCharacterAnimInstance::CopyMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
 	const FVector CharacterVelocity = OwningCharacter->GetVelocity();
 	Data.Movement.Velocity = CharacterVelocity;
 	Data.Movement.GroundSpeed = FVector(CharacterVelocity.X, CharacterVelocity.Y, 0.0f).Size();
@@ -253,83 +277,87 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 
 	Data.Movement.bWasAccelerating = ThreadSafeData.Movement.bIsAccelerating || ThreadSafeData.bIsAccelerating;
 	Data.Movement.bStoppedAcceleratingThisFrame = Data.Movement.bWasAccelerating && !Data.Movement.bIsAccelerating;
-	bool bHasAimData = false;
+}
 
-	if (const UProject_JLocomotionAnimStateComponent* AnimState = LocomotionAnimStateComponent.Get())
+void UProject_JCharacterAnimInstance::CopyAnimStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	const UProject_JLocomotionAnimStateComponent* AnimState = LocomotionAnimStateComponent.Get();
+	if (!AnimState)
 	{
-		Data.Input.MoveInputSize = AnimState->MoveInputSize;
-		Data.Input.MoveInputHeldTime = AnimState->MoveInputHeldTime;
-		Data.Input.MoveInputTurnAngle = AnimState->MoveInputTurnAngle;
-		Data.Input.MovementDirection = AnimState->MovementDirection;
-		Data.Input.bHasMoveInput = AnimState->bHasMoveInput;
-		Data.Input.bSharpTurnRequested = AnimState->bSharpTurnRequested;
-		Data.Ground.bStartRequested = AnimState->bStartRequested || AnimState->bUseStartDatabase;
-		Data.Ground.bStopRequested = AnimState->bStopRequested || AnimState->bUseStopDatabase;
-		Data.Ground.bWantsSprint = AnimState->bWantsSprint;
-		Data.Ground.bUseSprintLocomotion = AnimState->bUseSprintLocomotion;
-		Data.Ground.bStartWasSprinting =
-			AnimState->bStartWasSprinting ||
-			(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
-		Data.Ground.bStopWasSprinting = AnimState->bStopWasSprinting;
-		Data.Air.bIsJumping = AnimState->bIsJumping;
-		Data.Air.bIsFallOffStart = AnimState->bIsFallOffStart;
-		Data.Landing.bIsLanding = AnimState->bIsLanding || AnimState->bLandingRequested;
-		Data.Landing.bUseHeavyLand = AnimState->bUseHeavyLand;
-		Data.Landing.bLandWasSprinting = AnimState->bLandWasSprinting;
-		Data.Landing.bLandWasMoving = AnimState->bLandWasMoving;
-		Data.Landing.LastFallSpeed = AnimState->LastFallSpeed;
-		Data.Landing.LandStartFallSpeed = AnimState->LandStartFallSpeed;
-		Data.Ground.GroundMotionMode = AnimState->GroundMotionMode;
-	}
-	else
-	{
-		Data.Input.bHasMoveInput = Data.Movement.bIsAccelerating || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold;
-		Data.Ground.bUseSprintLocomotion = Data.Movement.GroundSpeed >= SprintLocomotionSpeedThreshold;
-		Data.Ground.GroundMotionMode = Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold
-			? EProject_JGroundMotionMode::Locomotion
-			: EProject_JGroundMotionMode::Idle;
+		return;
 	}
 
-	if (OwningPlayerCharacter)
+	Data.Input.MoveInputSize = AnimState->MoveInputSize;
+	Data.Input.MoveInputHeldTime = AnimState->MoveInputHeldTime;
+	Data.Input.MoveInputTurnAngle = AnimState->MoveInputTurnAngle;
+	Data.Input.MovementDirection = AnimState->MovementDirection;
+	Data.Input.bHasMoveInput = AnimState->bHasMoveInput;
+	Data.Input.bSharpTurnRequested = AnimState->bSharpTurnRequested;
+	Data.Ground.bStartRequested = AnimState->bStartRequested || AnimState->bUseStartDatabase;
+	Data.Ground.bStopRequested = AnimState->bStopRequested || AnimState->bUseStopDatabase;
+	Data.Ground.bWantsSprint = AnimState->bWantsSprint;
+	Data.Ground.bUseSprintLocomotion = AnimState->bUseSprintLocomotion;
+	Data.Ground.bStartWasSprinting =
+		AnimState->bStartWasSprinting ||
+		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
+	Data.Ground.bStopWasSprinting = AnimState->bStopWasSprinting;
+	Data.Ground.GroundMotionMode = AnimState->GroundMotionMode;
+	Data.Air.bIsJumping = AnimState->bIsJumping;
+	Data.Air.bIsFallOffStart = AnimState->bIsFallOffStart;
+	Data.Landing.bIsLanding = AnimState->bIsLanding || AnimState->bLandingRequested;
+	Data.Landing.bUseHeavyLand = AnimState->bUseHeavyLand;
+	Data.Landing.bLandWasSprinting = AnimState->bLandWasSprinting;
+	Data.Landing.bLandWasMoving = AnimState->bLandWasMoving;
+	Data.Landing.LastFallSpeed = AnimState->LastFallSpeed;
+	Data.Landing.LandStartFallSpeed = AnimState->LandStartFallSpeed;
+}
+
+void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const
+{
+	Data.Input.bHasMoveInput = Data.Movement.bIsAccelerating || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold;
+	Data.Ground.bUseSprintLocomotion = Data.Movement.GroundSpeed >= SprintLocomotionSpeedThreshold;
+	Data.Ground.GroundMotionMode = Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold
+		? EProject_JGroundMotionMode::Locomotion
+		: EProject_JGroundMotionMode::Idle;
+}
+
+bool UProject_JCharacterAnimInstance::CopyPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	if (!OwningPlayerCharacter)
 	{
-		Data.Ground.bWantsSprint = Data.Ground.bWantsSprint || OwningPlayerCharacter->bIsSprinting;
-		Data.Ground.bStartWasSprinting =
-			Data.Ground.bStartWasSprinting ||
-			(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
-		Data.Ground.bUseSprintLocomotion =
-			Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-			Data.Ground.bWantsSprint &&
-			(Data.Input.bHasMoveInput || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold);
-		Data.Combat.bIsCombatMode = OwningPlayerCharacter->bIsCombatMode;
-		Data.Combat.bIsAttacking = OwningPlayerCharacter->bIsAttacking;
-		Data.Combat.bIsDodging = OwningPlayerCharacter->bIsDodging;
-		Data.Combat.bIsHitReacting = OwningPlayerCharacter->bIsHitReacting;
-		Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->bIsPlayingCombatIntro;
-
-		if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
-		{
-			Data.Movement.Trajectory = TrajectoryComponent->GetTrajectory();
-			Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
-		}
-
-		if (OwningCharacter->GetController())
-		{
-			const FRotator ControlRotation = OwningCharacter->GetControlRotation();
-			const FRotator ActorRotation = OwningCharacter->GetActorRotation();
-			Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, ControlRotation.Yaw), -MaxAimYaw, MaxAimYaw);
-			Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(ControlRotation.Pitch), -MaxAimPitch, MaxAimPitch);
-			bHasAimData = true;
-		}
+		return false;
 	}
 
-	Data.SyncLegacyFieldsFromStructuredData();
-	if (bHasAimData)
+	Data.Ground.bWantsSprint = Data.Ground.bWantsSprint || OwningPlayerCharacter->bIsSprinting;
+	Data.Ground.bStartWasSprinting =
+		Data.Ground.bStartWasSprinting ||
+		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
+	Data.Ground.bUseSprintLocomotion =
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		Data.Ground.bWantsSprint &&
+		(Data.Input.bHasMoveInput || Data.Movement.GroundSpeed > GenericMoveInputSpeedThreshold);
+	Data.Combat.bIsCombatMode = OwningPlayerCharacter->bIsCombatMode;
+	Data.Combat.bIsAttacking = OwningPlayerCharacter->bIsAttacking;
+	Data.Combat.bIsDodging = OwningPlayerCharacter->bIsDodging;
+	Data.Combat.bIsHitReacting = OwningPlayerCharacter->bIsHitReacting;
+	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->bIsPlayingCombatIntro;
+
+	if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
 	{
-		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
-		Data.SyncLegacyFieldsFromStructuredData();
+		Data.Movement.Trajectory = TrajectoryComponent->GetTrajectory();
+		Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
 	}
 
-	return Data;
+	if (OwningCharacter->GetController())
+	{
+		const FRotator ControlRotation = OwningCharacter->GetControlRotation();
+		const FRotator ActorRotation = OwningCharacter->GetActorRotation();
+		Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, ControlRotation.Yaw), -MaxAimYaw, MaxAimYaw);
+		Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(ControlRotation.Pitch), -MaxAimPitch, MaxAimPitch);
+		return true;
+	}
+
+	return false;
 }
 
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
