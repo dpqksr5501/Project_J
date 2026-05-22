@@ -82,6 +82,7 @@ void AProject_JPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ApplyLocomotionProfile();
+	LogAnimationProfileConfiguration();
 
 	// Dynamically find and cache the active combat component if added in Blueprint
 	ActiveCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
@@ -279,6 +280,61 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 	UpdateMaxWalkSpeed();
 }
 
+void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
+{
+	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
+	const UProject_JMotionMatchingAssetSet* EffectiveAssetSet = GetMotionMatchingAssetSet();
+	const bool bHasDirectMotionMatchingFallback =
+		MotionMatchingDefaultDatabase ||
+		MotionMatchingIdleDatabase ||
+		MotionMatchingChooserTable;
+
+	if (!CharacterAnimProfile && LocomotionProfile)
+	{
+		UE_LOG(
+			LogTemplateCharacter,
+			Display,
+			TEXT("%s uses LocomotionProfile directly. Prefer assigning CharacterAnimProfile for new characters."),
+			*GetNameSafe(this));
+	}
+	else if (!CharacterAnimProfile && (MotionMatchingAssetSet || bHasDirectMotionMatchingFallback))
+	{
+		UE_LOG(
+			LogTemplateCharacter,
+			Display,
+			TEXT("%s uses direct motion matching fallback assets. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."),
+			*GetNameSafe(this));
+	}
+
+	if (CharacterAnimProfile && !EffectiveLocomotionProfile)
+	{
+		UE_LOG(
+			LogTemplateCharacter,
+			Warning,
+			TEXT("%s has CharacterAnimProfile %s, but it does not provide a LocomotionProfile."),
+			*GetNameSafe(this),
+			*GetNameSafe(CharacterAnimProfile));
+	}
+
+	if (EffectiveLocomotionProfile && !EffectiveAssetSet && !bHasDirectMotionMatchingFallback)
+	{
+		UE_LOG(
+			LogTemplateCharacter,
+			Warning,
+			TEXT("%s uses LocomotionProfile %s, but no MotionMatchingAssetSet or direct PSD/Chooser fallback is assigned."),
+			*GetNameSafe(this),
+			*GetNameSafe(EffectiveLocomotionProfile));
+	}
+	else if (!EffectiveLocomotionProfile && !EffectiveAssetSet && !bHasDirectMotionMatchingFallback)
+	{
+		UE_LOG(
+			LogTemplateCharacter,
+			Warning,
+			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, MotionMatchingAssetSet, or direct PSD/Chooser fallback assigned."),
+			*GetNameSafe(this));
+	}
+}
+
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
@@ -370,6 +426,8 @@ float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 
 const UProject_JLocomotionProfile* AProject_JPlayerCharacter::GetLocomotionProfile() const
 {
+	// Preferred path: a top-level character profile owns the effective locomotion profile.
+	// Direct LocomotionProfile remains as a migration fallback for existing Blueprints.
 	if (CharacterAnimProfile && CharacterAnimProfile->LocomotionProfile)
 	{
 		return CharacterAnimProfile->LocomotionProfile.Get();
@@ -380,6 +438,8 @@ const UProject_JLocomotionProfile* AProject_JPlayerCharacter::GetLocomotionProfi
 
 const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatchingAssetSet() const
 {
+	// AssetSet is normally resolved from the effective locomotion profile.
+	// Direct assignment remains as the last character-level migration fallback.
 	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
 	{
 		if (EffectiveLocomotionProfile->MotionMatchingAssetSet)

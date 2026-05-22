@@ -142,6 +142,7 @@ protected:
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 
 	void ApplyLocomotionProfile();
+	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
 	void ApplySprintState(bool bNewIsSprinting);
 	void ApplySprintAnimationState();
