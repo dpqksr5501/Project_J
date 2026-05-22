@@ -20,6 +20,27 @@ class UPoseSearchDatabase;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+USTRUCT()
+struct FProject_JReplicatedAnimEventState
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	uint8 MoveStartCounter = 0;
+
+	UPROPERTY()
+	bool bMoveStartWasSprinting = false;
+
+	UPROPERTY()
+	uint8 MoveStopCounter = 0;
+
+	UPROPERTY()
+	uint8 JumpStartCounter = 0;
+
+	UPROPERTY()
+	uint8 FallOffStartCounter = 0;
+};
+
 /**
  *  A player-controllable third person character
  *  Implements a controllable orbiting camera and motion matching landing logic.
@@ -134,26 +155,17 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
 
-	UFUNCTION()
-	void OnRep_MoveStartEventCounter();
-
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyMoveStopped();
 
-	UFUNCTION()
-	void OnRep_MoveStopEventCounter();
-
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyJumpStarted();
-
-	UFUNCTION()
-	void OnRep_JumpStartEventCounter();
 
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyFallOffStarted();
 
 	UFUNCTION()
-	void OnRep_FallOffStartEventCounter();
+	void OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState);
 
 	UFUNCTION()
 	void OnRep_IsSprinting();
@@ -300,20 +312,8 @@ public:
 	bool bInterruptCombatIntroOnHit = true;
 
 private:
-	UPROPERTY(ReplicatedUsing = OnRep_MoveStartEventCounter)
-	uint8 MoveStartEventCounter = 0;
-
-	UPROPERTY(Replicated)
-	bool bMoveStartWasSprinting = false;
-
-	UPROPERTY(ReplicatedUsing = OnRep_MoveStopEventCounter)
-	uint8 MoveStopEventCounter = 0;
-
-	UPROPERTY(ReplicatedUsing = OnRep_JumpStartEventCounter)
-	uint8 JumpStartEventCounter = 0;
-
-	UPROPERTY(ReplicatedUsing = OnRep_FallOffStartEventCounter)
-	uint8 FallOffStartEventCounter = 0;
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAnimEvents)
+	FProject_JReplicatedAnimEventState ReplicatedAnimEvents;
 
 	bool bHadMoveInputForReplication = false;
 };

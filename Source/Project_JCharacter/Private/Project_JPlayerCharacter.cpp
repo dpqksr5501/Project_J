@@ -72,11 +72,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bIsSprinting, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, MoveStartEventCounter, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bMoveStartWasSprinting, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, MoveStopEventCounter, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, JumpStartEventCounter, COND_SkipOwner);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, FallOffStartEventCounter, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -334,8 +330,8 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 {
 	if (HasAuthority())
 	{
-		bMoveStartWasSprinting = bWasSprintingForStart;
-		++MoveStartEventCounter;
+		ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart;
+		++ReplicatedAnimEvents.MoveStartCounter;
 		ForceNetUpdate();
 		return;
 	}
@@ -345,24 +341,16 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStarted_Implementation(bool bWasSprintingForStart)
 {
-	bMoveStartWasSprinting = bWasSprintingForStart || bIsSprinting;
-	++MoveStartEventCounter;
+	ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart || bIsSprinting;
+	++ReplicatedAnimEvents.MoveStartCounter;
 	ForceNetUpdate();
-}
-
-void AProject_JPlayerCharacter::OnRep_MoveStartEventCounter()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStarted(bMoveStartWasSprinting);
-	}
 }
 
 void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++MoveStopEventCounter;
+		++ReplicatedAnimEvents.MoveStopCounter;
 		ForceNetUpdate();
 		return;
 	}
@@ -372,23 +360,15 @@ void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStopped_Implementation()
 {
-	++MoveStopEventCounter;
+	++ReplicatedAnimEvents.MoveStopCounter;
 	ForceNetUpdate();
-}
-
-void AProject_JPlayerCharacter::OnRep_MoveStopEventCounter()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
-	}
 }
 
 void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++JumpStartEventCounter;
+		++ReplicatedAnimEvents.JumpStartCounter;
 		ForceNetUpdate();
 		return;
 	}
@@ -398,23 +378,15 @@ void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyJumpStarted_Implementation()
 {
-	++JumpStartEventCounter;
+	++ReplicatedAnimEvents.JumpStartCounter;
 	ForceNetUpdate();
-}
-
-void AProject_JPlayerCharacter::OnRep_JumpStartEventCounter()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
-	}
 }
 
 void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++FallOffStartEventCounter;
+		++ReplicatedAnimEvents.FallOffStartCounter;
 		ForceNetUpdate();
 		return;
 	}
@@ -424,13 +396,33 @@ void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyFallOffStarted_Implementation()
 {
-	++FallOffStartEventCounter;
+	++ReplicatedAnimEvents.FallOffStartCounter;
 	ForceNetUpdate();
 }
 
-void AProject_JPlayerCharacter::OnRep_FallOffStartEventCounter()
+void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState)
 {
-	if (LocomotionAnimStateComponent)
+	if (!LocomotionAnimStateComponent)
+	{
+		return;
+	}
+
+	if (ReplicatedAnimEvents.MoveStopCounter != PreviousState.MoveStopCounter)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
+	}
+
+	if (ReplicatedAnimEvents.MoveStartCounter != PreviousState.MoveStartCounter)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedMoveStarted(ReplicatedAnimEvents.bMoveStartWasSprinting);
+	}
+
+	if (ReplicatedAnimEvents.JumpStartCounter != PreviousState.JumpStartCounter)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
+	}
+
+	if (ReplicatedAnimEvents.FallOffStartCounter != PreviousState.FallOffStartCounter)
 	{
 		LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
 	}
