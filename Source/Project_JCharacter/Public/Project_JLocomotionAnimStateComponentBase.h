@@ -33,7 +33,13 @@ protected:
 	AProject_JPlayerCharacter* GetPlayerOwner() const;
 	UCharacterMovementComponent* GetCachedMovementComponent() const;
 	UAbilitySystemComponent* GetCachedAbilitySystemComponent() const;
+	UCapsuleComponent* GetCachedCapsuleComponent() const;
+	USkeletalMeshComponent* GetCachedMeshComponent() const;
+	bool IsInAirForAnimation() const;
+	bool IsDedicatedServerContext() const;
+	bool WasRecentlyRendered(float RecentlyRenderedTolerance) const;
 
+private:
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> CachedPlayerOwner = nullptr;
 

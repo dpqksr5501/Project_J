@@ -17,7 +17,7 @@ UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
-	if (!CachedPlayerOwner || !CachedMovementComponent)
+	if (!GetPlayerOwner() || !GetCachedMovementComponent())
 	{
 		CacheOwnerReferences();
 	}
@@ -35,7 +35,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 		return;
 	}
 
-	bRecentlyRendered = WasRecentlyRendered();
+	bRecentlyRendered = WasRecentlyRendered(RecentlyRenderedTolerance);
 	if (!bUsingLocalInputState && !bRecentlyRendered && HiddenRemoteUpdateInterval > 0.0f)
 	{
 		HiddenRemoteUpdateAccumulator += DeltaTime;
@@ -601,27 +601,10 @@ void UProject_JLocomotionAnimStateComponent::HandleAnimationEvent(EProject_JLoco
 	}
 }
 
-bool UProject_JLocomotionAnimStateComponent::IsInAirForAnimation() const
-{
-	const UCharacterMovementComponent* MoveComp = GetCachedMovementComponent();
-	return MoveComp && MoveComp->IsFalling();
-}
-
 bool UProject_JLocomotionAnimStateComponent::ShouldUseLocalInputState() const
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	return PlayerOwner && (PlayerOwner->IsLocallyControlled() || bUseInputDerivedRequestsForRemotePlayers);
-}
-
-bool UProject_JLocomotionAnimStateComponent::IsDedicatedServerContext() const
-{
-	const AActor* Owner = GetOwner();
-	return Owner && Owner->GetNetMode() == NM_DedicatedServer;
-}
-
-bool UProject_JLocomotionAnimStateComponent::WasRecentlyRendered() const
-{
-	return !CachedMeshComponent || CachedMeshComponent->WasRecentlyRendered(RecentlyRenderedTolerance);
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsSprintRequestedForAnimation() const
@@ -706,13 +689,14 @@ bool UProject_JLocomotionAnimStateComponent::IsRemoteGroundedByProbe() const
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	const UWorld* World = GetWorld();
-	if (!bUseRemoteGroundProbe || !PlayerOwner || !World || !CachedCapsuleComponent)
+	const UCapsuleComponent* CapsuleComponent = GetCachedCapsuleComponent();
+	if (!bUseRemoteGroundProbe || !PlayerOwner || !World || !CapsuleComponent)
 	{
 		return false;
 	}
 
 	const FVector Start = PlayerOwner->GetActorLocation();
-	const float TraceDistance = CachedCapsuleComponent->GetScaledCapsuleHalfHeight() + RemoteGroundProbeDistance;
+	const float TraceDistance = CapsuleComponent->GetScaledCapsuleHalfHeight() + RemoteGroundProbeDistance;
 	const FVector End = Start - FVector(0.0f, 0.0f, TraceDistance);
 
 	FHitResult Hit;
@@ -1339,7 +1323,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 	if (bUsingLocalInputState)
 	{
 		const FVector2D CombatMoveInput = CachedMoveInput.GetClampedToMaxSize(1.0f);
-		const float DesiredSpeed = CachedMovementComponent ? CachedMovementComponent->MaxWalkSpeed : PlayerOwner->WalkSpeed;
+		const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
+		const float DesiredSpeed = MovementComponent ? MovementComponent->MaxWalkSpeed : PlayerOwner->WalkSpeed;
 		CombatInputRight = CombatMoveInput.X;
 		CombatInputForward = CombatMoveInput.Y;
 		CombatRightSpeed = CombatMoveInput.X * DesiredSpeed;
@@ -1353,7 +1338,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 	CombatForwardSpeed = FVector::DotProduct(HorizontalVelocity, Forward);
 	CombatRightSpeed = FVector::DotProduct(HorizontalVelocity, Right);
 
-	const float MaxSpeed = CachedMovementComponent ? FMath::Max(CachedMovementComponent->MaxWalkSpeed, 1.0f) : FMath::Max(PlayerOwner->WalkSpeed, 1.0f);
+	const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
+	const float MaxSpeed = MovementComponent ? FMath::Max(MovementComponent->MaxWalkSpeed, 1.0f) : FMath::Max(PlayerOwner->WalkSpeed, 1.0f);
 	CombatInputForward = FMath::Clamp(CombatForwardSpeed / MaxSpeed, -1.0f, 1.0f);
 	CombatInputRight = FMath::Clamp(CombatRightSpeed / MaxSpeed, -1.0f, 1.0f);
 	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatRightSpeed, CombatForwardSpeed));

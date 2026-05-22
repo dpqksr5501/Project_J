@@ -43,3 +43,31 @@ UAbilitySystemComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedAb
 {
 	return CachedAbilitySystemComponent.Get();
 }
+
+UCapsuleComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedCapsuleComponent() const
+{
+	return CachedCapsuleComponent.Get();
+}
+
+USkeletalMeshComponent* UProject_JLocomotionAnimStateComponentBase::GetCachedMeshComponent() const
+{
+	return CachedMeshComponent.Get();
+}
+
+bool UProject_JLocomotionAnimStateComponentBase::IsInAirForAnimation() const
+{
+	const UCharacterMovementComponent* MoveComp = GetCachedMovementComponent();
+	return MoveComp && MoveComp->IsFalling();
+}
+
+bool UProject_JLocomotionAnimStateComponentBase::IsDedicatedServerContext() const
+{
+	const AActor* Owner = GetOwner();
+	return Owner && Owner->GetNetMode() == NM_DedicatedServer;
+}
+
+bool UProject_JLocomotionAnimStateComponentBase::WasRecentlyRendered(float RecentlyRenderedTolerance) const
+{
+	const USkeletalMeshComponent* MeshComponent = GetCachedMeshComponent();
+	return !MeshComponent || MeshComponent->WasRecentlyRendered(RecentlyRenderedTolerance);
+}

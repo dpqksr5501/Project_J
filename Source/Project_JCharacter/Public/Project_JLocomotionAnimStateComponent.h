@@ -69,10 +69,7 @@ public:
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
 protected:
-	bool IsInAirForAnimation() const;
 	bool ShouldUseLocalInputState() const;
-	bool IsDedicatedServerContext() const;
-	bool WasRecentlyRendered() const;
 	bool IsSprintRequestedForAnimation() const;
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
