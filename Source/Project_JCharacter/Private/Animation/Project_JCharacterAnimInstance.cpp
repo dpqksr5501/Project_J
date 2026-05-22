@@ -139,17 +139,11 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 	bUseMultiThreadedAnimationUpdate = true;
 }
 
-void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
-{
-	Super::NativeInitializeAnimation();
-	CacheOwnerReferences();
-}
-
 void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!OwningPawn || OwningPawn != TryGetPawnOwner())
+	if (NeedsOwnerReferenceRefresh())
 	{
 		CacheOwnerReferences();
 	}
@@ -176,7 +170,7 @@ void UProject_JCharacterAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProx
 
 void UProject_JCharacterAnimInstance::HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType)
 {
-	if (!OwningPawn || OwningPawn != TryGetPawnOwner())
+	if (NeedsOwnerReferenceRefresh())
 	{
 		CacheOwnerReferences();
 	}
@@ -216,14 +210,6 @@ const FProject_JAnimThreadSafeData& UProject_JCharacterAnimInstance::GetThreadSa
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::GetCurrentActivePoseSearchDatabaseThreadSafe() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetCurrentActiveDatabase();
-}
-
-void UProject_JCharacterAnimInstance::CacheOwnerReferences()
-{
-	OwningPawn = TryGetPawnOwner();
-	OwningCharacter = Cast<ACharacter>(OwningPawn);
-	OwningPlayerCharacter = Cast<AProject_JPlayerCharacter>(OwningCharacter);
-	LocomotionAnimStateComponent = OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionAnimStateComponent() : nullptr;
 }
 
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeData(float DeltaSeconds) const

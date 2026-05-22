@@ -6,6 +6,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/TrajectoryTypes.h"
+#include "Animation/Project_JCharacterAnimInstanceBase.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
 #include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -386,14 +387,13 @@ private:
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstance : public UAnimInstance
+class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstance : public UProject_JCharacterAnimInstanceBase
 {
 	GENERATED_BODY()
 
 public:
 	UProject_JCharacterAnimInstance();
 
-	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
@@ -408,7 +408,6 @@ public:
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
 
 protected:
-	void CacheOwnerReferences();
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
 	void CopyMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void CopyAnimStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
@@ -627,18 +626,6 @@ public:
 	float CombatAimAlpha = 1.0f;
 
 private:
-	UPROPERTY(Transient)
-	TObjectPtr<APawn> OwningPawn = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<ACharacter> OwningCharacter = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
-
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float MotionMatchingUpdateAccumulator = 0.0f;
 };
