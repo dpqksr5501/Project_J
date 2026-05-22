@@ -80,12 +80,15 @@ protected:
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
 	FVector2D GetMovementInputForState() const;
+	FVector UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
 	void StartFallOffStart();
 	void StopFallOffStart();
 	bool IsLandingStateActive() const;
+	void ClearJumpStartTimers();
+	void ClearFallOffStartTimers();
 	void ClearLandingTimers();
 	void FinishLandingImmediately();
 	FVector CalculateMoveWorldDirection(const FVector2D& MoveInput) const;

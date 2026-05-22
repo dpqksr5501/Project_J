@@ -60,27 +60,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 		HiddenRemoteUpdateAccumulator = 0.0f;
 	}
 
-	const FVector Velocity = PlayerOwner->GetVelocity();
-	const FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
-	VerticalSpeed = Velocity.Z;
-	GroundSpeed = HorizontalVelocity.Size();
-	bWantsSprint = IsSprintRequestedForAnimation();
-	const bool bHasSprintMovementIntent = CachedMoveInput.Size() > MoveInputDeadZone || GroundSpeed > IdleSpeedThreshold;
-	bUseSprintLocomotion =
-		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		bWantsSprint &&
-		bHasSprintMovementIntent;
-	GroundMotionModeElapsedTime += DeltaTime;
-	if (bIsJumping)
-	{
-		JumpStartElapsedTime += DeltaTime;
-	}
-
-	if (bIsLanding)
-	{
-		LandingElapsedTime += DeltaTime;
-		bCanExitLanding = LandingElapsedTime >= LandingMinHoldTime;
-	}
+	const FVector HorizontalVelocity = UpdateMovementSnapshot(DeltaTime, *PlayerOwner);
 
 	const bool bMovementReportsInAir = IsInAirForAnimation();
 
@@ -108,13 +88,8 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 
 	const bool bHadLandingState = IsLandingStateActive();
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpTimerHandle);
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
-	}
+	ClearJumpStartTimers();
+	ClearFallOffStartTimers();
 	ClearLandingTimers();
 	StopFallOffStart();
 	bIsLanding = false;
@@ -164,13 +139,8 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 		FinishLanding();
 	}
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpTimerHandle);
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
-	}
+	ClearJumpStartTimers();
+	ClearFallOffStartTimers();
 	ClearLandingTimers();
 
 	StopFallOffStart();
@@ -229,11 +199,7 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 	}
 
 	const float ImpactFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(PlayerOwner->GetVelocity().Z));
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpTimerHandle);
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-	}
+	ClearJumpStartTimers();
 	bJumpStartFinishPendingExit = false;
 	bIgnoreNextLandingForJumpStart = false;
 	StartLanding(ImpactFallSpeed, true, true);
@@ -485,6 +451,24 @@ bool UProject_JLocomotionAnimStateComponent::IsLandingStateActive() const
 	return bIsLanding || bLandingRequested || bCanEnterLand;
 }
 
+void UProject_JLocomotionAnimStateComponent::ClearJumpStartTimers()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(JumpTimerHandle);
+		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::ClearFallOffStartTimers()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
+		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
+	}
+}
+
 void UProject_JLocomotionAnimStateComponent::ClearLandingTimers()
 {
 	if (UWorld* World = GetWorld())
@@ -710,6 +694,33 @@ FVector2D UProject_JLocomotionAnimStateComponent::GetMovementInputForState() con
 	return FVector2D(LocalVelocity.Y, LocalVelocity.X).GetClampedToMaxSize(1.0f);
 }
 
+FVector UProject_JLocomotionAnimStateComponent::UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner)
+{
+	const FVector Velocity = PlayerOwner.GetVelocity();
+	const FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
+	VerticalSpeed = Velocity.Z;
+	GroundSpeed = HorizontalVelocity.Size();
+	bWantsSprint = IsSprintRequestedForAnimation();
+	const bool bHasSprintMovementIntent = CachedMoveInput.Size() > MoveInputDeadZone || GroundSpeed > IdleSpeedThreshold;
+	bUseSprintLocomotion =
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		bWantsSprint &&
+		bHasSprintMovementIntent;
+	GroundMotionModeElapsedTime += DeltaTime;
+	if (bIsJumping)
+	{
+		JumpStartElapsedTime += DeltaTime;
+	}
+
+	if (bIsLanding)
+	{
+		LandingElapsedTime += DeltaTime;
+		bCanExitLanding = LandingElapsedTime >= LandingMinHoldTime;
+	}
+
+	return HorizontalVelocity;
+}
+
 void UProject_JLocomotionAnimStateComponent::UpdateLocalAirState(bool bIsCurrentlyInAir)
 {
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
@@ -756,11 +767,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 	if (bIsJumping || bIsFallOffStart)
 	{
 		StopFallOffStart();
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(JumpTimerHandle);
-			World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		}
+		ClearJumpStartTimers();
 	}
 
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
@@ -889,10 +896,9 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
 
 	bIsInAir = true;
 	bIsFallOffStart = true;
+	ClearFallOffStartTimers();
 	if (UWorld* World = GetWorld())
 	{
-		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
 		World->GetTimerManager().SetTimer(FallOffStartTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
 	}
 	bFallOffStartFinishPendingExit = false;
@@ -908,11 +914,7 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
 
 void UProject_JLocomotionAnimStateComponent::StopFallOffStart()
 {
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
-	}
+	ClearFallOffStartTimers();
 	bIsFallOffStart = false;
 	bFallOffStartFinishPendingExit = false;
 }
@@ -937,11 +939,7 @@ void UProject_JLocomotionAnimStateComponent::CompleteJumpStart()
 		return;
 	}
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpTimerHandle);
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-	}
+	ClearJumpStartTimers();
 
 	bJumpStartFinishPendingExit = false;
 	bIsJumping = false;
