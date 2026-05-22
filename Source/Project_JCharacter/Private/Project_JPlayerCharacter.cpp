@@ -3,6 +3,8 @@
 #include "Project_JPlayerCharacter.h"
 #include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -47,6 +49,9 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	GetMesh()->SetAnimInstanceClass(UProject_JCharacterAnimInstance::StaticClass());
+
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -59,6 +64,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
+	MotionMatchingTrajectoryComponent = CreateDefaultSubobject<UProject_JMotionMatchingTrajectoryComponent>(TEXT("MotionMatchingTrajectoryComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -14,6 +14,9 @@ class UAnimMontage;
 struct FInputActionValue;
 class UProject_JCombatComponent;
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JMotionMatchingTrajectoryComponent;
+class UChooserTable;
+class UPoseSearchDatabase;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -41,6 +44,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** Owns locomotion animation state consumed by AnimInstance and Chooser Tables. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProject_JLocomotionAnimStateComponent* LocomotionAnimStateComponent;
+
+	/** Native trajectory buffer used by PoseSearch motion matching. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UProject_JMotionMatchingTrajectoryComponent* MotionMatchingTrajectoryComponent;
 	
 protected:
 
@@ -190,6 +197,9 @@ public:
 	/** Returns LocomotionAnimStateComponent subobject **/
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
+	/** Returns MotionMatchingTrajectoryComponent subobject **/
+	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
+
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding(bool bForceFinish = false);
 
@@ -204,6 +214,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintRotationRateYaw = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UPoseSearchDatabase> MotionMatchingDefaultDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UPoseSearchDatabase> MotionMatchingIdleDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;

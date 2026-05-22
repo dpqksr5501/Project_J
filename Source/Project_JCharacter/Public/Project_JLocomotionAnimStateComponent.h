@@ -25,6 +25,15 @@ enum class EProject_JLocomotionAnimEvent : uint8
 	AttackFinished
 };
 
+UENUM(BlueprintType)
+enum class EProject_JGroundMotionMode : uint8
+{
+	Idle,
+	Start,
+	Locomotion,
+	Stop
+};
+
 /**
  * Owns the player locomotion state consumed by animation graphs and Chooser Tables.
  *
@@ -83,8 +92,11 @@ protected:
 	void CompleteJumpStart();
 	void CompleteFallOffStart();
 	void CompleteLanding();
+	void EnterGroundMotionMode(EProject_JGroundMotionMode NewMode);
+	void RefreshGroundMotionFlags();
 	void UpdateMovementRequestState(float DeltaTime);
 	void UpdateRemoteMovementRequestState(float DeltaTime);
+	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void ClearMovementRequests();
 	void ClearTransientAnimationRequests();
@@ -120,23 +132,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;
 
+	/** Fallback only. GroundStartFinished notify should normally leave Start before this timeout. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartToLoopDelay = 2.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float MinStartDatabaseTime = 0.12f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartIntentGraceTime = 0.05f;
+	float StartFallbackDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
 
+	/** Fallback only. StopFinished notify should normally leave Stop before this timeout. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StopRequestDuration = 0.35f;
+	float StopFallbackDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintLocomotionSpeedThreshold = 600.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Finished", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float FinishedExitWindow = 0.10f;
@@ -229,6 +240,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	float GroundSpeed = 0.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Ground")
+	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Ground")
+	bool bUseGroundLocomotionState = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	float MoveInputSize = 0.0f;
 
@@ -256,11 +273,26 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bGroundStartFinished = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bUseGroundLocomotionDatabase = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bWantsSprint = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	bool bUseSprintLocomotion = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	bool bStartWasSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	bool bStopWasSprinting = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bStopRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
+	bool bUseStopDatabase = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bIsStopping = false;
@@ -317,8 +349,6 @@ private:
 	FTimerHandle LandingTimerHandle;
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
-	FTimerHandle GroundStartExitTimerHandle;
-	FTimerHandle StopExitTimerHandle;
 	FTimerHandle JumpStartExitTimerHandle;
 	FTimerHandle FallOffStartExitTimerHandle;
 	FTimerHandle LandingExitTimerHandle;
@@ -326,11 +356,12 @@ private:
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
 	bool bWasInAir = false;
+	bool bPendingStartRequest = false;
+	bool bPendingStopRequest = false;
 	bool bSuppressFallOffStart = false;
 	bool bRealLandingEventRequested = false;
 	bool bSprintInputHeld = false;
-	bool bStartWindowActive = false;
-	float StartWindowElapsedTime = 0.0f;
+	float GroundMotionModeElapsedTime = 0.0f;
 	float JumpStartElapsedTime = 0.0f;
 	bool bIgnoreNextLandingForJumpStart = false;
 	bool bResolvedMoveInputLastUpdate = false;

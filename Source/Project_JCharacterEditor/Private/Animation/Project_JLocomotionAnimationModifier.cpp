@@ -3,8 +3,63 @@
 #include "Animation/Project_JLocomotionAnimationModifier.h"
 
 #include "Animation/AnimSequence.h"
+#include "Animation/AnimTypes.h"
 #include "Animation/Project_JLocomotionAnimNotify.h"
 #include "AnimationBlueprintLibrary.h"
+
+namespace
+{
+bool HasMatchingLocomotionNotify(
+	UAnimSequence* AnimationSequence,
+	FName NotifyTrackName,
+	EProject_JLocomotionAnimEvent EventType,
+	float NotifyTime,
+	float TimeTolerance)
+{
+	TArray<FAnimNotifyEvent> ExistingEvents;
+	UAnimationBlueprintLibrary::GetAnimationNotifyEventsForTrack(AnimationSequence, NotifyTrackName, ExistingEvents);
+
+	for (const FAnimNotifyEvent& ExistingEvent : ExistingEvents)
+	{
+		const UProject_JLocomotionAnimNotify* ExistingNotify = Cast<UProject_JLocomotionAnimNotify>(ExistingEvent.Notify);
+		if (!ExistingNotify || ExistingNotify->EventType != EventType)
+		{
+			continue;
+		}
+
+		if (FMath::Abs(ExistingEvent.GetTime() - NotifyTime) <= TimeTolerance)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void AddLocomotionNotifyIfMissing(
+	UAnimSequence* AnimationSequence,
+	FName NotifyTrackName,
+	EProject_JLocomotionAnimEvent EventType,
+	float NotifyTime,
+	float TimeTolerance)
+{
+	if (HasMatchingLocomotionNotify(AnimationSequence, NotifyTrackName, EventType, NotifyTime, TimeTolerance))
+	{
+		return;
+	}
+
+	UAnimNotify* Notify = UAnimationBlueprintLibrary::AddAnimationNotifyEvent(
+		AnimationSequence,
+		NotifyTrackName,
+		NotifyTime,
+		UProject_JLocomotionAnimNotify::StaticClass());
+
+	if (UProject_JLocomotionAnimNotify* LocomotionNotify = Cast<UProject_JLocomotionAnimNotify>(Notify))
+	{
+		LocomotionNotify->EventType = EventType;
+	}
+}
+}
 
 void UProject_JLocomotionAnimationModifier::OnApply_Implementation(UAnimSequence* AnimationSequence)
 {
@@ -29,15 +84,22 @@ void UProject_JLocomotionAnimationModifier::OnApply_Implementation(UAnimSequence
 	for (const FProject_JLocomotionNotifyRule& Rule : NotifyRules)
 	{
 		const float NotifyTime = FMath::Clamp(Rule.Time, 0.0f, SequenceLength);
-		UAnimNotify* Notify = UAnimationBlueprintLibrary::AddAnimationNotifyEvent(
+		AddLocomotionNotifyIfMissing(
 			AnimationSequence,
 			NotifyTrackName,
+			Rule.EventType,
 			NotifyTime,
-			UProject_JLocomotionAnimNotify::StaticClass());
+			DuplicateTimeTolerance);
+	}
 
-		if (UProject_JLocomotionAnimNotify* LocomotionNotify = Cast<UProject_JLocomotionAnimNotify>(Notify))
-		{
-			LocomotionNotify->EventType = Rule.EventType;
-		}
+	if (bAutoAddNotify)
+	{
+		const float AutoNotifyTime = FMath::Clamp(SequenceLength * AutoNotifyNormalizedTime, 0.0f, SequenceLength);
+		AddLocomotionNotifyIfMissing(
+			AnimationSequence,
+			NotifyTrackName,
+			AutoNotifyEventType,
+			AutoNotifyTime,
+			DuplicateTimeTolerance);
 	}
 }

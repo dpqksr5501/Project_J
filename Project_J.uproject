@@ -64,6 +64,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "BlendStack",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		}

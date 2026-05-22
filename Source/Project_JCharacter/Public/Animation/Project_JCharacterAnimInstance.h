@@ -4,215 +4,360 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimInstanceProxy.h"
+#include "Animation/TrajectoryTypes.h"
+#include "PoseSearch/AnimNode_MotionMatching.h"
+#include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
 class ACharacter;
 class APawn;
 class AProject_JPlayerCharacter;
+class UChooserTable;
+class UPoseSearchDatabase;
 class UProject_JLocomotionAnimStateComponent;
+struct FAnimNode_Base;
+struct FAnimationUpdateContext;
 
-/**
- * Native animation data bridge for Project J characters.
- *
- * Keep Anim Blueprints focused on state machines, choosers, and graph logic.
- * Character state is copied here once per animation update instead of being
- * rebuilt in every ABP Event Graph.
- */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float DeltaTime = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector Velocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector Acceleration = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector AccelerationDirection = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FTransformTrajectory Trajectory;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float AccelerationRatio = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float GroundSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float VerticalSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float LastFallSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float LandStartFallSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float MoveInputSize = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float MoveInputHeldTime = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float MoveInputTurnAngle = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float MovementDirection = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float AimYaw = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float AimPitch = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float AimOffsetAlpha = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsAccelerating = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bWasAccelerating = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bStoppedAcceleratingThisFrame = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsInAir = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsJumping = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsLanding = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bUseHeavyLand = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bHasMoveInput = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bHasTrajectory = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bSharpTurnRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bStartRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bStopRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bWantsSprint = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bUseSprintLocomotion = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bStartWasSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bStopWasSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsCombatMode = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsAttacking = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsDodging = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsHitReacting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsPlayingCombatIntro = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
+};
+
+USTRUCT()
+struct PROJECT_JCHARACTER_API FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
+{
+	GENERATED_BODY()
+
+	FProject_JCharacterAnimInstanceProxy()
+	{
+		LinkNativeGraph();
+	}
+	FProject_JCharacterAnimInstanceProxy(UAnimInstance* InAnimInstance)
+		: FAnimInstanceProxy(InAnimInstance)
+	{
+		LinkNativeGraph();
+	}
+
+	void QueueGameThreadData(
+		const FProject_JAnimThreadSafeData& InData,
+		UPoseSearchDatabase* InSelectedDatabase,
+		bool bInMotionMatchingEnabled,
+		bool bInUpdateMotionMatchingThisFrame);
+	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
+	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
+
+protected:
+	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
+	virtual void UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& InContext, FAnimNode_Base* InRootNode, FName InLayerName) override;
+	virtual FAnimNode_Base* GetCustomRootNode() override;
+	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
+
+private:
+	void LinkNativeGraph();
+	void ApplySelectedDatabaseToNativeNode();
+
+	FProject_JAnimThreadSafeData PendingGameThreadData;
+	FProject_JAnimThreadSafeData ThreadSafeData;
+	bool bMotionMatchingEnabled = true;
+	bool bUpdateMotionMatchingThisFrame = true;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
+
+	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
+	FAnimNode_MotionMatching NativeMotionMatchingNode;
+};
+
 UCLASS(Blueprintable, BlueprintType)
 class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
 public:
+	UProject_JCharacterAnimInstance();
+
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Animation|Movement")
-	void MarkGroundStartFinished();
-
-	UFUNCTION(BlueprintCallable, Category = "Animation|Landing")
-	void MarkLandingFinished();
+	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
+	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Animation|Events")
 	void HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType);
 
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	const FProject_JAnimThreadSafeData& GetThreadSafeData() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
+	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
+
 protected:
-	void CacheOwningCharacter();
-	void ResetAnimationState();
-	void UpdateFromGenericCharacter(float DeltaSeconds);
-	void UpdateFromPlayerCharacter(float DeltaSeconds, const AProject_JPlayerCharacter& PlayerCharacter);
-	void UpdateAimOffset();
-	float CalculateAimOffsetAlpha() const;
+	void CacheOwnerReferences();
+	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
+	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
+	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
+	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
+	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
+	float CalculateMotionMatchingUpdateInterval() const;
+	float CalculateViewerDistanceSquared() const;
+	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
+	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
+	bool ShouldSkipNativeUpdate(float DeltaSeconds);
 
 public:
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
-	TObjectPtr<APawn> OwningPawn = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
-	TObjectPtr<ACharacter> OwningCharacter = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UPoseSearchDatabase> DefaultPoseSearchDatabase = nullptr;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
-	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UPoseSearchDatabase> DefaultIdlePoseSearchDatabase = nullptr;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|References")
-	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UPoseSearchDatabase> CurrentActivePoseSearchDatabase = nullptr;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	float DeltaTime = 0.0f;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimThreadSafeData ThreadSafeData;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	float GroundSpeed = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserGroundSpeed = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	float VerticalSpeed = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserVerticalSpeed = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	float LastFallSpeed = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserAccelerationRatio = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	float LandStartGroundSpeed = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserMoveInputSize = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	float LandStartFallSpeed = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserMoveInputHeldTime = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bLandWasSprinting = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserMoveInputTurnAngle = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bLandWasMoving = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserLastFallSpeed = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bUseHeavyLand = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserLandStartFallSpeed = 0.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	bool bIsInAir = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserHasMoveInput = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	bool bIsPhysicallyInAir = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserStartRequested = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	bool bIsJumping = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserStopRequested = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Movement")
-	bool bIsFallOffStart = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserSharpTurnRequested = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bIsLanding = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserWantsSprint = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bLandingRequested = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintLocomotion = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bCanEnterLand = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRunStart = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bCanEnterGround = true;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintStart = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bCanExitLanding = true;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRunStop = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Landing")
-	bool bLandingFinished = true;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintStop = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float MoveInputSize = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRunLocomotion = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float MoveInputHeldTime = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintLocomotionRow = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
-	float MoveInputTurnAngle = 0.0f;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserStartWasSprinting = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bHasMoveInput = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserStopWasSprinting = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
-	bool bSharpTurnRequested = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsInAir = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bPrevHasMoveInput = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsJumping = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bStartRequested = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsLanding = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bUseStartDatabase = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseHeavyLand = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bGroundStartFinished = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsCombatMode = false;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bStopRequested = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsIdle = true;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	bool bIsStopping = false;
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	EProject_JGroundMotionMode ChooserGroundMotionMode = EProject_JGroundMotionMode::Idle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bSkipDedicatedServerAnimationDataUpdate = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float HiddenRemoteUpdateInterval = 0.10f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RecentlyRenderedTolerance = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NearMotionMatchingDistance = 2500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MidMotionMatchingDistance = 6000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float FarMotionMatchingDistance = 12000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MidMotionMatchingUpdateInterval = 0.033f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float FarMotionMatchingUpdateInterval = 0.083f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bDisableMotionMatchingBeyondFarDistance = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float GenericMoveInputSpeedThreshold = 3.0f;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float StopIntentSpeedThreshold = 80.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float StopRequestDuration = 0.35f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input")
-	float IdleSpeedThreshold = 30.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
-	float SharpTurnAngleThreshold = 60.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Input|Turn")
-	float SharpTurnMinSpeed = 500.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
-	bool bIsSprinting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Sprint")
-	bool bWantsSprint = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bIsCombatMode = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bIsAttacking = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bIsDodging = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bIsHitReacting = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bIsPlayingCombatIntro = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	bool bPendingCombatModeFromIntro = false;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	float MovementDirection = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	float CombatInputForward = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	float CombatInputRight = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	float CombatForwardSpeed = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Combat")
-	float CombatRightSpeed = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
-	float AimYaw = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
-	float AimPitch = 0.0f;
-
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|AimOffset")
-	float AimOffsetAlpha = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintLocomotionSpeedThreshold = 600.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MaxAimYaw = 90.0f;
@@ -231,4 +376,20 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
+
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<APawn> OwningPawn = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ACharacter> OwningCharacter = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+
+	float HiddenRemoteUpdateAccumulator = 0.0f;
+	float MotionMatchingUpdateAccumulator = 0.0f;
 };

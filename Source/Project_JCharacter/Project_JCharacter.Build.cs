@@ -16,6 +16,12 @@ public class Project_JCharacter : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
+			"PoseSearch",
+			"Chooser",
+			"BlendStack",
+			"MotionTrajectory",
+			"AnimationCore",
+			"AnimGraphRuntime",
 			"Project_JCore",
 			"Project_JGAS"
 		});

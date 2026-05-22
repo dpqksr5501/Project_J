@@ -33,6 +33,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion")
 	bool bClearExistingProjectJTrack = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Auto")
+	bool bAutoAddNotify = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Auto")
+	EProject_JLocomotionAnimEvent AutoNotifyEventType = EProject_JLocomotionAnimEvent::StopFinished;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Auto", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float AutoNotifyNormalizedTime = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Auto", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DuplicateTimeTolerance = 0.03f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion")
 	TArray<FProject_JLocomotionNotifyRule> NotifyRules;
 };

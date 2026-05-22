@@ -64,6 +64,12 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	VerticalSpeed = Velocity.Z;
 	GroundSpeed = HorizontalVelocity.Size();
 	bWantsSprint = IsSprintRequestedForAnimation();
+	const bool bHasSprintMovementIntent = CachedMoveInput.Size() > MoveInputDeadZone || GroundSpeed > IdleSpeedThreshold;
+	bUseSprintLocomotion =
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		bWantsSprint &&
+		bHasSprintMovementIntent;
+	GroundMotionModeElapsedTime += DeltaTime;
 	if (bIsJumping)
 	{
 		JumpStartElapsedTime += DeltaTime;
@@ -268,29 +274,14 @@ void UProject_JLocomotionAnimStateComponent::FinishLanding(bool bForceFinish)
 
 void UProject_JLocomotionAnimStateComponent::FinishStop()
 {
-	if (!bStopRequested && !bIsStopping)
-	{
-		return;
-	}
+	bStopFinishPendingExit = false;
 
-	if (FinishedExitWindow > 0.0f && (bStopRequested || bIsStopping) && !bStopFinishPendingExit)
+	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
 	{
-		bStopFinishPendingExit = true;
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().SetTimer(
-				StopExitTimerHandle,
-				this,
-				&UProject_JLocomotionAnimStateComponent::CompleteStop,
-				FinishedExitWindow,
-				false);
-		}
-		return;
-	}
-
-	if (!bStopFinishPendingExit)
-	{
-		CompleteStop();
+		EnterGroundMotionMode(
+			bHasMoveInput || GroundSpeed > StopIntentSpeedThreshold
+				? EProject_JGroundMotionMode::Locomotion
+				: EProject_JGroundMotionMode::Idle);
 	}
 }
 
@@ -372,77 +363,75 @@ void UProject_JLocomotionAnimStateComponent::FinishFallOffStart()
 
 void UProject_JLocomotionAnimStateComponent::MarkGroundStartFinished()
 {
-	if (!bStartWindowActive && !bUseStartDatabase && !bPendingGroundStartFinish)
-	{
-		return;
-	}
-
-	if (MoveInputHeldTime < MinStartDatabaseTime)
-	{
-		bPendingGroundStartFinish = true;
-		return;
-	}
-
 	bPendingGroundStartFinish = false;
-	if (FinishedExitWindow > 0.0f && !bGroundStartFinishPendingExit)
-	{
-		bGroundStartFinishPendingExit = true;
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().SetTimer(
-				GroundStartExitTimerHandle,
-				this,
-				&UProject_JLocomotionAnimStateComponent::CompleteGroundStart,
-				FinishedExitWindow,
-				false);
-		}
-		return;
-	}
+	bGroundStartFinishPendingExit = false;
 
-	if (!bGroundStartFinishPendingExit)
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
 	{
-		CompleteGroundStart();
+		EnterGroundMotionMode(
+			bHasMoveInput || GroundSpeed > IdleSpeedThreshold
+				? EProject_JGroundMotionMode::Locomotion
+				: EProject_JGroundMotionMode::Idle);
 	}
 }
 
 void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMoveInput)
 {
-	CachedMoveInput = InMoveInput;
+	const bool bHadMoveInput = CachedMoveInput.Size() > MoveInputDeadZone || bHasMoveInput || bResolvedMoveInputLastUpdate;
+	CachedMoveInput = InMoveInput.GetClampedToMaxSize(1.0f);
+	const bool bHasNewMoveInput = CachedMoveInput.Size() > MoveInputDeadZone;
+
+	if (bHasNewMoveInput && !bHadMoveInput)
+	{
+		bPendingStartRequest = true;
+	}
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
 {
+	const bool bHadMoveInput = CachedMoveInput.Size() > MoveInputDeadZone || bHasMoveInput || bResolvedMoveInputLastUpdate;
 	CachedMoveInput = FVector2D::ZeroVector;
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
 	bHasMoveInput = false;
-	bPrevHasMoveInput = false;
-	bResolvedMoveInputLastUpdate = false;
-	bStartRequested = false;
-	bUseStartDatabase = false;
-	bStartWindowActive = false;
-	StartWindowElapsedTime = 0.0f;
-	bGroundStartFinished = false;
-	bPendingGroundStartFinish = false;
-	bGroundStartFinishPendingExit = false;
 	PreviousMoveInputForTurn = FVector2D::ZeroVector;
 
-	if (UWorld* World = GetWorld())
+	if (bHadMoveInput)
 	{
-		World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
+		bPendingStopRequest = true;
 	}
+
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStarted()
 {
 	bSprintInputHeld = true;
 	bWantsSprint = true;
+	bUseSprintLocomotion =
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(CachedMoveInput.Size() > MoveInputDeadZone || GroundSpeed > IdleSpeedThreshold);
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+	{
+		bStartWasSprinting = true;
+	}
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 {
 	bSprintInputHeld = false;
 	bWantsSprint = false;
+	bUseSprintLocomotion = false;
+
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+	{
+		bStartWasSprinting = false;
+		EnterGroundMotionMode(
+			CachedMoveInput.Size() > MoveInputDeadZone || bHasMoveInput
+				? EProject_JGroundMotionMode::Locomotion
+				: (GroundSpeed > StopIntentSpeedThreshold
+					? EProject_JGroundMotionMode::Stop
+					: EProject_JGroundMotionMode::Idle));
+	}
 }
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeRealLandingEventRequested()
@@ -531,6 +520,63 @@ bool UProject_JLocomotionAnimStateComponent::IsSprintRequestedForAnimation() con
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	return bSprintInputHeld || (PlayerOwner && PlayerOwner->bIsSprinting);
+}
+
+void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGroundMotionMode NewMode)
+{
+	if (GroundMotionMode == NewMode)
+	{
+		RefreshGroundMotionFlags();
+		return;
+	}
+
+	GroundMotionMode = NewMode;
+	GroundMotionModeElapsedTime = 0.0f;
+	bPendingGroundStartFinish = false;
+	bGroundStartFinishPendingExit = false;
+	bStopFinishPendingExit = false;
+
+	if (NewMode == EProject_JGroundMotionMode::Start)
+	{
+		bStartWasSprinting = IsSprintRequestedForAnimation() || GroundSpeed >= SprintLocomotionSpeedThreshold;
+	}
+	else if (NewMode == EProject_JGroundMotionMode::Stop)
+	{
+		bStopWasSprinting = bUseSprintLocomotion || bWantsSprint || GroundSpeed >= SprintLocomotionSpeedThreshold;
+	}
+	else if (NewMode == EProject_JGroundMotionMode::Idle)
+	{
+		bStartWasSprinting = false;
+		bStopWasSprinting = false;
+	}
+	else if (NewMode == EProject_JGroundMotionMode::Locomotion)
+	{
+		bStartWasSprinting = false;
+		bStopWasSprinting = false;
+	}
+
+	RefreshGroundMotionFlags();
+}
+
+void UProject_JLocomotionAnimStateComponent::RefreshGroundMotionFlags()
+{
+	bStartRequested = GroundMotionMode == EProject_JGroundMotionMode::Start;
+	bUseStartDatabase = bStartRequested;
+	bGroundStartFinished = !bStartRequested;
+	bUseGroundLocomotionDatabase = GroundMotionMode == EProject_JGroundMotionMode::Locomotion;
+	bStopRequested = GroundMotionMode == EProject_JGroundMotionMode::Stop;
+	bUseStopDatabase = bStopRequested;
+	bIsStopping = bStopRequested;
+	bUseGroundLocomotionState =
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion ||
+		GroundMotionMode == EProject_JGroundMotionMode::Start ||
+		GroundMotionMode == EProject_JGroundMotionMode::Stop ||
+		bHasMoveInput ||
+		GroundSpeed > IdleSpeedThreshold;
+	bUseSprintLocomotion =
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		bWantsSprint &&
+		(bHasMoveInput || GroundSpeed > IdleSpeedThreshold);
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsRemoteInAirForAnimation(bool bMovementReportsInAir) const
@@ -779,40 +825,15 @@ void UProject_JLocomotionAnimStateComponent::StopFallOffStart()
 
 void UProject_JLocomotionAnimStateComponent::CompleteGroundStart()
 {
-	if (!bStartWindowActive && !bUseStartDatabase && !bPendingGroundStartFinish && !bGroundStartFinishPendingExit)
-	{
-		return;
-	}
-
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-	}
-
-	bGroundStartFinishPendingExit = false;
 	bPendingGroundStartFinish = false;
-	bGroundStartFinished = true;
-	bUseStartDatabase = false;
-	bStartWindowActive = false;
-	StartWindowElapsedTime = 0.0f;
+	bGroundStartFinishPendingExit = false;
+	MarkGroundStartFinished();
 }
 
 void UProject_JLocomotionAnimStateComponent::CompleteStop()
 {
-	if (!bStopRequested && !bIsStopping && !bStopFinishPendingExit)
-	{
-		return;
-	}
-
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(StopExitTimerHandle);
-	}
-
 	bStopFinishPendingExit = false;
-	bStopRequested = false;
-	bIsStopping = false;
-	StopElapsedTime = 0.0f;
+	FinishStop();
 }
 
 void UProject_JLocomotionAnimStateComponent::CompleteJumpStart()
@@ -887,17 +908,11 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 		bHasMoveInput = bMoveInputStillHeld;
 		bPrevHasMoveInput = bMoveInputStillHeld;
 		bResolvedMoveInputLastUpdate = bMoveInputStillHeld;
-		bGroundStartFinished = true;
-		bPendingGroundStartFinish = false;
-		bGroundStartFinishPendingExit = false;
-		bUseStartDatabase = false;
-		bStartWindowActive = false;
-		StartWindowElapsedTime = 0.0f;
-
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-		}
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+	}
+	else
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 	}
 
 	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
@@ -953,8 +968,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
 	MoveInputTurnAngle = 0.0f;
 	bSharpTurnRequested = false;
-	bStartRequested = false;
-	bStopRequested = false;
 
 	if (bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
 	{
@@ -965,108 +978,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
 	}
 
-	const bool bCanRequestGroundMove = !bIsInAir && !bIsLanding && !bIsJumping && !bIsFallOffStart;
-	if (!bCanRequestGroundMove)
-	{
-		ClearMovementRequests();
-		bResolvedMoveInputLastUpdate = bHasMoveInput;
-		PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
-		return;
-	}
-
-	const bool bStartedMoving = !bPrevHasMoveInput && bHasMoveInput;
-	const bool bStoppedMoving = bPrevHasMoveInput && !bHasMoveInput;
-
-	if (bStartedMoving)
-	{
-		MoveInputHeldTime = 0.0f;
-		StartWindowElapsedTime = 0.0f;
-		bGroundStartFinished = false;
-		bPendingGroundStartFinish = false;
-		bGroundStartFinishPendingExit = false;
-		bStartWindowActive = true;
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-		}
-	}
-	if (!bHasMoveInput)
-	{
-		bGroundStartFinished = false;
-		bPendingGroundStartFinish = false;
-		bGroundStartFinishPendingExit = false;
-		bStartWindowActive = false;
-		StartWindowElapsedTime = 0.0f;
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-		}
-	}
-	else
-	{
-		FinishStop();
-	}
-
-	if (bPendingGroundStartFinish && MoveInputHeldTime >= MinStartDatabaseTime)
-	{
-		MarkGroundStartFinished();
-	}
-
-	bSharpTurnRequested =
-		PlayerOwner->bIsSprinting &&
-		bHasMoveInput &&
-		bPrevHasMoveInput &&
-		GroundSpeed >= SharpTurnMinSpeed &&
-		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
-
-	bStartRequested = bStartedMoving;
-	if (bStoppedMoving && GroundSpeed > StopIntentSpeedThreshold)
-	{
-		if (UWorld* World = GetWorld())
-		{
-			World->GetTimerManager().ClearTimer(StopExitTimerHandle);
-		}
-		bStopFinishPendingExit = false;
-		bStopRequested = true;
-		bIsStopping = true;
-		StopElapsedTime = 0.0f;
-	}
-	else if (bIsStopping)
-	{
-		bStopRequested = true;
-		StopElapsedTime += DeltaTime;
-		if (StopElapsedTime >= StopRequestDuration || GroundSpeed <= IdleSpeedThreshold)
-		{
-			FinishStop();
-		}
-	}
-
-	if (bStartWindowActive && bHasMoveInput)
-	{
-		StartWindowElapsedTime += DeltaTime;
-	}
-
-	if (bHasMoveInput && !bGroundStartFinished && StartWindowElapsedTime >= StartToLoopDelay)
-	{
-		bGroundStartFinished = true;
-		bPendingGroundStartFinish = false;
-		bStartWindowActive = false;
-		StartWindowElapsedTime = 0.0f;
-	}
-	else if (bHasMoveInput && !bGroundStartFinished)
-	{
-		bStartWindowActive = true;
-	}
-	else
-	{
-		bStartWindowActive = false;
-		StartWindowElapsedTime = 0.0f;
-	}
-
-	bUseStartDatabase = bStartWindowActive && !bGroundStartFinished && StartWindowElapsedTime >= StartIntentGraceTime;
-
-	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
-	bResolvedMoveInputLastUpdate = bHasMoveInput;
+	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, true);
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(float DeltaTime)
@@ -1078,14 +990,95 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(fl
 	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
 
 	bSharpTurnRequested = false;
-	bStartRequested = false;
-	bStopRequested = false;
-	bIsStopping = false;
-	bUseStartDatabase = false;
-	bStartWindowActive = false;
-	bPendingGroundStartFinish = false;
 	MoveInputTurnAngle = 0.0f;
-	bGroundStartFinished = bHasMoveInput;
+
+	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, false);
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn)
+{
+	const bool bCanRequestGroundMove = !bIsInAir && !bIsLanding && !bIsJumping && !bIsFallOffStart;
+	if (!bCanRequestGroundMove)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
+		bResolvedMoveInputLastUpdate = bHasMoveInput;
+		PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
+		bPendingStartRequest = false;
+		bPendingStopRequest = false;
+		return;
+	}
+
+	const bool bStartEdge = bPendingStartRequest || (bHasMoveInput && !bPrevHasMoveInput);
+	const bool bStopEdge = bPendingStopRequest || (!bHasMoveInput && bPrevHasMoveInput && GroundSpeed > StopIntentSpeedThreshold);
+	bPendingStartRequest = false;
+	bPendingStopRequest = false;
+
+	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	bSharpTurnRequested =
+		bAllowSharpTurn &&
+		PlayerOwner &&
+		PlayerOwner->bIsSprinting &&
+		bHasMoveInput &&
+		bPrevHasMoveInput &&
+		GroundSpeed >= SharpTurnMinSpeed &&
+		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
+
+	if (bStartEdge)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
+	}
+	else if (bStopEdge)
+	{
+		StopElapsedTime = 0.0f;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
+	}
+	else if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+	{
+		if (bWantsSprint && bHasMoveInput)
+		{
+			bStartWasSprinting = true;
+		}
+
+		if (!bHasMoveInput)
+		{
+			EnterGroundMotionMode(
+				GroundSpeed > StopIntentSpeedThreshold
+					? EProject_JGroundMotionMode::Stop
+					: EProject_JGroundMotionMode::Idle);
+		}
+		else if (GroundMotionModeElapsedTime >= StartFallbackDuration)
+		{
+			EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
+		}
+		else
+		{
+			RefreshGroundMotionFlags();
+		}
+	}
+	else if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
+	{
+		StopElapsedTime += DeltaTime;
+		if (bHasMoveInput)
+		{
+			EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
+		}
+		else if (StopElapsedTime >= StopFallbackDuration)
+		{
+			EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
+		}
+		else
+		{
+			RefreshGroundMotionFlags();
+		}
+	}
+	else
+	{
+		EnterGroundMotionMode(
+			bHasMoveInput || GroundSpeed > IdleSpeedThreshold
+				? EProject_JGroundMotionMode::Locomotion
+				: EProject_JGroundMotionMode::Idle);
+	}
+
 	PreviousMoveInputForTurn = bHasMoveInput ? MoveInput : FVector2D::ZeroVector;
 	bResolvedMoveInputLastUpdate = bHasMoveInput;
 }
@@ -1139,11 +1132,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 {
 	bStartRequested = false;
-	bStopRequested = false;
-	bUseStartDatabase = false;
-	bStartWindowActive = false;
-	StartWindowElapsedTime = 0.0f;
-	bGroundStartFinished = false;
+	bPendingStartRequest = false;
+	bPendingStopRequest = false;
 	bPendingGroundStartFinish = false;
 	bGroundStartFinishPendingExit = false;
 	bStopFinishPendingExit = false;
@@ -1152,23 +1142,15 @@ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 	StopElapsedTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
-
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(StopExitTimerHandle);
-	}
+	EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
 {
 	bSharpTurnRequested = false;
 	bStartRequested = false;
-	bStopRequested = false;
-	bIsStopping = false;
-	bUseStartDatabase = false;
-	bStartWindowActive = false;
-	StartWindowElapsedTime = 0.0f;
+	bPendingStartRequest = false;
+	bPendingStopRequest = false;
 	bPendingGroundStartFinish = false;
 	bGroundStartFinishPendingExit = false;
 	bStopFinishPendingExit = false;
@@ -1177,11 +1159,10 @@ void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
 	bLandingFinishPendingExit = false;
 	bRealLandingEventRequested = false;
 	bResolvedMoveInputLastUpdate = bHasMoveInput;
+	EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
 
 	if (UWorld* World = GetWorld())
 	{
-		World->GetTimerManager().ClearTimer(GroundStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(StopExitTimerHandle);
 		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
 		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
