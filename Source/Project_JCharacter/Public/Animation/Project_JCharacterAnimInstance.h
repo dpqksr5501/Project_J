@@ -409,10 +409,11 @@ public:
 
 protected:
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
-	void CopyMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
-	void CopyAnimStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
-	bool CopyPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	bool FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);

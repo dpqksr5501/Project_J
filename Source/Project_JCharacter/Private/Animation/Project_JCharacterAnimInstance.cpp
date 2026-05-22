@@ -222,29 +222,23 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 		return Data;
 	}
 
-	CopyMovementThreadSafeData(Data);
+	FillMovementThreadSafeData(Data);
 	if (LocomotionAnimStateComponent)
 	{
-		CopyAnimStateThreadSafeData(Data);
+		FillLocomotionStateThreadSafeData(Data);
 	}
 	else
 	{
 		ApplyGenericMovementFallback(Data);
 	}
 
-	const bool bHasAimData = CopyPlayerThreadSafeData(Data);
-
-	Data.SyncLegacyFieldsFromStructuredData();
-	if (bHasAimData)
-	{
-		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
-		Data.SyncLegacyFieldsFromStructuredData();
-	}
+	const bool bHasAimData = FillPlayerThreadSafeData(Data);
+	FinalizeThreadSafeData(Data, bHasAimData);
 
 	return Data;
 }
 
-void UProject_JCharacterAnimInstance::CopyMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+void UProject_JCharacterAnimInstance::FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
 	const FVector CharacterVelocity = OwningCharacter->GetVelocity();
 	Data.Movement.Velocity = CharacterVelocity;
@@ -266,7 +260,7 @@ void UProject_JCharacterAnimInstance::CopyMovementThreadSafeData(FProject_JAnimT
 	Data.Movement.bStoppedAcceleratingThisFrame = Data.Movement.bWasAccelerating && !Data.Movement.bIsAccelerating;
 }
 
-void UProject_JCharacterAnimInstance::CopyAnimStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
 	const UProject_JLocomotionAnimStateComponent* AnimState = LocomotionAnimStateComponent.Get();
 	if (!AnimState)
@@ -308,7 +302,7 @@ void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAni
 		: EProject_JGroundMotionMode::Idle;
 }
 
-bool UProject_JCharacterAnimInstance::CopyPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
 	if (!OwningPlayerCharacter)
 	{
@@ -345,6 +339,16 @@ bool UProject_JCharacterAnimInstance::CopyPlayerThreadSafeData(FProject_JAnimThr
 	}
 
 	return false;
+}
+
+void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const
+{
+	Data.SyncLegacyFieldsFromStructuredData();
+	if (bHasAimData)
+	{
+		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
+		Data.SyncLegacyFieldsFromStructuredData();
+	}
 }
 
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
