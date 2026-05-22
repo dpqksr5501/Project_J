@@ -260,34 +260,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding(bool bForceFinish = false);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides movement speed."))
 	float WalkSpeed = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides sprint speed."))
 	float SprintSpeed = 700.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides walk rotation rate."))
 	float WalkRotationRateYaw = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides sprint rotation rate."))
 	float SprintRotationRateYaw = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile", meta = (ToolTip = "Preferred top-level animation profile. New characters should assign this and leave the migration fallback fields empty."))
 	TObjectPtr<UProject_JCharacterAnimProfile> CharacterAnimProfile = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Locomotion")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback locomotion profile used only when CharacterAnimProfile does not provide one."))
 	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback PSD used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
 	TObjectPtr<UPoseSearchDatabase> MotionMatchingDefaultDatabase = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback idle PSD used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
 	TObjectPtr<UPoseSearchDatabase> MotionMatchingIdleDatabase = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback Chooser Table used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
 	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
