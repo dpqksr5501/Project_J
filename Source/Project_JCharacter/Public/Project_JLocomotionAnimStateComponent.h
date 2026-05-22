@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+#include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Project_JLocomotionAnimStateComponent.generated.h"
 
 class AProject_JPlayerCharacter;
@@ -41,20 +41,19 @@ enum class EProject_JGroundMotionMode : uint8
  * keep animation-facing locomotion separate from player input and combat flow.
  */
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Character), meta=(BlueprintSpawnableComponent))
-class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UActorComponent
+class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UProject_JLocomotionAnimStateComponentBase
 {
 	GENERATED_BODY()
 
 public:
 	UProject_JLocomotionAnimStateComponent();
 
-	virtual void BeginPlay() override;
-
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
 	void HandleReplicatedJumpStarted();
 	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
+	void HandleReplicatedMoveStopped();
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void FinishStop();
@@ -70,10 +69,6 @@ public:
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
 protected:
-	void CacheOwnerReferences();
-	AProject_JPlayerCharacter* GetPlayerOwner() const;
-	UCharacterMovementComponent* GetCachedMovementComponent() const;
-	UAbilitySystemComponent* GetCachedAbilitySystemComponent() const;
 	bool IsInAirForAnimation() const;
 	bool ShouldUseLocalInputState() const;
 	bool IsDedicatedServerContext() const;
@@ -361,21 +356,6 @@ public:
 	float CombatRightSpeed = 0.0f;
 
 private:
-	UPROPERTY(Transient)
-	TObjectPtr<AProject_JPlayerCharacter> CachedPlayerOwner = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UCharacterMovementComponent> CachedMovementComponent = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UCapsuleComponent> CachedCapsuleComponent = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UAbilitySystemComponent> CachedAbilitySystemComponent = nullptr;
-
-	UPROPERTY(Transient)
-	TObjectPtr<USkeletalMeshComponent> CachedMeshComponent = nullptr;
-
 	FTimerHandle LandingTimerHandle;
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
@@ -408,4 +388,6 @@ private:
 	bool bFallOffStartFinishPendingExit = false;
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
+	bool bRemoteMoveReleasedWhileAirborne = false;
+	bool bLandingIgnoresRemoteGroundSpeed = false;
 };

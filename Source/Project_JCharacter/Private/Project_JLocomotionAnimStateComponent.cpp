@@ -13,14 +13,6 @@
 
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-}
-
-void UProject_JLocomotionAnimStateComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	CacheOwnerReferences();
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
@@ -199,6 +191,9 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 		return;
 	}
 
+	bRemoteMoveReleasedWhileAirborne = false;
+	bLandingIgnoresRemoteGroundSpeed = false;
+
 	if (IsLandingStateActive())
 	{
 		bStartWasSprinting = bWasSprintingForStart;
@@ -215,6 +210,36 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 
 	bStartWasSprinting = bWasSprintingForStart;
 	bPendingStartRequest = true;
+}
+
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
+{
+	if (ShouldUseLocalInputState())
+	{
+		return;
+	}
+
+	bHasMoveInput = false;
+	bPrevHasMoveInput = false;
+	bResolvedMoveInputLastUpdate = false;
+	MoveInputSize = 0.0f;
+	MoveInputHeldTime = 0.0f;
+	PreviousMoveInputForTurn = FVector2D::ZeroVector;
+	bPendingStartRequest = false;
+
+	const bool bInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
+	if (bInAirState)
+	{
+		bRemoteMoveReleasedWhileAirborne = true;
+	}
+
+	if (IsLandingStateActive())
+	{
+		bLandWasMoving = false;
+		bLandWasSprinting = false;
+		bLandingIgnoresRemoteGroundSpeed = true;
+		FinishLandingImmediately();
+	}
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
@@ -576,30 +601,6 @@ void UProject_JLocomotionAnimStateComponent::HandleAnimationEvent(EProject_JLoco
 	}
 }
 
-void UProject_JLocomotionAnimStateComponent::CacheOwnerReferences()
-{
-	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
-	CachedMovementComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCharacterMovement() : nullptr;
-	CachedCapsuleComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCapsuleComponent() : nullptr;
-	CachedAbilitySystemComponent = CachedPlayerOwner ? CachedPlayerOwner->GetAbilitySystemComponent() : nullptr;
-	CachedMeshComponent = CachedPlayerOwner ? CachedPlayerOwner->GetMesh() : nullptr;
-}
-
-AProject_JPlayerCharacter* UProject_JLocomotionAnimStateComponent::GetPlayerOwner() const
-{
-	return CachedPlayerOwner ? CachedPlayerOwner.Get() : Cast<AProject_JPlayerCharacter>(GetOwner());
-}
-
-UCharacterMovementComponent* UProject_JLocomotionAnimStateComponent::GetCachedMovementComponent() const
-{
-	return CachedMovementComponent.Get();
-}
-
-UAbilitySystemComponent* UProject_JLocomotionAnimStateComponent::GetCachedAbilitySystemComponent() const
-{
-	return CachedAbilitySystemComponent.Get();
-}
-
 bool UProject_JLocomotionAnimStateComponent::IsInAirForAnimation() const
 {
 	const UCharacterMovementComponent* MoveComp = GetCachedMovementComponent();
@@ -921,12 +922,15 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	LastFallSpeed = ImpactFallSpeed;
 	LandStartGroundSpeed = GroundSpeed;
 	LandStartFallSpeed = ImpactFallSpeed;
+	const bool bUseRemoteStandLandingOverride = !ShouldUseLocalInputState() && bRemoteMoveReleasedWhileAirborne;
 	const bool bLandingHasMoveInput = GetMovementInputForState().Size() > MoveInputDeadZone || bHasMoveInput;
 	const bool bLandingHasMovementIntent = ShouldUseLocalInputState()
 		? bLandingHasMoveInput
-		: (bLandingHasMoveInput || LandStartGroundSpeed > IdleSpeedThreshold);
+		: (!bUseRemoteStandLandingOverride && (bLandingHasMoveInput || LandStartGroundSpeed > IdleSpeedThreshold));
 	bLandWasMoving = bLandingHasMovementIntent;
 	bLandWasSprinting = bLandWasMoving && IsSprintRequestedForAnimation();
+	bLandingIgnoresRemoteGroundSpeed = bUseRemoteStandLandingOverride;
+	bRemoteMoveReleasedWhileAirborne = false;
 	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
@@ -1079,10 +1083,13 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 
-	const bool bMoveInputStillHeld = GetMovementInputForState().Size() > MoveInputDeadZone;
+	const bool bIgnoreRemoteMotionForLandingFinish = bLandingIgnoresRemoteGroundSpeed;
+	const bool bMoveInputStillHeld = !bIgnoreRemoteMotionForLandingFinish && GetMovementInputForState().Size() > MoveInputDeadZone;
 	const bool bForcedLocomotionFinish = bForceLandingFinishToLocomotion;
-	const bool bShouldEnterLocomotion = bForcedLocomotionFinish || bMoveInputStillHeld || GroundSpeed > IdleSpeedThreshold;
+	const bool bAllowGroundSpeedLocomotion = !bIgnoreRemoteMotionForLandingFinish;
+	const bool bShouldEnterLocomotion = bForcedLocomotionFinish || bMoveInputStillHeld || (bAllowGroundSpeedLocomotion && GroundSpeed > IdleSpeedThreshold);
 	bForceLandingFinishToLocomotion = false;
+	bLandingIgnoresRemoteGroundSpeed = false;
 
 	if (bShouldEnterLocomotion)
 	{

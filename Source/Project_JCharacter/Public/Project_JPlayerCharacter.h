@@ -124,6 +124,7 @@ protected:
 	void UpdateMoveStartReplicationState(const FVector2D& MoveInput);
 	void ResetMoveStartReplicationState();
 	void DispatchMoveStartAnimationEvent(bool bWasSprintingForStart);
+	void DispatchMoveStopAnimationEvent();
 	void DispatchJumpStartAnimationEvent();
 	void DispatchFallOffStartAnimationEvent();
 
@@ -135,6 +136,12 @@ protected:
 
 	UFUNCTION()
 	void OnRep_MoveStartEventCounter();
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyMoveStopped();
+
+	UFUNCTION()
+	void OnRep_MoveStopEventCounter();
 
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyJumpStarted();
@@ -298,6 +305,9 @@ private:
 
 	UPROPERTY(Replicated)
 	bool bMoveStartWasSprinting = false;
+
+	UPROPERTY(ReplicatedUsing = OnRep_MoveStopEventCounter)
+	uint8 MoveStopEventCounter = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_JumpStartEventCounter)
 	uint8 JumpStartEventCounter = 0;

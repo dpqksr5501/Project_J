@@ -74,6 +74,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bIsSprinting, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, MoveStartEventCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bMoveStartWasSprinting, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, MoveStopEventCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, JumpStartEventCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, FallOffStartEventCounter, COND_SkipOwner);
 }
@@ -141,11 +142,17 @@ void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
 
 void AProject_JPlayerCharacter::StopMoveInput()
 {
+	const bool bHadMoveInput = bHadMoveInputForReplication;
 	ResetMoveStartReplicationState();
 
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->ClearMoveInput();
+	}
+
+	if (bHadMoveInput)
+	{
+		DispatchMoveStopAnimationEvent();
 	}
 }
 
@@ -348,6 +355,32 @@ void AProject_JPlayerCharacter::OnRep_MoveStartEventCounter()
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->HandleReplicatedMoveStarted(bMoveStartWasSprinting);
+	}
+}
+
+void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
+{
+	if (HasAuthority())
+	{
+		++MoveStopEventCounter;
+		ForceNetUpdate();
+		return;
+	}
+
+	ServerNotifyMoveStopped();
+}
+
+void AProject_JPlayerCharacter::ServerNotifyMoveStopped_Implementation()
+{
+	++MoveStopEventCounter;
+	ForceNetUpdate();
+}
+
+void AProject_JPlayerCharacter::OnRep_MoveStopEventCounter()
+{
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
 	}
 }
 
