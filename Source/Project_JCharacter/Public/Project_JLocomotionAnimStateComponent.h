@@ -53,6 +53,7 @@ public:
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
 	void HandleReplicatedJumpStarted();
+	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
@@ -81,12 +82,14 @@ protected:
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
 	FVector2D GetMovementInputForState() const;
+	FVector2D GetLocalMovementInputForState() const;
+	FVector2D GetRemoteMovementInputForState() const;
 	FVector UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
 	bool UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence);
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
-	void StartFallOffStart();
+	void StartFallOffStart(bool bReplicateEvent = true);
 	void StopFallOffStart();
 	bool IsLandingStateActive() const;
 	void ClearJumpStartTimers();
@@ -106,6 +109,8 @@ protected:
 	void RefreshGroundMotionFlags();
 	void UpdateMovementRequestState(float DeltaTime);
 	void UpdateRemoteMovementRequestState(float DeltaTime);
+	void RefreshMovementInputState(float DeltaTime, const FVector2D& MoveInput, bool bTrackTurnAngle);
+	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void ClearMovementRequests();

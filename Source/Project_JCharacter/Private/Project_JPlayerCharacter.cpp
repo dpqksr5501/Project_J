@@ -75,6 +75,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, MoveStartEventCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bMoveStartWasSprinting, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, JumpStartEventCounter, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, FallOffStartEventCounter, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -216,6 +217,11 @@ void AProject_JPlayerCharacter::DoJumpEnd()
 {
 	// signal the character to stop jumping
 	StopJumping();
+}
+
+void AProject_JPlayerCharacter::NotifyFallOffStartedForAnimation()
+{
+	DispatchFallOffStartAnimationEvent();
 }
 
 void AProject_JPlayerCharacter::FinishFallOffStart()
@@ -368,6 +374,32 @@ void AProject_JPlayerCharacter::OnRep_JumpStartEventCounter()
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
+	}
+}
+
+void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
+{
+	if (HasAuthority())
+	{
+		++FallOffStartEventCounter;
+		ForceNetUpdate();
+		return;
+	}
+
+	ServerNotifyFallOffStarted();
+}
+
+void AProject_JPlayerCharacter::ServerNotifyFallOffStarted_Implementation()
+{
+	++FallOffStartEventCounter;
+	ForceNetUpdate();
+}
+
+void AProject_JPlayerCharacter::OnRep_FallOffStartEventCounter()
+{
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
 	}
 }
 

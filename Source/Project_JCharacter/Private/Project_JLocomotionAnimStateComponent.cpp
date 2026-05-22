@@ -168,6 +168,30 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 	}
 }
 
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()
+{
+	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner || ShouldUseLocalInputState())
+	{
+		return;
+	}
+
+	if (IsLandingStateActive())
+	{
+		return;
+	}
+
+	if (bIsJumping)
+	{
+		CompleteJumpStart();
+	}
+
+	bSuppressFallOffStart = false;
+	StartFallOffStart(false);
+	bIsPhysicallyInAir = true;
+	RemoteAirborneTime = 0.0f;
+}
+
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
 {
 	if (ShouldUseLocalInputState())
@@ -697,15 +721,20 @@ bool UProject_JLocomotionAnimStateComponent::IsRemoteGroundedByProbe() const
 
 FVector2D UProject_JLocomotionAnimStateComponent::GetMovementInputForState() const
 {
+	return ShouldUseLocalInputState() ? GetLocalMovementInputForState() : GetRemoteMovementInputForState();
+}
+
+FVector2D UProject_JLocomotionAnimStateComponent::GetLocalMovementInputForState() const
+{
+	return CachedMoveInput.GetClampedToMaxSize(1.0f);
+}
+
+FVector2D UProject_JLocomotionAnimStateComponent::GetRemoteMovementInputForState() const
+{
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
 	{
 		return FVector2D::ZeroVector;
-	}
-
-	if (ShouldUseLocalInputState())
-	{
-		return CachedMoveInput.GetClampedToMaxSize(1.0f);
 	}
 
 	FVector HorizontalVelocity = PlayerOwner->GetVelocity();
@@ -789,11 +818,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 		RemoteAirborneTime >= RemoteLandingMinAirTime ||
 		LastFallSpeed >= RemoteLandingMinFallSpeed;
 
-	if (bIsFallOffStart)
-	{
-		StopFallOffStart();
-	}
-
 	if (UpdateRemoteJumpStartState(DeltaTime, bIsCurrentlyInAir, bHadRemoteAirborneEvidence))
 	{
 		return;
@@ -802,8 +826,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
 	bIsJumping = false;
 	bJumpStartFinishPendingExit = false;
-	bIsFallOffStart = false;
-	bSuppressFallOffStart = false;
+	if (!bIsFallOffStart)
+	{
+		bSuppressFallOffStart = false;
+	}
 
 	if (bIsCurrentlyInAir)
 	{
@@ -829,9 +855,9 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 	}
 	else if (!bIsLanding && !bLandingRequested)
 	{
-		bIsInAir = false;
+		bIsInAir = bIsFallOffStart;
 		bCanEnterLand = false;
-		bCanEnterGround = true;
+		bCanEnterGround = !bIsFallOffStart;
 		RemoteAirborneTime = 0.0f;
 		LastFallSpeed = 0.0f;
 	}
@@ -945,7 +971,7 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	bRealLandingEventRequested = bBroadcastRealLandingEvent && LastFallSpeed > RealLandingEventSpeedThreshold;
 }
 
-void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
+void UProject_JLocomotionAnimStateComponent::StartFallOffStart(bool bReplicateEvent)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
@@ -956,6 +982,11 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart()
 	bIsInAir = true;
 	bIsFallOffStart = true;
 	ClearFallOffStartTimers();
+	if (bReplicateEvent && ShouldUseLocalInputState())
+	{
+		PlayerOwner->NotifyFallOffStartedForAnimation();
+	}
+
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(FallOffStartTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
@@ -1111,55 +1142,11 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 		return;
 	}
 
-	bPrevHasMoveInput = bResolvedMoveInputLastUpdate;
-
-	const FVector2D MoveInput = GetMovementInputForState();
-	MoveInputSize = MoveInput.Size();
-	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
-	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
-	MoveInputTurnAngle = 0.0f;
-	bSharpTurnRequested = false;
-
-	if (bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
+	const FVector2D MoveInput = GetLocalMovementInputForState();
+	RefreshMovementInputState(DeltaTime, MoveInput, true);
+	if (TryFinishLandingFromMovementInput(MoveInput, true))
 	{
-		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
-		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
-		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
-		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
-		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
-	}
-
-	if (IsLandingStateActive() && !bLandWasMoving && bHasMoveInput)
-	{
-		bLandWasMoving = true;
-		FinishLandingImmediately();
 		return;
-	}
-
-	if (IsLandingStateActive() &&
-		bLandWasSprinting &&
-		bWantsSprint &&
-		bHasMoveInput &&
-		LandingElapsedTime >= SprintLandingTurnCancelMinTime)
-	{
-		const FVector CurrentLandingMoveWorldDirection = CalculateMoveWorldDirection(MoveInput);
-
-		const FVector ReferenceLandingMoveWorldDirection = !InitialLandingMoveWorldDirection.IsNearlyZero()
-			? InitialLandingMoveWorldDirection
-			: PreviousLandingMoveWorldDirection;
-
-		if (!ReferenceLandingMoveWorldDirection.IsNearlyZero() && !CurrentLandingMoveWorldDirection.IsNearlyZero())
-		{
-			const float DirectionDot = FMath::Clamp(FVector::DotProduct(ReferenceLandingMoveWorldDirection, CurrentLandingMoveWorldDirection), -1.0f, 1.0f);
-			const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
-			if (DirectionAngle >= SprintLandingTurnCancelAngle)
-			{
-				FinishLandingImmediately();
-				return;
-			}
-		}
-
-		PreviousLandingMoveWorldDirection = CurrentLandingMoveWorldDirection;
 	}
 
 	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, true);
@@ -1167,16 +1154,68 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 
 void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(float DeltaTime)
 {
+	const FVector2D MoveInput = GetRemoteMovementInputForState();
+	RefreshMovementInputState(DeltaTime, MoveInput, false);
+
+	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, false);
+}
+
+void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float DeltaTime, const FVector2D& MoveInput, bool bTrackTurnAngle)
+{
 	bPrevHasMoveInput = bResolvedMoveInputLastUpdate;
-	const FVector2D MoveInput = GetMovementInputForState();
 	MoveInputSize = MoveInput.Size();
 	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
 	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
-
-	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
+	bSharpTurnRequested = false;
 
-	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, false);
+	if (bTrackTurnAngle && bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
+	{
+		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
+		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
+		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
+		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
+		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+	}
+}
+
+bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel)
+{
+	if (IsLandingStateActive() && !bLandWasMoving && bHasMoveInput)
+	{
+		bLandWasMoving = true;
+		FinishLandingImmediately();
+		return true;
+	}
+
+	if (!bAllowSprintTurnCancel ||
+		!IsLandingStateActive() ||
+		!bLandWasSprinting ||
+		!bWantsSprint ||
+		!bHasMoveInput ||
+		LandingElapsedTime < SprintLandingTurnCancelMinTime)
+	{
+		return false;
+	}
+
+	const FVector CurrentLandingMoveWorldDirection = CalculateMoveWorldDirection(MoveInput);
+	const FVector ReferenceLandingMoveWorldDirection = !InitialLandingMoveWorldDirection.IsNearlyZero()
+		? InitialLandingMoveWorldDirection
+		: PreviousLandingMoveWorldDirection;
+
+	if (!ReferenceLandingMoveWorldDirection.IsNearlyZero() && !CurrentLandingMoveWorldDirection.IsNearlyZero())
+	{
+		const float DirectionDot = FMath::Clamp(FVector::DotProduct(ReferenceLandingMoveWorldDirection, CurrentLandingMoveWorldDirection), -1.0f, 1.0f);
+		const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
+		if (DirectionAngle >= SprintLandingTurnCancelAngle)
+		{
+			FinishLandingImmediately();
+			return true;
+		}
+	}
+
+	PreviousLandingMoveWorldDirection = CurrentLandingMoveWorldDirection;
+	return false;
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn)

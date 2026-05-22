@@ -125,6 +125,7 @@ protected:
 	void ResetMoveStartReplicationState();
 	void DispatchMoveStartAnimationEvent(bool bWasSprintingForStart);
 	void DispatchJumpStartAnimationEvent();
+	void DispatchFallOffStartAnimationEvent();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewIsSprinting);
@@ -140,6 +141,12 @@ protected:
 
 	UFUNCTION()
 	void OnRep_JumpStartEventCounter();
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyFallOffStarted();
+
+	UFUNCTION()
+	void OnRep_FallOffStartEventCounter();
 
 	UFUNCTION()
 	void OnRep_IsSprinting();
@@ -165,6 +172,8 @@ public:
 	/** Handles jump pressed inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
+
+	void NotifyFallOffStartedForAnimation();
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
 	void FinishFallOffStart();
@@ -292,6 +301,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_JumpStartEventCounter)
 	uint8 JumpStartEventCounter = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_FallOffStartEventCounter)
+	uint8 FallOffStartEventCounter = 0;
 
 	bool bHadMoveInputForReplication = false;
 };
