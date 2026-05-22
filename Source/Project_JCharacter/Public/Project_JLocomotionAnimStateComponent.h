@@ -106,6 +106,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float LandingRequestDuration = 2.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float StandLandingRequestDuration = 3.5f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LandingMinHoldTime = 0.0f;
 
@@ -164,6 +167,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnMinSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintLandingTurnCancelAngle = 35.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintLandingTurnCancelMinTime = 0.05f;
 
 	/** Remote proxies do not have authoritative local input, so derive request state from replicated movement instead. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network")
@@ -362,6 +371,8 @@ private:
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
+	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
+	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	bool bWasInAir = false;
 	bool bPendingStartRequest = false;
 	bool bPendingStopRequest = false;

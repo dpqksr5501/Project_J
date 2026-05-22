@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
@@ -802,9 +803,27 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	LastFallSpeed = ImpactFallSpeed;
 	LandStartGroundSpeed = GroundSpeed;
 	LandStartFallSpeed = ImpactFallSpeed;
-	bLandWasSprinting = IsSprintRequestedForAnimation();
-	bLandWasMoving = LandStartGroundSpeed > IdleSpeedThreshold || bHasMoveInput;
+	const bool bLandingHasMoveInput = GetMovementInputForState().Size() > MoveInputDeadZone || bHasMoveInput;
+	const bool bLandingHasMovementIntent = ShouldUseLocalInputState()
+		? bLandingHasMoveInput
+		: (bLandingHasMoveInput || LandStartGroundSpeed > IdleSpeedThreshold);
+	bLandWasMoving = bLandingHasMovementIntent;
+	bLandWasSprinting = bLandWasMoving && IsSprintRequestedForAnimation();
 	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
+	InitialLandingMoveWorldDirection = FVector::ZeroVector;
+	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
+	if (ShouldUseLocalInputState() && bLandWasMoving)
+	{
+		const FVector2D LandingMoveInput = GetMovementInputForState();
+		if (LandingMoveInput.SizeSquared() > FMath::Square(MoveInputDeadZone))
+		{
+			const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
+			const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
+			const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
+			InitialLandingMoveWorldDirection = (ForwardDirection * LandingMoveInput.Y + RightDirection * LandingMoveInput.X).GetSafeNormal();
+			PreviousLandingMoveWorldDirection = InitialLandingMoveWorldDirection;
+		}
+	}
 	bIsLanding = true;
 	bLandingRequested = true;
 	bCanEnterLand = true;
@@ -831,8 +850,9 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 
 	if (UWorld* World = GetWorld())
 	{
+		const float LandingFallbackDuration = bLandWasMoving ? LandingRequestDuration : StandLandingRequestDuration;
 		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
-		World->GetTimerManager().SetTimer(LandingTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished, FMath::Max(0.05f, LandingRequestDuration), false);
+		World->GetTimerManager().SetTimer(LandingTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished, FMath::Max(0.05f, LandingFallbackDuration), false);
 	}
 	bLandingFinishPendingExit = false;
 
@@ -955,6 +975,8 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	LastFallSpeed = 0.0f;
 	RemoteAirborneTime = 0.0f;
 	LandingElapsedTime = 0.0f;
+	InitialLandingMoveWorldDirection = FVector::ZeroVector;
+	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 
 	const bool bMoveInputStillHeld = GetMovementInputForState().Size() > MoveInputDeadZone;
 	if (bMoveInputStillHeld || GroundSpeed > IdleSpeedThreshold)
@@ -1030,6 +1052,54 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
 		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+	}
+
+	if ((bIsLanding || bLandingRequested || bCanEnterLand) && !bLandWasMoving && bHasMoveInput)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(LandingTimerHandle);
+			World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
+		}
+		bLandWasMoving = true;
+		bLandingFinishPendingExit = false;
+		OnLandingTimerFinished();
+		return;
+	}
+
+	if ((bIsLanding || bLandingRequested || bCanEnterLand) &&
+		bLandWasSprinting &&
+		bWantsSprint &&
+		bHasMoveInput &&
+		LandingElapsedTime >= SprintLandingTurnCancelMinTime)
+	{
+		const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
+		const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
+		const FVector CurrentLandingMoveWorldDirection = (ForwardDirection * MoveInput.Y + RightDirection * MoveInput.X).GetSafeNormal();
+
+		const FVector ReferenceLandingMoveWorldDirection = !InitialLandingMoveWorldDirection.IsNearlyZero()
+			? InitialLandingMoveWorldDirection
+			: PreviousLandingMoveWorldDirection;
+
+		if (!ReferenceLandingMoveWorldDirection.IsNearlyZero() && !CurrentLandingMoveWorldDirection.IsNearlyZero())
+		{
+			const float DirectionDot = FMath::Clamp(FVector::DotProduct(ReferenceLandingMoveWorldDirection, CurrentLandingMoveWorldDirection), -1.0f, 1.0f);
+			const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
+			if (DirectionAngle >= SprintLandingTurnCancelAngle)
+			{
+				if (UWorld* World = GetWorld())
+				{
+					World->GetTimerManager().ClearTimer(LandingTimerHandle);
+					World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
+				}
+				bLandingFinishPendingExit = false;
+				OnLandingTimerFinished();
+				return;
+			}
+		}
+
+		PreviousLandingMoveWorldDirection = CurrentLandingMoveWorldDirection;
 	}
 
 	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, true);
