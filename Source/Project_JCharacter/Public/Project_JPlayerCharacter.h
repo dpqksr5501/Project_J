@@ -14,6 +14,7 @@ class UAnimMontage;
 struct FInputActionValue;
 class UProject_JCombatComponent;
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
 class UChooserTable;
 class UPoseSearchDatabase;
@@ -260,6 +261,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintRotationRateYaw = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
+	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> MotionMatchingDefaultDatabase = nullptr;

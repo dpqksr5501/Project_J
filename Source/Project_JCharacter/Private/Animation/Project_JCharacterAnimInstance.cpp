@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "IObjectChooser.h"
+#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
@@ -377,18 +378,27 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		return nullptr;
 	}
 
-	UPoseSearchDatabase* IdleDatabase = OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingIdleDatabase
-		? OwningPlayerCharacter->MotionMatchingIdleDatabase.Get()
-		: DefaultIdlePoseSearchDatabase.Get();
-	UPoseSearchDatabase* LocomotionDatabase = OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingDefaultDatabase
-		? OwningPlayerCharacter->MotionMatchingDefaultDatabase.Get()
-		: DefaultPoseSearchDatabase.Get();
+	const UProject_JMotionMatchingAssetSet* AssetSet = OwningPlayerCharacter
+		? OwningPlayerCharacter->MotionMatchingAssetSet.Get()
+		: nullptr;
+	UPoseSearchDatabase* IdleDatabase = AssetSet && AssetSet->IdlePoseSearchDatabase
+		? AssetSet->IdlePoseSearchDatabase.Get()
+		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingIdleDatabase
+			? OwningPlayerCharacter->MotionMatchingIdleDatabase.Get()
+			: DefaultIdlePoseSearchDatabase.Get());
+	UPoseSearchDatabase* LocomotionDatabase = AssetSet && AssetSet->DefaultPoseSearchDatabase
+		? AssetSet->DefaultPoseSearchDatabase.Get()
+		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingDefaultDatabase
+			? OwningPlayerCharacter->MotionMatchingDefaultDatabase.Get()
+			: DefaultPoseSearchDatabase.Get());
 	UPoseSearchDatabase* SelectedDatabase = Data.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
 		? IdleDatabase
 		: LocomotionDatabase;
-	const UChooserTable* ChooserTable = OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingChooserTable
-		? OwningPlayerCharacter->MotionMatchingChooserTable.Get()
-		: MotionMatchingChooserTable.Get();
+	const UChooserTable* ChooserTable = AssetSet && AssetSet->MotionMatchingChooserTable
+		? AssetSet->MotionMatchingChooserTable.Get()
+		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingChooserTable
+			? OwningPlayerCharacter->MotionMatchingChooserTable.Get()
+			: MotionMatchingChooserTable.Get());
 
 	if (bDisableMotionMatchingBeyondFarDistance && CalculateViewerDistanceSquared() > FMath::Square(FarMotionMatchingDistance))
 	{
