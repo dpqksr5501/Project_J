@@ -118,13 +118,27 @@ protected:
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 
 	void UpdateMaxWalkSpeed();
+	void ApplySprintState(bool bNewIsSprinting);
+	void NotifyMoveStartForRemoteClients();
 	void NotifyJumpStartForRemoteClients();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetSprinting(bool bNewIsSprinting);
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
+
+	UFUNCTION()
+	void OnRep_MoveStartEventCounter();
 
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyJumpStarted();
 
 	UFUNCTION()
 	void OnRep_JumpStartEventCounter();
+
+	UFUNCTION()
+	void OnRep_IsSprinting();
 
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
@@ -224,7 +238,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching")
 	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
+	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;
 
 	// --- Combat States ---
@@ -266,6 +280,14 @@ public:
 	bool bInterruptCombatIntroOnHit = true;
 
 private:
+	UPROPERTY(ReplicatedUsing = OnRep_MoveStartEventCounter)
+	uint8 MoveStartEventCounter = 0;
+
+	UPROPERTY(Replicated)
+	bool bMoveStartWasSprinting = false;
+
 	UPROPERTY(ReplicatedUsing = OnRep_JumpStartEventCounter)
 	uint8 JumpStartEventCounter = 0;
+
+	bool bHadMoveInputForReplication = false;
 };

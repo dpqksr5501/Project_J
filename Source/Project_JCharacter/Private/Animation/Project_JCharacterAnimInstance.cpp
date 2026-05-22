@@ -3,6 +3,7 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 
 #include "ChooserFunctionLibrary.h"
+#include "ChooserTypes.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -412,6 +413,8 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 
 	FChooserEvaluationContext ChooserContext;
 	ChooserContext.AddObjectParam(const_cast<UProject_JCharacterAnimInstance*>(this));
+	FChooserPlayerSettings ChooserPlayerSettings;
+	ChooserContext.AddStructParam(ChooserPlayerSettings);
 
 	const FInstancedStruct ChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(const_cast<UChooserTable*>(ChooserTable));
 	if (!ChooserObject.IsValid())
@@ -447,16 +450,23 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	bChooserStopRequested = Data.bStopRequested;
 	bChooserSharpTurnRequested = Data.bSharpTurnRequested;
 	bChooserWantsSprint = Data.bWantsSprint;
+	bChooserIsRemoteProxy = OwningPlayerCharacter && !OwningPlayerCharacter->IsLocallyControlled();
 	bChooserUseSprintLocomotion =
 		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.bUseSprintLocomotion;
-	bChooserUseRunStart = Data.bStartRequested && !Data.bStartWasSprinting;
+	bChooserUseRunStart = Data.bStartRequested && !Data.bStartWasSprinting && !bChooserIsRemoteProxy;
+	bChooserUseRemoteRunStart = Data.bStartRequested && !Data.bStartWasSprinting && bChooserIsRemoteProxy;
 	bChooserUseSprintStart = Data.bStartRequested && Data.bStartWasSprinting;
 	bChooserUseRunStop = Data.bStopRequested && !Data.bStopWasSprinting;
 	bChooserUseSprintStop = Data.bStopRequested && Data.bStopWasSprinting;
 	bChooserUseRunLocomotion =
 		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		!Data.bUseSprintLocomotion;
+		!Data.bUseSprintLocomotion &&
+		!bChooserIsRemoteProxy;
+	bChooserUseRemoteRunLocomotion =
+		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		!Data.bUseSprintLocomotion &&
+		bChooserIsRemoteProxy;
 	bChooserUseSprintLocomotionRow =
 		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.bUseSprintLocomotion;

@@ -168,6 +168,17 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 	}
 }
 
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
+{
+	if (ShouldUseLocalInputState())
+	{
+		return;
+	}
+
+	bStartWasSprinting = bWasSprintingForStart;
+	bPendingStartRequest = true;
+}
+
 void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
@@ -764,10 +775,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 		RemoteAirborneTime >= RemoteLandingMinAirTime ||
 		LastFallSpeed >= RemoteLandingMinFallSpeed;
 
-	if (bIsJumping || bIsFallOffStart)
+	if (bIsFallOffStart)
 	{
 		StopFallOffStart();
-		ClearJumpStartTimers();
+	}
+
+	if (UpdateRemoteJumpStartState(DeltaTime, bIsCurrentlyInAir, bHadRemoteAirborneEvidence))
+	{
+		return;
 	}
 
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
@@ -808,6 +823,36 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 	}
 
 	bWasInAir = bIsCurrentlyInAir;
+}
+
+bool UProject_JLocomotionAnimStateComponent::UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence)
+{
+	if (!bIsJumping)
+	{
+		return false;
+	}
+
+	bIsPhysicallyInAir = bIsCurrentlyInAir;
+	bIsInAir = true;
+	bSuppressFallOffStart = false;
+	bCanEnterLand = false;
+	bCanEnterGround = false;
+
+	if (bIsCurrentlyInAir)
+	{
+		RemoteAirborneTime += DeltaTime;
+		LastFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed));
+	}
+	else if (bHadRemoteAirborneEvidence && JumpStartElapsedTime >= JumpStartGroundContactGraceTime && !bIsLanding && !bLandingRequested)
+	{
+		StartLanding(FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed)), false, false);
+		bWasInAir = false;
+		RemoteAirborneTime = 0.0f;
+		return true;
+	}
+
+	bWasInAir = bIsCurrentlyInAir;
+	return true;
 }
 
 void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags)

@@ -53,6 +53,7 @@ public:
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
 	void HandleReplicatedJumpStarted();
+	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void FinishStop();
@@ -83,6 +84,7 @@ protected:
 	FVector UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
+	bool UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence);
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
 	void StartFallOffStart();
 	void StopFallOffStart();

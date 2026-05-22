@@ -486,6 +486,9 @@ public:
 	bool bChooserUseRunStart = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRemoteRunStart = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserUseSprintStart = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
@@ -496,6 +499,9 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserUseRunLocomotion = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRemoteRunLocomotion = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserUseSprintLocomotionRow = false;
@@ -562,6 +568,9 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserIsIdle = true;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsRemoteProxy = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	EProject_JGroundMotionMode ChooserGroundMotionMode = EProject_JGroundMotionMode::Idle;
