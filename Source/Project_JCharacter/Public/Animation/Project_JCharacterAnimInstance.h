@@ -92,10 +92,16 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	bool bIsJumping = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsFallOffStart = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsLanding = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bUseHeavyLand = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bLandWasSprinting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasMoveInput = false;
@@ -298,6 +304,36 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserUseSprintLocomotionRow = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseJumpStart = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseFallOff = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseFallLoop = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseLightLand = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseHeavyLandRow = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRunLightLand = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintLightLand = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseRunHeavyLand = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserUseSprintHeavyLand = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserLandWasSprinting = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	bool bChooserStartWasSprinting = false;

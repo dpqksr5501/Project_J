@@ -191,6 +191,11 @@ void AProject_JPlayerCharacter::DoJumpStart()
 {
 	if (LocomotionAnimStateComponent)
 	{
+		if (!LocomotionAnimStateComponent->CanStartJumpForAnimation())
+		{
+			return;
+		}
+
 		LocomotionAnimStateComponent->HandleJumpStarted();
 	}
 

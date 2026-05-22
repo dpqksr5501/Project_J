@@ -100,7 +100,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	if (!PlayerOwner)
+	if (!PlayerOwner || !CanStartJumpForAnimation())
 	{
 		return;
 	}
@@ -207,7 +207,16 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 		return;
 	}
 
-	if (bIsJumping && (bIgnoreNextLandingForJumpStart || JumpStartElapsedTime <= IgnoreLandingAfterJumpStartTime || PlayerOwner->GetVelocity().Z > 0.0f))
+	const bool bHasRealFallingEvidence =
+		LastFallSpeed >= RemoteLandingMinFallSpeed ||
+		VerticalSpeed < -RemoteLandingMinFallSpeed ||
+		PlayerOwner->GetVelocity().Z < -RemoteLandingMinFallSpeed;
+	const bool bIgnoreEarlyJumpStartLanding =
+		bIgnoreNextLandingForJumpStart &&
+		JumpStartElapsedTime <= IgnoreLandingAfterJumpStartTime &&
+		!bHasRealFallingEvidence;
+
+	if (bIsJumping && (bIgnoreEarlyJumpStartLanding || PlayerOwner->GetVelocity().Z > 0.0f))
 	{
 		bIsInAir = true;
 		bIsPhysicallyInAir = true;
@@ -227,6 +236,7 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
 	}
 	bJumpStartFinishPendingExit = false;
+	bIgnoreNextLandingForJumpStart = false;
 	StartLanding(ImpactFallSpeed, true, true);
 }
 
@@ -294,6 +304,16 @@ void UProject_JLocomotionAnimStateComponent::FinishJumpStart()
 
 	if (bIsLanding || bLandingRequested || bCanEnterLand)
 	{
+		return;
+	}
+
+	if (JumpStartElapsedTime < JumpStartNotifyIgnoreTime)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
+		}
+		bJumpStartFinishPendingExit = false;
 		return;
 	}
 
@@ -432,6 +452,33 @@ void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 					? EProject_JGroundMotionMode::Stop
 					: EProject_JGroundMotionMode::Idle));
 	}
+
+	if ((bIsLanding || bLandingRequested || bCanEnterLand) && bLandWasSprinting)
+	{
+		bLandWasSprinting = false;
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(LandingTimerHandle);
+			World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
+		}
+
+		bLandingFinishPendingExit = false;
+		OnLandingTimerFinished();
+	}
+}
+
+bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
+{
+	const bool bInLandingRecovery = bIsLanding || bLandingRequested || bCanEnterLand;
+	const bool bCanCancelLandingIntoJump =
+		bInLandingRecovery &&
+		!bIsPhysicallyInAir &&
+		!IsInAirForAnimation();
+
+	return
+		!bIsJumping &&
+		!bIsFallOffStart &&
+		(!bInLandingRecovery || bCanCancelLandingIntoJump);
 }
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeRealLandingEventRequested()
@@ -644,7 +691,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocalAirState(bool bIsCurrent
 		LastFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed));
 	}
 
-	if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
+	if (bIsJumping && !bIsCurrentlyInAir && JumpStartElapsedTime >= JumpStartGroundContactGraceTime)
+	{
+		const float ImpactFallSpeed = VerticalSpeed < 0.0f
+			? FMath::Max(LastFallSpeed, FMath::Abs(VerticalSpeed))
+			: LastFallSpeed;
+		StartLanding(ImpactFallSpeed, false, true);
+	}
+	else if (!bWasInAir && bIsCurrentlyInAir && !bIsJumping && !bIsLanding && !bSuppressFallOffStart)
 	{
 		StartFallOffStart();
 	}

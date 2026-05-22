@@ -63,6 +63,7 @@ public:
 	void ClearMoveInput();
 	void HandleSprintStarted();
 	void HandleSprintStopped();
+	bool CanStartJumpForAnimation() const;
 	bool ConsumeRealLandingEventRequested();
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
@@ -103,10 +104,10 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float LandingRequestDuration = 1.8f;
+	float LandingRequestDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float LandingMinHoldTime = 0.16f;
+	float LandingMinHoldTime = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HeavyLandSpeedThreshold = 650.0f;
@@ -115,19 +116,25 @@ public:
 	float RealLandingEventSpeedThreshold = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
-	float JumpStartMaxDuration = 1.0f;
+	float JumpStartMaxDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float JumpStartMinHoldTime = 0.35f;
+	float JumpStartMinHoldTime = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float IgnoreLandingAfterJumpStartTime = 0.25f;
+	float JumpStartNotifyIgnoreTime = 0.08f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float IgnoreLandingAfterJumpStartTime = 0.05f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float JumpStartGroundContactGraceTime = 0.08f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float ReplicatedJumpStartDuration = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float FallOffStartDuration = 0.6f;
+	float FallOffStartDuration = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;

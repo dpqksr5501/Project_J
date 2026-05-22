@@ -220,8 +220,10 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 			(Data.bStartRequested && Data.bWantsSprint && Data.bHasMoveInput);
 		Data.bStopWasSprinting = AnimState->bStopWasSprinting;
 		Data.bIsJumping = AnimState->bIsJumping;
+		Data.bIsFallOffStart = AnimState->bIsFallOffStart;
 		Data.bIsLanding = AnimState->bIsLanding || AnimState->bLandingRequested;
 		Data.bUseHeavyLand = AnimState->bUseHeavyLand;
+		Data.bLandWasSprinting = AnimState->bLandWasSprinting;
 		Data.LastFallSpeed = AnimState->LastFallSpeed;
 		Data.LandStartFallSpeed = AnimState->LandStartFallSpeed;
 		Data.GroundMotionMode = AnimState->GroundMotionMode;
@@ -370,6 +372,41 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	bChooserUseSprintLocomotionRow =
 		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.bUseSprintLocomotion;
+	bChooserUseJumpStart =
+		Data.bIsJumping &&
+		!Data.bIsLanding;
+	bChooserUseFallOff =
+		Data.bIsFallOffStart &&
+		!Data.bIsJumping &&
+		!Data.bIsLanding;
+	bChooserUseFallLoop =
+		Data.bIsInAir &&
+		!Data.bIsJumping &&
+		!Data.bIsFallOffStart &&
+		!Data.bIsLanding;
+	bChooserUseLightLand =
+		Data.bIsLanding &&
+		!Data.bUseHeavyLand;
+	bChooserUseHeavyLandRow =
+		Data.bIsLanding &&
+		Data.bUseHeavyLand;
+	bChooserUseRunLightLand =
+		Data.bIsLanding &&
+		!Data.bUseHeavyLand &&
+		!Data.bLandWasSprinting;
+	bChooserUseSprintLightLand =
+		Data.bIsLanding &&
+		!Data.bUseHeavyLand &&
+		Data.bLandWasSprinting;
+	bChooserUseRunHeavyLand =
+		Data.bIsLanding &&
+		Data.bUseHeavyLand &&
+		!Data.bLandWasSprinting;
+	bChooserUseSprintHeavyLand =
+		Data.bIsLanding &&
+		Data.bUseHeavyLand &&
+		Data.bLandWasSprinting;
+	bChooserLandWasSprinting = Data.bLandWasSprinting;
 	bChooserStartWasSprinting = Data.bStartWasSprinting;
 	bChooserStopWasSprinting = Data.bStopWasSprinting;
 	bChooserIsInAir = Data.bIsInAir;
