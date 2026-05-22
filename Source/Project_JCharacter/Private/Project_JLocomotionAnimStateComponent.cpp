@@ -52,7 +52,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 		HiddenRemoteUpdateAccumulator = 0.0f;
 	}
 
-	const FVector HorizontalVelocity = UpdateMovementSnapshot(DeltaTime, *PlayerOwner);
+	const FProject_JLocomotionRuntimeSnapshot MovementSnapshot = BuildMovementSnapshot(*PlayerOwner);
+	ApplyMovementSnapshot(DeltaTime, MovementSnapshot);
 
 	const bool bMovementReportsInAir = IsInAirForAnimation();
 
@@ -67,7 +68,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 		UpdateRemoteMovementRequestState(DeltaTime);
 	}
 
-	UpdateCombatMovementState(HorizontalVelocity);
+	UpdateCombatMovementState(MovementSnapshot.HorizontalVelocity);
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
@@ -733,18 +734,27 @@ FVector2D UProject_JLocomotionAnimStateComponent::GetRemoteMovementInputForState
 	return FVector2D(LocalVelocity.Y, LocalVelocity.X).GetClampedToMaxSize(1.0f);
 }
 
-FVector UProject_JLocomotionAnimStateComponent::UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner)
+FProject_JLocomotionRuntimeSnapshot UProject_JLocomotionAnimStateComponent::BuildMovementSnapshot(const AProject_JPlayerCharacter& PlayerOwner) const
 {
-	const FVector Velocity = PlayerOwner.GetVelocity();
-	const FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
-	VerticalSpeed = Velocity.Z;
-	GroundSpeed = HorizontalVelocity.Size();
-	bWantsSprint = IsSprintRequestedForAnimation();
-	const bool bHasSprintMovementIntent = CachedMoveInput.Size() > MoveInputDeadZone || GroundSpeed > IdleSpeedThreshold;
+	FProject_JLocomotionRuntimeSnapshot Snapshot;
+	Snapshot.Velocity = PlayerOwner.GetVelocity();
+	Snapshot.HorizontalVelocity = FVector(Snapshot.Velocity.X, Snapshot.Velocity.Y, 0.0f);
+	Snapshot.VerticalSpeed = Snapshot.Velocity.Z;
+	Snapshot.GroundSpeed = Snapshot.HorizontalVelocity.Size();
+	Snapshot.bWantsSprint = IsSprintRequestedForAnimation();
+	Snapshot.bHasSprintMovementIntent = CachedMoveInput.Size() > MoveInputDeadZone || Snapshot.GroundSpeed > IdleSpeedThreshold;
+	return Snapshot;
+}
+
+void UProject_JLocomotionAnimStateComponent::ApplyMovementSnapshot(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot)
+{
+	VerticalSpeed = Snapshot.VerticalSpeed;
+	GroundSpeed = Snapshot.GroundSpeed;
+	bWantsSprint = Snapshot.bWantsSprint;
 	bUseSprintLocomotion =
 		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		bWantsSprint &&
-		bHasSprintMovementIntent;
+		Snapshot.bHasSprintMovementIntent;
 	GroundMotionModeElapsedTime += DeltaTime;
 	if (bIsJumping)
 	{
@@ -756,8 +766,6 @@ FVector UProject_JLocomotionAnimStateComponent::UpdateMovementSnapshot(float Del
 		LandingElapsedTime += DeltaTime;
 		bCanExitLanding = LandingElapsedTime >= LandingMinHoldTime;
 	}
-
-	return HorizontalVelocity;
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateLocalAirState(bool bIsCurrentlyInAir)

@@ -34,6 +34,30 @@ enum class EProject_JGroundMotionMode : uint8
 	Stop
 };
 
+USTRUCT(BlueprintType)
+struct FProject_JLocomotionRuntimeSnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	FVector Velocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	FVector HorizontalVelocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float VerticalSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float GroundSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bWantsSprint = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bHasSprintMovementIntent = false;
+};
+
 /**
  * Owns the player locomotion state consumed by animation graphs and Chooser Tables.
  *
@@ -76,7 +100,8 @@ protected:
 	FVector2D GetMovementInputForState() const;
 	FVector2D GetLocalMovementInputForState() const;
 	FVector2D GetRemoteMovementInputForState() const;
-	FVector UpdateMovementSnapshot(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
+	FProject_JLocomotionRuntimeSnapshot BuildMovementSnapshot(const AProject_JPlayerCharacter& PlayerOwner) const;
+	void ApplyMovementSnapshot(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
 	bool UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence);
