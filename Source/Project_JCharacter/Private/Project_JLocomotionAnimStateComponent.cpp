@@ -106,17 +106,16 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 		return;
 	}
 
-	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
+	const bool bHadLandingState = IsLandingStateActive();
 
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(JumpTimerHandle);
 		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
 	}
+	ClearLandingTimers();
 	StopFallOffStart();
 	bIsLanding = false;
 	bLandingRequested = false;
@@ -160,7 +159,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 		return;
 	}
 
-	if (bIsLanding || bLandingRequested || bCanEnterLand)
+	if (IsLandingStateActive())
 	{
 		FinishLanding();
 	}
@@ -169,11 +168,10 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 	{
 		World->GetTimerManager().ClearTimer(JumpTimerHandle);
 		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
 	}
+	ClearLandingTimers();
 
 	StopFallOffStart();
 	bIsLanding = false;
@@ -243,7 +241,7 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 
 void UProject_JLocomotionAnimStateComponent::FinishLanding(bool bForceFinish)
 {
-	if (!bIsLanding && !bLandingRequested && !bCanEnterLand)
+	if (!IsLandingStateActive())
 	{
 		return;
 	}
@@ -303,7 +301,7 @@ void UProject_JLocomotionAnimStateComponent::FinishJumpStart()
 		return;
 	}
 
-	if (bIsLanding || bLandingRequested || bCanEnterLand)
+	if (IsLandingStateActive())
 	{
 		return;
 	}
@@ -454,7 +452,7 @@ void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 					: EProject_JGroundMotionMode::Idle));
 	}
 
-	if ((bIsLanding || bLandingRequested || bCanEnterLand) && bLandWasSprinting)
+	if (IsLandingStateActive() && bLandWasSprinting)
 	{
 		bLandWasSprinting = false;
 		FinishLandingImmediately();
@@ -965,7 +963,7 @@ void UProject_JLocomotionAnimStateComponent::CompleteFallOffStart()
 
 void UProject_JLocomotionAnimStateComponent::CompleteLanding()
 {
-	if (!bIsLanding && !bLandingRequested && !bCanEnterLand && !bLandingFinishPendingExit)
+	if (!IsLandingStateActive() && !bLandingFinishPendingExit)
 	{
 		return;
 	}
@@ -975,7 +973,7 @@ void UProject_JLocomotionAnimStateComponent::CompleteLanding()
 
 void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 {
-	const bool bHadLandingState = bIsLanding || bLandingRequested || bCanEnterLand;
+	const bool bHadLandingState = IsLandingStateActive();
 
 	bIsLanding = false;
 	bLandingRequested = false;
@@ -1031,7 +1029,7 @@ void UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished()
 		return;
 	}
 
-	if (bIsJumping && !bIsLanding && !bLandingRequested && !bCanEnterLand)
+	if (bIsJumping && !IsLandingStateActive())
 	{
 		CompleteJumpStart();
 	}
@@ -1069,14 +1067,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
 	}
 
-	if ((bIsLanding || bLandingRequested || bCanEnterLand) && !bLandWasMoving && bHasMoveInput)
+	if (IsLandingStateActive() && !bLandWasMoving && bHasMoveInput)
 	{
 		bLandWasMoving = true;
 		FinishLandingImmediately();
 		return;
 	}
 
-	if ((bIsLanding || bLandingRequested || bCanEnterLand) &&
+	if (IsLandingStateActive() &&
 		bLandWasSprinting &&
 		bWantsSprint &&
 		bHasMoveInput &&
@@ -1289,6 +1287,6 @@ void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
 	{
 		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
 		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(LandingExitTimerHandle);
 	}
+	ClearLandingTimers();
 }
