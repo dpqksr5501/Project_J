@@ -140,7 +140,7 @@ void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
 
 void AProject_JPlayerCharacter::StopMoveInput()
 {
-	bHadMoveInputForReplication = false;
+	ResetMoveStartReplicationState();
 
 	if (LocomotionAnimStateComponent)
 	{
@@ -160,19 +160,13 @@ void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
 void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
 {
 	const FVector2D MoveInput(Right, Forward);
-	const float MoveInputDeadZone = LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
-	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(MoveInputDeadZone);
 
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->SetMoveInput(MoveInput);
 	}
 
-	if (bHasMoveInput && !bHadMoveInputForReplication)
-	{
-		NotifyMoveStartForRemoteClients();
-	}
-	bHadMoveInputForReplication = bHasMoveInput;
+	UpdateMoveStartReplicationState(MoveInput);
 
 	if (GetController() != nullptr)
 	{
@@ -214,7 +208,7 @@ void AProject_JPlayerCharacter::DoJumpStart()
 		LocomotionAnimStateComponent->HandleJumpStarted();
 	}
 
-	NotifyJumpStartForRemoteClients();
+	DispatchJumpStartAnimationEvent();
 	Jump();
 }
 
@@ -278,7 +272,11 @@ void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
 
 	bIsSprinting = bNewIsSprinting;
 	UpdateMaxWalkSpeed();
+	ApplySprintAnimationState();
+}
 
+void AProject_JPlayerCharacter::ApplySprintAnimationState()
+{
 	if (LocomotionAnimStateComponent)
 	{
 		if (bIsSprinting)
@@ -298,17 +296,38 @@ void AProject_JPlayerCharacter::ServerSetSprinting_Implementation(bool bNewIsSpr
 	ForceNetUpdate();
 }
 
-void AProject_JPlayerCharacter::NotifyMoveStartForRemoteClients()
+float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
+{
+	return LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
+}
+
+void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
+{
+	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(GetMoveInputDeadZoneForAnimation());
+	if (bHasMoveInput && !bHadMoveInputForReplication)
+	{
+		DispatchMoveStartAnimationEvent(bIsSprinting);
+	}
+
+	bHadMoveInputForReplication = bHasMoveInput;
+}
+
+void AProject_JPlayerCharacter::ResetMoveStartReplicationState()
+{
+	bHadMoveInputForReplication = false;
+}
+
+void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprintingForStart)
 {
 	if (HasAuthority())
 	{
-		bMoveStartWasSprinting = bIsSprinting;
+		bMoveStartWasSprinting = bWasSprintingForStart;
 		++MoveStartEventCounter;
 		ForceNetUpdate();
 		return;
 	}
 
-	ServerNotifyMoveStarted(bIsSprinting);
+	ServerNotifyMoveStarted(bWasSprintingForStart);
 }
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStarted_Implementation(bool bWasSprintingForStart)
@@ -326,7 +345,7 @@ void AProject_JPlayerCharacter::OnRep_MoveStartEventCounter()
 	}
 }
 
-void AProject_JPlayerCharacter::NotifyJumpStartForRemoteClients()
+void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 {
 	if (HasAuthority())
 	{
@@ -355,18 +374,7 @@ void AProject_JPlayerCharacter::OnRep_JumpStartEventCounter()
 void AProject_JPlayerCharacter::OnRep_IsSprinting()
 {
 	UpdateMaxWalkSpeed();
-
-	if (LocomotionAnimStateComponent)
-	{
-		if (bIsSprinting)
-		{
-			LocomotionAnimStateComponent->HandleSprintStarted();
-		}
-		else
-		{
-			LocomotionAnimStateComponent->HandleSprintStopped();
-		}
-	}
+	ApplySprintAnimationState();
 }
 
 void AProject_JPlayerCharacter::StartSprint()

@@ -402,4 +402,5 @@ private:
 	bool bJumpStartFinishPendingExit = false;
 	bool bFallOffStartFinishPendingExit = false;
 	bool bLandingFinishPendingExit = false;
+	bool bForceLandingFinishToLocomotion = false;
 };

@@ -119,8 +119,12 @@ protected:
 
 	void UpdateMaxWalkSpeed();
 	void ApplySprintState(bool bNewIsSprinting);
-	void NotifyMoveStartForRemoteClients();
-	void NotifyJumpStartForRemoteClients();
+	void ApplySprintAnimationState();
+	float GetMoveInputDeadZoneForAnimation() const;
+	void UpdateMoveStartReplicationState(const FVector2D& MoveInput);
+	void ResetMoveStartReplicationState();
+	void DispatchMoveStartAnimationEvent(bool bWasSprintingForStart);
+	void DispatchJumpStartAnimationEvent();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewIsSprinting);

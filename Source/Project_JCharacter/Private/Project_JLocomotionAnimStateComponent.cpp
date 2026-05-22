@@ -175,6 +175,20 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 		return;
 	}
 
+	if (IsLandingStateActive())
+	{
+		bStartWasSprinting = bWasSprintingForStart;
+		bWantsSprint = bWasSprintingForStart;
+		bHasMoveInput = true;
+		bPrevHasMoveInput = true;
+		bResolvedMoveInputLastUpdate = true;
+		bLandWasMoving = true;
+		bPendingStartRequest = false;
+		bForceLandingFinishToLocomotion = true;
+		FinishLandingImmediately();
+		return;
+	}
+
 	bStartWasSprinting = bWasSprintingForStart;
 	bPendingStartRequest = true;
 }
@@ -1035,11 +1049,16 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 
 	const bool bMoveInputStillHeld = GetMovementInputForState().Size() > MoveInputDeadZone;
-	if (bMoveInputStillHeld || GroundSpeed > IdleSpeedThreshold)
+	const bool bForcedLocomotionFinish = bForceLandingFinishToLocomotion;
+	const bool bShouldEnterLocomotion = bForcedLocomotionFinish || bMoveInputStillHeld || GroundSpeed > IdleSpeedThreshold;
+	bForceLandingFinishToLocomotion = false;
+
+	if (bShouldEnterLocomotion)
 	{
-		bHasMoveInput = bMoveInputStillHeld;
-		bPrevHasMoveInput = bMoveInputStillHeld;
-		bResolvedMoveInputLastUpdate = bMoveInputStillHeld;
+		const bool bHasResolvedMoveIntent = bForcedLocomotionFinish || bMoveInputStillHeld;
+		bHasMoveInput = bHasResolvedMoveIntent;
+		bPrevHasMoveInput = bHasResolvedMoveIntent;
+		bResolvedMoveInputLastUpdate = bHasResolvedMoveIntent;
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else
