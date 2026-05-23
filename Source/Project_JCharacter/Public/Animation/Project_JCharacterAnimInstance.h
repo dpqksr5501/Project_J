@@ -7,6 +7,7 @@
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
+#include "BoneControllers/AnimNode_FootPlacement.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
 #include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -403,7 +404,25 @@ public:
 	void HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType);
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
-	const FProject_JAnimThreadSafeData& GetThreadSafeData() const;
+	FProject_JAnimThreadSafeData GetThreadSafeData() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	FTransformTrajectory GetThreadSafeTrajectory() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
+	float GetThreadSafeAimYaw() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
+	float GetThreadSafeAimPitch() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
+	float GetThreadSafeAimOffsetAlpha() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
+	FFootPlacementPlantSettings Get_FootPlacementPlantSettings() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
+	FFootPlacementInterpolationSettings Get_FootPlacementInterpolationSettings() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
@@ -635,6 +654,18 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Plant")
+	FFootPlacementPlantSettings FootPlacementPlantSettingsDefault;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Plant")
+	FFootPlacementPlantSettings FootPlacementPlantSettingsStops;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Interpolation")
+	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsDefault;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Interpolation")
+	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsStops;
 
 private:
 	float HiddenRemoteUpdateAccumulator = 0.0f;

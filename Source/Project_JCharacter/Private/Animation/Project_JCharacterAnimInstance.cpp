@@ -139,6 +139,17 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
 	bUseMultiThreadedAnimationUpdate = true;
+
+	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;
+	FootPlacementPlantSettingsStops.UnplantRadius = 25.0f;
+	FootPlacementPlantSettingsStops.UnplantAngle = 35.0f;
+	FootPlacementPlantSettingsStops.ReplantRadiusRatio = 0.5f;
+	FootPlacementPlantSettingsStops.ReplantAngleRatio = 0.65f;
+
+	FootPlacementInterpolationSettingsStops.UnplantLinearStiffness = 500.0f;
+	FootPlacementInterpolationSettingsStops.UnplantAngularStiffness = 700.0f;
+	FootPlacementInterpolationSettingsStops.FloorLinearStiffness = 1200.0f;
+	FootPlacementInterpolationSettingsStops.FloorAngularStiffness = 650.0f;
 }
 
 void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -204,9 +215,41 @@ void UProject_JCharacterAnimInstance::HandleLocomotionAnimEvent(EProject_JLocomo
 	}
 }
 
-const FProject_JAnimThreadSafeData& UProject_JCharacterAnimInstance::GetThreadSafeData() const
+FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::GetThreadSafeData() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+}
+
+FTransformTrajectory UProject_JCharacterAnimInstance::GetThreadSafeTrajectory() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Trajectory;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeAimYaw() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Aim.AimYaw;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeAimPitch() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Aim.AimPitch;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeAimOffsetAlpha() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Aim.AimOffsetAlpha;
+}
+
+FFootPlacementPlantSettings UProject_JCharacterAnimInstance::Get_FootPlacementPlantSettings() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.Ground.bStopRequested ? FootPlacementPlantSettingsStops : FootPlacementPlantSettingsDefault;
+}
+
+FFootPlacementInterpolationSettings UProject_JCharacterAnimInstance::Get_FootPlacementInterpolationSettings() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.Ground.bStopRequested ? FootPlacementInterpolationSettingsStops : FootPlacementInterpolationSettingsDefault;
 }
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::GetCurrentActivePoseSearchDatabaseThreadSafe() const

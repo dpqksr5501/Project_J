@@ -68,6 +68,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "AnimationWarping",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		}

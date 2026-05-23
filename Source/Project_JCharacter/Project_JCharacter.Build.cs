@@ -22,6 +22,7 @@ public class Project_JCharacter : ModuleRules
 			"MotionTrajectory",
 			"AnimationCore",
 			"AnimGraphRuntime",
+			"AnimationWarpingRuntime",
 			"Project_JCore",
 			"Project_JGAS"
 		});
