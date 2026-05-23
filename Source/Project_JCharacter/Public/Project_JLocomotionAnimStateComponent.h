@@ -72,6 +72,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UPr
 public:
 	UProject_JLocomotionAnimStateComponent();
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
 	void HandleReplicatedJumpStarted();
@@ -130,6 +132,11 @@ protected:
 	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
+	void AddOwnedInAirGameplayTag();
+	void RemoveOwnedInAirGameplayTag();
+	void AddOwnedLandingGameplayTag();
+	void RemoveOwnedLandingGameplayTag();
+	void ClearOwnedMovementGameplayTags();
 	void ClearMovementRequests();
 	void ClearTransientAnimationRequests();
 
@@ -412,4 +419,6 @@ private:
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
+	bool bAppliedInAirGameplayTag = false;
+	bool bAppliedLandingGameplayTag = false;
 };

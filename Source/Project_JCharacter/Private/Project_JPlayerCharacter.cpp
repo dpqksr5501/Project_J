@@ -5,8 +5,10 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JWeaponAnimProfile.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -258,11 +260,12 @@ void AProject_JPlayerCharacter::MarkGroundStartFinished()
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
-	bUseControllerRotationYaw = bEnableCombatRotation;
+	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
+	bUseControllerRotationYaw = bShouldUseCombatRotation;
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
-		MoveComp->bOrientRotationToMovement = !bEnableCombatRotation;
+		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
 }
 
@@ -385,6 +388,72 @@ float AProject_JPlayerCharacter::GetEffectiveSprintRotationRateYaw() const
 	return SprintRotationRateYaw;
 }
 
+UAnimMontage* AProject_JPlayerCharacter::GetEffectiveCombatIntroMontage() const
+{
+	if (const UProject_JWeaponAnimProfile* EffectiveWeaponAnimProfile = GetWeaponAnimProfile())
+	{
+		if (EffectiveWeaponAnimProfile->CombatIntroMontage)
+		{
+			return EffectiveWeaponAnimProfile->CombatIntroMontage.Get();
+		}
+	}
+
+	return CombatIntroMontage;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveCombatIntroMontagePlayRate() const
+{
+	if (const UProject_JWeaponAnimProfile* EffectiveWeaponAnimProfile = GetWeaponAnimProfile())
+	{
+		if (EffectiveWeaponAnimProfile->CombatIntroMontage)
+		{
+			return EffectiveWeaponAnimProfile->CombatIntroMontagePlayRate;
+		}
+	}
+
+	return CombatIntroMontagePlayRate;
+}
+
+bool AProject_JPlayerCharacter::ShouldPlayCombatIntroMontage() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->bPlayIntroMontageWhenEnteringCombat;
+	}
+
+	return true;
+}
+
+bool AProject_JPlayerCharacter::ShouldUseCombatRotationMode() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->bUseCombatRotationMode;
+	}
+
+	return true;
+}
+
+bool AProject_JPlayerCharacter::ShouldInterruptCombatIntroOnHit() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->bInterruptCombatIntroOnHit;
+	}
+
+	return bInterruptCombatIntroOnHit;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveCombatAimAlpha() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->CombatAimAlpha;
+	}
+
+	return 1.0f;
+}
+
 void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
 {
 	if (bIsSprinting == bNewIsSprinting)
@@ -449,6 +518,16 @@ const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatc
 	}
 
 	return MotionMatchingAssetSet.Get();
+}
+
+const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
+{
+	return CharacterAnimProfile ? CharacterAnimProfile->WeaponAnimProfile.Get() : nullptr;
+}
+
+const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfile() const
+{
+	return CharacterAnimProfile ? CharacterAnimProfile->CombatAnimProfile.Get() : nullptr;
 }
 
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
@@ -666,6 +745,12 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 		return;
 	}
 
+	if (!ShouldPlayCombatIntroMontage())
+	{
+		SetCombatMode(true);
+		return;
+	}
+
 	ApplyCombatRotationMode(true);
 	PlayCombatIntroMontage();
 
@@ -677,7 +762,8 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 
 void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 {
-	if (!CombatIntroMontage || bIsPlayingCombatIntro || bIsHitReacting)
+	UAnimMontage* EffectiveCombatIntroMontage = GetEffectiveCombatIntroMontage();
+	if (!EffectiveCombatIntroMontage || bIsPlayingCombatIntro || bIsHitReacting)
 	{
 		return;
 	}
@@ -688,7 +774,7 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 		return;
 	}
 
-	const float Duration = PlayAnimMontage(CombatIntroMontage, CombatIntroMontagePlayRate);
+	const float Duration = PlayAnimMontage(EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate());
 	if (Duration <= 0.0f)
 	{
 		return;
@@ -696,28 +782,32 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 
 	bIsPlayingCombatIntro = true;
 	bPendingCombatModeFromIntro = true;
+	ActiveCombatIntroMontage = EffectiveCombatIntroMontage;
 
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(EndDelegate, CombatIntroMontage);
+	AnimInstance->Montage_SetEndDelegate(EndDelegate, EffectiveCombatIntroMontage);
 }
 
 void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 {
+	UAnimMontage* MontageToStop = ActiveCombatIntroMontage ? ActiveCombatIntroMontage.Get() : GetEffectiveCombatIntroMontage();
 	if (bIsPlayingCombatIntro)
 	{
-		StopAnimMontage(CombatIntroMontage);
+		StopAnimMontage(MontageToStop);
 	}
 
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
+	ActiveCombatIntroMontage = nullptr;
 }
 
 void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage == CombatIntroMontage)
+	if (Montage == ActiveCombatIntroMontage)
 	{
 		bIsPlayingCombatIntro = false;
+		ActiveCombatIntroMontage = nullptr;
 
 		if (bPendingCombatModeFromIntro)
 		{
@@ -737,14 +827,16 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 
 void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 {
-	if (!bInterruptCombatIntroOnHit || !bIsPlayingCombatIntro)
+	if (!ShouldInterruptCombatIntroOnHit() || !bIsPlayingCombatIntro)
 	{
 		return;
 	}
 
-	StopAnimMontage(CombatIntroMontage);
+	UAnimMontage* MontageToStop = ActiveCombatIntroMontage ? ActiveCombatIntroMontage.Get() : GetEffectiveCombatIntroMontage();
+	StopAnimMontage(MontageToStop);
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
+	ActiveCombatIntroMontage = nullptr;
 	if (!bIsCombatMode)
 	{
 		ApplyCombatRotationMode(false);

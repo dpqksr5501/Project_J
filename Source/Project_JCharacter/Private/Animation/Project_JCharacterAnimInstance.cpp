@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "IObjectChooser.h"
+#include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "PoseSearch/PoseSearchDatabase.h"
@@ -658,7 +659,7 @@ float UProject_JCharacterAnimInstance::CalculateAimOffsetAlpha(const FProject_JA
 {
 	if (Data.bIsCombatMode)
 	{
-		return CombatAimAlpha;
+		return GetEffectiveCombatAimAlpha();
 	}
 
 	if (Data.bUseSprintLocomotion)
@@ -799,4 +800,19 @@ bool UProject_JCharacterAnimInstance::ShouldDisableMotionMatchingBeyondFarDistan
 	}
 
 	return bDisableMotionMatchingBeyondFarDistance;
+}
+
+const UProject_JCombatAnimProfile* UProject_JCharacterAnimInstance::GetCombatAnimProfile() const
+{
+	return OwningPlayerCharacter ? OwningPlayerCharacter->GetCombatAnimProfile() : nullptr;
+}
+
+float UProject_JCharacterAnimInstance::GetEffectiveCombatAimAlpha() const
+{
+	if (const UProject_JCombatAnimProfile* Profile = GetCombatAnimProfile())
+	{
+		return Profile->CombatAimAlpha;
+	}
+
+	return CombatAimAlpha;
 }

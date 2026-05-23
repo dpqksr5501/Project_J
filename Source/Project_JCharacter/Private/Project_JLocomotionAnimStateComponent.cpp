@@ -15,6 +15,12 @@ UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 {
 }
 
+void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ClearOwnedMovementGameplayTags();
+	Super::EndPlay(EndPlayReason);
+}
+
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
 	if (!GetPlayerOwner() || !GetCachedMovementComponent())
@@ -106,17 +112,11 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 		World->GetTimerManager().SetTimer(JumpTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished, FMath::Max(0.1f, JumpStartMaxDuration), false);
 	}
 
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	if (bHadLandingState)
 	{
-		if (bHadLandingState)
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
+		RemoveOwnedLandingGameplayTag();
 	}
+	AddOwnedInAirGameplayTag();
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
@@ -942,18 +942,12 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 
 	if (bUpdateGameplayTags)
 	{
-		if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+		if (bHadInAirState)
 		{
-			if (bHadInAirState)
-			{
-				ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-			}
-
-			if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing))
-			{
-				ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-			}
+			RemoveOwnedInAirGameplayTag();
 		}
+
+		AddOwnedLandingGameplayTag();
 	}
 
 	if (UWorld* World = GetWorld())
@@ -989,13 +983,7 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart(bool bReplicateEv
 	}
 	bFallOffStartFinishPendingExit = false;
 
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
-	{
-		if (!ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir))
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-	}
+	AddOwnedInAirGameplayTag();
 }
 
 void UProject_JLocomotionAnimStateComponent::StopFallOffStart()
@@ -1096,12 +1084,9 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 	}
 
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	if (bHadLandingState)
 	{
-		if (bHadLandingState)
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
+		RemoveOwnedLandingGameplayTag();
 	}
 }
 
@@ -1351,6 +1336,68 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 	CombatInputForward = FMath::Clamp(CombatForwardSpeed / MaxSpeed, -1.0f, 1.0f);
 	CombatInputRight = FMath::Clamp(CombatRightSpeed / MaxSpeed, -1.0f, 1.0f);
 	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatRightSpeed, CombatForwardSpeed));
+}
+
+void UProject_JLocomotionAnimStateComponent::AddOwnedInAirGameplayTag()
+{
+	if (bAppliedInAirGameplayTag)
+	{
+		return;
+	}
+
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	{
+		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+		bAppliedInAirGameplayTag = true;
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::RemoveOwnedInAirGameplayTag()
+{
+	if (!bAppliedInAirGameplayTag)
+	{
+		return;
+	}
+
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	{
+		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+	}
+	bAppliedInAirGameplayTag = false;
+}
+
+void UProject_JLocomotionAnimStateComponent::AddOwnedLandingGameplayTag()
+{
+	if (bAppliedLandingGameplayTag)
+	{
+		return;
+	}
+
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	{
+		ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+		bAppliedLandingGameplayTag = true;
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::RemoveOwnedLandingGameplayTag()
+{
+	if (!bAppliedLandingGameplayTag)
+	{
+		return;
+	}
+
+	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+	{
+		ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+	}
+	bAppliedLandingGameplayTag = false;
+}
+
+void UProject_JLocomotionAnimStateComponent::ClearOwnedMovementGameplayTags()
+{
+	RemoveOwnedInAirGameplayTag();
+	RemoveOwnedLandingGameplayTag();
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()

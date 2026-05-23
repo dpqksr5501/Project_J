@@ -20,6 +20,7 @@ class UChooserTable;
 class UPoseSearchDatabase;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JLocomotionProfile;
+class UProject_JCombatAnimProfile;
 struct FAnimNode_Base;
 struct FAnimationUpdateContext;
 
@@ -452,6 +453,8 @@ protected:
 	float GetEffectiveMidMotionMatchingUpdateInterval() const;
 	float GetEffectiveFarMotionMatchingUpdateInterval() const;
 	bool ShouldDisableMotionMatchingBeyondFarDistance() const;
+	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
+	float GetEffectiveCombatAimAlpha() const;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Motion Matching", AdvancedDisplay, meta = (ToolTip = "Final fallback Chooser Table. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet on the character."))

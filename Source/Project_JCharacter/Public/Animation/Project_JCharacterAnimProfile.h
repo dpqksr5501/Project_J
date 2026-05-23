@@ -7,6 +7,8 @@
 #include "Project_JCharacterAnimProfile.generated.h"
 
 class UProject_JLocomotionProfile;
+class UProject_JWeaponAnimProfile;
+class UProject_JCombatAnimProfile;
 
 /**
  * Top-level animation profile for a playable character archetype.
@@ -22,4 +24,10 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAnimProfile : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Locomotion")
 	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
+	TObjectPtr<UProject_JWeaponAnimProfile> WeaponAnimProfile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
+	TObjectPtr<UProject_JCombatAnimProfile> CombatAnimProfile = nullptr;
 };

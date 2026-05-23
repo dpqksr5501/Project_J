@@ -18,6 +18,8 @@ class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
 class UProject_JLocomotionProfile;
+class UProject_JWeaponAnimProfile;
+class UProject_JCombatAnimProfile;
 class UChooserTable;
 class UPoseSearchDatabase;
 
@@ -150,6 +152,11 @@ protected:
 	float GetEffectiveSprintSpeed() const;
 	float GetEffectiveWalkRotationRateYaw() const;
 	float GetEffectiveSprintRotationRateYaw() const;
+	UAnimMontage* GetEffectiveCombatIntroMontage() const;
+	float GetEffectiveCombatIntroMontagePlayRate() const;
+	bool ShouldPlayCombatIntroMontage() const;
+	bool ShouldUseCombatRotationMode() const;
+	bool ShouldInterruptCombatIntroOnHit() const;
 	float GetMoveInputDeadZoneForAnimation() const;
 	void UpdateMoveStartReplicationState(const FVector2D& MoveInput);
 	void ResetMoveStartReplicationState();
@@ -257,6 +264,11 @@ public:
 
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
 	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
+	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
+	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
+	float GetEffectiveCombatAimAlpha() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding(bool bForceFinish = false);
@@ -335,6 +347,9 @@ public:
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAnimEvents)
 	FProject_JReplicatedAnimEventState ReplicatedAnimEvents;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> ActiveCombatIntroMontage = nullptr;
 
 	bool bHadMoveInputForReplication = false;
 };
