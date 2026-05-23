@@ -44,6 +44,9 @@ struct FProject_JReplicatedAnimEventState
 
 	UPROPERTY()
 	uint8 FallOffStartCounter = 0;
+
+	UPROPERTY()
+	uint8 LandingCancelCounter = 0;
 };
 
 /**
@@ -164,6 +167,7 @@ protected:
 	void DispatchMoveStopAnimationEvent();
 	void DispatchJumpStartAnimationEvent();
 	void DispatchFallOffStartAnimationEvent();
+	void DispatchLandingCancelAnimationEvent();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewIsSprinting);
@@ -179,6 +183,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerNotifyFallOffStarted();
+
+	UFUNCTION(Server, Reliable)
+	void ServerNotifyLandingCancelled();
 
 	UFUNCTION()
 	void OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState);
@@ -209,6 +216,8 @@ public:
 	virtual void DoJumpEnd();
 
 	void NotifyFallOffStartedForAnimation();
+
+	void NotifyLandingCancelledForAnimation();
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
 	void FinishFallOffStart();

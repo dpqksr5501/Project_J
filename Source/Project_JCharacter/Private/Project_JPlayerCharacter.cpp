@@ -234,6 +234,11 @@ void AProject_JPlayerCharacter::NotifyFallOffStartedForAnimation()
 	DispatchFallOffStartAnimationEvent();
 }
 
+void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
+{
+	DispatchLandingCancelAnimationEvent();
+}
+
 void AProject_JPlayerCharacter::FinishFallOffStart()
 {
 	if (LocomotionAnimStateComponent)
@@ -620,6 +625,24 @@ void AProject_JPlayerCharacter::ServerNotifyFallOffStarted_Implementation()
 	ForceNetUpdate();
 }
 
+void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
+{
+	if (HasAuthority())
+	{
+		++ReplicatedAnimEvents.LandingCancelCounter;
+		ForceNetUpdate();
+		return;
+	}
+
+	ServerNotifyLandingCancelled();
+}
+
+void AProject_JPlayerCharacter::ServerNotifyLandingCancelled_Implementation()
+{
+	++ReplicatedAnimEvents.LandingCancelCounter;
+	ForceNetUpdate();
+}
+
 void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState)
 {
 	if (!LocomotionAnimStateComponent)
@@ -645,6 +668,11 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedA
 	if (ReplicatedAnimEvents.FallOffStartCounter != PreviousState.FallOffStartCounter)
 	{
 		LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
+	}
+
+	if (ReplicatedAnimEvents.LandingCancelCounter != PreviousState.LandingCancelCounter)
+	{
+		LocomotionAnimStateComponent->HandleReplicatedLandingCancelled();
 	}
 }
 

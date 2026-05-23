@@ -246,6 +246,18 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
 	}
 }
 
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled()
+{
+	if (ShouldUseLocalInputState() || !IsLandingStateActive())
+	{
+		return;
+	}
+
+	bLandWasMoving = true;
+	bForceLandingFinishToLocomotion = true;
+	FinishLandingImmediately();
+}
+
 void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
@@ -569,6 +581,13 @@ FVector UProject_JLocomotionAnimStateComponent::CalculateMoveWorldDirection(cons
 	if (!PlayerOwner || MoveInput.SizeSquared() <= FMath::Square(MoveInputDeadZone))
 	{
 		return FVector::ZeroVector;
+	}
+
+	if (!ShouldUseLocalInputState())
+	{
+		FVector HorizontalVelocity = PlayerOwner->GetVelocity();
+		HorizontalVelocity.Z = 0.0f;
+		return HorizontalVelocity.GetSafeNormal();
 	}
 
 	const FRotator ControlYawRotation(0.0f, PlayerOwner->GetControlRotation().Yaw, 0.0f);
@@ -927,9 +946,12 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	bLandingIgnoresRemoteGroundSpeed = bUseRemoteStandLandingOverride;
 	bRemoteMoveReleasedWhileAirborne = false;
 	bUseHeavyLand = LandStartFallSpeed >= HeavyLandSpeedThreshold;
+	bLandingCancelEventDispatched = false;
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
-	if (ShouldUseLocalInputState() && bLandWasMoving)
+	InitialLandingActorYaw = PlayerOwner->GetActorRotation().Yaw;
+	PreviousLandingActorYaw = InitialLandingActorYaw;
+	if (bLandWasMoving)
 	{
 		const FVector2D LandingMoveInput = GetMovementInputForState();
 		InitialLandingMoveWorldDirection = CalculateMoveWorldDirection(LandingMoveInput);
@@ -1065,6 +1087,8 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	LandingElapsedTime = 0.0f;
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
+	InitialLandingActorYaw = 0.0f;
+	PreviousLandingActorYaw = 0.0f;
 
 	const bool bIgnoreRemoteMotionForLandingFinish = bLandingIgnoresRemoteGroundSpeed;
 	const bool bMoveInputStillHeld = !bIgnoreRemoteMotionForLandingFinish && GetMovementInputForState().Size() > MoveInputDeadZone;
@@ -1073,6 +1097,7 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	const bool bShouldEnterLocomotion = bForcedLocomotionFinish || bMoveInputStillHeld || (bAllowGroundSpeedLocomotion && GroundSpeed > IdleSpeedThreshold);
 	bForceLandingFinishToLocomotion = false;
 	bLandingIgnoresRemoteGroundSpeed = false;
+	bLandingCancelEventDispatched = false;
 
 	if (bShouldEnterLocomotion)
 	{
@@ -1183,6 +1208,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromMovementInput(c
 	if (IsLandingStateActive() && !bLandWasMoving && bHasMoveInput)
 	{
 		bLandWasMoving = true;
+		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;
 	}
@@ -1208,9 +1234,25 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromMovementInput(c
 		const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
 		if (DirectionAngle >= SprintLandingTurnCancelAngle)
 		{
+			DispatchLandingCancelForAnimation();
 			FinishLandingImmediately();
 			return true;
 		}
+	}
+
+	if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
+	{
+		const float CurrentActorYaw = PlayerOwner->GetActorRotation().Yaw;
+		const float InitialYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(InitialLandingActorYaw, CurrentActorYaw));
+		const float PreviousYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(PreviousLandingActorYaw, CurrentActorYaw));
+		if (FMath::Max(InitialYawDelta, PreviousYawDelta) >= SprintLandingTurnCancelAngle)
+		{
+			DispatchLandingCancelForAnimation();
+			FinishLandingImmediately();
+			return true;
+		}
+
+		PreviousLandingActorYaw = CurrentActorYaw;
 	}
 
 	PreviousLandingMoveWorldDirection = CurrentLandingMoveWorldDirection;
@@ -1353,6 +1395,20 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 	MovementDirection = FMath::RadiansToDegrees(FMath::Atan2(CombatRightSpeed, CombatForwardSpeed));
 }
 
+void UProject_JLocomotionAnimStateComponent::DispatchLandingCancelForAnimation()
+{
+	if (!ShouldUseLocalInputState() || bLandingCancelEventDispatched)
+	{
+		return;
+	}
+
+	if (AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
+	{
+		bLandingCancelEventDispatched = true;
+		PlayerOwner->NotifyLandingCancelledForAnimation();
+	}
+}
+
 void UProject_JLocomotionAnimStateComponent::AddOwnedInAirGameplayTag()
 {
 	if (bAppliedInAirGameplayTag)
@@ -1443,6 +1499,7 @@ void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
 	bJumpStartFinishPendingExit = false;
 	bFallOffStartFinishPendingExit = false;
 	bLandingFinishPendingExit = false;
+	bLandingCancelEventDispatched = false;
 	bRealLandingEventRequested = false;
 	bResolvedMoveInputLastUpdate = bHasMoveInput;
 	EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);

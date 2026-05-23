@@ -80,6 +80,7 @@ public:
 	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
 	void HandleReplicatedMoveStopped();
+	void HandleReplicatedLandingCancelled();
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void FinishStop();
@@ -132,6 +133,7 @@ protected:
 	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
+	void DispatchLandingCancelForAnimation();
 	void AddOwnedInAirGameplayTag();
 	void RemoveOwnedInAirGameplayTag();
 	void AddOwnedLandingGameplayTag();
@@ -400,6 +402,8 @@ private:
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
 	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
+	float InitialLandingActorYaw = 0.0f;
+	float PreviousLandingActorYaw = 0.0f;
 	bool bWasInAir = false;
 	bool bPendingStartRequest = false;
 	bool bPendingStopRequest = false;
@@ -424,6 +428,7 @@ private:
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
+	bool bLandingCancelEventDispatched = false;
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;
 };
