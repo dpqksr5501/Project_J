@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Engine/DataAsset.h"
 #include "Project_JLocomotionProfile.generated.h"
 
@@ -20,6 +21,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UDataAsset
 	GENERATED_BODY()
 
 public:
+	UProject_JLocomotionProfile();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
@@ -64,4 +67,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Motion Matching")
 	bool bDisableMotionMatchingBeyondFarDistance = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Foot Placement|Plant")
+	FFootPlacementPlantSettings FootPlacementPlantSettingsDefault;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Foot Placement|Plant")
+	FFootPlacementPlantSettings FootPlacementPlantSettingsStops;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Foot Placement|Interpolation")
+	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsDefault;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Foot Placement|Interpolation")
+	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsStops;
 };

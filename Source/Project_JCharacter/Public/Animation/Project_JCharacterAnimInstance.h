@@ -403,7 +403,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation|Events")
 	void HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType);
 
-	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe, DeprecatedFunction, DeprecationMessage = "Use dedicated thread-safe getters such as GetThreadSafeTrajectory, GetThreadSafeAimYaw, GetThreadSafeAimPitch, and GetThreadSafeAimOffsetAlpha in AnimGraph."))
 	FProject_JAnimThreadSafeData GetThreadSafeData() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
@@ -655,16 +655,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Plant")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides foot placement plant settings."))
 	FFootPlacementPlantSettings FootPlacementPlantSettingsDefault;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Plant")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides stop foot placement plant settings."))
 	FFootPlacementPlantSettings FootPlacementPlantSettingsStops;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Interpolation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides foot placement interpolation settings."))
 	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsDefault;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foot Placement|Interpolation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides stop foot placement interpolation settings."))
 	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsStops;
 
 private:
