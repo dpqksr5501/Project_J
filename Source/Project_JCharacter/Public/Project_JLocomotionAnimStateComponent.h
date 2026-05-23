@@ -237,6 +237,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteLandingMinFallSpeed = 120.0f;
 
+	/** Prevents residual replicated velocity from creating a fake remote Start right after an explicit remote Stop event. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteStopStartSuppressDuration = 0.20f;
+
 	/** Hidden simulated proxies can update animation-facing state less often. Visible and local players still update every frame. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HiddenRemoteUpdateInterval = 0.0f;
@@ -408,6 +412,7 @@ private:
 	bool bResolvedMoveInputLastUpdate = false;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float RemoteAirborneTime = 0.0f;
+	float RemoteStopStartSuppressTimeRemaining = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
 	bool bPendingGroundStartFinish = false;

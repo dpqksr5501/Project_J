@@ -192,6 +192,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 		return;
 	}
 
+	RemoteStopStartSuppressTimeRemaining = 0.0f;
 	bRemoteMoveReleasedWhileAirborne = false;
 	bLandingIgnoresRemoteGroundSpeed = false;
 
@@ -227,6 +228,8 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
 	MoveInputHeldTime = 0.0f;
 	PreviousMoveInputForTurn = FVector2D::ZeroVector;
 	bPendingStartRequest = false;
+	bPendingStopRequest = true;
+	RemoteStopStartSuppressTimeRemaining = FMath::Max(RemoteStopStartSuppressTimeRemaining, RemoteStopStartSuppressDuration);
 
 	const bool bInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
 	if (bInAirState)
@@ -1139,7 +1142,19 @@ void UProject_JLocomotionAnimStateComponent::UpdateMovementRequestState(float De
 void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(float DeltaTime)
 {
 	const FVector2D MoveInput = GetRemoteMovementInputForState();
+	const bool bSuppressStartFromResidualVelocity = RemoteStopStartSuppressTimeRemaining > 0.0f;
+	RemoteStopStartSuppressTimeRemaining = FMath::Max(0.0f, RemoteStopStartSuppressTimeRemaining - DeltaTime);
+
 	RefreshMovementInputState(DeltaTime, MoveInput, false);
+	if (bSuppressStartFromResidualVelocity)
+	{
+		bPendingStartRequest = false;
+		bHasMoveInput = false;
+		bPrevHasMoveInput = false;
+		bResolvedMoveInputLastUpdate = false;
+		MoveInputSize = 0.0f;
+		MoveInputHeldTime = 0.0f;
+	}
 
 	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, false);
 }
