@@ -29,7 +29,7 @@ enum class EProject_JWeaponAnimStance : uint8
  * shared locomotion profile before weapon and combat animations are authored.
  */
 UCLASS(BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JWeaponAnimProfile : public UDataAsset
+class PROJECT_JCHARACTER_API UProject_JWeaponAnimProfile : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

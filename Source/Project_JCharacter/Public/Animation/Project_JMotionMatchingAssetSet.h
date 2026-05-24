@@ -17,7 +17,7 @@ class UPoseSearchDatabase;
  * valid fallbacks for migration.
  */
 UCLASS(BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JMotionMatchingAssetSet : public UDataAsset
+class PROJECT_JCHARACTER_API UProject_JMotionMatchingAssetSet : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

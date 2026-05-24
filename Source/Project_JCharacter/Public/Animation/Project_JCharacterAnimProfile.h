@@ -17,7 +17,7 @@ class UProject_JCombatAnimProfile;
  * profiles can be added here later without forcing the stable locomotion profile to own them.
  */
 UCLASS(BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JCharacterAnimProfile : public UDataAsset
+class PROJECT_JCHARACTER_API UProject_JCharacterAnimProfile : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

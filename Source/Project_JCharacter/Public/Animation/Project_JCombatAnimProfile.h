@@ -14,7 +14,7 @@
  * before combat animations are authored.
  */
 UCLASS(BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JCombatAnimProfile : public UDataAsset
+class PROJECT_JCHARACTER_API UProject_JCombatAnimProfile : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

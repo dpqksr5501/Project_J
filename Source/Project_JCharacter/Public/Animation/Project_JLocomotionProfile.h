@@ -16,7 +16,7 @@ class UProject_JMotionMatchingAssetSet;
  * on top through montages or separate combat assets without changing the base movement profile.
  */
 UCLASS(BlueprintType)
-class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UDataAsset
+class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
