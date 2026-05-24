@@ -59,6 +59,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	UProject_JAttributeSet* AttributeSet;
 
+	// Equipment Manager for modular meshes
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+	class UProject_JEquipmentManagerComponent* EquipmentManager;
+
 	// Character Level
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 CharacterLevel;

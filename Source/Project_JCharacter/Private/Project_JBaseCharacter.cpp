@@ -4,6 +4,7 @@
 #include "Project_JBaseCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
+#include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "SignificanceManager.h"
 #include "Engine/World.h"
@@ -21,6 +22,9 @@ AProject_JBaseCharacter::AProject_JBaseCharacter()
 
 	// Create Attribute Set
 	AttributeSet = CreateDefaultSubobject<UProject_JAttributeSet>(TEXT("AttributeSet"));
+
+	// Create Equipment Manager
+	EquipmentManager = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
 
 UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() const
