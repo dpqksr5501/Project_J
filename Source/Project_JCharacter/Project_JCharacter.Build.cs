@@ -37,9 +37,7 @@ public class Project_JCharacter : ModuleRules
 			"MassRepresentation",
 			"MassSpawner",
 			"MassGameplayDebug",
-			"MassActors",
-			"NetworkPrediction",
-			"NetworkPredictionExtras"
+			"MassActors"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}

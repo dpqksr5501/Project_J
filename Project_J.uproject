@@ -106,14 +106,6 @@
 		{
 			"Name": "MassAI",
 			"Enabled": true
-		},
-		{
-			"Name": "NetworkPrediction",
-			"Enabled": true
-		},
-		{
-			"Name": "NetworkPredictionExtras",
-			"Enabled": true
 		}
 	]
 }
