@@ -29,7 +29,17 @@ public class Project_JCharacter : ModuleRules
 			"IrisCore",
 			"NetCore",
 			"GameFeatures",
-			"ModularGameplay"
+			"ModularGameplay",
+			"StructUtils",
+			"MassEntity",
+			"MassCommon",
+			"MassMovement",
+			"MassRepresentation",
+			"MassSpawner",
+			"MassGameplayDebug",
+			"MassActors",
+			"NetworkPrediction",
+			"NetworkPredictionExtras"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}
