@@ -29,7 +29,12 @@ public class Project_J : ModuleRules
 			"IrisCore",
 			"NetCore",
 			"GameFeatures",
-			"ModularGameplay"
+			"ModularGameplay",
+			"HTTP",
+			"Json",
+			"JsonUtilities",
+			"Sockets",
+			"Networking"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
