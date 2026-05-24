@@ -31,4 +31,14 @@ public:
 	/** Trigger basic attack or combo sequence */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void Attack() {}
+
+	/** Bind this component to the owner's Ability System Component */
+	virtual void BindToGAS(class UAbilitySystemComponent* ASC);
+
+protected:
+	// Callback when a GAS Ability is activated
+	virtual void OnAbilityActivatedCallback(class UGameplayAbility* Ability);
+
+	UPROPERTY()
+	class UAbilitySystemComponent* OwnerASC;
 };
