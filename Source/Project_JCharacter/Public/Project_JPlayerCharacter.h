@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -22,6 +22,7 @@ class UProject_JWeaponAnimProfile;
 class UProject_JCombatAnimProfile;
 class UChooserTable;
 class UPoseSearchDatabase;
+class UProject_JCharacterViewModel;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -77,6 +78,16 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** Native trajectory buffer used by PoseSearch motion matching. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProject_JMotionMatchingTrajectoryComponent* MotionMatchingTrajectoryComponent;
+	
+	/** ViewModel for UI bindings */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta = (AllowPrivateAccess = "true"))
+	UProject_JCharacterViewModel* CharacterViewModel;
+
+	/** Helper to update ViewModel from Attribute Set */
+	void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+	void OnMaxHealthChanged(const struct FOnAttributeChangeData& Data);
+	void OnManaChanged(const struct FOnAttributeChangeData& Data);
+	void OnMaxManaChanged(const struct FOnAttributeChangeData& Data);
 	
 protected:
 

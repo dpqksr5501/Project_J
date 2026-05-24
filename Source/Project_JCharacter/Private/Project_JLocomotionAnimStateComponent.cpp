@@ -1205,12 +1205,24 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 
 bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel)
 {
-	if (IsLandingStateActive() && !bLandWasMoving && bHasMoveInput)
+	if (IsLandingStateActive())
 	{
-		bLandWasMoving = true;
-		DispatchLandingCancelForAnimation();
-		FinishLandingImmediately();
-		return true;
+		if (!bLandWasMoving && bHasMoveInput)
+		{
+			bLandWasMoving = true;
+			DispatchLandingCancelForAnimation();
+			FinishLandingImmediately();
+			return true;
+		}
+
+		if (bLandWasMoving && !bHasMoveInput)
+		{
+			bLandWasMoving = false;
+			bLandWasSprinting = false;
+			DispatchLandingCancelForAnimation();
+			FinishLandingImmediately();
+			return true;
+		}
 	}
 
 	if (!bAllowSprintTurnCancel ||

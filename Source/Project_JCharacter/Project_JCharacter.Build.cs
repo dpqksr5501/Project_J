@@ -37,7 +37,8 @@ public class Project_JCharacter : ModuleRules
 			"MassRepresentation",
 			"MassSpawner",
 			"MassGameplayDebug",
-			"MassActors"
+			"MassActors",
+			"ModelViewViewModel"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}

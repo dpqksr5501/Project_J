@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
 #include "Project_JCombatComponent.h"
@@ -23,6 +23,9 @@
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JAttributeSet.h"
+#include "UI/Project_JCharacterViewModel.h"
 #include "InputCoreTypes.h"
 #include "Net/UnrealNetwork.h"
 
@@ -83,6 +86,26 @@ void AProject_JPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Initialize ViewModel
+	CharacterViewModel = NewObject<UProject_JCharacterViewModel>(this);
+
+	// Bind GAS Attributes to ViewModel
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		// Initial Values
+		CharacterViewModel->SetHealth(AttributeSet->GetHealth());
+		CharacterViewModel->SetMaxHealth(AttributeSet->GetMaxHealth());
+		CharacterViewModel->SetMana(AttributeSet->GetMana());
+		CharacterViewModel->SetMaxMana(AttributeSet->GetMaxMana());
+		CharacterViewModel->SetLevel(CharacterLevel);
+
+		// Bind callbacks for future changes
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnHealthChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxHealthAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnMaxHealthChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnManaChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxManaAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnMaxManaChanged);
+	}
+
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
 
@@ -97,6 +120,38 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
+	}
+}
+
+void AProject_JPlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	if (CharacterViewModel)
+	{
+		CharacterViewModel->SetHealth(Data.NewValue);
+	}
+}
+
+void AProject_JPlayerCharacter::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
+{
+	if (CharacterViewModel)
+	{
+		CharacterViewModel->SetMaxHealth(Data.NewValue);
+	}
+}
+
+void AProject_JPlayerCharacter::OnManaChanged(const FOnAttributeChangeData& Data)
+{
+	if (CharacterViewModel)
+	{
+		CharacterViewModel->SetMana(Data.NewValue);
+	}
+}
+
+void AProject_JPlayerCharacter::OnMaxManaChanged(const FOnAttributeChangeData& Data)
+{
+	if (CharacterViewModel)
+	{
+		CharacterViewModel->SetMaxMana(Data.NewValue);
 	}
 }
 
