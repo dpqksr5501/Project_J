@@ -8,12 +8,14 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "IObjectChooser.h"
-#include "Animation/Project_JCombatAnimProfile.h"
-#include "Animation/Project_JLocomotionProfile.h"
+#include "Project_JLocomotionAnimStateComponentBase.h"
+#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
+#include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JCombatAnimProfile.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
-#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Project_JBaseCharacter.h"
 #include "StructUtils/InstancedStruct.h"
 
 // SyncLegacyFieldsFromStructuredData() removed.
@@ -413,7 +415,13 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? OwningPlayerCharacter->MotionMatchingChooserTable.Get()
 			: MotionMatchingChooserTable.Get());
 
-	if (ShouldDisableMotionMatchingBeyondFarDistance() && CalculateViewerDistanceSquared() > FMath::Square(GetEffectiveFarMotionMatchingDistance()))
+	bool bIsFarDistance = false;
+	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
+	{
+		bIsFarDistance = BaseChar->GetSignificance() >= 2.0f;
+	}
+
+	if (ShouldDisableMotionMatchingBeyondFarDistance() && bIsFarDistance)
 	{
 		return nullptr;
 	}
@@ -574,18 +582,22 @@ float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() c
 		return 0.0f;
 	}
 
-	const float DistanceSquared = CalculateViewerDistanceSquared();
-	if (DistanceSquared <= FMath::Square(GetEffectiveNearMotionMatchingDistance()))
+	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
 	{
-		return 0.0f;
+		const float Significance = BaseChar->GetSignificance();
+		if (Significance <= 0.0f)
+		{
+			return 0.0f; // Near
+		}
+		if (Significance <= 1.0f)
+		{
+			return GetEffectiveMidMotionMatchingUpdateInterval(); // Mid
+		}
+		
+		return GetEffectiveFarMotionMatchingUpdateInterval(); // Far
 	}
 
-	if (DistanceSquared <= FMath::Square(GetEffectiveMidMotionMatchingDistance()))
-	{
-		return GetEffectiveMidMotionMatchingUpdateInterval();
-	}
-
-	return GetEffectiveFarMotionMatchingUpdateInterval();
+	return 0.0f;
 }
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const

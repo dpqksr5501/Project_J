@@ -24,7 +24,8 @@ public class Project_J : ModuleRules
 			"GameplayTasks",
 			"Project_JCore",
 			"Project_JGAS",
-			"Project_JCharacter"
+			"Project_JCharacter",
+			"SignificanceManager"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

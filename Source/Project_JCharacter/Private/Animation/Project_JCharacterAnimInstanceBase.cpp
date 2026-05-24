@@ -48,22 +48,4 @@ bool UProject_JCharacterAnimInstanceBase::WasOwnerRecentlyRendered(float Recentl
 	return !MeshComponent || MeshComponent->WasRecentlyRendered(RecentlyRenderedTolerance);
 }
 
-float UProject_JCharacterAnimInstanceBase::CalculateViewerDistanceSquared() const
-{
-	const UWorld* World = OwningCharacter ? OwningCharacter->GetWorld() : nullptr;
-	if (!World || !OwningCharacter)
-	{
-		return 0.0f;
-	}
 
-	const APlayerController* PlayerController = World->GetFirstPlayerController();
-	if (!PlayerController)
-	{
-		return 0.0f;
-	}
-
-	FVector ViewLocation = FVector::ZeroVector;
-	FRotator ViewRotation = FRotator::ZeroRotator;
-	PlayerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
-	return FVector::DistSquared(ViewLocation, OwningCharacter->GetActorLocation());
-}

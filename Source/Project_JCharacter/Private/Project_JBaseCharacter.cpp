@@ -1,10 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Project_JBaseCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Components/CapsuleComponent.h"
+#include "SignificanceManager.h"
+#include "Engine/World.h"
 
 AProject_JBaseCharacter::AProject_JBaseCharacter()
 {
@@ -30,7 +32,61 @@ void AProject_JBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
+	{
+		auto SignificanceFunc = [](USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint) -> float
+		{
+			AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
+			if (!Character) return 0.0f;
+
+			const float DistanceSquared = FVector::DistSquared(Character->GetActorLocation(), Viewpoint.GetLocation());
+
+			if (DistanceSquared < FMath::Square(Character->SignificanceNearDistance)) return 0.0f;
+			if (DistanceSquared < FMath::Square(Character->SignificanceMidDistance)) return 1.0f;
+			if (DistanceSquared < FMath::Square(Character->SignificanceFarDistance)) return 2.0f;
+			return 3.0f;
+		};
+
+		auto PostSignificanceFunc = [](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal)
+		{
+			AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
+			if (!Character) return;
+
+			Character->CurrentSignificance = Significance;
+
+			if (Significance <= 0.0f)
+			{
+				Character->SetActorTickInterval(0.0f);
+			}
+			else if (Significance <= 1.0f)
+			{
+				Character->SetActorTickInterval(0.033f);
+			}
+			else if (Significance <= 2.0f)
+			{
+				Character->SetActorTickInterval(0.083f);
+			}
+			else
+			{
+				Character->SetActorTickInterval(0.15f);
+			}
+		};
+
+		SignificanceManager->RegisterObject(this, FName("Character"), SignificanceFunc, USignificanceManager::EPostSignificanceType::Sequential, PostSignificanceFunc);
+	}
 }
+
+void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
+	{
+		SignificanceManager->UnregisterObject(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
 {

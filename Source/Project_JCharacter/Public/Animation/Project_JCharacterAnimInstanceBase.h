@@ -31,7 +31,6 @@ protected:
 	bool IsDedicatedServerAnimationContext() const;
 	bool IsLocallyControlledCharacter() const;
 	bool WasOwnerRecentlyRendered(float RecentlyRenderedTolerance) const;
-	float CalculateViewerDistanceSquared() const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> OwningPawn = nullptr;

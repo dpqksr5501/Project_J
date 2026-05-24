@@ -24,7 +24,8 @@ public class Project_JCharacter : ModuleRules
 			"AnimGraphRuntime",
 			"AnimationWarpingRuntime",
 			"Project_JCore",
-			"Project_JGAS"
+			"Project_JGAS",
+			"SignificanceManager"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}

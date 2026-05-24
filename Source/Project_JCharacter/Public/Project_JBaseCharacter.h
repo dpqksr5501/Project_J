@@ -32,6 +32,24 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	UFUNCTION(BlueprintPure, Category = "Significance")
+	float GetSignificance() const { return CurrentSignificance; }
+
+protected:
+	UPROPERTY(Transient)
+	float CurrentSignificance = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance")
+	float SignificanceNearDistance = 2500.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance")
+	float SignificanceMidDistance = 6000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance")
+	float SignificanceFarDistance = 12000.0f;
 
 	// The Ability System Component for this character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
