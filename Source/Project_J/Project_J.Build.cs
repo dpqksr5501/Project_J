@@ -25,7 +25,11 @@ public class Project_J : ModuleRules
 			"Project_JCore",
 			"Project_JGAS",
 			"Project_JCharacter",
-			"SignificanceManager"
+			"SignificanceManager",
+			"IrisCore",
+			"NetCore",
+			"GameFeatures",
+			"ModularGameplay"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

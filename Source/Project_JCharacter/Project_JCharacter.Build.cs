@@ -25,7 +25,11 @@ public class Project_JCharacter : ModuleRules
 			"AnimationWarpingRuntime",
 			"Project_JCore",
 			"Project_JGAS",
-			"SignificanceManager"
+			"SignificanceManager",
+			"IrisCore",
+			"NetCore",
+			"GameFeatures",
+			"ModularGameplay"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}
