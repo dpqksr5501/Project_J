@@ -189,11 +189,19 @@ struct PROJECT_JCHARACTER_API FProject_JAnimAimThreadSafeData
 	float AimOffsetAlpha = 0.0f;
 };
 
+/**
+ * All animation thread-safe data used by the Proxy and AnimGraph.
+ *
+ * Flat legacy fields (Velocity, GroundSpeed, bIsInAir, etc.) have been removed.
+ * All data is now accessed exclusively through the sub-structs below.
+ * Use dedicated thread-safe getter functions in AnimGraph instead of splitting this struct.
+ */
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 {
 	GENERATED_BODY()
 
+	// DeltaTime is injected by Proxy.PreUpdate, kept here as metadata for worker thread logic.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float DeltaTime = 0.0f;
 
@@ -217,131 +225,6 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	FVector Velocity = FVector::ZeroVector;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	FVector Acceleration = FVector::ZeroVector;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	FVector AccelerationDirection = FVector::ZeroVector;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	FTransformTrajectory Trajectory;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float AccelerationRatio = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float GroundSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float VerticalSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float LastFallSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float LandStartFallSpeed = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float MoveInputSize = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float MoveInputHeldTime = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float MoveInputTurnAngle = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float MovementDirection = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float AimYaw = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float AimPitch = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	float AimOffsetAlpha = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsAccelerating = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bWasAccelerating = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bStoppedAcceleratingThisFrame = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsInAir = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsJumping = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsFallOffStart = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsLanding = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bUseHeavyLand = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bLandWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bLandWasMoving = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bHasMoveInput = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bHasTrajectory = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bSharpTurnRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bStartRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bStopRequested = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bWantsSprint = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bUseSprintLocomotion = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bStartWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bStopWasSprinting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsCombatMode = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsAttacking = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsDodging = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsHitReacting = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	bool bIsPlayingCombatIntro = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
-	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
-
-	void SyncLegacyFieldsFromStructuredData();
 };
 
 USTRUCT()
@@ -471,6 +354,8 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimThreadSafeData ThreadSafeData;
+
+	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	float ChooserGroundSpeed = 0.0f;
@@ -607,6 +492,8 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	EProject_JGroundMotionMode ChooserGroundMotionMode = EProject_JGroundMotionMode::Idle;
 
+	// --- Optimization Settings ---
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Advanced|Optimization", AdvancedDisplay, meta = (ToolTip = "Skips animation-only data work on dedicated servers. Event replication still runs."))
 	bool bSkipDedicatedServerAnimationDataUpdate = true;
 
@@ -640,6 +527,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Movement", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback sprint threshold used when no effective LocomotionProfile is assigned."))
 	float SprintLocomotionSpeedThreshold = 600.0f;
 
+	// --- AimOffset Settings ---
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MaxAimYaw = 90.0f;
 
@@ -657,6 +546,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
+
+	// --- Foot Placement Fallbacks ---
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides foot placement plant settings."))
 	FFootPlacementPlantSettings FootPlacementPlantSettingsDefault;

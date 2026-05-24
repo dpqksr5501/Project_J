@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
@@ -16,56 +16,8 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "StructUtils/InstancedStruct.h"
 
-void FProject_JAnimThreadSafeData::SyncLegacyFieldsFromStructuredData()
-{
-	Velocity = Movement.Velocity;
-	Acceleration = Movement.Acceleration;
-	AccelerationDirection = Movement.AccelerationDirection;
-	Trajectory = Movement.Trajectory;
-	AccelerationRatio = Movement.AccelerationRatio;
-	GroundSpeed = Movement.GroundSpeed;
-	VerticalSpeed = Movement.VerticalSpeed;
-	bIsAccelerating = Movement.bIsAccelerating;
-	bWasAccelerating = Movement.bWasAccelerating;
-	bStoppedAcceleratingThisFrame = Movement.bStoppedAcceleratingThisFrame;
-	bHasTrajectory = Movement.bHasTrajectory;
-
-	MoveInputSize = Input.MoveInputSize;
-	MoveInputHeldTime = Input.MoveInputHeldTime;
-	MoveInputTurnAngle = Input.MoveInputTurnAngle;
-	MovementDirection = Input.MovementDirection;
-	bHasMoveInput = Input.bHasMoveInput;
-	bSharpTurnRequested = Input.bSharpTurnRequested;
-
-	bStartRequested = Ground.bStartRequested;
-	bStopRequested = Ground.bStopRequested;
-	bWantsSprint = Ground.bWantsSprint;
-	bUseSprintLocomotion = Ground.bUseSprintLocomotion;
-	bStartWasSprinting = Ground.bStartWasSprinting;
-	bStopWasSprinting = Ground.bStopWasSprinting;
-	GroundMotionMode = Ground.GroundMotionMode;
-
-	bIsInAir = Air.bIsInAir;
-	bIsJumping = Air.bIsJumping;
-	bIsFallOffStart = Air.bIsFallOffStart;
-
-	LastFallSpeed = Landing.LastFallSpeed;
-	LandStartFallSpeed = Landing.LandStartFallSpeed;
-	bIsLanding = Landing.bIsLanding;
-	bUseHeavyLand = Landing.bUseHeavyLand;
-	bLandWasSprinting = Landing.bLandWasSprinting;
-	bLandWasMoving = Landing.bLandWasMoving;
-
-	bIsCombatMode = Combat.bIsCombatMode;
-	bIsAttacking = Combat.bIsAttacking;
-	bIsDodging = Combat.bIsDodging;
-	bIsHitReacting = Combat.bIsHitReacting;
-	bIsPlayingCombatIntro = Combat.bIsPlayingCombatIntro;
-
-	AimYaw = Aim.AimYaw;
-	AimPitch = Aim.AimPitch;
-	AimOffsetAlpha = Aim.AimOffsetAlpha;
-}
+// SyncLegacyFieldsFromStructuredData() removed.
+// All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
 
 void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const FProject_JAnimThreadSafeData& InData,
@@ -92,13 +44,12 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FAnimNode_Base* InRootNode,
 	FName InLayerName)
 {
-	if (!bUpdateMotionMatchingThisFrame)
+	if (bUpdateMotionMatchingThisFrame)
 	{
-		return;
+		ApplySelectedDatabaseToNativeNode();
+		NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
 	}
 
-	ApplySelectedDatabaseToNativeNode();
-	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Trajectory;
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
 }
 
@@ -312,7 +263,7 @@ void UProject_JCharacterAnimInstance::FillMovementThreadSafeData(FProject_JAnimT
 		Data.Movement.AccelerationRatio = FMath::Clamp(Data.Movement.Acceleration.Size2D() / MaxAcceleration, 0.0f, 1.0f);
 	}
 
-	Data.Movement.bWasAccelerating = ThreadSafeData.Movement.bIsAccelerating || ThreadSafeData.bIsAccelerating;
+	Data.Movement.bWasAccelerating = ThreadSafeData.Movement.bIsAccelerating;
 	Data.Movement.bStoppedAcceleratingThisFrame = Data.Movement.bWasAccelerating && !Data.Movement.bIsAccelerating;
 }
 
@@ -400,11 +351,9 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 
 void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const
 {
-	Data.SyncLegacyFieldsFromStructuredData();
 	if (bHasAimData)
 	{
 		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
-		Data.SyncLegacyFieldsFromStructuredData();
 	}
 }
 
@@ -412,10 +361,13 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 {
 	const bool bMotionMatchingEnabled = OwningCharacter && !IsDedicatedServerAnimationContext();
 	const bool bUpdateMotionMatchingThisFrame = bMotionMatchingEnabled && ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime);
-	PublishChooserProperties(Data);
 
 	if (bUpdateMotionMatchingThisFrame)
 	{
+		// Chooser properties only need refreshing when we're actually re-evaluating the PSD this frame.
+		// Skipping on throttled frames (mid/far distance, hidden remote) reduces Game Thread cost
+		// proportionally to how aggressively the Motion Matching update interval is throttled.
+		PublishChooserProperties(Data);
 		CurrentActivePoseSearchDatabase = EvaluatePoseSearchDatabaseOnGameThread(Data);
 	}
 	if (!bMotionMatchingEnabled)
@@ -447,9 +399,14 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingDefaultDatabase
 			? OwningPlayerCharacter->MotionMatchingDefaultDatabase.Get()
 			: DefaultPoseSearchDatabase.Get());
-	UPoseSearchDatabase* SelectedDatabase = Data.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
-		? IdleDatabase
-		: LocomotionDatabase;
+	UPoseSearchDatabase* SelectedDatabase = nullptr;
+	if (!SelectedDatabase)
+	{
+		SelectedDatabase = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
+			? IdleDatabase
+			: LocomotionDatabase;
+	}
+	
 	const UChooserTable* ChooserTable = AssetSet && AssetSet->MotionMatchingChooserTable
 		? AssetSet->MotionMatchingChooserTable.Get()
 		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingChooserTable
@@ -492,96 +449,97 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 
 void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JAnimThreadSafeData& Data)
 {
-	ChooserGroundSpeed = Data.GroundSpeed;
-	ChooserVerticalSpeed = Data.VerticalSpeed;
-	ChooserAccelerationRatio = Data.AccelerationRatio;
-	ChooserMoveInputSize = Data.MoveInputSize;
-	ChooserMoveInputHeldTime = Data.MoveInputHeldTime;
-	ChooserMoveInputTurnAngle = Data.MoveInputTurnAngle;
-	ChooserLastFallSpeed = Data.LastFallSpeed;
-	ChooserLandStartFallSpeed = Data.LandStartFallSpeed;
-	bChooserHasMoveInput = Data.bHasMoveInput;
-	bChooserStartRequested = Data.bStartRequested;
-	bChooserStopRequested = Data.bStopRequested;
-	bChooserSharpTurnRequested = Data.bSharpTurnRequested;
-	bChooserWantsSprint = Data.bWantsSprint;
+	// All accesses now use sub-struct paths; no legacy flat fields.
+	ChooserGroundSpeed = Data.Movement.GroundSpeed;
+	ChooserVerticalSpeed = Data.Movement.VerticalSpeed;
+	ChooserAccelerationRatio = Data.Movement.AccelerationRatio;
+	ChooserMoveInputSize = Data.Input.MoveInputSize;
+	ChooserMoveInputHeldTime = Data.Input.MoveInputHeldTime;
+	ChooserMoveInputTurnAngle = Data.Input.MoveInputTurnAngle;
+	ChooserLastFallSpeed = Data.Landing.LastFallSpeed;
+	ChooserLandStartFallSpeed = Data.Landing.LandStartFallSpeed;
+	bChooserHasMoveInput = Data.Input.bHasMoveInput;
+	bChooserStartRequested = Data.Ground.bStartRequested;
+	bChooserStopRequested = Data.Ground.bStopRequested;
+	bChooserSharpTurnRequested = Data.Input.bSharpTurnRequested;
+	bChooserWantsSprint = Data.Ground.bWantsSprint;
 	bChooserIsRemoteProxy = OwningPlayerCharacter && !IsLocallyControlledCharacter();
 	bChooserUseSprintLocomotion =
-		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		Data.bUseSprintLocomotion;
-	bChooserUseRunStart = Data.bStartRequested && !Data.bStartWasSprinting && !bChooserIsRemoteProxy;
-	bChooserUseRemoteRunStart = Data.bStartRequested && !Data.bStartWasSprinting && bChooserIsRemoteProxy;
-	bChooserUseSprintStart = Data.bStartRequested && Data.bStartWasSprinting;
-	bChooserUseRunStop = Data.bStopRequested && !Data.bStopWasSprinting;
-	bChooserUseSprintStop = Data.bStopRequested && Data.bStopWasSprinting;
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		Data.Ground.bUseSprintLocomotion;
+	bChooserUseRunStart = Data.Ground.bStartRequested && !Data.Ground.bStartWasSprinting && !bChooserIsRemoteProxy;
+	bChooserUseRemoteRunStart = Data.Ground.bStartRequested && !Data.Ground.bStartWasSprinting && bChooserIsRemoteProxy;
+	bChooserUseSprintStart = Data.Ground.bStartRequested && Data.Ground.bStartWasSprinting;
+	bChooserUseRunStop = Data.Ground.bStopRequested && !Data.Ground.bStopWasSprinting;
+	bChooserUseSprintStop = Data.Ground.bStopRequested && Data.Ground.bStopWasSprinting;
 	bChooserUseRunLocomotion =
-		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		!Data.bUseSprintLocomotion &&
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		!Data.Ground.bUseSprintLocomotion &&
 		!bChooserIsRemoteProxy;
 	bChooserUseRemoteRunLocomotion =
-		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		!Data.bUseSprintLocomotion &&
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		!Data.Ground.bUseSprintLocomotion &&
 		bChooserIsRemoteProxy;
 	bChooserUseSprintLocomotionRow =
-		Data.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-		Data.bUseSprintLocomotion;
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		Data.Ground.bUseSprintLocomotion;
 	bChooserUseJumpStart =
-		Data.bIsJumping &&
-		!Data.bIsLanding;
+		Data.Air.bIsJumping &&
+		!Data.Landing.bIsLanding;
 	bChooserUseFallOff =
-		Data.bIsFallOffStart &&
-		!Data.bIsJumping &&
-		!Data.bIsLanding;
+		Data.Air.bIsFallOffStart &&
+		!Data.Air.bIsJumping &&
+		!Data.Landing.bIsLanding;
 	bChooserUseFallLoop =
-		Data.bIsInAir &&
-		!Data.bIsJumping &&
-		!Data.bIsFallOffStart &&
-		!Data.bIsLanding;
+		Data.Air.bIsInAir &&
+		!Data.Air.bIsJumping &&
+		!Data.Air.bIsFallOffStart &&
+		!Data.Landing.bIsLanding;
 	bChooserUseLightLand =
-		Data.bIsLanding &&
-		!Data.bUseHeavyLand;
+		Data.Landing.bIsLanding &&
+		!Data.Landing.bUseHeavyLand;
 	bChooserUseHeavyLandRow =
-		Data.bIsLanding &&
-		Data.bUseHeavyLand;
+		Data.Landing.bIsLanding &&
+		Data.Landing.bUseHeavyLand;
 	bChooserUseStandLightLand =
-		Data.bIsLanding &&
-		!Data.bUseHeavyLand &&
-		!Data.bLandWasMoving;
+		Data.Landing.bIsLanding &&
+		!Data.Landing.bUseHeavyLand &&
+		!Data.Landing.bLandWasMoving;
 	bChooserUseStandHeavyLand =
-		Data.bIsLanding &&
-		Data.bUseHeavyLand &&
-		!Data.bLandWasMoving;
+		Data.Landing.bIsLanding &&
+		Data.Landing.bUseHeavyLand &&
+		!Data.Landing.bLandWasMoving;
 	bChooserUseRunLightLand =
-		Data.bIsLanding &&
-		!Data.bUseHeavyLand &&
-		Data.bLandWasMoving &&
-		!Data.bLandWasSprinting;
+		Data.Landing.bIsLanding &&
+		!Data.Landing.bUseHeavyLand &&
+		Data.Landing.bLandWasMoving &&
+		!Data.Landing.bLandWasSprinting;
 	bChooserUseSprintLightLand =
-		Data.bIsLanding &&
-		!Data.bUseHeavyLand &&
-		Data.bLandWasMoving &&
-		Data.bLandWasSprinting;
+		Data.Landing.bIsLanding &&
+		!Data.Landing.bUseHeavyLand &&
+		Data.Landing.bLandWasMoving &&
+		Data.Landing.bLandWasSprinting;
 	bChooserUseRunHeavyLand =
-		Data.bIsLanding &&
-		Data.bUseHeavyLand &&
-		Data.bLandWasMoving &&
-		!Data.bLandWasSprinting;
+		Data.Landing.bIsLanding &&
+		Data.Landing.bUseHeavyLand &&
+		Data.Landing.bLandWasMoving &&
+		!Data.Landing.bLandWasSprinting;
 	bChooserUseSprintHeavyLand =
-		Data.bIsLanding &&
-		Data.bUseHeavyLand &&
-		Data.bLandWasMoving &&
-		Data.bLandWasSprinting;
-	bChooserLandWasSprinting = Data.bLandWasSprinting;
-	bChooserLandWasMoving = Data.bLandWasMoving;
-	bChooserStartWasSprinting = Data.bStartWasSprinting;
-	bChooserStopWasSprinting = Data.bStopWasSprinting;
-	bChooserIsInAir = Data.bIsInAir;
-	bChooserIsJumping = Data.bIsJumping;
-	bChooserIsLanding = Data.bIsLanding;
-	bChooserUseHeavyLand = Data.bUseHeavyLand;
-	bChooserIsCombatMode = Data.bIsCombatMode;
-	bChooserIsIdle = Data.GroundMotionMode == EProject_JGroundMotionMode::Idle;
-	ChooserGroundMotionMode = Data.GroundMotionMode;
+		Data.Landing.bIsLanding &&
+		Data.Landing.bUseHeavyLand &&
+		Data.Landing.bLandWasMoving &&
+		Data.Landing.bLandWasSprinting;
+	bChooserLandWasSprinting = Data.Landing.bLandWasSprinting;
+	bChooserLandWasMoving = Data.Landing.bLandWasMoving;
+	bChooserStartWasSprinting = Data.Ground.bStartWasSprinting;
+	bChooserStopWasSprinting = Data.Ground.bStopWasSprinting;
+	bChooserIsInAir = Data.Air.bIsInAir;
+	bChooserIsJumping = Data.Air.bIsJumping;
+	bChooserIsLanding = Data.Landing.bIsLanding;
+	bChooserUseHeavyLand = Data.Landing.bUseHeavyLand;
+	bChooserIsCombatMode = Data.Combat.bIsCombatMode;
+	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
+	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
 }
 
 bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds)
@@ -632,7 +590,7 @@ float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() c
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
 {
-	if (!Data.bStoppedAcceleratingThisFrame)
+	if (!Data.Movement.bStoppedAcceleratingThisFrame)
 	{
 		return;
 	}
@@ -657,17 +615,17 @@ void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(c
 
 float UProject_JCharacterAnimInstance::CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const
 {
-	if (Data.bIsCombatMode)
+	if (Data.Combat.bIsCombatMode)
 	{
 		return GetEffectiveCombatAimAlpha();
 	}
 
-	if (Data.bUseSprintLocomotion)
+	if (Data.Ground.bUseSprintLocomotion)
 	{
 		return SprintAimAlpha;
 	}
 
-	return Data.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold() ? MovingAimAlpha : StandingAimAlpha;
+	return Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold() ? MovingAimAlpha : StandingAimAlpha;
 }
 
 bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
