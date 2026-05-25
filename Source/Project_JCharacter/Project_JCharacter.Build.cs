@@ -30,7 +30,6 @@ public class Project_JCharacter : ModuleRules
 			"NetCore",
 			"GameFeatures",
 			"ModularGameplay",
-			"StructUtils",
 			"MassEntity",
 			"MassCommon",
 			"MassMovement",
