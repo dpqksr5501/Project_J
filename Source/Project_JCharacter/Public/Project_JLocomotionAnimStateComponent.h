@@ -243,6 +243,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteStopStartSuppressDuration = 0.20f;
 
+	/** Simulated proxies leave Start immediately when replicated movement direction changes this much. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteStartTurnExitAngle = 15.0f;
+
 	/** Hidden simulated proxies can update animation-facing state less often. Visible and local players still update every frame. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HiddenRemoteUpdateInterval = 0.0f;
@@ -417,6 +421,8 @@ private:
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float RemoteAirborneTime = 0.0f;
 	float RemoteStopStartSuppressTimeRemaining = 0.0f;
+	FVector RemoteStartPreviousMoveWorldDirection = FVector::ZeroVector;
+	float RemoteStartPreviousActorYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
 	bool bPendingGroundStartFinish = false;
@@ -427,6 +433,7 @@ private:
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
+	bool bHasRemoteStartTurnReference = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
 	bool bLandingCancelEventDispatched = false;
 	bool bAppliedInAirGameplayTag = false;

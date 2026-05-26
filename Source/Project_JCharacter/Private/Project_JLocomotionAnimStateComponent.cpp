@@ -210,6 +210,13 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 		return;
 	}
 
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+	{
+		bPendingStartRequest = false;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		return;
+	}
+
 	bStartWasSprinting = bWasSprintingForStart;
 	bPendingStartRequest = true;
 }
@@ -218,6 +225,15 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
 {
 	if (ShouldUseLocalInputState())
 	{
+		return;
+	}
+
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start &&
+		GetRemoteMovementInputForState().SizeSquared() > FMath::Square(MoveInputDeadZone))
+	{
+		bPendingStopRequest = false;
+		RemoteStopStartSuppressTimeRemaining = 0.0f;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 		return;
 	}
 
@@ -653,6 +669,19 @@ void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGro
 	if (NewMode == EProject_JGroundMotionMode::Start)
 	{
 		bStartWasSprinting = IsSprintRequestedForAnimation() || GroundSpeed >= SprintLocomotionSpeedThreshold;
+		if (!ShouldUseLocalInputState())
+		{
+			if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
+			{
+				FVector HorizontalVelocity = PlayerOwner->GetVelocity();
+				HorizontalVelocity.Z = 0.0f;
+				RemoteStartPreviousMoveWorldDirection = HorizontalVelocity.SizeSquared() > FMath::Square(RemoteMoveSpeedThreshold)
+					? HorizontalVelocity.GetSafeNormal()
+					: FVector::ZeroVector;
+				RemoteStartPreviousActorYaw = PlayerOwner->GetActorRotation().Yaw;
+				bHasRemoteStartTurnReference = true;
+			}
+		}
 	}
 	else if (NewMode == EProject_JGroundMotionMode::Stop)
 	{
@@ -667,6 +696,13 @@ void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGro
 	{
 		bStartWasSprinting = false;
 		bStopWasSprinting = false;
+	}
+
+	if (NewMode != EProject_JGroundMotionMode::Start)
+	{
+		RemoteStartPreviousMoveWorldDirection = FVector::ZeroVector;
+		RemoteStartPreviousActorYaw = 0.0f;
+		bHasRemoteStartTurnReference = false;
 	}
 
 	RefreshGroundMotionFlags();
@@ -1170,7 +1206,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(fl
 	const bool bSuppressStartFromResidualVelocity = RemoteStopStartSuppressTimeRemaining > 0.0f;
 	RemoteStopStartSuppressTimeRemaining = FMath::Max(0.0f, RemoteStopStartSuppressTimeRemaining - DeltaTime);
 
-	RefreshMovementInputState(DeltaTime, MoveInput, false);
+	RefreshMovementInputState(DeltaTime, MoveInput, true);
 	if (bSuppressStartFromResidualVelocity)
 	{
 		bPendingStartRequest = false;
@@ -1315,12 +1351,45 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 			bStartWasSprinting = true;
 		}
 
+		bool bRemoteStartTurnExitRequested = false;
+		if (!bAllowSharpTurn && PlayerOwner)
+		{
+			FVector CurrentHorizontalVelocity = PlayerOwner->GetVelocity();
+			CurrentHorizontalVelocity.Z = 0.0f;
+			const bool bHasRemoteMoveDirection = CurrentHorizontalVelocity.SizeSquared() > FMath::Square(RemoteMoveSpeedThreshold);
+			const FVector CurrentRemoteMoveWorldDirection = bHasRemoteMoveDirection
+				? CurrentHorizontalVelocity.GetSafeNormal()
+				: FVector::ZeroVector;
+			const float CurrentRemoteActorYaw = PlayerOwner->GetActorRotation().Yaw;
+
+			if (bHasRemoteStartTurnReference)
+			{
+				if (bHasRemoteMoveDirection && !RemoteStartPreviousMoveWorldDirection.IsNearlyZero())
+				{
+					const float DirectionDot = FMath::Clamp(FVector::DotProduct(RemoteStartPreviousMoveWorldDirection, CurrentRemoteMoveWorldDirection), -1.0f, 1.0f);
+					const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
+					bRemoteStartTurnExitRequested = DirectionAngle >= RemoteStartTurnExitAngle;
+				}
+
+				const float ActorYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(RemoteStartPreviousActorYaw, CurrentRemoteActorYaw));
+				bRemoteStartTurnExitRequested = bRemoteStartTurnExitRequested || ActorYawDelta >= RemoteStartTurnExitAngle;
+			}
+
+			RemoteStartPreviousMoveWorldDirection = bHasRemoteMoveDirection ? CurrentRemoteMoveWorldDirection : FVector::ZeroVector;
+			RemoteStartPreviousActorYaw = CurrentRemoteActorYaw;
+			bHasRemoteStartTurnReference = true;
+		}
+
 		if (!bHasMoveInput)
 		{
 			EnterGroundMotionMode(
 				GroundSpeed > StopIntentSpeedThreshold
 					? EProject_JGroundMotionMode::Stop
 					: EProject_JGroundMotionMode::Idle);
+		}
+		else if (!bAllowSharpTurn && (bRemoteStartTurnExitRequested || FMath::Abs(MoveInputTurnAngle) >= RemoteStartTurnExitAngle))
+		{
+			EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 		}
 		else if (GroundMotionModeElapsedTime >= StartFallbackDuration)
 		{
