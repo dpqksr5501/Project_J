@@ -24,6 +24,37 @@ class UProject_JCombatAnimProfile;
 struct FAnimNode_Base;
 struct FAnimationUpdateContext;
 
+UENUM(BlueprintType)
+enum class EProject_JAnimBudgetTier : uint8
+{
+	Local,
+	Near,
+	Mid,
+	Far,
+	Hidden
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimOptimizationPolicy
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	EProject_JAnimBudgetTier Tier = EProject_JAnimBudgetTier::Local;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bUpdateAnimationData = true;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bUseFullChooserRows = true;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bUseFarChooserRowsOnly = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	float MotionMatchingUpdateInterval = 0.0f;
+};
+
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 {
@@ -322,6 +353,7 @@ protected:
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
 	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
+	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	float CalculateMotionMatchingUpdateInterval() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
@@ -491,6 +523,9 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	EProject_JGroundMotionMode ChooserGroundMotionMode = EProject_JGroundMotionMode::Idle;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	FProject_JAnimOptimizationPolicy CurrentOptimizationPolicy;
 
 	// --- Optimization Settings ---
 

@@ -458,6 +458,10 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JAnimThreadSafeData& Data)
 {
 	// All accesses now use sub-struct paths; no legacy flat fields.
+	const FProject_JAnimOptimizationPolicy OptimizationPolicy = BuildOptimizationPolicy();
+	CurrentOptimizationPolicy = OptimizationPolicy;
+	const bool bUseFarChooserRowsOnly = OptimizationPolicy.bUseFarChooserRowsOnly;
+
 	ChooserGroundSpeed = Data.Movement.GroundSpeed;
 	ChooserVerticalSpeed = Data.Movement.VerticalSpeed;
 	ChooserAccelerationRatio = Data.Movement.AccelerationRatio;
@@ -548,6 +552,45 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	bChooserIsCombatMode = Data.Combat.bIsCombatMode;
 	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
 	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
+
+	if (bUseFarChooserRowsOnly)
+	{
+		const bool bUseFarLocomotion =
+			Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+			!Data.Air.bIsInAir &&
+			!Data.Air.bIsJumping;
+		const bool bUseFarRunLocomotion = bUseFarLocomotion && !Data.Ground.bUseSprintLocomotion;
+		const bool bUseFarSprintLocomotion = bUseFarLocomotion && Data.Ground.bUseSprintLocomotion;
+
+		bChooserStartRequested = false;
+		bChooserStopRequested = false;
+		bChooserSharpTurnRequested = false;
+		bChooserUseRunStart = false;
+		bChooserUseRemoteRunStart = false;
+		bChooserUseSprintStart = false;
+		bChooserUseRunStop = false;
+		bChooserUseSprintStop = false;
+		bChooserUseFallOff = false;
+		bChooserUseLightLand = false;
+		bChooserUseHeavyLandRow = false;
+		bChooserUseStandLightLand = false;
+		bChooserUseStandHeavyLand = false;
+		bChooserUseRunLightLand = false;
+		bChooserUseSprintLightLand = false;
+		bChooserUseRunHeavyLand = false;
+		bChooserUseSprintHeavyLand = false;
+		bChooserIsLanding = false;
+		bChooserUseHeavyLand = false;
+		bChooserLandWasMoving = false;
+		bChooserLandWasSprinting = false;
+		bChooserUseSprintLocomotion = bUseFarSprintLocomotion;
+		bChooserUseRunLocomotion = false;
+		bChooserUseRemoteRunLocomotion = bUseFarRunLocomotion;
+		bChooserUseSprintLocomotionRow = bUseFarSprintLocomotion;
+		bChooserUseJumpStart = Data.Air.bIsJumping;
+		bChooserUseFallLoop = Data.Air.bIsInAir && !Data.Air.bIsJumping;
+		bChooserIsIdle = !Data.Air.bIsInAir && Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
+	}
 }
 
 bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds)
@@ -558,7 +601,8 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 		return false;
 	}
 
-	const float UpdateInterval = CalculateMotionMatchingUpdateInterval();
+	CurrentOptimizationPolicy = BuildOptimizationPolicy();
+	const float UpdateInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
 	if (UpdateInterval <= 0.0f)
 	{
 		MotionMatchingUpdateAccumulator = 0.0f;
@@ -573,6 +617,60 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 
 	MotionMatchingUpdateAccumulator = 0.0f;
 	return true;
+}
+
+FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const
+{
+	FProject_JAnimOptimizationPolicy Policy;
+	if (!OwningCharacter)
+	{
+		Policy.Tier = EProject_JAnimBudgetTier::Hidden;
+		Policy.bUpdateAnimationData = false;
+		Policy.bUseFullChooserRows = false;
+		Policy.bUseFarChooserRowsOnly = false;
+		return Policy;
+	}
+
+	if (IsLocallyControlledCharacter())
+	{
+		return Policy;
+	}
+
+	const bool bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
+	if (!bRecentlyRendered)
+	{
+		Policy.Tier = EProject_JAnimBudgetTier::Hidden;
+		Policy.bUpdateAnimationData = false;
+		Policy.bUseFullChooserRows = false;
+		Policy.bUseFarChooserRowsOnly = false;
+		return Policy;
+	}
+
+	if (const AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
+	{
+		const float Significance = BaseChar->GetSignificance();
+		if (Significance <= 0.0f)
+		{
+			Policy.Tier = EProject_JAnimBudgetTier::Near;
+			return Policy;
+		}
+
+		if (Significance <= 1.0f)
+		{
+			Policy.Tier = EProject_JAnimBudgetTier::Mid;
+			Policy.MotionMatchingUpdateInterval = GetEffectiveMidMotionMatchingUpdateInterval();
+			return Policy;
+		}
+
+		Policy.Tier = EProject_JAnimBudgetTier::Far;
+		Policy.bUseFullChooserRows = false;
+		Policy.bUseFarChooserRowsOnly = true;
+		Policy.MotionMatchingUpdateInterval = GetEffectiveFarMotionMatchingUpdateInterval();
+		return Policy;
+	}
+
+	Policy.Tier = EProject_JAnimBudgetTier::Near;
+	return Policy;
 }
 
 float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() const
@@ -656,25 +754,17 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 		return true;
 	}
 
-	const bool bLocallyControlled = IsLocallyControlledCharacter();
-	const bool bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
-	const float EffectiveHiddenRemoteUpdateInterval = GetEffectiveHiddenRemoteUpdateInterval();
-	if (bLocallyControlled || bRecentlyRendered || EffectiveHiddenRemoteUpdateInterval <= 0.0f)
+	CurrentOptimizationPolicy = BuildOptimizationPolicy();
+	if (CurrentOptimizationPolicy.bUpdateAnimationData)
 	{
 		HiddenRemoteUpdateAccumulator = 0.0f;
 		return false;
 	}
 
-	HiddenRemoteUpdateAccumulator += DeltaSeconds;
-	if (HiddenRemoteUpdateAccumulator < EffectiveHiddenRemoteUpdateInterval)
-	{
-		FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-		ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false);
-		return true;
-	}
-
 	HiddenRemoteUpdateAccumulator = 0.0f;
-	return false;
+	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false);
+	return true;
 }
 
 const UProject_JLocomotionProfile* UProject_JCharacterAnimInstance::GetLocomotionProfile() const

@@ -42,16 +42,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	}
 
 	bRecentlyRendered = WasRecentlyRendered(RecentlyRenderedTolerance);
-	if (!bUsingLocalInputState && !bRecentlyRendered && HiddenRemoteUpdateInterval > 0.0f)
+	if (!bUsingLocalInputState && !bRecentlyRendered)
 	{
-		HiddenRemoteUpdateAccumulator += DeltaTime;
-		if (HiddenRemoteUpdateAccumulator < HiddenRemoteUpdateInterval)
-		{
-			return;
-		}
-
-		DeltaTime = HiddenRemoteUpdateAccumulator;
 		HiddenRemoteUpdateAccumulator = 0.0f;
+		return;
 	}
 	else
 	{
