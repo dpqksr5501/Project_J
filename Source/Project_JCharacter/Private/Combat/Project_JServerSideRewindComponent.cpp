@@ -32,12 +32,19 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	NewRecord.Location = Owner->GetActorLocation();
 	NewRecord.Rotation = Owner->GetActorQuat();
 
-	PoseHistory.Insert(NewRecord, 0);
+	PoseHistory.Add(NewRecord);
 
-	// 2. Cull old records that exceed MaxRecordTime
-	while (PoseHistory.Num() > 0 && (PoseHistory[0].Timestamp - PoseHistory.Last().Timestamp) > MaxRecordTime)
+	// 2. Cull old records that exceed MaxRecordTime (removes oldest from the front)
+	const float CurrentTime = NewRecord.Timestamp;
+	int32 RemoveCount = 0;
+	while (RemoveCount < PoseHistory.Num() && (CurrentTime - PoseHistory[RemoveCount].Timestamp) > MaxRecordTime)
 	{
-		PoseHistory.Pop();
+		RemoveCount++;
+	}
+
+	if (RemoveCount > 0)
+	{
+		PoseHistory.RemoveAt(0, RemoveCount, EAllowShrinking::No);
 	}
 }
 
@@ -46,18 +53,90 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 	FProject_JPoseHistoryBuffer Pose1, Pose2;
 	float Alpha = 0.0f;
 
-	// In a real implementation, you would:
-	// 1. Find the poses at ClientTimestamp
-	// 2. Move the Actor's collision shape to the interpolated position
-	// 3. Perform the Sweep or LineTrace
-	// 4. Move the Actor's collision back to the actual current position
-	// 5. Return true if hit, false otherwise.
+	if (!GetPosesForTime(ClientTimestamp, Pose1, Pose2, Alpha))
+	{
+		return false;
+	}
 
-	return false;
+	AActor* Owner = GetOwner();
+	if (!Owner)
+	{
+		return false;
+	}
+
+	// Interpolate location and rotation
+	FVector InterpolatedLocation = FMath::Lerp(Pose1.Location, Pose2.Location, Alpha);
+	FQuat InterpolatedRotation = FQuat::Slerp(Pose1.Rotation, Pose2.Rotation, Alpha);
+
+	// Cache current transform
+	FVector OriginalLocation = Owner->GetActorLocation();
+	FQuat OriginalRotation = Owner->GetActorQuat();
+
+	// Temporarily rollback collision collider of target
+	Owner->SetActorLocationAndRotation(InterpolatedLocation, InterpolatedRotation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	// Perform server trace (LineTrace against ECC_Pawn)
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SSRVerify), true, Owner);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Pawn, QueryParams);
+
+	// Restore original transform immediately
+	Owner->SetActorLocationAndRotation(OriginalLocation, OriginalRotation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	// Confirm if we hit this target at that rolled-back position
+	return bHit && HitResult.GetActor() == Owner;
 }
 
 bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const
 {
-	// Implementation for searching the PoseHistory array and calculating Alpha for interpolation
-	return false;
+	if (PoseHistory.Num() < 2)
+	{
+		return false;
+	}
+
+	// Because PoseHistory is sorted oldest to newest:
+	// PoseHistory[0] is oldest (smallest timestamp), PoseHistory.Last() is newest (largest timestamp).
+	if (Time < PoseHistory[0].Timestamp || Time > PoseHistory.Last().Timestamp)
+	{
+		return false;
+	}
+
+	// Binary Search to find the two bounding frames
+	int32 Low = 0;
+	int32 High = PoseHistory.Num() - 1;
+	int32 FoundIndex = -1;
+
+	while (Low <= High)
+	{
+		int32 Mid = Low + (High - Low) / 2;
+		if (PoseHistory[Mid].Timestamp >= Time)
+		{
+			FoundIndex = Mid;
+			High = Mid - 1;
+		}
+		else
+		{
+			Low = Mid + 1;
+		}
+	}
+
+	if (FoundIndex <= 0)
+	{
+		return false;
+	}
+
+	OutPose2 = PoseHistory[FoundIndex];
+	OutPose1 = PoseHistory[FoundIndex - 1];
+
+	const float TimeDiff = OutPose2.Timestamp - OutPose1.Timestamp;
+	if (FMath::IsNearlyZero(TimeDiff))
+	{
+		OutAlpha = 0.0f;
+	}
+	else
+	{
+		OutAlpha = (Time - OutPose1.Timestamp) / TimeDiff;
+	}
+
+	return true;
 }

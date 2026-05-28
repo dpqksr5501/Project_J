@@ -3,6 +3,7 @@
 
 void UProject_JMassMonster_Trait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	// Tell the Mass Framework that this entity requires the Stats Fragment
-	BuildContext.AddFragment<FProject_JMassMonsterStatsFragment>();
+	// Add the Stats Fragment and initialize it with DefaultStats configured in the editor.
+	FProject_JMassMonsterStatsFragment& Stats = BuildContext.AddFragment_GetRef<FProject_JMassMonsterStatsFragment>();
+	Stats = DefaultStats;
 }
