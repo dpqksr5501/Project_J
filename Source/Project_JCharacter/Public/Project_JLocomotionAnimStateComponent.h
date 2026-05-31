@@ -96,6 +96,9 @@ public:
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
 protected:
+	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
+	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
+	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
 	bool ShouldUseLocalInputState() const;
 	bool IsSprintRequestedForAnimation() const;
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
@@ -108,6 +111,11 @@ protected:
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
 	bool UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence);
+	void BeginJumpStartState();
+	void ScheduleJumpStartTimeout(float Duration);
+	void BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed);
+	void ScheduleLandingTimeout();
+	void ClearActiveLandingState();
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
 	void StartFallOffStart(bool bReplicateEvent = true);
 	void StopFallOffStart();
@@ -131,6 +139,11 @@ protected:
 	void UpdateRemoteMovementRequestState(float DeltaTime);
 	void RefreshMovementInputState(float DeltaTime, const FVector2D& MoveInput, bool bTrackTurnAngle);
 	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
+	void UpdateSharpTurnRequest(bool bAllowSharpTurn);
+	bool UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput);
+	void UpdateStartGroundMotionMode(const FVector2D& MoveInput, bool bAllowSharpTurn);
+	void UpdateStopGroundMotionMode(float DeltaTime);
+	void UpdateDefaultGroundMotionMode();
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void DispatchLandingCancelForAnimation();
@@ -141,6 +154,7 @@ protected:
 	void ClearOwnedMovementGameplayTags();
 	void ClearMovementRequests();
 	void ClearTransientAnimationRequests();
+	void ClearResolvedMoveInputState();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
