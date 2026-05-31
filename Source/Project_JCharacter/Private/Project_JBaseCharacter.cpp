@@ -11,7 +11,7 @@
 
 AProject_JBaseCharacter::AProject_JBaseCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	CharacterLevel = 1;
 

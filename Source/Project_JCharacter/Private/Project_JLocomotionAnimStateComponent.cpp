@@ -44,13 +44,17 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	bRecentlyRendered = WasRecentlyRendered(RecentlyRenderedTolerance);
 	if (!bUsingLocalInputState && !bRecentlyRendered)
 	{
-		HiddenRemoteUpdateAccumulator = 0.0f;
-		return;
+		const float UpdateInterval = HiddenRemoteUpdateInterval;
+		if (UpdateInterval > 0.0f)
+		{
+			HiddenRemoteUpdateAccumulator += DeltaTime;
+			if (HiddenRemoteUpdateAccumulator < UpdateInterval)
+			{
+				return;
+			}
+		}
 	}
-	else
-	{
-		HiddenRemoteUpdateAccumulator = 0.0f;
-	}
+	HiddenRemoteUpdateAccumulator = 0.0f;
 
 	const FProject_JLocomotionRuntimeSnapshot MovementSnapshot = BuildMovementSnapshot(*PlayerOwner);
 	ApplyMovementSnapshot(DeltaTime, MovementSnapshot);

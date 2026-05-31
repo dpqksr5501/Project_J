@@ -79,6 +79,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bIsSprinting, COND_SkipOwner);
+	DOREPLIFETIME(AProject_JPlayerCharacter, bIsCombatMode);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
@@ -329,6 +330,53 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	}
 }
 
+void AProject_JPlayerCharacter::ApplyCombatModeState(bool bNewCombatMode)
+{
+	bIsCombatMode = bNewCombatMode;
+
+	if (ActiveCombatComponent)
+	{
+		if (bIsCombatMode)
+		{
+			ActiveCombatComponent->EquipWeapon();
+		}
+		else
+		{
+			ActiveCombatComponent->UnequipWeapon();
+		}
+	}
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		if (bIsCombatMode)
+		{
+			if (!bAppliedCombatModeTag)
+			{
+				ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+				bAppliedCombatModeTag = true;
+			}
+		}
+		else
+		{
+			if (bAppliedCombatModeTag)
+			{
+				ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+				bAppliedCombatModeTag = false;
+			}
+		}
+	}
+
+	if (bIsCombatMode)
+	{
+		ApplyCombatRotationMode(true);
+	}
+	else
+	{
+		CancelCombatIntroMontage();
+		ApplyCombatRotationMode(false);
+	}
+}
+
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 {
 	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
@@ -548,6 +596,12 @@ void AProject_JPlayerCharacter::ServerSetSprinting_Implementation(bool bNewIsSpr
 	ForceNetUpdate();
 }
 
+void AProject_JPlayerCharacter::ServerSetCombatMode_Implementation(bool bNewCombatMode)
+{
+	ApplyCombatModeState(bNewCombatMode);
+	ForceNetUpdate();
+}
+
 float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 {
 	return LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
@@ -737,6 +791,11 @@ void AProject_JPlayerCharacter::OnRep_IsSprinting()
 	ApplySprintAnimationState();
 }
 
+void AProject_JPlayerCharacter::OnRep_CombatMode()
+{
+	ApplyCombatModeState(bIsCombatMode);
+}
+
 void AProject_JPlayerCharacter::StartSprint()
 {
 	ApplySprintState(true);
@@ -781,43 +840,10 @@ void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
 		return;
 	}
 
-	bIsCombatMode = bInCombatMode;
-
-	// Update weapon visibility
-	if (ActiveCombatComponent)
+	ApplyCombatModeState(bInCombatMode);
+	if (!HasAuthority())
 	{
-		if (bIsCombatMode)
-		{
-			ActiveCombatComponent->EquipWeapon();
-		}
-		else
-		{
-			ActiveCombatComponent->UnequipWeapon();
-		}
-	}
-
-	// Update Gameplay Tags
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		if (bIsCombatMode)
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		}
-		else
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		}
-	}
-
-	// Update movement rotation settings for Strafe vs Free movement
-	if (bIsCombatMode)
-	{
-		ApplyCombatRotationMode(true);
-	}
-	else
-	{
-		CancelCombatIntroMontage();
-		ApplyCombatRotationMode(false);
+		ServerSetCombatMode(bInCombatMode);
 	}
 }
 

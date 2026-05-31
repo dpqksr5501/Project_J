@@ -156,6 +156,7 @@ protected:
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
+	void ApplyCombatModeState(bool bNewCombatMode);
 
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
@@ -184,6 +185,9 @@ protected:
 	void ServerSetSprinting(bool bNewIsSprinting);
 
 	UFUNCTION(Server, Reliable)
+	void ServerSetCombatMode(bool bNewCombatMode);
+
+	UFUNCTION(Server, Reliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
 
 	UFUNCTION(Server, Reliable)
@@ -203,6 +207,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_IsSprinting();
+
+	UFUNCTION()
+	void OnRep_CombatMode();
 
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
@@ -329,7 +336,7 @@ public:
 	// --- Combat States ---
 
 	/** True if the character is currently in combat mode (weapon drawn) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	UPROPERTY(ReplicatedUsing = OnRep_CombatMode, VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bIsCombatMode = false;
 
 	/** True if the character is currently attacking */
@@ -372,4 +379,5 @@ private:
 	TObjectPtr<UAnimMontage> ActiveCombatIntroMontage = nullptr;
 
 	bool bHadMoveInputForReplication = false;
+	bool bAppliedCombatModeTag = false;
 };

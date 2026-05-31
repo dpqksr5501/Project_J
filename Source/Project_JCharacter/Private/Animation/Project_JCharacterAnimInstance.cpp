@@ -643,6 +643,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bUpdateAnimationData = false;
 		Policy.bUseFullChooserRows = false;
 		Policy.bUseFarChooserRowsOnly = false;
+		Policy.MotionMatchingUpdateInterval = GetEffectiveHiddenRemoteUpdateInterval();
 		return Policy;
 	}
 
@@ -761,7 +762,17 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 		return false;
 	}
 
-	HiddenRemoteUpdateAccumulator = 0.0f;
+	const float UpdateInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
+	if (UpdateInterval > 0.0f)
+	{
+		HiddenRemoteUpdateAccumulator += DeltaSeconds;
+		if (HiddenRemoteUpdateAccumulator >= UpdateInterval)
+		{
+			HiddenRemoteUpdateAccumulator = 0.0f;
+			return false;
+		}
+	}
+
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false);
 	return true;
