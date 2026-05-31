@@ -7,6 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
 #include "CombatDamageable.h"
+#include "Project_JGameplayTags.h"
 
 // Sets default values for this component's properties
 UProject_JWarriorComponent::UProject_JWarriorComponent()
@@ -81,6 +82,7 @@ void UProject_JWarriorComponent::Attack()
 	}
 
 	bIsAttacking = true;
+	SetOwnedCombatStateTag(FProject_JGameplayTags::Get().State_Attacking, true);
 	ComboCount = 0;
 	CachedAttackInputTime = 0.0f;
 
@@ -95,11 +97,13 @@ void UProject_JWarriorComponent::Attack()
 		else
 		{
 			bIsAttacking = false;
+			SetOwnedCombatStateTag(FProject_JGameplayTags::Get().State_Attacking, false);
 		}
 	}
 	else
 	{
 		bIsAttacking = false;
+		SetOwnedCombatStateTag(FProject_JGameplayTags::Get().State_Attacking, false);
 	}
 }
 
@@ -142,6 +146,7 @@ void UProject_JWarriorComponent::ResetCombo()
 {
 	ComboCount = 0;
 	bIsAttacking = false;
+	SetOwnedCombatStateTag(FProject_JGameplayTags::Get().State_Attacking, false);
 	CachedAttackInputTime = 0.0f;
 
 	ACharacter* Owner = Cast<ACharacter>(GetOwner());
@@ -216,6 +221,7 @@ void UProject_JWarriorComponent::OnAttackMontageEnded(UAnimMontage* Montage, boo
 	if (Montage == SwordComboMontage)
 	{
 		bIsAttacking = false;
+		SetOwnedCombatStateTag(FProject_JGameplayTags::Get().State_Attacking, false);
 		ComboCount = 0;
 		CachedAttackInputTime = 0.0f;
 	}

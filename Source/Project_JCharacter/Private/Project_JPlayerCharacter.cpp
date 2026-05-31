@@ -16,6 +16,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameplayTagContainer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -112,6 +113,10 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 	// Dynamically find and cache the active combat component if added in Blueprint
 	ActiveCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
+	if (ActiveCombatComponent && AbilitySystemComponent)
+	{
+		ActiveCombatComponent->BindToGAS(AbilitySystemComponent);
+	}
 }
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
@@ -121,6 +126,12 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
+	}
+
+	if (bWasSprintLocomotionAllowed != IsSprintLocomotionAllowed())
+	{
+		UpdateMaxWalkSpeed();
+		ApplySprintAnimationState();
 	}
 }
 
@@ -375,6 +386,9 @@ void AProject_JPlayerCharacter::ApplyCombatModeState(bool bNewCombatMode)
 		CancelCombatIntroMontage();
 		ApplyCombatRotationMode(false);
 	}
+
+	UpdateMaxWalkSpeed();
+	ApplySprintAnimationState();
 }
 
 bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) const
@@ -385,7 +399,21 @@ bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) 
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
-	return IsAttacking() || IsDodging() || IsHitReacting();
+	return
+		(IsCombatModeActive() && !ShouldAllowSprintInCombat()) ||
+		IsAttacking() ||
+		IsDodging() ||
+		IsHitReacting();
+}
+
+bool AProject_JPlayerCharacter::ShouldAllowSprintInCombat() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->bAllowSprintInCombat;
+	}
+
+	return false;
 }
 
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
@@ -406,10 +434,6 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 {
 	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
 	const UProject_JMotionMatchingAssetSet* EffectiveAssetSet = GetMotionMatchingAssetSet();
-	const bool bHasDirectMotionMatchingFallback =
-		MotionMatchingDefaultDatabase ||
-		MotionMatchingIdleDatabase ||
-		MotionMatchingChooserTable;
 
 	if (!CharacterAnimProfile && LocomotionProfile)
 	{
@@ -419,12 +443,12 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 			TEXT("%s uses LocomotionProfile directly. Prefer assigning CharacterAnimProfile for new characters."),
 			*GetNameSafe(this));
 	}
-	else if (!CharacterAnimProfile && (MotionMatchingAssetSet || bHasDirectMotionMatchingFallback))
+	else if (!CharacterAnimProfile && MotionMatchingAssetSet)
 	{
 		UE_LOG(
 			LogTemplateCharacter,
 			Display,
-			TEXT("%s uses direct motion matching fallback assets. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."),
+			TEXT("%s uses MotionMatchingAssetSet directly. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."),
 			*GetNameSafe(this));
 	}
 
@@ -438,21 +462,21 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 			*GetNameSafe(CharacterAnimProfile));
 	}
 
-	if (EffectiveLocomotionProfile && !EffectiveAssetSet && !bHasDirectMotionMatchingFallback)
+	if (EffectiveLocomotionProfile && !EffectiveAssetSet)
 	{
 		UE_LOG(
 			LogTemplateCharacter,
 			Warning,
-			TEXT("%s uses LocomotionProfile %s, but no MotionMatchingAssetSet or direct PSD/Chooser fallback is assigned."),
+			TEXT("%s uses LocomotionProfile %s, but no MotionMatchingAssetSet is assigned."),
 			*GetNameSafe(this),
 			*GetNameSafe(EffectiveLocomotionProfile));
 	}
-	else if (!EffectiveLocomotionProfile && !EffectiveAssetSet && !bHasDirectMotionMatchingFallback)
+	else if (!EffectiveLocomotionProfile && !EffectiveAssetSet)
 	{
 		UE_LOG(
 			LogTemplateCharacter,
 			Warning,
-			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, MotionMatchingAssetSet, or direct PSD/Chooser fallback assigned."),
+			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."),
 			*GetNameSafe(this));
 	}
 }
@@ -461,7 +485,7 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
-		const bool bCanSprint = bIsSprinting && !IsCombatActionBlockingSprint();
+		const bool bCanSprint = IsSprintLocomotionAllowed();
 		MoveComp->MaxWalkSpeed = bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed();
 		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
 	}
@@ -588,9 +612,11 @@ void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
 
 void AProject_JPlayerCharacter::ApplySprintAnimationState()
 {
+	bWasSprintLocomotionAllowed = IsSprintLocomotionAllowed();
+
 	if (LocomotionAnimStateComponent)
 	{
-		if (bIsSprinting)
+		if (bWasSprintLocomotionAllowed)
 		{
 			LocomotionAnimStateComponent->HandleSprintStarted();
 		}
@@ -675,12 +701,17 @@ bool AProject_JPlayerCharacter::IsHitReacting() const
 	return bIsHitReacting || HasCombatStateTag(FProject_JGameplayTags::Get().State_HitReacting);
 }
 
+bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
+{
+	return bIsSprinting && !IsCombatActionBlockingSprint();
+}
+
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
 {
 	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(GetMoveInputDeadZoneForAnimation());
 	if (bHasMoveInput && !bHadMoveInputForReplication)
 	{
-		DispatchMoveStartAnimationEvent(bIsSprinting);
+		DispatchMoveStartAnimationEvent(IsSprintLocomotionAllowed());
 	}
 
 	bHadMoveInputForReplication = bHasMoveInput;
@@ -706,7 +737,7 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStarted_Implementation(bool bWasSprintingForStart)
 {
-	ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart || bIsSprinting;
+	ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart || IsSprintLocomotionAllowed();
 	++ReplicatedAnimEvents.MoveStartCounter;
 	ForceNetUpdate();
 }

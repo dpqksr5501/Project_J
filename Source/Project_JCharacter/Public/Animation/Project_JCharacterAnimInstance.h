@@ -4,12 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Animation/AnimInstanceProxy.h"
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
-#include "PoseSearch/AnimNode_MotionMatching.h"
-#include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
@@ -256,51 +253,6 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
-};
-
-USTRUCT()
-struct PROJECT_JCHARACTER_API FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
-{
-	GENERATED_BODY()
-
-	FProject_JCharacterAnimInstanceProxy()
-	{
-		LinkNativeGraph();
-	}
-	FProject_JCharacterAnimInstanceProxy(UAnimInstance* InAnimInstance)
-		: FAnimInstanceProxy(InAnimInstance)
-	{
-		LinkNativeGraph();
-	}
-
-	void QueueGameThreadData(
-		const FProject_JAnimThreadSafeData& InData,
-		UPoseSearchDatabase* InSelectedDatabase,
-		bool bInMotionMatchingEnabled,
-		bool bInUpdateMotionMatchingThisFrame);
-	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
-	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
-
-protected:
-	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
-	virtual void UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& InContext, FAnimNode_Base* InRootNode, FName InLayerName) override;
-	virtual FAnimNode_Base* GetCustomRootNode() override;
-	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
-
-private:
-	void LinkNativeGraph();
-	void ApplySelectedDatabaseToNativeNode();
-
-	FProject_JAnimThreadSafeData PendingGameThreadData;
-	FProject_JAnimThreadSafeData ThreadSafeData;
-	bool bMotionMatchingEnabled = true;
-	bool bUpdateMotionMatchingThisFrame = true;
-
-	UPROPERTY(Transient)
-	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
-
-	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
-	FAnimNode_MotionMatching NativeMotionMatchingNode;
 };
 
 UCLASS(Blueprintable, BlueprintType)

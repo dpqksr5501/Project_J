@@ -647,7 +647,7 @@ bool UProject_JLocomotionAnimStateComponent::ShouldUseLocalInputState() const
 bool UProject_JLocomotionAnimStateComponent::IsSprintRequestedForAnimation() const
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	return bSprintInputHeld || (PlayerOwner && PlayerOwner->bIsSprinting);
+	return bSprintInputHeld || (PlayerOwner && PlayerOwner->IsSprintLocomotionAllowed());
 }
 
 void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGroundMotionMode NewMode)
@@ -1327,7 +1327,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 	bSharpTurnRequested =
 		bAllowSharpTurn &&
 		PlayerOwner &&
-		PlayerOwner->bIsSprinting &&
+		PlayerOwner->IsSprintLocomotionAllowed() &&
 		bHasMoveInput &&
 		bPrevHasMoveInput &&
 		GroundSpeed >= SharpTurnMinSpeed &&

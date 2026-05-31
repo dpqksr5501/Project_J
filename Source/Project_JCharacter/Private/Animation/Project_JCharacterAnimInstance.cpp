@@ -2,6 +2,7 @@
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
+#include "Animation/AnimInstanceProxy.h"
 #include "ChooserFunctionLibrary.h"
 #include "ChooserTypes.h"
 #include "GameFramework/Character.h"
@@ -13,6 +14,8 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
+#include "PoseSearch/AnimNode_MotionMatching.h"
+#include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
@@ -20,6 +23,48 @@
 
 // SyncLegacyFieldsFromStructuredData() removed.
 // All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
+
+struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
+{
+	FProject_JCharacterAnimInstanceProxy()
+	{
+		LinkNativeGraph();
+	}
+
+	explicit FProject_JCharacterAnimInstanceProxy(UAnimInstance* InAnimInstance)
+		: FAnimInstanceProxy(InAnimInstance)
+	{
+		LinkNativeGraph();
+	}
+
+	void QueueGameThreadData(
+		const FProject_JAnimThreadSafeData& InData,
+		UPoseSearchDatabase* InSelectedDatabase,
+		bool bInMotionMatchingEnabled,
+		bool bInUpdateMotionMatchingThisFrame);
+	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
+	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
+
+protected:
+	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
+	virtual void UpdateAnimationNode_WithRoot(const FAnimationUpdateContext& InContext, FAnimNode_Base* InRootNode, FName InLayerName) override;
+	virtual FAnimNode_Base* GetCustomRootNode() override;
+	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
+
+private:
+	void LinkNativeGraph();
+	void ApplySelectedDatabaseToNativeNode();
+
+	FProject_JAnimThreadSafeData PendingGameThreadData;
+	FProject_JAnimThreadSafeData ThreadSafeData;
+	bool bMotionMatchingEnabled = true;
+	bool bUpdateMotionMatchingThisFrame = true;
+
+	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
+
+	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
+	FAnimNode_MotionMatching NativeMotionMatchingNode;
+};
 
 void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const FProject_JAnimThreadSafeData& InData,
@@ -319,7 +364,9 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 		return false;
 	}
 
-	Data.Ground.bWantsSprint = Data.Ground.bWantsSprint || OwningPlayerCharacter->bIsSprinting;
+	Data.Ground.bWantsSprint =
+		(Data.Ground.bWantsSprint || OwningPlayerCharacter->bIsSprinting) &&
+		OwningPlayerCharacter->IsSprintLocomotionAllowed();
 	Data.Ground.bStartWasSprinting =
 		Data.Ground.bStartWasSprinting ||
 		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
@@ -393,14 +440,10 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		: nullptr;
 	UPoseSearchDatabase* IdleDatabase = AssetSet && AssetSet->IdlePoseSearchDatabase
 		? AssetSet->IdlePoseSearchDatabase.Get()
-		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingIdleDatabase
-			? OwningPlayerCharacter->MotionMatchingIdleDatabase.Get()
-			: DefaultIdlePoseSearchDatabase.Get());
+		: DefaultIdlePoseSearchDatabase.Get();
 	UPoseSearchDatabase* LocomotionDatabase = AssetSet && AssetSet->DefaultPoseSearchDatabase
 		? AssetSet->DefaultPoseSearchDatabase.Get()
-		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingDefaultDatabase
-			? OwningPlayerCharacter->MotionMatchingDefaultDatabase.Get()
-			: DefaultPoseSearchDatabase.Get());
+		: DefaultPoseSearchDatabase.Get();
 	UPoseSearchDatabase* SelectedDatabase = nullptr;
 	if (!SelectedDatabase)
 	{
@@ -411,9 +454,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	
 	const UChooserTable* ChooserTable = AssetSet && AssetSet->MotionMatchingChooserTable
 		? AssetSet->MotionMatchingChooserTable.Get()
-		: (OwningPlayerCharacter && OwningPlayerCharacter->MotionMatchingChooserTable
-			? OwningPlayerCharacter->MotionMatchingChooserTable.Get()
-			: MotionMatchingChooserTable.Get());
+		: MotionMatchingChooserTable.Get();
 
 	bool bIsFarDistance = false;
 	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))

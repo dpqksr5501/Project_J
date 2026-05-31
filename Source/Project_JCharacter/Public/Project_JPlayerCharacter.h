@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "Project_JBaseCharacter.h"
 #include "Logging/LogMacros.h"
 #include "Project_JPlayerCharacter.generated.h"
@@ -21,9 +20,8 @@ class UProject_JMotionMatchingTrajectoryComponent;
 class UProject_JLocomotionProfile;
 class UProject_JWeaponAnimProfile;
 class UProject_JCombatAnimProfile;
-class UChooserTable;
-class UPoseSearchDatabase;
 class UProject_JCharacterViewModel;
+struct FGameplayTag;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -160,6 +158,7 @@ protected:
 	void ApplyCombatModeState(bool bNewCombatMode);
 	bool HasCombatStateTag(const FGameplayTag& StateTag) const;
 	bool IsCombatActionBlockingSprint() const;
+	bool ShouldAllowSprintInCombat() const;
 
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
@@ -309,6 +308,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool IsHitReacting() const;
 
+	UFUNCTION(BlueprintPure, Category = "Movement|Sprint")
+	bool IsSprintLocomotionAllowed() const;
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	float GetEffectiveCombatAimAlpha() const;
 
@@ -335,15 +337,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
-	TObjectPtr<UPoseSearchDatabase> MotionMatchingDefaultDatabase = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
-	TObjectPtr<UPoseSearchDatabase> MotionMatchingIdleDatabase = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
-	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;
@@ -395,4 +388,5 @@ private:
 
 	bool bHadMoveInputForReplication = false;
 	bool bAppliedCombatModeTag = false;
+	bool bWasSprintLocomotionAllowed = false;
 };

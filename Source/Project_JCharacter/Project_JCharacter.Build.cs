@@ -10,9 +10,6 @@ public class Project_JCharacter : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"InputCore",
-			"EnhancedInput",
-			"AIModule",
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
@@ -26,19 +23,23 @@ public class Project_JCharacter : ModuleRules
 			"Project_JCore",
 			"Project_JGAS",
 			"SignificanceManager",
-			"IrisCore",
 			"NetCore",
+			"MassEntity",
+			"MassSpawner",
+			"ModelViewViewModel"
+		});
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"InputCore",
+			"EnhancedInput",
+			"AIModule",
+			"IrisCore",
 			"GameFeatures",
 			"ModularGameplay",
-			"MassEntity",
 			"MassCommon",
 			"MassMovement",
 			"MassRepresentation",
-			"MassSpawner",
 			"MassGameplayDebug",
-			"MassActors",
-			"ModelViewViewModel"
+			"MassActors"
 		});
-		PrivateDependencyModuleNames.AddRange(new string[] { });
 	}
 }
