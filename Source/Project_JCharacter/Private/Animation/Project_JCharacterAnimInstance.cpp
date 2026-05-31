@@ -327,10 +327,10 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.Ground.bWantsSprint &&
 		(Data.Input.bHasMoveInput || Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold());
-	Data.Combat.bIsCombatMode = OwningPlayerCharacter->bIsCombatMode;
-	Data.Combat.bIsAttacking = OwningPlayerCharacter->bIsAttacking;
-	Data.Combat.bIsDodging = OwningPlayerCharacter->bIsDodging;
-	Data.Combat.bIsHitReacting = OwningPlayerCharacter->bIsHitReacting;
+	Data.Combat.bIsCombatMode = OwningPlayerCharacter->IsCombatModeActive();
+	Data.Combat.bIsAttacking = OwningPlayerCharacter->IsAttacking();
+	Data.Combat.bIsDodging = OwningPlayerCharacter->IsDodging();
+	Data.Combat.bIsHitReacting = OwningPlayerCharacter->IsHitReacting();
 	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->bIsPlayingCombatIntro;
 
 	if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())

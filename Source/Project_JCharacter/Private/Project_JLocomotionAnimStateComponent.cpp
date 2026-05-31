@@ -1439,7 +1439,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVe
 		return;
 	}
 
-	if (!PlayerOwner->bIsCombatMode || !bHasMoveInput)
+	if (!PlayerOwner->IsCombatModeActive() || !bHasMoveInput)
 	{
 		MovementDirection = 0.0f;
 		CombatInputForward = 0.0f;

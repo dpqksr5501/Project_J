@@ -377,6 +377,17 @@ void AProject_JPlayerCharacter::ApplyCombatModeState(bool bNewCombatMode)
 	}
 }
 
+bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && StateTag.IsValid() && ASC->HasMatchingGameplayTag(StateTag);
+}
+
+bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
+{
+	return IsAttacking() || IsDodging() || IsHitReacting();
+}
+
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 {
 	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
@@ -450,7 +461,7 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
-		const bool bCanSprint = bIsSprinting && !bIsAttacking && !bIsDodging && !bIsHitReacting;
+		const bool bCanSprint = bIsSprinting && !IsCombatActionBlockingSprint();
 		MoveComp->MaxWalkSpeed = bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed();
 		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
 	}
@@ -644,6 +655,26 @@ const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfi
 	return CharacterAnimProfile ? CharacterAnimProfile->CombatAnimProfile.Get() : nullptr;
 }
 
+bool AProject_JPlayerCharacter::IsCombatModeActive() const
+{
+	return bIsCombatMode || HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+}
+
+bool AProject_JPlayerCharacter::IsAttacking() const
+{
+	return bIsAttacking || HasCombatStateTag(FProject_JGameplayTags::Get().State_Attacking);
+}
+
+bool AProject_JPlayerCharacter::IsDodging() const
+{
+	return bIsDodging || HasCombatStateTag(FProject_JGameplayTags::Get().State_Dodging);
+}
+
+bool AProject_JPlayerCharacter::IsHitReacting() const
+{
+	return bIsHitReacting || HasCombatStateTag(FProject_JGameplayTags::Get().State_HitReacting);
+}
+
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
 {
 	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(GetMoveInputDeadZoneForAnimation());
@@ -816,7 +847,7 @@ void AProject_JPlayerCharacter::StopSprint()
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
-	if (bIsCombatMode)
+	if (IsCombatModeActive())
 	{
 		CancelCombatIntroMontage();
 		SetCombatMode(false);
@@ -835,7 +866,7 @@ void AProject_JPlayerCharacter::ToggleCombatMode()
 
 void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
 {
-	if (bIsCombatMode == bInCombatMode)
+	if (IsCombatModeActive() == bInCombatMode)
 	{
 		return;
 	}
@@ -849,7 +880,7 @@ void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
 
 void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 {
-	if (bIsCombatMode || bIsPlayingCombatIntro || bPendingCombatModeFromIntro || bIsHitReacting)
+	if (IsCombatModeActive() || bIsPlayingCombatIntro || bPendingCombatModeFromIntro || IsHitReacting())
 	{
 		return;
 	}
@@ -872,7 +903,7 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 {
 	UAnimMontage* EffectiveCombatIntroMontage = GetEffectiveCombatIntroMontage();
-	if (!EffectiveCombatIntroMontage || bIsPlayingCombatIntro || bIsHitReacting)
+	if (!EffectiveCombatIntroMontage || bIsPlayingCombatIntro || IsHitReacting())
 	{
 		return;
 	}
@@ -922,11 +953,11 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		{
 			bPendingCombatModeFromIntro = false;
 
-			if (!bInterrupted && !bIsHitReacting)
+			if (!bInterrupted && !IsHitReacting())
 			{
 				SetCombatMode(true);
 			}
-			else if (!bIsCombatMode)
+			else if (!IsCombatModeActive())
 			{
 				ApplyCombatRotationMode(false);
 			}
@@ -946,7 +977,7 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
 	ActiveCombatIntroMontage = nullptr;
-	if (!bIsCombatMode)
+	if (!IsCombatModeActive())
 	{
 		ApplyCombatRotationMode(false);
 	}

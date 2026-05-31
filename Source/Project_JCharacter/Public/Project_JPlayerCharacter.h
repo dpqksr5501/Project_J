@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Project_JBaseCharacter.h"
 #include "Logging/LogMacros.h"
 #include "Project_JPlayerCharacter.generated.h"
@@ -157,6 +158,8 @@ protected:
 
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 	void ApplyCombatModeState(bool bNewCombatMode);
+	bool HasCombatStateTag(const FGameplayTag& StateTag) const;
+	bool IsCombatActionBlockingSprint() const;
 
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
@@ -187,19 +190,19 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetCombatMode(bool bNewCombatMode);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void ServerNotifyMoveStopped();
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void ServerNotifyJumpStarted();
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void ServerNotifyFallOffStarted();
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void ServerNotifyLandingCancelled();
 
 	UFUNCTION()
@@ -294,6 +297,18 @@ public:
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool IsCombatModeActive() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool IsAttacking() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool IsDodging() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat")
+	bool IsHitReacting() const;
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	float GetEffectiveCombatAimAlpha() const;
 
@@ -321,13 +336,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback PSD used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
 	TObjectPtr<UPoseSearchDatabase> MotionMatchingDefaultDatabase = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback idle PSD used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
 	TObjectPtr<UPoseSearchDatabase> MotionMatchingIdleDatabase = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Final fallback Chooser Table used only when CharacterAnimProfile, LocomotionProfile, and MotionMatchingAssetSet are not assigned."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (DeprecatedProperty, DeprecationMessage = "Assign a MotionMatchingAssetSet on the effective LocomotionProfile instead.", ToolTip = "Deprecated migration fallback. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."))
 	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
