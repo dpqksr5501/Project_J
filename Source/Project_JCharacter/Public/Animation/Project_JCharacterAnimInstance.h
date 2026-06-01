@@ -307,6 +307,12 @@ protected:
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
+	void PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data);
+	void PublishChooserGroundProperties(const FProject_JAnimThreadSafeData& Data);
+	void PublishChooserAirProperties(const FProject_JAnimThreadSafeData& Data);
+	void PublishChooserLandingProperties(const FProject_JAnimThreadSafeData& Data);
+	void PublishChooserCombatProperties(const FProject_JAnimThreadSafeData& Data);
+	void ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data);
 	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	float CalculateMotionMatchingUpdateInterval() const;

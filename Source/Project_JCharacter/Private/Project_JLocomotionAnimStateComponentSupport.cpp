@@ -82,6 +82,7 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
 		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
 		TEXT("Air InAir=%s PhysAir=%s Jumping=%s FallOff=%s Landing=%s LandReq=%s CanLand=%s CanGround=%s LastFall=%.1f\n")
+		TEXT("JumpDebug IgnoredLandings=%d LastIgnoredElapsed=%.3f LastIgnoredVz=%.1f LastIgnoredFall=%.1f LastIgnoredVertical=%.1f HadFallEvidence=%s\n")
 		TEXT("Combat Dir=%.1f Fwd=%.2f Right=%.2f FwdSpeed=%.1f RightSpeed=%.1f"),
 		ToDebugString(NetMode),
 		ToDebugString(LocalRole),
@@ -118,11 +119,27 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		bCanEnterLand ? TEXT("true") : TEXT("false"),
 		bCanEnterGround ? TEXT("true") : TEXT("false"),
 		LastFallSpeed,
+		IgnoredJumpStartLandingCount,
+		LastIgnoredJumpStartLandingElapsedTime,
+		LastIgnoredJumpStartLandingVelocityZ,
+		LastIgnoredJumpStartLandingFallSpeed,
+		LastIgnoredJumpStartLandingVerticalSpeed,
+		bLastIgnoredJumpStartLandingHadFallingEvidence ? TEXT("true") : TEXT("false"),
 		MovementDirection,
 		CombatInputForward,
 		CombatInputRight,
 		CombatForwardSpeed,
 		CombatRightSpeed);
+}
+
+void UProject_JLocomotionAnimStateComponent::ResetJumpStartLandingDebugState()
+{
+	IgnoredJumpStartLandingCount = 0;
+	LastIgnoredJumpStartLandingElapsedTime = 0.0f;
+	LastIgnoredJumpStartLandingVelocityZ = 0.0f;
+	LastIgnoredJumpStartLandingFallSpeed = 0.0f;
+	LastIgnoredJumpStartLandingVerticalSpeed = 0.0f;
+	bLastIgnoredJumpStartLandingHadFallingEvidence = false;
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVector& HorizontalVelocity)

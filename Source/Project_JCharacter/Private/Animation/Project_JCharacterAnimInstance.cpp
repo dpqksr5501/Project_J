@@ -564,22 +564,37 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	// All accesses now use sub-struct paths; no legacy flat fields.
 	const FProject_JAnimOptimizationPolicy OptimizationPolicy = BuildOptimizationPolicy();
 	CurrentOptimizationPolicy = OptimizationPolicy;
-	const bool bUseFarChooserRowsOnly = OptimizationPolicy.bUseFarChooserRowsOnly;
 
+	PublishChooserMovementProperties(Data);
+	PublishChooserGroundProperties(Data);
+	PublishChooserAirProperties(Data);
+	PublishChooserLandingProperties(Data);
+	PublishChooserCombatProperties(Data);
+
+	if (OptimizationPolicy.bUseFarChooserRowsOnly)
+	{
+		ApplyFarChooserOverrides(Data);
+	}
+}
+
+void UProject_JCharacterAnimInstance::PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data)
+{
 	ChooserGroundSpeed = Data.Movement.GroundSpeed;
 	ChooserVerticalSpeed = Data.Movement.VerticalSpeed;
 	ChooserAccelerationRatio = Data.Movement.AccelerationRatio;
 	ChooserMoveInputSize = Data.Input.MoveInputSize;
 	ChooserMoveInputHeldTime = Data.Input.MoveInputHeldTime;
 	ChooserMoveInputTurnAngle = Data.Input.MoveInputTurnAngle;
-	ChooserLastFallSpeed = Data.Landing.LastFallSpeed;
-	ChooserLandStartFallSpeed = Data.Landing.LandStartFallSpeed;
 	bChooserHasMoveInput = Data.Input.bHasMoveInput;
+	bChooserSharpTurnRequested = Data.Input.bSharpTurnRequested;
+	bChooserIsRemoteProxy = OwningPlayerCharacter && !IsLocallyControlledCharacter();
+}
+
+void UProject_JCharacterAnimInstance::PublishChooserGroundProperties(const FProject_JAnimThreadSafeData& Data)
+{
 	bChooserStartRequested = Data.Ground.bStartRequested;
 	bChooserStopRequested = Data.Ground.bStopRequested;
-	bChooserSharpTurnRequested = Data.Input.bSharpTurnRequested;
 	bChooserWantsSprint = Data.Ground.bWantsSprint;
-	bChooserIsRemoteProxy = OwningPlayerCharacter && !IsLocallyControlledCharacter();
 	bChooserUseSprintLocomotion =
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.Ground.bUseSprintLocomotion;
@@ -599,6 +614,14 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 	bChooserUseSprintLocomotionRow =
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.Ground.bUseSprintLocomotion;
+	bChooserStartWasSprinting = Data.Ground.bStartWasSprinting;
+	bChooserStopWasSprinting = Data.Ground.bStopWasSprinting;
+	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
+	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
+}
+
+void UProject_JCharacterAnimInstance::PublishChooserAirProperties(const FProject_JAnimThreadSafeData& Data)
+{
 	bChooserUseJumpStart =
 		Data.Air.bIsJumping &&
 		!Data.Landing.bIsLanding;
@@ -611,6 +634,14 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 		!Data.Air.bIsJumping &&
 		!Data.Air.bIsFallOffStart &&
 		!Data.Landing.bIsLanding;
+	bChooserIsInAir = Data.Air.bIsInAir;
+	bChooserIsJumping = Data.Air.bIsJumping;
+}
+
+void UProject_JCharacterAnimInstance::PublishChooserLandingProperties(const FProject_JAnimThreadSafeData& Data)
+{
+	ChooserLastFallSpeed = Data.Landing.LastFallSpeed;
+	ChooserLandStartFallSpeed = Data.Landing.LandStartFallSpeed;
 	bChooserUseLightLand =
 		Data.Landing.bIsLanding &&
 		!Data.Landing.bUseHeavyLand;
@@ -647,54 +678,52 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 		Data.Landing.bLandWasSprinting;
 	bChooserLandWasSprinting = Data.Landing.bLandWasSprinting;
 	bChooserLandWasMoving = Data.Landing.bLandWasMoving;
-	bChooserStartWasSprinting = Data.Ground.bStartWasSprinting;
-	bChooserStopWasSprinting = Data.Ground.bStopWasSprinting;
-	bChooserIsInAir = Data.Air.bIsInAir;
-	bChooserIsJumping = Data.Air.bIsJumping;
 	bChooserIsLanding = Data.Landing.bIsLanding;
 	bChooserUseHeavyLand = Data.Landing.bUseHeavyLand;
+}
+
+void UProject_JCharacterAnimInstance::PublishChooserCombatProperties(const FProject_JAnimThreadSafeData& Data)
+{
 	bChooserIsCombatMode = Data.Combat.bIsCombatMode;
-	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
-	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
+}
 
-	if (bUseFarChooserRowsOnly)
-	{
-		const bool bUseFarLocomotion =
-			Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
-			!Data.Air.bIsInAir &&
-			!Data.Air.bIsJumping;
-		const bool bUseFarRunLocomotion = bUseFarLocomotion && !Data.Ground.bUseSprintLocomotion;
-		const bool bUseFarSprintLocomotion = bUseFarLocomotion && Data.Ground.bUseSprintLocomotion;
+void UProject_JCharacterAnimInstance::ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data)
+{
+	const bool bUseFarLocomotion =
+		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		!Data.Air.bIsInAir &&
+		!Data.Air.bIsJumping;
+	const bool bUseFarRunLocomotion = bUseFarLocomotion && !Data.Ground.bUseSprintLocomotion;
+	const bool bUseFarSprintLocomotion = bUseFarLocomotion && Data.Ground.bUseSprintLocomotion;
 
-		bChooserStartRequested = false;
-		bChooserStopRequested = false;
-		bChooserSharpTurnRequested = false;
-		bChooserUseRunStart = false;
-		bChooserUseRemoteRunStart = false;
-		bChooserUseSprintStart = false;
-		bChooserUseRunStop = false;
-		bChooserUseSprintStop = false;
-		bChooserUseFallOff = false;
-		bChooserUseLightLand = false;
-		bChooserUseHeavyLandRow = false;
-		bChooserUseStandLightLand = false;
-		bChooserUseStandHeavyLand = false;
-		bChooserUseRunLightLand = false;
-		bChooserUseSprintLightLand = false;
-		bChooserUseRunHeavyLand = false;
-		bChooserUseSprintHeavyLand = false;
-		bChooserIsLanding = false;
-		bChooserUseHeavyLand = false;
-		bChooserLandWasMoving = false;
-		bChooserLandWasSprinting = false;
-		bChooserUseSprintLocomotion = bUseFarSprintLocomotion;
-		bChooserUseRunLocomotion = false;
-		bChooserUseRemoteRunLocomotion = bUseFarRunLocomotion;
-		bChooserUseSprintLocomotionRow = bUseFarSprintLocomotion;
-		bChooserUseJumpStart = Data.Air.bIsJumping;
-		bChooserUseFallLoop = Data.Air.bIsInAir && !Data.Air.bIsJumping;
-		bChooserIsIdle = !Data.Air.bIsInAir && Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
-	}
+	bChooserStartRequested = false;
+	bChooserStopRequested = false;
+	bChooserSharpTurnRequested = false;
+	bChooserUseRunStart = false;
+	bChooserUseRemoteRunStart = false;
+	bChooserUseSprintStart = false;
+	bChooserUseRunStop = false;
+	bChooserUseSprintStop = false;
+	bChooserUseFallOff = false;
+	bChooserUseLightLand = false;
+	bChooserUseHeavyLandRow = false;
+	bChooserUseStandLightLand = false;
+	bChooserUseStandHeavyLand = false;
+	bChooserUseRunLightLand = false;
+	bChooserUseSprintLightLand = false;
+	bChooserUseRunHeavyLand = false;
+	bChooserUseSprintHeavyLand = false;
+	bChooserIsLanding = false;
+	bChooserUseHeavyLand = false;
+	bChooserLandWasMoving = false;
+	bChooserLandWasSprinting = false;
+	bChooserUseSprintLocomotion = bUseFarSprintLocomotion;
+	bChooserUseRunLocomotion = false;
+	bChooserUseRemoteRunLocomotion = bUseFarRunLocomotion;
+	bChooserUseSprintLocomotionRow = bUseFarSprintLocomotion;
+	bChooserUseJumpStart = Data.Air.bIsJumping;
+	bChooserUseFallLoop = Data.Air.bIsInAir && !Data.Air.bIsJumping;
+	bChooserIsIdle = !Data.Air.bIsInAir && Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
 }
 
 bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds)

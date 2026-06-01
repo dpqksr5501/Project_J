@@ -89,6 +89,7 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 
 	if (bIsJumping && ShouldIgnoreJumpStartLanding(*PlayerOwner))
 	{
+		RecordIgnoredJumpStartLanding(*PlayerOwner);
 		KeepJumpStartAirborneAfterIgnoredLanding();
 		return;
 	}
@@ -116,6 +117,16 @@ bool UProject_JLocomotionAnimStateComponent::ShouldIgnoreJumpStartLanding(const 
 		!HasRealFallingEvidenceForLanding(PlayerOwner);
 
 	return bIgnoreEarlyJumpStartLanding || PlayerOwner.GetVelocity().Z > 0.0f;
+}
+
+void UProject_JLocomotionAnimStateComponent::RecordIgnoredJumpStartLanding(const AProject_JPlayerCharacter& PlayerOwner)
+{
+	++IgnoredJumpStartLandingCount;
+	LastIgnoredJumpStartLandingElapsedTime = JumpStartElapsedTime;
+	LastIgnoredJumpStartLandingVelocityZ = PlayerOwner.GetVelocity().Z;
+	LastIgnoredJumpStartLandingFallSpeed = LastFallSpeed;
+	LastIgnoredJumpStartLandingVerticalSpeed = VerticalSpeed;
+	bLastIgnoredJumpStartLandingHadFallingEvidence = HasRealFallingEvidenceForLanding(PlayerOwner);
 }
 
 void UProject_JLocomotionAnimStateComponent::KeepJumpStartAirborneAfterIgnoredLanding()

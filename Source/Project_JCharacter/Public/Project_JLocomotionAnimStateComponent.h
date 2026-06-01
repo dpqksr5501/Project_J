@@ -74,6 +74,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Movement|Debug")
+	void ResetJumpStartLandingDebugState();
+
 private:
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
 	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
@@ -103,6 +106,7 @@ private:
 
 	bool HasRealFallingEvidenceForLanding(const AProject_JPlayerCharacter& PlayerOwner) const;
 	bool ShouldIgnoreJumpStartLanding(const AProject_JPlayerCharacter& PlayerOwner) const;
+	void RecordIgnoredJumpStartLanding(const AProject_JPlayerCharacter& PlayerOwner);
 	void KeepJumpStartAirborneAfterIgnoredLanding();
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
@@ -447,6 +451,24 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
 	float CombatRightSpeed = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	int32 IgnoredJumpStartLandingCount = 0;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	float LastIgnoredJumpStartLandingElapsedTime = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	float LastIgnoredJumpStartLandingVelocityZ = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	float LastIgnoredJumpStartLandingFallSpeed = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	float LastIgnoredJumpStartLandingVerticalSpeed = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Debug")
+	bool bLastIgnoredJumpStartLandingHadFallingEvidence = false;
 
 private:
 	FTimerHandle LandingTimerHandle;
