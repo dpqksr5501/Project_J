@@ -95,10 +95,15 @@ public:
 	bool ConsumeRealLandingEventRequested();
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
-protected:
+private:
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
 	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
 	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
+	bool ShouldUseLocalInputState() const;
+	bool IsSprintRequestedForAnimation() const;
+	FProject_JLocomotionRuntimeSnapshot BuildMovementSnapshot(const AProject_JPlayerCharacter& PlayerOwner) const;
+	void ApplyMovementSnapshot(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
+
 	void ClearRemoteMoveStartTransientState();
 	bool TryFinishLandingForReplicatedMoveStart(bool bWasSprintingForStart);
 	bool TryPromoteReplicatedStartToLocomotion();
@@ -107,6 +112,7 @@ protected:
 	void QueueReplicatedMoveStop();
 	void MarkRemoteMoveReleasedIfAirborne();
 	void TryFinishLandingForReplicatedMoveStop();
+
 	bool HasAnyMoveInputState() const;
 	bool HasCachedMoveInput() const;
 	void QueueLocalMoveStartIfNeeded(bool bHadMoveInput, bool bHasNewMoveInput);
@@ -115,18 +121,15 @@ protected:
 	void UpdateSprintLocomotionRequest();
 	EProject_JGroundMotionMode ResolveGroundMotionModeAfterSprintStop() const;
 	void TryFinishSprintLandingAfterSprintStop();
+
 	bool HasRealFallingEvidenceForLanding(const AProject_JPlayerCharacter& PlayerOwner) const;
 	bool ShouldIgnoreJumpStartLanding(const AProject_JPlayerCharacter& PlayerOwner) const;
 	void KeepJumpStartAirborneAfterIgnoredLanding();
-	bool ShouldUseLocalInputState() const;
-	bool IsSprintRequestedForAnimation() const;
 	bool IsRemoteInAirForAnimation(bool bMovementReportsInAir) const;
 	bool IsRemoteGroundedByProbe() const;
 	FVector2D GetMovementInputForState() const;
 	FVector2D GetLocalMovementInputForState() const;
 	FVector2D GetRemoteMovementInputForState() const;
-	FProject_JLocomotionRuntimeSnapshot BuildMovementSnapshot(const AProject_JPlayerCharacter& PlayerOwner) const;
-	void ApplyMovementSnapshot(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
 	void UpdateLocalAirState(bool bIsCurrentlyInAir);
 	void UpdateLocalAirborneEvidence(bool bIsCurrentlyInAir);
 	bool TryStartLocalLandingFromJump(bool bIsCurrentlyInAir);
@@ -138,6 +141,7 @@ protected:
 	void UpdateRemoteAirborneEvidence(float DeltaTime);
 	void ClearRemoteGroundedAirState();
 	bool UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence);
+
 	void BeginJumpStartState();
 	void ScheduleJumpStartTimeout(float Duration);
 	void BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed);
@@ -155,6 +159,7 @@ protected:
 	void ClearPendingJumpStartExit();
 	bool CanFinishJumpStart() const;
 	void FinishLandingImmediately();
+	void DispatchLandingCancelForAnimation();
 	FVector CalculateMoveWorldDirection(const FVector2D& MoveInput) const;
 	void OnLandingTimerFinished();
 	void OnJumpTimerFinished();
@@ -164,6 +169,7 @@ protected:
 	void CompleteJumpStart();
 	void CompleteFallOffStart();
 	void CompleteLanding();
+
 	void EnterGroundMotionMode(EProject_JGroundMotionMode NewMode);
 	void ResetGroundMotionTransitionRequests();
 	void HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode);
@@ -172,6 +178,7 @@ protected:
 	void ClearGroundMotionSprintTransitionState();
 	void CacheRemoteStartTurnReference();
 	void ClearRemoteStartTurnReference();
+	bool UpdateLocalStartTurnExitRequest();
 	void RefreshGroundMotionFlags();
 	void UpdateMovementRequestState(float DeltaTime);
 	void UpdateRemoteMovementRequestState(float DeltaTime);
@@ -191,11 +198,12 @@ protected:
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	bool CanRequestGroundMotion() const;
 	void ClearGroundMotionInputRequests(const FVector2D& MoveInput);
+
 	void UpdateCombatMovementState(const FVector& HorizontalVelocity);
 	void ClearCombatMovementState();
 	void UpdateLocalCombatMovementState(const AProject_JPlayerCharacter& PlayerOwner);
 	void UpdateRemoteCombatMovementState(const AProject_JPlayerCharacter& PlayerOwner, const FVector& HorizontalVelocity);
-	void DispatchLandingCancelForAnimation();
+
 	void AddOwnedInAirGameplayTag();
 	void RemoveOwnedInAirGameplayTag();
 	void AddOwnedLandingGameplayTag();
@@ -271,6 +279,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnMinSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartTurnExitAngle = 15.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLandingTurnCancelAngle = 35.0f;
@@ -487,6 +498,7 @@ private:
 	float RemoteStopStartSuppressTimeRemaining = 0.0f;
 	FVector RemoteStartPreviousMoveWorldDirection = FVector::ZeroVector;
 	float RemoteStartPreviousActorYaw = 0.0f;
+	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
 	bool bPendingGroundStartFinish = false;
