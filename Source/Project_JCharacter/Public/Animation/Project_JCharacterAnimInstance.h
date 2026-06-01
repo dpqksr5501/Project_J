@@ -7,7 +7,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
-#include "Project_JLocomotionAnimStateComponent.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
 class ACharacter;
@@ -293,6 +293,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Debug")
+	FString GetAnimationDebugSummary() const;
 
 protected:
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;

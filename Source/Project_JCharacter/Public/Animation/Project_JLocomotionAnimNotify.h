@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "Project_JLocomotionAnimStateComponent.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionAnimNotify.generated.h"
 
 /**

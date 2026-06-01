@@ -276,6 +276,11 @@ void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
 
 void AProject_JPlayerCharacter::DoJumpStart()
 {
+	if (!IsJumpLocomotionAllowed())
+	{
+		return;
+	}
+
 	if (LocomotionAnimStateComponent)
 	{
 		if (!LocomotionAnimStateComponent->CanStartJumpForAnimation())
@@ -704,6 +709,11 @@ bool AProject_JPlayerCharacter::IsHitReacting() const
 bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
 {
 	return bIsSprinting && !IsCombatActionBlockingSprint();
+}
+
+bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
+{
+	return !IsAttacking() && !IsDodging() && !IsHitReacting();
 }
 
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)

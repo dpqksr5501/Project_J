@@ -8,6 +8,123 @@
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
 
+namespace
+{
+const TCHAR* ToDebugString(EProject_JGroundMotionMode MotionMode)
+{
+	switch (MotionMode)
+	{
+	case EProject_JGroundMotionMode::Idle:
+		return TEXT("Idle");
+	case EProject_JGroundMotionMode::Start:
+		return TEXT("Start");
+	case EProject_JGroundMotionMode::Locomotion:
+		return TEXT("Locomotion");
+	case EProject_JGroundMotionMode::Stop:
+		return TEXT("Stop");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(ENetMode NetMode)
+{
+	switch (NetMode)
+	{
+	case NM_Standalone:
+		return TEXT("Standalone");
+	case NM_DedicatedServer:
+		return TEXT("DedicatedServer");
+	case NM_ListenServer:
+		return TEXT("ListenServer");
+	case NM_Client:
+		return TEXT("Client");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(ENetRole NetRole)
+{
+	switch (NetRole)
+	{
+	case ROLE_None:
+		return TEXT("None");
+	case ROLE_SimulatedProxy:
+		return TEXT("SimProxy");
+	case ROLE_AutonomousProxy:
+		return TEXT("AutoProxy");
+	case ROLE_Authority:
+		return TEXT("Authority");
+	default:
+		return TEXT("Unknown");
+	}
+}
+}
+
+FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
+{
+	const AActor* Owner = GetOwner();
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	const ENetMode NetMode = Owner ? Owner->GetNetMode() : NM_Standalone;
+	const ENetRole LocalRole = Owner ? Owner->GetLocalRole() : ROLE_None;
+	const ENetRole RemoteRole = Owner ? Owner->GetRemoteRole() : ROLE_None;
+	const bool bSprintAllowed = PlayerOwner && PlayerOwner->IsSprintLocomotionAllowed();
+	const bool bJumpAllowed = PlayerOwner && PlayerOwner->IsJumpLocomotionAllowed();
+	const bool bCombatMode = PlayerOwner && PlayerOwner->IsCombatModeActive();
+	const bool bAttacking = PlayerOwner && PlayerOwner->IsAttacking();
+	const bool bDodging = PlayerOwner && PlayerOwner->IsDodging();
+	const bool bHitReacting = PlayerOwner && PlayerOwner->IsHitReacting();
+
+	return FString::Printf(
+		TEXT("Net=%s LocalRole=%s RemoteRole=%s LocalInput=%s Rendered=%s Dedicated=%s\n")
+		TEXT("Ground=%s GroundSpeed=%.1f VerticalSpeed=%.1f HasInput=%s InputSize=%.2f Held=%.2f Turn=%.1f SharpTurn=%s\n")
+		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
+		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
+		TEXT("Air InAir=%s PhysAir=%s Jumping=%s FallOff=%s Landing=%s LandReq=%s CanLand=%s CanGround=%s LastFall=%.1f\n")
+		TEXT("Combat Dir=%.1f Fwd=%.2f Right=%.2f FwdSpeed=%.1f RightSpeed=%.1f"),
+		ToDebugString(NetMode),
+		ToDebugString(LocalRole),
+		ToDebugString(RemoteRole),
+		bUsingLocalInputState ? TEXT("true") : TEXT("false"),
+		bRecentlyRendered ? TEXT("true") : TEXT("false"),
+		bDedicatedServerContext ? TEXT("true") : TEXT("false"),
+		ToDebugString(GroundMotionMode),
+		GroundSpeed,
+		VerticalSpeed,
+		bHasMoveInput ? TEXT("true") : TEXT("false"),
+		MoveInputSize,
+		MoveInputHeldTime,
+		MoveInputTurnAngle,
+		bSharpTurnRequested ? TEXT("true") : TEXT("false"),
+		bSprintAllowed ? TEXT("true") : TEXT("false"),
+		bJumpAllowed ? TEXT("true") : TEXT("false"),
+		bCombatMode ? TEXT("true") : TEXT("false"),
+		bAttacking ? TEXT("true") : TEXT("false"),
+		bDodging ? TEXT("true") : TEXT("false"),
+		bHitReacting ? TEXT("true") : TEXT("false"),
+		bWantsSprint ? TEXT("true") : TEXT("false"),
+		bUseSprintLocomotion ? TEXT("true") : TEXT("false"),
+		bStartWasSprinting ? TEXT("true") : TEXT("false"),
+		bStopWasSprinting ? TEXT("true") : TEXT("false"),
+		bStartRequested ? TEXT("true") : TEXT("false"),
+		bStopRequested ? TEXT("true") : TEXT("false"),
+		bIsInAir ? TEXT("true") : TEXT("false"),
+		bIsPhysicallyInAir ? TEXT("true") : TEXT("false"),
+		bIsJumping ? TEXT("true") : TEXT("false"),
+		bIsFallOffStart ? TEXT("true") : TEXT("false"),
+		bIsLanding ? TEXT("true") : TEXT("false"),
+		bLandingRequested ? TEXT("true") : TEXT("false"),
+		bCanEnterLand ? TEXT("true") : TEXT("false"),
+		bCanEnterGround ? TEXT("true") : TEXT("false"),
+		LastFallSpeed,
+		MovementDirection,
+		CombatInputForward,
+		CombatInputRight,
+		CombatForwardSpeed,
+		CombatRightSpeed);
+}
+
 void UProject_JLocomotionAnimStateComponent::UpdateCombatMovementState(const FVector& HorizontalVelocity)
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();

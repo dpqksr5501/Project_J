@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AnimationModifier.h"
-#include "Project_JLocomotionAnimStateComponent.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionAnimationModifier.generated.h"
 
 USTRUCT(BlueprintType)

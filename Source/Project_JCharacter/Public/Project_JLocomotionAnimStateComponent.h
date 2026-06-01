@@ -4,35 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionAnimStateComponent.generated.h"
 
 class AProject_JPlayerCharacter;
-class UAbilitySystemComponent;
-class UCharacterMovementComponent;
-class UCapsuleComponent;
-class USkeletalMeshComponent;
 struct FHitResult;
-
-UENUM(BlueprintType)
-enum class EProject_JLocomotionAnimEvent : uint8
-{
-	GroundStartFinished,
-	StopFinished,
-	JumpStartFinished,
-	FallOffStartFinished,
-	LandingFinished,
-	HitReactFinished,
-	AttackFinished
-};
-
-UENUM(BlueprintType)
-enum class EProject_JGroundMotionMode : uint8
-{
-	Idle,
-	Start,
-	Locomotion,
-	Stop
-};
 
 USTRUCT(BlueprintType)
 struct FProject_JLocomotionRuntimeSnapshot
@@ -94,6 +70,9 @@ public:
 	bool CanStartJumpForAnimation() const;
 	bool ConsumeRealLandingEventRequested();
 	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
+
+	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
+	FString GetDebugSummary() const;
 
 private:
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
@@ -255,17 +234,17 @@ public:
 	float MoveInputDeadZone = 0.1f;
 
 	/** Fallback only. GroundStartFinished notify should normally leave Start before this timeout. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartFallbackDuration = 2.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
 
 	/** Fallback only. StopFinished notify should normally leave Stop before this timeout. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float StopFallbackDuration = 2.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
@@ -274,13 +253,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Finished", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float FinishedExitWindow = 0.10f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnAngleThreshold = 60.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnMinSpeed = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartTurnExitAngle = 15.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))

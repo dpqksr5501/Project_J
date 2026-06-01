@@ -311,6 +311,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement|Sprint")
 	bool IsSprintLocomotionAllowed() const;
 
+	UFUNCTION(BlueprintPure, Category = "Movement|Jump")
+	bool IsJumpLocomotionAllowed() const;
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	float GetEffectiveCombatAimAlpha() const;
 

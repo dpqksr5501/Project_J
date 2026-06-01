@@ -250,6 +250,12 @@ void UProject_JLocomotionAnimStateComponent::MarkGroundStartFinished()
 
 bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
 {
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (PlayerOwner && !PlayerOwner->IsJumpLocomotionAllowed())
+	{
+		return false;
+	}
+
 	const UCharacterMovementComponent* MovementComponent = GetCachedMovementComponent();
 	const bool bIsGroundedForJump = MovementComponent && MovementComponent->IsMovingOnGround();
 	const bool bInLandingRecovery = IsLandingStateActive();

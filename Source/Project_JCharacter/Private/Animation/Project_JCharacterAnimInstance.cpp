@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "IObjectChooser.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
@@ -264,6 +265,68 @@ FFootPlacementInterpolationSettings UProject_JCharacterAnimInstance::Get_FootPla
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::GetCurrentActivePoseSearchDatabaseThreadSafe() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetCurrentActiveDatabase();
+}
+
+FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
+{
+	const FProject_JAnimThreadSafeData& Data = ThreadSafeData;
+	const bool bSprintAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsSprintLocomotionAllowed();
+	const bool bJumpAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsJumpLocomotionAllowed();
+	return FString::Printf(
+		TEXT("Optimization Tier=%d UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s\n")
+		TEXT("Movement GroundSpeed=%.1f VerticalSpeed=%.1f AccelRatio=%.2f HasTrajectory=%s StoppedAccel=%s\n")
+		TEXT("Input Has=%s Size=%.2f Held=%.2f Turn=%.1f SharpTurn=%s MoveDir=%.1f\n")
+		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
+		TEXT("Ground Mode=%d Start=%s Stop=%s WantsSprint=%s UseSprint=%s StartSprint=%s StopSprint=%s\n")
+		TEXT("Air InAir=%s Jumping=%s FallOff=%s Landing=%s HeavyLand=%s LandMoving=%s LandSprint=%s\n")
+		TEXT("Chooser Start=%s Stop=%s RunLoc=%s RemoteRunLoc=%s SprintLoc=%s Jump=%s Fall=%s Land=%s Combat=%s Remote=%s"),
+		static_cast<int32>(CurrentOptimizationPolicy.Tier),
+		CurrentOptimizationPolicy.bUpdateAnimationData ? TEXT("true") : TEXT("false"),
+		CurrentOptimizationPolicy.bUseFullChooserRows ? TEXT("true") : TEXT("false"),
+		CurrentOptimizationPolicy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
+		CurrentOptimizationPolicy.MotionMatchingUpdateInterval,
+		*GetNameSafe(CurrentActivePoseSearchDatabase),
+		Data.Movement.GroundSpeed,
+		Data.Movement.VerticalSpeed,
+		Data.Movement.AccelerationRatio,
+		Data.Movement.bHasTrajectory ? TEXT("true") : TEXT("false"),
+		Data.Movement.bStoppedAcceleratingThisFrame ? TEXT("true") : TEXT("false"),
+		Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+		Data.Input.MoveInputSize,
+		Data.Input.MoveInputHeldTime,
+		Data.Input.MoveInputTurnAngle,
+		Data.Input.bSharpTurnRequested ? TEXT("true") : TEXT("false"),
+		Data.Input.MovementDirection,
+		bSprintAllowed ? TEXT("true") : TEXT("false"),
+		bJumpAllowed ? TEXT("true") : TEXT("false"),
+		Data.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
+		Data.Combat.bIsAttacking ? TEXT("true") : TEXT("false"),
+		Data.Combat.bIsDodging ? TEXT("true") : TEXT("false"),
+		Data.Combat.bIsHitReacting ? TEXT("true") : TEXT("false"),
+		static_cast<int32>(Data.Ground.GroundMotionMode),
+		Data.Ground.bStartRequested ? TEXT("true") : TEXT("false"),
+		Data.Ground.bStopRequested ? TEXT("true") : TEXT("false"),
+		Data.Ground.bWantsSprint ? TEXT("true") : TEXT("false"),
+		Data.Ground.bUseSprintLocomotion ? TEXT("true") : TEXT("false"),
+		Data.Ground.bStartWasSprinting ? TEXT("true") : TEXT("false"),
+		Data.Ground.bStopWasSprinting ? TEXT("true") : TEXT("false"),
+		Data.Air.bIsInAir ? TEXT("true") : TEXT("false"),
+		Data.Air.bIsJumping ? TEXT("true") : TEXT("false"),
+		Data.Air.bIsFallOffStart ? TEXT("true") : TEXT("false"),
+		Data.Landing.bIsLanding ? TEXT("true") : TEXT("false"),
+		Data.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
+		Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+		Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+		bChooserStartRequested ? TEXT("true") : TEXT("false"),
+		bChooserStopRequested ? TEXT("true") : TEXT("false"),
+		bChooserUseRunLocomotion ? TEXT("true") : TEXT("false"),
+		bChooserUseRemoteRunLocomotion ? TEXT("true") : TEXT("false"),
+		bChooserUseSprintLocomotionRow ? TEXT("true") : TEXT("false"),
+		bChooserUseJumpStart ? TEXT("true") : TEXT("false"),
+		(bChooserUseFallOff || bChooserUseFallLoop) ? TEXT("true") : TEXT("false"),
+		bChooserIsLanding ? TEXT("true") : TEXT("false"),
+		bChooserIsCombatMode ? TEXT("true") : TEXT("false"),
+		bChooserIsRemoteProxy ? TEXT("true") : TEXT("false"));
 }
 
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeData(float DeltaSeconds) const
