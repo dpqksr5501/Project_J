@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Combat/Project_JCombatTypes.h"
 #include "Engine/DataAsset.h"
 #include "Project_JWeaponAnimProfile.generated.h"
 
@@ -35,6 +36,9 @@ class PROJECT_JCHARACTER_API UProject_JWeaponAnimProfile : public UPrimaryDataAs
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	EProject_JWeaponType WeaponType = EProject_JWeaponType::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	EProject_JWeaponAnimStance WeaponStance = EProject_JWeaponAnimStance::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
@@ -60,6 +64,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Attack")
 	TArray<FName> PrimaryAttackSectionNames;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
+	FProject_JWeaponAttackSpec PrimaryAttackSpec;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Reaction")
 	TObjectPtr<UAnimMontage> HitReactMontage = nullptr;

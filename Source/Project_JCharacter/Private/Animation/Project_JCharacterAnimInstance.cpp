@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
@@ -15,6 +15,7 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
+#include "Animation/Project_JWeaponAnimProfile.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
 #include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "PoseSearch/PoseSearchDatabase.h"
@@ -134,6 +135,32 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 	NativeMotionMatchingNode.SetDatabaseToSearch(
 		CurrentActiveDatabase.Get(),
 		EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
+}
+
+namespace
+{
+const TCHAR* ToDebugString(EProject_JWeaponAnimStance WeaponStance)
+{
+	switch (WeaponStance)
+	{
+	case EProject_JWeaponAnimStance::None:
+		return TEXT("None");
+	case EProject_JWeaponAnimStance::OneHanded:
+		return TEXT("OneHanded");
+	case EProject_JWeaponAnimStance::TwoHanded:
+		return TEXT("TwoHanded");
+	case EProject_JWeaponAnimStance::DualWield:
+		return TEXT("DualWield");
+	case EProject_JWeaponAnimStance::Staff:
+		return TEXT("Staff");
+	case EProject_JWeaponAnimStance::Bow:
+		return TEXT("Bow");
+	case EProject_JWeaponAnimStance::Unarmed:
+		return TEXT("Unarmed");
+	default:
+		return TEXT("Unknown");
+	}
+}
 }
 
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
@@ -272,8 +299,10 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 	const FProject_JAnimThreadSafeData& Data = ThreadSafeData;
 	const bool bSprintAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsSprintLocomotionAllowed();
 	const bool bJumpAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsJumpLocomotionAllowed();
+	const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter ? OwningPlayerCharacter->GetWeaponAnimProfile() : nullptr;
 	return FString::Printf(
 		TEXT("Optimization Tier=%d UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s\n")
+		TEXT("Weapon Profile=%s Stance=%s\n")
 		TEXT("Movement GroundSpeed=%.1f VerticalSpeed=%.1f AccelRatio=%.2f HasTrajectory=%s StoppedAccel=%s\n")
 		TEXT("Input Has=%s Size=%.2f Held=%.2f Turn=%.1f SharpTurn=%s MoveDir=%.1f\n")
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
@@ -286,6 +315,8 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 		CurrentOptimizationPolicy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
 		CurrentOptimizationPolicy.MotionMatchingUpdateInterval,
 		*GetNameSafe(CurrentActivePoseSearchDatabase),
+		*GetNameSafe(WeaponAnimProfile),
+		WeaponAnimProfile ? ToDebugString(WeaponAnimProfile->WeaponStance) : TEXT("None"),
 		Data.Movement.GroundSpeed,
 		Data.Movement.VerticalSpeed,
 		Data.Movement.AccelerationRatio,

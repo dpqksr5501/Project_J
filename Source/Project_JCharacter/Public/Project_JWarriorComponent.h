@@ -7,6 +7,9 @@
 #include "Project_JWarriorComponent.generated.h"
 
 class UAnimMontage;
+class UProject_JWeaponAnimProfile;
+struct FGameplayTag;
+struct FProject_JWeaponAttackSpec;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JWarriorComponent : public UProject_JCombatComponent
@@ -46,9 +49,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Warrior|Combat")
 	void ResetCombo();
 
+	UFUNCTION(BlueprintPure, Category = "Warrior|Combat")
+	bool IsPrototypeAttacking() const { return bIsAttacking; }
+
 protected:
 	/** Callback when the attack montage completes or is interrupted */
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	bool TryActivatePrimaryAttackAbility() const;
+	bool CanStartPrototypeAttack(const ACharacter* Owner, const UAnimMontage* AttackMontage, const TArray<FName>& ComboSections) const;
+	void QueuePrototypeComboInput(float CurrentTime);
+	void BeginPrototypeAttack(UAnimMontage* AttackMontage, const TArray<FName>& ComboSections);
+	void ClearPrototypeAttackState();
+	void EndPrototypeAttack(bool bStopMontage);
+	const UProject_JWeaponAnimProfile* GetCurrentWeaponAnimProfile() const;
+	TSubclassOf<AActor> GetEffectiveWeaponClass() const;
+	FName GetEffectiveWeaponSocketName() const;
+	UAnimMontage* GetEffectiveAttackMontage() const;
+	const TArray<FName>& GetEffectiveComboSectionNames() const;
+	FGameplayTag GetEffectivePrimaryAttackAbilityTag() const;
+	FProject_JWeaponAttackSpec GetEffectivePrimaryAttackSpec() const;
 
 protected:
 	/** Weapon Actor class to spawn */
@@ -98,12 +117,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Warrior|Attack")
 	float MeleeLaunchImpulse = 250.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Warrior|Attack", meta = (ToolTip = "Keep enabled for MMORPG-style authority. Disable only for local prototype experiments."))
+	bool bRequireAuthorityForDamageTrace = true;
+
 private:
 	/** Current index of the combo attack */
 	int32 ComboCount = 0;
 
 	/** True if the character is currently attacking */
 	bool bIsAttacking = false;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> ActiveAttackMontage = nullptr;
+
+	TArray<FName> ActiveComboSectionNames;
 
 	/** Delegate for montage end */
 	FOnMontageEnded OnAttackMontageEndedDelegate;

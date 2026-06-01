@@ -81,6 +81,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bIsSprinting, COND_SkipOwner);
 	DOREPLIFETIME(AProject_JPlayerCharacter, bIsCombatMode);
+	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponAnimProfile);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
@@ -678,6 +679,11 @@ const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatc
 
 const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
 {
+	if (CurrentWeaponAnimProfile)
+	{
+		return CurrentWeaponAnimProfile.Get();
+	}
+
 	return CharacterAnimProfile ? CharacterAnimProfile->WeaponAnimProfile.Get() : nullptr;
 }
 
@@ -689,6 +695,25 @@ const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfi
 bool AProject_JPlayerCharacter::IsCombatModeActive() const
 {
 	return bIsCombatMode || HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+}
+
+void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile)
+{
+	if (CurrentWeaponAnimProfile == InWeaponAnimProfile)
+	{
+		return;
+	}
+
+	CurrentWeaponAnimProfile = InWeaponAnimProfile;
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
+	}
+}
+
+void AProject_JPlayerCharacter::OnRep_CurrentWeaponAnimProfile()
+{
+	// AnimInstance reads the effective profile on demand, so no cache invalidation is needed yet.
 }
 
 bool AProject_JPlayerCharacter::IsAttacking() const

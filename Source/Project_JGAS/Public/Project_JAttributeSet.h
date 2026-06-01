@@ -60,4 +60,20 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
+
+	// AttackPower Attribute
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_AttackPower)
+	FGameplayAttributeData AttackPower;
+	ATTRIBUTE_ACCESSORS(UProject_JAttributeSet, AttackPower)
+
+	UFUNCTION()
+	virtual void OnRep_AttackPower(const FGameplayAttributeData& OldAttackPower);
+
+	// Defense Attribute
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_Defense)
+	FGameplayAttributeData Defense;
+	ATTRIBUTE_ACCESSORS(UProject_JAttributeSet, Defense)
+
+	UFUNCTION()
+	virtual void OnRep_Defense(const FGameplayAttributeData& OldDefense);
 };

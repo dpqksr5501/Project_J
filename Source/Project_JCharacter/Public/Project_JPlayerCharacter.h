@@ -213,6 +213,9 @@ protected:
 	UFUNCTION()
 	void OnRep_CombatMode();
 
+	UFUNCTION()
+	void OnRep_CurrentWeaponAnimProfile();
+
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
 	void K2_OnRealLanded();
@@ -296,6 +299,12 @@ public:
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Animation|Weapon")
+	void SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile);
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Weapon")
+	UProject_JWeaponAnimProfile* GetCurrentWeaponAnimProfile() const { return CurrentWeaponAnimProfile.Get(); }
+
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool IsCombatModeActive() const;
 
@@ -340,6 +349,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeaponAnimProfile, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
+	TObjectPtr<UProject_JWeaponAnimProfile> CurrentWeaponAnimProfile = nullptr;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
 	bool bIsSprinting = false;

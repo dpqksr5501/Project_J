@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Equipment/Project_JEquipmentTypes.h"
 #include "Engine/DataAsset.h"
+#include "Project_JStatTypes.h"
 #include "Project_JEquipmentItemDefinition.generated.h"
 
 class USkeletalMesh;
@@ -17,6 +19,10 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentItemDefinition : public UPrimary
 	GENERATED_BODY()
 
 public:
+	// Logical slot used to enforce one equipped item per gameplay slot.
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	EProject_JEquipmentSlot EquipmentSlot = EProject_JEquipmentSlot::Weapon;
+
 	// The skeletal mesh representing the equipment.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual")
 	TSoftObjectPtr<USkeletalMesh> EquipmentMesh;
@@ -28,6 +34,10 @@ public:
 	// List of abilities granted to the character when this equipment is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
+
+	// Fixed attribute bonuses applied while this item is equipped.
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Stats")
+	TArray<FProject_JEquipmentStatModifier> StatModifiers;
 
 	// The Weapon Animation Profile (Motion Matching DBs & Montages) associated with this equipment.
 	// We use the existing UProject_JWeaponAnimProfile instead of a duplicate system.

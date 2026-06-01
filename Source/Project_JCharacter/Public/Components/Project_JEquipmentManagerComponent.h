@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Equipment/Project_JEquipmentTypes.h"
+#include "Inventory/Project_JItemInstanceTypes.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "GameplayAbilitySpec.h"
 #include "Project_JEquipmentManagerComponent.generated.h"
@@ -10,6 +12,8 @@ class UProject_JEquipmentItemDefinition;
 class UProject_JModularMeshComponent;
 class UProject_JEquipmentManagerComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEquipmentChangedSignature, EProject_JEquipmentSlot, Slot, UProject_JEquipmentItemDefinition*, ItemDef);
+
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentArrayItem : public FFastArraySerializerItem
 {
@@ -17,6 +21,12 @@ struct FProject_JEquipmentArrayItem : public FFastArraySerializerItem
 
 	UPROPERTY()
 	UProject_JEquipmentItemDefinition* ItemDef = nullptr;
+
+	UPROPERTY()
+	FProject_JItemInstanceData ItemInstance;
+
+	UPROPERTY()
+	EProject_JEquipmentSlot Slot = EProject_JEquipmentSlot::None;
 
 	UPROPERTY(NotReplicated)
 	UProject_JModularMeshComponent* SpawnedMesh = nullptr;
@@ -69,13 +79,30 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(BlueprintAssignable, Category = "Equipment")
+	FProject_JEquipmentChangedSignature OnEquipmentEquipped;
+
+	UPROPERTY(BlueprintAssignable, Category = "Equipment")
+	FProject_JEquipmentChangedSignature OnEquipmentUnequipped;
+
 	/** Equip an item based on its data definition (Server-Only) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItem(UProject_JEquipmentItemDefinition* ItemDef);
 
+	/** Equip an owned item instance. This is the preferred path once inventory exists. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	void EquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
+
 	/** Unequip an item and destroy its spawned visual representation (Server-Only) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void UnequipItem(UProject_JEquipmentItemDefinition* ItemDef);
+
+	/** Unequip whatever item currently occupies the requested slot (Server-Only) */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	void UnequipSlot(EProject_JEquipmentSlot Slot);
+
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	UProject_JEquipmentItemDefinition* GetEquippedItemInSlot(EProject_JEquipmentSlot Slot) const;
 
 	// Replicated list event handlers
 	void OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item);
@@ -85,8 +112,15 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	void BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item);
+	void BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item);
+	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
 	void StartLocalSpawnEquipment(FProject_JEquipmentArrayItem& Item);
 	void OnEquipmentMeshLoaded(UProject_JEquipmentItemDefinition* ItemDef);
+	void RefreshCurrentWeaponAnimProfile(const UProject_JEquipmentItemDefinition* ExcludedItemDef = nullptr);
+	int32 FindEquipmentIndexByItem(const UProject_JEquipmentItemDefinition* ItemDef) const;
+	int32 FindEquipmentIndexBySlot(EProject_JEquipmentSlot Slot) const;
+	void RemoveEquipmentAt(int32 Index);
 
 private:
 	UPROPERTY(Replicated)
