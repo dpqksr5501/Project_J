@@ -10,6 +10,7 @@
 
 class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
+class UProject_JDefaultAttributeSetData;
 
 UCLASS(Abstract)
 class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
@@ -68,6 +69,9 @@ protected:
 	// Character Level
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 CharacterLevel;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Class Defaults")
+	TObjectPtr<UProject_JDefaultAttributeSetData> DefaultAttributeData = nullptr;
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void InitializeDefaultAttributes() const;

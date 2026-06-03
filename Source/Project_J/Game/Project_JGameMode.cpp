@@ -16,17 +16,9 @@ void AProject_JGameMode::InitGameState()
 {
 	Super::InitGameState();
 
-	const FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString(TEXT("UnknownMap"));
-
-	FProject_JWorldInstanceId WorldInstanceId;
-	WorldInstanceId.WorldId = FName(TEXT("PrototypeWorld"));
-	WorldInstanceId.ZoneId = FName(*FPaths::GetBaseFilename(MapName));
-	WorldInstanceId.InstanceId = FName(*FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower));
-	WorldInstanceId.ChannelId = FName(TEXT("Default"));
-
 	if (AProject_JGameState* ProjectGameState = GetGameState<AProject_JGameState>())
 	{
-		ProjectGameState->SetWorldInstanceId(WorldInstanceId);
+		ProjectGameState->SetWorldInstanceId(CreatePrototypeWorldInstanceId());
 	}
 }
 
@@ -42,6 +34,23 @@ void AProject_JGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (!ProjectPlayerState->GetAccountId().IsValid() || !ProjectPlayerState->GetCharacterId().IsValid())
 	{
-		ProjectPlayerState->SetIdentity(FProject_JAccountId::NewId(), FProject_JCharacterId::NewId());
+		AssignPrototypeIdentity(*ProjectPlayerState);
 	}
+}
+
+FProject_JWorldInstanceId AProject_JGameMode::CreatePrototypeWorldInstanceId() const
+{
+	const FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString(TEXT("UnknownMap"));
+
+	FProject_JWorldInstanceId WorldInstanceId;
+	WorldInstanceId.WorldId = FName(TEXT("PrototypeWorld"));
+	WorldInstanceId.ZoneId = FName(*FPaths::GetBaseFilename(MapName));
+	WorldInstanceId.InstanceId = FName(*FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphensLower));
+	WorldInstanceId.ChannelId = FName(TEXT("Default"));
+	return WorldInstanceId;
+}
+
+void AProject_JGameMode::AssignPrototypeIdentity(AProject_JPlayerState& ProjectPlayerState) const
+{
+	ProjectPlayerState.SetIdentity(FProject_JAccountId::NewId(), FProject_JCharacterId::NewId());
 }

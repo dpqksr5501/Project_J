@@ -4,6 +4,7 @@
 #include "Project_JBaseCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
+#include "Project_JDefaultAttributeSetData.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
@@ -140,34 +141,41 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 		return;
 	}
 
+	const float DefaultMaxHealth = DefaultAttributeData ? DefaultAttributeData->MaxHealth : 100.0f;
+	const float DefaultHealth = DefaultAttributeData ? DefaultAttributeData->Health : DefaultMaxHealth;
+	const float DefaultMaxMana = DefaultAttributeData ? DefaultAttributeData->MaxMana : 100.0f;
+	const float DefaultMana = DefaultAttributeData ? DefaultAttributeData->Mana : DefaultMaxMana;
+	const float DefaultAttackPower = DefaultAttributeData ? DefaultAttributeData->AttackPower : 10.0f;
+	const float DefaultDefense = DefaultAttributeData ? DefaultAttributeData->Defense : 0.0f;
+
 	if (AttributeSet->GetMaxHealth() <= 0.0f)
 	{
-		AttributeSet->InitMaxHealth(100.0f);
+		AttributeSet->InitMaxHealth(FMath::Max(1.0f, DefaultMaxHealth));
 	}
 
 	if (AttributeSet->GetHealth() <= 0.0f)
 	{
-		AttributeSet->InitHealth(AttributeSet->GetMaxHealth());
+		AttributeSet->InitHealth(FMath::Clamp(DefaultHealth, 0.0f, AttributeSet->GetMaxHealth()));
 	}
 
 	if (AttributeSet->GetMaxMana() <= 0.0f)
 	{
-		AttributeSet->InitMaxMana(100.0f);
+		AttributeSet->InitMaxMana(FMath::Max(1.0f, DefaultMaxMana));
 	}
 
 	if (AttributeSet->GetMana() <= 0.0f)
 	{
-		AttributeSet->InitMana(AttributeSet->GetMaxMana());
+		AttributeSet->InitMana(FMath::Clamp(DefaultMana, 0.0f, AttributeSet->GetMaxMana()));
 	}
 
 	if (AttributeSet->GetAttackPower() <= 0.0f)
 	{
-		AttributeSet->InitAttackPower(10.0f);
+		AttributeSet->InitAttackPower(FMath::Max(0.0f, DefaultAttackPower));
 	}
 
-	if (AttributeSet->GetDefense() < 0.0f)
+	if (AttributeSet->GetDefense() <= 0.0f)
 	{
-		AttributeSet->InitDefense(0.0f);
+		AttributeSet->InitDefense(FMath::Max(0.0f, DefaultDefense));
 	}
 }
 

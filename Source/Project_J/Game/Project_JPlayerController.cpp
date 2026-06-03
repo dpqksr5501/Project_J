@@ -70,6 +70,9 @@ bool AProject_JPlayerController::ShouldUseTouchControls() const
 
 void AProject_JPlayerController::DumpMMOState()
 {
+#if UE_BUILD_SHIPPING
+	return;
+#else
 	const AProject_JPlayerState* ProjectPlayerState = GetPlayerState<AProject_JPlayerState>();
 	const AProject_JGameState* ProjectGameState = GetWorld() ? GetWorld()->GetGameState<AProject_JGameState>() : nullptr;
 
@@ -93,4 +96,5 @@ void AProject_JPlayerController::DumpMMOState()
 	ClientMessage(WorldLine);
 	UE_LOG(LogProject_J, Display, TEXT("%s"), *PlayerLine);
 	UE_LOG(LogProject_J, Display, TEXT("%s"), *WorldLine);
+#endif
 }

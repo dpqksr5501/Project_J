@@ -20,6 +20,11 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 		return;
 	}
 
+	if (AccountId.Value == InAccountId.Value && CharacterId.Value == InCharacterId.Value)
+	{
+		return;
+	}
+
 	AccountId = InAccountId;
 	CharacterId = InCharacterId;
 	ForceNetUpdate();
@@ -32,7 +37,13 @@ void AProject_JPlayerState::SetPublicCharacterSnapshot(FName InClassId, int32 In
 		return;
 	}
 
+	const int32 ClampedLevel = FMath::Max(1, InLevel);
+	if (PublicClassId == InClassId && PublicCharacterLevel == ClampedLevel)
+	{
+		return;
+	}
+
 	PublicClassId = InClassId;
-	PublicCharacterLevel = FMath::Max(1, InLevel);
+	PublicCharacterLevel = ClampedLevel;
 	ForceNetUpdate();
 }
