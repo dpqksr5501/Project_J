@@ -59,6 +59,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetAnimInstanceClass(UProject_JCharacterAnimInstance::StaticClass());
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+	GetMesh()->bEnableUpdateRateOptimizations = true;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -407,6 +409,12 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 			LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = EffectiveLocomotionProfile->SprintLocomotionSpeedThreshold;
 			LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = EffectiveLocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
 		}
+
+		SignificanceNearDistance = EffectiveLocomotionProfile->NearMotionMatchingDistance;
+		SignificanceMidDistance = EffectiveLocomotionProfile->MidMotionMatchingDistance;
+		SignificanceFarDistance = EffectiveLocomotionProfile->FarMotionMatchingDistance;
+		MidSignificanceTickInterval = EffectiveLocomotionProfile->MidMotionMatchingUpdateInterval;
+		FarSignificanceTickInterval = EffectiveLocomotionProfile->FarMotionMatchingUpdateInterval;
 	}
 
 	UpdateMaxWalkSpeed();

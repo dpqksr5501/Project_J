@@ -54,6 +54,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Significance")
 	float SignificanceFarDistance = 12000.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Significance|Tick", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NearSignificanceTickInterval = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance|Tick", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MidSignificanceTickInterval = 0.033f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance|Tick", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float FarSignificanceTickInterval = 0.083f;
+
+	UPROPERTY(EditAnywhere, Category = "Significance|Tick", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float HiddenSignificanceTickInterval = 0.15f;
+
 	// The Ability System Component for this character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	UProject_JAbilitySystemComponent* AbilitySystemComponent;

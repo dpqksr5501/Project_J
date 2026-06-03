@@ -4,8 +4,8 @@
 
 ## Animation / Locomotion
 
-- [Network PIE Locomotion Checklist](NetworkPIELocomotionChecklist.md)
-  - Listen Server와 Client에서 Locomotion, Jump, Landing, Chooser 선택을 반복 확인하기 위한 체크리스트
+- [Motion Matching Next Steps](MotionMatchingNextSteps.md)
+  - C++ 기반 Motion Matching 구조 이후 진행할 데이터 정리, 최적화, LOD 작업 로드맵
 - [Combat Animation Architecture Notes](CombatAnimationArchitectureNotes.md)
   - 전투/무기 애니메이션을 추가하기 전 Locomotion과 Combat의 책임 경계를 정리한 메모
 

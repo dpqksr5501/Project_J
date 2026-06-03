@@ -64,19 +64,19 @@ void AProject_JBaseCharacter::BeginPlay()
 
 			if (Significance <= 0.0f)
 			{
-				Character->SetActorTickInterval(0.0f);
+				Character->SetActorTickInterval(Character->NearSignificanceTickInterval);
 			}
 			else if (Significance <= 1.0f)
 			{
-				Character->SetActorTickInterval(0.033f);
+				Character->SetActorTickInterval(Character->MidSignificanceTickInterval);
 			}
 			else if (Significance <= 2.0f)
 			{
-				Character->SetActorTickInterval(0.083f);
+				Character->SetActorTickInterval(Character->FarSignificanceTickInterval);
 			}
 			else
 			{
-				Character->SetActorTickInterval(0.15f);
+				Character->SetActorTickInterval(Character->HiddenSignificanceTickInterval);
 			}
 		};
 
