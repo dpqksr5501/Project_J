@@ -6,6 +6,7 @@
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/Controller.h"
 #include "SignificanceManager.h"
 #include "Engine/World.h"
 
@@ -35,6 +36,8 @@ UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() co
 void AProject_JBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	InitializeAbilitySystem();
+	InitializeDefaultAttributes();
 	
 	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
@@ -90,6 +93,19 @@ void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void AProject_JBaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	InitializeAbilitySystem();
+	InitializeDefaultAttributes();
+}
+
+void AProject_JBaseCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	InitializeAbilitySystem();
+}
+
 
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
@@ -119,6 +135,46 @@ bool AProject_JBaseCharacter::IsDead_Implementation() const
 
 void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 {
-	// Can be implemented to apply a default GameplayEffect containing initial stats
-	// 123
+	if (!HasAuthority() || !AttributeSet)
+	{
+		return;
+	}
+
+	if (AttributeSet->GetMaxHealth() <= 0.0f)
+	{
+		AttributeSet->InitMaxHealth(100.0f);
+	}
+
+	if (AttributeSet->GetHealth() <= 0.0f)
+	{
+		AttributeSet->InitHealth(AttributeSet->GetMaxHealth());
+	}
+
+	if (AttributeSet->GetMaxMana() <= 0.0f)
+	{
+		AttributeSet->InitMaxMana(100.0f);
+	}
+
+	if (AttributeSet->GetMana() <= 0.0f)
+	{
+		AttributeSet->InitMana(AttributeSet->GetMaxMana());
+	}
+
+	if (AttributeSet->GetAttackPower() <= 0.0f)
+	{
+		AttributeSet->InitAttackPower(10.0f);
+	}
+
+	if (AttributeSet->GetDefense() < 0.0f)
+	{
+		AttributeSet->InitDefense(0.0f);
+	}
+}
+
+void AProject_JBaseCharacter::InitializeAbilitySystem()
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
 }

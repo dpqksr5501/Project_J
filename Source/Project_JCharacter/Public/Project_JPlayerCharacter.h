@@ -189,6 +189,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetCombatMode(bool bNewCombatMode);
 
+	UFUNCTION(Server, Reliable)
+	void ServerTriggerPlayerAttack();
+
 	UFUNCTION(Server, Unreliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
 

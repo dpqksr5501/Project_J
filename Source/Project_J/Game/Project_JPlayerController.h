@@ -46,6 +46,9 @@ protected:
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
+	UFUNCTION(Exec)
+	void DumpMMOState();
+
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
 

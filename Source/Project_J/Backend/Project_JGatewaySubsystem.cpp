@@ -4,7 +4,9 @@
 #include "Interfaces/IHttpResponse.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
+#include "Serialization/JsonSerializer.h"
 
 void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -19,7 +21,11 @@ void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection
 
 void UProject_JGatewaySubsystem::Deinitialize()
 {
-	// Cleanup connections
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(LogFlushTimerHandle);
+	}
+
 	Super::Deinitialize();
 }
 
@@ -34,13 +40,15 @@ void UProject_JGatewaySubsystem::SendAsyncRequest(const FString& Endpoint, const
 
 	Request->OnProcessRequestComplete().BindLambda([OnResponse](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
 	{
-		if (bConnectedSuccessfully && ResponsePtr.IsValid())
+		const bool bSucceeded = bConnectedSuccessfully && ResponsePtr.IsValid() && EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode());
+		if (bSucceeded)
 		{
 			OnResponse.ExecuteIfBound(true, ResponsePtr->GetContentAsString());
 		}
 		else
 		{
-			OnResponse.ExecuteIfBound(false, TEXT("Connection Failed"));
+			const FString ResponseData = ResponsePtr.IsValid() ? ResponsePtr->GetContentAsString() : TEXT("Connection Failed");
+			OnResponse.ExecuteIfBound(false, ResponseData);
 		}
 	});
 
@@ -64,19 +72,47 @@ void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const 
 void UProject_JGatewaySubsystem::FlushRemoteLogs()
 {
 	if (LogQueue.Num() == 0) return;
+	if (bLogFlushInFlight) return;
 
-	// In a real implementation, serialize LogQueue to a JSON Array and send via Discord Webhook or ELK endpoint.
-	// Example Discord Webhook format:
-	// FString Payload = FString::Printf(TEXT("{\"content\": \"[%s] %s\"}"), *LogQueue[0].Severity, *LogQueue[0].Message);
-	
-	FString Payload = TEXT("{ \"logs\": [");
-	for (int32 i = 0; i < LogQueue.Num(); ++i)
+	Swap(PendingLogFlushBatch, LogQueue);
+
+	TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
+	TArray<TSharedPtr<FJsonValue>> LogValues;
+	LogValues.Reserve(PendingLogFlushBatch.Num());
+	for (const FLogPayload& Log : PendingLogFlushBatch)
 	{
-		Payload += FString::Printf(TEXT("{\"severity\":\"%s\", \"message\":\"%s\"}%s"), 
-			*LogQueue[i].Severity, *LogQueue[i].Message, (i == LogQueue.Num() - 1) ? TEXT("") : TEXT(","));
+		TSharedRef<FJsonObject> LogObject = MakeShared<FJsonObject>();
+		LogObject->SetStringField(TEXT("severity"), Log.Severity);
+		LogObject->SetStringField(TEXT("message"), Log.Message);
+		LogValues.Add(MakeShared<FJsonValueObject>(LogObject));
 	}
-	Payload += TEXT("] }");
+	RootObject->SetArrayField(TEXT("logs"), LogValues);
 
-	SendAsyncRequest(TEXT("telemetry"), Payload, FOnBackendResponse());
-	LogQueue.Empty();
+	FString Payload;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Payload);
+	FJsonSerializer::Serialize(RootObject, Writer);
+
+	bLogFlushInFlight = true;
+
+	FOnBackendResponse ResponseDelegate;
+	ResponseDelegate.BindDynamic(this, &UProject_JGatewaySubsystem::HandleRemoteLogFlushResponse);
+	SendAsyncRequest(TEXT("telemetry"), Payload, ResponseDelegate);
+}
+
+void UProject_JGatewaySubsystem::HandleRemoteLogFlushResponse(bool bSucceeded, const FString& Response)
+{
+	bLogFlushInFlight = false;
+
+	if (bSucceeded)
+	{
+		PendingLogFlushBatch.Reset();
+		return;
+	}
+
+	LogQueue.Insert(PendingLogFlushBatch, 0);
+	PendingLogFlushBatch.Reset();
+	if (LogQueue.Num() > 100)
+	{
+		LogQueue.RemoveAt(0, LogQueue.Num() - 100);
+	}
 }

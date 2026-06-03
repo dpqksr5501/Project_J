@@ -33,6 +33,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Significance")
@@ -69,4 +71,5 @@ protected:
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void InitializeDefaultAttributes() const;
+	void InitializeAbilitySystem();
 };

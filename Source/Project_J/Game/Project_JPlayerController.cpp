@@ -7,6 +7,8 @@
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Project_J.h"
+#include "Project_JGameState.h"
+#include "Project_JPlayerState.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void AProject_JPlayerController::BeginPlay()
@@ -64,4 +66,31 @@ bool AProject_JPlayerController::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+}
+
+void AProject_JPlayerController::DumpMMOState()
+{
+	const AProject_JPlayerState* ProjectPlayerState = GetPlayerState<AProject_JPlayerState>();
+	const AProject_JGameState* ProjectGameState = GetWorld() ? GetWorld()->GetGameState<AProject_JGameState>() : nullptr;
+
+	const FString PlayerLine = ProjectPlayerState
+		? FString::Printf(
+			TEXT("PlayerState Account=%s Character=%s Class=%s Level=%d"),
+			*ProjectPlayerState->GetAccountId().ToString(),
+			*ProjectPlayerState->GetCharacterId().ToString(),
+			*ProjectPlayerState->GetPublicClassId().ToString(),
+			ProjectPlayerState->GetPublicCharacterLevel())
+		: FString(TEXT("PlayerState unavailable"));
+
+	const FString WorldLine = ProjectGameState
+		? FString::Printf(
+			TEXT("GameState %s PublicEvent=%s"),
+			*ProjectGameState->GetWorldInstanceId().ToDebugString(),
+			*ProjectGameState->GetPublicEventId().ToString())
+		: FString(TEXT("GameState unavailable"));
+
+	ClientMessage(PlayerLine);
+	ClientMessage(WorldLine);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *PlayerLine);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *WorldLine);
 }

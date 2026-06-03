@@ -18,6 +18,9 @@ public:
 	
 	/** Constructor */
 	AProject_JGameMode();
+
+	virtual void InitGameState() override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };
 
 

@@ -36,7 +36,11 @@ private:
 		FString Severity;
 	};
 	TArray<FLogPayload> LogQueue;
+	TArray<FLogPayload> PendingLogFlushBatch;
 	FTimerHandle LogFlushTimerHandle;
+	bool bLogFlushInFlight = false;
 
 	void FlushRemoteLogs();
+	UFUNCTION()
+	void HandleRemoteLogFlushResponse(bool bSucceeded, const FString& Response);
 };

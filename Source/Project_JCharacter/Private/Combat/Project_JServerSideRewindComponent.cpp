@@ -75,9 +75,10 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 	// Temporarily rollback collision collider of target
 	Owner->SetActorLocationAndRotation(InterpolatedLocation, InterpolatedRotation, false, nullptr, ETeleportType::TeleportPhysics);
 
-	// Perform server trace (LineTrace against ECC_Pawn)
+	// Perform server trace (LineTrace against ECC_Pawn). Do not ignore Owner here:
+	// this component is attached to the target being verified.
 	FHitResult HitResult;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SSRVerify), true, Owner);
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SSRVerify), true);
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Pawn, QueryParams);
 
 	// Restore original transform immediately

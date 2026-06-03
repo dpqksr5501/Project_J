@@ -621,6 +621,19 @@ void AProject_JPlayerCharacter::ServerSetCombatMode_Implementation(bool bNewComb
 	ForceNetUpdate();
 }
 
+void AProject_JPlayerCharacter::ServerTriggerPlayerAttack_Implementation()
+{
+	if (IsDodging() || IsHitReacting())
+	{
+		return;
+	}
+
+	if (ActiveCombatComponent)
+	{
+		ActiveCombatComponent->Attack();
+	}
+}
+
 float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 {
 	return LocomotionAnimStateComponent ? LocomotionAnimStateComponent->MoveInputDeadZone : 0.1f;
@@ -1053,5 +1066,10 @@ void AProject_JPlayerCharacter::TriggerPlayerAttack()
 	if (ActiveCombatComponent)
 	{
 		ActiveCombatComponent->Attack();
+	}
+
+	if (!HasAuthority())
+	{
+		ServerTriggerPlayerAttack();
 	}
 }
