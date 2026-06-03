@@ -143,17 +143,12 @@ public:
 	void HandleReplicatedLandingCancelled();
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
-	void FinishStop();
-	void FinishJumpStart();
-	void FinishFallOffStart();
-	void MarkGroundStartFinished();
 	void SetMoveInput(const FVector2D& InMoveInput);
 	void ClearMoveInput();
 	void HandleSprintStarted();
 	void HandleSprintStopped();
 	bool CanStartJumpForAnimation() const;
 	bool ConsumeRealLandingEventRequested();
-	void HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType);
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
@@ -169,6 +164,7 @@ private:
 	FProject_JLocomotionAuthoritativeContext BuildAuthoritativeContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	void ApplyLocomotionPhaseStability(float DeltaTime, FProject_JDerivedLocomotionContext& InOutContext);
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
@@ -235,16 +231,12 @@ private:
 	void ClearLandingTimers();
 	bool SchedulePendingExit(FTimerHandle& TimerHandle, bool& bPendingExit, void (UProject_JLocomotionAnimStateComponent::*Callback)(), float Delay);
 	bool ScheduleLandingMinHoldRetry();
-	void ClearPendingJumpStartExit();
-	bool CanFinishJumpStart() const;
 	void FinishLandingImmediately();
 	void DispatchLandingCancelForAnimation();
 	FVector CalculateMoveWorldDirection(const FVector2D& MoveInput) const;
 	void OnLandingTimerFinished();
 	void OnJumpTimerFinished();
 	void OnFallOffStartFinished();
-	void CompleteGroundStart();
-	void CompleteStop();
 	void CompleteJumpStart();
 	void CompleteFallOffStart();
 	void CompleteLanding();
@@ -266,9 +258,10 @@ private:
 	void RefreshMovementInputState(float DeltaTime, const FVector2D& MoveInput, bool bTrackTurnAngle);
 	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
 	bool TryFinishLandingFromInputChange();
+	bool TryFinishLandingRedirectCancel(const FVector2D& MoveInput);
 	bool TryFinishSprintLandingTurnCancel(const FVector2D& MoveInput);
-	bool HasSprintLandingDirectionTurnCancel(const FVector2D& MoveInput);
-	bool HasSprintLandingActorTurnCancel();
+	bool HasLandingDirectionTurnCancel(const FVector2D& MoveInput, float AngleThreshold);
+	bool HasLandingActorTurnCancel(float AngleThreshold);
 	void UpdateSharpTurnRequest(bool bAllowSharpTurn);
 	bool UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput);
 	void UpdateStartGroundMotionMode(const FVector2D& MoveInput, bool bAllowSharpTurn);
@@ -294,14 +287,19 @@ private:
 	void ClearResolvedMoveInputState();
 
 public:
+	/** Maximum time a moving landing can hold without a cancel or new phase. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float LandingRequestDuration = 2.0f;
 
+	/** Maximum time a stand landing can hold without a cancel or new phase. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StandLandingRequestDuration = 3.5f;
+	float StandLandingRequestDuration = 1.4f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float LandingMinHoldTime = 0.0f;
+	float LandingMinHoldTime = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandingInputCancelGraceTime = 0.25f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HeavyLandSpeedThreshold = 650.0f;
@@ -311,12 +309,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float JumpStartMaxDuration = 2.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float JumpStartMinHoldTime = 0.16f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float JumpStartNotifyIgnoreTime = 0.16f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IgnoreLandingAfterJumpStartTime = 0.05f;
@@ -333,16 +325,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Input", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float MoveInputDeadZone = 0.1f;
 
-	/** Fallback only. GroundStartFinished notify should normally leave Start before this timeout. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartFallbackDuration = 2.0f;
+	float StartMinDuration = 1.4f;
+
+	/** Maximum time Start can hold without reaching locomotion. Start no longer depends on GroundStartFinished notify. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float StartMaxDuration = 1.4f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
 
-	/** Fallback only. StopFinished notify should normally leave Stop before this timeout. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StopMinDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StopExitSpeedThreshold = 20.0f;
+
+	/** Maximum time Stop can hold without a new movement input. Stop no longer depends on StopFinished notify. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StopFallbackDuration = 2.0f;
+	float StopFallbackDuration = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
@@ -375,10 +376,19 @@ public:
 	float DerivedTurnAngleThreshold = 45.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedTurnMinHoldTime = 0.18f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedTurnInPlaceAngleThreshold = 65.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedSpinTransitionAngleThreshold = 135.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandingRedirectCancelAngle = 35.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandingRedirectCancelMinTime = 0.05f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLandingTurnCancelAngle = 35.0f;
@@ -448,6 +458,12 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
 	FProject_JDerivedLocomotionContext DerivedLocomotionContext;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
+	EProject_JLocomotionPhaseFamily PreviousDerivedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
+	float DerivedPhaseFamilyElapsedTime = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bIsLanding = false;
@@ -597,8 +613,6 @@ private:
 	FTimerHandle LandingTimerHandle;
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
-	FTimerHandle JumpStartExitTimerHandle;
-	FTimerHandle FallOffStartExitTimerHandle;
 	FTimerHandle LandingExitTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
@@ -625,11 +639,6 @@ private:
 	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
-	bool bPendingGroundStartFinish = false;
-	bool bGroundStartFinishPendingExit = false;
-	bool bStopFinishPendingExit = false;
-	bool bJumpStartFinishPendingExit = false;
-	bool bFallOffStartFinishPendingExit = false;
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;

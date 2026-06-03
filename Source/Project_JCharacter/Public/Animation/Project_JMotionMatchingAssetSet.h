@@ -11,6 +11,51 @@ class UChooserTable;
 class UPoseSearchDatabase;
 
 USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
+	TObjectPtr<UPoseSearchDatabase> Cycle = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Start Stop")
+	TObjectPtr<UPoseSearchDatabase> Start = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Start Stop")
+	TObjectPtr<UPoseSearchDatabase> RemoteStart = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Start Stop")
+	TObjectPtr<UPoseSearchDatabase> Stop = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Turn Redirect")
+	TObjectPtr<UPoseSearchDatabase> TurnRedirect = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JMotionMatchingLandDatabaseFamily
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing")
+	TObjectPtr<UPoseSearchDatabase> Stand = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing")
+	TObjectPtr<UPoseSearchDatabase> Run = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing")
+	TObjectPtr<UPoseSearchDatabase> Sprint = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing|Heavy")
+	TObjectPtr<UPoseSearchDatabase> StandHeavy = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing|Heavy")
+	TObjectPtr<UPoseSearchDatabase> RunHeavy = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Landing|Heavy")
+	TObjectPtr<UPoseSearchDatabase> SprintHeavy = nullptr;
+};
+
+USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JMotionMatchingDatabaseEntry
 {
 	GENERATED_BODY()
@@ -60,13 +105,36 @@ public:
 	UPoseSearchDatabase* FindDatabaseForContext(
 		EProject_JLocomotionGaitIntent GaitIntent,
 		EProject_JLocomotionRotationMode RotationMode,
-		EProject_JLocomotionPhaseFamily PhaseFamily) const;
+		EProject_JLocomotionPhaseFamily PhaseFamily,
+		bool bUseHeavyLand = false,
+		bool bLandWasMoving = false,
+		bool bLandWasSprinting = false,
+		bool bUseFallOffStart = false,
+		bool bUseRemoteStart = false) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> DefaultPoseSearchDatabase = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> IdlePoseSearchDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	FProject_JMotionMatchingGaitDatabaseFamily RunDatabases;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	FProject_JMotionMatchingGaitDatabaseFamily SprintDatabases;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	TObjectPtr<UPoseSearchDatabase> JumpStartDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	TObjectPtr<UPoseSearchDatabase> FallOffStartDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	TObjectPtr<UPoseSearchDatabase> JumpAirDatabase = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families")
+	FProject_JMotionMatchingLandDatabaseFamily LandDatabases;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;

@@ -96,7 +96,6 @@ void UProject_JLocomotionAnimStateComponent::HandleLanded(const FHitResult&)
 
 	const float ImpactFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(PlayerOwner->GetVelocity().Z));
 	ClearJumpStartTimers();
-	bJumpStartFinishPendingExit = false;
 	bIgnoreNextLandingForJumpStart = false;
 	StartLanding(ImpactFallSpeed, true, true);
 }
@@ -169,96 +168,6 @@ void UProject_JLocomotionAnimStateComponent::FinishLanding(bool bForceFinish)
 	}
 }
 
-void UProject_JLocomotionAnimStateComponent::FinishStop()
-{
-	bStopFinishPendingExit = false;
-
-	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
-	{
-		EnterGroundMotionMode(
-			bHasMoveInput || GroundSpeed > StopIntentSpeedThreshold
-				? EProject_JGroundMotionMode::Locomotion
-				: EProject_JGroundMotionMode::Idle);
-	}
-}
-
-void UProject_JLocomotionAnimStateComponent::FinishJumpStart()
-{
-	if (!bIsJumping)
-	{
-		return;
-	}
-
-	if (IsLandingStateActive())
-	{
-		return;
-	}
-
-	if (JumpStartElapsedTime < JumpStartNotifyIgnoreTime)
-	{
-		ClearPendingJumpStartExit();
-		return;
-	}
-
-	if (!CanFinishJumpStart())
-	{
-		ClearPendingJumpStartExit();
-		return;
-	}
-
-	bJumpStartFinishPendingExit = false;
-
-	if (SchedulePendingExit(
-		JumpStartExitTimerHandle,
-		bJumpStartFinishPendingExit,
-		&UProject_JLocomotionAnimStateComponent::CompleteJumpStart,
-		FinishedExitWindow))
-	{
-		return;
-	}
-
-	if (!bJumpStartFinishPendingExit)
-	{
-		CompleteJumpStart();
-	}
-}
-
-void UProject_JLocomotionAnimStateComponent::FinishFallOffStart()
-{
-	if (!bIsFallOffStart)
-	{
-		return;
-	}
-
-	if (bIsFallOffStart && SchedulePendingExit(
-		FallOffStartExitTimerHandle,
-		bFallOffStartFinishPendingExit,
-		&UProject_JLocomotionAnimStateComponent::CompleteFallOffStart,
-		FinishedExitWindow))
-	{
-		return;
-	}
-
-	if (!bFallOffStartFinishPendingExit)
-	{
-		CompleteFallOffStart();
-	}
-}
-
-void UProject_JLocomotionAnimStateComponent::MarkGroundStartFinished()
-{
-	bPendingGroundStartFinish = false;
-	bGroundStartFinishPendingExit = false;
-
-	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
-	{
-		EnterGroundMotionMode(
-			bHasMoveInput || GroundSpeed > IdleSpeedThreshold
-				? EProject_JGroundMotionMode::Locomotion
-				: EProject_JGroundMotionMode::Idle);
-	}
-}
-
 bool UProject_JLocomotionAnimStateComponent::CanStartJumpForAnimation() const
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
@@ -300,7 +209,6 @@ void UProject_JLocomotionAnimStateComponent::ClearJumpStartTimers()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(JumpTimerHandle);
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
 	}
 }
 
@@ -309,7 +217,6 @@ void UProject_JLocomotionAnimStateComponent::ClearFallOffStartTimers()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(FallOffStartTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
 	}
 }
 
@@ -360,23 +267,6 @@ bool UProject_JLocomotionAnimStateComponent::ScheduleLandingMinHoldRetry()
 	return false;
 }
 
-void UProject_JLocomotionAnimStateComponent::ClearPendingJumpStartExit()
-{
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-	}
-	bJumpStartFinishPendingExit = false;
-}
-
-bool UProject_JLocomotionAnimStateComponent::CanFinishJumpStart() const
-{
-	const bool bMovementIsAirborne = IsInAirForAnimation();
-	return
-		JumpStartElapsedTime >= JumpStartMinHoldTime &&
-		(bMovementIsAirborne || JumpStartElapsedTime >= JumpStartMaxDuration);
-}
-
 void UProject_JLocomotionAnimStateComponent::FinishLandingImmediately()
 {
 	ClearLandingTimers();
@@ -403,9 +293,7 @@ void UProject_JLocomotionAnimStateComponent::BeginJumpStartState()
 	bIsJumping = true;
 	JumpStartElapsedTime = 0.0f;
 	bIgnoreNextLandingForJumpStart = true;
-	bJumpStartFinishPendingExit = false;
 	bLandingFinishPendingExit = false;
-	bFallOffStartFinishPendingExit = false;
 }
 
 void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Duration)
@@ -424,12 +312,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Dura
 void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed)
 {
 	StopFallOffStart();
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-	}
 
-	bJumpStartFinishPendingExit = false;
 	bIsJumping = false;
 	bIgnoreNextLandingForJumpStart = false;
 	bIsInAir = true;
@@ -557,7 +440,6 @@ void UProject_JLocomotionAnimStateComponent::StartFallOffStart(bool bReplicateEv
 	{
 		World->GetTimerManager().SetTimer(FallOffStartTimerHandle, this, &UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished, FMath::Max(0.05f, FallOffStartDuration), false);
 	}
-	bFallOffStartFinishPendingExit = false;
 
 	AddOwnedInAirGameplayTag();
 }
@@ -566,32 +448,17 @@ void UProject_JLocomotionAnimStateComponent::StopFallOffStart()
 {
 	ClearFallOffStartTimers();
 	bIsFallOffStart = false;
-	bFallOffStartFinishPendingExit = false;
-}
-
-void UProject_JLocomotionAnimStateComponent::CompleteGroundStart()
-{
-	bPendingGroundStartFinish = false;
-	bGroundStartFinishPendingExit = false;
-	MarkGroundStartFinished();
-}
-
-void UProject_JLocomotionAnimStateComponent::CompleteStop()
-{
-	bStopFinishPendingExit = false;
-	FinishStop();
 }
 
 void UProject_JLocomotionAnimStateComponent::CompleteJumpStart()
 {
-	if (!bIsJumping && !bJumpStartFinishPendingExit)
+	if (!bIsJumping)
 	{
 		return;
 	}
 
 	ClearJumpStartTimers();
 
-	bJumpStartFinishPendingExit = false;
 	bIsJumping = false;
 	JumpStartElapsedTime = 0.0f;
 	bIgnoreNextLandingForJumpStart = false;
@@ -678,5 +545,5 @@ void UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished()
 
 void UProject_JLocomotionAnimStateComponent::OnFallOffStartFinished()
 {
-	FinishFallOffStart();
+	CompleteFallOffStart();
 }

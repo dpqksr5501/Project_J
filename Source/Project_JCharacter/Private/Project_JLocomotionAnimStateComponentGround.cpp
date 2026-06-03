@@ -21,9 +21,6 @@ void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGro
 
 void UProject_JLocomotionAnimStateComponent::ResetGroundMotionTransitionRequests()
 {
-	bPendingGroundStartFinish = false;
-	bGroundStartFinishPendingExit = false;
-	bStopFinishPendingExit = false;
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode)
@@ -205,18 +202,27 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		}
 	}
 
+	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartMinDuration;
+
 	if (!bHasMoveInput)
 	{
-		EnterGroundMotionMode(
-			GroundSpeed > StopIntentSpeedThreshold
-				? EProject_JGroundMotionMode::Stop
-				: EProject_JGroundMotionMode::Idle);
+		if (bCanExitStart)
+		{
+			EnterGroundMotionMode(
+				GroundSpeed > StopIntentSpeedThreshold
+					? EProject_JGroundMotionMode::Stop
+					: EProject_JGroundMotionMode::Idle);
+		}
+		else
+		{
+			RefreshGroundMotionFlags();
+		}
 	}
-	else if (bStartTurnExitRequested)
+	else if (bCanExitStart && (bStartTurnExitRequested || GroundSpeed > DerivedStartMaxGroundSpeed))
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
-	else if (GroundMotionModeElapsedTime >= StartFallbackDuration)
+	else if (GroundMotionModeElapsedTime >= StartMaxDuration)
 	{
 		EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
 	}
@@ -232,6 +238,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateStopGroundMotionMode(float De
 	if (bHasMoveInput)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
+	}
+	else if (StopElapsedTime >= StopMinDuration && GroundSpeed <= StopExitSpeedThreshold)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 	}
 	else if (StopElapsedTime >= StopFallbackDuration)
 	{

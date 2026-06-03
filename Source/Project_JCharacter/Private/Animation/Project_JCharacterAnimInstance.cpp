@@ -63,6 +63,7 @@ private:
 	bool bUpdateMotionMatchingThisFrame = true;
 
 	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
+	TObjectPtr<UPoseSearchDatabase> AppliedDatabase = nullptr;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
 	FAnimNode_MotionMatching NativeMotionMatchingNode;
@@ -128,13 +129,23 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 {
 	if (!bMotionMatchingEnabled || !CurrentActiveDatabase)
 	{
-		NativeMotionMatchingNode.ResetDatabasesToSearch(EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
+		if (AppliedDatabase)
+		{
+			NativeMotionMatchingNode.ResetDatabasesToSearch(EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
+			AppliedDatabase = nullptr;
+		}
+		return;
+	}
+
+	if (AppliedDatabase == CurrentActiveDatabase)
+	{
 		return;
 	}
 
 	NativeMotionMatchingNode.SetDatabaseToSearch(
 		CurrentActiveDatabase.Get(),
 		EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
+	AppliedDatabase = CurrentActiveDatabase;
 }
 
 namespace
@@ -263,40 +274,6 @@ FAnimInstanceProxy* UProject_JCharacterAnimInstance::CreateAnimInstanceProxy()
 void UProject_JCharacterAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy)
 {
 	delete InProxy;
-}
-
-void UProject_JCharacterAnimInstance::HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType)
-{
-	if (NeedsOwnerReferenceRefresh())
-	{
-		CacheOwnerReferences();
-	}
-
-	if (OwningPlayerCharacter)
-	{
-		if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
-		{
-			AnimState->HandleAnimationEvent(EventType);
-		}
-	}
-
-	switch (EventType)
-	{
-	case EProject_JLocomotionAnimEvent::HitReactFinished:
-		if (OwningPlayerCharacter)
-		{
-			OwningPlayerCharacter->bIsHitReacting = false;
-		}
-		break;
-	case EProject_JLocomotionAnimEvent::AttackFinished:
-		if (OwningPlayerCharacter)
-		{
-			OwningPlayerCharacter->bIsAttacking = false;
-		}
-		break;
-	default:
-		break;
-	}
 }
 
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::GetThreadSafeData() const
@@ -624,7 +601,12 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		? AssetSet->FindDatabaseForContext(
 			Data.LocomotionContext.GaitIntent,
 			Data.LocomotionContext.RotationMode,
-			Data.LocomotionContext.PhaseFamily)
+			Data.LocomotionContext.PhaseFamily,
+			Data.Landing.bUseHeavyLand,
+			Data.Landing.bLandWasMoving,
+			Data.Landing.bLandWasSprinting,
+			Data.Air.bIsFallOffStart,
+			OwningPlayerCharacter && !IsLocallyControlledCharacter())
 		: nullptr;
 	if (!SelectedDatabase)
 	{

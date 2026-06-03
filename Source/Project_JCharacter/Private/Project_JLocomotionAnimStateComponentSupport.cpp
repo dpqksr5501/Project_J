@@ -370,22 +370,11 @@ void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
 	bRealLandingEventRequested = false;
 	bResolvedMoveInputLastUpdate = bHasMoveInput;
 	EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
-
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(JumpStartExitTimerHandle);
-		World->GetTimerManager().ClearTimer(FallOffStartExitTimerHandle);
-	}
 	ClearLandingTimers();
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearPendingAnimationExitRequests()
 {
-	bPendingGroundStartFinish = false;
-	bGroundStartFinishPendingExit = false;
-	bStopFinishPendingExit = false;
-	bJumpStartFinishPendingExit = false;
-	bFallOffStartFinishPendingExit = false;
 	bLandingFinishPendingExit = false;
 }
 

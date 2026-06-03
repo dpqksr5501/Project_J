@@ -312,30 +312,6 @@ void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
 	DispatchLandingCancelAnimationEvent();
 }
 
-void AProject_JPlayerCharacter::FinishFallOffStart()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->FinishFallOffStart();
-	}
-}
-
-void AProject_JPlayerCharacter::FinishJumpStart()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->FinishJumpStart();
-	}
-}
-
-void AProject_JPlayerCharacter::MarkGroundStartFinished()
-{
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->MarkGroundStartFinished();
-	}
-}
-
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();

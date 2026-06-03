@@ -242,12 +242,6 @@ public:
 
 	void NotifyLandingCancelledForAnimation();
 
-	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
-	void FinishFallOffStart();
-
-	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
-	void FinishJumpStart();
-
 	/** Toggles the combat mode on or off */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void ToggleCombatMode();
@@ -273,9 +267,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
-
-	UFUNCTION(BlueprintCallable, Category = "Movement|Animation")
-	void MarkGroundStartFinished();
 
 public:
 

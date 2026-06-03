@@ -91,7 +91,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateAirAndMovementRequests(float 
 	UpdateRemoteMovementRequestState(DeltaTime);
 }
 
-void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float, const FProject_JLocomotionRuntimeSnapshot& Snapshot)
+void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot)
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
@@ -99,12 +99,16 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float, con
 		AuthoritativeContext = FProject_JLocomotionAuthoritativeContext();
 		KinematicContext = FProject_JLocomotionKinematicContext();
 		DerivedLocomotionContext = FProject_JDerivedLocomotionContext();
+		PreviousDerivedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+		DerivedPhaseFamilyElapsedTime = 0.0f;
 		return;
 	}
 
 	AuthoritativeContext = BuildAuthoritativeContext(*PlayerOwner, Snapshot);
 	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot);
-	DerivedLocomotionContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
+	FProject_JDerivedLocomotionContext NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
+	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
+	DerivedLocomotionContext = NewDerivedContext;
 }
 
 FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent::BuildAuthoritativeContext(
@@ -170,6 +174,36 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	return Context;
 }
 
+void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
+	float DeltaTime,
+	FProject_JDerivedLocomotionContext& InOutContext)
+{
+	if (PreviousDerivedPhaseFamily == InOutContext.PhaseFamily)
+	{
+		DerivedPhaseFamilyElapsedTime += DeltaTime;
+		return;
+	}
+
+	const bool bKeepMovingTurn =
+		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
+		InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		DerivedPhaseFamilyElapsedTime < DerivedTurnMinHoldTime &&
+		KinematicContext.bHasMoveInput &&
+		KinematicContext.GroundSpeed > StopIntentSpeedThreshold &&
+		!bIsInAir &&
+		!IsLandingStateActive();
+
+	if (bKeepMovingTurn)
+	{
+		InOutContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+		DerivedPhaseFamilyElapsedTime += DeltaTime;
+		return;
+	}
+
+	PreviousDerivedPhaseFamily = InOutContext.PhaseFamily;
+	DerivedPhaseFamilyElapsedTime = 0.0f;
+}
+
 EProject_JLocomotionGaitIntent UProject_JLocomotionAnimStateComponent::ResolveGaitIntent(
 	const AProject_JPlayerCharacter&,
 	const FProject_JLocomotionRuntimeSnapshot& Snapshot) const
@@ -223,7 +257,10 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	{
 		return EProject_JLocomotionPhaseFamily::Start;
 	}
-	if (FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold)
+	if (Context.bIsMoving &&
+		KinematicContext.bHasMoveInput &&
+		KinematicContext.GroundSpeed > StopIntentSpeedThreshold &&
+		FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;
 	}
@@ -250,14 +287,17 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
+	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
+	{
+		return false;
+	}
+
 	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed <= StopIntentSpeedThreshold)
 	{
 		return false;
 	}
 
-	const float PivotThreshold = AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
-		? DerivedPivotAngleThreshold * 0.75f
-		: DerivedPivotAngleThreshold;
+	const float PivotThreshold = DerivedPivotAngleThreshold * 0.75f;
 	return FMath::Abs(InKinematicContext.MoveInputTurnAngle) >= PivotThreshold;
 }
 
@@ -278,7 +318,10 @@ bool UProject_JLocomotionAnimStateComponent::ShouldSpinTransitionForContext(
 	const FProject_JLocomotionAuthoritativeContext&,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
-	return FMath::Abs(InKinematicContext.DesiredFacingDeltaYaw) >= DerivedSpinTransitionAngleThreshold;
+	return
+		InKinematicContext.bHasMoveInput &&
+		InKinematicContext.GroundSpeed > StopIntentSpeedThreshold &&
+		FMath::Abs(InKinematicContext.DesiredFacingDeltaYaw) >= DerivedSpinTransitionAngleThreshold;
 }
 
 FVector UProject_JLocomotionAnimStateComponent::CalculateMoveWorldDirection(const FVector2D& MoveInput) const
@@ -300,34 +343,6 @@ FVector UProject_JLocomotionAnimStateComponent::CalculateMoveWorldDirection(cons
 	const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
 	const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
 	return (ForwardDirection * MoveInput.Y + RightDirection * MoveInput.X).GetSafeNormal();
-}
-
-void UProject_JLocomotionAnimStateComponent::HandleAnimationEvent(EProject_JLocomotionAnimEvent EventType)
-{
-	switch (EventType)
-	{
-	case EProject_JLocomotionAnimEvent::GroundStartFinished:
-		MarkGroundStartFinished();
-		break;
-	case EProject_JLocomotionAnimEvent::StopFinished:
-		FinishStop();
-		break;
-	case EProject_JLocomotionAnimEvent::JumpStartFinished:
-		FinishJumpStart();
-		break;
-	case EProject_JLocomotionAnimEvent::FallOffStartFinished:
-		FinishFallOffStart();
-		break;
-	case EProject_JLocomotionAnimEvent::LandingFinished:
-		FinishLanding(true);
-		break;
-	case EProject_JLocomotionAnimEvent::HitReactFinished:
-	case EProject_JLocomotionAnimEvent::AttackFinished:
-		ClearTransientAnimationRequests();
-		break;
-	default:
-		break;
-	}
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldUseLocalInputState() const
@@ -511,12 +526,22 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromMovementInput(c
 		return true;
 	}
 
+	if (TryFinishLandingRedirectCancel(MoveInput))
+	{
+		return true;
+	}
+
 	return bAllowSprintTurnCancel && TryFinishSprintLandingTurnCancel(MoveInput);
 }
 
 bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 {
 	if (!IsLandingStateActive())
+	{
+		return false;
+	}
+
+	if (ShouldUseLocalInputState() && LandingElapsedTime < LandingInputCancelGraceTime)
 	{
 		return false;
 	}
@@ -541,6 +566,27 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 	return false;
 }
 
+bool UProject_JLocomotionAnimStateComponent::TryFinishLandingRedirectCancel(const FVector2D& MoveInput)
+{
+	if (!IsLandingStateActive() ||
+		!bLandWasMoving ||
+		!bHasMoveInput ||
+		LandingElapsedTime < LandingRedirectCancelMinTime)
+	{
+		return false;
+	}
+
+	if (HasLandingDirectionTurnCancel(MoveInput, LandingRedirectCancelAngle) ||
+		HasLandingActorTurnCancel(LandingRedirectCancelAngle))
+	{
+		DispatchLandingCancelForAnimation();
+		FinishLandingImmediately();
+		return true;
+	}
+
+	return false;
+}
+
 bool UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingTurnCancel(const FVector2D& MoveInput)
 {
 	if (!IsLandingStateActive() ||
@@ -552,7 +598,8 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingTurnCancel(co
 		return false;
 	}
 
-	if (HasSprintLandingDirectionTurnCancel(MoveInput) || HasSprintLandingActorTurnCancel())
+	if (HasLandingDirectionTurnCancel(MoveInput, SprintLandingTurnCancelAngle) ||
+		HasLandingActorTurnCancel(SprintLandingTurnCancelAngle))
 	{
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
@@ -562,7 +609,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingTurnCancel(co
 	return false;
 }
 
-bool UProject_JLocomotionAnimStateComponent::HasSprintLandingDirectionTurnCancel(const FVector2D& MoveInput)
+bool UProject_JLocomotionAnimStateComponent::HasLandingDirectionTurnCancel(const FVector2D& MoveInput, float AngleThreshold)
 {
 	const FVector CurrentLandingMoveWorldDirection = CalculateMoveWorldDirection(MoveInput);
 	const FVector ReferenceLandingMoveWorldDirection = !InitialLandingMoveWorldDirection.IsNearlyZero()
@@ -573,7 +620,7 @@ bool UProject_JLocomotionAnimStateComponent::HasSprintLandingDirectionTurnCancel
 	{
 		const float DirectionDot = FMath::Clamp(FVector::DotProduct(ReferenceLandingMoveWorldDirection, CurrentLandingMoveWorldDirection), -1.0f, 1.0f);
 		const float DirectionAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
-		if (DirectionAngle >= SprintLandingTurnCancelAngle)
+		if (DirectionAngle >= AngleThreshold)
 		{
 			return true;
 		}
@@ -583,7 +630,7 @@ bool UProject_JLocomotionAnimStateComponent::HasSprintLandingDirectionTurnCancel
 	return false;
 }
 
-bool UProject_JLocomotionAnimStateComponent::HasSprintLandingActorTurnCancel()
+bool UProject_JLocomotionAnimStateComponent::HasLandingActorTurnCancel(float AngleThreshold)
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
@@ -594,7 +641,7 @@ bool UProject_JLocomotionAnimStateComponent::HasSprintLandingActorTurnCancel()
 	const float CurrentActorYaw = PlayerOwner->GetActorRotation().Yaw;
 	const float InitialYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(InitialLandingActorYaw, CurrentActorYaw));
 	const float PreviousYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(PreviousLandingActorYaw, CurrentActorYaw));
-	if (FMath::Max(InitialYawDelta, PreviousYawDelta) >= SprintLandingTurnCancelAngle)
+	if (FMath::Max(InitialYawDelta, PreviousYawDelta) >= AngleThreshold)
 	{
 		return true;
 	}

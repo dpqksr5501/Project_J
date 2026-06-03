@@ -82,7 +82,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 
 	bIsPhysicallyInAir = bIsCurrentlyInAir;
 	bIsJumping = false;
-	bJumpStartFinishPendingExit = false;
 	if (!bIsFallOffStart)
 	{
 		bSuppressFallOffStart = false;

@@ -303,9 +303,6 @@ public:
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Animation|Events")
-	void HandleLocomotionAnimEvent(EProject_JLocomotionAnimEvent EventType);
-
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe, DeprecatedFunction, DeprecationMessage = "Use dedicated thread-safe getters such as GetThreadSafeTrajectory, GetThreadSafeAimYaw, GetThreadSafeAimPitch, and GetThreadSafeAimOffsetAlpha in AnimGraph."))
 	FProject_JAnimThreadSafeData GetThreadSafeData() const;
 
