@@ -109,6 +109,33 @@ GM 포털, CS case 관리, 제재 UI, 유저 검색, 아이템 지급/회수 도
 - housing placement, ownership, decoration persistence가 컨텐츠 목표로 확정될 때
 - 경제 루프와 보상/소모처가 충분히 정의될 때
 
+### 극단적인 모션 매칭 군중 최적화
+
+MMORPG 환경에서는 한 화면에 많은 캐릭터가 몰릴 수 있으므로 장기적으로는 Mass Entity 기반 군중 표현, VAT, impostor, remote player proxy, 고급 dead reckoning 같은 기술을 검토할 수 있다. 다만 현재 Project J의 Pose Search Database는 가장 큰 것도 애니메이션 수가 약 20개 수준이므로, 지금 단계에서 Pose Search 검색 비용 자체가 가장 큰 병목일 가능성은 낮다.
+
+현재는 이미 들어간 Significance 기반 update interval, `VisibilityBasedAnimTickOption`, Update Rate Optimization, far distance motion matching throttle/disable 정책을 유지한다. 지금 당장 Local/Remote/Far 전용 PSD를 과하게 나누거나, skeletal mesh 플레이어를 Mass/VAT/impostor로 대체하는 작업은 미룬다.
+
+지금 우선할 일:
+
+- 더미 캐릭터 10/30/50명 단위 PIE 테스트로 Game Thread, Anim Thread, Render Thread 비용을 측정한다.
+- PSD 검색 비용보다 SkeletalMesh 수, AnimBP 평가, 장비 mesh, material/draw call, actor/component tick 비용을 먼저 확인한다.
+- 현재 Significance/URO 설정으로 remote character 움직임과 애니메이션 품질이 충분한지 확인한다.
+
+다시 검토할 시점:
+
+- PSD당 애니메이션 수가 크게 늘거나 Pose Search Database 검색 시간이 실제 병목으로 측정될 때
+- 화면에 보이는 skeletal mesh 캐릭터 수가 늘어 AnimBP/skin/render 비용이 뚜렷하게 커질 때
+- 마을, 필드 이벤트, 공성전처럼 한 화면에 수십~수백 캐릭터가 모이는 컨텐츠가 실제 목표가 될 때
+- 장비/외형 조합까지 포함한 remote character 표현 비용이 프레임을 압박할 때
+- CMC 기본 smoothing과 현재 trajectory 보정만으로 remote player motion matching 품질이 부족하다고 확인될 때
+
+후순위 후보:
+
+- Mass Entity는 먼저 몬스터, 배경 NPC, crowd용으로 실험한다.
+- VAT/impostor는 장비 외형, 염색, 무기, LOD 전환 품질 문제가 정리된 뒤 검토한다.
+- 고급 dead reckoning은 CharacterMovementComponent와 충돌하지 않는 범위에서만 실험한다.
+- 비대칭 Pose Database는 실제 DB 크기와 검색 비용이 커진 뒤 Local/Remote/Far 정책으로 나눈다.
+
 ## 지금 유지해야 할 최소 기반
 
 - `AccountId`, `CharacterId`, `WorldId`, `ZoneId`, `InstanceId`, `ChannelId` 같은 식별자
@@ -116,6 +143,7 @@ GM 포털, CS case 관리, 제재 UI, 유저 검색, 아이템 지급/회수 도
 - 정의 데이터와 상태 데이터 분리: DataAsset/PrimaryDataAsset은 정의, Actor/Component/FastArray/backend row는 상태
 - `PlayerState`에는 공개 가능한 플레이어 메타만 둔다
 - `GameState`에는 모든 클라이언트가 알아야 하는 얇은 월드/인스턴스 상태만 둔다
+- Motion Matching은 현재 Significance, URO, visibility tick, update interval 정책을 우선 유지한다
 - 개발 단계에서는 debug dump, structured log, PIE 네트워크 테스트를 우선한다
 
 ## 설계 메모
