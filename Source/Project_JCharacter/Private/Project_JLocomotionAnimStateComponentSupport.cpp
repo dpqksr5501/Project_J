@@ -27,6 +27,63 @@ const TCHAR* ToDebugString(EProject_JGroundMotionMode MotionMode)
 	}
 }
 
+const TCHAR* ToDebugString(EProject_JLocomotionGaitIntent GaitIntent)
+{
+	switch (GaitIntent)
+	{
+	case EProject_JLocomotionGaitIntent::Walk:
+		return TEXT("Walk");
+	case EProject_JLocomotionGaitIntent::Run:
+		return TEXT("Run");
+	case EProject_JLocomotionGaitIntent::Sprint:
+		return TEXT("Sprint");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(EProject_JLocomotionRotationMode RotationMode)
+{
+	switch (RotationMode)
+	{
+	case EProject_JLocomotionRotationMode::OrientToMovement:
+		return TEXT("Orient");
+	case EProject_JLocomotionRotationMode::Strafe:
+		return TEXT("Strafe");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(EProject_JLocomotionPhaseFamily PhaseFamily)
+{
+	switch (PhaseFamily)
+	{
+	case EProject_JLocomotionPhaseFamily::Idle:
+		return TEXT("Idle");
+	case EProject_JLocomotionPhaseFamily::Start:
+		return TEXT("Start");
+	case EProject_JLocomotionPhaseFamily::Cycle:
+		return TEXT("Cycle");
+	case EProject_JLocomotionPhaseFamily::Stop:
+		return TEXT("Stop");
+	case EProject_JLocomotionPhaseFamily::Pivot:
+		return TEXT("Pivot");
+	case EProject_JLocomotionPhaseFamily::Turn:
+		return TEXT("Turn");
+	case EProject_JLocomotionPhaseFamily::TurnInPlace:
+		return TEXT("TurnInPlace");
+	case EProject_JLocomotionPhaseFamily::JumpStart:
+		return TEXT("JumpStart");
+	case EProject_JLocomotionPhaseFamily::Fall:
+		return TEXT("Fall");
+	case EProject_JLocomotionPhaseFamily::Landing:
+		return TEXT("Landing");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
 const TCHAR* ToDebugString(ENetMode NetMode)
 {
 	switch (NetMode)
@@ -79,6 +136,7 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 	return FString::Printf(
 		TEXT("Net=%s LocalRole=%s RemoteRole=%s LocalInput=%s Rendered=%s Dedicated=%s\n")
 		TEXT("Ground=%s GroundSpeed=%.1f VerticalSpeed=%.1f HasInput=%s InputSize=%.2f Held=%.2f Turn=%.1f SharpTurn=%s\n")
+		TEXT("Context Gait=%s Rotation=%s Phase=%s Moving=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f Accel=%.2f\n")
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
 		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
 		TEXT("Air InAir=%s PhysAir=%s Jumping=%s FallOff=%s Landing=%s LandReq=%s CanLand=%s CanGround=%s LastFall=%.1f\n")
@@ -98,6 +156,16 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		MoveInputHeldTime,
 		MoveInputTurnAngle,
 		bSharpTurnRequested ? TEXT("true") : TEXT("false"),
+		ToDebugString(AuthoritativeContext.GaitIntent),
+		ToDebugString(AuthoritativeContext.RotationMode),
+		ToDebugString(DerivedLocomotionContext.PhaseFamily),
+		DerivedLocomotionContext.bIsMoving ? TEXT("true") : TEXT("false"),
+		DerivedLocomotionContext.bIsStarting ? TEXT("true") : TEXT("false"),
+		DerivedLocomotionContext.bIsPivoting ? TEXT("true") : TEXT("false"),
+		DerivedLocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
+		DerivedLocomotionContext.bShouldSpinTransition ? TEXT("true") : TEXT("false"),
+		KinematicContext.DesiredFacingDeltaYaw,
+		KinematicContext.AccelerationRatio,
 		bSprintAllowed ? TEXT("true") : TEXT("false"),
 		bJumpAllowed ? TEXT("true") : TEXT("false"),
 		bCombatMode ? TEXT("true") : TEXT("false"),

@@ -203,6 +203,39 @@ struct PROJECT_JCHARACTER_API FProject_JAnimCombatThreadSafeData
 };
 
 USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JLocomotionGaitIntent GaitIntent = EProject_JLocomotionGaitIntent::Run;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float DesiredFacingDeltaYaw = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsMoving = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsStarting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsPivoting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bShouldTurnInPlace = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bShouldSpinTransition = false;
+};
+
+USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimAimThreadSafeData
 {
 	GENERATED_BODY()
@@ -250,6 +283,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimCombatThreadSafeData Combat;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimLocomotionContextThreadSafeData LocomotionContext;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
@@ -484,6 +520,30 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	EProject_JGroundMotionMode ChooserGroundMotionMode = EProject_JGroundMotionMode::Idle;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	EProject_JLocomotionGaitIntent ChooserGaitIntent = EProject_JLocomotionGaitIntent::Run;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	EProject_JLocomotionRotationMode ChooserRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	EProject_JLocomotionPhaseFamily ChooserPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	float ChooserDesiredFacingDeltaYaw = 0.0f;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsStartingDerived = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserIsPivoting = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserShouldTurnInPlace = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
+	bool bChooserShouldSpinTransition = false;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	FProject_JAnimOptimizationPolicy CurrentOptimizationPolicy;

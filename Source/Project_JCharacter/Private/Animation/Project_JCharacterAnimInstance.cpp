@@ -161,6 +161,63 @@ const TCHAR* ToDebugString(EProject_JWeaponAnimStance WeaponStance)
 		return TEXT("Unknown");
 	}
 }
+
+const TCHAR* ToDebugString(EProject_JLocomotionGaitIntent GaitIntent)
+{
+	switch (GaitIntent)
+	{
+	case EProject_JLocomotionGaitIntent::Walk:
+		return TEXT("Walk");
+	case EProject_JLocomotionGaitIntent::Run:
+		return TEXT("Run");
+	case EProject_JLocomotionGaitIntent::Sprint:
+		return TEXT("Sprint");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(EProject_JLocomotionRotationMode RotationMode)
+{
+	switch (RotationMode)
+	{
+	case EProject_JLocomotionRotationMode::OrientToMovement:
+		return TEXT("Orient");
+	case EProject_JLocomotionRotationMode::Strafe:
+		return TEXT("Strafe");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+const TCHAR* ToDebugString(EProject_JLocomotionPhaseFamily PhaseFamily)
+{
+	switch (PhaseFamily)
+	{
+	case EProject_JLocomotionPhaseFamily::Idle:
+		return TEXT("Idle");
+	case EProject_JLocomotionPhaseFamily::Start:
+		return TEXT("Start");
+	case EProject_JLocomotionPhaseFamily::Cycle:
+		return TEXT("Cycle");
+	case EProject_JLocomotionPhaseFamily::Stop:
+		return TEXT("Stop");
+	case EProject_JLocomotionPhaseFamily::Pivot:
+		return TEXT("Pivot");
+	case EProject_JLocomotionPhaseFamily::Turn:
+		return TEXT("Turn");
+	case EProject_JLocomotionPhaseFamily::TurnInPlace:
+		return TEXT("TurnInPlace");
+	case EProject_JLocomotionPhaseFamily::JumpStart:
+		return TEXT("JumpStart");
+	case EProject_JLocomotionPhaseFamily::Fall:
+		return TEXT("Fall");
+	case EProject_JLocomotionPhaseFamily::Landing:
+		return TEXT("Landing");
+	default:
+		return TEXT("Unknown");
+	}
+}
 }
 
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
@@ -305,6 +362,7 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 		TEXT("Weapon Profile=%s Stance=%s\n")
 		TEXT("Movement GroundSpeed=%.1f VerticalSpeed=%.1f AccelRatio=%.2f HasTrajectory=%s StoppedAccel=%s\n")
 		TEXT("Input Has=%s Size=%.2f Held=%.2f Turn=%.1f SharpTurn=%s MoveDir=%.1f\n")
+		TEXT("Context Gait=%s Rotation=%s Phase=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f\n")
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
 		TEXT("Ground Mode=%d Start=%s Stop=%s WantsSprint=%s UseSprint=%s StartSprint=%s StopSprint=%s\n")
 		TEXT("Air InAir=%s Jumping=%s FallOff=%s Landing=%s HeavyLand=%s LandMoving=%s LandSprint=%s\n")
@@ -328,6 +386,14 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 		Data.Input.MoveInputTurnAngle,
 		Data.Input.bSharpTurnRequested ? TEXT("true") : TEXT("false"),
 		Data.Input.MovementDirection,
+		ToDebugString(Data.LocomotionContext.GaitIntent),
+		ToDebugString(Data.LocomotionContext.RotationMode),
+		ToDebugString(Data.LocomotionContext.PhaseFamily),
+		Data.LocomotionContext.bIsStarting ? TEXT("true") : TEXT("false"),
+		Data.LocomotionContext.bIsPivoting ? TEXT("true") : TEXT("false"),
+		Data.LocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
+		Data.LocomotionContext.bShouldSpinTransition ? TEXT("true") : TEXT("false"),
+		Data.LocomotionContext.DesiredFacingDeltaYaw,
 		bSprintAllowed ? TEXT("true") : TEXT("false"),
 		bJumpAllowed ? TEXT("true") : TEXT("false"),
 		Data.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
@@ -439,6 +505,15 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.Landing.bLandWasMoving = AnimState->bLandWasMoving;
 	Data.Landing.LastFallSpeed = AnimState->LastFallSpeed;
 	Data.Landing.LandStartFallSpeed = AnimState->LandStartFallSpeed;
+	Data.LocomotionContext.GaitIntent = AnimState->AuthoritativeContext.GaitIntent;
+	Data.LocomotionContext.RotationMode = AnimState->AuthoritativeContext.RotationMode;
+	Data.LocomotionContext.PhaseFamily = AnimState->DerivedLocomotionContext.PhaseFamily;
+	Data.LocomotionContext.DesiredFacingDeltaYaw = AnimState->KinematicContext.DesiredFacingDeltaYaw;
+	Data.LocomotionContext.bIsMoving = AnimState->DerivedLocomotionContext.bIsMoving;
+	Data.LocomotionContext.bIsStarting = AnimState->DerivedLocomotionContext.bIsStarting;
+	Data.LocomotionContext.bIsPivoting = AnimState->DerivedLocomotionContext.bIsPivoting;
+	Data.LocomotionContext.bShouldTurnInPlace = AnimState->DerivedLocomotionContext.bShouldTurnInPlace;
+	Data.LocomotionContext.bShouldSpinTransition = AnimState->DerivedLocomotionContext.bShouldSpinTransition;
 }
 
 void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const
@@ -449,6 +524,13 @@ void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAni
 	Data.Ground.GroundMotionMode = Data.Movement.GroundSpeed > MoveInputSpeedThreshold
 		? EProject_JGroundMotionMode::Locomotion
 		: EProject_JGroundMotionMode::Idle;
+	Data.LocomotionContext.GaitIntent = Data.Ground.bUseSprintLocomotion
+		? EProject_JLocomotionGaitIntent::Sprint
+		: EProject_JLocomotionGaitIntent::Run;
+	Data.LocomotionContext.PhaseFamily = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion
+		? EProject_JLocomotionPhaseFamily::Cycle
+		: EProject_JLocomotionPhaseFamily::Idle;
+	Data.LocomotionContext.bIsMoving = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion;
 }
 
 bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const
@@ -538,7 +620,12 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	UPoseSearchDatabase* LocomotionDatabase = AssetSet && AssetSet->DefaultPoseSearchDatabase
 		? AssetSet->DefaultPoseSearchDatabase.Get()
 		: DefaultPoseSearchDatabase.Get();
-	UPoseSearchDatabase* SelectedDatabase = nullptr;
+	UPoseSearchDatabase* SelectedDatabase = AssetSet
+		? AssetSet->FindDatabaseForContext(
+			Data.LocomotionContext.GaitIntent,
+			Data.LocomotionContext.RotationMode,
+			Data.LocomotionContext.PhaseFamily)
+		: nullptr;
 	if (!SelectedDatabase)
 	{
 		SelectedDatabase = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
@@ -623,32 +710,45 @@ void UProject_JCharacterAnimInstance::PublishChooserMovementProperties(const FPr
 
 void UProject_JCharacterAnimInstance::PublishChooserGroundProperties(const FProject_JAnimThreadSafeData& Data)
 {
-	bChooserStartRequested = Data.Ground.bStartRequested;
-	bChooserStopRequested = Data.Ground.bStopRequested;
+	const bool bDerivedStart = Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Start;
+	const bool bDerivedStop = Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Stop;
+	const bool bDerivedCycle = Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle;
+	const bool bDerivedIdle = Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle;
+
+	bChooserStartRequested = Data.Ground.bStartRequested || bDerivedStart;
+	bChooserStopRequested = Data.Ground.bStopRequested || bDerivedStop;
 	bChooserWantsSprint = Data.Ground.bWantsSprint;
 	bChooserUseSprintLocomotion =
-		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion || bDerivedCycle) &&
 		Data.Ground.bUseSprintLocomotion;
-	bChooserUseRunStart = Data.Ground.bStartRequested && !Data.Ground.bStartWasSprinting && !bChooserIsRemoteProxy;
-	bChooserUseRemoteRunStart = Data.Ground.bStartRequested && !Data.Ground.bStartWasSprinting && bChooserIsRemoteProxy;
-	bChooserUseSprintStart = Data.Ground.bStartRequested && Data.Ground.bStartWasSprinting;
-	bChooserUseRunStop = Data.Ground.bStopRequested && !Data.Ground.bStopWasSprinting;
-	bChooserUseSprintStop = Data.Ground.bStopRequested && Data.Ground.bStopWasSprinting;
+	bChooserUseRunStart = bChooserStartRequested && !Data.Ground.bStartWasSprinting && !bChooserIsRemoteProxy;
+	bChooserUseRemoteRunStart = bChooserStartRequested && !Data.Ground.bStartWasSprinting && bChooserIsRemoteProxy;
+	bChooserUseSprintStart = bChooserStartRequested && Data.Ground.bStartWasSprinting;
+	bChooserUseRunStop = bChooserStopRequested && !Data.Ground.bStopWasSprinting;
+	bChooserUseSprintStop = bChooserStopRequested && Data.Ground.bStopWasSprinting;
 	bChooserUseRunLocomotion =
-		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion || bDerivedCycle) &&
 		!Data.Ground.bUseSprintLocomotion &&
 		!bChooserIsRemoteProxy;
 	bChooserUseRemoteRunLocomotion =
-		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion || bDerivedCycle) &&
 		!Data.Ground.bUseSprintLocomotion &&
 		bChooserIsRemoteProxy;
 	bChooserUseSprintLocomotionRow =
-		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion || bDerivedCycle) &&
 		Data.Ground.bUseSprintLocomotion;
 	bChooserStartWasSprinting = Data.Ground.bStartWasSprinting;
 	bChooserStopWasSprinting = Data.Ground.bStopWasSprinting;
-	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
+	bChooserIsIdle = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle || bDerivedIdle;
 	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
+	ChooserGaitIntent = Data.LocomotionContext.GaitIntent;
+	ChooserRotationMode = Data.LocomotionContext.RotationMode;
+	ChooserPhaseFamily = Data.LocomotionContext.PhaseFamily;
+	ChooserDesiredFacingDeltaYaw = Data.LocomotionContext.DesiredFacingDeltaYaw;
+	bChooserIsStartingDerived = Data.LocomotionContext.bIsStarting;
+	bChooserIsPivoting = Data.LocomotionContext.bIsPivoting;
+	bChooserShouldTurnInPlace = Data.LocomotionContext.bShouldTurnInPlace;
+	bChooserShouldSpinTransition = Data.LocomotionContext.bShouldSpinTransition;
 }
 
 void UProject_JCharacterAnimInstance::PublishChooserAirProperties(const FProject_JAnimThreadSafeData& Data)

@@ -11,7 +11,7 @@ class AProject_JPlayerCharacter;
 struct FHitResult;
 
 USTRUCT(BlueprintType)
-struct FProject_JLocomotionRuntimeSnapshot
+struct PROJECT_JCHARACTER_API FProject_JLocomotionRuntimeSnapshot
 {
 	GENERATED_BODY()
 
@@ -32,6 +32,90 @@ struct FProject_JLocomotionRuntimeSnapshot
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bHasSprintMovementIntent = false;
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JLocomotionAuthoritativeContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	EProject_JLocomotionGaitIntent GaitIntent = EProject_JLocomotionGaitIntent::Run;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bSprintAllowed = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bJumpAllowed = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bCombatMode = false;
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JLocomotionKinematicContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector Velocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector HorizontalVelocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector Acceleration = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector MoveWorldDirection = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float GroundSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float VerticalSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float AccelerationRatio = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float DesiredFacingDeltaYaw = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float MoveInputTurnAngle = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bHasMoveInput = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsAccelerating = false;
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsMoving = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsStarting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsPivoting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bShouldTurnInPlace = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bShouldSpinTransition = false;
 };
 
 /**
@@ -81,6 +165,18 @@ private:
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
 	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
 	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
+	void UpdateLocomotionContexts(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
+	FProject_JLocomotionAuthoritativeContext BuildAuthoritativeContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
+	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
+	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
+	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
+	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
+	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool IsStartingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool ShouldTurnInPlaceForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool ShouldSpinTransitionForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldUseLocalInputState() const;
 	bool IsSprintRequestedForAnimation() const;
 	FProject_JLocomotionRuntimeSnapshot BuildMovementSnapshot(const AProject_JPlayerCharacter& PlayerOwner) const;
@@ -266,6 +362,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartTurnExitAngle = 15.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedStartInputHoldWindow = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedStartMaxGroundSpeed = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedPivotAngleThreshold = 110.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedTurnAngleThreshold = 45.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedTurnInPlaceAngleThreshold = 65.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedSpinTransitionAngleThreshold = 135.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLandingTurnCancelAngle = 35.0f;
 
@@ -325,6 +439,15 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Optimization|State")
 	bool bDedicatedServerContext = false;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
+	FProject_JLocomotionAuthoritativeContext AuthoritativeContext;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
+	FProject_JLocomotionKinematicContext KinematicContext;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
+	FProject_JDerivedLocomotionContext DerivedLocomotionContext;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bIsLanding = false;

@@ -36,6 +36,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	ApplyMovementSnapshot(DeltaTime, MovementSnapshot);
 
 	UpdateAirAndMovementRequests(DeltaTime, IsInAirForAnimation());
+	UpdateLocomotionContexts(DeltaTime, MovementSnapshot);
 	UpdateCombatMovementState(MovementSnapshot.HorizontalVelocity);
 }
 
@@ -88,6 +89,196 @@ void UProject_JLocomotionAnimStateComponent::UpdateAirAndMovementRequests(float 
 
 	UpdateRemoteAirState(DeltaTime, IsRemoteInAirForAnimation(bMovementReportsInAir));
 	UpdateRemoteMovementRequestState(DeltaTime);
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float, const FProject_JLocomotionRuntimeSnapshot& Snapshot)
+{
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner)
+	{
+		AuthoritativeContext = FProject_JLocomotionAuthoritativeContext();
+		KinematicContext = FProject_JLocomotionKinematicContext();
+		DerivedLocomotionContext = FProject_JDerivedLocomotionContext();
+		return;
+	}
+
+	AuthoritativeContext = BuildAuthoritativeContext(*PlayerOwner, Snapshot);
+	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot);
+	DerivedLocomotionContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
+}
+
+FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent::BuildAuthoritativeContext(
+	const AProject_JPlayerCharacter& PlayerOwner,
+	const FProject_JLocomotionRuntimeSnapshot& Snapshot) const
+{
+	FProject_JLocomotionAuthoritativeContext Context;
+	Context.bSprintAllowed = PlayerOwner.IsSprintLocomotionAllowed();
+	Context.bJumpAllowed = PlayerOwner.IsJumpLocomotionAllowed();
+	Context.bCombatMode = PlayerOwner.IsCombatModeActive();
+	Context.GaitIntent = ResolveGaitIntent(PlayerOwner, Snapshot);
+	Context.RotationMode = ResolveRotationMode(PlayerOwner);
+	return Context;
+}
+
+FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::BuildKinematicContext(
+	const AProject_JPlayerCharacter& PlayerOwner,
+	const FProject_JLocomotionRuntimeSnapshot& Snapshot) const
+{
+	FProject_JLocomotionKinematicContext Context;
+	Context.Velocity = Snapshot.Velocity;
+	Context.HorizontalVelocity = Snapshot.HorizontalVelocity;
+	Context.GroundSpeed = Snapshot.GroundSpeed;
+	Context.VerticalSpeed = Snapshot.VerticalSpeed;
+	Context.MoveInputTurnAngle = MoveInputTurnAngle;
+	Context.bHasMoveInput = bHasMoveInput;
+	Context.MoveWorldDirection = CalculateMoveWorldDirection(GetMovementInputForState());
+
+	if (const UCharacterMovementComponent* MovementComponent = PlayerOwner.GetCharacterMovement())
+	{
+		Context.Acceleration = MovementComponent->GetCurrentAcceleration();
+		Context.bIsAccelerating = Context.Acceleration.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
+		const float MaxAcceleration = FMath::Max(MovementComponent->GetMaxAcceleration(), UE_KINDA_SMALL_NUMBER);
+		Context.AccelerationRatio = FMath::Clamp(Context.Acceleration.Size2D() / MaxAcceleration, 0.0f, 1.0f);
+	}
+
+	if (!Context.MoveWorldDirection.IsNearlyZero())
+	{
+		const float DesiredYaw = Context.MoveWorldDirection.Rotation().Yaw;
+		Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(PlayerOwner.GetActorRotation().Yaw, DesiredYaw);
+	}
+	else
+	{
+		Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
+			PlayerOwner.GetActorRotation().Yaw,
+			PlayerOwner.GetControlRotation().Yaw);
+	}
+
+	return Context;
+}
+
+FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::BuildDerivedLocomotionContext(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	FProject_JDerivedLocomotionContext Context;
+	Context.bIsMoving = IsMovingForContext(InKinematicContext);
+	Context.bIsStarting = IsStartingForContext(InKinematicContext);
+	Context.bIsPivoting = IsPivotingForContext(AuthContext, InKinematicContext);
+	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
+	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
+	Context.PhaseFamily = ResolvePhaseFamily(Context);
+	return Context;
+}
+
+EProject_JLocomotionGaitIntent UProject_JLocomotionAnimStateComponent::ResolveGaitIntent(
+	const AProject_JPlayerCharacter&,
+	const FProject_JLocomotionRuntimeSnapshot& Snapshot) const
+{
+	if (bWantsSprint || Snapshot.GroundSpeed >= SprintLocomotionSpeedThreshold)
+	{
+		return EProject_JLocomotionGaitIntent::Sprint;
+	}
+
+	return Snapshot.GroundSpeed > IdleSpeedThreshold || bHasMoveInput
+		? EProject_JLocomotionGaitIntent::Run
+		: EProject_JLocomotionGaitIntent::Walk;
+}
+
+EProject_JLocomotionRotationMode UProject_JLocomotionAnimStateComponent::ResolveRotationMode(
+	const AProject_JPlayerCharacter& PlayerOwner) const
+{
+	return PlayerOwner.IsCombatModeActive()
+		? EProject_JLocomotionRotationMode::Strafe
+		: EProject_JLocomotionRotationMode::OrientToMovement;
+}
+
+EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolvePhaseFamily(
+	const FProject_JDerivedLocomotionContext& Context) const
+{
+	if (IsLandingStateActive())
+	{
+		return EProject_JLocomotionPhaseFamily::Landing;
+	}
+	if (bIsJumping)
+	{
+		return EProject_JLocomotionPhaseFamily::JumpStart;
+	}
+	if (bIsFallOffStart || bIsInAir)
+	{
+		return EProject_JLocomotionPhaseFamily::Fall;
+	}
+	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
+	{
+		return EProject_JLocomotionPhaseFamily::Stop;
+	}
+	if (Context.bShouldTurnInPlace)
+	{
+		return EProject_JLocomotionPhaseFamily::TurnInPlace;
+	}
+	if (Context.bIsPivoting)
+	{
+		return EProject_JLocomotionPhaseFamily::Pivot;
+	}
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start || Context.bIsStarting)
+	{
+		return EProject_JLocomotionPhaseFamily::Start;
+	}
+	if (FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold)
+	{
+		return EProject_JLocomotionPhaseFamily::Turn;
+	}
+
+	return Context.bIsMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+}
+
+bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	return InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed > IdleSpeedThreshold;
+}
+
+bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	return
+		InKinematicContext.bHasMoveInput &&
+		MoveInputHeldTime <= DerivedStartInputHoldWindow &&
+		InKinematicContext.GroundSpeed <= DerivedStartMaxGroundSpeed &&
+		!bIsInAir &&
+		!IsLandingStateActive();
+}
+
+bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed <= StopIntentSpeedThreshold)
+	{
+		return false;
+	}
+
+	const float PivotThreshold = AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+		? DerivedPivotAngleThreshold * 0.75f
+		: DerivedPivotAngleThreshold;
+	return FMath::Abs(InKinematicContext.MoveInputTurnAngle) >= PivotThreshold;
+}
+
+bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	return
+		AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		!InKinematicContext.bHasMoveInput &&
+		InKinematicContext.GroundSpeed <= IdleSpeedThreshold &&
+		FMath::Abs(InKinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold &&
+		!bIsInAir &&
+		!IsLandingStateActive();
+}
+
+bool UProject_JLocomotionAnimStateComponent::ShouldSpinTransitionForContext(
+	const FProject_JLocomotionAuthoritativeContext&,
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	return FMath::Abs(InKinematicContext.DesiredFacingDeltaYaw) >= DerivedSpinTransitionAngleThreshold;
 }
 
 FVector UProject_JLocomotionAnimStateComponent::CalculateMoveWorldDirection(const FVector2D& MoveInput) const
