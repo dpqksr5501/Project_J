@@ -21,6 +21,7 @@
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
+#include "Project_JLocomotionDebugUtils.h"
 #include "StructUtils/InstancedStruct.h"
 
 // SyncLegacyFieldsFromStructuredData() removed.
@@ -148,89 +149,6 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 	AppliedDatabase = CurrentActiveDatabase;
 }
 
-namespace
-{
-const TCHAR* ToDebugString(EProject_JWeaponAnimStance WeaponStance)
-{
-	switch (WeaponStance)
-	{
-	case EProject_JWeaponAnimStance::None:
-		return TEXT("None");
-	case EProject_JWeaponAnimStance::OneHanded:
-		return TEXT("OneHanded");
-	case EProject_JWeaponAnimStance::TwoHanded:
-		return TEXT("TwoHanded");
-	case EProject_JWeaponAnimStance::DualWield:
-		return TEXT("DualWield");
-	case EProject_JWeaponAnimStance::Staff:
-		return TEXT("Staff");
-	case EProject_JWeaponAnimStance::Bow:
-		return TEXT("Bow");
-	case EProject_JWeaponAnimStance::Unarmed:
-		return TEXT("Unarmed");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionGaitIntent GaitIntent)
-{
-	switch (GaitIntent)
-	{
-	case EProject_JLocomotionGaitIntent::Walk:
-		return TEXT("Walk");
-	case EProject_JLocomotionGaitIntent::Run:
-		return TEXT("Run");
-	case EProject_JLocomotionGaitIntent::Sprint:
-		return TEXT("Sprint");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionRotationMode RotationMode)
-{
-	switch (RotationMode)
-	{
-	case EProject_JLocomotionRotationMode::OrientToMovement:
-		return TEXT("Orient");
-	case EProject_JLocomotionRotationMode::Strafe:
-		return TEXT("Strafe");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionPhaseFamily PhaseFamily)
-{
-	switch (PhaseFamily)
-	{
-	case EProject_JLocomotionPhaseFamily::Idle:
-		return TEXT("Idle");
-	case EProject_JLocomotionPhaseFamily::Start:
-		return TEXT("Start");
-	case EProject_JLocomotionPhaseFamily::Cycle:
-		return TEXT("Cycle");
-	case EProject_JLocomotionPhaseFamily::Stop:
-		return TEXT("Stop");
-	case EProject_JLocomotionPhaseFamily::Pivot:
-		return TEXT("Pivot");
-	case EProject_JLocomotionPhaseFamily::Turn:
-		return TEXT("Turn");
-	case EProject_JLocomotionPhaseFamily::TurnInPlace:
-		return TEXT("TurnInPlace");
-	case EProject_JLocomotionPhaseFamily::JumpStart:
-		return TEXT("JumpStart");
-	case EProject_JLocomotionPhaseFamily::Fall:
-		return TEXT("Fall");
-	case EProject_JLocomotionPhaseFamily::Landing:
-		return TEXT("Landing");
-	default:
-		return TEXT("Unknown");
-	}
-}
-}
-
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
 	bUseMultiThreadedAnimationUpdate = true;
@@ -330,6 +248,8 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::GetCurrentActivePoseSearch
 
 FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 {
+	using Project_J::LocomotionDebug::ToDebugString;
+
 	const FProject_JAnimThreadSafeData& Data = ThreadSafeData;
 	const bool bSprintAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsSprintLocomotionAllowed();
 	const bool bJumpAllowed = OwningPlayerCharacter && OwningPlayerCharacter->IsJumpLocomotionAllowed();
@@ -562,7 +482,10 @@ void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThrea
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
 {
 	const bool bMotionMatchingEnabled = OwningCharacter && !IsDedicatedServerAnimationContext();
-	const bool bUpdateMotionMatchingThisFrame = bMotionMatchingEnabled && ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime);
+	const bool bForceMotionMatchingRefresh = bMotionMatchingEnabled && ShouldForceMotionMatchingContextRefresh(Data);
+	const bool bUpdateMotionMatchingThisFrame =
+		bMotionMatchingEnabled &&
+		(bForceMotionMatchingRefresh || ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime));
 
 	if (bUpdateMotionMatchingThisFrame)
 	{
@@ -571,10 +494,12 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 		// proportionally to how aggressively the Motion Matching update interval is throttled.
 		PublishChooserProperties(Data);
 		CurrentActivePoseSearchDatabase = EvaluatePoseSearchDatabaseOnGameThread(Data);
+		CacheEvaluatedMotionMatchingContext(Data);
 	}
 	if (!bMotionMatchingEnabled)
 	{
 		CurrentActivePoseSearchDatabase = nullptr;
+		bHasEvaluatedMotionMatchingContext = false;
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
@@ -863,6 +788,34 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 
 	MotionMatchingUpdateAccumulator = 0.0f;
 	return true;
+}
+
+bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const
+{
+	if (!bHasEvaluatedMotionMatchingContext)
+	{
+		return true;
+	}
+
+	return
+		LastEvaluatedGroundMotionMode != Data.Ground.GroundMotionMode ||
+		LastEvaluatedGaitIntent != Data.LocomotionContext.GaitIntent ||
+		LastEvaluatedRotationMode != Data.LocomotionContext.RotationMode ||
+		LastEvaluatedPhaseFamily != Data.LocomotionContext.PhaseFamily ||
+		bLastEvaluatedStartRequested != Data.Ground.bStartRequested ||
+		bLastEvaluatedStartWasSprinting != Data.Ground.bStartWasSprinting;
+}
+
+void UProject_JCharacterAnimInstance::CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data)
+{
+	LastEvaluatedGroundMotionMode = Data.Ground.GroundMotionMode;
+	LastEvaluatedGaitIntent = Data.LocomotionContext.GaitIntent;
+	LastEvaluatedRotationMode = Data.LocomotionContext.RotationMode;
+	LastEvaluatedPhaseFamily = Data.LocomotionContext.PhaseFamily;
+	bLastEvaluatedStartRequested = Data.Ground.bStartRequested;
+	bLastEvaluatedStartWasSprinting = Data.Ground.bStartWasSprinting;
+	bHasEvaluatedMotionMatchingContext = true;
+	MotionMatchingUpdateAccumulator = 0.0f;
 }
 
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const

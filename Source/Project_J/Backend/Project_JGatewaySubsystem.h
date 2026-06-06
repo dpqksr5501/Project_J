@@ -26,8 +26,14 @@ public:
 	void EnqueueRemoteLog(const FString& Message, const FString& Severity);
 
 private:
-	// Implementation details for HTTP pooling or Socket persistence would go here.
+	UPROPERTY(EditDefaultsOnly, Category = "Backend")
 	FString GatewayUrl = TEXT("http://127.0.0.1:8080/api/v1/");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Backend|Telemetry", meta = (ClampMin = "1", UIMin = "1"))
+	int32 MaxQueuedRemoteLogs = 100;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Backend|Telemetry", meta = (ClampMin = "0.1", UIMin = "0.1", Units = "s"))
+	float RemoteLogFlushInterval = 5.0f;
 
 	// Log Batching
 	struct FLogPayload
@@ -41,6 +47,7 @@ private:
 	bool bLogFlushInFlight = false;
 
 	void FlushRemoteLogs();
+	void TrimRemoteLogQueue();
 	UFUNCTION()
 	void HandleRemoteLogFlushResponse(bool bSucceeded, const FString& Response);
 };

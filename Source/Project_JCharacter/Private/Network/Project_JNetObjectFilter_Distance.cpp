@@ -1,5 +1,44 @@
 #include "Network/Project_JNetObjectFilter_Distance.h"
 
-// Implementation of UNetObjectFilter overrides will go here.
-// In a real MMORPG scenario, you would evaluate the distance between the connection's view position
-// and the target object, and strip out replication updates for objects beyond MaxReplicationDistanceSquared.
+#include "GameFramework/Actor.h"
+
+bool UProject_JNetObjectFilter_Distance::ShouldReplicateActorForViewer(const AActor* TargetActor, const FVector& ViewerLocation) const
+{
+	return BuildReplicationDecision(TargetActor, ViewerLocation).bShouldReplicate;
+}
+
+float UProject_JNetObjectFilter_Distance::GetReplicationDistanceSquared(const AActor* TargetActor, const FVector& ViewerLocation) const
+{
+	if (!TargetActor)
+	{
+		return TNumericLimits<float>::Max();
+	}
+
+	return FVector::DistSquared(TargetActor->GetActorLocation(), ViewerLocation);
+}
+
+FProject_JReplicationPolicyDecision UProject_JNetObjectFilter_Distance::BuildReplicationDecision(const AActor* TargetActor, const FVector& ViewerLocation) const
+{
+	FProject_JReplicationPolicyDecision Decision;
+	if (!TargetActor)
+	{
+		return Decision;
+	}
+
+	Decision.DistanceSquared = GetReplicationDistanceSquared(TargetActor, ViewerLocation);
+
+	if (bAlwaysReplicateOwnerOrInstigator && (TargetActor->GetOwner() || TargetActor->GetInstigator()))
+	{
+		Decision.bShouldReplicate = true;
+		Decision.AddReason(EProject_JReplicationRelevanceReason::Owner);
+		return Decision;
+	}
+
+	if (Decision.DistanceSquared <= MaxReplicationDistanceSquared)
+	{
+		Decision.bShouldReplicate = true;
+		Decision.AddReason(EProject_JReplicationRelevanceReason::Distance);
+	}
+
+	return Decision;
+}

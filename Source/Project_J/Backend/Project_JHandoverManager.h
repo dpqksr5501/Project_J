@@ -4,6 +4,37 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Project_JHandoverManager.generated.h"
 
+class AActor;
+
+UENUM(BlueprintType)
+enum class EProject_JHandoverState : uint8
+{
+	None,
+	Preparing,
+	Ghosting,
+	SwitchingAuthority,
+	Completed,
+	Failed
+};
+
+USTRUCT(BlueprintType)
+struct FProject_JHandoverRecord
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Handover")
+	TWeakObjectPtr<AActor> Actor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Handover")
+	FString TargetServerNodeId;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Handover")
+	EProject_JHandoverState State = EProject_JHandoverState::None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Handover")
+	int32 PayloadBytes = 0;
+};
+
 /**
  * Subsystem to manage seamless server-to-server handovers.
  * Handles the state machine: Pre-Connect -> Ghost Replication -> Authority Switch.
@@ -25,7 +56,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Handover")
 	void InitiateHandover(AActor* ActorToHandover, const FString& TargetServerNodeId);
 
+	UFUNCTION(BlueprintPure, Category = "Handover")
+	bool IsHandoverInProgress(AActor* Actor) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Handover")
+	void CancelHandover(AActor* Actor);
+
 private:
-	// Maps an Actor to its current Handover State (e.g., ePreConnect, eGhosting, eSwitching)
-	// TMap<AActor*, EHandoverState> HandoverStates;
+	TMap<TObjectKey<AActor>, FProject_JHandoverRecord> HandoverStates;
 };

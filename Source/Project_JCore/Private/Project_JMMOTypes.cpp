@@ -23,3 +23,53 @@ FString FProject_JWorldInstanceId::ToDebugString() const
 		*InstanceId.ToString(),
 		*ChannelId.ToString());
 }
+
+void FProject_JReplicationPolicyDecision::AddReason(EProject_JReplicationRelevanceReason Reason)
+{
+	RelevanceReasonMask |= static_cast<int32>(Reason);
+}
+
+bool FProject_JReplicationPolicyDecision::HasReason(EProject_JReplicationRelevanceReason Reason) const
+{
+	return (RelevanceReasonMask & static_cast<int32>(Reason)) != 0;
+}
+
+FString FProject_JReplicationPolicyDecision::ToDebugString() const
+{
+	TArray<FString> Reasons;
+	if (HasReason(EProject_JReplicationRelevanceReason::Distance))
+	{
+		Reasons.Add(TEXT("Distance"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::Owner))
+	{
+		Reasons.Add(TEXT("Owner"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::Party))
+	{
+		Reasons.Add(TEXT("Party"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::Guild))
+	{
+		Reasons.Add(TEXT("Guild"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::Combat))
+	{
+		Reasons.Add(TEXT("Combat"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::PublicEvent))
+	{
+		Reasons.Add(TEXT("PublicEvent"));
+	}
+	if (HasReason(EProject_JReplicationRelevanceReason::AlwaysRelevant))
+	{
+		Reasons.Add(TEXT("AlwaysRelevant"));
+	}
+
+	return FString::Printf(
+		TEXT("Replicate=%s DistanceSq=%.0f Priority=%.2f Reasons=%s"),
+		bShouldReplicate ? TEXT("true") : TEXT("false"),
+		DistanceSquared,
+		PriorityMultiplier,
+		Reasons.Num() > 0 ? *FString::Join(Reasons, TEXT("|")) : TEXT("None"));
+}

@@ -4,123 +4,15 @@
 
 #include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Project_JLocomotionDebugUtils.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
 
-namespace
-{
-const TCHAR* ToDebugString(EProject_JGroundMotionMode MotionMode)
-{
-	switch (MotionMode)
-	{
-	case EProject_JGroundMotionMode::Idle:
-		return TEXT("Idle");
-	case EProject_JGroundMotionMode::Start:
-		return TEXT("Start");
-	case EProject_JGroundMotionMode::Locomotion:
-		return TEXT("Locomotion");
-	case EProject_JGroundMotionMode::Stop:
-		return TEXT("Stop");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionGaitIntent GaitIntent)
-{
-	switch (GaitIntent)
-	{
-	case EProject_JLocomotionGaitIntent::Walk:
-		return TEXT("Walk");
-	case EProject_JLocomotionGaitIntent::Run:
-		return TEXT("Run");
-	case EProject_JLocomotionGaitIntent::Sprint:
-		return TEXT("Sprint");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionRotationMode RotationMode)
-{
-	switch (RotationMode)
-	{
-	case EProject_JLocomotionRotationMode::OrientToMovement:
-		return TEXT("Orient");
-	case EProject_JLocomotionRotationMode::Strafe:
-		return TEXT("Strafe");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(EProject_JLocomotionPhaseFamily PhaseFamily)
-{
-	switch (PhaseFamily)
-	{
-	case EProject_JLocomotionPhaseFamily::Idle:
-		return TEXT("Idle");
-	case EProject_JLocomotionPhaseFamily::Start:
-		return TEXT("Start");
-	case EProject_JLocomotionPhaseFamily::Cycle:
-		return TEXT("Cycle");
-	case EProject_JLocomotionPhaseFamily::Stop:
-		return TEXT("Stop");
-	case EProject_JLocomotionPhaseFamily::Pivot:
-		return TEXT("Pivot");
-	case EProject_JLocomotionPhaseFamily::Turn:
-		return TEXT("Turn");
-	case EProject_JLocomotionPhaseFamily::TurnInPlace:
-		return TEXT("TurnInPlace");
-	case EProject_JLocomotionPhaseFamily::JumpStart:
-		return TEXT("JumpStart");
-	case EProject_JLocomotionPhaseFamily::Fall:
-		return TEXT("Fall");
-	case EProject_JLocomotionPhaseFamily::Landing:
-		return TEXT("Landing");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(ENetMode NetMode)
-{
-	switch (NetMode)
-	{
-	case NM_Standalone:
-		return TEXT("Standalone");
-	case NM_DedicatedServer:
-		return TEXT("DedicatedServer");
-	case NM_ListenServer:
-		return TEXT("ListenServer");
-	case NM_Client:
-		return TEXT("Client");
-	default:
-		return TEXT("Unknown");
-	}
-}
-
-const TCHAR* ToDebugString(ENetRole NetRole)
-{
-	switch (NetRole)
-	{
-	case ROLE_None:
-		return TEXT("None");
-	case ROLE_SimulatedProxy:
-		return TEXT("SimProxy");
-	case ROLE_AutonomousProxy:
-		return TEXT("AutoProxy");
-	case ROLE_Authority:
-		return TEXT("Authority");
-	default:
-		return TEXT("Unknown");
-	}
-}
-}
-
 FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 {
+	using Project_J::LocomotionDebug::ToDebugString;
+
 	const AActor* Owner = GetOwner();
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	const ENetMode NetMode = Owner ? Owner->GetNetMode() : NM_Standalone;

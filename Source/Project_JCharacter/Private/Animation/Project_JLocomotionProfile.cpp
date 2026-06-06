@@ -15,3 +15,16 @@ UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 	FootPlacementInterpolationSettingsStops.FloorLinearStiffness = 1200.0f;
 	FootPlacementInterpolationSettingsStops.FloorAngularStiffness = 650.0f;
 }
+
+FProject_JAnimationBudgetSettings UProject_JLocomotionProfile::GetResolvedAnimationBudgetSettings() const
+{
+	FProject_JAnimationBudgetSettings ResolvedSettings = AnimationBudget;
+	ResolvedSettings.NearDistance = NearMotionMatchingDistance;
+	ResolvedSettings.MidDistance = MidMotionMatchingDistance;
+	ResolvedSettings.FarDistance = FarMotionMatchingDistance;
+	ResolvedSettings.MidUpdateInterval = MidMotionMatchingUpdateInterval;
+	ResolvedSettings.FarUpdateInterval = FarMotionMatchingUpdateInterval;
+	ResolvedSettings.HiddenUpdateInterval = AnimInstanceHiddenRemoteUpdateInterval;
+	ResolvedSettings.bDisableMotionMatchingBeyondFarDistance = bDisableMotionMatchingBeyondFarDistance;
+	return ResolvedSettings;
+}

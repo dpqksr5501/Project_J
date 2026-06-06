@@ -49,6 +49,18 @@ protected:
 	UFUNCTION(Exec)
 	void DumpMMOState();
 
+	UFUNCTION(Exec)
+	void DumpAnimBudget();
+
+	UFUNCTION(Exec)
+	void DumpReplicationPolicy();
+
+	UFUNCTION(Exec)
+	void DumpCharacterComponents();
+
+	UFUNCTION(Exec)
+	void DumpCombatState();
+
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
 

@@ -29,17 +29,21 @@ void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProj
 	{
 	case EProject_JGroundMotionMode::Start:
 		EnterStartGroundMotionMode();
+		ScheduleStartAutoPromote();
 		break;
 	case EProject_JGroundMotionMode::Stop:
+		ClearStartAutoPromoteTimer();
 		EnterStopGroundMotionMode();
 		ClearRemoteStartTurnReference();
 		break;
 	case EProject_JGroundMotionMode::Idle:
 	case EProject_JGroundMotionMode::Locomotion:
+		ClearStartAutoPromoteTimer();
 		ClearGroundMotionSprintTransitionState();
 		ClearRemoteStartTurnReference();
 		break;
 	default:
+		ClearStartAutoPromoteTimer();
 		ClearRemoteStartTurnReference();
 		break;
 	}
@@ -60,6 +64,9 @@ void UProject_JLocomotionAnimStateComponent::ClearGroundMotionSprintTransitionSt
 {
 	bStartWasSprinting = false;
 	bStopWasSprinting = false;
+	bStartRequested = false;
+	bUseStartDatabase = false;
+	bGroundStartFinished = true;
 }
 
 void UProject_JLocomotionAnimStateComponent::CacheRemoteStartTurnReference()
@@ -147,6 +154,99 @@ void UProject_JLocomotionAnimStateComponent::UpdateSharpTurnRequest(bool bAllowS
 		FMath::Abs(MoveInputTurnAngle) >= SharpTurnAngleThreshold;
 }
 
+bool UProject_JLocomotionAnimStateComponent::ShouldInterruptStartForResponsiveTurn(
+	const FVector2D& MoveInput,
+	bool bAllowLocalControlYaw) const
+{
+	if (!bHasMoveInput || GroundMotionModeElapsedTime < StartResponsiveTurnExitMinTime)
+	{
+		return false;
+	}
+
+	const float ResponsiveExitAngle = FMath::Max(StartResponsiveTurnExitAngle, StartTurnExitAngle);
+	if (FMath::Abs(MoveInputTurnAngle) >= ResponsiveExitAngle)
+	{
+		return true;
+	}
+
+	if (bSharpTurnRequested)
+	{
+		return true;
+	}
+
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner)
+	{
+		return false;
+	}
+
+	return bAllowLocalControlYaw && HasLocalStartResponsiveTurn(ResponsiveExitAngle);
+}
+
+bool UProject_JLocomotionAnimStateComponent::HasLocalStartResponsiveTurn(float AngleThreshold) const
+{
+	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner || !bHasRemoteStartTurnReference)
+	{
+		return false;
+	}
+
+	const float CurrentActorYaw = PlayerOwner->GetActorRotation().Yaw;
+	const float CurrentControlYaw = PlayerOwner->GetControlRotation().Yaw;
+	const float ActorYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(RemoteStartPreviousActorYaw, CurrentActorYaw));
+	const float ControlYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(StartPreviousControlYaw, CurrentControlYaw));
+	return ActorYawDelta >= AngleThreshold || ControlYawDelta >= AngleThreshold;
+}
+
+void UProject_JLocomotionAnimStateComponent::ScheduleStartAutoPromote()
+{
+	UWorld* World = GetWorld();
+	if (!World || StartAutoPromoteDelay <= 0.0f)
+	{
+		return;
+	}
+
+	World->GetTimerManager().ClearTimer(StartAutoPromoteTimerHandle);
+	World->GetTimerManager().SetTimer(
+		StartAutoPromoteTimerHandle,
+		this,
+		&UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion,
+		StartAutoPromoteDelay,
+		false);
+}
+
+void UProject_JLocomotionAnimStateComponent::ClearStartAutoPromoteTimer()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(StartAutoPromoteTimerHandle);
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion()
+{
+	if (GroundMotionMode != EProject_JGroundMotionMode::Start)
+	{
+		return;
+	}
+
+	const bool bHasMovementIntent =
+		bHasMoveInput ||
+		GetMovementInputForState().SizeSquared() > FMath::Square(MoveInputDeadZone) ||
+		GroundSpeed > IdleSpeedThreshold;
+
+	if (bHasMovementIntent)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		return;
+	}
+
+	EnterGroundMotionMode(
+		GroundSpeed > StopExitSpeedThreshold
+			? EProject_JGroundMotionMode::Stop
+			: EProject_JGroundMotionMode::Idle);
+}
+
 bool UProject_JLocomotionAnimStateComponent::UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput)
 {
 	FVector CurrentHorizontalVelocity = PlayerOwner.GetVelocity();
@@ -185,6 +285,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		bStartWasSprinting = true;
 	}
 
+	const bool bResponsiveTurnExitRequested = ShouldInterruptStartForResponsiveTurn(MoveInput, bAllowSharpTurn);
 	bool bStartTurnExitRequested = false;
 	if (bAllowSharpTurn)
 	{
@@ -203,13 +304,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	}
 
 	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartMinDuration;
+	const bool bCanExitReleasedStart = GroundMotionModeElapsedTime >= StartInputReleaseExitMinTime;
 
 	if (!bHasMoveInput)
 	{
-		if (bCanExitStart)
+		if (bCanExitReleasedStart || bCanExitStart)
 		{
 			EnterGroundMotionMode(
-				GroundSpeed > StopIntentSpeedThreshold
+				GroundSpeed > StopExitSpeedThreshold
 					? EProject_JGroundMotionMode::Stop
 					: EProject_JGroundMotionMode::Idle);
 		}
@@ -217,6 +319,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		{
 			RefreshGroundMotionFlags();
 		}
+	}
+	else if (bResponsiveTurnExitRequested)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else if (bCanExitStart && (bStartTurnExitRequested || GroundSpeed > DerivedStartMaxGroundSpeed))
 	{
@@ -276,7 +382,15 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 
 	UpdateSharpTurnRequest(bAllowSharpTurn);
 
-	if (bStartEdge)
+	if (bStopEdge && (!bStartEdge || !bHasMoveInput))
+	{
+		StopElapsedTime = 0.0f;
+		EnterGroundMotionMode(
+			GroundSpeed > StopExitSpeedThreshold
+				? EProject_JGroundMotionMode::Stop
+				: EProject_JGroundMotionMode::Idle);
+	}
+	else if (bStartEdge)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
 	}

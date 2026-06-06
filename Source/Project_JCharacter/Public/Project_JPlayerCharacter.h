@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/Project_JPlayerInputBindingComponent.h"
+#include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
 #include "Logging/LogMacros.h"
 #include "Project_JPlayerCharacter.generated.h"
@@ -11,7 +13,6 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 class UAnimMontage;
-struct FInputActionValue;
 class UProject_JCombatComponent;
 class UProject_JCharacterAnimProfile;
 class UProject_JLocomotionAnimStateComponent;
@@ -21,33 +22,11 @@ class UProject_JLocomotionProfile;
 class UProject_JWeaponAnimProfile;
 class UProject_JCombatAnimProfile;
 class UProject_JCharacterViewModel;
+class UProject_JCharacterUIBindingComponent;
+class UProject_JReplicatedAnimEventComponent;
 struct FGameplayTag;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-
-USTRUCT()
-struct FProject_JReplicatedAnimEventState
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	uint8 MoveStartCounter = 0;
-
-	UPROPERTY()
-	bool bMoveStartWasSprinting = false;
-
-	UPROPERTY()
-	uint8 MoveStopCounter = 0;
-
-	UPROPERTY()
-	uint8 JumpStartCounter = 0;
-
-	UPROPERTY()
-	uint8 FallOffStartCounter = 0;
-
-	UPROPERTY()
-	uint8 LandingCancelCounter = 0;
-};
 
 /**
  *  A player-controllable third person character
@@ -57,6 +36,8 @@ UCLASS(abstract)
 class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCharacter
 {
 	GENERATED_BODY()
+
+	friend class UProject_JPlayerInputBindingComponent;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -80,13 +61,13 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	
 	/** ViewModel for UI bindings */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta = (AllowPrivateAccess = "true"))
-	UProject_JCharacterViewModel* CharacterViewModel;
+	UProject_JCharacterUIBindingComponent* CharacterUIBindingComponent;
 
-	/** Helper to update ViewModel from Attribute Set */
-	void OnHealthChanged(const struct FOnAttributeChangeData& Data);
-	void OnMaxHealthChanged(const struct FOnAttributeChangeData& Data);
-	void OnManaChanged(const struct FOnAttributeChangeData& Data);
-	void OnMaxManaChanged(const struct FOnAttributeChangeData& Data);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
+	UProject_JPlayerInputBindingComponent* PlayerInputBindingComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
+	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
 	
 protected:
 
@@ -136,13 +117,7 @@ protected:
 
 protected:
 
-	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
-
 	void StopMoveInput();
-
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
 
 	// 기본 착지 이벤트 오버라이드(모션매칭)
 	virtual void Landed(const FHitResult& Hit) override;
@@ -288,6 +263,9 @@ public:
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
+	UFUNCTION(BlueprintPure, Category = "UI")
+	UProject_JCharacterViewModel* GetCharacterViewModel() const;
+
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
 	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
@@ -316,6 +294,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Jump")
 	bool IsJumpLocomotionAllowed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Movement|Ground")
+	bool IsGroundStartAllowed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Movement|Ground")
+	bool IsGroundStopAllowed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
+	bool IsCombatLocomotionOverlayAllowed() const;
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	float GetEffectiveCombatAimAlpha() const;

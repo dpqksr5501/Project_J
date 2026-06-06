@@ -15,6 +15,7 @@ UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	ClearStartAutoPromoteTimer();
 	ClearOwnedMovementGameplayTags();
 	Super::EndPlay(EndPlayReason);
 }
@@ -253,7 +254,11 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	{
 		return EProject_JLocomotionPhaseFamily::Pivot;
 	}
-	if (GroundMotionMode == EProject_JGroundMotionMode::Start || Context.bIsStarting)
+	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+	{
+		return EProject_JLocomotionPhaseFamily::Start;
+	}
+	if (GroundMotionMode != EProject_JGroundMotionMode::Locomotion && Context.bIsStarting)
 	{
 		return EProject_JLocomotionPhaseFamily::Start;
 	}

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/TrajectoryTypes.h"
+#include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Project_JLocomotionAnimTypes.h"
@@ -20,37 +21,6 @@ class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
 struct FAnimNode_Base;
 struct FAnimationUpdateContext;
-
-UENUM(BlueprintType)
-enum class EProject_JAnimBudgetTier : uint8
-{
-	Local,
-	Near,
-	Mid,
-	Far,
-	Hidden
-};
-
-USTRUCT(BlueprintType)
-struct PROJECT_JCHARACTER_API FProject_JAnimOptimizationPolicy
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	EProject_JAnimBudgetTier Tier = EProject_JAnimBudgetTier::Local;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUpdateAnimationData = true;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUseFullChooserRows = true;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	bool bUseFarChooserRowsOnly = false;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
-	float MotionMatchingUpdateInterval = 0.0f;
-};
 
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
@@ -347,6 +317,8 @@ protected:
 	void PublishChooserCombatProperties(const FProject_JAnimThreadSafeData& Data);
 	void ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data);
 	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
+	bool ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const;
+	void CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data);
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	float CalculateMotionMatchingUpdateInterval() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
@@ -617,4 +589,11 @@ public:
 private:
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float MotionMatchingUpdateAccumulator = 0.0f;
+	EProject_JGroundMotionMode LastEvaluatedGroundMotionMode = EProject_JGroundMotionMode::Idle;
+	EProject_JLocomotionGaitIntent LastEvaluatedGaitIntent = EProject_JLocomotionGaitIntent::Run;
+	EProject_JLocomotionRotationMode LastEvaluatedRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionPhaseFamily LastEvaluatedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+	bool bLastEvaluatedStartRequested = false;
+	bool bLastEvaluatedStartWasSprinting = false;
+	bool bHasEvaluatedMotionMatchingContext = false;
 };

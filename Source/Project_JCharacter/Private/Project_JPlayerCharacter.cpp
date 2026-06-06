@@ -17,15 +17,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameplayTagContainer.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
 #include "Project_JGameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
+#include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
 #include "InputCoreTypes.h"
 #include "Net/UnrealNetwork.h"
@@ -75,6 +74,9 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 
 	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
 	MotionMatchingTrajectoryComponent = CreateDefaultSubobject<UProject_JMotionMatchingTrajectoryComponent>(TEXT("MotionMatchingTrajectoryComponent"));
+	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
+	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
+	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -91,24 +93,9 @@ void AProject_JPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Initialize ViewModel
-	CharacterViewModel = NewObject<UProject_JCharacterViewModel>(this);
-
-	// Bind GAS Attributes to ViewModel
-	if (AbilitySystemComponent && AttributeSet)
+	if (CharacterUIBindingComponent)
 	{
-		// Initial Values
-		CharacterViewModel->SetHealth(AttributeSet->GetHealth());
-		CharacterViewModel->SetMaxHealth(AttributeSet->GetMaxHealth());
-		CharacterViewModel->SetMana(AttributeSet->GetMana());
-		CharacterViewModel->SetMaxMana(AttributeSet->GetMaxMana());
-		CharacterViewModel->SetLevel(CharacterLevel);
-
-		// Bind callbacks for future changes
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnHealthChanged);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxHealthAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnMaxHealthChanged);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnManaChanged);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxManaAttribute()).AddUObject(this, &AProject_JPlayerCharacter::OnMaxManaChanged);
+		CharacterUIBindingComponent->InitializeFromAttributes(AbilitySystemComponent, AttributeSet, CharacterLevel);
 	}
 
 	ApplyLocomotionProfile();
@@ -138,79 +125,22 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	}
 }
 
-void AProject_JPlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetHealth(Data.NewValue);
-	}
-}
-
-void AProject_JPlayerCharacter::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMaxHealth(Data.NewValue);
-	}
-}
-
-void AProject_JPlayerCharacter::OnManaChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMana(Data.NewValue);
-	}
-}
-
-void AProject_JPlayerCharacter::OnMaxManaChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMaxMana(Data.NewValue);
-	}
-}
-
 void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	FProject_JPlayerInputActionSet ActionSet;
+	ActionSet.JumpAction = JumpAction;
+	ActionSet.MoveAction = MoveAction;
+	ActionSet.LookAction = LookAction;
+	ActionSet.MouseLookAction = MouseLookAction;
+	ActionSet.SprintAction = SprintAction;
+	ActionSet.ToggleCombatAction = ToggleCombatAction;
+	ActionSet.AttackAction = AttackAction;
 
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::DoJumpStart);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::DoJumpEnd);
-
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Move);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::StopMoveInput);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AProject_JPlayerCharacter::StopMoveInput);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Look);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProject_JPlayerCharacter::Look);
-
-		// Sprinting
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::StartSprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AProject_JPlayerCharacter::StopSprint);
-
-		// Toggle Combat Mode
-		EnhancedInputComponent->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::ToggleCombatMode);
-
-		// Player Melee Attack
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AProject_JPlayerCharacter::TriggerPlayerAttack);
-	}
-	else
+	const bool bBoundInput = PlayerInputBindingComponent && PlayerInputBindingComponent->BindInput(PlayerInputComponent, this, ActionSet);
+	if (!bBoundInput)
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
-}
-
-void AProject_JPlayerCharacter::Move(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoMove(MovementVector.X, MovementVector.Y);
 }
 
 void AProject_JPlayerCharacter::StopMoveInput()
@@ -227,15 +157,6 @@ void AProject_JPlayerCharacter::StopMoveInput()
 	{
 		DispatchMoveStopAnimationEvent();
 	}
-}
-
-void AProject_JPlayerCharacter::Look(const FInputActionValue& Value)
-{
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
 
 void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
@@ -689,6 +610,11 @@ const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfi
 	return CharacterAnimProfile ? CharacterAnimProfile->CombatAnimProfile.Get() : nullptr;
 }
 
+UProject_JCharacterViewModel* AProject_JPlayerCharacter::GetCharacterViewModel() const
+{
+	return CharacterUIBindingComponent ? CharacterUIBindingComponent->GetCharacterViewModel() : nullptr;
+}
+
 bool AProject_JPlayerCharacter::IsCombatModeActive() const
 {
 	return bIsCombatMode || HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
@@ -738,6 +664,21 @@ bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
 	return !IsAttacking() && !IsDodging() && !IsHitReacting();
 }
 
+bool AProject_JPlayerCharacter::IsGroundStartAllowed() const
+{
+	return !IsHitReacting();
+}
+
+bool AProject_JPlayerCharacter::IsGroundStopAllowed() const
+{
+	return true;
+}
+
+bool AProject_JPlayerCharacter::IsCombatLocomotionOverlayAllowed() const
+{
+	return IsCombatModeActive() && !IsHitReacting();
+}
+
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
 {
 	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(GetMoveInputDeadZoneForAnimation());
@@ -758,8 +699,10 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 {
 	if (HasAuthority())
 	{
-		ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart;
-		++ReplicatedAnimEvents.MoveStartCounter;
+		if (ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->MarkMoveStarted(ReplicatedAnimEvents, bWasSprintingForStart);
+		}
 		ForceNetUpdate();
 		return;
 	}
@@ -769,8 +712,10 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStarted_Implementation(bool bWasSprintingForStart)
 {
-	ReplicatedAnimEvents.bMoveStartWasSprinting = bWasSprintingForStart || IsSprintLocomotionAllowed();
-	++ReplicatedAnimEvents.MoveStartCounter;
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->MarkMoveStarted(ReplicatedAnimEvents, bWasSprintingForStart || IsSprintLocomotionAllowed());
+	}
 	ForceNetUpdate();
 }
 
@@ -778,7 +723,10 @@ void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++ReplicatedAnimEvents.MoveStopCounter;
+		if (ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->MarkMoveStopped(ReplicatedAnimEvents);
+		}
 		ForceNetUpdate();
 		return;
 	}
@@ -788,7 +736,10 @@ void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyMoveStopped_Implementation()
 {
-	++ReplicatedAnimEvents.MoveStopCounter;
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->MarkMoveStopped(ReplicatedAnimEvents);
+	}
 	ForceNetUpdate();
 }
 
@@ -796,7 +747,10 @@ void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++ReplicatedAnimEvents.JumpStartCounter;
+		if (ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->MarkJumpStarted(ReplicatedAnimEvents);
+		}
 		ForceNetUpdate();
 		return;
 	}
@@ -806,7 +760,10 @@ void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyJumpStarted_Implementation()
 {
-	++ReplicatedAnimEvents.JumpStartCounter;
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->MarkJumpStarted(ReplicatedAnimEvents);
+	}
 	ForceNetUpdate();
 }
 
@@ -814,7 +771,10 @@ void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++ReplicatedAnimEvents.FallOffStartCounter;
+		if (ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->MarkFallOffStarted(ReplicatedAnimEvents);
+		}
 		ForceNetUpdate();
 		return;
 	}
@@ -824,7 +784,10 @@ void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyFallOffStarted_Implementation()
 {
-	++ReplicatedAnimEvents.FallOffStartCounter;
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->MarkFallOffStarted(ReplicatedAnimEvents);
+	}
 	ForceNetUpdate();
 }
 
@@ -832,7 +795,10 @@ void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
 {
 	if (HasAuthority())
 	{
-		++ReplicatedAnimEvents.LandingCancelCounter;
+		if (ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->MarkLandingCancelled(ReplicatedAnimEvents);
+		}
 		ForceNetUpdate();
 		return;
 	}
@@ -842,40 +808,18 @@ void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
 
 void AProject_JPlayerCharacter::ServerNotifyLandingCancelled_Implementation()
 {
-	++ReplicatedAnimEvents.LandingCancelCounter;
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->MarkLandingCancelled(ReplicatedAnimEvents);
+	}
 	ForceNetUpdate();
 }
 
 void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState)
 {
-	if (!LocomotionAnimStateComponent)
+	if (ReplicatedAnimEventComponent)
 	{
-		return;
-	}
-
-	if (ReplicatedAnimEvents.MoveStopCounter != PreviousState.MoveStopCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
-	}
-
-	if (ReplicatedAnimEvents.MoveStartCounter != PreviousState.MoveStartCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStarted(ReplicatedAnimEvents.bMoveStartWasSprinting);
-	}
-
-	if (ReplicatedAnimEvents.JumpStartCounter != PreviousState.JumpStartCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
-	}
-
-	if (ReplicatedAnimEvents.FallOffStartCounter != PreviousState.FallOffStartCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
-	}
-
-	if (ReplicatedAnimEvents.LandingCancelCounter != PreviousState.LandingCancelCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedLandingCancelled();
+		ReplicatedAnimEventComponent->ApplyReplicatedEvents(ReplicatedAnimEvents, PreviousState, LocomotionAnimStateComponent);
 	}
 }
 

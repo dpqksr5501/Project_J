@@ -263,6 +263,11 @@ private:
 	bool HasLandingDirectionTurnCancel(const FVector2D& MoveInput, float AngleThreshold);
 	bool HasLandingActorTurnCancel(float AngleThreshold);
 	void UpdateSharpTurnRequest(bool bAllowSharpTurn);
+	bool ShouldInterruptStartForResponsiveTurn(const FVector2D& MoveInput, bool bAllowLocalControlYaw) const;
+	bool HasLocalStartResponsiveTurn(float AngleThreshold) const;
+	void ScheduleStartAutoPromote();
+	void ClearStartAutoPromoteTimer();
+	void PromoteStartToResolvedGroundMotion();
 	bool UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput);
 	void UpdateStartGroundMotionMode(const FVector2D& MoveInput, bool bAllowSharpTurn);
 	void UpdateStopGroundMotionMode(float DeltaTime);
@@ -362,6 +367,22 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartTurnExitAngle = 15.0f;
+
+	/** Start can be interrupted after this short window when input/camera/replicated movement turns sharply. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartResponsiveTurnExitMinTime = 0.08f;
+
+	/** Sharper turn threshold that bypasses StartMinDuration and moves directly into locomotion. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartResponsiveTurnExitAngle = 35.0f;
+
+	/** Start can exit into Stop/Idle after this short window if movement input is released quickly. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartInputReleaseExitMinTime = 0.08f;
+
+	/** Failsafe that prevents Start/RemoteStart PSD from persisting if update throttling or remote input inference misses the exit. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
+	float StartAutoPromoteDelay = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedStartInputHoldWindow = 0.25f;
@@ -614,6 +635,7 @@ private:
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
 	FTimerHandle LandingExitTimerHandle;
+	FTimerHandle StartAutoPromoteTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;

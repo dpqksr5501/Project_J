@@ -15,7 +15,7 @@ void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection
 	// Set up rate-limited flush timer (e.g. every 5 seconds)
 	if (UWorld* World = GetWorld())
 	{
-		World->GetTimerManager().SetTimer(LogFlushTimerHandle, this, &UProject_JGatewaySubsystem::FlushRemoteLogs, 5.0f, true);
+		World->GetTimerManager().SetTimer(LogFlushTimerHandle, this, &UProject_JGatewaySubsystem::FlushRemoteLogs, RemoteLogFlushInterval, true);
 	}
 }
 
@@ -25,6 +25,10 @@ void UProject_JGatewaySubsystem::Deinitialize()
 	{
 		World->GetTimerManager().ClearTimer(LogFlushTimerHandle);
 	}
+
+	LogQueue.Reset();
+	PendingLogFlushBatch.Reset();
+	bLogFlushInFlight = false;
 
 	Super::Deinitialize();
 }
@@ -52,7 +56,10 @@ void UProject_JGatewaySubsystem::SendAsyncRequest(const FString& Endpoint, const
 		}
 	});
 
-	Request->ProcessRequest();
+	if (!Request->ProcessRequest())
+	{
+		OnResponse.ExecuteIfBound(false, TEXT("Request dispatch failed"));
+	}
 }
 
 void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const FString& Severity)
@@ -61,12 +68,7 @@ void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const 
 	Payload.Message = Message;
 	Payload.Severity = Severity;
 	LogQueue.Add(Payload);
-	
-	// Hard cap to prevent memory leak on disconnected environments
-	if (LogQueue.Num() > 100)
-	{
-		LogQueue.RemoveAt(0, LogQueue.Num() - 100);
-	}
+	TrimRemoteLogQueue();
 }
 
 void UProject_JGatewaySubsystem::FlushRemoteLogs()
@@ -111,8 +113,13 @@ void UProject_JGatewaySubsystem::HandleRemoteLogFlushResponse(bool bSucceeded, c
 
 	LogQueue.Insert(PendingLogFlushBatch, 0);
 	PendingLogFlushBatch.Reset();
-	if (LogQueue.Num() > 100)
+	TrimRemoteLogQueue();
+}
+
+void UProject_JGatewaySubsystem::TrimRemoteLogQueue()
+{
+	if (LogQueue.Num() > MaxQueuedRemoteLogs)
 	{
-		LogQueue.RemoveAt(0, LogQueue.Num() - 100);
+		LogQueue.RemoveAt(0, LogQueue.Num() - MaxQueuedRemoteLogs);
 	}
 }

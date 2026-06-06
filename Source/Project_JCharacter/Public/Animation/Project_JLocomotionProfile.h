@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/Project_JAnimationBudgetTypes.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Engine/DataAsset.h"
 #include "Project_JLocomotionProfile.generated.h"
@@ -22,6 +23,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UPrimaryDataAs
 
 public:
 	UProject_JLocomotionProfile();
+
+	FProject_JAnimationBudgetSettings GetResolvedAnimationBudgetSettings() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
@@ -49,6 +52,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Anim Instance", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float AnimInstanceHiddenRemoteUpdateInterval = 0.10f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization")
+	FProject_JAnimationBudgetSettings AnimationBudget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Motion Matching", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float NearMotionMatchingDistance = 2500.0f;
