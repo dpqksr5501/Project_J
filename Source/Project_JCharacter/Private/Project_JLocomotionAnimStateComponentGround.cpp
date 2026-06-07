@@ -305,6 +305,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 
 	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartMinDuration;
 	const bool bCanExitReleasedStart = GroundMotionModeElapsedTime >= StartInputReleaseExitMinTime;
+	const bool bRemoteResponsiveTurnExitRequested =
+		!bAllowSharpTurn &&
+		bStartTurnExitRequested &&
+		GroundMotionModeElapsedTime >= StartResponsiveTurnExitMinTime;
 
 	if (!bHasMoveInput)
 	{
@@ -321,6 +325,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		}
 	}
 	else if (bResponsiveTurnExitRequested)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+	}
+	else if (bRemoteResponsiveTurnExitRequested)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
