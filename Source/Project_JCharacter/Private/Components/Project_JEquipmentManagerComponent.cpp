@@ -69,15 +69,26 @@ void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefin
 	EquipItemInstance(ItemInstance);
 }
 
-void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
+void UProject_JEquipmentManagerComponent::RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef)
 {
-	UProject_JEquipmentItemDefinition* ItemDef = ItemInstance.ItemDef;
-	if (!ItemDef || !GetOwner() || !GetOwner()->HasAuthority())
+	if (!ItemDef)
 	{
 		return;
 	}
 
-	if (FindEquipmentIndexByItem(ItemDef) != INDEX_NONE)
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		EquipItem(ItemDef);
+		return;
+	}
+
+	ServerRequestEquipItem(ItemDef);
+}
+
+void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
+{
+	UProject_JEquipmentItemDefinition* ItemDef = ItemInstance.ItemDef;
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !CanCommitEquipItemInstance(ItemInstance))
 	{
 		return;
 	}
@@ -132,6 +143,22 @@ void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItem
 	ApplyEquipmentStatModifiers(ItemDef, 1.0f);
 }
 
+void UProject_JEquipmentManagerComponent::RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
+{
+	if (!ItemInstance.ItemDef)
+	{
+		return;
+	}
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		EquipItemInstance(ItemInstance);
+		return;
+	}
+
+	ServerRequestEquipItemInstance(ItemInstance);
+}
+
 void UProject_JEquipmentManagerComponent::UnequipItem(UProject_JEquipmentItemDefinition* ItemDef)
 {
 	if (!ItemDef || !GetOwner() || !GetOwner()->HasAuthority())
@@ -160,10 +187,56 @@ void UProject_JEquipmentManagerComponent::UnequipSlot(EProject_JEquipmentSlot Sl
 	}
 }
 
+void UProject_JEquipmentManagerComponent::RequestUnequipSlot(EProject_JEquipmentSlot Slot)
+{
+	if (Slot == EProject_JEquipmentSlot::None)
+	{
+		return;
+	}
+
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		UnequipSlot(Slot);
+		return;
+	}
+
+	ServerRequestUnequipSlot(Slot);
+}
+
 UProject_JEquipmentItemDefinition* UProject_JEquipmentManagerComponent::GetEquippedItemInSlot(EProject_JEquipmentSlot Slot) const
 {
 	const int32 FoundIndex = FindEquipmentIndexBySlot(Slot);
 	return FoundIndex != INDEX_NONE ? EquipmentArray.Items[FoundIndex].ItemDef : nullptr;
+}
+
+void UProject_JEquipmentManagerComponent::ServerRequestEquipItem_Implementation(const UProject_JEquipmentItemDefinition* ItemDef)
+{
+	EquipItem(const_cast<UProject_JEquipmentItemDefinition*>(ItemDef));
+}
+
+void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstance_Implementation(FProject_JItemInstanceData ItemInstance)
+{
+	EquipItemInstance(ItemInstance);
+}
+
+void UProject_JEquipmentManagerComponent::ServerRequestUnequipSlot_Implementation(EProject_JEquipmentSlot Slot)
+{
+	UnequipSlot(Slot);
+}
+
+bool UProject_JEquipmentManagerComponent::CanCommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance) const
+{
+	if (!ItemInstance.ItemDef || ItemInstance.ItemDef->EquipmentSlot == EProject_JEquipmentSlot::None)
+	{
+		return false;
+	}
+
+	if (ItemInstance.InstanceId.IsValid() && FindEquipmentIndexByInstanceId(ItemInstance.InstanceId) != INDEX_NONE)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
@@ -225,6 +298,8 @@ void UProject_JEquipmentManagerComponent::OnRep_EquipmentRemoved(FProject_JEquip
 		Item.SpawnedMesh->DestroyComponent();
 		Item.SpawnedMesh = nullptr;
 	}
+
+	++Item.LocalVisualRequestId;
 }
 
 void UProject_JEquipmentManagerComponent::StartLocalSpawnEquipment(FProject_JEquipmentArrayItem& Item)
@@ -235,21 +310,24 @@ void UProject_JEquipmentManagerComponent::StartLocalSpawnEquipment(FProject_JEqu
 		return;
 	}
 
+	const FGuid InstanceId = Item.ItemInstance.InstanceId;
+	const int32 VisualRequestId = ++Item.LocalVisualRequestId;
+
 	// Request ASYNC Loading of modular mesh to prevent game-thread hitches
 	TWeakObjectPtr<UProject_JEquipmentManagerComponent> WeakThis(this);
 	UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
 		ItemDef->EquipmentMesh.ToSoftObjectPath(),
-		FStreamableDelegate::CreateLambda([WeakThis, ItemDef]()
+		FStreamableDelegate::CreateLambda([WeakThis, InstanceId, ItemDef, VisualRequestId]()
 		{
 			if (UProject_JEquipmentManagerComponent* StrongThis = WeakThis.Get())
 			{
-				StrongThis->OnEquipmentMeshLoaded(ItemDef);
+				StrongThis->OnEquipmentMeshLoaded(InstanceId, ItemDef, VisualRequestId);
 			}
 		})
 	);
 }
 
-void UProject_JEquipmentManagerComponent::OnEquipmentMeshLoaded(UProject_JEquipmentItemDefinition* ItemDef)
+void UProject_JEquipmentManagerComponent::OnEquipmentMeshLoaded(FGuid InstanceId, UProject_JEquipmentItemDefinition* ItemDef, int32 VisualRequestId)
 {
 	if (!ItemDef) return;
 
@@ -257,7 +335,7 @@ void UProject_JEquipmentManagerComponent::OnEquipmentMeshLoaded(UProject_JEquipm
 	FProject_JEquipmentArrayItem* FoundItem = nullptr;
 	for (FProject_JEquipmentArrayItem& Item : EquipmentArray.Items)
 	{
-		if (Item.ItemDef == ItemDef)
+		if (Item.ItemInstance.InstanceId == InstanceId && Item.ItemDef == ItemDef && Item.LocalVisualRequestId == VisualRequestId)
 		{
 			FoundItem = &Item;
 			break;
@@ -279,6 +357,8 @@ void UProject_JEquipmentManagerComponent::OnEquipmentMeshLoaded(UProject_JEquipm
 	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
 	NewMeshComp->RegisterComponent();
 	NewMeshComp->SetSkeletalMesh(ItemDef->EquipmentMesh.Get());
+	NewMeshComp->SetCastShadow(ItemDef->bCastDynamicShadow);
+	NewMeshComp->SetCullDistance(ItemDef->MaxDrawDistance);
 
 	// Attach to specific socket or standard Leader Pose
 	if (ItemDef->AttachSocketName.IsNone())
@@ -391,6 +471,24 @@ int32 UProject_JEquipmentManagerComponent::FindEquipmentIndexByItem(const UProje
 	for (int32 Index = 0; Index < EquipmentArray.Items.Num(); ++Index)
 	{
 		if (EquipmentArray.Items[Index].ItemDef == ItemDef)
+		{
+			return Index;
+		}
+	}
+
+	return INDEX_NONE;
+}
+
+int32 UProject_JEquipmentManagerComponent::FindEquipmentIndexByInstanceId(const FGuid& InstanceId) const
+{
+	if (!InstanceId.IsValid())
+	{
+		return INDEX_NONE;
+	}
+
+	for (int32 Index = 0; Index < EquipmentArray.Items.Num(); ++Index)
+	{
+		if (EquipmentArray.Items[Index].ItemInstance.InstanceId == InstanceId)
 		{
 			return Index;
 		}

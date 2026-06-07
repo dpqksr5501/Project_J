@@ -24,6 +24,7 @@ class UProject_JCombatAnimProfile;
 class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
+class UProject_JInventoryComponent;
 struct FGameplayTag;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -68,6 +69,9 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory", meta = (AllowPrivateAccess = "true"))
+	UProject_JInventoryComponent* InventoryComponent;
 	
 protected:
 
@@ -262,6 +266,8 @@ public:
 
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
+
+	FORCEINLINE class UProject_JInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "UI")
 	UProject_JCharacterViewModel* GetCharacterViewModel() const;

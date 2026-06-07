@@ -27,6 +27,7 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Components/Project_JInventoryComponent.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
 #include "InputCoreTypes.h"
@@ -99,6 +100,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
+	InventoryComponent = CreateDefaultSubobject<UProject_JInventoryComponent>(TEXT("InventoryComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -342,6 +344,8 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 		{
 			LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = EffectiveLocomotionProfile->SprintLocomotionSpeedThreshold;
 			LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = EffectiveLocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
+			LocomotionAnimStateComponent->RemoteStartTurnExitAngle = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStartTurnExitAngle;
+			LocomotionAnimStateComponent->RemoteStopStartSuppressDuration = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStopStartSuppressDuration;
 		}
 
 		SignificanceNearDistance = EffectiveLocomotionProfile->NearMotionMatchingDistance;

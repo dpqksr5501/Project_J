@@ -10,6 +10,24 @@
 
 class UProject_JMotionMatchingAssetSet;
 
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JRemoteVisualLocomotionPolicy
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
+	bool bUseForwardOnlyRemoteStart = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
+	bool bDisableStartStopChooserBeyondFarDistance = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteStartTurnExitAngle = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteStopStartSuppressDuration = 0.20f;
+};
+
 /**
  * Data-driven locomotion defaults shared by the player character and its native anim instance.
  *
@@ -46,6 +64,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Animation", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLocomotionSpeedThreshold = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
+	FProject_JRemoteVisualLocomotionPolicy RemoteVisualPolicy;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Anim State", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float AnimStateHiddenRemoteUpdateInterval = 0.0f;

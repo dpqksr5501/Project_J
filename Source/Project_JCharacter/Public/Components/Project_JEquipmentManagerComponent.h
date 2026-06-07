@@ -33,6 +33,9 @@ struct FProject_JEquipmentArrayItem : public FFastArraySerializerItem
 
 	UPROPERTY(NotReplicated)
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+
+	UPROPERTY(NotReplicated)
+	int32 LocalVisualRequestId = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -89,9 +92,17 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItem(UProject_JEquipmentItemDefinition* ItemDef);
 
+	/** Client-safe request path. Server validates and then commits the replicated equipment change. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef);
+
 	/** Equip an owned item instance. This is the preferred path once inventory exists. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
+
+	/** Client-safe request path for inventory-backed equipment. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
 
 	/** Unequip an item and destroy its spawned visual representation (Server-Only) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
@@ -100,6 +111,10 @@ public:
 	/** Unequip whatever item currently occupies the requested slot (Server-Only) */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void UnequipSlot(EProject_JEquipmentSlot Slot);
+
+	/** Client-safe request path for unequipping a slot. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RequestUnequipSlot(EProject_JEquipmentSlot Slot);
 
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	UProject_JEquipmentItemDefinition* GetEquippedItemInSlot(EProject_JEquipmentSlot Slot) const;
@@ -112,13 +127,24 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UFUNCTION(Server, Reliable)
+	void ServerRequestEquipItem(const UProject_JEquipmentItemDefinition* ItemDef);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestEquipItemInstance(FProject_JItemInstanceData ItemInstance);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestUnequipSlot(EProject_JEquipmentSlot Slot);
+
+	bool CanCommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
 	void BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item);
 	void BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item);
 	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
 	void StartLocalSpawnEquipment(FProject_JEquipmentArrayItem& Item);
-	void OnEquipmentMeshLoaded(UProject_JEquipmentItemDefinition* ItemDef);
+	void OnEquipmentMeshLoaded(FGuid InstanceId, UProject_JEquipmentItemDefinition* ItemDef, int32 VisualRequestId);
 	void RefreshCurrentWeaponAnimProfile(const UProject_JEquipmentItemDefinition* ExcludedItemDef = nullptr);
 	int32 FindEquipmentIndexByItem(const UProject_JEquipmentItemDefinition* ItemDef) const;
+	int32 FindEquipmentIndexByInstanceId(const FGuid& InstanceId) const;
 	int32 FindEquipmentIndexBySlot(EProject_JEquipmentSlot Slot) const;
 	void RemoveEquipmentAt(int32 Index);
 

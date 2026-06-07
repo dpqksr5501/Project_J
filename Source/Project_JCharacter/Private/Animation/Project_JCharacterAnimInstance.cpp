@@ -531,7 +531,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			Data.Landing.bLandWasMoving,
 			Data.Landing.bLandWasSprinting,
 			Data.Air.bIsFallOffStart,
-			OwningPlayerCharacter && !IsLocallyControlledCharacter())
+			OwningPlayerCharacter && !IsLocallyControlledCharacter() && GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart)
 		: nullptr;
 	if (!SelectedDatabase)
 	{
@@ -727,6 +727,11 @@ void UProject_JCharacterAnimInstance::PublishChooserCombatProperties(const FProj
 
 void UProject_JCharacterAnimInstance::ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data)
 {
+	if (!GetEffectiveRemoteVisualPolicy().bDisableStartStopChooserBeyondFarDistance)
+	{
+		return;
+	}
+
 	const bool bUseFarLocomotion =
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		!Data.Air.bIsInAir &&
@@ -1018,6 +1023,16 @@ float UProject_JCharacterAnimInstance::GetEffectiveSprintLocomotionSpeedThreshol
 	}
 
 	return SprintLocomotionSpeedThreshold;
+}
+
+FProject_JRemoteVisualLocomotionPolicy UProject_JCharacterAnimInstance::GetEffectiveRemoteVisualPolicy() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->RemoteVisualPolicy;
+	}
+
+	return FProject_JRemoteVisualLocomotionPolicy();
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const

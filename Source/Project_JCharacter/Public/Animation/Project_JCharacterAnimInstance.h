@@ -7,6 +7,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "Project_JCharacterAnimInstance.generated.h"
@@ -328,6 +329,7 @@ protected:
 	FProject_JAnimationBudgetSettings GetEffectiveAnimationBudgetSettings() const;
 	float GetEffectiveGenericMoveInputSpeedThreshold() const;
 	float GetEffectiveSprintLocomotionSpeedThreshold() const;
+	FProject_JRemoteVisualLocomotionPolicy GetEffectiveRemoteVisualPolicy() const;
 	float GetEffectiveHiddenRemoteUpdateInterval() const;
 	float GetEffectiveNearMotionMatchingDistance() const;
 	float GetEffectiveMidMotionMatchingDistance() const;

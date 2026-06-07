@@ -31,6 +31,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual")
 	FName AttachSocketName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MaxDrawDistance = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual|Optimization")
+	bool bCastDynamicShadow = true;
+
 	// List of abilities granted to the character when this equipment is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
