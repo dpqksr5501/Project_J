@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 
@@ -177,6 +177,14 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (ShouldSkipNativeUpdate(DeltaSeconds))
 	{
 		return;
+	}
+
+	if (OwningPlayerCharacter)
+	{
+		if (UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
+		{
+			TrajectoryComponent->UpdateTrajectoryState(DeltaSeconds);
+		}
 	}
 
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);

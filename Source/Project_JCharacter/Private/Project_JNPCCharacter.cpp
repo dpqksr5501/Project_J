@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JNPCCharacter.h"
+#include "Project_JAbilitySystemComponent.h"
 
 #include "Components/SkeletalMeshComponent.h"
 
@@ -8,6 +9,11 @@ AProject_JNPCCharacter::AProject_JNPCCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	}
 }
 
 void AProject_JNPCCharacter::BeginPlay()
