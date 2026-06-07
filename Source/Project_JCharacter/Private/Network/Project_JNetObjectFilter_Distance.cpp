@@ -19,6 +19,14 @@ float UProject_JNetObjectFilter_Distance::GetReplicationDistanceSquared(const AA
 
 FProject_JReplicationPolicyDecision UProject_JNetObjectFilter_Distance::BuildReplicationDecision(const AActor* TargetActor, const FVector& ViewerLocation) const
 {
+	return BuildReplicationDecisionWithSettings(TargetActor, ViewerLocation, PolicySettings);
+}
+
+FProject_JReplicationPolicyDecision UProject_JNetObjectFilter_Distance::BuildReplicationDecisionWithSettings(
+	const AActor* TargetActor,
+	const FVector& ViewerLocation,
+	const FProject_JReplicationPolicySettings& Settings) const
+{
 	FProject_JReplicationPolicyDecision Decision;
 	if (!TargetActor)
 	{
@@ -27,18 +35,23 @@ FProject_JReplicationPolicyDecision UProject_JNetObjectFilter_Distance::BuildRep
 
 	Decision.DistanceSquared = GetReplicationDistanceSquared(TargetActor, ViewerLocation);
 
-	if (bAlwaysReplicateOwnerOrInstigator && (TargetActor->GetOwner() || TargetActor->GetInstigator()))
+	if (Settings.bAlwaysReplicateOwnerOrInstigator && (TargetActor->GetOwner() || TargetActor->GetInstigator()))
 	{
 		Decision.bShouldReplicate = true;
 		Decision.AddReason(EProject_JReplicationRelevanceReason::Owner);
 		return Decision;
 	}
 
-	if (Decision.DistanceSquared <= MaxReplicationDistanceSquared)
+	if (Decision.DistanceSquared <= Settings.GetMaxReplicationDistanceSquared())
 	{
 		Decision.bShouldReplicate = true;
 		Decision.AddReason(EProject_JReplicationRelevanceReason::Distance);
 	}
 
 	return Decision;
+}
+
+void UProject_JNetObjectFilter_Distance::SetPolicySettings(const FProject_JReplicationPolicySettings& InPolicySettings)
+{
+	PolicySettings = InPolicySettings;
 }

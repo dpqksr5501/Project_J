@@ -61,6 +61,9 @@ protected:
 	UFUNCTION(Exec)
 	void DumpCombatState();
 
+	UFUNCTION(Exec)
+	void DumpMMOProfilingSnapshot(int32 MaxDetailedCharacters = 8);
+
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
 

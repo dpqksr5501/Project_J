@@ -14,6 +14,34 @@ FProject_JCharacterId FProject_JCharacterId::NewId()
 	return NewCharacterId;
 }
 
+FProject_JRequestId FProject_JRequestId::NewId()
+{
+	FProject_JRequestId NewRequestId;
+	NewRequestId.Value = FGuid::NewGuid();
+	return NewRequestId;
+}
+
+FProject_JIdempotencyKey FProject_JIdempotencyKey::NewKey()
+{
+	FProject_JIdempotencyKey NewIdempotencyKey;
+	NewIdempotencyKey.Value = FGuid::NewGuid();
+	return NewIdempotencyKey;
+}
+
+FProject_JTransactionId FProject_JTransactionId::NewId()
+{
+	FProject_JTransactionId NewTransactionId;
+	NewTransactionId.Value = FGuid::NewGuid();
+	return NewTransactionId;
+}
+
+FProject_JItemInstanceId FProject_JItemInstanceId::NewId()
+{
+	FProject_JItemInstanceId NewItemInstanceId;
+	NewItemInstanceId.Value = FGuid::NewGuid();
+	return NewItemInstanceId;
+}
+
 FString FProject_JWorldInstanceId::ToDebugString() const
 {
 	return FString::Printf(
@@ -72,4 +100,9 @@ FString FProject_JReplicationPolicyDecision::ToDebugString() const
 		DistanceSquared,
 		PriorityMultiplier,
 		Reasons.Num() > 0 ? *FString::Join(Reasons, TEXT("|")) : TEXT("None"));
+}
+
+float FProject_JReplicationPolicySettings::GetMaxReplicationDistanceSquared() const
+{
+	return FMath::Square(MaxReplicationDistance);
 }

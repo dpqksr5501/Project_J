@@ -1,5 +1,17 @@
 # Project J Docs
 
+## Latest Architecture Updates
+
+- `FProject_JRequestId`, `FProject_JIdempotencyKey`, `FProject_JTransactionId`, `FProject_JItemInstanceId` were added to Core as backend/economy contract IDs.
+- `FProject_JBackendRequestContext` and `SendAsyncRequestWithContext` let gateway calls carry request, idempotency, and transaction headers without changing existing callers.
+- `FProject_JBackendResponseEnvelope` and `SendAsyncRequestEnvelope` now expose HTTP status, failure kind, retryability, and request context for backend callers that need MMO-grade observability.
+- Remote telemetry flushes now requeue failed batches only for retryable backend failures, avoiding infinite resend loops on permanent client/contract errors.
+- `FProject_JCombatMovementPolicy` now centralizes combat-driven sprint, jump, ground start, overlay, rotation, and intro interruption decisions.
+- `UProject_JCharacterAnimInstance` now resolves Near/Mid/Far/Hidden motion matching budget through `FProject_JAnimationBudgetSettings`, preserving legacy profile fallback values.
+- `DumpMMOProfilingSnapshot [MaxDetailedCharacters]` was added as an early PIE profiling command for player/NPC counts, network roles, animation budget tier distribution, chooser policy, and replication relevance samples.
+- `AProject_JNPCCharacter` now applies a low-cost default NPC policy for net cull distance, net update frequency, significance tick intervals, skeletal mesh URO, and visibility-based animation ticking.
+- `FProject_JReplicationPolicySettings` centralizes distance filter settings so debug commands and future Iris/RepGraph glue can use the same replication thresholds.
+
 Project J의 C++ 구조, MMORPG 확장 방향, 애니메이션/전투 아키텍처, 네트워크 최적화 기준을 정리하는 문서 모음입니다.
 
 ## 문서 목록

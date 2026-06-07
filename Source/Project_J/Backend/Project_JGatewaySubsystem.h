@@ -21,6 +21,16 @@ public:
 
 	// IProject_JBackendConnection interface
 	virtual void SendAsyncRequest(const FString& Endpoint, const FString& Payload, FOnBackendResponse OnResponse) override;
+	virtual void SendAsyncRequestWithContext(
+		const FString& Endpoint,
+		const FString& Payload,
+		const FProject_JBackendRequestContext& RequestContext,
+		FOnBackendResponse OnResponse) override;
+	virtual void SendAsyncRequestEnvelope(
+		const FString& Endpoint,
+		const FString& Payload,
+		const FProject_JBackendRequestContext& RequestContext,
+		FOnBackendEnvelopeResponse OnResponse) override;
 
 	// Enqueue a log message to be sent to the backend asynchronously (Rate Limited)
 	void EnqueueRemoteLog(const FString& Message, const FString& Severity);
@@ -49,5 +59,5 @@ private:
 	void FlushRemoteLogs();
 	void TrimRemoteLogQueue();
 	UFUNCTION()
-	void HandleRemoteLogFlushResponse(bool bSucceeded, const FString& Response);
+	void HandleRemoteLogFlushEnvelopeResponse(const FProject_JBackendResponseEnvelope& Response);
 };

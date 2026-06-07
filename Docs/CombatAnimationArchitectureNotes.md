@@ -1,5 +1,14 @@
 # Combat Animation Architecture Notes
 
+## Combat Movement Policy
+
+`FProject_JCombatMovementPolicy` is the current boundary between combat state and locomotion decisions.
+
+- PlayerCharacter still owns replicated state and GAS tag reads.
+- The policy struct makes sprint, jump, ground start, overlay, combat rotation, and intro interruption decisions from plain values.
+- Weapon/job-specific profile settings can feed the policy without pushing combat checks deeper into locomotion.
+- This keeps motion matching timing stable while making future class/weapon combat variants easier to add.
+
 이 문서는 Locomotion과 Combat의 책임 경계를 유지하기 위한 메모입니다. MMORPG 캐릭터는 직업, 무기, 스킬, 상태이상이 계속 늘어나므로 combat 조건이 locomotion 내부에 직접 섞이지 않도록 관리해야 합니다.
 
 ## 현재 기준

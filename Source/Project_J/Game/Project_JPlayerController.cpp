@@ -4,6 +4,7 @@
 #include "Project_JPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "EngineUtils.h"
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -14,8 +15,67 @@
 #include "Project_JPlayerState.h"
 #include "Network/Project_JNetObjectFilter_Distance.h"
 #include "Network/Project_JNetObjectPrioritizer_Combat.h"
+#include "Project_JNPCCharacter.h"
 #include "Project_JPlayerCharacter.h"
+#include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
+
+namespace
+{
+const TCHAR* ToDebugString(ENetRole Role)
+{
+	switch (Role)
+	{
+	case ROLE_Authority:
+		return TEXT("Authority");
+	case ROLE_AutonomousProxy:
+		return TEXT("Autonomous");
+	case ROLE_SimulatedProxy:
+		return TEXT("Simulated");
+	case ROLE_None:
+	default:
+		return TEXT("None");
+	}
+}
+
+const TCHAR* ToDebugString(EProject_JAnimBudgetTier Tier)
+{
+	switch (Tier)
+	{
+	case EProject_JAnimBudgetTier::Local:
+		return TEXT("Local");
+	case EProject_JAnimBudgetTier::Near:
+		return TEXT("Near");
+	case EProject_JAnimBudgetTier::Mid:
+		return TEXT("Mid");
+	case EProject_JAnimBudgetTier::Far:
+		return TEXT("Far");
+	case EProject_JAnimBudgetTier::Hidden:
+		return TEXT("Hidden");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
+int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
+{
+	switch (Tier)
+	{
+	case EProject_JAnimBudgetTier::Local:
+		return 0;
+	case EProject_JAnimBudgetTier::Near:
+		return 1;
+	case EProject_JAnimBudgetTier::Mid:
+		return 2;
+	case EProject_JAnimBudgetTier::Far:
+		return 3;
+	case EProject_JAnimBudgetTier::Hidden:
+		return 4;
+	default:
+		return 4;
+	}
+}
+}
 
 void AProject_JPlayerController::BeginPlay()
 {
@@ -200,5 +260,149 @@ void AProject_JPlayerController::DumpCombatState()
 
 	ClientMessage(CombatLine);
 	UE_LOG(LogProject_J, Display, TEXT("%s"), *CombatLine);
+#endif
+}
+
+void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedCharacters)
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		ClientMessage(TEXT("MMOProfilingSnapshot unavailable: no world."));
+		return;
+	}
+
+	MaxDetailedCharacters = FMath::Max(0, MaxDetailedCharacters);
+
+	const FVector ViewerLocation = PlayerCameraManager
+		? PlayerCameraManager->GetCameraLocation()
+		: (GetPawn() ? GetPawn()->GetActorLocation() : FVector::ZeroVector);
+
+	const UProject_JNetObjectFilter_Distance* DistanceFilter = NewObject<UProject_JNetObjectFilter_Distance>(GetTransientPackage());
+	const UProject_JNetObjectPrioritizer_Combat* CombatPrioritizer = NewObject<UProject_JNetObjectPrioritizer_Combat>(GetTransientPackage());
+
+	int32 PlayerCharacterCount = 0;
+	int32 NPCCharacterCount = 0;
+	int32 AuthorityCount = 0;
+	int32 AutonomousCount = 0;
+	int32 SimulatedCount = 0;
+	int32 AnimInstanceCount = 0;
+	int32 FullChooserCount = 0;
+	int32 FarChooserOnlyCount = 0;
+	int32 AnimationDataUpdateCount = 0;
+	int32 TierCounts[5] = { 0, 0, 0, 0, 0 };
+	float TotalMotionMatchingInterval = 0.0f;
+	int32 MotionMatchingIntervalCount = 0;
+	int32 DetailedLinesPrinted = 0;
+
+	UE_LOG(LogProject_J, Display, TEXT("==== MMO Profiling Snapshot ===="));
+
+	for (TActorIterator<ACharacter> It(World); It; ++It)
+	{
+		ACharacter* IterCharacter = *It;
+		if (!IterCharacter)
+		{
+			continue;
+		}
+
+		const bool bIsPlayerCharacter = IterCharacter->IsA<AProject_JPlayerCharacter>();
+		const bool bIsNPCCharacter = IterCharacter->IsA<AProject_JNPCCharacter>();
+		if (!bIsPlayerCharacter && !bIsNPCCharacter)
+		{
+			continue;
+		}
+
+		PlayerCharacterCount += bIsPlayerCharacter ? 1 : 0;
+		NPCCharacterCount += bIsNPCCharacter ? 1 : 0;
+
+		switch (IterCharacter->GetLocalRole())
+		{
+		case ROLE_Authority:
+			++AuthorityCount;
+			break;
+		case ROLE_AutonomousProxy:
+			++AutonomousCount;
+			break;
+		case ROLE_SimulatedProxy:
+			++SimulatedCount;
+			break;
+		default:
+			break;
+		}
+
+		UProject_JCharacterAnimInstance* AnimInstance = nullptr;
+		if (USkeletalMeshComponent* Mesh = IterCharacter->GetMesh())
+		{
+			AnimInstance = Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
+		}
+
+		FProject_JReplicationPolicyDecision Decision = DistanceFilter->BuildReplicationDecision(IterCharacter, ViewerLocation);
+		Decision = CombatPrioritizer->ApplyCombatPriority(IterCharacter, Decision);
+
+		FString AnimSummary = TEXT("Anim=None");
+		if (AnimInstance)
+		{
+			++AnimInstanceCount;
+			const FProject_JAnimOptimizationPolicy& Policy = AnimInstance->CurrentOptimizationPolicy;
+			++TierCounts[GetBudgetTierIndex(Policy.Tier)];
+			FullChooserCount += Policy.bUseFullChooserRows ? 1 : 0;
+			FarChooserOnlyCount += Policy.bUseFarChooserRowsOnly ? 1 : 0;
+			AnimationDataUpdateCount += Policy.bUpdateAnimationData ? 1 : 0;
+			TotalMotionMatchingInterval += Policy.MotionMatchingUpdateInterval;
+			++MotionMatchingIntervalCount;
+
+			AnimSummary = FString::Printf(
+				TEXT("AnimTier=%s UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s"),
+				ToDebugString(Policy.Tier),
+				Policy.bUpdateAnimationData ? TEXT("true") : TEXT("false"),
+				Policy.bUseFullChooserRows ? TEXT("true") : TEXT("false"),
+				Policy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
+				Policy.MotionMatchingUpdateInterval,
+				*GetNameSafe(AnimInstance->CurrentActivePoseSearchDatabase.Get()));
+		}
+
+		if (DetailedLinesPrinted < MaxDetailedCharacters)
+		{
+			const FString DetailLine = FString::Printf(
+				TEXT("MMOProfile Actor=%s Type=%s Role=%s Distance=%.0f %s Rep=%s"),
+				*GetNameSafe(IterCharacter),
+				bIsPlayerCharacter ? TEXT("Player") : TEXT("NPC"),
+				ToDebugString(IterCharacter->GetLocalRole()),
+				FMath::Sqrt(Decision.DistanceSquared),
+				*AnimSummary,
+				*Decision.ToDebugString());
+			UE_LOG(LogProject_J, Display, TEXT("%s"), *DetailLine);
+			++DetailedLinesPrinted;
+		}
+	}
+
+	const float AverageMotionMatchingInterval = MotionMatchingIntervalCount > 0
+		? TotalMotionMatchingInterval / static_cast<float>(MotionMatchingIntervalCount)
+		: 0.0f;
+
+	const FString SummaryLine = FString::Printf(
+		TEXT("MMOProfileSummary Players=%d NPCs=%d Authority=%d Autonomous=%d Simulated=%d AnimInstances=%d Tiers(Local/Near/Mid/Far/Hidden)=%d/%d/%d/%d/%d UpdateData=%d FullChooser=%d FarOnly=%d AvgMMInterval=%.3f Detailed=%d"),
+		PlayerCharacterCount,
+		NPCCharacterCount,
+		AuthorityCount,
+		AutonomousCount,
+		SimulatedCount,
+		AnimInstanceCount,
+		TierCounts[0],
+		TierCounts[1],
+		TierCounts[2],
+		TierCounts[3],
+		TierCounts[4],
+		AnimationDataUpdateCount,
+		FullChooserCount,
+		FarChooserOnlyCount,
+		AverageMotionMatchingInterval,
+		DetailedLinesPrinted);
+
+	ClientMessage(SummaryLine);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *SummaryLine);
 #endif
 }

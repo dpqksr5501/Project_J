@@ -1,5 +1,33 @@
 # Motion Matching Next Steps
 
+## Animation Budget Source
+
+`UProject_JCharacterAnimInstance` now resolves Near/Mid/Far/Hidden motion matching values through `FProject_JAnimationBudgetSettings`.
+
+- `UProject_JLocomotionProfile::GetResolvedAnimationBudgetSettings()` remains the migration bridge from legacy per-field floats.
+- AnimInstance fallback values are still used when no locomotion profile is assigned.
+- Motion matching update interval, hidden remote interval, far distance, and far-disable policy now share one budget source.
+- This keeps MMO animation cost tuning data-driven without changing the Start/RemoteStart replicated event semantics.
+
+## PIE Profiling Snapshot
+
+`DumpMMOProfilingSnapshot [MaxDetailedCharacters]` captures an early MMORPG-scale snapshot from the current PIE world.
+
+- Counts player characters and NPC characters separately.
+- Counts authority, autonomous proxy, and simulated proxy roles.
+- Aggregates animation budget tiers as Local/Near/Mid/Far/Hidden.
+- Reports how many characters update animation data, use full chooser rows, or use far-only chooser rows.
+- Samples distance/combat replication policy decisions from the local viewer position.
+
+Use this before changing budget values. In early development, the goal is not a perfect benchmark; it is to build a repeatable baseline for 10/30/50 character tests and catch cases where simulated proxies stay too expensive or fall into the wrong tier.
+
+Current early pass:
+
+- Use player characters for Motion Matching quality and remote proxy validation.
+- Use NPC characters as a non-MM low-cost baseline.
+- Compare player proxy tier distribution against NPC counts before increasing Motion Matching quality.
+- Keep backend and inventory work out of this loop until character movement and replication costs are measured.
+
 ## Start Responsive Exit Policy
 
 Run/Sprint Start는 "정지에서 이동으로 들어가는 짧은 진입 포즈"로만 유지합니다. MMORPG 입력에서는 WASD 방향을 빠르게 바꾸거나 마우스로 control yaw를 크게 돌리는 일이 잦기 때문에, Start 상태가 `StartMinDuration` 동안 무조건 붙잡히면 실제 이동 방향과 포즈가 어긋납니다.
@@ -123,9 +151,9 @@ Unreal Insights에서 다음 비용을 먼저 확인합니다.
 
 플레이어, 파티원, 적, 군중 NPC마다 같은 거리라도 다른 quality tier를 줄 수 있도록 policy를 분리합니다.
 
-### NPC 저비용 locomotion path
+### NPC non-MM locomotion path
 
-원거리 NPC나 배경 crowd는 player-grade motion matching 대신 sequence, blendspace, cached pose, reduced update rate를 검토합니다.
+NPCs should not use player-grade Motion Matching in the current architecture. Keep NPC animation on cheaper blendspace, sequence, cached pose, URO, and significance-driven update paths. For MMORPG scale, spend NPC optimization budget on AI tick cadence, replication relevance, skeletal mesh update frequency, combat significance, and server-authoritative state compression before improving animation fidelity.
 
 ### Mass/Crowd 검토
 

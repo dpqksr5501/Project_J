@@ -27,6 +27,13 @@ public:
 	float GetReplicationDistanceSquared(const AActor* TargetActor, const FVector& ViewerLocation) const;
 
 	FProject_JReplicationPolicyDecision BuildReplicationDecision(const AActor* TargetActor, const FVector& ViewerLocation) const;
+	FProject_JReplicationPolicyDecision BuildReplicationDecisionWithSettings(
+		const AActor* TargetActor,
+		const FVector& ViewerLocation,
+		const FProject_JReplicationPolicySettings& Settings) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Network|Filtering")
+	void SetPolicySettings(const FProject_JReplicationPolicySettings& InPolicySettings);
 
 	// Setup filter parameters (overridden from UNetObjectFilter)
 	// virtual void OnInit(FNetObjectFilterInitParams& Params) override;
@@ -39,10 +46,6 @@ public:
 	// virtual void Filter(FNetObjectFilterParams& Params) override;
 
 protected:
-	// Distance squared threshold for aggressive filtering
 	UPROPERTY(EditAnywhere, Category = "Network|Filtering")
-	float MaxReplicationDistanceSquared = 100000000.0f; // 10000 * 10000
-
-	UPROPERTY(EditAnywhere, Category = "Network|Filtering")
-	bool bAlwaysReplicateOwnerOrInstigator = false;
+	FProject_JReplicationPolicySettings PolicySettings;
 };

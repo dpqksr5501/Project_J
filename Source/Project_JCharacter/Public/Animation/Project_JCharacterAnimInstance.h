@@ -325,6 +325,7 @@ protected:
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
+	FProject_JAnimationBudgetSettings GetEffectiveAnimationBudgetSettings() const;
 	float GetEffectiveGenericMoveInputSpeedThreshold() const;
 	float GetEffectiveSprintLocomotionSpeedThreshold() const;
 	float GetEffectiveHiddenRemoteUpdateInterval() const;

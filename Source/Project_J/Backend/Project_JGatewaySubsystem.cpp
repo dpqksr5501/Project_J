@@ -8,6 +8,106 @@
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonSerializer.h"
 
+namespace
+{
+FProject_JBackendRequestContext NormalizeRequestContext(FProject_JBackendRequestContext RequestContext)
+{
+	if (!RequestContext.HasRequestId())
+	{
+		RequestContext.RequestId = FProject_JRequestId::NewId();
+	}
+	return RequestContext;
+}
+
+EProject_JBackendFailureKind ClassifyFailure(int32 StatusCode, bool bConnectedSuccessfully, bool bDispatchFailed)
+{
+	if (bDispatchFailed)
+	{
+		return EProject_JBackendFailureKind::DispatchFailed;
+	}
+	if (!bConnectedSuccessfully || StatusCode <= 0)
+	{
+		return EProject_JBackendFailureKind::ConnectionFailed;
+	}
+	if (StatusCode == 429)
+	{
+		return EProject_JBackendFailureKind::RateLimited;
+	}
+	if (StatusCode >= 500)
+	{
+		return EProject_JBackendFailureKind::ServerError;
+	}
+	if (StatusCode >= 400)
+	{
+		return EProject_JBackendFailureKind::ClientError;
+	}
+	return EProject_JBackendFailureKind::Unknown;
+}
+
+bool IsRetryableBackendFailure(EProject_JBackendFailureKind FailureKind, int32 StatusCode)
+{
+	return
+		FailureKind == EProject_JBackendFailureKind::ConnectionFailed ||
+		FailureKind == EProject_JBackendFailureKind::RateLimited ||
+		FailureKind == EProject_JBackendFailureKind::ServerError ||
+		StatusCode == 408;
+}
+
+FProject_JBackendResponseEnvelope BuildResponseEnvelope(
+	const FProject_JBackendRequestContext& RequestContext,
+	FHttpResponsePtr ResponsePtr,
+	bool bConnectedSuccessfully,
+	bool bDispatchFailed)
+{
+	FProject_JBackendResponseEnvelope Envelope;
+	Envelope.RequestContext = RequestContext;
+	Envelope.HttpStatusCode = ResponsePtr.IsValid() ? ResponsePtr->GetResponseCode() : 0;
+	Envelope.ResponseData = ResponsePtr.IsValid() ? ResponsePtr->GetContentAsString() : TEXT("Connection Failed");
+	Envelope.bSucceeded = !bDispatchFailed && bConnectedSuccessfully && ResponsePtr.IsValid() && EHttpResponseCodes::IsOk(Envelope.HttpStatusCode);
+	Envelope.FailureKind = Envelope.bSucceeded
+		? EProject_JBackendFailureKind::None
+		: ClassifyFailure(Envelope.HttpStatusCode, bConnectedSuccessfully, bDispatchFailed);
+	Envelope.bRetryable = !Envelope.bSucceeded && IsRetryableBackendFailure(Envelope.FailureKind, Envelope.HttpStatusCode);
+	return Envelope;
+}
+
+void DispatchGatewayRequest(
+	const FString& GatewayUrl,
+	const FString& Endpoint,
+	const FString& Payload,
+	const FProject_JBackendRequestContext& InRequestContext,
+	TFunction<void(const FProject_JBackendResponseEnvelope&)> OnEnvelope)
+{
+	const FProject_JBackendRequestContext RequestContext = NormalizeRequestContext(InRequestContext);
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+	Request->SetURL(GatewayUrl + Endpoint);
+	Request->SetVerb("POST");
+	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	Request->SetHeader(TEXT("X-ProjectJ-Request-Id"), RequestContext.RequestId.ToString());
+	if (RequestContext.HasIdempotencyKey())
+	{
+		Request->SetHeader(TEXT("X-ProjectJ-Idempotency-Key"), RequestContext.IdempotencyKey.ToString());
+	}
+	if (RequestContext.HasTransactionId())
+	{
+		Request->SetHeader(TEXT("X-ProjectJ-Transaction-Id"), RequestContext.TransactionId.ToString());
+	}
+	Request->SetContentAsString(Payload);
+
+	Request->OnProcessRequestComplete().BindLambda([RequestContext, OnEnvelope](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
+	{
+		OnEnvelope(BuildResponseEnvelope(RequestContext, ResponsePtr, bConnectedSuccessfully, false));
+	});
+
+	if (!Request->ProcessRequest())
+	{
+		FProject_JBackendResponseEnvelope Envelope = BuildResponseEnvelope(RequestContext, nullptr, false, true);
+		Envelope.ResponseData = TEXT("Request dispatch failed");
+		OnEnvelope(Envelope);
+	}
+}
+}
+
 void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -35,31 +135,31 @@ void UProject_JGatewaySubsystem::Deinitialize()
 
 void UProject_JGatewaySubsystem::SendAsyncRequest(const FString& Endpoint, const FString& Payload, FOnBackendResponse OnResponse)
 {
-	// Example HTTP implementation skeleton
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
-	Request->SetURL(GatewayUrl + Endpoint);
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/json");
-	Request->SetContentAsString(Payload);
+	SendAsyncRequestWithContext(Endpoint, Payload, FProject_JBackendRequestContext(), OnResponse);
+}
 
-	Request->OnProcessRequestComplete().BindLambda([OnResponse](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
+void UProject_JGatewaySubsystem::SendAsyncRequestWithContext(
+	const FString& Endpoint,
+	const FString& Payload,
+	const FProject_JBackendRequestContext& RequestContext,
+	FOnBackendResponse OnResponse)
+{
+	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
-		const bool bSucceeded = bConnectedSuccessfully && ResponsePtr.IsValid() && EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode());
-		if (bSucceeded)
-		{
-			OnResponse.ExecuteIfBound(true, ResponsePtr->GetContentAsString());
-		}
-		else
-		{
-			const FString ResponseData = ResponsePtr.IsValid() ? ResponsePtr->GetContentAsString() : TEXT("Connection Failed");
-			OnResponse.ExecuteIfBound(false, ResponseData);
-		}
+		OnResponse.ExecuteIfBound(Envelope.bSucceeded, Envelope.ResponseData);
 	});
+}
 
-	if (!Request->ProcessRequest())
+void UProject_JGatewaySubsystem::SendAsyncRequestEnvelope(
+	const FString& Endpoint,
+	const FString& Payload,
+	const FProject_JBackendRequestContext& RequestContext,
+	FOnBackendEnvelopeResponse OnResponse)
+{
+	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
-		OnResponse.ExecuteIfBound(false, TEXT("Request dispatch failed"));
-	}
+		OnResponse.ExecuteIfBound(Envelope);
+	});
 }
 
 void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const FString& Severity)
@@ -96,22 +196,28 @@ void UProject_JGatewaySubsystem::FlushRemoteLogs()
 
 	bLogFlushInFlight = true;
 
-	FOnBackendResponse ResponseDelegate;
-	ResponseDelegate.BindDynamic(this, &UProject_JGatewaySubsystem::HandleRemoteLogFlushResponse);
-	SendAsyncRequest(TEXT("telemetry"), Payload, ResponseDelegate);
+	FProject_JBackendRequestContext RequestContext;
+	RequestContext.RequestId = FProject_JRequestId::NewId();
+
+	FOnBackendEnvelopeResponse ResponseDelegate;
+	ResponseDelegate.BindDynamic(this, &UProject_JGatewaySubsystem::HandleRemoteLogFlushEnvelopeResponse);
+	SendAsyncRequestEnvelope(TEXT("telemetry"), Payload, RequestContext, ResponseDelegate);
 }
 
-void UProject_JGatewaySubsystem::HandleRemoteLogFlushResponse(bool bSucceeded, const FString& Response)
+void UProject_JGatewaySubsystem::HandleRemoteLogFlushEnvelopeResponse(const FProject_JBackendResponseEnvelope& Response)
 {
 	bLogFlushInFlight = false;
 
-	if (bSucceeded)
+	if (Response.bSucceeded)
 	{
 		PendingLogFlushBatch.Reset();
 		return;
 	}
 
-	LogQueue.Insert(PendingLogFlushBatch, 0);
+	if (Response.bRetryable)
+	{
+		LogQueue.Insert(PendingLogFlushBatch, 0);
+	}
 	PendingLogFlushBatch.Reset();
 	TrimRemoteLogQueue();
 }

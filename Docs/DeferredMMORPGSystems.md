@@ -1,5 +1,44 @@
 # Deferred MMORPG Systems
 
+## Backend Contract Baseline
+
+MMORPG backend calls need stable request identity before full marketplace, inventory, transfer, or CS/audit systems exist.
+
+- `FProject_JRequestId`: traces one gateway request through logs and backend handlers.
+- `FProject_JIdempotencyKey`: lets retryable writes avoid duplicated rewards, purchases, or handover actions.
+- `FProject_JTransactionId`: identifies economy, inventory, and transfer transactions.
+- `FProject_JItemInstanceId`: distinguishes one owned item instance from a static item definition.
+- `FProject_JBackendRequestContext`: carries request, idempotency, and transaction values into gateway headers.
+- `FProject_JBackendResponseEnvelope`: returns success, HTTP status, failure kind, retryability, response payload, and the original request context.
+- Remote telemetry flushes now attach a request id so log batches can be correlated with gateway/backend traces.
+- Remote telemetry requeues failed batches only when the failure is retryable, such as connection failure, rate limit, timeout, or server error.
+
+Keep these as contracts first. Do not build the full economy or marketplace engine until backend authority, audit logs, and retry behavior are proven.
+
+At the current character/MM-only stage, do not expand backend gameplay APIs further. Keep the request envelope and IDs as a boundary for future inventory, reward, marketplace, telemetry, and audit systems, but prioritize locomotion, remote proxy behavior, replication policy, and NPC cost first.
+
+## NPC Optimization Assumption
+
+NPCs are not expected to use player-grade Motion Matching. Keep NPC optimization focused on AI tick cadence, replication relevance, skeletal mesh update rate, combat significance, and server-authoritative state compression. If NPC animation quality needs to scale later, prefer simple blendspace/sequence LOD paths over adding Motion Matching to every non-player character.
+
+`AProject_JNPCCharacter` now applies an early low-cost default policy:
+
+- actor tick stays disabled by default.
+- net cull distance and net update frequency are lower than player-facing defaults.
+- significance tick intervals are slower than player Motion Matching tiers.
+- skeletal mesh update rate optimization is enabled.
+- hidden NPC meshes only tick pose when rendered.
+
+This is intentionally modest. It gives early MMORPG-scale tests a safer NPC baseline without building AI, inventory, UI, or economy systems too early.
+
+## Replication Policy Settings
+
+`FProject_JReplicationPolicySettings` keeps distance filter thresholds in a reusable struct. `UProject_JNetObjectFilter_Distance` can now build decisions from either its default settings or explicit settings. This is the current adapter-prep layer before real Iris/RepGraph integration.
+
+## Early Profiling Baseline
+
+`DumpMMOProfilingSnapshot [MaxDetailedCharacters]` is the current early-project profiling hook. Use it in PIE before adding heavier systems. It records player/NPC counts, network role distribution, animation budget tier distribution, chooser policy counts, and replication relevance samples. This keeps optimization decisions tied to observed multiplayer state instead of guessing from single-character behavior.
+
 이 문서는 Project J에서 중요하지만 아직 본격 구현하지 않을 MMORPG 시스템을 정리합니다. 지금 목표는 대형 시스템을 성급히 만드는 것이 아니라, 나중에 붙일 수 있는 ID, 정책, 디버그, 책임 경계를 유지하는 것입니다.
 
 ## 지금 유지해야 할 최소 기반

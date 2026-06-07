@@ -21,5 +21,29 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// Add AI specific properties or components here
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization")
+	bool bApplyDefaultNPCOptimizationPolicy = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NPCNetCullDistance = 8000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "1.0", UIMin = "1.0"))
+	float NPCNetUpdateFrequency = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "1.0", UIMin = "1.0"))
+	float NPCMinNetUpdateFrequency = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NPCNearSignificanceTickInterval = 0.033f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NPCMidSignificanceTickInterval = 0.10f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NPCFarSignificanceTickInterval = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float NPCHiddenSignificanceTickInterval = 0.50f;
+
+	void ApplyDefaultNPCOptimizationPolicy();
 };

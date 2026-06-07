@@ -9,6 +9,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
+#include "Combat/Project_JCombatMovementPolicy.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -30,6 +31,25 @@
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+
+namespace
+{
+FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerCharacter& PlayerCharacter)
+{
+	FProject_JCombatMovementPolicy Policy;
+	Policy.bCombatMode = PlayerCharacter.IsCombatModeActive();
+	Policy.bAttacking = PlayerCharacter.IsAttacking();
+	Policy.bDodging = PlayerCharacter.IsDodging();
+	Policy.bHitReacting = PlayerCharacter.IsHitReacting();
+	if (const UProject_JCombatAnimProfile* CombatAnimProfile = PlayerCharacter.GetCombatAnimProfile())
+	{
+		Policy.bAllowSprintInCombat = CombatAnimProfile->bAllowSprintInCombat;
+		Policy.bUseCombatRotationMode = CombatAnimProfile->bUseCombatRotationMode;
+		Policy.bInterruptIntroOnHit = CombatAnimProfile->bInterruptCombatIntroOnHit;
+	}
+	return Policy;
+}
+}
 
 AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 {
@@ -304,21 +324,12 @@ bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) 
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
-	return
-		(IsCombatModeActive() && !ShouldAllowSprintInCombat()) ||
-		IsAttacking() ||
-		IsDodging() ||
-		IsHitReacting();
+	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
 }
 
 bool AProject_JPlayerCharacter::ShouldAllowSprintInCombat() const
 {
-	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
-	{
-		return EffectiveCombatAnimProfile->bAllowSprintInCombat;
-	}
-
-	return false;
+	return BuildCombatMovementPolicy(*this).bAllowSprintInCombat;
 }
 
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
@@ -480,22 +491,17 @@ bool AProject_JPlayerCharacter::ShouldPlayCombatIntroMontage() const
 
 bool AProject_JPlayerCharacter::ShouldUseCombatRotationMode() const
 {
-	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
-	{
-		return EffectiveCombatAnimProfile->bUseCombatRotationMode;
-	}
-
-	return true;
+	return BuildCombatMovementPolicy(*this).ShouldUseCombatRotationMode();
 }
 
 bool AProject_JPlayerCharacter::ShouldInterruptCombatIntroOnHit() const
 {
-	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	FProject_JCombatMovementPolicy Policy = BuildCombatMovementPolicy(*this);
+	if (!GetCombatAnimProfile())
 	{
-		return EffectiveCombatAnimProfile->bInterruptCombatIntroOnHit;
+		Policy.bInterruptIntroOnHit = bInterruptCombatIntroOnHit;
 	}
-
-	return bInterruptCombatIntroOnHit;
+	return Policy.ShouldInterruptIntroOnHit();
 }
 
 float AProject_JPlayerCharacter::GetEffectiveCombatAimAlpha() const
@@ -661,22 +667,22 @@ bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
 
 bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
 {
-	return !IsAttacking() && !IsDodging() && !IsHitReacting();
+	return BuildCombatMovementPolicy(*this).IsJumpAllowed();
 }
 
 bool AProject_JPlayerCharacter::IsGroundStartAllowed() const
 {
-	return !IsHitReacting();
+	return BuildCombatMovementPolicy(*this).IsGroundStartAllowed();
 }
 
 bool AProject_JPlayerCharacter::IsGroundStopAllowed() const
 {
-	return true;
+	return BuildCombatMovementPolicy(*this).IsGroundStopAllowed();
 }
 
 bool AProject_JPlayerCharacter::IsCombatLocomotionOverlayAllowed() const
 {
-	return IsCombatModeActive() && !IsHitReacting();
+	return BuildCombatMovementPolicy(*this).IsCombatLocomotionOverlayAllowed();
 }
 
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)

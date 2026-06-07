@@ -982,6 +982,24 @@ const UProject_JLocomotionProfile* UProject_JCharacterAnimInstance::GetLocomotio
 	return OwningPlayerCharacter ? OwningPlayerCharacter->GetLocomotionProfile() : nullptr;
 }
 
+FProject_JAnimationBudgetSettings UProject_JCharacterAnimInstance::GetEffectiveAnimationBudgetSettings() const
+{
+	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
+	{
+		return Profile->GetResolvedAnimationBudgetSettings();
+	}
+
+	FProject_JAnimationBudgetSettings Settings;
+	Settings.NearDistance = NearMotionMatchingDistance;
+	Settings.MidDistance = MidMotionMatchingDistance;
+	Settings.FarDistance = FarMotionMatchingDistance;
+	Settings.MidUpdateInterval = MidMotionMatchingUpdateInterval;
+	Settings.FarUpdateInterval = FarMotionMatchingUpdateInterval;
+	Settings.HiddenUpdateInterval = HiddenRemoteUpdateInterval;
+	Settings.bDisableMotionMatchingBeyondFarDistance = bDisableMotionMatchingBeyondFarDistance;
+	return Settings;
+}
+
 float UProject_JCharacterAnimInstance::GetEffectiveGenericMoveInputSpeedThreshold() const
 {
 	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
@@ -1004,72 +1022,37 @@ float UProject_JCharacterAnimInstance::GetEffectiveSprintLocomotionSpeedThreshol
 
 float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->AnimInstanceHiddenRemoteUpdateInterval;
-	}
-
-	return HiddenRemoteUpdateInterval;
+	return GetEffectiveAnimationBudgetSettings().HiddenUpdateInterval;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveNearMotionMatchingDistance() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->NearMotionMatchingDistance;
-	}
-
-	return NearMotionMatchingDistance;
+	return GetEffectiveAnimationBudgetSettings().NearDistance;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingDistance() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->MidMotionMatchingDistance;
-	}
-
-	return MidMotionMatchingDistance;
+	return GetEffectiveAnimationBudgetSettings().MidDistance;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingDistance() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->FarMotionMatchingDistance;
-	}
-
-	return FarMotionMatchingDistance;
+	return GetEffectiveAnimationBudgetSettings().FarDistance;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->MidMotionMatchingUpdateInterval;
-	}
-
-	return MidMotionMatchingUpdateInterval;
+	return GetEffectiveAnimationBudgetSettings().MidUpdateInterval;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingUpdateInterval() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->FarMotionMatchingUpdateInterval;
-	}
-
-	return FarMotionMatchingUpdateInterval;
+	return GetEffectiveAnimationBudgetSettings().FarUpdateInterval;
 }
 
 bool UProject_JCharacterAnimInstance::ShouldDisableMotionMatchingBeyondFarDistance() const
 {
-	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
-	{
-		return Profile->bDisableMotionMatchingBeyondFarDistance;
-	}
-
-	return bDisableMotionMatchingBeyondFarDistance;
+	return GetEffectiveAnimationBudgetSettings().bDisableMotionMatchingBeyondFarDistance;
 }
 
 const UProject_JCombatAnimProfile* UProject_JCharacterAnimInstance::GetCombatAnimProfile() const
