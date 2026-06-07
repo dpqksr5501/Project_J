@@ -4,6 +4,51 @@
 
 #include "Project_JPlayerCharacter.h"
 
+namespace
+{
+struct FProject_JResolvedGroundStartTiming
+{
+	float MinDuration = 0.0f;
+	float MaxDuration = 0.0f;
+	float ResponsiveTurnExitMinTime = 0.0f;
+	float InputReleaseExitMinTime = 0.0f;
+	float AutoPromoteDelay = 0.0f;
+};
+
+float ResolveStartTimingValue(float BaseValue, float OverrideValue)
+{
+	return OverrideValue >= 0.0f ? OverrideValue : BaseValue;
+}
+
+const FProject_JGroundStartTimingOverride& SelectStartTimingOverride(
+	const UProject_JLocomotionAnimStateComponent& Component,
+	bool bUseRemoteStart,
+	bool bUseSprintStart)
+{
+	if (bUseRemoteStart)
+	{
+		return bUseSprintStart ? Component.RemoteSprintStartTiming : Component.RemoteRunStartTiming;
+	}
+
+	return bUseSprintStart ? Component.LocalSprintStartTiming : Component.LocalRunStartTiming;
+}
+
+FProject_JResolvedGroundStartTiming ResolveStartTiming(
+	const UProject_JLocomotionAnimStateComponent& Component,
+	bool bUseRemoteStart,
+	bool bUseSprintStart)
+{
+	const FProject_JGroundStartTimingOverride& TimingOverride = SelectStartTimingOverride(Component, bUseRemoteStart, bUseSprintStart);
+	FProject_JResolvedGroundStartTiming ResolvedTiming;
+	ResolvedTiming.MinDuration = ResolveStartTimingValue(Component.StartMinDuration, TimingOverride.MinDuration);
+	ResolvedTiming.MaxDuration = ResolveStartTimingValue(Component.StartMaxDuration, TimingOverride.MaxDuration);
+	ResolvedTiming.ResponsiveTurnExitMinTime = ResolveStartTimingValue(Component.StartResponsiveTurnExitMinTime, TimingOverride.ResponsiveTurnExitMinTime);
+	ResolvedTiming.InputReleaseExitMinTime = ResolveStartTimingValue(Component.StartInputReleaseExitMinTime, TimingOverride.InputReleaseExitMinTime);
+	ResolvedTiming.AutoPromoteDelay = ResolveStartTimingValue(Component.StartAutoPromoteDelay, TimingOverride.AutoPromoteDelay);
+	return ResolvedTiming;
+}
+}
+
 void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGroundMotionMode NewMode)
 {
 	if (GroundMotionMode == NewMode)
@@ -158,7 +203,8 @@ bool UProject_JLocomotionAnimStateComponent::ShouldInterruptStartForResponsiveTu
 	const FVector2D& MoveInput,
 	bool bAllowLocalControlYaw) const
 {
-	if (!bHasMoveInput || GroundMotionModeElapsedTime < StartResponsiveTurnExitMinTime)
+	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bAllowLocalControlYaw, bStartWasSprinting);
+	if (!bHasMoveInput || GroundMotionModeElapsedTime < StartTiming.ResponsiveTurnExitMinTime)
 	{
 		return false;
 	}
@@ -201,7 +247,8 @@ bool UProject_JLocomotionAnimStateComponent::HasLocalStartResponsiveTurn(float A
 void UProject_JLocomotionAnimStateComponent::ScheduleStartAutoPromote()
 {
 	UWorld* World = GetWorld();
-	if (!World || StartAutoPromoteDelay <= 0.0f)
+	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bUsingLocalInputState, bStartWasSprinting);
+	if (!World || StartTiming.AutoPromoteDelay <= 0.0f)
 	{
 		return;
 	}
@@ -211,7 +258,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleStartAutoPromote()
 		StartAutoPromoteTimerHandle,
 		this,
 		&UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion,
-		StartAutoPromoteDelay,
+		StartTiming.AutoPromoteDelay,
 		false);
 }
 
@@ -303,12 +350,13 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		}
 	}
 
-	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartMinDuration;
-	const bool bCanExitReleasedStart = GroundMotionModeElapsedTime >= StartInputReleaseExitMinTime;
+	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bAllowSharpTurn, bStartWasSprinting);
+	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartTiming.MinDuration;
+	const bool bCanExitReleasedStart = GroundMotionModeElapsedTime >= StartTiming.InputReleaseExitMinTime;
 	const bool bRemoteResponsiveTurnExitRequested =
 		!bAllowSharpTurn &&
 		bStartTurnExitRequested &&
-		GroundMotionModeElapsedTime >= StartResponsiveTurnExitMinTime;
+		GroundMotionModeElapsedTime >= StartTiming.ResponsiveTurnExitMinTime;
 
 	if (!bHasMoveInput)
 	{
@@ -336,7 +384,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
-	else if (GroundMotionModeElapsedTime >= StartMaxDuration)
+	else if (GroundMotionModeElapsedTime >= StartTiming.MaxDuration)
 	{
 		EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
 	}

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogProject_JCore, Log, All);
+
 class FProject_JCoreModule : public IModuleInterface
 {
 public:

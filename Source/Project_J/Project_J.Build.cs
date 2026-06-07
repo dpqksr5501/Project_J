@@ -14,9 +14,6 @@ public class Project_J : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
 			"GameplayAbilities",
@@ -25,11 +22,7 @@ public class Project_J : ModuleRules
 			"Project_JCore",
 			"Project_JGAS",
 			"Project_JCharacter",
-			"SignificanceManager",
-			"IrisCore",
-			"NetCore",
-			"GameFeatures",
-			"ModularGameplay"
+			"SignificanceManager"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
@@ -42,20 +35,7 @@ public class Project_J : ModuleRules
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Project_J",
-			"Project_J/Game",
-			"Project_J/Variant_Platforming",
-			"Project_J/Variant_Platforming/Animation",
-			"Project_J/Variant_Combat",
-			"Project_J/Variant_Combat/AI",
-			"Project_J/Variant_Combat/Animation",
-			"Project_J/Variant_Combat/Gameplay",
-			"Project_J/Variant_Combat/Interfaces",
-			"Project_J/Variant_Combat/UI",
-			"Project_J/Variant_SideScrolling",
-			"Project_J/Variant_SideScrolling/AI",
-			"Project_J/Variant_SideScrolling/Gameplay",
-			"Project_J/Variant_SideScrolling/Interfaces",
-			"Project_J/Variant_SideScrolling/UI"
+			"Project_J/Game"
 		});
 
 		// Uncomment if you are using Slate UI

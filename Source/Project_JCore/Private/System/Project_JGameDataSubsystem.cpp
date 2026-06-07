@@ -2,18 +2,20 @@
 
 #include "System/Project_JGameDataSubsystem.h"
 
+#include "Project_JCore.h"
+
 void UProject_JGameDataSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	bIsReady = true;
-	UE_LOG(LogTemp, Log, TEXT("Project_J GameData Subsystem Initialized."));
+	UE_LOG(LogProject_JCore, Log, TEXT("Project_J GameData Subsystem Initialized."));
 }
 
 void UProject_JGameDataSubsystem::Deinitialize()
 {
 	bIsReady = false;
-	UE_LOG(LogTemp, Log, TEXT("Project_J GameData Subsystem Deinitialized."));
+	UE_LOG(LogProject_JCore, Log, TEXT("Project_J GameData Subsystem Deinitialized."));
 	
 	Super::Deinitialize();
 }

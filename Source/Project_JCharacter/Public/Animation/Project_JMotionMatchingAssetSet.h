@@ -112,6 +112,8 @@ public:
 		bool bUseFallOffStart = false,
 		bool bUseRemoteStart = false) const;
 
+	bool ValidateForProjectJLocomotion(const UObject* ValidationContext, TArray<FString>& OutWarnings) const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> DefaultPoseSearchDatabase = nullptr;
 

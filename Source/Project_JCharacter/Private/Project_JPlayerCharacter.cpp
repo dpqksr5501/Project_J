@@ -3,10 +3,12 @@
 #include "Project_JPlayerCharacter.h"
 #include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Animation/Project_JAnimationProfileValidation.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
@@ -400,6 +402,21 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 			Warning,
 			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."),
 			*GetNameSafe(this));
+	}
+
+	TArray<FString> ValidationWarnings;
+	Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration(
+		*this,
+		EffectiveLocomotionProfile,
+		EffectiveAssetSet,
+		GetWeaponAnimProfile(),
+		GetCombatAnimProfile(),
+		LocomotionAnimStateComponent,
+		ValidationWarnings);
+
+	for (const FString& ValidationWarning : ValidationWarnings)
+	{
+		UE_LOG(LogTemplateCharacter, Warning, TEXT("%s"), *ValidationWarning);
 	}
 }
 

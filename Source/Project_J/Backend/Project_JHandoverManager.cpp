@@ -2,6 +2,7 @@
 
 #include "GameFramework/Actor.h"
 #include "Network/Project_JHandoverSerializable.h"
+#include "Project_J.h"
 
 void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -24,7 +25,7 @@ void UProject_JHandoverManager::InitiateHandover(AActor* ActorToHandover, const 
 
 	if (!ActorToHandover->HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Ignoring handover for %s because this node does not have authority."), *GetNameSafe(ActorToHandover));
+		UE_LOG(LogProject_J, Warning, TEXT("Ignoring handover for %s because this node does not have authority."), *GetNameSafe(ActorToHandover));
 		return;
 	}
 
@@ -42,7 +43,7 @@ void UProject_JHandoverManager::InitiateHandover(AActor* ActorToHandover, const 
 	IProject_JHandoverSerializable* SerializableActor = Cast<IProject_JHandoverSerializable>(ActorToHandover);
 	if (!SerializableActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Actor %s does not implement Project_JHandoverSerializable."), *GetNameSafe(ActorToHandover));
+		UE_LOG(LogProject_J, Warning, TEXT("Actor %s does not implement Project_JHandoverSerializable."), *GetNameSafe(ActorToHandover));
 		return;
 	}
 

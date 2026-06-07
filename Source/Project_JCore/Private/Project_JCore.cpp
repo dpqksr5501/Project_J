@@ -1,6 +1,8 @@
 #include "Project_JCore.h"
 #include "Project_JGameplayTags.h"
 
+DEFINE_LOG_CATEGORY(LogProject_JCore);
+
 #define LOCTEXT_NAMESPACE "FProject_JCoreModule"
 
 void FProject_JCoreModule::StartupModule()

@@ -35,6 +35,32 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionRuntimeSnapshot
 };
 
 USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JGroundStartTimingOverride
+{
+	GENERATED_BODY()
+
+	/** -1 keeps the shared StartMinDuration value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
+	float MinDuration = -1.0f;
+
+	/** -1 keeps the shared StartMaxDuration value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
+	float MaxDuration = -1.0f;
+
+	/** -1 keeps the shared StartResponsiveTurnExitMinTime value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
+	float ResponsiveTurnExitMinTime = -1.0f;
+
+	/** -1 keeps the shared StartInputReleaseExitMinTime value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
+	float InputReleaseExitMinTime = -1.0f;
+
+	/** -1 keeps the shared StartAutoPromoteDelay value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
+	float AutoPromoteDelay = -1.0f;
+};
+
+USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JLocomotionAuthoritativeContext
 {
 	GENERATED_BODY()
@@ -383,6 +409,22 @@ public:
 	/** Failsafe that prevents Start/RemoteStart PSD from persisting if update throttling or remote input inference misses the exit. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float StartAutoPromoteDelay = 0.35f;
+
+	/** Optional overrides for local run starts. Values below 0 keep the shared Start timing value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
+	FProject_JGroundStartTimingOverride LocalRunStartTiming;
+
+	/** Optional overrides for local sprint starts. Values below 0 keep the shared Start timing value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
+	FProject_JGroundStartTimingOverride LocalSprintStartTiming;
+
+	/** Optional overrides for simulated proxy run starts. Values below 0 keep the shared Start timing value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
+	FProject_JGroundStartTimingOverride RemoteRunStartTiming;
+
+	/** Optional overrides for simulated proxy sprint starts. Values below 0 keep the shared Start timing value. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
+	FProject_JGroundStartTimingOverride RemoteSprintStartTiming;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedStartInputHoldWindow = 0.25f;

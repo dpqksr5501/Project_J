@@ -2,16 +2,18 @@
 
 #include "System/Project_JMessageSubsystem.h"
 
+#include "Project_JCore.h"
+
 void UProject_JMessageSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	UE_LOG(LogTemp, Log, TEXT("Project_J Message Subsystem (Event Router) Initialized."));
+	UE_LOG(LogProject_JCore, Log, TEXT("Project_J Message Subsystem (Event Router) Initialized."));
 }
 
 void UProject_JMessageSubsystem::Deinitialize()
 {
 	ListenerMap.Empty();
-	UE_LOG(LogTemp, Log, TEXT("Project_J Message Subsystem Deinitialized."));
+	UE_LOG(LogProject_JCore, Log, TEXT("Project_J Message Subsystem Deinitialized."));
 	Super::Deinitialize();
 }
 
@@ -19,7 +21,7 @@ void UProject_JMessageSubsystem::BroadcastMessage(FGameplayTag Channel, UObject*
 {
 	if (!Channel.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Attempted to broadcast on an invalid GameplayTag channel."));
+		UE_LOG(LogProject_JCore, Warning, TEXT("Attempted to broadcast on an invalid GameplayTag channel."));
 		return;
 	}
 

@@ -31,15 +31,7 @@ public class Project_JCharacter : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"IrisCore",
-			"GameFeatures",
-			"ModularGameplay",
-			"MassCommon",
-			"MassMovement",
-			"MassRepresentation",
-			"MassGameplayDebug",
-			"MassActors"
+			"MassCommon"
 		});
 	}
 }
