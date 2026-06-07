@@ -22,6 +22,11 @@ void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type 
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
+	if (!IsRegistered())
+	{
+		return;
+	}
+
 	AProject_JPlayerCharacter* PlayerOwner = nullptr;
 	if (!RefreshOwnerReferencesForUpdate(PlayerOwner))
 	{

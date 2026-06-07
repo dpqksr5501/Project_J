@@ -21,7 +21,7 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	AActor* Owner = GetOwner();
-	if (!Owner || !Owner->HasAuthority())
+	if (!Owner || !Owner->HasAuthority() || !GetWorld())
 	{
 		return;
 	}
@@ -59,7 +59,7 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 	}
 
 	AActor* Owner = GetOwner();
-	if (!Owner)
+	if (!Owner || !GetWorld())
 	{
 		return false;
 	}

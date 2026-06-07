@@ -139,6 +139,9 @@ protected:
 	bool IsCombatActionBlockingSprint() const;
 	bool ShouldAllowSprintInCombat() const;
 
+	UFUNCTION()
+	void OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
@@ -168,8 +171,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetCombatMode(bool bNewCombatMode);
 
-	UFUNCTION(Server, Reliable)
-	void ServerTriggerPlayerAttack();
+
 
 	UFUNCTION(Server, Unreliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);

@@ -10,6 +10,7 @@ class ACharacter;
 class APawn;
 class AProject_JPlayerCharacter;
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JMotionMatchingTrajectoryComponent;
 
 /**
  * Shared owner/reference cache for native character animation instances.
@@ -43,4 +44,7 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> CachedTrajectoryComponent = nullptr;
 };

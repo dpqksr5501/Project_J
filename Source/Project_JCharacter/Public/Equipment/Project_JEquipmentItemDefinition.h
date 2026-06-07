@@ -37,9 +37,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual|Optimization")
 	bool bCastDynamicShadow = true;
 
-	// List of abilities granted to the character when this equipment is equipped.
+	// AbilitySet containing skills and passives granted when this equipment is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
+	TObjectPtr<class UProject_JAbilitySet> AbilitySet;
 
 	// Fixed attribute bonuses applied while this item is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Stats")

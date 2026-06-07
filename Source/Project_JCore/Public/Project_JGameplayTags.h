@@ -26,6 +26,14 @@ public:
 	FGameplayTag State_HitReacting;
 	FGameplayTag State_Dead;
 
+	// Input Tags
+	FGameplayTag InputTag_Weapon_LightAttack;
+	FGameplayTag InputTag_Weapon_HeavyAttack;
+	FGameplayTag InputTag_Skill_Dash;
+
+	// Event Tags
+	FGameplayTag Event_Combat_ComboWindow;
+
 private:
 	static FProject_JGameplayTags GameplayTags;
 };

@@ -6,6 +6,7 @@
 #include "Inventory/Project_JItemInstanceTypes.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "GameplayAbilitySpec.h"
+#include "AbilitySystem/Project_JAbilitySet.h"
 #include "Project_JEquipmentManagerComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
@@ -32,7 +33,7 @@ struct FProject_JEquipmentArrayItem : public FFastArraySerializerItem
 	UProject_JModularMeshComponent* SpawnedMesh = nullptr;
 
 	UPROPERTY(NotReplicated)
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+	FProject_JAbilitySet_GrantedHandles GrantedHandles;
 
 	UPROPERTY(NotReplicated)
 	int32 LocalVisualRequestId = 0;
@@ -131,7 +132,7 @@ private:
 	void ServerRequestEquipItem(const UProject_JEquipmentItemDefinition* ItemDef);
 
 	UFUNCTION(Server, Reliable)
-	void ServerRequestEquipItemInstance(FProject_JItemInstanceData ItemInstance);
+	void ServerRequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestUnequipSlot(EProject_JEquipmentSlot Slot);

@@ -13,6 +13,7 @@
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
 #include "Engine/LocalPlayer.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -131,6 +132,14 @@ void AProject_JPlayerCharacter::BeginPlay()
 	{
 		ActiveCombatComponent->BindToGAS(AbilitySystemComponent);
 	}
+
+	// 바인딩: 어택/회피/피격 태그가 변경될 때 즉각적으로 Sprint 속도를 갱신
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	}
 }
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
@@ -140,12 +149,6 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
-	}
-
-	if (bWasSprintLocomotionAllowed != IsSprintLocomotionAllowed())
-	{
-		UpdateMaxWalkSpeed();
-		ApplySprintAnimationState();
 	}
 }
 
@@ -329,6 +332,12 @@ bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
 	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
+}
+
+void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	UpdateMaxWalkSpeed();
+	ApplySprintAnimationState();
 }
 
 bool AProject_JPlayerCharacter::ShouldAllowSprintInCombat() const
@@ -577,18 +586,7 @@ void AProject_JPlayerCharacter::ServerSetCombatMode_Implementation(bool bNewComb
 	ForceNetUpdate();
 }
 
-void AProject_JPlayerCharacter::ServerTriggerPlayerAttack_Implementation()
-{
-	if (IsDodging() || IsHitReacting())
-	{
-		return;
-	}
 
-	if (ActiveCombatComponent)
-	{
-		ActiveCombatComponent->Attack();
-	}
-}
 
 float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 {
@@ -1042,13 +1040,14 @@ void AProject_JPlayerCharacter::FinishLanding(bool bForceFinish)
 
 void AProject_JPlayerCharacter::TriggerPlayerAttack()
 {
-	if (ActiveCombatComponent)
+	if (AbilitySystemComponent)
 	{
-		ActiveCombatComponent->Attack();
-	}
+		FGameplayEventData Payload;
+		Payload.EventTag = FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
+		Payload.Instigator = this;
+		Payload.Target = this;
 
-	if (!HasAuthority())
-	{
-		ServerTriggerPlayerAttack();
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Payload.EventTag, Payload);
+		AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(Payload.EventTag));
 	}
 }

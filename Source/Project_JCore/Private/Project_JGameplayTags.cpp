@@ -42,4 +42,26 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FName("State.Dead"),
 		FString("Character is dead")
 	);
+
+	// Input Tags
+	GameplayTags.InputTag_Weapon_LightAttack = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Weapon.LightAttack"),
+		FString("Input for Light Attack")
+	);
+
+	GameplayTags.InputTag_Weapon_HeavyAttack = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Weapon.HeavyAttack"),
+		FString("Input for Heavy Attack")
+	);
+
+	GameplayTags.InputTag_Skill_Dash = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Skill.Dash"),
+		FString("Input for Dash Skill")
+	);
+
+	// Event Tags
+	GameplayTags.Event_Combat_ComboWindow = GameplayTagsManager.AddNativeGameplayTag(
+		FName("Event.Combat.ComboWindow"),
+		FString("Event fired when combo window is open in an animation")
+	);
 }

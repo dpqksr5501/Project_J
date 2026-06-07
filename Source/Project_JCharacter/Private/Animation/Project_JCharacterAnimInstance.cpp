@@ -918,21 +918,9 @@ void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(c
 		return;
 	}
 
-	if (OwningPlayerCharacter)
+	if (CachedTrajectoryComponent)
 	{
-		if (UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
-		{
-			TrajectoryComponent->ResetTrajectoryHistory();
-			return;
-		}
-	}
-
-	if (OwningCharacter)
-	{
-		if (UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningCharacter->FindComponentByClass<UProject_JMotionMatchingTrajectoryComponent>())
-		{
-			TrajectoryComponent->ResetTrajectoryHistory();
-		}
+		CachedTrajectoryComponent->ResetTrajectoryHistory();
 	}
 }
 

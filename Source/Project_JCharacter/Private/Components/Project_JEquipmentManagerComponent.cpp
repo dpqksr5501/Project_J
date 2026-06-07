@@ -125,19 +125,11 @@ void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItem
 		StartLocalSpawnEquipment(AddedItem);
 	}
 
-	// Grant GAS Abilities
+	// Grant GAS Ability Set
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-	if (ASC)
+	if (ASC && ItemDef->AbilitySet)
 	{
-		for (TSubclassOf<UGameplayAbility> AbilityClass : ItemDef->GrantedAbilities)
-		{
-			if (AbilityClass)
-			{
-				FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, OwnerCharacter);
-				FGameplayAbilitySpecHandle SpecHandle = ASC->GiveAbility(Spec);
-				AddedItem.GrantedAbilityHandles.Add(SpecHandle);
-			}
-		}
+		ItemDef->AbilitySet->GiveToAbilitySystem(ASC, &AddedItem.GrantedHandles);
 	}
 
 	ApplyEquipmentStatModifiers(ItemDef, 1.0f);
@@ -214,7 +206,7 @@ void UProject_JEquipmentManagerComponent::ServerRequestEquipItem_Implementation(
 	EquipItem(const_cast<UProject_JEquipmentItemDefinition*>(ItemDef));
 }
 
-void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstance_Implementation(FProject_JItemInstanceData ItemInstance)
+void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstance_Implementation(const FProject_JItemInstanceData& ItemInstance)
 {
 	EquipItemInstance(ItemInstance);
 }
@@ -256,17 +248,11 @@ void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 		BroadcastEquipmentUnequipped(EquipmentArray.Items[Index]);
 	}
 
-	// Remove granted GAS abilities
+	// Remove granted GAS Ability Set
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-	if (ASC)
+	if (ASC && EquipmentArray.Items[Index].ItemDef && EquipmentArray.Items[Index].ItemDef->AbilitySet)
 	{
-		for (const FGameplayAbilitySpecHandle& Handle : EquipmentArray.Items[Index].GrantedAbilityHandles)
-		{
-			if (Handle.IsValid())
-			{
-				ASC->ClearAbility(Handle);
-			}
-		}
+		EquipmentArray.Items[Index].ItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &EquipmentArray.Items[Index].GrantedHandles);
 	}
 
 	ApplyEquipmentStatModifiers(EquipmentArray.Items[Index].ItemDef, -1.0f);

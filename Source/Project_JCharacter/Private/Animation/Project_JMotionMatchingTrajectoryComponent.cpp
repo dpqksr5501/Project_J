@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionTrajectoryLibrary.h"
+#include "Async/ParallelFor.h"
 
 UProject_JMotionMatchingTrajectoryComponent::UProject_JMotionMatchingTrajectoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -71,6 +72,12 @@ void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float De
 	if (!CharacterOwner)
 	{
 		return;
+	}
+
+	// 0. Update the actual trajectory samples manually since component tick is disabled
+	if (IsRegistered())
+	{
+		Super::TickComponent(DeltaTime, ELevelTick::LEVELTICK_All, nullptr);
 	}
 
 	// 1. Speed change correction (applies to all characters, local or simulated)
@@ -151,7 +158,10 @@ void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float
 	FTransform ActorTransform = CharacterOwner->GetActorTransform();
 	float Alpha = FMath::Clamp(DeltaTime * TrajectorySmoothingSpeed, 0.0f, 1.0f);
 
-	for (int32 i = 0; i < Trajectory.Samples.Num(); ++i)
+	const int32 NumSamples = Trajectory.Samples.Num();
+	constexpr int32 ParallelSmoothingSampleThreshold = 64;
+
+	auto SmoothingLogic = [&](int32 i)
 	{
 		FTransformTrajectorySample& CurrentSample = Trajectory.Samples[i];
 		const FTransformTrajectorySample& PrevSample = PreviousFilteredTrajectory.Samples[i];
@@ -169,6 +179,18 @@ void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float
 
 		// Convert back to world space
 		CurrentSample.SetTransform(LocalSmoothed * ActorTransform);
+	};
+
+	if (NumSamples >= ParallelSmoothingSampleThreshold)
+	{
+		ParallelFor(NumSamples, SmoothingLogic);
+	}
+	else
+	{
+		for (int32 i = 0; i < NumSamples; ++i)
+		{
+			SmoothingLogic(i);
+		}
 	}
 
 	PreviousFilteredTrajectory = Trajectory;
