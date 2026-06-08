@@ -45,6 +45,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|GAS")
 	UAbilitySystemComponent* GetOwnerAbilitySystemComponent() const { return OwnerASC.Get(); }
 
+	/** Sends a Server-Side Rewind hit request to the server from a local client */
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Combat|SSR")
+	void ServerRequestSSRHit(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd);
+
 protected:
 	// Callback when a GAS Ability is activated
 	virtual void OnAbilityActivatedCallback(UGameplayAbility* Ability);
@@ -55,6 +59,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|GAS", meta = (ToolTip = "Optional ability tag to activate when Attack is called. Leave empty while combat abilities are not authored yet."))
 	FGameplayTag PrimaryAttackAbilityTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|SSR", meta = (ClampMin = "0.0"))
+	float MaxServerSideRewindRequestAge = 1.0f;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> OwnerASC = nullptr;

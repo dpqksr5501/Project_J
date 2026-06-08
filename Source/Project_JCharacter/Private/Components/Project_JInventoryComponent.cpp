@@ -51,7 +51,7 @@ void UProject_JInventoryComponent::BeginPlay()
 void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UProject_JInventoryComponent, InventoryArray);
+	DOREPLIFETIME_CONDITION(UProject_JInventoryComponent, InventoryArray, COND_OwnerOnly);
 }
 
 FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProject_JEquipmentItemDefinition* ItemDef, int32 StackCount, int32 ItemLevel)

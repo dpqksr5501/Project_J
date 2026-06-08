@@ -5,7 +5,7 @@ UProject_JModularMeshComponent::UProject_JModularMeshComponent()
 {
 	// Default optimization: don't tick animations if not rendered, relying on the main mesh's significance or leader pose.
 	VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	bEnableUpdateRateOptimizations = true;
 }
 

@@ -4,11 +4,21 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
+#include "Project_JCombatComponent.h"
+#include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
 
 UProject_JGameplayAbility_Melee::UProject_JGameplayAbility_Melee()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
+
+	FGameplayTagContainer AssetTags;
+	AssetTags.AddTag(FProject_JGameplayTags::Get().State_Attacking);
+	SetAssetTags(AssetTags);
+
+	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Attacking);
 }
 
 void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -127,13 +137,34 @@ void UProject_JGameplayAbility_Melee::OnMontageInterrupted()
 
 void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payload)
 {
-	const AActor* HitActor = Payload.Target.Get();
+	AActor* HitActor = const_cast<AActor*>(Payload.Target.Get());
 	if (HitActor && !HitActorsThisSwing.Contains(HitActor))
 	{
 		HitActorsThisSwing.Add(HitActor);
 		
-		// Apply damage/effects to HitActor here
-		// Note: Actual GameplayEffect application should typically check HasAuthority() or run on server.
+		AActor* AvatarActor = GetAvatarActorFromActorInfo();
+		if (AvatarActor && AvatarActor->HasAuthority())
+		{
+			// Server hit natively (either locally controlled server or AI)
+			// Apply damage/effects to HitActor here
+		}
+		else if (AvatarActor && AvatarActor->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			// Local predicting client: request SSR from the server
+			if (Payload.TargetData.Num() > 0)
+			{
+				if (const FHitResult* HitResult = Payload.TargetData.Get(0)->GetHitResult())
+				{
+					const UWorld* World = GetWorld();
+					const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
+					const float ClientTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
+					if (UProject_JCombatComponent* CombatComp = AvatarActor->FindComponentByClass<UProject_JCombatComponent>())
+					{
+						CombatComp->ServerRequestSSRHit(HitActor, ClientTimestamp, HitResult->TraceStart, HitResult->TraceEnd);
+					}
+				}
+			}
+		}
 	}
 }
 

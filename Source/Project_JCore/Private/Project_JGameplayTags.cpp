@@ -17,6 +17,11 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FString("Character is currently in the air")
 	);
 
+	GameplayTags.State_Movement_Sprinting = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Movement.Sprinting"),
+		FString("Character is currently sprinting")
+	);
+
 	// Combat Tags
 	GameplayTags.State_CombatMode = GameplayTagsManager.AddNativeGameplayTag(
 		FName("State.CombatMode"),

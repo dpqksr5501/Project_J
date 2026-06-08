@@ -18,6 +18,7 @@ public:
 
 	FGameplayTag State_Movement_Landing;
 	FGameplayTag State_Movement_InAir;
+	FGameplayTag State_Movement_Sprinting;
 
 	// Combat States
 	FGameplayTag State_CombatMode;

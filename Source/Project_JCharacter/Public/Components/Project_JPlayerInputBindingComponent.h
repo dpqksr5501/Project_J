@@ -56,6 +56,8 @@ private:
 	void HandleMove(const FInputActionValue& Value);
 	void HandleLook(const FInputActionValue& Value);
 	void HandleMoveStopped();
+	void HandleJumpStarted();
+	void HandleJumpStopped();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> BoundPlayerCharacter = nullptr;

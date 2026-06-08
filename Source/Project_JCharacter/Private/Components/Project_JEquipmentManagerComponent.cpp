@@ -1,16 +1,8 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
-#include "GameFramework/Character.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
 #include "Net/UnrealNetwork.h"
-#include "Project_JAttributeSet.h"
-#include "Project_JPlayerCharacter.h"
-#include "Project_JStatTypes.h"
-#include "System/Project_JAssetManager.h"
 #include "Engine/StreamableManager.h"
-#include "Engine/SkeletalMesh.h"
 
 // --- FFastArraySerializer Callbacks ---
 
@@ -58,7 +50,6 @@ void UProject_JEquipmentManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	EquipmentArray.OwnerComponent = this;
-	RefreshCurrentWeaponAnimProfile();
 }
 
 void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefinition* ItemDef)
@@ -116,23 +107,6 @@ void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItem
 	FProject_JEquipmentArrayItem& AddedItem = EquipmentArray.Items.Add_GetRef(NewItem);
 	EquipmentArray.MarkItemDirty(AddedItem);
 	BroadcastEquipmentEquipped(AddedItem);
-	RefreshCurrentWeaponAnimProfile();
-
-	// On Listen Server or Standalone, trigger local spawning manually since OnRep won't trigger for server owner
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter && OwnerCharacter->GetNetMode() != NM_DedicatedServer)
-	{
-		StartLocalSpawnEquipment(AddedItem);
-	}
-
-	// Grant GAS Ability Set
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-	if (ASC && ItemDef->AbilitySet)
-	{
-		ItemDef->AbilitySet->GiveToAbilitySystem(ASC, &AddedItem.GrantedHandles);
-	}
-
-	ApplyEquipmentStatModifiers(ItemDef, 1.0f);
 }
 
 void UProject_JEquipmentManagerComponent::RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
@@ -201,6 +175,19 @@ UProject_JEquipmentItemDefinition* UProject_JEquipmentManagerComponent::GetEquip
 	return FoundIndex != INDEX_NONE ? EquipmentArray.Items[FoundIndex].ItemDef : nullptr;
 }
 
+TArray<UProject_JEquipmentItemDefinition*> UProject_JEquipmentManagerComponent::GetAllEquippedItems() const
+{
+	TArray<UProject_JEquipmentItemDefinition*> Result;
+	for (const FProject_JEquipmentArrayItem& Item : EquipmentArray.Items)
+	{
+		if (Item.ItemDef)
+		{
+			Result.Add(Item.ItemDef);
+		}
+	}
+	return Result;
+}
+
 void UProject_JEquipmentManagerComponent::ServerRequestEquipItem_Implementation(const UProject_JEquipmentItemDefinition* ItemDef)
 {
 	EquipItem(const_cast<UProject_JEquipmentItemDefinition*>(ItemDef));
@@ -238,152 +225,20 @@ void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 		return;
 	}
 
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter && OwnerCharacter->GetNetMode() != NM_DedicatedServer)
-	{
-		OnRep_EquipmentRemoved(EquipmentArray.Items[Index]);
-	}
-	else
-	{
-		BroadcastEquipmentUnequipped(EquipmentArray.Items[Index]);
-	}
-
-	// Remove granted GAS Ability Set
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-	if (ASC && EquipmentArray.Items[Index].ItemDef && EquipmentArray.Items[Index].ItemDef->AbilitySet)
-	{
-		EquipmentArray.Items[Index].ItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &EquipmentArray.Items[Index].GrantedHandles);
-	}
-
-	ApplyEquipmentStatModifiers(EquipmentArray.Items[Index].ItemDef, -1.0f);
+	BroadcastEquipmentUnequipped(EquipmentArray.Items[Index]);
 
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();
-	RefreshCurrentWeaponAnimProfile();
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item)
 {
 	BroadcastEquipmentEquipped(Item);
-	RefreshCurrentWeaponAnimProfile();
-
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter && OwnerCharacter->GetNetMode() != NM_DedicatedServer)
-	{
-		StartLocalSpawnEquipment(Item);
-	}
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem& Item)
 {
 	BroadcastEquipmentUnequipped(Item);
-	RefreshCurrentWeaponAnimProfile(Item.ItemDef);
-
-	if (Item.SpawnedMesh)
-	{
-		Item.SpawnedMesh->DestroyComponent();
-		Item.SpawnedMesh = nullptr;
-	}
-
-	++Item.LocalVisualRequestId;
-}
-
-void UProject_JEquipmentManagerComponent::StartLocalSpawnEquipment(FProject_JEquipmentArrayItem& Item)
-{
-	UProject_JEquipmentItemDefinition* ItemDef = Item.ItemDef;
-	if (!ItemDef || ItemDef->EquipmentMesh.IsNull())
-	{
-		return;
-	}
-
-	const FGuid InstanceId = Item.ItemInstance.InstanceId;
-	const int32 VisualRequestId = ++Item.LocalVisualRequestId;
-
-	// Request ASYNC Loading of modular mesh to prevent game-thread hitches
-	TWeakObjectPtr<UProject_JEquipmentManagerComponent> WeakThis(this);
-	UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
-		ItemDef->EquipmentMesh.ToSoftObjectPath(),
-		FStreamableDelegate::CreateLambda([WeakThis, InstanceId, ItemDef, VisualRequestId]()
-		{
-			if (UProject_JEquipmentManagerComponent* StrongThis = WeakThis.Get())
-			{
-				StrongThis->OnEquipmentMeshLoaded(InstanceId, ItemDef, VisualRequestId);
-			}
-		})
-	);
-}
-
-void UProject_JEquipmentManagerComponent::OnEquipmentMeshLoaded(FGuid InstanceId, UProject_JEquipmentItemDefinition* ItemDef, int32 VisualRequestId)
-{
-	if (!ItemDef) return;
-
-	// Verify the item is still equipped (handling race conditions where gear is unequipped while loading)
-	FProject_JEquipmentArrayItem* FoundItem = nullptr;
-	for (FProject_JEquipmentArrayItem& Item : EquipmentArray.Items)
-	{
-		if (Item.ItemInstance.InstanceId == InstanceId && Item.ItemDef == ItemDef && Item.LocalVisualRequestId == VisualRequestId)
-		{
-			FoundItem = &Item;
-			break;
-		}
-	}
-
-	if (!FoundItem || FoundItem->SpawnedMesh)
-	{
-		return;
-	}
-
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter) return;
-
-	USkeletalMeshComponent* MainMesh = OwnerCharacter->GetMesh();
-	if (!MainMesh) return;
-
-	// Spawn the modular mesh component dynamically on the client
-	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
-	NewMeshComp->RegisterComponent();
-	NewMeshComp->SetSkeletalMesh(ItemDef->EquipmentMesh.Get());
-	NewMeshComp->SetCastShadow(ItemDef->bCastDynamicShadow);
-	NewMeshComp->SetCullDistance(ItemDef->MaxDrawDistance);
-
-	// Attach to specific socket or standard Leader Pose
-	if (ItemDef->AttachSocketName.IsNone())
-	{
-		// Standard armor/body part: Follow leader pose
-		NewMeshComp->AttachAndSetLeader(MainMesh);
-	}
-	else
-	{
-		// Weapon or accessory: Attach to socket and disable leader pose (usually rigid)
-		NewMeshComp->AttachToComponent(MainMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ItemDef->AttachSocketName);
-		NewMeshComp->SetLeaderPoseComponent(nullptr); 
-	}
-
-	FoundItem->SpawnedMesh = NewMeshComp;
-}
-
-void UProject_JEquipmentManagerComponent::RefreshCurrentWeaponAnimProfile(const UProject_JEquipmentItemDefinition* ExcludedItemDef)
-{
-	AProject_JPlayerCharacter* OwnerPlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
-	if (!OwnerPlayer)
-	{
-		return;
-	}
-
-	UProject_JWeaponAnimProfile* SelectedWeaponAnimProfile = nullptr;
-	for (int32 Index = EquipmentArray.Items.Num() - 1; Index >= 0; --Index)
-	{
-		const UProject_JEquipmentItemDefinition* ItemDef = EquipmentArray.Items[Index].ItemDef;
-		if (!ItemDef || ItemDef == ExcludedItemDef || EquipmentArray.Items[Index].Slot != EProject_JEquipmentSlot::Weapon || !ItemDef->WeaponAnimProfile)
-		{
-			continue;
-		}
-
-		SelectedWeaponAnimProfile = ItemDef->WeaponAnimProfile;
-		break;
-	}
-
-	OwnerPlayer->SetCurrentWeaponAnimProfile(SelectedWeaponAnimProfile);
 }
 
 void UProject_JEquipmentManagerComponent::BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item)
@@ -402,55 +257,6 @@ void UProject_JEquipmentManagerComponent::BroadcastEquipmentUnequipped(const FPr
 	}
 }
 
-void UProject_JEquipmentManagerComponent::ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const
-{
-	AActor* OwnerActor = GetOwner();
-	UAbilitySystemComponent* ASC = OwnerActor ? UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerActor) : nullptr;
-	if (!ASC || !ItemDef || !OwnerActor || !OwnerActor->HasAuthority())
-	{
-		return;
-	}
-
-	for (const FProject_JEquipmentStatModifier& Modifier : ItemDef->StatModifiers)
-	{
-		if (FMath::IsNearlyZero(Modifier.Value))
-		{
-			continue;
-		}
-
-		const float SignedValue = Modifier.Value * Sign;
-		switch (Modifier.Stat)
-		{
-		case EProject_JEquipmentStat::MaxHealth:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxHealthAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::MaxMana:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxManaAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::AttackPower:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetAttackPowerAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::Defense:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetDefenseAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		default:
-			break;
-		}
-	}
-
-	if (const UProject_JAttributeSet* AttributeSet = Cast<UProject_JAttributeSet>(ASC->GetAttributeSet(UProject_JAttributeSet::StaticClass())))
-	{
-		if (AttributeSet->GetHealth() > AttributeSet->GetMaxHealth())
-		{
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetHealthAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxHealth());
-		}
-
-		if (AttributeSet->GetMana() > AttributeSet->GetMaxMana())
-		{
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetManaAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxMana());
-		}
-	}
-}
 
 int32 UProject_JEquipmentManagerComponent::FindEquipmentIndexByItem(const UProject_JEquipmentItemDefinition* ItemDef) const
 {

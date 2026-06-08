@@ -20,6 +20,11 @@ void UProject_JLocomotionAnimStateComponentBase::BeginPlay()
 	CacheOwnerReferences();
 }
 
+void UProject_JLocomotionAnimStateComponentBase::RefreshCachedReferences()
+{
+	CacheOwnerReferences();
+}
+
 void UProject_JLocomotionAnimStateComponentBase::CacheOwnerReferences()
 {
 	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());

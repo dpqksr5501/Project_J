@@ -10,7 +10,7 @@ class UAnimMontage;
  * A flexible, data-driven combo ability for MMORPG combat.
  * Listens for Gameplay Events triggered by AnimNotifies to branch combos based on input tags.
  */
-UCLASS(Abstract)
+UCLASS()
 class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Melee : public UGameplayAbility
 {
 	GENERATED_BODY()

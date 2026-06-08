@@ -22,10 +22,11 @@
 #include "GameFramework/Controller.h"
 #include "GameplayTagContainer.h"
 #include "Project_JGameplayTags.h"
-#include "AbilitySystemComponent.h"
+#include "Camera/Project_JCameraComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "Project_JAbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Components/Project_JInventoryComponent.h"
@@ -52,6 +53,11 @@ FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerC
 		Policy.bInterruptIntroOnHit = CombatAnimProfile->bInterruptCombatIntroOnHit;
 	}
 	return Policy;
+}
+
+int32 GetCharacterLevelForInterfaceObject(const UObject* Object)
+{
+	return Object ? IProject_JCombatInterface::Execute_GetCharacterLevel(const_cast<UObject*>(Object)) : 1;
 }
 }
 
@@ -96,20 +102,20 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
+	CameraComponent = CreateDefaultSubobject<UProject_JCameraComponent>(TEXT("CameraComponent"));
+	CameraComponent->Initialize(CameraBoom, FollowCamera);
+
 	LocomotionAnimStateComponent = CreateDefaultSubobject<UProject_JLocomotionAnimStateComponent>(TEXT("LocomotionAnimStateComponent"));
 	MotionMatchingTrajectoryComponent = CreateDefaultSubobject<UProject_JMotionMatchingTrajectoryComponent>(TEXT("MotionMatchingTrajectoryComponent"));
 	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
-	InventoryComponent = CreateDefaultSubobject<UProject_JInventoryComponent>(TEXT("InventoryComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bIsSprinting, COND_SkipOwner);
-	DOREPLIFETIME(AProject_JPlayerCharacter, bIsCombatMode);
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponAnimProfile);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, ReplicatedAnimEvents, COND_SkipOwner);
 }
@@ -118,28 +124,36 @@ void AProject_JPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (CharacterUIBindingComponent)
-	{
-		CharacterUIBindingComponent->InitializeFromAttributes(AbilitySystemComponent, AttributeSet, CharacterLevel);
-	}
-
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
-
-	// Dynamically find and cache the active combat component if added in Blueprint
-	ActiveCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
-	if (ActiveCombatComponent && AbilitySystemComponent)
-	{
-		ActiveCombatComponent->BindToGAS(AbilitySystemComponent);
-	}
+	RefreshAbilitySystemDependentComponents();
 
 	// 바인딩: 어택/회피/피격 태그가 변경될 때 즉각적으로 Sprint 속도를 갱신
-	if (AbilitySystemComponent)
+	RegisterCombatStateTagEvents();
+}
+
+void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (LocomotionAnimStateComponent)
 	{
-		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-		AbilitySystemComponent->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+		LocomotionAnimStateComponent->RefreshCachedReferences();
 	}
+
+	RefreshAbilitySystemDependentComponents();
+}
+
+void AProject_JPlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	if (LocomotionAnimStateComponent)
+	{
+		LocomotionAnimStateComponent->RefreshCachedReferences();
+	}
+
+	RefreshAbilitySystemDependentComponents();
 }
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
@@ -150,6 +164,15 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
 	}
+}
+
+AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
+{
+	if (APlayerState* PS = GetPlayerState())
+	{
+		return PS;
+	}
+	return Super::GetAbilitySystemOwnerActor();
 }
 
 void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -170,87 +193,9 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	}
 }
 
-void AProject_JPlayerCharacter::StopMoveInput()
-{
-	const bool bHadMoveInput = bHadMoveInputForReplication;
-	ResetMoveStartReplicationState();
 
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->ClearMoveInput();
-	}
 
-	if (bHadMoveInput)
-	{
-		DispatchMoveStopAnimationEvent();
-	}
-}
 
-void AProject_JPlayerCharacter::DoMove(float Right, float Forward)
-{
-	const FVector2D MoveInput(Right, Forward);
-
-	if (LocomotionAnimStateComponent)
-	{
-		LocomotionAnimStateComponent->SetMoveInput(MoveInput);
-	}
-
-	UpdateMoveStartReplicationState(MoveInput);
-
-	if (GetController() != nullptr)
-	{
-		// find out which way is forward
-		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		// get right vector
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement
-		AddMovementInput(ForwardDirection, Forward);
-		AddMovementInput(RightDirection, Right);
-	}
-}
-
-void AProject_JPlayerCharacter::DoLook(float Yaw, float Pitch)
-{
-	if (GetController() != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
-	}
-}
-
-void AProject_JPlayerCharacter::DoJumpStart()
-{
-	if (!IsJumpLocomotionAllowed())
-	{
-		return;
-	}
-
-	if (LocomotionAnimStateComponent)
-	{
-		if (!LocomotionAnimStateComponent->CanStartJumpForAnimation())
-		{
-			return;
-		}
-
-		LocomotionAnimStateComponent->HandleJumpStarted();
-	}
-
-	DispatchJumpStartAnimationEvent();
-	Jump();
-}
-
-void AProject_JPlayerCharacter::DoJumpEnd()
-{
-	// signal the character to stop jumping
-	StopJumping();
-}
 
 void AProject_JPlayerCharacter::NotifyFallOffStartedForAnimation()
 {
@@ -273,55 +218,6 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	}
 }
 
-void AProject_JPlayerCharacter::ApplyCombatModeState(bool bNewCombatMode)
-{
-	bIsCombatMode = bNewCombatMode;
-
-	if (ActiveCombatComponent)
-	{
-		if (bIsCombatMode)
-		{
-			ActiveCombatComponent->EquipWeapon();
-		}
-		else
-		{
-			ActiveCombatComponent->UnequipWeapon();
-		}
-	}
-
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		if (bIsCombatMode)
-		{
-			if (!bAppliedCombatModeTag)
-			{
-				ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-				bAppliedCombatModeTag = true;
-			}
-		}
-		else
-		{
-			if (bAppliedCombatModeTag)
-			{
-				ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-				bAppliedCombatModeTag = false;
-			}
-		}
-	}
-
-	if (bIsCombatMode)
-	{
-		ApplyCombatRotationMode(true);
-	}
-	else
-	{
-		CancelCombatIntroMontage();
-		ApplyCombatRotationMode(false);
-	}
-
-	UpdateMaxWalkSpeed();
-	ApplySprintAnimationState();
-}
 
 bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) const
 {
@@ -334,8 +230,77 @@ bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
 }
 
+void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
+{
+	if (CharacterUIBindingComponent)
+	{
+		CharacterUIBindingComponent->InitializeFromAttributes(Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()), GetAttributeSet(), GetCharacterLevelForInterfaceObject(this));
+	}
+
+	RefreshActiveCombatComponent();
+}
+
+UProject_JCombatComponent* AProject_JPlayerCharacter::RefreshActiveCombatComponent()
+{
+	UProject_JCombatComponent* FoundCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
+	if (FoundCombatComponent && FoundCombatComponent != ActiveCombatComponent)
+	{
+		ActiveCombatComponent = FoundCombatComponent;
+	}
+
+	if (ActiveCombatComponent && GetAbilitySystemComponent())
+	{
+		ActiveCombatComponent->BindToGAS(GetAbilitySystemComponent());
+	}
+
+	return ActiveCombatComponent;
+}
+
+void AProject_JPlayerCharacter::RegisterCombatStateTagEvents()
+{
+	if (!GetAbilitySystemComponent())
+	{
+		return;
+	}
+
+	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_CombatMode, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Movement_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+}
+
 void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
+	const bool bIsCombatModeActive = HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+
+	if (CallbackTag == FProject_JGameplayTags::Get().State_CombatMode)
+	{
+		UProject_JCombatComponent* CombatComponent = RefreshActiveCombatComponent();
+		if (CombatComponent)
+		{
+			if (bIsCombatModeActive)
+			{
+				CombatComponent->EquipWeapon();
+			}
+			else
+			{
+				CombatComponent->UnequipWeapon();
+			}
+		}
+
+		if (bIsCombatModeActive)
+		{
+			ApplyCombatRotationMode(true);
+		}
+		else
+		{
+			CancelCombatIntroMontage();
+			ApplyCombatRotationMode(false);
+		}
+	}
+
 	UpdateMaxWalkSpeed();
 	ApplySprintAnimationState();
 }
@@ -544,18 +509,7 @@ float AProject_JPlayerCharacter::GetEffectiveCombatAimAlpha() const
 	return 1.0f;
 }
 
-void AProject_JPlayerCharacter::ApplySprintState(bool bNewIsSprinting)
-{
-	if (bIsSprinting == bNewIsSprinting)
-	{
-		UpdateMaxWalkSpeed();
-		return;
-	}
 
-	bIsSprinting = bNewIsSprinting;
-	UpdateMaxWalkSpeed();
-	ApplySprintAnimationState();
-}
 
 void AProject_JPlayerCharacter::ApplySprintAnimationState()
 {
@@ -574,17 +528,7 @@ void AProject_JPlayerCharacter::ApplySprintAnimationState()
 	}
 }
 
-void AProject_JPlayerCharacter::ServerSetSprinting_Implementation(bool bNewIsSprinting)
-{
-	ApplySprintState(bNewIsSprinting);
-	ForceNetUpdate();
-}
 
-void AProject_JPlayerCharacter::ServerSetCombatMode_Implementation(bool bNewCombatMode)
-{
-	ApplyCombatModeState(bNewCombatMode);
-	ForceNetUpdate();
-}
 
 
 
@@ -640,9 +584,18 @@ UProject_JCharacterViewModel* AProject_JPlayerCharacter::GetCharacterViewModel()
 	return CharacterUIBindingComponent ? CharacterUIBindingComponent->GetCharacterViewModel() : nullptr;
 }
 
+UProject_JInventoryComponent* AProject_JPlayerCharacter::GetInventoryComponent() const
+{
+	if (APlayerState* PS = GetPlayerState())
+	{
+		return PS->FindComponentByClass<UProject_JInventoryComponent>();
+	}
+	return nullptr;
+}
+
 bool AProject_JPlayerCharacter::IsCombatModeActive() const
 {
-	return bIsCombatMode || HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+	return HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
 }
 
 void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile)
@@ -681,7 +634,7 @@ bool AProject_JPlayerCharacter::IsHitReacting() const
 
 bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
 {
-	return bIsSprinting && !IsCombatActionBlockingSprint();
+	return HasCombatStateTag(FProject_JGameplayTags::Get().State_Movement_Sprinting) && !IsCombatActionBlockingSprint();
 }
 
 bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
@@ -848,88 +801,43 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedA
 	}
 }
 
-void AProject_JPlayerCharacter::OnRep_IsSprinting()
-{
-	UpdateMaxWalkSpeed();
-	ApplySprintAnimationState();
-}
 
-void AProject_JPlayerCharacter::OnRep_CombatMode()
-{
-	ApplyCombatModeState(bIsCombatMode);
-}
 
 void AProject_JPlayerCharacter::StartSprint()
 {
-	ApplySprintState(true);
-	if (!HasAuthority())
+	if (GetAbilitySystemComponent() && SprintAbilityTag.IsValid())
 	{
-		ServerSetSprinting(true);
+		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(SprintAbilityTag));
 	}
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
-	ApplySprintState(false);
-	if (!HasAuthority())
+	if (GetAbilitySystemComponent() && SprintAbilityTag.IsValid())
 	{
-		ServerSetSprinting(false);
+		FGameplayTagContainer TagContainer(SprintAbilityTag);
+		GetAbilitySystemComponent()->CancelAbilities(&TagContainer);
 	}
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
-	if (IsCombatModeActive())
+	if (!IsCombatModeActive() && ShouldPlayCombatIntroMontage())
 	{
-		CancelCombatIntroMontage();
-		SetCombatMode(false);
-		return;
+		BeginCombatModeWithIntro();
 	}
-
-	if (bIsPlayingCombatIntro || bPendingCombatModeFromIntro)
+	else if (GetAbilitySystemComponent() && CombatToggleAbilityTag.IsValid())
 	{
-		CancelCombatIntroMontage();
-		ApplyCombatRotationMode(false);
-		return;
-	}
-
-	BeginCombatModeWithIntro();
-}
-
-void AProject_JPlayerCharacter::SetCombatMode(bool bInCombatMode)
-{
-	if (IsCombatModeActive() == bInCombatMode)
-	{
-		return;
-	}
-
-	ApplyCombatModeState(bInCombatMode);
-	if (!HasAuthority())
-	{
-		ServerSetCombatMode(bInCombatMode);
+		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(CombatToggleAbilityTag));
 	}
 }
+
+
 
 void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 {
-	if (IsCombatModeActive() || bIsPlayingCombatIntro || bPendingCombatModeFromIntro || IsHitReacting())
-	{
-		return;
-	}
-
-	if (!ShouldPlayCombatIntroMontage())
-	{
-		SetCombatMode(true);
-		return;
-	}
-
 	ApplyCombatRotationMode(true);
 	PlayCombatIntroMontage();
-
-	if (!bPendingCombatModeFromIntro)
-	{
-		SetCombatMode(true);
-	}
 }
 
 void AProject_JPlayerCharacter::PlayCombatIntroMontage()
@@ -981,18 +889,18 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		bIsPlayingCombatIntro = false;
 		ActiveCombatIntroMontage = nullptr;
 
-		if (bPendingCombatModeFromIntro)
+		if (bPendingCombatModeFromIntro && !bInterrupted && !IsHitReacting())
 		{
 			bPendingCombatModeFromIntro = false;
-
-			if (!bInterrupted && !IsHitReacting())
+			if (GetAbilitySystemComponent() && CombatToggleAbilityTag.IsValid())
 			{
-				SetCombatMode(true);
+				GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(CombatToggleAbilityTag));
 			}
-			else if (!IsCombatModeActive())
-			{
-				ApplyCombatRotationMode(false);
-			}
+		}
+		else if (!IsCombatModeActive())
+		{
+			bPendingCombatModeFromIntro = false;
+			ApplyCombatRotationMode(false);
 		}
 	}
 }
@@ -1040,7 +948,9 @@ void AProject_JPlayerCharacter::FinishLanding(bool bForceFinish)
 
 void AProject_JPlayerCharacter::TriggerPlayerAttack()
 {
-	if (AbilitySystemComponent)
+	RefreshActiveCombatComponent();
+
+	if (GetAbilitySystemComponent())
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
@@ -1048,6 +958,6 @@ void AProject_JPlayerCharacter::TriggerPlayerAttack()
 		Payload.Target = this;
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Payload.EventTag, Payload);
-		AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(Payload.EventTag));
+		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(Payload.EventTag));
 	}
 }

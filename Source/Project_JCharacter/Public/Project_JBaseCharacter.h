@@ -11,6 +11,7 @@
 class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
 class UProject_JDefaultAttributeSetData;
+class UProject_JEquipmentRuntimeComponent;
 
 UCLASS(Abstract)
 class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
@@ -29,7 +30,7 @@ public:
 	virtual FVector GetCombatSocketLocation_Implementation(const FName& SocketName) override;
 	virtual bool IsDead_Implementation() const override;
 
-	FORCEINLINE UProject_JAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	virtual UProject_JAttributeSet* GetAttributeSet() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -78,6 +79,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
 	class UProject_JEquipmentManagerComponent* EquipmentManager;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+	UProject_JEquipmentRuntimeComponent* EquipmentRuntime;
+
 	// Character Level
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 CharacterLevel;
@@ -85,7 +89,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Class Defaults")
 	TObjectPtr<UProject_JDefaultAttributeSetData> DefaultAttributeData = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<class UGameplayAbility>> DefaultAbilities;
+
+	UPROPERTY(Transient)
+	bool bDefaultAbilitiesGranted = false;
+
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void InitializeDefaultAttributes() const;
 	void InitializeAbilitySystem();
+	void BindEquipmentRuntimeToEquipmentManager();
+	virtual AActor* GetAbilitySystemOwnerActor() const;
 };

@@ -2,13 +2,46 @@
 
 #include "Project_JPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/Project_JInventoryComponent.h"
+#include "Components/Project_JEquipmentManagerComponent.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JAttributeSet.h"
+
+AProject_JPlayerState::AProject_JPlayerState()
+{
+	SetNetUpdateFrequency(100.0f);
+
+	InventoryComponent = CreateDefaultSubobject<UProject_JInventoryComponent>(TEXT("InventoryComponent"));
+	EquipmentManagerComponent = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
+
+	AbilitySystemComponent = CreateDefaultSubobject<UProject_JAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UProject_JAttributeSet>(TEXT("AttributeSet"));
+}
+
+UAbilitySystemComponent* AProject_JPlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UProject_JAbilitySystemComponent* AProject_JPlayerState::GetProjectJAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UProject_JAttributeSet* AProject_JPlayerState::GetProjectJAttributeSet() const
+{
+	return AttributeSet;
+}
 
 void AProject_JPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AProject_JPlayerState, AccountId);
-	DOREPLIFETIME(AProject_JPlayerState, CharacterId);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerState, AccountId, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerState, CharacterId, COND_OwnerOnly);
 	DOREPLIFETIME(AProject_JPlayerState, PublicClassId);
 	DOREPLIFETIME(AProject_JPlayerState, PublicCharacterLevel);
 }

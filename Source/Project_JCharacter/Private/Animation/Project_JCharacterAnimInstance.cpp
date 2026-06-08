@@ -446,7 +446,7 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	}
 
 	Data.Ground.bWantsSprint =
-		(Data.Ground.bWantsSprint || OwningPlayerCharacter->bIsSprinting) &&
+		(Data.Ground.bWantsSprint || OwningPlayerCharacter->IsSprintLocomotionAllowed()) &&
 		OwningPlayerCharacter->IsSprintLocomotionAllowed();
 	Data.Ground.bStartWasSprinting =
 		Data.Ground.bStartWasSprinting ||

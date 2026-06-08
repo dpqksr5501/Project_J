@@ -11,21 +11,49 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 		return;
 	}
 
-	// Grant Abilities
+	for (const FProject_JAbilitySet_GameplayAbility& AbilityEntry : GrantedAbilityEntries)
+	{
+		if (!AbilityEntry.Ability)
+		{
+			continue;
+		}
+
+		FGameplayAbilitySpec AbilitySpec(AbilityEntry.Ability, FMath::Max(1, AbilityEntry.AbilityLevel), AbilityEntry.InputID, SourceObject);
+		if (AbilityEntry.InputTag.IsValid())
+		{
+			AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityEntry.InputTag);
+		}
+
+		const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
+		OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
+	}
+
+	// Backward-compatible legacy grants.
 	for (int32 AbilityIndex = 0; AbilityIndex < GrantedGameplayAbilities.Num(); ++AbilityIndex)
 	{
 		const TSubclassOf<UGameplayAbility>& AbilityToGrant = GrantedGameplayAbilities[AbilityIndex];
 		if (AbilityToGrant)
 		{
-			UGameplayAbility* AbilityCDO = AbilityToGrant->GetDefaultObject<UGameplayAbility>();
-			FGameplayAbilitySpec AbilitySpec(AbilityCDO, 1, INDEX_NONE, SourceObject);
+			FGameplayAbilitySpec AbilitySpec(AbilityToGrant, 1, INDEX_NONE, SourceObject);
 
 			const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
 			OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
 		}
 	}
 
-	// Grant Effects
+	for (const FProject_JAbilitySet_GameplayEffect& EffectEntry : GrantedEffectEntries)
+	{
+		if (!EffectEntry.Effect)
+		{
+			continue;
+		}
+
+		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
+		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
+		OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle);
+	}
+
+	// Backward-compatible legacy effects.
 	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
 	{
 		const TSubclassOf<UGameplayEffect>& EffectToGrant = GrantedGameplayEffects[EffectIndex];

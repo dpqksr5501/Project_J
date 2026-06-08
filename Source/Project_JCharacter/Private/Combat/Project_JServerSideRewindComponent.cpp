@@ -1,5 +1,24 @@
 #include "Combat/Project_JServerSideRewindComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
+
+namespace
+{
+bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEnd, const FVector& CapsuleCenter, const FQuat& CapsuleRotation, float CapsuleRadius, float CapsuleHalfHeight)
+{
+	const float CapsuleSegmentHalfHeight = FMath::Max(0.0f, CapsuleHalfHeight - CapsuleRadius);
+	const FVector CapsuleAxis = CapsuleRotation.GetUpVector();
+	const FVector CapsuleSegmentStart = CapsuleCenter + CapsuleAxis * CapsuleSegmentHalfHeight;
+	const FVector CapsuleSegmentEnd = CapsuleCenter - CapsuleAxis * CapsuleSegmentHalfHeight;
+
+	FVector ClosestTracePoint;
+	FVector ClosestCapsulePoint;
+	FMath::SegmentDistToSegmentSafe(TraceStart, TraceEnd, CapsuleSegmentStart, CapsuleSegmentEnd, ClosestTracePoint, ClosestCapsulePoint);
+
+	return FVector::DistSquared(ClosestTracePoint, ClosestCapsulePoint) <= FMath::Square(CapsuleRadius);
+}
+}
 
 UProject_JServerSideRewindComponent::UProject_JServerSideRewindComponent()
 {
@@ -11,9 +30,12 @@ UProject_JServerSideRewindComponent::UProject_JServerSideRewindComponent()
 void UProject_JServerSideRewindComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	const AActor* Owner = GetOwner();
+	SetComponentTickEnabled(Owner && Owner->HasAuthority());
 	
-	// Pre-allocate buffer roughly based on 30Hz target tick rate for server
-	PoseHistory.Reserve(30);
+	const int32 ExpectedRecordCount = FMath::CeilToInt(FMath::Max(1.0f, MaxRecordTime) * FMath::Max(1.0f, RecordRateHz)) + 2;
+	PoseHistory.Reserve(ExpectedRecordCount);
 }
 
 void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -26,7 +48,14 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 		return;
 	}
 
-	// 1. Record current transform and time
+	TimeSinceLastRecord += DeltaTime;
+	const float RecordInterval = 1.0f / FMath::Max(1.0f, RecordRateHz);
+	if (PoseHistory.Num() > 0 && TimeSinceLastRecord < RecordInterval)
+	{
+		return;
+	}
+	TimeSinceLastRecord = FMath::Fmod(TimeSinceLastRecord, RecordInterval);
+
 	FProject_JPoseHistoryBuffer NewRecord;
 	NewRecord.Timestamp = GetWorld()->GetTimeSeconds();
 	NewRecord.Location = Owner->GetActorLocation();
@@ -34,7 +63,6 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 
 	PoseHistory.Add(NewRecord);
 
-	// 2. Cull old records that exceed MaxRecordTime (removes oldest from the front)
 	const float CurrentTime = NewRecord.Timestamp;
 	int32 RemoveCount = 0;
 	while (RemoveCount < PoseHistory.Num() && (CurrentTime - PoseHistory[RemoveCount].Timestamp) > MaxRecordTime)
@@ -58,34 +86,30 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 		return false;
 	}
 
-	AActor* Owner = GetOwner();
-	if (!Owner || !GetWorld())
+	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter)
 	{
 		return false;
 	}
 
-	// Interpolate location and rotation
-	FVector InterpolatedLocation = FMath::Lerp(Pose1.Location, Pose2.Location, Alpha);
-	FQuat InterpolatedRotation = FQuat::Slerp(Pose1.Rotation, Pose2.Rotation, Alpha);
+	const UCapsuleComponent* CapsuleComponent = OwnerCharacter->GetCapsuleComponent();
+	if (!CapsuleComponent)
+	{
+		return false;
+	}
 
-	// Cache current transform
-	FVector OriginalLocation = Owner->GetActorLocation();
-	FQuat OriginalRotation = Owner->GetActorQuat();
+	const FVector InterpolatedLocation = FMath::Lerp(Pose1.Location, Pose2.Location, Alpha);
+	const FQuat InterpolatedRotation = FQuat::Slerp(Pose1.Rotation, Pose2.Rotation, Alpha);
+	const FTransform HistoricalActorTransform(InterpolatedRotation, InterpolatedLocation);
+	const FTransform HistoricalCapsuleTransform = CapsuleComponent->GetRelativeTransform() * HistoricalActorTransform;
 
-	// Temporarily rollback collision collider of target
-	Owner->SetActorLocationAndRotation(InterpolatedLocation, InterpolatedRotation, false, nullptr, ETeleportType::TeleportPhysics);
-
-	// Perform server trace (LineTrace against ECC_Pawn). Do not ignore Owner here:
-	// this component is attached to the target being verified.
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SSRVerify), true);
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Pawn, QueryParams);
-
-	// Restore original transform immediately
-	Owner->SetActorLocationAndRotation(OriginalLocation, OriginalRotation, false, nullptr, ETeleportType::TeleportPhysics);
-
-	// Confirm if we hit this target at that rolled-back position
-	return bHit && HitResult.GetActor() == Owner;
+	return DoesTraceIntersectCapsule(
+		TraceStart,
+		TraceEnd,
+		HistoricalCapsuleTransform.GetLocation(),
+		HistoricalCapsuleTransform.GetRotation(),
+		CapsuleComponent->GetScaledCapsuleRadius(),
+		CapsuleComponent->GetScaledCapsuleHalfHeight());
 }
 
 bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const

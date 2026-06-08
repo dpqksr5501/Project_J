@@ -4,11 +4,14 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbility.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
+#include "Project_JAbilitySystemComponent.h"
 
 UProject_JCombatComponent::UProject_JCombatComponent()
 {
 	// Disable ticking by default as it's not needed for base combat capabilities
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 }
 
 void UProject_JCombatComponent::BeginPlay()
@@ -87,7 +90,14 @@ void UProject_JCombatComponent::SetOwnedCombatStateTag(const FGameplayTag& State
 	{
 		if (!OwnedLooseCombatStateTags.Contains(StateTag))
 		{
-			OwnerASC->AddLooseGameplayTag(StateTag);
+			if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
+			{
+				ProjectJASC->AddProjectJLooseGameplayTag(StateTag);
+			}
+			else
+			{
+				OwnerASC->AddLooseGameplayTag(StateTag);
+			}
 			OwnedLooseCombatStateTags.Add(StateTag);
 		}
 		return;
@@ -95,7 +105,14 @@ void UProject_JCombatComponent::SetOwnedCombatStateTag(const FGameplayTag& State
 
 	if (OwnedLooseCombatStateTags.Remove(StateTag) > 0)
 	{
-		OwnerASC->RemoveLooseGameplayTag(StateTag);
+		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
+		{
+			ProjectJASC->RemoveProjectJLooseGameplayTag(StateTag);
+		}
+		else
+		{
+			OwnerASC->RemoveLooseGameplayTag(StateTag);
+		}
 	}
 }
 
@@ -109,8 +126,50 @@ void UProject_JCombatComponent::ClearOwnedCombatStateTags()
 
 	for (const FGameplayTag& StateTag : OwnedLooseCombatStateTags)
 	{
-		OwnerASC->RemoveLooseGameplayTag(StateTag);
+		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
+		{
+			ProjectJASC->RemoveProjectJLooseGameplayTag(StateTag);
+		}
+		else
+		{
+			OwnerASC->RemoveLooseGameplayTag(StateTag);
+		}
 	}
 
 	OwnedLooseCombatStateTags.Reset();
+}
+
+void UProject_JCombatComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd)
+{
+	if (!HitActor) return;
+
+	const UWorld* World = GetWorld();
+	if (!World || !FMath::IsFinite(ClientTimestamp))
+	{
+		return;
+	}
+
+	const float RequestAge = World->GetTimeSeconds() - ClientTimestamp;
+	if (RequestAge < 0.0f || RequestAge > MaxServerSideRewindRequestAge)
+	{
+		return;
+	}
+
+	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
+	{
+		if (SSRComp->ServerVerifyHit(ClientTimestamp, TraceStart, TraceEnd))
+		{
+			// SSR Verified the hit!
+			// Apply damage/effects to HitActor here
+		}
+		else
+		{
+			// SSR Rejected Hit
+		}
+	}
+	else
+	{
+		// Target has no SSR component, fallback to normal hit
+		// Apply damage/effects to HitActor here
+	}
 }

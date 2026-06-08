@@ -6,11 +6,13 @@
 #include "Components/Project_JPlayerInputBindingComponent.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
+#include "GameplayTagContainer.h"
 #include "Logging/LogMacros.h"
 #include "Project_JPlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
+class UProject_JCameraComponent;
 class UInputAction;
 class UAnimMontage;
 class UProject_JCombatComponent;
@@ -48,6 +50,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 
+	/** Camera Component handling boom, zoom, and multi-player optimization */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UProject_JCameraComponent* CameraComponent;
+
 	/** Job-specific combat component (dynamically cached at runtime) */
 	UPROPERTY(Transient, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProject_JCombatComponent* ActiveCombatComponent;
@@ -70,9 +76,6 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory", meta = (AllowPrivateAccess = "true"))
-	UProject_JInventoryComponent* InventoryComponent;
-	
 protected:
 
 	/** Jump Input Action */
@@ -113,6 +116,9 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+	virtual AActor* GetAbilitySystemOwnerActor() const override;
 
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -129,23 +135,25 @@ protected:
 	void PlayCombatIntroMontage();
 
 	void CancelCombatIntroMontage();
+	void RefreshAbilitySystemDependentComponents();
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	void RegisterCombatStateTagEvents();
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
-	void ApplyCombatModeState(bool bNewCombatMode);
 	bool HasCombatStateTag(const FGameplayTag& StateTag) const;
 	bool IsCombatActionBlockingSprint() const;
 	bool ShouldAllowSprintInCombat() const;
 
+public:
 	UFUNCTION()
 	void OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+protected:
 
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
-	void ApplySprintState(bool bNewIsSprinting);
 	void ApplySprintAnimationState();
 	float GetEffectiveWalkSpeed() const;
 	float GetEffectiveSprintSpeed() const;
@@ -164,14 +172,6 @@ protected:
 	void DispatchJumpStartAnimationEvent();
 	void DispatchFallOffStartAnimationEvent();
 	void DispatchLandingCancelAnimationEvent();
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetSprinting(bool bNewIsSprinting);
-
-	UFUNCTION(Server, Reliable)
-	void ServerSetCombatMode(bool bNewCombatMode);
-
-
 
 	UFUNCTION(Server, Unreliable)
 	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
@@ -192,12 +192,6 @@ protected:
 	void OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState);
 
 	UFUNCTION()
-	void OnRep_IsSprinting();
-
-	UFUNCTION()
-	void OnRep_CombatMode();
-
-	UFUNCTION()
 	void OnRep_CurrentWeaponAnimProfile();
 
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
@@ -206,22 +200,6 @@ protected:
 
 public:
 
-	/** Handles move inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoMove(float Right, float Forward);
-
-	/** Handles look inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoLook(float Yaw, float Pitch);
-
-	/** Handles jump pressed inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-
-	/** Handles jump pressed inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
-
 	void NotifyFallOffStartedForAnimation();
 
 	void NotifyLandingCancelledForAnimation();
@@ -229,10 +207,6 @@ public:
 	/** Toggles the combat mode on or off */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void ToggleCombatMode();
-
-	/** Sets the combat mode to the specified state */
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	virtual void SetCombatMode(bool bInCombatMode);
 
 	/** Starts combat mode after the combat intro montage finishes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Animation")
@@ -263,13 +237,15 @@ public:
 	/** Returns ActiveCombatComponent subobject **/
 	FORCEINLINE class UProject_JCombatComponent* GetActiveCombatComponent() const { return ActiveCombatComponent; }
 
+	UProject_JCombatComponent* RefreshActiveCombatComponent();
+
 	/** Returns LocomotionAnimStateComponent subobject **/
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
 
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
-	FORCEINLINE class UProject_JInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+	class UProject_JInventoryComponent* GetInventoryComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "UI")
 	UProject_JCharacterViewModel* GetCharacterViewModel() const;
@@ -342,14 +318,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeaponAnimProfile, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
 	TObjectPtr<UProject_JWeaponAnimProfile> CurrentWeaponAnimProfile = nullptr;
 
-	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Sprint")
-	bool bIsSprinting = false;
-
 	// --- Combat States ---
-
-	/** True if the character is currently in combat mode (weapon drawn) */
-	UPROPERTY(ReplicatedUsing = OnRep_CombatMode, VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	bool bIsCombatMode = false;
 
 	/** True if the character is currently attacking */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -382,6 +351,13 @@ public:
 	/** If true, hit reactions can stop the combat intro montage. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bInterruptCombatIntroOnHit = true;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities|Tags")
+	FGameplayTag SprintAbilityTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities|Tags")
+	FGameplayTag CombatToggleAbilityTag;
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAnimEvents)

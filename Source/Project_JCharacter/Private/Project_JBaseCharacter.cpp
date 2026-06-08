@@ -6,10 +6,14 @@
 #include "Project_JAttributeSet.h"
 #include "Project_JDefaultAttributeSetData.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerState.h"
 #include "SignificanceManager.h"
 #include "Engine/World.h"
+#include "Project_JAbilitySystemOwnerInterface.h"
+
 
 AProject_JBaseCharacter::AProject_JBaseCharacter()
 {
@@ -27,11 +31,37 @@ AProject_JBaseCharacter::AProject_JBaseCharacter()
 
 	// Create Equipment Manager
 	EquipmentManager = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManager"));
+	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
 }
 
 UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() const
 {
+	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+	{
+		if (IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
+		{
+			if (UAbilitySystemComponent* OwnerASC = OwnerInterface->GetProjectJAbilitySystemComponent())
+			{
+				return OwnerASC;
+			}
+		}
+	}
 	return AbilitySystemComponent;
+}
+
+UProject_JAttributeSet* AProject_JBaseCharacter::GetAttributeSet() const
+{
+	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+	{
+		if (IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
+		{
+			if (UProject_JAttributeSet* OwnerAttr = OwnerInterface->GetProjectJAttributeSet())
+			{
+				return OwnerAttr;
+			}
+		}
+	}
+	return AttributeSet;
 }
 
 void AProject_JBaseCharacter::BeginPlay()
@@ -39,6 +69,7 @@ void AProject_JBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
+	BindEquipmentRuntimeToEquipmentManager();
 	
 	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
@@ -99,12 +130,14 @@ void AProject_JBaseCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
+	BindEquipmentRuntimeToEquipmentManager();
 }
 
 void AProject_JBaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitializeAbilitySystem();
+	BindEquipmentRuntimeToEquipmentManager();
 }
 
 
@@ -127,16 +160,17 @@ FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FN
 
 bool AProject_JBaseCharacter::IsDead_Implementation() const
 {
-	if (AttributeSet)
+	if (const UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet())
 	{
-		return AttributeSet->GetHealth() <= 0.0f;
+		return CurrentAttributeSet->GetHealth() <= 0.0f;
 	}
 	return false;
 }
 
 void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 {
-	if (!HasAuthority() || !AttributeSet)
+	UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet();
+	if (!HasAuthority() || !CurrentAttributeSet)
 	{
 		return;
 	}
@@ -148,41 +182,93 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 	const float DefaultAttackPower = DefaultAttributeData ? DefaultAttributeData->AttackPower : 10.0f;
 	const float DefaultDefense = DefaultAttributeData ? DefaultAttributeData->Defense : 0.0f;
 
-	if (AttributeSet->GetMaxHealth() <= 0.0f)
+	if (CurrentAttributeSet->GetMaxHealth() <= 0.0f)
 	{
-		AttributeSet->InitMaxHealth(FMath::Max(1.0f, DefaultMaxHealth));
+		CurrentAttributeSet->InitMaxHealth(FMath::Max(1.0f, DefaultMaxHealth));
 	}
 
-	if (AttributeSet->GetHealth() <= 0.0f)
+	if (CurrentAttributeSet->GetHealth() <= 0.0f)
 	{
-		AttributeSet->InitHealth(FMath::Clamp(DefaultHealth, 0.0f, AttributeSet->GetMaxHealth()));
+		CurrentAttributeSet->InitHealth(FMath::Clamp(DefaultHealth, 0.0f, CurrentAttributeSet->GetMaxHealth()));
 	}
 
-	if (AttributeSet->GetMaxMana() <= 0.0f)
+	if (CurrentAttributeSet->GetMaxMana() <= 0.0f)
 	{
-		AttributeSet->InitMaxMana(FMath::Max(1.0f, DefaultMaxMana));
+		CurrentAttributeSet->InitMaxMana(FMath::Max(1.0f, DefaultMaxMana));
 	}
 
-	if (AttributeSet->GetMana() <= 0.0f)
+	if (CurrentAttributeSet->GetMana() <= 0.0f)
 	{
-		AttributeSet->InitMana(FMath::Clamp(DefaultMana, 0.0f, AttributeSet->GetMaxMana()));
+		CurrentAttributeSet->InitMana(FMath::Clamp(DefaultMana, 0.0f, CurrentAttributeSet->GetMaxMana()));
 	}
 
-	if (AttributeSet->GetAttackPower() <= 0.0f)
+	if (CurrentAttributeSet->GetAttackPower() <= 0.0f)
 	{
-		AttributeSet->InitAttackPower(FMath::Max(0.0f, DefaultAttackPower));
+		CurrentAttributeSet->InitAttackPower(FMath::Max(0.0f, DefaultAttackPower));
 	}
 
-	if (AttributeSet->GetDefense() <= 0.0f)
+	if (CurrentAttributeSet->GetDefense() <= 0.0f)
 	{
-		AttributeSet->InitDefense(FMath::Max(0.0f, DefaultDefense));
+		CurrentAttributeSet->InitDefense(FMath::Max(0.0f, DefaultDefense));
 	}
 }
 
 void AProject_JBaseCharacter::InitializeAbilitySystem()
 {
-	if (AbilitySystemComponent)
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	ASC->InitAbilityActorInfo(GetAbilitySystemOwnerActor(), this);
+
+	if (HasAuthority())
 	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		UObject* AbilitySourceObject = GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
+		IProject_JAbilitySystemOwnerInterface* OwnerInterface = nullptr;
+		if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+		{
+			OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor);
+		}
+
+		const bool bAlreadyGranted = OwnerInterface ? OwnerInterface->HasGrantedDefaultAbilities() : bDefaultAbilitiesGranted;
+		if (!bAlreadyGranted)
+		{
+			for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultAbilities)
+			{
+				if (AbilityClass)
+				{
+					ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+				}
+			}
+
+			if (OwnerInterface)
+			{
+				OwnerInterface->SetHasGrantedDefaultAbilities(true);
+			}
+			else
+			{
+				bDefaultAbilitiesGranted = true;
+			}
+		}
 	}
+}
+
+void AProject_JBaseCharacter::BindEquipmentRuntimeToEquipmentManager()
+{
+	if (!EquipmentRuntime)
+	{
+		return;
+	}
+
+	UProject_JEquipmentManagerComponent* Manager = nullptr;
+	if (APlayerState* OwningPlayerState = GetPlayerState())
+	{
+		Manager = OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>();
+	}
+
+	EquipmentRuntime->BindToEquipmentManager(Manager ? Manager : EquipmentManager);
+}
+
+AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
+{
+	return const_cast<AProject_JBaseCharacter*>(this);
 }

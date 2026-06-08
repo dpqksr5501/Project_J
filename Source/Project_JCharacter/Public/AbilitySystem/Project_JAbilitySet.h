@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayEffectTypes.h"
 #include "Project_JAbilitySet.generated.h"
@@ -22,6 +23,36 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GrantedHandles
 	TArray<FActiveGameplayEffectHandle> GameplayEffectHandles;
 };
 
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GameplayAbility
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = "Ability")
+	TSubclassOf<UGameplayAbility> Ability = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Ability", meta = (ClampMin = "1"))
+	int32 AbilityLevel = 1;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Ability")
+	FGameplayTag InputTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Ability")
+	int32 InputID = INDEX_NONE;
+};
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GameplayEffect
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effect")
+	TSubclassOf<UGameplayEffect> Effect = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (ClampMin = "1"))
+	float EffectLevel = 1.0f;
+};
+
 /**
  * DataAsset containing a set of GameplayAbilities and GameplayEffects.
  * Used to grant multi-class skills or weapon-specific abilities dynamically.
@@ -32,6 +63,12 @@ class PROJECT_JCHARACTER_API UProject_JAbilitySet : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Abilities")
+	TArray<FProject_JAbilitySet_GameplayAbility> GrantedAbilityEntries;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effects")
+	TArray<FProject_JAbilitySet_GameplayEffect> GrantedEffectEntries;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> GrantedGameplayAbilities;
 

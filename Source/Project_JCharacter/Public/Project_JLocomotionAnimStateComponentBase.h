@@ -28,6 +28,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	void RefreshCachedReferences();
+
 protected:
 	void CacheOwnerReferences();
 	AProject_JPlayerCharacter* GetPlayerOwner() const;

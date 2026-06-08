@@ -18,5 +18,9 @@ class PROJECT_JGAS_API UProject_JAbilitySystemComponent : public UAbilitySystemC
 public:
 	UProject_JAbilitySystemComponent();
 
-	// Add any Project_J specific ASC logic here.
+	void AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
+	void RemoveProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
+
+private:
+	bool HasGameplayTagReplicationAuthority() const;
 };

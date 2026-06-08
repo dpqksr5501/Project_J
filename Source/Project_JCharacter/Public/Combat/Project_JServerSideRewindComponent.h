@@ -44,6 +44,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "SSR")
 	float MaxRecordTime = 1.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "SSR", meta = (ClampMin = "1.0", UIMin = "1.0"))
+	float RecordRateHz = 30.0f;
+
 	// Perform a rollback sweep/check at a specific time in the past
 	UFUNCTION(BlueprintCallable, Category = "SSR")
 	bool ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd);
@@ -51,6 +54,8 @@ public:
 private:
 	// The circular buffer storing the past transforms
 	TArray<FProject_JPoseHistoryBuffer> PoseHistory;
+
+	float TimeSinceLastRecord = 0.0f;
 	
 	// Helper to find the closest poses to interpolate between
 	bool GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const;
