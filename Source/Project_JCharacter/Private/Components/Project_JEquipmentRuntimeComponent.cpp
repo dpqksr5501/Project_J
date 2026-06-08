@@ -25,6 +25,13 @@ void UProject_JEquipmentRuntimeComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UProject_JEquipmentRuntimeComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	BindToEquipmentManager(nullptr);
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager)
 {
 	if (BoundEquipmentManager == InEquipmentManager)
@@ -69,7 +76,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 
 	if (RuntimeItems.Contains(Slot))
 	{
-		OnEquipmentUnequipped(Slot, ItemDef);
+		OnEquipmentUnequipped(Slot, RuntimeItems[Slot].ItemDef);
 	}
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
@@ -100,20 +107,23 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (!ItemDef || !RuntimeItems.Contains(Slot)) return;
+	if (!RuntimeItems.Contains(Slot)) return;
 
 	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
+	UProject_JEquipmentItemDefinition* RuntimeItemDef = RuntimeItem.ItemDef ? RuntimeItem.ItemDef : ItemDef;
+	if (!RuntimeItemDef) return;
+
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 
 	// Remove ASC Grants
 	if (OwnerCharacter && OwnerCharacter->HasAuthority())
 	{
 		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-		if (ASC && ItemDef->AbilitySet)
+		if (ASC && RuntimeItemDef->AbilitySet)
 		{
-			ItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
+			RuntimeItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
 		}
-		ApplyEquipmentStatModifiers(ItemDef, -1.0f);
+		ApplyEquipmentStatModifiers(RuntimeItemDef, -1.0f);
 	}
 
 	// Remove Visuals
@@ -149,6 +159,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	if (!ItemDef || !RuntimeItems.Contains(Slot)) return;
 
 	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
+	if (RuntimeItem.ItemDef != ItemDef) return;
 	if (RuntimeItem.SpawnedMesh) return;
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());

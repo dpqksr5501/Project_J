@@ -10,7 +10,10 @@ UProject_JGameplayAbility_CombatToggle::UProject_JGameplayAbility_CombatToggle()
 	// 핵심: 로컬 예측을 통해 버튼을 누르자마자 무기를 꺼냄 (Input Lag 제거)
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
-	AbilityTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
+	FGameplayTagContainer AssetTags;
+	AssetTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
+	SetAssetTags(AssetTags);
+
 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
 }
 

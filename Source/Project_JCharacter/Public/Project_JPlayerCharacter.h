@@ -27,6 +27,7 @@ class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
 class UProject_JInventoryComponent;
+class UAbilitySystemComponent;
 struct FGameplayTag;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -116,6 +117,7 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	virtual AActor* GetAbilitySystemOwnerActor() const override;
@@ -141,8 +143,11 @@ protected:
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	void RegisterCombatStateTagEvents();
+	void UnregisterCombatStateTagEvents();
 	void ApplyCombatRotationMode(bool bEnableCombatRotation);
 	bool HasCombatStateTag(const FGameplayTag& StateTag) const;
+	bool TryActivateAbilityByTag(const FGameplayTag& AbilityTag);
+	void CancelAbilitiesByTag(const FGameplayTag& AbilityTag);
 	bool IsCombatActionBlockingSprint() const;
 	bool ShouldAllowSprintInCombat() const;
 
@@ -369,4 +374,7 @@ private:
 	bool bHadMoveInputForReplication = false;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
+
+	TWeakObjectPtr<UAbilitySystemComponent> CombatStateTagEventASC;
+	TArray<FDelegateHandle> CombatStateTagEventHandles;
 };

@@ -13,7 +13,10 @@ UProject_JGameplayAbility_Sprint::UProject_JGameplayAbility_Sprint()
 	// 핵심: 로컬 클라이언트에서 즉시 실행되고 서버에 예측 통보
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
-	AbilityTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
+	FGameplayTagContainer AssetTags;
+	AssetTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
+	SetAssetTags(AssetTags);
+
 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
 }
 

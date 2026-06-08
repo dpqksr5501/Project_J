@@ -129,7 +129,13 @@ void AProject_JPlayerCharacter::BeginPlay()
 	RefreshAbilitySystemDependentComponents();
 
 	// 바인딩: 어택/회피/피격 태그가 변경될 때 즉각적으로 Sprint 속도를 갱신
-	RegisterCombatStateTagEvents();
+}
+
+void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UnregisterCombatStateTagEvents();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
@@ -225,6 +231,29 @@ bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) 
 	return ASC && StateTag.IsValid() && ASC->HasMatchingGameplayTag(StateTag);
 }
 
+bool AProject_JPlayerCharacter::TryActivateAbilityByTag(const FGameplayTag& AbilityTag)
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC || !AbilityTag.IsValid())
+	{
+		return false;
+	}
+
+	return ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
+}
+
+void AProject_JPlayerCharacter::CancelAbilitiesByTag(const FGameplayTag& AbilityTag)
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC || !AbilityTag.IsValid())
+	{
+		return;
+	}
+
+	FGameplayTagContainer TagContainer(AbilityTag);
+	ASC->CancelAbilities(&TagContainer);
+}
+
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 {
 	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
@@ -238,6 +267,11 @@ void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
 	}
 
 	RefreshActiveCombatComponent();
+	RegisterCombatStateTagEvents();
+	if (CameraComponent)
+	{
+		CameraComponent->RefreshAbilitySystemBinding();
+	}
 }
 
 UProject_JCombatComponent* AProject_JPlayerCharacter::RefreshActiveCombatComponent()
@@ -258,17 +292,52 @@ UProject_JCombatComponent* AProject_JPlayerCharacter::RefreshActiveCombatCompone
 
 void AProject_JPlayerCharacter::RegisterCombatStateTagEvents()
 {
-	if (!GetAbilitySystemComponent())
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC)
 	{
 		return;
 	}
 
+	if (CombatStateTagEventASC.Get() == ASC && !CombatStateTagEventHandles.IsEmpty())
+	{
+		return;
+	}
+
+	UnregisterCombatStateTagEvents();
+
 	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_CombatMode, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
-	GetAbilitySystemComponent()->RegisterGameplayTagEvent(GameplayTags.State_Movement_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	CombatStateTagEventASC = ASC;
+	CombatStateTagEventHandles.Reserve(5);
+	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
+	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
+	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
+	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_CombatMode, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
+	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Movement_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
+}
+
+void AProject_JPlayerCharacter::UnregisterCombatStateTagEvents()
+{
+	UAbilitySystemComponent* ASC = CombatStateTagEventASC.Get();
+	if (ASC)
+	{
+		const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
+		const FGameplayTag StateTags[] =
+		{
+			GameplayTags.State_Attacking,
+			GameplayTags.State_Dodging,
+			GameplayTags.State_HitReacting,
+			GameplayTags.State_CombatMode,
+			GameplayTags.State_Movement_Sprinting
+		};
+
+		for (int32 Index = 0; Index < CombatStateTagEventHandles.Num() && Index < UE_ARRAY_COUNT(StateTags); ++Index)
+		{
+			ASC->RegisterGameplayTagEvent(StateTags[Index], EGameplayTagEventType::NewOrRemoved).Remove(CombatStateTagEventHandles[Index]);
+		}
+	}
+
+	CombatStateTagEventHandles.Reset();
+	CombatStateTagEventASC.Reset();
 }
 
 void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
@@ -805,19 +874,12 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedA
 
 void AProject_JPlayerCharacter::StartSprint()
 {
-	if (GetAbilitySystemComponent() && SprintAbilityTag.IsValid())
-	{
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(SprintAbilityTag));
-	}
+	TryActivateAbilityByTag(SprintAbilityTag);
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
-	if (GetAbilitySystemComponent() && SprintAbilityTag.IsValid())
-	{
-		FGameplayTagContainer TagContainer(SprintAbilityTag);
-		GetAbilitySystemComponent()->CancelAbilities(&TagContainer);
-	}
+	CancelAbilitiesByTag(SprintAbilityTag);
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
@@ -826,9 +888,9 @@ void AProject_JPlayerCharacter::ToggleCombatMode()
 	{
 		BeginCombatModeWithIntro();
 	}
-	else if (GetAbilitySystemComponent() && CombatToggleAbilityTag.IsValid())
+	else
 	{
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(CombatToggleAbilityTag));
+		TryActivateAbilityByTag(CombatToggleAbilityTag);
 	}
 }
 
@@ -892,10 +954,7 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		if (bPendingCombatModeFromIntro && !bInterrupted && !IsHitReacting())
 		{
 			bPendingCombatModeFromIntro = false;
-			if (GetAbilitySystemComponent() && CombatToggleAbilityTag.IsValid())
-			{
-				GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(CombatToggleAbilityTag));
-			}
+			TryActivateAbilityByTag(CombatToggleAbilityTag);
 		}
 		else if (!IsCombatModeActive())
 		{
@@ -958,6 +1017,6 @@ void AProject_JPlayerCharacter::TriggerPlayerAttack()
 		Payload.Target = this;
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Payload.EventTag, Payload);
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(Payload.EventTag));
+		TryActivateAbilityByTag(Payload.EventTag);
 	}
 }

@@ -106,6 +106,7 @@ public:
 	TArray<UProject_JEquipmentItemDefinition*> GetAllEquippedItems() const;
 
 	void OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item);
+	void OnRep_EquipmentChanged(FProject_JEquipmentArrayItem& Item);
 	void OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem& Item);
 
 protected:

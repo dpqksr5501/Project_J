@@ -19,6 +19,13 @@ void FProject_JEquipmentArray::PostReplicatedAdd(const TArrayView<int32>& AddedI
 
 void FProject_JEquipmentArray::PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize)
 {
+	for (int32 Index : ChangedIndices)
+	{
+		if (OwnerComponent && Items.IsValidIndex(Index))
+		{
+			OwnerComponent->OnRep_EquipmentChanged(Items[Index]);
+		}
+	}
 }
 
 void FProject_JEquipmentArray::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
@@ -232,6 +239,11 @@ void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item)
+{
+	BroadcastEquipmentEquipped(Item);
+}
+
+void UProject_JEquipmentManagerComponent::OnRep_EquipmentChanged(FProject_JEquipmentArrayItem& Item)
 {
 	BroadcastEquipmentEquipped(Item);
 }

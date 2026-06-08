@@ -46,35 +46,58 @@ void UProject_JCameraComponent::BeginPlay()
 		return;
 	}
 
-	APawn* OwningPawn = Cast<APawn>(GetOwner());
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningPawn);
+	RefreshAbilitySystemBinding();
+}
+
+void UProject_JCameraComponent::RefreshAbilitySystemBinding()
+{
+	if (!bIsLocallyControlled)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
 	if (ASC)
 	{
+		if (BoundAbilitySystemComponent.Get() == ASC && CombatModeTagEventHandle.IsValid())
+		{
+			return;
+		}
+
+		UnregisterAbilitySystemBinding();
+
 		bIsCombatMode = ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		if (CameraBoom)
 		{
 			CameraBoom->TargetArmLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
 		}
 
-		ASC->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_CombatMode, EGameplayTagEventType::NewOrRemoved)
+		BoundAbilitySystemComponent = ASC;
+		CombatModeTagEventHandle = ASC->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_CombatMode, EGameplayTagEventType::NewOrRemoved)
 			.AddUObject(this, &UProject_JCameraComponent::OnCombatStateTagChanged);
 	}
 }
 
 void UProject_JCameraComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	APawn* OwningPawn = Cast<APawn>(GetOwner());
-	if (OwningPawn && bIsLocallyControlled)
+	UnregisterAbilitySystemBinding();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UProject_JCameraComponent::UnregisterAbilitySystemBinding()
+{
+	if (UAbilitySystemComponent* ASC = BoundAbilitySystemComponent.Get())
 	{
-		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningPawn);
-		if (ASC)
+		if (CombatModeTagEventHandle.IsValid())
 		{
 			ASC->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_CombatMode, EGameplayTagEventType::NewOrRemoved)
-				.RemoveAll(this);
+				.Remove(CombatModeTagEventHandle);
 		}
 	}
 
-	Super::EndPlay(EndPlayReason);
+	CombatModeTagEventHandle.Reset();
+	BoundAbilitySystemComponent.Reset();
 }
 
 void UProject_JCameraComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

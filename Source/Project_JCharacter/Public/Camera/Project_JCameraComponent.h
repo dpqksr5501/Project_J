@@ -30,6 +30,7 @@ protected:
 
 public:
 	void Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InFollowCamera);
+	void RefreshAbilitySystemBinding();
 
 	UPROPERTY()
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -57,6 +58,10 @@ private:
 	UFUNCTION()
 	void OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
+	void UnregisterAbilitySystemBinding();
+
+	TWeakObjectPtr<UAbilitySystemComponent> BoundAbilitySystemComponent;
+	FDelegateHandle CombatModeTagEventHandle;
 	bool bIsCombatMode = false;
 	bool bIsLocallyControlled = false;
 };
