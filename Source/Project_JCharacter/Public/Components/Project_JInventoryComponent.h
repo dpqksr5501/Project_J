@@ -75,8 +75,29 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool RemoveItemInstance(FGuid InstanceId);
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
+	bool SetItemStackCount(FGuid InstanceId, int32 NewStackCount);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
+	bool AddItemStackCount(FGuid InstanceId, int32 DeltaStackCount);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
+	bool ConsumeItemStack(FGuid InstanceId, int32 CountToConsume = 1);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
+	bool SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped = false);
+
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool HasItemInstance(FGuid InstanceId) const;
+
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	bool IsItemInstanceLocked(FGuid InstanceId) const;
+
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	bool CanRemoveItemInstance(FGuid InstanceId, int32 Count = 1) const;
+
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	bool CanMoveItemInstance(FGuid InstanceId, int32 Count = 1) const;
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData& OutItemInstance) const;

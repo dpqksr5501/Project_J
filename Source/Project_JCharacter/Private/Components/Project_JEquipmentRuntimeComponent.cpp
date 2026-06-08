@@ -93,7 +93,14 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 		{
 			ItemDef->AbilitySet->GiveToAbilitySystem(ASC, &NewRuntimeItem.GrantedHandles);
 		}
-		ApplyEquipmentStatModifiers(ItemDef, 1.0f);
+		if (ASC)
+		{
+			ApplyEquipmentEffects(*ASC, *ItemDef, NewRuntimeItem);
+		}
+		else
+		{
+			ApplyEquipmentStatModifiers(ItemDef, 1.0f);
+		}
 	}
 
 	RuntimeItems.Add(Slot, NewRuntimeItem);
@@ -123,7 +130,14 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 		{
 			RuntimeItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
 		}
-		ApplyEquipmentStatModifiers(RuntimeItemDef, -1.0f);
+		if (ASC)
+		{
+			RemoveEquipmentEffects(*ASC, RuntimeItem);
+		}
+		else
+		{
+			ApplyEquipmentStatModifiers(RuntimeItemDef, -1.0f);
+		}
 	}
 
 	// Remove Visuals
@@ -206,6 +220,65 @@ void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponAnimProfile()
 	}
 
 	OwnerPlayer->SetCurrentWeaponAnimProfile(SelectedWeaponAnimProfile);
+}
+
+void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	if (ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly)
+	{
+		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+		RuntimeItem.bAppliedStatModifierFallback = true;
+		return;
+	}
+
+	if (!ItemDef.EquipmentEffects.IsEmpty())
+	{
+		for (const TSubclassOf<UGameplayEffect>& EffectClass : ItemDef.EquipmentEffects)
+		{
+			if (!EffectClass)
+			{
+				continue;
+			}
+
+			FGameplayEffectContextHandle EffectContext = ASC.MakeEffectContext();
+			EffectContext.AddSourceObject(&ItemDef);
+			const FGameplayEffectSpecHandle SpecHandle = ASC.MakeOutgoingSpec(EffectClass, 1.0f, EffectContext);
+			if (SpecHandle.IsValid())
+			{
+				const FActiveGameplayEffectHandle ActiveHandle = ASC.ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				if (ActiveHandle.IsValid())
+				{
+					RuntimeItem.GrantedEffectHandles.Add(ActiveHandle);
+				}
+			}
+		}
+	}
+
+	if (RuntimeItem.GrantedEffectHandles.IsEmpty() &&
+		ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers)
+	{
+		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+		RuntimeItem.bAppliedStatModifierFallback = true;
+	}
+}
+
+void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	if (RuntimeItem.bAppliedStatModifierFallback)
+	{
+		ApplyEquipmentStatModifiers(RuntimeItem.ItemDef, -1.0f);
+		RuntimeItem.bAppliedStatModifierFallback = false;
+	}
+
+	for (const FActiveGameplayEffectHandle& EffectHandle : RuntimeItem.GrantedEffectHandles)
+	{
+		if (EffectHandle.IsValid())
+		{
+			ASC.RemoveActiveGameplayEffect(EffectHandle);
+		}
+	}
+
+	RuntimeItem.GrantedEffectHandles.Reset();
 }
 
 void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const

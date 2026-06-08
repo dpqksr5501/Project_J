@@ -10,6 +10,7 @@
 class UProject_JEquipmentItemDefinition;
 class UProject_JModularMeshComponent;
 class UProject_JEquipmentManagerComponent;
+class UProject_JInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEquipmentChangedSignature, EProject_JEquipmentSlot, Slot, UProject_JEquipmentItemDefinition*, ItemDef);
 
@@ -123,6 +124,10 @@ private:
 	void ServerRequestUnequipSlot(EProject_JEquipmentSlot Slot);
 
 	bool CanCommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
+	bool CanEquipInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
+	UProject_JInventoryComponent* GetOwnerInventoryComponent() const;
+	bool SetInventoryEquipmentLock(const FProject_JItemInstanceData& ItemInstance, bool bLocked) const;
+	void CommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance, bool bRequireInventoryOwnership);
 	void BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item);
 	void BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item);
 	int32 FindEquipmentIndexByItem(const UProject_JEquipmentItemDefinition* ItemDef) const;

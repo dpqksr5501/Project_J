@@ -1,4 +1,5 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
+#include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Net/UnrealNetwork.h"
@@ -64,7 +65,7 @@ void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefin
 	FProject_JItemInstanceData ItemInstance;
 	ItemInstance.InstanceId = FGuid::NewGuid();
 	ItemInstance.ItemDef = ItemDef;
-	EquipItemInstance(ItemInstance);
+	CommitEquipItemInstance(ItemInstance, false);
 }
 
 void UProject_JEquipmentManagerComponent::RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef)
@@ -85,35 +86,7 @@ void UProject_JEquipmentManagerComponent::RequestEquipItem(UProject_JEquipmentIt
 
 void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
 {
-	UProject_JEquipmentItemDefinition* ItemDef = ItemInstance.ItemDef;
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !CanCommitEquipItemInstance(ItemInstance))
-	{
-		return;
-	}
-
-	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
-	if (Slot != EProject_JEquipmentSlot::None)
-	{
-		const int32 ExistingSlotIndex = FindEquipmentIndexBySlot(Slot);
-		if (ExistingSlotIndex != INDEX_NONE)
-		{
-			RemoveEquipmentAt(ExistingSlotIndex);
-		}
-	}
-
-	// Add to replicated fast array
-	FProject_JEquipmentArrayItem NewItem;
-	NewItem.ItemDef = ItemDef;
-	NewItem.ItemInstance = ItemInstance;
-	if (!NewItem.ItemInstance.InstanceId.IsValid())
-	{
-		NewItem.ItemInstance.InstanceId = FGuid::NewGuid();
-	}
-	NewItem.Slot = Slot;
-	
-	FProject_JEquipmentArrayItem& AddedItem = EquipmentArray.Items.Add_GetRef(NewItem);
-	EquipmentArray.MarkItemDirty(AddedItem);
-	BroadcastEquipmentEquipped(AddedItem);
+	CommitEquipItemInstance(ItemInstance, true);
 }
 
 void UProject_JEquipmentManagerComponent::RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
@@ -225,6 +198,95 @@ bool UProject_JEquipmentManagerComponent::CanCommitEquipItemInstance(const FProj
 	return true;
 }
 
+bool UProject_JEquipmentManagerComponent::CanEquipInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const
+{
+	if (!ItemInstance.InstanceId.IsValid())
+	{
+		return false;
+	}
+
+	const UProject_JInventoryComponent* InventoryComponent = GetOwnerInventoryComponent();
+	if (!InventoryComponent)
+	{
+		return false;
+	}
+
+	FProject_JItemInstanceData OwnedItemInstance;
+	if (!InventoryComponent->FindItemInstance(ItemInstance.InstanceId, OwnedItemInstance))
+	{
+		return false;
+	}
+
+	return
+		OwnedItemInstance.ItemDef == ItemInstance.ItemDef &&
+		OwnedItemInstance.StackCount > 0 &&
+		!OwnedItemInstance.bIsLocked;
+}
+
+UProject_JInventoryComponent* UProject_JEquipmentManagerComponent::GetOwnerInventoryComponent() const
+{
+	const AActor* OwnerActor = GetOwner();
+	return OwnerActor ? OwnerActor->FindComponentByClass<UProject_JInventoryComponent>() : nullptr;
+}
+
+bool UProject_JEquipmentManagerComponent::SetInventoryEquipmentLock(const FProject_JItemInstanceData& ItemInstance, bool bLocked) const
+{
+	if (!ItemInstance.InstanceId.IsValid())
+	{
+		return true;
+	}
+
+	UProject_JInventoryComponent* InventoryComponent = GetOwnerInventoryComponent();
+	if (!InventoryComponent)
+	{
+		return false;
+	}
+
+	return InventoryComponent->SetItemInstanceLocked(ItemInstance.InstanceId, bLocked, bLocked);
+}
+
+void UProject_JEquipmentManagerComponent::CommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance, bool bRequireInventoryOwnership)
+{
+	UProject_JEquipmentItemDefinition* ItemDef = ItemInstance.ItemDef;
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !CanCommitEquipItemInstance(ItemInstance))
+	{
+		return;
+	}
+
+	if (bRequireInventoryOwnership && !CanEquipInventoryItemInstance(ItemInstance))
+	{
+		return;
+	}
+
+	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
+	if (Slot != EProject_JEquipmentSlot::None)
+	{
+		const int32 ExistingSlotIndex = FindEquipmentIndexBySlot(Slot);
+		if (ExistingSlotIndex != INDEX_NONE)
+		{
+			RemoveEquipmentAt(ExistingSlotIndex);
+		}
+	}
+
+	FProject_JEquipmentArrayItem NewItem;
+	NewItem.ItemDef = ItemDef;
+	NewItem.ItemInstance = ItemInstance;
+	if (!NewItem.ItemInstance.InstanceId.IsValid())
+	{
+		NewItem.ItemInstance.InstanceId = FGuid::NewGuid();
+	}
+	NewItem.Slot = Slot;
+
+	if (bRequireInventoryOwnership && !SetInventoryEquipmentLock(NewItem.ItemInstance, true))
+	{
+		return;
+	}
+
+	FProject_JEquipmentArrayItem& AddedItem = EquipmentArray.Items.Add_GetRef(NewItem);
+	EquipmentArray.MarkItemDirty(AddedItem);
+	BroadcastEquipmentEquipped(AddedItem);
+}
+
 void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 {
 	if (!EquipmentArray.Items.IsValidIndex(Index))
@@ -233,6 +295,7 @@ void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 	}
 
 	BroadcastEquipmentUnequipped(EquipmentArray.Items[Index]);
+	SetInventoryEquipmentLock(EquipmentArray.Items[Index].ItemInstance, false);
 
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();

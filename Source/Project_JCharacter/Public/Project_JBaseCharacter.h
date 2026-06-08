@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "AbilitySystem/Project_JAbilitySet.h"
 #include "Project_JCombatInterface.h"
 #include "Project_JBaseCharacter.generated.h"
 
@@ -12,6 +13,8 @@ class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
 class UProject_JDefaultAttributeSetData;
 class UProject_JEquipmentRuntimeComponent;
+class UProject_JCharacterClassDefinition;
+class UProject_JCharacterAdvancementDefinition;
 
 UCLASS(Abstract)
 class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
@@ -31,6 +34,24 @@ public:
 	virtual bool IsDead_Implementation() const override;
 
 	virtual UProject_JAttributeSet* GetAttributeSet() const;
+
+	UFUNCTION(BlueprintPure, Category = "Character Class")
+	FName GetCharacterClassId() const;
+
+	UFUNCTION(BlueprintPure, Category = "Character Class")
+	FName GetAdvancementId() const;
+
+	UFUNCTION(BlueprintPure, Category = "Character Class")
+	const UProject_JCharacterClassDefinition* GetCharacterClassDefinition() const { return CharacterClassDefinition; }
+
+	UFUNCTION(BlueprintPure, Category = "Character Class")
+	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const { return AdvancementDefinition; }
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
+	bool CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
+	bool ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition);
 
 protected:
 	virtual void BeginPlay() override;
@@ -89,15 +110,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Class Defaults")
 	TObjectPtr<UProject_JDefaultAttributeSetData> DefaultAttributeData = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Class Defaults")
+	TObjectPtr<UProject_JCharacterClassDefinition> CharacterClassDefinition = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Class Defaults")
+	TObjectPtr<UProject_JCharacterAdvancementDefinition> AdvancementDefinition = nullptr;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> DefaultAbilities;
 
 	UPROPERTY(Transient)
 	bool bDefaultAbilitiesGranted = false;
 
+	UPROPERTY(Transient)
+	FProject_JAbilitySet_GrantedHandles AdvancementGrantedHandles;
+
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void InitializeDefaultAttributes() const;
 	void InitializeAbilitySystem();
+	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;
+	void GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject);
+	void GiveAdvancementAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject, FProject_JAbilitySet_GrantedHandles& OutGrantedHandles) const;
+	void RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC);
 	void BindEquipmentRuntimeToEquipmentManager();
 	virtual AActor* GetAbilitySystemOwnerActor() const;
 };

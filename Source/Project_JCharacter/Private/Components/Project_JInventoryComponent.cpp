@@ -87,6 +87,11 @@ bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 		return false;
 	}
 
+	if (!CanRemoveItemInstance(InstanceId, 1))
+	{
+		return false;
+	}
+
 	const FProject_JInventoryArrayItem RemovedItem = InventoryArray.Items[FoundIndex];
 	OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
 	InventoryArray.Items.RemoveAt(FoundIndex);
@@ -94,9 +99,149 @@ bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 	return true;
 }
 
+bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 NewStackCount)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || NewStackCount < 0)
+	{
+		return false;
+	}
+
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	FProject_JInventoryArrayItem& Item = InventoryArray.Items[FoundIndex];
+	if (NewStackCount > Item.ItemInstance.StackCount && Item.ItemInstance.bIsLocked)
+	{
+		return false;
+	}
+
+	if (NewStackCount < Item.ItemInstance.StackCount && !CanRemoveItemInstance(InstanceId, Item.ItemInstance.StackCount - NewStackCount))
+	{
+		return false;
+	}
+
+	if (NewStackCount == 0)
+	{
+		const FProject_JInventoryArrayItem RemovedItem = Item;
+		OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
+		InventoryArray.Items.RemoveAt(FoundIndex);
+		InventoryArray.MarkArrayDirty();
+		return true;
+	}
+
+	Item.ItemInstance.StackCount = NewStackCount;
+	InventoryArray.MarkItemDirty(Item);
+	OnItemChanged.Broadcast(Item.ItemInstance);
+	return true;
+}
+
+bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 DeltaStackCount)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	if (DeltaStackCount == 0)
+	{
+		return true;
+	}
+
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	const int32 CurrentStackCount = InventoryArray.Items[FoundIndex].ItemInstance.StackCount;
+	return SetItemStackCount(InstanceId, CurrentStackCount + DeltaStackCount);
+}
+
+bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 CountToConsume)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	if (CountToConsume <= 0)
+	{
+		return false;
+	}
+
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	const int32 CurrentStackCount = InventoryArray.Items[FoundIndex].ItemInstance.StackCount;
+	if (CurrentStackCount < CountToConsume)
+	{
+		return false;
+	}
+
+	return SetItemStackCount(InstanceId, CurrentStackCount - CountToConsume);
+}
+
+bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return false;
+	}
+
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	FProject_JInventoryArrayItem& Item = InventoryArray.Items[FoundIndex];
+	Item.ItemInstance.bIsLocked = bLocked;
+	Item.ItemInstance.bIsEquipped = bLocked && bEquipped;
+	InventoryArray.MarkItemDirty(Item);
+	OnItemChanged.Broadcast(Item.ItemInstance);
+	return true;
+}
+
 bool UProject_JInventoryComponent::HasItemInstance(FGuid InstanceId) const
 {
 	return FindItemIndex(InstanceId) != INDEX_NONE;
+}
+
+bool UProject_JInventoryComponent::IsItemInstanceLocked(FGuid InstanceId) const
+{
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	return FoundIndex != INDEX_NONE && InventoryArray.Items[FoundIndex].ItemInstance.bIsLocked;
+}
+
+bool UProject_JInventoryComponent::CanRemoveItemInstance(FGuid InstanceId, int32 Count) const
+{
+	if (Count <= 0)
+	{
+		return false;
+	}
+
+	const int32 FoundIndex = FindItemIndex(InstanceId);
+	if (FoundIndex == INDEX_NONE)
+	{
+		return false;
+	}
+
+	const FProject_JItemInstanceData& ItemInstance = InventoryArray.Items[FoundIndex].ItemInstance;
+	return
+		ItemInstance.IsValid() &&
+		!ItemInstance.bIsLocked &&
+		ItemInstance.StackCount >= Count;
+}
+
+bool UProject_JInventoryComponent::CanMoveItemInstance(FGuid InstanceId, int32 Count) const
+{
+	return CanRemoveItemInstance(InstanceId, Count);
 }
 
 bool UProject_JInventoryComponent::FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData& OutItemInstance) const

@@ -26,6 +26,8 @@ class UProject_JCombatAnimProfile;
 class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
+class UProject_JCombatStateComponent;
+class UProject_JCombatIntroComponent;
 class UProject_JInventoryComponent;
 class UAbilitySystemComponent;
 struct FGameplayTag;
@@ -76,6 +78,12 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
+	UProject_JCombatStateComponent* CombatStateComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
+	UProject_JCombatIntroComponent* CombatIntroComponent;
 
 protected:
 
@@ -368,13 +376,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAnimEvents)
 	FProject_JReplicatedAnimEventState ReplicatedAnimEvents;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UAnimMontage> ActiveCombatIntroMontage = nullptr;
-
 	bool bHadMoveInputForReplication = false;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
-
-	TWeakObjectPtr<UAbilitySystemComponent> CombatStateTagEventASC;
-	TArray<FDelegateHandle> CombatStateTagEventHandles;
 };

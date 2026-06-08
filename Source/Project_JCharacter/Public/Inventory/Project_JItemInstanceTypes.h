@@ -22,8 +22,14 @@ struct FProject_JItemInstanceData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (ClampMin = "1"))
 	int32 StackCount = 1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	bool bIsLocked = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	bool bIsEquipped = false;
+
 	bool IsValid() const
 	{
-		return ItemDef != nullptr;
+		return ItemDef != nullptr && InstanceId.IsValid() && StackCount > 0;
 	}
 };

@@ -29,6 +29,8 @@
 #include "Animation/AnimMontage.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Components/Project_JCombatIntroComponent.h"
+#include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
@@ -110,6 +112,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
+	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
+	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -124,6 +128,15 @@ void AProject_JPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (CombatStateComponent)
+	{
+		CombatStateComponent->OnCombatStateTagChanged.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	}
+	if (CombatIntroComponent)
+	{
+		CombatIntroComponent->OnCombatIntroEnded.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+	}
+
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
 	RefreshAbilitySystemDependentComponents();
@@ -134,6 +147,14 @@ void AProject_JPlayerCharacter::BeginPlay()
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	UnregisterCombatStateTagEvents();
+	if (CombatStateComponent)
+	{
+		CombatStateComponent->OnCombatStateTagChanged.RemoveDynamic(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged);
+	}
+	if (CombatIntroComponent)
+	{
+		CombatIntroComponent->OnCombatIntroEnded.RemoveDynamic(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+	}
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -227,31 +248,20 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) const
 {
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	return ASC && StateTag.IsValid() && ASC->HasMatchingGameplayTag(StateTag);
+	return CombatStateComponent && CombatStateComponent->HasStateTag(StateTag);
 }
 
 bool AProject_JPlayerCharacter::TryActivateAbilityByTag(const FGameplayTag& AbilityTag)
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC || !AbilityTag.IsValid())
-	{
-		return false;
-	}
-
-	return ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AbilityTag));
+	return CombatStateComponent && CombatStateComponent->TryActivateAbilityByTag(AbilityTag);
 }
 
 void AProject_JPlayerCharacter::CancelAbilitiesByTag(const FGameplayTag& AbilityTag)
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC || !AbilityTag.IsValid())
+	if (CombatStateComponent)
 	{
-		return;
+		CombatStateComponent->CancelAbilitiesByTag(AbilityTag);
 	}
-
-	FGameplayTagContainer TagContainer(AbilityTag);
-	ASC->CancelAbilities(&TagContainer);
 }
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
@@ -292,52 +302,18 @@ UProject_JCombatComponent* AProject_JPlayerCharacter::RefreshActiveCombatCompone
 
 void AProject_JPlayerCharacter::RegisterCombatStateTagEvents()
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC)
+	if (CombatStateComponent)
 	{
-		return;
+		CombatStateComponent->BindToAbilitySystem(GetAbilitySystemComponent());
 	}
-
-	if (CombatStateTagEventASC.Get() == ASC && !CombatStateTagEventHandles.IsEmpty())
-	{
-		return;
-	}
-
-	UnregisterCombatStateTagEvents();
-
-	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
-	CombatStateTagEventASC = ASC;
-	CombatStateTagEventHandles.Reserve(5);
-	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Attacking, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
-	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Dodging, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
-	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_HitReacting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
-	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_CombatMode, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
-	CombatStateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(GameplayTags.State_Movement_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AProject_JPlayerCharacter::OnCombatStateTagChanged));
 }
 
 void AProject_JPlayerCharacter::UnregisterCombatStateTagEvents()
 {
-	UAbilitySystemComponent* ASC = CombatStateTagEventASC.Get();
-	if (ASC)
+	if (CombatStateComponent)
 	{
-		const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
-		const FGameplayTag StateTags[] =
-		{
-			GameplayTags.State_Attacking,
-			GameplayTags.State_Dodging,
-			GameplayTags.State_HitReacting,
-			GameplayTags.State_CombatMode,
-			GameplayTags.State_Movement_Sprinting
-		};
-
-		for (int32 Index = 0; Index < CombatStateTagEventHandles.Num() && Index < UE_ARRAY_COUNT(StateTags); ++Index)
-		{
-			ASC->RegisterGameplayTagEvent(StateTags[Index], EGameplayTagEventType::NewOrRemoved).Remove(CombatStateTagEventHandles[Index]);
-		}
+		CombatStateComponent->ClearAbilitySystemBinding();
 	}
-
-	CombatStateTagEventHandles.Reset();
-	CombatStateTagEventASC.Reset();
 }
 
 void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
@@ -664,7 +640,7 @@ UProject_JInventoryComponent* AProject_JPlayerCharacter::GetInventoryComponent()
 
 bool AProject_JPlayerCharacter::IsCombatModeActive() const
 {
-	return HasCombatStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+	return CombatStateComponent && CombatStateComponent->IsCombatModeActive();
 }
 
 void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile)
@@ -688,22 +664,22 @@ void AProject_JPlayerCharacter::OnRep_CurrentWeaponAnimProfile()
 
 bool AProject_JPlayerCharacter::IsAttacking() const
 {
-	return bIsAttacking || HasCombatStateTag(FProject_JGameplayTags::Get().State_Attacking);
+	return bIsAttacking || (CombatStateComponent && CombatStateComponent->IsAttacking());
 }
 
 bool AProject_JPlayerCharacter::IsDodging() const
 {
-	return bIsDodging || HasCombatStateTag(FProject_JGameplayTags::Get().State_Dodging);
+	return bIsDodging || (CombatStateComponent && CombatStateComponent->IsDodging());
 }
 
 bool AProject_JPlayerCharacter::IsHitReacting() const
 {
-	return bIsHitReacting || HasCombatStateTag(FProject_JGameplayTags::Get().State_HitReacting);
+	return bIsHitReacting || (CombatStateComponent && CombatStateComponent->IsHitReacting());
 }
 
 bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
 {
-	return HasCombatStateTag(FProject_JGameplayTags::Get().State_Movement_Sprinting) && !IsCombatActionBlockingSprint();
+	return CombatStateComponent && CombatStateComponent->IsSprintTagActive() && !IsCombatActionBlockingSprint();
 }
 
 bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
@@ -905,77 +881,64 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 {
 	UAnimMontage* EffectiveCombatIntroMontage = GetEffectiveCombatIntroMontage();
-	if (!EffectiveCombatIntroMontage || bIsPlayingCombatIntro || IsHitReacting())
+	if (!EffectiveCombatIntroMontage || !CombatIntroComponent || CombatIntroComponent->IsPlayingIntro() || IsHitReacting())
 	{
 		return;
 	}
 
-	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
-	if (!AnimInstance)
+	if (CombatIntroComponent->PlayIntro(*this, EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate()))
 	{
-		return;
+		bIsPlayingCombatIntro = CombatIntroComponent->IsPlayingIntro();
+		bPendingCombatModeFromIntro = CombatIntroComponent->IsPendingCombatMode();
 	}
-
-	const float Duration = PlayAnimMontage(EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate());
-	if (Duration <= 0.0f)
-	{
-		return;
-	}
-
-	bIsPlayingCombatIntro = true;
-	bPendingCombatModeFromIntro = true;
-	ActiveCombatIntroMontage = EffectiveCombatIntroMontage;
-
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(EndDelegate, EffectiveCombatIntroMontage);
 }
 
 void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 {
-	UAnimMontage* MontageToStop = ActiveCombatIntroMontage ? ActiveCombatIntroMontage.Get() : GetEffectiveCombatIntroMontage();
-	if (bIsPlayingCombatIntro)
+	if (CombatIntroComponent)
 	{
-		StopAnimMontage(MontageToStop);
+		CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
 	}
 
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
-	ActiveCombatIntroMontage = nullptr;
 }
 
 void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage == ActiveCombatIntroMontage)
-	{
-		bIsPlayingCombatIntro = false;
-		ActiveCombatIntroMontage = nullptr;
+	bIsPlayingCombatIntro = CombatIntroComponent && CombatIntroComponent->IsPlayingIntro();
+	bPendingCombatModeFromIntro = CombatIntroComponent && CombatIntroComponent->IsPendingCombatMode();
 
-		if (bPendingCombatModeFromIntro && !bInterrupted && !IsHitReacting())
+	if (bPendingCombatModeFromIntro && !bInterrupted && !IsHitReacting())
+	{
+		if (CombatIntroComponent)
 		{
-			bPendingCombatModeFromIntro = false;
-			TryActivateAbilityByTag(CombatToggleAbilityTag);
+			CombatIntroComponent->ClearPendingCombatMode();
 		}
-		else if (!IsCombatModeActive())
+		bPendingCombatModeFromIntro = false;
+		TryActivateAbilityByTag(CombatToggleAbilityTag);
+	}
+	else if (!IsCombatModeActive())
+	{
+		if (CombatIntroComponent)
 		{
-			bPendingCombatModeFromIntro = false;
-			ApplyCombatRotationMode(false);
+			CombatIntroComponent->ClearPendingCombatMode();
 		}
+		bPendingCombatModeFromIntro = false;
+		ApplyCombatRotationMode(false);
 	}
 }
 
 void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 {
-	if (!ShouldInterruptCombatIntroOnHit() || !bIsPlayingCombatIntro)
+	if (!ShouldInterruptCombatIntroOnHit() || !CombatIntroComponent || !CombatIntroComponent->IsPlayingIntro())
 	{
 		return;
 	}
 
-	UAnimMontage* MontageToStop = ActiveCombatIntroMontage ? ActiveCombatIntroMontage.Get() : GetEffectiveCombatIntroMontage();
-	StopAnimMontage(MontageToStop);
+	CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
-	ActiveCombatIntroMontage = nullptr;
 	if (!IsCombatModeActive())
 	{
 		ApplyCombatRotationMode(false);

@@ -8,6 +8,15 @@
 
 class USkeletalMesh;
 class UGameplayAbility;
+class UGameplayEffect;
+
+UENUM(BlueprintType)
+enum class EProject_JEquipmentStatApplicationPolicy : uint8
+{
+	GameplayEffectsThenStatModifiers,
+	GameplayEffectsOnly,
+	StatModifiersOnly
+};
 
 /**
  * Data-driven definition for an equipment piece (Armor, Weapon, Accessory).
@@ -40,6 +49,13 @@ public:
 	// AbilitySet containing skills and passives granted when this equipment is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Abilities")
 	TObjectPtr<class UProject_JAbilitySet> AbilitySet;
+
+	// GameplayEffects applied while this item is equipped.
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Effects")
+	TArray<TSubclassOf<UGameplayEffect>> EquipmentEffects;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Effects")
+	EProject_JEquipmentStatApplicationPolicy StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers;
 
 	// Fixed attribute bonuses applied while this item is equipped.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Stats")

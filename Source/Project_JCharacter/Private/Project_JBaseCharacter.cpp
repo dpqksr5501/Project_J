@@ -7,6 +7,8 @@
 #include "Project_JDefaultAttributeSetData.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "CharacterClass/Project_JCharacterClassDefinition.h"
+#include "AbilitySystem/Project_JAbilitySet.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerState.h"
@@ -144,7 +146,8 @@ void AProject_JBaseCharacter::OnRep_PlayerState()
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
 {
-	return CharacterLevel;
+	const int32 ClassStartingLevel = CharacterClassDefinition ? CharacterClassDefinition->StartingLevel : 1;
+	return FMath::Max(CharacterLevel, ClassStartingLevel);
 }
 
 FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FName& SocketName)
@@ -167,6 +170,83 @@ bool AProject_JBaseCharacter::IsDead_Implementation() const
 	return false;
 }
 
+FName AProject_JBaseCharacter::GetCharacterClassId() const
+{
+	return CharacterClassDefinition ? CharacterClassDefinition->ClassId : NAME_None;
+}
+
+FName AProject_JBaseCharacter::GetAdvancementId() const
+{
+	return AdvancementDefinition ? AdvancementDefinition->AdvancementId : NAME_None;
+}
+
+bool AProject_JBaseCharacter::CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const
+{
+	if (!HasAuthority() || !NewAdvancementDefinition || NewAdvancementDefinition == AdvancementDefinition)
+	{
+		return false;
+	}
+
+	if (NewAdvancementDefinition->BaseClass && CharacterClassDefinition && NewAdvancementDefinition->BaseClass != CharacterClassDefinition)
+	{
+		return false;
+	}
+
+	if (GetCharacterLevel_Implementation() < NewAdvancementDefinition->RequiredLevel)
+	{
+		return false;
+	}
+
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer OwnedTags;
+	ASC->GetOwnedGameplayTags(OwnedTags);
+	if (!OwnedTags.HasAll(NewAdvancementDefinition->RequiredTags))
+	{
+		return false;
+	}
+
+	if (OwnedTags.HasAny(NewAdvancementDefinition->BlockedTags))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool AProject_JBaseCharacter::ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition)
+{
+	if (!CanApplyAdvancementDefinition(NewAdvancementDefinition))
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!ASC)
+	{
+		return false;
+	}
+
+	if (NewAdvancementDefinition->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement)
+	{
+		RemoveAdvancementAbilitySets(*ASC);
+	}
+
+	AdvancementDefinition = NewAdvancementDefinition;
+	if (!CharacterClassDefinition && AdvancementDefinition->BaseClass)
+	{
+		CharacterClassDefinition = AdvancementDefinition->BaseClass;
+	}
+
+	UObject* AbilitySourceObject = GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
+	GiveAdvancementAbilitySets(*ASC, AbilitySourceObject, AdvancementGrantedHandles);
+	return true;
+}
+
 void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 {
 	UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet();
@@ -175,12 +255,13 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 		return;
 	}
 
-	const float DefaultMaxHealth = DefaultAttributeData ? DefaultAttributeData->MaxHealth : 100.0f;
-	const float DefaultHealth = DefaultAttributeData ? DefaultAttributeData->Health : DefaultMaxHealth;
-	const float DefaultMaxMana = DefaultAttributeData ? DefaultAttributeData->MaxMana : 100.0f;
-	const float DefaultMana = DefaultAttributeData ? DefaultAttributeData->Mana : DefaultMaxMana;
-	const float DefaultAttackPower = DefaultAttributeData ? DefaultAttributeData->AttackPower : 10.0f;
-	const float DefaultDefense = DefaultAttributeData ? DefaultAttributeData->Defense : 0.0f;
+	const UProject_JDefaultAttributeSetData* EffectiveDefaultAttributeData = GetEffectiveDefaultAttributeData();
+	const float DefaultMaxHealth = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->MaxHealth : 100.0f;
+	const float DefaultHealth = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Health : DefaultMaxHealth;
+	const float DefaultMaxMana = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->MaxMana : 100.0f;
+	const float DefaultMana = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Mana : DefaultMaxMana;
+	const float DefaultAttackPower = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->AttackPower : 10.0f;
+	const float DefaultDefense = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Defense : 0.0f;
 
 	if (CurrentAttributeSet->GetMaxHealth() <= 0.0f)
 	{
@@ -239,6 +320,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 					ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
 				}
 			}
+			GiveDefaultAbilitySets(*ASC, AbilitySourceObject);
 
 			if (OwnerInterface)
 			{
@@ -250,6 +332,97 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 			}
 		}
 	}
+}
+
+const UProject_JDefaultAttributeSetData* AProject_JBaseCharacter::GetEffectiveDefaultAttributeData() const
+{
+	if (AdvancementDefinition && AdvancementDefinition->OverrideAttributeData)
+	{
+		return AdvancementDefinition->OverrideAttributeData;
+	}
+
+	if (CharacterClassDefinition && CharacterClassDefinition->DefaultAttributeData)
+	{
+		return CharacterClassDefinition->DefaultAttributeData;
+	}
+
+	return DefaultAttributeData;
+}
+
+void AProject_JBaseCharacter::GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject)
+{
+	FProject_JAbilitySet_GrantedHandles IgnoredGrantedHandles;
+
+	if (CharacterClassDefinition)
+	{
+		for (const UProject_JAbilitySet* AbilitySet : CharacterClassDefinition->AbilitySets)
+		{
+			if (AbilitySet)
+			{
+				AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject);
+			}
+		}
+	}
+
+	if (AdvancementDefinition)
+	{
+		if (AdvancementDefinition->BaseClass && AdvancementDefinition->BaseClass != CharacterClassDefinition)
+		{
+			for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->BaseClass->AbilitySets)
+			{
+				if (AbilitySet)
+				{
+					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject);
+				}
+			}
+		}
+
+		for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->AdditionalAbilitySets)
+		{
+			if (AbilitySet)
+			{
+				AbilitySet->GiveToAbilitySystem(&ASC, &AdvancementGrantedHandles, AbilitySourceObject);
+			}
+		}
+	}
+}
+
+void AProject_JBaseCharacter::GiveAdvancementAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject, FProject_JAbilitySet_GrantedHandles& OutGrantedHandles) const
+{
+	if (!AdvancementDefinition)
+	{
+		return;
+	}
+
+	for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->AdditionalAbilitySets)
+	{
+		if (AbilitySet)
+		{
+			AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject);
+		}
+	}
+}
+
+void AProject_JBaseCharacter::RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC)
+{
+	for (const FGameplayAbilitySpecHandle& AbilitySpecHandle : AdvancementGrantedHandles.AbilitySpecHandles)
+	{
+		if (AbilitySpecHandle.IsValid())
+		{
+			ASC.ClearAbility(AbilitySpecHandle);
+		}
+	}
+
+	for (const FActiveGameplayEffectHandle& EffectHandle : AdvancementGrantedHandles.GameplayEffectHandles)
+	{
+		if (EffectHandle.IsValid())
+		{
+			ASC.RemoveActiveGameplayEffect(EffectHandle);
+		}
+	}
+
+	AdvancementGrantedHandles.AbilitySpecHandles.Reset();
+	AdvancementGrantedHandles.GameplayEffectHandles.Reset();
 }
 
 void AProject_JBaseCharacter::BindEquipmentRuntimeToEquipmentManager()

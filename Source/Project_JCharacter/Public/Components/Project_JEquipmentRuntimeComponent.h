@@ -5,12 +5,14 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AbilitySystem/Project_JAbilitySet.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "Equipment/Project_JEquipmentTypes.h"
 #include "Project_JEquipmentRuntimeComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
 class UProject_JEquipmentManagerComponent;
 class UProject_JModularMeshComponent;
+class UAbilitySystemComponent;
 
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentRuntimeItem
@@ -26,6 +28,12 @@ struct FProject_JEquipmentRuntimeItem
 	/** Granted Ability handles for this item */
 	UPROPERTY(Transient)
 	FProject_JAbilitySet_GrantedHandles GrantedHandles;
+
+	UPROPERTY(Transient)
+	TArray<FActiveGameplayEffectHandle> GrantedEffectHandles;
+
+	UPROPERTY(Transient)
+	bool bAppliedStatModifierFallback = false;
 };
 
 /**
@@ -59,6 +67,8 @@ protected:
 private:
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
 	void RefreshCurrentWeaponAnimProfile();
 

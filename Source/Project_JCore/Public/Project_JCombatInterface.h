@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -20,18 +20,17 @@ class PROJECT_JCORE_API IProject_JCombatInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	// ?덉떆: 罹먮┃???덈꺼 諛섑솚
+	// Returns the combat participant's current character level.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	int32 GetCharacterLevel() const;
 
-	// ?덉떆: 臾닿린??怨듦꺽 ?댄럺?몃? ?ㅽ룿???뚯폆 ?꾩튂 諛섑솚
+	// Returns the world location of the named combat socket.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	FVector GetCombatSocketLocation(const FName& SocketName);
 
-	// ?덉떆: ?щ쭩 ?곹깭 ?뺤씤
+	// Returns whether this combat participant is dead.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
 	bool IsDead() const;
 };
