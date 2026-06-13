@@ -13,6 +13,7 @@
 #include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
@@ -26,6 +27,67 @@
 
 // SyncLegacyFieldsFromStructuredData() removed.
 // All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
+
+namespace
+{
+FString GetDebugWorldName(const AActor* Actor)
+{
+	return Actor && Actor->GetWorld() ? Actor->GetWorld()->GetName() : FString(TEXT("None"));
+}
+
+void LogRemoteTrajectoryFacing(
+	const ACharacter* OwningCharacter,
+	const FProject_JAnimThreadSafeData& Data,
+	const UPoseSearchDatabase* SelectedDatabase)
+{
+	if (!OwningCharacter ||
+		OwningCharacter->GetLocalRole() != ROLE_SimulatedProxy ||
+		!Project_J::MotionMatchingCVars::IsDebugRemoteTrajectoryEnabled())
+	{
+		return;
+	}
+
+	const TArray<FTransformTrajectorySample>& Samples = Data.Movement.Trajectory.Samples;
+	if (Samples.Num() < 2)
+	{
+		return;
+	}
+
+	const float ActorYaw = OwningCharacter->GetActorRotation().Yaw;
+	const FVector HorizontalVelocity(Data.Movement.Velocity.X, Data.Movement.Velocity.Y, 0.0f);
+	const float VelocityYaw = HorizontalVelocity.IsNearlyZero() ? ActorYaw : HorizontalVelocity.Rotation().Yaw;
+
+	for (int32 Index = 1; Index < Samples.Num(); ++Index)
+	{
+		const FVector Delta = Samples[Index].GetTransform().GetLocation() - Samples[Index - 1].GetTransform().GetLocation();
+		const FVector HorizontalDelta(Delta.X, Delta.Y, 0.0f);
+		if (HorizontalDelta.IsNearlyZero())
+		{
+			continue;
+		}
+
+		const float PosYaw = HorizontalDelta.Rotation().Yaw;
+		const float FaceYaw = Samples[Index].GetTransform().GetRotation().Rotator().Yaw;
+		const float Diff = FMath::FindDeltaAngleDegrees(PosYaw, FaceYaw);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("ProjectJ.MM.RemoteTrajectory World=%s NetMode=%s Owner=%s Sample=%d Time=%.3f PSD=%s PosYaw=%.1f FaceYaw=%.1f Diff=%.1f ActorYaw=%.1f VelocityYaw=%.1f Speed=%.1f"),
+			*GetDebugWorldName(OwningCharacter),
+			Project_J::LocomotionDebug::ToDebugString(OwningCharacter->GetNetMode()),
+			*GetNameSafe(OwningCharacter),
+			Index,
+			Samples[Index].TimeInSeconds,
+			*GetNameSafe(SelectedDatabase),
+			PosYaw,
+			FaceYaw,
+			Diff,
+			ActorYaw,
+			VelocityYaw,
+			Data.Movement.GroundSpeed);
+	}
+}
+}
 
 struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 {
@@ -95,10 +157,12 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FAnimNode_Base* InRootNode,
 	FName InLayerName)
 {
+	// Pose Search query trajectory must stay current even when database selection is throttled.
+	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
+
 	if (bUpdateMotionMatchingThisFrame)
 	{
 		ApplySelectedDatabaseToNativeNode();
-		NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
 	}
 
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
@@ -511,6 +575,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	LogRemoteTrajectoryFacing(OwningCharacter.Get(), Data, CurrentActivePoseSearchDatabase.Get());
 	ProjectProxy.QueueGameThreadData(Data, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, bUpdateMotionMatchingThisFrame);
 }
 
@@ -547,7 +612,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
 	}
-	
+
 	const UChooserTable* ChooserTable = AssetSet && AssetSet->MotionMatchingChooserTable
 		? AssetSet->MotionMatchingChooserTable.Get()
 		: MotionMatchingChooserTable.Get();
@@ -915,6 +980,14 @@ void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(c
 {
 	if (!Data.Movement.bStoppedAcceleratingThisFrame)
 	{
+		return;
+	}
+
+	if (OwningCharacter &&
+		OwningCharacter->GetLocalRole() == ROLE_SimulatedProxy &&
+		Project_J::MotionMatchingCVars::ShouldDisableRemoteAccelerationReset())
+	{
+		// Simulated proxies do not own reliable input acceleration; replicated velocity can be valid while acceleration flickers.
 		return;
 	}
 

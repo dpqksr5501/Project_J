@@ -207,6 +207,7 @@ private:
 	void ClearRemoteMoveStartTransientState();
 	bool TryFinishLandingForReplicatedMoveStart(bool bWasSprintingForStart);
 	bool TryPromoteReplicatedStartToLocomotion();
+	bool ShouldIgnoreRedundantReplicatedMoveStart() const;
 	void QueueReplicatedMoveStart(bool bWasSprintingForStart);
 	bool TryPromoteReplicatedStopToLocomotion();
 	void QueueReplicatedMoveStop();

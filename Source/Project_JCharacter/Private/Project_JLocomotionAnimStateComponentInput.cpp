@@ -20,6 +20,11 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 		return;
 	}
 
+	if (ShouldIgnoreRedundantReplicatedMoveStart())
+	{
+		return;
+	}
+
 	QueueReplicatedMoveStart(bWasSprintingForStart);
 }
 
@@ -76,6 +81,13 @@ bool UProject_JLocomotionAnimStateComponent::TryPromoteReplicatedStartToLocomoti
 	bPendingStartRequest = false;
 	EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	return true;
+}
+
+bool UProject_JLocomotionAnimStateComponent::ShouldIgnoreRedundantReplicatedMoveStart() const
+{
+	return
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		(bHasMoveInput || GroundSpeed > IdleSpeedThreshold);
 }
 
 void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStart(bool bWasSprintingForStart)

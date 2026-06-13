@@ -5,6 +5,8 @@
 #include "CharacterTrajectoryComponent.h"
 #include "Project_JMotionMatchingTrajectoryComponent.generated.h"
 
+class ACharacter;
+
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Animation), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JMotionMatchingTrajectoryComponent : public UCharacterTrajectoryComponent
 {
@@ -43,6 +45,7 @@ protected:
 private:
 	void EnsureTrajectoryBuffers();
 	void ApplyTrajectorySmoothing(float DeltaTime);
+	void RepairRemoteTrajectoryFacing(const ACharacter& CharacterOwner);
 	void ScaleTrajectoryHistory(float ScaleRatio);
 
 	UPROPERTY(Transient)

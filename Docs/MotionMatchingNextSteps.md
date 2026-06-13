@@ -1,98 +1,97 @@
-# Motion Matching Next Steps
+# Motion Matching Notes
 
-Project J의 플레이어 캐릭터 Motion Matching은 C++ locomotion state, thread-safe AnimInstance snapshot, profile 기반 PSD 선택, animation budget policy를 중심으로 유지합니다. NPC는 현재 구조에서 player-grade Motion Matching을 사용하지 않는 것을 기본 가정으로 둡니다.
+Project J uses a C++ locomotion state component, a thread-safe animation snapshot, and Pose Search databases selected from the character motion matching asset set. The player path is the primary Motion Matching path; NPC animation should stay on cheaper non-MM paths unless a later profiling pass proves otherwise.
 
 ## Current Architecture
 
-- `UProject_JLocomotionAnimStateComponent`가 ground/air/landing/start/stop state를 계산합니다.
-- `UProject_JCharacterAnimInstance`가 game thread snapshot을 만들고 anim thread에서 안전하게 사용합니다.
-- `UProject_JMotionMatchingAssetSet`이 run/sprint/start/remote start/stop/turn/jump/fall/landing PSD를 소유합니다.
-- `UProject_JLocomotionProfile`이 movement speed, motion matching distance, update interval, optimization fallback을 제공합니다.
-- `FProject_JAnimationBudgetSettings`와 `FProject_JAnimOptimizationPolicy`가 Near/Mid/Far/Hidden tier별 animation cost 정책을 공유합니다.
-- `UProject_JReplicatedAnimEventComponent`가 remote proxy용 replicated animation event counter를 해석합니다.
+- `UProject_JLocomotionAnimStateComponent` reconstructs ground, air, landing, start, stop, gait, and phase context.
+- `UProject_JCharacterAnimInstance` publishes a thread-safe snapshot to the native animation proxy.
+- `UProject_JMotionMatchingAssetSet` owns run, sprint, start, remote start, stop, turn, jump, fall, and landing databases.
+- `UProject_JMotionMatchingTrajectoryComponent` owns Motion Matching trajectory samples used by the Pose Search query.
+- Animation budget settings throttle database selection and expensive update work, but the Pose Search trajectory input must remain current every animation update.
 
-## Animation Budget Source
+## Locomotion-Only Policy
 
-`UProject_JCharacterAnimInstance`는 Near/Mid/Far/Hidden motion matching 값을 `FProject_JAnimationBudgetSettings`에서 해석합니다.
+Motion Matching is currently a locomotion system only. Stylish MMORPG skills, including mouse button combinations and modifier inputs, should stay in the input, GAS ability, montage, slot, and gameplay tag layers rather than expanding the locomotion Pose Search query.
 
-- `UProject_JLocomotionProfile::GetResolvedAnimationBudgetSettings()`는 legacy per-field float와 새 budget struct 사이의 migration bridge입니다.
-- LocomotionProfile이 없으면 AnimInstance fallback 값을 사용합니다.
-- Motion matching update interval, hidden remote interval, far distance, far-disable policy는 하나의 budget source를 공유합니다.
-- Start/RemoteStart replicated event 의미는 유지합니다.
+Keep this boundary unless there is a measured reason to change it:
 
-## Profile And PSD Validation
+- Locomotion Motion Matching chooses the base movement pose.
+- Skills and attacks activate through ability input mapping and gameplay tags.
+- Skill animation playback should use montages, slots, overlays, or ability-owned animation policy.
+- Root-motion or forced-facing skills should temporarily own their montage/pose layer instead of changing the base run-cycle database.
+- Future lock-on, strafe, or aim-offset movement should add explicit locomotion policy before it opts out of straight-running trajectory repair.
 
-`Project_J::AnimationProfileValidation`과 `UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion()`은 PIE 시작 시 다음 항목을 warning으로 알려줍니다.
+## Remote SimulatedProxy Fix
 
-- Run/Sprint: Cycle, Start, RemoteStart, Stop, TurnRedirect
-- Jump/Fall/Landing: JumpStart, FallOffStart, JumpAir, Stand/Run/Sprint Land, Heavy Land
-- LocomotionProfile: speed, sprint threshold, distance tier ordering
-- Start timing override: resolved `MaxDuration < MinDuration` 같은 튜닝 실수
-- Weapon/Combat profile: montage/play rate/socket/section 구성 실수
+The remote running issue was not caused by bad Run_Arc, Prism, or Run_Loop assets. It was caused by the simulated proxy trajectory query:
 
-검증은 log-only입니다. 초기 개발을 막지 않으면서 C++ state-machine 문제와 에셋 세팅 문제를 빨리 분리하기 위한 장치입니다.
+- The visible debug path positions could look straight.
+- After a turn, current velocity, actor yaw, phase, and selected database could all return to a straight run state.
+- Future trajectory sample rotations could still encode the previous turn.
+- Pose Search then saw an arc-like query and selected Prism/Arc candidates instead of `Run_Loop`.
 
-## Start Timing Overrides
+The fix keeps remote running queries semantically straight after network-smoothed turns:
 
-Start timing은 공통값을 기본 경로로 유지하고, 필요할 때만 상황별 override를 사용합니다.
+- `TransformTrajectory` is assigned to the native Pose Search history collector every animation update, independent of database selection throttling.
+- Simulated proxies skip acceleration-stop trajectory resets by default because local input acceleration is not reliable for replicated characters.
+- Simulated proxy trajectory smoothing is CVar-gated; rotation smoothing stays disabled by default.
+- `RepairRemoteTrajectoryFacing` is enabled by default for simulated proxies when:
+  - speed is above `p.ProjectJ.MM.RepairRemoteTrajectoryFacingMinSpeed`,
+  - actor yaw and velocity yaw are within `p.ProjectJ.MM.RepairRemoteTrajectoryFacingMaxYawDelta`.
+- The repair preserves the existing trajectory facing offset and only adjusts current/predicted samples. Historical samples are left intact so actual turns still match turn/arc candidates.
 
-- `LocalRunStartTiming`
-- `LocalSprintStartTiming`
-- `RemoteRunStartTiming`
-- `RemoteSprintStartTiming`
+Expected behavior:
 
-각 override field는 `-1`이면 공통값을 사용합니다. 먼저 `StartMinDuration`, `StartMaxDuration`, `StartResponsiveTurnExitMinTime`, `StartInputReleaseExitMinTime`, `StartAutoPromoteDelay`를 조정하고, local/remote 또는 run/sprint가 서로 다르게 보여야 할 때만 override를 채웁니다.
+- Straight remote running selects `Run_Loop`.
+- Actual turning can select Arc/Prism.
+- Returning to straight remote running returns to `Run_Loop`.
+- Sprint remains unchanged.
+- Future strafe, lock-on, or aim-offset locomotion should add an explicit opt-out before it intentionally allows facing to differ from movement.
 
-## PIE Profiling Snapshot
+## Useful CVars
 
-`DumpMMOProfilingSnapshot [MaxDetailedCharacters]`는 현재 PIE world에서 MMORPG-scale early snapshot을 캡처합니다.
+- `p.ProjectJ.MM.RepairRemoteTrajectoryFacing` defaults to `1`.
+- `p.ProjectJ.MM.RepairRemoteTrajectoryFacingMinSpeed` defaults to `80`.
+- `p.ProjectJ.MM.RepairRemoteTrajectoryFacingMaxYawDelta` defaults to `35`.
+- `p.ProjectJ.MM.DisableRemoteAccelReset` defaults to `1`.
+- `p.ProjectJ.MM.SmoothRemoteTrajectoryPosition` defaults to `0`.
+- `p.ProjectJ.MM.SmoothRemoteTrajectoryRotation` defaults to `0`.
+- `p.ProjectJ.MM.DebugRemoteTrajectory` defaults to `0` and logs `PosYaw`, `FaceYaw`, and their delta for simulated proxy trajectory samples.
 
-- player character와 NPC character 수를 따로 집계합니다.
-- authority, autonomous proxy, simulated proxy role 분포를 집계합니다.
-- Local/Near/Mid/Far/Hidden animation budget tier를 집계합니다.
-- animation data update, full chooser row, far-only chooser row 사용량을 기록합니다.
-- local viewer 기준 replication relevance 샘플을 출력합니다.
+## Refactor Guardrails
 
-Use this before changing budget values. 초기 목표는 완벽한 benchmark가 아니라 10/30/50 character 테스트 기준선을 만들고, simulated proxy가 너무 비싸거나 tier가 잘못 잡히는 상황을 빠르게 찾는 것입니다.
+Keep these invariants when refactoring the Motion Matching pipeline:
+
+- Do not treat trajectory debug path positions as the whole query. Pose Search also consumes trajectory rotations/facing, pose history, continuing pose, phase, and selected database.
+- Do not move `NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory` back under database throttling. Database selection may be throttled; query trajectory input must stay fresh every animation update.
+- Do not replace `RepairRemoteTrajectoryFacing` with `Rotation = Velocity.Rotation()` or a hard-coded world offset. The project schema has a stable sample-facing convention; the repair must preserve the current present-sample `MoveYaw -> FaceYaw` offset.
+- Do not repair historical trajectory samples. Past samples describe the turn that already happened and help Pose Search select turn/arc clips during actual turns.
+- Do not silently reuse the straight-running repair for future locomotion modes that intentionally face away from movement. Add an explicit policy check first.
+- Do not re-enable simulated proxy trajectory rotation smoothing by default. Local-space smoothing can delay or bend future sample rotations after network-smoothed turns.
+- Do not use simulated proxy `GetCurrentAcceleration()` as a reliable local input stop signal. Remote characters can have valid replicated velocity while acceleration flickers.
+
+If this area is rewritten, validate with two-client PIE from the observing client and compare:
+
+- straight run immediately after start,
+- sustained turn,
+- return to straight run after the turn,
+- sprint,
+- future strafe, lock-on, or aim-offset locomotion once those modes exist.
 
 ## Near Term Checks
 
-- Remote start, stop 중 회전, jump/falloff/landing을 listen server와 client에서 반복 확인합니다.
-- Sprint key가 stand landing을 sprint landing PSD로 오염시키지 않는지 확인합니다.
-- Local/remote/far tier에서 chooser row가 의도대로 선택되는지 확인합니다.
-- Profile validation warning이 실제 누락/튜닝 실수만 가리키는지 확인합니다.
+- Test two-client PIE from the observing client:
+  - idle to W-only straight run,
+  - mouse/WASD turn,
+  - return to straight run.
+- Confirm `PSD_Run_Cycle` selects `Run_Loop` during straight segments and only uses Arc/Prism during actual turn-shaped queries.
+- Repeat with sprint to confirm sprint databases remain stable.
+- When future strafe, lock-on, or aim-offset locomotion exists, verify it opts out before intentional facing offsets are introduced.
 
-## Optimization Track
+## Do Not Do
 
-### Significance Tuning
-
-- Near: local quality 유지
-- Mid: motion matching update interval 완화
-- Far: far chooser row 또는 낮은 빈도의 PSD 갱신
-- Hidden: animation-only data update throttle
-
-### Profiling-Based Decisions
-
-Unreal Insights에서 다음 비용을 먼저 봅니다.
-
-- AnimInstance update
-- PoseSearch / Motion Matching node
-- CharacterMovement
-- skeletal mesh evaluation
-- material/draw call
-- actor/component tick
-
-### NPC Non-MM Path
-
-NPC는 현재 구조에서 player-grade Motion Matching을 사용하지 않습니다. NPC 최적화는 blendspace/sequence/cached pose/URO/significance-driven update path, AI tick cadence, replication relevance, skeletal mesh update frequency, server-authoritative state compression을 우선합니다.
-
-### Mass/Crowd Review
-
-수백 단위 crowd가 실제 목표가 될 때 MassEntity, crowd LOD, server-side simulation 분리를 검토합니다. 측정 없이 Mass/VAT/impostor/custom animation worker를 먼저 만들지 않습니다.
-
-## Do Not Do Yet
-
-- AnimInstance에서 임의 worker thread로 UObject에 접근하지 않습니다.
-- PSD 선택 로직을 여러 시스템에 흩뜨리지 않습니다.
-- replicated animation event counter의 의미를 바꾸지 않습니다.
-- 측정 없이 NPC 전체에 Motion Matching을 적용하지 않습니다.
+- Do not remove Run_Arc or Prism clips to hide query problems.
+- Do not force `Run_Loop` globally for simulated proxies.
+- Do not apply the straight-running trajectory facing repair to future locomotion modes that intentionally decouple facing from movement.
+- Do not throttle trajectory input updates together with database selection updates.
