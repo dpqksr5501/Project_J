@@ -972,7 +972,7 @@ void AProject_JPlayerCharacter::TriggerPlayerAttack()
 {
 	RefreshActiveCombatComponent();
 
-	if (GetAbilitySystemComponent())
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
@@ -980,6 +980,17 @@ void AProject_JPlayerCharacter::TriggerPlayerAttack()
 		Payload.Target = this;
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Payload.EventTag, Payload);
+
+		// New skills should bind through AbilitySet InputTag. The legacy ability-tag path remains
+		// as a fallback so existing Blueprint ability assets keep working during migration.
+		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+		{
+			if (ProjectJASC->TryActivateAbilitiesByInputTag(Payload.EventTag))
+			{
+				return;
+			}
+		}
+
 		TryActivateAbilityByTag(Payload.EventTag);
 	}
 }

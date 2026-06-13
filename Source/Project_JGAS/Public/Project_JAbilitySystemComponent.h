@@ -20,6 +20,9 @@ public:
 
 	void AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
 	void RemoveProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
+	bool TryActivateAbilitiesByInputTag(const FGameplayTag& InputTag);
+	void AbilityInputTagPressed(const FGameplayTag& InputTag);
+	void AbilityInputTagReleased(const FGameplayTag& InputTag);
 
 private:
 	bool HasGameplayTagReplicationAuthority() const;
