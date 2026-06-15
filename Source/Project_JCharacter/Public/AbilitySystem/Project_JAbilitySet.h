@@ -5,6 +5,9 @@
 #include "GameplayTagContainer.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "GameplayEffectTypes.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 #include "Project_JAbilitySet.generated.h"
 
 class UGameplayAbility;
@@ -80,4 +83,8 @@ public:
 
 	/** Removes the abilities and effects previously granted. */
 	void TakeFromAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* GrantedHandles) const;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };

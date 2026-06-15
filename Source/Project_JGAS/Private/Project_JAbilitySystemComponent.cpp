@@ -61,12 +61,14 @@ bool UProject_JAbilitySystemComponent::TryActivateAbilitiesByInputTag(const FGam
 	return bActivatedAnyAbility;
 }
 
-void UProject_JAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
+bool UProject_JAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid())
 	{
-		return;
+		return false;
 	}
+
+	bool bHandledAnyAbility = false;
 
 	ABILITYLIST_SCOPE_LOCK();
 	for (FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
@@ -76,6 +78,7 @@ void UProject_JAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag
 			continue;
 		}
 
+		bHandledAnyAbility = true;
 		AbilitySpec.InputPressed = true;
 		if (AbilitySpec.IsActive())
 		{
@@ -97,14 +100,18 @@ PRAGMA_ENABLE_DEPRECATION_WARNINGS
 			TryActivateAbility(AbilitySpec.Handle);
 		}
 	}
+
+	return bHandledAnyAbility;
 }
 
-void UProject_JAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
+bool UProject_JAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
 {
 	if (!InputTag.IsValid())
 	{
-		return;
+		return false;
 	}
+
+	bool bHandledAnyAbility = false;
 
 	ABILITYLIST_SCOPE_LOCK();
 	for (FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
@@ -114,6 +121,7 @@ void UProject_JAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTa
 			continue;
 		}
 
+		bHandledAnyAbility = true;
 		AbilitySpec.InputPressed = false;
 		if (AbilitySpec.IsActive())
 		{
@@ -131,6 +139,8 @@ PRAGMA_ENABLE_DEPRECATION_WARNINGS
 			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, ActivationInfo.GetActivationPredictionKey());
 		}
 	}
+
+	return bHandledAnyAbility;
 }
 
 bool UProject_JAbilitySystemComponent::HasGameplayTagReplicationAuthority() const

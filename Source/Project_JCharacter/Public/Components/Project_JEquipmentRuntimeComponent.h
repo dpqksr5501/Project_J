@@ -12,6 +12,7 @@
 class UProject_JEquipmentItemDefinition;
 class UProject_JEquipmentManagerComponent;
 class UProject_JModularMeshComponent;
+class UProject_JWeaponAnimProfile;
 class UAbilitySystemComponent;
 
 USTRUCT(BlueprintType)
@@ -65,8 +66,12 @@ protected:
 	void OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 
 private:
+	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+	void RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+	void DestroyEquipmentVisual(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+	UProject_JWeaponAnimProfile* ResolveCurrentWeaponAnimProfile() const;
 	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;

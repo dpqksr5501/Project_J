@@ -4,6 +4,9 @@
 #include "Equipment/Project_JEquipmentTypes.h"
 #include "Engine/DataAsset.h"
 #include "Project_JStatTypes.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 #include "Project_JEquipmentItemDefinition.generated.h"
 
 class USkeletalMesh;
@@ -65,4 +68,8 @@ public:
 	// We use the existing UProject_JWeaponAnimProfile instead of a duplicate system.
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Animation")
 	class UProject_JWeaponAnimProfile* WeaponAnimProfile;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };

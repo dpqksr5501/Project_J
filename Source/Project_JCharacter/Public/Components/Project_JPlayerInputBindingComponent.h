@@ -34,6 +34,12 @@ struct FProject_JPlayerInputActionSet
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> AttackAction = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> HeavyAttackAction = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> SkillModifierAction = nullptr;
 };
 
 /**
@@ -58,6 +64,12 @@ private:
 	void HandleMoveStopped();
 	void HandleJumpStarted();
 	void HandleJumpStopped();
+	void HandlePrimarySkillPressed();
+	void HandlePrimarySkillReleased();
+	void HandleSecondarySkillPressed();
+	void HandleSecondarySkillReleased();
+	void HandleSkillModifierPressed();
+	void HandleSkillModifierReleased();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> BoundPlayerCharacter = nullptr;

@@ -31,7 +31,8 @@ AProject_JBaseCharacter::AProject_JBaseCharacter()
 	// Create Attribute Set
 	AttributeSet = CreateDefaultSubobject<UProject_JAttributeSet>(TEXT("AttributeSet"));
 
-	// Create Equipment Manager
+	// Player characters prefer the PlayerState equipment manager; this character-local manager
+	// supports NPCs and pre-PlayerState fallback binding.
 	EquipmentManager = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManager"));
 	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
 }
@@ -71,7 +72,7 @@ void AProject_JBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
-	BindEquipmentRuntimeToEquipmentManager();
+	BindEquipmentRuntimeToResolvedEquipmentManager();
 	
 	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
@@ -132,14 +133,14 @@ void AProject_JBaseCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
-	BindEquipmentRuntimeToEquipmentManager();
+	BindEquipmentRuntimeToResolvedEquipmentManager();
 }
 
 void AProject_JBaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	InitializeAbilitySystem();
-	BindEquipmentRuntimeToEquipmentManager();
+	BindEquipmentRuntimeToResolvedEquipmentManager();
 }
 
 
@@ -425,20 +426,27 @@ void AProject_JBaseCharacter::RemoveAdvancementAbilitySets(UAbilitySystemCompone
 	AdvancementGrantedHandles.GameplayEffectHandles.Reset();
 }
 
-void AProject_JBaseCharacter::BindEquipmentRuntimeToEquipmentManager()
+UProject_JEquipmentManagerComponent* AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const
+{
+	if (APlayerState* OwningPlayerState = GetPlayerState())
+	{
+		if (UProject_JEquipmentManagerComponent* PlayerStateEquipmentManager = OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>())
+		{
+			return PlayerStateEquipmentManager;
+		}
+	}
+
+	return EquipmentManager;
+}
+
+void AProject_JBaseCharacter::BindEquipmentRuntimeToResolvedEquipmentManager()
 {
 	if (!EquipmentRuntime)
 	{
 		return;
 	}
 
-	UProject_JEquipmentManagerComponent* Manager = nullptr;
-	if (APlayerState* OwningPlayerState = GetPlayerState())
-	{
-		Manager = OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>();
-	}
-
-	EquipmentRuntime->BindToEquipmentManager(Manager ? Manager : EquipmentManager);
+	EquipmentRuntime->BindToEquipmentManager(ResolveEquipmentManagerForRuntime());
 }
 
 AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const

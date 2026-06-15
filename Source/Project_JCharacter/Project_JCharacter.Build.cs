@@ -33,5 +33,10 @@ public class Project_JCharacter : ModuleRules
 			"EnhancedInput",
 			"MassCommon"
 		});
+
+		if (Target.bBuildEditor)
+		{
+			PublicDependencyModuleNames.Add("DataValidation");
+		}
 	}
 }

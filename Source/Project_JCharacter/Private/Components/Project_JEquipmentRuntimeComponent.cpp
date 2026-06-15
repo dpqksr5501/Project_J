@@ -85,23 +85,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 	FProject_JEquipmentRuntimeItem NewRuntimeItem;
 	NewRuntimeItem.ItemDef = ItemDef;
 
-	// Grant GAS Ability Set (Authority Only)
-	if (OwnerCharacter->HasAuthority())
-	{
-		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-		if (ASC && ItemDef->AbilitySet)
-		{
-			ItemDef->AbilitySet->GiveToAbilitySystem(ASC, &NewRuntimeItem.GrantedHandles);
-		}
-		if (ASC)
-		{
-			ApplyEquipmentEffects(*ASC, *ItemDef, NewRuntimeItem);
-		}
-		else
-		{
-			ApplyEquipmentStatModifiers(ItemDef, 1.0f);
-		}
-	}
+	ApplyEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
 
 	RuntimeItems.Add(Slot, NewRuntimeItem);
 	RefreshCurrentWeaponAnimProfile();
@@ -121,34 +105,61 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	if (!RuntimeItemDef) return;
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-
-	// Remove ASC Grants
-	if (OwnerCharacter && OwnerCharacter->HasAuthority())
+	if (OwnerCharacter)
 	{
-		UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerCharacter);
-		if (ASC && RuntimeItemDef->AbilitySet)
-		{
-			RuntimeItemDef->AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
-		}
-		if (ASC)
-		{
-			RemoveEquipmentEffects(*ASC, RuntimeItem);
-		}
-		else
-		{
-			ApplyEquipmentStatModifiers(RuntimeItemDef, -1.0f);
-		}
+		RemoveEquipmentGameplay(*OwnerCharacter, *RuntimeItemDef, RuntimeItem);
 	}
 
-	// Remove Visuals
-	if (RuntimeItem.SpawnedMesh)
-	{
-		RuntimeItem.SpawnedMesh->DestroyComponent();
-		RuntimeItem.SpawnedMesh = nullptr;
-	}
+	DestroyEquipmentVisual(RuntimeItem);
 
 	RuntimeItems.Remove(Slot);
 	RefreshCurrentWeaponAnimProfile();
+}
+
+void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	if (!OwnerCharacter.HasAuthority())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
+	if (ASC && ItemDef.AbilitySet)
+	{
+		ItemDef.AbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef));
+	}
+
+	if (ASC)
+	{
+		ApplyEquipmentEffects(*ASC, ItemDef, RuntimeItem);
+	}
+	else
+	{
+		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+	}
+}
+
+void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	if (!OwnerCharacter.HasAuthority())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
+	if (ASC && ItemDef.AbilitySet)
+	{
+		ItemDef.AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
+	}
+
+	if (ASC)
+	{
+		RemoveEquipmentEffects(*ASC, RuntimeItem);
+	}
+	else
+	{
+		ApplyEquipmentStatModifiers(&ItemDef, -1.0f);
+	}
 }
 
 void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
@@ -201,15 +212,28 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	RuntimeItem.SpawnedMesh = NewMeshComp;
 }
 
+void UProject_JEquipmentRuntimeComponent::DestroyEquipmentVisual(FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	if (RuntimeItem.SpawnedMesh)
+	{
+		RuntimeItem.SpawnedMesh->DestroyComponent();
+		RuntimeItem.SpawnedMesh = nullptr;
+	}
+}
+
 void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponAnimProfile()
 {
 	AProject_JPlayerCharacter* OwnerPlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
 	if (!OwnerPlayer) return;
 
+	OwnerPlayer->SetCurrentWeaponAnimProfile(ResolveCurrentWeaponAnimProfile());
+}
+
+UProject_JWeaponAnimProfile* UProject_JEquipmentRuntimeComponent::ResolveCurrentWeaponAnimProfile() const
+{
 	UProject_JWeaponAnimProfile* SelectedWeaponAnimProfile = nullptr;
 	
-	// Just pick the first weapon we have equipped
-	for (auto& Pair : RuntimeItems)
+	for (const TPair<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem>& Pair : RuntimeItems)
 	{
 		UProject_JEquipmentItemDefinition* ItemDef = Pair.Value.ItemDef;
 		if (ItemDef && ItemDef->EquipmentSlot == EProject_JEquipmentSlot::Weapon && ItemDef->WeaponAnimProfile)
@@ -219,7 +243,7 @@ void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponAnimProfile()
 		}
 	}
 
-	OwnerPlayer->SetCurrentWeaponAnimProfile(SelectedWeaponAnimProfile);
+	return SelectedWeaponAnimProfile;
 }
 
 void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const

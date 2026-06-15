@@ -24,22 +24,28 @@ Class / Advancement / Equipment
 
 ## Current Input Path
 
-Player input is still mostly explicit and character-driven:
+Player input now splits locomotion/combat toggles from skill intent:
 
 ```text
 Enhanced Input
   -> UProject_JPlayerInputBindingComponent
-  -> AProject_JPlayerCharacter method
-  -> UProject_JCombatStateComponent / ASC
+  -> UProject_JSkillInputRouterComponent for skill buttons
+  -> resolved InputTag
+  -> UProject_JSkillInputExecutionComponent
+  -> UProject_JAbilitySystemComponent::AbilityInputTagPressed/Released
 ```
 
 Examples:
 
 - Sprint input calls `AProject_JPlayerCharacter::StartSprint` / `StopSprint`.
 - Combat toggle input calls `AProject_JPlayerCharacter::ToggleCombatMode`.
-- Attack input calls `AProject_JPlayerCharacter::TriggerPlayerAttack`.
+- Primary attack input resolves to `InputTag.Weapon.LightAttack`.
+- Secondary attack input resolves to `InputTag.Weapon.HeavyAttack`.
+- A held skill modifier can change chord priority; the default modified primary chord maps to heavy attack.
 
-This is fine for the current prototype, but it will not scale cleanly to MMORPG-style skill chords such as left click + right click, left click + shift, or weapon/class-specific overrides.
+The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`.
+
+`UProject_JSkillInputRouterComponent` can read chords from `UProject_JSkillInputMappingData`. If no mapping data is assigned, it falls back to the component's local `Chords` array, and then to the native default light/heavy chords.
 
 ## InputTag Foundation
 
@@ -51,7 +57,7 @@ This is fine for the current prototype, but it will not scale cleanly to MMORPG-
 
 These functions search activatable ability specs by `DynamicSpecSourceTags`, which are populated by `UProject_JAbilitySet::GiveToAbilitySystem` from each ability entry's `InputTag`.
 
-Current attack input uses this new InputTag activation path first, then falls back to the legacy ability-tag activation path. This keeps existing Blueprint ability assets working while allowing new abilities to be granted and activated purely through `AbilitySet.InputTag`.
+Current skill input uses this new InputTag activation path first, then optionally falls back to the legacy ability-tag activation path when no ability spec owns the pressed InputTag. The fallback is controlled by `UProject_JSkillInputExecutionComponent::bAllowLegacySkillInputFallback` and logs once per tag when `bWarnOnLegacySkillInputFallback` is enabled.
 
 ## Combo And Montage Events
 
@@ -70,16 +76,15 @@ Keep input tags and animation events conceptually separate:
 
 The current light attack path still sends the input tag as a gameplay event for combo buffering. That is acceptable for migration, but future combat work should avoid overloading one tag namespace for both activation and ability-internal events.
 
-## Recommended Next Step
+## Implemented Router Shape
 
-Add a small skill input router instead of adding more hardcoded methods to `AProject_JPlayerCharacter`.
-
-Suggested shape:
+The current router shape is:
 
 ```text
 Enhanced Input
   -> SkillInputRouter
   -> resolved InputTag
+  -> SkillInputExecutionComponent
   -> Project_JAbilitySystemComponent::AbilityInputTagPressed/Released
 ```
 
@@ -99,6 +104,10 @@ The router should not own:
 - Motion Matching database or trajectory logic
 
 Those stay in abilities, components, and animation systems.
+
+## Recommended Next Step
+
+Move concrete Blueprint ability assets from legacy ability-tag activation to `AbilitySet.GrantedAbilityEntries` with explicit `InputTag` values. After those assets migrate, turn off `bAllowLegacySkillInputFallback` on the skill input execution component defaults and treat fallback warnings as migration bugs.
 
 ## Boundaries
 

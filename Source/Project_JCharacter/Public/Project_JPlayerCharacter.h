@@ -29,6 +29,8 @@ class UProject_JReplicatedAnimEventComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
 class UProject_JInventoryComponent;
+class UProject_JSkillInputExecutionComponent;
+class UProject_JSkillInputRouterComponent;
 class UAbilitySystemComponent;
 struct FGameplayTag;
 
@@ -76,6 +78,12 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
 	UProject_JPlayerInputBindingComponent* PlayerInputBindingComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
+	UProject_JSkillInputRouterComponent* SkillInputRouterComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
+	UProject_JSkillInputExecutionComponent* SkillInputExecutionComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
 
@@ -114,6 +122,14 @@ protected:
 	/** Attack Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* AttackAction;
+
+	/** Heavy Attack Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* HeavyAttackAction;
+
+	/** Skill modifier Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* SkillModifierAction;
 
 public:
 
@@ -232,6 +248,12 @@ public:
 	/** Triggers the active combat component's attack */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void TriggerPlayerAttack();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
+	void HandleSkillInputTagPressed(FGameplayTag InputTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
+	void HandleSkillInputTagReleased(FGameplayTag InputTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartSprint();

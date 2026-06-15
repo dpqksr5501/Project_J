@@ -4,6 +4,7 @@
 #include "InputActionValue.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Components/Project_JSkillInputRouterComponent.h"
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 {
@@ -33,7 +34,24 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	EnhancedInputComponent->BindAction(ActionSet.SprintAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StartSprint);
 	EnhancedInputComponent->BindAction(ActionSet.SprintAction, ETriggerEvent::Completed, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
 	EnhancedInputComponent->BindAction(ActionSet.ToggleCombatAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::ToggleCombatMode);
-	EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::TriggerPlayerAttack);
+	if (ActionSet.AttackAction)
+	{
+		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed);
+		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
+		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
+	}
+	if (ActionSet.HeavyAttackAction)
+	{
+		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed);
+		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
+		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
+	}
+	if (ActionSet.SkillModifierAction)
+	{
+		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierPressed);
+		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
+		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
+	}
 
 	return true;
 }
@@ -136,4 +154,52 @@ void UProject_JPlayerInputBindingComponent::HandleJumpStopped()
 {
 	if (!BoundPlayerCharacter) return;
 	BoundPlayerCharacter->StopJumping();
+}
+
+void UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::Primary);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::Primary);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::Secondary);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::Secondary);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleSkillModifierPressed()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->SetModifierHeld(true);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased()
+{
+	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
+	{
+		BoundPlayerCharacter->SkillInputRouterComponent->SetModifierHeld(false);
+	}
 }

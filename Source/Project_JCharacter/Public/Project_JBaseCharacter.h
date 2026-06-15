@@ -96,7 +96,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	UProject_JAttributeSet* AttributeSet;
 
-	// Equipment Manager for modular meshes
+	// Character-local equipment manager used by NPCs and as a fallback before a PlayerState manager is available.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
 	class UProject_JEquipmentManagerComponent* EquipmentManager;
 
@@ -132,6 +132,7 @@ protected:
 	void GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject);
 	void GiveAdvancementAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject, FProject_JAbilitySet_GrantedHandles& OutGrantedHandles) const;
 	void RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC);
-	void BindEquipmentRuntimeToEquipmentManager();
+	UProject_JEquipmentManagerComponent* ResolveEquipmentManagerForRuntime() const;
+	void BindEquipmentRuntimeToResolvedEquipmentManager();
 	virtual AActor* GetAbilitySystemOwnerActor() const;
 };

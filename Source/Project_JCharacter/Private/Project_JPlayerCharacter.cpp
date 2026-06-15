@@ -13,7 +13,6 @@
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
 #include "Engine/LocalPlayer.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -32,6 +31,8 @@
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JInventoryComponent.h"
+#include "Components/Project_JSkillInputExecutionComponent.h"
+#include "Components/Project_JSkillInputRouterComponent.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
 #include "InputCoreTypes.h"
@@ -111,6 +112,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	MotionMatchingTrajectoryComponent = CreateDefaultSubobject<UProject_JMotionMatchingTrajectoryComponent>(TEXT("MotionMatchingTrajectoryComponent"));
 	CharacterUIBindingComponent = CreateDefaultSubobject<UProject_JCharacterUIBindingComponent>(TEXT("CharacterUIBindingComponent"));
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
+	SkillInputRouterComponent = CreateDefaultSubobject<UProject_JSkillInputRouterComponent>(TEXT("SkillInputRouterComponent"));
+	SkillInputExecutionComponent = CreateDefaultSubobject<UProject_JSkillInputExecutionComponent>(TEXT("SkillInputExecutionComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
@@ -212,6 +215,13 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	ActionSet.SprintAction = SprintAction;
 	ActionSet.ToggleCombatAction = ToggleCombatAction;
 	ActionSet.AttackAction = AttackAction;
+	ActionSet.HeavyAttackAction = HeavyAttackAction;
+	ActionSet.SkillModifierAction = SkillModifierAction;
+
+	if (SkillInputRouterComponent)
+	{
+		SkillInputRouterComponent->Initialize(this);
+	}
 
 	const bool bBoundInput = PlayerInputBindingComponent && PlayerInputBindingComponent->BindInput(PlayerInputComponent, this, ActionSet);
 	if (!bBoundInput)
@@ -278,6 +288,10 @@ void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
 
 	RefreshActiveCombatComponent();
 	RegisterCombatStateTagEvents();
+	if (SkillInputExecutionComponent)
+	{
+		SkillInputExecutionComponent->Initialize(this, CombatStateComponent);
+	}
 	if (CameraComponent)
 	{
 		CameraComponent->RefreshAbilitySystemBinding();
@@ -970,27 +984,21 @@ void AProject_JPlayerCharacter::FinishLanding(bool bForceFinish)
 
 void AProject_JPlayerCharacter::TriggerPlayerAttack()
 {
-	RefreshActiveCombatComponent();
+	HandleSkillInputTagPressed(FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack);
+}
 
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+void AProject_JPlayerCharacter::HandleSkillInputTagPressed(FGameplayTag InputTag)
+{
+	if (SkillInputExecutionComponent)
 	{
-		FGameplayEventData Payload;
-		Payload.EventTag = FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
-		Payload.Instigator = this;
-		Payload.Target = this;
+		SkillInputExecutionComponent->HandleInputTagPressed(InputTag);
+	}
+}
 
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, Payload.EventTag, Payload);
-
-		// New skills should bind through AbilitySet InputTag. The legacy ability-tag path remains
-		// as a fallback so existing Blueprint ability assets keep working during migration.
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-		{
-			if (ProjectJASC->TryActivateAbilitiesByInputTag(Payload.EventTag))
-			{
-				return;
-			}
-		}
-
-		TryActivateAbilityByTag(Payload.EventTag);
+void AProject_JPlayerCharacter::HandleSkillInputTagReleased(FGameplayTag InputTag)
+{
+	if (SkillInputExecutionComponent)
+	{
+		SkillInputExecutionComponent->HandleInputTagReleased(InputTag);
 	}
 }
