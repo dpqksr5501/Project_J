@@ -24,6 +24,7 @@ public class Project_JCharacter : ModuleRules
 			"Project_JGAS",
 			"SignificanceManager",
 			"NetCore",
+			"MassCore",
 			"MassEntity",
 			"MassSpawner",
 			"ModelViewViewModel"
