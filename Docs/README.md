@@ -4,6 +4,8 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [Project Overview](ProjectOverview.md)
+  - 프로젝트의 게임 정체성, 현재 구현 범위, 모듈·런타임 소유권, 서버·전투·애니메이션 원칙을 한 문서로 정리한 기준 개요.
 - [MMORPG Architecture Review](MMORPGArchitectureReview.md)
   - Module boundaries, character systems, GAS, services, networking, backend/UI, Mass, and Motion Matching priorities.
 - [Motion Matching Notes](MotionMatchingNextSteps.md)

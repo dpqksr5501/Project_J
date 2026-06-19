@@ -6,9 +6,32 @@
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Engine/DataAsset.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionProfile.generated.h"
 
 class UProject_JMotionMatchingAssetSet;
+
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
+{
+	GENERATED_BODY()
+
+	/**
+	 * Airborne databases normally contain short one-shot or looping clips where repeatedly
+	 * selecting another pose from the same asset creates unnecessary BlendStack entries.
+	 * Database changes still trigger a search when these options are disabled.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchJumpStartEveryUpdate = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchFallOffEveryUpdate = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchAirborneLoopEveryUpdate = false;
+
+	bool ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily PhaseFamily, bool bIsFallOffStart) const;
+};
 
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JRemoteVisualLocomotionPolicy
@@ -46,6 +69,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
+	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkSpeed = 500.0f;

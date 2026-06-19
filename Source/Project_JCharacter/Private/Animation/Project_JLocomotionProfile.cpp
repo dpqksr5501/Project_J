@@ -2,6 +2,25 @@
 
 #include "Animation/Project_JLocomotionProfile.h"
 
+bool FProject_JMotionMatchingSearchPolicy::ShouldSearchEveryUpdate(
+	EProject_JLocomotionPhaseFamily PhaseFamily,
+	bool bIsFallOffStart) const
+{
+	switch (PhaseFamily)
+	{
+	case EProject_JLocomotionPhaseFamily::JumpStart:
+		return bSearchJumpStartEveryUpdate;
+
+	case EProject_JLocomotionPhaseFamily::Fall:
+		return bIsFallOffStart
+			? bSearchFallOffEveryUpdate
+			: bSearchAirborneLoopEveryUpdate;
+
+	default:
+		return true;
+	}
+}
+
 UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 {
 	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;

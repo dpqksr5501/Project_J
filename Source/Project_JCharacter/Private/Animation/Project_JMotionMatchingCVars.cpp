@@ -9,6 +9,11 @@ TAutoConsoleVariable<int32> CVarProjectJDebugRemoteTrajectory(
 	0,
 	TEXT("Logs remote simulated proxy trajectory position yaw versus facing yaw diagnostics."));
 
+TAutoConsoleVariable<int32> CVarProjectJDebugInAirBlendStack(
+	TEXT("p.ProjectJ.MM.DebugInAirBlendStack"),
+	0,
+	TEXT("Logs the actual Anim Blueprint Motion Matching selection and BlendStack while using the in-air database."));
+
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
 	TEXT("p.ProjectJ.MM.RepairRemoteTrajectoryFacing"),
 	1,
@@ -45,6 +50,11 @@ namespace Project_J::MotionMatchingCVars
 bool IsDebugRemoteTrajectoryEnabled()
 {
 	return CVarProjectJDebugRemoteTrajectory.GetValueOnAnyThread() != 0;
+}
+
+bool IsDebugInAirBlendStackEnabled()
+{
+	return CVarProjectJDebugInAirBlendStack.GetValueOnAnyThread() != 0;
 }
 
 bool ShouldRepairRemoteTrajectoryFacing()

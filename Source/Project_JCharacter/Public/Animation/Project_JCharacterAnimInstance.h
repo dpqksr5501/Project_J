@@ -260,6 +260,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 };
 
 UCLASS(Blueprintable, BlueprintType)
