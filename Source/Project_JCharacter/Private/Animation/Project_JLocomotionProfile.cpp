@@ -21,6 +21,17 @@ bool FProject_JMotionMatchingSearchPolicy::ShouldSearchEveryUpdate(
 	}
 }
 
+float FProject_JMotionMatchingSearchPolicy::ResolveSearchThrottleTime(
+	EProject_JLocomotionPhaseFamily PhaseFamily,
+	bool bIsFallOffStart,
+	float DefaultSearchThrottleTime,
+	bool bDatabaseChanged) const
+{
+	return ShouldSearchEveryUpdate(PhaseFamily, bIsFallOffStart) || bDatabaseChanged
+		? FMath::Max(0.0f, DefaultSearchThrottleTime)
+		: FMath::Max(0.0f, SuppressedSearchThrottleTime);
+}
+
 UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 {
 	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;

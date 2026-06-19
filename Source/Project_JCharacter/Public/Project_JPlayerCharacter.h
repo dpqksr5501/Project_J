@@ -202,27 +202,6 @@ protected:
 	void DispatchFallOffStartAnimationEvent();
 	void DispatchLandingCancelAnimationEvent();
 
-	UFUNCTION(Server, Unreliable)
-	void ServerNotifyMoveStarted(bool bWasSprintingForStart);
-
-	UFUNCTION(Server, Unreliable)
-	void ServerNotifyMoveStopped();
-
-	UFUNCTION(Server, Unreliable)
-	void ServerNotifyJumpStarted();
-
-	UFUNCTION(Server, Unreliable)
-	void ServerNotifyFallOffStarted();
-
-	UFUNCTION(Server, Unreliable)
-	void ServerNotifyLandingCancelled();
-
-	UFUNCTION()
-	void OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState);
-
-	UFUNCTION()
-	void OnRep_CurrentWeaponAnimProfile();
-
 	// C++에서 '진짜 착지'로 판정되었을 때 블루프린트(ABP)로 신호를 보내기 위한 이벤트	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Movement|Animation")
 	void K2_OnRealLanded();
@@ -350,7 +329,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeaponAnimProfile, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
+	/** Derived locally from replicated equipment; it is not an independent replicated state. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
 	TObjectPtr<UProject_JWeaponAnimProfile> CurrentWeaponAnimProfile = nullptr;
 
 	// --- Combat States ---
@@ -395,9 +375,6 @@ protected:
 	FGameplayTag CombatToggleAbilityTag;
 
 private:
-	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedAnimEvents)
-	FProject_JReplicatedAnimEventState ReplicatedAnimEvents;
-
 	bool bHadMoveInputForReplication = false;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;

@@ -1,9 +1,7 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
-#include "Components/Project_JModularMeshComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Net/UnrealNetwork.h"
-#include "Engine/StreamableManager.h"
 
 // --- FFastArraySerializer Callbacks ---
 
@@ -78,10 +76,7 @@ void UProject_JEquipmentManagerComponent::RequestEquipItem(UProject_JEquipmentIt
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		EquipItem(ItemDef);
-		return;
 	}
-
-	ServerRequestEquipItem(ItemDef);
 }
 
 void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
@@ -91,18 +86,56 @@ void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItem
 
 void UProject_JEquipmentManagerComponent::RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
 {
-	if (!ItemInstance.ItemDef)
+	if (!ItemInstance.InstanceId.IsValid())
+	{
+		return;
+	}
+
+	RequestEquipItemInstanceById(ItemInstance.InstanceId);
+}
+
+void UProject_JEquipmentManagerComponent::RequestEquipItemInstanceById(FGuid InstanceId)
+{
+	if (!InstanceId.IsValid())
 	{
 		return;
 	}
 
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
-		EquipItemInstance(ItemInstance);
+		TryEquipItemInstanceById(InstanceId);
 		return;
 	}
 
-	ServerRequestEquipItemInstance(ItemInstance);
+	ServerRequestEquipItemInstanceById(InstanceId);
+}
+
+FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::TryEquipItemInstanceById(FGuid InstanceId)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::NotAuthority,
+			InstanceId);
+	}
+
+	UProject_JInventoryComponent* InventoryComponent = GetOwnerInventoryComponent();
+	if (!InventoryComponent)
+	{
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::InventoryUnavailable,
+			InstanceId);
+	}
+
+	FProject_JItemInstanceData AuthoritativeItem;
+	if (!InventoryComponent->FindItemInstance(InstanceId, AuthoritativeItem))
+	{
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::ItemNotOwned,
+			InstanceId);
+	}
+
+	return CommitEquipItemInstance(AuthoritativeItem, true);
 }
 
 void UProject_JEquipmentManagerComponent::UnequipItem(UProject_JEquipmentItemDefinition* ItemDef)
@@ -168,14 +201,9 @@ TArray<UProject_JEquipmentItemDefinition*> UProject_JEquipmentManagerComponent::
 	return Result;
 }
 
-void UProject_JEquipmentManagerComponent::ServerRequestEquipItem_Implementation(const UProject_JEquipmentItemDefinition* ItemDef)
+void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstanceById_Implementation(FGuid InstanceId)
 {
-	EquipItem(const_cast<UProject_JEquipmentItemDefinition*>(ItemDef));
-}
-
-void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstance_Implementation(const FProject_JItemInstanceData& ItemInstance)
-{
-	EquipItemInstance(ItemInstance);
+	TryEquipItemInstanceById(InstanceId);
 }
 
 void UProject_JEquipmentManagerComponent::ServerRequestUnequipSlot_Implementation(EProject_JEquipmentSlot Slot)
@@ -198,29 +226,36 @@ bool UProject_JEquipmentManagerComponent::CanCommitEquipItemInstance(const FProj
 	return true;
 }
 
-bool UProject_JEquipmentManagerComponent::CanEquipInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const
+EProject_JEquipmentOperationFailure UProject_JEquipmentManagerComponent::ValidateInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const
 {
 	if (!ItemInstance.InstanceId.IsValid())
 	{
-		return false;
+		return EProject_JEquipmentOperationFailure::InvalidRequest;
 	}
 
 	const UProject_JInventoryComponent* InventoryComponent = GetOwnerInventoryComponent();
 	if (!InventoryComponent)
 	{
-		return false;
+		return EProject_JEquipmentOperationFailure::InventoryUnavailable;
 	}
 
 	FProject_JItemInstanceData OwnedItemInstance;
 	if (!InventoryComponent->FindItemInstance(ItemInstance.InstanceId, OwnedItemInstance))
 	{
-		return false;
+		return EProject_JEquipmentOperationFailure::ItemNotOwned;
 	}
 
-	return
-		OwnedItemInstance.ItemDef == ItemInstance.ItemDef &&
-		OwnedItemInstance.StackCount > 0 &&
-		!OwnedItemInstance.bIsLocked;
+	if (OwnedItemInstance.ItemDef != ItemInstance.ItemDef || OwnedItemInstance.StackCount <= 0)
+	{
+		return EProject_JEquipmentOperationFailure::InvalidRequest;
+	}
+
+	if (OwnedItemInstance.bIsLocked)
+	{
+		return EProject_JEquipmentOperationFailure::ItemLocked;
+	}
+
+	return EProject_JEquipmentOperationFailure::None;
 }
 
 UProject_JInventoryComponent* UProject_JEquipmentManagerComponent::GetOwnerInventoryComponent() const
@@ -245,29 +280,55 @@ bool UProject_JEquipmentManagerComponent::SetInventoryEquipmentLock(const FProje
 	return InventoryComponent->SetItemInstanceLocked(ItemInstance.InstanceId, bLocked, bLocked);
 }
 
-void UProject_JEquipmentManagerComponent::CommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance, bool bRequireInventoryOwnership)
+FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEquipItemInstance(
+	const FProject_JItemInstanceData& ItemInstance,
+	bool bRequireInventoryOwnership)
 {
 	UProject_JEquipmentItemDefinition* ItemDef = ItemInstance.ItemDef;
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !CanCommitEquipItemInstance(ItemInstance))
+	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
-		return;
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::NotAuthority,
+			ItemInstance.InstanceId);
 	}
 
-	if (bRequireInventoryOwnership && !CanEquipInventoryItemInstance(ItemInstance))
+	if (!ItemDef)
 	{
-		return;
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::InvalidDefinition,
+			ItemInstance.InstanceId);
 	}
 
-	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
-	if (Slot != EProject_JEquipmentSlot::None)
+	if (ItemDef->EquipmentSlot == EProject_JEquipmentSlot::None)
 	{
-		const int32 ExistingSlotIndex = FindEquipmentIndexBySlot(Slot);
-		if (ExistingSlotIndex != INDEX_NONE)
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::InvalidSlot,
+			ItemInstance.InstanceId);
+	}
+
+	if (!CanCommitEquipItemInstance(ItemInstance))
+	{
+		return FProject_JEquipmentOperationResult::FailureResult(
+			FindEquipmentIndexByInstanceId(ItemInstance.InstanceId) != INDEX_NONE
+				? EProject_JEquipmentOperationFailure::AlreadyEquipped
+				: EProject_JEquipmentOperationFailure::InvalidRequest,
+			ItemInstance.InstanceId,
+			ItemDef->EquipmentSlot);
+	}
+
+	if (bRequireInventoryOwnership)
+	{
+		const EProject_JEquipmentOperationFailure ValidationFailure = ValidateInventoryItemInstance(ItemInstance);
+		if (ValidationFailure != EProject_JEquipmentOperationFailure::None)
 		{
-			RemoveEquipmentAt(ExistingSlotIndex);
+			return FProject_JEquipmentOperationResult::FailureResult(
+				ValidationFailure,
+				ItemInstance.InstanceId,
+				ItemDef->EquipmentSlot);
 		}
 	}
 
+	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
 	FProject_JEquipmentArrayItem NewItem;
 	NewItem.ItemDef = ItemDef;
 	NewItem.ItemInstance = ItemInstance;
@@ -277,21 +338,40 @@ void UProject_JEquipmentManagerComponent::CommitEquipItemInstance(const FProject
 	}
 	NewItem.Slot = Slot;
 
+	// Lock the incoming inventory item before mutating the existing slot. This keeps a
+	// failed replacement from unequipping a valid item.
 	if (bRequireInventoryOwnership && !SetInventoryEquipmentLock(NewItem.ItemInstance, true))
 	{
-		return;
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::InventoryLockFailed,
+			NewItem.ItemInstance.InstanceId,
+			Slot);
+	}
+
+	const int32 ExistingSlotIndex = FindEquipmentIndexBySlot(Slot);
+	if (ExistingSlotIndex != INDEX_NONE && !RemoveEquipmentAt(ExistingSlotIndex))
+	{
+		if (bRequireInventoryOwnership)
+		{
+			SetInventoryEquipmentLock(NewItem.ItemInstance, false);
+		}
+		return FProject_JEquipmentOperationResult::FailureResult(
+			EProject_JEquipmentOperationFailure::InvalidRequest,
+			NewItem.ItemInstance.InstanceId,
+			Slot);
 	}
 
 	FProject_JEquipmentArrayItem& AddedItem = EquipmentArray.Items.Add_GetRef(NewItem);
 	EquipmentArray.MarkItemDirty(AddedItem);
 	BroadcastEquipmentEquipped(AddedItem);
+	return FProject_JEquipmentOperationResult::Success(AddedItem.ItemInstance.InstanceId, Slot);
 }
 
-void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
+bool UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 {
 	if (!EquipmentArray.Items.IsValidIndex(Index))
 	{
-		return;
+		return false;
 	}
 
 	BroadcastEquipmentUnequipped(EquipmentArray.Items[Index]);
@@ -299,6 +379,7 @@ void UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();
+	return true;
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item)

@@ -1,42 +1,127 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 
+#include "Net/UnrealNetwork.h"
+#include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 
 UProject_JReplicatedAnimEventComponent::UProject_JReplicatedAnimEventComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 }
 
-void UProject_JReplicatedAnimEventComponent::MarkMoveStarted(FProject_JReplicatedAnimEventState& State, bool bWasSprintingForStart) const
+void UProject_JReplicatedAnimEventComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	State.bMoveStartWasSprinting = bWasSprintingForStart;
-	++State.MoveStartCounter;
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(UProject_JReplicatedAnimEventComponent, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
-void UProject_JReplicatedAnimEventComponent::MarkMoveStopped(FProject_JReplicatedAnimEventState& State) const
+void UProject_JReplicatedAnimEventComponent::Initialize(
+	UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent)
 {
-	++State.MoveStopCounter;
+	LocomotionAnimStateComponent = InLocomotionAnimStateComponent;
 }
 
-void UProject_JReplicatedAnimEventComponent::MarkJumpStarted(FProject_JReplicatedAnimEventState& State) const
+void UProject_JReplicatedAnimEventComponent::DispatchMoveStarted(bool bWasSprintingForStart)
 {
-	++State.JumpStartCounter;
+	DispatchEvent(EProject_JReplicatedAnimEventType::MoveStart, bWasSprintingForStart);
 }
 
-void UProject_JReplicatedAnimEventComponent::MarkFallOffStarted(FProject_JReplicatedAnimEventState& State) const
+void UProject_JReplicatedAnimEventComponent::DispatchMoveStopped()
 {
-	++State.FallOffStartCounter;
+	DispatchEvent(EProject_JReplicatedAnimEventType::MoveStop);
 }
 
-void UProject_JReplicatedAnimEventComponent::MarkLandingCancelled(FProject_JReplicatedAnimEventState& State) const
+void UProject_JReplicatedAnimEventComponent::DispatchJumpStarted()
 {
-	++State.LandingCancelCounter;
+	DispatchEvent(EProject_JReplicatedAnimEventType::JumpStart);
+}
+
+void UProject_JReplicatedAnimEventComponent::DispatchFallOffStarted()
+{
+	DispatchEvent(EProject_JReplicatedAnimEventType::FallOffStart);
+}
+
+void UProject_JReplicatedAnimEventComponent::DispatchLandingCancelled()
+{
+	DispatchEvent(EProject_JReplicatedAnimEventType::LandingCancel);
+}
+
+void UProject_JReplicatedAnimEventComponent::DispatchEvent(
+	EProject_JReplicatedAnimEventType EventType,
+	bool bFlag)
+{
+	AActor* Owner = GetOwner();
+	if (!Owner)
+	{
+		return;
+	}
+
+	if (Owner->HasAuthority())
+	{
+		ApplyEvent(EventType, bFlag);
+		Owner->ForceNetUpdate();
+		return;
+	}
+
+	ServerDispatchEvent(EventType, bFlag);
+}
+
+void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
+	EProject_JReplicatedAnimEventType EventType,
+	bool bFlag)
+{
+	if (EventType == EProject_JReplicatedAnimEventType::MoveStart)
+	{
+		if (const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetOwner()))
+		{
+			bFlag = bFlag || PlayerCharacter->IsSprintLocomotionAllowed();
+		}
+	}
+
+	ApplyEvent(EventType, bFlag);
+	if (AActor* Owner = GetOwner())
+	{
+		Owner->ForceNetUpdate();
+	}
+}
+
+void UProject_JReplicatedAnimEventComponent::ApplyEvent(
+	EProject_JReplicatedAnimEventType EventType,
+	bool bFlag)
+{
+	switch (EventType)
+	{
+	case EProject_JReplicatedAnimEventType::MoveStart:
+		ReplicatedAnimEvents.bMoveStartWasSprinting = bFlag;
+		++ReplicatedAnimEvents.MoveStartCounter;
+		break;
+	case EProject_JReplicatedAnimEventType::MoveStop:
+		++ReplicatedAnimEvents.MoveStopCounter;
+		break;
+	case EProject_JReplicatedAnimEventType::JumpStart:
+		++ReplicatedAnimEvents.JumpStartCounter;
+		break;
+	case EProject_JReplicatedAnimEventType::FallOffStart:
+		++ReplicatedAnimEvents.FallOffStartCounter;
+		break;
+	case EProject_JReplicatedAnimEventType::LandingCancel:
+		++ReplicatedAnimEvents.LandingCancelCounter;
+		break;
+	default:
+		break;
+	}
+}
+
+void UProject_JReplicatedAnimEventComponent::OnRep_ReplicatedAnimEvents(
+	FProject_JReplicatedAnimEventState PreviousState)
+{
+	ApplyReplicatedEvents(ReplicatedAnimEvents, PreviousState);
 }
 
 void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 	const FProject_JReplicatedAnimEventState& CurrentState,
-	const FProject_JReplicatedAnimEventState& PreviousState,
-	UProject_JLocomotionAnimStateComponent* LocomotionAnimStateComponent) const
+	const FProject_JReplicatedAnimEventState& PreviousState) const
 {
 	if (!LocomotionAnimStateComponent)
 	{

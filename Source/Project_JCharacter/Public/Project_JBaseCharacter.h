@@ -16,6 +16,13 @@ class UProject_JEquipmentRuntimeComponent;
 class UProject_JCharacterClassDefinition;
 class UProject_JCharacterAdvancementDefinition;
 
+UENUM(BlueprintType)
+enum class EProject_JRuntimeStateOwnership : uint8
+{
+	CharacterLocal,
+	PlayerStatePreferred
+};
+
 UCLASS(Abstract)
 class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
 {
@@ -52,6 +59,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
 	bool ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition);
+
+	UFUNCTION(BlueprintPure, Category = "Runtime State")
+	EProject_JRuntimeStateOwnership GetRuntimeStateOwnership() const { return RuntimeStateOwnership; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -124,6 +134,14 @@ protected:
 
 	UPROPERTY(Transient)
 	FProject_JAbilitySet_GrantedHandles AdvancementGrantedHandles;
+
+	/**
+	 * NPCs own runtime state directly on the character. Player characters prefer the
+	 * persistent PlayerState components and retain character-local components only as
+	 * a pre-PlayerState/fallback path.
+	 */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Runtime State")
+	EProject_JRuntimeStateOwnership RuntimeStateOwnership = EProject_JRuntimeStateOwnership::CharacterLocal;
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void InitializeDefaultAttributes() const;

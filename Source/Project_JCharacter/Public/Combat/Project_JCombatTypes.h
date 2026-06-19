@@ -21,6 +21,11 @@ struct FProject_JWeaponAttackSpec
 {
 	GENERATED_BODY()
 
+	/** Preferred activation intent. AbilitySet entries should grant an ability with this InputTag. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Ability")
+	FGameplayTag InputTag;
+
+	/** Migration fallback for assets that still activate by ability classification tag. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Ability")
 	FGameplayTag AbilityTag;
 

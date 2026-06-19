@@ -30,7 +30,15 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
 	bool bSearchAirborneLoopEveryUpdate = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search", meta = (ClampMin = "0.0", Units = "s"))
+	float SuppressedSearchThrottleTime = 3600.0f;
+
 	bool ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily PhaseFamily, bool bIsFallOffStart) const;
+	float ResolveSearchThrottleTime(
+		EProject_JLocomotionPhaseFamily PhaseFamily,
+		bool bIsFallOffStart,
+		float DefaultSearchThrottleTime,
+		bool bDatabaseChanged) const;
 };
 
 USTRUCT(BlueprintType)

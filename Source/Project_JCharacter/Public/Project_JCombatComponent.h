@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
+#include "Combat/Project_JCombatHitValidation.h"
 #include "Project_JCombatComponent.generated.h"
 
 class UAbilitySystemComponent;
-class UGameplayAbility;
+class UGameplayEffect;
 
 /**
  * Base component class for character combat capabilities.
@@ -24,7 +25,6 @@ public:
 	UProject_JCombatComponent();
 
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	/** Equip job-specific weapons */
@@ -49,24 +49,24 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Combat|SSR")
 	void ServerRequestSSRHit(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd);
 
-protected:
-	// Callback when a GAS Ability is activated
-	virtual void OnAbilityActivatedCallback(UGameplayAbility* Ability);
+	FProject_JCombatHitValidationResult ValidateServerHitRequest(const FProject_JCombatHitRequest& Request) const;
 
+protected:
+	bool TryActivateAbilityByInputTag(const FGameplayTag& InputTag) const;
 	bool TryActivateAbilityByTag(const FGameplayTag& AbilityTag) const;
-	void SetOwnedCombatStateTag(const FGameplayTag& StateTag, bool bEnabled);
-	void ClearOwnedCombatStateTags();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|GAS", meta = (ToolTip = "Preferred InputTag used to activate the primary attack ability."))
+	FGameplayTag PrimaryAttackInputTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|GAS", meta = (ToolTip = "Optional ability tag to activate when Attack is called. Leave empty while combat abilities are not authored yet."))
 	FGameplayTag PrimaryAttackAbilityTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|SSR", meta = (ClampMin = "0.0"))
-	float MaxServerSideRewindRequestAge = 1.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|SSR")
+	FProject_JCombatHitValidationPolicy HitValidationPolicy;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Damage")
+	TSubclassOf<UGameplayEffect> ConfirmedHitGameplayEffect;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAbilitySystemComponent> OwnerASC = nullptr;
-
-private:
-	FDelegateHandle AbilityActivatedDelegateHandle;
-	TSet<FGameplayTag> OwnedLooseCombatStateTags;
 };

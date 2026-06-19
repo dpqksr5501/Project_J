@@ -38,6 +38,7 @@ protected:
 	const UProject_JWeaponAnimProfile* GetCurrentWeaponAnimProfile() const;
 	TSubclassOf<AActor> GetEffectiveWeaponClass() const;
 	FName GetEffectiveWeaponSocketName() const;
+	FGameplayTag GetEffectivePrimaryAttackInputTag() const;
 	FGameplayTag GetEffectivePrimaryAttackAbilityTag() const;
 
 protected:

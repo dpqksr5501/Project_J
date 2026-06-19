@@ -8,7 +8,6 @@
 #include "Project_JEquipmentManagerComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
-class UProject_JModularMeshComponent;
 class UProject_JEquipmentManagerComponent;
 class UProject_JInventoryComponent;
 
@@ -82,14 +81,21 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItem(UProject_JEquipmentItemDefinition* ItemDef);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UFUNCTION(BlueprintCallable, Category = "Equipment", meta = (DeprecatedFunction, DeprecationMessage = "Client equipment requests must use RequestEquipItemInstanceById. EquipItem remains available for authority-owned NPC or development grants."))
 	void RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UFUNCTION(BlueprintCallable, Category = "Equipment", meta = (DeprecatedFunction, DeprecationMessage = "Use RequestEquipItemInstanceById and pass only the authoritative inventory instance id."))
 	void RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
+
+	/** Preferred network request contract: the server resolves authoritative item data by id. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RequestEquipItemInstanceById(FGuid InstanceId);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	FProject_JEquipmentOperationResult TryEquipItemInstanceById(FGuid InstanceId);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void UnequipItem(UProject_JEquipmentItemDefinition* ItemDef);
@@ -115,25 +121,22 @@ protected:
 
 private:
 	UFUNCTION(Server, Reliable)
-	void ServerRequestEquipItem(const UProject_JEquipmentItemDefinition* ItemDef);
-
-	UFUNCTION(Server, Reliable)
-	void ServerRequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
+	void ServerRequestEquipItemInstanceById(FGuid InstanceId);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestUnequipSlot(EProject_JEquipmentSlot Slot);
 
 	bool CanCommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
-	bool CanEquipInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
+	EProject_JEquipmentOperationFailure ValidateInventoryItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
 	UProject_JInventoryComponent* GetOwnerInventoryComponent() const;
 	bool SetInventoryEquipmentLock(const FProject_JItemInstanceData& ItemInstance, bool bLocked) const;
-	void CommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance, bool bRequireInventoryOwnership);
+	FProject_JEquipmentOperationResult CommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance, bool bRequireInventoryOwnership);
 	void BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item);
 	void BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item);
 	int32 FindEquipmentIndexByItem(const UProject_JEquipmentItemDefinition* ItemDef) const;
 	int32 FindEquipmentIndexByInstanceId(const FGuid& InstanceId) const;
 	int32 FindEquipmentIndexBySlot(EProject_JEquipmentSlot Slot) const;
-	void RemoveEquipmentAt(int32 Index);
+	bool RemoveEquipmentAt(int32 Index);
 
 private:
 	UPROPERTY(Replicated)

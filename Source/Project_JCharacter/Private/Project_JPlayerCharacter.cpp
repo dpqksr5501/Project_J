@@ -30,6 +30,7 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
+#include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
@@ -66,6 +67,16 @@ int32 GetCharacterLevelForInterfaceObject(const UObject* Object)
 
 AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 {
+	RuntimeStateOwnership = EProject_JRuntimeStateOwnership::PlayerStatePreferred;
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->SetIsReplicated(false);
+	}
+	if (EquipmentManager)
+	{
+		EquipmentManager->SetIsReplicated(false);
+	}
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -115,6 +126,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	SkillInputRouterComponent = CreateDefaultSubobject<UProject_JSkillInputRouterComponent>(TEXT("SkillInputRouterComponent"));
 	SkillInputExecutionComponent = CreateDefaultSubobject<UProject_JSkillInputExecutionComponent>(TEXT("SkillInputExecutionComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
+	ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 }
@@ -123,8 +135,6 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponAnimProfile);
-	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -138,6 +148,10 @@ void AProject_JPlayerCharacter::BeginPlay()
 	if (CombatIntroComponent)
 	{
 		CombatIntroComponent->OnCombatIntroEnded.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+	}
+	if (ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
 	}
 
 	ApplyLocomotionProfile();
@@ -665,15 +679,6 @@ void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnim
 	}
 
 	CurrentWeaponAnimProfile = InWeaponAnimProfile;
-	if (HasAuthority())
-	{
-		ForceNetUpdate();
-	}
-}
-
-void AProject_JPlayerCharacter::OnRep_CurrentWeaponAnimProfile()
-{
-	// AnimInstance reads the effective profile on demand, so no cache invalidation is needed yet.
 }
 
 bool AProject_JPlayerCharacter::IsAttacking() const
@@ -734,129 +739,41 @@ void AProject_JPlayerCharacter::ResetMoveStartReplicationState()
 
 void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprintingForStart)
 {
-	if (HasAuthority())
-	{
-		if (ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->MarkMoveStarted(ReplicatedAnimEvents, bWasSprintingForStart);
-		}
-		ForceNetUpdate();
-		return;
-	}
-
-	ServerNotifyMoveStarted(bWasSprintingForStart);
-}
-
-void AProject_JPlayerCharacter::ServerNotifyMoveStarted_Implementation(bool bWasSprintingForStart)
-{
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->MarkMoveStarted(ReplicatedAnimEvents, bWasSprintingForStart || IsSprintLocomotionAllowed());
+		ReplicatedAnimEventComponent->DispatchMoveStarted(bWasSprintingForStart);
 	}
-	ForceNetUpdate();
 }
 
 void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 {
-	if (HasAuthority())
-	{
-		if (ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->MarkMoveStopped(ReplicatedAnimEvents);
-		}
-		ForceNetUpdate();
-		return;
-	}
-
-	ServerNotifyMoveStopped();
-}
-
-void AProject_JPlayerCharacter::ServerNotifyMoveStopped_Implementation()
-{
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->MarkMoveStopped(ReplicatedAnimEvents);
+		ReplicatedAnimEventComponent->DispatchMoveStopped();
 	}
-	ForceNetUpdate();
 }
 
 void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
 {
-	if (HasAuthority())
-	{
-		if (ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->MarkJumpStarted(ReplicatedAnimEvents);
-		}
-		ForceNetUpdate();
-		return;
-	}
-
-	ServerNotifyJumpStarted();
-}
-
-void AProject_JPlayerCharacter::ServerNotifyJumpStarted_Implementation()
-{
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->MarkJumpStarted(ReplicatedAnimEvents);
+		ReplicatedAnimEventComponent->DispatchJumpStarted();
 	}
-	ForceNetUpdate();
 }
 
 void AProject_JPlayerCharacter::DispatchFallOffStartAnimationEvent()
 {
-	if (HasAuthority())
-	{
-		if (ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->MarkFallOffStarted(ReplicatedAnimEvents);
-		}
-		ForceNetUpdate();
-		return;
-	}
-
-	ServerNotifyFallOffStarted();
-}
-
-void AProject_JPlayerCharacter::ServerNotifyFallOffStarted_Implementation()
-{
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->MarkFallOffStarted(ReplicatedAnimEvents);
+		ReplicatedAnimEventComponent->DispatchFallOffStarted();
 	}
-	ForceNetUpdate();
 }
 
 void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
 {
-	if (HasAuthority())
-	{
-		if (ReplicatedAnimEventComponent)
-		{
-			ReplicatedAnimEventComponent->MarkLandingCancelled(ReplicatedAnimEvents);
-		}
-		ForceNetUpdate();
-		return;
-	}
-
-	ServerNotifyLandingCancelled();
-}
-
-void AProject_JPlayerCharacter::ServerNotifyLandingCancelled_Implementation()
-{
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->MarkLandingCancelled(ReplicatedAnimEvents);
-	}
-	ForceNetUpdate();
-}
-
-void AProject_JPlayerCharacter::OnRep_ReplicatedAnimEvents(FProject_JReplicatedAnimEventState PreviousState)
-{
-	if (ReplicatedAnimEventComponent)
-	{
-		ReplicatedAnimEventComponent->ApplyReplicatedEvents(ReplicatedAnimEvents, PreviousState, LocomotionAnimStateComponent);
+		ReplicatedAnimEventComponent->DispatchLandingCancelled();
 	}
 }
 

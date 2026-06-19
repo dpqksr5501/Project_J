@@ -3,9 +3,10 @@
 #include "Project_JCombatComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Abilities/GameplayAbility.h"
+#include "GameplayEffect.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Project_JAbilitySystemComponent.h"
+#include "Project_JGameplayTags.h"
 
 UProject_JCombatComponent::UProject_JCombatComponent()
 {
@@ -24,47 +25,28 @@ void UProject_JCombatComponent::BeginPlay()
 	}
 }
 
-void UProject_JCombatComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	ClearOwnedCombatStateTags();
-
-	if (OwnerASC && AbilityActivatedDelegateHandle.IsValid())
-	{
-		OwnerASC->AbilityActivatedCallbacks.Remove(AbilityActivatedDelegateHandle);
-		AbilityActivatedDelegateHandle.Reset();
-	}
-
-	OwnerASC = nullptr;
-	Super::EndPlay(EndPlayReason);
-}
-
 void UProject_JCombatComponent::Attack()
 {
-	TryActivateAbilityByTag(PrimaryAttackAbilityTag);
+	const FGameplayTag EffectiveInputTag = PrimaryAttackInputTag.IsValid()
+		? PrimaryAttackInputTag
+		: FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
+	if (!TryActivateAbilityByInputTag(EffectiveInputTag))
+	{
+		TryActivateAbilityByTag(PrimaryAttackAbilityTag);
+	}
 }
 
 void UProject_JCombatComponent::BindToGAS(UAbilitySystemComponent* ASC)
 {
-	if (!ASC || OwnerASC == ASC)
-	{
-		return;
-	}
-
-	if (OwnerASC && AbilityActivatedDelegateHandle.IsValid())
-	{
-		OwnerASC->AbilityActivatedCallbacks.Remove(AbilityActivatedDelegateHandle);
-		AbilityActivatedDelegateHandle.Reset();
-	}
-
 	OwnerASC = ASC;
-	AbilityActivatedDelegateHandle = OwnerASC->AbilityActivatedCallbacks.AddUObject(this, &UProject_JCombatComponent::OnAbilityActivatedCallback);
 }
 
-void UProject_JCombatComponent::OnAbilityActivatedCallback(UGameplayAbility* Ability)
+bool UProject_JCombatComponent::TryActivateAbilityByInputTag(const FGameplayTag& InputTag) const
 {
-	if (!Ability) return;
-
-	// Weapon presentation components can react to ability tags here without owning combat authority.
+	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC);
+	return ProjectJASC && InputTag.IsValid()
+		? ProjectJASC->TryActivateAbilitiesByInputTag(InputTag)
+		: false;
 }
 
 bool UProject_JCombatComponent::TryActivateAbilityByTag(const FGameplayTag& AbilityTag) const
@@ -79,97 +61,74 @@ bool UProject_JCombatComponent::TryActivateAbilityByTag(const FGameplayTag& Abil
 	return OwnerASC->TryActivateAbilitiesByTag(AbilityTags);
 }
 
-void UProject_JCombatComponent::SetOwnedCombatStateTag(const FGameplayTag& StateTag, bool bEnabled)
-{
-	if (!OwnerASC || !StateTag.IsValid())
-	{
-		return;
-	}
-
-	if (bEnabled)
-	{
-		if (!OwnedLooseCombatStateTags.Contains(StateTag))
-		{
-			if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
-			{
-				ProjectJASC->AddProjectJLooseGameplayTag(StateTag);
-			}
-			else
-			{
-				OwnerASC->AddLooseGameplayTag(StateTag);
-			}
-			OwnedLooseCombatStateTags.Add(StateTag);
-		}
-		return;
-	}
-
-	if (OwnedLooseCombatStateTags.Remove(StateTag) > 0)
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
-		{
-			ProjectJASC->RemoveProjectJLooseGameplayTag(StateTag);
-		}
-		else
-		{
-			OwnerASC->RemoveLooseGameplayTag(StateTag);
-		}
-	}
-}
-
-void UProject_JCombatComponent::ClearOwnedCombatStateTags()
-{
-	if (!OwnerASC)
-	{
-		OwnedLooseCombatStateTags.Reset();
-		return;
-	}
-
-	for (const FGameplayTag& StateTag : OwnedLooseCombatStateTags)
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
-		{
-			ProjectJASC->RemoveProjectJLooseGameplayTag(StateTag);
-		}
-		else
-		{
-			OwnerASC->RemoveLooseGameplayTag(StateTag);
-		}
-	}
-
-	OwnedLooseCombatStateTags.Reset();
-}
-
 void UProject_JCombatComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd)
 {
-	if (!HitActor) return;
+	FProject_JCombatHitRequest Request;
+	Request.Target = HitActor;
+	Request.ClientTimestamp = ClientTimestamp;
+	Request.TraceStart = TraceStart;
+	Request.TraceEnd = TraceEnd;
 
-	const UWorld* World = GetWorld();
-	if (!World || !FMath::IsFinite(ClientTimestamp))
+	const FProject_JCombatHitValidationResult ValidationResult = ValidateServerHitRequest(Request);
+	if (!ValidationResult.bAccepted)
 	{
 		return;
 	}
 
-	const float RequestAge = World->GetTimeSeconds() - ClientTimestamp;
-	if (RequestAge < 0.0f || RequestAge > MaxServerSideRewindRequestAge)
-	{
-		return;
-	}
-
+	bool bHitConfirmed = false;
 	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
 	{
-		if (SSRComp->ServerVerifyHit(ClientTimestamp, TraceStart, TraceEnd))
-		{
-			// SSR Verified the hit!
-			// Apply damage/effects to HitActor here
-		}
-		else
-		{
-			// SSR Rejected Hit
-		}
+		bHitConfirmed = SSRComp->ServerVerifyHit(ClientTimestamp, TraceStart, TraceEnd);
 	}
 	else
 	{
-		// Target has no SSR component, fallback to normal hit
-		// Apply damage/effects to HitActor here
+		// Targets without rewind history are validated against their current bounds.
+		bHitConfirmed = HitActor->GetComponentsBoundingBox().Intersect(
+			FBox(TraceStart.ComponentMin(TraceEnd), TraceStart.ComponentMax(TraceEnd)).ExpandBy(25.0f));
 	}
+
+	if (!bHitConfirmed || !ConfirmedHitGameplayEffect || !OwnerASC)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
+	if (!TargetASC)
+	{
+		return;
+	}
+
+	FGameplayEffectContextHandle EffectContext = OwnerASC->MakeEffectContext();
+	EffectContext.AddInstigator(GetOwner(), GetOwner());
+	const FGameplayEffectSpecHandle SpecHandle = OwnerASC->MakeOutgoingSpec(ConfirmedHitGameplayEffect, 1.0f, EffectContext);
+	if (SpecHandle.IsValid())
+	{
+		OwnerASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+	}
+}
+
+FProject_JCombatHitValidationResult UProject_JCombatComponent::ValidateServerHitRequest(
+	const FProject_JCombatHitRequest& Request) const
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return FProject_JCombatHitValidationResult::Rejected(EProject_JCombatHitValidationFailure::InvalidRequester);
+	}
+
+	if (const EProject_JCombatHitValidationFailure Failure =
+			HitValidationPolicy.ValidateRequestData(Request, World->GetTimeSeconds());
+		Failure != EProject_JCombatHitValidationFailure::None)
+	{
+		return FProject_JCombatHitValidationResult::Rejected(Failure);
+	}
+
+	if (const EProject_JCombatHitValidationFailure Failure =
+			HitValidationPolicy.ValidateActors(GetOwner(), Request);
+		Failure != EProject_JCombatHitValidationFailure::None)
+	{
+		return FProject_JCombatHitValidationResult::Rejected(Failure);
+	}
+
+	return FProject_JCombatHitValidationResult::Accepted();
 }

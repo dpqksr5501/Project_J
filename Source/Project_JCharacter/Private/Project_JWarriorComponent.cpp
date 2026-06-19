@@ -104,6 +104,21 @@ FName UProject_JWarriorComponent::GetEffectiveWeaponSocketName() const
 
 
 
+FGameplayTag UProject_JWarriorComponent::GetEffectivePrimaryAttackInputTag() const
+{
+	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = GetCurrentWeaponAnimProfile())
+	{
+		if (WeaponAnimProfile->PrimaryAttackSpec.InputTag.IsValid())
+		{
+			return WeaponAnimProfile->PrimaryAttackSpec.InputTag;
+		}
+	}
+
+	return PrimaryAttackInputTag.IsValid()
+		? PrimaryAttackInputTag
+		: FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
+}
+
 FGameplayTag UProject_JWarriorComponent::GetEffectivePrimaryAttackAbilityTag() const
 {
 	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = GetCurrentWeaponAnimProfile())
