@@ -8,6 +8,8 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombat, Log, All);
+
 UProject_JCombatComponent::UProject_JCombatComponent()
 {
 	// Disable ticking by default as it's not needed for base combat capabilities
@@ -72,6 +74,13 @@ void UProject_JCombatComponent::ServerRequestSSRHit_Implementation(AActor* HitAc
 	const FProject_JCombatHitValidationResult ValidationResult = ValidateServerHitRequest(Request);
 	if (!ValidationResult.bAccepted)
 	{
+		UE_LOG(
+			LogProjectJCombat,
+			Verbose,
+			TEXT("SSR hit request rejected. Requester=%s Target=%s Reason=%s"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(HitActor),
+			LexToString(ValidationResult.Failure));
 		return;
 	}
 

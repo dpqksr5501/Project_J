@@ -165,6 +165,71 @@ float UProject_JCharacterAnimInstance::GetThreadSafeAimOffsetAlpha() const
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Aim.AimOffsetAlpha;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeGroundSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
+}
+
+FVector UProject_JCharacterAnimInstance::GetThreadSafeVelocity() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Velocity;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeVerticalSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.VerticalSpeed;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsAccelerating() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.bIsAccelerating;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeMoveInputSize() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Input.MoveInputSize;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeHasMoveInput() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Input.bHasMoveInput;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsInAir() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Air.bIsInAir;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsJumping() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Air.bIsJumping;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsLanding() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Landing.bIsLanding;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsCombatMode() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Combat.bIsCombatMode;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsMoving() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.bIsMoving;
+}
+
+EProject_JLocomotionGaitIntent UProject_JCharacterAnimInstance::GetThreadSafeGaitIntent() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.GaitIntent;
+}
+
+EProject_JLocomotionRotationMode UProject_JCharacterAnimInstance::GetThreadSafeRotationMode() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.RotationMode;
+}
+
 FFootPlacementPlantSettings UProject_JCharacterAnimInstance::Get_FootPlacementPlantSettings() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();

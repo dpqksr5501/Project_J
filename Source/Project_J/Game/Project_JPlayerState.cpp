@@ -44,6 +44,8 @@ void AProject_JPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME_CONDITION(AProject_JPlayerState, CharacterId, COND_OwnerOnly);
 	DOREPLIFETIME(AProject_JPlayerState, PublicClassId);
 	DOREPLIFETIME(AProject_JPlayerState, PublicCharacterLevel);
+	DOREPLIFETIME(AProject_JPlayerState, PartyId);
+	DOREPLIFETIME(AProject_JPlayerState, GuildId);
 }
 
 void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, const FProject_JCharacterId& InCharacterId)
@@ -60,6 +62,18 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 
 	AccountId = InAccountId;
 	CharacterId = InCharacterId;
+	ForceNetUpdate();
+}
+
+void AProject_JPlayerState::SetSocialState(FName InPartyId, FName InGuildId)
+{
+	if (!HasAuthority() || (PartyId == InPartyId && GuildId == InGuildId))
+	{
+		return;
+	}
+
+	PartyId = InPartyId;
+	GuildId = InGuildId;
 	ForceNetUpdate();
 }
 

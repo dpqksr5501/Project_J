@@ -55,6 +55,9 @@ public:
 	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const { return AdvancementDefinition; }
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
+	bool InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
 	bool CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
@@ -106,7 +109,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	UProject_JAttributeSet* AttributeSet;
 
-	// Character-local equipment manager used by NPCs and as a fallback before a PlayerState manager is available.
+	// Character-local equipment manager. Created by NPC subclasses; players resolve the PlayerState manager.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
 	class UProject_JEquipmentManagerComponent* EquipmentManager;
 
@@ -136,15 +139,14 @@ protected:
 	FProject_JAbilitySet_GrantedHandles AdvancementGrantedHandles;
 
 	/**
-	 * NPCs own runtime state directly on the character. Player characters prefer the
-	 * persistent PlayerState components and retain character-local components only as
-	 * a pre-PlayerState/fallback path.
+	 * NPCs own runtime state directly on the character. Player characters resolve
+	 * persistent runtime state from PlayerState and do not create local duplicates.
 	 */
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Runtime State")
 	EProject_JRuntimeStateOwnership RuntimeStateOwnership = EProject_JRuntimeStateOwnership::CharacterLocal;
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
-	virtual void InitializeDefaultAttributes() const;
+	virtual void InitializeDefaultAttributes(bool bForceReset = false) const;
 	void InitializeAbilitySystem();
 	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;
 	void GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject);

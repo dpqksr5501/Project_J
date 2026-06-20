@@ -5,6 +5,8 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Combat/Project_JCombatHitValidation.h"
 #include "Equipment/Project_JEquipmentTypes.h"
+#include "GameFramework/Actor.h"
+#include "Network/Project_JNetObjectFilter_Distance.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJMotionMatchingSearchPolicyTest,
@@ -132,6 +134,42 @@ bool FProjectJEquipmentOperationResultTest::RunTest(const FString& Parameters)
 			InstanceId);
 	TestFalse(TEXT("Failure result is not successful"), Failure.bSucceeded);
 	TestEqual(TEXT("Failure preserves reason"), Failure.Failure, EProject_JEquipmentOperationFailure::ItemLocked);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJReplicationOwnerRelevanceTest,
+	"ProjectJ.Architecture.Replication.OwnerRelevance",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJReplicationOwnerRelevanceTest::RunTest(const FString& Parameters)
+{
+	UProject_JNetObjectFilter_Distance* Filter =
+		NewObject<UProject_JNetObjectFilter_Distance>(GetTransientPackage());
+	AActor* Viewer = NewObject<AActor>(GetTransientPackage());
+	AActor* UnrelatedOwner = NewObject<AActor>(GetTransientPackage());
+	AActor* Target = NewObject<AActor>(GetTransientPackage());
+
+	FProject_JReplicationPolicySettings Settings;
+	Settings.MaxReplicationDistance = 1.0f;
+	Settings.bAlwaysReplicateOwnerOrInstigator = true;
+
+	Target->SetOwner(UnrelatedOwner);
+	const FProject_JReplicationPolicyDecision UnrelatedDecision =
+		Filter->BuildReplicationDecisionWithSettings(Target, FVector(1000.0f), Settings, Viewer);
+	TestFalse(TEXT("An unrelated owner does not make the target relevant"), UnrelatedDecision.bShouldReplicate);
+	TestFalse(
+		TEXT("An unrelated owner does not add the owner relevance reason"),
+		UnrelatedDecision.HasReason(EProject_JReplicationRelevanceReason::Owner));
+
+	Target->SetOwner(Viewer);
+	const FProject_JReplicationPolicyDecision OwnedDecision =
+		Filter->BuildReplicationDecisionWithSettings(Target, FVector(1000.0f), Settings, Viewer);
+	TestTrue(TEXT("The viewer's owned target remains relevant outside distance"), OwnedDecision.bShouldReplicate);
+	TestTrue(
+		TEXT("The viewer's owned target records the owner relevance reason"),
+		OwnedDecision.HasReason(EProject_JReplicationRelevanceReason::Owner));
 
 	return true;
 }

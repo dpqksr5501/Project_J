@@ -33,6 +33,24 @@ enum class EProject_JEquipmentOperationFailure : uint8
 	InventoryLockFailed
 };
 
+inline const TCHAR* LexToString(EProject_JEquipmentOperationFailure Failure)
+{
+	switch (Failure)
+	{
+	case EProject_JEquipmentOperationFailure::None: return TEXT("None");
+	case EProject_JEquipmentOperationFailure::NotAuthority: return TEXT("NotAuthority");
+	case EProject_JEquipmentOperationFailure::InvalidRequest: return TEXT("InvalidRequest");
+	case EProject_JEquipmentOperationFailure::InventoryUnavailable: return TEXT("InventoryUnavailable");
+	case EProject_JEquipmentOperationFailure::ItemNotOwned: return TEXT("ItemNotOwned");
+	case EProject_JEquipmentOperationFailure::ItemLocked: return TEXT("ItemLocked");
+	case EProject_JEquipmentOperationFailure::InvalidDefinition: return TEXT("InvalidDefinition");
+	case EProject_JEquipmentOperationFailure::InvalidSlot: return TEXT("InvalidSlot");
+	case EProject_JEquipmentOperationFailure::AlreadyEquipped: return TEXT("AlreadyEquipped");
+	case EProject_JEquipmentOperationFailure::InventoryLockFailed: return TEXT("InventoryLockFailed");
+	default: return TEXT("Unknown");
+	}
+}
+
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentOperationResult
 {

@@ -31,7 +31,7 @@ public:
 	void HandleInputTagReleased(FGameplayTag InputTag);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities|Input")
-	bool bAllowLegacySkillInputFallback = true;
+	bool bAllowLegacySkillInputFallback = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities|Input", meta = (EditCondition = "bAllowLegacySkillInputFallback"))
 	bool bWarnOnLegacySkillInputFallback = true;

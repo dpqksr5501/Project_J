@@ -26,11 +26,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Network|Filtering")
 	float GetReplicationDistanceSquared(const AActor* TargetActor, const FVector& ViewerLocation) const;
 
-	FProject_JReplicationPolicyDecision BuildReplicationDecision(const AActor* TargetActor, const FVector& ViewerLocation) const;
+	FProject_JReplicationPolicyDecision BuildReplicationDecision(const AActor* TargetActor, const FVector& ViewerLocation, const AActor* ViewerActor = nullptr) const;
 	FProject_JReplicationPolicyDecision BuildReplicationDecisionWithSettings(
 		const AActor* TargetActor,
 		const FVector& ViewerLocation,
-		const FProject_JReplicationPolicySettings& Settings) const;
+		const FProject_JReplicationPolicySettings& Settings,
+		const AActor* ViewerActor = nullptr) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Network|Filtering")
 	void SetPolicySettings(const FProject_JReplicationPolicySettings& InPolicySettings);

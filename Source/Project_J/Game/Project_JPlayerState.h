@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "Project_JMMOTypes.h"
+#include "Project_JSocialStateInterface.h"
 #include "AbilitySystemInterface.h"
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Project_JPlayerState.generated.h"
@@ -20,7 +21,11 @@ class UProject_JEquipmentManagerComponent;
  * replicated components.
  */
 UCLASS()
-class PROJECT_J_API AProject_JPlayerState : public APlayerState, public IAbilitySystemInterface, public IProject_JAbilitySystemOwnerInterface
+class PROJECT_J_API AProject_JPlayerState
+	: public APlayerState
+	, public IAbilitySystemInterface
+	, public IProject_JAbilitySystemOwnerInterface
+	, public IProject_JSocialStateInterface
 {
 	GENERATED_BODY()
 
@@ -37,6 +42,8 @@ public:
 	virtual UProject_JAttributeSet* GetProjectJAttributeSet() const override;
 	virtual bool HasGrantedDefaultAbilities() const override { return bDefaultAbilitiesGranted; }
 	virtual void SetHasGrantedDefaultAbilities(bool bGranted) override { bDefaultAbilitiesGranted = bGranted; }
+	virtual FName GetPartyId_Implementation() const override { return PartyId; }
+	virtual FName GetGuildId_Implementation() const override { return GuildId; }
 
 	UFUNCTION(BlueprintPure, Category = "MMO|Identity")
 	FProject_JAccountId GetAccountId() const { return AccountId; }
@@ -56,6 +63,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Character")
 	void SetPublicCharacterSnapshot(FName InClassId, int32 InLevel);
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Social")
+	void SetSocialState(FName InPartyId, FName InGuildId);
+
 	FORCEINLINE UProject_JInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	FORCEINLINE UProject_JEquipmentManagerComponent* GetEquipmentManagerComponent() const { return EquipmentManagerComponent; }
 
@@ -71,6 +81,12 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Character")
 	int32 PublicCharacterLevel = 1;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Social")
+	FName PartyId = NAME_None;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Social")
+	FName GuildId = NAME_None;
 
 private:
 	UPROPERTY(Transient)

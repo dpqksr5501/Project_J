@@ -200,7 +200,7 @@ void AProject_JPlayerController::DumpReplicationPolicy()
 	const UProject_JNetObjectFilter_Distance* DistanceFilter = NewObject<UProject_JNetObjectFilter_Distance>(GetTransientPackage());
 	const UProject_JNetObjectPrioritizer_Combat* CombatPrioritizer = NewObject<UProject_JNetObjectPrioritizer_Combat>(GetTransientPackage());
 
-	FProject_JReplicationPolicyDecision Decision = DistanceFilter->BuildReplicationDecision(TargetActor, ViewerLocation);
+	FProject_JReplicationPolicyDecision Decision = DistanceFilter->BuildReplicationDecision(TargetActor, ViewerLocation, GetPawn());
 	Decision = CombatPrioritizer->ApplyCombatPriority(TargetActor, Decision);
 
 	const FString PolicyLine = FString::Printf(TEXT("ReplicationPolicy Actor=%s %s"), *GetNameSafe(TargetActor), *Decision.ToDebugString());
@@ -339,7 +339,7 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 			AnimInstance = Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
 		}
 
-		FProject_JReplicationPolicyDecision Decision = DistanceFilter->BuildReplicationDecision(IterCharacter, ViewerLocation);
+		FProject_JReplicationPolicyDecision Decision = DistanceFilter->BuildReplicationDecision(IterCharacter, ViewerLocation, GetPawn());
 		Decision = CombatPrioritizer->ApplyCombatPriority(IterCharacter, Decision);
 
 		FString AnimSummary = TEXT("Anim=None");

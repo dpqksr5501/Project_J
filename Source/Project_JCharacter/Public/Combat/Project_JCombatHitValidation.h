@@ -19,6 +19,25 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	TargetOutsideAttackArc
 };
 
+inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
+{
+	switch (Failure)
+	{
+	case EProject_JCombatHitValidationFailure::None: return TEXT("None");
+	case EProject_JCombatHitValidationFailure::InvalidRequester: return TEXT("InvalidRequester");
+	case EProject_JCombatHitValidationFailure::InvalidTarget: return TEXT("InvalidTarget");
+	case EProject_JCombatHitValidationFailure::InvalidTimestamp: return TEXT("InvalidTimestamp");
+	case EProject_JCombatHitValidationFailure::RequestTooOld: return TEXT("RequestTooOld");
+	case EProject_JCombatHitValidationFailure::RequestFromFuture: return TEXT("RequestFromFuture");
+	case EProject_JCombatHitValidationFailure::InvalidTrace: return TEXT("InvalidTrace");
+	case EProject_JCombatHitValidationFailure::TraceTooLong: return TEXT("TraceTooLong");
+	case EProject_JCombatHitValidationFailure::TargetTooFar: return TEXT("TargetTooFar");
+	case EProject_JCombatHitValidationFailure::TraceOriginTooFar: return TEXT("TraceOriginTooFar");
+	case EProject_JCombatHitValidationFailure::TargetOutsideAttackArc: return TEXT("TargetOutsideAttackArc");
+	default: return TEXT("Unknown");
+	}
+}
+
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
 {

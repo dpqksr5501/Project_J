@@ -292,6 +292,45 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
 	float GetThreadSafeAimOffsetAlpha() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	float GetThreadSafeGroundSpeed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	FVector GetThreadSafeVelocity() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	float GetThreadSafeVerticalSpeed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsAccelerating() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	float GetThreadSafeMoveInputSize() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeHasMoveInput() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsInAir() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsJumping() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsLanding() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsCombatMode() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsMoving() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	EProject_JLocomotionGaitIntent GetThreadSafeGaitIntent() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	EProject_JLocomotionRotationMode GetThreadSafeRotationMode() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
 	FFootPlacementPlantSettings Get_FootPlacementPlantSettings() const;
 

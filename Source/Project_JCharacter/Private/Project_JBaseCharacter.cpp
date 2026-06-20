@@ -23,17 +23,12 @@ AProject_JBaseCharacter::AProject_JBaseCharacter()
 	
 	CharacterLevel = 1;
 
-	// Create Ability System Component
-	AbilitySystemComponent = CreateDefaultSubobject<UProject_JAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	// ASC, AttributeSet, and EquipmentManager are NOT created as default subobjects on the base.
+	// Player characters pull these from PlayerState. NPCs will construct them locally.
+	AbilitySystemComponent = nullptr;
+	AttributeSet = nullptr;
+	EquipmentManager = nullptr;
 
-	// Create Attribute Set
-	AttributeSet = CreateDefaultSubobject<UProject_JAttributeSet>(TEXT("AttributeSet"));
-
-	// Player characters prefer the PlayerState equipment manager; this character-local manager
-	// supports NPCs and pre-PlayerState fallback binding.
-	EquipmentManager = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManager"));
 	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
 }
 
@@ -171,6 +166,43 @@ bool AProject_JBaseCharacter::IsDead_Implementation() const
 	return false;
 }
 
+bool AProject_JBaseCharacter::InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition)
+{
+	if (!HasAuthority() || !NewClassDefinition)
+	{
+		return false;
+	}
+
+	if (CharacterClassDefinition == NewClassDefinition)
+	{
+		return true;
+	}
+
+	if (CharacterClassDefinition || AdvancementDefinition)
+	{
+		return false;
+	}
+
+	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+	{
+		if (const IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor);
+			OwnerInterface && OwnerInterface->HasGrantedDefaultAbilities())
+		{
+			return false;
+		}
+	}
+	else if (bDefaultAbilitiesGranted)
+	{
+		return false;
+	}
+
+	CharacterClassDefinition = NewClassDefinition;
+	CharacterLevel = FMath::Max(CharacterLevel, NewClassDefinition->StartingLevel);
+	InitializeDefaultAttributes(true);
+	InitializeAbilitySystem();
+	return true;
+}
+
 FName AProject_JBaseCharacter::GetCharacterClassId() const
 {
 	return CharacterClassDefinition ? CharacterClassDefinition->ClassId : NAME_None;
@@ -248,7 +280,7 @@ bool AProject_JBaseCharacter::ApplyAdvancementDefinition(UProject_JCharacterAdva
 	return true;
 }
 
-void AProject_JBaseCharacter::InitializeDefaultAttributes() const
+void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) const
 {
 	UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet();
 	if (!HasAuthority() || !CurrentAttributeSet)
@@ -264,32 +296,32 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes() const
 	const float DefaultAttackPower = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->AttackPower : 10.0f;
 	const float DefaultDefense = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Defense : 0.0f;
 
-	if (CurrentAttributeSet->GetMaxHealth() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetMaxHealth() <= 0.0f)
 	{
 		CurrentAttributeSet->InitMaxHealth(FMath::Max(1.0f, DefaultMaxHealth));
 	}
 
-	if (CurrentAttributeSet->GetHealth() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetHealth() <= 0.0f)
 	{
 		CurrentAttributeSet->InitHealth(FMath::Clamp(DefaultHealth, 0.0f, CurrentAttributeSet->GetMaxHealth()));
 	}
 
-	if (CurrentAttributeSet->GetMaxMana() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetMaxMana() <= 0.0f)
 	{
 		CurrentAttributeSet->InitMaxMana(FMath::Max(1.0f, DefaultMaxMana));
 	}
 
-	if (CurrentAttributeSet->GetMana() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetMana() <= 0.0f)
 	{
 		CurrentAttributeSet->InitMana(FMath::Clamp(DefaultMana, 0.0f, CurrentAttributeSet->GetMaxMana()));
 	}
 
-	if (CurrentAttributeSet->GetAttackPower() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetAttackPower() <= 0.0f)
 	{
 		CurrentAttributeSet->InitAttackPower(FMath::Max(0.0f, DefaultAttackPower));
 	}
 
-	if (CurrentAttributeSet->GetDefense() <= 0.0f)
+	if (bForceReset || CurrentAttributeSet->GetDefense() <= 0.0f)
 	{
 		CurrentAttributeSet->InitDefense(FMath::Max(0.0f, DefaultDefense));
 	}
@@ -312,7 +344,11 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 		}
 
 		const bool bAlreadyGranted = OwnerInterface ? OwnerInterface->HasGrantedDefaultAbilities() : bDefaultAbilitiesGranted;
-		if (!bAlreadyGranted)
+		const bool bHasGrantContent =
+			!DefaultAbilities.IsEmpty() ||
+			(CharacterClassDefinition && !CharacterClassDefinition->AbilitySets.IsEmpty()) ||
+			(AdvancementDefinition && !AdvancementDefinition->AdditionalAbilitySets.IsEmpty());
+		if (!bAlreadyGranted && bHasGrantContent)
 		{
 			for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultAbilities)
 			{

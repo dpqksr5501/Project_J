@@ -4,6 +4,8 @@
 #include "Inventory/Project_JItemDefinition.h"
 #include "Net/UnrealNetwork.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJEquipment, Log, All);
+
 // --- FFastArraySerializer Callbacks ---
 
 void FProject_JEquipmentArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
@@ -204,7 +206,18 @@ TArray<UProject_JEquipmentItemDefinition*> UProject_JEquipmentManagerComponent::
 
 void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstanceById_Implementation(FGuid InstanceId)
 {
-	TryEquipItemInstanceById(InstanceId);
+	const FProject_JEquipmentOperationResult Result = TryEquipItemInstanceById(InstanceId);
+	if (!Result.bSucceeded)
+	{
+		UE_LOG(
+			LogProjectJEquipment,
+			Verbose,
+			TEXT("Equipment request rejected. Owner=%s InstanceId=%s Slot=%d Reason=%s"),
+			*GetNameSafe(GetOwner()),
+			*InstanceId.ToString(),
+			static_cast<int32>(Result.Slot),
+			LexToString(Result.Failure));
+	}
 }
 
 void UProject_JEquipmentManagerComponent::ServerRequestUnequipSlot_Implementation(EProject_JEquipmentSlot Slot)

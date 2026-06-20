@@ -149,5 +149,11 @@ struct PROJECT_JCORE_API FProject_JReplicationPolicySettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MMO|Replication")
 	bool bAlwaysReplicateOwnerOrInstigator = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MMO|Replication", meta = (ClampMin = "1.0", UIMin = "1.0"))
+	float PartyPriorityMultiplier = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MMO|Replication", meta = (ClampMin = "1.0", UIMin = "1.0"))
+	float GuildPriorityMultiplier = 1.25f;
+
 	float GetMaxReplicationDistanceSquared() const;
 };
