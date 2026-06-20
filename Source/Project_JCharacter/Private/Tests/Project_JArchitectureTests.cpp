@@ -75,6 +75,40 @@ bool FProjectJCombatHitValidationPolicyTest::RunTest(const FString& Parameters)
 		Policy.ValidateRequestData(Request, 10.0f),
 		EProject_JCombatHitValidationFailure::TraceTooLong);
 
+	Policy.MaxTargetDistance = 600.0f;
+	Policy.MaxTraceStartDistance = 100.0f;
+	Policy.MinTargetFacingDot = 0.0f;
+	Request.TraceStart = FVector(50.0f, 0.0f, 0.0f);
+	Request.TraceEnd = FVector(150.0f, 0.0f, 0.0f);
+	TestEqual(
+		TEXT("Nearby forward target passes spatial validation"),
+		Policy.ValidateSpatialData(
+			FVector::ZeroVector,
+			FVector::ForwardVector,
+			FVector(200.0f, 0.0f, 0.0f),
+			Request),
+		EProject_JCombatHitValidationFailure::None);
+
+	Request.TraceStart = FVector(150.0f, 0.0f, 0.0f);
+	TestEqual(
+		TEXT("Trace origin too far from requester is rejected"),
+		Policy.ValidateSpatialData(
+			FVector::ZeroVector,
+			FVector::ForwardVector,
+			FVector(200.0f, 0.0f, 0.0f),
+			Request),
+		EProject_JCombatHitValidationFailure::TraceOriginTooFar);
+
+	Request.TraceStart = FVector::ZeroVector;
+	TestEqual(
+		TEXT("Target behind requester is rejected"),
+		Policy.ValidateSpatialData(
+			FVector::ZeroVector,
+			FVector::ForwardVector,
+			FVector(-200.0f, 0.0f, 0.0f),
+			Request),
+		EProject_JCombatHitValidationFailure::TargetOutsideAttackArc);
+
 	return true;
 }
 

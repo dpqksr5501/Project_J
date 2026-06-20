@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Equipment/Project_JEquipmentTypes.h"
-#include "Engine/DataAsset.h"
+#include "Inventory/Project_JItemDefinition.h"
 #include "Project_JStatTypes.h"
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -26,7 +26,7 @@ enum class EProject_JEquipmentStatApplicationPolicy : uint8
  * Allows designers to create equipment items in the editor without writing C++.
  */
 UCLASS(BlueprintType, Const)
-class PROJECT_JCHARACTER_API UProject_JEquipmentItemDefinition : public UPrimaryDataAsset
+class PROJECT_JCHARACTER_API UProject_JEquipmentItemDefinition : public UProject_JItemDefinition
 {
 	GENERATED_BODY()
 

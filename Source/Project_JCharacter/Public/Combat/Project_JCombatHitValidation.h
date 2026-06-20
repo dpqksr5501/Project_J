@@ -14,7 +14,9 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	RequestFromFuture,
 	InvalidTrace,
 	TraceTooLong,
-	TargetTooFar
+	TargetTooFar,
+	TraceOriginTooFar,
+	TargetOutsideAttackArc
 };
 
 USTRUCT(BlueprintType)
@@ -52,9 +54,21 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitValidationPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "0.0"))
 	float MaxTargetDistance = 600.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "0.0"))
+	float MaxTraceStartDistance = 250.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation", meta = (ClampMin = "-1.0", ClampMax = "1.0"))
+	float MinTargetFacingDot = 0.0f;
+
 	EProject_JCombatHitValidationFailure ValidateRequestData(
 		const FProject_JCombatHitRequest& Request,
 		float ServerTimeSeconds) const;
+
+	EProject_JCombatHitValidationFailure ValidateSpatialData(
+		const FVector& RequesterLocation,
+		const FVector& RequesterForward,
+		const FVector& TargetLocation,
+		const FProject_JCombatHitRequest& Request) const;
 
 	EProject_JCombatHitValidationFailure ValidateActors(
 		const AActor* Requester,

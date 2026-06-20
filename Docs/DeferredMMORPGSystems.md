@@ -32,7 +32,7 @@ NPC는 player-grade Motion Matching을 사용하지 않는 것을 기본으로 �
 
 `FProject_JReplicationPolicySettings`는 distance filter threshold를 reusable struct로 보관합니다. `UProject_JNetObjectFilter_Distance`는 default settings 또는 explicit settings에서 decision을 만들 수 있습니다.
 
-현재는 Iris/RepGraph adapter 이전 단계입니다. 중요한 것은 policy calculation을 먼저 명확히 분리해, 나중에 transport layer를 바꿔도 relevance reason과 priority 계산 의미가 유지되도록 하는 것입니다.
+현재는 Iris/RepGraph adapter 이전 단계입니다. (참고: UE 5.8에서도 Iris는 여전히 공식적으로 Experimental 단계이며 로컬 플러그인은 Beta 상태입니다.) 중요한 것은 policy calculation을 먼저 명확히 분리해, 나중에 transport layer를 바꿔도 relevance reason과 priority 계산 의미가 유지되도록 하는 것입니다.
 
 ## Replication Policy Decision
 

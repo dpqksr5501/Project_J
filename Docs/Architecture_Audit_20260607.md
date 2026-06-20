@@ -94,5 +94,5 @@ Keep these deferred until gameplay or profiling makes them necessary:
 - Add more concrete skill input chords as actual gameplay needs appear.
 - Convert legacy ability-tag activation assets to AbilitySet `InputTag` entries.
 - Disable legacy skill input fallback once migrated assets cover the expected inputs.
-- Add editor or automation coverage for AbilitySet and equipment validation.
+- Expand automation tests and editor execution paths for AbilitySet and equipment validation (as IsDataValid is already implemented).
 - Keep two-client Motion Matching checks as a manual regression pass when locomotion code changes.

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Project_JItemInstanceTypes.generated.h"
 
-class UProject_JEquipmentItemDefinition;
+class UProject_JItemDefinition;
 
 USTRUCT(BlueprintType)
 struct FProject_JItemInstanceData
@@ -14,7 +14,7 @@ struct FProject_JItemInstanceData
 	FGuid InstanceId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
-	TObjectPtr<UProject_JEquipmentItemDefinition> ItemDef = nullptr;
+	TObjectPtr<UProject_JItemDefinition> ItemDef = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (ClampMin = "1"))
 	int32 ItemLevel = 1;

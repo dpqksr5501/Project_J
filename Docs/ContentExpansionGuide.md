@@ -447,7 +447,7 @@ Get PlayerState
   -> Add Item Definition
 ```
 
-현재 모든 인벤토리 정의가 `UProject_JEquipmentItemDefinition`을 사용한다. 소비 아이템, 재료, 퀘스트 아이템까지 본격적으로 추가할 시점에는 공통 `UProject_JItemDefinition`을 만들고 장비 정의가 이를 상속하도록 일반화하는 것이 다음 단계다.
+인벤토리 아이템은 공통 기본 클래스인 `UProject_JItemDefinition`을 상속하여 확장합니다. 장비 아이템(`UProject_JEquipmentItemDefinition`)은 이를 상속받아 구현되어 있으며, 소비 아이템, 재료, 퀘스트 아이템 등의 새로운 아이템 분류가 필요할 경우 역시 `UProject_JItemDefinition`을 상속받는 새로운 데이터 에셋 정의를 만들어 쉽게 추가할 수 있습니다.
 
 ### 현재 지원 연산
 

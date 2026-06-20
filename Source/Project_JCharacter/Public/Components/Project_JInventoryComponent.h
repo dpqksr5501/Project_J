@@ -6,6 +6,7 @@
 #include "Net/Serialization/FastArraySerializer.h"
 #include "Project_JInventoryComponent.generated.h"
 
+class UProject_JItemDefinition;
 class UProject_JEquipmentItemDefinition;
 class UProject_JInventoryComponent;
 
@@ -70,7 +71,7 @@ public:
 	FProject_JInventoryItemChangedSignature OnItemRemoved;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
-	FProject_JItemInstanceData AddItemDefinition(UProject_JEquipmentItemDefinition* ItemDef, int32 StackCount = 1, int32 ItemLevel = 1);
+	FProject_JItemInstanceData AddItemDefinition(UProject_JItemDefinition* ItemDef, int32 StackCount = 1, int32 ItemLevel = 1);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool RemoveItemInstance(FGuid InstanceId);

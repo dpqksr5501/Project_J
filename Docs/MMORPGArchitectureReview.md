@@ -68,8 +68,10 @@ Project_JCharacterEditor
   - static item definition과 실제 소유 아이템 instance를 분리하기 위한 ID입니다.
 - `FProject_JItemInstanceData`
   - 인벤토리 구현 전에도 장비 instance 경계를 유지할 수 있습니다.
+- `UProject_JItemDefinition`
+  - 모든 인벤토리 아이템 유형(장비, 소비, 재료 등)이 공유하는 기본 공통 속성(ItemId, 이름, 설명, 아이콘, MaxStackCount)을 정의하는 추상 데이터 에셋입니다.
 - `UProject_JEquipmentItemDefinition`
-  - 장비 슬롯, 장비 mesh, 부여 ability, stat modifier, weapon animation profile을 DataAsset으로 정의합니다.
+  - `UProject_JItemDefinition`을 상속받아 구현되며, 장비 슬롯, 장비 mesh, 부여 ability, stat modifier, weapon animation profile을 추가로 정의합니다.
 - `UProject_JEquipmentManagerComponent`
   - `FFastArraySerializer` 기반으로 장비 목록을 복제합니다.
   - 장착/해제, mesh spawn, stat modifier, weapon animation profile 갱신 책임을 가집니다.
@@ -96,7 +98,7 @@ Project_JCharacterEditor
 - `UProject_JReplicatedAnimEventComponent`
   - 원격 애니메이션 event counter를 캐릭터 본체에서 분리합니다.
 
-Iris를 켜둔 상태에서 policy 계산을 adapter와 분리해둔 방향은 좋습니다. 아직 실제 Iris filter/prioritizer adapter에 완전히 연결된 구조라기보다는, gameplay policy를 먼저 분리해둔 상태입니다.
+Iris를 고려하여 policy 계산을 adapter와 분리해둔 방향은 좋습니다. 다만 UE 5.8에서도 Iris는 여전히 공식적으로 Experimental 상태(로컬 플러그인은 Beta)이며, 필터/우선순위화 API가 FInternalNetRefIndex 및 신규 index manager를 경유하도록 리팩터링되는 등의 API 정밀화가 진행 중입니다. 따라서 실제 Iris filter/prioritizer adapter에 완전 바인딩하는 것은 향후 선택적인 추가 작업으로 남겨두고, gameplay policy를 우선 분리해둔 현재 상태를 유지하는 것이 적합합니다.
 
 ### Backend And World Boundary
 
@@ -190,15 +192,10 @@ distance/combat priority 계산을 Iris adapter 자체에 바로 묻지 않고 U
 
 ### 2. Global Validation System
 
-현재 animation/profile validation은 있습니다. 같은 패턴을 전체 시스템으로 넓히면 좋습니다.
+현재 animation/profile validation과 더불어, 주요 데이터 에셋인 EquipmentItemDefinition, AbilitySet 등에는 C++ `IsDataValid()` 검증 함수가 구현되어 있습니다. 이를 자동화 테스트 및 빌드/에디터 실행 경로로 확대 적용하고 다른 시스템으로 넓히면 좋습니다.
 
-추가 후보:
+추가 확장 후보:
 
-- Equipment definition validation
-  - slot이 `None`인지
-  - mesh와 socket 조합이 유효한지
-  - weapon animation profile이 필요한 장비에 비어 있는지
-  - ability class가 null인지
 - Attribute/default stat validation
   - MaxHealth, MaxMana가 0 이하인지
   - AttackPower, Defense가 음수인지
@@ -209,7 +206,7 @@ distance/combat priority 계산을 Iris adapter 자체에 바로 묻지 않고 U
   - GatewayUrl이 비어 있는지
   - log queue/flush interval 값이 비정상인지
 
-초기에는 fatal error가 아니라 PIE warning으로 충분합니다.
+초기에는 fatal error가 아니라 PIE warning이나 Data Validation Result(Warning/Error)로 유연하게 처리합니다.
 
 ### 3. Transition / Runtime Reason Telemetry
 
@@ -444,10 +441,11 @@ Gateway/Handover/ID 타입이 있으므로 persistence가 붙을 때 다음 경�
 - LocomotionProfile speed/distance 값 이상
 - Start timing override 값 이상
 - Weapon/Combat profile montage/socket/section 누락
+- EquipmentItemDefinition validation (C++ `IsDataValid` 구현 완료)
+- AbilitySet validation (C++ `IsDataValid` 구현 완료)
 
 ### Add Next
 
-- EquipmentItemDefinition validation
 - DefaultAttributeSetData validation
 - ReplicationPolicySettings validation
 - GatewaySubsystem config validation

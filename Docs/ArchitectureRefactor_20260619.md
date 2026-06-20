@@ -13,6 +13,9 @@
 
 ### 인벤토리와 장비
 
+- 공통 아이템 정의 기본 클래스 `UProject_JItemDefinition`을 신규 생성하고, `UProject_JEquipmentItemDefinition`이 이를 상속받도록 리팩토링했다.
+- 인벤토리 인스턴스 데이터 `FProject_JItemInstanceData::ItemDef`의 타입을 공통 `UProject_JItemDefinition`으로 일반화하여, 장비 외에 소비아이템 등 차후 추가될 모든 유형의 아이템을 수용할 수 있는 아키텍처를 구축했다.
+- 장비 관리자(`UProject_JEquipmentManagerComponent`) 등 장비 사양 확인이 필요한 노드에서는 내부적으로 `Cast<UProject_JEquipmentItemDefinition>`을 통해 장착 슬롯과 속성을 식별하는 안전한 유효성 검사 코드를 적용했다.
 - 네트워크 장착 요청은 전체 `FProject_JItemInstanceData` 대신 `InstanceId`만 전달한다.
 - 서버가 InventoryComponent에서 authoritative item instance를 다시 조회한다.
 - 장착 검증 결과를 `FProject_JEquipmentOperationResult`로 구조화했다.
@@ -42,7 +45,7 @@
 
 - `FProject_JCharacterAnimInstanceProxy`와 Motion Matching node 조작·BlendStack 진단을 별도 파일로 분리했다.
 - `Project_JCharacterAnimInstance.cpp`는 snapshot, Chooser, profile 및 optimization 흐름에 집중한다.
-- UE 5.8에서 실제 검색에 사용되지 않는 `bShouldSearch` 조작을 제거했다.
+- UE 5.8에서 필드는 남아 있지만 런타임 검색 경로가 더 이상 소비하지 않는 `bShouldSearch` 조작을 제거했다.
 - 공중 검색 억제 시간은 `FProject_JMotionMatchingSearchPolicy`가 계산한다.
 
 ### 테스트

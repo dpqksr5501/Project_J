@@ -48,10 +48,38 @@ EProject_JCombatHitValidationFailure FProject_JCombatHitValidationPolicy::Valida
 		return EProject_JCombatHitValidationFailure::InvalidTarget;
 	}
 
-	if (FVector::DistSquared(Requester->GetActorLocation(), Request.Target->GetActorLocation()) >
+	return ValidateSpatialData(
+		Requester->GetActorLocation(),
+		Requester->GetActorForwardVector(),
+		Request.Target->GetActorLocation(),
+		Request);
+}
+
+EProject_JCombatHitValidationFailure FProject_JCombatHitValidationPolicy::ValidateSpatialData(
+	const FVector& RequesterLocation,
+	const FVector& RequesterForward,
+	const FVector& TargetLocation,
+	const FProject_JCombatHitRequest& Request) const
+{
+	if (FVector::DistSquared(RequesterLocation, TargetLocation) >
 		FMath::Square(FMath::Max(0.0f, MaxTargetDistance)))
 	{
 		return EProject_JCombatHitValidationFailure::TargetTooFar;
+	}
+
+	if (FVector::DistSquared(RequesterLocation, Request.TraceStart) >
+		FMath::Square(FMath::Max(0.0f, MaxTraceStartDistance)))
+	{
+		return EProject_JCombatHitValidationFailure::TraceOriginTooFar;
+	}
+
+	const FVector TargetDirection = (TargetLocation - RequesterLocation).GetSafeNormal();
+	const FVector ForwardDirection = RequesterForward.GetSafeNormal();
+	if (!TargetDirection.IsNearlyZero() &&
+		!ForwardDirection.IsNearlyZero() &&
+		FVector::DotProduct(ForwardDirection, TargetDirection) < FMath::Clamp(MinTargetFacingDot, -1.0f, 1.0f))
+	{
+		return EProject_JCombatHitValidationFailure::TargetOutsideAttackArc;
 	}
 
 	return EProject_JCombatHitValidationFailure::None;

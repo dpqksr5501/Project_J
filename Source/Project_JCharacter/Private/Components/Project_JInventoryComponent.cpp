@@ -1,6 +1,7 @@
 #include "Components/Project_JInventoryComponent.h"
 
 #include "Equipment/Project_JEquipmentItemDefinition.h"
+#include "Inventory/Project_JItemDefinition.h"
 #include "Net/UnrealNetwork.h"
 
 void FProject_JInventoryArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
@@ -54,7 +55,7 @@ void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
 	DOREPLIFETIME_CONDITION(UProject_JInventoryComponent, InventoryArray, COND_OwnerOnly);
 }
 
-FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProject_JEquipmentItemDefinition* ItemDef, int32 StackCount, int32 ItemLevel)
+FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProject_JItemDefinition* ItemDef, int32 StackCount, int32 ItemLevel)
 {
 	FProject_JItemInstanceData NewItem;
 	NewItem.InstanceId = FGuid::NewGuid();
@@ -113,6 +114,14 @@ bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 New
 	}
 
 	FProject_JInventoryArrayItem& Item = InventoryArray.Items[FoundIndex];
+	const int32 MaxStackCount = Item.ItemInstance.ItemDef
+		? FMath::Max(1, Item.ItemInstance.ItemDef->MaxStackCount)
+		: 1;
+	if (NewStackCount > MaxStackCount)
+	{
+		return false;
+	}
+
 	if (NewStackCount > Item.ItemInstance.StackCount && Item.ItemInstance.bIsLocked)
 	{
 		return false;
@@ -273,7 +282,17 @@ void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JI
 
 bool UProject_JInventoryComponent::CanCommitItemInstance(const FProject_JItemInstanceData& ItemInstance) const
 {
-	return ItemInstance.ItemDef && ItemInstance.InstanceId.IsValid() && ItemInstance.StackCount > 0 && FindItemIndex(ItemInstance.InstanceId) == INDEX_NONE;
+	if (!ItemInstance.ItemDef)
+	{
+		return false;
+	}
+
+	const int32 MaxStackCount = FMath::Max(1, ItemInstance.ItemDef->MaxStackCount);
+	return
+		ItemInstance.InstanceId.IsValid() &&
+		ItemInstance.StackCount > 0 &&
+		ItemInstance.StackCount <= MaxStackCount &&
+		FindItemIndex(ItemInstance.InstanceId) == INDEX_NONE;
 }
 
 int32 UProject_JInventoryComponent::FindItemIndex(FGuid InstanceId) const
