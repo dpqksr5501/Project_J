@@ -8,6 +8,7 @@
 #include "Project_JBaseCharacter.h"
 #include "GameplayTagContainer.h"
 #include "Logging/LogMacros.h"
+#include "Network/Project_JHandoverSerializable.h"
 #include "Project_JPlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -37,12 +38,30 @@ struct FGameplayTag;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+USTRUCT(BlueprintType)
+struct FProject_JPlayerHandoverSnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Handover")
+	uint8 Version = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Handover")
+	int32 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Handover")
+	FVector_NetQuantize10 Location = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Handover")
+	FRotator Rotation = FRotator::ZeroRotator;
+};
+
 /**
  *  A player-controllable third person character
  *  Implements a controllable orbiting camera and motion matching landing logic.
  */
 UCLASS(abstract)
-class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCharacter
+class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCharacter, public IProject_JHandoverSerializable
 {
 	GENERATED_BODY()
 
@@ -50,90 +69,90 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+	TObjectPtr<USpringArmComponent> CameraBoom = nullptr;
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
+	TObjectPtr<UCameraComponent> FollowCamera = nullptr;
 
 	/** Camera Component handling boom, zoom, and multi-player optimization */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UProject_JCameraComponent* CameraComponent;
+	TObjectPtr<UProject_JCameraComponent> CameraComponent = nullptr;
 
 	/** Job-specific combat component (dynamically cached at runtime) */
 	UPROPERTY(Transient, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UProject_JCombatComponent* ActiveCombatComponent;
+	TObjectPtr<UProject_JCombatComponent> ActiveCombatComponent = nullptr;
 
 	/** Owns locomotion animation state consumed by AnimInstance and Chooser Tables. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UProject_JLocomotionAnimStateComponent* LocomotionAnimStateComponent;
+	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
 
 	/** Native trajectory buffer used by PoseSearch motion matching. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	UProject_JMotionMatchingTrajectoryComponent* MotionMatchingTrajectoryComponent;
+	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> MotionMatchingTrajectoryComponent = nullptr;
 	
 	/** ViewModel for UI bindings */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI", meta = (AllowPrivateAccess = "true"))
-	UProject_JCharacterUIBindingComponent* CharacterUIBindingComponent;
+	TObjectPtr<UProject_JCharacterUIBindingComponent> CharacterUIBindingComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
-	UProject_JPlayerInputBindingComponent* PlayerInputBindingComponent;
+	TObjectPtr<UProject_JPlayerInputBindingComponent> PlayerInputBindingComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
-	UProject_JSkillInputRouterComponent* SkillInputRouterComponent;
+	TObjectPtr<UProject_JSkillInputRouterComponent> SkillInputRouterComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Input", meta = (AllowPrivateAccess = "true"))
-	UProject_JSkillInputExecutionComponent* SkillInputExecutionComponent;
+	TObjectPtr<UProject_JSkillInputExecutionComponent> SkillInputExecutionComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
-	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
+	TObjectPtr<UProject_JReplicatedAnimEventComponent> ReplicatedAnimEventComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
-	UProject_JReplicatedJumpStateComponent* ReplicatedJumpStateComponent;
+	TObjectPtr<UProject_JReplicatedJumpStateComponent> ReplicatedJumpStateComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
-	UProject_JCombatStateComponent* CombatStateComponent;
+	TObjectPtr<UProject_JCombatStateComponent> CombatStateComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
-	UProject_JCombatIntroComponent* CombatIntroComponent;
+	TObjectPtr<UProject_JCombatIntroComponent> CombatIntroComponent = nullptr;
 
 protected:
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* JumpAction;
+	TObjectPtr<UInputAction> JumpAction = nullptr;
 
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* MoveAction;
+	TObjectPtr<UInputAction> MoveAction = nullptr;
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* LookAction;
+	TObjectPtr<UInputAction> LookAction = nullptr;
 
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* MouseLookAction;
+	TObjectPtr<UInputAction> MouseLookAction = nullptr;
 
 	/** Sprint Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* SprintAction;
+	TObjectPtr<UInputAction> SprintAction = nullptr;
 
 	/** Toggle Combat Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* ToggleCombatAction;
+	TObjectPtr<UInputAction> ToggleCombatAction = nullptr;
 
 	/** Attack Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* AttackAction;
+	TObjectPtr<UInputAction> AttackAction = nullptr;
 
 	/** Heavy Attack Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* HeavyAttackAction;
+	TObjectPtr<UInputAction> HeavyAttackAction = nullptr;
 
 	/** Skill modifier Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* SkillModifierAction;
+	TObjectPtr<UInputAction> SkillModifierAction = nullptr;
 
 public:
 
@@ -311,6 +330,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement|Landing")
 	void FinishLanding(bool bForceFinish = false);
+
+public:
+	// IProject_JHandoverSerializable Interface
+	virtual void SerializeForHandover(TArray<uint8>& OutData) override;
+	virtual void DeserializeFromHandover(const TArray<uint8>& InData) override;
+
+	virtual void SetCharacterLevel(int32 NewLevel) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides movement speed."))
 	float WalkSpeed = 500.0f;

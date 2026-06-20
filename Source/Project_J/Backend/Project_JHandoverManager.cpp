@@ -4,6 +4,7 @@
 #include "Misc/Crc.h"
 #include "Network/Project_JHandoverSerializable.h"
 #include "Project_J.h"
+#include "Async/Async.h"
 
 void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -391,10 +392,22 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this)](
 			const FProject_JHandoverTransportResponse& Response)
 		{
-			if (UProject_JHandoverManager* Manager = WeakThis.Get())
+			if (IsInGameThread())
 			{
-				Manager->HandleTransportResponse(Response);
+				if (UProject_JHandoverManager* Manager = WeakThis.Get())
+				{
+					Manager->HandleTransportResponse(Response);
+				}
+				return;
 			}
+
+			AsyncTask(ENamedThreads::GameThread, [WeakThis, Response]()
+			{
+				if (UProject_JHandoverManager* Manager = WeakThis.Get())
+				{
+					Manager->HandleTransportResponse(Response);
+				}
+			});
 		});
 
 	if (!bDispatched)
@@ -409,6 +422,7 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 void UProject_JHandoverManager::HandleTransportResponse(
 	const FProject_JHandoverTransportResponse& Response)
 {
+	check(IsInGameThread());
 	FProject_JHandoverRecord* Record = HandoverStates.Find(Response.TransferId);
 	if (!Record ||
 		Record->State != EProject_JHandoverState::AwaitingAck ||

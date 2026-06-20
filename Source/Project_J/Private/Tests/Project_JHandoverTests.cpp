@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Backend/Project_JHandoverManager.h"
+#include "Project_JPlayerCharacter.h"
 #include "Backend/Project_JHandoverTransport.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -230,6 +231,94 @@ bool FProjectJSocialMembershipTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Trusted restore joins reconnecting member to guild"), SocialSubsystem->RestoreMembership(Member, NAME_None, Guild.GroupId));
 	TestEqual(TEXT("Restored guild snapshot is synchronized"), Member->GetGuildId_Implementation(), Guild.GroupId);
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJPlayerCharacterSerializationTest,
+	"ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, TEXT("TestSerializationWorld"));
+	if (!World)
+	{
+		return false;
+	}
+
+	FString PlayerClassPathString = TEXT("/Game/Character_BPs/BP_Player.BP_Player_C");
+	GConfig->GetString(TEXT("ProjectJ.Tests"), TEXT("PlayerCharacterClassPath"), PlayerClassPathString, GEngineIni);
+
+	FSoftClassPath PlayerClassPath(PlayerClassPathString);
+	UClass* PlayerClass = PlayerClassPath.TryLoadClass<AProject_JPlayerCharacter>();
+	TestNotNull(TEXT("Configured player character class must be loaded"), PlayerClass);
+	if (!PlayerClass)
+	{
+		World->DestroyWorld(true);
+		return false;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.bNoFail = true;
+
+	AProject_JPlayerCharacter* SourceCharacter = World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass, SpawnParams);
+	TestNotNull(TEXT("Source Character must be spawned"), SourceCharacter);
+	if (!SourceCharacter)
+	{
+		World->DestroyWorld(true);
+		return false;
+	}
+
+	const int32 SourceLevel = 42;
+	const FVector SourceLocation(1234.5f, 6789.0f, 150.0f);
+	const FRotator SourceRotation(0.0f, 90.0f, 0.0f);
+
+	SourceCharacter->SetCharacterLevel(SourceLevel);
+	SourceCharacter->SetActorLocationAndRotation(SourceLocation, SourceRotation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	TArray<uint8> Buffer;
+	SourceCharacter->SerializeForHandover(Buffer);
+
+	TestTrue(TEXT("Payload size must be less than 1KB"), Buffer.Num() < 1024);
+	TestTrue(TEXT("Payload size must be greater than 0"), Buffer.Num() > 0);
+
+	AProject_JPlayerCharacter* DestCharacter = World->SpawnActor<AProject_JPlayerCharacter>(PlayerClass, SpawnParams);
+	TestNotNull(TEXT("Destination Character must be spawned"), DestCharacter);
+	if (!DestCharacter)
+	{
+		if (SourceCharacter)
+		{
+			SourceCharacter->Destroy();
+		}
+		World->DestroyWorld(true);
+		return false;
+	}
+
+	DestCharacter->SetCharacterLevel(1);
+	DestCharacter->SetActorLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator, false, nullptr, ETeleportType::TeleportPhysics);
+
+	DestCharacter->DeserializeFromHandover(Buffer);
+
+	const int32 DestLevel = DestCharacter->GetCharacterLevel_Implementation();
+	TestEqual(TEXT("Restored level must match source level"), DestLevel, SourceLevel);
+
+	const FVector DestLocation = DestCharacter->GetActorLocation();
+	const FRotator DestRotator = DestCharacter->GetActorRotation();
+
+	TestTrue(TEXT("Restored Location matches source location"), DestLocation.Equals(SourceLocation, 1.0f));
+	TestTrue(TEXT("Restored Rotation matches source rotation"), DestRotator.Equals(SourceRotation, 1.0f));
+
+	if (SourceCharacter)
+	{
+		SourceCharacter->Destroy();
+	}
+	if (DestCharacter)
+	{
+		DestCharacter->Destroy();
+	}
+	World->DestroyWorld(true);
 	return true;
 }
 

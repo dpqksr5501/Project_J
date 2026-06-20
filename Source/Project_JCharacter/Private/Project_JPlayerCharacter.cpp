@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 #include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JAnimationProfileValidation.h"
@@ -927,4 +929,67 @@ void AProject_JPlayerCharacter::HandleSkillInputTagReleased(FGameplayTag InputTa
 	{
 		SkillInputExecutionComponent->HandleInputTagReleased(InputTag);
 	}
+}
+
+void AProject_JPlayerCharacter::SerializeForHandover(TArray<uint8>& OutData)
+{
+	OutData.Reset();
+
+	FProject_JPlayerHandoverSnapshot Snapshot;
+	Snapshot.Version = 1;
+	Snapshot.Level = GetCharacterLevel_Implementation();
+	Snapshot.Location = GetActorLocation();
+	Snapshot.Rotation = GetActorRotation();
+
+	FMemoryWriter Writer(OutData, true);
+	Writer << Snapshot.Version;
+	Writer << Snapshot.Level;
+	Writer << Snapshot.Location;
+	Writer << Snapshot.Rotation;
+}
+
+void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InData)
+{
+	if (InData.Num() == 0)
+	{
+		return;
+	}
+
+	FProject_JPlayerHandoverSnapshot Snapshot;
+	TArray<uint8> LocalData = InData;
+	FMemoryReader Reader(LocalData, true);
+
+	Reader << Snapshot.Version;
+	Reader << Snapshot.Level;
+	Reader << Snapshot.Location;
+	Reader << Snapshot.Rotation;
+
+	if (Reader.IsError())
+	{
+		UE_LOG(LogTemplateCharacter, Warning, TEXT("Failed to deserialize player handover snapshot."));
+		return;
+	}
+
+	if (Snapshot.Version != 1)
+	{
+		UE_LOG(LogTemplateCharacter, Warning, TEXT("Unsupported handover snapshot version: %d"), Snapshot.Version);
+		return;
+	}
+
+	SetCharacterLevel(Snapshot.Level);
+
+	// Physics and teleport compensation
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+	}
+
+	SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics);
+	ForceNetUpdate();
+}
+
+void AProject_JPlayerCharacter::SetCharacterLevel(int32 NewLevel)
+{
+	Super::SetCharacterLevel(NewLevel);
+	RefreshAbilitySystemDependentComponents();
 }

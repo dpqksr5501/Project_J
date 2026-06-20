@@ -489,3 +489,13 @@ AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
 {
 	return const_cast<AProject_JBaseCharacter*>(this);
 }
+
+void AProject_JBaseCharacter::SetCharacterLevel(int32 NewLevel)
+{
+	const int32 GuardedLevel = FMath::Max(1, NewLevel);
+	if (CharacterLevel != GuardedLevel)
+	{
+		CharacterLevel = GuardedLevel;
+		InitializeDefaultAttributes(true);
+	}
+}

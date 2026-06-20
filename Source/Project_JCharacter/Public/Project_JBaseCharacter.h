@@ -146,6 +146,7 @@ protected:
 	EProject_JRuntimeStateOwnership RuntimeStateOwnership = EProject_JRuntimeStateOwnership::CharacterLocal;
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
+	virtual void SetCharacterLevel(int32 NewLevel);
 	virtual void InitializeDefaultAttributes(bool bForceReset = false) const;
 	void InitializeAbilitySystem();
 	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;
