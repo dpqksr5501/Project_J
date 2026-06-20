@@ -30,6 +30,14 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
 	bool bSearchAirborneLoopEveryUpdate = false;
 
+	/**
+	 * Duration for which a simulated proxy temporarily bypasses skeletal mesh URO after
+	 * receiving a confirmed jump. Keep this long enough for the authored Motion Matching
+	 * transition to begin, but short enough to preserve the normal MMO animation budget.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Network", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float RemoteJumpUrgentAnimationUpdateDuration = 0.10f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search", meta = (ClampMin = "0.0", Units = "s"))
 	float SuppressedSearchThrottleTime = 3600.0f;
 

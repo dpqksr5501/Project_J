@@ -73,9 +73,9 @@ This was not caused by:
 ### Required runtime behavior
 
 - `UProject_JReplicatedJumpStateComponent` temporarily disables skeletal mesh URO for a visible simulated proxy when a confirmed jump arrives.
-- The urgent update window is intentionally short (`0.10` seconds), after which the previous URO setting is restored.
-- `FProject_JCharacterAnimInstanceProxy` waits until the JumpStart database and newest MM player are actually initialized, then removes older ground players for that one pending remote JumpStart edge.
-- The collapse applies only to simulated proxies. Local/autonomous characters and ordinary Motion Matching transitions keep their authored blending.
+- The urgent update window is configured by `MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration` and defaults to `0.10` seconds, after which the previous URO setting is restored.
+- Motion Matching BlendStack state is not modified for JumpStart. The same authored transition used by other locomotion changes remains responsible for visual continuity.
+- Local, autonomous, and simulated-proxy characters therefore use the same Motion Matching blend behavior once their AnimGraph updates.
 
 Do not permanently disable URO to solve this issue. URO remains part of the MMORPG animation budget; only latency-sensitive replicated transitions should receive a short event-driven exception.
 
@@ -85,9 +85,9 @@ When changing player mesh URO, significance tiers, animation budgets, replicated
 
 - preserve the short urgent animation update started by confirmed remote jumps,
 - preserve restoration of the mesh's previous URO value,
-- do not depend on `AnyNewBlendToThisFrame()` from the post-update proxy hook; its update-counter timing did not reliably identify the newly initialized JumpStart player,
-- identify the JumpStart player using the selected database, selected animation, and newest BlendStack player,
-- do not collapse all remote Motion Matching blends globally,
+- do not manipulate `FBlendStackAnimPlayer`, `AnimPlayers`, or JumpStart blend progress from project code,
+- do not delete the previous player to force full weight; that produces an abrupt remote pose cut,
+- let the authored Motion Matching transition handle pose continuity after URO allows the graph to update,
 - do not move this exception into handover or sprint policy code; those systems do not own animation presentation timing.
 
 ### Mandatory two-client regression test
@@ -111,11 +111,10 @@ Expected sequence:
 MulticastReceive
 UrgentAnimUpdateBegin
 AnimStateEnter
-RemoteJumpBlendCollapsed
 UrgentAnimUpdateEnd
 ```
 
-For deeper BlendStack inspection, enable `p.ProjectJ.MM.DebugInAirBlendStack 1` separately. The first relevant entry should contain only the JumpStart player with contribution `1.000`. A reappearance of Run/Sprint players, or a large frame gap between multicast receipt and blend collapse, indicates a regression in BlendStack convergence or URO scheduling.
+For deeper BlendStack inspection, enable `p.ProjectJ.MM.DebugInAirBlendStack 1` separately. JumpStart should use the normal authored blend and should no longer be delayed by skipped URO update frames.
 
 ## Useful CVars
 

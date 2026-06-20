@@ -1,9 +1,7 @@
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 
 #include "Animation/AnimClassInterface.h"
-#include "Animation/AnimInstance.h"
 #include "Animation/Project_JLocomotionProfile.h"
-#include "GameFramework/Pawn.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JLocomotionDebugUtils.h"
@@ -74,21 +72,6 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FName InLayerName)
 {
 	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
-	const bool bIsJumpStart =
-		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart;
-	if (IsRemoteSimulatedProxy() &&
-		PreviousPhaseFamily != EProject_JLocomotionPhaseFamily::JumpStart &&
-		bIsJumpStart)
-	{
-		// The phase and the game-thread Pose Search database publication can arrive a few
-		// animation frames apart. Keep the request pending until Motion Matching actually
-		// creates the new JumpStart player instead of applying a one-frame-only override.
-		bPendingRemoteJumpStartBlendCollapse = true;
-	}
-	else if (!bIsJumpStart)
-	{
-		bPendingRemoteJumpStartBlendCollapse = false;
-	}
 
 	if (bUpdateMotionMatchingThisFrame)
 	{
@@ -97,93 +80,7 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 
 	ApplyMotionMatchingSearchPolicy();
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
-	CollapsePendingRemoteJumpStartBlend();
 	LogInAirAnimBlueprintBlendStacks();
-	PreviousPhaseFamily = ThreadSafeData.LocomotionContext.PhaseFamily;
-}
-
-bool FProject_JCharacterAnimInstanceProxy::IsRemoteSimulatedProxy() const
-{
-	const UAnimInstance* AnimInstance = Cast<UAnimInstance>(GetAnimInstanceObject());
-	const APawn* PawnOwner = AnimInstance ? AnimInstance->TryGetPawnOwner() : nullptr;
-	return PawnOwner && PawnOwner->GetLocalRole() == ROLE_SimulatedProxy;
-}
-
-bool FProject_JCharacterAnimInstanceProxy::CollapsePendingRemoteJumpStartBlend()
-{
-	if (!bPendingRemoteJumpStartBlendCollapse)
-	{
-		return false;
-	}
-
-	bool bCollapsedAnyNode = false;
-	auto CollapseNewJumpBlend = [this, &bCollapsedAnyNode](FAnimNode_MotionMatching& MotionMatchingNode)
-	{
-		if (MotionMatchingNode.AnimPlayers.IsEmpty())
-		{
-			return;
-		}
-
-		const FPoseSearchBlueprintResult& SearchResult =
-			MotionMatchingNode.GetMotionMatchingState().SearchResult;
-		if (!CurrentActiveDatabase ||
-			SearchResult.SelectedDatabase != CurrentActiveDatabase ||
-			SearchResult.SelectedAnim == nullptr ||
-			MotionMatchingNode.AnimPlayers[0].GetAnimationAsset() != SearchResult.SelectedAnim)
-		{
-			return;
-		}
-
-		const int32 PreviousPlayerCount = MotionMatchingNode.AnimPlayers.Num();
-		if (PreviousPlayerCount > 1)
-		{
-			// Update has already initialized the newest player at index zero. Evaluation has
-			// not run yet, so discarding older ground players here makes the JumpStart pose
-			// contribute at full weight in this same rendered frame.
-			//
-			// Refactoring guard: moving simulated proxies otherwise retain Run/Sprint at
-			// roughly 75% on the first JumpStart update and fade it out over about 0.15 s.
-			// This is deliberately restricted to the pending remote JumpStart edge; do not
-			// generalize it to normal MM transitions or local/autonomous characters.
-			MotionMatchingNode.AnimPlayers.SetNum(1, EAllowShrinking::No);
-		}
-
-		// AnyNewBlendToThisFrame() is tied to BlendTo's exact update counter and is no
-		// longer reliable from this post-update hook. Matching the selected database and
-		// newest player proves that the JumpStart player has actually been initialized.
-		bCollapsedAnyNode = true;
-		if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
-		{
-			UE_LOG(
-				LogTemp,
-				Warning,
-				TEXT("ProjectJ.JumpLatency Stage=RemoteJumpBlendCollapsed Frame=%llu AnimInstance=%s Anim=%s PreviousPlayers=%d"),
-				GFrameCounter,
-				*GetNameSafe(GetAnimInstanceObject()),
-				*GetNameSafe(SearchResult.SelectedAnim),
-				PreviousPlayerCount);
-		}
-	};
-
-	CollapseNewJumpBlend(NativeMotionMatchingNode);
-	if (const IAnimClassInterface* AnimClass = GetAnimClassInterface())
-	{
-		const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-		for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
-		{
-			if (const FAnimNode_MotionMatching* MotionMatchingNode =
-				GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex))
-			{
-				CollapseNewJumpBlend(*const_cast<FAnimNode_MotionMatching*>(MotionMatchingNode));
-			}
-		}
-	}
-
-	if (bCollapsedAnyNode)
-	{
-		bPendingRemoteJumpStartBlendCollapse = false;
-	}
-	return bCollapsedAnyNode;
 }
 
 void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()

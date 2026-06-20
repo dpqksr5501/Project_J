@@ -9,7 +9,9 @@
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Project_JPlayerCharacter.h"
 
 UProject_JReplicatedJumpStateComponent::UProject_JReplicatedJumpStateComponent()
 {
@@ -164,11 +166,25 @@ void UProject_JReplicatedJumpStateComponent::BeginUrgentRemoteAnimationUpdate()
 	// the transition has been consumed.
 	bUrgentAnimationUpdateActive = true;
 	MeshComponent->bEnableUpdateRateOptimizations = false;
+	const AProject_JPlayerCharacter* PlayerCharacter =
+		Cast<AProject_JPlayerCharacter>(CharacterOwner);
+	const UProject_JLocomotionProfile* LocomotionProfile =
+		PlayerCharacter ? PlayerCharacter->GetLocomotionProfile() : nullptr;
+	const float UrgentUpdateDuration = FMath::Max(
+		0.0f,
+		LocomotionProfile
+			? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
+			: 0.10f);
+	if (UrgentUpdateDuration <= 0.0f)
+	{
+		RestoreRemoteAnimationUpdateRateOptimization();
+		return;
+	}
 	World->GetTimerManager().SetTimer(
 		RestoreAnimationUpdateRateTimer,
 		this,
 		&UProject_JReplicatedJumpStateComponent::RestoreRemoteAnimationUpdateRateOptimization,
-		0.10f,
+		UrgentUpdateDuration,
 		false);
 
 	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
