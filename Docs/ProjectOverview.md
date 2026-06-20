@@ -24,6 +24,8 @@ Project J는 Unreal Engine 5.8 기반의 **3인칭 액션 MMORPG 프로토타입
 - 저비용 NPC 정책과 Mass 확장을 위한 초기 기반
 - 월드 인스턴스 ID, 백엔드 요청 ID, 트랜잭션 ID와 같은 MMO 공통 타입
 - 거리와 전투 상태를 고려하는 replication policy 기반
+- **[추가]** 서버 권위 레벨 동기화(SetCharacterLevel API) 및 핸드오버 플레이어 캐릭터 직렬화/역직렬화(Round-trip)
+- **[추가]** 설정 파일(DefaultEngine.ini)을 활용한 소프트 클래스 경로 동적 로딩 및 스레드 안전 비동기 응답 처리
 
 현재 기본 맵과 GameMode 설정에는 Unreal Third Person 템플릿 경로가 일부 남아 있다. 이는 프로젝트의 최종 게임 정체성이 Third Person 템플릿이라는 뜻이 아니라, 아직 콘텐츠와 프로젝트 설정 정리가 완료되지 않았다는 의미다.
 
@@ -207,7 +209,8 @@ Project J의 리팩터링은 다음 기준을 따른다.
 3. 레거시 AbilityTag 입력을 InputTag 경로로 마이그레이션
 4. `PlayerCharacter`와 `CharacterAnimInstance`의 조정·정책·디버그 책임 분리
 5. inventory, equipment, AbilitySet, combat validation 자동화 테스트 추가
-6. 실제 gameplay와 backend 요구가 생기는 시점에 Gateway와 persistence 계층 확장
+6. **[완료]** Gateway와 persistence 계층 확장을 위한 핸드오버 직렬화 현대화 및 비동기 스레드/GC 안전성 확보
+7. **[완료]** GAS Attribute 레벨 동기화 보장 API(SetCharacterLevel) 구현 및 설정형 테스트 경로 소프트 로드 구축
 
 ## 관련 문서
 

@@ -98,6 +98,16 @@ Advancement.OverrideAttributeData
 
 현재 초기화 코드는 기존 값이 0 이하일 때 기본값을 채우는 방식이다. 레벨업이나 전직 시 기존 Health를 강제로 최대치로 회복시키는 정책은 별도 게임 규칙으로 구현해야 한다.
 
+### 레벨 변경 및 어트리뷰트 동기화 API
+
+캐릭터의 레벨을 갱신할 때 `CharacterLevel` 멤버변수에 값을 직접 대입하면 레벨 변화에 따른 GAS Attribute와 UI의 갱신이 누락될 수 있습니다. 반드시 아래 정식 API를 사용해야 합니다.
+
+- **C++ 사용법**:
+  ```cpp
+  Character->SetCharacterLevel(NewLevel);
+  ```
+  이 함수는 내부적으로 레벨을 검증(`FMath::Max(1, NewLevel)`)하고, `InitializeDefaultAttributes(true)`를 통해 어트리뷰트 스케일링 값을 동기화하며, 플레이어 캐릭터의 경우 UI ViewModel과 어빌리티 바인딩을 리프레시합니다.
+
 `AttackPower`와 `Defense`는 복제되고 장비 보너스도 적용되지만, 현재 `AttackPower`를 최종 피해량으로 변환하는 Damage Execution Calculation은 아직 없다. 실제 전투 공식은 아래 구조로 추가하는 것이 적합하다.
 
 ```text
