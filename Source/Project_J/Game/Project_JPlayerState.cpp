@@ -6,6 +6,7 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
+#include "Social/Project_JSocialSubsystem.h"
 
 AProject_JPlayerState::AProject_JPlayerState()
 {
@@ -36,6 +37,38 @@ UProject_JAttributeSet* AProject_JPlayerState::GetProjectJAttributeSet() const
 	return AttributeSet;
 }
 
+void AProject_JPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			if (UProject_JSocialSubsystem* SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>())
+			{
+				SocialSubsystem->BindPlayerState(this);
+			}
+		}
+	}
+}
+
+void AProject_JPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (HasAuthority())
+	{
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			if (UProject_JSocialSubsystem* SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>())
+			{
+				SocialSubsystem->UnbindPlayerState(this);
+			}
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void AProject_JPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -46,6 +79,8 @@ void AProject_JPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	DOREPLIFETIME(AProject_JPlayerState, PublicCharacterLevel);
 	DOREPLIFETIME(AProject_JPlayerState, PartyId);
 	DOREPLIFETIME(AProject_JPlayerState, GuildId);
+	DOREPLIFETIME(AProject_JPlayerState, PartyLeaderCharacterId);
+	DOREPLIFETIME(AProject_JPlayerState, GuildLeaderCharacterId);
 }
 
 void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, const FProject_JCharacterId& InCharacterId)
@@ -60,20 +95,45 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 		return;
 	}
 
+	UProject_JSocialSubsystem* SocialSubsystem = nullptr;
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>();
+		if (SocialSubsystem)
+		{
+			SocialSubsystem->UnbindPlayerState(this);
+		}
+	}
+
 	AccountId = InAccountId;
 	CharacterId = InCharacterId;
 	ForceNetUpdate();
+
+	if (SocialSubsystem)
+	{
+		SocialSubsystem->BindPlayerState(this);
+	}
 }
 
-void AProject_JPlayerState::SetSocialState(FName InPartyId, FName InGuildId)
+void AProject_JPlayerState::SetSocialState(
+	FName InPartyId,
+	FName InGuildId,
+	const FGuid& InPartyLeaderCharacterId,
+	const FGuid& InGuildLeaderCharacterId)
 {
-	if (!HasAuthority() || (PartyId == InPartyId && GuildId == InGuildId))
+	if (!HasAuthority() ||
+		(PartyId == InPartyId &&
+			GuildId == InGuildId &&
+			PartyLeaderCharacterId == InPartyLeaderCharacterId &&
+			GuildLeaderCharacterId == InGuildLeaderCharacterId))
 	{
 		return;
 	}
 
 	PartyId = InPartyId;
 	GuildId = InGuildId;
+	PartyLeaderCharacterId = InPartyLeaderCharacterId;
+	GuildLeaderCharacterId = InGuildLeaderCharacterId;
 	ForceNetUpdate();
 }
 

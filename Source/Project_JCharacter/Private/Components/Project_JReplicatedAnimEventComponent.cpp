@@ -32,11 +32,6 @@ void UProject_JReplicatedAnimEventComponent::DispatchMoveStopped()
 	DispatchEvent(EProject_JReplicatedAnimEventType::MoveStop);
 }
 
-void UProject_JReplicatedAnimEventComponent::DispatchJumpStarted()
-{
-	DispatchEvent(EProject_JReplicatedAnimEventType::JumpStart);
-}
-
 void UProject_JReplicatedAnimEventComponent::DispatchFallOffStarted()
 {
 	DispatchEvent(EProject_JReplicatedAnimEventType::FallOffStart);
@@ -64,19 +59,47 @@ void UProject_JReplicatedAnimEventComponent::DispatchEvent(
 		return;
 	}
 
+	if (EventType == EProject_JReplicatedAnimEventType::MoveStart ||
+		EventType == EProject_JReplicatedAnimEventType::MoveStop)
+	{
+		ServerDispatchMoveState(EventType == EProject_JReplicatedAnimEventType::MoveStart);
+		return;
+	}
+
 	ServerDispatchEvent(EventType, bFlag);
+}
+
+void UProject_JReplicatedAnimEventComponent::ServerDispatchMoveState_Implementation(bool bIsMoving)
+{
+	bool bServerAllowsSprint = false;
+	if (bIsMoving)
+	{
+		if (const AProject_JPlayerCharacter* PlayerCharacter =
+			Cast<AProject_JPlayerCharacter>(GetOwner()))
+		{
+			bServerAllowsSprint = PlayerCharacter->IsSprintLocomotionAllowed();
+		}
+	}
+
+	ApplyEvent(
+		bIsMoving
+			? EProject_JReplicatedAnimEventType::MoveStart
+			: EProject_JReplicatedAnimEventType::MoveStop,
+		bServerAllowsSprint);
+	if (AActor* Owner = GetOwner())
+	{
+		Owner->ForceNetUpdate();
+	}
 }
 
 void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
 	EProject_JReplicatedAnimEventType EventType,
 	bool bFlag)
 {
-	if (EventType == EProject_JReplicatedAnimEventType::MoveStart)
+	if (EventType == EProject_JReplicatedAnimEventType::MoveStart ||
+		EventType == EProject_JReplicatedAnimEventType::MoveStop)
 	{
-		if (const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetOwner()))
-		{
-			bFlag = bFlag || PlayerCharacter->IsSprintLocomotionAllowed();
-		}
+		return;
 	}
 
 	ApplyEvent(EventType, bFlag);
@@ -93,14 +116,14 @@ void UProject_JReplicatedAnimEventComponent::ApplyEvent(
 	switch (EventType)
 	{
 	case EProject_JReplicatedAnimEventType::MoveStart:
-		ReplicatedAnimEvents.bMoveStartWasSprinting = bFlag;
-		++ReplicatedAnimEvents.MoveStartCounter;
+		ReplicatedAnimEvents.bIsMoving = true;
+		ReplicatedAnimEvents.bIsSprinting = bFlag;
+		++ReplicatedAnimEvents.MoveSequence;
 		break;
 	case EProject_JReplicatedAnimEventType::MoveStop:
-		++ReplicatedAnimEvents.MoveStopCounter;
-		break;
-	case EProject_JReplicatedAnimEventType::JumpStart:
-		++ReplicatedAnimEvents.JumpStartCounter;
+		ReplicatedAnimEvents.bIsMoving = false;
+		ReplicatedAnimEvents.bIsSprinting = false;
+		++ReplicatedAnimEvents.MoveSequence;
 		break;
 	case EProject_JReplicatedAnimEventType::FallOffStart:
 		++ReplicatedAnimEvents.FallOffStartCounter;
@@ -128,19 +151,16 @@ void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 		return;
 	}
 
-	if (CurrentState.MoveStopCounter != PreviousState.MoveStopCounter)
+	if (CurrentState.MoveSequence != PreviousState.MoveSequence)
 	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
-	}
-
-	if (CurrentState.MoveStartCounter != PreviousState.MoveStartCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedMoveStarted(CurrentState.bMoveStartWasSprinting);
-	}
-
-	if (CurrentState.JumpStartCounter != PreviousState.JumpStartCounter)
-	{
-		LocomotionAnimStateComponent->HandleReplicatedJumpStarted();
+		if (CurrentState.bIsMoving)
+		{
+			LocomotionAnimStateComponent->HandleReplicatedMoveStarted(CurrentState.bIsSprinting);
+		}
+		else
+		{
+			LocomotionAnimStateComponent->HandleReplicatedMoveStopped();
+		}
 	}
 
 	if (CurrentState.FallOffStartCounter != PreviousState.FallOffStartCounter)

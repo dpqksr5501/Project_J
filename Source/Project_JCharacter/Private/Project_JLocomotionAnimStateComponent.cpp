@@ -93,7 +93,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateAirAndMovementRequests(float 
 		return;
 	}
 
-	UpdateRemoteAirState(DeltaTime, IsRemoteInAirForAnimation(bMovementReportsInAir));
+	UpdateRemoteAirState(
+		DeltaTime,
+		IsRemoteInAirForAnimation(bMovementReportsInAir),
+		bMovementReportsInAir);
 	UpdateRemoteMovementRequestState(DeltaTime);
 }
 

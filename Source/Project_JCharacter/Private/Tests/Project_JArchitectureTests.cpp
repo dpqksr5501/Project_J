@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JReplicatedJumpState.h"
 #include "Combat/Project_JCombatHitValidation.h"
 #include "Equipment/Project_JEquipmentTypes.h"
 #include "GameFramework/Actor.h"
@@ -170,6 +171,35 @@ bool FProjectJReplicationOwnerRelevanceTest::RunTest(const FString& Parameters)
 	TestTrue(
 		TEXT("The viewer's owned target records the owner relevance reason"),
 		OwnedDecision.HasReason(EProject_JReplicationRelevanceReason::Owner));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJRemoteJumpPredictionPolicyTest,
+	"ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJRemoteJumpPredictionPolicyTest::RunTest(const FString& Parameters)
+{
+	FProject_JRemoteJumpPredictionPolicy Policy;
+	Policy.MinUpwardSpeed = 80.0f;
+
+	TestTrue(
+		TEXT("Ground-to-falling transition with upward velocity predicts jump start"),
+		Policy.ShouldPredict(false, true, 300.0f, false, false, false));
+	TestFalse(
+		TEXT("Negative vertical velocity remains a fall-off"),
+		Policy.ShouldPredict(false, true, -300.0f, false, false, false));
+	TestFalse(
+		TEXT("An already airborne proxy does not retrigger jump start"),
+		Policy.ShouldPredict(true, true, 300.0f, false, false, false));
+	TestFalse(
+		TEXT("Server-confirmed or predicted jump state suppresses duplicate prediction"),
+		Policy.ShouldPredict(false, true, 300.0f, true, false, false));
+	TestFalse(
+		TEXT("Landing state suppresses remote jump prediction"),
+		Policy.ShouldPredict(false, true, 300.0f, false, true, false));
 
 	return true;
 }

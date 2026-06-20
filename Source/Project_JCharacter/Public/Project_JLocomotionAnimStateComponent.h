@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionAnimStateComponent.generated.h"
@@ -162,7 +163,7 @@ public:
 
 	void UpdateState(float DeltaTime);
 	void HandleJumpStarted();
-	void HandleReplicatedJumpStarted();
+	void HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
 	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
 	void HandleReplicatedMoveStopped();
@@ -238,7 +239,8 @@ private:
 	bool TryStartLocalFallOff(bool bIsCurrentlyInAir);
 	bool TryClearLocalGroundedAirState(bool bIsCurrentlyInAir);
 	void RefreshLocalAirEntryFlags(bool bIsCurrentlyInAir);
-	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir);
+	void UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir, bool bMovementReportsInAir);
+	bool TryPredictRemoteJumpStart(bool bMovementReportsInAir);
 	bool HasRemoteAirborneEvidence(bool bWasRemoteInAir) const;
 	void UpdateRemoteAirborneEvidence(float DeltaTime);
 	void ClearRemoteGroundedAirState();
@@ -350,6 +352,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float ReplicatedJumpStartDuration = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping|Network")
+	FProject_JRemoteJumpPredictionPolicy RemoteJumpPredictionPolicy;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Jumping", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float FallOffStartDuration = 2.0f;
@@ -698,6 +703,8 @@ private:
 	bool bResolvedMoveInputLastUpdate = false;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float RemoteAirborneTime = 0.0f;
+	int32 LastConfirmedRemoteJumpSequence = 0;
+	bool bPredictedRemoteJumpStart = false;
 	float RemoteStopStartSuppressTimeRemaining = 0.0f;
 	FVector RemoteStartPreviousMoveWorldDirection = FVector::ZeroVector;
 	float RemoteStartPreviousActorYaw = 0.0f;

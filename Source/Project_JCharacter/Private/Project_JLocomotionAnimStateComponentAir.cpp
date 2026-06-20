@@ -71,9 +71,18 @@ void UProject_JLocomotionAnimStateComponent::RefreshLocalAirEntryFlags(bool bIsC
 	bCanEnterGround = !bIsInAir && !bIsLanding && !bLandingRequested;
 }
 
-void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTime, bool bIsCurrentlyInAir)
+void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(
+	float DeltaTime,
+	bool bIsCurrentlyInAir,
+	bool bMovementReportsInAir)
 {
 	const bool bHadRemoteAirborneEvidence = HasRemoteAirborneEvidence(bWasInAir);
+
+	if (TryPredictRemoteJumpStart(bMovementReportsInAir))
+	{
+		UpdateRemoteJumpStartState(DeltaTime, bIsCurrentlyInAir, bHadRemoteAirborneEvidence);
+		return;
+	}
 
 	if (UpdateRemoteJumpStartState(DeltaTime, bIsCurrentlyInAir, bHadRemoteAirborneEvidence))
 	{
@@ -116,6 +125,27 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteAirState(float DeltaTim
 	bWasInAir = bIsCurrentlyInAir;
 }
 
+bool UProject_JLocomotionAnimStateComponent::TryPredictRemoteJumpStart(bool bMovementReportsInAir)
+{
+	if (!RemoteJumpPredictionPolicy.ShouldPredict(
+			bWasInAir,
+			bMovementReportsInAir,
+			VerticalSpeed,
+			bIsJumping,
+			IsLandingStateActive(),
+			bIsFallOffStart))
+	{
+		return false;
+	}
+
+	BeginJumpStartState();
+	bPredictedRemoteJumpStart = true;
+	RemoteAirborneTime = 0.0f;
+	LastFallSpeed = FMath::Abs(VerticalSpeed);
+	ScheduleJumpStartTimeout(FMath::Max(0.05f, ReplicatedJumpStartDuration));
+	return true;
+}
+
 bool UProject_JLocomotionAnimStateComponent::HasRemoteAirborneEvidence(bool bWasRemoteInAir) const
 {
 	return
@@ -137,6 +167,7 @@ void UProject_JLocomotionAnimStateComponent::ClearRemoteGroundedAirState()
 	bCanEnterGround = !bIsFallOffStart;
 	RemoteAirborneTime = 0.0f;
 	LastFallSpeed = 0.0f;
+	bPredictedRemoteJumpStart = false;
 }
 
 bool UProject_JLocomotionAnimStateComponent::UpdateRemoteJumpStartState(float DeltaTime, bool bIsCurrentlyInAir, bool bHadRemoteAirborneEvidence)

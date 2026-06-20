@@ -12,7 +12,6 @@ enum class EProject_JReplicatedAnimEventType : uint8
 {
 	MoveStart,
 	MoveStop,
-	JumpStart,
 	FallOffStart,
 	LandingCancel
 };
@@ -36,7 +35,6 @@ public:
 	void Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent);
 	void DispatchMoveStarted(bool bWasSprintingForStart);
 	void DispatchMoveStopped();
-	void DispatchJumpStarted();
 	void DispatchFallOffStarted();
 	void DispatchLandingCancelled();
 
@@ -46,6 +44,11 @@ private:
 	void ApplyReplicatedEvents(
 		const FProject_JReplicatedAnimEventState& CurrentState,
 		const FProject_JReplicatedAnimEventState& PreviousState) const;
+
+	// Movement transitions are infrequent state boundaries. Keep them on a dedicated
+	// reliable channel so the final stop cannot be lost without making cosmetic events reliable.
+	UFUNCTION(Server, Reliable)
+	void ServerDispatchMoveState(bool bIsMoving);
 
 	UFUNCTION(Server, Unreliable)
 	void ServerDispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag);

@@ -26,6 +26,7 @@ class UProject_JCombatAnimProfile;
 class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
+class UProject_JReplicatedJumpStateComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
 class UProject_JInventoryComponent;
@@ -86,6 +87,9 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	UProject_JReplicatedAnimEventComponent* ReplicatedAnimEventComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
+	UProject_JReplicatedJumpStateComponent* ReplicatedJumpStateComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
 	UProject_JCombatStateComponent* CombatStateComponent;
@@ -150,6 +154,7 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Tick(float DeltaTime) override;
+	virtual void OnJumped_Implementation() override;
 
 protected:
 
@@ -198,7 +203,6 @@ protected:
 	void ResetMoveStartReplicationState();
 	void DispatchMoveStartAnimationEvent(bool bWasSprintingForStart);
 	void DispatchMoveStopAnimationEvent();
-	void DispatchJumpStartAnimationEvent();
 	void DispatchFallOffStartAnimationEvent();
 	void DispatchLandingCancelAnimationEvent();
 

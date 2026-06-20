@@ -1,5 +1,6 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
 
@@ -23,11 +24,49 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 	AddOwnedInAirGameplayTag();
 }
 
-void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
+void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
+	int32 Sequence,
+	float ServerStartAgeSeconds,
+	const FVector& LaunchVelocity)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	if (!PlayerOwner || ShouldUseLocalInputState())
+	if (!PlayerOwner || ShouldUseLocalInputState() || Sequence == LastConfirmedRemoteJumpSequence)
 	{
+		return;
+	}
+
+	LastConfirmedRemoteJumpSequence = Sequence;
+	const float ConfirmedElapsedTime = FMath::Max(0.0f, ServerStartAgeSeconds);
+	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ProjectJ.JumpLatency Stage=AnimStateEnter Frame=%llu WorldTime=%.3f Owner=%s Sequence=%d Age=%.3f Predicted=%s WasJumping=%s VelocityZ=%.1f"),
+			GFrameCounter,
+			GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f,
+			*GetNameSafe(PlayerOwner),
+			Sequence,
+			ConfirmedElapsedTime,
+			bPredictedRemoteJumpStart ? TEXT("true") : TEXT("false"),
+			bIsJumping ? TEXT("true") : TEXT("false"),
+			LaunchVelocity.Z);
+	}
+	if (bPredictedRemoteJumpStart && bIsJumping)
+	{
+		JumpStartElapsedTime = FMath::Max(JumpStartElapsedTime, ConfirmedElapsedTime);
+		bPredictedRemoteJumpStart = false;
+		LastFallSpeed = FMath::Max(LastFallSpeed, FMath::Abs(LaunchVelocity.Z));
+
+		if (JumpStartElapsedTime >= ReplicatedJumpStartDuration)
+		{
+			CompleteJumpStart();
+		}
+		else
+		{
+			ScheduleJumpStartTimeout(
+				FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
+		}
 		return;
 	}
 
@@ -37,10 +76,19 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedJumpStarted()
 	}
 
 	BeginJumpStartState();
+	bPredictedRemoteJumpStart = false;
+	JumpStartElapsedTime = ConfirmedElapsedTime;
 	RemoteAirborneTime = 0.0f;
-	LastFallSpeed = 0.0f;
+	LastFallSpeed = FMath::Abs(LaunchVelocity.Z);
 
-	ScheduleJumpStartTimeout(FMath::Max(0.05f, ReplicatedJumpStartDuration));
+	if (JumpStartElapsedTime >= ReplicatedJumpStartDuration)
+	{
+		CompleteJumpStart();
+		return;
+	}
+
+	ScheduleJumpStartTimeout(
+		FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()
@@ -460,6 +508,7 @@ void UProject_JLocomotionAnimStateComponent::CompleteJumpStart()
 	ClearJumpStartTimers();
 
 	bIsJumping = false;
+	bPredictedRemoteJumpStart = false;
 	JumpStartElapsedTime = 0.0f;
 	bIgnoreNextLandingForJumpStart = false;
 

@@ -14,6 +14,11 @@ TAutoConsoleVariable<int32> CVarProjectJDebugInAirBlendStack(
 	0,
 	TEXT("Logs the actual Anim Blueprint Motion Matching selection and BlendStack while using the in-air database."));
 
+TAutoConsoleVariable<int32> CVarProjectJDebugJumpLatency(
+	TEXT("p.ProjectJ.MM.DebugJumpLatency"),
+	0,
+	TEXT("Logs remote jump presentation timing from multicast receipt through Motion Matching blend output."));
+
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
 	TEXT("p.ProjectJ.MM.RepairRemoteTrajectoryFacing"),
 	1,
@@ -55,6 +60,11 @@ bool IsDebugRemoteTrajectoryEnabled()
 bool IsDebugInAirBlendStackEnabled()
 {
 	return CVarProjectJDebugInAirBlendStack.GetValueOnAnyThread() != 0;
+}
+
+bool IsDebugJumpLatencyEnabled()
+{
+	return CVarProjectJDebugJumpLatency.GetValueOnAnyThread() != 0;
 }
 
 bool ShouldRepairRemoteTrajectoryFacing()

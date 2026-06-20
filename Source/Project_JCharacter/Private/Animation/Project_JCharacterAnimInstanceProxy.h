@@ -42,6 +42,8 @@ private:
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
 	void LogInAirAnimBlueprintBlendStacks();
+	bool IsRemoteSimulatedProxy() const;
+	bool CollapsePendingRemoteJumpStartBlend();
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
@@ -54,6 +56,8 @@ private:
 	TMap<int32, float> DefaultSearchThrottleTimes;
 	float NativeDefaultSearchThrottleTime = 0.0f;
 	bool bHasNativeDefaultSearchThrottleTime = false;
+	bool bPendingRemoteJumpStartBlendCollapse = false;
+	EProject_JLocomotionPhaseFamily PreviousPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
 	FAnimNode_MotionMatching NativeMotionMatchingNode;

@@ -49,6 +49,74 @@ Expected behavior:
 - Sprint remains unchanged.
 - Future strafe, lock-on, or aim-offset locomotion should add an explicit opt-out before it intentionally allows facing to differ from movement.
 
+## Remote JumpStart Latency and URO Guard
+
+Remote moving jumps have two separate latency hazards. Both must remain covered when refactoring animation optimization or Motion Matching.
+
+### Observed failure
+
+In two-client PIE, the locally controlled character jumped immediately, but the observing client briefly kept the remote character's Run/Sprint pose. Standing jumps and repeated jumps could look correct, making the issue easiest to reproduce on the first jump while walking or sprinting.
+
+Diagnostic logging with `p.ProjectJ.MM.DebugJumpLatency 1` confirmed:
+
+- replication and `HandleConfirmedRemoteJump` arrived without meaningful server-time age,
+- `PSD_JumpStart` was selected correctly,
+- the first JumpStart Motion Matching player initially blended against the previous Run/Sprint player,
+- skeletal mesh Update Rate Optimization could defer the remote AnimGraph update by several render frames.
+
+This was not caused by:
+
+- handover retry, timeout, payload cleanup, or transport logic,
+- sprint server-authority validation,
+- the `GameState == nullptr` jump-age fallback when logs report `Age=0.000`.
+
+### Required runtime behavior
+
+- `UProject_JReplicatedJumpStateComponent` temporarily disables skeletal mesh URO for a visible simulated proxy when a confirmed jump arrives.
+- The urgent update window is intentionally short (`0.10` seconds), after which the previous URO setting is restored.
+- `FProject_JCharacterAnimInstanceProxy` waits until the JumpStart database and newest MM player are actually initialized, then removes older ground players for that one pending remote JumpStart edge.
+- The collapse applies only to simulated proxies. Local/autonomous characters and ordinary Motion Matching transitions keep their authored blending.
+
+Do not permanently disable URO to solve this issue. URO remains part of the MMORPG animation budget; only latency-sensitive replicated transitions should receive a short event-driven exception.
+
+### Refactor guardrails
+
+When changing player mesh URO, significance tiers, animation budgets, replicated jump state, or Motion Matching BlendStack handling:
+
+- preserve the short urgent animation update started by confirmed remote jumps,
+- preserve restoration of the mesh's previous URO value,
+- do not depend on `AnyNewBlendToThisFrame()` from the post-update proxy hook; its update-counter timing did not reliably identify the newly initialized JumpStart player,
+- identify the JumpStart player using the selected database, selected animation, and newest BlendStack player,
+- do not collapse all remote Motion Matching blends globally,
+- do not move this exception into handover or sprint policy code; those systems do not own animation presentation timing.
+
+### Mandatory two-client regression test
+
+From the observing client, verify another client performing:
+
+- standing jump,
+- walking jump,
+- sprinting jump,
+- repeated jump after landing.
+
+For a diagnostic run, enable:
+
+```text
+p.ProjectJ.MM.DebugJumpLatency 1
+```
+
+Expected sequence:
+
+```text
+MulticastReceive
+UrgentAnimUpdateBegin
+AnimStateEnter
+RemoteJumpBlendCollapsed
+UrgentAnimUpdateEnd
+```
+
+For deeper BlendStack inspection, enable `p.ProjectJ.MM.DebugInAirBlendStack 1` separately. The first relevant entry should contain only the JumpStart player with contribution `1.000`. A reappearance of Run/Sprint players, or a large frame gap between multicast receipt and blend collapse, indicates a regression in BlendStack convergence or URO scheduling.
+
 ## Useful CVars
 
 - `p.ProjectJ.MM.RepairRemoteTrajectoryFacing` defaults to `1`.
@@ -70,6 +138,8 @@ Keep these invariants when refactoring the Motion Matching pipeline:
 - Do not silently reuse the straight-running repair for future locomotion modes that intentionally face away from movement. Add an explicit policy check first.
 - Do not re-enable simulated proxy trajectory rotation smoothing by default. Local-space smoothing can delay or bend future sample rotations after network-smoothed turns.
 - Do not use simulated proxy `GetCurrentAcceleration()` as a reliable local input stop signal. Remote characters can have valid replicated velocity while acceleration flickers.
+- Do not remove the event-driven remote JumpStart URO exception merely because ordinary MM updates appear correct. URO scheduling and MM BlendStack convergence are separate latency layers.
+- Do not permanently disable player mesh URO as a jump fix. Preserve the short exception and restore the previous setting.
 
 If this area is rewritten, validate with two-client PIE from the observing client and compare:
 
@@ -77,6 +147,7 @@ If this area is rewritten, validate with two-client PIE from the observing clien
 - sustained turn,
 - return to straight run after the turn,
 - sprint,
+- standing, walking, sprinting, and repeated remote jumps,
 - future strafe, lock-on, or aim-offset locomotion once those modes exist.
 
 ## Near Term Checks

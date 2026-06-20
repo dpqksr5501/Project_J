@@ -33,6 +33,8 @@ public:
 	AProject_JPlayerState();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// Implement IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -57,6 +59,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "MMO|Character")
 	int32 GetPublicCharacterLevel() const { return PublicCharacterLevel; }
 
+	UFUNCTION(BlueprintPure, Category = "MMO|Social")
+	FGuid GetPartyLeaderCharacterId() const { return PartyLeaderCharacterId; }
+
+	UFUNCTION(BlueprintPure, Category = "MMO|Social")
+	FGuid GetGuildLeaderCharacterId() const { return GuildLeaderCharacterId; }
+
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Identity")
 	void SetIdentity(const FProject_JAccountId& InAccountId, const FProject_JCharacterId& InCharacterId);
 
@@ -64,7 +72,11 @@ public:
 	void SetPublicCharacterSnapshot(FName InClassId, int32 InLevel);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Social")
-	void SetSocialState(FName InPartyId, FName InGuildId);
+	void SetSocialState(
+		FName InPartyId,
+		FName InGuildId,
+		const FGuid& InPartyLeaderCharacterId,
+		const FGuid& InGuildLeaderCharacterId);
 
 	FORCEINLINE UProject_JInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	FORCEINLINE UProject_JEquipmentManagerComponent* GetEquipmentManagerComponent() const { return EquipmentManagerComponent; }
@@ -87,6 +99,12 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Social")
 	FName GuildId = NAME_None;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Social")
+	FGuid PartyLeaderCharacterId;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Social")
+	FGuid GuildLeaderCharacterId;
 
 private:
 	UPROPERTY(Transient)

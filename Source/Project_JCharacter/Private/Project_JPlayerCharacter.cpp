@@ -28,6 +28,7 @@
 #include "Animation/AnimMontage.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Components/Project_JReplicatedJumpStateComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
@@ -127,6 +128,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	SkillInputExecutionComponent = CreateDefaultSubobject<UProject_JSkillInputExecutionComponent>(TEXT("SkillInputExecutionComponent"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
 	ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
+	ReplicatedJumpStateComponent = CreateDefaultSubobject<UProject_JReplicatedJumpStateComponent>(TEXT("ReplicatedJumpStateComponent"));
+	ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 }
@@ -152,6 +155,10 @@ void AProject_JPlayerCharacter::BeginPlay()
 	if (ReplicatedAnimEventComponent)
 	{
 		ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
+	}
+	if (ReplicatedJumpStateComponent)
+	{
+		ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
 	}
 
 	ApplyLocomotionProfile();
@@ -681,6 +688,16 @@ void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnim
 	CurrentWeaponAnimProfile = InWeaponAnimProfile;
 }
 
+void AProject_JPlayerCharacter::OnJumped_Implementation()
+{
+	Super::OnJumped_Implementation();
+
+	if (HasAuthority() && ReplicatedJumpStateComponent)
+	{
+		ReplicatedJumpStateComponent->RecordServerConfirmedJump(GetVelocity());
+	}
+}
+
 bool AProject_JPlayerCharacter::IsAttacking() const
 {
 	return bIsAttacking || (CombatStateComponent && CombatStateComponent->IsAttacking());
@@ -750,14 +767,6 @@ void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
 	if (ReplicatedAnimEventComponent)
 	{
 		ReplicatedAnimEventComponent->DispatchMoveStopped();
-	}
-}
-
-void AProject_JPlayerCharacter::DispatchJumpStartAnimationEvent()
-{
-	if (ReplicatedAnimEventComponent)
-	{
-		ReplicatedAnimEventComponent->DispatchJumpStarted();
 	}
 }
 

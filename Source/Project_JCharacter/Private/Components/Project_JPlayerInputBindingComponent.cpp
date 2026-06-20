@@ -146,7 +146,6 @@ void UProject_JPlayerInputBindingComponent::HandleJumpStarted()
 		BoundPlayerCharacter->LocomotionAnimStateComponent->HandleJumpStarted();
 	}
 
-	BoundPlayerCharacter->DispatchJumpStartAnimationEvent();
 	BoundPlayerCharacter->Jump();
 }
 

@@ -894,31 +894,6 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 	return Policy;
 }
 
-float UProject_JCharacterAnimInstance::CalculateMotionMatchingUpdateInterval() const
-{
-	if (!OwningCharacter || IsLocallyControlledCharacter())
-	{
-		return 0.0f;
-	}
-
-	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
-	{
-		const float Significance = BaseChar->GetSignificance();
-		if (Significance <= 0.0f)
-		{
-			return 0.0f; // Near
-		}
-		if (Significance <= 1.0f)
-		{
-			return GetEffectiveMidMotionMatchingUpdateInterval(); // Mid
-		}
-		
-		return GetEffectiveFarMotionMatchingUpdateInterval(); // Far
-	}
-
-	return 0.0f;
-}
-
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
 {
 	if (!Data.Movement.bStoppedAcceleratingThisFrame)
@@ -1060,11 +1035,6 @@ float UProject_JCharacterAnimInstance::GetEffectiveNearMotionMatchingDistance() 
 float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingDistance() const
 {
 	return GetEffectiveAnimationBudgetSettings().MidDistance;
-}
-
-float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingDistance() const
-{
-	return GetEffectiveAnimationBudgetSettings().FarDistance;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const

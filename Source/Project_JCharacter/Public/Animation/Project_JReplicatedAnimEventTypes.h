@@ -9,16 +9,13 @@ struct PROJECT_JCHARACTER_API FProject_JReplicatedAnimEventState
 	GENERATED_BODY()
 
 	UPROPERTY()
-	uint8 MoveStartCounter = 0;
+	int32 MoveSequence = 0;
 
 	UPROPERTY()
-	bool bMoveStartWasSprinting = false;
+	bool bIsMoving = false;
 
 	UPROPERTY()
-	uint8 MoveStopCounter = 0;
-
-	UPROPERTY()
-	uint8 JumpStartCounter = 0;
+	bool bIsSprinting = false;
 
 	UPROPERTY()
 	uint8 FallOffStartCounter = 0;

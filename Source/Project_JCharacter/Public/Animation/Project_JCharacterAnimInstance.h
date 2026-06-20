@@ -263,6 +263,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
+
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -363,7 +364,6 @@ protected:
 	bool ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const;
 	void CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data);
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
-	float CalculateMotionMatchingUpdateInterval() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);
@@ -375,7 +375,6 @@ protected:
 	float GetEffectiveHiddenRemoteUpdateInterval() const;
 	float GetEffectiveNearMotionMatchingDistance() const;
 	float GetEffectiveMidMotionMatchingDistance() const;
-	float GetEffectiveFarMotionMatchingDistance() const;
 	float GetEffectiveMidMotionMatchingUpdateInterval() const;
 	float GetEffectiveFarMotionMatchingUpdateInterval() const;
 	bool ShouldDisableMotionMatchingBeyondFarDistance() const;
