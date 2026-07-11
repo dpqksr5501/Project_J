@@ -1,5 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include <limits>
+
 #include "Misc/AutomationTest.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
@@ -8,6 +10,7 @@
 #include "Equipment/Project_JEquipmentTypes.h"
 #include "GameFramework/Actor.h"
 #include "Network/Project_JNetObjectFilter_Distance.h"
+#include "Project_JMMOTypes.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJMotionMatchingSearchPolicyTest,
@@ -171,6 +174,25 @@ bool FProjectJReplicationOwnerRelevanceTest::RunTest(const FString& Parameters)
 	TestTrue(
 		TEXT("The viewer's owned target records the owner relevance reason"),
 		OwnedDecision.HasReason(EProject_JReplicationRelevanceReason::Owner));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJReplicationPolicySettingsSanitizationTest,
+	"ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJReplicationPolicySettingsSanitizationTest::RunTest(const FString& Parameters)
+{
+	FProject_JReplicationPolicySettings Settings;
+	Settings.MaxReplicationDistance = -100.0f;
+	Settings.PartyPriorityMultiplier = 0.0f;
+	Settings.GuildPriorityMultiplier = std::numeric_limits<float>::quiet_NaN();
+
+	TestEqual(TEXT("Negative replication distance is clamped to zero"), Settings.GetMaxReplicationDistanceSquared(), 0.0f);
+	TestEqual(TEXT("Party priority never drops below one"), Settings.GetPartyPriorityMultiplier(), 1.0f);
+	TestEqual(TEXT("Non-finite guild priority falls back to one"), Settings.GetGuildPriorityMultiplier(), 1.0f);
 
 	return true;
 }

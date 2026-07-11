@@ -156,4 +156,6 @@ struct PROJECT_JCORE_API FProject_JReplicationPolicySettings
 	float GuildPriorityMultiplier = 1.25f;
 
 	float GetMaxReplicationDistanceSquared() const;
+	float GetPartyPriorityMultiplier() const;
+	float GetGuildPriorityMultiplier() const;
 };

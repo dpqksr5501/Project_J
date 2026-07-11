@@ -443,10 +443,10 @@ Gateway/Handover/ID 타입이 있으므로 persistence가 붙을 때 다음 경�
 - Weapon/Combat profile montage/socket/section 누락
 - EquipmentItemDefinition validation (C++ `IsDataValid` 구현 완료)
 - AbilitySet validation (C++ `IsDataValid` 구현 완료)
+- DefaultAttributeSetData validation (finite value, positive max resource, current-resource overflow warning)
 
 ### Add Next
 
-- DefaultAttributeSetData validation
 - ReplicationPolicySettings validation
 - GatewaySubsystem config validation
 - Handover payload/version validation

@@ -104,5 +104,22 @@ FString FProject_JReplicationPolicyDecision::ToDebugString() const
 
 float FProject_JReplicationPolicySettings::GetMaxReplicationDistanceSquared() const
 {
-	return FMath::Square(MaxReplicationDistance);
+	const float SafeDistance = FMath::IsFinite(MaxReplicationDistance)
+		? FMath::Max(0.0f, MaxReplicationDistance)
+		: 0.0f;
+	return FMath::Square(SafeDistance);
+}
+
+float FProject_JReplicationPolicySettings::GetPartyPriorityMultiplier() const
+{
+	return FMath::IsFinite(PartyPriorityMultiplier)
+		? FMath::Max(1.0f, PartyPriorityMultiplier)
+		: 1.0f;
+}
+
+float FProject_JReplicationPolicySettings::GetGuildPriorityMultiplier() const
+{
+	return FMath::IsFinite(GuildPriorityMultiplier)
+		? FMath::Max(1.0f, GuildPriorityMultiplier)
+		: 1.0f;
 }

@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 #include "Project_JDefaultAttributeSetData.generated.h"
 
 UCLASS(BlueprintType)
@@ -27,4 +30,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes", meta = (ClampMin = "0.0"))
 	float Defense = 0.0f;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };

@@ -118,13 +118,13 @@ FProject_JReplicationPolicyDecision UProject_JNetObjectFilter_Distance::BuildRep
 	{
 		Decision.bShouldReplicate = true;
 		Decision.AddReason(EProject_JReplicationRelevanceReason::Party);
-		Decision.PriorityMultiplier = FMath::Max(Decision.PriorityMultiplier, Settings.PartyPriorityMultiplier);
+		Decision.PriorityMultiplier = FMath::Max(Decision.PriorityMultiplier, Settings.GetPartyPriorityMultiplier());
 	}
 	if (SharesNonEmptySocialId(ViewerSocialState, TargetSocialState, false))
 	{
 		Decision.bShouldReplicate = true;
 		Decision.AddReason(EProject_JReplicationRelevanceReason::Guild);
-		Decision.PriorityMultiplier = FMath::Max(Decision.PriorityMultiplier, Settings.GuildPriorityMultiplier);
+		Decision.PriorityMultiplier = FMath::Max(Decision.PriorityMultiplier, Settings.GetGuildPriorityMultiplier());
 	}
 
 	// 2. Owner Relevance Check
