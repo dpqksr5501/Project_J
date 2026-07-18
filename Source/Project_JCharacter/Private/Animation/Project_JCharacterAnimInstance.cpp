@@ -20,6 +20,9 @@
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
+#include "Mount/Project_JMountComponent.h"
+#include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JFlyingMountCharacter.h"
 #include "Project_JLocomotionDebugUtils.h"
 #include "StructUtils/InstancedStruct.h"
 
@@ -117,7 +120,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	if (OwningPlayerCharacter)
+	if (OwningPlayerCharacter && (!OwningPlayerCharacter->GetMountComponent() || !OwningPlayerCharacter->GetMountComponent()->IsMounted()))
 	{
 		if (UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
 		{
@@ -228,6 +231,51 @@ EProject_JLocomotionGaitIntent UProject_JCharacterAnimInstance::GetThreadSafeGai
 EProject_JLocomotionRotationMode UProject_JCharacterAnimInstance::GetThreadSafeRotationMode() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.RotationMode;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsMounted() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsMounted;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedIsFlying() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsFlying;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedIsGliding() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bIsGliding;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.Speed;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedVerticalSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.VerticalSpeed;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeHasMountedHandIKTargets() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.bHasHandIKTargets;
+}
+
+FVector UProject_JCharacterAnimInstance::GetThreadSafeMountedLeftHandTargetComponentSpace() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.LeftHandTargetComponentSpace;
+}
+
+FVector UProject_JCharacterAnimInstance::GetThreadSafeMountedRightHandTargetComponentSpace() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.RightHandTargetComponentSpace;
+}
+
+EProject_JAnimationLocomotionMode UProject_JCharacterAnimInstance::GetThreadSafeLocomotionMode() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionMode;
 }
 
 FFootPlacementPlantSettings UProject_JCharacterAnimInstance::Get_FootPlacementPlantSettings() const
@@ -359,6 +407,7 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 	}
 
 	const bool bHasAimData = FillPlayerThreadSafeData(Data);
+	FillMountThreadSafeData(Data);
 	FinalizeThreadSafeData(Data, bHasAimData);
 
 	return Data;
@@ -486,6 +535,45 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	return false;
 }
 
+void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	if (!OwningPlayerCharacter)
+	{
+		return;
+	}
+
+	Data.LocomotionMode = OwningPlayerCharacter->GetAnimationLocomotionMode();
+
+	const UProject_JMountComponent* MountComponent = OwningPlayerCharacter->GetMountComponent();
+	const AProject_JMountCharacter* MountedMount = MountComponent ? MountComponent->GetMountedMount() : nullptr;
+	if (!MountedMount)
+	{
+		return;
+	}
+
+	Data.Mount.bIsMounted = Data.LocomotionMode == EProject_JAnimationLocomotionMode::Mounted;
+	const FVector MountVelocity = MountedMount->GetVelocity();
+	Data.Mount.Speed = MountVelocity.Size2D();
+	Data.Mount.VerticalSpeed = MountVelocity.Z;
+
+	if (const AProject_JFlyingMountCharacter* FlyingMount = Cast<AProject_JFlyingMountCharacter>(MountedMount))
+	{
+		Data.Mount.bIsFlying = FlyingMount->IsFlyingMount();
+		Data.Mount.bIsGliding = FlyingMount->IsGliding();
+	}
+
+	USkeletalMeshComponent* RiderMesh = OwningPlayerCharacter->GetMesh();
+	FVector LeftHandTargetWorld;
+	FVector RightHandTargetWorld;
+	if (RiderMesh && MountedMount->GetRiderHandIKTargetsWorld(LeftHandTargetWorld, RightHandTargetWorld))
+	{
+		const FTransform RiderMeshTransform = RiderMesh->GetComponentTransform();
+		Data.Mount.LeftHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(LeftHandTargetWorld);
+		Data.Mount.RightHandTargetComponentSpace = RiderMeshTransform.InverseTransformPosition(RightHandTargetWorld);
+		Data.Mount.bHasHandIKTargets = true;
+	}
+}
+
 void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const
 {
 	if (bHasAimData)
@@ -496,7 +584,10 @@ void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThrea
 
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
 {
-	const bool bMotionMatchingEnabled = OwningCharacter && !IsDedicatedServerAnimationContext();
+	const bool bMotionMatchingEnabled =
+		OwningCharacter &&
+		!IsDedicatedServerAnimationContext() &&
+		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
 	const bool bForceMotionMatchingRefresh = bMotionMatchingEnabled && ShouldForceMotionMatchingContextRefresh(Data);
 	const bool bUpdateMotionMatchingThisFrame =
 		bMotionMatchingEnabled &&

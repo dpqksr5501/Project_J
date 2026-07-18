@@ -48,6 +48,24 @@ UAbilitySystemComponent* AProject_JMountCharacter::GetAbilitySystemComponent() c
 bool AProject_JMountCharacter::CanInteract_Implementation(ACharacter* Interactor) const { return CanMountRider(Interactor); }
 void AProject_JMountCharacter::Interact_Implementation(ACharacter* Interactor) { TryMountRider(Interactor); }
 
+bool AProject_JMountCharacter::GetRiderHandIKTargetsWorld(FVector& OutLeftTarget, FVector& OutRightTarget) const
+{
+	OutLeftTarget = FVector::ZeroVector;
+	OutRightTarget = FVector::ZeroVector;
+
+	const USkeletalMeshComponent* MountMesh = GetMesh();
+	if (!bEnableRiderHandIK || !MountMesh ||
+		!MountMesh->DoesSocketExist(RiderLeftHandSocketName) ||
+		!MountMesh->DoesSocketExist(RiderRightHandSocketName))
+	{
+		return false;
+	}
+
+	OutLeftTarget = MountMesh->GetSocketLocation(RiderLeftHandSocketName);
+	OutRightTarget = MountMesh->GetSocketLocation(RiderRightHandSocketName);
+	return true;
+}
+
 void AProject_JMountCharacter::BeginPlay()
 {
 	Super::BeginPlay();

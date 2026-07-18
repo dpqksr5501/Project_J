@@ -96,6 +96,96 @@ Every mount owns a replicated `UProject_JAbilitySystemComponent` and `UProject_J
 
 The current mount availability and damage path still uses replicated primitive health as a transitional gameplay path.  Before adding mount combat, move the authoritative health update fully to GameplayEffects/AttributeSet callbacks, then attach death, stagger, stamina drain, and cooldown logic to the ASC.
 
+## Rider animation and hand IK
+
+The player `UProject_JCharacterAnimInstance` now publishes a mount snapshot through its animation proxy.  It includes mounted state, mount speed, vertical speed, flying/gliding state, and optional left/right hand targets in the player mesh's component space.  The snapshot is collected on the game thread before worker-thread AnimGraph evaluation, so it is safe to use with the project's multi-threaded animation update.
+
+While mounted, player Motion Matching trajectory updates and searches are disabled.  The player ABP should select a separate mounted locomotion layer, bypassing foot placement, leg IK, aim offsets, and pose history for that layer.  This avoids evaluating ground-only systems for an attached rider and also prevents attached-player velocity from driving an incorrect locomotion pose.
+
+For a Wyvern Blueprint, create the following mesh sockets near the reins/neck handle and tune their position before enabling IK:
+
+- `Reins_L`: left hand target
+- `Reins_R`: right hand target
+
+These are configurable as `Rider Left Hand Socket Name` and `Rider Right Hand Socket Name` on every mount Blueprint.  A mount without both sockets simply reports no hand targets, so its rider can still use the mounted pose without FABRIK.
+
+### Current player ABP layout
+
+`ABP_Player` currently has a Motion Matching based locomotion path.  Its high-level flow is:
+
+```text
+Pose Search Database
+  -> Motion Matching
+  -> Save Cached Pose: Locomotion
+
+Use Cached Pose: Locomotion
+  -> UpperBody Slot
+  -> Layered Blend Per Bone
+  -> Default Slot
+  -> Mesh Space Aim Offset
+  -> Local To Component
+  -> Foot Placement
+  -> Leg IK
+  -> Component To Local
+  -> Pose History
+  -> Output Pose
+```
+
+The lower path is intentionally left unchanged for an on-foot player.  It should not be reused directly for a rider: attached-player trajectory, foot planting, leg IK, and standing aim offsets all describe the wrong motion while seated on a mount.
+
+### Required locomotion-layer selection in ABP_Player
+
+Create separate `OnFootLocomotion` and `MountedLocomotion` Anim Layers.  `ABP_Player` remains the composition graph: select the full-body layer near the root with `Blend Poses by Enum`, using `GetThreadSafeLocomotionMode`.
+
+```text
+OnFootLocomotion Layer ---------------------- OnFoot
+MountedLocomotion Layer --------------------- Mounted
+Swimming / Vehicle / Transformed Layers ----- future entries
+                                                  Blend Poses by Enum -> action slots -> Output Pose
+Active Enum: GetThreadSafeLocomotionMode
+```
+
+The current Motion Matching / Aim Offset / Foot Placement / Leg IK / Pose History graph is the body of `OnFootLocomotion`.  It is not evaluated in `MountedLocomotion`.
+
+`MountedLocomotion` for the current imported idle animation should be:
+
+```text
+Sequence Player: ANIM_Rider_Idle (Loop)
+  -> Local To Component
+  -> FABRIK Left Arm
+  -> FABRIK Right Arm
+  -> Component To Local
+```
+
+Configure the two FABRIK nodes as follows:
+
+| Node | Root Bone | Tip Bone | Effector Transform Space | Location source | Alpha |
+| --- | --- | --- | --- | --- | --- |
+| Left arm | `clavicle_l` | `hand_l` | Component Space | `GetThreadSafeMountedLeftHandTargetComponentSpace` through `Make Transform` | `GetThreadSafeHasMountedHandIKTargets` |
+| Right arm | `clavicle_r` | `hand_r` | Component Space | `GetThreadSafeMountedRightHandTargetComponentSpace` through `Make Transform` | `GetThreadSafeHasMountedHandIKTargets` |
+
+If the project skeleton uses different bone names, use the matching clavicle/hand chain.  First tune `RiderSocket`, then the `Reins_L` and `Reins_R` sockets, and only then adjust FABRIK precision or alpha.  IK should correct a small difference, not pull the arm across a large distance.
+
+### Planned rider states
+
+Only `ANIM_Rider_Idle` is needed for the first test.  Do not make a second State Machine yet unless more rider sequences exist.  When additional assets are available, replace the single Sequence Player in `MountedLocomotion` with a small cached pose or state machine driven exclusively by these thread-safe getters:
+
+| Future state | Suggested condition |
+| --- | --- |
+| MountedIdle | `MountedSpeed <= small threshold` and not flying |
+| MountedGroundMove | `MountedSpeed > small threshold` and not flying |
+| MountedFly | `MountedIsFlying` and not gliding |
+| MountedGlide | `MountedIsGliding` |
+| Mount/Dismount transition | Explicit replicated mount state or montage notification |
+
+`GetAnimationLocomotionMode` is a Blueprint-native extension point on the player.  Its default result is replicated mount state (`OnFoot` or `Mounted`).  Future swimming, vehicle, or transformation systems may override it in their player Blueprint or native subclass.  The current code intentionally exposes mounted speed and flight state now, so adding rider states later does not require player-input polling or new replication rules.
+
+### Optional linked mounted AnimBP
+
+The initial implementation can use `MountedLocomotion` as a self layer inside `ABP_Player`.  When rider logic grows, create a separate `ABP_Player_Mounted` and assign it to `Mounted Animation Layer Class` in the player Blueprint defaults.  The player character listens to the replicated `MountComponent.OnMountChanged` event and calls `LinkAnimClassLayers` only while mounted; it unlinks the class on dismount and end play.  This is event-driven rather than tick-driven.
+
+For the external class to override the master layer, both `ABP_Player` and `ABP_Player_Mounted` must implement the same Animation Layer Interface and expose the layer selected by the master's `Linked Anim Layer` node.  If no class is assigned, or the layer cannot be linked yet, the self-layer implementation remains the safe fallback during setup.
+
 ## Validation checklist
 
 1. Place `BP_Wyvern` in a level and confirm its mesh has `RiderSocket`.

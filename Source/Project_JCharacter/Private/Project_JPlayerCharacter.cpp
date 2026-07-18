@@ -169,6 +169,11 @@ void AProject_JPlayerCharacter::BeginPlay()
 	{
 		ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
 	}
+	if (MountComponent)
+	{
+		MountComponent->OnMountChanged.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnMountChangedForAnimation);
+		RefreshMountedAnimationLayer();
+	}
 
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
@@ -179,6 +184,11 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (MountComponent)
+	{
+		MountComponent->OnMountChanged.RemoveDynamic(this, &AProject_JPlayerCharacter::OnMountChangedForAnimation);
+	}
+	UnlinkMountedAnimationLayer();
 	UnregisterCombatStateTagEvents();
 	if (CombatStateComponent)
 	{
@@ -233,6 +243,67 @@ AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
 		return PS;
 	}
 	return Super::GetAbilitySystemOwnerActor();
+}
+
+void AProject_JPlayerCharacter::OnMountChangedForAnimation(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount)
+{
+	RefreshMountedAnimationLayer();
+}
+
+void AProject_JPlayerCharacter::RefreshMountedAnimationLayer()
+{
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	const bool bShouldLinkMountedLayer = MountComponent && MountComponent->IsMounted() && !MountedAnimationLayerClass.IsNull();
+	if (!bShouldLinkMountedLayer)
+	{
+		UnlinkMountedAnimationLayer();
+		return;
+	}
+
+	UClass* LoadedLayerClass = MountedAnimationLayerClass.LoadSynchronous();
+	if (!LoadedLayerClass || !LoadedLayerClass->IsChildOf(UAnimInstance::StaticClass()))
+	{
+		UnlinkMountedAnimationLayer();
+		return;
+	}
+
+	if (LinkedMountedAnimationLayerClass == LoadedLayerClass)
+	{
+		return;
+	}
+
+	UnlinkMountedAnimationLayer();
+	if (USkeletalMeshComponent* PlayerMesh = GetMesh())
+	{
+		PlayerMesh->LinkAnimClassLayers(LoadedLayerClass);
+		LinkedMountedAnimationLayerClass = LoadedLayerClass;
+	}
+}
+
+void AProject_JPlayerCharacter::UnlinkMountedAnimationLayer()
+{
+	if (!LinkedMountedAnimationLayerClass)
+	{
+		return;
+	}
+
+	if (USkeletalMeshComponent* PlayerMesh = GetMesh())
+	{
+		PlayerMesh->UnlinkAnimClassLayers(LinkedMountedAnimationLayerClass);
+	}
+
+	LinkedMountedAnimationLayerClass = nullptr;
+}
+
+EProject_JAnimationLocomotionMode AProject_JPlayerCharacter::GetAnimationLocomotionMode_Implementation() const
+{
+	return GetMountComponent() && GetMountComponent()->IsMounted()
+		? EProject_JAnimationLocomotionMode::Mounted
+		: EProject_JAnimationLocomotionMode::OnFoot;
 }
 
 void AProject_JPlayerCharacter::RequestUseMountItem(FGuid ItemInstanceId)

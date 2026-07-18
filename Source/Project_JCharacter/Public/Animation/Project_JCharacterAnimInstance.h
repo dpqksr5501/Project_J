@@ -7,6 +7,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
+#include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Project_JLocomotionAnimTypes.h"
@@ -221,6 +222,37 @@ struct PROJECT_JCHARACTER_API FProject_JAnimAimThreadSafeData
 	float AimOffsetAlpha = 0.0f;
 };
 
+/** Snapshot used by the player ABP while the player character is attached to a mount. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimMountThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	float Speed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	float VerticalSpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	FVector LeftHandTargetComponentSpace = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	FVector RightHandTargetComponentSpace = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	bool bIsMounted = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	bool bIsFlying = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	bool bIsGliding = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	bool bHasHandIKTargets = false;
+};
+
 /**
  * All animation thread-safe data used by the Proxy and AnimGraph.
  *
@@ -260,6 +292,12 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimMountThreadSafeData Mount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JAnimationLocomotionMode LocomotionMode = EProject_JAnimationLocomotionMode::OnFoot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
@@ -332,6 +370,33 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	EProject_JLocomotionRotationMode GetThreadSafeRotationMode() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsMounted() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeMountedIsFlying() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeMountedIsGliding() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	float GetThreadSafeMountedSpeed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	float GetThreadSafeMountedVerticalSpeed() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeHasMountedHandIKTargets() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	FVector GetThreadSafeMountedLeftHandTargetComponentSpace() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	FVector GetThreadSafeMountedRightHandTargetComponentSpace() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	EProject_JAnimationLocomotionMode GetThreadSafeLocomotionMode() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
 	FFootPlacementPlantSettings Get_FootPlacementPlantSettings() const;
 
@@ -350,6 +415,7 @@ protected:
 	void FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
 	bool FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;

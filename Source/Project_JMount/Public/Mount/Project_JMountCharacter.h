@@ -36,6 +36,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	EProject_JMountState GetMountState() const { return MountState; }
 
+	/** Resolves optional hand targets for the rider animation blueprint. */
+	UFUNCTION(BlueprintPure, Category = "Mount|Rider IK")
+	bool GetRiderHandIKTargetsWorld(FVector& OutLeftTarget, FVector& OutRightTarget) const;
+
 	UFUNCTION(BlueprintPure, Category = "Mount|Health")
 	float GetHealth() const { return Health; }
 
@@ -73,6 +77,16 @@ protected:
 	/** Socket on the mount mesh used to attach the hidden player avatar. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount")
 	FName RiderSocketName = TEXT("RiderSocket");
+
+	/** Optional mesh sockets for the rider's left/right hand FABRIK targets. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Rider IK")
+	FName RiderLeftHandSocketName = TEXT("Reins_L");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Rider IK")
+	FName RiderRightHandSocketName = TEXT("Reins_R");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Rider IK")
+	bool bEnableRiderHandIK = true;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount", meta = (ClampMin = "0.0"))
 	float MountInteractionDistance = 300.0f;

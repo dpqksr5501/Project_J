@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/Project_JPlayerInputBindingComponent.h"
+#include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
 #include "GameplayTagContainer.h"
@@ -16,6 +17,7 @@ class UCameraComponent;
 class UProject_JCameraComponent;
 class UInputAction;
 class UAnimMontage;
+class UAnimInstance;
 class UProject_JCombatComponent;
 class UProject_JCharacterAnimProfile;
 class UProject_JLocomotionAnimStateComponent;
@@ -125,6 +127,14 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(Replicated, Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class AProject_JMountCharacter> SummonedMount = nullptr;
 
+	/**
+	 * Optional linked AnimBP used to override the master's mounted locomotion
+	 * layer only while this avatar is riding. It must implement the Animation
+	 * Layer Interface selected by ABP_Player's Mounted linked-layer node.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Layers", meta = (AllowPrivateAccess = "true"))
+	TSoftClassPtr<UAnimInstance> MountedAnimationLayerClass;
+
 protected:
 
 	/** Jump Input Action */
@@ -198,6 +208,12 @@ protected:
 
 	void CancelCombatIntroMontage();
 	void RefreshAbilitySystemDependentComponents();
+
+	UFUNCTION()
+	void OnMountChangedForAnimation(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount);
+
+	void RefreshMountedAnimationLayer();
+	void UnlinkMountedAnimationLayer();
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -302,6 +318,15 @@ public:
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
 	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
+
+	/**
+	 * Persistent full-body animation context. Blueprint subclasses may extend
+	 * this for swimming, vehicles, or transformations; brief actions belong in
+	 * montages instead of changing this mode.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "Animation|Locomotion")
+	EProject_JAnimationLocomotionMode GetAnimationLocomotionMode() const;
+
 	FORCEINLINE class AProject_JMountCharacter* GetSummonedMount() const { return SummonedMount; }
 
 	class UProject_JInventoryComponent* GetInventoryComponent() const;
@@ -312,6 +337,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
+
+	/** Hard reference held only while the matching linked instance is active. */
+	TSubclassOf<UAnimInstance> LinkedMountedAnimationLayerClass;
 
 public:
 
