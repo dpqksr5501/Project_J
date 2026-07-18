@@ -27,6 +27,11 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FString("Character is currently riding a mount")
 	);
 
+	GameplayTags.State_Mount_TakingOff = GameplayTagsManager.AddNativeGameplayTag(FName("State.Mount.TakingOff"), FString("Mount is playing its protected takeoff phase"));
+	GameplayTags.State_Mount_AutoAscending = GameplayTagsManager.AddNativeGameplayTag(FName("State.Mount.AutoAscending"), FString("Mount is automatically climbing after takeoff"));
+	GameplayTags.State_Mount_Flying = GameplayTagsManager.AddNativeGameplayTag(FName("State.Mount.Flying"), FString("Mount is under normal aerial control"));
+	GameplayTags.State_Mount_Landing = GameplayTagsManager.AddNativeGameplayTag(FName("State.Mount.Landing"), FString("Mount is playing its protected landing phase"));
+
 	// Combat Tags
 	GameplayTags.State_CombatMode = GameplayTagsManager.AddNativeGameplayTag(
 		FName("State.CombatMode"),
@@ -74,4 +79,7 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FName("Event.Combat.ComboWindow"),
 		FString("Event fired when combo window is open in an animation")
 	);
+
+	GameplayTags.Event_Mount_TakeOffImpulse = GameplayTagsManager.AddNativeGameplayTag(FName("Event.Mount.TakeOffImpulse"), FString("Animation timing cue for a mount takeoff impulse"));
+	GameplayTags.Event_Mount_LandingTouchdown = GameplayTagsManager.AddNativeGameplayTag(FName("Event.Mount.LandingTouchdown"), FString("Animation timing cue for a mount landing touchdown"));
 }

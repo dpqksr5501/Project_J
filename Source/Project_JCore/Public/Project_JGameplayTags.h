@@ -20,6 +20,10 @@ public:
 	FGameplayTag State_Movement_InAir;
 	FGameplayTag State_Movement_Sprinting;
 	FGameplayTag State_Mounted;
+	FGameplayTag State_Mount_TakingOff;
+	FGameplayTag State_Mount_AutoAscending;
+	FGameplayTag State_Mount_Flying;
+	FGameplayTag State_Mount_Landing;
 
 	// Combat States
 	FGameplayTag State_CombatMode;
@@ -35,6 +39,8 @@ public:
 
 	// Event Tags
 	FGameplayTag Event_Combat_ComboWindow;
+	FGameplayTag Event_Mount_TakeOffImpulse;
+	FGameplayTag Event_Mount_LandingTouchdown;
 
 private:
 	static FProject_JGameplayTags GameplayTags;

@@ -9,4 +9,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	UPROPERTY(BlueprintReadOnly, Category="Mount|Flight") bool bIsFlying = false;
 	UPROPERTY(BlueprintReadOnly, Category="Mount|Flight") bool bIsGliding = false;
+	UPROPERTY(BlueprintReadOnly, Category="Mount|Flight") bool bIsTakingOff = false;
+	UPROPERTY(BlueprintReadOnly, Category="Mount|Flight") bool bIsAutoAscending = false;
+	UPROPERTY(BlueprintReadOnly, Category="Mount|Flight") bool bIsLanding = false;
 };

@@ -96,6 +96,20 @@ Every mount owns a replicated `UProject_JAbilitySystemComponent` and `UProject_J
 
 The current mount availability and damage path still uses replicated primitive health as a transitional gameplay path.  Before adding mount combat, move the authoritative health update fully to GameplayEffects/AttributeSet callbacks, then attach death, stagger, stamina drain, and cooldown logic to the ASC.
 
+## Flight phases and automatic takeoff
+
+Flying mounts use a replicated `EProject_JMountFlightState` instead of a single flying boolean:
+
+```text
+Grounded -> TakingOff -> AutoAscending -> Flying -> Landing -> Grounded
+```
+
+`TakingOff`, `AutoAscending`, and `Landing` lock movement, ascent, descent, and dismount input while preserving camera look. The server verifies upward capsule clearance, then automatically climbs to `AutoTakeOffHeight` at the authored wing-impact time. Assign the TakeOff sequence to `TakeOffCueAnimation` on the flying-mount Blueprint and add the reusable `Project J Mount Flight Cue` notify with `TakeOffImpulse` on its wing downbeat. Clients use the notify for the visual cue; a dedicated server scans that same notify time when the phase begins, so authority does not depend on animation evaluation and there is no Blueprint delay value to tune.
+
+Normal flying uses moderated flying braking for a responsive hover without an abrupt stop. Glide uses a lower braking value to preserve momentum. Landing starts when a descending flight detects nearby ground with a valid surface normal; the configurable maximum landing slope rejects steep terrain. Assign the landing sequence to `LandingCueAnimation` and put the shared `LandingTouchdown` cue on its contact frame. The mount only returns to the grounded state after both server collision contact and that authored cue time have occurred; input stays locked until then.
+
+The mount ASC receives replicated loose tags for the protected phases: `State.Mount.TakingOff`, `State.Mount.AutoAscending`, `State.Mount.Flying`, and `State.Mount.Landing`. A `LandingTouchdown` flight cue can be placed on a landing animation for VFX/SFX. Actual landing completion remains collision and server-state driven, so an early or delayed animation does not put the mount through terrain.
+
 ## Rider animation and hand IK
 
 The player `UProject_JCharacterAnimInstance` now publishes a mount snapshot through its animation proxy.  It includes mounted state, mount speed, vertical speed, flying/gliding state, and optional left/right hand targets in the player mesh's component space.  The snapshot is collected on the game thread before worker-thread AnimGraph evaluation, so it is safe to use with the project's multi-threaded animation update.
