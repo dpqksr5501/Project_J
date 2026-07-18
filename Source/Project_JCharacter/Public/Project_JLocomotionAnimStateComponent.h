@@ -323,7 +323,7 @@ private:
 public:
 	/** Maximum time a moving landing can hold without a cancel or new phase. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float LandingRequestDuration = 2.0f;
+	float LandingRequestDuration = 1.3f;
 
 	/** Maximum time a stand landing can hold without a cancel or new phase. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
