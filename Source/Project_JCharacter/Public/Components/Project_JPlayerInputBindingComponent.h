@@ -40,6 +40,9 @@ struct FProject_JPlayerInputActionSet
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> SkillModifierAction = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction = nullptr;
 };
 
 /**
@@ -70,6 +73,7 @@ private:
 	void HandleSecondarySkillReleased();
 	void HandleSkillModifierPressed();
 	void HandleSkillModifierReleased();
+	void HandleInteract();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> BoundPlayerCharacter = nullptr;

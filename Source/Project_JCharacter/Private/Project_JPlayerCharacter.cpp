@@ -37,10 +37,16 @@
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
+#include "Mount/Project_JMountComponent.h"
+#include "Mount/Project_JMountCharacter.h"
+#include "Mount/Project_JMountItemDefinition.h"
+#include "Interaction/Project_JInteractable.h"
 #include "UI/Project_JCharacterUIBindingComponent.h"
 #include "UI/Project_JCharacterViewModel.h"
 #include "InputCoreTypes.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/World.h"
+#include "Engine/OverlapResult.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -134,12 +140,13 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
+	MountComponent = CreateDefaultSubobject<UProject_JMountComponent>(TEXT("MountComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+	DOREPLIFETIME(AProject_JPlayerCharacter, SummonedMount);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -228,6 +235,66 @@ AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
 	return Super::GetAbilitySystemOwnerActor();
 }
 
+void AProject_JPlayerCharacter::RequestUseMountItem(FGuid ItemInstanceId)
+{
+	if (!ItemInstanceId.IsValid())
+	{
+		return;
+	}
+
+	if (HasAuthority())
+	{
+		ServerRequestUseMountItem_Implementation(ItemInstanceId);
+	}
+	else
+	{
+		ServerRequestUseMountItem(ItemInstanceId);
+	}
+}
+
+void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid ItemInstanceId)
+{
+	if (GetMountComponent() && GetMountComponent()->IsMounted())
+	{
+		return;
+	}
+
+	FProject_JItemInstanceData ItemInstance;
+	UProject_JInventoryComponent* Inventory = GetInventoryComponent();
+	if (!Inventory || !Inventory->FindItemInstance(ItemInstanceId, ItemInstance) || ItemInstance.bIsLocked)
+	{
+		return;
+	}
+
+	const UProject_JMountItemDefinition* MountItem = Cast<UProject_JMountItemDefinition>(ItemInstance.ItemDef);
+	const TSubclassOf<AProject_JMountCharacter> MountClass = MountItem ? MountItem->MountClass.LoadSynchronous() : nullptr;
+	if (!MountClass || !GetWorld())
+	{
+		return;
+	}
+
+	if (SummonedMount)
+	{
+		if (MountItem->bAutoMountAfterSpawn)
+		{
+			SummonedMount->TryMountRider(this);
+		}
+		return;
+	}
+
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Owner = this;
+	SpawnParameters.Instigator = this;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+	const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * MountItem->SpawnDistance;
+	AProject_JMountCharacter* Mount = GetWorld()->SpawnActor<AProject_JMountCharacter>(MountClass, SpawnLocation, GetActorRotation(), SpawnParameters);
+	SummonedMount = Mount;
+	if (Mount && MountItem->bAutoMountAfterSpawn)
+	{
+		Mount->TryMountRider(this);
+	}
+}
+
 void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	FProject_JPlayerInputActionSet ActionSet;
@@ -240,6 +307,7 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	ActionSet.AttackAction = AttackAction;
 	ActionSet.HeavyAttackAction = HeavyAttackAction;
 	ActionSet.SkillModifierAction = SkillModifierAction;
+	ActionSet.InteractAction = InteractAction;
 
 	if (SkillInputRouterComponent)
 	{
@@ -251,6 +319,27 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void AProject_JPlayerCharacter::TryInteract()
+{
+	if (!HasAuthority())
+	{
+		ServerTryInteract();
+		return;
+	}
+	TArray<FOverlapResult> Results;
+	FCollisionObjectQueryParams ObjectTypes; ObjectTypes.AddObjectTypesToQuery(ECC_Pawn);
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(ProjectJInteract), false, this);
+	if (!GetWorld()->OverlapMultiByObjectType(Results, GetActorLocation(), FQuat::Identity, ObjectTypes, FCollisionShape::MakeSphere(300.0f), Params)) return;
+	AActor* Best = nullptr; float BestDistance = TNumericLimits<float>::Max();
+	for (const FOverlapResult& Result : Results) { AActor* Candidate = Result.GetActor(); if (Candidate && Candidate->GetClass()->ImplementsInterface(UProject_JInteractable::StaticClass())) { const float D = FVector::DistSquared(GetActorLocation(), Candidate->GetActorLocation()); if (D < BestDistance && IProject_JInteractable::Execute_CanInteract(Candidate, this)) { Best = Candidate; BestDistance = D; } } }
+	if (Best) IProject_JInteractable::Execute_Interact(Best, this);
+}
+
+void AProject_JPlayerCharacter::ServerTryInteract_Implementation()
+{
+	TryInteract();
 }
 
 

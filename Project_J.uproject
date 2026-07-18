@@ -24,6 +24,11 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "Project_JMount",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "Project_JCharacter",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"

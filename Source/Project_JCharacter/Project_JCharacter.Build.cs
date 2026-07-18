@@ -22,6 +22,7 @@ public class Project_JCharacter : ModuleRules
 			"AnimationWarpingRuntime",
 			"Project_JCore",
 			"Project_JGAS",
+			"Project_JMount",
 			"SignificanceManager",
 			"NetCore",
 			"MassCore",

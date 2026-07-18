@@ -16,6 +16,8 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
   - C++ Motion Matching architecture, remote simulated proxy trajectory repair, animation budget behavior, and validation checks.
 - [Skill System Architecture](SkillSystemArchitecture.md)
   - Current GAS ownership, AbilitySet grants, InputTag activation foundation, and the future skill input router direction.
+- [Mount System Architecture](MountSystemArchitecture.md)
+  - Reusable ground/flying mount boundaries, interaction, camera, input, replication, and GAS foundation.
 - [Deferred MMORPG Systems](DeferredMMORPGSystems.md)
   - Systems that should remain deferred until the core gameplay and networking path justifies them.
 - [Combat Animation Architecture Notes](CombatAnimationArchitectureNotes.md)

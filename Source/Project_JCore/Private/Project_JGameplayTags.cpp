@@ -22,6 +22,11 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FString("Character is currently sprinting")
 	);
 
+	GameplayTags.State_Mounted = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Mounted"),
+		FString("Character is currently riding a mount")
+	);
+
 	// Combat Tags
 	GameplayTags.State_CombatMode = GameplayTagsManager.AddNativeGameplayTag(
 		FName("State.CombatMode"),

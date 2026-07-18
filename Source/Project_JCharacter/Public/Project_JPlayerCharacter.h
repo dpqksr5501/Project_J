@@ -33,6 +33,7 @@ class UProject_JCombatIntroComponent;
 class UProject_JInventoryComponent;
 class UProject_JSkillInputExecutionComponent;
 class UProject_JSkillInputRouterComponent;
+class UProject_JMountComponent;
 class UAbilitySystemComponent;
 struct FGameplayTag;
 
@@ -116,6 +117,14 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCombatIntroComponent> CombatIntroComponent = nullptr;
 
+	/** Replicated player-side state for possession-based mounts. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JMountComponent> MountComponent = nullptr;
+
+	/** The one world mount currently summoned from this player's mount item. */
+	UPROPERTY(Replicated, Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AProject_JMountCharacter> SummonedMount = nullptr;
+
 protected:
 
 	/** Jump Input Action */
@@ -153,6 +162,9 @@ protected:
 	/** Skill modifier Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> SkillModifierAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category="Input")
+	TObjectPtr<UInputAction> InteractAction = nullptr;
 
 public:
 
@@ -263,6 +275,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
 
+	/** Owner-only inventory UI calls this with its replicated item instance id. */
+	UFUNCTION(BlueprintCallable, Category = "Mount")
+	void RequestUseMountItem(FGuid ItemInstanceId);
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void TryInteract();
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -282,7 +301,19 @@ public:
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
 
+	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
+	FORCEINLINE class AProject_JMountCharacter* GetSummonedMount() const { return SummonedMount; }
+
 	class UProject_JInventoryComponent* GetInventoryComponent() const;
+
+private:
+	UFUNCTION(Server, Reliable)
+	void ServerRequestUseMountItem(FGuid ItemInstanceId);
+
+	UFUNCTION(Server, Reliable)
+	void ServerTryInteract();
+
+public:
 
 	UFUNCTION(BlueprintPure, Category = "UI")
 	UProject_JCharacterViewModel* GetCharacterViewModel() const;

@@ -52,8 +52,20 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 	}
+	if (ActionSet.InteractAction)
+	{
+		EnhancedInputComponent->BindAction(ActionSet.InteractAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleInteract);
+	}
 
 	return true;
+}
+
+void UProject_JPlayerInputBindingComponent::HandleInteract()
+{
+	if (BoundPlayerCharacter)
+	{
+		BoundPlayerCharacter->TryInteract();
+	}
 }
 
 void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& Value)
