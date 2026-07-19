@@ -32,6 +32,7 @@
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Components/Project_JReplicatedJumpStateComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
+#include "Components/Project_JCombatAnimationLayerComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
@@ -140,6 +141,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
+	CombatAnimationLayerComponent = CreateDefaultSubobject<UProject_JCombatAnimationLayerComponent>(TEXT("CombatAnimationLayerComponent"));
 	MountComponent = CreateDefaultSubobject<UProject_JMountComponent>(TEXT("MountComponent"));
 }
 
@@ -178,6 +180,10 @@ void AProject_JPlayerCharacter::BeginPlay()
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
 	RefreshAbilitySystemDependentComponents();
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 
 	// 바인딩: 어택/회피/피격 태그가 변경될 때 즉각적으로 Sprint 속도를 갱신
 }
@@ -247,7 +253,19 @@ AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
 
 void AProject_JPlayerCharacter::OnMountChangedForAnimation(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount)
 {
+	if (NewMount)
+	{
+		// Mounted presentation has priority over any unfinished draw animation.
+		// Persistent combat-state removal remains a server gameplay policy.
+		CancelCombatIntroMontage();
+		ApplyCombatRotationMode(false);
+	}
+
 	RefreshMountedAnimationLayer();
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 }
 
 void AProject_JPlayerCharacter::RefreshMountedAnimationLayer()
@@ -541,6 +559,12 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 			CancelCombatIntroMontage();
 			ApplyCombatRotationMode(false);
 		}
+
+		if (CombatAnimationLayerComponent)
+		{
+			CombatAnimationLayerComponent->RefreshLayer();
+		}
+
 	}
 
 	UpdateMaxWalkSpeed();
@@ -848,6 +872,10 @@ void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnim
 	}
 
 	CurrentWeaponAnimProfile = InWeaponAnimProfile;
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 }
 
 void AProject_JPlayerCharacter::OnJumped_Implementation()
@@ -962,6 +990,11 @@ void AProject_JPlayerCharacter::StopSprint()
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
+	if (MountComponent && MountComponent->IsMounted())
+	{
+		return;
+	}
+
 	if (!IsCombatModeActive() && ShouldPlayCombatIntroMontage())
 	{
 		BeginCombatModeWithIntro();

@@ -32,6 +32,7 @@ class UProject_JReplicatedAnimEventComponent;
 class UProject_JReplicatedJumpStateComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
+class UProject_JCombatAnimationLayerComponent;
 class UProject_JInventoryComponent;
 class UProject_JSkillInputExecutionComponent;
 class UProject_JSkillInputRouterComponent;
@@ -118,6 +119,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCombatIntroComponent> CombatIntroComponent = nullptr;
+
+	/** Generic runtime linker for job/weapon Anim Layers; it does not depend on BP_Player. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JCombatAnimationLayerComponent> CombatAnimationLayerComponent = nullptr;
 
 	/** Replicated player-side state for possession-based mounts. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))

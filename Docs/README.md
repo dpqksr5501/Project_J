@@ -22,6 +22,8 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
   - Systems that should remain deferred until the core gameplay and networking path justifies them.
 - [Combat Animation Architecture Notes](CombatAnimationArchitectureNotes.md)
   - Locomotion/combat ownership boundaries and future weapon, attack, dodge, and hit reaction animation paths.
+- [Combat Locomotion Architecture](CombatLocomotionArchitecture.md)
+  - Reusable weapon-family linked layers, socket/IK rules, and combat animation priority.
 
 ## Current Structure Policy
 

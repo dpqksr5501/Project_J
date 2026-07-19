@@ -8,6 +8,7 @@
 #include "Project_JWeaponAnimProfile.generated.h"
 
 class AActor;
+class UAnimInstance;
 class UAnimMontage;
 class UBlendSpace;
 
@@ -55,6 +56,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UAnimMontage> CombatIntroMontage = nullptr;
+
+	/**
+	 * Weapon/job-specific Linked Anim Layer class. It overrides the production
+	 * humanoid master only while this weapon is in combat mode.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat|Layers")
+	TSoftClassPtr<UAnimInstance> CombatAnimationLayerClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float CombatIntroMontagePlayRate = 1.0f;

@@ -14,7 +14,8 @@ UProject_JGameplayAbility_CombatToggle::UProject_JGameplayAbility_CombatToggle()
 	AssetTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
 	SetAssetTags(AssetTags);
 
-	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
+	// State.CombatMode belongs to the persistent GameplayEffect. Giving it to this
+	// short-lived ability makes its first activation look like combat is already active.
 }
 
 bool UProject_JGameplayAbility_CombatToggle::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
