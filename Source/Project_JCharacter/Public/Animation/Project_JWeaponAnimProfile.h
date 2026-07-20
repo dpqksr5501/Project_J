@@ -10,7 +10,7 @@
 class AActor;
 class UAnimInstance;
 class UAnimMontage;
-class UBlendSpace;
+class UProject_JComboDefinition;
 
 UENUM(BlueprintType)
 enum class EProject_JWeaponAnimStance : uint8
@@ -46,14 +46,9 @@ public:
 	TSubclassOf<AActor> WeaponActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	FName WeaponSocketName = FName("WeaponSocket_R");
+	FName WeaponSocketName = NAME_None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Equip")
-	TObjectPtr<UAnimMontage> EquipMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Equip")
-	TObjectPtr<UAnimMontage> UnequipMontage = nullptr;
-
+	/** The full-body draw / combat-entry montage for this weapon. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UAnimMontage> CombatIntroMontage = nullptr;
 
@@ -64,30 +59,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat|Layers")
 	TSoftClassPtr<UAnimInstance> CombatAnimationLayerClass;
 
+	/** Immutable input graph used by the generic weapon combo Gameplay Ability. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Combo")
+	TObjectPtr<UProject_JComboDefinition> ComboDefinition = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float CombatIntroMontagePlayRate = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Attack")
-	TObjectPtr<UAnimMontage> PrimaryAttackMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Attack")
-	TArray<FName> PrimaryAttackSectionNames;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
-	FProject_JWeaponAttackSpec PrimaryAttackSpec;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Reaction")
-	TObjectPtr<UAnimMontage> HitReactMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Reaction")
-	TObjectPtr<UAnimMontage> DodgeMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Movement")
-	TObjectPtr<UBlendSpace> CombatMovementBlendSpace = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Slots")
-	FName UpperBodySlotName = FName("UpperBody");
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Slots")
-	FName FullBodySlotName = FName("DefaultSlot");
 };

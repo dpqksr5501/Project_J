@@ -8,8 +8,6 @@
 #include "Engine/World.h"
 #include "CombatDamageable.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
-#include "Combat/Project_JCombatTypes.h"
-#include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 
 // Sets default values for this component's properties
@@ -86,7 +84,7 @@ TSubclassOf<AActor> UProject_JWarriorComponent::GetEffectiveWeaponClass() const
 		}
 	}
 
-	return WeaponClass;
+	return nullptr;
 }
 
 FName UProject_JWarriorComponent::GetEffectiveWeaponSocketName() const
@@ -99,37 +97,7 @@ FName UProject_JWarriorComponent::GetEffectiveWeaponSocketName() const
 		}
 	}
 
-	return WeaponSocketName;
-}
-
-
-
-FGameplayTag UProject_JWarriorComponent::GetEffectivePrimaryAttackInputTag() const
-{
-	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = GetCurrentWeaponAnimProfile())
-	{
-		if (WeaponAnimProfile->PrimaryAttackSpec.InputTag.IsValid())
-		{
-			return WeaponAnimProfile->PrimaryAttackSpec.InputTag;
-		}
-	}
-
-	return PrimaryAttackInputTag.IsValid()
-		? PrimaryAttackInputTag
-		: FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
-}
-
-FGameplayTag UProject_JWarriorComponent::GetEffectivePrimaryAttackAbilityTag() const
-{
-	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = GetCurrentWeaponAnimProfile())
-	{
-		if (WeaponAnimProfile->PrimaryAttackSpec.AbilityTag.IsValid())
-		{
-			return WeaponAnimProfile->PrimaryAttackSpec.AbilityTag;
-		}
-	}
-
-	return PrimaryAttackAbilityTag;
+	return NAME_None;
 }
 
 

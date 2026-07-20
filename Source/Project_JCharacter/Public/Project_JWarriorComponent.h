@@ -8,8 +8,6 @@
 
 class UAnimMontage;
 class UProject_JWeaponAnimProfile;
-struct FGameplayTag;
-struct FProject_JWeaponAttackSpec;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JWarriorComponent : public UProject_JCombatComponent
@@ -38,18 +36,7 @@ protected:
 	const UProject_JWeaponAnimProfile* GetCurrentWeaponAnimProfile() const;
 	TSubclassOf<AActor> GetEffectiveWeaponClass() const;
 	FName GetEffectiveWeaponSocketName() const;
-	FGameplayTag GetEffectivePrimaryAttackInputTag() const;
-	FGameplayTag GetEffectivePrimaryAttackAbilityTag() const;
-
 protected:
-	/** Weapon Actor class to spawn */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Warrior|Weapon")
-	TSubclassOf<AActor> WeaponClass;
-
-	/** Socket to attach the weapon to */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Warrior|Weapon")
-	FName WeaponSocketName = FName("WeaponSocket_R");
-
 	/** Spawned Weapon Actor reference */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Warrior|Weapon")
 	AActor* SpawnedWeapon = nullptr;

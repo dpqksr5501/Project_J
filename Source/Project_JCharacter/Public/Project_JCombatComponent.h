@@ -35,8 +35,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void UnequipWeapon() {}
 
-	/** Trigger basic attack or combo sequence */
-	UFUNCTION(BlueprintCallable, Category = "Combat")
+	/** Submits any discrete combat intent to GAS. The combo graph decides whether it is a valid start or branch. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
+	virtual void SubmitCombatInput(FGameplayTag InputTag);
+
+	/** Compatibility entry point for old Blueprints. New code submits InputTag.Weapon.LightAttack explicitly. */
+	UFUNCTION(BlueprintCallable, Category = "Combat", meta = (DeprecatedFunction, DeprecationMessage = "Use SubmitCombatInput(InputTag.Weapon.LightAttack)."))
 	virtual void Attack();
 
 	/** Bind this component to the owner's Ability System Component */
@@ -52,15 +56,6 @@ public:
 	FProject_JCombatHitValidationResult ValidateServerHitRequest(const FProject_JCombatHitRequest& Request) const;
 
 protected:
-	bool TryActivateAbilityByInputTag(const FGameplayTag& InputTag) const;
-	bool TryActivateAbilityByTag(const FGameplayTag& AbilityTag) const;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|GAS", meta = (ToolTip = "Preferred InputTag used to activate the primary attack ability."))
-	FGameplayTag PrimaryAttackInputTag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|GAS", meta = (ToolTip = "Optional ability tag to activate when Attack is called. Leave empty while combat abilities are not authored yet."))
-	FGameplayTag PrimaryAttackAbilityTag;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|SSR")
 	FProject_JCombatHitValidationPolicy HitValidationPolicy;
 

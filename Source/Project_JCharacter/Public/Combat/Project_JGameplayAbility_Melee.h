@@ -5,6 +5,8 @@
 #include "Project_JGameplayAbility_Melee.generated.h"
 
 class UAnimMontage;
+class UProject_JComboDefinition;
+struct FProject_JComboNode;
 
 /**
  * A flexible, data-driven combo ability for MMORPG combat.
@@ -41,31 +43,31 @@ protected:
 	UFUNCTION()
 	void OnMeleeHitReceived(FGameplayEventData Payload);
 
-	/** Determines the next montage section based on the current section and the received input tag. Can be overridden in Blueprints for complex graph logic. */
-	UFUNCTION(BlueprintNativeEvent, Category = "Combat|Combo")
-	FName GetNextSectionForInput(FGameplayTag InputTag, FName CurrentSection) const;
-
 	/** Rotates the character towards the camera look direction or input direction for 3rd-person actions */
 	void ApplyCameraDirectionRotation();
+	void StartComboNode(const FProject_JComboNode& Node);
+	bool TryQueueOrConsumeComboInput(FGameplayTag InputTag);
+	const FProject_JComboNode* GetCurrentComboNode() const;
+	FGameplayTagContainer GetOwnerGameplayTags() const;
+	void BindComboInputEvents();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Combat|Montage")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Combat|Montage")
-	FName InitialSectionName = FName("Light_01");
-
 	UPROPERTY(EditDefaultsOnly, Category = "Combat|Tags")
 	FGameplayTag MeleeHitEventTag;
 
 private:
-	FName CurrentSectionName;
+	FGameplayTag CurrentComboNodeTag;
+	FGameplayTag QueuedInputTag;
+	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;
+	TObjectPtr<UAnimMontage> ActiveComboMontage = nullptr;
 	bool bIsComboWindowOpen = false;
 	bool bHasNextComboQueued = false;
-	FName QueuedSectionName;
 	
 	UPROPERTY()
 	class UAbilityTask_PlayMontageAndWait* MontageTask = nullptr;
+
+	UPROPERTY()
+	TArray<class UAbilityTask_WaitGameplayEvent*> ComboEventTasks;
 
 	/** Set of actors already hit during the current combo swing to prevent multi-hits from the same attack section */
 	UPROPERTY(Transient)

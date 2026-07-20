@@ -9,6 +9,7 @@
 UProject_JSkillInputExecutionComponent::UProject_JSkillInputExecutionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 }
 
 void UProject_JSkillInputExecutionComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter, UProject_JCombatStateComponent* InCombatStateComponent)
@@ -41,11 +42,30 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag 
 
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(BoundPlayerCharacter, Payload.EventTag, Payload);
 
+		if (!BoundPlayerCharacter->HasAuthority())
+		{
+			ServerSendCombatInputEvent(InputTag);
+		}
+
 		if (!bHandledByInputTagAbility)
 		{
 			TryLegacyFallback(InputTag);
 		}
 	}
+}
+
+void UProject_JSkillInputExecutionComponent::ServerSendCombatInputEvent_Implementation(const FGameplayTag InputTag)
+{
+	if (!InputTag.IsValid() || !BoundPlayerCharacter)
+	{
+		return;
+	}
+
+	FGameplayEventData Payload;
+	Payload.EventTag = InputTag;
+	Payload.Instigator = BoundPlayerCharacter;
+	Payload.Target = BoundPlayerCharacter;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(BoundPlayerCharacter, InputTag, Payload);
 }
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagReleased(FGameplayTag InputTag)

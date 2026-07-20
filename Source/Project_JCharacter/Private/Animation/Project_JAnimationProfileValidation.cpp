@@ -140,11 +140,6 @@ void ValidateWeaponProfile(
 		AddWarning(Context, OutWarnings, TEXT("has CombatIntroMontage but non-positive CombatIntroMontagePlayRate."));
 	}
 
-	if (WeaponProfile->PrimaryAttackMontage && WeaponProfile->PrimaryAttackSectionNames.IsEmpty())
-	{
-		AddWarning(Context, OutWarnings, TEXT("has PrimaryAttackMontage but no PrimaryAttackSectionNames."));
-	}
-
 	if (WeaponProfile->WeaponActorClass && WeaponProfile->WeaponSocketName.IsNone())
 	{
 		AddWarning(Context, OutWarnings, TEXT("has WeaponActorClass but no WeaponSocketName."));

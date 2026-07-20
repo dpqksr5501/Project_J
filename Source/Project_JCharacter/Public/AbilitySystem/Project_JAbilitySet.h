@@ -40,6 +40,10 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GameplayAbility
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	FGameplayTag InputTag;
 
+	/** Additional inputs handled by the same ability spec (for example LightAttack and HeavyAttack on one combo ability). */
+	UPROPERTY(EditDefaultsOnly, Category = "Ability")
+	FGameplayTagContainer AdditionalInputTags;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	int32 InputID = INDEX_NONE;
 };

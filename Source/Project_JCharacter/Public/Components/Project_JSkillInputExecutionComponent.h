@@ -30,6 +30,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleInputTagReleased(FGameplayTag InputTag);
 
+	/** Server receives the same combo input event as the predicting client. Reliable is appropriate for discrete combat input, not movement axes. */
+	UFUNCTION(Server, Reliable)
+	void ServerSendCombatInputEvent(FGameplayTag InputTag);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities|Input")
 	bool bAllowLegacySkillInputFallback = false;
 

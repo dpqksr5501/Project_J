@@ -17,6 +17,7 @@ void UProject_JAnimNotifyState_ComboWindow::NotifyBegin(USkeletalMeshComponent* 
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = ComboWindowTag;
+		Payload.EventMagnitude = 1.0f;
 		Payload.Instigator = Owner;
 		Payload.Target = Owner;
 
@@ -27,4 +28,14 @@ void UProject_JAnimNotifyState_ComboWindow::NotifyBegin(USkeletalMeshComponent* 
 void UProject_JAnimNotifyState_ComboWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
+
+	if (AActor* Owner = MeshComp->GetOwner())
+	{
+		FGameplayEventData Payload;
+		Payload.EventTag = ComboWindowTag;
+		Payload.EventMagnitude = 0.0f;
+		Payload.Instigator = Owner;
+		Payload.Target = Owner;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, ComboWindowTag, Payload);
+	}
 }

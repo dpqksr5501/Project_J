@@ -16,18 +16,11 @@ enum class EProject_JWeaponType : uint8
 	Bow UMETA(DisplayName = "Bow")
 };
 
+/** Gameplay parameters for one authored swing. Input ownership belongs to the combo graph, not this hit specification. */
 USTRUCT(BlueprintType)
-struct FProject_JWeaponAttackSpec
+struct FProject_JComboHitSpec
 {
 	GENERATED_BODY()
-
-	/** Preferred activation intent. AbilitySet entries should grant an ability with this InputTag. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Ability")
-	FGameplayTag InputTag;
-
-	/** Migration fallback for assets that still activate by ability classification tag. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Ability")
-	FGameplayTag AbilityTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Damage", meta = (ClampMin = "0.0"))
 	float BaseDamage = 1.5f;

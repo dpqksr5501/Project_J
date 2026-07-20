@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "GameplayEffect.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
@@ -29,38 +30,35 @@ void UProject_JCombatComponent::BeginPlay()
 
 void UProject_JCombatComponent::Attack()
 {
-	const FGameplayTag EffectiveInputTag = PrimaryAttackInputTag.IsValid()
-		? PrimaryAttackInputTag
-		: FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack;
-	if (!TryActivateAbilityByInputTag(EffectiveInputTag))
+	SubmitCombatInput(FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack);
+}
+
+void UProject_JCombatComponent::SubmitCombatInput(const FGameplayTag InputTag)
+{
+	if (!InputTag.IsValid())
 	{
-		TryActivateAbilityByTag(PrimaryAttackAbilityTag);
+		return;
+	}
+
+	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC))
+	{
+		ProjectJASC->AbilityInputTagPressed(InputTag);
+	}
+
+	// CombatComponent can be used by AI and legacy blueprints without the player input router.
+	if (AActor* Owner = GetOwner())
+	{
+		FGameplayEventData Payload;
+		Payload.EventTag = InputTag;
+		Payload.Instigator = Owner;
+		Payload.Target = Owner;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, InputTag, Payload);
 	}
 }
 
 void UProject_JCombatComponent::BindToGAS(UAbilitySystemComponent* ASC)
 {
 	OwnerASC = ASC;
-}
-
-bool UProject_JCombatComponent::TryActivateAbilityByInputTag(const FGameplayTag& InputTag) const
-{
-	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(OwnerASC);
-	return ProjectJASC && InputTag.IsValid()
-		? ProjectJASC->TryActivateAbilitiesByInputTag(InputTag)
-		: false;
-}
-
-bool UProject_JCombatComponent::TryActivateAbilityByTag(const FGameplayTag& AbilityTag) const
-{
-	if (!OwnerASC || !AbilityTag.IsValid())
-	{
-		return false;
-	}
-
-	FGameplayTagContainer AbilityTags;
-	AbilityTags.AddTag(AbilityTag);
-	return OwnerASC->TryActivateAbilitiesByTag(AbilityTags);
 }
 
 void UProject_JCombatComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd)

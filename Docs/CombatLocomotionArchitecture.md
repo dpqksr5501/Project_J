@@ -69,9 +69,29 @@ Until the skeleton assets are confirmed, preserve their actual names and map the
 - Advancement is permanent progression. It is not a combat-time toggle and does not belong in the locomotion state machine.
 - Lock-on is intentionally out of scope. If added later, it needs its own facing/trajectory policy.
 
+## Data-Driven Weapon Combos
+
+Weapon profiles do not contain a growing list of `LightAfterHeavy` fields. A profile references one immutable `UProject_JComboDefinition`; its nodes contain a montage/section, movement policy, start inputs, and outgoing input transitions. The shared `UProject_JGameplayAbility_Melee` owns all transient state: active node, one buffered input, combo-window state, and montage execution. This keeps job Blueprints and `AProject_JPlayerCharacter` free of weapon-specific branching.
+
+`ComboDefinition` is the only attack-order and input-branching source. `WeaponAnimProfile` no longer contains primary-attack montage, section, input, reaction, BlendSpace, or slot fields: those responsibilities previously overlapped the combo graph, action abilities, or the job animation layer. A combo node owns its own hit specification, while the animation layer owns continuous combat locomotion.
+
+```text
+DA_WeaponProfile_Greatsword
+  -> DA_Combo_Greatsword
+       Light_1 --LightAttack--> Light_2
+       Light_1 --HeavyAttack--> Light_To_Heavy_2
+```
+
+The ability is granted once by the weapon AbilitySet. Put `InputTag.Weapon.LightAttack` in the entry's `InputTag` and `InputTag.Weapon.HeavyAttack` in `AdditionalInputTags`; both inputs then activate the same ability spec. The player input component sends each discrete combat input locally for prediction and to the server through its RPC path. The server runs the same graph and remains the authority for hit confirmation, tags, stamina, cooldowns, and cancellation.
+
+Author `UProject_JAnimNotifyState_ComboWindow` around the intended input period of each montage section. Its begin/end events open and close the graph's input window. Only one valid next input is buffered; this prevents macro-style unlimited queueing and makes the result deterministic. Node/edge owner-tag requirements support stances, advancement, aerial branches, and buff-gated finishers without new code. Each combo definition participates in Data Validation and rejects missing/duplicate node tags, missing montages, duplicate per-node input edges, missing start nodes, and unresolved edge targets.
+
+Use one montage with named sections for a simple chain. The runtime also supports changing montage per node, but transitions should be authored only at a safe cancel boundary. Root-motion policy is explicit per node: ordinary strikes are In-Place; committed lunges are Root Motion Montage; target-relative actions use Root Motion + Motion Warping. The ABP remains `Root Motion from Montages Only`.
+
 ## Validation Checklist
 
 - Link/unlink each weapon-family layer on local and simulated-proxy combat transitions.
 - Verify no combat layer remains linked while mounted.
 - Test eight-direction movement, jump, landing, draw, sheath, attack, dodge, hit reaction, and death per weapon family.
 - Verify distant-player tiers omit expensive aim/IK while preserving visible combat montages.
+- Validate each Combo Definition and test local prediction plus at least two-client PIE for Light→Light, Light→Heavy, invalid-input rejection, buffering before a window, CC/death/mount cancellation, and weapon swap during an active combo.

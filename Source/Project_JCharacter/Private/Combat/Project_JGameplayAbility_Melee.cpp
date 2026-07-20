@@ -1,9 +1,13 @@
 #include "Combat/Project_JGameplayAbility_Melee.h"
+#include "Animation/Project_JWeaponAnimProfile.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystemComponent.h"
+#include "Combat/Project_JComboDefinition.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
+#include "Project_JPlayerCharacter.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Project_JCombatComponent.h"
 #include "Engine/World.h"
@@ -29,99 +33,208 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 		return;
 	}
 
-	if (!AttackMontage)
+	ApplyCameraDirectionRotation();
+
+	ActiveComboDefinition = nullptr;
+	if (const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (const UProject_JWeaponAnimProfile* WeaponProfile = PlayerCharacter->GetWeaponAnimProfile())
+		{
+			ActiveComboDefinition = WeaponProfile->ComboDefinition;
+		}
+	}
+
+	if (!ActiveComboDefinition || ActiveComboDefinition->Nodes.IsEmpty())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	ApplyCameraDirectionRotation();
-
-	CurrentSectionName = InitialSectionName;
+	CurrentComboNodeTag = FGameplayTag();
+	QueuedInputTag = FGameplayTag();
 	bIsComboWindowOpen = false;
 	bHasNextComboQueued = false;
 	HitActorsThisSwing.Reset();
+	ComboEventTasks.Reset();
 
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, AttackMontage, 1.0f, CurrentSectionName);
+	BindComboInputEvents();
+	if (MeleeHitEventTag.IsValid())
+	{
+		UAbilityTask_WaitGameplayEvent* HitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, MeleeHitEventTag);
+		if (HitTask)
+		{
+			HitTask->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMeleeHitReceived);
+			HitTask->ReadyForActivation();
+			ComboEventTasks.Add(HitTask);
+		}
+	}
+	if (TriggerEventData && TriggerEventData->EventTag.IsValid())
+	{
+		OnComboInputReceived(*TriggerEventData);
+	}
+}
+
+void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	ComboEventTasks.Reset();
+	ActiveComboDefinition = nullptr;
+	ActiveComboMontage = nullptr;
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Payload)
+{
+	if (!CurrentComboNodeTag.IsValid())
+	{
+		if (const FProject_JComboNode* StartNode = ActiveComboDefinition->FindStartNode(Payload.EventTag, GetOwnerGameplayTags()))
+		{
+			StartComboNode(*StartNode);
+		}
+		return;
+	}
+
+	TryQueueOrConsumeComboInput(Payload.EventTag);
+}
+
+void UProject_JGameplayAbility_Melee::OnComboWindowOpened(FGameplayEventData Payload)
+{
+	if (Payload.EventMagnitude <= 0.0f)
+	{
+		bIsComboWindowOpen = false;
+		return;
+	}
+
+	bIsComboWindowOpen = true;
+	if (bHasNextComboQueued)
+	{
+		const FGameplayTag BufferedInput = QueuedInputTag;
+		bHasNextComboQueued = false;
+		QueuedInputTag = FGameplayTag();
+		TryQueueOrConsumeComboInput(BufferedInput);
+	}
+}
+
+void UProject_JGameplayAbility_Melee::BindComboInputEvents()
+{
+	if (!ActiveComboDefinition)
+	{
+		return;
+	}
+
+	UAbilityTask_WaitGameplayEvent* ComboWindowTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FProject_JGameplayTags::Get().Event_Combat_ComboWindow);
+	if (ComboWindowTask)
+	{
+		ComboWindowTask->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboWindowOpened);
+		ComboWindowTask->ReadyForActivation();
+		ComboEventTasks.Add(ComboWindowTask);
+	}
+
+	FGameplayTagContainer InputTags;
+	ActiveComboDefinition->GetReferencedInputTags(InputTags);
+	for (const FGameplayTag& InputTag : InputTags)
+	{
+		if (!InputTag.IsValid())
+		{
+			continue;
+		}
+
+		UAbilityTask_WaitGameplayEvent* InputTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, InputTag);
+		if (InputTask)
+		{
+			InputTask->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboInputReceived);
+			InputTask->ReadyForActivation();
+			ComboEventTasks.Add(InputTask);
+		}
+	}
+}
+
+const FProject_JComboNode* UProject_JGameplayAbility_Melee::GetCurrentComboNode() const
+{
+	return ActiveComboDefinition ? ActiveComboDefinition->FindNode(CurrentComboNodeTag) : nullptr;
+}
+
+FGameplayTagContainer UProject_JGameplayAbility_Melee::GetOwnerGameplayTags() const
+{
+	FGameplayTagContainer OwnerTags;
+	if (const UAbilitySystemComponent* AbilitySystem = GetAbilitySystemComponentFromActorInfo())
+	{
+		AbilitySystem->GetOwnedGameplayTags(OwnerTags);
+	}
+	return OwnerTags;
+}
+
+bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGameplayTag InputTag)
+{
+	const FProject_JComboNode* CurrentNode = GetCurrentComboNode();
+	if (!CurrentNode || !ActiveComboDefinition)
+	{
+		return false;
+	}
+
+	const FProject_JComboTransition* Transition = ActiveComboDefinition->FindTransition(*CurrentNode, InputTag, GetOwnerGameplayTags());
+	if (!Transition)
+	{
+		return false;
+	}
+
+	if (!bIsComboWindowOpen)
+	{
+		if (CurrentNode->bAllowInputBuffer)
+		{
+			QueuedInputTag = InputTag;
+			bHasNextComboQueued = true;
+			return true;
+		}
+		return false;
+	}
+
+	const FProject_JComboNode* NextNode = ActiveComboDefinition->FindNode(Transition->TargetNodeTag);
+	if (!NextNode)
+	{
+		return false;
+	}
+
+	bIsComboWindowOpen = false;
+	bHasNextComboQueued = false;
+	QueuedInputTag = FGameplayTag();
+	StartComboNode(*NextNode);
+	return true;
+}
+
+void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& Node)
+{
+	if (!Node.Montage)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+
+	ApplyCameraDirectionRotation();
+	HitActorsThisSwing.Reset();
+	CurrentComboNodeTag = Node.NodeTag;
+	if (MontageTask && ActiveComboMontage == Node.Montage)
+	{
+		if (!Node.MontageSectionName.IsNone())
+		{
+			MontageJumpToSection(Node.MontageSectionName);
+		}
+		return;
+	}
+
+	if (MontageTask)
+	{
+		MontageTask->EndTask();
+		MontageTask = nullptr;
+	}
+
+	ActiveComboMontage = Node.Montage;
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Node.Montage, Node.PlayRate, Node.MontageSectionName);
 	if (MontageTask)
 	{
 		MontageTask->OnCompleted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageCompleted);
 		MontageTask->OnInterrupted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
 		MontageTask->OnCancelled.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
 		MontageTask->ReadyForActivation();
-	}
-
-	// Listen for ComboWindow event from AnimNotify
-	UAbilityTask_WaitGameplayEvent* WaitComboWindowEvent = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FProject_JGameplayTags::Get().Event_Combat_ComboWindow);
-	if (WaitComboWindowEvent)
-	{
-		WaitComboWindowEvent->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboWindowOpened);
-		WaitComboWindowEvent->ReadyForActivation();
-	}
-
-	// Listen for generic attack input events
-	UAbilityTask_WaitGameplayEvent* WaitInputEventLight = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack);
-	if (WaitInputEventLight)
-	{
-		WaitInputEventLight->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboInputReceived);
-		WaitInputEventLight->ReadyForActivation();
-	}
-	
-	UAbilityTask_WaitGameplayEvent* WaitInputEventHeavy = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FProject_JGameplayTags::Get().InputTag_Weapon_HeavyAttack);
-	if (WaitInputEventHeavy)
-	{
-		WaitInputEventHeavy->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboInputReceived);
-		WaitInputEventHeavy->ReadyForActivation();
-	}
-
-	if (MeleeHitEventTag.IsValid())
-	{
-		UAbilityTask_WaitGameplayEvent* WaitMeleeHitEvent = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, MeleeHitEventTag);
-		if (WaitMeleeHitEvent)
-		{
-			WaitMeleeHitEvent->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMeleeHitReceived);
-			WaitMeleeHitEvent->ReadyForActivation();
-		}
-	}
-}
-
-void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Payload)
-{
-	FName NextSection = GetNextSectionForInput(Payload.EventTag, CurrentSectionName);
-	if (!NextSection.IsNone())
-	{
-		QueuedSectionName = NextSection;
-		bHasNextComboQueued = true;
-
-		// If the window is already open when the button is pressed, jump immediately.
-		if (bIsComboWindowOpen)
-		{
-			MontageJumpToSection(QueuedSectionName);
-			CurrentSectionName = QueuedSectionName;
-			bIsComboWindowOpen = false;
-			bHasNextComboQueued = false;
-			HitActorsThisSwing.Reset();
-		}
-	}
-}
-
-void UProject_JGameplayAbility_Melee::OnComboWindowOpened(FGameplayEventData Payload)
-{
-	bIsComboWindowOpen = true;
-
-	// If there is already a buffered input, jump immediately.
-	if (bHasNextComboQueued)
-	{
-		MontageJumpToSection(QueuedSectionName);
-		CurrentSectionName = QueuedSectionName;
-		bIsComboWindowOpen = false;
-		bHasNextComboQueued = false;
-		HitActorsThisSwing.Reset();
 	}
 }
 
@@ -166,12 +279,6 @@ void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payl
 			}
 		}
 	}
-}
-
-FName UProject_JGameplayAbility_Melee::GetNextSectionForInput_Implementation(FGameplayTag InputTag, FName CurrentSection) const
-{
-	// Base implementation can be simple naming conventions or data table lookups
-	return FName();
 }
 
 void UProject_JGameplayAbility_Melee::ApplyCameraDirectionRotation()

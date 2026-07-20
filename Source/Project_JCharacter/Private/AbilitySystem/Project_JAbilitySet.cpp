@@ -28,6 +28,7 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 		{
 			AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityEntry.InputTag);
 		}
+		AbilitySpec.GetDynamicSpecSourceTags().AppendTags(AbilityEntry.AdditionalInputTags);
 
 		const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
 		OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
@@ -124,15 +125,24 @@ EDataValidationResult UProject_JAbilitySet::IsDataValid(FDataValidationContext& 
 				FText::AsNumber(AbilityIndex)));
 		}
 
+		FGameplayTagContainer EntryInputTags = AbilityEntry.AdditionalInputTags;
 		if (AbilityEntry.InputTag.IsValid())
 		{
-			if (SeenInputTags.Contains(AbilityEntry.InputTag))
+			EntryInputTags.AddTag(AbilityEntry.InputTag);
+		}
+		for (const FGameplayTag& EntryInputTag : EntryInputTags)
+		{
+			if (!EntryInputTag.IsValid())
+			{
+				continue;
+			}
+			if (SeenInputTags.Contains(EntryInputTag))
 			{
 				Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
 					NSLOCTEXT("ProjectJAbilitySet", "DuplicateInputTag", "InputTag '{0}' is assigned to more than one ability entry."),
-					FText::FromString(AbilityEntry.InputTag.ToString())));
+					FText::FromString(EntryInputTag.ToString())));
 			}
-			SeenInputTags.Add(AbilityEntry.InputTag);
+			SeenInputTags.Add(EntryInputTag);
 		}
 	}
 
