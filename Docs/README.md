@@ -4,6 +4,9 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [Project Context Handoff](ProjectContextHandoff.md)
+  - Cross-system onboarding: module boundaries, runtime ownership, data flows, configuration entry points, and a new-task checklist.
+
 - [Project Overview](ProjectOverview.md)
   - 프로젝트의 게임 정체성, 현재 구현 범위, 모듈·런타임 소유권, 서버·전투·애니메이션 원칙을 한 문서로 정리한 기준 개요.
 - [Architecture Refactor 2026-06-19](ArchitectureRefactor_20260619.md)
