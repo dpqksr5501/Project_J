@@ -24,6 +24,9 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GrantedHandles
 
 	UPROPERTY()
 	TArray<FActiveGameplayEffectHandle> GameplayEffectHandles;
+
+	UPROPERTY()
+	TArray<FName> GrantSourceIds;
 };
 
 USTRUCT(BlueprintType)
@@ -76,14 +79,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effects")
 	TArray<FProject_JAbilitySet_GameplayEffect> GrantedEffectEntries;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> GrantedGameplayAbilities;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effects")
-	TArray<TSubclassOf<UGameplayEffect>> GrantedGameplayEffects;
-
 	/** Grants the abilities and effects to the specified ASC, and stores the handles to remove them later. */
-	void GiveToAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject = nullptr) const;
+	void GiveToAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject = nullptr, FName GrantSourceId = NAME_None) const;
 
 	/** Removes the abilities and effects previously granted. */
 	void TakeFromAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* GrantedHandles) const;

@@ -15,6 +15,7 @@ class UProject_JDefaultAttributeSetData;
 class UProject_JEquipmentRuntimeComponent;
 class UProject_JCharacterClassDefinition;
 class UProject_JCharacterAdvancementDefinition;
+class UProject_JCombatStyleDefinition;
 
 UENUM(BlueprintType)
 enum class EProject_JRuntimeStateOwnership : uint8
@@ -53,6 +54,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
 	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const { return AdvancementDefinition; }
+	const UProject_JCombatStyleDefinition* GetClassCombatStyleDefinition() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
 	bool InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition);

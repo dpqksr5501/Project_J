@@ -222,8 +222,9 @@ void AProject_JPlayerController::DumpCharacterComponents()
 	}
 
 	const FString ComponentLine = FString::Printf(
-		TEXT("CharacterComponents Combat=%s Locomotion=%s Trajectory=%s ViewModel=%s"),
-		ProjectCharacter->GetActiveCombatComponent() ? TEXT("yes") : TEXT("no"),
+		TEXT("CharacterComponents WeaponPresentation=%s HitValidation=%s Locomotion=%s Trajectory=%s ViewModel=%s"),
+		ProjectCharacter->GetWeaponPresentationComponent() ? TEXT("yes") : TEXT("no"),
+		ProjectCharacter->GetCombatHitValidationComponent() ? TEXT("yes") : TEXT("no"),
 		ProjectCharacter->GetLocomotionAnimStateComponent() ? TEXT("yes") : TEXT("no"),
 		ProjectCharacter->GetMotionMatchingTrajectoryComponent() ? TEXT("yes") : TEXT("no"),
 		ProjectCharacter->GetCharacterViewModel() ? TEXT("yes") : TEXT("no"));

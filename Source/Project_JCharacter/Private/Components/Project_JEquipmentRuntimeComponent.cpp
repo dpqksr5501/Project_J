@@ -8,11 +8,14 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Project_JAttributeSet.h"
+#include "Project_JAbilitySystemComponent.h"
 #include "System/Project_JAssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/SkeletalMesh.h"
 #include "Project_JPlayerCharacter.h"
 #include "AbilitySystem/Project_JAbilitySet.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
+#include "Equipment/Project_JWeaponPresentationProfile.h"
 
 UProject_JEquipmentRuntimeComponent::UProject_JEquipmentRuntimeComponent()
 {
@@ -88,7 +91,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 	ApplyEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
 
 	RuntimeItems.Add(Slot, NewRuntimeItem);
-	RefreshCurrentWeaponAnimProfile();
+	RefreshCurrentWeaponConfiguration();
 
 	if (OwnerCharacter->GetNetMode() != NM_DedicatedServer)
 	{
@@ -113,7 +116,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	DestroyEquipmentVisual(RuntimeItem);
 
 	RuntimeItems.Remove(Slot);
-	RefreshCurrentWeaponAnimProfile();
+	RefreshCurrentWeaponConfiguration();
 }
 
 void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
@@ -126,7 +129,19 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
 	if (ASC && ItemDef.AbilitySet)
 	{
-		ItemDef.AbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef));
+		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetName()));
+		ItemDef.AbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef), GrantSource);
+	}
+	if (ASC && ItemDef.CombatStyleDefinition)
+	{
+		for (const UProject_JAbilitySet* StyleAbilitySet : ItemDef.CombatStyleDefinition->AbilitySets)
+		{
+			if (StyleAbilitySet)
+			{
+				const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *ItemDef.CombatStyleDefinition->CombatStyleTag.ToString(), *StyleAbilitySet->GetName()));
+				StyleAbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef), GrantSource);
+			}
+		}
 	}
 
 	if (ASC)
@@ -147,9 +162,15 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& Ow
 	}
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
-	if (ASC && ItemDef.AbilitySet)
+	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
 	{
-		ItemDef.AbilitySet->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
+		for (const FName GrantSourceId : RuntimeItem.GrantedHandles.GrantSourceIds)
+		{
+			ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
+		}
+		RuntimeItem.GrantedHandles.AbilitySpecHandles.Reset();
+		RuntimeItem.GrantedHandles.GameplayEffectHandles.Reset();
+		RuntimeItem.GrantedHandles.GrantSourceIds.Reset();
 	}
 
 	if (ASC)
@@ -221,29 +242,31 @@ void UProject_JEquipmentRuntimeComponent::DestroyEquipmentVisual(FProject_JEquip
 	}
 }
 
-void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponAnimProfile()
+void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponConfiguration()
 {
 	AProject_JPlayerCharacter* OwnerPlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
 	if (!OwnerPlayer) return;
 
-	OwnerPlayer->SetCurrentWeaponAnimProfile(ResolveCurrentWeaponAnimProfile());
+	OwnerPlayer->SetCurrentCombatStyle(ResolveCurrentCombatStyle());
+	OwnerPlayer->SetCurrentWeaponPresentationProfile(ResolveCurrentWeaponPresentationProfile());
 }
 
-UProject_JWeaponAnimProfile* UProject_JEquipmentRuntimeComponent::ResolveCurrentWeaponAnimProfile() const
+UProject_JCombatStyleDefinition* UProject_JEquipmentRuntimeComponent::ResolveCurrentCombatStyle() const
 {
-	UProject_JWeaponAnimProfile* SelectedWeaponAnimProfile = nullptr;
-	
-	for (const TPair<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem>& Pair : RuntimeItems)
+	if (const FProject_JEquipmentRuntimeItem* WeaponItem = RuntimeItems.Find(EProject_JEquipmentSlot::Weapon))
 	{
-		UProject_JEquipmentItemDefinition* ItemDef = Pair.Value.ItemDef;
-		if (ItemDef && ItemDef->EquipmentSlot == EProject_JEquipmentSlot::Weapon && ItemDef->WeaponAnimProfile)
-		{
-			SelectedWeaponAnimProfile = ItemDef->WeaponAnimProfile;
-			break;
-		}
+		return WeaponItem->ItemDef ? WeaponItem->ItemDef->CombatStyleDefinition.Get() : nullptr;
 	}
+	return nullptr;
+}
 
-	return SelectedWeaponAnimProfile;
+UProject_JWeaponPresentationProfile* UProject_JEquipmentRuntimeComponent::ResolveCurrentWeaponPresentationProfile() const
+{
+	if (const FProject_JEquipmentRuntimeItem* WeaponItem = RuntimeItems.Find(EProject_JEquipmentSlot::Weapon))
+	{
+		return WeaponItem->ItemDef ? WeaponItem->ItemDef->WeaponPresentationProfile.Get() : nullptr;
+	}
+	return nullptr;
 }
 
 void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const

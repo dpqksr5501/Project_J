@@ -8,6 +8,7 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "AbilitySystem/Project_JAbilitySet.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
@@ -213,6 +214,15 @@ FName AProject_JBaseCharacter::GetAdvancementId() const
 	return AdvancementDefinition ? AdvancementDefinition->AdvancementId : NAME_None;
 }
 
+const UProject_JCombatStyleDefinition* AProject_JBaseCharacter::GetClassCombatStyleDefinition() const
+{
+	if (AdvancementDefinition && AdvancementDefinition->CombatStyleOverride)
+	{
+		return AdvancementDefinition->CombatStyleOverride;
+	}
+	return CharacterClassDefinition ? CharacterClassDefinition->DefaultCombatStyle.Get() : nullptr;
+}
+
 bool AProject_JBaseCharacter::CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const
 {
 	if (!HasAuthority() || !NewAdvancementDefinition || NewAdvancementDefinition == AdvancementDefinition)
@@ -347,6 +357,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 		const bool bHasGrantContent =
 			!DefaultAbilities.IsEmpty() ||
 			(CharacterClassDefinition && !CharacterClassDefinition->AbilitySets.IsEmpty()) ||
+			(CharacterClassDefinition && CharacterClassDefinition->DefaultCombatStyle && !CharacterClassDefinition->DefaultCombatStyle->AbilitySets.IsEmpty()) ||
 			(AdvancementDefinition && !AdvancementDefinition->AdditionalAbilitySets.IsEmpty());
 		if (!bAlreadyGranted && bHasGrantContent)
 		{
@@ -354,7 +365,20 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 			{
 				if (AbilityClass)
 				{
-					ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+					const FName GrantSource(*FString::Printf(TEXT("Default.%s"), *AbilityClass->GetName()));
+					if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+					{
+						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource))
+						{
+							continue;
+						}
+						const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+						ProjectJASC->RegisterGrantedAbility(GrantSource, Handle);
+					}
+					else
+					{
+						ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+					}
 				}
 			}
 			GiveDefaultAbilitySets(*ASC, AbilitySourceObject);
@@ -396,7 +420,19 @@ void AProject_JBaseCharacter::GiveDefaultAbilitySets(UAbilitySystemComponent& AS
 		{
 			if (AbilitySet)
 			{
-				AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject);
+				const FName GrantSource(*FString::Printf(TEXT("Class.%s.%s"), *GetCharacterClassId().ToString(), *AbilitySet->GetName()));
+				AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
+			}
+		}
+		if (CharacterClassDefinition->DefaultCombatStyle)
+		{
+			for (const UProject_JAbilitySet* AbilitySet : CharacterClassDefinition->DefaultCombatStyle->AbilitySets)
+			{
+				if (AbilitySet)
+				{
+					const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *CharacterClassDefinition->DefaultCombatStyle->CombatStyleTag.ToString(), *AbilitySet->GetName()));
+					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
+				}
 			}
 		}
 	}
@@ -409,18 +445,13 @@ void AProject_JBaseCharacter::GiveDefaultAbilitySets(UAbilitySystemComponent& AS
 			{
 				if (AbilitySet)
 				{
-					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject);
+					const FName GrantSource(*FString::Printf(TEXT("Class.%s.%s"), *AdvancementDefinition->BaseClass->ClassId.ToString(), *AbilitySet->GetName()));
+					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
 				}
 			}
 		}
 
-		for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->AdditionalAbilitySets)
-		{
-			if (AbilitySet)
-			{
-				AbilitySet->GiveToAbilitySystem(&ASC, &AdvancementGrantedHandles, AbilitySourceObject);
-			}
-		}
+		GiveAdvancementAbilitySets(ASC, AbilitySourceObject, AdvancementGrantedHandles);
 	}
 }
 
@@ -435,13 +466,37 @@ void AProject_JBaseCharacter::GiveAdvancementAbilitySets(UAbilitySystemComponent
 	{
 		if (AbilitySet)
 		{
-			AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject);
+			const FName GrantSource(*FString::Printf(TEXT("Advancement.%s.%s"), *GetAdvancementId().ToString(), *AbilitySet->GetName()));
+			AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject, GrantSource);
+		}
+	}
+	if (AdvancementDefinition->CombatStyleOverride)
+	{
+		for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->CombatStyleOverride->AbilitySets)
+		{
+			if (AbilitySet)
+			{
+				const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *AdvancementDefinition->CombatStyleOverride->CombatStyleTag.ToString(), *AbilitySet->GetName()));
+				AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject, GrantSource);
+			}
 		}
 	}
 }
 
 void AProject_JBaseCharacter::RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC)
 {
+	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(&ASC); ProjectJASC && !AdvancementGrantedHandles.GrantSourceIds.IsEmpty())
+	{
+		for (const FName GrantSourceId : AdvancementGrantedHandles.GrantSourceIds)
+		{
+			ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
+		}
+		AdvancementGrantedHandles.AbilitySpecHandles.Reset();
+		AdvancementGrantedHandles.GameplayEffectHandles.Reset();
+		AdvancementGrantedHandles.GrantSourceIds.Reset();
+		return;
+	}
+
 	for (const FGameplayAbilitySpecHandle& AbilitySpecHandle : AdvancementGrantedHandles.AbilitySpecHandles)
 	{
 		if (AbilitySpecHandle.IsValid())
@@ -460,6 +515,7 @@ void AProject_JBaseCharacter::RemoveAdvancementAbilitySets(UAbilitySystemCompone
 
 	AdvancementGrantedHandles.AbilitySpecHandles.Reset();
 	AdvancementGrantedHandles.GameplayEffectHandles.Reset();
+	AdvancementGrantedHandles.GrantSourceIds.Reset();
 }
 
 UProject_JEquipmentManagerComponent* AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const

@@ -6,11 +6,13 @@
 
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JReplicatedJumpState.h"
+#include "Combat/Project_JCombatCommandSet.h"
 #include "Combat/Project_JCombatHitValidation.h"
 #include "Equipment/Project_JEquipmentTypes.h"
 #include "GameFramework/Actor.h"
 #include "Network/Project_JNetObjectFilter_Distance.h"
 #include "Project_JMMOTypes.h"
+#include "Project_JGameplayTags.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJMotionMatchingSearchPolicyTest,
@@ -114,6 +116,39 @@ bool FProjectJCombatHitValidationPolicyTest::RunTest(const FString& Parameters)
 			FVector(-200.0f, 0.0f, 0.0f),
 			Request),
 		EProject_JCombatHitValidationFailure::TargetOutsideAttackArc);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJCombatCommandResolutionTest,
+	"ProjectJ.Architecture.Combat.CommandResolution",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJCombatCommandResolutionTest::RunTest(const FString& Parameters)
+{
+	UProject_JCombatCommandSet* CommandSet = NewObject<UProject_JCombatCommandSet>(GetTransientPackage());
+	const FProject_JGameplayTags& Tags = FProject_JGameplayTags::Get();
+
+	FProject_JCombatCommandDefinition& Command = CommandSet->Commands.AddDefaulted_GetRef();
+	Command.CommandTag = Tags.InputTag_Weapon_HeavyAttack;
+	Command.OrderedInputSequence = {
+		Tags.InputTag_Weapon_LightAttack,
+		Tags.InputTag_Weapon_HeavyAttack,
+		Tags.InputTag_Weapon_LightAttack};
+	Command.ResultInputTag = Tags.InputTag_Weapon_HeavyAttack;
+	Command.MaxTimeBetweenInputs = 0.45f;
+
+	TArray<FProject_JCombatCommandInputEntry> History;
+	History.Add({Tags.InputTag_Weapon_LightAttack, 10.0});
+	History.Add({Tags.InputTag_Weapon_HeavyAttack, 10.2});
+	History.Add({Tags.InputTag_Weapon_LightAttack, 10.4});
+
+	const FGameplayTagContainer OwnerTags;
+	TestNotNull(TEXT("Light-heavy-light resolves the authored command"), CommandSet->FindBestMatch(History, OwnerTags));
+
+	History[2].TimestampSeconds = 10.8;
+	TestNull(TEXT("A gap beyond the command window does not resolve"), CommandSet->FindBestMatch(History, OwnerTags));
 
 	return true;
 }

@@ -3,21 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Combat/Project_JCombatTypes.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "Project_JComboDefinition.generated.h"
 
-class UAnimMontage;
-
-/** How this combo node moves the character. The ability does not force root motion; the montage/ability owns that behavior. */
-UENUM(BlueprintType)
-enum class EProject_JComboMovementPolicy : uint8
-{
-	InPlace UMETA(DisplayName = "In Place"),
-	RootMotionMontage UMETA(DisplayName = "Root Motion Montage"),
-	RootMotionWarped UMETA(DisplayName = "Root Motion + Motion Warping")
-};
+class UProject_JAttackDefinition;
 
 /** A directed input edge between two authored combo nodes. */
 USTRUCT(BlueprintType)
@@ -53,21 +43,9 @@ struct PROJECT_JCHARACTER_API FProject_JComboNode
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Identity")
 	FGameplayTagContainer StartInputTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> Montage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	FName MontageSectionName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (ClampMin = "0.1", UIMin = "0.1"))
-	float PlayRate = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
-	EProject_JComboMovementPolicy MovementPolicy = EProject_JComboMovementPolicy::InPlace;
-
-	/** Gameplay parameters for this individual swing. Hit tracing consumes this node's data rather than a weapon-wide primary-attack value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
-	FProject_JComboHitSpec HitSpec;
+	/** Reusable attack payload. Combo nodes only define graph flow and conditions. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
+	TObjectPtr<UProject_JAttackDefinition> AttackDefinition = nullptr;
 
 	/** Allows one valid next input to be held before the Combo Window notify opens. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")

@@ -31,6 +31,7 @@
 
 namespace
 {
+
 FString GetDebugWorldName(const AActor* Actor)
 {
 	return Actor && Actor->GetWorld() ? Actor->GetWorld()->GetName() : FString(TEXT("None"));
@@ -173,6 +174,37 @@ float UProject_JCharacterAnimInstance::GetThreadSafeGroundSpeed() const
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeCombatLocomotionSpeed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeCombatLocomotionDirection() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.RelativeVelocityDirection;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeCombatLocomotionStartRequested() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Ground.bStartRequested;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeCombatLocomotionStopRequested() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Ground.bStopRequested;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeUsesFullBodyCombatLocomotion() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Combat.PresentationMode ==
+		EProject_JCombatAnimationPresentationMode::FullBodyLocomotion;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeUsesCombatUpperBodyOverlay() const
+{
+	return !GetThreadSafeUsesFullBodyCombatLocomotion();
+}
+
 FVector UProject_JCharacterAnimInstance::GetThreadSafeVelocity() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.Velocity;
@@ -300,6 +332,21 @@ FFootPlacementInterpolationSettings UProject_JCharacterAnimInstance::Get_FootPla
 	return Data.Ground.bStopRequested ? FootPlacementInterpolationSettingsStops : FootPlacementInterpolationSettingsDefault;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeFootPlacementAlpha() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().ProceduralIK.FootPlacementAlpha;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeLegIKAlpha() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().ProceduralIK.LegIKAlpha;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeFullBodyMontageWeight() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().ProceduralIK.FullBodyMontageWeight;
+}
+
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::GetCurrentActivePoseSearchDatabaseThreadSafe() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetCurrentActiveDatabase();
@@ -315,7 +362,7 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 	const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter ? OwningPlayerCharacter->GetWeaponAnimProfile() : nullptr;
 	return FString::Printf(
 		TEXT("Optimization Tier=%d UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s\n")
-		TEXT("Weapon Profile=%s Stance=%s\n")
+		TEXT("Weapon Profile=%s Stance=%s Presentation=%d\n")
 		TEXT("Movement GroundSpeed=%.1f VerticalSpeed=%.1f AccelRatio=%.2f HasTrajectory=%s StoppedAccel=%s\n")
 		TEXT("Input Has=%s Size=%.2f Held=%.2f Turn=%.1f SharpTurn=%s MoveDir=%.1f\n")
 		TEXT("Context Gait=%s Rotation=%s Phase=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f\n")
@@ -331,6 +378,7 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 		*GetNameSafe(CurrentActivePoseSearchDatabase),
 		*GetNameSafe(WeaponAnimProfile),
 		WeaponAnimProfile ? ToDebugString(WeaponAnimProfile->WeaponStance) : TEXT("None"),
+		static_cast<int32>(Data.Combat.PresentationMode),
 		Data.Movement.GroundSpeed,
 		Data.Movement.VerticalSpeed,
 		Data.Movement.AccelerationRatio,
@@ -409,6 +457,7 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 	const bool bHasAimData = FillPlayerThreadSafeData(Data);
 	FillMountThreadSafeData(Data);
 	FinalizeThreadSafeData(Data, bHasAimData);
+	FillProceduralIKThreadSafeData(Data);
 
 	return Data;
 }
@@ -417,7 +466,17 @@ void UProject_JCharacterAnimInstance::FillMovementThreadSafeData(FProject_JAnimT
 {
 	const FVector CharacterVelocity = OwningCharacter->GetVelocity();
 	Data.Movement.Velocity = CharacterVelocity;
-	Data.Movement.GroundSpeed = FVector(CharacterVelocity.X, CharacterVelocity.Y, 0.0f).Size();
+	const FVector GroundVelocity(CharacterVelocity.X, CharacterVelocity.Y, 0.0f);
+	Data.Movement.GroundSpeed = GroundVelocity.Size();
+	if (Data.Movement.GroundSpeed > KINDA_SMALL_NUMBER)
+	{
+		const FVector LocalGroundVelocity = OwningCharacter->GetActorQuat().UnrotateVector(GroundVelocity);
+		Data.Movement.RelativeVelocityDirection = FMath::RadiansToDegrees(FMath::Atan2(LocalGroundVelocity.Y, LocalGroundVelocity.X));
+	}
+	else
+	{
+		Data.Movement.RelativeVelocityDirection = 0.0f;
+	}
 	Data.Movement.VerticalSpeed = CharacterVelocity.Z;
 
 	if (const UCharacterMovementComponent* MovementComponent = OwningCharacter->GetCharacterMovement())
@@ -515,7 +574,11 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	Data.Combat.bIsAttacking = OwningPlayerCharacter->IsAttacking();
 	Data.Combat.bIsDodging = OwningPlayerCharacter->IsDodging();
 	Data.Combat.bIsHitReacting = OwningPlayerCharacter->IsHitReacting();
-	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->bIsPlayingCombatIntro;
+	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->IsCombatIntroPlaying();
+	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter->GetWeaponAnimProfile())
+	{
+		Data.Combat.PresentationMode = WeaponAnimProfile->CombatPresentationMode;
+	}
 
 	if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
 	{
@@ -582,6 +645,39 @@ void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThrea
 	}
 }
 
+void UProject_JCharacterAnimInstance::FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const
+{
+	// Slot state belongs to UAnimInstance and is therefore sampled on the game
+	// thread here. The result is copied to the proxy before AnimGraph worker
+	// thread evaluation, avoiding an unsafe montage query from Blueprint.
+	const float FullBodyMontageWeight = FMath::Clamp(
+		GetSlotMontageGlobalWeight(FullBodyMontageIKPolicy.FullBodyMontageSlotName),
+		0.0f,
+		1.0f);
+
+	Data.ProceduralIK.FullBodyMontageWeight = FullBodyMontageWeight;
+	Data.ProceduralIK.FootPlacementAlpha = FMath::Lerp(
+		1.0f,
+		FullBodyMontageIKPolicy.FootPlacementAlphaDuringFullBodyMontage,
+		FullBodyMontageWeight);
+	const float MontageLegIKAlpha = FMath::Lerp(
+		1.0f,
+		FullBodyMontageIKPolicy.LegIKAlphaDuringFullBodyMontage,
+		FullBodyMontageWeight);
+
+	// Only a weapon profile that explicitly supplies full-body locomotion owns
+	// the lower-body pose. Upper-body overlays deliberately retain the shared
+	// Motion Matching lower body and therefore retain normal procedural Leg IK.
+	// Full-body draw/attack montages are handled independently by their slot
+	// weight above, so combat intro blending cannot produce an IK 0->1->0 pulse.
+	const bool bUsesAuthoredCombatLowerBody =
+		Data.Combat.PresentationMode == EProject_JCombatAnimationPresentationMode::FullBodyLocomotion &&
+		(Data.Combat.bIsCombatMode || Data.Combat.bIsPlayingCombatIntro);
+	Data.ProceduralIK.LegIKAlpha = bUsesAuthoredCombatLowerBody
+		? FMath::Min(MontageLegIKAlpha, FullBodyMontageIKPolicy.LegIKAlphaDuringFullBodyCombat)
+		: MontageLegIKAlpha;
+}
+
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
 {
 	const bool bMotionMatchingEnabled =
@@ -613,7 +709,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 	ProjectProxy.QueueGameThreadData(Data, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, bUpdateMotionMatchingThisFrame);
 }
 
-UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const
+UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data)
 {
 	if (!OwningCharacter || IsDedicatedServerAnimationContext())
 	{
@@ -640,6 +736,30 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			Data.Air.bIsFallOffStart,
 			OwningPlayerCharacter && !IsLocallyControlledCharacter() && GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart)
 		: nullptr;
+
+	// Upper-body combat overlays retain the shared lower-body Motion Matching
+	// asset set.  Most base locomotion sets only author their Start/Run/Stop
+	// database families for OrientToMovement; combat camera-facing movement uses
+	// a different rotation mode and would otherwise fall through to the generic
+	// (often idle-only) fallback database.  Prefer a dedicated combat/strafe
+	// DatabaseEntry whenever one exists, then fall back to the proven shared
+	// gait family until that weapon receives authored full-body strafe databases.
+	if (!SelectedDatabase &&
+		Data.Combat.bIsCombatMode &&
+		Data.Combat.PresentationMode == EProject_JCombatAnimationPresentationMode::UpperBodyOverlay &&
+		Data.LocomotionContext.RotationMode != EProject_JLocomotionRotationMode::OrientToMovement &&
+		AssetSet)
+	{
+		SelectedDatabase = AssetSet->FindDatabaseForContext(
+			Data.LocomotionContext.GaitIntent,
+			EProject_JLocomotionRotationMode::OrientToMovement,
+			Data.LocomotionContext.PhaseFamily,
+			Data.Landing.bUseHeavyLand,
+			Data.Landing.bLandWasMoving,
+			Data.Landing.bLandWasSprinting,
+			Data.Air.bIsFallOffStart,
+			OwningPlayerCharacter && !IsLocallyControlledCharacter() && GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart);
+	}
 	if (!SelectedDatabase)
 	{
 		SelectedDatabase = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
@@ -685,7 +805,28 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 
 	if (UPoseSearchDatabase* ResultDatabase = Cast<UPoseSearchDatabase>(ResultObject))
 	{
-		SelectedDatabase = ResultDatabase;
+		// An upper-body combat overlay deliberately keeps the shared Motion
+		// Matching lower body.  A combat-specific Chooser row must therefore
+		// never replace a valid moving/start/stop database with the idle
+		// database; doing so freezes the legs while the CharacterMovement
+		// component continues moving.  Full-body combat locomotion remains free
+		// to provide its own database selection through its presentation layer.
+		const bool bUsesSharedCombatLowerBody =
+			Data.Combat.bIsCombatMode &&
+			Data.Combat.PresentationMode == EProject_JCombatAnimationPresentationMode::UpperBodyOverlay;
+		const bool bHasNonIdleLocomotionContext =
+			Data.Ground.GroundMotionMode != EProject_JGroundMotionMode::Idle ||
+			Data.LocomotionContext.PhaseFamily != EProject_JLocomotionPhaseFamily::Idle;
+		const bool bChooserWouldReplaceMovingPoseWithIdle =
+			bUsesSharedCombatLowerBody &&
+			bHasNonIdleLocomotionContext &&
+			SelectedDatabase &&
+			ResultDatabase == IdleDatabase;
+
+		if (!bChooserWouldReplaceMovingPoseWithIdle)
+		{
+			SelectedDatabase = ResultDatabase;
+		}
 	}
 
 	return SelectedDatabase;

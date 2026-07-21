@@ -1,19 +1,30 @@
 #include "AbilitySystem/Project_JAbilitySet.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
+#include "Project_JAbilitySystemComponent.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
 #include "Validation/Project_JDataValidation.h"
 #endif
 
-void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject) const
+void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject, const FName GrantSourceId) const
 {
 	check(ASC);
 
 	if (!OutGrantedHandles)
 	{
 		return;
+	}
+
+	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+	if (!GrantSourceId.IsNone())
+	{
+		if (!ProjectJASC || !ProjectJASC->ReserveAbilityGrantSource(GrantSourceId))
+		{
+			return;
+		}
+		OutGrantedHandles->GrantSourceIds.Add(GrantSourceId);
 	}
 
 	for (const FProject_JAbilitySet_GameplayAbility& AbilityEntry : GrantedAbilityEntries)
@@ -32,18 +43,9 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 
 		const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
 		OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
-	}
-
-	// Backward-compatible legacy grants.
-	for (int32 AbilityIndex = 0; AbilityIndex < GrantedGameplayAbilities.Num(); ++AbilityIndex)
-	{
-		const TSubclassOf<UGameplayAbility>& AbilityToGrant = GrantedGameplayAbilities[AbilityIndex];
-		if (AbilityToGrant)
+		if (ProjectJASC && !GrantSourceId.IsNone())
 		{
-			FGameplayAbilitySpec AbilitySpec(AbilityToGrant, 1, INDEX_NONE, SourceObject);
-
-			const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
-			OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
+			ProjectJASC->RegisterGrantedAbility(GrantSourceId, AbilitySpecHandle);
 		}
 	}
 
@@ -57,19 +59,12 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
 		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
 		OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle);
-	}
-
-	// Backward-compatible legacy effects.
-	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
-	{
-		const TSubclassOf<UGameplayEffect>& EffectToGrant = GrantedGameplayEffects[EffectIndex];
-		if (EffectToGrant)
+		if (ProjectJASC && !GrantSourceId.IsNone())
 		{
-			const UGameplayEffect* GameplayEffect = EffectToGrant->GetDefaultObject<UGameplayEffect>();
-			const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, 1.0f, ASC->MakeEffectContext());
-			OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle);
+			ProjectJASC->RegisterGrantedEffect(GrantSourceId, GameplayEffectHandle);
 		}
 	}
+
 }
 
 void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, FProject_JAbilitySet_GrantedHandles* GrantedHandles) const
@@ -79,6 +74,21 @@ void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, F
 	if (!GrantedHandles)
 	{
 		return;
+	}
+
+	if (!GrantedHandles->GrantSourceIds.IsEmpty())
+	{
+		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+		{
+			for (const FName GrantSourceId : GrantedHandles->GrantSourceIds)
+			{
+				ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
+			}
+			GrantedHandles->AbilitySpecHandles.Reset();
+			GrantedHandles->GameplayEffectHandles.Reset();
+			GrantedHandles->GrantSourceIds.Reset();
+			return;
+		}
 	}
 
 	for (const FGameplayAbilitySpecHandle& Handle : GrantedHandles->AbilitySpecHandles)
@@ -99,6 +109,7 @@ void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, F
 
 	GrantedHandles->AbilitySpecHandles.Reset();
 	GrantedHandles->GameplayEffectHandles.Reset();
+	GrantedHandles->GrantSourceIds.Reset();
 }
 
 #if WITH_EDITOR
@@ -160,26 +171,6 @@ EDataValidationResult UProject_JAbilitySet::IsDataValid(FDataValidationContext& 
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
 				NSLOCTEXT("ProjectJAbilitySet", "InvalidEffectLevel", "GrantedEffectEntries[{0}] has EffectLevel below or equal to 0."),
-				FText::AsNumber(EffectIndex)));
-		}
-	}
-
-	for (int32 AbilityIndex = 0; AbilityIndex < GrantedGameplayAbilities.Num(); ++AbilityIndex)
-	{
-		if (!GrantedGameplayAbilities[AbilityIndex])
-		{
-			Project_J::DataValidation::AddWarning(Context, FText::Format(
-				NSLOCTEXT("ProjectJAbilitySet", "MissingLegacyAbility", "GrantedGameplayAbilities[{0}] is empty."),
-				FText::AsNumber(AbilityIndex)));
-		}
-	}
-
-	for (int32 EffectIndex = 0; EffectIndex < GrantedGameplayEffects.Num(); ++EffectIndex)
-	{
-		if (!GrantedGameplayEffects[EffectIndex])
-		{
-			Project_J::DataValidation::AddWarning(Context, FText::Format(
-				NSLOCTEXT("ProjectJAbilitySet", "MissingLegacyEffect", "GrantedGameplayEffects[{0}] is empty."),
 				FText::AsNumber(EffectIndex)));
 		}
 	}

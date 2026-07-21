@@ -46,7 +46,8 @@ Combat 상태가 Locomotion 조건문 안에 직접 섞이지 않도록 characte
 
 ## Current Supporting Pieces
 
-- `UProject_JCombatComponent`: GAS ability tag activation과 combat state tag 소유를 담당합니다.
+- `UProject_JWeaponPresentationComponent`: 공용 무기 액터 생성·제거와 프로필 소켓 부착을 담당합니다.
+- `UProject_JCombatHitValidationComponent`: 모든 직업이 공유하는 서버 측 히트 검증(SSR)을 담당합니다.
 - `UProject_JCharacterUIBindingComponent`: UI ViewModel attribute binding을 담당합니다.
 - `UProject_JPlayerInputBindingComponent`: EnhancedInput binding과 gameplay method 호출을 분리합니다.
 - `UProject_JReplicatedAnimEventComponent`: replicated animation event counter 갱신/적용 의미를 담당합니다.

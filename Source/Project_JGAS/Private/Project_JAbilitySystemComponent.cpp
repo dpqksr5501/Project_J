@@ -154,3 +154,60 @@ bool UProject_JAbilitySystemComponent::HasGameplayTagReplicationAuthority() cons
 	const AActor* Owner = GetOwnerActor();
 	return Owner && Owner->HasAuthority();
 }
+
+bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName SourceId)
+{
+	if (!IsOwnerActorAuthoritative() || SourceId.IsNone() || AbilityGrantRecords.Contains(SourceId))
+	{
+		return false;
+	}
+	AbilityGrantRecords.Add(SourceId);
+	return true;
+}
+
+void UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, const FGameplayAbilitySpecHandle Handle)
+{
+	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
+	{
+		Record->AbilityHandles.Add(Handle);
+	}
+}
+
+void UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceId, const FActiveGameplayEffectHandle Handle)
+{
+	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
+	{
+		Record->EffectHandles.Add(Handle);
+	}
+}
+
+bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId)
+{
+	FProject_JAbilityGrantRecord Record;
+	if (!IsOwnerActorAuthoritative() || SourceId.IsNone() || !AbilityGrantRecords.RemoveAndCopyValue(SourceId, Record))
+	{
+		return false;
+	}
+
+	for (const FGameplayAbilitySpecHandle Handle : Record.AbilityHandles)
+	{
+		if (Handle.IsValid())
+		{
+			CancelAbilityHandle(Handle);
+			ClearAbility(Handle);
+		}
+	}
+	for (const FActiveGameplayEffectHandle Handle : Record.EffectHandles)
+	{
+		if (Handle.IsValid())
+		{
+			RemoveActiveGameplayEffect(Handle);
+		}
+	}
+	return true;
+}
+
+bool UProject_JAbilitySystemComponent::HasAbilityGrantSource(const FName SourceId) const
+{
+	return !SourceId.IsNone() && AbilityGrantRecords.Contains(SourceId);
+}

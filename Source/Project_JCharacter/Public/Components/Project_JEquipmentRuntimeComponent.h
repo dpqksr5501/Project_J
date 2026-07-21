@@ -12,7 +12,8 @@
 class UProject_JEquipmentItemDefinition;
 class UProject_JEquipmentManagerComponent;
 class UProject_JModularMeshComponent;
-class UProject_JWeaponAnimProfile;
+class UProject_JCombatStyleDefinition;
+class UProject_JWeaponPresentationProfile;
 class UAbilitySystemComponent;
 
 USTRUCT(BlueprintType)
@@ -71,11 +72,12 @@ private:
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void DestroyEquipmentVisual(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
-	UProject_JWeaponAnimProfile* ResolveCurrentWeaponAnimProfile() const;
+	UProject_JCombatStyleDefinition* ResolveCurrentCombatStyle() const;
+	UProject_JWeaponPresentationProfile* ResolveCurrentWeaponPresentationProfile() const;
 	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
-	void RefreshCurrentWeaponAnimProfile();
+	void RefreshCurrentWeaponConfiguration();
 
 private:
 	UPROPERTY(Transient)

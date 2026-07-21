@@ -3,7 +3,6 @@
 #include "Project_JPlayerCharacter.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
-#include "Project_JCombatComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JAnimationProfileValidation.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
@@ -13,7 +12,10 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
+#include "Equipment/Project_JWeaponPresentationProfile.h"
+#include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -33,11 +35,13 @@
 #include "Components/Project_JReplicatedJumpStateComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatAnimationLayerComponent.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
 #include "Mount/Project_JMountItemDefinition.h"
@@ -49,7 +53,7 @@
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+DEFINE_LOG_CATEGORY(LogProjectJPlayer);
 
 namespace
 {
@@ -90,7 +94,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	PrimaryActorTick.bCanEverTick = true; // Tick 활성화
+	PrimaryActorTick.bCanEverTick = true; // Tick ?쒖꽦??
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -142,6 +146,8 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 	CombatAnimationLayerComponent = CreateDefaultSubobject<UProject_JCombatAnimationLayerComponent>(TEXT("CombatAnimationLayerComponent"));
+	WeaponPresentationComponent = CreateDefaultSubobject<UProject_JWeaponPresentationComponent>(TEXT("WeaponPresentationComponent"));
+	CombatHitValidationComponent = CreateDefaultSubobject<UProject_JCombatHitValidationComponent>(TEXT("CombatHitValidationComponent"));
 	MountComponent = CreateDefaultSubobject<UProject_JMountComponent>(TEXT("MountComponent"));
 }
 
@@ -149,6 +155,9 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AProject_JPlayerCharacter, SummonedMount);
+	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentCombatStyle);
+	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponPresentationProfile);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatModePresentation, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -180,12 +189,14 @@ void AProject_JPlayerCharacter::BeginPlay()
 	ApplyLocomotionProfile();
 	LogAnimationProfileConfiguration();
 	RefreshAbilitySystemDependentComponents();
+	ApplyPrototypeStartingEquipment();
 	if (CombatAnimationLayerComponent)
 	{
+		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
 		CombatAnimationLayerComponent->RefreshLayer();
 	}
 
-	// 바인딩: 어택/회피/피격 태그가 변경될 때 즉각적으로 Sprint 속도를 갱신
+	// 諛붿씤?? ?댄깮/?뚰뵾/?쇨꺽 ?쒓렇媛 蹂寃쎈맆 ??利됯컖?곸쑝濡?Sprint ?띾룄瑜?媛깆떊
 }
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -218,6 +229,7 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 	}
 
 	RefreshAbilitySystemDependentComponents();
+	ApplyPrototypeStartingEquipment();
 }
 
 void AProject_JPlayerCharacter::OnRep_PlayerState()
@@ -230,6 +242,31 @@ void AProject_JPlayerCharacter::OnRep_PlayerState()
 	}
 
 	RefreshAbilitySystemDependentComponents();
+}
+
+void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
+{
+	if (!HasAuthority() || !PrototypeStartingWeapon)
+	{
+		return;
+	}
+
+	UProject_JEquipmentManagerComponent* ResolvedEquipmentManager = ResolveEquipmentManagerForRuntime();
+	if (!ResolvedEquipmentManager)
+	{
+		UE_LOG(LogProjectJPlayer, Warning, TEXT("Prototype starting weapon was not equipped: no EquipmentManager is available. Owner=%s Weapon=%s"),
+			*GetName(), *GetNameSafe(PrototypeStartingWeapon));
+		return;
+	}
+
+	if (ResolvedEquipmentManager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon))
+	{
+		return;
+	}
+
+	ResolvedEquipmentManager->EquipItem(PrototypeStartingWeapon);
+	UE_LOG(LogProjectJPlayer, Log, TEXT("Prototype starting weapon equipped. Owner=%s Weapon=%s"),
+		*GetName(), *GetNameSafe(PrototypeStartingWeapon));
 }
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
@@ -264,6 +301,7 @@ void AProject_JPlayerCharacter::OnMountChangedForAnimation(AProject_JMountCharac
 	RefreshMountedAnimationLayer();
 	if (CombatAnimationLayerComponent)
 	{
+		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
 		CombatAnimationLayerComponent->RefreshLayer();
 	}
 }
@@ -406,7 +444,7 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	const bool bBoundInput = PlayerInputBindingComponent && PlayerInputBindingComponent->BindInput(PlayerInputComponent, this, ActionSet);
 	if (!bBoundInput)
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogProjectJPlayer, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
@@ -487,32 +525,15 @@ void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
 		CharacterUIBindingComponent->InitializeFromAttributes(Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()), GetAttributeSet(), GetCharacterLevelForInterfaceObject(this));
 	}
 
-	RefreshActiveCombatComponent();
 	RegisterCombatStateTagEvents();
 	if (SkillInputExecutionComponent)
 	{
-		SkillInputExecutionComponent->Initialize(this, CombatStateComponent);
+		SkillInputExecutionComponent->Initialize(this);
 	}
 	if (CameraComponent)
 	{
 		CameraComponent->RefreshAbilitySystemBinding();
 	}
-}
-
-UProject_JCombatComponent* AProject_JPlayerCharacter::RefreshActiveCombatComponent()
-{
-	UProject_JCombatComponent* FoundCombatComponent = FindComponentByClass<UProject_JCombatComponent>();
-	if (FoundCombatComponent && FoundCombatComponent != ActiveCombatComponent)
-	{
-		ActiveCombatComponent = FoundCombatComponent;
-	}
-
-	if (ActiveCombatComponent && GetAbilitySystemComponent())
-	{
-		ActiveCombatComponent->BindToGAS(GetAbilitySystemComponent());
-	}
-
-	return ActiveCombatComponent;
 }
 
 void AProject_JPlayerCharacter::RegisterCombatStateTagEvents()
@@ -537,38 +558,92 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 
 	if (CallbackTag == FProject_JGameplayTags::Get().State_CombatMode)
 	{
-		UProject_JCombatComponent* CombatComponent = RefreshActiveCombatComponent();
-		if (CombatComponent)
+		if (HasAuthority())
 		{
-			if (bIsCombatModeActive)
-			{
-				CombatComponent->EquipWeapon();
-			}
-			else
-			{
-				CombatComponent->UnequipWeapon();
-			}
+			bReplicatedCombatModePresentation = bIsCombatModeActive;
+			ForceNetUpdate();
 		}
 
-		if (bIsCombatModeActive)
-		{
-			ApplyCombatRotationMode(true);
-		}
-		else
-		{
-			CancelCombatIntroMontage();
-			ApplyCombatRotationMode(false);
-		}
-
-		if (CombatAnimationLayerComponent)
-		{
-			CombatAnimationLayerComponent->RefreshLayer();
-		}
-
+		ApplyCombatPresentationState(bIsCombatModeActive, false);
 	}
 
 	UpdateMaxWalkSpeed();
 	ApplySprintAnimationState();
+}
+
+void AProject_JPlayerCharacter::OnRep_ReplicatedCombatModePresentation()
+{
+	// Never consult the remote avatar's ASC here. Its replicated tag timing is
+	// intentionally independent from this cosmetic state and can otherwise keep
+	// a just-sheathed weapon attached to the hand.
+	ApplyCombatPresentationState(bReplicatedCombatModePresentation, true);
+	UpdateMaxWalkSpeed();
+	ApplySprintAnimationState();
+}
+
+void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
+{
+	if (SkillInputExecutionComponent)
+	{
+		SkillInputExecutionComponent->ClearCommandInputHistory();
+	}
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
+}
+
+void AProject_JPlayerCharacter::OnRep_CurrentWeaponPresentationProfile()
+{
+	if (WeaponPresentationComponent)
+	{
+		WeaponPresentationComponent->RefreshPresentation();
+	}
+}
+
+void AProject_JPlayerCharacter::ApplyCombatPresentationState(
+	const bool bCombatModeActive,
+	const bool bPlayRemoteTransitionMontage)
+{
+	if (bCombatModeActive)
+	{
+		CancelCombatOutroMontage();
+		if (WeaponPresentationComponent)
+		{
+			WeaponPresentationComponent->EnterCombatPresentation();
+		}
+		ApplyCombatRotationMode(true);
+
+		// The owning client already played the draw montage before applying its
+		// predicted combat state. Simulated proxies need an explicit cosmetic play.
+		if (bPlayRemoteTransitionMontage)
+		{
+			PlayCosmeticCombatIntroMontage();
+		}
+	}
+	else
+	{
+		CancelCombatIntroMontage();
+		ApplyCombatRotationMode(false);
+		if (GetEffectiveCombatOutroMontage())
+		{
+			if (WeaponPresentationComponent)
+			{
+				WeaponPresentationComponent->BeginSheathePresentation();
+			}
+			PlayCombatOutroMontage();
+		}
+		else if (WeaponPresentationComponent)
+		{
+			WeaponPresentationComponent->ExitCombatPresentation();
+		}
+	}
+
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 }
 
 bool AProject_JPlayerCharacter::ShouldAllowSprintInCombat() const
@@ -606,7 +681,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	if (!CharacterAnimProfile && LocomotionProfile)
 	{
 		UE_LOG(
-			LogTemplateCharacter,
+			LogProjectJPlayer,
 			Display,
 			TEXT("%s uses LocomotionProfile directly. Prefer assigning CharacterAnimProfile for new characters."),
 			*GetNameSafe(this));
@@ -614,7 +689,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	else if (!CharacterAnimProfile && MotionMatchingAssetSet)
 	{
 		UE_LOG(
-			LogTemplateCharacter,
+			LogProjectJPlayer,
 			Display,
 			TEXT("%s uses MotionMatchingAssetSet directly. Prefer CharacterAnimProfile -> LocomotionProfile -> MotionMatchingAssetSet."),
 			*GetNameSafe(this));
@@ -623,7 +698,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	if (CharacterAnimProfile && !EffectiveLocomotionProfile)
 	{
 		UE_LOG(
-			LogTemplateCharacter,
+			LogProjectJPlayer,
 			Warning,
 			TEXT("%s has CharacterAnimProfile %s, but it does not provide a LocomotionProfile."),
 			*GetNameSafe(this),
@@ -633,7 +708,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	if (EffectiveLocomotionProfile && !EffectiveAssetSet)
 	{
 		UE_LOG(
-			LogTemplateCharacter,
+			LogProjectJPlayer,
 			Warning,
 			TEXT("%s uses LocomotionProfile %s, but no MotionMatchingAssetSet is assigned."),
 			*GetNameSafe(this),
@@ -642,7 +717,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	else if (!EffectiveLocomotionProfile && !EffectiveAssetSet)
 	{
 		UE_LOG(
-			LogTemplateCharacter,
+			LogProjectJPlayer,
 			Warning,
 			TEXT("%s has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."),
 			*GetNameSafe(this));
@@ -660,7 +735,7 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 
 	for (const FString& ValidationWarning : ValidationWarnings)
 	{
-		UE_LOG(LogTemplateCharacter, Warning, TEXT("%s"), *ValidationWarning);
+		UE_LOG(LogProjectJPlayer, Warning, TEXT("%s"), *ValidationWarning);
 	}
 }
 
@@ -738,6 +813,26 @@ float AProject_JPlayerCharacter::GetEffectiveCombatIntroMontagePlayRate() const
 	}
 
 	return CombatIntroMontagePlayRate;
+}
+
+UAnimMontage* AProject_JPlayerCharacter::GetEffectiveCombatOutroMontage() const
+{
+	if (const UProject_JWeaponAnimProfile* EffectiveWeaponAnimProfile = GetWeaponAnimProfile())
+	{
+		return EffectiveWeaponAnimProfile->CombatOutroMontage.Get();
+	}
+
+	return nullptr;
+}
+
+float AProject_JPlayerCharacter::GetEffectiveCombatOutroMontagePlayRate() const
+{
+	if (const UProject_JWeaponAnimProfile* EffectiveWeaponAnimProfile = GetWeaponAnimProfile())
+	{
+		return EffectiveWeaponAnimProfile->CombatOutroMontagePlayRate;
+	}
+
+	return 1.0f;
 }
 
 bool AProject_JPlayerCharacter::ShouldPlayCombatIntroMontage() const
@@ -832,17 +927,30 @@ const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatc
 
 const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
 {
-	if (CurrentWeaponAnimProfile)
+	if (const UProject_JCombatStyleDefinition* CombatStyle = GetCombatStyleDefinition())
 	{
-		return CurrentWeaponAnimProfile.Get();
+		return CombatStyle->WeaponAnimationProfile;
 	}
-
-	return CharacterAnimProfile ? CharacterAnimProfile->WeaponAnimProfile.Get() : nullptr;
+	return nullptr;
 }
 
 const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfile() const
 {
 	return CharacterAnimProfile ? CharacterAnimProfile->CombatAnimProfile.Get() : nullptr;
+}
+
+const UProject_JCombatStyleDefinition* AProject_JPlayerCharacter::GetCombatStyleDefinition() const
+{
+	if (CurrentCombatStyle)
+	{
+		return CurrentCombatStyle;
+	}
+	if (const UProject_JCombatStyleDefinition* ClassCombatStyle = GetClassCombatStyleDefinition())
+	{
+		return ClassCombatStyle;
+	}
+
+	return nullptr;
 }
 
 UProject_JCharacterViewModel* AProject_JPlayerCharacter::GetCharacterViewModel() const
@@ -861,20 +969,51 @@ UProject_JInventoryComponent* AProject_JPlayerCharacter::GetInventoryComponent()
 
 bool AProject_JPlayerCharacter::IsCombatModeActive() const
 {
-	return CombatStateComponent && CombatStateComponent->IsCombatModeActive();
+	return (CombatStateComponent && CombatStateComponent->IsCombatModeActive()) || bReplicatedCombatModePresentation;
 }
 
-void AProject_JPlayerCharacter::SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile)
+void AProject_JPlayerCharacter::SetCurrentCombatStyle(UProject_JCombatStyleDefinition* InCombatStyle)
 {
-	if (CurrentWeaponAnimProfile == InWeaponAnimProfile)
+	if (CurrentCombatStyle == InCombatStyle)
 	{
 		return;
 	}
 
-	CurrentWeaponAnimProfile = InWeaponAnimProfile;
+	CurrentCombatStyle = InCombatStyle;
+	if (SkillInputExecutionComponent)
+	{
+		SkillInputExecutionComponent->ClearCommandInputHistory();
+	}
+	if (WeaponPresentationComponent)
+	{
+		WeaponPresentationComponent->RefreshPresentation();
+	}
 	if (CombatAnimationLayerComponent)
 	{
+		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
 		CombatAnimationLayerComponent->RefreshLayer();
+	}
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
+	}
+}
+
+void AProject_JPlayerCharacter::SetCurrentWeaponPresentationProfile(UProject_JWeaponPresentationProfile* InPresentationProfile)
+{
+	if (CurrentWeaponPresentationProfile == InPresentationProfile)
+	{
+		return;
+	}
+
+	CurrentWeaponPresentationProfile = InPresentationProfile;
+	if (WeaponPresentationComponent)
+	{
+		WeaponPresentationComponent->RefreshPresentation();
+	}
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
 	}
 }
 
@@ -1025,7 +1164,50 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 	{
 		bIsPlayingCombatIntro = CombatIntroComponent->IsPlayingIntro();
 		bPendingCombatModeFromIntro = CombatIntroComponent->IsPendingCombatMode();
+		if (CombatAnimationLayerComponent)
+		{
+			// Keep the weapon layer alive beneath the montage so its blend-out
+			// resolves directly into armed idle rather than a one-frame base locomotion pose.
+			CombatAnimationLayerComponent->RefreshLayer();
+		}
 	}
+}
+
+void AProject_JPlayerCharacter::PlayCosmeticCombatIntroMontage()
+{
+	UAnimMontage* EffectiveCombatIntroMontage = GetEffectiveCombatIntroMontage();
+	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+	if (!EffectiveCombatIntroMontage || !AnimInstance || AnimInstance->Montage_IsPlaying(EffectiveCombatIntroMontage))
+	{
+		return;
+	}
+
+	// This has no pending-combat side effect. It is only the visual replay used
+	// by simulated proxies after the server confirms a remote player's draw.
+	PlayAnimMontage(EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate());
+}
+
+void AProject_JPlayerCharacter::PlayCombatOutroMontage()
+{
+	UAnimMontage* EffectiveCombatOutroMontage = GetEffectiveCombatOutroMontage();
+	if (!EffectiveCombatOutroMontage || bIsPlayingCombatOutro)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+	if (!AnimInstance || PlayAnimMontage(EffectiveCombatOutroMontage, GetEffectiveCombatOutroMontagePlayRate()) <= 0.0f)
+	{
+		// A broken/missing slot must not strand the weapon in the hand.
+		MoveWeaponToSheathedSocket();
+		return;
+	}
+
+	bIsPlayingCombatOutro = true;
+	ActiveCombatOutroMontage = EffectiveCombatOutroMontage;
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(this, &AProject_JPlayerCharacter::OnCombatOutroMontageEnded);
+	AnimInstance->Montage_SetEndDelegate(EndDelegate, EffectiveCombatOutroMontage);
 }
 
 void AProject_JPlayerCharacter::CancelCombatIntroMontage()
@@ -1037,6 +1219,21 @@ void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
+}
+
+void AProject_JPlayerCharacter::CancelCombatOutroMontage()
+{
+	if (bIsPlayingCombatOutro && ActiveCombatOutroMontage)
+	{
+		StopAnimMontage(ActiveCombatOutroMontage);
+	}
+
+	bIsPlayingCombatOutro = false;
+	ActiveCombatOutroMontage = nullptr;
 }
 
 void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -1062,6 +1259,36 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		bPendingCombatModeFromIntro = false;
 		ApplyCombatRotationMode(false);
 	}
+
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
+}
+
+void AProject_JPlayerCharacter::OnCombatOutroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (Montage != ActiveCombatOutroMontage)
+	{
+		return;
+	}
+
+	bIsPlayingCombatOutro = false;
+	ActiveCombatOutroMontage = nullptr;
+	if (!IsCombatModeActive())
+	{
+		// Fallback for an omitted/misplaced notify; a valid notify simply performs
+		// the same operation earlier at the authored hand-to-back frame.
+		MoveWeaponToSheathedSocket();
+	}
+}
+
+void AProject_JPlayerCharacter::MoveWeaponToSheathedSocket()
+{
+	if (!IsCombatModeActive() && WeaponPresentationComponent)
+	{
+		WeaponPresentationComponent->AttachWeaponToSheathedSocket();
+	}
 }
 
 void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
@@ -1074,6 +1301,10 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 	CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 	if (!IsCombatModeActive())
 	{
 		ApplyCombatRotationMode(false);
@@ -1101,11 +1332,6 @@ void AProject_JPlayerCharacter::FinishLanding(bool bForceFinish)
 	{
 		LocomotionAnimStateComponent->FinishLanding(bForceFinish);
 	}
-}
-
-void AProject_JPlayerCharacter::TriggerPlayerAttack()
-{
-	HandleSkillInputTagPressed(FProject_JGameplayTags::Get().InputTag_Weapon_LightAttack);
 }
 
 void AProject_JPlayerCharacter::HandleSkillInputTagPressed(FGameplayTag InputTag)
@@ -1159,13 +1385,13 @@ void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InD
 
 	if (Reader.IsError())
 	{
-		UE_LOG(LogTemplateCharacter, Warning, TEXT("Failed to deserialize player handover snapshot."));
+		UE_LOG(LogProjectJPlayer, Warning, TEXT("Failed to deserialize player handover snapshot."));
 		return;
 	}
 
 	if (Snapshot.Version != 1)
 	{
-		UE_LOG(LogTemplateCharacter, Warning, TEXT("Unsupported handover snapshot version: %d"), Snapshot.Version);
+		UE_LOG(LogProjectJPlayer, Warning, TEXT("Unsupported handover snapshot version: %d"), Snapshot.Version);
 		return;
 	}
 

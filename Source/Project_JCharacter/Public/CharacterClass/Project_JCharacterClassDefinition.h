@@ -7,6 +7,7 @@
 
 class UProject_JAbilitySet;
 class UProject_JDefaultAttributeSetData;
+class UProject_JCombatStyleDefinition;
 
 UENUM(BlueprintType)
 enum class EProject_JAdvancementAbilityGrantPolicy : uint8
@@ -25,6 +26,9 @@ public:
 	FName ClassId = NAME_None;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class", meta = (ClampMin = "1"))
+	int32 SchemaVersion = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class", meta = (ClampMin = "1"))
 	int32 StartingLevel = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
@@ -32,6 +36,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	TArray<TObjectPtr<UProject_JAbilitySet>> AbilitySets;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<UProject_JCombatStyleDefinition> DefaultCombatStyle = nullptr;
 };
 
 UCLASS(BlueprintType, Const)
@@ -42,6 +49,9 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAdvancementDefinition : public U
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement")
 	FName AdvancementId = NAME_None;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement", meta = (ClampMin = "1"))
+	int32 SchemaVersion = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement")
 	TObjectPtr<UProject_JCharacterClassDefinition> BaseClass = nullptr;
@@ -63,4 +73,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	EProject_JAdvancementAbilityGrantPolicy AbilityGrantPolicy = EProject_JAdvancementAbilityGrantPolicy::Additive;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<UProject_JCombatStyleDefinition> CombatStyleOverride = nullptr;
 };

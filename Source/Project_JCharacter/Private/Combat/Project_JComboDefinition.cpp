@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Combat/Project_JComboDefinition.h"
+#include "Combat/Project_JAttackDefinition.h"
 
 #if WITH_EDITOR
 #include "Validation/Project_JDataValidation.h"
@@ -76,13 +77,9 @@ EDataValidationResult UProject_JComboDefinition::IsDataValid(FDataValidationCont
 		KnownNodeTags.Add(Node.NodeTag);
 		bHasStartNode |= !Node.StartInputTags.IsEmpty();
 
-		if (!Node.Montage)
+		if (!Node.AttackDefinition)
 		{
-			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJComboDefinition", "MissingMontage", "Node '{0}' has no Montage."), FText::FromString(Node.NodeTag.ToString())));
-		}
-		if (Node.PlayRate <= 0.0f)
-		{
-			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJComboDefinition", "InvalidPlayRate", "Node '{0}' has a non-positive PlayRate."), FText::FromString(Node.NodeTag.ToString())));
+			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJComboDefinition", "MissingAttack", "Node '{0}' requires an AttackDefinition."), FText::FromString(Node.NodeTag.ToString())));
 		}
 
 		TSet<FGameplayTag> SeenTransitionInputs;

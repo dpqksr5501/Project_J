@@ -12,6 +12,8 @@
 class USkeletalMesh;
 class UGameplayAbility;
 class UGameplayEffect;
+class UProject_JCombatStyleDefinition;
+class UProject_JWeaponPresentationProfile;
 
 UENUM(BlueprintType)
 enum class EProject_JEquipmentStatApplicationPolicy : uint8
@@ -64,10 +66,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Stats")
 	TArray<FProject_JEquipmentStatModifier> StatModifiers;
 
-	// The Weapon Animation Profile (Motion Matching DBs & Montages) associated with this equipment.
-	// We use the existing UProject_JWeaponAnimProfile instead of a duplicate system.
-	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Animation")
-	class UProject_JWeaponAnimProfile* WeaponAnimProfile;
+	/** Gameplay and animation style selected by this weapon. */
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Combat")
+	TObjectPtr<UProject_JCombatStyleDefinition> CombatStyleDefinition = nullptr;
+
+	/** Visual actor and drawn socket. Weapon skins can vary without duplicating combat data. */
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment|Visual")
+	TObjectPtr<UProject_JWeaponPresentationProfile> WeaponPresentationProfile = nullptr;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

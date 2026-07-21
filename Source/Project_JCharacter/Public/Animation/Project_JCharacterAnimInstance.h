@@ -10,6 +10,7 @@
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
+#include "Combat/Project_JCombatTypes.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
@@ -46,6 +47,15 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float GroundSpeed = 0.0f;
+
+	/**
+	 * Direction of actual horizontal velocity relative to the character's actor
+	 * facing. -90 is left, 0 is forward, +90 is right, and +/-180 is backward.
+	 * This intentionally uses velocity rather than local input, so simulated
+	 * proxies and movement correction use the same Blend Space coordinates.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float RelativeVelocityDirection = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float VerticalSpeed = 0.0f;
@@ -172,6 +182,55 @@ struct PROJECT_JCHARACTER_API FProject_JAnimCombatThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsPlayingCombatIntro = false;
+
+	/** Continuous animation composition selected by the equipped weapon profile. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	EProject_JCombatAnimationPresentationMode PresentationMode = EProject_JCombatAnimationPresentationMode::UpperBodyOverlay;
+};
+
+/**
+ * Per-frame procedural leg correction snapshot.
+ *
+ * Full-body montages author their own lower-body pose.  Their slot weight is
+ * sampled on the game thread and copied through the animation proxy so the
+ * AnimGraph never needs to query montage state from a worker thread.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimProceduralIKThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Procedural IK")
+	float FullBodyMontageWeight = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Procedural IK")
+	float FootPlacementAlpha = 1.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Procedural IK")
+	float LegIKAlpha = 1.0f;
+};
+
+/** Shared policy for protecting authored combat poses from procedural leg correction. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JFullBodyMontageIKPolicy
+{
+	GENERATED_BODY()
+
+	/** Slot reserved for full-body montages such as attacks, dodge, draw/sheath, hit react, and death. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Procedural IK")
+	FName FullBodyMontageSlotName = TEXT("DefaultSlot");
+
+	/** Alpha used by Foot Placement at a full weight full-body montage. Keep at 1.0 when only Leg IK needs suppression. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Procedural IK", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float FootPlacementAlphaDuringFullBodyMontage = 1.0f;
+
+	/** Alpha used by Leg IK at a full weight full-body montage. Full-body combat actions normally use 0.0. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Procedural IK", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float LegIKAlphaDuringFullBodyMontage = 0.0f;
+
+	/** Alpha used by Leg IK only while a full-body combat locomotion set is active. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Procedural IK", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float LegIKAlphaDuringFullBodyCombat = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -288,6 +347,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	FProject_JAnimCombatThreadSafeData Combat;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimProceduralIKThreadSafeData ProceduralIK;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimLocomotionContextThreadSafeData LocomotionContext;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -333,6 +395,33 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	float GetThreadSafeGroundSpeed() const;
+
+	/** Actual XY speed for directional combat locomotion Blend Spaces. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
+	float GetThreadSafeCombatLocomotionSpeed() const;
+
+	/**
+	 * Actual velocity direction relative to actor facing for directional combat
+	 * Blend Spaces. -90 is left, 0 is forward, +90 is right, +/-180 is backward.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
+	float GetThreadSafeCombatLocomotionDirection() const;
+
+	/** True for the authoritative locomotion start phase; use this to enter a combat start state. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeCombatLocomotionStartRequested() const;
+
+	/** True for the authoritative locomotion stop phase; use this to enter a combat stop state. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeCombatLocomotionStopRequested() const;
+
+	/** True when the equipped weapon supplies a validated full-body combat locomotion set. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Presentation", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeUsesFullBodyCombatLocomotion() const;
+
+	/** True when combat should retain shared Motion Matching below the overlay root. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Presentation", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeUsesCombatUpperBodyOverlay() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	FVector GetThreadSafeVelocity() const;
@@ -403,6 +492,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
 	FFootPlacementInterpolationSettings Get_FootPlacementInterpolationSettings() const;
 
+	/** Alpha for the Foot Placement node. Full-body montage weight is sampled on the game thread. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Procedural IK", meta = (BlueprintThreadSafe))
+	float GetThreadSafeFootPlacementAlpha() const;
+
+	/** Alpha for the Leg IK node. Montage and combat-layer state are sampled on the game thread. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Procedural IK", meta = (BlueprintThreadSafe))
+	float GetThreadSafeLegIKAlpha() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Procedural IK", meta = (BlueprintThreadSafe))
+	float GetThreadSafeFullBodyMontageWeight() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
 
@@ -417,8 +517,9 @@ protected:
 	bool FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
+	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
-	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
+	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserGroundProperties(const FProject_JAnimThreadSafeData& Data);
@@ -682,6 +783,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
 
+	// --- Procedural IK ---
+
+	/** Shared full-body montage policy. The same master AnimBP rule works for every job. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Procedural IK")
+	FProject_JFullBodyMontageIKPolicy FullBodyMontageIKPolicy;
+
 	// --- Foot Placement Fallbacks ---
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Migration Fallbacks|Foot Placement", AdvancedDisplay, meta = (ToolTip = "Fallback used only when no effective LocomotionProfile provides foot placement plant settings."))
@@ -699,6 +806,7 @@ public:
 private:
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	float MotionMatchingUpdateAccumulator = 0.0f;
+
 	EProject_JGroundMotionMode LastEvaluatedGroundMotionMode = EProject_JGroundMotionMode::Idle;
 	EProject_JLocomotionGaitIntent LastEvaluatedGaitIntent = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode LastEvaluatedRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;

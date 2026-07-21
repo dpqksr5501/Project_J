@@ -139,11 +139,11 @@ void ValidateWeaponProfile(
 	{
 		AddWarning(Context, OutWarnings, TEXT("has CombatIntroMontage but non-positive CombatIntroMontagePlayRate."));
 	}
-
-	if (WeaponProfile->WeaponActorClass && WeaponProfile->WeaponSocketName.IsNone())
+	if (WeaponProfile->CombatOutroMontage && WeaponProfile->CombatOutroMontagePlayRate <= 0.0f)
 	{
-		AddWarning(Context, OutWarnings, TEXT("has WeaponActorClass but no WeaponSocketName."));
+		AddWarning(Context, OutWarnings, TEXT("has CombatOutroMontage but non-positive CombatOutroMontagePlayRate."));
 	}
+
 }
 
 void ValidateCombatProfile(

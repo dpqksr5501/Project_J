@@ -7,7 +7,6 @@
 #include "Project_JCharacterAnimProfile.generated.h"
 
 class UProject_JLocomotionProfile;
-class UProject_JWeaponAnimProfile;
 class UProject_JCombatAnimProfile;
 
 /**
@@ -24,9 +23,6 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAnimProfile : public UPrimaryDat
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Locomotion")
 	TObjectPtr<UProject_JLocomotionProfile> LocomotionProfile = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
-	TObjectPtr<UProject_JWeaponAnimProfile> WeaponAnimProfile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UProject_JCombatAnimProfile> CombatAnimProfile = nullptr;

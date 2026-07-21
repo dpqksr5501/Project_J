@@ -57,7 +57,7 @@ The character still keeps compatibility wrappers, but new skill inputs should go
 
 These functions search activatable ability specs by `DynamicSpecSourceTags`, which are populated by `UProject_JAbilitySet::GiveToAbilitySystem` from each ability entry's `InputTag`.
 
-Current skill input uses this new InputTag activation path first, then optionally falls back to the legacy ability-tag activation path when no ability spec owns the pressed InputTag. The fallback is controlled by `UProject_JSkillInputExecutionComponent::bAllowLegacySkillInputFallback` and logs once per tag when `bWarnOnLegacySkillInputFallback` is enabled.
+Skill input uses only this InputTag activation path. Every player-facing input must be represented by an `AbilitySet.GrantedAbilityEntries` entry; there is no legacy ability-tag fallback.
 
 ## Combo And Montage Events
 
@@ -74,7 +74,7 @@ Keep input tags and animation events conceptually separate:
 - `InputTag.*` should mean "the player pressed/released an input intent."
 - `Event.*` should mean "gameplay or animation emitted an event inside an active ability."
 
-The current light attack path still sends the input tag as a gameplay event for combo buffering. That is acceptable for migration, but future combat work should avoid overloading one tag namespace for both activation and ability-internal events.
+The current light attack path also sends the input tag as a gameplay event for combo buffering. This is intentional: it keeps activation and the buffered branch tied to the same player intent while animation-specific timing remains on `Event.Combat.ComboWindow`.
 
 ## Implemented Router Shape
 
@@ -105,9 +105,9 @@ The router should not own:
 
 Those stay in abilities, components, and animation systems.
 
-## Recommended Next Step
+## Ability Set Requirement
 
-Move concrete Blueprint ability assets from legacy ability-tag activation to `AbilitySet.GrantedAbilityEntries` with explicit `InputTag` values. After those assets migrate, turn off `bAllowLegacySkillInputFallback` on the skill input execution component defaults and treat fallback warnings as migration bugs.
+Every concrete Blueprint ability asset must be listed in `AbilitySet.GrantedAbilityEntries` with its explicit input tags. One combo ability can own multiple inputs through `AdditionalInputTags`.
 
 ## Boundaries
 

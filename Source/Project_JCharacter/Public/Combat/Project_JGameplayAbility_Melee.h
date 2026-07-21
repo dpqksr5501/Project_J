@@ -6,6 +6,7 @@
 
 class UAnimMontage;
 class UProject_JComboDefinition;
+class UProject_JAttackDefinition;
 struct FProject_JComboNode;
 
 /**
@@ -60,6 +61,7 @@ private:
 	FGameplayTag QueuedInputTag;
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;
 	TObjectPtr<UAnimMontage> ActiveComboMontage = nullptr;
+	TObjectPtr<UProject_JAttackDefinition> ActiveAttackDefinition = nullptr;
 	bool bIsComboWindowOpen = false;
 	bool bHasNextComboQueued = false;
 	

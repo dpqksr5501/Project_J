@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Project_JCombatHitValidation.generated.h"
 
 UENUM(BlueprintType)
@@ -16,7 +17,12 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	TraceTooLong,
 	TargetTooFar,
 	TraceOriginTooFar,
-	TargetOutsideAttackArc
+	TargetOutsideAttackArc,
+	NoActiveAttack,
+	AttackNodeMismatch,
+	HitWindowClosed,
+	DuplicateTarget,
+	RequestRateLimited
 };
 
 inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
@@ -34,6 +40,11 @@ inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
 	case EProject_JCombatHitValidationFailure::TargetTooFar: return TEXT("TargetTooFar");
 	case EProject_JCombatHitValidationFailure::TraceOriginTooFar: return TEXT("TraceOriginTooFar");
 	case EProject_JCombatHitValidationFailure::TargetOutsideAttackArc: return TEXT("TargetOutsideAttackArc");
+	case EProject_JCombatHitValidationFailure::NoActiveAttack: return TEXT("NoActiveAttack");
+	case EProject_JCombatHitValidationFailure::AttackNodeMismatch: return TEXT("AttackNodeMismatch");
+	case EProject_JCombatHitValidationFailure::HitWindowClosed: return TEXT("HitWindowClosed");
+	case EProject_JCombatHitValidationFailure::DuplicateTarget: return TEXT("DuplicateTarget");
+	case EProject_JCombatHitValidationFailure::RequestRateLimited: return TEXT("RequestRateLimited");
 	default: return TEXT("Unknown");
 	}
 }
@@ -54,6 +65,12 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
 	FVector TraceEnd = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	FGameplayTag AttackNodeTag;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
+	int32 RequestSequence = 0;
 };
 
 USTRUCT(BlueprintType)

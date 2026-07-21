@@ -1,15 +1,16 @@
 #include "Combat/Project_JGameplayAbility_Melee.h"
-#include "Animation/Project_JWeaponAnimProfile.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemComponent.h"
 #include "Combat/Project_JComboDefinition.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
+#include "Combat/Project_JAttackDefinition.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
-#include "Project_JCombatComponent.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 
@@ -23,6 +24,12 @@ UProject_JGameplayAbility_Melee::UProject_JGameplayAbility_Melee()
 	SetAssetTags(AssetTags);
 
 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Attacking);
+
+	// Weapon combo inputs may be bound at all times, but a weapon attack is only
+	// valid after the persistent combat-mode effect has armed the character.
+	// This keeps input routing generic across jobs without allowing an equipped
+	// weapon's GA to fire while the character is sheathed/non-combat.
+	ActivationRequiredTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
 }
 
 void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -36,11 +43,12 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 	ApplyCameraDirectionRotation();
 
 	ActiveComboDefinition = nullptr;
+	ActiveAttackDefinition = nullptr;
 	if (const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo()))
 	{
-		if (const UProject_JWeaponAnimProfile* WeaponProfile = PlayerCharacter->GetWeaponAnimProfile())
+		if (const UProject_JCombatStyleDefinition* CombatStyle = PlayerCharacter->GetCombatStyleDefinition(); CombatStyle && CombatStyle->ComboDefinition)
 		{
-			ActiveComboDefinition = WeaponProfile->ComboDefinition;
+			ActiveComboDefinition = CombatStyle->ComboDefinition;
 		}
 	}
 
@@ -76,8 +84,16 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 
 void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
+	{
+		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		{
+			HitValidation->EndAttack();
+		}
+	}
 	ComboEventTasks.Reset();
 	ActiveComboDefinition = nullptr;
+	ActiveAttackDefinition = nullptr;
 	ActiveComboMontage = nullptr;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -203,7 +219,25 @@ bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGamepla
 
 void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& Node)
 {
-	if (!Node.Montage)
+	UProject_JAttackDefinition* AttackDefinition = Node.AttackDefinition;
+	if (AttackDefinition)
+	{
+		const FGameplayTagContainer OwnerTags = GetOwnerGameplayTags();
+		if (!OwnerTags.HasAll(AttackDefinition->RequiredOwnerTags) || OwnerTags.HasAny(AttackDefinition->BlockedOwnerTags))
+		{
+			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+			return;
+		}
+	}
+	if (!AttackDefinition)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return;
+	}
+	UAnimMontage* NodeMontage = AttackDefinition->Montage.Get();
+	const FName NodeSection = AttackDefinition->MontageSectionName;
+	const float NodePlayRate = AttackDefinition->PlayRate;
+	if (!NodeMontage)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
@@ -212,11 +246,19 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	ApplyCameraDirectionRotation();
 	HitActorsThisSwing.Reset();
 	CurrentComboNodeTag = Node.NodeTag;
-	if (MontageTask && ActiveComboMontage == Node.Montage)
+	ActiveAttackDefinition = AttackDefinition;
+	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
 	{
-		if (!Node.MontageSectionName.IsNone())
+		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
-			MontageJumpToSection(Node.MontageSectionName);
+			HitValidation->BeginAttackNode(CurrentComboNodeTag, AttackDefinition);
+		}
+	}
+	if (MontageTask && ActiveComboMontage == NodeMontage)
+	{
+		if (!NodeSection.IsNone())
+		{
+			MontageJumpToSection(NodeSection);
 		}
 		return;
 	}
@@ -227,8 +269,8 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		MontageTask = nullptr;
 	}
 
-	ActiveComboMontage = Node.Montage;
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Node.Montage, Node.PlayRate, Node.MontageSectionName);
+	ActiveComboMontage = NodeMontage;
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, NodeMontage, NodePlayRate, NodeSection);
 	if (MontageTask)
 	{
 		MontageTask->OnCompleted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageCompleted);
@@ -258,8 +300,10 @@ void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payl
 		AActor* AvatarActor = GetAvatarActorFromActorInfo();
 		if (AvatarActor && AvatarActor->HasAuthority())
 		{
-			// Server hit natively (either locally controlled server or AI)
-			// Apply damage/effects to HitActor here
+			if (UProject_JCombatHitValidationComponent* CombatComp = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+			{
+				CombatComp->ProcessAuthorityHit(HitActor);
+			}
 		}
 		else if (AvatarActor && AvatarActor->GetLocalRole() == ROLE_AutonomousProxy)
 		{
@@ -271,9 +315,9 @@ void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payl
 					const UWorld* World = GetWorld();
 					const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
 					const float ClientTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
-					if (UProject_JCombatComponent* CombatComp = AvatarActor->FindComponentByClass<UProject_JCombatComponent>())
+					if (UProject_JCombatHitValidationComponent* CombatComp = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 					{
-						CombatComp->ServerRequestSSRHit(HitActor, ClientTimestamp, HitResult->TraceStart, HitResult->TraceEnd);
+						CombatComp->SubmitPredictedHit(HitActor, ClientTimestamp, HitResult->TraceStart, HitResult->TraceEnd);
 					}
 				}
 			}

@@ -45,9 +45,14 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
 		}
 	}
 
-	if (EquipmentSlot == EProject_JEquipmentSlot::Weapon && !AbilitySet && !WeaponAnimProfile && EquipmentEffects.IsEmpty() && StatModifiers.IsEmpty())
+	if (EquipmentSlot == EProject_JEquipmentSlot::Weapon && !CombatStyleDefinition)
 	{
-		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJEquipmentItemDefinition", "EmptyWeaponDefinition", "Weapon equipment has no AbilitySet, WeaponAnimProfile, EquipmentEffects, or StatModifiers."));
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJEquipmentItemDefinition", "MissingCombatStyle", "Weapon equipment requires a CombatStyleDefinition."));
+	}
+
+	if (EquipmentSlot == EProject_JEquipmentSlot::Weapon && !WeaponPresentationProfile)
+	{
+		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJEquipmentItemDefinition", "MissingPresentation", "Weapon equipment has no WeaponPresentationProfile and will not display a drawn weapon actor."));
 	}
 
 	return Project_J::DataValidation::MakeResult(Result, bHasError);

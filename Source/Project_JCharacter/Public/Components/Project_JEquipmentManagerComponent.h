@@ -81,14 +81,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItem(UProject_JEquipmentItemDefinition* ItemDef);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment", meta = (DeprecatedFunction, DeprecationMessage = "Client equipment requests must use RequestEquipItemInstanceById. EquipItem remains available for authority-owned NPC or development grants."))
-	void RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef);
-
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
-
-	UFUNCTION(BlueprintCallable, Category = "Equipment", meta = (DeprecatedFunction, DeprecationMessage = "Use RequestEquipItemInstanceById and pass only the authoritative inventory instance id."))
-	void RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance);
 
 	/** Preferred network request contract: the server resolves authoritative item data by id. */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")

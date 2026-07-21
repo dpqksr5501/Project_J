@@ -4,9 +4,23 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
+#include "Combat/Project_JAttackDefinition.h"
 
 UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
 {
+}
+
+void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+	{
+		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		{
+			HitValidation->SetHitWindowOpen(true);
+		}
+	}
 }
 
 void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
@@ -26,6 +40,14 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	}
 
 	FVector TraceLocation = MeshComp->GetSocketLocation(SocketName);
+	float EffectiveTraceRadius = TraceRadius;
+	if (const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+	{
+		if (const UProject_JAttackDefinition* AttackDefinition = HitValidation->GetActiveAttackDefinition())
+		{
+			EffectiveTraceRadius = AttackDefinition->HitSpec.TraceRadius;
+		}
+	}
 
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(OwnerActor);
@@ -38,7 +60,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		World,
 		TraceLocation,
 		TraceLocation, // End == Start for overlap
-		TraceRadius,
+		EffectiveTraceRadius,
 		{ UEngineTypes::ConvertToObjectType(ECC_Pawn) },
 		false,
 		ActorsToIgnore,
@@ -62,4 +84,16 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OwnerActor, HitEventTag, Payload);
 		}
 	}
+}
+
+void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+{
+	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+	{
+		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		{
+			HitValidation->SetHitWindowOpen(false);
+		}
+	}
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

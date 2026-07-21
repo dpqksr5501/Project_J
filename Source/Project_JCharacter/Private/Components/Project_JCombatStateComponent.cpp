@@ -3,6 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatState, Log, All);
+
 UProject_JCombatStateComponent::UProject_JCombatStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -140,5 +142,6 @@ void UProject_JCombatStateComponent::UnregisterStateTagEvents()
 
 void UProject_JCombatStateComponent::HandleStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
+	UE_LOG(LogProjectJCombatState, Log, TEXT("State tag changed. Owner=%s Tag=%s Count=%d"), *GetNameSafe(GetOwner()), *CallbackTag.ToString(), NewCount);
 	OnCombatStateTagChanged.Broadcast(CallbackTag, NewCount);
 }

@@ -6,8 +6,6 @@
 #include "Project_JPlayerCharacter.h"
 #include "Project_JGreatswordCharacter.generated.h"
 
-class UProject_JWarriorComponent;
-
 /**
  * Native foundation for the greatsword job family.
  *
@@ -21,17 +19,5 @@ class PROJECT_JCHARACTER_API AProject_JGreatswordCharacter : public AProject_JPl
 	GENERATED_BODY()
 
 public:
-	AProject_JGreatswordCharacter();
-
-	UFUNCTION(BlueprintPure, Category = "Greatsword")
-	UProject_JWarriorComponent* GetGreatswordCombatComponent() const { return GreatswordCombatComponent; }
-
-protected:
-	/**
-	 * Uses the current generic melee combat implementation initially. A future
-	 * greatsword-only charge/guard component can replace this without changing
-	 * the common player character class.
-	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Greatsword", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UProject_JWarriorComponent> GreatswordCombatComponent = nullptr;
+	AProject_JGreatswordCharacter() = default;
 };

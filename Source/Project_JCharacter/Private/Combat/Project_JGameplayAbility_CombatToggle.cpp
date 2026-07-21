@@ -4,6 +4,8 @@
 #include "AbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatToggleAbility, Log, All);
+
 UProject_JGameplayAbility_CombatToggle::UProject_JGameplayAbility_CombatToggle()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
@@ -45,6 +47,7 @@ void UProject_JGameplayAbility_CombatToggle::ActivateAbility(const FGameplayAbil
 		if (bIsCombatMode)
 		{
 			// 전투 모드 해제 (Effect 제거)
+			UE_LOG(LogProjectJCombatToggleAbility, Log, TEXT("Deactivate combat. Owner=%s Effect=%s"), *GetNameSafe(ActorInfo->AvatarActor.Get()), *GetNameSafe(CombatModeEffectClass.Get()));
 			ASC->RemoveActiveGameplayEffectBySourceEffect(CombatModeEffectClass, ASC);
 		}
 		else
@@ -54,6 +57,7 @@ void UProject_JGameplayAbility_CombatToggle::ActivateAbility(const FGameplayAbil
 			if (SpecHandle.IsValid())
 			{
 				ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+				UE_LOG(LogProjectJCombatToggleAbility, Log, TEXT("Activate combat. Owner=%s Effect=%s TagNowActive=%s"), *GetNameSafe(ActorInfo->AvatarActor.Get()), *GetNameSafe(CombatModeEffectClass.Get()), ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode) ? TEXT("true") : TEXT("false"));
 			}
 		}
 	}

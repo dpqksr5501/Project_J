@@ -16,6 +16,21 @@ enum class EProject_JWeaponType : uint8
 	Bow UMETA(DisplayName = "Bow")
 };
 
+/**
+ * How a weapon family contributes continuous combat animation beneath action
+ * montages. This is presentation-only; it must never change movement or GAS
+ * authority.
+ */
+UENUM(BlueprintType)
+enum class EProject_JCombatAnimationPresentationMode : uint8
+{
+	/** Keep the shared Motion Matching lower body and overlay only the armed upper body. */
+	UpperBodyOverlay UMETA(DisplayName = "Upper-Body Overlay"),
+
+	/** Replace continuous locomotion with a weapon-authored full-body pose set. */
+	FullBodyLocomotion UMETA(DisplayName = "Full-Body Locomotion")
+};
+
 /** Gameplay parameters for one authored swing. Input ownership belongs to the combo graph, not this hit specification. */
 USTRUCT(BlueprintType)
 struct FProject_JComboHitSpec

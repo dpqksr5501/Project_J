@@ -69,32 +69,9 @@ void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefin
 	CommitEquipItemInstance(ItemInstance, false);
 }
 
-void UProject_JEquipmentManagerComponent::RequestEquipItem(UProject_JEquipmentItemDefinition* ItemDef)
-{
-	if (!ItemDef)
-	{
-		return;
-	}
-
-	if (GetOwner() && GetOwner()->HasAuthority())
-	{
-		EquipItem(ItemDef);
-	}
-}
-
 void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
 {
 	CommitEquipItemInstance(ItemInstance, true);
-}
-
-void UProject_JEquipmentManagerComponent::RequestEquipItemInstance(const FProject_JItemInstanceData& ItemInstance)
-{
-	if (!ItemInstance.InstanceId.IsValid())
-	{
-		return;
-	}
-
-	RequestEquipItemInstanceById(ItemInstance.InstanceId);
 }
 
 void UProject_JEquipmentManagerComponent::RequestEquipItemInstanceById(FGuid InstanceId)

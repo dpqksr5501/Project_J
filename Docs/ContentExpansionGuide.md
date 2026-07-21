@@ -229,6 +229,9 @@ GrantedEffectEntries
   - GE_Warrior_BasePassive
 ```
 
+> Current rule: use only `GrantedAbilityEntries` and `GrantedEffectEntries`.
+> `GrantedGameplayAbilities` and `GrantedGameplayEffects` no longer exist.
+
 신규 스킬 입력은 반드시 `GrantedAbilityEntries.InputTag`를 사용한다. `GrantedGameplayAbilities`는 InputTag를 붙일 수 없는 레거시 호환 배열이므로 새 콘텐츠에는 가급적 사용하지 않는다.
 
 ### Character에 연결

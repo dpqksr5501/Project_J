@@ -18,14 +18,16 @@ class UProject_JCameraComponent;
 class UInputAction;
 class UAnimMontage;
 class UAnimInstance;
-class UProject_JCombatComponent;
 class UProject_JCharacterAnimProfile;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
 class UProject_JLocomotionProfile;
 class UProject_JWeaponAnimProfile;
+class UProject_JWeaponPresentationProfile;
+class UProject_JEquipmentItemDefinition;
 class UProject_JCombatAnimProfile;
+class UProject_JCombatStyleDefinition;
 class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
@@ -33,6 +35,8 @@ class UProject_JReplicatedJumpStateComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
 class UProject_JCombatAnimationLayerComponent;
+class UProject_JCombatHitValidationComponent;
+class UProject_JWeaponPresentationComponent;
 class UProject_JInventoryComponent;
 class UProject_JSkillInputExecutionComponent;
 class UProject_JSkillInputRouterComponent;
@@ -40,7 +44,7 @@ class UProject_JMountComponent;
 class UAbilitySystemComponent;
 struct FGameplayTag;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogProjectJPlayer, Log, All);
 
 USTRUCT(BlueprintType)
 struct FProject_JPlayerHandoverSnapshot
@@ -83,10 +87,6 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCameraComponent> CameraComponent = nullptr;
 
-	/** Job-specific combat component (dynamically cached at runtime) */
-	UPROPERTY(Transient, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UProject_JCombatComponent> ActiveCombatComponent = nullptr;
-
 	/** Owns locomotion animation state consumed by AnimInstance and Chooser Tables. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
@@ -124,6 +124,14 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCombatAnimationLayerComponent> CombatAnimationLayerComponent = nullptr;
 
+	/** Shared runtime weapon actor management. Job data selects actor and socket. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JWeaponPresentationComponent> WeaponPresentationComponent = nullptr;
+
+	/** Shared server-side rewind validation for all player jobs. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JCombatHitValidationComponent> CombatHitValidationComponent = nullptr;
+
 	/** Replicated player-side state for possession-based mounts. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JMountComponent> MountComponent = nullptr;
@@ -141,6 +149,14 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	TSoftClassPtr<UAnimInstance> MountedAnimationLayerClass;
 
 protected:
+	/**
+	 * Prototype-only bootstrap for a job Blueprint. The server equips this item
+	 * only when the replicated Weapon slot is empty. Persistent characters should
+	 * receive equipment from inventory/backend loadout restoration instead.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment|Prototype", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JEquipmentItemDefinition> PrototypeStartingWeapon = nullptr;
+
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
@@ -205,13 +221,18 @@ protected:
 protected:
 
 	void StopMoveInput();
+	void ApplyPrototypeStartingEquipment();
 
 	// 기본 착지 이벤트 오버라이드(모션매칭)
 	virtual void Landed(const FHitResult& Hit) override;
 
 	void PlayCombatIntroMontage();
+	void PlayCombatOutroMontage();
+	void PlayCosmeticCombatIntroMontage();
+	void ApplyCombatPresentationState(bool bCombatModeActive, bool bPlayRemoteTransitionMontage);
 
 	void CancelCombatIntroMontage();
+	void CancelCombatOutroMontage();
 	void RefreshAbilitySystemDependentComponents();
 
 	UFUNCTION()
@@ -222,6 +243,7 @@ protected:
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnCombatOutroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	void RegisterCombatStateTagEvents();
 	void UnregisterCombatStateTagEvents();
@@ -235,6 +257,16 @@ protected:
 public:
 	UFUNCTION()
 	void OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	/** Receives the server-authoritative combat presentation state on simulated proxies. */
+	UFUNCTION()
+	void OnRep_ReplicatedCombatModePresentation();
+
+	UFUNCTION()
+	void OnRep_CurrentCombatStyle();
+
+	UFUNCTION()
+	void OnRep_CurrentWeaponPresentationProfile();
 protected:
 
 	void ApplyLocomotionProfile();
@@ -247,6 +279,8 @@ protected:
 	float GetEffectiveSprintRotationRateYaw() const;
 	UAnimMontage* GetEffectiveCombatIntroMontage() const;
 	float GetEffectiveCombatIntroMontagePlayRate() const;
+	UAnimMontage* GetEffectiveCombatOutroMontage() const;
+	float GetEffectiveCombatOutroMontagePlayRate() const;
 	bool ShouldPlayCombatIntroMontage() const;
 	bool ShouldUseCombatRotationMode() const;
 	bool ShouldInterruptCombatIntroOnHit() const;
@@ -280,10 +314,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Animation")
 	void InterruptCombatIntroForHit();
 
-	/** Triggers the active combat component's attack */
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void TriggerPlayerAttack();
-
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleSkillInputTagPressed(FGameplayTag InputTag);
 
@@ -311,10 +341,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	/** Returns ActiveCombatComponent subobject **/
-	FORCEINLINE class UProject_JCombatComponent* GetActiveCombatComponent() const { return ActiveCombatComponent; }
-
-	UProject_JCombatComponent* RefreshActiveCombatComponent();
+	FORCEINLINE UProject_JWeaponPresentationComponent* GetWeaponPresentationComponent() const { return WeaponPresentationComponent; }
+	FORCEINLINE UProject_JCombatHitValidationComponent* GetCombatHitValidationComponent() const { return CombatHitValidationComponent; }
 
 	/** Returns LocomotionAnimStateComponent subobject **/
 	FORCEINLINE class UProject_JLocomotionAnimStateComponent* GetLocomotionAnimStateComponent() const { return LocomotionAnimStateComponent; }
@@ -355,15 +383,30 @@ public:
 	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
+	const UProject_JCombatStyleDefinition* GetCombatStyleDefinition() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Animation|Weapon")
-	void SetCurrentWeaponAnimProfile(UProject_JWeaponAnimProfile* InWeaponAnimProfile);
+	UFUNCTION(BlueprintCallable, Category = "Combat|Style")
+	void SetCurrentCombatStyle(UProject_JCombatStyleDefinition* InCombatStyle);
 
-	UFUNCTION(BlueprintPure, Category = "Animation|Weapon")
-	UProject_JWeaponAnimProfile* GetCurrentWeaponAnimProfile() const { return CurrentWeaponAnimProfile.Get(); }
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void SetCurrentWeaponPresentationProfile(UProject_JWeaponPresentationProfile* InPresentationProfile);
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Style")
+	UProject_JCombatStyleDefinition* GetCurrentCombatStyle() const { return CurrentCombatStyle.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
+	UProject_JWeaponPresentationProfile* GetCurrentWeaponPresentationProfile() const { return CurrentWeaponPresentationProfile.Get(); }
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool IsCombatModeActive() const;
+
+	/** True while an entering-combat montage is preparing the combat animation layer. */
+	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
+	bool IsCombatIntroPlaying() const { return bIsPlayingCombatIntro; }
+
+	/** Called by the weapon's sheathe montage notify at the hand-to-back frame. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void MoveWeaponToSheathedSocket();
 
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	bool IsAttacking() const;
@@ -423,9 +466,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Profile|Migration Fallbacks", AdvancedDisplay, meta = (ToolTip = "Fallback asset set used only when no effective LocomotionProfile provides one."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
-	/** Derived locally from replicated equipment; it is not an independent replicated state. */
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Weapon")
-	TObjectPtr<UProject_JWeaponAnimProfile> CurrentWeaponAnimProfile = nullptr;
+	/** Derived locally from immutable equipped item data. */
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentCombatStyle, Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Style")
+	TObjectPtr<UProject_JCombatStyleDefinition> CurrentCombatStyle = nullptr;
+
+	/** Derived locally from immutable equipped item data. */
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeaponPresentationProfile, Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
+	TObjectPtr<UProject_JWeaponPresentationProfile> CurrentWeaponPresentationProfile = nullptr;
+
+	/** Cosmetic replication for remote AnimBPs and weapon presentation; gameplay remains ASC-authoritative. */
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedCombatModePresentation, Transient)
+	bool bReplicatedCombatModePresentation = false;
 
 	// --- Combat States ---
 
@@ -452,6 +503,11 @@ public:
 	/** True while the combat intro montage is active. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bIsPlayingCombatIntro = false;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> ActiveCombatOutroMontage = nullptr;
+
+	bool bIsPlayingCombatOutro = false;
 
 	/** True while combat mode is waiting for the intro montage to finish. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation")

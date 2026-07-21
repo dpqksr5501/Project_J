@@ -7,10 +7,8 @@
 #include "Engine/DataAsset.h"
 #include "Project_JWeaponAnimProfile.generated.h"
 
-class AActor;
 class UAnimInstance;
 class UAnimMontage;
-class UProject_JComboDefinition;
 
 UENUM(BlueprintType)
 enum class EProject_JWeaponAnimStance : uint8
@@ -42,15 +40,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	EProject_JWeaponAnimStance WeaponStance = EProject_JWeaponAnimStance::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TSubclassOf<AActor> WeaponActorClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	FName WeaponSocketName = NAME_None;
+	/**
+	 * Selects whether this weapon preserves the shared lower-body Motion Matching
+	 * and contributes an armed upper-body pose, or supplies a validated full-body
+	 * combat locomotion set. Defaulting to overlay keeps incomplete weapon assets
+	 * from replacing stable shared locomotion.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat|Presentation")
+	EProject_JCombatAnimationPresentationMode CombatPresentationMode = EProject_JCombatAnimationPresentationMode::UpperBodyOverlay;
 
 	/** The full-body draw / combat-entry montage for this weapon. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UAnimMontage> CombatIntroMontage = nullptr;
+
+	/**
+	 * Optional weapon-specific sheathe / combat-exit montage. It is authored
+	 * beside the draw montage because it belongs to the equipped weapon style,
+	 * not to the job's shared locomotion graph.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
+	TObjectPtr<UAnimMontage> CombatOutroMontage = nullptr;
 
 	/**
 	 * Weapon/job-specific Linked Anim Layer class. It overrides the production
@@ -59,11 +68,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat|Layers")
 	TSoftClassPtr<UAnimInstance> CombatAnimationLayerClass;
 
-	/** Immutable input graph used by the generic weapon combo Gameplay Ability. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Combo")
-	TObjectPtr<UProject_JComboDefinition> ComboDefinition = nullptr;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float CombatIntroMontagePlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat", meta = (ClampMin = "0.1", UIMin = "0.1"))
+	float CombatOutroMontagePlayRate = 1.0f;
 
 };
