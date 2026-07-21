@@ -9,7 +9,7 @@
 
 namespace
 {
-bool MatchesOwnerTags(const FGameplayTagContainer& OwnerTags, const FGameplayTagContainer& RequiredTags, const FGameplayTagContainer& BlockedTags)
+bool MatchesComboOwnerTags(const FGameplayTagContainer& OwnerTags, const FGameplayTagContainer& RequiredTags, const FGameplayTagContainer& BlockedTags)
 {
 	return OwnerTags.HasAll(RequiredTags) && !OwnerTags.HasAny(BlockedTags);
 }
@@ -28,7 +28,7 @@ const FProject_JComboNode* UProject_JComboDefinition::FindStartNode(const FGamep
 	return Nodes.FindByPredicate([InputTag, &OwnerTags](const FProject_JComboNode& Node)
 	{
 		return Node.StartInputTags.HasTagExact(InputTag)
-			&& MatchesOwnerTags(OwnerTags, Node.RequiredOwnerTags, Node.BlockedOwnerTags);
+			&& MatchesComboOwnerTags(OwnerTags, Node.RequiredOwnerTags, Node.BlockedOwnerTags);
 	});
 }
 
@@ -37,7 +37,7 @@ const FProject_JComboTransition* UProject_JComboDefinition::FindTransition(const
 	return FromNode.Transitions.FindByPredicate([InputTag, &OwnerTags](const FProject_JComboTransition& Transition)
 	{
 		return Transition.InputTag.MatchesTagExact(InputTag)
-			&& MatchesOwnerTags(OwnerTags, Transition.RequiredOwnerTags, Transition.BlockedOwnerTags);
+			&& MatchesComboOwnerTags(OwnerTags, Transition.RequiredOwnerTags, Transition.BlockedOwnerTags);
 	});
 }
 

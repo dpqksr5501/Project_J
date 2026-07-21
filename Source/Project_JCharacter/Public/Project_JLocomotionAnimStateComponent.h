@@ -412,7 +412,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartInputReleaseExitMinTime = 0.08f;
 
-	/** Failsafe that prevents Start/RemoteStart PSD from persisting if update throttling or remote input inference misses the exit. */
+	/** Failsafe that prevents Start/RemoteStart PSD from persisting if update throttling or remote input inference misses the exit. It is clamped to StartMinDuration, so it cannot shorten an authored normal Start window. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
 	float StartAutoPromoteDelay = 0.35f;
 

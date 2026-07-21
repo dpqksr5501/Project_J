@@ -41,7 +41,12 @@ FProject_JResolvedGroundStartTiming ResolveStartTiming(
 	const FProject_JGroundStartTimingOverride& TimingOverride = SelectStartTimingOverride(Component, bUseRemoteStart, bUseSprintStart);
 	FProject_JResolvedGroundStartTiming ResolvedTiming;
 	ResolvedTiming.MinDuration = ResolveStartTimingValue(Component.StartMinDuration, TimingOverride.MinDuration);
-	ResolvedTiming.MaxDuration = ResolveStartTimingValue(Component.StartMaxDuration, TimingOverride.MaxDuration);
+	// A data override should never make the normal Start path leave before its
+	// configured minimum. Responsive-turn and released-input paths deliberately
+	// remain the only early exits.
+	ResolvedTiming.MaxDuration = FMath::Max(
+		ResolvedTiming.MinDuration,
+		ResolveStartTimingValue(Component.StartMaxDuration, TimingOverride.MaxDuration));
 	ResolvedTiming.ResponsiveTurnExitMinTime = ResolveStartTimingValue(Component.StartResponsiveTurnExitMinTime, TimingOverride.ResponsiveTurnExitMinTime);
 	ResolvedTiming.InputReleaseExitMinTime = ResolveStartTimingValue(Component.StartInputReleaseExitMinTime, TimingOverride.InputReleaseExitMinTime);
 	ResolvedTiming.AutoPromoteDelay = ResolveStartTimingValue(Component.StartAutoPromoteDelay, TimingOverride.AutoPromoteDelay);
@@ -254,11 +259,15 @@ void UProject_JLocomotionAnimStateComponent::ScheduleStartAutoPromote()
 	}
 
 	World->GetTimerManager().ClearTimer(StartAutoPromoteTimerHandle);
+	// Auto promotion is only a failsafe. Scheduling it before MinDuration made
+	// every run/sprint start inherit the 0.35 second default and bypass the
+	// authored Start window entirely.
+	const float AutoPromoteDelay = FMath::Max(StartTiming.AutoPromoteDelay, StartTiming.MinDuration);
 	World->GetTimerManager().SetTimer(
 		StartAutoPromoteTimerHandle,
 		this,
 		&UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion,
-		StartTiming.AutoPromoteDelay,
+		AutoPromoteDelay,
 		false);
 }
 
