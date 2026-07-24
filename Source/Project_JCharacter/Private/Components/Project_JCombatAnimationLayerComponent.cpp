@@ -34,7 +34,6 @@ void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 	AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
 	if (!Player || Player->GetNetMode() == NM_DedicatedServer)
 	{
-		UE_LOG(LogProjectJCombatAnimationLayer, Warning, TEXT("RefreshLayer skipped. Owner=%s NetMode=%d"), *GetNameSafe(GetOwner()), Player ? static_cast<int32>(Player->GetNetMode()) : INDEX_NONE);
 		return;
 	}
 

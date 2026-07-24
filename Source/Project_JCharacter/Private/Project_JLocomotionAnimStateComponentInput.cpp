@@ -2,6 +2,7 @@
 
 #include "Project_JLocomotionAnimStateComponent.h"
 
+
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
 {
 	if (ShouldUseLocalInputState())

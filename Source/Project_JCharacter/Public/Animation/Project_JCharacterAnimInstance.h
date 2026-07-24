@@ -72,6 +72,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasTrajectory = false;
+
 };
 
 USTRUCT(BlueprintType)
@@ -815,5 +816,6 @@ private:
 	EProject_JLocomotionPhaseFamily LastEvaluatedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	bool bLastEvaluatedStartRequested = false;
 	bool bLastEvaluatedStartWasSprinting = false;
+
 	bool bHasEvaluatedMotionMatchingContext = false;
 };

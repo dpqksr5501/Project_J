@@ -1103,10 +1103,20 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
 {
-	if (!Data.Movement.bStoppedAcceleratingThisFrame)
+	const bool bPreserveLocalCombatStrafeHistory =
+		IsLocallyControlledCharacter() &&
+		Data.Combat.bIsCombatMode &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	if (!Data.Movement.bStoppedAcceleratingThisFrame || bPreserveLocalCombatStrafeHistory)
 	{
 		return;
 	}
+
+	// Combat Strafe Stop searches need the movement history that immediately precedes
+	// input release. Resetting here only on the autonomous proxy made its Stop query
+	// roughly one tenth as long as the simulated proxy query, causing wrong-direction
+	// candidates to win. Normal locomotion retains its existing reset behavior.
+
 
 	if (OwningCharacter &&
 		OwningCharacter->GetLocalRole() == ROLE_SimulatedProxy &&
