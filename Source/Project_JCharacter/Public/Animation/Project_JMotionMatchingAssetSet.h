@@ -110,9 +110,13 @@ public:
 		bool bLandWasMoving = false,
 		bool bLandWasSprinting = false,
 		bool bUseFallOffStart = false,
-		bool bUseRemoteStart = false) const;
+		bool bUseRemoteStart = false,
+		bool bUseGenericFamiliesForNonOrientToMovement = false) const;
 
 	bool ValidateForProjectJLocomotion(const UObject* ValidationContext, TArray<FString>& OutWarnings) const;
+
+	/** Validates the standard family slots required by camera-facing combat locomotion. */
+	bool ValidateCombatStrafeForProjectJLocomotion(const UObject* ValidationContext, TArray<FString>& OutWarnings) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> DefaultPoseSearchDatabase = nullptr;
@@ -141,6 +145,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching")
 	TObjectPtr<UChooserTable> MotionMatchingChooserTable = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Database Families", meta = (TitleProperty = "PoseSearchDatabase"))
+	/** Advanced context overrides. Standard locomotion and combat asset sets use the visible database families above. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Advanced Overrides", AdvancedDisplay, meta = (TitleProperty = "PoseSearchDatabase"))
 	TArray<FProject_JMotionMatchingDatabaseEntry> DatabaseEntries;
 };

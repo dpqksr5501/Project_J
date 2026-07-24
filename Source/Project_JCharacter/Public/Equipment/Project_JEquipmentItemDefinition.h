@@ -18,8 +18,10 @@ class UProject_JWeaponPresentationProfile;
 UENUM(BlueprintType)
 enum class EProject_JEquipmentStatApplicationPolicy : uint8
 {
+	/** Preferred production path: authored infinite GameplayEffects with explicit source handles. */
 	GameplayEffectsThenStatModifiers,
 	GameplayEffectsOnly,
+	/** Compatibility path for existing data. Migrate new equipment to GameplayEffects. */
 	StatModifiersOnly
 };
 

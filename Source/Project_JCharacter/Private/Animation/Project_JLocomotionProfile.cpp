@@ -16,6 +16,9 @@ bool FProject_JMotionMatchingSearchPolicy::ShouldSearchEveryUpdate(
 			? bSearchFallOffEveryUpdate
 			: bSearchAirborneLoopEveryUpdate;
 
+	case EProject_JLocomotionPhaseFamily::Landing:
+		return bSearchLandingEveryUpdate;
+
 	default:
 		return true;
 	}

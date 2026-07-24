@@ -82,6 +82,8 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 		BoundPlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
 	}
 
+	BoundPlayerCharacter->UpdateSprintInputFromMove(MoveInput);
+
 	BoundPlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
 
 	if (BoundPlayerCharacter->GetController() != nullptr)
@@ -132,6 +134,8 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	{
 		BoundPlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
 	}
+
+	BoundPlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
 
 	if (bHadMoveInput)
 	{

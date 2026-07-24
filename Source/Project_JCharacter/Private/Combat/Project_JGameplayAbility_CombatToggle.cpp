@@ -3,6 +3,7 @@
 #include "Combat/Project_JGameplayAbility_CombatToggle.h"
 #include "AbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
+#include "Project_JPlayerCharacter.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatToggleAbility, Log, All);
 
@@ -27,11 +28,19 @@ bool UProject_JGameplayAbility_CombatToggle::CanActivateAbility(const FGameplayA
 		return false;
 	}
 
-	return true;
+	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr);
+	return PlayerCharacter && PlayerCharacter->CanToggleCombatMode();
 }
 
 void UProject_JGameplayAbility_CombatToggle::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr);
+	if (!PlayerCharacter || !PlayerCharacter->CanToggleCombatMode())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

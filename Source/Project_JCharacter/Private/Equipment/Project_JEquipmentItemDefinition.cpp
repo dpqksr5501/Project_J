@@ -24,6 +24,10 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
 	{
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJEquipmentItemDefinition", "StatsOnlyNoStats", "StatApplicationPolicy is StatModifiersOnly, but no StatModifiers are assigned."));
 	}
+	if (StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly)
+	{
+		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJEquipmentItemDefinition", "LegacyStatModifiers", "StatModifiersOnly is a compatibility path. Prefer authored infinite GameplayEffects for new equipment."));
+	}
 
 	for (int32 EffectIndex = 0; EffectIndex < EquipmentEffects.Num(); ++EffectIndex)
 	{

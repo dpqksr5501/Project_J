@@ -253,6 +253,8 @@ protected:
 	void CancelAbilitiesByTag(const FGameplayTag& AbilityTag);
 	bool IsCombatActionBlockingSprint() const;
 	bool ShouldAllowSprintInCombat() const;
+	bool ShouldRequestSprintAbility() const;
+	void RefreshSprintAbilityFromInput();
 
 public:
 	UFUNCTION()
@@ -306,6 +308,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void ToggleCombatMode();
 
+	/**
+	 * Shared gameplay guard for combat-mode transitions. This is intentionally
+	 * usable by the Gameplay Ability as well as local input, so prediction and
+	 * server confirmation reject the same unsafe movement/presentation states.
+	 */
+	bool CanToggleCombatMode() const;
+
 	/** Starts combat mode after the combat intro montage finishes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Animation")
 	void BeginCombatModeWithIntro();
@@ -325,6 +334,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StopSprint();
+
+	/** Updates the held-sprint request from raw local movement input. */
+	void UpdateSprintInputFromMove(const FVector2D& MoveInput);
 
 	/** Owner-only inventory UI calls this with its replicated item instance id. */
 	UFUNCTION(BlueprintCallable, Category = "Mount")
@@ -349,6 +361,13 @@ public:
 
 	/** Returns MotionMatchingTrajectoryComponent subobject **/
 	FORCEINLINE class UProject_JMotionMatchingTrajectoryComponent* GetMotionMatchingTrajectoryComponent() const { return MotionMatchingTrajectoryComponent; }
+
+	/**
+	 * True only when the actor is expected to face its travel direction. Remote
+	 * trajectory repair must not reinterpret intentional strafe/lock-on facing
+	 * as a stale straight-running query.
+	 */
+	bool AllowsStraightRunningTrajectoryRepair() const;
 
 	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
 
@@ -381,6 +400,7 @@ public:
 
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
 	const UProject_JMotionMatchingAssetSet* GetMotionMatchingAssetSet() const;
+	const UProject_JMotionMatchingAssetSet* GetCombatStrafeMotionMatchingAssetSet() const;
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 	const UProject_JCombatStyleDefinition* GetCombatStyleDefinition() const;
@@ -419,6 +439,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Sprint")
 	bool IsSprintLocomotionAllowed() const;
+
+	/** True when the current local input may request a Sprint ability. */
+	bool IsSprintInputDirectionAllowed() const;
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Jump")
 	bool IsJumpLocomotionAllowed() const;
@@ -526,6 +549,8 @@ protected:
 
 private:
 	bool bHadMoveInputForReplication = false;
+	bool bSprintInputHeld = false;
+	FVector2D SprintMoveInput = FVector2D::ZeroVector;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
 };

@@ -18,6 +18,8 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	TargetTooFar,
 	TraceOriginTooFar,
 	TargetOutsideAttackArc,
+	WorldObstructed,
+	AuthoritativeTraceUnavailable,
 	NoActiveAttack,
 	AttackNodeMismatch,
 	HitWindowClosed,
@@ -40,6 +42,8 @@ inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
 	case EProject_JCombatHitValidationFailure::TargetTooFar: return TEXT("TargetTooFar");
 	case EProject_JCombatHitValidationFailure::TraceOriginTooFar: return TEXT("TraceOriginTooFar");
 	case EProject_JCombatHitValidationFailure::TargetOutsideAttackArc: return TEXT("TargetOutsideAttackArc");
+	case EProject_JCombatHitValidationFailure::WorldObstructed: return TEXT("WorldObstructed");
+	case EProject_JCombatHitValidationFailure::AuthoritativeTraceUnavailable: return TEXT("AuthoritativeTraceUnavailable");
 	case EProject_JCombatHitValidationFailure::NoActiveAttack: return TEXT("NoActiveAttack");
 	case EProject_JCombatHitValidationFailure::AttackNodeMismatch: return TEXT("AttackNodeMismatch");
 	case EProject_JCombatHitValidationFailure::HitWindowClosed: return TEXT("HitWindowClosed");

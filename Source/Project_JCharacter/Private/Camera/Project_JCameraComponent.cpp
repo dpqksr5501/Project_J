@@ -70,6 +70,14 @@ void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 		if (CameraBoom)
 		{
 			CameraBoom->TargetArmLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
+			const FVector TargetOffset = bIsCombatMode
+				? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
+				: NormalSocketOffset;
+			CameraBoom->SocketOffset = TargetOffset;
+		}
+		if (FollowCamera)
+		{
+			FollowCamera->SetFieldOfView(bIsCombatMode ? CombatFieldOfView : NormalFieldOfView);
 		}
 
 		BoundAbilitySystemComponent = ASC;
@@ -104,14 +112,36 @@ void UProject_JCameraComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bIsLocallyControlled && CameraBoom)
+	if (!bIsLocallyControlled)
+	{
+		return;
+	}
+
+	if (CameraBoom)
 	{
 		const float TargetLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
 		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetLength, DeltaTime, ZoomInterpolationSpeed);
+		const FVector TargetOffset = bIsCombatMode
+			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
+			: NormalSocketOffset;
+		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, FramingInterpolationSpeed);
+	}
+	if (FollowCamera)
+	{
+		const float TargetFOV = bIsCombatMode ? CombatFieldOfView : NormalFieldOfView;
+		FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaTime, FramingInterpolationSpeed));
 	}
 }
 
 void UProject_JCameraComponent::OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
 	bIsCombatMode = (NewCount > 0);
+}
+
+void UProject_JCameraComponent::SetCombatRightShoulder(bool bUseRightShoulder)
+{
+	if (bIsLocallyControlled)
+	{
+		bUseRightCombatShoulder = bUseRightShoulder;
+	}
 }

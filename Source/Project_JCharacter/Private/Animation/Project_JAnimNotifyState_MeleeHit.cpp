@@ -16,6 +16,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* Mes
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
+		PreviousSocketLocations.Add(MeshComp, MeshComp->GetSocketLocation(SocketName));
 		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
 			HitValidation->SetHitWindowOpen(true);
@@ -39,7 +40,9 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		return;
 	}
 
-	FVector TraceLocation = MeshComp->GetSocketLocation(SocketName);
+	const FVector TraceLocation = MeshComp->GetSocketLocation(SocketName);
+	const FVector TraceStart = PreviousSocketLocations.FindRef(MeshComp);
+	PreviousSocketLocations.Add(MeshComp, TraceLocation);
 	float EffectiveTraceRadius = TraceRadius;
 	if (const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 	{
@@ -49,17 +52,25 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		}
 	}
 
+	if (OwnerActor->HasAuthority())
+	{
+		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		{
+			HitValidation->RecordAuthoritativeTrace(TraceStart, TraceLocation);
+		}
+	}
+
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(OwnerActor);
 
 	TArray<FHitResult> OutHits;
 
-	// Simple overlap at socket location. 
-	// For better precision at high framerates, sweep from a cached previous frame location can be implemented.
+	// Sweep across the weapon's actual frame-to-frame path. A point overlap misses
+	// fast swings at low frame rates and gives clients inconsistent hit candidates.
 	UKismetSystemLibrary::SphereTraceMultiForObjects(
 		World,
+		TraceStart,
 		TraceLocation,
-		TraceLocation, // End == Start for overlap
 		EffectiveTraceRadius,
 		{ UEngineTypes::ConvertToObjectType(ECC_Pawn) },
 		false,
@@ -95,5 +106,6 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshC
 			HitValidation->SetHitWindowOpen(false);
 		}
 	}
+	PreviousSocketLocations.Remove(MeshComp);
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

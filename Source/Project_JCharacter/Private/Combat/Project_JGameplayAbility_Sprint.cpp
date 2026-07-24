@@ -58,7 +58,10 @@ void UProject_JGameplayAbility_Sprint::EndAbility(const FGameplayAbilitySpecHand
 {
 	if (ActiveSprintEffectHandle.IsValid())
 	{
-		ActorInfo->AbilitySystemComponent->RemoveActiveGameplayEffect(ActiveSprintEffectHandle);
+		if (UAbilitySystemComponent* AbilitySystemComponent = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr)
+		{
+			AbilitySystemComponent->RemoveActiveGameplayEffect(ActiveSprintEffectHandle);
+		}
 		ActiveSprintEffectHandle.Invalidate();
 	}
 

@@ -22,6 +22,62 @@ Keep this boundary unless there is a measured reason to change it:
 - Root-motion or forced-facing skills should temporarily own their montage/pose layer instead of changing the base run-cycle database.
 - Future lock-on, strafe, or aim-offset movement should add explicit locomotion policy before it opts out of straight-running trajectory repair.
 
+## Combat Strafe Pose Search Authoring
+
+Combat presentation must not create a second Pose Search Schema merely because an
+upper-body weapon layer is active. Start by sharing the on-foot locomotion schema
+with dedicated `PSD_Combat_Strafe_*` databases. Create a separate combat schema
+only if its lower-body pose features or trajectory sampling layout intentionally
+differs from the shared locomotion query.
+
+Recommended initial schema for the third-person combat overlay:
+
+- Keep the same skeleton, pose-history source, and trajectory sample times as the
+  native `UProject_JMotionMatchingTrajectoryComponent`. Do not add offsets in a
+  PSD that the trajectory component does not produce.
+- Use trajectory position and facing samples at `-0.4`, `-0.2`, `+0.2`, `+0.4`,
+  and `+0.6` seconds as a starting point, with a relative channel weight of `1.5`.
+  If the existing shared schema uses different sample times, preserve those times.
+- Sample only lower-body locomotion bones (`thigh_l/r`, `calf_l/r`, `foot_l/r`)
+  with position and velocity features, with a relative channel weight of `1.0`.
+  Do not index spine, hands, or weapon bones while the upper body is owned by
+  Aim Offset, linked layers, and montages.
+- Author and assign separate idle, start, cycle, stop, pivot, moving-turn, and
+  turn-in-place strafe PSDs. The cycle database needs forward, backward, left,
+  right, diagonal, and direction-change clips before it can provide reliable
+  camera-facing combat.
+- Create a `UProject_JMotionMatchingAssetSet` DA such as
+  `DA_Player_Combat_Strafe`, then assign it to
+  `CharacterAnimProfile -> CombatAnimProfile -> Combat Strafe Motion Matching
+  Asset Set`. Fill its visible Idle, Run, Sprint, Jump, Fall, and Landing
+  fields with combat PSDs using the same layout as `DA_Player_Locomotion`.
+  The combat asset set is a complete, readable replacement while Strafe is
+  active; no per-phase `DatabaseEntries` array setup is required.
+- `DatabaseEntries` remains an advanced override only for a future lock-on,
+  weapon-specific, or special locomotion context that cannot use the standard
+  family layout.
+- Player startup validation warns for each missing Strafe phase while the combat
+  profile enables camera-facing rotation. The temporary OrientToMovement fallback
+  remains available only to keep incomplete data sets playable during authoring.
+- To enable the authored combat sprint set `CombatAnimProfile.bAllowSprintInCombat`
+  to true. With `bRequireForwardInputForSprintInCombat=true` and
+  `CombatSprintForwardInputThreshold=0.1`, sprint is permitted only for `W`,
+  `W+A`, or `W+D`; holding Shift while moving only left/right/back cancels the
+  predicted Sprint ability and returns to normal combat movement.
+- Use PCAKDTree and retain the engine/default pose-pruning threshold initially.
+  Search remains unthrottled for the local/near combatant; retain the project
+  mid/far intervals (`0.033` / `0.083` seconds) for remote actors.
+
+`AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair()` is the
+policy boundary for networked trajectory repair. It returns false while combat
+owns character yaw, preventing the simulated-proxy straight-running correction
+from rewriting intentional strafe, lock-on, or forced-facing trajectories. Future
+facing modes must extend this policy instead of disabling the global repair CVar.
+
+Aim Offset snapshots use `ACharacter::GetBaseAimRotation()`. This keeps the
+owning client's full controller aim and allows simulated proxies to consume the
+engine-replicated remote view pitch without replicating raw camera transforms.
+
 ## Remote SimulatedProxy Fix
 
 The remote running issue was not caused by bad Run_Arc, Prism, or Run_Loop assets. It was caused by the simulated proxy trajectory query:
@@ -57,7 +113,7 @@ Remote moving jumps have two separate latency hazards. Both must remain covered 
 
 In two-client PIE, the locally controlled character jumped immediately, but the observing client briefly kept the remote character's Run/Sprint pose. Standing jumps and repeated jumps could look correct, making the issue easiest to reproduce on the first jump while walking or sprinting.
 
-Diagnostic logging with `p.ProjectJ.MM.DebugJumpLatency 1` confirmed:
+Earlier diagnostic captures confirmed:
 
 - replication and `HandleConfirmedRemoteJump` arrived without meaningful server-time age,
 - `PSD_JumpStart` was selected correctly,
@@ -99,22 +155,8 @@ From the observing client, verify another client performing:
 - sprinting jump,
 - repeated jump after landing.
 
-For a diagnostic run, enable:
-
-```text
-p.ProjectJ.MM.DebugJumpLatency 1
-```
-
-Expected sequence:
-
-```text
-MulticastReceive
-UrgentAnimUpdateBegin
-AnimStateEnter
-UrgentAnimUpdateEnd
-```
-
-For deeper BlendStack inspection, enable `p.ProjectJ.MM.DebugInAirBlendStack 1` separately. JumpStart should use the normal authored blend and should no longer be delayed by skipped URO update frames.
+JumpStart uses the normal authored blend and should no longer be delayed by
+skipped URO update frames.
 
 ## Useful CVars
 
@@ -124,7 +166,33 @@ For deeper BlendStack inspection, enable `p.ProjectJ.MM.DebugInAirBlendStack 1` 
 - `p.ProjectJ.MM.DisableRemoteAccelReset` defaults to `1`.
 - `p.ProjectJ.MM.SmoothRemoteTrajectoryPosition` defaults to `0`.
 - `p.ProjectJ.MM.SmoothRemoteTrajectoryRotation` defaults to `0`.
-- `p.ProjectJ.MM.DebugRemoteTrajectory` defaults to `0` and logs `PosYaw`, `FaceYaw`, and their delta for simulated proxy trajectory samples.
+
+## Combat Strafe reselect
+
+The combat animation profile exposes `bForceReselectOnStrafeInputTurn` (default
+`true`) and `StrafeInputTurnReselectAngle` (default `35`). They apply only to
+camera-facing combat Strafe. When an already-held input turns at least that
+amount—for example W to A/D or W+D to D—the Motion Matching node invalidates
+its continuing pose and searches the current combat Cycle PSD again. This keeps
+a forward running pose from surviving a lateral-direction transition without
+changing ordinary locomotion or remote-proxy budgeting.
+
+`TurnRedirect` remains part of the combat Strafe set: it is used once when an
+already-held input changes direction by the locomotion turn threshold. While a
+lateral input is held, the actor deliberately keeps camera-facing rotation, so
+its desired-facing delta remains near +/-90 degrees. That persistent offset is
+not a continuing turn; after the short turn hold, the selector returns to the
+combat Cycle PSD, where Pose Search selects the sustained lateral pose.
+
+## Landing recovery duration
+
+`LandingRequestDuration` and `StandLandingRequestDuration` are the maximum
+times that moving and standing landing PSDs own Motion Matching. Their defaults
+are both `1.00` seconds, for combat and non-combat locomotion alike. Landing
+search is suppressed after the initial database-change search
+(`bSearchLandingEveryUpdate = false`), so the selected one-shot clip cannot be
+restarted while that one-second recovery state is active. On leaving Landing,
+the database changes to ground locomotion and permits an immediate new search.
 
 ## Refactor Guardrails
 

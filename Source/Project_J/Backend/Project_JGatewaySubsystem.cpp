@@ -144,6 +144,15 @@ void UProject_JGatewaySubsystem::SendAsyncRequestWithContext(
 	const FProject_JBackendRequestContext& RequestContext,
 	FOnBackendResponse OnResponse)
 {
+	if (GatewayUrl.IsEmpty())
+	{
+		FProject_JBackendResponseEnvelope Envelope;
+		Envelope.RequestContext = NormalizeRequestContext(RequestContext);
+		Envelope.FailureKind = EProject_JBackendFailureKind::DispatchFailed;
+		Envelope.ResponseData = TEXT("Gateway URL is not configured");
+		OnResponse.ExecuteIfBound(false, Envelope.ResponseData);
+		return;
+	}
 	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope.bSucceeded, Envelope.ResponseData);
@@ -156,6 +165,15 @@ void UProject_JGatewaySubsystem::SendAsyncRequestEnvelope(
 	const FProject_JBackendRequestContext& RequestContext,
 	FOnBackendEnvelopeResponse OnResponse)
 {
+	if (GatewayUrl.IsEmpty())
+	{
+		FProject_JBackendResponseEnvelope Envelope;
+		Envelope.RequestContext = NormalizeRequestContext(RequestContext);
+		Envelope.FailureKind = EProject_JBackendFailureKind::DispatchFailed;
+		Envelope.ResponseData = TEXT("Gateway URL is not configured");
+		OnResponse.ExecuteIfBound(Envelope);
+		return;
+	}
 	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope);
@@ -164,11 +182,26 @@ void UProject_JGatewaySubsystem::SendAsyncRequestEnvelope(
 
 void UProject_JGatewaySubsystem::EnqueueRemoteLog(const FString& Message, const FString& Severity)
 {
+	if (!IsRemoteTelemetryEnabled())
+	{
+		return;
+	}
+
 	FLogPayload Payload;
-	Payload.Message = Message;
+	Payload.Message = Message.Left(FMath::Max(128, MaxRemoteLogMessageLength));
 	Payload.Severity = Severity;
 	LogQueue.Add(Payload);
 	TrimRemoteLogQueue();
+}
+
+bool UProject_JGatewaySubsystem::IsRemoteTelemetryEnabled() const
+{
+	const UWorld* World = GetWorld();
+	return bEnableRemoteTelemetry &&
+		!GatewayUrl.IsEmpty() &&
+		GatewayUrl.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) &&
+		World &&
+		World->GetNetMode() != NM_Client;
 }
 
 void UProject_JGatewaySubsystem::FlushRemoteLogs()

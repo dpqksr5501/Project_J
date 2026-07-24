@@ -9,7 +9,7 @@
  * Subsystem to manage all connections to the Gateway backend.
  * Uses the IProject_JBackendConnection interface to decouple the underlying implementation (HTTP/Socket).
  */
-UCLASS()
+UCLASS(Config=Game, DefaultConfig)
 class PROJECT_J_API UProject_JGatewaySubsystem : public UGameInstanceSubsystem, public IProject_JBackendConnection
 {
 	GENERATED_BODY()
@@ -34,10 +34,18 @@ public:
 
 	// Enqueue a log message to be sent to the backend asynchronously (Rate Limited)
 	void EnqueueRemoteLog(const FString& Message, const FString& Severity);
+	bool IsRemoteTelemetryEnabled() const;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Backend")
-	FString GatewayUrl = TEXT("http://127.0.0.1:8080/api/v1/");
+	/** Remote telemetry is opt-in. Do not enable it without a production HTTPS endpoint and a server-side redaction policy. */
+	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend|Telemetry")
+	bool bEnableRemoteTelemetry = false;
+
+	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend")
+	FString GatewayUrl;
+
+	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend|Telemetry", meta = (ClampMin = "128", UIMin = "128"))
+	int32 MaxRemoteLogMessageLength = 2048;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Backend|Telemetry", meta = (ClampMin = "1", UIMin = "1"))
 	int32 MaxQueuedRemoteLogs = 100;

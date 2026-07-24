@@ -31,6 +31,14 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	bool bSearchAirborneLoopEveryUpdate = false;
 
 	/**
+	 * Landing PSDs are one-shot recovery clips. Keep the initial result until the
+	 * locomotion component leaves Landing, otherwise Pose Search can restart the
+	 * same landing clip while its database remains selected.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchLandingEveryUpdate = false;
+
+	/**
 	 * Duration for which a simulated proxy temporarily bypasses skeletal mesh URO after
 	 * receiving a confirmed jump. Keep this long enough for the authored Motion Matching
 	 * transition to begin, but short enough to preserve the normal MMO animation budget.

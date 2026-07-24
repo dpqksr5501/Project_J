@@ -260,7 +260,12 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	}
 	if (Context.bIsPivoting)
 	{
-		return EProject_JLocomotionPhaseFamily::Pivot;
+		// A combat Strafe pivot uses the authored TurnRedirect database too. Keep
+		// it in the Turn family so the short hold below can finish the redirect
+		// before returning to the lateral Cycle search.
+		return AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+			? EProject_JLocomotionPhaseFamily::Turn
+			: EProject_JLocomotionPhaseFamily::Pivot;
 	}
 	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
 	{
@@ -270,10 +275,21 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	{
 		return EProject_JLocomotionPhaseFamily::Start;
 	}
-	if (Context.bIsMoving &&
+	const bool bHasMovingTurnIntent =
+		Context.bIsMoving &&
 		KinematicContext.bHasMoveInput &&
-		KinematicContext.GroundSpeed > StopIntentSpeedThreshold &&
-		FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold)
+		KinematicContext.GroundSpeed > StopIntentSpeedThreshold;
+	const bool bIsCombatStrafe =
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
+		(bIsCombatStrafe
+			// In Strafe, actor facing intentionally remains camera-facing. A held A/D
+			// input therefore has a permanent +/-90 desired-facing delta and must not
+			// pin the character in TurnRedirect. Only an actual input-direction change
+			// starts the redirect; phase stability keeps it briefly before Cycle.
+			? FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold
+			: FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold);
+	if (bShouldUseTurnRedirect)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;
 	}
@@ -367,7 +383,8 @@ bool UProject_JLocomotionAnimStateComponent::ShouldUseLocalInputState() const
 bool UProject_JLocomotionAnimStateComponent::IsSprintRequestedForAnimation() const
 {
 	const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	return bSprintInputHeld || (PlayerOwner && PlayerOwner->IsSprintLocomotionAllowed());
+	return (bSprintInputHeld && (!PlayerOwner || PlayerOwner->IsSprintInputDirectionAllowed())) ||
+		(PlayerOwner && PlayerOwner->IsSprintLocomotionAllowed());
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsRemoteInAirForAnimation(bool bMovementReportsInAir) const

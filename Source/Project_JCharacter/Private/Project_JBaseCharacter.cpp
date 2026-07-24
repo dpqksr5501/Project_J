@@ -92,22 +92,10 @@ void AProject_JBaseCharacter::BeginPlay()
 
 			Character->CurrentSignificance = Significance;
 
-			if (Significance <= 0.0f)
-			{
-				Character->SetActorTickInterval(Character->NearSignificanceTickInterval);
-			}
-			else if (Significance <= 1.0f)
-			{
-				Character->SetActorTickInterval(Character->MidSignificanceTickInterval);
-			}
-			else if (Significance <= 2.0f)
-			{
-				Character->SetActorTickInterval(Character->FarSignificanceTickInterval);
-			}
-			else
-			{
-				Character->SetActorTickInterval(Character->HiddenSignificanceTickInterval);
-			}
+			// Significance is a measurement, not a safe global actor-tick throttle.
+			// Player characters use their tick for input/locomotion and NPCs disable it
+			// entirely. Individual consumers (AI, mesh URO, Mass LOD) must opt in to
+			// their own budget policy rather than silently slowing every character.
 		};
 
 		SignificanceManager->RegisterObject(this, FName("Character"), SignificanceFunc, USignificanceManager::EPostSignificanceType::Sequential, PostSignificanceFunc);

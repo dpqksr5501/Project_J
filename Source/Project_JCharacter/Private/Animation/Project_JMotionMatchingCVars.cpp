@@ -4,21 +4,6 @@
 
 namespace
 {
-TAutoConsoleVariable<int32> CVarProjectJDebugRemoteTrajectory(
-	TEXT("p.ProjectJ.MM.DebugRemoteTrajectory"),
-	0,
-	TEXT("Logs remote simulated proxy trajectory position yaw versus facing yaw diagnostics."));
-
-TAutoConsoleVariable<int32> CVarProjectJDebugInAirBlendStack(
-	TEXT("p.ProjectJ.MM.DebugInAirBlendStack"),
-	0,
-	TEXT("Logs the actual Anim Blueprint Motion Matching selection and BlendStack while using the in-air database."));
-
-TAutoConsoleVariable<int32> CVarProjectJDebugJumpLatency(
-	TEXT("p.ProjectJ.MM.DebugJumpLatency"),
-	0,
-	TEXT("Logs remote jump presentation timing from multicast receipt through Motion Matching blend output."));
-
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
 	TEXT("p.ProjectJ.MM.RepairRemoteTrajectoryFacing"),
 	1,
@@ -52,21 +37,6 @@ TAutoConsoleVariable<int32> CVarProjectJSmoothRemoteTrajectoryPosition(
 
 namespace Project_J::MotionMatchingCVars
 {
-bool IsDebugRemoteTrajectoryEnabled()
-{
-	return CVarProjectJDebugRemoteTrajectory.GetValueOnAnyThread() != 0;
-}
-
-bool IsDebugInAirBlendStackEnabled()
-{
-	return CVarProjectJDebugInAirBlendStack.GetValueOnAnyThread() != 0;
-}
-
-bool IsDebugJumpLatencyEnabled()
-{
-	return CVarProjectJDebugJumpLatency.GetValueOnAnyThread() != 0;
-}
-
 bool ShouldRepairRemoteTrajectoryFacing()
 {
 	return CVarProjectJRepairRemoteTrajectoryFacing.GetValueOnAnyThread() != 0;

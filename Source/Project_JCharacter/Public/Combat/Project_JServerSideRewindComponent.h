@@ -49,7 +49,7 @@ public:
 
 	// Perform a rollback sweep/check at a specific time in the past
 	UFUNCTION(BlueprintCallable, Category = "SSR")
-	bool ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd);
+	bool ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius = 0.0f);
 
 private:
 	// The circular buffer storing the past transforms

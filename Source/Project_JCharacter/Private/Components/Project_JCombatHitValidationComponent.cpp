@@ -6,6 +6,7 @@
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameplayEffect.h"
+#include "Engine/World.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatHitValidation, Log, All);
 
@@ -20,6 +21,7 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 	ActiveAttackNodeTag = AttackNodeTag;
 	ActiveAttackDefinition = AttackDefinition;
 	bHitWindowOpen = false;
+	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
 }
 
@@ -28,7 +30,20 @@ void UProject_JCombatHitValidationComponent::EndAttack()
 	ActiveAttackNodeTag = FGameplayTag();
 	ActiveAttackDefinition = nullptr;
 	bHitWindowOpen = false;
+	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
+}
+
+void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVector& TraceStart, const FVector& TraceEnd)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !ActiveAttackNodeTag.IsValid())
+	{
+		return;
+	}
+
+	LastAuthoritativeTraceStart = TraceStart;
+	LastAuthoritativeTraceEnd = TraceEnd;
+	bHasAuthoritativeTrace = true;
 }
 
 void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
@@ -57,6 +72,10 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 	Request.Target = HitActor;
 	Request.AttackNodeTag = ActiveAttackNodeTag;
 	if (HitValidationPolicy.ValidateActors(GetOwner(), Request) != EProject_JCombatHitValidationFailure::None)
+	{
+		return false;
+	}
+	if (!bHasAuthoritativeTrace || IsTargetObstructed(HitActor))
 	{
 		return false;
 	}
@@ -89,13 +108,14 @@ void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(
 	}
 
 	bool bHitConfirmed = false;
+	const float TraceRadius = ActiveAttackDefinition ? FMath::Max(0.0f, ActiveAttackDefinition->HitSpec.TraceRadius) : 0.0f;
 	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
 	{
-		bHitConfirmed = SSRComp->ServerVerifyHit(ClientTimestamp, TraceStart, TraceEnd);
+		bHitConfirmed = SSRComp->ServerVerifyHit(ClientTimestamp, LastAuthoritativeTraceStart, LastAuthoritativeTraceEnd, TraceRadius);
 	}
 	else
 	{
-		bHitConfirmed = HitActor->GetComponentsBoundingBox().Intersect(FBox(TraceStart.ComponentMin(TraceEnd), TraceStart.ComponentMax(TraceEnd)).ExpandBy(25.0f));
+		bHitConfirmed = HitActor->GetComponentsBoundingBox().Intersect(FBox(LastAuthoritativeTraceStart.ComponentMin(LastAuthoritativeTraceEnd), LastAuthoritativeTraceStart.ComponentMax(LastAuthoritativeTraceEnd)).ExpandBy(TraceRadius));
 	}
 
 	if (!bHitConfirmed)
@@ -121,6 +141,19 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	{
 		return EProject_JCombatHitValidationFailure::HitWindowClosed;
 	}
+	if (!bHasAuthoritativeTrace)
+	{
+		return EProject_JCombatHitValidationFailure::AuthoritativeTraceUnavailable;
+	}
+	if (ActiveAttackDefinition &&
+		FVector::DistSquared(Request.TraceStart, Request.TraceEnd) > FMath::Square(FMath::Max(0.0f, ActiveAttackDefinition->HitSpec.TraceDistance + ActiveAttackDefinition->HitSpec.TraceRadius)))
+	{
+		return EProject_JCombatHitValidationFailure::TraceTooLong;
+	}
+	if (IsTargetObstructed(Request.Target))
+	{
+		return EProject_JCombatHitValidationFailure::WorldObstructed;
+	}
 	if (ServerHitActors.Contains(Request.Target))
 	{
 		return EProject_JCombatHitValidationFailure::DuplicateTarget;
@@ -143,6 +176,25 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	}
 	LastServerRequestSequence = Request.RequestSequence;
 	return EProject_JCombatHitValidationFailure::None;
+}
+
+bool UProject_JCombatHitValidationComponent::IsTargetObstructed(const AActor* HitActor) const
+{
+	const UWorld* World = GetWorld();
+	if (!World || !GetOwner() || !HitActor)
+	{
+		return true;
+	}
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(ProjectJCombatLineOfSight), false, GetOwner());
+	QueryParams.AddIgnoredActor(GetOwner());
+	FHitResult BlockingHit;
+	if (!World->LineTraceSingleByChannel(BlockingHit, LastAuthoritativeTraceStart, HitActor->GetActorLocation(), ECC_Visibility, QueryParams))
+	{
+		return false;
+	}
+
+	return BlockingHit.GetActor() != HitActor;
 }
 
 bool UProject_JCombatHitValidationComponent::ApplyConfirmedHit(AActor* HitActor)

@@ -161,6 +161,13 @@ void ValidateCombatProfile(
 	{
 		AddWarning(Context, OutWarnings, TEXT("plays combat intro on enter but no effective CombatIntroMontage is assigned."));
 	}
+
+	if (CombatProfile->bAllowSprintInCombat &&
+		CombatProfile->bRequireForwardInputForSprintInCombat &&
+		CombatProfile->CombatSprintForwardInputThreshold <= 0.0f)
+	{
+		AddWarning(Context, OutWarnings, TEXT("allows combat sprint with a non-positive forward-input threshold; use a small positive value such as 0.1."));
+	}
 }
 }
 
@@ -181,5 +188,13 @@ void Project_J::AnimationProfileValidation::ValidatePlayerAnimationConfiguration
 	if (MotionMatchingAssetSet)
 	{
 		MotionMatchingAssetSet->ValidateForProjectJLocomotion(&PlayerCharacter, OutWarnings);
+		if (CombatAnimProfile && CombatAnimProfile->bUseCombatRotationMode)
+		{
+			const UProject_JMotionMatchingAssetSet* CombatStrafeAssetSet =
+				CombatAnimProfile->CombatStrafeMotionMatchingAssetSet
+					? CombatAnimProfile->CombatStrafeMotionMatchingAssetSet.Get()
+					: MotionMatchingAssetSet;
+			CombatStrafeAssetSet->ValidateCombatStrafeForProjectJLocomotion(&PlayerCharacter, OutWarnings);
+		}
 	}
 }

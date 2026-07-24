@@ -5,8 +5,10 @@
 #include "Project_JMassMonsterSpawner.generated.h"
 
 /**
- * A custom C++ Mass Spawner specifically configured to spawn monsters or NPCs.
- * Instead of setting up everything in Blueprints, you can pre-configure default properties here.
+ * Experimental integration point for future large-scale monsters and crowds.
+ * Keep gameplay-critical NPCs on AProject_JNPCCharacter until a measured Mass
+ * representation/LOD policy exists. Mass remains enabled; this class simply
+ * prevents the experimental path from leaking into normal character code.
  */
 UCLASS()
 class PROJECT_JCHARACTER_API AProject_JMassMonsterSpawner : public AMassSpawner

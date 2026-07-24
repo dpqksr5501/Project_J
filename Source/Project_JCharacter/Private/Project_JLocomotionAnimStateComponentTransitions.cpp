@@ -1,6 +1,5 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
 
@@ -37,21 +36,6 @@ void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 
 	LastConfirmedRemoteJumpSequence = Sequence;
 	const float ConfirmedElapsedTime = FMath::Max(0.0f, ServerStartAgeSeconds);
-	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("ProjectJ.JumpLatency Stage=AnimStateEnter Frame=%llu WorldTime=%.3f Owner=%s Sequence=%d Age=%.3f Predicted=%s WasJumping=%s VelocityZ=%.1f"),
-			GFrameCounter,
-			GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f,
-			*GetNameSafe(PlayerOwner),
-			Sequence,
-			ConfirmedElapsedTime,
-			bPredictedRemoteJumpStart ? TEXT("true") : TEXT("false"),
-			bIsJumping ? TEXT("true") : TEXT("false"),
-			LaunchVelocity.Z);
-	}
 	if (bPredictedRemoteJumpStart && bIsJumping)
 	{
 		JumpStartElapsedTime = FMath::Max(JumpStartElapsedTime, ConfirmedElapsedTime);

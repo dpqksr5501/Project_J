@@ -16,7 +16,8 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 		const FProject_JAnimThreadSafeData& InData,
 		UPoseSearchDatabase* InSelectedDatabase,
 		bool bInMotionMatchingEnabled,
-		bool bInUpdateMotionMatchingThisFrame);
+		bool bInUpdateMotionMatchingThisFrame,
+		bool bInForceMotionMatchingReselect);
 
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
@@ -31,26 +32,20 @@ protected:
 	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
 
 private:
-	struct FInAirBlendStackDebugState
-	{
-		int32 StackCount = INDEX_NONE;
-		FString StackSignature;
-		bool bWasInAir = false;
-	};
-
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
-	void LogInAirAnimBlueprintBlendStacks();
+	void ForceReselectMotionMatchingNodes();
+	void LogMotionMatchingDiagnostics();
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
 	bool bMotionMatchingEnabled = true;
 	bool bUpdateMotionMatchingThisFrame = true;
+	bool bForceMotionMatchingReselect = false;
 
 	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
 	TObjectPtr<UPoseSearchDatabase> AppliedDatabase = nullptr;
-	TMap<int32, FInAirBlendStackDebugState> InAirBlendStackDebugStates;
 	TMap<int32, float> DefaultSearchThrottleTimes;
 	float NativeDefaultSearchThrottleTime = 0.0f;
 	bool bHasNativeDefaultSearchThrottleTime = false;

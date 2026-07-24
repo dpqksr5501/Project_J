@@ -36,11 +36,6 @@ void AProject_JNPCCharacter::ApplyDefaultNPCOptimizationPolicy()
 	SetNetUpdateFrequency(NPCNetUpdateFrequency);
 	SetMinNetUpdateFrequency(NPCMinNetUpdateFrequency);
 
-	NearSignificanceTickInterval = NPCNearSignificanceTickInterval;
-	MidSignificanceTickInterval = NPCMidSignificanceTickInterval;
-	FarSignificanceTickInterval = NPCFarSignificanceTickInterval;
-	HiddenSignificanceTickInterval = NPCHiddenSignificanceTickInterval;
-
 	if (USkeletalMeshComponent* MeshComponent = GetMesh())
 	{
 		MeshComponent->bEnableUpdateRateOptimizations = true;

@@ -4,7 +4,6 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "PoseSearch/PoseSearchDatabase.h"
-#include "Project_JLocomotionDebugUtils.h"
 #include "UObject/UnrealType.h"
 
 namespace
@@ -51,12 +50,14 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const FProject_JAnimThreadSafeData& InData,
 	UPoseSearchDatabase* InSelectedDatabase,
 	bool bInMotionMatchingEnabled,
-	bool bInUpdateMotionMatchingThisFrame)
+	bool bInUpdateMotionMatchingThisFrame,
+	bool bInForceMotionMatchingReselect)
 {
 	PendingGameThreadData = InData;
 	CurrentActiveDatabase = InSelectedDatabase;
 	bMotionMatchingEnabled = bInMotionMatchingEnabled;
 	bUpdateMotionMatchingThisFrame = bInUpdateMotionMatchingThisFrame;
+	bForceMotionMatchingReselect = bInForceMotionMatchingReselect;
 }
 
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)
@@ -77,10 +78,13 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	{
 		ApplySelectedDatabaseToNativeNode();
 	}
+	if (bForceMotionMatchingReselect && bMotionMatchingEnabled && CurrentActiveDatabase)
+	{
+		ForceReselectMotionMatchingNodes();
+	}
 
 	ApplyMotionMatchingSearchPolicy();
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
-	LogInAirAnimBlueprintBlendStacks();
 }
 
 void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
@@ -137,20 +141,177 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 	}
 }
 
-void FProject_JCharacterAnimInstanceProxy::LogInAirAnimBlueprintBlendStacks()
+void FProject_JCharacterAnimInstanceProxy::LogMotionMatchingDiagnostics()
 {
-	const bool bDebugEnabled = Project_J::MotionMatchingCVars::IsDebugInAirBlendStackEnabled();
+#if 0 // Temporary Motion Matching diagnostics removed after landing investigation.
+	const int32 DebugLevel = Project_J::MotionMatchingCVars::GetDebugLevel();
+	if (DebugLevel <= 0)
+	{
+		MotionMatchingDebugStates.Reset();
+		return;
+	}
+
 	const bool bShouldSearchEveryUpdate = ThreadSafeData.MotionMatchingSearchPolicy.ShouldSearchEveryUpdate(
 		ThreadSafeData.LocomotionContext.PhaseFamily,
 		ThreadSafeData.Air.bIsFallOffStart);
-	const bool bIsInAirPhase =
-		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart ||
-		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall;
-	if (!bDebugEnabled || !bIsInAirPhase)
+	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
+	if (!AnimClass)
 	{
-		InAirBlendStackDebugStates.Reset();
 		return;
 	}
+
+	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
+	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+	{
+		const FAnimNode_MotionMatching* MotionMatchingNode = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
+		if (!MotionMatchingNode)
+		{
+			continue;
+		}
+
+		const int32 PropertyIndex = AnimNodeProperties.Num() - 1 - NodeIndex;
+		const FStructProperty* NodeProperty = AnimNodeProperties.IsValidIndex(PropertyIndex)
+			? AnimNodeProperties[PropertyIndex]
+			: nullptr;
+		const FPoseSearchBlueprintResult& SearchResult = MotionMatchingNode->GetMotionMatchingState().SearchResult;
+		const bool bMissingInputDatabase = bMotionMatchingEnabled && !CurrentActiveDatabase;
+		const bool bMissingTrajectory =
+			ThreadSafeData.LocomotionContext.bIsMoving && !ThreadSafeData.Movement.bHasTrajectory;
+		const bool bDatabaseMismatch =
+			CurrentActiveDatabase && SearchResult.SelectedDatabase &&
+			SearchResult.SelectedDatabase != CurrentActiveDatabase;
+		const bool bMissingSelectedAnimation =
+			CurrentActiveDatabase && !SearchResult.SelectedAnim;
+		const bool bForcedReselectStillContinuing =
+			bForceMotionMatchingReselect && SearchResult.bIsContinuingPoseSearch;
+		const bool bHasIssue = bMissingInputDatabase || bMissingTrajectory || bDatabaseMismatch ||
+			bMissingSelectedAnimation || bForcedReselectStillContinuing;
+
+		const FString Signature = FString::Printf(
+			TEXT("%s|%s|%s|%s|%s|%s|%d|%d|%d|%d|%d|%d"),
+			*GetNameSafe(CurrentActiveDatabase),
+			*GetNameSafe(SearchResult.SelectedDatabase),
+			*GetNameSafe(SearchResult.SelectedAnim),
+			Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.GaitIntent),
+			Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.RotationMode),
+			Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.PhaseFamily),
+			bForceMotionMatchingReselect ? 1 : 0,
+			SearchResult.bIsContinuingPoseSearch ? 1 : 0,
+			bHasIssue ? 1 : 0,
+			ThreadSafeData.Landing.bIsLanding ? 1 : 0,
+			ThreadSafeData.Landing.bLandWasMoving ? 1 : 0,
+			ThreadSafeData.Landing.bUseHeavyLand ? 1 : 0);
+		FMotionMatchingDebugState& DebugState = MotionMatchingDebugStates.FindOrAdd(NodeIndex);
+		const bool bShouldLog = Signature != DebugState.Signature ||
+			bHasIssue != DebugState.bHadIssue ||
+			(DebugLevel >= 2 && bForceMotionMatchingReselect) ||
+			MotionMatchingNode->AnyNewBlendToThisFrame();
+		if (!bShouldLog)
+		{
+			continue;
+		}
+
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("ProjectJ.MM Frame=%llu AnimInstance=%s Node=%s InputPSD=%s SelectedPSD=%s SelectedAnim=%s Time=%.3f Continuing=%s NewBlend=%s ForceReselect=%s Context[Combat=%s Gait=%s Rotation=%s Phase=%s GroundMode=%d] Input[Has=%s Turn=%.1f] Movement[Speed=%.1f Accel=%.2f Trajectory=%s Samples=%d] Landing[Active=%s Moving=%s Sprint=%s Heavy=%s FallStart=%.1f LastFall=%.1f] Search[EveryUpdate=%s Throttle=%.3f] Issues[NoInputPSD=%s NoTrajectory=%s PSDMismatch=%s NoAnim=%s ForcedContinue=%s]"),
+		GFrameCounter,
+		*GetNameSafe(GetAnimInstanceObject()),
+		NodeProperty ? *NodeProperty->GetName() : TEXT("Unknown"),
+		*GetNameSafe(CurrentActiveDatabase),
+		*GetNameSafe(SearchResult.SelectedDatabase),
+		*GetNameSafe(SearchResult.SelectedAnim),
+		SearchResult.SelectedTime,
+		SearchResult.bIsContinuingPoseSearch ? TEXT("true") : TEXT("false"),
+		MotionMatchingNode->AnyNewBlendToThisFrame() ? TEXT("true") : TEXT("false"),
+		bForceMotionMatchingReselect ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
+		Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.GaitIntent),
+		Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.RotationMode),
+		Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.PhaseFamily),
+		static_cast<int32>(ThreadSafeData.Ground.GroundMotionMode),
+		ThreadSafeData.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Input.MoveInputTurnAngle,
+		ThreadSafeData.Movement.GroundSpeed,
+		ThreadSafeData.Movement.AccelerationRatio,
+		ThreadSafeData.Movement.bHasTrajectory ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Movement.Trajectory.Samples.Num(),
+		ThreadSafeData.Landing.bIsLanding ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
+		ThreadSafeData.Landing.LandStartFallSpeed,
+		ThreadSafeData.Landing.LastFallSpeed,
+		bShouldSearchEveryUpdate ? TEXT("true") : TEXT("false"),
+		GetMotionMatchingSearchThrottleTime(*MotionMatchingNode),
+		bMissingInputDatabase ? TEXT("true") : TEXT("false"),
+		bMissingTrajectory ? TEXT("true") : TEXT("false"),
+		bDatabaseMismatch ? TEXT("true") : TEXT("false"),
+		bMissingSelectedAnimation ? TEXT("true") : TEXT("false"),
+		bForcedReselectStillContinuing ? TEXT("true") : TEXT("false"));
+
+		DebugState.Signature = Signature;
+		DebugState.bHadIssue = bHasIssue;
+
+		const bool bIsLandingPhase =
+			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Landing;
+		if (DebugLevel >= 2 && bIsLandingPhase)
+		{
+			const int32 StackCount = MotionMatchingNode->AnimPlayers.Num();
+			UE_LOG(
+				LogTemp,
+				Log,
+				TEXT("ProjectJ.MM.LandingBlendStack Frame=%llu Node=%s InputPSD=%s SelectedPSD=%s SelectedAnim=%s NewBlend=%s StackCount=%d MaxBlends=%d Landing[Active=%s Moving=%s Sprint=%s Heavy=%s FallStart=%.1f LastFall=%.1f]"),
+				GFrameCounter,
+				NodeProperty ? *NodeProperty->GetName() : TEXT("Unknown"),
+				*GetNameSafe(CurrentActiveDatabase),
+				*GetNameSafe(SearchResult.SelectedDatabase),
+				*GetNameSafe(SearchResult.SelectedAnim),
+				MotionMatchingNode->AnyNewBlendToThisFrame() ? TEXT("true") : TEXT("false"),
+				StackCount,
+				MotionMatchingNode->GetMaxActiveBlends(),
+				ThreadSafeData.Landing.bIsLanding ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.Landing.LandStartFallSpeed,
+				ThreadSafeData.Landing.LastFallSpeed);
+
+			float RemainingWeight = 1.0f;
+			for (int32 PlayerIndex = 0; PlayerIndex < StackCount; ++PlayerIndex)
+			{
+				const FBlendStackAnimPlayer& Player = MotionMatchingNode->AnimPlayers[PlayerIndex];
+				const bool bIsOldestPlayer = PlayerIndex == StackCount - 1;
+				const float BlendInWeight = bIsOldestPlayer ? 1.0f : Player.GetBlendInWeight();
+				const float ContributionWeight = RemainingWeight * BlendInWeight;
+				UE_LOG(
+					LogTemp,
+					Log,
+					TEXT("ProjectJ.MM.LandingBlendPlayer Frame=%llu Node=%s Index=%d Anim=%s Time=%.3f AssetTime=%.3f Length=%.3f Contribution=%.3f BlendIn=%.3f BlendProgress=%.3f Active=%s Loop=%s"),
+					GFrameCounter,
+					NodeProperty ? *NodeProperty->GetName() : TEXT("Unknown"),
+					PlayerIndex,
+					*Player.GetAnimationName(),
+					Player.GetAccumulatedTime(),
+					Player.GetCurrentAssetTime(),
+					Player.GetCurrentAssetLength(),
+					ContributionWeight,
+					Player.GetBlendInWeight(),
+					Player.GetBlendInPercentage(),
+					Player.IsActive() ? TEXT("true") : TEXT("false"),
+					Player.IsLooping() ? TEXT("true") : TEXT("false"));
+				RemainingWeight *= 1.0f - BlendInWeight;
+			}
+		}
+	}
+#endif
+}
+
+void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
+{
+	const EPoseSearchInterruptMode InterruptMode =
+		EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose;
+	NativeMotionMatchingNode.SetInterruptMode(InterruptMode);
 
 	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
 	if (!AnimClass)
@@ -161,91 +322,11 @@ void FProject_JCharacterAnimInstanceProxy::LogInAirAnimBlueprintBlendStacks()
 	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
 	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
 	{
-		const FAnimNode_MotionMatching* MotionMatchingNode =
-			GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
-		if (!MotionMatchingNode)
+		if (FAnimNode_MotionMatching* MotionMatchingNode =
+			const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex)))
 		{
-			continue;
+			MotionMatchingNode->SetInterruptMode(InterruptMode);
 		}
-
-		const int32 PropertyIndex = AnimNodeProperties.Num() - 1 - NodeIndex;
-		const FStructProperty* NodeProperty = AnimNodeProperties.IsValidIndex(PropertyIndex)
-			? AnimNodeProperties[PropertyIndex]
-			: nullptr;
-		const FPoseSearchBlueprintResult& SearchResult =
-			MotionMatchingNode->GetMotionMatchingState().SearchResult;
-		const int32 StackCount = MotionMatchingNode->AnimPlayers.Num();
-		const bool bNewBlend = MotionMatchingNode->AnyNewBlendToThisFrame();
-
-		FString StackSignature;
-		for (const FBlendStackAnimPlayer& Player : MotionMatchingNode->AnimPlayers)
-		{
-			StackSignature += Player.GetAnimationName();
-			StackSignature.AppendChar(TEXT('|'));
-		}
-
-		FInAirBlendStackDebugState& DebugState = InAirBlendStackDebugStates.FindOrAdd(NodeIndex);
-		const bool bStackChanged =
-			DebugState.StackCount != StackCount ||
-			DebugState.StackSignature != StackSignature;
-		const bool bEnteredInAir = !DebugState.bWasInAir;
-		if (!bNewBlend && !bStackChanged && !bEnteredInAir)
-		{
-			continue;
-		}
-
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("ProjectJ.MM.InAirBlendStack Frame=%llu AnimInstance=%s Node=%s NodeIndex=%d Phase=%s FallOff=%s SearchEveryUpdate=%s SearchThrottle=%.3g InputPSD=%s SelectedPSD=%s SelectedAnim=%s SelectedTime=%.3f Continuing=%s NewBlend=%s Count=%d Max=%d"),
-			GFrameCounter,
-			*GetNameSafe(GetAnimInstanceObject()),
-			NodeProperty ? *NodeProperty->GetName() : TEXT("Unknown"),
-			NodeIndex,
-			Project_J::LocomotionDebug::ToDebugString(ThreadSafeData.LocomotionContext.PhaseFamily),
-			ThreadSafeData.Air.bIsFallOffStart ? TEXT("true") : TEXT("false"),
-			bShouldSearchEveryUpdate ? TEXT("true") : TEXT("false"),
-			GetMotionMatchingSearchThrottleTime(*MotionMatchingNode),
-			*GetNameSafe(CurrentActiveDatabase),
-			*GetNameSafe(SearchResult.SelectedDatabase),
-			*GetNameSafe(SearchResult.SelectedAnim),
-			SearchResult.SelectedTime,
-			SearchResult.bIsContinuingPoseSearch ? TEXT("true") : TEXT("false"),
-			bNewBlend ? TEXT("true") : TEXT("false"),
-			StackCount,
-			MotionMatchingNode->GetMaxActiveBlends());
-
-		float RemainingWeight = 1.0f;
-		for (int32 PlayerIndex = 0; PlayerIndex < StackCount; ++PlayerIndex)
-		{
-			const FBlendStackAnimPlayer& Player = MotionMatchingNode->AnimPlayers[PlayerIndex];
-			const bool bIsOldestPlayer = PlayerIndex == StackCount - 1;
-			const float BlendInWeight = bIsOldestPlayer ? 1.0f : Player.GetBlendInWeight();
-			const float ContributionWeight = RemainingWeight * BlendInWeight;
-
-			UE_LOG(
-				LogTemp,
-				Warning,
-				TEXT("ProjectJ.MM.InAirBlendStackPlayer NodeIndex=%d Player=%d Anim=%s Time=%.3f AssetTime=%.3f Length=%.3f Contribution=%.3f BlendIn=%.3f BlendProgress=%.3f Active=%s Loop=%s StoredPose=%s"),
-				NodeIndex,
-				PlayerIndex,
-				*Player.GetAnimationName(),
-				Player.GetAccumulatedTime(),
-				Player.GetCurrentAssetTime(),
-				Player.GetCurrentAssetLength(),
-				ContributionWeight,
-				Player.GetBlendInWeight(),
-				Player.GetBlendInPercentage(),
-				Player.IsActive() ? TEXT("true") : TEXT("false"),
-				Player.IsLooping() ? TEXT("true") : TEXT("false"),
-				Player.GetAnimationAsset() ? TEXT("false") : TEXT("true"));
-
-			RemainingWeight *= 1.0f - BlendInWeight;
-		}
-
-		DebugState.StackCount = StackCount;
-		DebugState.StackSignature = MoveTemp(StackSignature);
-		DebugState.bWasInAir = true;
 	}
 }
 

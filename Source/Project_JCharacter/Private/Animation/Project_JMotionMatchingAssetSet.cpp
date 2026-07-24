@@ -108,6 +108,33 @@ void ValidateGaitDatabaseFamily(
 	ValidateDatabaseSlot(AssetSet, ValidationContext, OutWarnings, *FString::Printf(TEXT("%s.Stop"), FamilyName), DatabaseFamily.Stop.Get());
 	ValidateDatabaseSlot(AssetSet, ValidationContext, OutWarnings, *FString::Printf(TEXT("%s.TurnRedirect"), FamilyName), DatabaseFamily.TurnRedirect.Get());
 }
+
+UPoseSearchDatabase* FindBestDatabaseEntry(
+	const TArray<FProject_JMotionMatchingDatabaseEntry>& DatabaseEntries,
+	EProject_JLocomotionGaitIntent GaitIntent,
+	EProject_JLocomotionRotationMode RotationMode,
+	EProject_JLocomotionPhaseFamily PhaseFamily)
+{
+	const FProject_JMotionMatchingDatabaseEntry* BestEntry = nullptr;
+	int32 BestSpecificity = INDEX_NONE;
+
+	for (const FProject_JMotionMatchingDatabaseEntry& Entry : DatabaseEntries)
+	{
+		if (!Entry.Matches(GaitIntent, RotationMode, PhaseFamily))
+		{
+			continue;
+		}
+
+		const int32 Specificity = Entry.GetSpecificity();
+		if (!BestEntry || Specificity > BestSpecificity)
+		{
+			BestEntry = &Entry;
+			BestSpecificity = Specificity;
+		}
+	}
+
+	return BestEntry ? BestEntry->PoseSearchDatabase.Get() : nullptr;
+}
 }
 
 bool FProject_JMotionMatchingDatabaseEntry::Matches(
@@ -143,8 +170,19 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
 	bool bLandWasMoving,
 	bool bLandWasSprinting,
 	bool bUseFallOffStart,
-	bool bUseRemoteStart) const
+	bool bUseRemoteStart,
+	bool bUseGenericFamiliesForNonOrientToMovement) const
 {
+	// Camera-facing combat must be able to override every phase, including idle.
+	// The generic idle database is intentionally evaluated after a Strafe entry.
+	if (RotationMode != EProject_JLocomotionRotationMode::OrientToMovement)
+	{
+		if (UPoseSearchDatabase* RotationModeDatabase = FindBestDatabaseEntry(DatabaseEntries, GaitIntent, RotationMode, PhaseFamily))
+		{
+			return RotationModeDatabase;
+		}
+	}
+
 	if (PhaseFamily == EProject_JLocomotionPhaseFamily::Idle)
 	{
 		if (IdlePoseSearchDatabase)
@@ -183,7 +221,8 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
 		}
 	}
 
-	if (RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
+	if (RotationMode == EProject_JLocomotionRotationMode::OrientToMovement ||
+		bUseGenericFamiliesForNonOrientToMovement)
 	{
 		const FProject_JMotionMatchingGaitDatabaseFamily& GaitFamily =
 			GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
@@ -193,25 +232,7 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
 		}
 	}
 
-	const FProject_JMotionMatchingDatabaseEntry* BestEntry = nullptr;
-	int32 BestSpecificity = INDEX_NONE;
-
-	for (const FProject_JMotionMatchingDatabaseEntry& Entry : DatabaseEntries)
-	{
-		if (!Entry.Matches(GaitIntent, RotationMode, PhaseFamily))
-		{
-			continue;
-		}
-
-		const int32 Specificity = Entry.GetSpecificity();
-		if (!BestEntry || Specificity > BestSpecificity)
-		{
-			BestEntry = &Entry;
-			BestSpecificity = Specificity;
-		}
-	}
-
-	return BestEntry ? BestEntry->PoseSearchDatabase.Get() : nullptr;
+	return FindBestDatabaseEntry(DatabaseEntries, GaitIntent, RotationMode, PhaseFamily);
 }
 
 bool UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion(
@@ -233,5 +254,18 @@ bool UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion(
 	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("LandDatabases.RunHeavy"), LandDatabases.RunHeavy.Get());
 	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("LandDatabases.SprintHeavy"), LandDatabases.SprintHeavy.Get());
 
+	return OutWarnings.Num() == InitialWarningCount;
+}
+
+bool UProject_JMotionMatchingAssetSet::ValidateCombatStrafeForProjectJLocomotion(
+	const UObject* ValidationContext,
+	TArray<FString>& OutWarnings) const
+{
+	const int32 InitialWarningCount = OutWarnings.Num();
+	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.IdlePoseSearchDatabase"), IdlePoseSearchDatabase.Get());
+	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Cycle"), RunDatabases.Cycle.Get());
+	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Start"), RunDatabases.Start.Get());
+	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Stop"), RunDatabases.Stop.Get());
+	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.TurnRedirect"), RunDatabases.TurnRedirect.Get());
 	return OutWarnings.Num() == InitialWarningCount;
 }

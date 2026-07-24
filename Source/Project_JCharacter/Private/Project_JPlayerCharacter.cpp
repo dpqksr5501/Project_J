@@ -201,6 +201,11 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// Sprint is an InstancedPerActor ability. Explicitly end it before the ASC
+	// starts removing specs during PIE shutdown or pawn destruction.
+	bSprintInputHeld = false;
+	CancelAbilitiesByTag(SprintAbilityTag);
+
 	if (MountComponent)
 	{
 		MountComponent->OnMountChanged.RemoveDynamic(this, &AProject_JPlayerCharacter::OnMountChangedForAnimation);
@@ -486,12 +491,31 @@ void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
+	const bool bRotationModeChanged = bUseControllerRotationYaw != bShouldUseCombatRotation;
 	bUseControllerRotationYaw = bShouldUseCombatRotation;
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
+
+	// The trajectory contains facing samples as well as positions. Re-seed it
+	// when ownership of character yaw changes so Pose Search does not compare a
+	// pre-combat forward trajectory with a combat strafe database (or vice versa).
+	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
+	{
+		MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
+	}
+
+}
+
+bool AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair() const
+{
+	// Combat currently owns yaw through the controller and therefore permits
+	// movement that intentionally differs from facing. Future lock-on or forced
+	// facing modes should return false here as well, rather than changing the
+	// global simulated-proxy repair CVar.
+	return !bUseControllerRotationYaw;
 }
 
 
@@ -569,6 +593,7 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 
 	UpdateMaxWalkSpeed();
 	ApplySprintAnimationState();
+	RefreshSprintAbilityFromInput();
 }
 
 void AProject_JPlayerCharacter::OnRep_ReplicatedCombatModePresentation()
@@ -925,6 +950,16 @@ const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetMotionMatc
 	return MotionMatchingAssetSet.Get();
 }
 
+const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetCombatStrafeMotionMatchingAssetSet() const
+{
+	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
+	{
+		return EffectiveCombatAnimProfile->CombatStrafeMotionMatchingAssetSet.Get();
+	}
+
+	return nullptr;
+}
+
 const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
 {
 	if (const UProject_JCombatStyleDefinition* CombatStyle = GetCombatStyleDefinition())
@@ -1047,6 +1082,24 @@ bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
 	return CombatStateComponent && CombatStateComponent->IsSprintTagActive() && !IsCombatActionBlockingSprint();
 }
 
+bool AProject_JPlayerCharacter::IsSprintInputDirectionAllowed() const
+{
+	// Simulated proxies have no raw input. Their replicated Sprint tag remains authoritative.
+	if (!IsLocallyControlled() || !IsCombatModeActive())
+	{
+		return true;
+	}
+
+	const UProject_JCombatAnimProfile* CombatAnimProfile = GetCombatAnimProfile();
+	if (!CombatAnimProfile || !CombatAnimProfile->bAllowSprintInCombat)
+	{
+		return false;
+	}
+
+	return !CombatAnimProfile->bRequireForwardInputForSprintInCombat ||
+		SprintMoveInput.Y > CombatAnimProfile->CombatSprintForwardInputThreshold;
+}
+
 bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
 {
 	return BuildCombatMovementPolicy(*this).IsJumpAllowed();
@@ -1119,17 +1172,51 @@ void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
 
 void AProject_JPlayerCharacter::StartSprint()
 {
-	TryActivateAbilityByTag(SprintAbilityTag);
+	bSprintInputHeld = true;
+	RefreshSprintAbilityFromInput();
 }
 
 void AProject_JPlayerCharacter::StopSprint()
 {
+	bSprintInputHeld = false;
 	CancelAbilitiesByTag(SprintAbilityTag);
+}
+
+void AProject_JPlayerCharacter::UpdateSprintInputFromMove(const FVector2D& MoveInput)
+{
+	SprintMoveInput = MoveInput.GetClampedToMaxSize(1.0f);
+	RefreshSprintAbilityFromInput();
+}
+
+bool AProject_JPlayerCharacter::ShouldRequestSprintAbility() const
+{
+	return bSprintInputHeld && IsSprintInputDirectionAllowed();
+}
+
+void AProject_JPlayerCharacter::RefreshSprintAbilityFromInput()
+{
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
+	const bool bSprintAbilityActive = CombatStateComponent && CombatStateComponent->IsSprintTagActive();
+	if (ShouldRequestSprintAbility())
+	{
+		if (!bSprintAbilityActive)
+		{
+			TryActivateAbilityByTag(SprintAbilityTag);
+		}
+	}
+	else if (bSprintAbilityActive)
+	{
+		CancelAbilitiesByTag(SprintAbilityTag);
+	}
 }
 
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
-	if (MountComponent && MountComponent->IsMounted())
+	if (!CanToggleCombatMode())
 	{
 		return;
 	}
@@ -1148,8 +1235,39 @@ void AProject_JPlayerCharacter::ToggleCombatMode()
 
 void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 {
+	if (!CanToggleCombatMode())
+	{
+		return;
+	}
+
 	ApplyCombatRotationMode(true);
 	PlayCombatIntroMontage();
+}
+
+bool AProject_JPlayerCharacter::CanToggleCombatMode() const
+{
+	if ((MountComponent && MountComponent->IsMounted()) ||
+		bIsPlayingCombatIntro ||
+		bIsPlayingCombatOutro ||
+		IsAttacking() ||
+		IsDodging() ||
+		IsHitReacting())
+	{
+		return false;
+	}
+
+	if (const UCharacterMovementComponent* MoveComp = GetCharacterMovement(); MoveComp && MoveComp->IsFalling())
+	{
+		return false;
+	}
+
+	// JumpStart and landing have a short overlap with grounded movement mode.
+	// Their animation state is therefore included in addition to IsFalling().
+	return !LocomotionAnimStateComponent ||
+		(!LocomotionAnimStateComponent->bIsJumping &&
+			!LocomotionAnimStateComponent->bIsFallOffStart &&
+			!LocomotionAnimStateComponent->bIsLanding &&
+			!LocomotionAnimStateComponent->bIsPhysicallyInAir);
 }
 
 void AProject_JPlayerCharacter::PlayCombatIntroMontage()
@@ -1247,6 +1365,11 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		{
 			CombatIntroComponent->ClearPendingCombatMode();
 		}
+		// The intro component can still report its montage as playing during its
+		// end delegate. Clear the local transition flag before activating the
+		// persistent combat ability, otherwise the common toggle guard rejects
+		// the completed transition as an overlapping input.
+		bIsPlayingCombatIntro = false;
 		bPendingCombatModeFromIntro = false;
 		TryActivateAbilityByTag(CombatToggleAbilityTag);
 	}

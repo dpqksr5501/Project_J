@@ -50,6 +50,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Zoom")
 	float ZoomInterpolationSpeed = 5.0f;
 
+	/** Camera socket offset while not in combat. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing")
+	FVector NormalSocketOffset = FVector::ZeroVector;
+
+	/** Over-the-shoulder offset used by the local combat camera. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing")
+	FVector CombatSocketOffset = FVector(0.0f, 55.0f, 20.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing", meta=(ClampMin="1.0", ClampMax="170.0"))
+	float NormalFieldOfView = 90.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing", meta=(ClampMin="1.0", ClampMax="170.0"))
+	float CombatFieldOfView = 85.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera|Framing", meta=(ClampMin="0.0", UIMin="0.0"))
+	float FramingInterpolationSpeed = 8.0f;
+
+	/** Switches the local over-the-shoulder framing without changing gameplay facing. */
+	UFUNCTION(BlueprintCallable, Category="Camera|Framing")
+	void SetCombatRightShoulder(bool bUseRightShoulder);
+
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -64,4 +85,5 @@ private:
 	FDelegateHandle CombatModeTagEventHandle;
 	bool bIsCombatMode = false;
 	bool bIsLocallyControlled = false;
+	bool bUseRightCombatShoulder = true;
 };

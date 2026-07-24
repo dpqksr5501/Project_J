@@ -22,6 +22,13 @@ public:
 	void EndAttack();
 	void SetHitWindowOpen(bool bOpen);
 
+	/**
+	 * Records the server's authored weapon sweep for the active notify window.
+	 * Client traces remain useful as a lag-compensation hint, but never become
+	 * authoritative damage geometry.
+	 */
+	void RecordAuthoritativeTrace(const FVector& TraceStart, const FVector& TraceEnd);
+
 	/** Local predicted client path. Sequence is generated internally and verified by the server. */
 	void SubmitPredictedHit(AActor* HitActor, float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd);
 
@@ -40,6 +47,7 @@ private:
 	UAbilitySystemComponent* ResolveOwnerAbilitySystemComponent() const;
 	bool ApplyConfirmedHit(AActor* HitActor);
 	EProject_JCombatHitValidationFailure ValidateActiveAttack(const FProject_JCombatHitRequest& Request);
+	bool IsTargetObstructed(const AActor* HitActor) const;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|SSR", meta = (AllowPrivateAccess = "true"))
 	FProject_JCombatHitValidationPolicy HitValidationPolicy;
@@ -50,6 +58,9 @@ private:
 	FGameplayTag ActiveAttackNodeTag;
 	TSet<TWeakObjectPtr<const AActor>> ServerHitActors;
 	bool bHitWindowOpen = false;
+	FVector LastAuthoritativeTraceStart = FVector::ZeroVector;
+	FVector LastAuthoritativeTraceEnd = FVector::ZeroVector;
+	bool bHasAuthoritativeTrace = false;
 	int32 LocalRequestSequence = 0;
 	int32 LastServerRequestSequence = 0;
 	double RateWindowStartSeconds = 0.0;

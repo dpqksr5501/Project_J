@@ -5,7 +5,7 @@
 
 namespace
 {
-bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEnd, const FVector& CapsuleCenter, const FQuat& CapsuleRotation, float CapsuleRadius, float CapsuleHalfHeight)
+ bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEnd, const FVector& CapsuleCenter, const FQuat& CapsuleRotation, float CapsuleRadius, float CapsuleHalfHeight, float TraceRadius)
 {
 	const float CapsuleSegmentHalfHeight = FMath::Max(0.0f, CapsuleHalfHeight - CapsuleRadius);
 	const FVector CapsuleAxis = CapsuleRotation.GetUpVector();
@@ -16,7 +16,7 @@ bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEn
 	FVector ClosestCapsulePoint;
 	FMath::SegmentDistToSegmentSafe(TraceStart, TraceEnd, CapsuleSegmentStart, CapsuleSegmentEnd, ClosestTracePoint, ClosestCapsulePoint);
 
-	return FVector::DistSquared(ClosestTracePoint, ClosestCapsulePoint) <= FMath::Square(CapsuleRadius);
+	return FVector::DistSquared(ClosestTracePoint, ClosestCapsulePoint) <= FMath::Square(CapsuleRadius + FMath::Max(0.0f, TraceRadius));
 }
 }
 
@@ -76,7 +76,7 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	}
 }
 
-bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd)
+bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
 {
 	FProject_JPoseHistoryBuffer Pose1, Pose2;
 	float Alpha = 0.0f;
@@ -109,7 +109,8 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 		HistoricalCapsuleTransform.GetLocation(),
 		HistoricalCapsuleTransform.GetRotation(),
 		CapsuleComponent->GetScaledCapsuleRadius(),
-		CapsuleComponent->GetScaledCapsuleHalfHeight());
+		CapsuleComponent->GetScaledCapsuleHalfHeight(),
+		TraceRadius);
 }
 
 bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const

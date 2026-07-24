@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionTrajectoryLibrary.h"
+#include "Project_JPlayerCharacter.h"
 #include "Async/ParallelFor.h"
 
 namespace
@@ -53,6 +54,12 @@ FVector ResolveTrajectorySampleDirection(const FTransformTrajectory& Trajectory,
 
 bool ShouldRepairRemoteTrajectoryFacingForOwner(const ACharacter& CharacterOwner, FVector& OutVelocityDirection)
 {
+	if (const AProject_JPlayerCharacter* PlayerOwner = Cast<AProject_JPlayerCharacter>(&CharacterOwner);
+		PlayerOwner && !PlayerOwner->AllowsStraightRunningTrajectoryRepair())
+	{
+		return false;
+	}
+
 	FVector HorizontalVelocity(CharacterOwner.GetVelocity().X, CharacterOwner.GetVelocity().Y, 0.0f);
 	const float GroundSpeed = HorizontalVelocity.Size();
 	if (GroundSpeed < Project_J::MotionMatchingCVars::GetRepairRemoteTrajectoryFacingMinSpeed())

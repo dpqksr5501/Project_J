@@ -8,7 +8,6 @@
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JPlayerCharacter.h"
@@ -74,29 +73,6 @@ void UProject_JReplicatedJumpStateComponent::MulticastConfirmedJump_Implementati
 	if (!Owner || Owner->HasAuthority())
 	{
 		return;
-	}
-
-	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
-	{
-		const ACharacter* CharacterOwner = Cast<ACharacter>(Owner);
-		const UCharacterMovementComponent* Movement =
-			CharacterOwner ? CharacterOwner->GetCharacterMovement() : nullptr;
-		const FVector CurrentVelocity = Owner->GetVelocity();
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("ProjectJ.JumpLatency Stage=MulticastReceive Frame=%llu WorldTime=%.3f Owner=%s Role=%d Sequence=%d Age=%.3f LaunchSpeed2D=%.1f LaunchVelocityZ=%.1f CurrentSpeed2D=%.1f CurrentVelocityZ=%.1f MovementMode=%d"),
-			GFrameCounter,
-			GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f,
-			*GetNameSafe(Owner),
-			static_cast<int32>(Owner->GetLocalRole()),
-			ConfirmedState.Sequence,
-			ResolveServerStartAgeSeconds(ConfirmedState),
-			FVector(ConfirmedState.LaunchVelocity.X, ConfirmedState.LaunchVelocity.Y, 0.0f).Size(),
-			ConfirmedState.LaunchVelocity.Z,
-			FVector(CurrentVelocity.X, CurrentVelocity.Y, 0.0f).Size(),
-			CurrentVelocity.Z,
-			Movement ? static_cast<int32>(Movement->MovementMode) : INDEX_NONE);
 	}
 
 	ApplyConfirmedJumpState(ConfirmedState);
@@ -187,16 +163,6 @@ void UProject_JReplicatedJumpStateComponent::BeginUrgentRemoteAnimationUpdate()
 		UrgentUpdateDuration,
 		false);
 
-	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled())
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("ProjectJ.JumpLatency Stage=UrgentAnimUpdateBegin Frame=%llu Owner=%s RestoreURO=%s"),
-			GFrameCounter,
-			*GetNameSafe(CharacterOwner),
-			bRestoreAnimationUpdateRateOptimization ? TEXT("true") : TEXT("false"));
-	}
 }
 
 void UProject_JReplicatedJumpStateComponent::RestoreRemoteAnimationUpdateRateOptimization()
@@ -220,16 +186,6 @@ void UProject_JReplicatedJumpStateComponent::RestoreRemoteAnimationUpdateRateOpt
 	}
 	bUrgentAnimationUpdateActive = false;
 
-	if (Project_J::MotionMatchingCVars::IsDebugJumpLatencyEnabled() && CharacterOwner)
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("ProjectJ.JumpLatency Stage=UrgentAnimUpdateEnd Frame=%llu Owner=%s RestoredURO=%s"),
-			GFrameCounter,
-			*GetNameSafe(CharacterOwner),
-			bRestoreAnimationUpdateRateOptimization ? TEXT("true") : TEXT("false"));
-	}
 }
 
 float UProject_JReplicatedJumpStateComponent::ResolveServerStartAgeSeconds(

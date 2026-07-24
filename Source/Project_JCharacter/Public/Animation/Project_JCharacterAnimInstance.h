@@ -22,6 +22,7 @@ class UPoseSearchDatabase;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
+class UProject_JMotionMatchingAssetSet;
 struct FAnimNode_Base;
 struct FAnimationUpdateContext;
 
@@ -529,6 +530,7 @@ protected:
 	void ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data);
 	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
 	bool ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const;
+	bool ShouldForceMotionMatchingReselect(const FProject_JAnimThreadSafeData& Data) const;
 	void CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data);
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;

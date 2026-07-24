@@ -321,13 +321,17 @@ private:
 	void ClearResolvedMoveInputState();
 
 public:
-	/** Maximum time a moving landing can hold without a cancel or new phase. */
+	/**
+	 * Maximum time a moving landing may own the Motion Matching database. The
+	 * Motion Matching search policy holds the selected one-shot landing pose during
+	 * this interval, so this is a recovery-state duration rather than a reselect cadence.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float LandingRequestDuration = 1.3f;
+	float LandingRequestDuration = 1.00f;
 
-	/** Maximum time a stand landing can hold without a cancel or new phase. */
+	/** Maximum time a stand landing may own the Motion Matching database. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StandLandingRequestDuration = 1.4f;
+	float StandLandingRequestDuration = 1.00f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LandingMinHoldTime = 0.25f;

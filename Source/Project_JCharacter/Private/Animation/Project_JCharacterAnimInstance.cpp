@@ -29,68 +29,6 @@
 // SyncLegacyFieldsFromStructuredData() removed.
 // All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
 
-namespace
-{
-
-FString GetDebugWorldName(const AActor* Actor)
-{
-	return Actor && Actor->GetWorld() ? Actor->GetWorld()->GetName() : FString(TEXT("None"));
-}
-
-void LogRemoteTrajectoryFacing(
-	const ACharacter* OwningCharacter,
-	const FProject_JAnimThreadSafeData& Data,
-	const UPoseSearchDatabase* SelectedDatabase)
-{
-	if (!OwningCharacter ||
-		OwningCharacter->GetLocalRole() != ROLE_SimulatedProxy ||
-		!Project_J::MotionMatchingCVars::IsDebugRemoteTrajectoryEnabled())
-	{
-		return;
-	}
-
-	const TArray<FTransformTrajectorySample>& Samples = Data.Movement.Trajectory.Samples;
-	if (Samples.Num() < 2)
-	{
-		return;
-	}
-
-	const float ActorYaw = OwningCharacter->GetActorRotation().Yaw;
-	const FVector HorizontalVelocity(Data.Movement.Velocity.X, Data.Movement.Velocity.Y, 0.0f);
-	const float VelocityYaw = HorizontalVelocity.IsNearlyZero() ? ActorYaw : HorizontalVelocity.Rotation().Yaw;
-
-	for (int32 Index = 1; Index < Samples.Num(); ++Index)
-	{
-		const FVector Delta = Samples[Index].GetTransform().GetLocation() - Samples[Index - 1].GetTransform().GetLocation();
-		const FVector HorizontalDelta(Delta.X, Delta.Y, 0.0f);
-		if (HorizontalDelta.IsNearlyZero())
-		{
-			continue;
-		}
-
-		const float PosYaw = HorizontalDelta.Rotation().Yaw;
-		const float FaceYaw = Samples[Index].GetTransform().GetRotation().Rotator().Yaw;
-		const float Diff = FMath::FindDeltaAngleDegrees(PosYaw, FaceYaw);
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("ProjectJ.MM.RemoteTrajectory World=%s NetMode=%s Owner=%s Sample=%d Time=%.3f PSD=%s PosYaw=%.1f FaceYaw=%.1f Diff=%.1f ActorYaw=%.1f VelocityYaw=%.1f Speed=%.1f"),
-			*GetDebugWorldName(OwningCharacter),
-			Project_J::LocomotionDebug::ToDebugString(OwningCharacter->GetNetMode()),
-			*GetNameSafe(OwningCharacter),
-			Index,
-			Samples[Index].TimeInSeconds,
-			*GetNameSafe(SelectedDatabase),
-			PosYaw,
-			FaceYaw,
-			Diff,
-			ActorYaw,
-			VelocityYaw,
-			Data.Movement.GroundSpeed);
-	}
-}
-}
-
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
 	bUseMultiThreadedAnimationUpdate = true;
@@ -586,16 +524,15 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 		Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
 	}
 
-	if (OwningCharacter->GetController())
-	{
-		const FRotator ControlRotation = OwningCharacter->GetControlRotation();
-		const FRotator ActorRotation = OwningCharacter->GetActorRotation();
-		Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, ControlRotation.Yaw), -MaxAimYaw, MaxAimYaw);
-		Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(ControlRotation.Pitch), -MaxAimPitch, MaxAimPitch);
-		return true;
-	}
-
-	return false;
+	// GetBaseAimRotation uses the owning controller for the autonomous proxy and
+	// the engine-replicated remote view pitch for simulated proxies. Reading the
+	// controller directly left remote combat overlays at zero aim whenever that
+	// client did not own the pawn.
+	const FRotator AimRotation = OwningCharacter->GetBaseAimRotation();
+	const FRotator ActorRotation = OwningCharacter->GetActorRotation();
+	Data.Aim.AimYaw = FMath::Clamp(FMath::FindDeltaAngleDegrees(ActorRotation.Yaw, AimRotation.Yaw), -MaxAimYaw, MaxAimYaw);
+	Data.Aim.AimPitch = FMath::Clamp(FRotator::NormalizeAxis(AimRotation.Pitch), -MaxAimPitch, MaxAimPitch);
+	return true;
 }
 
 void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const
@@ -705,8 +642,12 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-	LogRemoteTrajectoryFacing(OwningCharacter.Get(), Data, CurrentActivePoseSearchDatabase.Get());
-	ProjectProxy.QueueGameThreadData(Data, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, bUpdateMotionMatchingThisFrame);
+	ProjectProxy.QueueGameThreadData(
+		Data,
+		CurrentActivePoseSearchDatabase,
+		bMotionMatchingEnabled,
+		bUpdateMotionMatchingThisFrame,
+		ShouldForceMotionMatchingReselect(Data));
 }
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data)
@@ -719,14 +660,21 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	const UProject_JMotionMatchingAssetSet* AssetSet = OwningPlayerCharacter
 		? OwningPlayerCharacter->GetMotionMatchingAssetSet()
 		: nullptr;
+	const UProject_JMotionMatchingAssetSet* CombatStrafeAssetSet =
+		OwningPlayerCharacter && Data.Combat.bIsCombatMode &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+			? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet()
+			: nullptr;
 	UPoseSearchDatabase* IdleDatabase = AssetSet && AssetSet->IdlePoseSearchDatabase
 		? AssetSet->IdlePoseSearchDatabase.Get()
 		: DefaultIdlePoseSearchDatabase.Get();
 	UPoseSearchDatabase* LocomotionDatabase = AssetSet && AssetSet->DefaultPoseSearchDatabase
 		? AssetSet->DefaultPoseSearchDatabase.Get()
 		: DefaultPoseSearchDatabase.Get();
-	UPoseSearchDatabase* SelectedDatabase = AssetSet
-		? AssetSet->FindDatabaseForContext(
+	const bool bUseRemoteStart = OwningPlayerCharacter && !IsLocallyControlledCharacter() &&
+		GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart;
+	UPoseSearchDatabase* SelectedDatabase = CombatStrafeAssetSet
+		? CombatStrafeAssetSet->FindDatabaseForContext(
 			Data.LocomotionContext.GaitIntent,
 			Data.LocomotionContext.RotationMode,
 			Data.LocomotionContext.PhaseFamily,
@@ -734,16 +682,26 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			Data.Landing.bLandWasMoving,
 			Data.Landing.bLandWasSprinting,
 			Data.Air.bIsFallOffStart,
-			OwningPlayerCharacter && !IsLocallyControlledCharacter() && GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart)
+			bUseRemoteStart,
+			true)
 		: nullptr;
+	const bool bSelectedCombatStrafeDatabase = SelectedDatabase != nullptr;
+	if (!SelectedDatabase && AssetSet)
+	{
+		SelectedDatabase = AssetSet->FindDatabaseForContext(
+			Data.LocomotionContext.GaitIntent,
+			Data.LocomotionContext.RotationMode,
+			Data.LocomotionContext.PhaseFamily,
+			Data.Landing.bUseHeavyLand,
+			Data.Landing.bLandWasMoving,
+			Data.Landing.bLandWasSprinting,
+			Data.Air.bIsFallOffStart,
+			bUseRemoteStart);
+	}
 
-	// Upper-body combat overlays retain the shared lower-body Motion Matching
-	// asset set.  Most base locomotion sets only author their Start/Run/Stop
-	// database families for OrientToMovement; combat camera-facing movement uses
-	// a different rotation mode and would otherwise fall through to the generic
-	// (often idle-only) fallback database.  Prefer a dedicated combat/strafe
-	// DatabaseEntry whenever one exists, then fall back to the proven shared
-	// gait family until that weapon receives authored full-body strafe databases.
+	// A combat asset set uses the same complete family layout as normal
+	// locomotion. The base set remains only as a migration fallback when the
+	// combat set itself has an intentionally unassigned slot.
 	if (!SelectedDatabase &&
 		Data.Combat.bIsCombatMode &&
 		Data.Combat.PresentationMode == EProject_JCombatAnimationPresentationMode::UpperBodyOverlay &&
@@ -758,7 +716,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			Data.Landing.bLandWasMoving,
 			Data.Landing.bLandWasSprinting,
 			Data.Air.bIsFallOffStart,
-			OwningPlayerCharacter && !IsLocallyControlledCharacter() && GetEffectiveRemoteVisualPolicy().bUseForwardOnlyRemoteStart);
+			bUseRemoteStart);
 	}
 	if (!SelectedDatabase)
 	{
@@ -767,9 +725,11 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			: LocomotionDatabase;
 	}
 
-	const UChooserTable* ChooserTable = AssetSet && AssetSet->MotionMatchingChooserTable
-		? AssetSet->MotionMatchingChooserTable.Get()
-		: MotionMatchingChooserTable.Get();
+	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
+		? nullptr
+		: AssetSet && AssetSet->MotionMatchingChooserTable
+			? AssetSet->MotionMatchingChooserTable.Get()
+			: MotionMatchingChooserTable.Get();
 
 	bool bIsFarDistance = false;
 	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
@@ -1059,6 +1019,22 @@ bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingContextRefresh(co
 		bLastEvaluatedStartWasSprinting != Data.Ground.bStartWasSprinting;
 }
 
+bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingReselect(const FProject_JAnimThreadSafeData& Data) const
+{
+	if (!OwningPlayerCharacter ||
+		!Data.Combat.bIsCombatMode ||
+		Data.LocomotionContext.RotationMode != EProject_JLocomotionRotationMode::Strafe ||
+		!Data.Input.bHasMoveInput)
+	{
+		return false;
+	}
+
+	const UProject_JCombatAnimProfile* CombatProfile = OwningPlayerCharacter->GetCombatAnimProfile();
+	return CombatProfile &&
+		CombatProfile->bForceReselectOnStrafeInputTurn &&
+		FMath::Abs(Data.Input.MoveInputTurnAngle) >= CombatProfile->StrafeInputTurnReselectAngle;
+}
+
 void UProject_JCharacterAnimInstance::CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data)
 {
 	LastEvaluatedGroundMotionMode = Data.Ground.GroundMotionMode;
@@ -1197,7 +1173,7 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false);
+	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false, false);
 	return true;
 }
 
