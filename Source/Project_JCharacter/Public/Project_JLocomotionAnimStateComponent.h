@@ -210,7 +210,6 @@ private:
 	bool TryPromoteReplicatedStartToLocomotion();
 	bool ShouldIgnoreRedundantReplicatedMoveStart() const;
 	void QueueReplicatedMoveStart(bool bWasSprintingForStart);
-	bool TryPromoteReplicatedStopToLocomotion();
 	void QueueReplicatedMoveStop();
 	void MarkRemoteMoveReleasedIfAirborne();
 	void TryFinishLandingForReplicatedMoveStop();
@@ -718,6 +717,8 @@ private:
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
+	/** A replicated MoveStop owns remote visual intent until a later MoveStart; residual network velocity must not restart locomotion. */
+	bool bRemoteStopVisualIntentActive = false;
 	bool bHasRemoteStartTurnReference = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
 	bool bLandingCancelEventDispatched = false;

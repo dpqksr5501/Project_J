@@ -194,6 +194,11 @@ search is suppressed after the initial database-change search
 restarted while that one-second recovery state is active. On leaving Landing,
 the database changes to ground locomotion and permits an immediate new search.
 
+Stop uses the same one-shot policy (`bSearchStopEveryUpdate = false`): the
+initial stop result is held until the stop state resolves to Idle or a new input
+starts movement. This prevents a combat Stop PSD from being restarted or lost
+to a fresh search during deceleration.
+
 ## Refactor Guardrails
 
 Keep these invariants when refactoring the Motion Matching pipeline:

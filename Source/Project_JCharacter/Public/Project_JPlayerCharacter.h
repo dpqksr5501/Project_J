@@ -264,6 +264,10 @@ public:
 	UFUNCTION()
 	void OnRep_ReplicatedCombatModePresentation();
 
+	/** Receives the cosmetic draw transition before the authoritative combat tag is applied. */
+	UFUNCTION()
+	void OnRep_ReplicatedCombatIntroPresentation();
+
 	UFUNCTION()
 	void OnRep_CurrentCombatStyle();
 
@@ -384,6 +388,10 @@ public:
 	class UProject_JInventoryComponent* GetInventoryComponent() const;
 
 private:
+	/** Cosmetic-only signal for remote clients; it never grants combat gameplay state. */
+	UFUNCTION(Server, Reliable)
+	void ServerSetCombatIntroPresentation(bool bShouldShowIntro);
+
 	UFUNCTION(Server, Reliable)
 	void ServerRequestUseMountItem(FGuid ItemInstanceId);
 
@@ -422,7 +430,7 @@ public:
 
 	/** True while an entering-combat montage is preparing the combat animation layer. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
-	bool IsCombatIntroPlaying() const { return bIsPlayingCombatIntro; }
+	bool IsCombatIntroPlaying() const { return bIsPlayingCombatIntro || bReplicatedCombatIntroPresentation; }
 
 	/** Called by the weapon's sheathe montage notify at the hand-to-back frame. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
@@ -500,6 +508,13 @@ public:
 	/** Cosmetic replication for remote AnimBPs and weapon presentation; gameplay remains ASC-authoritative. */
 	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedCombatModePresentation, Transient)
 	bool bReplicatedCombatModePresentation = false;
+
+	/** Replicates draw presentation immediately, without waiting for the post-montage combat Gameplay Effect. */
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedCombatIntroPresentation, Transient)
+	bool bReplicatedCombatIntroPresentation = false;
+
+	/** Tracks the early draw replay so the later authoritative combat state does not restart the montage. */
+	bool bHasReceivedRemoteCombatIntroPresentation = false;
 
 	// --- Combat States ---
 

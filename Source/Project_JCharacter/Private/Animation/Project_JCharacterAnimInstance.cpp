@@ -724,7 +724,6 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
 	}
-
 	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
 		? nullptr
 		: AssetSet && AssetSet->MotionMatchingChooserTable

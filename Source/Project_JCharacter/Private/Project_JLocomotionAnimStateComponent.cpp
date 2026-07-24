@@ -334,6 +334,16 @@ bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
+	// A simulated proxy does not have the owning player's current controller
+	// yaw. Treating its replicated/fallback control rotation as authoritative
+	// produces a permanent facing delta and repeatedly selects a Turn PSD while
+	// the remote character is actually stationary. Remote idle must remain Idle;
+	// future replicated aim/lock-on state can opt into a dedicated remote turn.
+	if (!ShouldUseLocalInputState())
+	{
+		return false;
+	}
+
 	return
 		AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		!InKinematicContext.bHasMoveInput &&
@@ -514,7 +524,22 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(fl
 		ApplyRemoteStopStartSuppress();
 	}
 
-	UpdateGroundMotionModeFromInput(DeltaTime, MoveInput, false);
+	// CharacterMovement velocity on a simulated proxy decays several replicated
+	// frames after the owner releases input. A confirmed MoveStop is more
+	// authoritative for visual intent than that residual velocity; otherwise a
+	// remote Stop enters for one frame and is immediately overwritten by Start.
+	const FVector2D VisualMoveInput = bRemoteStopVisualIntentActive
+		? FVector2D::ZeroVector
+		: MoveInput;
+	if (bRemoteStopVisualIntentActive)
+	{
+		bHasMoveInput = false;
+		MoveInputSize = 0.0f;
+		MoveInputHeldTime = 0.0f;
+		MoveInputTurnAngle = 0.0f;
+	}
+
+	UpdateGroundMotionModeFromInput(DeltaTime, VisualMoveInput, false);
 }
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeRemoteStopStartSuppress(float DeltaTime)

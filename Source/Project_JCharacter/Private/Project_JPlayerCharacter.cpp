@@ -52,11 +52,41 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
+#include "HAL/IConsoleManager.h"
 
 DEFINE_LOG_CATEGORY(LogProjectJPlayer);
 
 namespace
 {
+TAutoConsoleVariable<int32> CVarProjectJCombatPresentationDebug(
+	TEXT("p.ProjectJ.CombatPresentation.Debug"),
+	0,
+	TEXT("Combat draw presentation replication trace. 0: off, 1: log local start, server receipt, replication, and remote montage playback."));
+
+bool ShouldLogCombatPresentationTrace()
+{
+	return CVarProjectJCombatPresentationDebug.GetValueOnAnyThread() != 0;
+}
+
+void LogCombatPresentationTrace(const AProject_JPlayerCharacter& Character, const TCHAR* Stage)
+{
+	if (!ShouldLogCombatPresentationTrace())
+	{
+		return;
+	}
+
+	const UWorld* World = Character.GetWorld();
+	UE_LOG(LogProjectJPlayer, Log,
+		TEXT("[CombatPresentation] Stage=%s Time=%.3f Owner=%s Local=%s Authority=%s LocalRole=%d RemoteRole=%d"),
+		Stage,
+		World ? World->GetTimeSeconds() : -1.0f,
+		*GetNameSafe(&Character),
+		Character.IsLocallyControlled() ? TEXT("true") : TEXT("false"),
+		Character.HasAuthority() ? TEXT("true") : TEXT("false"),
+		static_cast<int32>(Character.GetLocalRole()),
+		static_cast<int32>(Character.GetRemoteRole()));
+}
+
 FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerCharacter& PlayerCharacter)
 {
 	FProject_JCombatMovementPolicy Policy;
@@ -158,6 +188,7 @@ void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentCombatStyle);
 	DOREPLIFETIME(AProject_JPlayerCharacter, CurrentWeaponPresentationProfile);
 	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatModePresentation, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AProject_JPlayerCharacter, bReplicatedCombatIntroPresentation, COND_SkipOwner);
 }
 
 void AProject_JPlayerCharacter::BeginPlay()
@@ -585,7 +616,11 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 		if (HasAuthority())
 		{
 			bReplicatedCombatModePresentation = bIsCombatModeActive;
+			// The gameplay tag is applied after the local draw montage. Clear the
+			// earlier cosmetic transition once that authoritative state arrives.
+			bReplicatedCombatIntroPresentation = false;
 			ForceNetUpdate();
+			LogCombatPresentationTrace(*this, TEXT("ServerCombatStateReplicated"));
 		}
 
 		ApplyCombatPresentationState(bIsCombatModeActive, false);
@@ -598,12 +633,42 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 
 void AProject_JPlayerCharacter::OnRep_ReplicatedCombatModePresentation()
 {
+	LogCombatPresentationTrace(*this, TEXT("RemoteCombatStateOnRep"));
 	// Never consult the remote avatar's ASC here. Its replicated tag timing is
 	// intentionally independent from this cosmetic state and can otherwise keep
 	// a just-sheathed weapon attached to the hand.
-	ApplyCombatPresentationState(bReplicatedCombatModePresentation, true);
+	const bool bNeedsFallbackRemoteTransition =
+		bReplicatedCombatModePresentation && !bHasReceivedRemoteCombatIntroPresentation;
+	ApplyCombatPresentationState(bReplicatedCombatModePresentation, bNeedsFallbackRemoteTransition);
+	// The main presentation state is now authoritative. The next combat entry
+	// needs a fresh early-transition signal, but this entry must not replay it.
+	bHasReceivedRemoteCombatIntroPresentation = false;
 	UpdateMaxWalkSpeed();
 	ApplySprintAnimationState();
+}
+
+void AProject_JPlayerCharacter::OnRep_ReplicatedCombatIntroPresentation()
+{
+	LogCombatPresentationTrace(
+		*this,
+		bReplicatedCombatIntroPresentation ? TEXT("RemoteIntroOnRepTrue") : TEXT("RemoteIntroOnRepFalse"));
+	// This is intentionally independent from the ASC tag replication: remote
+	// observers must see draw immediately, while the server still grants combat
+	// gameplay only after the owning player's intro completes.
+	if (bReplicatedCombatIntroPresentation && !bReplicatedCombatModePresentation)
+	{
+		bHasReceivedRemoteCombatIntroPresentation = true;
+		if (WeaponPresentationComponent)
+		{
+			WeaponPresentationComponent->EnterCombatPresentation();
+		}
+		PlayCosmeticCombatIntroMontage();
+	}
+
+	if (CombatAnimationLayerComponent)
+	{
+		CombatAnimationLayerComponent->RefreshLayer();
+	}
 }
 
 void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
@@ -1244,6 +1309,21 @@ void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 	PlayCombatIntroMontage();
 }
 
+void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(bool bShouldShowIntro)
+{
+	LogCombatPresentationTrace(*this, bShouldShowIntro ? TEXT("ServerIntroRpcReceivedTrue") : TEXT("ServerIntroRpcReceivedFalse"));
+	// This RPC controls only remote visuals. Do not duplicate CanToggleCombatMode
+	// here: its stricter airborne/action checks belong to authoritative gameplay
+	// activation and would unnecessarily delay a confirmed draw presentation.
+	bReplicatedCombatIntroPresentation = bShouldShowIntro &&
+		!bReplicatedCombatModePresentation &&
+		!(MountComponent && MountComponent->IsMounted());
+	ForceNetUpdate();
+	LogCombatPresentationTrace(
+		*this,
+		bReplicatedCombatIntroPresentation ? TEXT("ServerIntroPresentationSetTrue") : TEXT("ServerIntroPresentationSetFalse"));
+}
+
 bool AProject_JPlayerCharacter::CanToggleCombatMode() const
 {
 	if ((MountComponent && MountComponent->IsMounted()) ||
@@ -1282,6 +1362,13 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 	{
 		bIsPlayingCombatIntro = CombatIntroComponent->IsPlayingIntro();
 		bPendingCombatModeFromIntro = CombatIntroComponent->IsPendingCombatMode();
+		// Send the presentation signal only after the local montage really starts.
+		// This avoids remote draw visuals for a missing asset or incompatible slot.
+		if (IsLocallyControlled())
+		{
+			LogCombatPresentationTrace(*this, TEXT("LocalIntroMontageStarted"));
+			ServerSetCombatIntroPresentation(true);
+		}
 		if (CombatAnimationLayerComponent)
 		{
 			// Keep the weapon layer alive beneath the montage so its blend-out
@@ -1302,7 +1389,16 @@ void AProject_JPlayerCharacter::PlayCosmeticCombatIntroMontage()
 
 	// This has no pending-combat side effect. It is only the visual replay used
 	// by simulated proxies after the server confirms a remote player's draw.
-	PlayAnimMontage(EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate());
+	const float Duration = PlayAnimMontage(EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate());
+	if (ShouldLogCombatPresentationTrace())
+	{
+		UE_LOG(LogProjectJPlayer, Log,
+			TEXT("[CombatPresentation] Stage=RemoteIntroMontagePlay Time=%.3f Owner=%s Duration=%.3f AlreadyCombat=%s"),
+			GetWorld() ? GetWorld()->GetTimeSeconds() : -1.0f,
+			*GetNameSafe(this),
+			Duration,
+			bReplicatedCombatModePresentation ? TEXT("true") : TEXT("false"));
+	}
 }
 
 void AProject_JPlayerCharacter::PlayCombatOutroMontage()
@@ -1330,6 +1426,11 @@ void AProject_JPlayerCharacter::PlayCombatOutroMontage()
 
 void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 {
+	if (IsLocallyControlled())
+	{
+		ServerSetCombatIntroPresentation(false);
+	}
+
 	if (CombatIntroComponent)
 	{
 		CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
@@ -1375,6 +1476,10 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 	}
 	else if (!IsCombatModeActive())
 	{
+		if (IsLocallyControlled())
+		{
+			ServerSetCombatIntroPresentation(false);
+		}
 		if (CombatIntroComponent)
 		{
 			CombatIntroComponent->ClearPendingCombatMode();
@@ -1422,6 +1527,10 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 	}
 
 	CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
+	if (IsLocallyControlled())
+	{
+		ServerSetCombatIntroPresentation(false);
+	}
 	bIsPlayingCombatIntro = false;
 	bPendingCombatModeFromIntro = false;
 	if (CombatAnimationLayerComponent)

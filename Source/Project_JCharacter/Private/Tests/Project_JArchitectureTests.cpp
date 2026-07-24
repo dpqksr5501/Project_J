@@ -33,6 +33,9 @@ bool FProjectJMotionMatchingSearchPolicyTest::RunTest(const FString& Parameters)
 	TestFalse(
 		TEXT("Landing defaults to continuing-pose only"),
 		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Landing, false));
+	TestFalse(
+		TEXT("Stop defaults to continuing-pose only"),
+		Policy.ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily::Stop, false));
 	TestEqual(
 		TEXT("Suppressed airborne search uses policy throttle"),
 		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Fall, false, 0.0f, false),
@@ -44,6 +47,10 @@ bool FProjectJMotionMatchingSearchPolicyTest::RunTest(const FString& Parameters)
 	TestEqual(
 		TEXT("Landing suppresses repeat one-shot searches until its database changes"),
 		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Landing, false, 0.0f, false),
+		120.0f);
+	TestEqual(
+		TEXT("Stop suppresses repeat one-shot searches until its database changes"),
+		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Stop, false, 0.0f, false),
 		120.0f);
 
 	return true;

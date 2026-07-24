@@ -38,6 +38,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
 	bool bSearchLandingEveryUpdate = false;
 
+	/** Stop PSDs are one-shot deceleration clips; retain the initial result until Idle or a new movement phase takes over. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchStopEveryUpdate = false;
+
 	/**
 	 * Duration for which a simulated proxy temporarily bypasses skeletal mesh URO after
 	 * receiving a confirmed jump. Keep this long enough for the authored Motion Matching

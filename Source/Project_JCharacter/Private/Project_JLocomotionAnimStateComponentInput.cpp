@@ -34,12 +34,6 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
 	{
 		return;
 	}
-
-	if (TryPromoteReplicatedStopToLocomotion())
-	{
-		return;
-	}
-
 	QueueReplicatedMoveStop();
 	MarkRemoteMoveReleasedIfAirborne();
 	TryFinishLandingForReplicatedMoveStop();
@@ -49,6 +43,7 @@ void UProject_JLocomotionAnimStateComponent::ClearRemoteMoveStartTransientState(
 {
 	RemoteStopStartSuppressTimeRemaining = 0.0f;
 	bRemoteMoveReleasedWhileAirborne = false;
+	bRemoteStopVisualIntentActive = false;
 	bLandingIgnoresRemoteGroundSpeed = false;
 }
 
@@ -96,25 +91,12 @@ void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStart(bool bWasS
 	bPendingStartRequest = true;
 }
 
-bool UProject_JLocomotionAnimStateComponent::TryPromoteReplicatedStopToLocomotion()
-{
-	if (GroundMotionMode != EProject_JGroundMotionMode::Start ||
-		GetRemoteMovementInputForState().SizeSquared() <= FMath::Square(MoveInputDeadZone))
-	{
-		return false;
-	}
-
-	bPendingStopRequest = false;
-	RemoteStopStartSuppressTimeRemaining = 0.0f;
-	EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	return true;
-}
-
 void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStop()
 {
 	ClearResolvedMoveInputState();
 	bPendingStartRequest = false;
 	bPendingStopRequest = true;
+	bRemoteStopVisualIntentActive = true;
 	RemoteStopStartSuppressTimeRemaining = FMath::Max(RemoteStopStartSuppressTimeRemaining, RemoteStopStartSuppressDuration);
 }
 

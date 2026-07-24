@@ -271,6 +271,7 @@ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 	bStartRequested = false;
 	bPendingStartRequest = false;
 	bPendingStopRequest = false;
+	bRemoteStopVisualIntentActive = false;
 	ResetGroundMotionTransitionRequests();
 	bResolvedMoveInputLastUpdate = false;
 	MoveInputHeldTime = 0.0f;
