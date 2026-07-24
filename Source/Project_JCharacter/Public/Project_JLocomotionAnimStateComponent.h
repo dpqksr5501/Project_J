@@ -497,6 +497,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteStopStartSuppressDuration = 0.20f;
 
+	/** A remote MoveStop can arrive before the final replicated velocity update. Keep Cycle active above this speed so a Stop PSD is not searched against stale full-speed trajectory samples. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RemoteStopEntryMaxSpeed = 180.0f;
+
 	/** Simulated proxies leave Start immediately when replicated movement direction changes this much. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Optimization|Network", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteStartTurnExitAngle = 15.0f;

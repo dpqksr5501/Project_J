@@ -622,6 +622,13 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 		!IsDedicatedServerAnimationContext() &&
 		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
 	const bool bForceMotionMatchingRefresh = bMotionMatchingEnabled && ShouldForceMotionMatchingContextRefresh(Data);
+	const bool bForceRemoteCombatStopReselect =
+		bForceMotionMatchingRefresh &&
+		OwningCharacter &&
+		OwningCharacter->GetLocalRole() == ROLE_SimulatedProxy &&
+		Data.Combat.bIsCombatMode &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Stop;
 	const bool bUpdateMotionMatchingThisFrame =
 		bMotionMatchingEnabled &&
 		(bForceMotionMatchingRefresh || ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime));
@@ -647,7 +654,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 		CurrentActivePoseSearchDatabase,
 		bMotionMatchingEnabled,
 		bUpdateMotionMatchingThisFrame,
-		ShouldForceMotionMatchingReselect(Data));
+		ShouldForceMotionMatchingReselect(Data) || bForceRemoteCombatStopReselect);
 }
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data)

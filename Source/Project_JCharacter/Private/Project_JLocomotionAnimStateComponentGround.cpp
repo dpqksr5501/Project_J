@@ -440,6 +440,24 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 		return;
 	}
 
+	const bool bDelayRemoteStopUntilVelocitySettles =
+		!bAllowSharpTurn &&
+		bRemoteStopVisualIntentActive &&
+		bPendingStopRequest &&
+		GroundSpeed > RemoteStopEntryMaxSpeed;
+	if (bDelayRemoteStopUntilVelocitySettles)
+	{
+		// The replicated MoveStop reliably tells us the owner released input, but its
+		// CharacterMovement velocity can still be a full-speed sample for several
+		// frames. Searching a Stop PSD against that sample selects its walking entry.
+		// Keep the last cycle pose until the smoothed velocity reaches the authored
+		// deceleration window, then consume the pending Stop request below.
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		PreviousMoveInputForTurn = FVector2D::ZeroVector;
+		bResolvedMoveInputLastUpdate = false;
+		return;
+	}
+
 	const bool bStartEdge = bPendingStartRequest || (bHasMoveInput && !bPrevHasMoveInput);
 	const bool bStopEdge = bPendingStopRequest || (!bHasMoveInput && bPrevHasMoveInput && GroundSpeed > StopIntentSpeedThreshold);
 	bPendingStartRequest = false;
