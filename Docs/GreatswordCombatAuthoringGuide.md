@@ -175,6 +175,14 @@ Useful lines:
 
 Turn it off with `Project_J.Combat.ComboDebug 0` after authoring.
 
+To inspect a weapon that looks different in the Skeleton preview and PIE, run this before entering combat:
+
+```text
+Project_J.Combat.WeaponPresentationDebug 1
+```
+
+The `LogProjectJWeaponPresentation` output logs the actual spawned weapon class, character SkeletalMesh, attach parent/socket/bone, socket world transform, weapon root relative/world transforms, every StaticMesh component transform, and active montage position. Leave combat and enter it again after enabling the command so the initial `DrawAttach` line is emitted. It then samples every 0.5 seconds while the weapon is drawn. Disable it with `Project_J.Combat.WeaponPresentationDebug 0` when finished.
+
 ## New Weapon/Job Checklist
 
 1. Create job-specific Input Mapping Data and assign it to the derived job Blueprint.

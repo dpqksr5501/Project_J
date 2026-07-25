@@ -21,6 +21,7 @@ class PROJECT_JCHARACTER_API UProject_JWeaponPresentationComponent : public UAct
 public:
 	UProject_JWeaponPresentationComponent();
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/** Shows the currently selected weapon in its authored combat socket. */
@@ -49,9 +50,11 @@ public:
 private:
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;
+	void LogWeaponPresentationDebug(const TCHAR* Context) const;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> SpawnedWeapon = nullptr;
 
+	float WeaponPresentationDebugElapsedSeconds = 0.0f;
 	bool bCombatPresentationActive = false;
 };
