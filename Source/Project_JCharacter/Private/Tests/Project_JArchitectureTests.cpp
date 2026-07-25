@@ -145,18 +145,18 @@ bool FProjectJCombatCommandResolutionTest::RunTest(const FString& Parameters)
 	const FProject_JGameplayTags& Tags = FProject_JGameplayTags::Get();
 
 	FProject_JCombatCommandDefinition& Command = CommandSet->Commands.AddDefaulted_GetRef();
-	Command.CommandTag = Tags.InputTag_Weapon_HeavyAttack;
+	Command.CommandTag = Tags.InputTag_Weapon_RMB;
 	Command.OrderedInputSequence = {
-		Tags.InputTag_Weapon_LightAttack,
-		Tags.InputTag_Weapon_HeavyAttack,
-		Tags.InputTag_Weapon_LightAttack};
-	Command.ResultInputTag = Tags.InputTag_Weapon_HeavyAttack;
+		Tags.InputTag_Weapon_LMB,
+		Tags.InputTag_Weapon_RMB,
+		Tags.InputTag_Weapon_LMB};
+	Command.ResultInputTag = Tags.InputTag_Weapon_RMB;
 	Command.MaxTimeBetweenInputs = 0.45f;
 
 	TArray<FProject_JCombatCommandInputEntry> History;
-	History.Add({Tags.InputTag_Weapon_LightAttack, 10.0});
-	History.Add({Tags.InputTag_Weapon_HeavyAttack, 10.2});
-	History.Add({Tags.InputTag_Weapon_LightAttack, 10.4});
+	History.Add({Tags.InputTag_Weapon_LMB, 10.0});
+	History.Add({Tags.InputTag_Weapon_RMB, 10.2});
+	History.Add({Tags.InputTag_Weapon_LMB, 10.4});
 
 	const FGameplayTagContainer OwnerTags;
 	TestNotNull(TEXT("Light-heavy-light resolves the authored command"), CommandSet->FindBestMatch(History, OwnerTags));

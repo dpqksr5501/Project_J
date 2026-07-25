@@ -14,6 +14,8 @@ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
 {
 	BoundPlayerCharacter = PlayerCharacter;
+	ActiveSkillInputMappingData = ActionSet.SkillInputMappingData;
+	ActiveDirectInputTags.Reset();
 
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	if (!EnhancedInputComponent || !BoundPlayerCharacter)
@@ -52,6 +54,40 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 	}
+
+	TSet<const UInputAction*> BoundSkillActions;
+	if (const UProject_JSkillInputMappingData* SkillInputMappingData = ActiveSkillInputMappingData)
+	{
+		if (UProject_JSkillInputRouterComponent* SkillInputRouter = BoundPlayerCharacter->SkillInputRouterComponent)
+		{
+			for (const FProject_JSkillModifierBinding& ModifierBinding : SkillInputMappingData->ModifierBindings)
+			{
+				if (!ModifierBinding.InputAction || !ModifierBinding.ModifierTag.IsValid() || BoundSkillActions.Contains(ModifierBinding.InputAction))
+				{
+					continue;
+				}
+
+				BoundSkillActions.Add(ModifierBinding.InputAction);
+				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Started, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierPressed, ModifierBinding.ModifierTag);
+				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Completed, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
+				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Canceled, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
+			}
+		}
+
+		for (const FProject_JDirectSkillInputBinding& SkillBinding : SkillInputMappingData->DirectSkillBindings)
+		{
+			if (!SkillBinding.InputAction || !SkillBinding.InputTag.IsValid() || BoundSkillActions.Contains(SkillBinding.InputAction))
+			{
+				continue;
+			}
+
+			BoundSkillActions.Add(SkillBinding.InputAction);
+			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed, SkillBinding.InputAction.Get());
+			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
+			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
+		}
+	}
+
 	if (ActionSet.InteractAction)
 	{
 		EnhancedInputComponent->BindAction(ActionSet.InteractAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleInteract);
@@ -175,7 +211,7 @@ void UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed()
 {
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
-		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::Primary);
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::LMB);
 	}
 }
 
@@ -183,7 +219,7 @@ void UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased()
 {
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
-		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::Primary);
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::LMB);
 	}
 }
 
@@ -191,7 +227,7 @@ void UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed()
 {
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
-		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::Secondary);
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::RMB);
 	}
 }
 
@@ -199,7 +235,7 @@ void UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased()
 {
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
-		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::Secondary);
+		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonReleased(EProject_JSkillInputButton::RMB);
 	}
 }
 
@@ -216,5 +252,47 @@ void UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased()
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
 		BoundPlayerCharacter->SkillInputRouterComponent->SetModifierHeld(false);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed(UInputAction* InputAction)
+{
+	if (!InputAction || !BoundPlayerCharacter || !BoundPlayerCharacter->SkillInputRouterComponent || !ActiveSkillInputMappingData)
+	{
+		return;
+	}
+
+	const FProject_JDirectSkillInputBinding* BestBinding = nullptr;
+	for (const FProject_JDirectSkillInputBinding& SkillBinding : ActiveSkillInputMappingData->DirectSkillBindings)
+	{
+		if (SkillBinding.InputAction != InputAction || !SkillBinding.InputTag.IsValid() || !BoundPlayerCharacter->SkillInputRouterComponent->AreModifierTagsMatched(SkillBinding.RequiredModifierTags, SkillBinding.BlockedModifierTags))
+		{
+			continue;
+		}
+
+		if (!BestBinding || SkillBinding.Priority > BestBinding->Priority)
+		{
+			BestBinding = &SkillBinding;
+		}
+	}
+
+	if (BestBinding)
+	{
+		ActiveDirectInputTags.Add(InputAction, BestBinding->InputTag);
+		BoundPlayerCharacter->HandleSkillInputTagPressed(BestBinding->InputTag);
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased(UInputAction* InputAction)
+{
+	if (!InputAction || !BoundPlayerCharacter)
+	{
+		return;
+	}
+
+	if (FGameplayTag* ActiveInputTag = ActiveDirectInputTags.Find(InputAction))
+	{
+		BoundPlayerCharacter->HandleSkillInputTagReleased(*ActiveInputTag);
+		ActiveDirectInputTags.Remove(InputAction);
 	}
 }

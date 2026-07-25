@@ -59,14 +59,29 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 	);
 
 	// Input Tags
-	GameplayTags.InputTag_Weapon_LightAttack = GameplayTagsManager.AddNativeGameplayTag(
-		FName("InputTag.Weapon.LightAttack"),
-		FString("Input for Light Attack")
+	GameplayTags.InputTag_Weapon_LMB = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Weapon.LMB"),
+		FString("Input for left mouse button weapon action")
 	);
 
-	GameplayTags.InputTag_Weapon_HeavyAttack = GameplayTagsManager.AddNativeGameplayTag(
-		FName("InputTag.Weapon.HeavyAttack"),
-		FString("Input for Heavy Attack")
+	GameplayTags.InputTag_Weapon_RMB = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Weapon.RMB"),
+		FString("Input for right mouse button weapon action")
+	);
+
+	GameplayTags.InputTag_Skill_Q = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Skill.Q"),
+		FString("Input for Q key skill-slot action")
+	);
+
+	GameplayTags.InputTag_Skill_R = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Skill.R"),
+		FString("Input for R key skill-slot action")
+	);
+
+	GameplayTags.InputTag_Skill_T = GameplayTagsManager.AddNativeGameplayTag(
+		FName("InputTag.Skill.T"),
+		FString("Input for T key skill-slot action")
 	);
 
 	GameplayTags.InputTag_Skill_Dash = GameplayTagsManager.AddNativeGameplayTag(

@@ -18,6 +18,15 @@ enum class EProject_JAttackMovementPolicy : uint8
 	RootMotionWarped UMETA(DisplayName = "Root Motion + Motion Warping")
 };
 
+/** How an aerial root-motion attack resolves movement after normal completion. */
+UENUM(BlueprintType)
+enum class EProject_JRootMotionEndMovementPolicy : uint8
+{
+	Land UMETA(DisplayName = "Land / Walking"),
+	Fall UMETA(DisplayName = "Fall"),
+	KeepFlying UMETA(DisplayName = "Keep Flying")
+};
+
 /**
  * One reusable, server-resolved attack. Combo graphs, direct skills and AI may
  * all reference the same definition without duplicating damage or movement data.
@@ -45,6 +54,17 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	EProject_JAttackMovementPolicy MovementPolicy = EProject_JAttackMovementPolicy::InPlace;
+
+	/**
+	 * Temporarily uses Flying while this root-motion attack is active, allowing
+	 * authored vertical root motion to lift the character off the floor.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (EditCondition = "MovementPolicy != EProject_JAttackMovementPolicy::InPlace", EditConditionHides))
+	bool bUseFlyingMovementModeForRootMotion = false;
+
+	/** Movement state after this aerial root-motion montage completes normally. Interruptions always fall. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (EditCondition = "bUseFlyingMovementModeForRootMotion", EditConditionHides))
+	EProject_JRootMotionEndMovementPolicy RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Hit")
 	FProject_JComboHitSpec HitSpec;

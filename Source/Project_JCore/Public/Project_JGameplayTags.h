@@ -33,8 +33,11 @@ public:
 	FGameplayTag State_Dead;
 
 	// Input Tags
-	FGameplayTag InputTag_Weapon_LightAttack;
-	FGameplayTag InputTag_Weapon_HeavyAttack;
+	FGameplayTag InputTag_Weapon_LMB;
+	FGameplayTag InputTag_Weapon_RMB;
+	FGameplayTag InputTag_Skill_Q;
+	FGameplayTag InputTag_Skill_R;
+	FGameplayTag InputTag_Skill_T;
 	FGameplayTag InputTag_Skill_Dash;
 
 	// Event Tags

@@ -39,13 +39,15 @@ Examples:
 
 - Sprint input calls `AProject_JPlayerCharacter::StartSprint` / `StopSprint`.
 - Combat toggle input calls `AProject_JPlayerCharacter::ToggleCombatMode`.
-- Primary attack input resolves to `InputTag.Weapon.LightAttack`.
-- Secondary attack input resolves to `InputTag.Weapon.HeavyAttack`.
-- A held skill modifier can change chord priority; the default modified primary chord maps to heavy attack.
+- Primary attack input resolves to `InputTag.Weapon.LMB`.
+- Secondary attack input resolves to `InputTag.Weapon.RMB`.
+- Q/R/T resolve through `DirectSkillBindings` to `InputTag.Skill.Q`, `InputTag.Skill.R`, and `InputTag.Skill.T`.
+- Held modifier actions resolve to `InputTag.Modifier.*`; matching chord/direct-binding rows can require or block any combination of those tags.
+- LMB+RMB uses the mapping data's `Simultaneous Chord Grace Seconds` (default `0.08`) and resolves to `InputTag.Weapon.Chord.LMBRMB` only when both button presses arrive within that window. A released quick single tap dispatches immediately rather than waiting for the full grace period.
 
-The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`.
+The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`. See [Greatsword Combat Authoring Guide](GreatswordCombatAuthoringGuide.md) for the current data setup.
 
-`UProject_JSkillInputRouterComponent` can read chords from `UProject_JSkillInputMappingData`. If no mapping data is assigned, it falls back to the component's local `Chords` array, and then to the native default light/heavy chords.
+`UProject_JSkillInputRouterComponent` reads chords, direct skill bindings, and modifier bindings from `UProject_JSkillInputMappingData`. If no mapping data is assigned, it falls back to the component's local `Chords` array and then to the native LMB/RMB defaults. Production job Blueprints should assign mapping data.
 
 ## InputTag Foundation
 
@@ -88,13 +90,16 @@ Enhanced Input
   -> Project_JAbilitySystemComponent::AbilityInputTagPressed/Released
 ```
 
-The router should own:
+The router owns:
 
 - raw action state: left mouse, right mouse, shift, number keys, etc.
-- chord resolution: left click, right click, left click + shift, left click + right click
+- chord resolution: LMB, RMB, LMB + Shift, LMB + RMB, and other authored chords
+- Q/R/T direct action resolution and modifier-aware priority selection
 - priority rules when multiple chords match
 - optional class/weapon input mapping data
 - press/release/hold timing, if needed
+
+LMB/RMB chords deliberately keep the established GAS InputTag route after local resolution. This preserves the current local-predicted ability and root-motion path. Physical-button timing is not yet independently verified by the server; introduce that only with dedicated multiplayer/root-motion and packet-loss coverage.
 
 The router should not own:
 
@@ -107,7 +112,7 @@ Those stay in abilities, components, and animation systems.
 
 ## Ability Set Requirement
 
-Every concrete Blueprint ability asset must be listed in `AbilitySet.GrantedAbilityEntries` with its explicit input tags. One combo ability can own multiple inputs through `AdditionalInputTags`.
+Every concrete Blueprint ability asset must be listed in `AbilitySet.GrantedAbilityEntries` with its explicit input tags. One combo ability can own multiple inputs through `AdditionalInputTags`; an AttackSet or ComboDefinition reference alone never activates a skill.
 
 ## Boundaries
 

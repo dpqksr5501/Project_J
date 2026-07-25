@@ -2,11 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
 #include "Project_JPlayerInputBindingComponent.generated.h"
 
 class AProject_JPlayerCharacter;
 class UInputAction;
 class UInputComponent;
+class UProject_JSkillInputMappingData;
 struct FInputActionValue;
 
 USTRUCT(BlueprintType)
@@ -41,6 +43,9 @@ struct FProject_JPlayerInputActionSet
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> SkillModifierAction = nullptr;
 
+	/** Shared class/job mapping asset for direct skill actions such as Q/R/T. */
+	TObjectPtr<UProject_JSkillInputMappingData> SkillInputMappingData = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction = nullptr;
 };
@@ -73,8 +78,13 @@ private:
 	void HandleSecondarySkillReleased();
 	void HandleSkillModifierPressed();
 	void HandleSkillModifierReleased();
+	void HandleDirectSkillActionPressed(UInputAction* InputAction);
+	void HandleDirectSkillActionReleased(UInputAction* InputAction);
 	void HandleInteract();
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> BoundPlayerCharacter = nullptr;
+
+	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;
+	TMap<UInputAction*, FGameplayTag> ActiveDirectInputTags;
 };

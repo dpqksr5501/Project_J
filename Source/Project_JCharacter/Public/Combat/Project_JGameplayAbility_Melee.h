@@ -2,11 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Combat/Project_JAttackDefinition.h"
 #include "Project_JGameplayAbility_Melee.generated.h"
 
 class UAnimMontage;
 class UProject_JComboDefinition;
-class UProject_JAttackDefinition;
 struct FProject_JComboNode;
 
 /**
@@ -46,6 +46,8 @@ protected:
 
 	/** Rotates the character towards the camera look direction or input direction for 3rd-person actions */
 	void ApplyCameraDirectionRotation();
+	void ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition);
+	void RestoreAttackMovementMode(bool bWasCancelled);
 	void StartComboNode(const FProject_JComboNode& Node);
 	bool TryQueueOrConsumeComboInput(FGameplayTag InputTag);
 	const FProject_JComboNode* GetCurrentComboNode() const;
@@ -62,6 +64,9 @@ private:
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;
 	TObjectPtr<UAnimMontage> ActiveComboMontage = nullptr;
 	TObjectPtr<UProject_JAttackDefinition> ActiveAttackDefinition = nullptr;
+	TWeakObjectPtr<class UCharacterMovementComponent> RootMotionMovementComponent;
+	EProject_JRootMotionEndMovementPolicy RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;
+	bool bRootMotionForcedFlying = false;
 	bool bIsComboWindowOpen = false;
 	bool bHasNextComboQueued = false;
 	

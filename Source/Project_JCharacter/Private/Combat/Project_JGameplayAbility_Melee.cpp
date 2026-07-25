@@ -6,6 +6,7 @@
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
@@ -13,6 +14,23 @@
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
+#include "HAL/IConsoleManager.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatCombo, Log, All);
+
+namespace
+{
+TAutoConsoleVariable<int32> CVarProjectJCombatComboDebug(
+	TEXT("Project_J.Combat.ComboDebug"),
+	0,
+	TEXT("Logs combo input, selected nodes, and montage playback. 0: off, 1: on."),
+	ECVF_Default);
+
+bool IsComboDebugEnabled()
+{
+	return CVarProjectJCombatComboDebug.GetValueOnGameThread() != 0;
+}
+}
 
 UProject_JGameplayAbility_Melee::UProject_JGameplayAbility_Melee()
 {
@@ -58,6 +76,14 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 		return;
 	}
 
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Activate Owner=%s Combo=%s Trigger=%s"),
+			*GetNameSafe(GetAvatarActorFromActorInfo()),
+			*GetNameSafe(ActiveComboDefinition),
+			TriggerEventData ? *TriggerEventData->EventTag.ToString() : TEXT("None"));
+	}
+
 	CurrentComboNodeTag = FGameplayTag();
 	QueuedInputTag = FGameplayTag();
 	bIsComboWindowOpen = false;
@@ -84,6 +110,7 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 
 void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	RestoreAttackMovementMode(bWasCancelled);
 	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
 	{
 		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
@@ -98,13 +125,87 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
+void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition)
+{
+	if (!AttackDefinition.bUseFlyingMovementModeForRootMotion || AttackDefinition.MovementPolicy == EProject_JAttackMovementPolicy::InPlace)
+	{
+		return;
+	}
+
+	RootMotionEndMovementPolicy = AttackDefinition.RootMotionEndMovementPolicy;
+	if (bRootMotionForcedFlying)
+	{
+		return;
+	}
+
+	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	UCharacterMovementComponent* MovementComponent = Character ? Character->GetCharacterMovement() : nullptr;
+	if (!MovementComponent || MovementComponent->IsFlying())
+	{
+		return;
+	}
+
+	RootMotionMovementComponent = MovementComponent;
+	bRootMotionForcedFlying = true;
+	MovementComponent->SetMovementMode(MOVE_Flying);
+	UE_LOG(LogProjectJCombatCombo, Verbose, TEXT("RootMotion movement mode switched to Flying. Attack=%s"), *AttackDefinition.AttackTag.ToString());
+}
+
+void UProject_JGameplayAbility_Melee::RestoreAttackMovementMode(const bool bWasCancelled)
+{
+	if (!bRootMotionForcedFlying)
+	{
+		return;
+	}
+
+	if (UCharacterMovementComponent* MovementComponent = RootMotionMovementComponent.Get())
+	{
+		// An interrupted aerial attack always falls. On a normal completion the
+		// authored AttackDefinition controls whether it lands, falls, or begins a
+		// persistent flying state. Landing directly avoids a transient Falling
+		// state that would make Motion Matching play an unwanted landing montage.
+		if (bWasCancelled)
+		{
+			MovementComponent->SetMovementMode(MOVE_Falling);
+		}
+		else if (RootMotionEndMovementPolicy == EProject_JRootMotionEndMovementPolicy::Land)
+		{
+			MovementComponent->SetMovementMode(MOVE_Walking);
+		}
+		else if (RootMotionEndMovementPolicy == EProject_JRootMotionEndMovementPolicy::Fall)
+		{
+			MovementComponent->SetMovementMode(MOVE_Falling);
+		}
+	}
+
+	RootMotionMovementComponent = nullptr;
+	RootMotionEndMovementPolicy = EProject_JRootMotionEndMovementPolicy::Land;
+	bRootMotionForcedFlying = false;
+}
+
 void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Payload)
 {
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Input Received CurrentNode=%s Input=%s WindowOpen=%d"),
+			*CurrentComboNodeTag.ToString(),
+			*Payload.EventTag.ToString(),
+			bIsComboWindowOpen ? 1 : 0);
+	}
+
 	if (!CurrentComboNodeTag.IsValid())
 	{
 		if (const FProject_JComboNode* StartNode = ActiveComboDefinition->FindStartNode(Payload.EventTag, GetOwnerGameplayTags()))
 		{
+			if (IsComboDebugEnabled())
+			{
+				UE_LOG(LogProjectJCombatCombo, Log, TEXT("Start Node Selected Node=%s"), *StartNode->NodeTag.ToString());
+			}
 			StartComboNode(*StartNode);
+		}
+		else if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Warning, TEXT("No Start Node for Input=%s"), *Payload.EventTag.ToString());
 		}
 		return;
 	}
@@ -121,6 +222,10 @@ void UProject_JGameplayAbility_Melee::OnComboWindowOpened(FGameplayEventData Pay
 	}
 
 	bIsComboWindowOpen = true;
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Combo Window Opened Node=%s Queued=%s"), *CurrentComboNodeTag.ToString(), *QueuedInputTag.ToString());
+	}
 	if (bHasNextComboQueued)
 	{
 		const FGameplayTag BufferedInput = QueuedInputTag;
@@ -184,12 +289,20 @@ bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGamepla
 	const FProject_JComboNode* CurrentNode = GetCurrentComboNode();
 	if (!CurrentNode || !ActiveComboDefinition)
 	{
+		if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Warning, TEXT("Cannot Consume Input=%s: no active combo node."), *InputTag.ToString());
+		}
 		return false;
 	}
 
 	const FProject_JComboTransition* Transition = ActiveComboDefinition->FindTransition(*CurrentNode, InputTag, GetOwnerGameplayTags());
 	if (!Transition)
 	{
+		if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Warning, TEXT("No Transition From=%s Input=%s"), *CurrentNode->NodeTag.ToString(), *InputTag.ToString());
+		}
 		return false;
 	}
 
@@ -199,6 +312,10 @@ bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGamepla
 		{
 			QueuedInputTag = InputTag;
 			bHasNextComboQueued = true;
+			if (IsComboDebugEnabled())
+			{
+				UE_LOG(LogProjectJCombatCombo, Log, TEXT("Input Buffered From=%s Input=%s Target=%s"), *CurrentNode->NodeTag.ToString(), *InputTag.ToString(), *Transition->TargetNodeTag.ToString());
+			}
 			return true;
 		}
 		return false;
@@ -207,12 +324,20 @@ bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGamepla
 	const FProject_JComboNode* NextNode = ActiveComboDefinition->FindNode(Transition->TargetNodeTag);
 	if (!NextNode)
 	{
+		if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Warning, TEXT("Transition Target Missing From=%s Target=%s"), *CurrentNode->NodeTag.ToString(), *Transition->TargetNodeTag.ToString());
+		}
 		return false;
 	}
 
 	bIsComboWindowOpen = false;
 	bHasNextComboQueued = false;
 	QueuedInputTag = FGameplayTag();
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Transition Consumed From=%s Input=%s Target=%s"), *CurrentNode->NodeTag.ToString(), *InputTag.ToString(), *NextNode->NodeTag.ToString());
+	}
 	StartComboNode(*NextNode);
 	return true;
 }
@@ -234,6 +359,7 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
+	ApplyAttackMovementPolicy(*AttackDefinition);
 	UAnimMontage* NodeMontage = AttackDefinition->Montage.Get();
 	const FName NodeSection = AttackDefinition->MontageSectionName;
 	const float NodePlayRate = AttackDefinition->PlayRate;
@@ -241,6 +367,16 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
+	}
+
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Play Node=%s Attack=%s Montage=%s Section=%s SameMontage=%d"),
+			*Node.NodeTag.ToString(),
+			*AttackDefinition->AttackTag.ToString(),
+			*GetNameSafe(NodeMontage),
+			*NodeSection.ToString(),
+			ActiveComboMontage == NodeMontage ? 1 : 0);
 	}
 
 	ApplyCameraDirectionRotation();
@@ -258,6 +394,10 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	{
 		if (!NodeSection.IsNone())
 		{
+			if (IsComboDebugEnabled())
+			{
+				UE_LOG(LogProjectJCombatCombo, Log, TEXT("Jump Existing Montage Section=%s"), *NodeSection.ToString());
+			}
 			MontageJumpToSection(NodeSection);
 		}
 		return;

@@ -470,6 +470,7 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	ActionSet.AttackAction = AttackAction;
 	ActionSet.HeavyAttackAction = HeavyAttackAction;
 	ActionSet.SkillModifierAction = SkillModifierAction;
+	ActionSet.SkillInputMappingData = SkillInputRouterComponent ? SkillInputRouterComponent->InputMappingData : nullptr;
 	ActionSet.InteractAction = InteractAction;
 
 	if (SkillInputRouterComponent)
