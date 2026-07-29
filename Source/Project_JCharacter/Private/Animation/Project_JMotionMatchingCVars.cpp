@@ -33,6 +33,16 @@ TAutoConsoleVariable<int32> CVarProjectJSmoothRemoteTrajectoryPosition(
 	TEXT("p.ProjectJ.MM.SmoothRemoteTrajectoryPosition"),
 	0,
 	TEXT("Allows simulated proxy trajectory sample position smoothing. Disabled by default because local-space smoothing can bend remote history samples."));
+
+TAutoConsoleVariable<int32> CVarProjectJMMNetworkDebug(
+	TEXT("p.ProjectJ.MMNetDebug"),
+	0,
+	TEXT("Motion Matching network debug. 0=off, 1=selection/PSD changes, 2=also periodic animation updates."));
+
+TAutoConsoleVariable<int32> CVarProjectJMMPivotDebug(
+	TEXT("p.ProjectJ.MMPivotDebug"),
+	0,
+	TEXT("Captures native Motion Matching Pivot/BlendStack frames. Use DumpMotionMatchingPivotTrace after moving. 0=off, 1=on."));
 }
 
 namespace Project_J::MotionMatchingCVars
@@ -65,5 +75,20 @@ bool ShouldSmoothRemoteTrajectoryPosition()
 bool ShouldSmoothRemoteTrajectoryRotation()
 {
 	return CVarProjectJSmoothRemoteTrajectoryRotation.GetValueOnAnyThread() != 0;
+}
+
+int32 GetNetworkDebugMode()
+{
+	return CVarProjectJMMNetworkDebug.GetValueOnAnyThread();
+}
+
+bool ShouldLogNetworkDebugPeriodically()
+{
+	return GetNetworkDebugMode() >= 2;
+}
+
+bool ShouldCapturePivotDebugTrace()
+{
+	return CVarProjectJMMPivotDebug.GetValueOnAnyThread() != 0;
 }
 }

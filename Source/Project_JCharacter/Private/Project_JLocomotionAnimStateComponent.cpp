@@ -4,6 +4,11 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/Project_JCombatAnimProfile.h"
+#include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
+#include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
@@ -11,6 +16,29 @@
 
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 {
+}
+
+void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProject_JLocomotionTransitionPolicy& InPolicy)
+{
+	IdleSpeedThreshold = InPolicy.IdleSpeedThreshold;
+	DerivedMovingSpeedThreshold = InPolicy.MovingSpeedThreshold;
+	DerivedStartSpeedGainThreshold = InPolicy.StartSpeedGainThreshold;
+	DerivedMovementPredictionTime = InPolicy.MovementPredictionTime;
+	StartMinDuration = InPolicy.StartMinDuration;
+	StartMaxDuration = InPolicy.StartMaxDuration;
+	StopIntentSpeedThreshold = InPolicy.StopIntentSpeedThreshold;
+	StopMinDuration = InPolicy.StopMinDuration;
+	StopExitSpeedThreshold = InPolicy.StopExitSpeedThreshold;
+	StopFallbackDuration = InPolicy.StopFallbackDuration;
+	SharpTurnAngleThreshold = InPolicy.SharpTurnAngleThreshold;
+	SharpTurnMinSpeed = InPolicy.SharpTurnMinSpeed;
+	DerivedPivotAngleThreshold = InPolicy.PivotAngleThreshold;
+	DerivedTurnAngleThreshold = InPolicy.TurnRedirectAngleThreshold;
+	DerivedTurnMinSpeed = InPolicy.TurnRedirectMinSpeed;
+	DerivedPivotMinSpeed = FMath::Max(InPolicy.PivotMinSpeed, InPolicy.TurnRedirectMinSpeed);
+	DerivedTurnMinHoldTime = InPolicy.TurnRedirectMinHoldTime;
+	TurnRedirectReselectCooldown = InPolicy.TurnRedirectReselectCooldown;
+	SprintStopMemoryDuration = InPolicy.SprintStopMemoryDuration;
 }
 
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -26,6 +54,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	{
 		return;
 	}
+
+	SprintStopMemoryTimeRemaining = FMath::Max(0.0f, SprintStopMemoryTimeRemaining - DeltaTime);
 
 	AProject_JPlayerCharacter* PlayerOwner = nullptr;
 	if (!RefreshOwnerReferencesForUpdate(PlayerOwner))
@@ -44,6 +74,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	UpdateAirAndMovementRequests(DeltaTime, IsInAirForAnimation());
 	UpdateLocomotionContexts(DeltaTime, MovementSnapshot);
 	UpdateCombatMovementState(MovementSnapshot.HorizontalVelocity);
+	LogMotionMatchingNetworkDebugIfEnabled(*PlayerOwner);
 }
 
 bool UProject_JLocomotionAnimStateComponent::RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner)
@@ -110,14 +141,151 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		DerivedLocomotionContext = FProject_JDerivedLocomotionContext();
 		PreviousDerivedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 		DerivedPhaseFamilyElapsedTime = 0.0f;
+		bMotionMatchingSelectionChanged = true;
+		bForceMotionMatchingReselect = false;
+		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
+		bHasPublishedMotionMatchingSelection = false;
+		++MotionMatchingSelectionRevision;
+		if (MotionMatchingSelectionRevision == 0)
+		{
+			MotionMatchingSelectionRevision = 1;
+		}
 		return;
 	}
 
 	AuthoritativeContext = BuildAuthoritativeContext(*PlayerOwner, Snapshot);
-	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot);
+	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot, DeltaTime);
 	FProject_JDerivedLocomotionContext NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
 	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
 	DerivedLocomotionContext = NewDerivedContext;
+	UpdateMotionMatchingSelectionState(*PlayerOwner);
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(const AProject_JPlayerCharacter& PlayerOwner)
+{
+	MotionMatchingSelectionContext.GaitIntent = AuthoritativeContext.GaitIntent;
+	MotionMatchingSelectionContext.RotationMode = AuthoritativeContext.RotationMode;
+	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
+	MotionMatchingSelectionContext.bUseHeavyLand = bUseHeavyLand;
+	MotionMatchingSelectionContext.bLandWasMoving = bLandWasMoving;
+	MotionMatchingSelectionContext.bLandWasSprinting = bLandWasSprinting;
+	MotionMatchingSelectionContext.bUseFallOffStart = bIsFallOffStart;
+	MotionMatchingSelectionContext.bUseRemoteStart = !bUsingLocalInputState && bUseForwardOnlyRemoteStart;
+	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
+
+	const bool bSelectionChanged =
+		!bHasPublishedMotionMatchingSelection ||
+		LastPublishedMotionMatchingGait != AuthoritativeContext.GaitIntent ||
+		LastPublishedMotionMatchingRotationMode != AuthoritativeContext.RotationMode ||
+		LastPublishedMotionMatchingPhase != DerivedLocomotionContext.PhaseFamily ||
+		LastPublishedGroundMotionMode != GroundMotionMode ||
+		bLastPublishedHeavyLand != bUseHeavyLand ||
+		bLastPublishedLandWasMoving != bLandWasMoving ||
+		bLastPublishedLandWasSprinting != bLandWasSprinting ||
+		bLastPublishedFallOffStart != bIsFallOffStart ||
+		bLastPublishedUseRemoteStart != MotionMatchingSelectionContext.bUseRemoteStart;
+
+	bMotionMatchingSelectionChanged = bSelectionChanged;
+	if (bSelectionChanged)
+	{
+		LastPublishedMotionMatchingGait = AuthoritativeContext.GaitIntent;
+		LastPublishedMotionMatchingRotationMode = AuthoritativeContext.RotationMode;
+		LastPublishedMotionMatchingPhase = DerivedLocomotionContext.PhaseFamily;
+		LastPublishedGroundMotionMode = GroundMotionMode;
+		bLastPublishedHeavyLand = bUseHeavyLand;
+		bLastPublishedLandWasMoving = bLandWasMoving;
+		bLastPublishedLandWasSprinting = bLandWasSprinting;
+		bLastPublishedFallOffStart = bIsFallOffStart;
+		bLastPublishedUseRemoteStart = MotionMatchingSelectionContext.bUseRemoteStart;
+		bHasPublishedMotionMatchingSelection = true;
+		++MotionMatchingSelectionRevision;
+		if (MotionMatchingSelectionRevision == 0)
+		{
+			MotionMatchingSelectionRevision = 1;
+		}
+	}
+
+	// Do not force an interrupt for Start, Stop, Jump, Fall, or Landing. Those
+	// PSDs intentionally hold their initial result. The only same-database
+	// exception is a local moving Turn/Pivot redirect: a new input direction
+	// must discard the old continuing pose, but a short cooldown coalesces rapid
+	// W-A-D changes into a single re-search.
+	const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile();
+	const bool bCanForceTurnRedirectReselect =
+		bUsingLocalInputState &&
+		(DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle ||
+			DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
+			DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
+		bHasMoveInput &&
+		GroundSpeed >= DerivedTurnMinSpeed;
+	const bool bUsesCombatStrafeReselectPolicy =
+		AuthoritativeContext.bCombatMode &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const float ReselectAngle = bUsesCombatStrafeReselectPolicy && CombatProfile
+		? CombatProfile->StrafeInputTurnReselectAngle
+		: DerivedTurnAngleThreshold;
+	const bool bReselectPolicyEnabled = !bUsesCombatStrafeReselectPolicy ||
+		(CombatProfile && CombatProfile->bForceReselectOnStrafeInputTurn);
+	const bool bRequestsTurnRedirectReselect =
+		bCanForceTurnRedirectReselect &&
+		bReselectPolicyEnabled &&
+		FMath::Abs(MoveInputTurnAngle) >= ReselectAngle;
+	const double WorldTimeSeconds = PlayerOwner.GetWorld() ? PlayerOwner.GetWorld()->GetTimeSeconds() : 0.0;
+	const float ReselectCooldown = bUsesCombatStrafeReselectPolicy && CombatProfile
+		? CombatProfile->StrafeInputTurnReselectCooldown
+		: TurnRedirectReselectCooldown;
+	bForceMotionMatchingReselect = bRequestsTurnRedirectReselect &&
+		(WorldTimeSeconds - LastCombatStrafeReselectTimeSeconds >= ReselectCooldown);
+	if (bForceMotionMatchingReselect)
+	{
+		LastCombatStrafeReselectTimeSeconds = WorldTimeSeconds;
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnabled(const AProject_JPlayerCharacter& PlayerOwner) const
+{
+#if !UE_BUILD_SHIPPING
+	const int32 DebugMode = Project_J::MotionMatchingCVars::GetNetworkDebugMode();
+	if (DebugMode <= 0 ||
+		(DebugMode == 1 && !bMotionMatchingSelectionChanged && !bForceMotionMatchingReselect))
+	{
+		return;
+	}
+
+	const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = PlayerOwner.GetMotionMatchingTrajectoryComponent();
+	const FTransformTrajectory* Trajectory = TrajectoryComponent ? &TrajectoryComponent->GetTrajectory() : nullptr;
+	const TCHAR* Role = PlayerOwner.GetLocalRole() == ROLE_Authority
+		? TEXT("Authority")
+		: (PlayerOwner.GetLocalRole() == ROLE_AutonomousProxy ? TEXT("Autonomous") : TEXT("Simulated"));
+
+	UE_LOG(LogProjectJPlayer, Display,
+		TEXT("MMNetState Actor=%s Role=%s LocalInput=%s Rendered=%s Rev=%d Changed=%s ForceReselect=%s Gait=%d Rotation=%d Phase=%d GroundMode=%d RemoteStart=%s Speed=%.1f InputTurn=%.1f VelocityToInput=%.1f StopDist=%.1f RelativeAccel=(%.2f,%.2f)"),
+		*GetNameSafe(&PlayerOwner), Role,
+		bUsingLocalInputState ? TEXT("true") : TEXT("false"),
+		bRecentlyRendered ? TEXT("true") : TEXT("false"),
+		MotionMatchingSelectionRevision,
+		bMotionMatchingSelectionChanged ? TEXT("true") : TEXT("false"),
+		bForceMotionMatchingReselect ? TEXT("true") : TEXT("false"),
+		static_cast<int32>(MotionMatchingSelectionContext.GaitIntent),
+		static_cast<int32>(MotionMatchingSelectionContext.RotationMode),
+		static_cast<int32>(MotionMatchingSelectionContext.PhaseFamily),
+		static_cast<int32>(GroundMotionMode),
+		MotionMatchingSelectionContext.bUseRemoteStart ? TEXT("true") : TEXT("false"),
+		GroundSpeed, MoveInputTurnAngle,
+		KinematicContext.VelocityToMoveInputAngle,
+		KinematicContext.PredictedStopDistance,
+		KinematicContext.RelativeAccelerationAmount.X,
+		KinematicContext.RelativeAccelerationAmount.Y);
+	UE_LOG(LogProjectJPlayer, Display,
+		TEXT("MMNetTrajectory Actor=%s Samples=%d History=%d Prediction=%d RemoteFacingRepair=%s RemotePosSmoothing=%s RemoteRotSmoothing=%s"),
+		*GetNameSafe(&PlayerOwner),
+		Trajectory ? Trajectory->Samples.Num() : 0,
+		TrajectoryComponent ? TrajectoryComponent->GetSamplingData().NumHistorySamples : 0,
+		TrajectoryComponent ? TrajectoryComponent->GetSamplingData().NumPredictionSamples : 0,
+		Project_J::MotionMatchingCVars::ShouldRepairRemoteTrajectoryFacing() ? TEXT("true") : TEXT("false"),
+		Project_J::MotionMatchingCVars::ShouldSmoothRemoteTrajectoryPosition() ? TEXT("true") : TEXT("false"),
+		Project_J::MotionMatchingCVars::ShouldSmoothRemoteTrajectoryRotation() ? TEXT("true") : TEXT("false"));
+#endif
 }
 
 FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent::BuildAuthoritativeContext(
@@ -135,7 +303,8 @@ FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent:
 
 FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::BuildKinematicContext(
 	const AProject_JPlayerCharacter& PlayerOwner,
-	const FProject_JLocomotionRuntimeSnapshot& Snapshot) const
+	const FProject_JLocomotionRuntimeSnapshot& Snapshot,
+	float DeltaTime)
 {
 	FProject_JLocomotionKinematicContext Context;
 	Context.Velocity = Snapshot.Velocity;
@@ -145,6 +314,7 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 	Context.MoveInputTurnAngle = MoveInputTurnAngle;
 	Context.bHasMoveInput = bHasMoveInput;
 	Context.MoveWorldDirection = CalculateMoveWorldDirection(GetMovementInputForState());
+	float BrakingDeceleration = 0.0f;
 
 	if (const UCharacterMovementComponent* MovementComponent = PlayerOwner.GetCharacterMovement())
 	{
@@ -152,7 +322,40 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 		Context.bIsAccelerating = Context.Acceleration.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
 		const float MaxAcceleration = FMath::Max(MovementComponent->GetMaxAcceleration(), UE_KINDA_SMALL_NUMBER);
 		Context.AccelerationRatio = FMath::Clamp(Context.Acceleration.Size2D() / MaxAcceleration, 0.0f, 1.0f);
+		BrakingDeceleration = FMath::Max(MovementComponent->BrakingDecelerationWalking, UE_KINDA_SMALL_NUMBER);
+		Context.PredictedStopDistance = FMath::Square(Context.GroundSpeed) / (2.0f * BrakingDeceleration);
+
+		if (bHasPreviousKinematicVelocity && DeltaTime > UE_KINDA_SMALL_NUMBER)
+		{
+			Context.VelocityAcceleration = (Context.HorizontalVelocity - PreviousKinematicHorizontalVelocity) / DeltaTime;
+			const float VelocityAccelerationMagnitude = Context.VelocityAcceleration.Size2D();
+			if (Context.GroundSpeed > DerivedMovingSpeedThreshold && VelocityAccelerationMagnitude > UE_KINDA_SMALL_NUMBER)
+			{
+				Context.bIsDecelerating = FVector::DotProduct(Context.HorizontalVelocity.GetSafeNormal2D(), Context.VelocityAcceleration.GetSafeNormal2D()) < -0.05f;
+			}
+
+			const FVector LocalVelocityAcceleration = PlayerOwner.GetActorTransform().InverseTransformVectorNoScale(Context.VelocityAcceleration);
+			const float Normalization = Context.bIsDecelerating ? BrakingDeceleration : MaxAcceleration;
+			Context.RelativeAccelerationAmount = FVector(
+				FMath::Clamp(LocalVelocityAcceleration.X / Normalization, -1.0f, 1.0f),
+				FMath::Clamp(LocalVelocityAcceleration.Y / Normalization, -1.0f, 1.0f),
+				0.0f);
+		}
 	}
+	PreviousKinematicHorizontalVelocity = Context.HorizontalVelocity;
+	bHasPreviousKinematicVelocity = true;
+
+	if (Context.bHasMoveInput && Context.GroundSpeed > DerivedMovingSpeedThreshold && !Context.MoveWorldDirection.IsNearlyZero())
+	{
+		const float DirectionDot = FMath::Clamp(FVector::DotProduct(Context.HorizontalVelocity.GetSafeNormal2D(), Context.MoveWorldDirection), -1.0f, 1.0f);
+		Context.VelocityToMoveInputAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
+	}
+
+	const float PredictedSpeed = Context.bHasMoveInput
+		? Context.GroundSpeed + Context.Acceleration.Size2D() * DerivedMovementPredictionTime
+		: FMath::Max(0.0f, Context.GroundSpeed - BrakingDeceleration * DerivedMovementPredictionTime);
+	Context.PredictedSpeedGain = PredictedSpeed - Context.GroundSpeed;
+	Context.bHasPredictedMovement = PredictedSpeed > DerivedMovingSpeedThreshold;
 
 	if (!Context.MoveWorldDirection.IsNearlyZero())
 	{
@@ -193,8 +396,9 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		return;
 	}
 
-	const bool bKeepMovingTurn =
-		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
+	const bool bKeepMovingRedirect =
+		(PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
+			PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
 		InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		DerivedPhaseFamilyElapsedTime < DerivedTurnMinHoldTime &&
 		KinematicContext.bHasMoveInput &&
@@ -202,9 +406,9 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		!bIsInAir &&
 		!IsLandingStateActive();
 
-	if (bKeepMovingTurn)
+	if (bKeepMovingRedirect)
 	{
-		InOutContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+		InOutContext.PhaseFamily = PreviousDerivedPhaseFamily;
 		DerivedPhaseFamilyElapsedTime += DeltaTime;
 		return;
 	}
@@ -260,12 +464,7 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	}
 	if (Context.bIsPivoting)
 	{
-		// A combat Strafe pivot uses the authored TurnRedirect database too. Keep
-		// it in the Turn family so the short hold below can finish the redirect
-		// before returning to the lateral Cycle search.
-		return AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
-			? EProject_JLocomotionPhaseFamily::Turn
-			: EProject_JLocomotionPhaseFamily::Pivot;
+		return EProject_JLocomotionPhaseFamily::Pivot;
 	}
 	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
 	{
@@ -278,9 +477,12 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	const bool bHasMovingTurnIntent =
 		Context.bIsMoving &&
 		KinematicContext.bHasMoveInput &&
-		KinematicContext.GroundSpeed > StopIntentSpeedThreshold;
+		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
 	const bool bIsCombatStrafe =
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	// Pivot is combat-Strafe only, but a TurnRedirect is a separate moving-turn
+	// policy.  Neutral Run_Turn assets may be used by Orient-to-Movement, where
+	// DesiredFacingDeltaYaw describes the requested WASD heading change.
 	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
 		(bIsCombatStrafe
 			// In Strafe, actor facing intentionally remains camera-facing. A held A/D
@@ -299,7 +501,9 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 
 bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
-	return InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed > IdleSpeedThreshold;
+	return InKinematicContext.GroundSpeed > DerivedMovingSpeedThreshold ||
+		(InKinematicContext.bHasMoveInput &&
+			(InKinematicContext.bIsAccelerating || InKinematicContext.bHasPredictedMovement));
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
@@ -308,6 +512,7 @@ bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(const FProject
 		InKinematicContext.bHasMoveInput &&
 		MoveInputHeldTime <= DerivedStartInputHoldWindow &&
 		InKinematicContext.GroundSpeed <= DerivedStartMaxGroundSpeed &&
+		(InKinematicContext.bIsAccelerating || InKinematicContext.PredictedSpeedGain >= DerivedStartSpeedGainThreshold) &&
 		!bIsInAir &&
 		!IsLandingStateActive();
 }
@@ -316,18 +521,20 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
+	// Orient-to-Movement already rotates the character toward the requested
+	// WASD direction.  A Pivot there would fight CharacterMovement's natural
+	// heading update and select a strafe-authored foot redirect unnecessarily.
 	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
 	{
 		return false;
 	}
 
-	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed <= StopIntentSpeedThreshold)
+	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
 	{
 		return false;
 	}
 
-	const float PivotThreshold = DerivedPivotAngleThreshold * 0.75f;
-	return FMath::Abs(InKinematicContext.MoveInputTurnAngle) >= PivotThreshold;
+	return FMath::Max(FMath::Abs(InKinematicContext.MoveInputTurnAngle), InKinematicContext.VelocityToMoveInputAngle) >= DerivedPivotAngleThreshold;
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(

@@ -30,8 +30,10 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		TEXT("Net=%s LocalRole=%s RemoteRole=%s LocalInput=%s Rendered=%s Dedicated=%s\n")
 		TEXT("Ground=%s GroundSpeed=%.1f VerticalSpeed=%.1f HasInput=%s InputSize=%.2f Held=%.2f Turn=%.1f SharpTurn=%s\n")
 		TEXT("Context Gait=%s Rotation=%s Phase=%s Moving=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f Accel=%.2f\n")
+		TEXT("Kinematic VelocityToInput=%.1f PredictedGain=%.1f StopDistance=%.1f Accelerating=%s Decelerating=%s PredictedMoving=%s RelativeAccel=(%.2f,%.2f)\n")
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
 		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
+		TEXT("MM Revision=%d Changed=%s ForceReselect=%s Published=%s\n")
 		TEXT("Air InAir=%s PhysAir=%s Jumping=%s FallOff=%s Landing=%s LandReq=%s CanLand=%s CanGround=%s LastFall=%.1f\n")
 		TEXT("JumpDebug IgnoredLandings=%d LastIgnoredElapsed=%.3f LastIgnoredVz=%.1f LastIgnoredFall=%.1f LastIgnoredVertical=%.1f HadFallEvidence=%s\n")
 		TEXT("Combat Dir=%.1f Fwd=%.2f Right=%.2f FwdSpeed=%.1f RightSpeed=%.1f"),
@@ -59,6 +61,14 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		DerivedLocomotionContext.bShouldSpinTransition ? TEXT("true") : TEXT("false"),
 		KinematicContext.DesiredFacingDeltaYaw,
 		KinematicContext.AccelerationRatio,
+		KinematicContext.VelocityToMoveInputAngle,
+		KinematicContext.PredictedSpeedGain,
+		KinematicContext.PredictedStopDistance,
+		KinematicContext.bIsAccelerating ? TEXT("true") : TEXT("false"),
+		KinematicContext.bIsDecelerating ? TEXT("true") : TEXT("false"),
+		KinematicContext.bHasPredictedMovement ? TEXT("true") : TEXT("false"),
+		KinematicContext.RelativeAccelerationAmount.X,
+		KinematicContext.RelativeAccelerationAmount.Y,
 		bSprintAllowed ? TEXT("true") : TEXT("false"),
 		bJumpAllowed ? TEXT("true") : TEXT("false"),
 		bCombatMode ? TEXT("true") : TEXT("false"),
@@ -71,6 +81,10 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		bStopWasSprinting ? TEXT("true") : TEXT("false"),
 		bStartRequested ? TEXT("true") : TEXT("false"),
 		bStopRequested ? TEXT("true") : TEXT("false"),
+		MotionMatchingSelectionRevision,
+		bMotionMatchingSelectionChanged ? TEXT("true") : TEXT("false"),
+		bForceMotionMatchingReselect ? TEXT("true") : TEXT("false"),
+		bHasPublishedMotionMatchingSelection ? TEXT("true") : TEXT("false"),
 		bIsInAir ? TEXT("true") : TEXT("false"),
 		bIsPhysicallyInAir ? TEXT("true") : TEXT("false"),
 		bIsJumping ? TEXT("true") : TEXT("false"),

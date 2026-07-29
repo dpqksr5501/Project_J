@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "Project_JLocomotionAnimStateComponent.generated.h"
 
 class AProject_JPlayerCharacter;
+struct FProject_JLocomotionTransitionPolicy;
 struct FHitResult;
 
 USTRUCT(BlueprintType)
@@ -108,6 +110,26 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionKinematicContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float AccelerationRatio = 0.0f;
 
+	/** Velocity derivative in world space. Unlike CharacterMovement acceleration this remains meaningful while braking. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector VelocityAcceleration = FVector::ZeroVector;
+
+	/** Signed, actor-local acceleration normalized to [-1, 1] by MaxAcceleration/BrakingDeceleration. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector RelativeAccelerationAmount = FVector::ZeroVector;
+
+	/** Angle from the current horizontal velocity to the requested future input direction. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float VelocityToMoveInputAngle = 0.0f;
+
+	/** Estimated distance required to stop at the current speed using CMC braking deceleration. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float PredictedStopDistance = 0.0f;
+
+	/** Gained horizontal speed over the short analysis horizon. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float PredictedSpeedGain = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float DesiredFacingDeltaYaw = 0.0f;
 
@@ -119,6 +141,12 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionKinematicContext
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsAccelerating = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsDecelerating = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bHasPredictedMovement = false;
 };
 
 USTRUCT(BlueprintType)
@@ -162,6 +190,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void UpdateState(float DeltaTime);
+	void ApplyTransitionPolicy(const FProject_JLocomotionTransitionPolicy& InPolicy);
 	void HandleJumpStarted();
 	void HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
 	void HandleReplicatedFallOffStarted();
@@ -177,6 +206,9 @@ public:
 	bool CanStartJumpForAnimation() const;
 	bool ConsumeRealLandingEventRequested();
 
+	/** Complete value-only database-selection contract authored on the game thread. */
+	const FProject_JMotionMatchingSelectionContext& GetMotionMatchingSelectionContext() const { return MotionMatchingSelectionContext; }
+
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
 
@@ -188,8 +220,10 @@ private:
 	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
 	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
 	void UpdateLocomotionContexts(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
+	void UpdateMotionMatchingSelectionState(const AProject_JPlayerCharacter& PlayerOwner);
+	void LogMotionMatchingNetworkDebugIfEnabled(const AProject_JPlayerCharacter& PlayerOwner) const;
 	FProject_JLocomotionAuthoritativeContext BuildAuthoritativeContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
-	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
+	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot, float DeltaTime);
 	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	void ApplyLocomotionPhaseStability(float DeltaTime, FProject_JDerivedLocomotionContext& InOutContext);
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
@@ -391,6 +425,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLocomotionSpeedThreshold = 600.0f;
 
+	/** Preserves Sprint Stop when sprint and movement input release in adjacent input frames. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float SprintStopMemoryDuration = 0.25f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Finished", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float FinishedExitWindow = 0.10f;
 
@@ -439,6 +477,15 @@ public:
 	float DerivedStartInputHoldWindow = 0.25f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedMovingSpeedThreshold = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedStartSpeedGainThreshold = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float DerivedMovementPredictionTime = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedStartMaxGroundSpeed = 180.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
@@ -448,7 +495,16 @@ public:
 	float DerivedTurnAngleThreshold = 45.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedTurnMinSpeed = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedPivotMinSpeed = 350.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedTurnMinHoldTime = 0.18f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float TurnRedirectReselectCooldown = 0.10f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedTurnInPlaceAngleThreshold = 65.0f;
@@ -540,6 +596,26 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Context")
 	float DerivedPhaseFamilyElapsedTime = 0.0f;
+
+	/** Monotonic version of the C++ locomotion state consumed by Motion Matching. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	int32 MotionMatchingSelectionRevision = 1;
+
+	/** True only for the update in which a database-selection input changed. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	bool bMotionMatchingSelectionChanged = true;
+
+	/** Explicit same-database re-search request, currently used by local combat-strafe input redirects. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	bool bForceMotionMatchingReselect = false;
+
+	/** The complete selection input consumed by the animation snapshot and database resolver. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	FProject_JMotionMatchingSelectionContext MotionMatchingSelectionContext;
+
+	/** Profile policy copied here so AnimInstance does not query remote selection policy directly. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	bool bUseForwardOnlyRemoteStart = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Landing")
 	bool bIsLanding = false;
@@ -718,6 +794,8 @@ private:
 	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float StopElapsedTime = 0.0f;
+	float SprintStopMemoryTimeRemaining = 0.0f;
+	double LastCombatStrafeReselectTimeSeconds = -DBL_MAX;
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
@@ -728,4 +806,16 @@ private:
 	bool bLandingCancelEventDispatched = false;
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;
+	bool bHasPublishedMotionMatchingSelection = false;
+	bool bLastPublishedUseRemoteStart = false;
+	EProject_JLocomotionGaitIntent LastPublishedMotionMatchingGait = EProject_JLocomotionGaitIntent::Run;
+	EProject_JLocomotionRotationMode LastPublishedMotionMatchingRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionPhaseFamily LastPublishedMotionMatchingPhase = EProject_JLocomotionPhaseFamily::Idle;
+	EProject_JGroundMotionMode LastPublishedGroundMotionMode = EProject_JGroundMotionMode::Idle;
+	bool bLastPublishedHeavyLand = false;
+	bool bLastPublishedLandWasMoving = false;
+	bool bLastPublishedLandWasSprinting = false;
+	bool bLastPublishedFallOffStart = false;
+	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;
+	bool bHasPreviousKinematicVelocity = false;
 };

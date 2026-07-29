@@ -148,6 +148,16 @@ void UProject_JLocomotionAnimStateComponent::HandleSprintStarted()
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 {
+	const bool bWasSprintingAtRelease =
+		bUseSprintLocomotion ||
+		bWantsSprint ||
+		bSprintInputHeld ||
+		GroundSpeed >= SprintLocomotionSpeedThreshold;
+	if (bWasSprintingAtRelease)
+	{
+		SprintStopMemoryTimeRemaining = SprintStopMemoryDuration;
+	}
+
 	bSprintInputHeld = false;
 	bWantsSprint = false;
 	bUseSprintLocomotion = false;

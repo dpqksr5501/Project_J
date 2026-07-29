@@ -308,6 +308,7 @@ void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateMaxWalkSpeed();
 
 	if (LocomotionAnimStateComponent)
 	{
@@ -749,9 +750,11 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 		if (LocomotionAnimStateComponent)
 		{
 			LocomotionAnimStateComponent->SprintLocomotionSpeedThreshold = EffectiveLocomotionProfile->SprintLocomotionSpeedThreshold;
+			LocomotionAnimStateComponent->ApplyTransitionPolicy(EffectiveLocomotionProfile->TransitionPolicy);
 			LocomotionAnimStateComponent->HiddenRemoteUpdateInterval = EffectiveLocomotionProfile->AnimStateHiddenRemoteUpdateInterval;
 			LocomotionAnimStateComponent->RemoteStartTurnExitAngle = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStartTurnExitAngle;
 			LocomotionAnimStateComponent->RemoteStopStartSuppressDuration = EffectiveLocomotionProfile->RemoteVisualPolicy.RemoteStopStartSuppressDuration;
+			LocomotionAnimStateComponent->bUseForwardOnlyRemoteStart = EffectiveLocomotionProfile->RemoteVisualPolicy.bUseForwardOnlyRemoteStart;
 		}
 
 		SignificanceNearDistance = EffectiveLocomotionProfile->NearMotionMatchingDistance;
@@ -832,12 +835,54 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp || (!IsLocallyControlled() && GetLocalRole() != ROLE_Authority))
 	{
-		const bool bCanSprint = IsSprintLocomotionAllowed();
-		MoveComp->MaxWalkSpeed = bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed();
-		MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
+		return;
 	}
+
+	const bool bCanSprint = IsSprintLocomotionAllowed();
+	float DirectionalSpeedMultiplier = 1.0f;
+	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	{
+		const FProject_JLocomotionMovementPolicy& Policy = EffectiveLocomotionProfile->MovementPolicy;
+		MoveComp->MaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
+		MoveComp->BrakingDecelerationWalking = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
+		MoveComp->GroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
+
+		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
+		{
+			FVector Direction = GetPendingMovementInputVector();
+			Direction.Z = 0.0f;
+			if (Direction.IsNearlyZero())
+			{
+				Direction = GetVelocity();
+				Direction.Z = 0.0f;
+			}
+
+			if (!Direction.IsNearlyZero())
+			{
+				const FVector LocalDirection = GetActorTransform().InverseTransformVectorNoScale(Direction.GetSafeNormal());
+				const float ForwardAmount = LocalDirection.X;
+				const float SideAmount = FMath::Abs(LocalDirection.Y);
+				if (ForwardAmount < -0.5f)
+				{
+					DirectionalSpeedMultiplier = Policy.StrafeBackwardSpeedMultiplier;
+				}
+				else if (SideAmount > FMath::Abs(ForwardAmount))
+				{
+					DirectionalSpeedMultiplier = Policy.StrafeSideSpeedMultiplier;
+				}
+				else
+				{
+					DirectionalSpeedMultiplier = Policy.StrafeForwardSpeedMultiplier;
+				}
+			}
+		}
+	}
+
+	MoveComp->MaxWalkSpeed = (bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed()) * DirectionalSpeedMultiplier;
+	MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
 }
 
 float AProject_JPlayerCharacter::GetEffectiveWalkSpeed() const

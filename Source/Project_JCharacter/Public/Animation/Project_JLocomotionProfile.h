@@ -80,6 +80,148 @@ struct PROJECT_JCHARACTER_API FProject_JRemoteVisualLocomotionPolicy
 };
 
 /**
+ * Data-driven thresholds for the C++ ground locomotion state machine.  These
+ * values intentionally live beside the PSD family rather than in an AnimBP,
+ * so a new stance/profile can tune transitions without changing gameplay code.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Idle", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float IdleSpeedThreshold = 30.0f;
+
+	/** GASP-style movement analysis uses a smaller non-zero threshold than Idle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Kinematic Analysis", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float MovingSpeedThreshold = 10.0f;
+
+	/** Minimum predicted speed gain before an input may be treated as a locomotion Start. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Kinematic Analysis", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartSpeedGainThreshold = 25.0f;
+
+	/** Short prediction horizon used only for animation-state analysis, never for authoritative movement. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Kinematic Analysis", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float MovementPredictionTime = 0.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float StartMinDuration = 1.4f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.05", UIMin = "0.05", Units = "s"))
+	float StartMaxDuration = 1.4f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StopIntentSpeedThreshold = 80.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float StopMinDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StopExitSpeedThreshold = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.05", UIMin = "0.05", Units = "s"))
+	float StopFallbackDuration = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SharpTurnAngleThreshold = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SharpTurnMinSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float PivotAngleThreshold = 110.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float TurnRedirectAngleThreshold = 45.0f;
+
+	/** Minimum ground speed for a moving TurnRedirect query. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float TurnRedirectMinSpeed = 180.0f;
+
+	/** Minimum ground speed for a high-commitment Pivot query. Keep above TurnRedirectMinSpeed. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float PivotMinSpeed = 350.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float TurnRedirectMinHoldTime = 0.18f;
+
+	/** Coalesces same-database local turn/pivot re-searches during rapid direction changes. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float TurnRedirectReselectCooldown = 0.10f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Sprint", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float SprintStopMemoryDuration = 0.25f;
+};
+
+/**
+ * Runtime CMC policy equivalent to GASP's UpdateMovement_PreCMC helpers.
+ * Directional strafe scaling is opt-in so existing Project_J combat movement
+ * keeps its current feel until its authored PSD speeds have been validated.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JLocomotionMovementPolicy
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RunMaxAcceleration = 2048.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintMaxAcceleration = 2048.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RunBrakingDeceleration = 2000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintBrakingDeceleration = 2000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float RunGroundFriction = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|CMC", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float SprintGroundFriction = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|Strafe")
+	bool bEnableStrafeDirectionalSpeedScaling = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|Strafe", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StrafeForwardSpeedMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|Strafe", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StrafeSideSpeedMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement|Strafe", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StrafeBackwardSpeedMultiplier = 1.0f;
+};
+
+/**
+ * Presentation-only values calculated from the authoritative locomotion snapshot.
+ * They never alter CharacterMovement and are deliberately separated from the CMC
+ * policy so non-combat OTM and combat Strafe can be tuned independently.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JLocomotionPresentationPolicy
+{
+	GENERATED_BODY()
+
+	/** Enables the thread-safe Relative Acceleration -> Lean snapshot for AnimGraph consumers. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean")
+	bool bEnableLean = true;
+
+	/** Scale applied to the OTM (non-combat) lean snapshot. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float OrientToMovementLeanMultiplier = 1.0f;
+
+	/** Scale applied only to camera-facing combat Strafe. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float CombatStrafeLeanMultiplier = 1.0f;
+
+	/** Maximum absolute value of either lean axis exposed to the AnimGraph. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LeanAxisClamp = 1.0f;
+};
+
+/**
  * Data-driven locomotion defaults shared by the player character and its native anim instance.
  *
  * Keep this focused on generic biped locomotion policy. Job-specific combat animation can layer
@@ -118,6 +260,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Animation", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SprintLocomotionSpeedThreshold = 600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition")
+	FProject_JLocomotionTransitionPolicy TransitionPolicy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement")
+	FProject_JLocomotionMovementPolicy MovementPolicy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation")
+	FProject_JLocomotionPresentationPolicy PresentationPolicy;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
 	FProject_JRemoteVisualLocomotionPolicy RemoteVisualPolicy;

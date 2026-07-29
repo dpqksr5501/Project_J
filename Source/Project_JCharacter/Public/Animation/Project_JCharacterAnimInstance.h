@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
@@ -46,6 +47,22 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float AccelerationRatio = 0.0f;
 
+	/** Signed actor-local acceleration normalized by CMC acceleration/braking limits. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector RelativeAccelerationAmount = FVector::ZeroVector;
+
+	/** X is lateral lean, Y is forward/back lean; calculated from RelativeAccelerationAmount. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector2D LeanAmount = FVector2D::ZeroVector;
+
+	/** Animation-only predicted braking distance, in centimetres. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float PredictedStopDistance = 0.0f;
+
+	/** Angle from current velocity to requested movement input. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float VelocityToMoveInputAngle = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float GroundSpeed = 0.0f;
 
@@ -69,6 +86,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bStoppedAcceleratingThisFrame = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsDecelerating = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasTrajectory = false;
@@ -268,6 +288,49 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	bool bShouldSpinTransition = false;
 };
 
+/**
+ * Motion-Matching control data authored by the locomotion component on the
+ * game thread and consumed read-only through the proxy.  This deliberately
+ * contains no Actor, Controller, Component, or GameplayTag references.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	int32 SelectionRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	bool bSelectionChanged = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	bool bForceReselect = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	int32 TrajectorySampleCount = 0;
+
+	/** Component-authored selection contract. It contains no live UObject references. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	FProject_JMotionMatchingSelectionContext SelectionContext;
+};
+
+/** One game-thread Motion Matching decision retained for post-movement debugging. */
+struct FProject_JMotionMatchingTraceEntry
+{
+	double WorldTimeSeconds = 0.0;
+	int32 SelectionRevision = 0;
+	FString DatabaseName;
+	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+	EProject_JLocomotionGaitIntent GaitIntent = EProject_JLocomotionGaitIntent::Run;
+	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	float GroundSpeed = 0.0f;
+	float InputTurnAngle = 0.0f;
+	int32 TrajectorySampleCount = 0;
+	bool bDatabaseChanged = false;
+	bool bForceReselect = false;
+};
+
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimAimThreadSafeData
 {
@@ -355,6 +418,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	FProject_JAnimLocomotionContextThreadSafeData LocomotionContext;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimMotionMatchingThreadSafeData MotionMatching;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -434,6 +500,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeIsAccelerating() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	FVector GetThreadSafeRelativeAccelerationAmount() const;
+
+	/** X=lateral, Y=forward/back. Use as the input of a Lean additive or Blend Space. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	FVector2D GetThreadSafeLeanAmount() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	float GetThreadSafePredictedStopDistance() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	float GetThreadSafeVelocityToMoveInputAngle() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsDecelerating() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	float GetThreadSafeMoveInputSize() const;
 
@@ -511,6 +593,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Debug")
 	FString GetAnimationDebugSummary() const;
 
+	/** Returns recent native Motion Matching decisions after the character has stopped moving. */
+	FString GetMotionMatchingTraceSummary() const;
+
+	/** Returns native Motion Matching and BlendStack frames captured during a Pivot session. */
+	FString GetMotionMatchingPivotTraceSummary() const;
+
 protected:
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
 	void FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
@@ -533,6 +621,9 @@ protected:
 	bool ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldForceMotionMatchingReselect(const FProject_JAnimThreadSafeData& Data) const;
 	void CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data);
+	void RecordMotionMatchingTrace(const FProject_JAnimThreadSafeData& Data, bool bDatabaseChanged, bool bForceReselect);
+	/** Linked layers may consume the snapshot, but only the mesh's primary instance may mutate MM/trajectory state. */
+	bool IsPrimaryMeshAnimInstance() const;
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
@@ -816,6 +907,9 @@ private:
 	EProject_JLocomotionPhaseFamily LastEvaluatedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	bool bLastEvaluatedStartRequested = false;
 	bool bLastEvaluatedStartWasSprinting = false;
+	int32 LastEvaluatedMotionMatchingSelectionRevision = 0;
+	TArray<FProject_JMotionMatchingTraceEntry> MotionMatchingTrace;
+	int32 MaxMotionMatchingTraceEntries = 96;
 
 	bool bHasEvaluatedMotionMatchingContext = false;
 };

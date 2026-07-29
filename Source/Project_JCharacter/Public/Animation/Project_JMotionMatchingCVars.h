@@ -10,4 +10,7 @@ float GetRepairRemoteTrajectoryFacingMaxYawDelta();
 bool ShouldDisableRemoteAccelerationReset();
 bool ShouldSmoothRemoteTrajectoryPosition();
 bool ShouldSmoothRemoteTrajectoryRotation();
+int32 GetNetworkDebugMode();
+bool ShouldLogNetworkDebugPeriodically();
+bool ShouldCapturePivotDebugTrace();
 }

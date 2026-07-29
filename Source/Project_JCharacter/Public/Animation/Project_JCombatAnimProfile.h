@@ -56,6 +56,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", ClampMax = "180.0", UIMin = "15.0", UIMax = "90.0"))
 	float StrafeInputTurnReselectAngle = 35.0f;
 
+	/** Coalesces W->W+A->A input edges into one pose search instead of interrupting the same combat cycle twice. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float StrafeInputTurnReselectCooldown = 0.10f;
+
 	/** Require positive camera-relative forward input (W, W+A, or W+D) for combat sprint. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (EditCondition = "bAllowSprintInCombat"))
 	bool bRequireForwardInputForSprintInCombat = true;

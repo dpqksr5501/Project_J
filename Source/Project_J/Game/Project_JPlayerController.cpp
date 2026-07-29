@@ -17,6 +17,7 @@
 #include "Network/Project_JNetObjectPrioritizer_Combat.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JPlayerCharacter.h"
+#include "Project_JLocomotionAnimStateComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
@@ -184,6 +185,55 @@ void AProject_JPlayerController::DumpAnimBudget()
 #endif
 }
 
+void AProject_JPlayerController::DumpMotionMatchingTrace()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
+	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
+	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
+	const FString Trace = AnimInstance
+		? AnimInstance->GetMotionMatchingTraceSummary()
+		: FString(TEXT("Motion Matching trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
+	ClientMessage(TEXT("Motion Matching trace written to Output Log."));
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
+#endif
+}
+
+void AProject_JPlayerController::DumpLocomotionKinematics()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetPawn());
+	const UProject_JLocomotionAnimStateComponent* LocomotionState = PlayerCharacter
+		? PlayerCharacter->GetLocomotionAnimStateComponent()
+		: nullptr;
+	const FString Summary = LocomotionState
+		? LocomotionState->GetDebugSummary()
+		: FString(TEXT("Locomotion kinematics unavailable: possessed pawn does not use AProject_JPlayerCharacter."));
+	ClientMessage(TEXT("Locomotion kinematics written to Output Log."));
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Summary);
+#endif
+}
+
+void AProject_JPlayerController::DumpMotionMatchingPivotTrace()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
+	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
+	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
+	const FString Trace = AnimInstance
+		? AnimInstance->GetMotionMatchingPivotTraceSummary()
+		: FString(TEXT("Motion Matching Pivot trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
+	ClientMessage(TEXT("Motion Matching Pivot trace written to Output Log."));
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
+#endif
+}
+
 void AProject_JPlayerController::DumpReplicationPolicy()
 {
 #if UE_BUILD_SHIPPING
@@ -346,6 +396,7 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 		FString AnimSummary = TEXT("Anim=None");
 		if (AnimInstance)
 		{
+			const FProject_JAnimThreadSafeData AnimData = AnimInstance->GetThreadSafeData();
 			++AnimInstanceCount;
 			const FProject_JAnimOptimizationPolicy& Policy = AnimInstance->CurrentOptimizationPolicy;
 			++TierCounts[GetBudgetTierIndex(Policy.Tier)];
@@ -356,13 +407,16 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 			++MotionMatchingIntervalCount;
 
 			AnimSummary = FString::Printf(
-				TEXT("AnimTier=%s UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s"),
+				TEXT("AnimTier=%s UpdateData=%s FullChooser=%s FarOnly=%s MMInterval=%.3f ActivePSD=%s MMRev=%d ForceReselect=%s TrajectorySamples=%d"),
 				ToDebugString(Policy.Tier),
 				Policy.bUpdateAnimationData ? TEXT("true") : TEXT("false"),
 				Policy.bUseFullChooserRows ? TEXT("true") : TEXT("false"),
 				Policy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
 				Policy.MotionMatchingUpdateInterval,
-				*GetNameSafe(AnimInstance->CurrentActivePoseSearchDatabase.Get()));
+				*GetNameSafe(AnimInstance->CurrentActivePoseSearchDatabase.Get()),
+				AnimData.MotionMatching.SelectionRevision,
+				AnimData.MotionMatching.bForceReselect ? TEXT("true") : TEXT("false"),
+				AnimData.MotionMatching.TrajectorySampleCount);
 		}
 
 		if (DetailedLinesPrinted < MaxDetailedCharacters)

@@ -52,6 +52,18 @@ protected:
 	UFUNCTION(Exec)
 	void DumpAnimBudget();
 
+	/** Prints the C++ locomotion kinematic analysis after movement has stopped. */
+	UFUNCTION(Exec)
+	void DumpLocomotionKinematics();
+
+	/** Prints recent Motion Matching selection events captured while the player was moving. */
+	UFUNCTION(Exec)
+	void DumpMotionMatchingTrace();
+
+	/** Prints native Motion Matching/BlendStack frames captured while p.ProjectJ.MMPivotDebug was enabled. */
+	UFUNCTION(Exec)
+	void DumpMotionMatchingPivotTrace();
+
 	UFUNCTION(Exec)
 	void DumpReplicationPolicy();
 

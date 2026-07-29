@@ -107,7 +107,12 @@ void UProject_JLocomotionAnimStateComponent::EnterStartGroundMotionMode()
 
 void UProject_JLocomotionAnimStateComponent::EnterStopGroundMotionMode()
 {
-	bStopWasSprinting = bUseSprintLocomotion || bWantsSprint || GroundSpeed >= SprintLocomotionSpeedThreshold;
+	bStopWasSprinting =
+		bUseSprintLocomotion ||
+		bWantsSprint ||
+		GroundSpeed >= SprintLocomotionSpeedThreshold ||
+		SprintStopMemoryTimeRemaining > 0.0f;
+	SprintStopMemoryTimeRemaining = 0.0f;
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearGroundMotionSprintTransitionState()

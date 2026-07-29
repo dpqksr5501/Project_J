@@ -22,9 +22,14 @@ UPoseSearchDatabase* SelectGaitDatabase(
 	case EProject_JLocomotionPhaseFamily::Stop:
 		return DatabaseFamily.Stop.Get();
 	case EProject_JLocomotionPhaseFamily::Pivot:
+		return DatabaseFamily.Pivot.Get() ? DatabaseFamily.Pivot.Get() : DatabaseFamily.TurnRedirect.Get();
 	case EProject_JLocomotionPhaseFamily::Turn:
-	case EProject_JLocomotionPhaseFamily::TurnInPlace:
 		return DatabaseFamily.TurnRedirect.Get();
+	case EProject_JLocomotionPhaseFamily::TurnInPlace:
+		// Stationary TIP is intentionally not Motion Matching. Until the later
+		// Idle -> TIP -> Recovery implementation owns this transition, preserve
+		// the idle pose rather than searching a moving TurnRedirect PSD.
+		return nullptr;
 	case EProject_JLocomotionPhaseFamily::Cycle:
 		return DatabaseFamily.Cycle.Get();
 	default:
@@ -162,17 +167,11 @@ int32 FProject_JMotionMatchingDatabaseEntry::GetSpecificity() const
 	return Specificity;
 }
 
-UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
-	EProject_JLocomotionGaitIntent GaitIntent,
-	EProject_JLocomotionRotationMode RotationMode,
-	EProject_JLocomotionPhaseFamily PhaseFamily,
-	bool bUseHeavyLand,
-	bool bLandWasMoving,
-	bool bLandWasSprinting,
-	bool bUseFallOffStart,
-	bool bUseRemoteStart,
-	bool bUseGenericFamiliesForNonOrientToMovement) const
+UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(const FProject_JMotionMatchingSelectionContext& Context) const
 {
+	const EProject_JLocomotionGaitIntent GaitIntent = Context.GaitIntent;
+	const EProject_JLocomotionRotationMode RotationMode = Context.RotationMode;
+	const EProject_JLocomotionPhaseFamily PhaseFamily = Context.PhaseFamily;
 	// Camera-facing combat must be able to override every phase, including idle.
 	// The generic idle database is intentionally evaluated after a Strafe entry.
 	if (RotationMode != EProject_JLocomotionRotationMode::OrientToMovement)
@@ -202,7 +201,7 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
 	if (PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart ||
 		PhaseFamily == EProject_JLocomotionPhaseFamily::Fall)
 	{
-		if (PhaseFamily == EProject_JLocomotionPhaseFamily::Fall && bUseFallOffStart && FallOffStartDatabase)
+		if (PhaseFamily == EProject_JLocomotionPhaseFamily::Fall && Context.bUseFallOffStart && FallOffStartDatabase)
 		{
 			return FallOffStartDatabase.Get();
 		}
@@ -215,24 +214,48 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
 
 	if (PhaseFamily == EProject_JLocomotionPhaseFamily::Landing)
 	{
-		if (UPoseSearchDatabase* LandingDatabase = SelectLandingDatabase(LandDatabases, GaitIntent, bLandWasMoving, bLandWasSprinting, bUseHeavyLand))
+		if (UPoseSearchDatabase* LandingDatabase = SelectLandingDatabase(LandDatabases, GaitIntent, Context.bLandWasMoving, Context.bLandWasSprinting, Context.bUseHeavyLand))
 		{
 			return LandingDatabase;
 		}
 	}
 
 	if (RotationMode == EProject_JLocomotionRotationMode::OrientToMovement ||
-		bUseGenericFamiliesForNonOrientToMovement)
+		Context.bUseGenericFamiliesForNonOrientToMovement)
 	{
 		const FProject_JMotionMatchingGaitDatabaseFamily& GaitFamily =
 			GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
-		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily, bUseRemoteStart))
+		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily, Context.bUseRemoteStart))
 		{
 			return GaitDatabase;
 		}
 	}
 
 	return FindBestDatabaseEntry(DatabaseEntries, GaitIntent, RotationMode, PhaseFamily);
+}
+
+UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(
+	EProject_JLocomotionGaitIntent GaitIntent,
+	EProject_JLocomotionRotationMode RotationMode,
+	EProject_JLocomotionPhaseFamily PhaseFamily,
+	bool bUseHeavyLand,
+	bool bLandWasMoving,
+	bool bLandWasSprinting,
+	bool bUseFallOffStart,
+	bool bUseRemoteStart,
+	bool bUseGenericFamiliesForNonOrientToMovement) const
+{
+	FProject_JMotionMatchingSelectionContext Context;
+	Context.GaitIntent = GaitIntent;
+	Context.RotationMode = RotationMode;
+	Context.PhaseFamily = PhaseFamily;
+	Context.bUseHeavyLand = bUseHeavyLand;
+	Context.bLandWasMoving = bLandWasMoving;
+	Context.bLandWasSprinting = bLandWasSprinting;
+	Context.bUseFallOffStart = bUseFallOffStart;
+	Context.bUseRemoteStart = bUseRemoteStart;
+	Context.bUseGenericFamiliesForNonOrientToMovement = bUseGenericFamiliesForNonOrientToMovement;
+	return FindDatabaseForContext(Context);
 }
 
 bool UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion(
