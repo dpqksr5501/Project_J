@@ -38,32 +38,6 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionRuntimeSnapshot
 };
 
 USTRUCT(BlueprintType)
-struct PROJECT_JCHARACTER_API FProject_JGroundStartTimingOverride
-{
-	GENERATED_BODY()
-
-	/** -1 keeps the shared StartMinDuration value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
-	float MinDuration = -1.0f;
-
-	/** -1 keeps the shared StartMaxDuration value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
-	float MaxDuration = -1.0f;
-
-	/** -1 keeps the shared StartResponsiveTurnExitMinTime value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
-	float ResponsiveTurnExitMinTime = -1.0f;
-
-	/** -1 keeps the shared StartInputReleaseExitMinTime value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
-	float InputReleaseExitMinTime = -1.0f;
-
-	/** -1 keeps the shared StartAutoPromoteDelay value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "-1.0", UIMin = "-1.0"))
-	float AutoPromoteDelay = -1.0f;
-};
-
-USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JLocomotionAuthoritativeContext
 {
 	GENERATED_BODY()
@@ -130,6 +104,20 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionKinematicContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float PredictedSpeedGain = 0.0f;
 
+	/** Actual planar velocity reconstructed from the trajectory's present/future samples. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector FutureTrajectoryVelocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float FutureTrajectorySpeed = 0.0f;
+
+	/** Absolute yaw delta between current velocity and the sampled future trajectory velocity. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float FutureTrajectoryTurnAngle = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bHasFutureTrajectoryVelocity = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float DesiredFacingDeltaYaw = 0.0f;
 
@@ -159,6 +147,13 @@ struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsMoving = false;
+
+	/**
+	 * Motion-Matching presentation movement state.  Unlike bIsMoving, Stop is
+	 * deliberately non-moving so Cycle -> Stop is a core visual transition.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsMotionMatchingMoving = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsStarting = false;
@@ -212,6 +207,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
 
+	/** Seconds spent in the current semantic ground state; copied into the animation debug snapshot. */
+	float GetGroundMotionModeElapsedTime() const { return GroundMotionModeElapsedTime; }
+
 	UFUNCTION(BlueprintCallable, Category = "Movement|Debug")
 	void ResetJumpStartLandingDebugState();
 
@@ -230,6 +228,7 @@ private:
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool IsMotionMatchingMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsStartingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldTurnInPlaceForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
@@ -327,12 +326,9 @@ private:
 	void UpdateSharpTurnRequest(bool bAllowSharpTurn);
 	bool ShouldInterruptStartForResponsiveTurn(const FVector2D& MoveInput, bool bAllowLocalControlYaw) const;
 	bool HasLocalStartResponsiveTurn(float AngleThreshold) const;
-	void ScheduleStartAutoPromote();
-	void ClearStartAutoPromoteTimer();
-	void PromoteStartToResolvedGroundMotion();
 	bool UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput);
 	void UpdateStartGroundMotionMode(const FVector2D& MoveInput, bool bAllowSharpTurn);
-	void UpdateStopGroundMotionMode(float DeltaTime);
+	void UpdateStopGroundMotionMode();
 	void UpdateDefaultGroundMotionMode();
 	void UpdateGroundMotionModeFromInput(float DeltaTime, const FVector2D& MoveInput, bool bAllowSharpTurn);
 	bool CanRequestGroundMotion() const;
@@ -400,24 +396,15 @@ public:
 	float MoveInputDeadZone = 0.1f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartMinDuration = 1.4f;
-
-	/** Maximum time Start can hold without reaching locomotion. Start no longer depends on GroundStartFinished notify. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StartMaxDuration = 1.4f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StopMinDuration = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopExitSpeedThreshold = 20.0f;
 
-	/** Maximum time Stop can hold without a new movement input. Stop no longer depends on StopFinished notify. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StopFallbackDuration = 1.0f;
+	/** Start hands off to Cycle after this fraction of CharacterMovement's actual target speed, not an authored fixed duration. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start", meta = (ClampMin = "0.1", ClampMax = "1.0", UIMin = "0.1", UIMax = "1.0"))
+	float StartCompletionSpeedFraction = 0.90f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float IdleSpeedThreshold = 30.0f;
@@ -441,37 +428,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartTurnExitAngle = 15.0f;
 
-	/** Start can be interrupted after this short window when input/camera/replicated movement turns sharply. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartResponsiveTurnExitMinTime = 0.08f;
-
-	/** Sharper turn threshold that bypasses StartMinDuration and moves directly into locomotion. */
+	/** Sharper turn threshold that exits Start directly into locomotion. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartResponsiveTurnExitAngle = 35.0f;
-
-	/** Start can exit into Stop/Idle after this short window if movement input is released quickly. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float StartInputReleaseExitMinTime = 0.08f;
-
-	/** Failsafe that prevents Start/RemoteStart PSD from persisting if update throttling or remote input inference misses the exit. It is clamped to StartMinDuration, so it cannot shorten an authored normal Start window. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground", meta = (ClampMin = "0.05", UIMin = "0.05"))
-	float StartAutoPromoteDelay = 0.35f;
-
-	/** Optional overrides for local run starts. Values below 0 keep the shared Start timing value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
-	FProject_JGroundStartTimingOverride LocalRunStartTiming;
-
-	/** Optional overrides for local sprint starts. Values below 0 keep the shared Start timing value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
-	FProject_JGroundStartTimingOverride LocalSprintStartTiming;
-
-	/** Optional overrides for simulated proxy run starts. Values below 0 keep the shared Start timing value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
-	FProject_JGroundStartTimingOverride RemoteRunStartTiming;
-
-	/** Optional overrides for simulated proxy sprint starts. Values below 0 keep the shared Start timing value. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Ground|Start Overrides")
-	FProject_JGroundStartTimingOverride RemoteSprintStartTiming;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedStartInputHoldWindow = 0.25f;
@@ -766,7 +725,6 @@ private:
 	FTimerHandle JumpTimerHandle;
 	FTimerHandle FallOffStartTimerHandle;
 	FTimerHandle LandingExitTimerHandle;
-	FTimerHandle StartAutoPromoteTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
@@ -793,7 +751,6 @@ private:
 	float RemoteStartPreviousActorYaw = 0.0f;
 	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
-	float StopElapsedTime = 0.0f;
 	float SprintStopMemoryTimeRemaining = 0.0f;
 	double LastCombatStrafeReselectTimeSeconds = -DBL_MAX;
 	bool bLandingFinishPendingExit = false;

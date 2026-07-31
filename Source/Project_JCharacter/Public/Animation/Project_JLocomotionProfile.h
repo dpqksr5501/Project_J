@@ -10,6 +10,43 @@
 #include "Project_JLocomotionProfile.generated.h"
 
 class UProject_JMotionMatchingAssetSet;
+class UBlendProfile;
+class UChooserTable;
+
+/**
+ * Data contract returned by a future State Controller Chooser. It mirrors the
+ * reviewed GASP S_ChooserOutputs struct without assuming any Project_J asset
+ * name, loop flag, or animation length. The ABP owns the Animation Asset and
+ * Loop inputs; C++ only supplies thread-safe gameplay context.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JStateControllerChooserOutput
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller")
+	float StartTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller")
+	bool bUseMotionMatch = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller", meta = (ClampMin = "0.0"))
+	float MotionMatchCostLimit = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller", meta = (ClampMin = "0.0", Units = "s"))
+	float BlendTime = 0.3f;
+
+	/**
+	 * Keep this as an asset reference rather than an FName so a Chooser output
+	 * can connect directly to the Blend Stack's Blend Profile input. The former
+	 * name-only form could not express GASP's per-entry profile contract.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller")
+	TObjectPtr<UBlendProfile> BlendProfile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller")
+	TArray<FName> Tags;
+};
 
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
@@ -38,6 +75,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
 	bool bSearchLandingEveryUpdate = false;
 
+	/** Start PSDs are one-shot acceleration clips; retain their initial Pose Search result until Cycle, Stop, or air takes over. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
+	bool bSearchStartEveryUpdate = false;
+
 	/** Stop PSDs are one-shot deceleration clips; retain the initial result until Idle or a new movement phase takes over. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search")
 	bool bSearchStopEveryUpdate = false;
@@ -53,12 +94,102 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Search", meta = (ClampMin = "0.0", Units = "s"))
 	float SuppressedSearchThrottleTime = 3600.0f;
 
+	/** GASP-equivalent baseline policy, resolved from movement-mode transitions by C++ rather than AnimBP node functions. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float DefaultBlendTime = 0.20f;
+
+	/** Blend used when returning to ground from air (the GASP landing value). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float LandingBlendTime = 0.50f;
+
+	/** Blend used for an upward jump transition (the GASP jump value). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float JumpBlendTime = 0.15f;
+
+	/** Blend used while airborne but not in the initial upward jump. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float AirBlendTime = 0.50f;
+	/**
+	 * Kept as a per-profile override for authored one-shot presentation. This is
+	 * deliberately not used as a duration or completion gate for Start/Stop.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float TransitionBlendTime = 0.20f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.2", ClampMax = "3.0"))
+	float MinPlayRate = 0.85f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.2", ClampMax = "3.0"))
+	float MaxPlayRate = 1.15f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float NotifyRecencyTimeOut = 0.20f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "1", ClampMax = "8"))
+	int32 MaxActiveBlends = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
+	float MaxBlendInTimeToOverrideAnimation = 0.03f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.1"))
+	float PlayerDepthBlendInTimeMultiplier = 1.10f;
+
+	/**
+	 * Enables the GASP-style logical State Machine + Blend Stack presentation
+	 * contract. This does not alter the regular Motion Matching graph by itself;
+	 * it becomes active only after the ABP consumes the accompanying thread-safe
+	 * one-shot request getters.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	bool bEnableExperimentalOneShotPresentation = false;
+
+	/**
+	 * Optional GASP-style logical State Controller chooser. Unlike the regular
+	 * Motion Matching chooser, this returns a single Animation Asset plus
+	 * FProject_JStateControllerChooserOutput metadata for a Blend Stack entry.
+	 * Leave null while the experimental presentation branch is not authored.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	TObjectPtr<UChooserTable> StateControllerAnimationChooserTable = nullptr;
+
+	/**
+	 * Lets a State-Entry Blend Stack function perform one Pose Search over the
+	 * chooser's one-shot candidate set. Cycle remains owned by the regular MM
+	 * node and must not use this path.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	bool bUseMotionMatchForExperimentalOneShotEntry = true;
+
+	/**
+	 * Transition states must receive an authored lead-time from the Chooser
+	 * output whenever possible. Zero means that no profile fallback is supplied;
+	 * the State Controller must then rely on the asset's EarlyTransition notify
+	 * or the exact end of the non-looping Blend Stack asset.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	float ExperimentalOneShotFallbackLeadTime = 0.0f;
+
+	/**
+	 * Allows the optional State Controller to run GASP-style Idle Loop -> Idle
+	 * Break variation. It stays off until an Idle Break Chooser path is authored.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	bool bEnableExperimentalIdleBreak = false;
+
+	/**
+	 * Minimum logical Idle Loop time before an authored Idle Break rule may
+	 * enter. The ABP owns the actual state time and must apply this value.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	float ExperimentalIdleBreakMinimumStateTime = 3.0f;
+
 	bool ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily PhaseFamily, bool bIsFallOffStart) const;
 	float ResolveSearchThrottleTime(
 		EProject_JLocomotionPhaseFamily PhaseFamily,
 		bool bIsFallOffStart,
 		float DefaultSearchThrottleTime,
 		bool bDatabaseChanged) const;
+	float ResolveBlendTime(bool bIsInAir, bool bWasInAir, float VerticalSpeed) const;
 };
 
 USTRUCT(BlueprintType)
@@ -104,23 +235,16 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Kinematic Analysis", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float MovementPredictionTime = 0.25f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float StartMinDuration = 1.4f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.05", UIMin = "0.05", Units = "s"))
-	float StartMaxDuration = 1.4f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopIntentSpeedThreshold = 80.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float StopMinDuration = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StopExitSpeedThreshold = 20.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Stop", meta = (ClampMin = "0.05", UIMin = "0.05", Units = "s"))
-	float StopFallbackDuration = 1.0f;
+	/** Start hands off to Cycle after this fraction of CharacterMovement's actual target speed. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.1", ClampMax = "1.0", UIMin = "0.1", UIMax = "1.0"))
+	float StartCompletionSpeedFraction = 0.90f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnAngleThreshold = 60.0f;

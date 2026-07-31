@@ -29,7 +29,7 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 	return FString::Printf(
 		TEXT("Net=%s LocalRole=%s RemoteRole=%s LocalInput=%s Rendered=%s Dedicated=%s\n")
 		TEXT("Ground=%s GroundSpeed=%.1f VerticalSpeed=%.1f HasInput=%s InputSize=%.2f Held=%.2f Turn=%.1f SharpTurn=%s\n")
-		TEXT("Context Gait=%s Rotation=%s Phase=%s Moving=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f Accel=%.2f\n")
+		TEXT("Context Gait=%s Rotation=%s Phase=%s GameplayMoving=%s MMMoving=%s Starting=%s Pivoting=%s TurnInPlace=%s Spin=%s DesiredYaw=%.1f Accel=%.2f\n")
 		TEXT("Kinematic VelocityToInput=%.1f PredictedGain=%.1f StopDistance=%.1f Accelerating=%s Decelerating=%s PredictedMoving=%s RelativeAccel=(%.2f,%.2f)\n")
 		TEXT("Policy SprintAllowed=%s JumpAllowed=%s Combat=%s Attack=%s Dodge=%s HitReact=%s\n")
 		TEXT("Sprint Wants=%s UseSprint=%s StartSprint=%s StopSprint=%s StartReq=%s StopReq=%s\n")
@@ -55,6 +55,7 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		ToDebugString(AuthoritativeContext.RotationMode),
 		ToDebugString(DerivedLocomotionContext.PhaseFamily),
 		DerivedLocomotionContext.bIsMoving ? TEXT("true") : TEXT("false"),
+		DerivedLocomotionContext.bIsMotionMatchingMoving ? TEXT("true") : TEXT("false"),
 		DerivedLocomotionContext.bIsStarting ? TEXT("true") : TEXT("false"),
 		DerivedLocomotionContext.bIsPivoting ? TEXT("true") : TEXT("false"),
 		DerivedLocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
@@ -289,7 +290,6 @@ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 	ResetGroundMotionTransitionRequests();
 	bResolvedMoveInputLastUpdate = false;
 	MoveInputHeldTime = 0.0f;
-	StopElapsedTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
 	EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);

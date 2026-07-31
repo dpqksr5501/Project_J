@@ -64,6 +64,10 @@ protected:
 	UFUNCTION(Exec)
 	void DumpMotionMatchingPivotTrace();
 
+	/** Prints native Motion Matching one-shot BlendStack frames captured while p.ProjectJ.MMTransitionDebug was enabled. */
+	UFUNCTION(Exec)
+	void DumpMotionMatchingTransitionTrace();
+
 	UFUNCTION(Exec)
 	void DumpReplicationPolicy();
 

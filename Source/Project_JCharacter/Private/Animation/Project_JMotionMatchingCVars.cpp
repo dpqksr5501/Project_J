@@ -43,6 +43,11 @@ TAutoConsoleVariable<int32> CVarProjectJMMPivotDebug(
 	TEXT("p.ProjectJ.MMPivotDebug"),
 	0,
 	TEXT("Captures native Motion Matching Pivot/BlendStack frames. Use DumpMotionMatchingPivotTrace after moving. 0=off, 1=on."));
+
+TAutoConsoleVariable<int32> CVarProjectJMMTransitionDebug(
+	TEXT("p.ProjectJ.MMTransitionDebug"),
+	0,
+	TEXT("Captures native Motion Matching Start/Stop/Jump/Landing/Pivot BlendStack frames. Use DumpMotionMatchingTransitionTrace after moving. 0=off, 1=on."));
 }
 
 namespace Project_J::MotionMatchingCVars
@@ -90,5 +95,10 @@ bool ShouldLogNetworkDebugPeriodically()
 bool ShouldCapturePivotDebugTrace()
 {
 	return CVarProjectJMMPivotDebug.GetValueOnAnyThread() != 0;
+}
+
+bool ShouldCaptureTransitionDebugTrace()
+{
+	return CVarProjectJMMTransitionDebug.GetValueOnAnyThread() != 0;
 }
 }

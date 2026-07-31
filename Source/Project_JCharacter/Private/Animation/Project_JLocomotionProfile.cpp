@@ -19,6 +19,9 @@ bool FProject_JMotionMatchingSearchPolicy::ShouldSearchEveryUpdate(
 	case EProject_JLocomotionPhaseFamily::Landing:
 		return bSearchLandingEveryUpdate;
 
+	case EProject_JLocomotionPhaseFamily::Start:
+		return bSearchStartEveryUpdate;
+
 	case EProject_JLocomotionPhaseFamily::Stop:
 		return bSearchStopEveryUpdate;
 
@@ -36,6 +39,21 @@ float FProject_JMotionMatchingSearchPolicy::ResolveSearchThrottleTime(
 	return ShouldSearchEveryUpdate(PhaseFamily, bIsFallOffStart) || bDatabaseChanged
 		? FMath::Max(0.0f, DefaultSearchThrottleTime)
 		: FMath::Max(0.0f, SuppressedSearchThrottleTime);
+}
+
+float FProject_JMotionMatchingSearchPolicy::ResolveBlendTime(
+	bool bIsInAir,
+	bool bWasInAir,
+	float VerticalSpeed) const
+{
+	// Mirrors GASP Get_MMBlendTime. This is a presentation policy only: phase
+	// ownership and Start/Stop completion remain in the locomotion component.
+	if (!bIsInAir)
+	{
+		return FMath::Max(0.0f, bWasInAir ? LandingBlendTime : DefaultBlendTime);
+	}
+
+	return FMath::Max(0.0f, VerticalSpeed > 100.0f ? JumpBlendTime : AirBlendTime);
 }
 
 UProject_JLocomotionProfile::UProject_JLocomotionProfile()

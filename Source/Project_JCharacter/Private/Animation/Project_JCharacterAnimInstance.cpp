@@ -17,6 +17,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
+#include "Animation/AnimationAsset.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
@@ -28,6 +29,88 @@
 
 // SyncLegacyFieldsFromStructuredData() removed.
 // All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
+
+namespace
+{
+	EProject_JStateControllerStrafeDirection ResolveStateControllerStrafeDirection(const float DirectionDegrees)
+	{
+		const float Direction = FRotator::NormalizeAxis(DirectionDegrees);
+		if (Direction >= -60.0f && Direction <= 60.0f)
+		{
+			return EProject_JStateControllerStrafeDirection::Forward;
+		}
+
+		if (Direction > 60.0f && Direction <= 120.0f)
+		{
+			return EProject_JStateControllerStrafeDirection::Right;
+		}
+
+		if (Direction < -60.0f && Direction >= -120.0f)
+		{
+			return EProject_JStateControllerStrafeDirection::Left;
+		}
+
+		return EProject_JStateControllerStrafeDirection::Backward;
+	}
+
+	EProject_JStateControllerPresentationState ResolveStateControllerPresentationState(
+		const FProject_JAnimThreadSafeData& Data,
+		const FProject_JAnimOneShotPresentationThreadSafeData& OneShot)
+	{
+		if (!OneShot.bEnabled)
+		{
+			return EProject_JStateControllerPresentationState::Disabled;
+		}
+
+		if (Data.Air.bIsInAir)
+		{
+			return OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart ||
+				OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall
+				? EProject_JStateControllerPresentationState::TransitionToInAir
+				: EProject_JStateControllerPresentationState::InAirLoop;
+		}
+
+		if (OneShot.bRequested)
+		{
+			switch (OneShot.PhaseFamily)
+			{
+			case EProject_JLocomotionPhaseFamily::Start:
+			case EProject_JLocomotionPhaseFamily::Pivot:
+				// A release/reversal can happen before the component's phase has
+				// settled from Start/Pivot to Stop.  Let the trajectory-derived
+				// intent preempt it so the State Controller can select a Stop now.
+				return Data.LocomotionContext.bIsMotionMatchingMoving
+					? EProject_JStateControllerPresentationState::TransitionToLocomotion
+					: EProject_JStateControllerPresentationState::TransitionToIdle;
+			case EProject_JLocomotionPhaseFamily::Stop:
+			case EProject_JLocomotionPhaseFamily::Landing:
+				return EProject_JStateControllerPresentationState::TransitionToIdle;
+			case EProject_JLocomotionPhaseFamily::JumpStart:
+			case EProject_JLocomotionPhaseFamily::Fall:
+				return EProject_JStateControllerPresentationState::TransitionToInAir;
+			default:
+				break;
+			}
+		}
+
+		return Data.LocomotionContext.bIsMotionMatchingMoving
+			? EProject_JStateControllerPresentationState::LocomotionLoop
+			: EProject_JStateControllerPresentationState::IdleLoop;
+	}
+
+	bool ShouldStateControllerPresentationLoop(const EProject_JStateControllerPresentationState PresentationState)
+	{
+		switch (PresentationState)
+		{
+		case EProject_JStateControllerPresentationState::IdleLoop:
+		case EProject_JStateControllerPresentationState::LocomotionLoop:
+		case EProject_JStateControllerPresentationState::InAirLoop:
+			return true;
+		default:
+			return false;
+		}
+	}
+}
 
 UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
@@ -70,6 +153,18 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
+	// Chooser columns require a reflected property rather than a BlueprintPure
+	// enum getter. Publish this game-thread mirror *before* evaluating the
+	// chooser: its object-parameter columns read these reflected properties.
+	// Publishing afterwards would make every selection use the previous frame's
+	// presentation state (Idle -> Start -> Loop -> Stop one state late).
+	StateControllerPresentationStateForChooser = ThreadSafeData.OneShotPresentation.PresentationState;
+	RotationModeForChooser = ThreadSafeData.LocomotionContext.RotationMode;
+	GaitIntentForChooser = ThreadSafeData.LocomotionContext.GaitIntent;
+	StateControllerStanceForChooser = ThreadSafeData.OneShotPresentation.Stance;
+	StateControllerStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.StrafeDirection;
+	bCombatModeForChooser = ThreadSafeData.Combat.bIsCombatMode;
+	EvaluateStateControllerAnimationChooserOnGameThread(ThreadSafeData);
 	if (IsPrimaryMeshAnimInstance())
 	{
 		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
@@ -223,6 +318,11 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeIsMoving() const
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.bIsMoving;
 }
 
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsMotionMatchingMoving() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.bIsMotionMatchingMoving;
+}
+
 EProject_JLocomotionGaitIntent UProject_JCharacterAnimInstance::GetThreadSafeGaitIntent() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.GaitIntent;
@@ -231,6 +331,159 @@ EProject_JLocomotionGaitIntent UProject_JCharacterAnimInstance::GetThreadSafeGai
 EProject_JLocomotionRotationMode UProject_JCharacterAnimInstance::GetThreadSafeRotationMode() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionContext.RotationMode;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerWantsLocomotion() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.OneShotPresentation.bEnabled &&
+		!Data.Air.bIsInAir &&
+		Data.LocomotionContext.bIsMotionMatchingMoving;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerWantsIdle() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.OneShotPresentation.bEnabled &&
+		!Data.Air.bIsInAir &&
+		!Data.LocomotionContext.bIsMotionMatchingMoving;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIsGrounded() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.OneShotPresentation.bEnabled && !Data.Air.bIsInAir;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIsInAir() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.OneShotPresentation.bEnabled && Data.Air.bIsInAir;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeExperimentalOneShotEnabled() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bEnabled;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeOneShotRequested() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bRequested;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeOneShotUseMotionMatchOnEntry() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bUseMotionMatchOnEntry;
+}
+
+int32 UProject_JCharacterAnimInstance::GetThreadSafeOneShotRequestRevision() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.RequestRevision;
+}
+
+EProject_JLocomotionPhaseFamily UProject_JCharacterAnimInstance::GetThreadSafeOneShotPhase() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.PhaseFamily;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeOneShotEarlyTransitionWindowOpen() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bEarlyTransitionWindowOpen;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeOneShotFallbackLeadTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.FallbackLeadTime;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerLocomotionSemanticStateChanged() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bLocomotionSemanticStateChanged;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIdleSemanticStateChanged() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bIdleSemanticStateChanged;
+}
+
+EProject_JStateControllerStrafeDirection UProject_JCharacterAnimInstance::GetThreadSafeStateControllerStrafeDirection() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.StrafeDirection;
+}
+
+EProject_JStateControllerStance UProject_JCharacterAnimInstance::GetThreadSafeStateControllerStance() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.Stance;
+}
+
+EProject_JStateControllerPresentationState UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPresentationState() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.PresentationState;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIdleBreakEnabled() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bIdleBreakEnabled;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIdleBreakMinimumStateTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.IdleBreakMinimumStateTime;
+}
+
+UAnimationAsset* UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimation() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimation;
+}
+
+FProject_JStateControllerChooserOutput UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationOutput() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationStartTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.StartTime;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.BlendTime;
+}
+
+UBlendProfile* UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendProfile() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.BlendProfile;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationShouldLoop() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bSelectedAnimationShouldLoop;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerHasSelectedAnimation() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bHasSelectedAnimation;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationAlmostComplete() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bTransitionAnimationAlmostComplete;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationTimeRemaining() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.TransitionTimeRemaining;
+}
+
+void UProject_JCharacterAnimInstance::BeginOneShotEarlyTransitionWindow()
+{
+	++OneShotEarlyTransitionWindowDepth;
+}
+
+void UProject_JCharacterAnimInstance::EndOneShotEarlyTransitionWindow()
+{
+	OneShotEarlyTransitionWindowDepth = FMath::Max(OneShotEarlyTransitionWindowDepth - 1, 0);
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeIsMounted() const
@@ -410,22 +663,64 @@ FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const
 		bChooserIsRemoteProxy ? TEXT("true") : TEXT("false"));
 }
 
+FName UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectedAnimation() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection.SelectedAnimation;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectedAnimationProgress() const
+{
+	const FProject_JAnimMotionMatchingPostSelectionData& PostSelection =
+		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection;
+	return PostSelection.SelectedAnimationLength > UE_KINDA_SMALL_NUMBER
+		? FMath::Clamp(PostSelection.SelectedAnimationTime / PostSelection.SelectedAnimationLength, 0.0f, 1.0f)
+		: 0.0f;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeMotionMatchingSelectionIsContinuing() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching.PostSelection.bIsContinuingPoseSearch;
+}
+
 FString UProject_JCharacterAnimInstance::GetMotionMatchingTraceSummary() const
 {
 	using Project_J::LocomotionDebug::ToDebugString;
 
 	FString Summary = FString::Printf(TEXT("==== Motion Matching Trace (%d entries) ====\n"), MotionMatchingTrace.Num());
-	for (const FProject_JMotionMatchingTraceEntry& Entry : MotionMatchingTrace)
+	for (int32 EntryIndex = 0; EntryIndex < MotionMatchingTrace.Num(); ++EntryIndex)
 	{
+		const FProject_JMotionMatchingTraceEntry& Entry = MotionMatchingTrace[EntryIndex];
+		const double UntilNextSeconds = EntryIndex + 1 < MotionMatchingTrace.Num()
+			? MotionMatchingTrace[EntryIndex + 1].WorldTimeSeconds - Entry.WorldTimeSeconds
+			: -1.0;
 		Summary += FString::Printf(
-			TEXT("t=%.3f Rev=%d PSD=%s Phase=%s Gait=%s Rotation=%s Speed=%.1f InputTurn=%.1f Trajectory=%d DBChanged=%s ForceReselect=%s\n"),
+			TEXT("t=%.3f Next=%.3f Rev=%d PSD=%s Anim=%s AnimTime=%.3f/%.3f PlayRate=%.2f Continuing=%s CurveSpeed=%.1f Warp=%.2f CurvePhase=%.2f Phase=%s Ground=%d Age=%.3f Gait=%s Rotation=%s Speed=%.1f FutureSpeed=%.1f Gain=%.1f FutureTurn=%.1f FutureValid=%s StopDist=%.1f Input=%s Accel=%s Decel=%s InputTurn=%.1f Trajectory=%d DBChanged=%s ForceReselect=%s\n"),
 			Entry.WorldTimeSeconds,
+			UntilNextSeconds,
 			Entry.SelectionRevision,
 			*Entry.DatabaseName,
+			*Entry.SelectedAnimationName,
+			Entry.SelectedAnimationTime,
+			Entry.SelectedAnimationLength,
+			Entry.SelectedAnimationWantedPlayRate,
+			Entry.bSelectionIsContinuing ? TEXT("true") : TEXT("false"),
+			Entry.MoveDataSpeedCurve,
+			Entry.EnableWarpingCurve,
+			Entry.PhaseCurve,
 			ToDebugString(Entry.PhaseFamily),
+			static_cast<int32>(Entry.GroundMotionMode),
+			Entry.GroundModeAgeSeconds,
 			ToDebugString(Entry.GaitIntent),
 			ToDebugString(Entry.RotationMode),
 			Entry.GroundSpeed,
+			Entry.FutureTrajectorySpeed,
+			Entry.PredictedSpeedGain,
+			Entry.FutureTrajectoryTurnAngle,
+			Entry.bHasFutureTrajectoryVelocity ? TEXT("true") : TEXT("false"),
+			Entry.PredictedStopDistance,
+			Entry.bHasMoveInput ? TEXT("true") : TEXT("false"),
+			Entry.bIsAccelerating ? TEXT("true") : TEXT("false"),
+			Entry.bIsDecelerating ? TEXT("true") : TEXT("false"),
 			Entry.InputTurnAngle,
 			Entry.TrajectorySampleCount,
 			Entry.bDatabaseChanged ? TEXT("true") : TEXT("false"),
@@ -526,6 +821,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
 	Data.Ground.bStopWasSprinting = AnimState->bStopWasSprinting;
 	Data.Ground.GroundMotionMode = AnimState->GroundMotionMode;
+	Data.Ground.GroundMotionModeElapsedTime = AnimState->GetGroundMotionModeElapsedTime();
 	Data.Air.bIsJumping = AnimState->bIsJumping;
 	Data.Air.bIsFallOffStart = AnimState->bIsFallOffStart;
 	Data.Landing.bIsLanding = AnimState->bIsLanding || AnimState->bLandingRequested;
@@ -539,18 +835,310 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.LocomotionContext.PhaseFamily = AnimState->DerivedLocomotionContext.PhaseFamily;
 	Data.LocomotionContext.DesiredFacingDeltaYaw = AnimState->KinematicContext.DesiredFacingDeltaYaw;
 	Data.LocomotionContext.bIsMoving = AnimState->DerivedLocomotionContext.bIsMoving;
+	Data.LocomotionContext.bIsMotionMatchingMoving = AnimState->DerivedLocomotionContext.bIsMotionMatchingMoving;
 	Data.LocomotionContext.bIsStarting = AnimState->DerivedLocomotionContext.bIsStarting;
 	Data.LocomotionContext.bIsPivoting = AnimState->DerivedLocomotionContext.bIsPivoting;
 	Data.LocomotionContext.bShouldTurnInPlace = AnimState->DerivedLocomotionContext.bShouldTurnInPlace;
 	Data.LocomotionContext.bShouldSpinTransition = AnimState->DerivedLocomotionContext.bShouldSpinTransition;
 	Data.Movement.RelativeAccelerationAmount = AnimState->KinematicContext.RelativeAccelerationAmount;
 	Data.Movement.PredictedStopDistance = AnimState->KinematicContext.PredictedStopDistance;
+	Data.Movement.PredictedSpeedGain = AnimState->KinematicContext.PredictedSpeedGain;
+	Data.Movement.FutureTrajectoryVelocity = AnimState->KinematicContext.FutureTrajectoryVelocity;
+	Data.Movement.FutureTrajectorySpeed = AnimState->KinematicContext.FutureTrajectorySpeed;
+	Data.Movement.FutureTrajectoryTurnAngle = AnimState->KinematicContext.FutureTrajectoryTurnAngle;
+	Data.Movement.bHasFutureTrajectoryVelocity = AnimState->KinematicContext.bHasFutureTrajectoryVelocity;
 	Data.Movement.VelocityToMoveInputAngle = AnimState->KinematicContext.VelocityToMoveInputAngle;
 	Data.Movement.bIsDecelerating = AnimState->KinematicContext.bIsDecelerating;
 	Data.MotionMatching.SelectionRevision = AnimState->MotionMatchingSelectionRevision;
 	Data.MotionMatching.bSelectionChanged = AnimState->bMotionMatchingSelectionChanged;
 	Data.MotionMatching.bForceReselect = AnimState->bForceMotionMatchingReselect;
 	Data.MotionMatching.SelectionContext = AnimState->GetMotionMatchingSelectionContext();
+	Data.MotionMatching.PostSelection = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();
+
+	FProject_JAnimOneShotPresentationThreadSafeData& OneShot = Data.OneShotPresentation;
+	OneShot.bEnabled = Data.MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation;
+	OneShot.bUseMotionMatchOnEntry =
+		OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bUseMotionMatchForExperimentalOneShotEntry;
+	OneShot.bEarlyTransitionWindowOpen = OneShotEarlyTransitionWindowDepth > 0;
+	OneShot.FallbackLeadTime = Data.MotionMatchingSearchPolicy.ExperimentalOneShotFallbackLeadTime;
+	OneShot.bIdleBreakEnabled = OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bEnableExperimentalIdleBreak;
+	OneShot.IdleBreakMinimumStateTime = OneShot.bIdleBreakEnabled
+		? Data.MotionMatchingSearchPolicy.ExperimentalIdleBreakMinimumStateTime
+		: 0.0f;
+	OneShot.RequestRevision = Data.MotionMatching.SelectionRevision;
+	OneShot.PhaseFamily = Data.LocomotionContext.PhaseFamily;
+	OneShot.RotationMode = Data.LocomotionContext.RotationMode;
+	OneShot.StrafeDirection = OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe
+		? ResolveStateControllerStrafeDirection(Data.Input.MovementDirection)
+		: EProject_JStateControllerStrafeDirection::Forward;
+	OneShot.Stance = OwningCharacter && OwningCharacter->bIsCrouched
+		? EProject_JStateControllerStance::Crouch
+		: EProject_JStateControllerStance::Stand;
+
+	// State Controller re-entry is presentation-only. Compare two immutable
+	// game-thread snapshots, then expose the result to the worker thread. This
+	// intentionally does not use raw angle deltas: remote velocity can vary by a
+	// few degrees every replication update and would otherwise restart a state.
+	const FProject_JAnimThreadSafeData& PreviousData = ThreadSafeData;
+	const bool bCanCompareStateControllerContext =
+		OneShot.bEnabled &&
+		PreviousData.OneShotPresentation.bEnabled &&
+		!Data.Air.bIsInAir &&
+		!PreviousData.Air.bIsInAir;
+	const bool bRotationModeChanged =
+		Data.LocomotionContext.RotationMode != PreviousData.LocomotionContext.RotationMode;
+	const bool bGaitChanged =
+		Data.LocomotionContext.GaitIntent != PreviousData.LocomotionContext.GaitIntent;
+	const bool bLocomotionStanceChanged =
+		OneShot.Stance != PreviousData.OneShotPresentation.Stance;
+	const bool bStrafeDirectionChanged =
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		PreviousData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		OneShot.StrafeDirection != PreviousData.OneShotPresentation.StrafeDirection;
+
+	OneShot.bLocomotionSemanticStateChanged = bCanCompareStateControllerContext &&
+		(bGaitChanged || bRotationModeChanged || bLocomotionStanceChanged || bStrafeDirectionChanged);
+	OneShot.bIdleSemanticStateChanged = bCanCompareStateControllerContext &&
+		bLocomotionStanceChanged;
+
+	// Cycle stays in the regular MM node. These phase families are presentation
+	// requests only; the future State Controller owns the one-shot lifetime.
+	switch (OneShot.PhaseFamily)
+	{
+	case EProject_JLocomotionPhaseFamily::Start:
+	case EProject_JLocomotionPhaseFamily::Stop:
+	case EProject_JLocomotionPhaseFamily::Landing:
+	case EProject_JLocomotionPhaseFamily::JumpStart:
+	case EProject_JLocomotionPhaseFamily::Fall:
+		OneShot.bRequested = OneShot.bEnabled;
+		break;
+	case EProject_JLocomotionPhaseFamily::Pivot:
+		// Pivot assets are combat-Strafe content; never request them for OTM.
+		OneShot.bRequested = OneShot.bEnabled &&
+			OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+		break;
+	default:
+		OneShot.bRequested = false;
+		break;
+	}
+
+	ResolveStateControllerPresentationStateWithPlaybackHold(Data, OneShot);
+}
+
+void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWithPlaybackHold(
+	const FProject_JAnimThreadSafeData& Data,
+	FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const
+{
+	EProject_JStateControllerPresentationState DesiredState =
+		ResolveStateControllerPresentationState(Data, InOutOneShot);
+	const double NowSeconds = FPlatformTime::Seconds();
+
+	// GASP leaves Locomotion Loop as soon as its trajectory based IsMoving
+	// predicate becomes false.  Do the same even while the physical Character
+	// Movement component is still decelerating and has not yet entered its Stop
+	// phase.  This produces an early authored Stop selection without changing
+	// gameplay movement or the regular Motion Matching branch.
+	const bool bStoppedFromPresentedLocomotion =
+		!Data.Air.bIsInAir &&
+		!Data.LocomotionContext.bIsMotionMatchingMoving &&
+		DesiredState == EProject_JStateControllerPresentationState::IdleLoop &&
+		(StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::LocomotionLoop);
+	if (bStoppedFromPresentedLocomotion)
+	{
+		DesiredState = EProject_JStateControllerPresentationState::TransitionToIdle;
+	}
+
+	auto IsTransitionState = [](const EProject_JStateControllerPresentationState State)
+	{
+		return State == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+			State == EProject_JStateControllerPresentationState::TransitionToIdle ||
+			State == EProject_JStateControllerPresentationState::TransitionToInAir;
+	};
+
+	auto IsNaturalLoopContinuation = [](const EProject_JStateControllerPresentationState TransitionState,
+		const EProject_JStateControllerPresentationState CandidateState)
+	{
+		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
+				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+				CandidateState == EProject_JStateControllerPresentationState::InAirLoop);
+	};
+
+	const EProject_JStateControllerPresentationState RequestedState = DesiredState;
+	const EProject_JStateControllerPresentationState PreviousHeldState = StateControllerPlaybackHoldState;
+	const bool bHeldTransition = IsTransitionState(StateControllerPlaybackHoldState);
+	const bool bNaturalContinuation = bHeldTransition &&
+		IsNaturalLoopContinuation(StateControllerPlaybackHoldState, DesiredState);
+
+	// Gameplay intent changes must replace a transition immediately.  In
+	// particular, releasing movement during Start must enter Stop on that frame;
+	// BP_NotifyState_EarlyTransition only controls Transition -> Loop/Re-enter,
+	// never Start -> Stop or Stop -> Start intent replacement.
+	bool bStartedNewPlaybackHold = !bHeldTransition ||
+		(!bNaturalContinuation && DesiredState != StateControllerPlaybackHoldState);
+	if (bStartedNewPlaybackHold)
+	{
+		StateControllerPlaybackHoldState = DesiredState;
+		StateControllerPlaybackHoldStartedAtSeconds = IsTransitionState(DesiredState) ? NowSeconds : 0.0;
+		bStartedNewPlaybackHold = IsTransitionState(DesiredState);
+	}
+
+	InOutOneShot.TransitionElapsedTime = 0.0f;
+	InOutOneShot.TransitionTimeRemaining = 0.0f;
+	InOutOneShot.bTransitionAnimationAlmostComplete = false;
+
+	if (!IsTransitionState(StateControllerPlaybackHoldState))
+	{
+		InOutOneShot.PresentationState = DesiredState;
+		return;
+	}
+
+	// The chooser is evaluated after this snapshot is built.  On the frame that
+	// enters Start/Stop/Air, CachedStateControllerSelectedAnimation still refers
+	// to the old state (usually Idle or Cycle).  Do not inspect that stale asset
+	// or clear the new clock; publish the transition once so the chooser can
+	// select its authored one-shot on this frame.
+	if (bStartedNewPlaybackHold)
+	{
+		InOutOneShot.PresentationState = StateControllerPlaybackHoldState;
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerTransition Requested=%d PreviousHeld=%d NewHeld=%d Reason=GameplayIntentReplacement"),
+				static_cast<int32>(RequestedState),
+				static_cast<int32>(PreviousHeldState),
+				static_cast<int32>(StateControllerPlaybackHoldState));
+		}
+		return;
+	}
+
+	const UAnimationAsset* HeldAsset = CachedStateControllerSelectedAnimation;
+	const float AssetLength = HeldAsset ? HeldAsset->GetPlayLength() : 0.0f;
+	const float StartTime = FMath::Clamp(CachedStateControllerSelectedAnimationOutput.StartTime, 0.0f, AssetLength);
+	const float AuthoredPlayableLength = FMath::Max(AssetLength - StartTime, 0.0f);
+	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
+	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
+	const float Remaining = FMath::Max(AuthoredPlayableLength - Elapsed, 0.0f);
+	const bool bHasPlayableTransitionAsset = HeldAsset &&
+		AuthoredPlayableLength > KINDA_SMALL_NUMBER;
+	const bool bReachedCompletion = bHasPlayableTransitionAsset && Remaining <= LeadTime;
+
+	InOutOneShot.TransitionElapsedTime = Elapsed;
+	InOutOneShot.TransitionTimeRemaining = Remaining;
+	InOutOneShot.bTransitionAnimationAlmostComplete =
+		InOutOneShot.bEarlyTransitionWindowOpen || bReachedCompletion;
+
+	// A missing/looping entry must use the GASP "No Valid Anim" escape route.
+	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
+	// an authored early-transition notify), never until a locomotion phase flips.
+	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
+	if ((bNaturalContinuation || bStillRequestingHeldTransition) && bHasPlayableTransitionAsset &&
+		!InOutOneShot.bTransitionAnimationAlmostComplete)
+	{
+		InOutOneShot.PresentationState = StateControllerPlaybackHoldState;
+		return;
+	}
+
+	StateControllerPlaybackHoldState = DesiredState;
+	StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	InOutOneShot.PresentationState = DesiredState;
+}
+
+void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnGameThread(FProject_JAnimThreadSafeData& Data)
+{
+	FProject_JAnimOneShotPresentationThreadSafeData& OneShot = Data.OneShotPresentation;
+	OneShot.SelectedAnimation = nullptr;
+	OneShot.SelectedAnimationOutput = FProject_JStateControllerChooserOutput();
+	OneShot.bHasSelectedAnimation = false;
+	OneShot.bSelectedAnimationShouldLoop = ShouldStateControllerPresentationLoop(OneShot.PresentationState);
+	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
+
+	const UProject_JLocomotionProfile* Profile = GetLocomotionProfile();
+	UChooserTable* ChooserTable = Profile
+		? Profile->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable.Get()
+		: nullptr;
+	if (!OneShot.bEnabled || !ChooserTable)
+	{
+		CachedStateControllerChooserTable.Reset();
+		CachedStateControllerSelectedAnimation = nullptr;
+		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
+		bCachedStateControllerHasSelectedAnimation = false;
+		return;
+	}
+
+	const bool bContextChanged =
+		CachedStateControllerChooserTable.Get() != ChooserTable ||
+		CachedStateControllerPresentationState != OneShot.PresentationState ||
+		CachedStateControllerRotationMode != Data.LocomotionContext.RotationMode ||
+		CachedStateControllerGaitIntent != Data.LocomotionContext.GaitIntent ||
+		CachedStateControllerStance != OneShot.Stance ||
+		CachedStateControllerStrafeDirection != OneShot.StrafeDirection ||
+		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode;
+
+	if (bContextChanged)
+	{
+		FChooserEvaluationContext ChooserContext;
+		ChooserContext.AddObjectParam(this);
+		FChooserPlayerSettings ChooserPlayerSettings;
+		ChooserContext.AddStructParam(ChooserPlayerSettings);
+		FProject_JStateControllerChooserOutput ChooserOutput;
+		ChooserContext.AddStructParam(ChooserOutput);
+
+		const FInstancedStruct ChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(ChooserTable);
+		UObject* ResultObject = ChooserObject.IsValid()
+			? UChooserFunctionLibrary::EvaluateObjectChooserBase(
+				ChooserContext,
+				ChooserObject,
+				UAnimationAsset::StaticClass())
+			: nullptr;
+
+		CachedStateControllerChooserTable = ChooserTable;
+		CachedStateControllerPresentationState = OneShot.PresentationState;
+		CachedStateControllerRotationMode = Data.LocomotionContext.RotationMode;
+		CachedStateControllerGaitIntent = Data.LocomotionContext.GaitIntent;
+		CachedStateControllerStance = OneShot.Stance;
+		CachedStateControllerStrafeDirection = OneShot.StrafeDirection;
+		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
+		CachedStateControllerSelectedAnimation = Cast<UAnimationAsset>(ResultObject);
+		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
+		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
+		++StateControllerChooserSelectionRevision;
+
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d Stance=%d StrafeDir=%d Combat=%s MMMoving=%s Input=%s FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
+				StateControllerChooserSelectionRevision,
+				static_cast<int32>(OneShot.PresentationState),
+				static_cast<int32>(Data.LocomotionContext.RotationMode),
+				static_cast<int32>(Data.LocomotionContext.GaitIntent),
+				static_cast<int32>(OneShot.Stance),
+				static_cast<int32>(OneShot.StrafeDirection),
+				Data.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
+				Data.LocomotionContext.bIsMotionMatchingMoving ? TEXT("true") : TEXT("false"),
+				Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+				Data.Movement.FutureTrajectorySpeed,
+				Data.Movement.bIsAccelerating ? TEXT("true") : TEXT("false"),
+				CachedStateControllerSelectedAnimation ? *CachedStateControllerSelectedAnimation->GetName() : TEXT("None"),
+				CachedStateControllerSelectedAnimation ? CachedStateControllerSelectedAnimation->GetPlayLength() : 0.0f,
+				ChooserOutput.StartTime,
+				ShouldStateControllerPresentationLoop(OneShot.PresentationState) ? TEXT("true") : TEXT("false"),
+				ChooserOutput.BlendTime,
+				ChooserOutput.bUseMotionMatch ? TEXT("true") : TEXT("false"),
+				ChooserOutput.Tags.Num(),
+				OneShot.TransitionElapsedTime,
+				OneShot.TransitionTimeRemaining,
+				OneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
+		}
+	}
+
+	OneShot.SelectedAnimation = CachedStateControllerSelectedAnimation;
+	OneShot.SelectedAnimationOutput = CachedStateControllerSelectedAnimationOutput;
+	OneShot.bHasSelectedAnimation = bCachedStateControllerHasSelectedAnimation;
+	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
 }
 
 void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const
@@ -568,6 +1156,7 @@ void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAni
 		? EProject_JLocomotionPhaseFamily::Cycle
 		: EProject_JLocomotionPhaseFamily::Idle;
 	Data.LocomotionContext.bIsMoving = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion;
+	Data.LocomotionContext.bIsMotionMatchingMoving = Data.LocomotionContext.bIsMoving;
 	Data.MotionMatching.SelectionContext.GaitIntent = Data.LocomotionContext.GaitIntent;
 	Data.MotionMatching.SelectionContext.RotationMode = Data.LocomotionContext.RotationMode;
 	Data.MotionMatching.SelectionContext.PhaseFamily = Data.LocomotionContext.PhaseFamily;
@@ -805,12 +1394,30 @@ void UProject_JCharacterAnimInstance::RecordMotionMatchingTrace(
 		: 0.0;
 	Entry.SelectionRevision = Data.MotionMatching.SelectionRevision;
 	Entry.DatabaseName = GetNameSafe(CurrentActivePoseSearchDatabase);
+	Entry.SelectedAnimationName = Data.MotionMatching.PostSelection.SelectedAnimation.ToString();
+	Entry.SelectedAnimationTime = Data.MotionMatching.PostSelection.SelectedAnimationTime;
+	Entry.SelectedAnimationLength = Data.MotionMatching.PostSelection.SelectedAnimationLength;
+	Entry.SelectedAnimationWantedPlayRate = Data.MotionMatching.PostSelection.WantedPlayRate;
+	Entry.bSelectionIsContinuing = Data.MotionMatching.PostSelection.bIsContinuingPoseSearch;
+	Entry.MoveDataSpeedCurve = GetCurveValue(TEXT("movedata_speed"));
+	Entry.EnableWarpingCurve = GetCurveValue(TEXT("enable_warping"));
+	Entry.PhaseCurve = GetCurveValue(TEXT("phase"));
 	Entry.PhaseFamily = Data.LocomotionContext.PhaseFamily;
 	Entry.GaitIntent = Data.LocomotionContext.GaitIntent;
 	Entry.RotationMode = Data.LocomotionContext.RotationMode;
+	Entry.GroundMotionMode = Data.Ground.GroundMotionMode;
+	Entry.GroundModeAgeSeconds = Data.Ground.GroundMotionModeElapsedTime;
 	Entry.GroundSpeed = Data.Movement.GroundSpeed;
+	Entry.PredictedSpeedGain = Data.Movement.PredictedSpeedGain;
+	Entry.FutureTrajectorySpeed = Data.Movement.FutureTrajectorySpeed;
+	Entry.FutureTrajectoryTurnAngle = Data.Movement.FutureTrajectoryTurnAngle;
+	Entry.PredictedStopDistance = Data.Movement.PredictedStopDistance;
 	Entry.InputTurnAngle = Data.Input.MoveInputTurnAngle;
 	Entry.TrajectorySampleCount = Data.MotionMatching.TrajectorySampleCount;
+	Entry.bHasMoveInput = Data.Input.bHasMoveInput;
+	Entry.bIsAccelerating = Data.Movement.bIsAccelerating;
+	Entry.bIsDecelerating = Data.Movement.bIsDecelerating;
+	Entry.bHasFutureTrajectoryVelocity = Data.Movement.bHasFutureTrajectoryVelocity;
 	Entry.bDatabaseChanged = bDatabaseChanged;
 	Entry.bForceReselect = bForceReselect;
 

@@ -37,34 +37,6 @@ void ValidateNonNegativeValue(const UObject* Context, TArray<FString>& OutWarnin
 	}
 }
 
-float ResolveOverride(float BaseValue, float OverrideValue)
-{
-	return OverrideValue >= 0.0f ? OverrideValue : BaseValue;
-}
-
-void ValidateStartTimingOverride(
-	const UObject* Context,
-	TArray<FString>& OutWarnings,
-	const TCHAR* FieldName,
-	const FProject_JGroundStartTimingOverride& Timing,
-	float BaseMinDuration,
-	float BaseMaxDuration)
-{
-	const float ResolvedMinDuration = ResolveOverride(BaseMinDuration, Timing.MinDuration);
-	const float ResolvedMaxDuration = ResolveOverride(BaseMaxDuration, Timing.MaxDuration);
-	if (ResolvedMaxDuration < ResolvedMinDuration)
-	{
-		AddWarning(
-			Context,
-			OutWarnings,
-			FString::Printf(
-				TEXT("%s resolves MaxDuration %.3f below MinDuration %.3f."),
-				FieldName,
-				ResolvedMaxDuration,
-				ResolvedMinDuration));
-	}
-}
-
 void ValidateLocomotionProfile(
 	const UObject* Context,
 	const UProject_JLocomotionProfile* LocomotionProfile,
@@ -114,15 +86,6 @@ void ValidateLocomotionAnimState(
 		return;
 	}
 
-	if (AnimState->StartMaxDuration < AnimState->StartMinDuration)
-	{
-		AddWarning(Context, OutWarnings, TEXT("has StartMaxDuration lower than StartMinDuration."));
-	}
-
-	ValidateStartTimingOverride(Context, OutWarnings, TEXT("LocalRunStartTiming"), AnimState->LocalRunStartTiming, AnimState->StartMinDuration, AnimState->StartMaxDuration);
-	ValidateStartTimingOverride(Context, OutWarnings, TEXT("LocalSprintStartTiming"), AnimState->LocalSprintStartTiming, AnimState->StartMinDuration, AnimState->StartMaxDuration);
-	ValidateStartTimingOverride(Context, OutWarnings, TEXT("RemoteRunStartTiming"), AnimState->RemoteRunStartTiming, AnimState->StartMinDuration, AnimState->StartMaxDuration);
-	ValidateStartTimingOverride(Context, OutWarnings, TEXT("RemoteSprintStartTiming"), AnimState->RemoteSprintStartTiming, AnimState->StartMinDuration, AnimState->StartMaxDuration);
 }
 
 void ValidateWeaponProfile(

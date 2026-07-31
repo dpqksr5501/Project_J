@@ -32,6 +32,7 @@ struct FProject_JMotionMatchingPivotTraceEntry
 	float SearchCost = 0.0f;
 	float WantedPlayRate = 1.0f;
 	float ElapsedPoseSearchTime = 0.0f;
+	EPoseSearchInterruptMode AppliedInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
 	bool bContinuingPoseSearch = false;
 	bool bNewBlendThisFrame = false;
 	TArray<FProject_JMotionMatchingBlendStackPlayerDebug, TInlineAllocator<4>> BlendPlayers;
@@ -51,6 +52,7 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
+	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
 	FString GetPivotTraceSummary() const;
 
 protected:
@@ -67,7 +69,10 @@ private:
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
 	void ForceReselectMotionMatchingNodes();
+	void CapturePostSelection();
 	void CapturePivotDebugTrace();
+	EPoseSearchInterruptMode ResolveDatabaseChangeInterruptMode() const;
+	void CacheMotionMatchingPolicyState();
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
@@ -83,6 +88,14 @@ private:
 	float NativeDefaultSearchThrottleTime = 0.0f;
 	bool bHasNativeDefaultSearchThrottleTime = false;
 	bool bWasPivotPhaseForDebug = false;
+	bool bHasMotionMatchingPolicyState = false;
+	bool bLastPolicyWasInAir = false;
+	bool bLastPolicyWasMoving = false;
+	bool bLastPolicyWasCombat = false;
+	EProject_JLocomotionGaitIntent LastPolicyGaitIntent = EProject_JLocomotionGaitIntent::Run;
+	EProject_JLocomotionRotationMode LastPolicyRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EPoseSearchInterruptMode LastResolvedDatabaseChangeInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
+	FProject_JAnimMotionMatchingPostSelectionData LatestPostSelection;
 	TArray<FProject_JMotionMatchingPivotTraceEntry> PivotDebugTrace;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;

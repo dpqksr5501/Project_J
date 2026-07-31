@@ -24,12 +24,9 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 	DerivedMovingSpeedThreshold = InPolicy.MovingSpeedThreshold;
 	DerivedStartSpeedGainThreshold = InPolicy.StartSpeedGainThreshold;
 	DerivedMovementPredictionTime = InPolicy.MovementPredictionTime;
-	StartMinDuration = InPolicy.StartMinDuration;
-	StartMaxDuration = InPolicy.StartMaxDuration;
 	StopIntentSpeedThreshold = InPolicy.StopIntentSpeedThreshold;
-	StopMinDuration = InPolicy.StopMinDuration;
 	StopExitSpeedThreshold = InPolicy.StopExitSpeedThreshold;
-	StopFallbackDuration = InPolicy.StopFallbackDuration;
+	StartCompletionSpeedFraction = InPolicy.StartCompletionSpeedFraction;
 	SharpTurnAngleThreshold = InPolicy.SharpTurnAngleThreshold;
 	SharpTurnMinSpeed = InPolicy.SharpTurnMinSpeed;
 	DerivedPivotAngleThreshold = InPolicy.PivotAngleThreshold;
@@ -41,9 +38,9 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 	SprintStopMemoryDuration = InPolicy.SprintStopMemoryDuration;
 }
 
+
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ClearStartAutoPromoteTimer();
 	ClearOwnedMovementGameplayTags();
 	Super::EndPlay(EndPlayReason);
 }
@@ -351,9 +348,67 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 		Context.VelocityToMoveInputAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
 	}
 
-	const float PredictedSpeed = Context.bHasMoveInput
+	// Pose Search already consumes the full trajectory. Reconstruct the same
+	// short-horizon future velocity for C++ state decisions rather than relying
+	// only on acceleration/braking extrapolation. This stays on the game thread.
+	if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = PlayerOwner.GetMotionMatchingTrajectoryComponent())
+	{
+		const FTransformTrajectory& Trajectory = TrajectoryComponent->GetTrajectory();
+		const FTransformTrajectorySample* PresentSample = nullptr;
+		const FTransformTrajectorySample* FutureSample = nullptr;
+		float BestPresentTime = TNumericLimits<float>::Max();
+		float BestFutureTimeDelta = TNumericLimits<float>::Max();
+
+		for (const FTransformTrajectorySample& Sample : Trajectory.Samples)
+		{
+			const float AbsoluteSampleTime = FMath::Abs(Sample.TimeInSeconds);
+			if (AbsoluteSampleTime < BestPresentTime)
+			{
+				BestPresentTime = AbsoluteSampleTime;
+				PresentSample = &Sample;
+			}
+
+			if (Sample.TimeInSeconds > UE_KINDA_SMALL_NUMBER)
+			{
+				const float HorizonDelta = FMath::Abs(Sample.TimeInSeconds - DerivedMovementPredictionTime);
+				if (HorizonDelta < BestFutureTimeDelta)
+				{
+					BestFutureTimeDelta = HorizonDelta;
+					FutureSample = &Sample;
+				}
+			}
+		}
+
+		if (PresentSample && FutureSample)
+		{
+			const float SampleDeltaTime = FutureSample->TimeInSeconds - PresentSample->TimeInSeconds;
+			if (SampleDeltaTime > UE_KINDA_SMALL_NUMBER)
+			{
+				Context.FutureTrajectoryVelocity =
+					(FutureSample->GetTransform().GetLocation() - PresentSample->GetTransform().GetLocation()) / SampleDeltaTime;
+				Context.FutureTrajectoryVelocity.Z = 0.0f;
+				Context.FutureTrajectorySpeed = Context.FutureTrajectoryVelocity.Size2D();
+				Context.bHasFutureTrajectoryVelocity = true;
+
+				if (Context.GroundSpeed > DerivedMovingSpeedThreshold &&
+					Context.FutureTrajectorySpeed > DerivedMovingSpeedThreshold)
+				{
+					const float FutureDirectionDot = FMath::Clamp(
+						FVector::DotProduct(Context.HorizontalVelocity.GetSafeNormal2D(), Context.FutureTrajectoryVelocity.GetSafeNormal2D()),
+						-1.0f,
+						1.0f);
+					Context.FutureTrajectoryTurnAngle = FMath::RadiansToDegrees(FMath::Acos(FutureDirectionDot));
+				}
+			}
+		}
+	}
+
+	const float ApproximatePredictedSpeed = Context.bHasMoveInput
 		? Context.GroundSpeed + Context.Acceleration.Size2D() * DerivedMovementPredictionTime
 		: FMath::Max(0.0f, Context.GroundSpeed - BrakingDeceleration * DerivedMovementPredictionTime);
+	const float PredictedSpeed = Context.bHasFutureTrajectoryVelocity
+		? Context.FutureTrajectorySpeed
+		: ApproximatePredictedSpeed;
 	Context.PredictedSpeedGain = PredictedSpeed - Context.GroundSpeed;
 	Context.bHasPredictedMovement = PredictedSpeed > DerivedMovingSpeedThreshold;
 
@@ -378,6 +433,7 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 {
 	FProject_JDerivedLocomotionContext Context;
 	Context.bIsMoving = IsMovingForContext(InKinematicContext);
+	Context.bIsMotionMatchingMoving = IsMotionMatchingMovingForContext(InKinematicContext);
 	Context.bIsStarting = IsStartingForContext(InKinematicContext);
 	Context.bIsPivoting = IsPivotingForContext(AuthContext, InKinematicContext);
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
@@ -506,6 +562,36 @@ bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_J
 			(InKinematicContext.bIsAccelerating || InKinematicContext.bHasPredictedMovement));
 }
 
+bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+{
+	// This deliberately differs from gameplay "is moving".  The State Controller
+	// needs GASP-style *locomotion intent*: current velocity, future trajectory,
+	// and acceleration/input must all still agree that the character wants to move.
+	// Consequently a released input enters Stop while the capsule is still braking,
+	// instead of waiting for GroundMotionMode to eventually become Stop.
+	if (bIsInAir || IsLandingStateActive())
+	{
+		return false;
+	}
+
+	const float FutureSpeed = InKinematicContext.bHasFutureTrajectoryVelocity
+		? InKinematicContext.FutureTrajectorySpeed
+		: FMath::Max(InKinematicContext.GroundSpeed + InKinematicContext.PredictedSpeedGain, 0.0f);
+	const bool bCurrentVelocityMoving = InKinematicContext.GroundSpeed > DerivedMovingSpeedThreshold;
+	const bool bFutureVelocityMoving = FutureSpeed > DerivedMovingSpeedThreshold;
+	const bool bSustainedLocomotion = bCurrentVelocityMoving &&
+		bFutureVelocityMoving &&
+		InKinematicContext.bIsAccelerating;
+	// The initial Start frame commonly has near-zero physical velocity.  Preserve
+	// that valid start request as long as the input/trajectory predicts movement.
+	const bool bStartingFromRest = InKinematicContext.bHasMoveInput &&
+		bFutureVelocityMoving &&
+		(InKinematicContext.bIsAccelerating || InKinematicContext.bHasPredictedMovement);
+
+	return bSustainedLocomotion || bStartingFromRest;
+}
+
 bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
 	return
@@ -534,7 +620,10 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 		return false;
 	}
 
-	return FMath::Max(FMath::Abs(InKinematicContext.MoveInputTurnAngle), InKinematicContext.VelocityToMoveInputAngle) >= DerivedPivotAngleThreshold;
+	return FMath::Max3(
+		FMath::Abs(InKinematicContext.MoveInputTurnAngle),
+		InKinematicContext.VelocityToMoveInputAngle,
+		InKinematicContext.FutureTrajectoryTurnAngle) >= DerivedPivotAngleThreshold;
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(

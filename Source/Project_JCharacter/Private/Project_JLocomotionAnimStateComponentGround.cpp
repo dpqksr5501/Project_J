@@ -2,57 +2,8 @@
 
 #include "Project_JLocomotionAnimStateComponent.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
-
-namespace
-{
-struct FProject_JResolvedGroundStartTiming
-{
-	float MinDuration = 0.0f;
-	float MaxDuration = 0.0f;
-	float ResponsiveTurnExitMinTime = 0.0f;
-	float InputReleaseExitMinTime = 0.0f;
-	float AutoPromoteDelay = 0.0f;
-};
-
-float ResolveStartTimingValue(float BaseValue, float OverrideValue)
-{
-	return OverrideValue >= 0.0f ? OverrideValue : BaseValue;
-}
-
-const FProject_JGroundStartTimingOverride& SelectStartTimingOverride(
-	const UProject_JLocomotionAnimStateComponent& Component,
-	bool bUseRemoteStart,
-	bool bUseSprintStart)
-{
-	if (bUseRemoteStart)
-	{
-		return bUseSprintStart ? Component.RemoteSprintStartTiming : Component.RemoteRunStartTiming;
-	}
-
-	return bUseSprintStart ? Component.LocalSprintStartTiming : Component.LocalRunStartTiming;
-}
-
-FProject_JResolvedGroundStartTiming ResolveStartTiming(
-	const UProject_JLocomotionAnimStateComponent& Component,
-	bool bUseRemoteStart,
-	bool bUseSprintStart)
-{
-	const FProject_JGroundStartTimingOverride& TimingOverride = SelectStartTimingOverride(Component, bUseRemoteStart, bUseSprintStart);
-	FProject_JResolvedGroundStartTiming ResolvedTiming;
-	ResolvedTiming.MinDuration = ResolveStartTimingValue(Component.StartMinDuration, TimingOverride.MinDuration);
-	// A data override should never make the normal Start path leave before its
-	// configured minimum. Responsive-turn and released-input paths deliberately
-	// remain the only early exits.
-	ResolvedTiming.MaxDuration = FMath::Max(
-		ResolvedTiming.MinDuration,
-		ResolveStartTimingValue(Component.StartMaxDuration, TimingOverride.MaxDuration));
-	ResolvedTiming.ResponsiveTurnExitMinTime = ResolveStartTimingValue(Component.StartResponsiveTurnExitMinTime, TimingOverride.ResponsiveTurnExitMinTime);
-	ResolvedTiming.InputReleaseExitMinTime = ResolveStartTimingValue(Component.StartInputReleaseExitMinTime, TimingOverride.InputReleaseExitMinTime);
-	ResolvedTiming.AutoPromoteDelay = ResolveStartTimingValue(Component.StartAutoPromoteDelay, TimingOverride.AutoPromoteDelay);
-	return ResolvedTiming;
-}
-}
 
 void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGroundMotionMode NewMode)
 {
@@ -79,21 +30,17 @@ void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProj
 	{
 	case EProject_JGroundMotionMode::Start:
 		EnterStartGroundMotionMode();
-		ScheduleStartAutoPromote();
 		break;
 	case EProject_JGroundMotionMode::Stop:
-		ClearStartAutoPromoteTimer();
 		EnterStopGroundMotionMode();
 		ClearRemoteStartTurnReference();
 		break;
 	case EProject_JGroundMotionMode::Idle:
 	case EProject_JGroundMotionMode::Locomotion:
-		ClearStartAutoPromoteTimer();
 		ClearGroundMotionSprintTransitionState();
 		ClearRemoteStartTurnReference();
 		break;
 	default:
-		ClearStartAutoPromoteTimer();
 		ClearRemoteStartTurnReference();
 		break;
 	}
@@ -213,8 +160,7 @@ bool UProject_JLocomotionAnimStateComponent::ShouldInterruptStartForResponsiveTu
 	const FVector2D& MoveInput,
 	bool bAllowLocalControlYaw) const
 {
-	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bAllowLocalControlYaw, bStartWasSprinting);
-	if (!bHasMoveInput || GroundMotionModeElapsedTime < StartTiming.ResponsiveTurnExitMinTime)
+	if (!bHasMoveInput)
 	{
 		return false;
 	}
@@ -252,60 +198,6 @@ bool UProject_JLocomotionAnimStateComponent::HasLocalStartResponsiveTurn(float A
 	const float ActorYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(RemoteStartPreviousActorYaw, CurrentActorYaw));
 	const float ControlYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(StartPreviousControlYaw, CurrentControlYaw));
 	return ActorYawDelta >= AngleThreshold || ControlYawDelta >= AngleThreshold;
-}
-
-void UProject_JLocomotionAnimStateComponent::ScheduleStartAutoPromote()
-{
-	UWorld* World = GetWorld();
-	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bUsingLocalInputState, bStartWasSprinting);
-	if (!World || StartTiming.AutoPromoteDelay <= 0.0f)
-	{
-		return;
-	}
-
-	World->GetTimerManager().ClearTimer(StartAutoPromoteTimerHandle);
-	// Auto promotion is only a failsafe. Scheduling it before MinDuration made
-	// every run/sprint start inherit the 0.35 second default and bypass the
-	// authored Start window entirely.
-	const float AutoPromoteDelay = FMath::Max(StartTiming.AutoPromoteDelay, StartTiming.MinDuration);
-	World->GetTimerManager().SetTimer(
-		StartAutoPromoteTimerHandle,
-		this,
-		&UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion,
-		AutoPromoteDelay,
-		false);
-}
-
-void UProject_JLocomotionAnimStateComponent::ClearStartAutoPromoteTimer()
-{
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(StartAutoPromoteTimerHandle);
-	}
-}
-
-void UProject_JLocomotionAnimStateComponent::PromoteStartToResolvedGroundMotion()
-{
-	if (GroundMotionMode != EProject_JGroundMotionMode::Start)
-	{
-		return;
-	}
-
-	const bool bHasMovementIntent =
-		bHasMoveInput ||
-		GetMovementInputForState().SizeSquared() > FMath::Square(MoveInputDeadZone) ||
-		GroundSpeed > IdleSpeedThreshold;
-
-	if (bHasMovementIntent)
-	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-		return;
-	}
-
-	EnterGroundMotionMode(
-		GroundSpeed > StopExitSpeedThreshold
-			? EProject_JGroundMotionMode::Stop
-			: EProject_JGroundMotionMode::Idle);
 }
 
 bool UProject_JLocomotionAnimStateComponent::UpdateRemoteStartTurnExitRequest(const AProject_JPlayerCharacter& PlayerOwner, const FVector2D& MoveInput)
@@ -364,43 +256,58 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		}
 	}
 
-	const FProject_JResolvedGroundStartTiming StartTiming = ResolveStartTiming(*this, !bAllowSharpTurn, bStartWasSprinting);
-	const bool bCanExitStart = GroundMotionModeElapsedTime >= StartTiming.MinDuration;
-	const bool bCanExitReleasedStart = GroundMotionModeElapsedTime >= StartTiming.InputReleaseExitMinTime;
-	const bool bRemoteResponsiveTurnExitRequested =
-		!bAllowSharpTurn &&
-		bStartTurnExitRequested &&
-		GroundMotionModeElapsedTime >= StartTiming.ResponsiveTurnExitMinTime;
-
 	if (!bHasMoveInput)
 	{
-		if (bCanExitReleasedStart || bCanExitStart)
+		// Autonomous input release must select a Stop database immediately. A
+		// simulated proxy often has a full-speed replicated sample after a local
+		// Start request, however; keep its velocity-driven locomotion alive until
+		// the replicated stop intent arrives instead of falsely searching Stop.
+		if (!bUsingLocalInputState && GroundSpeed > StopExitSpeedThreshold)
 		{
-			EnterGroundMotionMode(
-				GroundSpeed > StopExitSpeedThreshold
-					? EProject_JGroundMotionMode::Stop
-					: EProject_JGroundMotionMode::Idle);
+			EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+			return;
+		}
+
+		EnterGroundMotionMode(
+			GroundSpeed > StopExitSpeedThreshold
+				? EProject_JGroundMotionMode::Stop
+				: EProject_JGroundMotionMode::Idle);
+	}
+	else if (bResponsiveTurnExitRequested)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+	}
+	else if (!bAllowSharpTurn && bStartTurnExitRequested)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+	}
+	else if (bStartTurnExitRequested)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+	}
+	else if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
+	{
+		const UCharacterMovementComponent* MovementComponent = PlayerOwner->GetCharacterMovement();
+		const float CompletionSpeed = MovementComponent
+			? FMath::Max(DerivedStartMaxGroundSpeed, MovementComponent->GetMaxSpeed() * StartCompletionSpeedFraction)
+			: DerivedStartMaxGroundSpeed;
+		if (GroundSpeed >= CompletionSpeed ||
+			(!KinematicContext.bIsAccelerating && KinematicContext.PredictedSpeedGain < DerivedStartSpeedGainThreshold))
+		{
+			EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 		}
 		else
 		{
 			RefreshGroundMotionFlags();
 		}
 	}
-	else if (bResponsiveTurnExitRequested)
+	else if (!KinematicContext.bIsAccelerating && KinematicContext.PredictedSpeedGain < DerivedStartSpeedGainThreshold)
 	{
+		// The player is still steering but CharacterMovement can no longer gain
+		// meaningful speed (for example due to a constrained speed policy). This
+		// is the semantic equivalent of GASP's start-to-locomotion handoff, not a
+		// fixed animation timeout.
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	}
-	else if (bRemoteResponsiveTurnExitRequested)
-	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	}
-	else if (bCanExitStart && (bStartTurnExitRequested || GroundSpeed > DerivedStartMaxGroundSpeed))
-	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
-	}
-	else if (GroundMotionModeElapsedTime >= StartTiming.MaxDuration)
-	{
-		EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
 	}
 	else
 	{
@@ -408,26 +315,29 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	}
 }
 
-void UProject_JLocomotionAnimStateComponent::UpdateStopGroundMotionMode(float DeltaTime)
+void UProject_JLocomotionAnimStateComponent::UpdateStopGroundMotionMode()
 {
-	StopElapsedTime += DeltaTime;
 	if (bHasMoveInput)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
 	}
-	else if (StopElapsedTime >= StopMinDuration && GroundSpeed <= StopExitSpeedThreshold)
+	else if (GroundSpeed <= StopExitSpeedThreshold)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 	}
-	else if (StopElapsedTime >= StopFallbackDuration)
+	else if (!KinematicContext.bIsDecelerating)
 	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
+		// Do not keep a Stop PSD solely because a non-input source (knockback,
+		// moving platform or replicated correction) keeps velocity above the exit
+		// threshold. It is not a player stop any more.
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else
 	{
 		RefreshGroundMotionFlags();
 	}
 }
+
 
 void UProject_JLocomotionAnimStateComponent::UpdateDefaultGroundMotionMode()
 {
@@ -472,7 +382,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 
 	if (bStopEdge && (!bStartEdge || !bHasMoveInput))
 	{
-		StopElapsedTime = 0.0f;
 		EnterGroundMotionMode(
 			GroundSpeed > StopExitSpeedThreshold
 				? EProject_JGroundMotionMode::Stop
@@ -484,7 +393,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 	}
 	else if (bStopEdge)
 	{
-		StopElapsedTime = 0.0f;
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
 	}
 	else if (GroundMotionMode == EProject_JGroundMotionMode::Start)
@@ -493,7 +401,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 	}
 	else if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
 	{
-		UpdateStopGroundMotionMode(DeltaTime);
+		UpdateStopGroundMotionMode();
 	}
 	else
 	{

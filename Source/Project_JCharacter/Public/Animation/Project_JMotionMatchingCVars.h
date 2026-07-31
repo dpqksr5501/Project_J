@@ -13,4 +13,5 @@ bool ShouldSmoothRemoteTrajectoryRotation();
 int32 GetNetworkDebugMode();
 bool ShouldLogNetworkDebugPeriodically();
 bool ShouldCapturePivotDebugTrace();
+bool ShouldCaptureTransitionDebugTrace();
 }

@@ -18,6 +18,7 @@
 class ACharacter;
 class APawn;
 class AProject_JPlayerCharacter;
+class UAnimationAsset;
 class UChooserTable;
 class UPoseSearchDatabase;
 class UProject_JLocomotionAnimStateComponent;
@@ -59,6 +60,22 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float PredictedStopDistance = 0.0f;
 
+	/** Animation-only expected speed gain over the locomotion prediction horizon. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float PredictedSpeedGain = 0.0f;
+	/** Game-thread reconstructed velocity from the predicted trajectory sample. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector FutureTrajectoryVelocity = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float FutureTrajectorySpeed = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float FutureTrajectoryTurnAngle = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bHasFutureTrajectoryVelocity = false;
+
 	/** Angle from current velocity to requested movement input. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float VelocityToMoveInputAngle = 0.0f;
@@ -89,7 +106,6 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsDecelerating = false;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasTrajectory = false;
 
@@ -144,6 +160,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimGroundThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float GroundMotionModeElapsedTime = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -275,6 +294,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsMoving = false;
 
+	/** MM presentation movement state; use only for MM diagnostics/policy, not gameplay. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsMotionMatchingMoving = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsStarting = false;
 
@@ -293,6 +316,38 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
  * game thread and consumed read-only through the proxy.  This deliberately
  * contains no Actor, Controller, Component, or GameplayTag references.
  */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingPostSelectionData
+{
+	GENERATED_BODY()
+
+	/** Previous-frame native result copied on the game thread; no live asset references are exposed to worker threads. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	FName SelectedDatabase = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	FName SelectedAnimation = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	float SelectedAnimationTime = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	float SelectedAnimationLength = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	float WantedPlayRate = 1.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	float SearchCost = 0.0f;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	bool bIsContinuingPoseSearch = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	TArray<FName> DatabaseTags;
+};
+
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
 {
@@ -313,6 +368,116 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
 	/** Component-authored selection contract. It contains no live UObject references. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
 	FProject_JMotionMatchingSelectionContext SelectionContext;
+
+	/** Native selection result from the preceding animation update, used for read-only presentation/debug policy. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	FProject_JAnimMotionMatchingPostSelectionData PostSelection;
+};
+
+/**
+ * Read-only request from C++ locomotion state to an optional GASP-style
+ * logical State Machine / Blend Stack presentation layer. Asset selection,
+ * start time, loop and completion remain ABP/Chooser responsibilities.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bEnabled = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bRequested = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bUseMotionMatchOnEntry = false;
+
+	/** Authored NotifyState window which may permit an early transition to a loop. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bEarlyTransitionWindowOpen = false;
+
+	/** Optional data-driven fallback. Prefer a Chooser output value per animation. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	float FallbackLeadTime = 0.0f;
+
+	/** Incremented by the locomotion component when its semantic MM context changes. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	int32 RequestRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+
+	/**
+	 * GASP's Movement Direction equivalent. This is a coarse sector of the
+	 * existing replicated/local Strafe direction and is never used for OTM.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JStateControllerStrafeDirection StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** GASP's locomotion stance (Stand/Crouch), not Project_J combat or weapon stance. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JStateControllerStance Stance = EProject_JStateControllerStance::Stand;
+
+	/** Resolved State Controller state. It is intentionally inert while bEnabled is false. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JStateControllerPresentationState PresentationState = EProject_JStateControllerPresentationState::Disabled;
+
+	/** Enables the authored Idle Loop -> Idle Break rule; it does not start a break by itself. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bIdleBreakEnabled = false;
+
+	/** Data Asset threshold consumed by an ABP logical-state-time transition rule. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	float IdleBreakMinimumStateTime = 0.0f;
+
+	/**
+	 * Immutable asset reference selected on the game thread by the optional
+	 * State Controller chooser. AnimGraph only consumes this cached reference;
+	 * it must not inspect the asset or query the world on a worker thread.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	TObjectPtr<UAnimationAsset> SelectedAnimation = nullptr;
+
+	/** Metadata authored beside SelectedAnimation in the State Controller chooser. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	FProject_JStateControllerChooserOutput SelectedAnimationOutput;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bHasSelectedAnimation = false;
+
+	/** Loop intent is derived from the logical presentation state, never guessed from asset duration. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bSelectedAnimationShouldLoop = false;
+
+	/** Increments only when the cached chooser result/context changes. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	int32 SelectionRevision = 0;
+
+	/**
+	 * Asset-progress approximation for the logical State Controller. It is derived
+	 * from the selected Blend Stack asset, never from a fixed Start/Stop duration.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	float TransitionElapsedTime = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	float TransitionTimeRemaining = 0.0f;
+
+	/** True at the asset end, or during an authored EarlyTransition NotifyState window. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bTransitionAnimationAlmostComplete = false;
+
+	/** GASP Loco - State Changed equivalent; ABP still gates it with state time > 0. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bLocomotionSemanticStateChanged = false;
+
+	/** GASP Idle - State Changed equivalent. Only locomotion stance may restart Idle. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bIdleSemanticStateChanged = false;
 };
 
 /** One game-thread Motion Matching decision retained for post-movement debugging. */
@@ -321,12 +486,32 @@ struct FProject_JMotionMatchingTraceEntry
 	double WorldTimeSeconds = 0.0;
 	int32 SelectionRevision = 0;
 	FString DatabaseName;
+	/** Native Pose Search result from the preceding animation update. This is trace-only; it never drives locomotion state. */
+	FString SelectedAnimationName;
+	float SelectedAnimationTime = 0.0f;
+	float SelectedAnimationLength = 0.0f;
+	float SelectedAnimationWantedPlayRate = 1.0f;
+	bool bSelectionIsContinuing = false;
+	/** Final blended animation-curve values sampled on the game thread for asset-contract diagnostics. */
+	float MoveDataSpeedCurve = 0.0f;
+	float EnableWarpingCurve = 0.0f;
+	float PhaseCurve = 0.0f;
 	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	EProject_JLocomotionGaitIntent GaitIntent = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
+	float GroundModeAgeSeconds = 0.0f;
 	float GroundSpeed = 0.0f;
+	float PredictedSpeedGain = 0.0f;
+	float FutureTrajectorySpeed = 0.0f;
+	float FutureTrajectoryTurnAngle = 0.0f;
+	float PredictedStopDistance = 0.0f;
 	float InputTurnAngle = 0.0f;
 	int32 TrajectorySampleCount = 0;
+	bool bHasMoveInput = false;
+	bool bIsAccelerating = false;
+	bool bIsDecelerating = false;
+	bool bHasFutureTrajectoryVelocity = false;
 	bool bDatabaseChanged = false;
 	bool bForceReselect = false;
 };
@@ -421,6 +606,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	FProject_JAnimMotionMatchingThreadSafeData MotionMatching;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FProject_JAnimOneShotPresentationThreadSafeData OneShotPresentation;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -445,6 +633,34 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
+
+	/**
+	 * Game-thread mirror used exclusively by Chooser property columns.
+	 *
+	 * Chooser property access cannot reliably resolve a BlueprintPure enum return
+	 * value as an enum column (it appears as "Missing" in the asset editor).
+	 * This value is copied from the immutable proxy snapshot once per native
+	 * update. AnimGraph worker-thread logic must continue to use
+	 * GetThreadSafeStateControllerPresentationState instead.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerPresentationState StateControllerPresentationStateForChooser = EProject_JStateControllerPresentationState::Disabled;
+
+	/** Reflected game-thread mirrors for State Controller Chooser columns. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JLocomotionRotationMode RotationModeForChooser = EProject_JLocomotionRotationMode::OrientToMovement;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JLocomotionGaitIntent GaitIntentForChooser = EProject_JLocomotionGaitIntent::Walk;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerStance StateControllerStanceForChooser = EProject_JStateControllerStance::Stand;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerStrafeDirection StateControllerStrafeDirectionForChooser = EProject_JStateControllerStrafeDirection::Forward;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	bool bCombatModeForChooser = false;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe, DeprecatedFunction, DeprecationMessage = "Use dedicated thread-safe getters such as GetThreadSafeTrajectory, GetThreadSafeAimYaw, GetThreadSafeAimPitch, and GetThreadSafeAimOffsetAlpha in AnimGraph."))
 	FProject_JAnimThreadSafeData GetThreadSafeData() const;
@@ -538,10 +754,108 @@ public:
 	bool GetThreadSafeIsMoving() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsMotionMatchingMoving() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	EProject_JLocomotionGaitIntent GetThreadSafeGaitIntent() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	EProject_JLocomotionRotationMode GetThreadSafeRotationMode() const;
+
+	/** GASP State Alias equivalent: Ground Idle-group -> TransitionToLocomotion. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerWantsLocomotion() const;
+
+	/** GASP State Alias equivalent: Ground Locomotion-group -> TransitionToIdle. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerWantsIdle() const;
+
+	/** GASP Grounded Conduit condition. Kept separate from idle/locomotion aliases. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerIsGrounded() const;
+
+	/** GASP -> In Air alias condition. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerIsInAir() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeExperimentalOneShotEnabled() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeOneShotRequested() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeOneShotUseMotionMatchOnEntry() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	int32 GetThreadSafeOneShotRequestRevision() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	EProject_JLocomotionPhaseFamily GetThreadSafeOneShotPhase() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeOneShotEarlyTransitionWindowOpen() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeOneShotFallbackLeadTime() const;
+
+	/** GASP Loco - State Changed condition; apply only from a locomotion-loop re-entry rule. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerLocomotionSemanticStateChanged() const;
+
+	/** GASP Idle - State Changed condition; apply only from an idle-loop re-entry rule. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerIdleSemanticStateChanged() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	EProject_JStateControllerStrafeDirection GetThreadSafeStateControllerStrafeDirection() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	EProject_JStateControllerStance GetThreadSafeStateControllerStance() const;
+
+	/** State Controller / Chooser input; does not replace the current regular-MM AnimGraph. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	EProject_JStateControllerPresentationState GetThreadSafeStateControllerPresentationState() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerIdleBreakEnabled() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerIdleBreakMinimumStateTime() const;
+
+	/** Cached State Controller chooser result. Safe only as a Blend Stack asset input. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	UAnimationAsset* GetThreadSafeStateControllerSelectedAnimation() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	FProject_JStateControllerChooserOutput GetThreadSafeStateControllerSelectedAnimationOutput() const;
+
+	/** Convenience pins for the Blend Stack; equivalent to breaking SelectedAnimationOutput. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerSelectedAnimationStartTime() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerSelectedAnimationBlendTime() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	UBlendProfile* GetThreadSafeStateControllerSelectedAnimationBlendProfile() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerSelectedAnimationShouldLoop() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerHasSelectedAnimation() const;
+
+	/** GASP-equivalent rule for a non-looping State Controller Blend Stack asset. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerSelectedAnimationAlmostComplete() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerSelectedAnimationTimeRemaining() const;
+
+	/** Game-thread only bridge for UAnimNotifyState_Project_JLocomotionEarlyTransition. */
+	void BeginOneShotEarlyTransitionWindow();
+	void EndOneShotEarlyTransitionWindow();
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeIsMounted() const;
@@ -590,6 +904,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
+	FName GetThreadSafeMotionMatchingSelectedAnimation() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
+	float GetThreadSafeMotionMatchingSelectedAnimationProgress() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeMotionMatchingSelectionIsContinuing() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Debug")
 	FString GetAnimationDebugSummary() const;
 
@@ -601,6 +924,9 @@ public:
 
 protected:
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
+	void ResolveStateControllerPresentationStateWithPlaybackHold(
+		const FProject_JAnimThreadSafeData& Data,
+		FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const;
 	void FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
@@ -610,6 +936,7 @@ protected:
 	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data);
+	void EvaluateStateControllerAnimationChooserOnGameThread(FProject_JAnimThreadSafeData& Data);
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserGroundProperties(const FProject_JAnimThreadSafeData& Data);
@@ -657,6 +984,26 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimThreadSafeData ThreadSafeData;
+
+	/** Game-thread NotifyState depth. A depth avoids prematurely closing overlapping blend windows. */
+	int32 OneShotEarlyTransitionWindowDepth = 0;
+
+	/** Game-thread cache backing the immutable proxy selection snapshot. */
+	TWeakObjectPtr<UChooserTable> CachedStateControllerChooserTable;
+	EProject_JStateControllerPresentationState CachedStateControllerPresentationState = EProject_JStateControllerPresentationState::Disabled;
+	EProject_JLocomotionRotationMode CachedStateControllerRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionGaitIntent CachedStateControllerGaitIntent = EProject_JLocomotionGaitIntent::Walk;
+	EProject_JStateControllerStance CachedStateControllerStance = EProject_JStateControllerStance::Stand;
+	EProject_JStateControllerStrafeDirection CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	bool bCachedStateControllerCombatMode = false;
+	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
+	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
+	bool bCachedStateControllerHasSelectedAnimation = false;
+	int32 StateControllerChooserSelectionRevision = 0;
+
+	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
+	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
+	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 
