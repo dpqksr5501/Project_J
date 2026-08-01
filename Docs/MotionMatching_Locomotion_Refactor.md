@@ -308,11 +308,7 @@ proxy.  The worker-thread AnimGraph consumes only these snapshot getters:
 | Blend Time | `GetThreadSafeStateControllerSelectedAnimationBlendTime` |
 | Blend Profile | `GetThreadSafeStateControllerSelectedAnimationBlendProfile` |
 
-The selected `FProject_JStateControllerChooserOutput` is also exposed as a
-single getter for diagnostics and future `UseMM` one-shot entry work.  The
-current pass does **not** make a continuous Pose Search call from this
-presentation branch.  That preserves the rule that authored Start/Stop must
-not be repeatedly re-selected at a middle timestamp.
+The selected `FProject_JStateControllerChooserOutput` supplies `StartTime`, `bUseMotionMatch`, `MotionMatchCostLimit`, `BlendTime`, `BlendProfile`, and `Tags`. When `bUseMotionMatch` is `true` (matching GASP's `Run Stops` and `Sprint Stops` defaults), C++ evaluates a 1-shot `UPoseSearchLibrary::MotionMatch` query on the state entry frame against `PoseHistory`. It dynamically calculates the best matching `StartTime` for the selected animation (skipping initial running stride frames) without performing continuous per-frame re-search. This preserves authored transition completion while ensuring the braking foot contact aligns immediately with the character's locomotion stride.
 
 ### Authored Start/Stop completion hold
 

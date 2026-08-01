@@ -4,6 +4,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "Project_JPlayerCharacter.h"
 #include "UObject/UnrealType.h"
 
 namespace

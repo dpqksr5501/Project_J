@@ -19,6 +19,7 @@
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Animation/AnimationAsset.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "PoseSearch/PoseSearchLibrary.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JBaseCharacter.h"
 #include "Mount/Project_JMountComponent.h"
@@ -62,12 +63,21 @@ namespace
 			return EProject_JStateControllerPresentationState::Disabled;
 		}
 
-		if (Data.Air.bIsInAir)
+		const bool bIsJumpingOrJumpStart = Data.Air.bIsJumping ||
+			Data.Air.bIsFallOffStart ||
+			OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart ||
+			OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall;
+
+		if (Data.Air.bIsInAir || bIsJumpingOrJumpStart)
 		{
-			return OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart ||
-				OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall
+			return (Data.Air.bIsJumping || Data.Air.bIsFallOffStart || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart)
 				? EProject_JStateControllerPresentationState::TransitionToInAir
 				: EProject_JStateControllerPresentationState::InAirLoop;
+		}
+
+		if (Data.Landing.bIsLanding)
+		{
+			return EProject_JStateControllerPresentationState::TransitionToLand;
 		}
 
 		if (OneShot.bRequested)
@@ -83,8 +93,9 @@ namespace
 					? EProject_JStateControllerPresentationState::TransitionToLocomotion
 					: EProject_JStateControllerPresentationState::TransitionToIdle;
 			case EProject_JLocomotionPhaseFamily::Stop:
-			case EProject_JLocomotionPhaseFamily::Landing:
 				return EProject_JStateControllerPresentationState::TransitionToIdle;
+			case EProject_JLocomotionPhaseFamily::Landing:
+				return EProject_JStateControllerPresentationState::TransitionToLand;
 			case EProject_JLocomotionPhaseFamily::JumpStart:
 			case EProject_JLocomotionPhaseFamily::Fall:
 				return EProject_JStateControllerPresentationState::TransitionToInAir;
@@ -97,6 +108,28 @@ namespace
 			? EProject_JStateControllerPresentationState::LocomotionLoop
 			: EProject_JStateControllerPresentationState::IdleLoop;
 	}
+
+	auto IsTransitionState = [](const EProject_JStateControllerPresentationState State)
+	{
+		return State == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+			State == EProject_JStateControllerPresentationState::TransitionToIdle ||
+			State == EProject_JStateControllerPresentationState::TransitionToInAir ||
+			State == EProject_JStateControllerPresentationState::TransitionToLand;
+	};
+
+	auto IsNaturalLoopContinuation = [](const EProject_JStateControllerPresentationState TransitionState,
+		const EProject_JStateControllerPresentationState CandidateState)
+	{
+		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
+				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+				CandidateState == EProject_JStateControllerPresentationState::InAirLoop) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TransitionToLand &&
+				(CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop ||
+				 CandidateState == EProject_JStateControllerPresentationState::IdleLoop));
+	};
 
 	bool ShouldStateControllerPresentationLoop(const EProject_JStateControllerPresentationState PresentationState)
 	{
@@ -949,24 +982,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		DesiredState = EProject_JStateControllerPresentationState::TransitionToIdle;
 	}
 
-	auto IsTransitionState = [](const EProject_JStateControllerPresentationState State)
-	{
-		return State == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
-			State == EProject_JStateControllerPresentationState::TransitionToIdle ||
-			State == EProject_JStateControllerPresentationState::TransitionToInAir;
-	};
-
-	auto IsNaturalLoopContinuation = [](const EProject_JStateControllerPresentationState TransitionState,
-		const EProject_JStateControllerPresentationState CandidateState)
-	{
-		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
-				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
-				CandidateState == EProject_JStateControllerPresentationState::InAirLoop);
-	};
-
 	const EProject_JStateControllerPresentationState RequestedState = DesiredState;
 	const EProject_JStateControllerPresentationState PreviousHeldState = StateControllerPlaybackHoldState;
 	const bool bHeldTransition = IsTransitionState(StateControllerPlaybackHoldState);
@@ -982,7 +997,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (bStartedNewPlaybackHold)
 	{
 		StateControllerPlaybackHoldState = DesiredState;
-		StateControllerPlaybackHoldStartedAtSeconds = IsTransitionState(DesiredState) ? NowSeconds : 0.0;
+		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 		bStartedNewPlaybackHold = IsTransitionState(DesiredState);
 	}
 
@@ -1031,6 +1046,23 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	InOutOneShot.bTransitionAnimationAlmostComplete =
 		InOutOneShot.bEarlyTransitionWindowOpen || bReachedCompletion;
 
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bStartedNewPlaybackHold)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StateControllerHold: RequestedState=%d PreviousHeld=%d DesiredState=%d Elapsed=%.3f Remaining=%.3f PlayableLen=%.3f LeadTime=%.3f ReachedComp=%s EarlyOpen=%s AlmostComp=%s Asset=%s"),
+			static_cast<int32>(RequestedState),
+			static_cast<int32>(PreviousHeldState),
+			static_cast<int32>(DesiredState),
+			Elapsed,
+			Remaining,
+			AuthoredPlayableLength,
+			LeadTime,
+			bReachedCompletion ? TEXT("true") : TEXT("false"),
+			InOutOneShot.bEarlyTransitionWindowOpen ? TEXT("true") : TEXT("false"),
+			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"),
+			HeldAsset ? *HeldAsset->GetName() : TEXT("None"));
+	}
+
 	// A missing/looping entry must use the GASP "No Valid Anim" escape route.
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
@@ -1042,8 +1074,19 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		return;
 	}
 
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StateControllerExitHold: Exiting State=%d to State=%d (Elapsed=%.3f Remaining=%.3f AlmostComp=%s)"),
+			static_cast<int32>(StateControllerPlaybackHoldState),
+			static_cast<int32>(DesiredState),
+			Elapsed,
+			Remaining,
+			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
+	}
+
 	StateControllerPlaybackHoldState = DesiredState;
-	StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 	InOutOneShot.PresentationState = DesiredState;
 }
 
@@ -1092,8 +1135,58 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			? UChooserFunctionLibrary::EvaluateObjectChooserBase(
 				ChooserContext,
 				ChooserObject,
-				UAnimationAsset::StaticClass())
+				UObject::StaticClass())
 			: nullptr;
+
+		// If Parent Chooser returned a Sub-Chooser Table, evaluate the Sub-Chooser recursively
+		while (UChooserTable* SubChooserTable = Cast<UChooserTable>(ResultObject))
+		{
+			const FInstancedStruct SubChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(SubChooserTable);
+			if (!SubChooserObject.IsValid())
+			{
+				ResultObject = nullptr;
+				break;
+			}
+			ResultObject = UChooserFunctionLibrary::EvaluateObjectChooserBase(
+				ChooserContext,
+				SubChooserObject,
+				UObject::StaticClass());
+		}
+
+		UAnimationAsset* SelectedAsset = Cast<UAnimationAsset>(ResultObject);
+		if (SelectedAsset && ChooserOutput.bUseMotionMatch)
+		{
+			TArray<UObject*> AssetsToSearch;
+			AssetsToSearch.Add(SelectedAsset);
+			FPoseSearchBlueprintResult MMResult;
+			FPoseSearchContinuingProperties ContinuingProperties;
+			FPoseSearchFutureProperties FutureProperties;
+
+			FName PoseHistoryName = FName("PoseHistory");
+			if (!UPoseSearchLibrary::FindPoseHistoryNode(PoseHistoryName, this))
+			{
+				PoseHistoryName = FName("PoseSearchHistoryCollector");
+				if (!UPoseSearchLibrary::FindPoseHistoryNode(PoseHistoryName, this))
+				{
+					PoseHistoryName = NAME_None;
+				}
+			}
+
+			UPoseSearchLibrary::MotionMatch(
+				this,
+				AssetsToSearch,
+				PoseHistoryName,
+				ContinuingProperties,
+				FutureProperties,
+				MMResult);
+
+			if (MMResult.SelectedAnim &&
+				(ChooserOutput.MotionMatchCostLimit <= 0.0f || MMResult.SearchCost <= ChooserOutput.MotionMatchCostLimit))
+			{
+				SelectedAsset = Cast<UAnimationAsset>(const_cast<UObject*>(MMResult.SelectedAnim.Get()));
+				ChooserOutput.StartTime = MMResult.SelectedTime;
+			}
+		}
 
 		CachedStateControllerChooserTable = ChooserTable;
 		CachedStateControllerPresentationState = OneShot.PresentationState;
@@ -1102,7 +1195,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerStance = OneShot.Stance;
 		CachedStateControllerStrafeDirection = OneShot.StrafeDirection;
 		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
-		CachedStateControllerSelectedAnimation = Cast<UAnimationAsset>(ResultObject);
+		CachedStateControllerSelectedAnimation = SelectedAsset;
 		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
 		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
 		++StateControllerChooserSelectionRevision;

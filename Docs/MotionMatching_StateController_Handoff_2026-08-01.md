@@ -130,14 +130,14 @@ The current code has been compiled successfully after the latest change.
   `StartTime`, `bUseMotionMatch`, `MotionMatchCostLimit`, `BlendTime`,
   `BlendProfile`, `Tags`. The selected asset is the Chooser result, not a field
   in the metadata struct.
-- `UProject_JAnimNotifyState_LocomotionEarlyTransition` exists as an optional,
-  local-presentation-only notify window. It must be added only to direct
-  transition assets that genuinely need an early exit. It never changes
-  CharacterMovement, network state or root motion.
-- State-controller hold logic has been corrected: it holds a naturally
-  continuing authored transition until end/almost-complete/early-notify, but
-  **immediately replaces** it for opposite gameplay intent. Start -> Stop and
-  Stop -> Start must be responsive.
+- **bUseMotionMatch (1-shot Pose Search on entry)**: Evaluates `UPoseSearchLibrary::MotionMatch`
+  on the State Controller entry frame when `ChooserOutput.bUseMotionMatch` is true (matching GASP's `Run Stops` and `Sprint Stops` defaults). It dynamically matches current `PoseHistory` (using `"PoseHistory"` / `"PoseSearchHistoryCollector"` node tags) to candidate animation poses, updating `StartTime` to the exact plant/braking frame timestamp rather than blindly starting from 0.0s.
+- **Hold Timer Initialization Fix**: Resolved the `HoldElapsed` 16,793,344s clock bug by ensuring `StateControllerPlaybackHoldStartedAtSeconds` is initialized to current `NowSeconds` on state transition entry.
+- **TransitionToLand Enum Addition**: Added `TransitionToLand` to `EProject_JStateControllerPresentationState` and integrated it into `ResolveStateControllerPresentationState`, `IsTransitionState`, and `IsNaturalLoopContinuation` in C++, enabling explicit Landing transition routing in the Chooser Table.
+- **Data Asset Collision Avoidance**: Documented that `DA_Player_Locomotion` (`Project_JMotionMatchingAssetSet`) must set `Start` and `Stop` database slots to `None` when using State Controller Chooser, leaving `Start`/`Stop` 1-shot animations strictly to the Chooser stack to prevent dual-track pose conflicts.
+- **Nested Chooser Evaluation Fix**: Fixed C++ `EvaluateStateControllerAnimationChooserOnGameThread` to recursively unpack nested `UChooserTable` objects (when a Parent Chooser with `Result Class = ChooserTable` returns a Sub-Chooser Table), correctly resolving the final `UAnimationAsset` and populated `FProject_JStateControllerChooserOutput` struct parameters.
+- **Enhanced StateController Real-time Debug Logs**: Added `StateControllerHold` and `StateControllerExitHold` detailed logs under `p.ProjectJ.MMTransitionDebug 1` for real-time tracking of hold elapsed times, playable lengths, and exit triggers.
+- **ABP StateController Intent Reversal Topology**: Verified and documented the required direct transition edge `Transition To Locomotion` -> `Transition To Idle` using `GetThreadSafeStateControllerWantsIdle`. This eliminates state machine delay when input is released mid-Start, allowing immediate transition into Stop.
 
 ## ABP work already authored manually
 
