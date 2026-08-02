@@ -4,6 +4,9 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [GASP ↔ Project_J Locomotion / State Controller 대응표](GASP_ProjectJ_Locomotion_Parity.md)
+  - 검토한 GASP ABP/Chooser/함수와 Project_J native·ABP 경로의 구현 상태, 의도적 보류 항목, OTM Reface Start에 필요한 추가 확인 자료를 정리한 기준표.
+
 - [Project Context Handoff](ProjectContextHandoff.md)
   - Cross-system onboarding: module boundaries, runtime ownership, data flows, configuration entry points, and a new-task checklist.
 

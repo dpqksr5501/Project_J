@@ -170,6 +170,14 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	float ExperimentalOneShotFallbackLeadTime = 0.0f;
 
 	/**
+	 * Fall Off clips often contain a long recovery tail before the looping airborne
+	 * pose. Keep the authored entry, then hand off to InAirLoop after this maximum
+	 * elapsed time. Zero disables the Fall Off-specific cap.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	float ExperimentalFallOffMaxHoldTime = 0.65f;
+
+	/**
 	 * Allows the optional State Controller to run GASP-style Idle Loop -> Idle
 	 * Break variation. It stays off until an Idle Break Chooser path is authored.
 	 */

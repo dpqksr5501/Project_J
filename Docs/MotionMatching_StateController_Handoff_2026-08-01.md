@@ -246,7 +246,7 @@ conflict with the MMORPG / no-Root-Motion policy.
 | `Get_PoseHistoryReference` | Implemented | ABP final PoseHistory + native fallback diagnostics | Single final ABP owner. |
 | `Update_MotionMatching_PostSelection` | Partially implemented | selected PSD/tag/trace diagnostics | Per-result Blend Profile override needs later data validation. |
 | `Update States` | Implemented | C++ snapshots for mode, rotation, intent, gait, stance, last semantic state | Stance correctly means Stand/Crouch, not combat. |
-| `Update Movement Direction` | Partial | combat Strafe coarse direction snapshot | OTM always Forward; GASP six-direction foot bias deferred. |
+| `Update Movement Direction` | Implemented | combat Strafe six-direction snapshot + static bias | OTM always Forward; the authored Strafe Chooser rows remain separate work. |
 | `Get_MovementDirectionThresholds` | Partial / deferred | baseline Strafe hysteresis only | Full foot-forward quadrant policy needs authored Strafe data. |
 | `Update Target Rotation` / Strafe yaw offset | Deferred | no active copied GASP target rotation layer | Required later for combat-only authored direction/Pivot. |
 | `IsPivoting` / moving Pivot selection | Partial | C++ signal/cooldown and combat-only policy | Direct Strafe Pivot chooser rows/tags are not authored yet. |
@@ -369,8 +369,8 @@ unreviewed rather than inferred.
 | `OnStateEntry_TransitionToLocomotion` | caches target rotation and calls chooser with force blend | Logical state exists; target-rotation-specific logic deferred. |
 | `OnUpdate_TransitionToLocomotion` | RInterp target rotation for rotational break detection | Deferred with rotation-break/Pivot data. |
 | `OnStateEntry_TransitionToIdle` | calls chooser with force blend | Logical state/direct table exists. |
-| `OnStateEntry_TransitionToInAir` | calls chooser with force blend | State exists; direct assets/rows pending. |
-| `OnStateEntry_InAirLoop` | calls chooser without force blend | State exists; direct assets/rows pending. |
+| `OnStateEntry_TransitionToInAir` | calls chooser with force blend | Native State Controller can select direct assets. Current InAir Chooser rows are being authored and need PIE validation. |
+| `OnStateEntry_InAirLoop` | calls chooser without force blend | Native State Controller can select a direct loop; retain regular MM fallback until the authored InAir rows are validated. |
 | `OnStateEntry_IdleLoop` | calls chooser without force blend | State exists; OTM idle row authored. |
 | `OnStateEntry_IdleBreak` | calls chooser with force blend | Deferred; optional idle variation only. |
 | Idle -> TransitionToLocomotion | `IsMoving` | Project_J StateController rule uses WantsLocomotion. |

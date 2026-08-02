@@ -33,22 +33,34 @@
 
 namespace
 {
-	EProject_JStateControllerStrafeDirection ResolveStateControllerStrafeDirection(const float DirectionDegrees)
+	constexpr float StateControllerOneShotMouseTurnCancelAngle = 15.0f;
+	// Let a very short Shift tap settle before committing the authored Start.
+	// After this window, switching the source animation mid-stride is worse than
+	// letting the current Start finish and entering the current-gait Cycle.
+	constexpr double StateControllerStartGaitCommitWindowSeconds = 0.15;
+
+	EProject_JStateControllerStrafeDirection ResolveStateControllerStrafeDirection(
+		const float DirectionDegrees,
+		const EProject_JStateControllerMovementDirectionBias MovementDirectionBias)
 	{
 		const float Direction = FRotator::NormalizeAxis(DirectionDegrees);
-		if (Direction >= -60.0f && Direction <= 60.0f)
+		if (Direction >= -45.0f && Direction <= 45.0f)
 		{
 			return EProject_JStateControllerStrafeDirection::Forward;
 		}
 
-		if (Direction > 60.0f && Direction <= 120.0f)
+		if (Direction < -45.0f && Direction >= -135.0f)
 		{
-			return EProject_JStateControllerStrafeDirection::Right;
+			return MovementDirectionBias == EProject_JStateControllerMovementDirectionBias::LeftFootForward
+				? EProject_JStateControllerStrafeDirection::LeftLeftFootForward
+				: EProject_JStateControllerStrafeDirection::LeftRightFootForward;
 		}
 
-		if (Direction < -60.0f && Direction >= -120.0f)
+		if (Direction > 45.0f && Direction <= 135.0f)
 		{
-			return EProject_JStateControllerStrafeDirection::Left;
+			return MovementDirectionBias == EProject_JStateControllerMovementDirectionBias::LeftFootForward
+				? EProject_JStateControllerStrafeDirection::RightLeftFootForward
+				: EProject_JStateControllerStrafeDirection::RightRightFootForward;
 		}
 
 		return EProject_JStateControllerStrafeDirection::Backward;
@@ -186,23 +198,359 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
+	const EProject_JStateControllerPresentationState PreviousStateControllerPresentationState =
+		StateControllerPresentationStateForChooser;
+	EProject_JStateControllerPresentationState CurrentStateControllerPresentationState =
+		ThreadSafeData.OneShotPresentation.PresentationState;
+	// CharacterMovement can report Falling one animation update before the
+	// locomotion-state component publishes bIsFallOffStart. Without this bridge,
+	// the first airborne frame selects InAirLoop and visibly blends FallLoop into
+	// the authored FallOff one-shot on the next update. Infer FallOff only on a
+	// fresh non-jump ground-to-air boundary; normal Jump and ongoing air states
+	// retain their authored state-component policy.
+	const bool bWasInAirPresentationState =
+		PreviousStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToInAir ||
+		PreviousStateControllerPresentationState == EProject_JStateControllerPresentationState::InAirLoop;
+	const bool bInferFallOffFromFreshAirEntry =
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::InAirLoop &&
+		!bWasInAirPresentationState &&
+		ThreadSafeData.Air.bIsInAir &&
+		!ThreadSafeData.Air.bIsJumping &&
+		!ThreadSafeData.Landing.bIsLanding;
+	if (bInferFallOffFromFreshAirEntry)
+	{
+		CurrentStateControllerPresentationState = EProject_JStateControllerPresentationState::TransitionToInAir;
+		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+	}
+	const bool bEnteringStateControllerTurnCancellableOneShot =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		(CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand);
+	if (bEnteringStateControllerTurnCancellableOneShot && OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
+	{
+		StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
+		bHasStateControllerOneShotControlYaw = true;
+	}
+
+	const bool bIsTurnCancellableOneShot =
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+	const bool bShouldCancelOneShotForMouseTurn =
+		bIsTurnCancellableOneShot &&
+		bHasStateControllerOneShotControlYaw &&
+		OwningPlayerCharacter &&
+		OwningPlayerCharacter->IsLocallyControlled() &&
+		FMath::Abs(FMath::FindDeltaAngleDegrees(
+			StateControllerOneShotControlYaw,
+			OwningPlayerCharacter->GetControlRotation().Yaw)) >= StateControllerOneShotMouseTurnCancelAngle;
+	if (bShouldCancelOneShotForMouseTurn)
+	{
+		// A local mouse turn invalidates the trajectory that selected an authored
+		// Start/Land one-shot. Release it and refresh regular MM immediately. We do
+		// not route this through a Turn asset: Project_J has not yet authored a
+		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
+		// already trajectory-aware and stable for Run and Sprint.
+		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
+			? EProject_JStateControllerPresentationState::LocomotionLoop
+			: EProject_JStateControllerPresentationState::IdleLoop;
+		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+		ThreadSafeData.OneShotPresentation.PhaseFamily =
+			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::LocomotionLoop
+				? EProject_JLocomotionPhaseFamily::Cycle
+				: EProject_JLocomotionPhaseFamily::Idle;
+		ThreadSafeData.OneShotPresentation.bRequested = false;
+		ThreadSafeData.LocomotionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
+		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
+		ThreadSafeData.MotionMatching.bForceReselect = true;
+		StateControllerPlaybackHoldState = CurrentStateControllerPresentationState;
+		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		bHasStateControllerOneShotControlYaw = false;
+	}
+	else if (!bIsTurnCancellableOneShot)
+	{
+		bHasStateControllerOneShotControlYaw = false;
+	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the
 	// chooser: its object-parameter columns read these reflected properties.
 	// Publishing afterwards would make every selection use the previous frame's
 	// presentation state (Idle -> Start -> Loop -> Stop one state late).
-	StateControllerPresentationStateForChooser = ThreadSafeData.OneShotPresentation.PresentationState;
+	StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
 	RotationModeForChooser = ThreadSafeData.LocomotionContext.RotationMode;
 	GaitIntentForChooser = ThreadSafeData.LocomotionContext.GaitIntent;
+	const bool bEnteringStateControllerStart =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion;
+	if (bEnteringStateControllerStart)
+	{
+		// The locomotion component retains this semantic fact even if Character
+		// Movement has not reached its target speed yet.
+		StateControllerStartGaitForChooser = ThreadSafeData.Ground.bStartWasSprinting
+			? EProject_JLocomotionGaitIntent::Sprint
+			: EProject_JLocomotionGaitIntent::Run;
+		StateControllerStartGaitStartedAtSeconds = FPlatformTime::Seconds();
+		bHasStateControllerStartGaitForChooser = true;
+		bStateControllerStartGaitCommitted = false;
+	}
+	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToLocomotion)
+	{
+		bHasStateControllerStartGaitForChooser = false;
+		bStateControllerStartGaitCommitted = false;
+	}
+	if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion)
+	{
+		const EProject_JLocomotionGaitIntent CurrentStartGait =
+			ThreadSafeData.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint
+				? EProject_JLocomotionGaitIntent::Sprint
+				: EProject_JLocomotionGaitIntent::Run;
+		if (!bStateControllerStartGaitCommitted)
+		{
+			// During the small grace window a released Shift can still choose the
+			// correct Run Start instead of briefly showing Sprint Start.
+			StateControllerStartGaitForChooser = CurrentStartGait;
+			bStateControllerStartGaitCommitted =
+				FPlatformTime::Seconds() - StateControllerStartGaitStartedAtSeconds >=
+				StateControllerStartGaitCommitWindowSeconds;
+		}
+
+		const bool bStartGaitChangedAfterCommit =
+			bHasStateControllerStartGaitForChooser &&
+			bStateControllerStartGaitCommitted &&
+			CurrentStartGait != StateControllerStartGaitForChooser;
+		if (bStartGaitChangedAfterCommit && ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving)
+		{
+			// Do not keep playing Sprint Start at a Run velocity (or vice versa).
+			// Once the authored start has genuinely begun, a gait change is better
+			// represented by the trajectory-aware Cycle PSD. This also avoids
+			// swapping Sprint Start directly to Run Start mid-stride.
+			CurrentStateControllerPresentationState = EProject_JStateControllerPresentationState::LocomotionLoop;
+			ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+			ThreadSafeData.OneShotPresentation.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+			ThreadSafeData.OneShotPresentation.bRequested = false;
+			ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+			ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+			ThreadSafeData.MotionMatching.bForceReselect = true;
+			StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
+			StateControllerPlaybackHoldState = CurrentStateControllerPresentationState;
+			StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+			bHasStateControllerStartGaitForChooser = false;
+			bStateControllerStartGaitCommitted = false;
+			GaitIntentForChooser = CurrentStartGait;
+		}
+		else
+		{
+			GaitIntentForChooser = bHasStateControllerStartGaitForChooser
+				? StateControllerStartGaitForChooser
+				: CurrentStartGait;
+		}
+	}
+	const bool bEnteringStateControllerStop =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle;
+	if (bEnteringStateControllerStop)
+	{
+		StateControllerStopGaitForChooser = ThreadSafeData.Ground.bStopWasSprinting
+			? EProject_JLocomotionGaitIntent::Sprint
+			: EProject_JLocomotionGaitIntent::Run;
+		bHasStateControllerStopGaitForChooser = true;
+	}
+	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToIdle)
+	{
+		bHasStateControllerStopGaitForChooser = false;
+	}
+	// Character movement returns to Walk intent as soon as the sprint/run input
+	// is released. A Stop one-shot must instead keep the gait that initiated the
+	// stop; otherwise the chooser re-evaluates as Walk and clears the selected
+	// Run/Sprint Stop asset during its first few frames.
+	if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle)
+	{
+		GaitIntentForChooser = bHasStateControllerStopGaitForChooser
+			? StateControllerStopGaitForChooser
+			: EProject_JLocomotionGaitIntent::Run;
+	}
 	StateControllerStanceForChooser = ThreadSafeData.OneShotPresentation.Stance;
 	StateControllerStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.StrafeDirection;
 	bCombatModeForChooser = ThreadSafeData.Combat.bIsCombatMode;
+	const bool bEnteringStateControllerInAir =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToInAir;
+	if (bEnteringStateControllerInAir)
+	{
+		bStateControllerFallOffForChooser =
+			ThreadSafeData.Air.bIsFallOffStart || bInferFallOffFromFreshAirEntry;
+		bHasStateControllerFallOffForChooser = true;
+	}
+	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToInAir)
+	{
+		bStateControllerFallOffForChooser = false;
+		bHasStateControllerFallOffForChooser = false;
+	}
+	StateControllerLeftFootContactForChooser = CachedStateControllerLeftFootContact;
+	StateControllerRightFootContactForChooser = CachedStateControllerRightFootContact;
+	bStateControllerHasLeftFootContactCurveForChooser = bHasStateControllerLeftFootContactCurve;
+	bStateControllerHasRightFootContactCurveForChooser = bHasStateControllerRightFootContactCurve;
+	const bool bEnteringStateControllerOneShot =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		(CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
+			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle ||
+			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToInAir ||
+			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand);
+	if (bEnteringStateControllerOneShot)
+	{
+		// Start begins from Idle, which deliberately has no remembered stride.
+		// Stop/Fall/Land continue a prior moving phase when both contact curves
+		// are transiently 0/0 or 1/1 at the transition boundary.
+		const bool bAllowPhaseHistoryFallback =
+			CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+			PreviousStateControllerPresentationState != EProject_JStateControllerPresentationState::IdleLoop;
+		StateControllerOneShotFootForChooser = ResolveStateControllerFootFromContactCurves(
+			bAllowPhaseHistoryFallback,
+			StateControllerOneShotFootSelectionReasonForChooser);
+		if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle)
+		{
+			StateControllerStopFootForChooser = StateControllerOneShotFootForChooser;
+		}
+
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerFootLatch State=%d Foot=%d Reason=%d HasCurveL=%s HasCurveR=%s ContactL=%.3f ContactR=%.3f Delta=%.3f Threshold=%.3f PhaseCache=%d AllowPhaseCache=%s DefaultFoot=%d StopGait=%d FallOff=%s"),
+				static_cast<int32>(CurrentStateControllerPresentationState),
+				static_cast<int32>(StateControllerOneShotFootForChooser),
+				static_cast<int32>(StateControllerOneShotFootSelectionReasonForChooser),
+				bHasStateControllerLeftFootContactCurve ? TEXT("true") : TEXT("false"),
+				bHasStateControllerRightFootContactCurve ? TEXT("true") : TEXT("false"),
+				CachedStateControllerLeftFootContact,
+				CachedStateControllerRightFootContact,
+				CachedStateControllerLeftFootContact - CachedStateControllerRightFootContact,
+				StateControllerFootContactDifferenceThreshold,
+				bHasStateControllerFootPhaseHistory ? static_cast<int32>(StateControllerFootPhaseHistory) : -1,
+				bAllowPhaseHistoryFallback ? TEXT("true") : TEXT("false"),
+				static_cast<int32>(StateControllerNoPhaseFootFallback),
+				static_cast<int32>(GaitIntentForChooser),
+				bStateControllerFallOffForChooser ? TEXT("true") : TEXT("false"));
+		}
+	}
+	StateControllerFootPhaseHistoryForChooser = bHasStateControllerFootPhaseHistory
+		? StateControllerFootPhaseHistory
+		: EProject_JStateControllerFoot::None;
+	if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::IdleLoop)
+	{
+		bHasStateControllerFootPhaseHistory = false;
+		StateControllerFootPhaseHistory = EProject_JStateControllerFoot::None;
+		StateControllerFootPhaseHistoryForChooser = EProject_JStateControllerFoot::None;
+	}
+	ThreadSafeData.OneShotPresentation.Foot = StateControllerOneShotFootForChooser;
+	// State Controller Choosers are evaluated on the game thread. Keep this
+	// separate from ChooserDesiredFacingDeltaYaw, which is published only when
+	// the throttled regular Motion Matching chooser is evaluated.
+	StateControllerInputFacingDeltaYawForChooser = ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw;
+	if (PreviousStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToIdle &&
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle)
+	{
+		StateControllerStopVelocityDeltaYawForChooser = 0.0f;
+		FVector StopVelocity = ThreadSafeData.Movement.Velocity;
+		StopVelocity.Z = 0.0f;
+		if (StopVelocity.SizeSquared2D() > UE_KINDA_SMALL_NUMBER)
+		{
+			const float ActorYaw = GetOwningActor() ? GetOwningActor()->GetActorRotation().Yaw : 0.0f;
+			StateControllerStopVelocityDeltaYawForChooser = FMath::FindDeltaAngleDegrees(
+				ActorYaw,
+				StopVelocity.Rotation().Yaw);
+		}
+
+	}
 	EvaluateStateControllerAnimationChooserOnGameThread(ThreadSafeData);
 	if (IsPrimaryMeshAnimInstance())
 	{
 		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
 	}
 	PublishThreadSafeDataToProxy(ThreadSafeData);
+}
+
+void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
+{
+	Super::NativePostEvaluateAnimation();
+
+	if (!IsPrimaryMeshAnimInstance())
+	{
+		return;
+	}
+
+	float LeftContact = 0.0f;
+	float RightContact = 0.0f;
+	const bool bHasLeftContact = GetCurveValue(TEXT("contact_l"), LeftContact);
+	const bool bHasRightContact = GetCurveValue(TEXT("contact_r"), RightContact);
+	bHasStateControllerLeftFootContactCurve = bHasLeftContact;
+	bHasStateControllerRightFootContactCurve = bHasRightContact;
+	bHasStateControllerFootContactCurves = bHasLeftContact && bHasRightContact;
+	if (bHasStateControllerFootContactCurves)
+	{
+		CachedStateControllerLeftFootContact = FMath::Clamp(LeftContact, 0.0f, 1.0f);
+		CachedStateControllerRightFootContact = FMath::Clamp(RightContact, 0.0f, 1.0f);
+		const float ContactDelta = CachedStateControllerLeftFootContact - CachedStateControllerRightFootContact;
+		if (FMath::Abs(ContactDelta) >= StateControllerFootContactDifferenceThreshold)
+		{
+			StateControllerFootPhaseHistory = ContactDelta < 0.0f
+				? EProject_JStateControllerFoot::Left
+				: EProject_JStateControllerFoot::Right;
+			bHasStateControllerFootPhaseHistory = true;
+		}
+	}
+	else
+	{
+		CachedStateControllerLeftFootContact = 0.0f;
+		CachedStateControllerRightFootContact = 0.0f;
+	}
+}
+
+EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateControllerFootFromContactCurves(
+	const bool bAllowPhaseHistoryFallback,
+	EProject_JStateControllerFootSelectionReason& OutReason) const
+{
+	auto UsePhaseHistoryOrDefault = [this, bAllowPhaseHistoryFallback, &OutReason]()
+	{
+		if (bAllowPhaseHistoryFallback && bHasStateControllerFootPhaseHistory)
+		{
+			OutReason = EProject_JStateControllerFootSelectionReason::PhaseHistoryFallback;
+			return StateControllerFootPhaseHistory;
+		}
+
+		OutReason = EProject_JStateControllerFootSelectionReason::DefaultFootFallback;
+		return StateControllerNoPhaseFootFallback;
+	};
+
+	if (!bHasStateControllerFootContactCurves)
+	{
+		OutReason = EProject_JStateControllerFootSelectionReason::MissingContactCurve;
+		return UsePhaseHistoryOrDefault();
+	}
+
+	const bool bLeftUnplanted = CachedStateControllerLeftFootContact < StateControllerFootContactDifferenceThreshold;
+	const bool bRightUnplanted = CachedStateControllerRightFootContact < StateControllerFootContactDifferenceThreshold;
+	if (bLeftUnplanted && bRightUnplanted)
+	{
+		OutReason = EProject_JStateControllerFootSelectionReason::BothFeetUnplanted;
+		return UsePhaseHistoryOrDefault();
+	}
+
+	const float ContactDelta = CachedStateControllerLeftFootContact - CachedStateControllerRightFootContact;
+	if (FMath::Abs(ContactDelta) < StateControllerFootContactDifferenceThreshold)
+	{
+		OutReason = EProject_JStateControllerFootSelectionReason::ContactsTooSimilar;
+		return UsePhaseHistoryOrDefault();
+	}
+
+	// A _Lfoot/_Rfoot one-shot begins by moving that foot. Pick the foot with
+	// lower contact (the current swing/airborne foot) to continue the stride.
+	if (ContactDelta < 0.0f)
+	{
+		OutReason = EProject_JStateControllerFootSelectionReason::LeftFootLowerContact;
+		return EProject_JStateControllerFoot::Left;
+	}
+
+	OutReason = EProject_JStateControllerFootSelectionReason::RightFootLowerContact;
+	return EProject_JStateControllerFoot::Right;
 }
 
 FAnimInstanceProxy* UProject_JCharacterAnimInstance::CreateAnimInstanceProxy()
@@ -902,7 +1250,9 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	OneShot.PhaseFamily = Data.LocomotionContext.PhaseFamily;
 	OneShot.RotationMode = Data.LocomotionContext.RotationMode;
 	OneShot.StrafeDirection = OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe
-		? ResolveStateControllerStrafeDirection(Data.Input.MovementDirection)
+		? ResolveStateControllerStrafeDirection(
+			Data.Input.MovementDirection,
+			StateControllerMovementDirectionBias)
 		: EProject_JStateControllerStrafeDirection::Forward;
 	OneShot.Stance = OwningCharacter && OwningCharacter->bIsCrouched
 		? EProject_JStateControllerStance::Crouch
@@ -1034,11 +1384,20 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const float AssetLength = HeldAsset ? HeldAsset->GetPlayLength() : 0.0f;
 	const float StartTime = FMath::Clamp(CachedStateControllerSelectedAnimationOutput.StartTime, 0.0f, AssetLength);
 	const float AuthoredPlayableLength = FMath::Max(AssetLength - StartTime, 0.0f);
+	const bool bHeldFallOff =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+		(Data.Air.bIsFallOffStart || InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall);
+	const float FallOffMaxHoldTime = FMath::Max(
+		Data.MotionMatchingSearchPolicy.ExperimentalFallOffMaxHoldTime,
+		0.0f);
+	const float EffectivePlayableLength = bHeldFallOff && FallOffMaxHoldTime > KINDA_SMALL_NUMBER
+		? FMath::Min(AuthoredPlayableLength, FallOffMaxHoldTime)
+		: AuthoredPlayableLength;
 	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
 	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
-	const float Remaining = FMath::Max(AuthoredPlayableLength - Elapsed, 0.0f);
+	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
 	const bool bHasPlayableTransitionAsset = HeldAsset &&
-		AuthoredPlayableLength > KINDA_SMALL_NUMBER;
+		EffectivePlayableLength > KINDA_SMALL_NUMBER;
 	const bool bReachedCompletion = bHasPlayableTransitionAsset && Remaining <= LeadTime;
 
 	InOutOneShot.TransitionElapsedTime = Elapsed;
@@ -1049,13 +1408,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bStartedNewPlaybackHold)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerHold: RequestedState=%d PreviousHeld=%d DesiredState=%d Elapsed=%.3f Remaining=%.3f PlayableLen=%.3f LeadTime=%.3f ReachedComp=%s EarlyOpen=%s AlmostComp=%s Asset=%s"),
+			TEXT("StateControllerHold: RequestedState=%d PreviousHeld=%d DesiredState=%d Elapsed=%.3f Remaining=%.3f PlayableLen=%.3f EffectiveLen=%.3f FallOff=%s LeadTime=%.3f ReachedComp=%s EarlyOpen=%s AlmostComp=%s Asset=%s"),
 			static_cast<int32>(RequestedState),
 			static_cast<int32>(PreviousHeldState),
 			static_cast<int32>(DesiredState),
 			Elapsed,
 			Remaining,
 			AuthoredPlayableLength,
+			EffectivePlayableLength,
+			bHeldFallOff ? TEXT("true") : TEXT("false"),
 			LeadTime,
 			bReachedCompletion ? TEXT("true") : TEXT("false"),
 			InOutOneShot.bEarlyTransitionWindowOpen ? TEXT("true") : TEXT("false"),
@@ -1116,10 +1477,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
 		CachedStateControllerRotationMode != Data.LocomotionContext.RotationMode ||
-		CachedStateControllerGaitIntent != Data.LocomotionContext.GaitIntent ||
+		CachedStateControllerGaitIntent != GaitIntentForChooser ||
 		CachedStateControllerStance != OneShot.Stance ||
 		CachedStateControllerStrafeDirection != OneShot.StrafeDirection ||
-		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode;
+		CachedStateControllerOneShotFoot != OneShot.Foot ||
+		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
+		bCachedStateControllerFallOff != bStateControllerFallOffForChooser;
 
 	if (bContextChanged)
 	{
@@ -1191,10 +1554,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerChooserTable = ChooserTable;
 		CachedStateControllerPresentationState = OneShot.PresentationState;
 		CachedStateControllerRotationMode = Data.LocomotionContext.RotationMode;
-		CachedStateControllerGaitIntent = Data.LocomotionContext.GaitIntent;
+		CachedStateControllerGaitIntent = GaitIntentForChooser;
 		CachedStateControllerStance = OneShot.Stance;
 		CachedStateControllerStrafeDirection = OneShot.StrafeDirection;
+		CachedStateControllerOneShotFoot = OneShot.Foot;
 		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
+		bCachedStateControllerFallOff = bStateControllerFallOffForChooser;
 		CachedStateControllerSelectedAnimation = SelectedAsset;
 		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
 		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
@@ -1203,16 +1568,26 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d Stance=%d StrafeDir=%d Combat=%s MMMoving=%s Input=%s FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
+			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
 				StateControllerChooserSelectionRevision,
 				static_cast<int32>(OneShot.PresentationState),
 				static_cast<int32>(Data.LocomotionContext.RotationMode),
-				static_cast<int32>(Data.LocomotionContext.GaitIntent),
+				static_cast<int32>(GaitIntentForChooser),
+				static_cast<int32>(StateControllerStartGaitForChooser),
+				bStateControllerStartGaitCommitted ? TEXT("true") : TEXT("false"),
 				static_cast<int32>(OneShot.Stance),
 				static_cast<int32>(OneShot.StrafeDirection),
+				static_cast<int32>(OneShot.Foot),
+				bStateControllerFallOffForChooser ? TEXT("true") : TEXT("false"),
+				CachedStateControllerLeftFootContact,
+				CachedStateControllerRightFootContact,
+				bHasStateControllerFootContactCurves ? TEXT("true") : TEXT("false"),
 				Data.Combat.bIsCombatMode ? TEXT("true") : TEXT("false"),
 				Data.LocomotionContext.bIsMotionMatchingMoving ? TEXT("true") : TEXT("false"),
 				Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+				StateControllerInputFacingDeltaYawForChooser,
+				StateControllerStopVelocityDeltaYawForChooser,
+				static_cast<int32>(StateControllerStopFootForChooser),
 				Data.Movement.FutureTrajectorySpeed,
 				Data.Movement.bIsAccelerating ? TEXT("true") : TEXT("false"),
 				CachedStateControllerSelectedAnimation ? *CachedStateControllerSelectedAnimation->GetName() : TEXT("None"),

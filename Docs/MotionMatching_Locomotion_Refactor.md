@@ -245,9 +245,9 @@ The following values are now snapshots generated on the game thread by `UProject
 | `-> In Air` | `GetThreadSafeStateControllerIsInAir` | C++ MovementMode snapshot. It has priority over ground aliases. |
 | `Loco - State Changed` | `GetThreadSafeStateControllerLocomotionSemanticStateChanged` | Gait / rotation-mode / Stand-Crouch changes for both modes, plus a quantized direction-sector change only in combat Strafe. ABP still adds `Current State Time > 0`. |
 | `Idle - State Changed` | `GetThreadSafeStateControllerIdleSemanticStateChanged` | GASP-equivalent locomotion stance (`Stand` / `Crouch`) only. Project_J does not currently expose Crouch gameplay, so it remains `Stand`; combat, direction and gait never restart Idle. |
-| GASP Movement Direction | `GetThreadSafeStateControllerStrafeDirection` | Four coarse Strafe sectors, derived from the existing local/remote combat movement direction. OTM always reports Forward and never re-enters from direction. |
+| GASP Movement Direction | `GetThreadSafeStateControllerStrafeDirection` | Six Strafe values (F/B/LL/LR/RL/RR), derived from movement direction plus static foot-forward bias. OTM always reports Forward and never re-enters from direction. |
 
-The direction sectors use the reviewed GASP baseline boundaries (-60, 60, -120, 120) only to prevent replication micro-jitter from causing re-entry every frame. They are not motion-matching search thresholds and they do not alter CharacterMovement, trajectory, PSD selection, or noncombat locomotion.
+The current direction sectors use -45, 45, -135, and 135 degrees to align with the authored directional Chooser ranges. They are not motion-matching search thresholds and they do not alter CharacterMovement, trajectory, PSD selection, or noncombat locomotion. Per-profile hysteresis remains future work.
 
 `GetThreadSafeStateControllerStance` snapshots `ACharacter::bIsCrouched`, which is replicated by CharacterMovement. This prepares the same contract as GASP without inventing a combat-to-stance mapping or introducing a Crouch mechanic into Project_J.
 
@@ -284,7 +284,7 @@ The `Stand Runs F` table verifies that GASP's State Controller returns direct an
 
 GASP updates direction only while `MovementState == Moving`. It derives a -180..180 direction from **future trajectory velocity** and capsule/orientation-intent rotation. In `OrientToMovement`, or while using GASP's Sprint gait, it forces `F`. In Strafe it uses four thresholds (`FL`, `FR`, `BL`, `BR`) and a foot-forward bias to choose `F`, `B`, `LL`, `LR`, `RL` or `RR`.
 
-Project_J currently exposes a safe four-direction Strafe snapshot but does **not** yet reproduce the left/right foot-forward split. The six-direction implementation is deliberately deferred until the source of GASP's `MovementDirectionBias` and the complete threshold policy are documented. It must remain Strafe-only; Project_J OTM always resolves to Forward.
+Project_J exposes the GASP-style six-direction Strafe snapshot. `StateControllerMovementDirectionBias` defaults to `LeftFootForward` and resolves side sectors to LL/RL; changing the static default resolves them to LR/RR. It remains Strafe-only; Project_J OTM always resolves to Forward.
 
 ## Debug commands
 

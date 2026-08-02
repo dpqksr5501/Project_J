@@ -418,6 +418,13 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	EProject_JStateControllerStrafeDirection StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 
+	/**
+	 * Foot selected from the prior evaluated contact curves when a direct
+	 * one-shot starts. None means the curves were unavailable or ambiguous.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JStateControllerFoot Foot = EProject_JStateControllerFoot::None;
+
 	/** GASP's locomotion stance (Stand/Crouch), not Project_J combat or weapon stance. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	EProject_JStateControllerStance Stance = EProject_JStateControllerStance::Stand;
@@ -631,6 +638,7 @@ public:
 	UProject_JCharacterAnimInstance();
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativePostEvaluateAnimation() override;
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
 
@@ -659,8 +667,88 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
 	EProject_JStateControllerStrafeDirection StateControllerStrafeDirectionForChooser = EProject_JStateControllerStrafeDirection::Forward;
 
+	/**
+	 * GASP's static Movement Direction Bias. It selects which authored foot is
+	 * forward for Strafe's left/right sectors; F and B, and all OTM selection,
+	 * remain unaffected. Left is the project default until a deliberate
+	 * gameplay-driven policy replaces it.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|State Controller")
+	EProject_JStateControllerMovementDirectionBias StateControllerMovementDirectionBias = EProject_JStateControllerMovementDirectionBias::LeftFootForward;
+
+	/**
+	 * Contact difference required to classify the lower-contact foot as the next
+	 * swing foot. Values inside this band produce None so generic chooser rows
+	 * can handle blended or curve-less poses.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|State Controller", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float StateControllerFootContactDifferenceThreshold = 0.20f;
+
+	/**
+	 * Stable authored fallback used only when neither live contact nor phase
+	 * history can identify a foot (for example, a jump started from Idle).
+	 * Foot-neutral chooser rows should use Any and be placed after L/R rows.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|State Controller")
+	EProject_JStateControllerFoot StateControllerNoPhaseFootFallback = EProject_JStateControllerFoot::Left;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
 	bool bCombatModeForChooser = false;
+
+	/**
+	 * Signed yaw from the character's facing at State Controller selection time to
+	 * the current movement-input heading.  Negative values are left and positive
+	 * values are right.  This is a game-thread Chooser column only; AnimGraph
+	 * code must use the immutable thread-safe snapshot instead.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerInputFacingDeltaYawForChooser = 0.0f;
+
+	/**
+	 * Signed yaw from character facing to the horizontal velocity sampled when a
+	 * Stop presentation begins. Negative values are left and positive values are
+	 * right. It remains latched through that Stop so deceleration cannot change
+	 * the chosen Stop asset mid-playback.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerStopVelocityDeltaYawForChooser = 0.0f;
+
+	/** Last evaluated final-pose contact curves, exposed for Chooser diagnostics. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerLeftFootContactForChooser = 0.0f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerRightFootContactForChooser = 0.0f;
+
+	/** True when the preceding final pose contributed each contact curve. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	bool bStateControllerHasLeftFootContactCurveForChooser = false;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	bool bStateControllerHasRightFootContactCurveForChooser = false;
+
+	/**
+	 * Latched curve-derived foot choice for the active Start/Stop/Jump/Land
+	 * transition. None selects authored rows that have no L/R foot variant.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerFoot StateControllerOneShotFootForChooser = EProject_JStateControllerFoot::None;
+
+	/** Diagnostic explanation of the current one-shot foot result. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerFootSelectionReason StateControllerOneShotFootSelectionReasonForChooser = EProject_JStateControllerFootSelectionReason::MissingContactCurve;
+
+	/** Last unambiguous moving-foot result retained through Stop/Fall/Land transitions. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerFoot StateControllerFootPhaseHistoryForChooser = EProject_JStateControllerFoot::None;
+
+	/** Backward-compatible Stop-only mirror of StateControllerOneShotFootForChooser. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerFoot StateControllerStopFootForChooser = EProject_JStateControllerFoot::None;
+
+	/** Latched at TransitionToInAir entry so Jump Start and Fall Off rows cannot overlap. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	bool bStateControllerFallOffForChooser = false;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe, DeprecatedFunction, DeprecationMessage = "Use dedicated thread-safe getters such as GetThreadSafeTrajectory, GetThreadSafeAimYaw, GetThreadSafeAimPitch, and GetThreadSafeAimOffsetAlpha in AnimGraph."))
 	FProject_JAnimThreadSafeData GetThreadSafeData() const;
@@ -935,6 +1023,9 @@ protected:
 	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
 	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
+	EProject_JStateControllerFoot ResolveStateControllerFootFromContactCurves(
+		bool bAllowPhaseHistoryFallback,
+		EProject_JStateControllerFootSelectionReason& OutReason) const;
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data);
 	void EvaluateStateControllerAnimationChooserOnGameThread(FProject_JAnimThreadSafeData& Data);
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
@@ -995,7 +1086,27 @@ public:
 	EProject_JLocomotionGaitIntent CachedStateControllerGaitIntent = EProject_JLocomotionGaitIntent::Walk;
 	EProject_JStateControllerStance CachedStateControllerStance = EProject_JStateControllerStance::Stand;
 	EProject_JStateControllerStrafeDirection CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	EProject_JStateControllerFoot CachedStateControllerOneShotFoot = EProject_JStateControllerFoot::None;
 	bool bCachedStateControllerCombatMode = false;
+	bool bCachedStateControllerFallOff = false;
+	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn. */
+	bool bHasStateControllerOneShotControlYaw = false;
+	float StateControllerOneShotControlYaw = 0.0f;
+	bool bHasStateControllerLeftFootContactCurve = false;
+	bool bHasStateControllerRightFootContactCurve = false;
+	bool bHasStateControllerFootContactCurves = false;
+	float CachedStateControllerLeftFootContact = 0.0f;
+	float CachedStateControllerRightFootContact = 0.0f;
+	EProject_JStateControllerFoot StateControllerFootPhaseHistory = EProject_JStateControllerFoot::None;
+	bool bHasStateControllerFootPhaseHistory = false;
+	/** Start gait is briefly provisional, then held until the authored Start exits. */
+	EProject_JLocomotionGaitIntent StateControllerStartGaitForChooser = EProject_JLocomotionGaitIntent::Run;
+	double StateControllerStartGaitStartedAtSeconds = 0.0;
+	bool bHasStateControllerStartGaitForChooser = false;
+	bool bStateControllerStartGaitCommitted = false;
+	EProject_JLocomotionGaitIntent StateControllerStopGaitForChooser = EProject_JLocomotionGaitIntent::Run;
+	bool bHasStateControllerStopGaitForChooser = false;
+	bool bHasStateControllerFallOffForChooser = false;
 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;

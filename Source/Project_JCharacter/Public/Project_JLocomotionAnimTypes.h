@@ -45,18 +45,64 @@ enum class EProject_JLocomotionPhaseFamily : uint8
 };
 
 /**
- * Coarse, presentation-only movement direction used by the optional GASP-style
- * State Controller. It is deliberately derived only for Strafe locomotion;
- * Orient-to-Movement does not re-enter a Blend Stack transition because its
- * capsule already turns toward input.
+ * GASP-style presentation movement direction used by the optional State
+ * Controller. It is deliberately derived only for Strafe locomotion.
+ *
+ * F and B need one directional asset each. L/R additionally encode the foot
+ * that should be forward, matching GASP's LL/LR/RL/RR convention. Orient to
+ * Movement never uses these side sectors because its capsule turns toward
+ * input before the locomotion animation is selected.
  */
 UENUM(BlueprintType)
 enum class EProject_JStateControllerStrafeDirection : uint8
 {
 	Forward,
-	Right,
 	Backward,
-	Left
+	LeftLeftFootForward,
+	LeftRightFootForward,
+	RightLeftFootForward,
+	RightRightFootForward
+};
+
+/**
+ * Static authored preference equivalent to GASP's Movement Direction Bias.
+ * It only affects Strafe side sectors; it is neither a physical foot-contact
+ * query nor an Orient-to-Movement selector.
+ */
+UENUM(BlueprintType)
+enum class EProject_JStateControllerMovementDirectionBias : uint8
+{
+	LeftFootForward,
+	RightFootForward
+};
+
+/**
+ * Presentation-only authored-foot preference for State Controller one-shots.
+ * It is deliberately not a physical contact/plant state; projects that later
+ * expose gait-phase or foot-plant data may replace its selection policy.
+ */
+UENUM(BlueprintType)
+enum class EProject_JStateControllerFoot : uint8
+{
+	Left,
+	Right,
+	None
+};
+
+/**
+ * Why a direct one-shot foot was latched. This is diagnostic-only: Chooser
+ * rows should continue to use EProject_JStateControllerFoot.
+ */
+UENUM(BlueprintType)
+enum class EProject_JStateControllerFootSelectionReason : uint8
+{
+	MissingContactCurve,
+	BothFeetUnplanted,
+	ContactsTooSimilar,
+	LeftFootLowerContact,
+	RightFootLowerContact,
+	PhaseHistoryFallback,
+	DefaultFootFallback
 };
 
 /** GASP Stance equivalent. It is intentionally independent of combat/weapon stance. */
