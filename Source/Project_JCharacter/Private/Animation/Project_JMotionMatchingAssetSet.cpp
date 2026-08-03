@@ -287,8 +287,6 @@ bool UProject_JMotionMatchingAssetSet::ValidateCombatStrafeForProjectJLocomotion
 	const int32 InitialWarningCount = OutWarnings.Num();
 	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.IdlePoseSearchDatabase"), IdlePoseSearchDatabase.Get());
 	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Cycle"), RunDatabases.Cycle.Get());
-	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Start"), RunDatabases.Start.Get());
-	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.Stop"), RunDatabases.Stop.Get());
 	ValidateDatabaseSlot(this, ValidationContext, OutWarnings, TEXT("Combat.RunDatabases.TurnRedirect"), RunDatabases.TurnRedirect.Get());
 	return OutWarnings.Num() == InitialWarningCount;
 }

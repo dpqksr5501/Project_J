@@ -56,12 +56,29 @@ enum class EProject_JLocomotionPhaseFamily : uint8
 UENUM(BlueprintType)
 enum class EProject_JStateControllerStrafeDirection : uint8
 {
+	/**
+	 * Legacy GASP-compatible values. Retained for serialized data compatibility,
+	 * but hidden from new Project_J Chooser rows: one-shot foot is selected by the
+	 * separate StateControllerOneShotFootForChooser column.
+	 */
 	Forward,
 	Backward,
-	LeftLeftFootForward,
-	LeftRightFootForward,
-	RightLeftFootForward,
-	RightRightFootForward
+	LeftLeftFootForward UMETA(Hidden),
+	LeftRightFootForward UMETA(Hidden),
+	RightLeftFootForward UMETA(Hidden),
+	RightRightFootForward UMETA(Hidden),
+
+	/**
+	 * Project_J combat assets are authored in eight movement sectors. These are
+	 * deliberately independent from EProject_JStateControllerFoot: direction
+	 * chooses the clip family, while Foot chooses a one-shot contact variant.
+	 */
+	ForwardLeft,
+	Left,
+	BackwardLeft,
+	BackwardRight,
+	Right,
+	ForwardRight
 };
 
 /**

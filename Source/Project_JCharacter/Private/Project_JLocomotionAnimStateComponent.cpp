@@ -620,8 +620,10 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 		return false;
 	}
 
-	return FMath::Max3(
-		FMath::Abs(InKinematicContext.MoveInputTurnAngle),
+	// A Pivot is a reversal of the actual/prospective movement trajectory, not
+	// merely a sharp change between two input samples. The latter is a normal
+	// moving TurnRedirect and remains owned by the combat TurnRedirect PSD.
+	return FMath::Max(
 		InKinematicContext.VelocityToMoveInputAngle,
 		InKinematicContext.FutureTrajectoryTurnAngle) >= DerivedPivotAngleThreshold;
 }

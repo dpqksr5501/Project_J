@@ -411,12 +411,21 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 
-	/**
-	 * GASP's Movement Direction equivalent. This is a coarse sector of the
-	 * existing replicated/local Strafe direction and is never used for OTM.
-	 */
+	/** Eight-direction combat-Strafe sector. It is never used for OTM. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	EProject_JStateControllerStrafeDirection StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** Previous valid eight-direction combat-Strafe sector, used only by Strafe Pivot chooser rows. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	EProject_JStateControllerStrafeDirection PreviousStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** Signed local angle (actor facing -> trajectory velocity) used to resolve StrafeDirection. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	float StrafeDirectionAngle = 0.0f;
+
+	/** True when StrafeDirectionAngle came from a usable future/current trajectory velocity. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bHasStrafeDirectionAngle = false;
 
 	/**
 	 * Foot selected from the prior evaluated contact curves when a direct
@@ -455,6 +464,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	bool bHasSelectedAnimation = false;
+
+	/** True only while a direct non-loop transition asset should replace regular Motion Matching. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bShouldOverrideMotionMatching = false;
 
 	/** Loop intent is derived from the logical presentation state, never guessed from asset duration. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
@@ -666,6 +679,17 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
 	EProject_JStateControllerStrafeDirection StateControllerStrafeDirectionForChooser = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** Previous Strafe direction for Pivot rows. It is meaningful only when bChooserIsPivoting is true. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	EProject_JStateControllerStrafeDirection StateControllerPreviousStrafeDirectionForChooser = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** Local trajectory angle which resolved StateControllerStrafeDirectionForChooser. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerStrafeDirectionAngleForChooser = 0.0f;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	bool bStateControllerHasStrafeDirectionAngleForChooser = false;
 
 	/**
 	 * GASP's static Movement Direction Bias. It selects which authored foot is
@@ -899,6 +923,9 @@ public:
 	EProject_JStateControllerStrafeDirection GetThreadSafeStateControllerStrafeDirection() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	EProject_JStateControllerStrafeDirection GetThreadSafeStateControllerPreviousStrafeDirection() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	EProject_JStateControllerStance GetThreadSafeStateControllerStance() const;
 
 	/** State Controller / Chooser input; does not replace the current regular-MM AnimGraph. */
@@ -933,6 +960,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeStateControllerHasSelectedAnimation() const;
+
+	/** Keeps loop/idle chooser rows from masking the regular Motion Matching pose. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerShouldOverrideMotionMatching() const;
 
 	/** GASP-equivalent rule for a non-looping State Controller Blend Stack asset. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
@@ -1086,6 +1117,7 @@ public:
 	EProject_JLocomotionGaitIntent CachedStateControllerGaitIntent = EProject_JLocomotionGaitIntent::Walk;
 	EProject_JStateControllerStance CachedStateControllerStance = EProject_JStateControllerStance::Stand;
 	EProject_JStateControllerStrafeDirection CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	EProject_JStateControllerStrafeDirection CachedStateControllerPreviousStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 	EProject_JStateControllerFoot CachedStateControllerOneShotFoot = EProject_JStateControllerFoot::None;
 	bool bCachedStateControllerCombatMode = false;
 	bool bCachedStateControllerFallOff = false;
@@ -1258,9 +1290,6 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	EProject_JLocomotionRotationMode ChooserRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
-	EProject_JLocomotionPhaseFamily ChooserPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	float ChooserDesiredFacingDeltaYaw = 0.0f;

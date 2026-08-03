@@ -37,11 +37,13 @@ public:
 	bool bAllowSprintInCombat = false;
 
 	/**
-	 * Optional full combat Motion Matching asset set used while this profile owns
-	 * camera-facing combat rotation. It uses the same visible database-family
-	 * layout as the normal locomotion asset set.
+	 * Optional combat loop Motion Matching asset set used while this profile owns
+	 * camera-facing combat rotation. Assign Idle, Run/Sprint Cycle, and moving
+	 * Run/Sprint TurnRedirect PSDs;
+	 * authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
+	 * the State Controller Chooser / direct Blend Stack path.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign a full combat Motion Matching Asset Set. Fill its Idle, Run, Sprint, Jump, Fall, and Landing database families just like the normal locomotion set."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle, Run/Sprint Cycle, and moving Run/Sprint TurnRedirect PSDs. One-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
 
 	/**
@@ -59,6 +61,14 @@ public:
 	/** Coalesces W->W+A->A input edges into one pose search instead of interrupting the same combat cycle twice. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float StrafeInputTurnReselectCooldown = 0.10f;
+
+	/** Ignore very slow trajectory samples and retain the last valid combat-Strafe direction instead. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StrafeDirectionMinimumSpeed = 10.0f;
+
+	/** Extra angular margin retained inside the previous eight-direction sector to prevent boundary flicker. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ClampMin = "0.0", ClampMax = "22.5", UIMin = "0.0", UIMax = "15.0"))
+	float StrafeDirectionHysteresisDegrees = 7.5f;
 
 	/** Require positive camera-relative forward input (W, W+A, or W+D) for combat sprint. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (EditCondition = "bAllowSprintInCombat"))

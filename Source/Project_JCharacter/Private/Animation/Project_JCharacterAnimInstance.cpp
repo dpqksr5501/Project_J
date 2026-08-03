@@ -39,30 +39,74 @@ namespace
 	// letting the current Start finish and entering the current-gait Cycle.
 	constexpr double StateControllerStartGaitCommitWindowSeconds = 0.15;
 
+	constexpr float StrafeDirectionSectorHalfWidth = 22.5f;
+
+	float GetStrafeDirectionCenterDegrees(const EProject_JStateControllerStrafeDirection Direction)
+	{
+		switch (Direction)
+		{
+		case EProject_JStateControllerStrafeDirection::Forward:
+			return 0.0f;
+		case EProject_JStateControllerStrafeDirection::ForwardLeft:
+			return -45.0f;
+		case EProject_JStateControllerStrafeDirection::Left:
+			return -90.0f;
+		case EProject_JStateControllerStrafeDirection::BackwardLeft:
+			return -135.0f;
+		case EProject_JStateControllerStrafeDirection::Backward:
+			return 180.0f;
+		case EProject_JStateControllerStrafeDirection::BackwardRight:
+			return 135.0f;
+		case EProject_JStateControllerStrafeDirection::Right:
+			return 90.0f;
+		case EProject_JStateControllerStrafeDirection::ForwardRight:
+			return 45.0f;
+		default:
+			return 0.0f;
+		}
+	}
+
 	EProject_JStateControllerStrafeDirection ResolveStateControllerStrafeDirection(
 		const float DirectionDegrees,
-		const EProject_JStateControllerMovementDirectionBias MovementDirectionBias)
+		const EProject_JStateControllerStrafeDirection PreviousDirection,
+		const float HysteresisDegrees)
 	{
 		const float Direction = FRotator::NormalizeAxis(DirectionDegrees);
-		if (Direction >= -45.0f && Direction <= 45.0f)
+		const float ClampedHysteresis = FMath::Clamp(HysteresisDegrees, 0.0f, StrafeDirectionSectorHalfWidth - KINDA_SMALL_NUMBER);
+		if (FMath::Abs(FMath::FindDeltaAngleDegrees(GetStrafeDirectionCenterDegrees(PreviousDirection), Direction)) <=
+			StrafeDirectionSectorHalfWidth + ClampedHysteresis)
+		{
+			return PreviousDirection;
+		}
+
+		if (Direction >= -22.5f && Direction <= 22.5f)
 		{
 			return EProject_JStateControllerStrafeDirection::Forward;
 		}
-
-		if (Direction < -45.0f && Direction >= -135.0f)
+		if (Direction < -22.5f && Direction >= -67.5f)
 		{
-			return MovementDirectionBias == EProject_JStateControllerMovementDirectionBias::LeftFootForward
-				? EProject_JStateControllerStrafeDirection::LeftLeftFootForward
-				: EProject_JStateControllerStrafeDirection::LeftRightFootForward;
+			return EProject_JStateControllerStrafeDirection::ForwardLeft;
 		}
-
-		if (Direction > 45.0f && Direction <= 135.0f)
+		if (Direction < -67.5f && Direction >= -112.5f)
 		{
-			return MovementDirectionBias == EProject_JStateControllerMovementDirectionBias::LeftFootForward
-				? EProject_JStateControllerStrafeDirection::RightLeftFootForward
-				: EProject_JStateControllerStrafeDirection::RightRightFootForward;
+			return EProject_JStateControllerStrafeDirection::Left;
 		}
-
+		if (Direction < -112.5f && Direction >= -157.5f)
+		{
+			return EProject_JStateControllerStrafeDirection::BackwardLeft;
+		}
+		if (Direction > 22.5f && Direction <= 67.5f)
+		{
+			return EProject_JStateControllerStrafeDirection::ForwardRight;
+		}
+		if (Direction > 67.5f && Direction <= 112.5f)
+		{
+			return EProject_JStateControllerStrafeDirection::Right;
+		}
+		if (Direction > 112.5f && Direction <= 157.5f)
+		{
+			return EProject_JStateControllerStrafeDirection::BackwardRight;
+		}
 		return EProject_JStateControllerStrafeDirection::Backward;
 	}
 
@@ -370,6 +414,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	StateControllerStanceForChooser = ThreadSafeData.OneShotPresentation.Stance;
 	StateControllerStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.StrafeDirection;
+	StateControllerPreviousStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.PreviousStrafeDirection;
+	StateControllerStrafeDirectionAngleForChooser = ThreadSafeData.OneShotPresentation.StrafeDirectionAngle;
+	bStateControllerHasStrafeDirectionAngleForChooser = ThreadSafeData.OneShotPresentation.bHasStrafeDirectionAngle;
 	bCombatModeForChooser = ThreadSafeData.Combat.bIsCombatMode;
 	const bool bEnteringStateControllerInAir =
 		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
@@ -792,6 +839,11 @@ EProject_JStateControllerStrafeDirection UProject_JCharacterAnimInstance::GetThr
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.StrafeDirection;
 }
 
+EProject_JStateControllerStrafeDirection UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPreviousStrafeDirection() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.PreviousStrafeDirection;
+}
+
 EProject_JStateControllerStance UProject_JCharacterAnimInstance::GetThreadSafeStateControllerStance() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.Stance;
@@ -845,6 +897,11 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimat
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerHasSelectedAnimation() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bHasSelectedAnimation;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldOverrideMotionMatching() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bShouldOverrideMotionMatching;
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationAlmostComplete() const
@@ -1249,11 +1306,43 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	OneShot.RequestRevision = Data.MotionMatching.SelectionRevision;
 	OneShot.PhaseFamily = Data.LocomotionContext.PhaseFamily;
 	OneShot.RotationMode = Data.LocomotionContext.RotationMode;
-	OneShot.StrafeDirection = OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe
-		? ResolveStateControllerStrafeDirection(
-			Data.Input.MovementDirection,
-			StateControllerMovementDirectionBias)
+	const FProject_JAnimOneShotPresentationThreadSafeData& PreviousOneShot = ThreadSafeData.OneShotPresentation;
+	const bool bWasStrafing = ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const bool bContinuePivot =
+		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+		PreviousOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
+	const EProject_JStateControllerStrafeDirection PreviousStrafeDirection = bWasStrafing
+		? (bContinuePivot ? PreviousOneShot.PreviousStrafeDirection : PreviousOneShot.StrafeDirection)
 		: EProject_JStateControllerStrafeDirection::Forward;
+	OneShot.PreviousStrafeDirection = PreviousStrafeDirection;
+	OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	OneShot.StrafeDirectionAngle = 0.0f;
+	OneShot.bHasStrafeDirectionAngle = false;
+	if (OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe)
+	{
+		FVector DirectionVelocity = Data.Movement.bHasFutureTrajectoryVelocity
+			? Data.Movement.FutureTrajectoryVelocity
+			: Data.Movement.Velocity;
+		DirectionVelocity.Z = 0.0f;
+		const UProject_JCombatAnimProfile* CombatProfile = GetCombatAnimProfile();
+		const float MinimumDirectionSpeed = CombatProfile ? CombatProfile->StrafeDirectionMinimumSpeed : 10.0f;
+		if (DirectionVelocity.SizeSquared2D() > FMath::Square(MinimumDirectionSpeed))
+		{
+			const float ActorYaw = OwningCharacter ? OwningCharacter->GetActorRotation().Yaw : 0.0f;
+			OneShot.StrafeDirectionAngle = FMath::FindDeltaAngleDegrees(ActorYaw, DirectionVelocity.Rotation().Yaw);
+			OneShot.bHasStrafeDirectionAngle = true;
+			OneShot.StrafeDirection = ResolveStateControllerStrafeDirection(
+				OneShot.StrafeDirectionAngle,
+				PreviousStrafeDirection,
+				CombatProfile ? CombatProfile->StrafeDirectionHysteresisDegrees : 7.5f);
+		}
+		else
+		{
+			// A stopped combatant has no meaningful movement direction. Preserve the
+			// previous sector so Stop/Fall/Pivot chooser rows stay deterministic.
+			OneShot.StrafeDirection = PreviousStrafeDirection;
+		}
+	}
 	OneShot.Stance = OwningCharacter && OwningCharacter->bIsCrouched
 		? EProject_JStateControllerStance::Crouch
 		: EProject_JStateControllerStance::Stand;
@@ -1457,6 +1546,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 	OneShot.SelectedAnimation = nullptr;
 	OneShot.SelectedAnimationOutput = FProject_JStateControllerChooserOutput();
 	OneShot.bHasSelectedAnimation = false;
+	OneShot.bShouldOverrideMotionMatching = false;
 	OneShot.bSelectedAnimationShouldLoop = ShouldStateControllerPresentationLoop(OneShot.PresentationState);
 	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
 
@@ -1480,6 +1570,8 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerGaitIntent != GaitIntentForChooser ||
 		CachedStateControllerStance != OneShot.Stance ||
 		CachedStateControllerStrafeDirection != OneShot.StrafeDirection ||
+		(OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+			CachedStateControllerPreviousStrafeDirection != OneShot.PreviousStrafeDirection) ||
 		CachedStateControllerOneShotFoot != OneShot.Foot ||
 		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
 		bCachedStateControllerFallOff != bStateControllerFallOffForChooser;
@@ -1557,6 +1649,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerGaitIntent = GaitIntentForChooser;
 		CachedStateControllerStance = OneShot.Stance;
 		CachedStateControllerStrafeDirection = OneShot.StrafeDirection;
+		CachedStateControllerPreviousStrafeDirection = OneShot.PreviousStrafeDirection;
 		CachedStateControllerOneShotFoot = OneShot.Foot;
 		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
 		bCachedStateControllerFallOff = bStateControllerFallOffForChooser;
@@ -1568,7 +1661,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
+			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
 				StateControllerChooserSelectionRevision,
 				static_cast<int32>(OneShot.PresentationState),
 				static_cast<int32>(Data.LocomotionContext.RotationMode),
@@ -1577,6 +1670,9 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				bStateControllerStartGaitCommitted ? TEXT("true") : TEXT("false"),
 				static_cast<int32>(OneShot.Stance),
 				static_cast<int32>(OneShot.StrafeDirection),
+				static_cast<int32>(OneShot.PreviousStrafeDirection),
+				OneShot.StrafeDirectionAngle,
+				OneShot.bHasStrafeDirectionAngle ? TEXT("true") : TEXT("false"),
 				static_cast<int32>(OneShot.Foot),
 				bStateControllerFallOffForChooser ? TEXT("true") : TEXT("false"),
 				CachedStateControllerLeftFootContact,
@@ -1606,6 +1702,10 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 	OneShot.SelectedAnimation = CachedStateControllerSelectedAnimation;
 	OneShot.SelectedAnimationOutput = CachedStateControllerSelectedAnimationOutput;
 	OneShot.bHasSelectedAnimation = bCachedStateControllerHasSelectedAnimation;
+	OneShot.bShouldOverrideMotionMatching =
+		OneShot.bHasSelectedAnimation &&
+		IsTransitionState(OneShot.PresentationState) &&
+		!OneShot.bSelectedAnimationShouldLoop;
 	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
 }
 
@@ -1906,9 +2006,10 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	const UProject_JMotionMatchingAssetSet* AssetSet = OwningPlayerCharacter
 		? OwningPlayerCharacter->GetMotionMatchingAssetSet()
 		: nullptr;
-	const UProject_JMotionMatchingAssetSet* CombatStrafeAssetSet =
+	const bool bUsesCombatStrafe =
 		OwningPlayerCharacter && Data.Combat.bIsCombatMode &&
-		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const UProject_JMotionMatchingAssetSet* CombatStrafeAssetSet = bUsesCombatStrafe
 			? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet()
 			: nullptr;
 	UPoseSearchDatabase* IdleDatabase = AssetSet && AssetSet->IdlePoseSearchDatabase
@@ -1919,20 +2020,49 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		: DefaultPoseSearchDatabase.Get();
 	const FProject_JMotionMatchingSelectionContext& SelectionContext = Data.MotionMatching.SelectionContext;
 	FProject_JMotionMatchingSelectionContext CombatSelectionContext = SelectionContext;
+	// State Controller owns authored Start, Stop, Pivot, air and landing one-shots.
+	// Regular Motion Matching still owns the continuous combat Cycle and the
+	// moving TurnRedirect PSD. Do not flatten Turn to Cycle: the combat asset
+	// set can therefore supply its authored turn database through the DA.
+	switch (SelectionContext.PhaseFamily)
+	{
+	case EProject_JLocomotionPhaseFamily::Idle:
+	case EProject_JLocomotionPhaseFamily::Cycle:
+	case EProject_JLocomotionPhaseFamily::Turn:
+		CombatSelectionContext.PhaseFamily = SelectionContext.PhaseFamily;
+		break;
+	default:
+		// Keep a stable locomotion pose beneath a direct State Controller one-shot.
+		CombatSelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+		break;
+	}
 	CombatSelectionContext.bUseGenericFamiliesForNonOrientToMovement = true;
 	UPoseSearchDatabase* SelectedDatabase = CombatStrafeAssetSet
 		? CombatStrafeAssetSet->FindDatabaseForContext(CombatSelectionContext)
 		: nullptr;
-	const bool bSelectedCombatStrafeDatabase = SelectedDatabase != nullptr;
-	if (!SelectedDatabase && AssetSet)
+	if (!SelectedDatabase &&
+		CombatStrafeAssetSet &&
+		CombatSelectionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint &&
+		(CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle ||
+			CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn))
+	{
+		// Combat sprint is intentionally limited to forward / forward-diagonal input.
+		// Until dedicated sprint Cycle or TurnRedirect PSDs are assigned, retain
+		// a coherent combat result by falling back to the Run family, never OTM.
+		FProject_JMotionMatchingSelectionContext RunFallbackContext = CombatSelectionContext;
+		RunFallbackContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
+		SelectedDatabase = CombatStrafeAssetSet->FindDatabaseForContext(RunFallbackContext);
+	}
+	bool bSelectedCombatStrafeDatabase = SelectedDatabase != nullptr;
+	if (!SelectedDatabase && !bUsesCombatStrafe && AssetSet)
 	{
 		SelectedDatabase = AssetSet->FindDatabaseForContext(SelectionContext);
 	}
 
-	// A combat asset set uses the same complete family layout as normal
-	// locomotion. The base set remains only as a migration fallback when the
-	// combat set itself has an intentionally unassigned slot.
+	// An upper-body overlay may use the normal lower-body loops only when no
+	// combat loop set is assigned. It must never borrow an OTM one-shot PSD.
 	if (!SelectedDatabase &&
+		!CombatStrafeAssetSet &&
 		Data.Combat.bIsCombatMode &&
 		Data.Combat.PresentationMode == EProject_JCombatAnimationPresentationMode::UpperBodyOverlay &&
 		Data.LocomotionContext.RotationMode != EProject_JLocomotionRotationMode::OrientToMovement &&
@@ -1941,6 +2071,39 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		FProject_JMotionMatchingSelectionContext OverlayFallbackContext = SelectionContext;
 		OverlayFallbackContext.RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 		SelectedDatabase = AssetSet->FindDatabaseForContext(OverlayFallbackContext);
+	}
+	if (!SelectedDatabase)
+	{
+		if (bUsesCombatStrafe && CombatStrafeAssetSet)
+		{
+			// The combat DA intentionally uses DefaultPoseSearchDatabase for Idle
+			// (see DA_Player_Combat_Strafe). A missing moving slot must therefore
+			// retry the appropriate Cycle family before using that default; otherwise
+			// an incomplete Sprint/Turn setup would visibly fall back to idle.
+			if (CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle)
+			{
+				SelectedDatabase = CombatStrafeAssetSet->IdlePoseSearchDatabase.Get();
+			}
+			else
+			{
+				FProject_JMotionMatchingSelectionContext CycleFallbackContext = CombatSelectionContext;
+				CycleFallbackContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+				SelectedDatabase = CombatStrafeAssetSet->FindDatabaseForContext(CycleFallbackContext);
+				if (!SelectedDatabase && CycleFallbackContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint)
+				{
+					CycleFallbackContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
+					SelectedDatabase = CombatStrafeAssetSet->FindDatabaseForContext(CycleFallbackContext);
+				}
+			}
+
+			// Keep this last-resort fallback inside the combat DA. It must never
+			// borrow an Orient-to-Movement database while combat owns the body.
+			if (!SelectedDatabase)
+			{
+				SelectedDatabase = CombatStrafeAssetSet->DefaultPoseSearchDatabase.Get();
+			}
+			bSelectedCombatStrafeDatabase = SelectedDatabase != nullptr;
+		}
 	}
 	if (!SelectedDatabase)
 	{
@@ -2081,7 +2244,6 @@ void UProject_JCharacterAnimInstance::PublishChooserGroundProperties(const FProj
 	ChooserGroundMotionMode = Data.Ground.GroundMotionMode;
 	ChooserGaitIntent = Data.LocomotionContext.GaitIntent;
 	ChooserRotationMode = Data.LocomotionContext.RotationMode;
-	ChooserPhaseFamily = Data.LocomotionContext.PhaseFamily;
 	ChooserDesiredFacingDeltaYaw = Data.LocomotionContext.DesiredFacingDeltaYaw;
 	bChooserIsStartingDerived = Data.LocomotionContext.bIsStarting;
 	bChooserIsPivoting = Data.LocomotionContext.bIsPivoting;
