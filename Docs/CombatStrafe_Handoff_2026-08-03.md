@@ -1,5 +1,11 @@
 # Combat Strafe handoff (2026-08-03)
 
+> **Status update (2026-08-04):** this handoff describes the original plan.
+> For the implemented OTM/Combat-Strafe split, Chooser hierarchy, State
+> Controller Blend Stack Orientation Warping, and landing-to-stop policy, read
+> [`CombatStrafe_Implementation_2026-08-04.md`](CombatStrafe_Implementation_2026-08-04.md)
+> first.
+
 ## 목적
 
 이 문서는 Project_J의 다음 작업인 **Combat Strafe locomotion**을 다른 대화 또는

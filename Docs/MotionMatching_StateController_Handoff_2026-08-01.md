@@ -1,5 +1,11 @@
 # Project_J locomotion handoff — 2026-08-01
 
+> **Later implementation note:** the current Combat Strafe implementation is
+> documented in
+> [`CombatStrafe_Implementation_2026-08-04.md`](CombatStrafe_Implementation_2026-08-04.md).
+> Its direct one-shot / Motion Matching responsibility split takes precedence
+> for Combat Strafe.
+
 ## Purpose of this handoff
 
 This document is the authoritative continuation context for the current

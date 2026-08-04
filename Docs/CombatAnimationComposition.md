@@ -58,6 +58,35 @@ Keep `DefaultSlot` as the full-body action path. Draw/sheath, attacks, dodge,
 hit reactions, death, and committed root-motion actions use it. `CombatUpperBody`
 is only for a persistent armed stance or a movement-compatible short overlay.
 
+## Locomotion source contract (OTM and Combat Strafe)
+
+The input called `Shared Motion Matching` above is a resolved locomotion pose,
+not a promise that every lower-body clip comes from Motion Matching. Project_J
+uses two lower-body modes:
+
+```text
+Non-combat / OTM
+  Existing Motion Matching + OTM State Controller direct one-shots.
+
+Combat / Strafe
+  Combat Motion Matching for continuous Cycle and Turn Redirect,
+  State Controller Blend Stack for Start, Stop, Pivot, Jump, Fall Off and Land.
+```
+
+The master graph selects the State Controller direct pose only while
+`GetThreadSafeStateControllerShouldOverrideMotionMatching` is true. Otherwise
+the active Motion Matching pose is used. Both paths then flow through the same
+combat upper-body, slots, aim offset, foot placement, Leg IK and Pose History
+chain. This is why combat strafe does not need a second master AnimGraph or a
+separate full-body combat layer.
+
+Combat Strafe's State Controller Blend Stack may contain local, per-one-shot
+Orientation Warping. It must remain inside that direct path, between `Local To
+Component` and `Component To Local`; do not apply it globally to the final
+locomotion pose. See
+[`CombatStrafe_Implementation_2026-08-04.md`](CombatStrafe_Implementation_2026-08-04.md)
+for the pin and bone contract.
+
 ## Greatsword Now
 
 Set `DA_Greatsword_WeaponProfile.CombatPresentationMode` to
