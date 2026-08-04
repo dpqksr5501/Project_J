@@ -368,6 +368,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LandingInputCancelGraceTime = 0.25f;
 
+	/** Minimum post-touchdown input time required before releasing input may hand a moving landing off to Stop. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandingExitStopInputHoldTime = 0.08f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Landing", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float HeavyLandSpeedThreshold = 650.0f;
 
@@ -751,10 +755,15 @@ private:
 	float RemoteStartPreviousActorYaw = 0.0f;
 	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
+	float LandingPostTouchdownMoveInputTime = 0.0f;
 	float SprintStopMemoryTimeRemaining = 0.0f;
 	double LastCombatStrafeReselectTimeSeconds = -DBL_MAX;
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
+	/** Latched only when movement genuinely continued after touchdown then released during a moving landing. */
+	bool bLandingReceivedPostTouchdownMoveInput = false;
+	bool bForceLandingFinishToStop = false;
+	bool bLandingExitStopWasSprinting = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
 	/** A replicated MoveStop owns remote visual intent until a later MoveStart; residual network velocity must not restart locomotion. */
 	bool bRemoteStopVisualIntentActive = false;

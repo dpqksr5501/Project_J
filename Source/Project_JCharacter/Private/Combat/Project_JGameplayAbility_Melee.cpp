@@ -127,8 +127,19 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 
 void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition)
 {
+	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	UCharacterMovementComponent* MovementComponent = Character ? Character->GetCharacterMovement() : nullptr;
 	if (!AttackDefinition.bUseFlyingMovementModeForRootMotion || AttackDefinition.MovementPolicy == EProject_JAttackMovementPolicy::InPlace)
 	{
+		if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Display,
+				TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=%s Result=Skipped MovementMode=%d"),
+				*AttackDefinition.AttackTag.ToString(),
+				static_cast<int32>(AttackDefinition.MovementPolicy),
+				AttackDefinition.bUseFlyingMovementModeForRootMotion ? TEXT("true") : TEXT("false"),
+				MovementComponent ? static_cast<int32>(MovementComponent->MovementMode) : -1);
+		}
 		return;
 	}
 
@@ -138,17 +149,31 @@ void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_J
 		return;
 	}
 
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	UCharacterMovementComponent* MovementComponent = Character ? Character->GetCharacterMovement() : nullptr;
 	if (!MovementComponent || MovementComponent->IsFlying())
 	{
+		if (IsComboDebugEnabled())
+		{
+			UE_LOG(LogProjectJCombatCombo, Display,
+				TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=true Result=%s MovementMode=%d"),
+				*AttackDefinition.AttackTag.ToString(),
+				static_cast<int32>(AttackDefinition.MovementPolicy),
+				MovementComponent ? TEXT("AlreadyFlying") : TEXT("NoMovementComponent"),
+				MovementComponent ? static_cast<int32>(MovementComponent->MovementMode) : -1);
+		}
 		return;
 	}
 
 	RootMotionMovementComponent = MovementComponent;
 	bRootMotionForcedFlying = true;
 	MovementComponent->SetMovementMode(MOVE_Flying);
-	UE_LOG(LogProjectJCombatCombo, Verbose, TEXT("RootMotion movement mode switched to Flying. Attack=%s"), *AttackDefinition.AttackTag.ToString());
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Display,
+			TEXT("RootMotionPolicy Attack=%s Policy=%d UseFlying=true Result=SetFlying MovementMode=%d"),
+			*AttackDefinition.AttackTag.ToString(),
+			static_cast<int32>(AttackDefinition.MovementPolicy),
+			static_cast<int32>(MovementComponent->MovementMode));
+	}
 }
 
 void UProject_JGameplayAbility_Melee::RestoreAttackMovementMode(const bool bWasCancelled)

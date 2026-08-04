@@ -387,6 +387,10 @@ void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JP
 	bCanExitLanding = LandingMinHoldTime <= 0.0f;
 	bLandingFinished = false;
 	LandingElapsedTime = 0.0f;
+	LandingPostTouchdownMoveInputTime = 0.0f;
+	bLandingReceivedPostTouchdownMoveInput = false;
+	bForceLandingFinishToStop = false;
+	bLandingExitStopWasSprinting = false;
 	bLandingFinishPendingExit = false;
 }
 
@@ -420,6 +424,8 @@ void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 	LastFallSpeed = 0.0f;
 	RemoteAirborneTime = 0.0f;
 	LandingElapsedTime = 0.0f;
+	LandingPostTouchdownMoveInputTime = 0.0f;
+	bLandingReceivedPostTouchdownMoveInput = false;
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	InitialLandingActorYaw = 0.0f;
@@ -526,16 +532,33 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 	const bool bIgnoreRemoteMotionForLandingFinish = bLandingIgnoresRemoteGroundSpeed;
 	const bool bMoveInputStillHeld = !bIgnoreRemoteMotionForLandingFinish && GetMovementInputForState().Size() > MoveInputDeadZone;
 	const bool bForcedLocomotionFinish = bForceLandingFinishToLocomotion;
+	const bool bForcedStopFinish = bForceLandingFinishToStop;
+	const bool bForcedStopWasSprinting = bLandingExitStopWasSprinting;
 	const bool bAllowGroundSpeedLocomotion = !bIgnoreRemoteMotionForLandingFinish;
-	const bool bShouldEnterLocomotion = bForcedLocomotionFinish || bMoveInputStillHeld || (bAllowGroundSpeedLocomotion && GroundSpeed > IdleSpeedThreshold);
+	const bool bShouldEnterLocomotion =
+		!bForcedStopFinish &&
+		(bForcedLocomotionFinish || bMoveInputStillHeld || (bAllowGroundSpeedLocomotion && GroundSpeed > IdleSpeedThreshold));
 
 	ClearActiveLandingState();
 
 	bForceLandingFinishToLocomotion = false;
+	bForceLandingFinishToStop = false;
+	bLandingExitStopWasSprinting = false;
 	bLandingIgnoresRemoteGroundSpeed = false;
 	bLandingCancelEventDispatched = false;
 
-	if (bShouldEnterLocomotion)
+	if (bForcedStopFinish)
+	{
+		// EnterStopGroundMotionMode snapshots these values into bStopWasSprinting,
+		// which lets the existing OTM/Strafe Stop choosers retain the landing gait.
+		bWantsSprint = bForcedStopWasSprinting;
+		bUseSprintLocomotion = bForcedStopWasSprinting;
+		bHasMoveInput = false;
+		bPrevHasMoveInput = false;
+		bResolvedMoveInputLastUpdate = false;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
+	}
+	else if (bShouldEnterLocomotion)
 	{
 		const bool bHasResolvedMoveIntent = bForcedLocomotionFinish || bMoveInputStillHeld;
 		bHasMoveInput = bHasResolvedMoveIntent;

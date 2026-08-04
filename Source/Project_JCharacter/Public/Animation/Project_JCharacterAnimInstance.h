@@ -469,6 +469,15 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	bool bShouldOverrideMotionMatching = false;
 
+	/**
+	 * Combat-Strafe only gate for the State Controller Blend Stack's Orientation
+	 * Warping node. This never changes capsule/controller rotation; it merely
+	 * permits the selected direct one-shot to be visually warped when its own
+	 * authored enable_warping curve is non-zero.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bShouldEnableCombatStrafeOrientationWarping = false;
+
 	/** Loop intent is derived from the logical presentation state, never guessed from asset duration. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	bool bSelectedAnimationShouldLoop = false;
@@ -964,6 +973,18 @@ public:
 	/** Keeps loop/idle chooser rows from masking the regular Motion Matching pose. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeStateControllerShouldOverrideMotionMatching() const;
+
+	/**
+	 * Returns 1 only for a selected Combat-Strafe direct one-shot with a stable
+	 * movement direction. Multiply this by the selected animation's
+	 * enable_warping curve inside the State Controller Blend Stack.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Strafe", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerCombatStrafeOrientationWarpingAlpha() const;
+
+	/** Signed actor-local angle input for the Combat-Strafe direct one-shot Orientation Warping node. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Combat Strafe", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle() const;
 
 	/** GASP-equivalent rule for a non-looping State Controller Blend Stack asset. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))

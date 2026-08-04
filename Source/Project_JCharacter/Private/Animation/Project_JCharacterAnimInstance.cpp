@@ -904,6 +904,18 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldOverride
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bShouldOverrideMotionMatching;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeOrientationWarpingAlpha() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bShouldEnableCombatStrafeOrientationWarping
+		? 1.0f
+		: 0.0f;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.StrafeDirectionAngle;
+}
+
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationAlmostComplete() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bTransitionAnimationAlmostComplete;
@@ -1706,6 +1718,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		OneShot.bHasSelectedAnimation &&
 		IsTransitionState(OneShot.PresentationState) &&
 		!OneShot.bSelectedAnimationShouldLoop;
+	OneShot.bShouldEnableCombatStrafeOrientationWarping =
+		IsTransitionState(OneShot.PresentationState) &&
+		!OneShot.bSelectedAnimationShouldLoop &&
+		Data.Combat.bIsCombatMode &&
+		OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		OneShot.bHasStrafeDirectionAngle;
 	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
 }
 

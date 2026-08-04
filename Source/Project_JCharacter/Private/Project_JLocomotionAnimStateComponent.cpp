@@ -862,6 +862,16 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 	MoveInputTurnAngle = 0.0f;
 	bSharpTurnRequested = false;
 
+	// A moving landing may hand off into Stop only when movement intent survived
+	// touchdown for a short, real interval. This rejects the common case where
+	// input was released in the air or on the landing frame.
+	if (bIsLanding && bHasMoveInput)
+	{
+		LandingPostTouchdownMoveInputTime += DeltaTime;
+		bLandingReceivedPostTouchdownMoveInput =
+			LandingPostTouchdownMoveInputTime >= LandingExitStopInputHoldTime;
+	}
+
 	if (bTrackTurnAngle && bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
 	{
 		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
@@ -907,14 +917,25 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 		return true;
 	}
 
-	if (bLandWasMoving && !bHasMoveInput)
+	if (bLandWasMoving &&
+		!bHasMoveInput &&
+		bLandingReceivedPostTouchdownMoveInput)
 	{
-		bLandWasMoving = false;
-		bLandWasSprinting = false;
+		// Input release after a genuine moving touchdown is a directional stop,
+		// not an abrupt transition to Idle. The current Strafe sector remains
+		// cached by the AnimInstance while velocity falls to zero.
+		bForceLandingFinishToStop = true;
+		bLandingExitStopWasSprinting = bLandWasSprinting;
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;
 	}
+
+	// Releasing movement input is not a redirect.  Keep the selected landing
+	// one-shot alive until its normal completion so a brief post-landing input
+	// cannot collapse a moving land directly into Idle.  This also preserves the
+	// landing gait/family selected at impact; only a new input or a meaningful
+	// redirect is allowed to cancel the landing responsively.
 
 	return false;
 }

@@ -114,10 +114,18 @@ void UProject_JLocomotionAnimStateComponent::TryFinishLandingForReplicatedMoveSt
 {
 	if (IsLandingStateActive())
 	{
-		bLandWasMoving = false;
-		bLandWasSprinting = false;
+		// A replicated MoveStop is the remote equivalent of releasing local
+		// movement input.  Do not reselect/cancel the in-flight landing pose;
+		// only prevent residual replicated velocity from choosing Locomotion
+		// when the landing naturally completes.
 		bLandingIgnoresRemoteGroundSpeed = true;
-		FinishLandingImmediately();
+		if (bLandWasMoving && bLandingReceivedPostTouchdownMoveInput)
+		{
+			bForceLandingFinishToStop = true;
+			bLandingExitStopWasSprinting = bLandWasSprinting;
+			DispatchLandingCancelForAnimation();
+			FinishLandingImmediately();
+		}
 	}
 }
 
@@ -227,9 +235,7 @@ EProject_JGroundMotionMode UProject_JLocomotionAnimStateComponent::ResolveGround
 
 void UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingAfterSprintStop()
 {
-	if (IsLandingStateActive() && bLandWasSprinting)
-	{
-		bLandWasSprinting = false;
-		FinishLandingImmediately();
-	}
+	// Sprint release must not turn a selected Sprint landing into a Run/Idle
+	// transition mid-pose.  The regular landing completion will evaluate the
+	// current input and enter Idle or Locomotion as appropriate.
 }
