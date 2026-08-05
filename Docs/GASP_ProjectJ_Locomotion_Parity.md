@@ -1,5 +1,15 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+> **2026-08-05 Combat Strafe addendum (takes precedence over historical
+> deferred notes below):** GASP rotation-break has now been reviewed. It is a
+> moving Start/Pivot re-entry mechanism, not the idle-only TIP behavior desired
+> for Project_J. Project_J will preserve idle camera-only Aim Offset and add no
+> global Steering or Offset Root Bone. Its future Combat Strafe implementation
+> will reselect direct Start/Pivot assets from a latched versus current
+> trajectory-direction delta, subject to a short early window and cooldown.
+> `UseMM=false` remains the direct-one-shot policy for every current one-shot;
+> BranchIn is deferred.
+
 > 작성일: 2026-08-02  
 > 범위: 현재 검토한 GASP `SandboxCharacter_CMC_AnimBP` 자료와 Project_J의 비전투 OTM locomotion, Motion Matching, Experimental State Controller 경로.  
 > 이 문서는 **구현 사실**과 **추가 확인이 필요한 GASP 세부 동작**을 분리한다. 에셋 연결값은 Unreal Editor에서 최종 확인한다.
@@ -252,6 +262,40 @@ Native snapshot / locomotion state
 ```
 
 Project_J는 일반 Motion Matching과 State Controller 출력을 먼저 `Two Way Blend`(현재 Alpha 1.0)로 합친 뒤, Direct Blend Stack의 유효 선택 여부로 `Blend Poses by Bool`을 사용한다. 현재 제공된 그래프에는 Inertialization 노드가 보이지 않으므로, 이를 현재 구조로 전제하지 않는다.
+
+### Project_J State Controller Blend Stack 내부 그래프 (2026-08-05 확인)
+
+`AnimationBlendStackGraph_0`은 선택된 one-shot 자체를 다시 고르거나 Motion
+Matching을 수행하지 않는다. Blend Stack Input으로 전달된 포즈에만, Combat
+Strafe 전용 Orientation Warping을 적용해 출력한다.
+
+```text
+State Machine Blend Stack Input
+  -> Local To Component
+  -> Orientation Warping
+       Alpha = CombatStrafeOrientationWarpingAlpha
+               * Curve(CurrentAnimAsset, "enable_warping", CurrentAnimAssetTime)
+       Locomotion Angle = CombatStrafeOrientationWarpingAngle
+       Current Anim Asset / Time = current Blend Stack asset / time
+  -> Component To Local
+  -> AnimationBlendStackGraph_0 Output Pose
+```
+
+따라서 warping은 (1) native/thread-safe getter가 Combat Strafe에 대해 허용한
+알파와 각도, 그리고 (2) 현재 선택된 애셋이 `enable_warping` curve로 허용하는
+구간의 곱으로만 적용된다. Curve가 없거나 값이 0이면 State Controller Blend
+Stack의 Orientation Warping도 0이 된다. 이 노드는 Combat Strafe direct
+one-shot의 국소 보정 계층이다.
+
+이 사실은 다음 경계를 확정한다.
+
+- Start/Pivot 재선택은 이 내부 그래프가 아니라 State Controller의 chooser
+  selection/re-entry 계약에서 수행한다.
+- GASP 전역 Steering / Offset Root Bone 또는 별도의 전역 Orientation Warping을
+  추가하지 않는다. 동일한 회전 보정을 중첩하면 직접 애셋의 방향/발 접지와
+  충돌할 수 있다.
+- `Current Anim Asset`과 그 재생 시간은 curve gate의 입력일 뿐, `UseMM` 또는
+  regular Motion Matching의 재검색을 의미하지 않는다.
 
 | 단계 | GASP | Project_J 상태 | Reface Start와의 관계 |
 |---|---|---|---|

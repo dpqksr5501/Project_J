@@ -1,5 +1,12 @@
 # Combat Strafe implementation status - 2026-08-04
 
+> **Design update (2026-08-05):** the next Combat Strafe refinement is not an
+> idle-only TIP. Camera rotation while idle remains Aim-Offset-only. The planned
+> enhancement is direct Start/Pivot re-selection during the early part of a
+> moving one-shot when trajectory intent changes sharply. This keeps every
+> current State Controller one-shot at `UseMM=false`; regular Motion Matching
+> continues to own only Cycle and Turn Redirect.
+
 ## Purpose and scope
 
 This is the current source of truth for the locomotion work completed after

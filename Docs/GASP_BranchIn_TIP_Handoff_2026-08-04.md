@@ -1,5 +1,16 @@
 # GASP BranchIn + TIP Handoff (2026-08-04)
 
+> **Superseding design update (2026-08-05):** Project_J will keep all current
+> State Controller one-shots on the direct path. `UseMM=false` is the intended
+> policy for Start, Stop, Pivot, Jump, FallOff, Land, and InAirLoop. BranchIn
+> is deferred rather than used as the next locomotion milestone.
+>
+> The term "TIP" in this document must not be read as an automatic idle body
+> turn. The desired combat behavior is: camera-only rotation while idle remains
+> Aim-Offset-only; a body/camera mismatch is resolved only after movement starts,
+> through Combat Strafe Start/Pivot re-selection. The detailed replacement
+> contract is in section 10A and takes precedence over the earlier TIP proposal.
+
 ## 1. Goal of the next task
 
 Move Project_J from the current **Chooser-direct one-shot** policy toward a selective
@@ -169,6 +180,9 @@ The main continuous Cycle and Turn Redirect route remains MM.
 
 ## 7. Planned GASP-style BranchIn migration
 
+> **2026-08-05 status:** deferred. This section is retained as future reference
+> for a deliberately authored BranchIn experiment, not as the active plan.
+
 The desired next architecture is selective, not blanket conversion.
 
 ### Good initial pilot
@@ -252,6 +266,11 @@ grace return while redirect/new input still uses the grace protection.
 
 ## 10. TIP scope
 
+> **2026-08-05 correction:** do not add an idle-only Turn In Place State
+> Controller family for the currently desired GASP-like Combat Strafe behavior.
+> Keep idle camera rotation upper-body/Aim-Offset-only. Use the moving
+> reorientation contract below instead.
+
 TIP is explicitly deferred. Current desired behavior:
 
 - In combat Strafe idle, rotating the camera alone turns the head/aim offset, not
@@ -261,6 +280,80 @@ TIP is explicitly deferred. Current desired behavior:
 
 Future TIP must be a separate State Controller/Chooser family (or carefully scoped
 BranchIn family), not mixed into the existing moving Pivot logic.
+
+## 10A. Combat Strafe moving reorientation / rotation-break (2026-08-05)
+
+GASP's relevant behavior is not an idle TIP. Its logical `Transition to
+Locomotion` state can re-enter while an authored Start or Pivot is still playing
+when the requested rotation changes rapidly. This preserves the authored
+one-shot model while allowing the player to change direction again during its
+early portion.
+
+### Confirmed GASP reference behavior
+
+```text
+OnStateEntry_TransitionToLocomotion
+  -> TargetRotationOnTransitionStart = TargetRotation
+  -> SetBlendStackAnimFromChooser(..., ForceBlend=true)
+
+OnUpdate_TransitionToLocomotion
+  -> TargetRotationOnTransitionStart = RInterpTo(
+       TargetRotationOnTransitionStart, TargetRotation, DeltaSeconds, 5.0)
+
+Rotation break
+  -> abs(DeltaRotator(TargetRotation, TargetRotationOnTransitionStart).Yaw) > 90
+  -> CurrentStateTime > 0 and < 0.5 seconds
+  -> current Blend Stack output tags contain Start or Pivot
+  -> re-enter Transition to Locomotion and select a fresh chooser result
+```
+
+The interpolated cache means a slowly changing target keeps the current asset,
+while a quick large change (for example a 90-degree Pivot immediately becoming
+a 180-degree request) reselects. GASP obtains `TargetRotation` from its own
+Steering / Offset Root Bone visual-rotation system; that visual-root ownership
+must not be copied into Project_J.
+
+### Project_J translation
+
+Project_J must retain its existing ownership boundaries:
+
+```text
+Idle + camera rotation only
+  -> no body turn; Aim Offset remains responsible
+
+Combat Strafe Start/Pivot selected
+  -> latch the selected trajectory/Strafe direction and selection time
+
+During the early direct one-shot window
+  -> compare current future-trajectory Strafe direction with the latched value
+  -> require a meaningful angular/sector change, a cooldown, and Start/Pivot tag
+  -> request a fresh direct State Controller chooser selection
+  -> choose the new asset from current direction + previous direction + foot
+```
+
+This supports both a continued turn in the same direction and a reversal, but
+does not run a query every frame. The initial tuning reference may be a 90-degree
+break threshold, a 0.5-second early window, and an explicit cooldown; final
+values must be verified in PIE with the Project_J eight-direction assets.
+
+Do not use GASP `TargetRotation - RootTransformRotation` as the Project_J
+selector. Project_J has no global Offset Root Bone rotation owner, uses no
+root-motion-everything locomotion policy, and already has local State Controller
+Blend Stack Orientation Warping for supported combat one-shots. The reselect
+criterion is trajectory intent, not visual-root delta.
+
+### Asset and graph constraints
+
+- `CHT_Player_Strafe_Run_Pivot` is the direct reselect leaf: previous Strafe
+  direction -> current Strafe direction -> one-shot foot -> animation asset.
+- Keep `UseMM=false` for the direct Pivot rows under the active policy.
+- Continuous Cycle and Turn Redirect remain regular Motion Matching work.
+- Do not add global Steering, Offset Root Bone, or a second global Orientation
+  Warping node. The existing State Controller Blend Stack warper must remain
+  the only combat one-shot directional warp.
+- Traversal/Motion-Warping montages are a separate future action system. They
+  must not become a locomotion rotation owner or be coupled to this reselect
+  mechanism.
 
 Suggested future TIP design:
 
