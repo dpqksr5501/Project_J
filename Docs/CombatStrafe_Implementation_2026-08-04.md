@@ -1,13 +1,41 @@
 # Combat Strafe implementation status - 2026-08-04
 
-> **Design update (2026-08-05):** the next Combat Strafe refinement is not an
-> idle-only TIP. Camera rotation while idle remains Aim-Offset-only. The planned
-> enhancement is direct Start/Pivot re-selection during the early part of a
-> moving one-shot when trajectory intent changes sharply. This keeps every
-> current State Controller one-shot at `UseMM=false`; regular Motion Matching
-> continues to own only Cycle and Turn Redirect.
+> **Design update (2026-08-05, superseding prior TIP wording):** Combat Strafe
+> gains a separate direct Idle TIP family. Camera yaw leads while idle; direct
+> `UseMM=false` 90/180 left/right one-shots resolve the body yaw once the
+> threshold is crossed. Start/Pivot re-selection during movement remains a
+> separate future refinement. Regular Motion Matching continues to own only
+> Cycle and Turn Redirect.
 
 ## Purpose and scope
+
+## Combat Strafe Idle TIP integration (2026-08-05)
+
+Native support is opt-in through
+`UProject_JLocomotionAnimStateComponent::bEnableCombatStrafeTurnInPlace` (default
+`false`). Once enabled, only a locally controlled, grounded Combat Strafe player
+with no move input, low speed, and no attack/dodge/hit-react can request TIP.
+The initial entry/exit yaw thresholds are 65/30 degrees. Attack, dodge, hit
+react, movement, air, and landing immediately release the local controller-yaw
+override and preempt TIP.
+
+The editor integration is intentionally a narrow direct path:
+
+1. Add `TransitionToTurnInPlace` rows under the Combat Strafe State Controller
+   chooser path.
+2. Use `StateControllerTurnInPlaceVariantForChooser`: `1=Left90`,
+   `2=Left180`, `3=Right90`, `4=Right180`.
+3. Map those four rows to `M_Neutral_Stand_Turn_090_L/R` and
+   `M_Neutral_Stand_Turn_180_L/R` (or the project-approved equivalents).
+4. Set each chooser output to `UseMM=false`, non-looping, and tag it
+   `TurnInPlace`. Do not add it to a regular locomotion PSD.
+5. Verify in PIE that the direct Blend Stack consumes the asset's authored root
+   yaw. Do not enable global `Root Motion from Everything`, global Steering, or
+   Offset Root Bone to make TIP work.
+
+The native chooser cache only re-evaluates on a 90/180 or left/right bucket
+change, not on every camera-yaw update. `p.ProjectJ.MMTransitionDebug 1` logs
+the presentation state, input-facing yaw, and `TIPVariant` for verification.
 
 This is the current source of truth for the locomotion work completed after
 `CombatStrafe_Handoff_2026-08-03.md`.

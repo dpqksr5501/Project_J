@@ -2,11 +2,11 @@
 
 > **2026-08-05 Combat Strafe addendum (takes precedence over historical
 > deferred notes below):** GASP rotation-break has now been reviewed. It is a
-> moving Start/Pivot re-entry mechanism, not the idle-only TIP behavior desired
-> for Project_J. Project_J will preserve idle camera-only Aim Offset and add no
-> global Steering or Offset Root Bone. Its future Combat Strafe implementation
-> will reselect direct Start/Pivot assets from a latched versus current
-> trajectory-direction delta, subject to a short early window and cooldown.
+> moving Start/Pivot re-entry mechanism. Project_J will additionally implement
+> a separate Idle TIP: camera yaw leads while locally idle, then a direct
+> left/right 90/180 one-shot turns the body. It does not add global Steering or
+> Offset Root Bone. TIP uses yaw-bucket reselects and a short cooldown/hysteresis;
+> moving Start/Pivot remains its own trajectory-direction path.
 > `UseMM=false` remains the direct-one-shot policy for every current one-shot;
 > BranchIn is deferred.
 

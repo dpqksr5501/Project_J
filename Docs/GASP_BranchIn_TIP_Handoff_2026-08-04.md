@@ -5,11 +5,12 @@
 > policy for Start, Stop, Pivot, Jump, FallOff, Land, and InAirLoop. BranchIn
 > is deferred rather than used as the next locomotion milestone.
 >
-> The term "TIP" in this document must not be read as an automatic idle body
-> turn. The desired combat behavior is: camera-only rotation while idle remains
-> Aim-Offset-only; a body/camera mismatch is resolved only after movement starts,
-> through Combat Strafe Start/Pivot re-selection. The detailed replacement
-> contract is in section 10A and takes precedence over the earlier TIP proposal.
+> **TIP correction (2026-08-05, later decision):** Project_J will implement a
+> dedicated Combat Strafe **Idle Turn In Place** family. It is separate from
+> GASP's moving Start/Pivot rotation-break reference in section 10A. Idle camera
+> rotation leads the body; a direct 90/180-degree TIP one-shot is selected once
+> the yaw error crosses its threshold, and may reselect when its quantized
+> left/right or 90/180 target changes.
 
 ## 1. Goal of the next task
 
@@ -266,10 +267,9 @@ grace return while redirect/new input still uses the grace protection.
 
 ## 10. TIP scope
 
-> **2026-08-05 correction:** do not add an idle-only Turn In Place State
-> Controller family for the currently desired GASP-like Combat Strafe behavior.
-> Keep idle camera rotation upper-body/Aim-Offset-only. Use the moving
-> reorientation contract below instead.
+> **2026-08-05 final scope:** add an idle-only Combat Strafe Turn In Place
+> State Controller family. GASP rotation-break remains a reference for the
+> reselect/cooldown pattern only; it does not replace Idle TIP.
 
 TIP is explicitly deferred. Current desired behavior:
 
@@ -278,8 +278,13 @@ TIP is explicitly deferred. Current desired behavior:
 - If the body faces forward but the camera faces behind, pressing W causes body
   movement/turning.
 
-Future TIP must be a separate State Controller/Chooser family (or carefully scoped
-BranchIn family), not mixed into the existing moving Pivot logic.
+Idle TIP is a separate direct State Controller/Chooser family, not moving Pivot
+logic and not BranchIn. It uses `UseMM=false`, 90/180 left/right assets, an entry
+threshold (initially 65 degrees), lower exit threshold (initially 30 degrees),
+and quantized reselects only when left/right or 90/180 classification changes.
+During an active local Idle TIP, controller-yaw rotation is temporarily released
+so the authored root yaw owns the body turn. Movement, air/land, attack, dodge,
+and hit-react immediately preempt TIP.
 
 ## 10A. Combat Strafe moving reorientation / rotation-break (2026-08-05)
 
