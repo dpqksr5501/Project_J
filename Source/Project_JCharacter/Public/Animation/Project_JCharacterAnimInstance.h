@@ -1014,6 +1014,9 @@ public:
 	float GetThreadSafeStateControllerSelectedAnimationStartTime() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerPlaybackHoldElapsedTime() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeStateControllerSelectedAnimationBlendTime() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))

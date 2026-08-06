@@ -10,6 +10,7 @@
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -545,10 +546,42 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 			const bool bInTurnInPlace = AnimInst->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TurnInPlace;
 			if (bInTurnInPlace)
 			{
-				const FRotator CurrentRot = GetActorRotation();
-				const FRotator TargetRot = FRotator(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
-				const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, GetWorld()->GetDeltaSeconds(), 8.0f);
-				SetActorRotation(NewRot);
+				const UAnimationAsset* SelectedAnim = AnimInst->GetThreadSafeStateControllerSelectedAnimation();
+				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
+				{
+					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
+					const float DeltaTime = GetWorld()->GetDeltaSeconds();
+					const float PrevTime = FMath::Max(Elapsed - DeltaTime, 0.0f);
+					const float CurrTime = FMath::Min(Elapsed, AnimSeq->GetPlayLength());
+
+					FAnimExtractContext ExtractionContext(static_cast<double>(CurrTime));
+					const FTransform RootMotionTransform = AnimSeq->ExtractRootMotionFromRange(static_cast<double>(PrevTime), static_cast<double>(CurrTime), ExtractionContext);
+					const float RootYawDelta = RootMotionTransform.Rotator().Yaw;
+
+					if (FMath::Abs(RootYawDelta) > KINDA_SMALL_NUMBER)
+					{
+						AddActorWorldRotation(FRotator(0.0f, RootYawDelta, 0.0f));
+					}
+
+					if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+					{
+						const float FacingDelta = LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw : 0.0f;
+						const float TurnIdx = AnimInst->GetThreadSafeStateControllerTurnInPlaceIndex();
+						UE_LOG(LogProjectJPlayer, Display,
+							TEXT("StrafeTIPDiag: Index=%.0f Asset=%s Elapsed=%.3f/%.3f RootYawDelta=%.2f ActorYaw=%.1f ControlYaw=%.1f FacingDelta=%.1f EnableRootMotion=%s"),
+							TurnIdx, *AnimSeq->GetName(), Elapsed, AnimSeq->GetPlayLength(), RootYawDelta,
+							GetActorRotation().Yaw, Controller->GetControlRotation().Yaw,
+							FacingDelta, AnimSeq->bEnableRootMotion ? TEXT("true") : TEXT("false"));
+					}
+				}
+				else if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+				{
+					const float FacingDelta = LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw : 0.0f;
+					const float TurnIdx = AnimInst->GetThreadSafeStateControllerTurnInPlaceIndex();
+					UE_LOG(LogProjectJPlayer, Display,
+						TEXT("StrafeTIPDiag: Index=%.0f Asset=None ActorYaw=%.1f ControlYaw=%.1f FacingDelta=%.1f"),
+						TurnIdx, GetActorRotation().Yaw, Controller->GetControlRotation().Yaw, FacingDelta);
+				}
 			}
 		}
 	}

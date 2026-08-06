@@ -162,7 +162,7 @@ namespace
 			}
 		}
 
-		if (Data.LocomotionContext.bShouldTurnInPlace || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace)
+		if (Data.LocomotionContext.bShouldTurnInPlace)
 		{
 			return EProject_JStateControllerPresentationState::TurnInPlace;
 		}
@@ -340,7 +340,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 1.0f; // Left 090
 	}
-	else if (DeltaYawForTurn < -135.0f || DeltaYawForTurn <= -180.0f)
+	else if (DeltaYawForTurn < -135.0f)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 2.0f; // Left 180
 	}
@@ -348,7 +348,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 3.0f; // Right 090
 	}
-	else if (DeltaYawForTurn >= 135.0f && DeltaYawForTurn <= 180.0f)
+	else if (DeltaYawForTurn >= 135.0f)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 4.0f; // Right 180
 	}
@@ -1026,6 +1026,12 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnima
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.StartTime;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPlaybackHoldElapsedTime() const
+{
+	const double NowSeconds = FPlatformTime::Seconds();
+	return FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
+}
+
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendTime() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.BlendTime;
@@ -1540,10 +1546,10 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	switch (OneShot.PhaseFamily)
 	{
 	case EProject_JLocomotionPhaseFamily::Start:
+		OneShot.bRequested = OneShot.bEnabled;
+		break;
 	case EProject_JLocomotionPhaseFamily::Pivot:
 	case EProject_JLocomotionPhaseFamily::TurnInPlace:
-		// Start, Pivot, and TurnInPlace assets are combat-Strafe content;
-		// never request them for OrientToMovement where CharacterMovement handles facing.
 		OneShot.bRequested = OneShot.bEnabled &&
 			OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe;
 		break;

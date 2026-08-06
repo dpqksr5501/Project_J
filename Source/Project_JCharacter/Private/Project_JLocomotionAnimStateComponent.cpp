@@ -602,20 +602,30 @@ bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
-	// Orient-to-Movement turns the capsule directly toward the input direction.
-	// Executing a fixed forward-start oneshot during OTM fights CharacterMovement's facing update.
-	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
-	{
-		return false;
-	}
-
-	return
+	const bool bResult =
 		InKinematicContext.bHasMoveInput &&
 		MoveInputHeldTime <= DerivedStartInputHoldWindow &&
 		InKinematicContext.GroundSpeed <= DerivedStartMaxGroundSpeed &&
 		(InKinematicContext.bIsAccelerating || InKinematicContext.PredictedSpeedGain >= DerivedStartSpeedGainThreshold) &&
 		!bIsInAir &&
 		!IsLandingStateActive();
+
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && InKinematicContext.bHasMoveInput)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("IsStartingForContext: Result=%s HasInput=%s HeldTime=%.3f/%.3f Speed=%.1f/%.1f Accel=%s Gain=%.1f/%.1f Air=%s Landing=%s RotationMode=%d"),
+			bResult ? TEXT("true") : TEXT("false"),
+			InKinematicContext.bHasMoveInput ? TEXT("true") : TEXT("false"),
+			MoveInputHeldTime, DerivedStartInputHoldWindow,
+			InKinematicContext.GroundSpeed, DerivedStartMaxGroundSpeed,
+			InKinematicContext.bIsAccelerating ? TEXT("true") : TEXT("false"),
+			InKinematicContext.PredictedSpeedGain, DerivedStartSpeedGainThreshold,
+			bIsInAir ? TEXT("true") : TEXT("false"),
+			IsLandingStateActive() ? TEXT("true") : TEXT("false"),
+			static_cast<int32>(AuthContext.RotationMode));
+	}
+
+	return bResult;
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
