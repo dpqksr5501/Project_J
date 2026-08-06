@@ -1217,6 +1217,8 @@ public:
 	bool bStateControllerStartGaitCommitted = false;
 	EProject_JLocomotionGaitIntent StateControllerStopGaitForChooser = EProject_JLocomotionGaitIntent::Run;
 	bool bHasStateControllerStopGaitForChooser = false;
+	EProject_JLocomotionGaitIntent StateControllerLandGaitForChooser = EProject_JLocomotionGaitIntent::Run;
+	bool bHasStateControllerLandGaitForChooser = false;
 	bool bHasStateControllerFallOffForChooser = false;
 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;

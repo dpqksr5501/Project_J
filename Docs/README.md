@@ -5,7 +5,7 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 ## Documents
 
 - [Locomotion OTM & Offset Root Bone Bug Report (2026-08-06)](Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md)
-  - 비전투 Orient-to-Movement(OTM) 모드 이동 시 Offset Root Bone 오프셋 락 및 Start/Reface 원샷 간섭 버그 원인과 최종 C++ & AnimGraph 해결 내역 보고서.
+  - OTM 모드 Start 원샷, TurnInPlace 360도 스핀 및 초과 회전 Clamping, 착지 GaitIntent 잠금, sprint_land Shift 해제 시 모션매칭(PSD) 조기 인터럽트 수복 내역 종합 보고서.
 
 - [Moving Reorientation & TIP WorkLog (2026-08-05)](MovingReorientation_TIP_WorkLog_2026-08-05.md)
   - Moving Reorientation (Rotation Break) C++ 알고리즘, Chooser Reselect 조건, UBT 빌드 검증 및 세션 간 연속성 가이드.

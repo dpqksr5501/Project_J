@@ -560,7 +560,21 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 					if (FMath::Abs(RootYawDelta) > KINDA_SMALL_NUMBER)
 					{
-						AddActorWorldRotation(FRotator(0.0f, RootYawDelta, 0.0f));
+						const float FacingDelta = LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw : 0.0f;
+						float ClampedRootYawDelta = RootYawDelta;
+						if (RootYawDelta > 0.0f)
+						{
+							ClampedRootYawDelta = FMath::Min(RootYawDelta, FMath::Max(FacingDelta, 0.0f));
+						}
+						else if (RootYawDelta < 0.0f)
+						{
+							ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
+						}
+
+						if (FMath::Abs(ClampedRootYawDelta) > KINDA_SMALL_NUMBER)
+						{
+							AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
+						}
 					}
 
 					if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())

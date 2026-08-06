@@ -446,6 +446,26 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			? StateControllerStopGaitForChooser
 			: EProject_JLocomotionGaitIntent::Run;
 	}
+	const bool bEnteringStateControllerLand =
+		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+	if (bEnteringStateControllerLand)
+	{
+		StateControllerLandGaitForChooser = ThreadSafeData.Landing.bLandWasSprinting
+			? EProject_JLocomotionGaitIntent::Sprint
+			: (ThreadSafeData.Landing.bLandWasMoving ? EProject_JLocomotionGaitIntent::Run : EProject_JLocomotionGaitIntent::Walk);
+		bHasStateControllerLandGaitForChooser = true;
+	}
+	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToLand)
+	{
+		bHasStateControllerLandGaitForChooser = false;
+	}
+	if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand)
+	{
+		GaitIntentForChooser = bHasStateControllerLandGaitForChooser
+			? StateControllerLandGaitForChooser
+			: EProject_JLocomotionGaitIntent::Run;
+	}
 	StateControllerStanceForChooser = ThreadSafeData.OneShotPresentation.Stance;
 	StateControllerStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.StrafeDirection;
 	StateControllerPreviousStrafeDirectionForChooser = ThreadSafeData.OneShotPresentation.PreviousStrafeDirection;
@@ -1674,6 +1694,23 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	InOutOneShot.bTransitionAnimationAlmostComplete =
 		InOutOneShot.bEarlyTransitionWindowOpen || bReachedCompletion;
 
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() &&
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StateControllerLandDiag: LandWasSprinting=%s LandWasMoving=%s WantsSprint=%s HasMoveInput=%s DesiredState=%d Elapsed=%.3f/%.3f EarlyOpen=%s AlmostComp=%s Asset=%s"),
+			Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+			Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+			Data.Ground.bWantsSprint ? TEXT("true") : TEXT("false"),
+			Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+			static_cast<int32>(DesiredState),
+			Elapsed,
+			EffectivePlayableLength,
+			InOutOneShot.bEarlyTransitionWindowOpen ? TEXT("true") : TEXT("false"),
+			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"),
+			HeldAsset ? *HeldAsset->GetName() : TEXT("None"));
+	}
+
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bStartedNewPlaybackHold)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
@@ -1697,7 +1734,21 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
 	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
-	if ((bNaturalContinuation || bStillRequestingHeldTransition) && bHasPlayableTransitionAsset &&
+
+	// When sprint_land is held, if the landing component phase has finished (!bIsLanding)
+	// or if the user released sprint input (!bWantsSprint), interrupt the land one-shot
+	// early so Motion Matching (PSD_Run / PSD_Sprint_Cycle / PSD_Idle) takes over immediately.
+	bool bInterruptLandForMotionMatching = false;
+	if (StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand &&
+		DesiredState == EProject_JStateControllerPresentationState::LocomotionLoop)
+	{
+		if (!Data.Landing.bIsLanding || (Data.Landing.bLandWasSprinting && !Data.Ground.bWantsSprint))
+		{
+			bInterruptLandForMotionMatching = true;
+		}
+	}
+
+	if (!bInterruptLandForMotionMatching && (bNaturalContinuation || bStillRequestingHeldTransition) && bHasPlayableTransitionAsset &&
 		!InOutOneShot.bTransitionAnimationAlmostComplete)
 	{
 		InOutOneShot.PresentationState = StateControllerPlaybackHoldState;
