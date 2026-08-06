@@ -652,3 +652,15 @@ takes precedence: use `StateControllerInputFacingDeltaYawForChooser` until
 Project_J explicitly adopts Root Offset, Steering, and a visual-root rotation
 owner. Likewise, any earlier four-direction Strafe description is historical;
 the current native contract is F/B/LL/LR/RL/RR with static bias.
+
+### 2026-08-06 OTM vs Strafe Offset Root Bone & State Controller Final Policy
+
+1. **Orient-To-Movement (OTM) Policy**:
+   - `OffsetRootRotationMode` & `OffsetRootTranslationMode` return `Off` (0) during OTM (`RotationMode == OrientToMovement`). The node acts as a 100% pass-through without modifying the root bone, allowing `CharacterMovementComponent` (`bOrientRotationToMovement`) to drive capsule rotation without physics/visual fighting.
+   - `PhaseFamily::Start` and `PhaseFamily::Pivot` oneshots are suppressed during OTM (`OneShot.bRequested = false`). WASD movement inputs enter Motion Matching cycle (`PSD_Run_Cycle`) immediately for smooth 360-degree rotation.
+   - `PhaseFamily::Stop` oneshots (`M_Neutral_Run_Stop_F`) remain active during OTM for natural deceleration.
+
+2. **Combat Strafe & Turn In Place (TIP) Policy**:
+   - `OffsetRootRotationMode` returns `Interpolated` (2) during TIP and `Release` (3) otherwise.
+   - `TurnInPlaceSteeringAlpha` returns `1.0` during TIP and `0.0` otherwise.
+   - `PhaseFamily::Start`, `Pivot`, and `TurnInPlace` oneshots are active in Strafe mode.

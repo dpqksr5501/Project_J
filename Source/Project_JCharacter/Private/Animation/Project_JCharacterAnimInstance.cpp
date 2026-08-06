@@ -888,17 +888,24 @@ EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootRota
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
 	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
 	{
-		return static_cast<EOffsetRootBoneMode>(0); // Off
+		return EOffsetRootBoneMode::Release;
 	}
 
-	// Turn In Place phase ONLY: allow Steering/OffsetRootBone to absorb root rotation.
-	// For all normal OTM and Strafe locomotion/idle, return Release (3) to smoothly zero the offset!
+	// Orient-to-Movement: Release continuously clears any root rotation offset to 0,
+	// keeping the mesh perfectly centered on the capsule during OTM locomotion.
+	if (Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
+	{
+		return EOffsetRootBoneMode::Release;
+	}
+
+	// Combat Strafe TIP: allow Steering/OffsetRootBone to absorb procedural root rotation.
 	if (Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace)
 	{
-		return static_cast<EOffsetRootBoneMode>(2); // Interpolated
+		return EOffsetRootBoneMode::Interpolate;
 	}
 
-	return static_cast<EOffsetRootBoneMode>(3); // Release
+	// Combat Strafe non-TIP: smoothly release any residual offset back to zero.
+	return EOffsetRootBoneMode::Release;
 }
 
 EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationMode() const
@@ -906,9 +913,17 @@ EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTran
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
 	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
 	{
-		return static_cast<EOffsetRootBoneMode>(0); // Off
+		return EOffsetRootBoneMode::Release;
 	}
-	return Data.Input.bHasMoveInput ? static_cast<EOffsetRootBoneMode>(2) : static_cast<EOffsetRootBoneMode>(3); // Interpolated : Release
+
+	// OTM: Release continuously clears translation offset back to zero.
+	if (Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
+	{
+		return EOffsetRootBoneMode::Release;
+	}
+
+	// Combat Strafe: Interpolate while moving, Release while idle.
+	return Data.Input.bHasMoveInput ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationHalfLife() const
@@ -1462,16 +1477,17 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	switch (OneShot.PhaseFamily)
 	{
 	case EProject_JLocomotionPhaseFamily::Start:
+	case EProject_JLocomotionPhaseFamily::Pivot:
+		// Start and Pivot assets (including Reface Starts) are combat-Strafe content;
+		// never request them for OrientToMovement where CharacterMovement handles facing.
+		OneShot.bRequested = OneShot.bEnabled &&
+			OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+		break;
 	case EProject_JLocomotionPhaseFamily::Stop:
 	case EProject_JLocomotionPhaseFamily::Landing:
 	case EProject_JLocomotionPhaseFamily::JumpStart:
 	case EProject_JLocomotionPhaseFamily::Fall:
 		OneShot.bRequested = OneShot.bEnabled;
-		break;
-	case EProject_JLocomotionPhaseFamily::Pivot:
-		// Pivot assets are combat-Strafe content; never request them for OTM.
-		OneShot.bRequested = OneShot.bEnabled &&
-			OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe;
 		break;
 	default:
 		OneShot.bRequested = false;

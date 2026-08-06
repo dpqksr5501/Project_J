@@ -524,22 +524,21 @@ void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
-	const bool bRotationModeChanged = bUseControllerRotationYaw != bShouldUseCombatRotation;
-	bUseControllerRotationYaw = bShouldUseCombatRotation;
+	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
+		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
+	const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
+	const bool bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
+	bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
 
-	// The trajectory contains facing samples as well as positions. Re-seed it
-	// when ownership of character yaw changes so Pose Search does not compare a
-	// pre-combat forward trajectory with a combat strafe database (or vice versa).
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
 	{
 		MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
 	}
-
 }
 
 bool AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair() const

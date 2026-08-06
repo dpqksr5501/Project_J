@@ -522,11 +522,7 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	{
 		return EProject_JLocomotionPhaseFamily::Pivot;
 	}
-	if (GroundMotionMode == EProject_JGroundMotionMode::Start)
-	{
-		return EProject_JLocomotionPhaseFamily::Start;
-	}
-	if (GroundMotionMode != EProject_JGroundMotionMode::Locomotion && Context.bIsStarting)
+	if (Context.bIsStarting)
 	{
 		return EProject_JLocomotionPhaseFamily::Start;
 	}
@@ -536,17 +532,11 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
 	const bool bIsCombatStrafe =
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
-	// Pivot is combat-Strafe only, but a TurnRedirect is a separate moving-turn
-	// policy.  Neutral Run_Turn assets may be used by Orient-to-Movement, where
-	// DesiredFacingDeltaYaw describes the requested WASD heading change.
+	// TurnRedirect triggers when the player changes WASD input heading (e.g. W -> D).
+	// Mouse camera rotation while holding W does not change MoveInputTurnAngle, allowing
+	// smooth Orient-To-Movement capsule turning in Motion Matching Cycle phase.
 	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
-		(bIsCombatStrafe
-			// In Strafe, actor facing intentionally remains camera-facing. A held A/D
-			// input therefore has a permanent +/-90 desired-facing delta and must not
-			// pin the character in TurnRedirect. Only an actual input-direction change
-			// starts the redirect; phase stability keeps it briefly before Cycle.
-			? FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold
-			: FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnAngleThreshold);
+		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold;
 	if (bShouldUseTurnRedirect)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;
@@ -581,8 +571,7 @@ bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
 	const bool bCurrentVelocityMoving = InKinematicContext.GroundSpeed > DerivedMovingSpeedThreshold;
 	const bool bFutureVelocityMoving = FutureSpeed > DerivedMovingSpeedThreshold;
 	const bool bSustainedLocomotion = bCurrentVelocityMoving &&
-		bFutureVelocityMoving &&
-		InKinematicContext.bIsAccelerating;
+		(InKinematicContext.bHasMoveInput || bFutureVelocityMoving);
 	// The initial Start frame commonly has near-zero physical velocity.  Preserve
 	// that valid start request as long as the input/trajectory predicts movement.
 	const bool bStartingFromRest = InKinematicContext.bHasMoveInput &&
