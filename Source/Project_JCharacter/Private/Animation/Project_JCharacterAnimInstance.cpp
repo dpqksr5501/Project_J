@@ -150,6 +150,8 @@ namespace
 					: EProject_JStateControllerPresentationState::TransitionToIdle;
 			case EProject_JLocomotionPhaseFamily::Stop:
 				return EProject_JStateControllerPresentationState::TransitionToIdle;
+			case EProject_JLocomotionPhaseFamily::TurnInPlace:
+				return EProject_JStateControllerPresentationState::TurnInPlace;
 			case EProject_JLocomotionPhaseFamily::Landing:
 				return EProject_JStateControllerPresentationState::TransitionToLand;
 			case EProject_JLocomotionPhaseFamily::JumpStart:
@@ -158,6 +160,11 @@ namespace
 			default:
 				break;
 			}
+		}
+
+		if (Data.LocomotionContext.bShouldTurnInPlace || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace)
+		{
+			return EProject_JStateControllerPresentationState::TurnInPlace;
 		}
 
 		return Data.LocomotionContext.bIsMotionMatchingMoving
@@ -170,7 +177,8 @@ namespace
 		return State == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
 			State == EProject_JStateControllerPresentationState::TransitionToIdle ||
 			State == EProject_JStateControllerPresentationState::TransitionToInAir ||
-			State == EProject_JStateControllerPresentationState::TransitionToLand;
+			State == EProject_JStateControllerPresentationState::TransitionToLand ||
+			State == EProject_JStateControllerPresentationState::TurnInPlace;
 	};
 
 	auto IsNaturalLoopContinuation = [](const EProject_JStateControllerPresentationState TransitionState,
@@ -179,12 +187,17 @@ namespace
 		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
 				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
+				(CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
+				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace)) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
 				CandidateState == EProject_JStateControllerPresentationState::InAirLoop) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToLand &&
 				(CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop ||
-				 CandidateState == EProject_JStateControllerPresentationState::IdleLoop));
+				 CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
+				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace)) ||
+			(TransitionState == EProject_JStateControllerPresentationState::TurnInPlace &&
+				(CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
+				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace));
 	};
 
 	bool ShouldStateControllerPresentationLoop(const EProject_JStateControllerPresentationState PresentationState)
@@ -195,6 +208,7 @@ namespace
 		case EProject_JStateControllerPresentationState::LocomotionLoop:
 		case EProject_JStateControllerPresentationState::InAirLoop:
 			return true;
+		case EProject_JStateControllerPresentationState::TurnInPlace:
 		default:
 			return false;
 		}
@@ -322,6 +336,27 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
 	RotationModeForChooser = ThreadSafeData.LocomotionContext.RotationMode;
 	GaitIntentForChooser = ThreadSafeData.LocomotionContext.GaitIntent;
+	const float DeltaYawForTurn = ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw;
+	if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn < -45.0f)
+	{
+		StateControllerTurnInPlaceIndexForChooser = 1.0f; // Left 090
+	}
+	else if (DeltaYawForTurn < -135.0f || DeltaYawForTurn <= -180.0f)
+	{
+		StateControllerTurnInPlaceIndexForChooser = 2.0f; // Left 180
+	}
+	else if (DeltaYawForTurn >= 45.0f && DeltaYawForTurn < 135.0f)
+	{
+		StateControllerTurnInPlaceIndexForChooser = 3.0f; // Right 090
+	}
+	else if (DeltaYawForTurn >= 135.0f && DeltaYawForTurn <= 180.0f)
+	{
+		StateControllerTurnInPlaceIndexForChooser = 4.0f; // Right 180
+	}
+	else
+	{
+		StateControllerTurnInPlaceIndexForChooser = 0.0f;
+	}
 	const bool bEnteringStateControllerStart =
 		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
 		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion;
@@ -866,7 +901,8 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldAbortTur
 	return !Data.OneShotPresentation.bEnabled ||
 		Data.Air.bIsInAir ||
 		Data.Input.bHasMoveInput ||
-		Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold();
+		Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold() ||
+		!Data.LocomotionContext.bShouldTurnInPlace;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceSteeringAlpha() const
@@ -875,6 +911,31 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceSt
 	return Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace
 		? 1.0f
 		: 0.0f;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceIndex() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	const float DeltaYaw = Data.LocomotionContext.DesiredFacingDeltaYaw;
+
+	if (DeltaYaw >= -135.0f && DeltaYaw < -45.0f)
+	{
+		return 1.0f; // Left 090
+	}
+	if (DeltaYaw < -135.0f || DeltaYaw <= -180.0f)
+	{
+		return 2.0f; // Left 180
+	}
+	if (DeltaYaw >= 45.0f && DeltaYaw < 135.0f)
+	{
+		return 3.0f; // Right 090
+	}
+	if (DeltaYaw >= 135.0f && DeltaYaw <= 180.0f)
+	{
+		return 4.0f; // Right 180
+	}
+
+	return 0.0f;
 }
 
 FRotator UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDesiredFacingRotator() const
@@ -910,20 +971,9 @@ EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootRota
 
 EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationMode() const
 {
-	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
-	{
-		return EOffsetRootBoneMode::Release;
-	}
-
-	// OTM: Release continuously clears translation offset back to zero.
-	if (Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
-	{
-		return EOffsetRootBoneMode::Release;
-	}
-
-	// Combat Strafe: Interpolate while moving, Release while idle.
-	return Data.Input.bHasMoveInput ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
+	// Always return Release so the visual mesh root position stays 100% centered
+	// on the physical capsule cylinder without off-center translation drifting.
+	return EOffsetRootBoneMode::Release;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationHalfLife() const
@@ -1465,7 +1515,8 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	const bool bStrafeDirectionChanged =
 		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		PreviousData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
-		OneShot.StrafeDirection != PreviousData.OneShotPresentation.StrafeDirection;
+		OneShot.StrafeDirection != PreviousData.OneShotPresentation.StrafeDirection &&
+		(OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot || Data.Input.bSharpTurnRequested);
 
 	OneShot.bLocomotionSemanticStateChanged = bCanCompareStateControllerContext &&
 		(bGaitChanged || bRotationModeChanged || bLocomotionStanceChanged || bStrafeDirectionChanged);
@@ -1478,7 +1529,8 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	{
 	case EProject_JLocomotionPhaseFamily::Start:
 	case EProject_JLocomotionPhaseFamily::Pivot:
-		// Start and Pivot assets (including Reface Starts) are combat-Strafe content;
+	case EProject_JLocomotionPhaseFamily::TurnInPlace:
+		// Start, Pivot, and TurnInPlace assets are combat-Strafe content;
 		// never request them for OrientToMovement where CharacterMovement handles facing.
 		OneShot.bRequested = OneShot.bEnabled &&
 			OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe;
@@ -1576,12 +1628,22 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const bool bHeldFallOff =
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
 		(Data.Air.bIsFallOffStart || InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall);
+	const bool bHeldTurnInPlace =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace;
 	const float FallOffMaxHoldTime = FMath::Max(
 		Data.MotionMatchingSearchPolicy.ExperimentalFallOffMaxHoldTime,
 		0.0f);
-	const float EffectivePlayableLength = bHeldFallOff && FallOffMaxHoldTime > KINDA_SMALL_NUMBER
-		? FMath::Min(AuthoredPlayableLength, FallOffMaxHoldTime)
-		: AuthoredPlayableLength;
+	const float TurnInPlaceMaxHoldTime = 0.5f;
+
+	float EffectivePlayableLength = AuthoredPlayableLength;
+	if (bHeldFallOff && FallOffMaxHoldTime > KINDA_SMALL_NUMBER)
+	{
+		EffectivePlayableLength = FMath::Min(AuthoredPlayableLength, FallOffMaxHoldTime);
+	}
+	else if (bHeldTurnInPlace)
+	{
+		EffectivePlayableLength = FMath::Min(AuthoredPlayableLength, TurnInPlaceMaxHoldTime);
+	}
 	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
 	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
 	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);

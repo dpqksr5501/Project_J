@@ -145,5 +145,6 @@ enum class EProject_JStateControllerPresentationState : uint8
 	TransitionToIdle,
 	TransitionToInAir,
 	InAirLoop,
-	TransitionToLand
+	TransitionToLand,
+	TurnInPlace
 };

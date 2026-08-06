@@ -739,6 +739,13 @@ public:
 	float StateControllerInputFacingDeltaYawForChooser = 0.0f;
 
 	/**
+	 * 1.0 (L090), 2.0 (L180), 3.0 (R090), 4.0 (R180) turn index mirror published
+	 * on Game Thread before Chooser table evaluation.
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
+	float StateControllerTurnInPlaceIndexForChooser = 0.0f;
+
+	/**
 	 * Signed yaw from character facing to the horizontal velocity sampled when a
 	 * Stop presentation begins. Negative values are left and positive values are
 	 * right. It remains latched through that Stop so deceleration cannot change
@@ -903,6 +910,10 @@ public:
 	/** Alpha gate for the Blend Stack TIP Steering node (1.0 during TIP, 0.0 otherwise). */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeStateControllerTurnInPlaceSteeringAlpha() const;
+
+	/** Returns 1.0 (Left 90), 2.0 (Left 180), 3.0 (Right 90), 4.0 (Right 180) index for CHT_Player_Strafe_TurnInPlace Chooser table. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerTurnInPlaceIndex() const;
 
 	/** Desired Facing Rotator consumed by Steering Target Orientation pin in the AnimGraph. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))

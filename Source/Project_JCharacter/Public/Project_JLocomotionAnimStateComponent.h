@@ -470,7 +470,7 @@ public:
 	float TurnRedirectReselectCooldown = 0.10f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float DerivedTurnInPlaceAngleThreshold = 65.0f;
+	float DerivedTurnInPlaceAngleThreshold = 45.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedSpinTransitionAngleThreshold = 135.0f;

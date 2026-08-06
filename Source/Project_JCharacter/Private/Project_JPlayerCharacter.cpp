@@ -314,6 +314,8 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
 	}
+
+	ApplyCombatRotationMode(IsCombatModeActive());
 }
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
@@ -526,6 +528,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
 	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
 		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
+
 	const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
 	const bool bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
 	bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
@@ -533,6 +536,21 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
+	}
+
+	if (bShouldUseCombatRotation && !bIsMovingInCombat && Controller)
+	{
+		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
+		{
+			const bool bInTurnInPlace = AnimInst->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TurnInPlace;
+			if (bInTurnInPlace)
+			{
+				const FRotator CurrentRot = GetActorRotation();
+				const FRotator TargetRot = FRotator(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
+				const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, GetWorld()->GetDeltaSeconds(), 8.0f);
+				SetActorRotation(NewRot);
+			}
+		}
 	}
 
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)

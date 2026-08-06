@@ -469,6 +469,23 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		return;
 	}
 
+	const bool bKeepTurnInPlace =
+		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace &&
+		!KinematicContext.bHasMoveInput &&
+		KinematicContext.GroundSpeed <= IdleSpeedThreshold &&
+		FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) > 5.0f &&
+		DerivedPhaseFamilyElapsedTime < 1.5f &&
+		!bIsInAir &&
+		!IsLandingStateActive();
+
+	if (bKeepTurnInPlace)
+	{
+		InOutContext.PhaseFamily = PreviousDerivedPhaseFamily;
+		InOutContext.bShouldTurnInPlace = true;
+		DerivedPhaseFamilyElapsedTime += DeltaTime;
+		return;
+	}
+
 	PreviousDerivedPhaseFamily = InOutContext.PhaseFamily;
 	DerivedPhaseFamilyElapsedTime = 0.0f;
 }
