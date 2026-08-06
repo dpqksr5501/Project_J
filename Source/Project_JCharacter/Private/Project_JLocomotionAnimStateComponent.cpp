@@ -434,7 +434,7 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	FProject_JDerivedLocomotionContext Context;
 	Context.bIsMoving = IsMovingForContext(InKinematicContext);
 	Context.bIsMotionMatchingMoving = IsMotionMatchingMovingForContext(InKinematicContext);
-	Context.bIsStarting = IsStartingForContext(InKinematicContext);
+	Context.bIsStarting = IsStartingForContext(AuthContext, InKinematicContext);
 	Context.bIsPivoting = IsPivotingForContext(AuthContext, InKinematicContext);
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
@@ -592,8 +592,17 @@ bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
 	return bSustainedLocomotion || bStartingFromRest;
 }
 
-bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
+bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
+	// Orient-to-Movement turns the capsule directly toward the input direction.
+	// Executing a fixed forward-start oneshot during OTM fights CharacterMovement's facing update.
+	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
+	{
+		return false;
+	}
+
 	return
 		InKinematicContext.bHasMoveInput &&
 		MoveInputHeldTime <= DerivedStartInputHoldWindow &&

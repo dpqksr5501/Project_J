@@ -854,6 +854,78 @@ EProject_JStateControllerPresentationState UProject_JCharacterAnimInstance::GetT
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.PresentationState;
 }
 
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldTurnInPlace() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.LocomotionContext.bShouldTurnInPlace;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldAbortTurnInPlace() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return !Data.OneShotPresentation.bEnabled ||
+		Data.Air.bIsInAir ||
+		Data.Input.bHasMoveInput ||
+		Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold();
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceSteeringAlpha() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace
+		? 1.0f
+		: 0.0f;
+}
+
+FRotator UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDesiredFacingRotator() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return FRotator(0.0f, Data.LocomotionContext.DesiredFacingDeltaYaw, 0.0f);
+}
+
+EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootRotationMode() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
+	{
+		return static_cast<EOffsetRootBoneMode>(0); // Off
+	}
+
+	// Turn In Place phase ONLY: allow Steering/OffsetRootBone to absorb root rotation.
+	// For all normal OTM and Strafe locomotion/idle, return Release (3) to smoothly zero the offset!
+	if (Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace)
+	{
+		return static_cast<EOffsetRootBoneMode>(2); // Interpolated
+	}
+
+	return static_cast<EOffsetRootBoneMode>(3); // Release
+}
+
+EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationMode() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
+	{
+		return static_cast<EOffsetRootBoneMode>(0); // Off
+	}
+	return Data.Input.bHasMoveInput ? static_cast<EOffsetRootBoneMode>(2) : static_cast<EOffsetRootBoneMode>(3); // Interpolated : Release
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationHalfLife() const
+{
+	return 0.1f;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationRadius() const
+{
+	return 30.0f;
+}
+
+void UProject_JCharacterAnimInstance::OnStateEntry_TurnInPlace(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+{
+	// Empty stub for Blueprint State Machine On Entry Binding
+}
+
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIdleBreakEnabled() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bIdleBreakEnabled;

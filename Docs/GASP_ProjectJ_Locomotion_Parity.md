@@ -1,5 +1,12 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+> **2026-08-06 OTM & Offset Root Bone addendum:** 
+> OTM (Orient to Movement) non-combat locomotion during WASD movement caused severe mesh/capsule rotation conflicts when combined with procedural Offset Root Bone holds or direction-fixed Start/Reface oneshots.
+> **Key Decisions:**
+> 1. `ABP_Humanoid_Master` AnimGraph's `Offset Root Bone` node is disconnected/disabled for OTM to prevent procedural root rotation locks fighting CharacterMovement's facing updates.
+> 2. `GetThreadSafeOffsetRootRotationMode()` returns `Release` (3) for all locomotion except pure Idle TIP.
+> 3. C++ `IsStartingForContext` and `IsPivotingForContext` now suppress fixed-direction Start/Reface oneshots during OTM (`AuthContext.RotationMode != Strafe`), allowing immediate 360-degree capsule and mesh turning straight into Motion Matching Cycles.
+
 > **2026-08-05 Combat Strafe addendum (takes precedence over historical
 > deferred notes below):** GASP rotation-break has now been reviewed. It is a
 > moving Start/Pivot re-entry mechanism. Project_J will additionally implement
@@ -9,15 +16,6 @@
 > moving Start/Pivot remains its own trajectory-direction path.
 > `UseMM=false` remains the direct-one-shot policy for every current one-shot;
 > BranchIn is deferred.
-
-> 작성일: 2026-08-02  
-> 범위: 현재 검토한 GASP `SandboxCharacter_CMC_AnimBP` 자료와 Project_J의 비전투 OTM locomotion, Motion Matching, Experimental State Controller 경로.  
-> 이 문서는 **구현 사실**과 **추가 확인이 필요한 GASP 세부 동작**을 분리한다. 에셋 연결값은 Unreal Editor에서 최종 확인한다.
-
-## 1. 결론과 작업 경계
-
-Project_J는 GASP를 Blueprint 그대로 복사하지 않는다. 게임플레이 및 locomotion 사실은 C++에서 계산하고, AnimInstance는 게임 스레드 snapshot을 proxy로 복사하며, ABP는 thread-safe getter로 포즈만 조립한다.
-
 현재 OTM Run/Sprint Start는 State Controller의 direct Blend Stack 경로로 동작한다. 다음 대상인 **OTM Reface Start**는 GASP의 `Target Rotation Delta` 기반 asset 선택만 추가하며, Combat Strafe Pivot, rotation-break, Steering, TIP를 함께 켜지 않는다.
 
 ```text

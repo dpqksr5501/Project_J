@@ -13,6 +13,7 @@
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Combat/Project_JCombatTypes.h"
 #include "Project_JLocomotionAnimTypes.h"
+#include "BoneControllers/AnimNode_OffsetRootBone.h"
 #include "Project_JCharacterAnimInstance.generated.h"
 
 class ACharacter;
@@ -890,6 +891,41 @@ public:
 	/** GASP State Alias equivalent: Ground Locomotion-group -> TransitionToIdle. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeStateControllerWantsIdle() const;
+
+	/** Dedicated Combat-Strafe Idle TIP entry gate. Do not substitute OneShotRequested here. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerShouldTurnInPlace() const;
+
+	/** Immediate TIP cancellation for movement, falling, or a gameplay action. Normal completion is handled separately. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerShouldAbortTurnInPlace() const;
+
+	/** Alpha gate for the Blend Stack TIP Steering node (1.0 during TIP, 0.0 otherwise). */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerTurnInPlaceSteeringAlpha() const;
+
+	/** Desired Facing Rotator consumed by Steering Target Orientation pin in the AnimGraph. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	FRotator GetThreadSafeStateControllerDesiredFacingRotator() const;
+
+	/** Offset Root Bone Rotation Mode consumed by AnimGraph Offset Root Bone node. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
+	EOffsetRootBoneMode GetThreadSafeOffsetRootRotationMode() const;
+
+	/** Offset Root Bone Translation Mode consumed by AnimGraph Offset Root Bone node. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
+	EOffsetRootBoneMode GetThreadSafeOffsetRootTranslationMode() const;
+
+	/** Offset Root Bone Translation HalfLife consumed by AnimGraph Offset Root Bone node. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
+	float GetThreadSafeOffsetRootTranslationHalfLife() const;
+
+	/** Offset Root Bone Translation Radius consumed by AnimGraph Offset Root Bone node. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
+	float GetThreadSafeOffsetRootTranslationRadius() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Animation|State Controller")
+	void OnStateEntry_TurnInPlace(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 	/** GASP Grounded Conduit condition. Kept separate from idle/locomotion aliases. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))

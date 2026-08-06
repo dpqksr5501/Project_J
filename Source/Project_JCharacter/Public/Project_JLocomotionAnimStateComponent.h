@@ -229,7 +229,7 @@ private:
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsMotionMatchingMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
-	bool IsStartingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool IsStartingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldTurnInPlaceForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldSpinTransitionForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
