@@ -187,8 +187,7 @@ namespace
 		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
 				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-				(CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
-				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace)) ||
+				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
 				CandidateState == EProject_JStateControllerPresentationState::InAirLoop) ||
 			(TransitionState == EProject_JStateControllerPresentationState::TransitionToLand &&
@@ -986,6 +985,17 @@ float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationRadius(
 	return 30.0f;
 }
 
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDisableLegIK() const
+{
+	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return Data.Air.bIsInAir;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerLegIKAlpha() const
+{
+	return GetThreadSafeStateControllerDisableLegIK() ? 0.0f : 1.0f;
+}
+
 void UProject_JCharacterAnimInstance::OnStateEntry_TurnInPlace(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
 	// Empty stub for Blueprint State Machine On Entry Binding
@@ -1147,7 +1157,9 @@ float UProject_JCharacterAnimInstance::GetThreadSafeFootPlacementAlpha() const
 
 float UProject_JCharacterAnimInstance::GetThreadSafeLegIKAlpha() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().ProceduralIK.LegIKAlpha;
+	const float BaseLegIKAlpha = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().ProceduralIK.LegIKAlpha;
+	const float StateControllerAlpha = GetThreadSafeStateControllerLegIKAlpha();
+	return FMath::Min(BaseLegIKAlpha, StateControllerAlpha);
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeFullBodyMontageWeight() const

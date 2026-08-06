@@ -935,6 +935,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
 	float GetThreadSafeOffsetRootTranslationRadius() const;
 
+	/** Returns true when Foot IK / Leg IK should be disabled (e.g. during TurnInPlace, falling, or airborne transitions). */
+	UFUNCTION(BlueprintPure, Category = "Animation|Leg IK", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerDisableLegIK() const;
+
+	/** Returns 0.0 when Leg IK should be disabled (e.g. TurnInPlace), and 1.0 when Leg IK is active. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Leg IK", meta = (BlueprintThreadSafe))
+	float GetThreadSafeStateControllerLegIKAlpha() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Animation|State Controller")
 	void OnStateEntry_TurnInPlace(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
