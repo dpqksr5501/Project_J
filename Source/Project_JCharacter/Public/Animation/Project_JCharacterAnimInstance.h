@@ -292,6 +292,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float DesiredFacingDeltaYaw = 0.0f;
 
+	/** Absolute world-space facing yaw. Keep this distinct from DesiredFacingDeltaYaw for Steering. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float DesiredFacingYaw = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsMoving = false;
 
@@ -486,6 +490,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 	/** Increments only when the cached chooser result/context changes. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	int32 SelectionRevision = 0;
+
+	/** One-frame command for the State Machine Blend Stack On Update binding. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	bool bForceBlendNextUpdate = false;
 
 	/**
 	 * Asset-progress approximation for the logical State Controller. It is derived
@@ -1016,6 +1024,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeStateControllerPlaybackHoldElapsedTime() const;
 
+	/** Monotonic chooser result revision. A changing value means C++ requested a new Blend Stack entry. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	int32 GetThreadSafeStateControllerSelectionRevision() const;
+
+	/** True only on the update immediately following a new State Controller chooser selection. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeStateControllerShouldForceBlend() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeStateControllerSelectedAnimationBlendTime() const;
 
@@ -1198,6 +1214,8 @@ public:
 	EProject_JStateControllerStrafeDirection CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 	EProject_JStateControllerStrafeDirection CachedStateControllerPreviousStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 	EProject_JStateControllerFoot CachedStateControllerOneShotFoot = EProject_JStateControllerFoot::None;
+	/** TIP chooser row (L90/L180/R90/R180) last used by the cached direct asset. */
+	float CachedStateControllerTurnInPlaceIndex = 0.0f;
 	bool bCachedStateControllerCombatMode = false;
 	bool bCachedStateControllerFallOff = false;
 	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn. */
@@ -1228,6 +1246,8 @@ public:
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
 	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
+	mutable bool bStateControllerForceTurnInPlaceReselect = false;
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 

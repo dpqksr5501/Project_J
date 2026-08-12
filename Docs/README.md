@@ -4,6 +4,9 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [Combat Strafe Turn In Place Implementation (2026-08-12)](CombatStrafe_TurnInPlace_Implementation_2026-08-12.md)
+  - Combat Strafe Idle TIP의 C++/State Controller/Chooser/Blend Stack/Steering 구조, 연속 재생 Force Blend, MM fallback 문제와 해결, 에디터 저작 및 디버그 절차.
+
 - [Locomotion OTM & Offset Root Bone Bug Report (2026-08-06)](Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md)
   - OTM 모드 Start 원샷, TurnInPlace 360도 스핀 및 초과 회전 Clamping, 착지 GaitIntent 잠금, sprint_land Shift 해제 시 모션매칭(PSD) 조기 인터럽트 수복 내역 종합 보고서.
 

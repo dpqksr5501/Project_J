@@ -336,7 +336,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	RotationModeForChooser = ThreadSafeData.LocomotionContext.RotationMode;
 	GaitIntentForChooser = ThreadSafeData.LocomotionContext.GaitIntent;
 	const float DeltaYawForTurn = ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw;
-	if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn < -45.0f)
+	if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn <= -30.0f)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 1.0f; // Left 090
 	}
@@ -344,7 +344,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 2.0f; // Left 180
 	}
-	else if (DeltaYawForTurn >= 45.0f && DeltaYawForTurn < 135.0f)
+	else if (DeltaYawForTurn >= 30.0f && DeltaYawForTurn < 135.0f)
 	{
 		StateControllerTurnInPlaceIndexForChooser = 3.0f; // Right 090
 	}
@@ -917,10 +917,14 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldTurnInPl
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldAbortTurnInPlace() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	// Do not use GenericMoveInputSpeedThreshold here.  TIP itself is allowed to
+	// start during the final stationary braking window (IdleSpeedThreshold), so
+	// the generic 3 cm/s movement threshold used to abort the state immediately.
+	// The locomotion component is the single source of truth for whether we are
+	// still stationary enough to finish this direct animation.
 	return !Data.OneShotPresentation.bEnabled ||
 		Data.Air.bIsInAir ||
 		Data.Input.bHasMoveInput ||
-		Data.Movement.GroundSpeed > GetEffectiveGenericMoveInputSpeedThreshold() ||
 		!Data.LocomotionContext.bShouldTurnInPlace;
 }
 
@@ -937,7 +941,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceIn
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
 	const float DeltaYaw = Data.LocomotionContext.DesiredFacingDeltaYaw;
 
-	if (DeltaYaw >= -135.0f && DeltaYaw < -45.0f)
+	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
 	{
 		return 1.0f; // Left 090
 	}
@@ -945,7 +949,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceIn
 	{
 		return 2.0f; // Left 180
 	}
-	if (DeltaYaw >= 45.0f && DeltaYaw < 135.0f)
+	if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
 	{
 		return 3.0f; // Right 090
 	}
@@ -960,7 +964,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceIn
 FRotator UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDesiredFacingRotator() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	return FRotator(0.0f, Data.LocomotionContext.DesiredFacingDeltaYaw, 0.0f);
+	return FRotator(0.0f, Data.LocomotionContext.DesiredFacingYaw, 0.0f);
 }
 
 EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootRotationMode() const
@@ -1050,6 +1054,16 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPlaybackHoldE
 {
 	const double NowSeconds = FPlatformTime::Seconds();
 	return FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
+}
+
+int32 UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectionRevision() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectionRevision;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldForceBlend() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bForceBlendNextUpdate;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendTime() const
@@ -1459,6 +1473,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.LocomotionContext.RotationMode = AnimState->AuthoritativeContext.RotationMode;
 	Data.LocomotionContext.PhaseFamily = AnimState->DerivedLocomotionContext.PhaseFamily;
 	Data.LocomotionContext.DesiredFacingDeltaYaw = AnimState->KinematicContext.DesiredFacingDeltaYaw;
+	Data.LocomotionContext.DesiredFacingYaw = AnimState->KinematicContext.DesiredFacingYaw;
 	Data.LocomotionContext.bIsMoving = AnimState->DerivedLocomotionContext.bIsMoving;
 	Data.LocomotionContext.bIsMotionMatchingMoving = AnimState->DerivedLocomotionContext.bIsMotionMatchingMoving;
 	Data.LocomotionContext.bIsStarting = AnimState->DerivedLocomotionContext.bIsStarting;
@@ -1594,6 +1609,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	EProject_JStateControllerPresentationState DesiredState =
 		ResolveStateControllerPresentationState(Data, InOutOneShot);
 	const double NowSeconds = FPlatformTime::Seconds();
+	bStateControllerForceTurnInPlaceReselect = false;
 
 	// GASP leaves Locomotion Loop as soon as its trajectory based IsMoving
 	// predicate becomes false.  Do the same even while the physical Character
@@ -1666,22 +1682,19 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const bool bHeldFallOff =
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
 		(Data.Air.bIsFallOffStart || InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall);
-	const bool bHeldTurnInPlace =
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace;
 	const float FallOffMaxHoldTime = FMath::Max(
 		Data.MotionMatchingSearchPolicy.ExperimentalFallOffMaxHoldTime,
 		0.0f);
-	const float TurnInPlaceMaxHoldTime = 0.5f;
 
 	float EffectivePlayableLength = AuthoredPlayableLength;
 	if (bHeldFallOff && FallOffMaxHoldTime > KINDA_SMALL_NUMBER)
 	{
 		EffectivePlayableLength = FMath::Min(AuthoredPlayableLength, FallOffMaxHoldTime);
 	}
-	else if (bHeldTurnInPlace)
-	{
-		EffectivePlayableLength = FMath::Min(AuthoredPlayableLength, TurnInPlaceMaxHoldTime);
-	}
+	// TIP is a direct authored one-shot. Do not truncate it at a generic fixed
+	// duration: the Blend Stack must retain it until its own completion (or an
+	// authored early-transition window) so the root turn and planted feet finish
+	// on the same animation timeline.
 	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
 	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
 	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
@@ -1734,6 +1747,28 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
 	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
+	// GASP does not wait for a long TIP asset to finish before trying another
+	// stationary turn.  At 0.75 seconds it re-enters the logical transition
+	// state when there is still a valid TIP request.  Reset our presentation
+	// clock and force a chooser evaluation even when the next entry is the same
+	// 90-degree animation; the Blend Stack On Update binding then consumes the
+	// resulting one-frame Force Blend pulse.
+	constexpr float TurnInPlaceReentryDelay = 0.75f;
+	const bool bShouldReenterTurnInPlace =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		Data.LocomotionContext.bShouldTurnInPlace &&
+		Elapsed >= TurnInPlaceReentryDelay;
+	if (bShouldReenterTurnInPlace)
+	{
+		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
+		bStateControllerForceTurnInPlaceReselect = true;
+		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
+		InOutOneShot.TransitionElapsedTime = 0.0f;
+		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
+		InOutOneShot.bTransitionAnimationAlmostComplete = false;
+		return;
+	}
 
 	// When sprint_land is held, if the landing component phase has finished (!bIsLanding)
 	// or if the user released sprint input (!bWantsSprint), interrupt the land one-shot
@@ -1780,6 +1815,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 	OneShot.bShouldOverrideMotionMatching = false;
 	OneShot.bSelectedAnimationShouldLoop = ShouldStateControllerPresentationLoop(OneShot.PresentationState);
 	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
+	OneShot.bForceBlendNextUpdate = false;
 
 	const UProject_JLocomotionProfile* Profile = GetLocomotionProfile();
 	UChooserTable* ChooserTable = Profile
@@ -1794,6 +1830,22 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		return;
 	}
 
+	// TIP is selected by a float chooser index rather than the generic Strafe
+	// direction columns.  GASP permits a tagged TIP to re-enter after 0.75 s;
+	// this lets a continuing mouse turn upgrade the next direct asset (for
+	// example 90 -> 180) without waiting for a full two-second clip to end.
+	// We only change the chooser result when its direction bucket changes.  A
+	// same-asset restart additionally needs the AnimGraph's Force Blend path,
+	// because a Blend Stack does not restart an identical asset by itself.
+	// Index zero means the remaining yaw is below the selection threshold; keep
+	// the already selected one-shot alive until its authored completion.
+	const bool bTurnInPlaceIndexChanged =
+		OneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		(bStateControllerForceTurnInPlaceReselect || OneShot.TransitionElapsedTime >= 0.75f) &&
+		StateControllerTurnInPlaceIndexForChooser > 0.0f &&
+		!FMath::IsNearlyEqual(
+			CachedStateControllerTurnInPlaceIndex,
+			StateControllerTurnInPlaceIndexForChooser);
 	const bool bContextChanged =
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
@@ -1804,6 +1856,8 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		(OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 			CachedStateControllerPreviousStrafeDirection != OneShot.PreviousStrafeDirection) ||
 		CachedStateControllerOneShotFoot != OneShot.Foot ||
+		bStateControllerForceTurnInPlaceReselect ||
+		bTurnInPlaceIndexChanged ||
 		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
 		bCachedStateControllerFallOff != bStateControllerFallOffForChooser;
 
@@ -1882,12 +1936,17 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerStrafeDirection = OneShot.StrafeDirection;
 		CachedStateControllerPreviousStrafeDirection = OneShot.PreviousStrafeDirection;
 		CachedStateControllerOneShotFoot = OneShot.Foot;
+		CachedStateControllerTurnInPlaceIndex = StateControllerTurnInPlaceIndexForChooser;
 		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
 		bCachedStateControllerFallOff = bStateControllerFallOffForChooser;
 		CachedStateControllerSelectedAnimation = SelectedAsset;
 		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
 		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
 		++StateControllerChooserSelectionRevision;
+		// The AnimGraph consumes this pulse from the Blend Stack's On Update
+		// binding. It is deliberately not based on asset identity: a repeated
+		// 90-degree TIP must be allowed to restart from time zero.
+		OneShot.bForceBlendNextUpdate = bCachedStateControllerHasSelectedAnimation;
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
@@ -2267,6 +2326,12 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	case EProject_JLocomotionPhaseFamily::Cycle:
 	case EProject_JLocomotionPhaseFamily::Turn:
 		CombatSelectionContext.PhaseFamily = SelectionContext.PhaseFamily;
+		break;
+	case EProject_JLocomotionPhaseFamily::TurnInPlace:
+		// A Turn In Place is a direct Blend Stack one-shot while the capsule is
+		// stationary.  Keep Combat Idle evaluated underneath it so that releasing
+		// the one-shot cannot reveal a Run Cycle pose for one blend-out frame.
+		CombatSelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 		break;
 	default:
 		// Keep a stable locomotion pose beneath a direct State Controller one-shot.

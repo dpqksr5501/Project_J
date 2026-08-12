@@ -121,6 +121,10 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionKinematicContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float DesiredFacingDeltaYaw = 0.0f;
 
+	/** Absolute world-space facing yaw consumed by Animation Graph Steering targets. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	float DesiredFacingYaw = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	float MoveInputTurnAngle = 0.0f;
 
@@ -470,7 +474,8 @@ public:
 	float TurnRedirectReselectCooldown = 0.10f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float DerivedTurnInPlaceAngleThreshold = 45.0f;
+	/** GASP's actual ShouldTurnInPlace node uses 30 degrees; authored TIP rows then choose 90/180 assets. */
+	float DerivedTurnInPlaceAngleThreshold = 30.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedSpinTransitionAngleThreshold = 135.0f;

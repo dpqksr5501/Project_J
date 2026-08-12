@@ -414,15 +414,15 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 
 	if (!Context.MoveWorldDirection.IsNearlyZero())
 	{
-		const float DesiredYaw = Context.MoveWorldDirection.Rotation().Yaw;
-		Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(PlayerOwner.GetActorRotation().Yaw, DesiredYaw);
+		Context.DesiredFacingYaw = Context.MoveWorldDirection.Rotation().Yaw;
 	}
 	else
 	{
-		Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
-			PlayerOwner.GetActorRotation().Yaw,
-			PlayerOwner.GetControlRotation().Yaw);
+		Context.DesiredFacingYaw = PlayerOwner.GetControlRotation().Yaw;
 	}
+	Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
+		PlayerOwner.GetActorRotation().Yaw,
+		Context.DesiredFacingYaw);
 
 	return Context;
 }
@@ -471,6 +471,8 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 
 	const bool bKeepTurnInPlace =
 		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace &&
+		(GroundMotionMode == EProject_JGroundMotionMode::Idle ||
+			GroundMotionMode == EProject_JGroundMotionMode::Stop) &&
 		!KinematicContext.bHasMoveInput &&
 		KinematicContext.GroundSpeed <= IdleSpeedThreshold &&
 		FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) > 5.0f &&
@@ -667,8 +669,18 @@ bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
 		return false;
 	}
 
+	// TIP is deliberately a stationary combat-Strafe presentation.  Movement
+	// input (including strafe input while the mouse rotates) remains entirely
+	// owned by the normal locomotion/MM path.  Landing is allowed to finish its
+	// authored animation first; after that it naturally enters Idle or Stop and
+	// can request TIP on the next update if the player is still facing away.
+	const bool bStationaryGroundPresentation =
+		GroundMotionMode == EProject_JGroundMotionMode::Idle ||
+		GroundMotionMode == EProject_JGroundMotionMode::Stop;
+
 	return
 		AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		bStationaryGroundPresentation &&
 		!InKinematicContext.bHasMoveInput &&
 		InKinematicContext.GroundSpeed <= IdleSpeedThreshold &&
 		FMath::Abs(InKinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold &&
