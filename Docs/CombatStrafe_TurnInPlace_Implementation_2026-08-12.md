@@ -398,3 +398,51 @@ MM trace의 주요 항목:
 - 전역 `Steering`, 전역 `Offset Root Bone Accumulate`, `Root Motion from Everything`을 켜서 이 구조를 대체하지 않는다. 현재 프로젝트의 capsule yaw/CharacterMovement 소유권과 충돌할 수 있다.
 - 새로운 무기/캐릭터는 Combat Strafe TIP chooser row와 `enable_turninplacesteering` curve를 함께 추가한다.
 - TIP 애셋 길이나 회전량이 달라지면 30/135도 구간과 0.75초 재진입 시간을 함께 플레이테스트한다.
+
+---
+
+## 안전한 런타임 최적화: Generated Motion Matching 노드 인덱스 캐시
+
+### 변경 내용
+
+`FProject_JCharacterAnimInstanceProxy`는 생성된 AnimBP/linked layer에서 실제 Motion Matching 노드를 찾아야 한다. 이전에는 아래 작업이 여러 지점에서 animation update마다 반복됐다.
+
+```text
+모든 generated AnimNode property 순회
+  -> Motion Matching node인지 확인
+  -> PSD 적용 / search policy 적용 / 결과 캡처 / force reselect 처리
+```
+
+이제 Anim Class Interface별로 Motion Matching node의 index만 한 번 캐시한다. 이후 update는 캐시된 index만 순회한다.
+
+```text
+Anim Class Interface 변경 또는 최초 접근
+  -> 전체 node property 1회 순회
+  -> Motion Matching node index 목록 캐시
+
+일반 update
+  -> 캐시된 Motion Matching node index만 순회
+```
+
+### 안전장치와 영향 범위
+
+- AnimBP 재컴파일/재인스턴싱처럼 `AnimClassInterface`가 바뀌면 캐시를 자동으로 다시 만든다.
+- 재구축 때 generated PSD 적용 캐시와 default search-throttle 캐시도 같이 초기화한다.
+- `CurrentActiveDatabase`, trajectory, Motion Matching search policy, interrupt mode, Chooser, State Controller, TIP 재진입 규칙은 변경하지 않는다.
+- 따라서 대각 점프/착지, OTM/Combat Strafe 선택, Pivot/Stop/TIP의 결과를 바꾸지 않는 순수 탐색 비용 최적화다.
+
+관련 파일:
+
+- `Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h`
+- `Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp`
+
+### 확인 방법
+
+에디터를 재시작한 뒤 기존 회귀 체크리스트를 수행한다. 특히 다음을 함께 확인한다.
+
+1. OTM 이동, 점프, 착지
+2. Combat Strafe 이동 중 방향 전환
+3. Combat Strafe 정지 TIP의 반복 재생
+4. AnimBP를 Compile한 직후 PIE 재실행
+
+마지막 항목은 editor reinstance 뒤 cache rebuild 경로를 확인하기 위한 것이다.

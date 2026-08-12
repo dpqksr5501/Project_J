@@ -97,31 +97,26 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	// linked layer. NativeMotionMatchingNode is only the fallback graph, so prefer
 	// a generated node which actually produced a Pose Search result this frame.
 	const FAnimNode_MotionMatching* ResultNode = nullptr;
-	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
-	if (AnimClass)
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
-		const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-		for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+		const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
+		if (!Candidate)
 		{
-			const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
-			if (!Candidate)
-			{
-				continue;
-			}
+			continue;
+		}
 
-			const FPoseSearchBlueprintResult& CandidateResult = Candidate->GetMotionMatchingState().SearchResult;
-			if (!CandidateResult.SelectedAnim)
-			{
-				continue;
-			}
+		const FPoseSearchBlueprintResult& CandidateResult = Candidate->GetMotionMatchingState().SearchResult;
+		if (!CandidateResult.SelectedAnim)
+		{
+			continue;
+		}
 
-			ResultNode = Candidate;
-			// Every generated node receives the same requested database. Prefer an
-			// exact match in case an inactive graph still retains an older result.
-			if (CandidateResult.SelectedDatabase == CurrentActiveDatabase)
-			{
-				break;
-			}
+		ResultNode = Candidate;
+		// Every generated node receives the same requested database. Prefer an
+		// exact match in case an inactive graph still retains an older result.
+		if (CandidateResult.SelectedDatabase == CurrentActiveDatabase)
+		{
+			break;
 		}
 	}
 
@@ -293,14 +288,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 			NativeDefaultSearchThrottleTime,
 			bNativeDatabaseChanged));
 
-	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
-	if (!AnimClass)
-	{
-		return;
-	}
-
-	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
 		const FAnimNode_MotionMatching* MotionMatchingNode =
 			GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
@@ -342,14 +330,7 @@ void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
 		EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose;
 	NativeMotionMatchingNode.SetInterruptMode(InterruptMode);
 
-	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
-	if (!AnimClass)
-	{
-		return;
-	}
-
-	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
 		if (FAnimNode_MotionMatching* MotionMatchingNode =
 			const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex)))
@@ -382,22 +363,18 @@ void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()
 	// Match CapturePostSelection: the displayed graph's generated node is the
 	// authoritative source for selection and Blend Stack diagnostics.
 	const FAnimNode_MotionMatching* ResultNode = nullptr;
-	if (const IAnimClassInterface* AnimClass = GetAnimClassInterface())
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
-		const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-		for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+		const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
+		if (!Candidate || !Candidate->GetMotionMatchingState().SearchResult.SelectedAnim)
 		{
-			const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
-			if (!Candidate || !Candidate->GetMotionMatchingState().SearchResult.SelectedAnim)
-			{
-				continue;
-			}
+			continue;
+		}
 
-			ResultNode = Candidate;
-			if (Candidate->GetMotionMatchingState().SearchResult.SelectedDatabase == CurrentActiveDatabase)
-			{
-				break;
-			}
+		ResultNode = Candidate;
+		if (Candidate->GetMotionMatchingState().SearchResult.SelectedDatabase == CurrentActiveDatabase)
+		{
+			break;
 		}
 	}
 	if (!ResultNode)
@@ -476,6 +453,36 @@ void FProject_JCharacterAnimInstanceProxy::LinkNativeGraph()
 	NativePoseHistoryNode.PoseCount = 10;
 	NativePoseHistoryNode.SamplingInterval = 0.04f;
 	NativePoseHistoryNode.TrajectorySpeedMultiplier = 1.0f;
+}
+
+const TArray<int32>& FProject_JCharacterAnimInstanceProxy::GetGeneratedMotionMatchingNodeIndices()
+{
+	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
+	if (CachedGeneratedMotionMatchingAnimClass == AnimClass)
+	{
+		return CachedGeneratedMotionMatchingNodeIndices;
+	}
+
+	CachedGeneratedMotionMatchingAnimClass = AnimClass;
+	CachedGeneratedMotionMatchingNodeIndices.Reset();
+	AppliedGeneratedDatabases.Reset();
+	DefaultSearchThrottleTimes.Reset();
+
+	if (!AnimClass)
+	{
+		return CachedGeneratedMotionMatchingNodeIndices;
+	}
+
+	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
+	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+	{
+		if (GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex))
+		{
+			CachedGeneratedMotionMatchingNodeIndices.Add(NodeIndex);
+		}
+	}
+
+	return CachedGeneratedMotionMatchingNodeIndices;
 }
 
 void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()

@@ -71,6 +71,12 @@ private:
 	void ForceReselectMotionMatchingNodes();
 	void CapturePostSelection();
 	void CapturePivotDebugTrace();
+	/**
+	 * Generated AnimBP graphs commonly contain far more nodes than Motion Matching
+	 * nodes. Cache only the latter's indices and rebuild when the generated class
+	 * interface changes (for example after an AnimBP reinstance in the editor).
+	 */
+	const TArray<int32>& GetGeneratedMotionMatchingNodeIndices();
 	EPoseSearchInterruptMode ResolveDatabaseChangeInterruptMode() const;
 	void CacheMotionMatchingPolicyState();
 
@@ -84,6 +90,8 @@ private:
 	TObjectPtr<UPoseSearchDatabase> AppliedDatabase = nullptr;
 	/** Database last pushed directly into each generated AnimBP Motion Matching node. */
 	TMap<int32, TObjectPtr<UPoseSearchDatabase>> AppliedGeneratedDatabases;
+	const IAnimClassInterface* CachedGeneratedMotionMatchingAnimClass = nullptr;
+	TArray<int32> CachedGeneratedMotionMatchingNodeIndices;
 	TMap<int32, float> DefaultSearchThrottleTimes;
 	float NativeDefaultSearchThrottleTime = 0.0f;
 	bool bHasNativeDefaultSearchThrottleTime = false;
