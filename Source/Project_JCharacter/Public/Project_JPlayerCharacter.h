@@ -432,6 +432,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	bool IsCombatIntroPlaying() const { return bIsPlayingCombatIntro || bReplicatedCombatIntroPresentation; }
 
+	/** True while the combat-exit sheathe montage owns the FullBody presentation. */
+	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
+	bool IsCombatOutroPlaying() const { return bIsPlayingCombatOutro; }
+
 	/** Called by the weapon's sheathe montage notify at the hand-to-back frame. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void MoveWeaponToSheathedSocket();

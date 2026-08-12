@@ -225,6 +225,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimCombatThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsPlayingCombatIntro = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bIsPlayingCombatOutro = false;
+
 	/** Continuous animation composition selected by the equipped weapon profile. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	EProject_JCombatAnimationPresentationMode PresentationMode = EProject_JCombatAnimationPresentationMode::UpperBodyOverlay;
@@ -1248,6 +1251,17 @@ public:
 	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
 	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
 	mutable bool bStateControllerForceTurnInPlaceReselect = false;
+	/**
+	 * A combat draw/sheathe montage is a presentation boundary.  A direct Land asset
+	 * selected before that boundary must never resume after the montage blends
+	 * out.  This flag only suppresses that already-active landing presentation
+	 * until both its semantic phase and physical landing event have ended; it
+	 * does not change gameplay landing state.
+	 */
+	bool bSuppressPreTransitionLandingPresentationUntilLandingEnds = false;
+
+	/** Rising-edge detector for local combat draw/sheathe presentation boundaries. */
+	bool bWasPlayingCombatPresentationTransitionForStateController = false;
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 

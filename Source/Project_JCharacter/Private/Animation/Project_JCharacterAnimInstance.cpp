@@ -255,6 +255,99 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
+	// A combat draw/sheathe montage temporarily owns the final pose through its
+	// FullBody slot. Do not allow a direct State Controller asset (most visibly Land)
+	// to remain cached underneath it and resume when the montage blends out.
+	// This is deliberately presentation-only: the locomotion component's landing
+	// event, CharacterMovement, and replicated movement state remain untouched.
+	const bool bCombatPresentationTransitionActive =
+		ThreadSafeData.Combat.bIsPlayingCombatIntro || ThreadSafeData.Combat.bIsPlayingCombatOutro;
+	const bool bCombatPresentationTransitionStarted =
+		bCombatPresentationTransitionActive && !bWasPlayingCombatPresentationTransitionForStateController;
+	const bool bCombatPresentationTransitionEnded =
+		!bCombatPresentationTransitionActive && bWasPlayingCombatPresentationTransitionForStateController;
+	bWasPlayingCombatPresentationTransitionForStateController = bCombatPresentationTransitionActive;
+	if (bCombatPresentationTransitionStarted)
+	{
+		const bool bDiscardingPhysicalLanding = ThreadSafeData.Landing.bIsLanding;
+		const bool bDiscardingHeldLand =
+			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand ||
+			ThreadSafeData.OneShotPresentation.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+		bSuppressPreTransitionLandingPresentationUntilLandingEnds =
+			bDiscardingPhysicalLanding || bDiscardingHeldLand;
+
+		// Invalidate both the logical hold and its immutable asset cache.  Merely
+		// disabling the Blend Stack branch would leave the old asset eligible to
+		// revive on the first post-montage update.
+		StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
+		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		CachedStateControllerChooserTable.Reset();
+		CachedStateControllerSelectedAnimation = nullptr;
+		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
+		bCachedStateControllerHasSelectedAnimation = false;
+		bStateControllerForceTurnInPlaceReselect = false;
+		bHasStateControllerOneShotControlYaw = false;
+		++StateControllerChooserSelectionRevision;
+
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerCombatPresentationReset: Intro=%s Outro=%s HeldLand=%s PhysicalLanding=%s PreviousAssetDiscarded=true"),
+				ThreadSafeData.Combat.bIsPlayingCombatIntro ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.Combat.bIsPlayingCombatOutro ? TEXT("true") : TEXT("false"),
+				bDiscardingHeldLand ? TEXT("true") : TEXT("false"),
+				bDiscardingPhysicalLanding ? TEXT("true") : TEXT("false"));
+		}
+	}
+
+	const bool bLandingPresentationStillActive =
+		ThreadSafeData.Landing.bIsLanding ||
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Landing;
+	if (bSuppressPreTransitionLandingPresentationUntilLandingEnds && !bLandingPresentationStillActive)
+	{
+		bSuppressPreTransitionLandingPresentationUntilLandingEnds = false;
+		ThreadSafeData.MotionMatching.bForceReselect = true;
+	}
+	// At either montage's blend-out, the locomotion profile may have changed
+	// (Combat Strafe -> OTM on sheathe, or OTM -> Combat Strafe on draw).  Ask
+	// regular MM for the current profile immediately even when no Land was
+	// active, rather than relying on its normal search throttle.
+	if (bCombatPresentationTransitionEnded)
+	{
+		ThreadSafeData.MotionMatching.bForceReselect = true;
+	}
+
+	const bool bSuppressDirectGroundOneShotsForCombatPresentation =
+		bCombatPresentationTransitionActive ||
+		bSuppressPreTransitionLandingPresentationUntilLandingEnds;
+	if (bSuppressDirectGroundOneShotsForCombatPresentation && !ThreadSafeData.Air.bIsInAir)
+	{
+		// Keep regular MM current beneath the montage.  On blend-out it therefore
+		// resolves from the *current* combat idle/strafe context rather than a
+		// stale non-combat Land, Start, Stop, or Pivot direct asset.
+		const bool bMoving = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving;
+		const EProject_JStateControllerPresentationState FallbackPresentationState = bMoving
+			? EProject_JStateControllerPresentationState::LocomotionLoop
+			: EProject_JStateControllerPresentationState::IdleLoop;
+		const EProject_JLocomotionPhaseFamily FallbackPhaseFamily = bMoving
+			? EProject_JLocomotionPhaseFamily::Cycle
+			: EProject_JLocomotionPhaseFamily::Idle;
+		ThreadSafeData.OneShotPresentation.PresentationState = FallbackPresentationState;
+		ThreadSafeData.OneShotPresentation.PhaseFamily = FallbackPhaseFamily;
+		ThreadSafeData.OneShotPresentation.bRequested = false;
+		ThreadSafeData.LocomotionContext.PhaseFamily = FallbackPhaseFamily;
+		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = FallbackPhaseFamily;
+		ThreadSafeData.MotionMatching.SelectionContext.bUseHeavyLand = false;
+		ThreadSafeData.MotionMatching.SelectionContext.bLandWasMoving = false;
+		ThreadSafeData.MotionMatching.SelectionContext.bLandWasSprinting = false;
+		// Re-query only at the presentation boundaries.  The fallback context is
+		// still published every frame, but repeatedly forcing a Pose Search while
+		// a montage is active would be needless per-frame work.
+		ThreadSafeData.MotionMatching.bForceReselect =
+			ThreadSafeData.MotionMatching.bForceReselect || bCombatPresentationTransitionStarted;
+		StateControllerPlaybackHoldState = FallbackPresentationState;
+		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+	}
 	const EProject_JStateControllerPresentationState PreviousStateControllerPresentationState =
 		StateControllerPresentationStateForChooser;
 	EProject_JStateControllerPresentationState CurrentStateControllerPresentationState =
@@ -2054,6 +2147,7 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	Data.Combat.bIsDodging = OwningPlayerCharacter->IsDodging();
 	Data.Combat.bIsHitReacting = OwningPlayerCharacter->IsHitReacting();
 	Data.Combat.bIsPlayingCombatIntro = OwningPlayerCharacter->IsCombatIntroPlaying();
+	Data.Combat.bIsPlayingCombatOutro = OwningPlayerCharacter->IsCombatOutroPlaying();
 	if (const UProject_JWeaponAnimProfile* WeaponAnimProfile = OwningPlayerCharacter->GetWeaponAnimProfile())
 	{
 		Data.Combat.PresentationMode = WeaponAnimProfile->CombatPresentationMode;
