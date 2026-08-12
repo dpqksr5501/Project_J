@@ -337,6 +337,24 @@ p.ProjectJ.MMTransitionDebug 1
 | `p.ProjectJ.MMNetDebug 1` | PSD 선택, revision, force reselect 변화 |
 | `p.ProjectJ.MMNetDebug 2` | MM state/trajectory 주기 로그도 추가 |
 | `p.ProjectJ.MMTransitionDebug 1` | MM 내부 Blend Stack transition trace 캡처 활성화 |
+| `p.ProjectJ.TIPDebug 1` | TIP의 상태/애셋/좌우 인덱스 변경만 `TIPDiag`로 출력 |
+| `p.ProjectJ.TIPDebug 2` | 위 로그에 더해 TIP 중 0.1초마다 요구 yaw, capsule/root 실제 yaw, 재진입/Force Blend 상태 출력 |
+
+### 좌/우 및 역방향 회전 진단
+
+`p.ProjectJ.TIPDebug 2`를 켜고 Output Log에서 `TIPDiag`를 필터링한다. 이 로그는 디버그 전용 game-thread 관측값이며 선택 정책이나 애니메이션 결과를 바꾸지 않는다.
+
+| 필드 | 확인할 내용 |
+|---|---|
+| `DesiredDelta` | 음수면 Left, 양수면 Right. 30도 미만이면 TIP 선택 대상이 아니다. |
+| `Index` | `1=L90`, `2=L180`, `3=R90`, `4=R180`. `DesiredDelta`의 부호와 반대면 chooser/asset 행을 점검한다. |
+| `ActorYaw`, `ControlYaw` | capsule과 카메라 목표의 실제 월드 yaw. `DesiredDelta`는 두 값의 정규화된 차이다. |
+| `RootYaw`, `RootVsCapsule` | mesh root의 시각적 회전과 capsule의 차. Steering/OffsetRootBone이 시각 루트를 보정하는 동안 0이 아닐 수 있다. |
+| `ActorTurn`, `RootTurn` | 직전 로그 이후 capsule/root가 실제로 회전한 양. 역방향 전환 시 부호가 바뀌는지 본다. |
+| `ForceReselect`, `ForceBlend` | 0.75초 TIP 재진입에서 chooser 재선택과 Blend Stack 재시작 요청이 발생했는지 확인한다. |
+| `Asset`, `Time`, `Remaining` | 실제 direct Blend Stack 애셋과 logical hold 진행도. |
+
+테스트는 정지한 Combat Strafe에서 **오른쪽 90도 → 왼쪽으로 크게 역회전**, 반대로 **왼쪽 90도 → 오른쪽 역회전**을 각각 수행하면 된다. 그 구간의 `TIPDiag` 로그 전체를 전달하면 `Index`, 실제 capsule/root 회전, chooser 선택 중 어느 단계가 좌측에서 어긋나는지 분리할 수 있다.
 
 재현 뒤 콘솔에서 실행:
 

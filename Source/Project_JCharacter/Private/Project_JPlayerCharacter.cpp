@@ -10,7 +10,6 @@
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -547,48 +546,6 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 				AnimInst->GetThreadSafeStateControllerPresentationState();
 			const bool bInTurnInPlace = PresentationState == EProject_JStateControllerPresentationState::TurnInPlace;
 			const UAnimationAsset* SelectedAnim = AnimInst->GetThreadSafeStateControllerSelectedAnimation();
-			const int32 TurnInPlaceDebugMode = Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode();
-			if (TurnInPlaceDebugMode > 0)
-			{
-				const FName SelectedAssetName = SelectedAnim ? SelectedAnim->GetFName() : NAME_None;
-				const double NowSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
-				const bool bStateOrAssetChanged =
-					LastTurnInPlaceDebugPresentationState != static_cast<int32>(PresentationState) ||
-					LastTurnInPlaceDebugAssetName != SelectedAssetName;
-				const bool bSampleDue = TurnInPlaceDebugMode >= 2 &&
-					NowSeconds - LastTurnInPlaceDebugLogSeconds >= 0.1;
-				if (bStateOrAssetChanged || bSampleDue)
-				{
-					const float FacingDelta = LocomotionAnimStateComponent
-						? LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw
-						: 0.0f;
-					const float DesiredYaw = AnimInst->GetThreadSafeStateControllerDesiredFacingRotator().Yaw;
-					UE_LOG(LogProjectJPlayer, Display,
-					TEXT("TIPDiag: AnimInst=%s State=%d InTIP=%s ShouldTurn=%s Abort=%s Asset=%s Index=%.0f Rev=%d ForceBlend=%s Hold=%.2f Remaining=%.2f AlmostComplete=%s ActorYaw=%.1f ControlYaw=%.1f DesiredYaw=%.1f Delta=%.1f SteeringAlpha=%.2f Speed=%.1f Input=%s"),
-						*GetNameSafe(AnimInst),
-						static_cast<int32>(PresentationState),
-						bInTurnInPlace ? TEXT("true") : TEXT("false"),
-						AnimInst->GetThreadSafeStateControllerShouldTurnInPlace() ? TEXT("true") : TEXT("false"),
-						AnimInst->GetThreadSafeStateControllerShouldAbortTurnInPlace() ? TEXT("true") : TEXT("false"),
-						*GetNameSafe(SelectedAnim),
-						AnimInst->GetThreadSafeStateControllerTurnInPlaceIndex(),
-						AnimInst->GetThreadSafeStateControllerSelectionRevision(),
-						AnimInst->GetThreadSafeStateControllerShouldForceBlend() ? TEXT("true") : TEXT("false"),
-						AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime(),
-						AnimInst->GetThreadSafeStateControllerSelectedAnimationTimeRemaining(),
-						AnimInst->GetThreadSafeStateControllerSelectedAnimationAlmostComplete() ? TEXT("true") : TEXT("false"),
-						GetActorRotation().Yaw,
-						Controller->GetControlRotation().Yaw,
-						DesiredYaw,
-						FacingDelta,
-						AnimInst->GetThreadSafeStateControllerTurnInPlaceSteeringAlpha(),
-						GetVelocity().Size2D(),
-						GetPendingMovementInputVector().IsNearlyZero() ? TEXT("false") : TEXT("true"));
-					LastTurnInPlaceDebugPresentationState = static_cast<int32>(PresentationState);
-					LastTurnInPlaceDebugAssetName = SelectedAssetName;
-					LastTurnInPlaceDebugLogSeconds = NowSeconds;
-				}
-			}
 			if (bInTurnInPlace)
 			{
 				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))

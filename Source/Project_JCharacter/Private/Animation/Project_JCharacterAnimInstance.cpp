@@ -5,6 +5,7 @@
 
 #include "ChooserFunctionLibrary.h"
 #include "ChooserTypes.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -655,6 +656,92 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	}
 	EvaluateStateControllerAnimationChooserOnGameThread(ThreadSafeData);
+	const int32 TurnInPlaceDebugMode = Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode();
+	if (TurnInPlaceDebugMode > 0 && OwningPlayerCharacter)
+	{
+		const FProject_JAnimOneShotPresentationThreadSafeData& OneShot = ThreadSafeData.OneShotPresentation;
+		const bool bTurnRelevant =
+			ThreadSafeData.LocomotionContext.bShouldTurnInPlace ||
+			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace ||
+			OneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace ||
+			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace;
+		const float ActorYaw = OwningPlayerCharacter->GetActorRotation().Yaw;
+		const float ControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
+		float RootYaw = ActorYaw;
+		float MeshYaw = ActorYaw;
+		if (const USkeletalMeshComponent* Mesh = OwningPlayerCharacter->GetMesh())
+		{
+			MeshYaw = Mesh->GetComponentRotation().Yaw;
+			if (Mesh->GetNumBones() > 0)
+			{
+				RootYaw = Mesh->GetBoneTransform(0).Rotator().Yaw;
+			}
+		}
+
+		UAnimationAsset* SelectedAsset = OneShot.SelectedAnimation;
+		const bool bStateChanged =
+			bLastTurnInPlaceDebugRelevant != bTurnRelevant ||
+			(bTurnRelevant &&
+				(bLastTurnInPlaceDebugShouldTurn != ThreadSafeData.LocomotionContext.bShouldTurnInPlace ||
+			LastTurnInPlaceDebugIndex != FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser) ||
+			LastTurnInPlaceDebugPhase != ThreadSafeData.LocomotionContext.PhaseFamily ||
+			LastTurnInPlaceDebugPresentationState != OneShot.PresentationState ||
+			LastTurnInPlaceDebugAsset.Get() != SelectedAsset ||
+			OneShot.bForceBlendNextUpdate));
+		const double NowSeconds = FPlatformTime::Seconds();
+		const bool bPeriodicSample =
+			TurnInPlaceDebugMode >= 2 && bTurnRelevant &&
+			NowSeconds - LastTurnInPlaceDebugSampleTime >= 0.10;
+		if (bTurnRelevant && (bStateChanged || bPeriodicSample))
+		{
+			const float ActorTurnSinceLastSample = bHasTurnInPlaceDebugSample
+				? FMath::FindDeltaAngleDegrees(LastTurnInPlaceDebugActorYaw, ActorYaw)
+				: 0.0f;
+			const float RootTurnSinceLastSample = bHasTurnInPlaceDebugSample
+				? FMath::FindDeltaAngleDegrees(LastTurnInPlaceDebugRootYaw, RootYaw)
+				: 0.0f;
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPDiag Kind=%s Should=%s DesiredYaw=%.1f DesiredDelta=%.1f ActorYaw=%.1f ControlYaw=%.1f RootYaw=%.1f MeshYaw=%.1f RootVsCapsule=%.1f ActorTurn=%.1f RootTurn=%.1f Index=%d CachedIndex=%d Phase=%d Presentation=%d Hold=%d ForceReselect=%s ForceBlend=%s Asset=%s Time=%.3f Remaining=%.3f"),
+				bStateChanged ? TEXT("Change") : TEXT("Sample"),
+				ThreadSafeData.LocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.LocomotionContext.DesiredFacingYaw,
+				ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw,
+				ActorYaw,
+				ControlYaw,
+				RootYaw,
+				MeshYaw,
+				FMath::FindDeltaAngleDegrees(ActorYaw, RootYaw),
+				ActorTurnSinceLastSample,
+				RootTurnSinceLastSample,
+				FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser),
+				FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex),
+				static_cast<int32>(ThreadSafeData.LocomotionContext.PhaseFamily),
+				static_cast<int32>(OneShot.PresentationState),
+				static_cast<int32>(StateControllerPlaybackHoldState),
+				bStateControllerForceTurnInPlaceReselect ? TEXT("true") : TEXT("false"),
+				OneShot.bForceBlendNextUpdate ? TEXT("true") : TEXT("false"),
+				SelectedAsset ? *SelectedAsset->GetName() : TEXT("None"),
+				OneShot.TransitionElapsedTime,
+				OneShot.TransitionTimeRemaining);
+			LastTurnInPlaceDebugSampleTime = NowSeconds;
+		}
+
+		bHasTurnInPlaceDebugSample = true;
+		bLastTurnInPlaceDebugRelevant = bTurnRelevant;
+		bLastTurnInPlaceDebugShouldTurn = ThreadSafeData.LocomotionContext.bShouldTurnInPlace;
+		LastTurnInPlaceDebugIndex = FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser);
+		LastTurnInPlaceDebugPhase = ThreadSafeData.LocomotionContext.PhaseFamily;
+		LastTurnInPlaceDebugPresentationState = OneShot.PresentationState;
+		LastTurnInPlaceDebugAsset = SelectedAsset;
+		LastTurnInPlaceDebugActorYaw = ActorYaw;
+		LastTurnInPlaceDebugRootYaw = RootYaw;
+	}
+	else if (TurnInPlaceDebugMode == 0)
+	{
+		// Re-enabling the CVar should always emit a complete first snapshot.
+		bHasTurnInPlaceDebugSample = false;
+		LastTurnInPlaceDebugSampleTime = -DBL_MAX;
+	}
 	if (IsPrimaryMeshAnimInstance())
 	{
 		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
@@ -1840,20 +1927,32 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
 	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
-	// GASP does not wait for a long TIP asset to finish before trying another
-	// stationary turn.  At 0.75 seconds it re-enters the logical transition
-	// state when there is still a valid TIP request.  Reset our presentation
-	// clock and force a chooser evaluation even when the next entry is the same
-	// 90-degree animation; the Blend Stack On Update binding then consumes the
-	// resulting one-frame Force Blend pulse.
+	// A different TIP direction bucket must preempt immediately. Keeping a
+	// right-turn root-motion clip alive after a left request makes the capsule
+	// keep rotating the wrong way until the generic repeat timer expires. The
+	// 0.75s delay remains only for repeating the same direction bucket.
 	constexpr float TurnInPlaceReentryDelay = 0.75f;
+	const int32 RequestedTurnInPlaceIndex = FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser);
+	const int32 CachedTurnInPlaceIndex = FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex);
+	const bool bTurnInPlaceDirectionBucketChanged =
+		RequestedTurnInPlaceIndex > 0 && RequestedTurnInPlaceIndex != CachedTurnInPlaceIndex;
 	const bool bShouldReenterTurnInPlace =
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
 		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
 		Data.LocomotionContext.bShouldTurnInPlace &&
-		Elapsed >= TurnInPlaceReentryDelay;
+		(bTurnInPlaceDirectionBucketChanged || Elapsed >= TurnInPlaceReentryDelay);
 	if (bShouldReenterTurnInPlace)
 	{
+		if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPReenter Reason=%s RequestedIndex=%d CachedIndex=%d DesiredDelta=%.1f Elapsed=%.3f"),
+				bTurnInPlaceDirectionBucketChanged ? TEXT("DirectionBucketChanged") : TEXT("SameDirectionTimer"),
+				RequestedTurnInPlaceIndex,
+				CachedTurnInPlaceIndex,
+				Data.LocomotionContext.DesiredFacingDeltaYaw,
+				Elapsed);
+		}
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 		bStateControllerForceTurnInPlaceReselect = true;
 		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;

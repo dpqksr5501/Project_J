@@ -572,7 +572,4 @@ private:
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
-	int32 LastTurnInPlaceDebugPresentationState = INDEX_NONE;
-	FName LastTurnInPlaceDebugAssetName = NAME_None;
-	double LastTurnInPlaceDebugLogSeconds = -DBL_MAX;
 };

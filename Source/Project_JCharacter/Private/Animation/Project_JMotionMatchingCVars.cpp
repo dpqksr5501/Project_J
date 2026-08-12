@@ -52,7 +52,7 @@ TAutoConsoleVariable<int32> CVarProjectJMMTransitionDebug(
 TAutoConsoleVariable<int32> CVarProjectJTurnInPlaceDebug(
 	TEXT("p.ProjectJ.TIPDebug"),
 	0,
-	TEXT("Combat-Strafe Turn In Place diagnostic. 0=off, 1=state/asset changes, 2=also sampled telemetry every 0.1 seconds."));
+	TEXT("Combat-Strafe Turn In Place diagnostic. 0=off, 1=TIP state/asset/index changes, 2=also 0.1s samples with desired/capsule/root yaw and force-blend telemetry."));
 }
 
 namespace Project_J::MotionMatchingCVars
