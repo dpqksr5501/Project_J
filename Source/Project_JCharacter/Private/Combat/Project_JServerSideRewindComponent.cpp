@@ -2,10 +2,11 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
+#include "Engine/World.h"
 
 namespace
 {
- bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEnd, const FVector& CapsuleCenter, const FQuat& CapsuleRotation, float CapsuleRadius, float CapsuleHalfHeight, float TraceRadius)
+bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEnd, const FVector& CapsuleCenter, const FQuat& CapsuleRotation, float CapsuleRadius, float CapsuleHalfHeight, float TraceRadius)
 {
 	const float CapsuleSegmentHalfHeight = FMath::Max(0.0f, CapsuleHalfHeight - CapsuleRadius);
 	const FVector CapsuleAxis = CapsuleRotation.GetUpVector();
@@ -31,7 +32,7 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const AActor* Owner = GetOwner();
+	AActor* Owner = GetOwner();
 	SetComponentTickEnabled(Owner && Owner->HasAuthority());
 	
 	const int32 ExpectedRecordCount = FMath::CeilToInt(FMath::Max(1.0f, MaxRecordTime) * FMath::Max(1.0f, RecordRateHz)) + 2;

@@ -28,9 +28,7 @@ public class Project_J : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"HTTP",
 			"Json",
-			"JsonUtilities",
-			"Sockets",
-			"Networking"
+			"JsonUtilities"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {

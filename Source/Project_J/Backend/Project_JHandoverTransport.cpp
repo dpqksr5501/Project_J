@@ -4,54 +4,61 @@ bool FProject_JLoopbackHandoverTransport::Send(
 	const FProject_JHandoverTransportRequest& Request,
 	FProject_JHandoverTransportCallback Completion)
 {
-	if (!Request.Envelope.TransferId.IsValid() || !Completion)
-	{
-		return false;
-	}
+	FProject_JHandoverTransportResponse Response;
+	Response.TransferId = Request.Envelope.TransferId;
+	Response.Attempt = Request.Attempt;
+	Response.Outcome = ResponseOutcome;
+	Response.Message = ResponseOutcome == EProject_JHandoverTransportOutcome::Accepted
+		? TEXT("Loopback accepted")
+		: TEXT("Loopback simulated failure");
 
-	if (bDropResponses)
+	if (ResponseDelaySeconds <= 0.0f)
 	{
+		if (!bDropResponses && Completion)
+		{
+			Completion(Response);
+		}
 		return true;
 	}
 
-	FPendingResponse& Pending = PendingResponses.AddDefaulted_GetRef();
-	Pending.Response.TransferId = Request.Envelope.TransferId;
-	Pending.Response.Attempt = Request.Attempt;
-	Pending.Response.Outcome = ResponseOutcome;
-	Pending.Response.Message =
-		ResponseOutcome == EProject_JHandoverTransportOutcome::Accepted
-			? TEXT("Loopback destination accepted the envelope.")
-			: TEXT("Loopback destination rejected the envelope.");
-	Pending.Completion = MoveTemp(Completion);
-	Pending.RemainingDelay = ResponseDelaySeconds;
+	if (!bDropResponses && Completion)
+	{
+		FPendingResponse Pending;
+		Pending.Response = Response;
+		Pending.Completion = MoveTemp(Completion);
+		Pending.RemainingDelay = ResponseDelaySeconds;
+		PendingResponses.Add(MoveTemp(Pending));
+	}
+
 	return true;
 }
 
 void FProject_JLoopbackHandoverTransport::Cancel(const FGuid& TransferId)
 {
-	PendingResponses.RemoveAll(
-		[&TransferId](const FPendingResponse& Pending)
-		{
-			return Pending.Response.TransferId == TransferId;
-		});
+	PendingResponses.RemoveAll([TransferId](const FPendingResponse& Pending)
+	{
+		return Pending.Response.TransferId == TransferId;
+	});
 }
 
 void FProject_JLoopbackHandoverTransport::Tick(float DeltaSeconds)
 {
+	if (PendingResponses.IsEmpty() || DeltaSeconds <= 0.0f)
+	{
+		return;
+	}
+
 	for (int32 Index = PendingResponses.Num() - 1; Index >= 0; --Index)
 	{
 		FPendingResponse& Pending = PendingResponses[Index];
-		Pending.RemainingDelay -= FMath::Max(0.0f, DeltaSeconds);
-		if (Pending.RemainingDelay > 0.0f)
+		Pending.RemainingDelay -= DeltaSeconds;
+		if (Pending.RemainingDelay <= 0.0f)
 		{
-			continue;
-		}
-
-		FPendingResponse Completed = MoveTemp(Pending);
-		PendingResponses.RemoveAtSwap(Index, 1, EAllowShrinking::No);
-		if (Completed.Completion)
-		{
-			Completed.Completion(Completed.Response);
+			if (Pending.Completion)
+			{
+				Pending.Completion(Pending.Response);
+			}
+			PendingResponses.RemoveAtSwap(Index, 1, EAllowShrinking::No);
 		}
 	}
 }

@@ -1,6 +1,6 @@
-# Project J 프로젝트 컨텍스트 · 작업 인수인계
+# Project J 프로젝트 맥락
 
-이 문서는 새 Codex 채팅 또는 새 작업자가 **특정 기능 구현 전에 읽을 프로젝트 지도**다. 전투/애니메이션만이 아니라 런타임 소유권, 데이터, 네트워크, 탈것, UI와 향후 MMORPG 확장 경계를 함께 다룬다.
+이 문서는 Project J의 **현재 구조와 작업 기준을 빠르게 파악하는 맥락 문서**다. 전투/애니메이션만이 아니라 런타임 소유권, 데이터, 네트워크, 탈것, UI와 향후 MMORPG 확장 경계를 함께 다룬다.
 
 > 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
 
@@ -11,6 +11,7 @@
 - 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
 - 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`, `ABP_Player`는 테스트 자산이며 생산 직업 구조의 기준은 아니다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
+- 전투 공간 인덱스, 중앙집중식 에셋 스트리밍 수명주기, 실제 서버 간 handover transport는 아직 도입하지 않는다. 현재는 SSR, 각 표현 컴포넌트의 로컬 `FStreamableHandle` 소유, handover envelope/상태 머신 계약만 유지한다.
 
 ## 2. 모듈 경계
 
@@ -45,9 +46,14 @@ Project_JCharacterEditor
 의존성은 아래 방향을 유지한다. 하위 모듈이 Character나 Game 모듈을 역참조하지 않도록 한다.
 
 ```text
-Project_JCore → Project_JGAS → Project_JCharacter → Project_J
-                         ↘ Project_JMount (독립적인 탈것 런타임 경계)
+Project_JCore → Project_JGAS → Project_JMount
+       └──────────────────────→ Project_JCharacter → Project_J
+Project_JMount ───────────────→ Project_JCharacter
 ```
+
+`Project_JMount`는 Core/GAS 공용 계약 위에 있는 탈것 런타임 모듈이며,
+현재 `Project_JCharacter`가 이를 사용한다. 따라서 Character 또는 Game 모듈을
+Mount가 역참조하지 않도록 한다.
 
 ## 3. 런타임 소유권: 가장 먼저 지켜야 할 규칙
 
@@ -205,7 +211,7 @@ Motion Matching 관련 CVar는 [README](README.md)와 [MotionMatchingNextSteps](
 ## 새 Codex 채팅에 붙여 넣을 최소 컨텍스트
 
 ```text
-UE 5.8 C++ Project J 작업이다. 먼저 Docs/ProjectContextHandoff.md와 기능별 관련 문서를 읽고,
+UE 5.8 C++ Project J 작업이다. 먼저 Docs/ProjectContext.md와 기능별 관련 문서를 읽고,
 Source/Config를 좁게 분석한 뒤 작업해줘. BP_Player/ABP_Player는 테스트 자산이며,
 생산 휴머노이드 기준은 AProject_JPlayerCharacter → 직업 native class → BP_직업,
 ABP_Humanoid_Master + 직업 Linked Anim Layer 구조다. 플레이어의 장기 상태는 PlayerState 우선,
