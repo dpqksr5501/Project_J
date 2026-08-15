@@ -38,14 +38,23 @@ public:
 
 	/**
 	 * Optional combat loop Motion Matching asset set used while this profile owns
-	 * camera-facing combat rotation. Assign Idle and Run/Sprint Cycle PSDs. The
-	 * Cycle databases own both continuous locomotion and moving directional
-	 * redirects for keyboard combat strafe;
+	 * camera-facing combat rotation. Assign Idle, Run/Sprint Cycle, and moving
+	 * Run/Sprint TurnRedirect PSDs;
 	 * authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
 	 * the State Controller Chooser / direct Blend Stack path.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle and Run/Sprint Cycle PSDs. Cycle owns continuous movement and directional redirects; one-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle, Run/Sprint Cycle, and moving Run/Sprint TurnRedirect PSDs. One-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
+
+	/**
+	 * Enable the moving TurnRedirect PSD family for Combat Strafe. Disabled by
+	 * default: keyboard strafe chord edges (S -> S+D -> S -> S+A) are ordinary
+	 * locomotion direction changes and should reselect inside Cycle. Authored
+	 * Pivot and Turn-In-Place one-shots remain responsible for deliberate
+	 * redirects.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
+	bool bUseMovingTurnRedirectInCombatStrafe = false;
 
 	/**
 	 * Re-query the current combat locomotion PSD when a held movement input turns

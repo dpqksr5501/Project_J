@@ -71,6 +71,7 @@ private:
 	void ApplyMotionMatchingSearchPolicy();
 	void ForceReselectMotionMatchingNodes();
 	void CapturePostSelection();
+	void CaptureCombatStrafeMotionMatchingDiagnostics(const FAnimNode_MotionMatching& ResultNode);
 	void CaptureOneShotPlaybackFeedback();
 	void CapturePivotDebugTrace();
 	/**
@@ -110,6 +111,9 @@ private:
 	FProject_JAnimOneShotPlaybackFeedback LatestOneShotPlaybackFeedback;
 	const IAnimClassInterface* CachedOneShotBlendStackAnimClass = nullptr;
 	int32 CachedOneShotBlendStackNodeIndex = INDEX_NONE;
+	bool bHasCombatStrafeMMDiagnosticSample = false;
+	float LastCombatStrafeMMDiagnosticInputDirection = 0.0f;
+	FName LastCombatStrafeMMDiagnosticAnimation = NAME_None;
 	TArray<FProject_JMotionMatchingPivotTraceEntry> PivotDebugTrace;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
