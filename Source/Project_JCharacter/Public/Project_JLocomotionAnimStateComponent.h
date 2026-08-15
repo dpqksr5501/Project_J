@@ -56,10 +56,6 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionAuthoritativeContext
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bCombatMode = false;
-
-	/** Whether this combat profile deliberately routes moving Strafe redirects to a TurnRedirect PSD. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
-	bool bUseMovingTurnRedirectInCombatStrafe = false;
 };
 
 USTRUCT(BlueprintType)
