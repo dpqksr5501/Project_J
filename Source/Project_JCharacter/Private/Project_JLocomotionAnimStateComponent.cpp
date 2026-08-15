@@ -642,25 +642,14 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
-	// Orient-to-Movement already rotates the character toward the requested
-	// WASD direction.  A Pivot there would fight CharacterMovement's natural
-	// heading update and select a strafe-authored foot redirect unnecessarily.
-	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
-	{
-		return false;
-	}
-
-	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
-	{
-		return false;
-	}
-
-	// A Pivot is a reversal of the actual/prospective movement trajectory, not
-	// merely a sharp change between two input samples. The latter is a normal
-	// moving TurnRedirect and remains owned by the combat TurnRedirect PSD.
-	return FMath::Max(
-		InKinematicContext.VelocityToMoveInputAngle,
-		InKinematicContext.FutureTrajectoryTurnAngle) >= DerivedPivotAngleThreshold;
+	// [Project J Locomotion Policy]
+	// State Controller One-Shot 피벗(Pivot)은 의도적으로 완전히 비활성화(Disabled)되었습니다.
+	// 이유:
+	// 1. One-Shot 피벗 강제 실행 시 발생하는 Blend Stack 3중 중첩(Start + Stop + Pivot) 및 고스트 레이어 오염 방지.
+	// 2. 키보드 스위치 접점 시차(8ms~15ms)로 인한 0.01초 단위 피벗 캔슬 및 떨림(Jitter) 현상 방지.
+	// 3. 이동 중 180도 급회전 및 방향 전환은 Motion Matching(Pose Search Database)이
+	//    실시간 궤적(Trajectory)과 발 디딤(Foot Phase)을 추적하여 100% 전담 처리합니다.
+	return false;
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
