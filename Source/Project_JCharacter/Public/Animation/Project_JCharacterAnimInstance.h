@@ -126,6 +126,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimInputThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float MoveInputTurnAngle = 0.0f;
 
+	/** Character-local input heading, populated for both OTM and Combat Strafe. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float MoveInputDirection = 0.0f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float MovementDirection = 0.0f;
 
@@ -1233,6 +1237,9 @@ public:
 	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn. */
 	bool bHasStateControllerOneShotControlYaw = false;
 	float StateControllerOneShotControlYaw = 0.0f;
+	/** Captured at direct Start/Land entry; valid for OTM as well as Combat Strafe. */
+	bool bHasStateControllerOneShotMoveInputDirection = false;
+	float StateControllerOneShotMoveInputDirection = 0.0f;
 	bool bHasStateControllerLeftFootContactCurve = false;
 	bool bHasStateControllerRightFootContactCurve = false;
 	bool bHasStateControllerFootContactCurves = false;
@@ -1253,6 +1260,8 @@ public:
 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;
+	/** Semantic phase of the direct asset actually selected by the State Controller. */
+	EProject_JLocomotionPhaseFamily CachedStateControllerSelectedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	/** True when the cached direct one-shot was selected from a Pivot chooser row. Debug-only diagnostic state. */
 	bool bCachedStateControllerWasPivotSelection = false;
 	/** Last settled combat-Strafe sector. It is intentionally not updated while a Pivot is being selected. */

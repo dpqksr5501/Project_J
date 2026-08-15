@@ -35,6 +35,10 @@
 namespace
 {
 	constexpr float StateControllerOneShotMouseTurnCancelAngle = 15.0f;
+	// Keyboard direction changes commonly pass through a 45-degree diagonal
+	// chord (W -> WA -> A). Keep this below 45 so OTM Start cannot remain
+	// active while a player makes a tight turn with sequential key presses.
+	constexpr float StateControllerOneShotInputDirectionCancelAngle = 30.0f;
 	// Let a very short Shift tap settle before committing the authored Start.
 	// After this window, switching the source animation mid-stride is worse than
 	// letting the current Start finish and entering the current-gait Cycle.
@@ -370,6 +374,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bCachedStateControllerHasSelectedAnimation = false;
 		bStateControllerForceTurnInPlaceReselect = false;
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputDirection = false;
 		++StateControllerChooserSelectionRevision;
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
@@ -463,27 +468,70 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
 		bHasStateControllerOneShotControlYaw = true;
+		StateControllerOneShotMoveInputDirection = ThreadSafeData.Input.MoveInputDirection;
+		bHasStateControllerOneShotMoveInputDirection = ThreadSafeData.Input.bHasMoveInput;
 	}
 
-	const bool bIsTurnCancellableOneShot =
-		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
-		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+	// Presentation state alone is not a one-shot semantic: Start and Pivot both
+	// use TransitionToLocomotion. Branch on the phase captured with the actual
+	// selected asset, so OTM Start rules cannot affect Combat Strafe Pivot.
+	const bool bHoldingDirectStart =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+		bCachedStateControllerHasSelectedAnimation &&
+		CachedStateControllerSelectedPhaseFamily == EProject_JLocomotionPhaseFamily::Start;
+	const bool bHoldingDirectLand =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand &&
+		bCachedStateControllerHasSelectedAnimation &&
+		CachedStateControllerSelectedPhaseFamily == EProject_JLocomotionPhaseFamily::Landing;
+	const bool bHoldingSelectedStrafePivot =
+		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+		bCachedStateControllerWasPivotSelection &&
+		bCachedStateControllerHasSelectedAnimation &&
+		CachedStateControllerSelectedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
+	const bool bHasCancellableDirectOneShot = bHoldingDirectStart || bHoldingDirectLand || bHoldingSelectedStrafePivot;
+	const bool bRetainsOneShotCancelSnapshot = bHasCancellableDirectOneShot || bEnteringStateControllerTurnCancellableOneShot;
 	const bool bShouldCancelOneShotForMouseTurn =
-		bIsTurnCancellableOneShot &&
+		bHasCancellableDirectOneShot &&
 		bHasStateControllerOneShotControlYaw &&
 		OwningPlayerCharacter &&
 		OwningPlayerCharacter->IsLocallyControlled() &&
 		FMath::Abs(FMath::FindDeltaAngleDegrees(
 			StateControllerOneShotControlYaw,
 			OwningPlayerCharacter->GetControlRotation().Yaw)) >= StateControllerOneShotMouseTurnCancelAngle;
-	if (bShouldCancelOneShotForMouseTurn)
+	// The locomotion component's bIsPivoting is a request-frame predicate and
+	// typically returns to false as soon as the trajectory phase becomes Cycle.
+	// Protect both a fresh confirmed Pivot request (before its chooser evaluation
+	// has populated the cache) and an already selected direct Pivot (after the
+	// phase becomes Cycle). Using only either half makes the generic OTM Start
+	// redirect cancel one of those two Pivot frames.
+	const bool bRequestingConfirmedStrafePivot =
+		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+		ThreadSafeData.LocomotionContext.bIsPivoting;
+	const bool bShouldCancelOneShotForInputDirection =
+		bHoldingDirectStart &&
+		bHasStateControllerOneShotMoveInputDirection &&
+		ThreadSafeData.Input.bHasMoveInput &&
+		// A Strafe Start that has become a confirmed Pivot is owned by the Pivot
+		// chooser this frame, never by the generic Start -> MM redirect.
+		!bRequestingConfirmedStrafePivot &&
+		(FMath::Abs(FMath::FindDeltaAngleDegrees(
+			StateControllerOneShotMoveInputDirection,
+			ThreadSafeData.Input.MoveInputDirection)) >= StateControllerOneShotInputDirectionCancelAngle ||
+			FMath::Abs(ThreadSafeData.Input.MoveInputTurnAngle) >= StateControllerOneShotInputDirectionCancelAngle);
+	if (bShouldCancelOneShotForMouseTurn || bShouldCancelOneShotForInputDirection)
 	{
-		// A local mouse turn invalidates the trajectory that selected an authored
-		// Start/Land one-shot. Release it and refresh regular MM immediately. We do
-		// not route this through a Turn asset: Project_J has not yet authored a
-		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
-		// already trajectory-aware and stable for Run and Sprint.
-		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
+		// MoveInputTurnAngle is populated for both OTM and Strafe.  In contrast,
+		// MovementDirection is intentionally a combat-Strafe value and stays zero
+		// in OTM, which used to make an OTM Start ignore W/A/S/D redirects.
+		// A local mouse turn or a new input heading invalidates the direct Start/
+		// Land trajectory, so hand it back to the regular MM cycle immediately.
+		// Preserve confirmed Strafe Pivot -> Pivot redirects; those are handled by
+		// the immutable Pivot From/To latch below rather than this generic escape.
+		const bool bShouldEnterLocomotionMM =
+			ThreadSafeData.Input.bHasMoveInput || ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving;
+		CurrentStateControllerPresentationState = bShouldEnterLocomotionMM
 			? EProject_JStateControllerPresentationState::LocomotionLoop
 			: EProject_JStateControllerPresentationState::IdleLoop;
 		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
@@ -498,10 +546,24 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		StateControllerPlaybackHoldState = CurrentStateControllerPresentationState;
 		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputDirection = false;
+		if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerDirectOneShot CancelledToMM Reason=%s Rotation=%d EntryInputDir=%.1f CurrentInputDir=%.1f InputTurn=%.1f HasInput=%s Moving=%s"),
+				bShouldCancelOneShotForMouseTurn ? TEXT("MouseTurn") : TEXT("InputDirectionChanged"),
+				static_cast<int32>(ThreadSafeData.LocomotionContext.RotationMode),
+				StateControllerOneShotMoveInputDirection,
+				ThreadSafeData.Input.MoveInputDirection,
+				ThreadSafeData.Input.MoveInputTurnAngle,
+				ThreadSafeData.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
+				ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving ? TEXT("true") : TEXT("false"));
+		}
 	}
-	else if (!bIsTurnCancellableOneShot)
+	else if (!bRetainsOneShotCancelSnapshot)
 	{
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputDirection = false;
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the
@@ -1731,6 +1793,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.Input.MoveInputSize = AnimState->MoveInputSize;
 	Data.Input.MoveInputHeldTime = AnimState->MoveInputHeldTime;
 	Data.Input.MoveInputTurnAngle = AnimState->MoveInputTurnAngle;
+	Data.Input.MoveInputDirection = AnimState->MoveInputDirection;
 	Data.Input.MovementDirection = AnimState->MovementDirection;
 	Data.Input.PivotInputReleaseFromMovementDirection = AnimState->PivotInputReleaseFromMovementDirection;
 	Data.Input.PivotInputReleaseToMovementDirection = AnimState->PivotInputReleaseToMovementDirection;
@@ -2260,6 +2323,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerSelectedAnimation = nullptr;
 		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
 		bCachedStateControllerHasSelectedAnimation = false;
+		CachedStateControllerSelectedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 		bCachedStateControllerWasPivotSelection = false;
 		return;
 	}
@@ -2488,6 +2552,18 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerSelectedAnimation = SelectedAsset;
 		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
 		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
+		if (bCachedStateControllerHasSelectedAnimation)
+		{
+			// Pivot must remain Pivot after its trajectory phase settles to Cycle.
+			// Other direct assets are classified from the request that selected them.
+			CachedStateControllerSelectedPhaseFamily = bPivotChooserRequested
+				? EProject_JLocomotionPhaseFamily::Pivot
+				: OneShot.PhaseFamily;
+		}
+		else if (!bPreservePreviousPivotOnNoResult)
+		{
+			CachedStateControllerSelectedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+		}
 		// CHT condition columns choose Pivot. Output Tags are optional semantic
 		// metadata for Blend Stack consumers and diagnostics; they must never
 		// decide whether an authored Pivot row is playable.
