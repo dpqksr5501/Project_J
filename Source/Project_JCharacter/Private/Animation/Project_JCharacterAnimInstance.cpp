@@ -39,10 +39,6 @@ namespace
 	// chord (W -> WA -> A). Keep this below 45 so OTM Start cannot remain
 	// active while a player makes a tight turn with sequential key presses.
 	constexpr float StateControllerOneShotInputDirectionCancelAngle = 30.0f;
-	// A selected Strafe Pivot may redirect only to another confirmed Pivot.  A
-	// different heading that does not qualify as one must release the root-motion
-	// Pivot and let the regular MM node own the lower body immediately.
-	constexpr float StateControllerPivotExitToMMDirectionAngle = 45.0f;
 	// Let a very short Shift tap settle before committing the authored Start.
 	// After this window, switching the source animation mid-stride is worse than
 	// letting the current Start finish and entering the current-gait Cycle.
@@ -524,19 +520,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			StateControllerOneShotMoveInputDirection,
 			ThreadSafeData.Input.MoveInputDirection)) >= StateControllerOneShotInputDirectionCancelAngle ||
 			FMath::Abs(ThreadSafeData.Input.MoveInputTurnAngle) >= StateControllerOneShotInputDirectionCancelAngle);
-	const float SelectedPivotInputDirectionDelta =
-		bHasStateControllerOneShotMoveInputDirection && ThreadSafeData.Input.bHasMoveInput
-			? FMath::Abs(FMath::FindDeltaAngleDegrees(
-				StateControllerOneShotMoveInputDirection,
-				ThreadSafeData.Input.MoveInputDirection))
-			: 0.0f;
-	const bool bShouldExitSelectedPivotToMotionMatching =
-		bHoldingSelectedStrafePivot &&
-		bHasStateControllerOneShotMoveInputDirection &&
-		ThreadSafeData.Input.bHasMoveInput &&
-		!bRequestingConfirmedStrafePivot &&
-		SelectedPivotInputDirectionDelta >= StateControllerPivotExitToMMDirectionAngle;
-	if (bShouldCancelOneShotForMouseTurn || bShouldCancelOneShotForInputDirection || bShouldExitSelectedPivotToMotionMatching)
+	if (bShouldCancelOneShotForMouseTurn || bShouldCancelOneShotForInputDirection)
 	{
 		// MoveInputTurnAngle is populated for both OTM and Strafe.  In contrast,
 		// MovementDirection is intentionally a combat-Strafe value and stays zero
@@ -567,9 +551,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerDirectOneShot CancelledToMM Reason=%s Rotation=%d EntryInputDir=%.1f CurrentInputDir=%.1f InputTurn=%.1f HasInput=%s Moving=%s"),
-				bShouldCancelOneShotForMouseTurn
-					? TEXT("MouseTurn")
-					: (bShouldExitSelectedPivotToMotionMatching ? TEXT("PivotHeadingExited") : TEXT("StartInputDirectionChanged")),
+				bShouldCancelOneShotForMouseTurn ? TEXT("MouseTurn") : TEXT("InputDirectionChanged"),
 				static_cast<int32>(ThreadSafeData.LocomotionContext.RotationMode),
 				StateControllerOneShotMoveInputDirection,
 				ThreadSafeData.Input.MoveInputDirection,
@@ -2589,17 +2571,6 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			bPivotChooserRequested && bCachedStateControllerHasSelectedAnimation;
 		if (bCachedStateControllerWasPivotSelection && !bPreservePreviousPivotOnNoResult)
 		{
-			// A Pivot redirect is a new direct clip. Rebase its local-input and mouse
-			// cancellation snapshot here, not only on TransitionToLocomotion entry:
-			// Pivot -> Pivot reuses that presentation state and otherwise inherits
-			// the outgoing Pivot's destination as its cancellation baseline.
-			if (OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
-			{
-				StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
-				bHasStateControllerOneShotControlYaw = true;
-				StateControllerOneShotMoveInputDirection = Data.Input.MoveInputDirection;
-				bHasStateControllerOneShotMoveInputDirection = Data.Input.bHasMoveInput;
-			}
 			// Pivot normally reuses TransitionToLocomotion, so changing only the
 			// Chooser result does not start a new presentation-state hold. Reset the
 			// clock here: the direct Blend Stack is about to restart this Pivot asset
