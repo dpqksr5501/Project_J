@@ -39,10 +39,6 @@ namespace
 	// chord (W -> WA -> A). Keep this below 45 so OTM Start cannot remain
 	// active while a player makes a tight turn with sequential key presses.
 	constexpr float StateControllerOneShotInputDirectionCancelAngle = 30.0f;
-	// A selected Strafe Pivot may redirect only to another confirmed Pivot.  A
-	// different heading that does not qualify as one must release the root-motion
-	// Pivot and let the regular MM node own the lower body immediately.
-	constexpr float StateControllerPivotExitToMMDirectionAngle = 45.0f;
 	// Let a very short Shift tap settle before committing the authored Start.
 	// After this window, switching the source animation mid-stride is worse than
 	// letting the current Start finish and entering the current-gait Cycle.
@@ -524,19 +520,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			StateControllerOneShotMoveInputDirection,
 			ThreadSafeData.Input.MoveInputDirection)) >= StateControllerOneShotInputDirectionCancelAngle ||
 			FMath::Abs(ThreadSafeData.Input.MoveInputTurnAngle) >= StateControllerOneShotInputDirectionCancelAngle);
-	const float SelectedPivotInputDirectionDelta =
-		bHasStateControllerOneShotMoveInputDirection && ThreadSafeData.Input.bHasMoveInput
-			? FMath::Abs(FMath::FindDeltaAngleDegrees(
-				StateControllerOneShotMoveInputDirection,
-				ThreadSafeData.Input.MoveInputDirection))
-			: 0.0f;
-	const bool bShouldExitSelectedPivotToMotionMatching =
-		bHoldingSelectedStrafePivot &&
-		bHasStateControllerOneShotMoveInputDirection &&
-		ThreadSafeData.Input.bHasMoveInput &&
-		!bRequestingConfirmedStrafePivot &&
-		SelectedPivotInputDirectionDelta >= StateControllerPivotExitToMMDirectionAngle;
-	if (bShouldCancelOneShotForMouseTurn || bShouldCancelOneShotForInputDirection || bShouldExitSelectedPivotToMotionMatching)
+	if (bShouldCancelOneShotForMouseTurn || bShouldCancelOneShotForInputDirection)
 	{
 		// MoveInputTurnAngle is populated for both OTM and Strafe.  In contrast,
 		// MovementDirection is intentionally a combat-Strafe value and stays zero
@@ -569,7 +553,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				TEXT("StateControllerDirectOneShot CancelledToMM Reason=%s Rotation=%d EntryInputDir=%.1f CurrentInputDir=%.1f InputTurn=%.1f HasInput=%s Moving=%s"),
 				bShouldCancelOneShotForMouseTurn
 					? TEXT("MouseTurn")
-					: (bShouldExitSelectedPivotToMotionMatching ? TEXT("PivotHeadingExited") : TEXT("StartInputDirectionChanged")),
+					: TEXT("StartInputDirectionChanged"),
 				static_cast<int32>(ThreadSafeData.LocomotionContext.RotationMode),
 				StateControllerOneShotMoveInputDirection,
 				ThreadSafeData.Input.MoveInputDirection,
@@ -1863,6 +1847,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.MotionMatching.PostSelection = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();
 
 	FProject_JAnimOneShotPresentationThreadSafeData& OneShot = Data.OneShotPresentation;
+	OneShot.PlaybackFeedback = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestOneShotPlaybackFeedback();
 	OneShot.bEnabled = Data.MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation;
 	OneShot.bUseMotionMatchOnEntry =
 		OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bUseMotionMatchForExperimentalOneShotEntry;
@@ -2071,53 +2056,43 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		ResolveStateControllerPresentationState(Data, InOutOneShot);
 	const double NowSeconds = FPlatformTime::Seconds();
 	bStateControllerForceTurnInPlaceReselect = false;
+	const FProject_JAnimOneShotPlaybackFeedback& Playback = InOutOneShot.PlaybackFeedback;
+	const UAnimationAsset* const CachedDirectAsset = CachedStateControllerSelectedAnimation.Get();
+	const bool bPlaybackMatchesCachedSelection =
+		CachedDirectAsset &&
+		Playback.bFound &&
+		Playback.SelectionRevision == StateControllerChooserSelectionRevision &&
+		Playback.Animation == CachedDirectAsset->GetFName() &&
+		Playback.AssetLength > UE_KINDA_SMALL_NUMBER;
+	const float CachedDirectLength = CachedDirectAsset ? CachedDirectAsset->GetPlayLength() : 0.0f;
+	const bool bPlaybackFinished = bPlaybackMatchesCachedSelection &&
+		(!Playback.bActive || Playback.AssetTime >= Playback.AssetLength - UE_KINDA_SMALL_NUMBER);
 
-	// GASP leaves Locomotion Loop as soon as its trajectory based IsMoving
-	// predicate becomes false.  Do the same even while the physical Character
-	// Movement component is still decelerating and has not yet entered its Stop
-	// phase.  This produces an early authored Stop selection without changing
-	// gameplay movement or the regular Motion Matching branch.
-	const bool bReleaseActivePivotToMotionMatching =
+	const bool bHoldingActiveDirectPivot =
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
 		bCachedStateControllerWasPivotSelection &&
-		!Data.Input.bHasMoveInput;
-	if (bReleaseActivePivotToMotionMatching)
+		bCachedStateControllerHasSelectedAnimation;
+	const bool bRetainActiveDirectPivotState =
+		bHoldingActiveDirectPivot &&
+		!bPlaybackFinished &&
+		(DesiredState == EProject_JStateControllerPresentationState::IdleLoop ||
+			DesiredState == EProject_JStateControllerPresentationState::LocomotionLoop ||
+			DesiredState == EProject_JStateControllerPresentationState::TransitionToIdle);
+	if (bRetainActiveDirectPivotState)
 	{
-		// This is an explicit abort rather than a natural Transition -> Loop
-		// continuation. Commit the loop immediately so the Blend Stack releases
-		// its Pivot and the regular Motion Matching node owns the next pose.
-		StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
-		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
-		InOutOneShot.PresentationState = StateControllerPlaybackHoldState;
-		InOutOneShot.bRequested = false;
-		InOutOneShot.TransitionElapsedTime = 0.0f;
-		InOutOneShot.TransitionTimeRemaining = 0.0f;
-		InOutOneShot.bTransitionAnimationAlmostComplete = false;
-		if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("PivotDiag CancelledToMM Reason=MoveInputReleased"));
-		}
-		return;
+		// GASP keeps Transition to Locomotion alive until the selected direct
+		// animation finishes. A one-frame input/trajectory dip may request Idle or
+		// Stop, but must not replace an already selected Pivot mid-clip.
+		DesiredState = StateControllerPlaybackHoldState;
 	}
-	const bool bKeepActivePivotPlaying =
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
-		bCachedStateControllerWasPivotSelection &&
-		Data.Input.bHasMoveInput;
 	const bool bStoppedFromPresentedLocomotion =
 		!Data.Air.bIsInAir &&
 		!Data.LocomotionContext.bIsMotionMatchingMoving &&
 		DesiredState == EProject_JStateControllerPresentationState::IdleLoop &&
+		!bHoldingActiveDirectPivot &&
 		(StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
 			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::LocomotionLoop);
-	if (bKeepActivePivotPlaying)
-	{
-		// Velocity is intentionally unreliable during a root-motion Pivot. As long
-		// as movement input remains held, retain the direct asset through its real
-		// completion instead of allowing the low-speed Stop policy to replace it.
-		DesiredState = EProject_JStateControllerPresentationState::LocomotionLoop;
-	}
-	else if (bStoppedFromPresentedLocomotion)
+	if (bStoppedFromPresentedLocomotion)
 	{
 		DesiredState = EProject_JStateControllerPresentationState::TransitionToIdle;
 	}
@@ -2170,8 +2145,8 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		return;
 	}
 
-	const UAnimationAsset* HeldAsset = CachedStateControllerSelectedAnimation;
-	const float AssetLength = HeldAsset ? HeldAsset->GetPlayLength() : 0.0f;
+	const UAnimationAsset* HeldAsset = CachedDirectAsset;
+	const float AssetLength = CachedDirectLength;
 	const float StartTime = FMath::Clamp(CachedStateControllerSelectedAnimationOutput.StartTime, 0.0f, AssetLength);
 	const float AuthoredPlayableLength = FMath::Max(AssetLength - StartTime, 0.0f);
 	const bool bHeldFallOff =
@@ -2186,25 +2161,30 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	{
 		EffectivePlayableLength = FMath::Min(AuthoredPlayableLength, FallOffMaxHoldTime);
 	}
-	// TIP is a direct authored one-shot. Do not truncate it at a generic fixed
-	// duration: the Blend Stack must retain it until its own completion (or an
-	// authored early-transition window) so the root turn and planted feet finish
-	// on the same animation timeline.
-	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerPlaybackHoldStartedAtSeconds), 0.0f);
+	// This is deliberately derived from the evaluated Blend Stack player, not
+	// FPlatformTime. A direct stack can start a frame later, be blended, or be
+	// re-entered; a wall-clock estimate desynchronizes those cases and lets MM
+	// reclaim the pose before the authored one-shot has actually finished.
+	const float Elapsed = bPlaybackMatchesCachedSelection
+		? FMath::Max(Playback.AssetTime - StartTime, 0.0f)
+		: 0.0f;
 	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
-	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
+	const float Remaining = bPlaybackMatchesCachedSelection
+		? FMath::Max(EffectivePlayableLength - Elapsed, 0.0f)
+		: EffectivePlayableLength;
 	const bool bHasPlayableTransitionAsset = HeldAsset &&
 		EffectivePlayableLength > KINDA_SMALL_NUMBER;
 	const bool bHoldingDirectPivot =
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
 		bCachedStateControllerWasPivotSelection;
 	const bool bReachedCompletion = bHasPlayableTransitionAsset &&
-		Remaining <= (bHoldingDirectPivot ? 0.0f : LeadTime);
+		bPlaybackMatchesCachedSelection &&
+		(bPlaybackFinished || Remaining <= (bHoldingDirectPivot ? 0.0f : LeadTime));
 
 	InOutOneShot.TransitionElapsedTime = Elapsed;
 	InOutOneShot.TransitionTimeRemaining = Remaining;
-	// Pivot must consume its authored clip. Unlike Start/Land, its early-window
-	// notify cannot make a subsequent opposite input replace the asset early.
+	// Pivot consumes its authored clip. A new confirmed Pivot can still re-enter
+	// and replace it through the chooser; raw WASD intermediate chords cannot.
 	InOutOneShot.bTransitionAnimationAlmostComplete =
 		(!bHoldingDirectPivot && InOutOneShot.bEarlyTransitionWindowOpen) || bReachedCompletion;
 
@@ -2351,14 +2331,15 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 		Data.LocomotionContext.bIsPivoting;
 	const bool bPreviousChooserWasPivot = bCachedStateControllerWasPivotSelection;
+	const UAnimationAsset* const PreviousSelectedAnimation = CachedStateControllerSelectedAnimation.Get();
+	const float PreviousSelectedStartTime = CachedStateControllerSelectedAnimationOutput.StartTime;
 	// The trajectory phase commonly settles to Cycle immediately after selecting
-	// a Pivot. Retain that direct asset while its original input remains active,
-	// but a newly confirmed Pivot request must immediately replace it.
+	// a Pivot. Retain that direct asset through completion, regardless of an
+	// intermediate keyboard chord, but let a newly confirmed Pivot replace it.
 	const bool bPreserveCurrentPivotSelection =
 		bPreviousChooserWasPivot &&
 		!bPivotChooserRequested &&
 		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
-		Data.Input.bHasMoveInput &&
 		!OneShot.bTransitionAnimationAlmostComplete;
 
 	// TIP is selected by a float chooser index rather than the generic Strafe
@@ -2537,15 +2518,27 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			ChooserOutput = FProject_JStateControllerChooserOutput();
 		}
 
+		if (bPivotChooserRequested && SelectedAsset)
+		{
+			// Pivot uses a consistent short crossfade regardless of the individual
+			// Chooser row. The authored StartTime is still passed unchanged to the
+			// incoming player; only pose ownership blends for this interval.
+			ChooserOutput.BlendTime = 0.3f;
+		}
+
+		const bool bSamePivotDirectionPairAsCached =
+			OneShot.PreviousStrafeDirection == CachedStateControllerPreviousStrafeDirection &&
+			OneShot.StrafeDirection == CachedStateControllerStrafeDirection;
 		const bool bPreservePreviousPivotOnNoResult =
 			bPivotChooserRequested &&
 			bPreviousChooserWasPivot &&
-			SelectedAsset == nullptr;
+			SelectedAsset == nullptr &&
+			bSamePivotDirectionPairAsCached;
 		if (bPreservePreviousPivotOnNoResult)
 		{
-			// A valid new Pivot request can still have no authored CHT row (for
-			// example a 135-degree redirect). Keep the current direct Pivot through
-			// its existing hold rather than dropping to an unrelated Start/MM pose.
+			// Preserve only an identical request whose table result vanished for one
+			// evaluation. Reusing an old Pivot for a different From/To pair visibly
+			// plays the wrong direction; that case intentionally falls back to MM.
 			SelectedAsset = CachedStateControllerSelectedAnimation;
 			ChooserOutput = CachedStateControllerSelectedAnimationOutput;
 			if (bCapturePivotDebug)
@@ -2554,6 +2547,19 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 					TEXT("PivotDiag Redirect PreservedPrevious Asset=%s"),
 					SelectedAsset ? *SelectedAsset->GetName() : TEXT("None"));
 			}
+		}
+		else if (bCapturePivotDebug && bPivotChooserRequested && !SelectedAsset)
+		{
+			UE_LOG(LogProjectJPlayer, Warning,
+				TEXT("PivotDiag MissingDirectionPair From=%s(%d) To=%s(%d) CachedFrom=%s(%d) CachedTo=%s(%d) Action=MotionMatching"),
+				GetStrafeDirectionDebugName(OneShot.PreviousStrafeDirection),
+				static_cast<int32>(OneShot.PreviousStrafeDirection),
+				GetStrafeDirectionDebugName(OneShot.StrafeDirection),
+				static_cast<int32>(OneShot.StrafeDirection),
+				GetStrafeDirectionDebugName(CachedStateControllerPreviousStrafeDirection),
+				static_cast<int32>(CachedStateControllerPreviousStrafeDirection),
+				GetStrafeDirectionDebugName(CachedStateControllerStrafeDirection),
+				static_cast<int32>(CachedStateControllerStrafeDirection));
 		}
 
 		CachedStateControllerChooserTable = ChooserTable;
@@ -2626,7 +2632,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				IsTransitionState(OneShot.PresentationState) &&
 				!ShouldStateControllerPresentationLoop(OneShot.PresentationState);
 			UE_LOG(LogProjectJPlayer, Display,
-			TEXT("PivotDiag Chooser Resolution=%s Rev=%d Phase=%d Pivot=%s State=%d Speed=%.1f VelToInput=%.1f FutureTurn=%.1f StrafeDir=%d PrevStrafeDir=%d Latch=%s From=%d To=%d Asset=%s Tags=%s Loop=%s WillOverrideMM=%s"),
+			TEXT("PivotDiag Chooser Resolution=%s Rev=%d Phase=%d Pivot=%s State=%d Speed=%.1f VelToInput=%.1f FutureTurn=%.1f StrafeDir=%d PrevStrafeDir=%d Latch=%s From=%d To=%d Asset=%s Start=%.3f Blend=%.3f ForceBlend=%s PrevAsset=%s PrevStart=%.3f SameAsset=%s Tags=%s Loop=%s WillOverrideMM=%s"),
 				PivotResolution,
 				StateControllerChooserSelectionRevision,
 				static_cast<int32>(OneShot.PhaseFamily),
@@ -2641,6 +2647,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				static_cast<int32>(LatchedPivotFromStrafeDirection),
 				static_cast<int32>(LatchedPivotToStrafeDirection),
 				CachedStateControllerSelectedAnimation ? *CachedStateControllerSelectedAnimation->GetName() : TEXT("None"),
+				CachedStateControllerSelectedAnimationOutput.StartTime,
+				CachedStateControllerSelectedAnimationOutput.BlendTime,
+				OneShot.bForceBlendNextUpdate ? TEXT("true") : TEXT("false"),
+				*GetNameSafe(PreviousSelectedAnimation),
+				PreviousSelectedStartTime,
+				CachedStateControllerSelectedAnimation == PreviousSelectedAnimation ? TEXT("true") : TEXT("false"),
 				*DescribeStateControllerChooserTags(CachedStateControllerSelectedAnimationOutput),
 				ShouldStateControllerPresentationLoop(OneShot.PresentationState) ? TEXT("true") : TEXT("false"),
 				bWillOverrideMotionMatching ? TEXT("true") : TEXT("false"));
@@ -3111,6 +3123,68 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		SelectedDatabase = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
+	}
+	if (bUsesCombatStrafe &&
+		Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace() &&
+		(Data.MotionMatching.bSelectionChanged || Data.MotionMatching.bForceReselect))
+	{
+		const FProject_JMotionMatchingGaitDatabaseFamily& CombatGaitFamily =
+			CombatSelectionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint
+				? CombatStrafeAssetSet->SprintDatabases
+				: CombatStrafeAssetSet->RunDatabases;
+		int32 MatchingEntryCount = 0;
+		int32 BestMatchingEntryIndex = INDEX_NONE;
+		int32 BestMatchingEntrySpecificity = INDEX_NONE;
+		for (int32 EntryIndex = 0; EntryIndex < CombatStrafeAssetSet->DatabaseEntries.Num(); ++EntryIndex)
+		{
+			const FProject_JMotionMatchingDatabaseEntry& Entry = CombatStrafeAssetSet->DatabaseEntries[EntryIndex];
+			if (!Entry.Matches(
+				CombatSelectionContext.GaitIntent,
+				CombatSelectionContext.RotationMode,
+				CombatSelectionContext.PhaseFamily))
+			{
+				continue;
+			}
+
+			++MatchingEntryCount;
+			const int32 Specificity = Entry.GetSpecificity();
+			if (BestMatchingEntryIndex == INDEX_NONE || Specificity > BestMatchingEntrySpecificity)
+			{
+				BestMatchingEntryIndex = EntryIndex;
+				BestMatchingEntrySpecificity = Specificity;
+			}
+		}
+
+		const TCHAR* SelectionSource = TEXT("Fallback");
+		if (BestMatchingEntryIndex != INDEX_NONE &&
+			SelectedDatabase == CombatStrafeAssetSet->DatabaseEntries[BestMatchingEntryIndex].PoseSearchDatabase.Get())
+		{
+			SelectionSource = TEXT("DatabaseEntry");
+		}
+		else if (SelectedDatabase == CombatGaitFamily.Cycle.Get())
+		{
+			SelectionSource = TEXT("GaitFamily.Cycle");
+		}
+		else if (SelectedDatabase == CombatGaitFamily.TurnRedirect.Get())
+		{
+			SelectionSource = TEXT("GaitFamily.TurnRedirect");
+		}
+		else if (SelectedDatabase == CombatStrafeAssetSet->DefaultPoseSearchDatabase.Get())
+		{
+			SelectionSource = TEXT("Default");
+		}
+
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StrafeMMRoute RequestedPhase=%d RequestedGait=%d SelectedPSD=%s Source=%s MatchingEntries=%d BestEntry=%d BestSpecificity=%d FamilyCycle=%s FamilyTurn=%s"),
+			static_cast<int32>(CombatSelectionContext.PhaseFamily),
+			static_cast<int32>(CombatSelectionContext.GaitIntent),
+			*GetNameSafe(SelectedDatabase),
+			SelectionSource,
+			MatchingEntryCount,
+			BestMatchingEntryIndex,
+			BestMatchingEntrySpecificity,
+			*GetNameSafe(CombatGaitFamily.Cycle.Get()),
+			*GetNameSafe(CombatGaitFamily.TurnRedirect.Get()));
 	}
 	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
 		? nullptr

@@ -47,6 +47,16 @@ public:
 	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
 
 	/**
+	 * Enable the moving TurnRedirect PSD family for Combat Strafe. Disabled by
+	 * default: keyboard strafe chord edges (S -> S+D -> S -> S+A) are ordinary
+	 * locomotion direction changes and should reselect inside Cycle. Authored
+	 * Pivot and Turn-In-Place one-shots remain responsible for deliberate
+	 * redirects.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
+	bool bUseMovingTurnRedirectInCombatStrafe = false;
+
+	/**
 	 * Re-query the current combat locomotion PSD when a held movement input turns
 	 * sharply. This is required for a camera-facing strafe set: W -> A/D normally
 	 * stays in the same Cycle PSD, but must not keep a forward continuing pose.

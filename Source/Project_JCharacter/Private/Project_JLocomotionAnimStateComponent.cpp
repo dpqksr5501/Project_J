@@ -296,6 +296,11 @@ FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent:
 	Context.bSprintAllowed = PlayerOwner.IsSprintLocomotionAllowed();
 	Context.bJumpAllowed = PlayerOwner.IsJumpLocomotionAllowed();
 	Context.bCombatMode = PlayerOwner.IsCombatModeActive();
+	if (const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile())
+	{
+		Context.bUseMovingTurnRedirectInCombatStrafe =
+			CombatProfile->bUseMovingTurnRedirectInCombatStrafe;
+	}
 	Context.GaitIntent = ResolveGaitIntent(PlayerOwner, Snapshot);
 	Context.RotationMode = ResolveRotationMode(PlayerOwner);
 	return Context;
@@ -579,11 +584,32 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
 	const bool bIsCombatStrafe =
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const bool bMovingTurnRedirectAllowed =
+		!bIsCombatStrafe || AuthoritativeContext.bUseMovingTurnRedirectInCombatStrafe;
 	// TurnRedirect triggers when the player changes WASD input heading (e.g. W -> D).
 	// Mouse camera rotation while holding W does not change MoveInputTurnAngle, allowing
 	// smooth Orient-To-Movement capsule turning in Motion Matching Cycle phase.
-	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
+	const bool bInputPassesTurnRedirectThreshold = bHasMovingTurnIntent &&
 		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold;
+	const bool bShouldUseTurnRedirect =
+		bInputPassesTurnRedirectThreshold && bMovingTurnRedirectAllowed;
+	if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace() && bInputPassesTurnRedirectThreshold)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StrafeTurnDiag PhaseGate Decision=%s Mode=%s Combat=%s TurnPSDAllowed=%s MoveWorld=(%.2f,%.2f) InputTurn=%.1f Threshold=%.1f Speed=%.1f/%.1f VelToInput=%.1f FutureTurn=%.1f"),
+			bShouldUseTurnRedirect ? TEXT("Turn") : TEXT("CycleReselect"),
+			AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? TEXT("Strafe") : TEXT("OrientToMovement"),
+			AuthoritativeContext.bCombatMode ? TEXT("true") : TEXT("false"),
+			bMovingTurnRedirectAllowed ? TEXT("true") : TEXT("false"),
+			KinematicContext.MoveWorldDirection.X,
+			KinematicContext.MoveWorldDirection.Y,
+			KinematicContext.MoveInputTurnAngle,
+			DerivedTurnAngleThreshold,
+			KinematicContext.GroundSpeed,
+			DerivedTurnMinSpeed,
+			KinematicContext.VelocityToMoveInputAngle,
+			KinematicContext.FutureTrajectoryTurnAngle);
+	}
 	if (bShouldUseTurnRedirect)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;
@@ -1107,20 +1133,51 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 			DerivedPivotInputReleaseBridgeTime + 1.0f);
 		if (PivotInputReleaseElapsedTime > DerivedPivotInputReleaseBridgeTime)
 		{
-			// The candidate remained a genuine non-Pivot direction. Commit it as
-			// ordinary locomotion input without replaying the stale From->Candidate
-			// delta next frame; MM/TurnRedirect can now own it normally.
-			if (bHasMoveInput && PivotInputCandidate.Size() > MoveInputDeadZone)
+			const FVector2D SettledFrom = PivotInputReleaseReference.GetSafeNormal();
+			const FVector2D SettledTo = PivotInputCandidate.GetSafeNormal();
+			const float SettledDot = FMath::Clamp(FVector2D::DotProduct(SettledFrom, SettledTo), -1.0f, 1.0f);
+			const float SettledCross = SettledFrom.Y * SettledTo.X - SettledFrom.X * SettledTo.Y;
+			const float SettledTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(SettledCross, SettledDot));
+			const bool bCommitSettledDiagonalPivot =
+				bTrackTurnAngle &&
+				bHasMoveInput &&
+				PivotInputCandidate.Size() > MoveInputDeadZone &&
+				AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+				PivotInputReleaseSpeedReference >= DerivedPivotMinSpeed &&
+				FMath::Abs(SettledTurnAngle) >= DerivedPivotAngleThreshold;
+
+			if (bCommitSettledDiagonalPivot)
 			{
+				// 135-degree diagonal redirects are intentionally not committed on the
+				// first one-key chord. Once the input has remained stable for the short
+				// bridge window it is a real player intent, so resolve it exactly like
+				// a 180-degree release bridge rather than handing the old pose to MM.
+				MoveInputTurnAngle = SettledTurnAngle;
+				PivotInputReleaseFromMovementDirection = FMath::RadiansToDegrees(
+					FMath::Atan2(PivotInputReleaseReference.X, PivotInputReleaseReference.Y));
+				PivotInputReleaseToMovementDirection = FMath::RadiansToDegrees(
+					FMath::Atan2(PivotInputCandidate.X, PivotInputCandidate.Y));
+				bHasPivotInputReleaseDirections = true;
+				bLastMoveInputTurnUsedReleaseBridge = true;
+			}
+			else if (bHasMoveInput && PivotInputCandidate.Size() > MoveInputDeadZone)
+			{
+				// A candidate below the Pivot threshold remained stable. Commit it as
+				// ordinary locomotion without replaying the stale From->Candidate delta.
 				PreviousMoveInputForTurn = PivotInputCandidate;
 				bResolvedMoveInputLastUpdate = true;
 			}
 			if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
 			{
 				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("PivotDiag InputSettle Expired Candidate=(%.2f,%.2f)"),
+					TEXT("PivotDiag InputSettle Resolved Verdict=%s From=(%.2f,%.2f) Candidate=(%.2f,%.2f) Turn=%.1f Threshold=%.1f"),
+					bCommitSettledDiagonalPivot ? TEXT("SettledPivot") : TEXT("OrdinaryLocomotion"),
+					PivotInputReleaseReference.X,
+					PivotInputReleaseReference.Y,
 					PivotInputCandidate.X,
-					PivotInputCandidate.Y);
+					PivotInputCandidate.Y,
+					SettledTurnAngle,
+					DerivedPivotAngleThreshold);
 			}
 			bPivotInputReleaseSequenceActive = false;
 			PivotInputCandidate = FVector2D::ZeroVector;

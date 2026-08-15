@@ -53,6 +53,7 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
 	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
+	const FProject_JAnimOneShotPlaybackFeedback& GetLatestOneShotPlaybackFeedback() const { return LatestOneShotPlaybackFeedback; }
 	FString GetPivotTraceSummary() const;
 
 protected:
@@ -70,6 +71,8 @@ private:
 	void ApplyMotionMatchingSearchPolicy();
 	void ForceReselectMotionMatchingNodes();
 	void CapturePostSelection();
+	void CaptureCombatStrafeMotionMatchingDiagnostics(const FAnimNode_MotionMatching& ResultNode);
+	void CaptureOneShotPlaybackFeedback();
 	void CapturePivotDebugTrace();
 	/**
 	 * Generated AnimBP graphs commonly contain far more nodes than Motion Matching
@@ -104,6 +107,13 @@ private:
 	EProject_JLocomotionRotationMode LastPolicyRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 	EPoseSearchInterruptMode LastResolvedDatabaseChangeInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
 	FProject_JAnimMotionMatchingPostSelectionData LatestPostSelection;
+	/** Updated after the generated AnimGraph has advanced its Blend Stack players. */
+	FProject_JAnimOneShotPlaybackFeedback LatestOneShotPlaybackFeedback;
+	const IAnimClassInterface* CachedOneShotBlendStackAnimClass = nullptr;
+	int32 CachedOneShotBlendStackNodeIndex = INDEX_NONE;
+	bool bHasCombatStrafeMMDiagnosticSample = false;
+	float LastCombatStrafeMMDiagnosticInputDirection = 0.0f;
+	FName LastCombatStrafeMMDiagnosticAnimation = NAME_None;
 	TArray<FProject_JMotionMatchingPivotTraceEntry> PivotDebugTrace;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;

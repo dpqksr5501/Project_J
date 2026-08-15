@@ -395,6 +395,23 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
 	FProject_JAnimMotionMatchingPostSelectionData PostSelection;
 };
 
+/** Runtime feedback copied from the State Controller's actual Blend Stack player. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPlaybackFeedback
+{
+	GENERATED_BODY()
+
+	/** Chooser revision which created the player. INDEX_NONE means no sample yet. */
+	int32 SelectionRevision = INDEX_NONE;
+
+	FName Animation = NAME_None;
+	float AssetTime = 0.0f;
+	float AssetLength = 0.0f;
+	float BlendWeight = 0.0f;
+	bool bFound = false;
+	bool bActive = false;
+};
+
 /**
  * Read-only request from C++ locomotion state to an optional GASP-style
  * logical State Machine / Blend Stack presentation layer. Asset selection,
@@ -512,9 +529,14 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOneShotPresentationThreadSafeData
 	bool bForceBlendNextUpdate = false;
 
 	/**
-	 * Asset-progress approximation for the logical State Controller. It is derived
-	 * from the selected Blend Stack asset, never from a fixed Start/Stop duration.
+	 * Previous animation-update sample from the concrete State Controller Blend
+	 * Stack player. This is the authoritative completion source for direct
+	 * one-shots; game-thread wall time is not used to infer asset progress.
 	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
+	FProject_JAnimOneShotPlaybackFeedback PlaybackFeedback;
+
+	/** Actual elapsed time reported by the selected Blend Stack player. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|One Shot")
 	float TransitionElapsedTime = 0.0f;
 

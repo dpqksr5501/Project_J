@@ -3,6 +3,7 @@
 #include "Animation/AnimClassInterface.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
+#include "BlendStack/AnimNode_BlendStack.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "UObject/UnrealType.h"
@@ -88,6 +89,7 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	ApplyMotionMatchingSearchPolicy();
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
 	CapturePostSelection();
+	CaptureOneShotPlaybackFeedback();
 	CapturePivotDebugTrace();
 }
 
@@ -139,6 +141,82 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	{
 		LatestPostSelection.DatabaseTags = Result.SelectedDatabase->Tags;
 	}
+
+	CaptureCombatStrafeMotionMatchingDiagnostics(*ResultNode);
+}
+
+void FProject_JCharacterAnimInstanceProxy::CaptureCombatStrafeMotionMatchingDiagnostics(
+	const FAnimNode_MotionMatching& ResultNode)
+{
+	if (!Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
+	{
+		bHasCombatStrafeMMDiagnosticSample = false;
+		return;
+	}
+
+	const FProject_JAnimThreadSafeData& Data = ThreadSafeData;
+	const bool bCombatStrafeMoving =
+		Data.Combat.bIsCombatMode &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Data.Input.bHasMoveInput &&
+		!Data.OneShotPresentation.bShouldOverrideMotionMatching;
+	if (!bCombatStrafeMoving)
+	{
+		bHasCombatStrafeMMDiagnosticSample = false;
+		return;
+	}
+
+	const FMotionMatchingState& State = ResultNode.GetMotionMatchingState();
+	const FPoseSearchBlueprintResult& Result = State.SearchResult;
+	const FName SelectedAnimation = Result.SelectedAnim ? Result.SelectedAnim->GetFName() : NAME_None;
+	const bool bInputDirectionChanged = !bHasCombatStrafeMMDiagnosticSample ||
+		FMath::Abs(FMath::FindDeltaAngleDegrees(
+			LastCombatStrafeMMDiagnosticInputDirection,
+			Data.Input.MoveInputDirection)) >= 10.0f;
+	const bool bSelectedAnimationChanged = SelectedAnimation != LastCombatStrafeMMDiagnosticAnimation;
+	const bool bNewBlend = ResultNode.AnyNewBlendToThisFrame();
+	if (!bInputDirectionChanged && !bSelectedAnimationChanged && !bNewBlend)
+	{
+		return;
+	}
+
+	const TCHAR* Reason = bNewBlend
+		? TEXT("NewBlend")
+		: (bSelectedAnimationChanged ? TEXT("SelectedAnimationChanged") : TEXT("InputDirectionChanged"));
+	UE_LOG(LogProjectJPlayer, Display,
+		TEXT("StrafeMMDiag Frame=%llu Reason=%s Rev=%d SelChanged=%s MMUpdated=%s InputDir=%.1f InputTurn=%.1f Sector=%d VelDir=%.1f VelToInput=%.1f Accel=(%.2f,%.2f) FutureVel=(%.1f,%.1f) FutureSpeed=%.1f FutureTurn=%.1f Speed=%.1f Phase=%d GroundMode=%d ForceReselect=%s RequestedPSD=%s AppliedPSD=%s NativePSD=%s Anim=%s AnimTime=%.3f Cost=%.3f Continuing=%s NewBlend=%s"),
+		GFrameCounter,
+		Reason,
+		Data.MotionMatching.SelectionRevision,
+		Data.MotionMatching.bSelectionChanged ? TEXT("true") : TEXT("false"),
+		bUpdateMotionMatchingThisFrame ? TEXT("true") : TEXT("false"),
+		Data.Input.MoveInputDirection,
+		Data.Input.MoveInputTurnAngle,
+		static_cast<int32>(Data.OneShotPresentation.StrafeDirection),
+		Data.Movement.RelativeVelocityDirection,
+		Data.Movement.VelocityToMoveInputAngle,
+		Data.Movement.AccelerationDirection.X,
+		Data.Movement.AccelerationDirection.Y,
+		Data.Movement.FutureTrajectoryVelocity.X,
+		Data.Movement.FutureTrajectoryVelocity.Y,
+		Data.Movement.FutureTrajectorySpeed,
+		Data.Movement.FutureTrajectoryTurnAngle,
+		Data.Movement.GroundSpeed,
+		static_cast<int32>(Data.LocomotionContext.PhaseFamily),
+		static_cast<int32>(Data.Ground.GroundMotionMode),
+		Data.MotionMatching.bForceReselect ? TEXT("true") : TEXT("false"),
+		*GetNameSafe(CurrentActiveDatabase),
+		*GetNameSafe(AppliedDatabase),
+		Result.SelectedDatabase ? *Result.SelectedDatabase->GetName() : TEXT("None"),
+		*SelectedAnimation.ToString(),
+		Result.SelectedTime,
+		Result.SearchCost,
+		Result.bIsContinuingPoseSearch ? TEXT("true") : TEXT("false"),
+		bNewBlend ? TEXT("true") : TEXT("false"));
+
+	bHasCombatStrafeMMDiagnosticSample = true;
+	LastCombatStrafeMMDiagnosticInputDirection = Data.Input.MoveInputDirection;
+	LastCombatStrafeMMDiagnosticAnimation = SelectedAnimation;
 }
 
 FFloatProperty* FindMotionMatchingFloatProperty(const TCHAR* PropertyName)
@@ -376,6 +454,7 @@ void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()
 		{
 			break;
 		}
+
 	}
 	if (!ResultNode)
 	{
@@ -403,6 +482,73 @@ void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()
 	Entry.AppliedInterruptMode = LastResolvedDatabaseChangeInterruptMode;
 	Entry.bContinuingPoseSearch = SearchResult.bIsContinuingPoseSearch;
 	Entry.bNewBlendThisFrame = bNewBlendThisFrame;
+	const FProject_JAnimOneShotPresentationThreadSafeData& OneShot = ThreadSafeData.OneShotPresentation;
+	const bool bCaptureDirectPivotBlend =
+		bCapturePivot &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+		OneShot.bForceBlendNextUpdate &&
+		OneShot.SelectedAnimation;
+	if (bCaptureDirectPivotBlend)
+	{
+		const FName ExpectedAnimation = OneShot.SelectedAnimation->GetFName();
+		bool bFoundDirectStack = false;
+		FName RequestedAnimation = NAME_None;
+		float RequestedTime = -1.0f;
+		float CurrentTime = -1.0f;
+		bool bNewDirectBlend = false;
+		FString PlayersSummary;
+
+		if (const IAnimClassInterface* AnimClass = GetAnimClassInterface())
+		{
+			const TArray<FStructProperty*>& NodeProperties = AnimClass->GetAnimNodeProperties();
+			for (int32 NodeIndex = 0; NodeIndex < NodeProperties.Num(); ++NodeIndex)
+			{
+				const FAnimNode_BlendStack* Candidate = GetNodeFromIndex<FAnimNode_BlendStack>(NodeIndex);
+				if (!Candidate)
+				{
+					continue;
+				}
+
+				bool bMatchesExpectedAsset = Candidate->AnimationAsset == OneShot.SelectedAnimation;
+				for (const FBlendStackAnimPlayer& Player : Candidate->AnimPlayers)
+				{
+					bMatchesExpectedAsset |= Player.GetAnimationAsset() == OneShot.SelectedAnimation;
+				}
+				if (!bMatchesExpectedAsset)
+				{
+					continue;
+				}
+
+				bFoundDirectStack = true;
+				RequestedAnimation = Candidate->AnimationAsset ? Candidate->AnimationAsset->GetFName() : NAME_None;
+				RequestedTime = Candidate->AnimationTime;
+				CurrentTime = Candidate->GetCurrentAssetTime();
+				bNewDirectBlend = Candidate->AnyNewBlendToThisFrame();
+				for (const FBlendStackAnimPlayer& Player : Candidate->AnimPlayers)
+				{
+					PlayersSummary += FString::Printf(
+						TEXT("[%s t=%.3f w=%.3f active=%s]"),
+						*GetNameSafe(Player.GetAnimationAsset()),
+						Player.GetCurrentAssetTime(),
+						Player.GetBlendInWeight(),
+						Player.IsActive() ? TEXT("true") : TEXT("false"));
+				}
+				break;
+			}
+		}
+
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("PivotDiag DirectStack Rev=%d Expected=%s Start=%.3f Found=%s Requested=%s RequestedTime=%.3f CurrentTime=%.3f NewBlend=%s Players=%s"),
+			OneShot.SelectionRevision,
+			*ExpectedAnimation.ToString(),
+			OneShot.SelectedAnimationOutput.StartTime,
+			bFoundDirectStack ? TEXT("true") : TEXT("false"),
+			*RequestedAnimation.ToString(),
+			RequestedTime,
+			CurrentTime,
+			bNewDirectBlend ? TEXT("true") : TEXT("false"),
+			*PlayersSummary);
+	}
 
 	for (const FBlendStackAnimPlayer& Player : ResultNode->AnimPlayers)
 	{
@@ -453,6 +599,102 @@ void FProject_JCharacterAnimInstanceProxy::LinkNativeGraph()
 	NativePoseHistoryNode.PoseCount = 10;
 	NativePoseHistoryNode.SamplingInterval = 0.04f;
 	NativePoseHistoryNode.TrajectorySpeedMultiplier = 1.0f;
+}
+
+void FProject_JCharacterAnimInstanceProxy::CaptureOneShotPlaybackFeedback()
+{
+	LatestOneShotPlaybackFeedback = FProject_JAnimOneShotPlaybackFeedback();
+
+	const FProject_JAnimOneShotPresentationThreadSafeData& OneShot = ThreadSafeData.OneShotPresentation;
+	if (!OneShot.bHasSelectedAnimation || !OneShot.SelectedAnimation || OneShot.bSelectedAnimationShouldLoop)
+	{
+		return;
+	}
+
+	LatestOneShotPlaybackFeedback.SelectionRevision = OneShot.SelectionRevision;
+	LatestOneShotPlaybackFeedback.Animation = OneShot.SelectedAnimation->GetFName();
+
+	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
+	if (!AnimClass)
+	{
+		return;
+	}
+
+	if (CachedOneShotBlendStackAnimClass != AnimClass)
+	{
+		CachedOneShotBlendStackAnimClass = AnimClass;
+		CachedOneShotBlendStackNodeIndex = INDEX_NONE;
+	}
+
+	const auto MatchesSelectedAnimation = [&OneShot](const FAnimNode_BlendStack& Candidate)
+	{
+		if (Candidate.AnimationAsset == OneShot.SelectedAnimation)
+		{
+			return true;
+		}
+		for (const FBlendStackAnimPlayer& Player : Candidate.AnimPlayers)
+		{
+			if (Player.GetAnimationAsset() == OneShot.SelectedAnimation)
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+
+	const FAnimNode_BlendStack* BlendStack = nullptr;
+	if (CachedOneShotBlendStackNodeIndex != INDEX_NONE)
+	{
+		const FAnimNode_BlendStack* Candidate = GetNodeFromIndex<FAnimNode_BlendStack>(CachedOneShotBlendStackNodeIndex);
+		if (Candidate && MatchesSelectedAnimation(*Candidate))
+		{
+			BlendStack = Candidate;
+		}
+	}
+
+	if (!BlendStack)
+	{
+		const TArray<FStructProperty*>& NodeProperties = AnimClass->GetAnimNodeProperties();
+		for (int32 NodeIndex = 0; NodeIndex < NodeProperties.Num(); ++NodeIndex)
+		{
+			const FAnimNode_BlendStack* Candidate = GetNodeFromIndex<FAnimNode_BlendStack>(NodeIndex);
+			if (Candidate && MatchesSelectedAnimation(*Candidate))
+			{
+				BlendStack = Candidate;
+				CachedOneShotBlendStackNodeIndex = NodeIndex;
+				break;
+			}
+		}
+	}
+
+	if (!BlendStack)
+	{
+		return;
+	}
+
+	const FBlendStackAnimPlayer* BestPlayer = nullptr;
+	for (const FBlendStackAnimPlayer& Player : BlendStack->AnimPlayers)
+	{
+		if (Player.GetAnimationAsset() != OneShot.SelectedAnimation)
+		{
+			continue;
+		}
+		if (!BestPlayer || Player.GetBlendInWeight() > BestPlayer->GetBlendInWeight())
+		{
+			BestPlayer = &Player;
+		}
+	}
+
+	if (!BestPlayer)
+	{
+		return;
+	}
+
+	LatestOneShotPlaybackFeedback.bFound = true;
+	LatestOneShotPlaybackFeedback.bActive = BestPlayer->IsActive();
+	LatestOneShotPlaybackFeedback.AssetTime = BestPlayer->GetCurrentAssetTime();
+	LatestOneShotPlaybackFeedback.AssetLength = BestPlayer->GetCurrentAssetLength();
+	LatestOneShotPlaybackFeedback.BlendWeight = BestPlayer->GetBlendInWeight();
 }
 
 const TArray<int32>& FProject_JCharacterAnimInstanceProxy::GetGeneratedMotionMatchingNodeIndices()

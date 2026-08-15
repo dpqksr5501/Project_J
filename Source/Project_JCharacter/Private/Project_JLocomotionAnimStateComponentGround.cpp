@@ -424,6 +424,48 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 
 	UpdateSharpTurnRequest(bAllowSharpTurn);
 
+	// Event arbitration: a confirmed Combat Strafe Pivot is a single authored
+	// redirect event, not Start and Stop occurring on the same update.  The
+	// input-settle bridge has already either accepted the final chord or expired
+	// before reaching here.  When it is accepted, consume both edge requests and
+	// keep the semantic ground state in Locomotion; ResolvePhaseFamily gives the
+	// Pivot phase precedence and the State Controller reaches only the Pivot CHT.
+	const float PivotTurnEvidence = FMath::Max3(
+		FMath::Abs(KinematicContext.MoveInputTurnAngle),
+		KinematicContext.VelocityToMoveInputAngle,
+		KinematicContext.FutureTrajectoryTurnAngle);
+	const bool bCanUseRetainedPivotSpeed =
+		bLastMoveInputTurnUsedReleaseBridge &&
+		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedPivotAngleThreshold &&
+		PivotInputReleaseSpeedReference >= DerivedPivotMinSpeed;
+	const bool bConfirmedPivotIntent =
+		bAllowSharpTurn &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		bHasMoveInput &&
+		(GroundSpeed >= DerivedPivotMinSpeed || bCanUseRetainedPivotSpeed) &&
+		PivotTurnEvidence >= DerivedPivotAngleThreshold;
+	if (bConfirmedPivotIntent)
+	{
+		bPendingStartRequest = false;
+		bPendingStopRequest = false;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		PreviousMoveInputForTurn = MoveInput;
+		bResolvedMoveInputLastUpdate = true;
+		if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("PivotDiag EventArbiter Decision=PivotConsumesStartStop Source=%s Turn=%.1f Evidence=%.1f Speed=%.1f/%0.1f StartEdge=%s StopEdge=%s"),
+				bCanUseRetainedPivotSpeed ? TEXT("InputSettle") : TEXT("LiveKinematics"),
+				KinematicContext.MoveInputTurnAngle,
+				PivotTurnEvidence,
+				GroundSpeed,
+				DerivedPivotMinSpeed,
+				bStartEdge ? TEXT("true") : TEXT("false"),
+				bStopEdge ? TEXT("true") : TEXT("false"));
+		}
+		return;
+	}
+
 	if (bStopEdge && (!bStartEdge || !bHasMoveInput))
 	{
 		EnterGroundMotionMode(

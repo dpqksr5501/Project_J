@@ -291,7 +291,7 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	 * This affects only Pivot entry classification; it never synthesizes movement.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
-	float PivotInputReleaseBridgeTime = 0.15f;
+	float PivotInputReleaseBridgeTime = 0.20f;
 
 	/**
 	 * Only an almost-opposite redirected chord may use retained pre-release speed.
