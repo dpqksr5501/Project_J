@@ -130,6 +130,15 @@ struct PROJECT_JCHARACTER_API FProject_JAnimInputThreadSafeData
 	float MovementDirection = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float PivotInputReleaseFromMovementDirection = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float PivotInputReleaseToMovementDirection = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bHasPivotInputReleaseDirections = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasMoveInput = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -1244,6 +1253,15 @@ public:
 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;
+	/** True when the cached direct one-shot was selected from a Pivot chooser row. Debug-only diagnostic state. */
+	bool bCachedStateControllerWasPivotSelection = false;
+	/** Last settled combat-Strafe sector. It is intentionally not updated while a Pivot is being selected. */
+	mutable EProject_JStateControllerStrafeDirection LastSettledStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	mutable bool bHasLastSettledStateControllerStrafeDirection = false;
+	/** Immutable From/To pair for the lifetime of one direct Pivot request. */
+	mutable EProject_JStateControllerStrafeDirection LatchedPivotFromStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	mutable EProject_JStateControllerStrafeDirection LatchedPivotToStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	mutable bool bHasLatchedPivotStrafeDirections = false;
 	int32 StateControllerChooserSelectionRevision = 0;
 
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
@@ -1274,6 +1292,8 @@ public:
 	float LastTurnInPlaceDebugActorYaw = 0.0f;
 	float LastTurnInPlaceDebugRootYaw = 0.0f;
 	double LastTurnInPlaceDebugSampleTime = -DBL_MAX;
+
+	/** Pivot direct-Blend-Stack input diagnostics; only active under MMPivotDebug. */
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 

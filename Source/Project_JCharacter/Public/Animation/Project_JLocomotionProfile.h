@@ -277,6 +277,30 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float TurnRedirectMinHoldTime = 0.18f;
 
+	/**
+	 * Briefly keeps an already-selected direct Pivot alive when a player releases
+	 * one WASD chord before pressing the reversing chord. This is presentation
+	 * grace only; it does not alter CharacterMovement input or velocity.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float PivotInputReleaseGraceTime = 0.12f;
+
+	/**
+	 * Retains the last non-zero local input long enough to measure a Pivot when
+	 * a keyboard chord is released between the old and new directions.
+	 * This affects only Pivot entry classification; it never synthesizes movement.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float PivotInputReleaseBridgeTime = 0.15f;
+
+	/**
+	 * Only an almost-opposite redirected chord may use retained pre-release speed.
+	 * This rejects transient one-key diagonal states (90/135 degrees) while still
+	 * allowing exact cardinal and diagonal reversals (180 degrees).
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float PivotInputReleaseMinimumTurnAngle = 150.0f;
+
 	/** Coalesces same-database local turn/pivot re-searches during rapid direction changes. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float TurnRedirectReselectCooldown = 0.10f;
@@ -351,6 +375,14 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionPresentationPolicy
 	/** Maximum absolute value of either lean axis exposed to the AnimGraph. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LeanAxisClamp = 1.0f;
+
+	/**
+	 * Minimum time that a direct Combat-Strafe Pivot remains the active Blend
+	 * Stack result before normal Motion Matching may retake locomotion. This is
+	 * presentation-only and does not delay CharacterMovement direction changes.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|State Controller", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "2.0", Units = "s"))
+	float StateControllerPivotPlaybackHoldTime = 0.85f;
 };
 
 /**

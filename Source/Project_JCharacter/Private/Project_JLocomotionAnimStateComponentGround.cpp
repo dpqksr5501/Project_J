@@ -2,6 +2,7 @@
 
 #include "Project_JLocomotionAnimStateComponent.h"
 
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
 
@@ -377,6 +378,49 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 	const bool bStopEdge = bPendingStopRequest || (!bHasMoveInput && bPrevHasMoveInput && GroundSpeed > StopIntentSpeedThreshold);
 	bPendingStartRequest = false;
 	bPendingStopRequest = false;
+
+	// Treat a brief all-keys-up gap during a high-speed local combat redirect as
+	// unresolved intent, rather than immediately committing a Stop one-shot.
+	// The Stop request is intentionally retained below: when no new chord arrives
+	// before the bridge expires it resumes the normal Stop path. A later genuine
+	// Stop -> Start remains unchanged because it enters after this short window.
+	const bool bDeferStopForPotentialPivot =
+		bAllowSharpTurn &&
+		bStopEdge &&
+		!bHasMoveInput &&
+		bPivotInputReleaseSequenceActive &&
+		GroundSpeed > StopIntentSpeedThreshold &&
+		PivotInputReleaseReference.Size() > MoveInputDeadZone &&
+		PivotInputReleaseElapsedTime <= DerivedPivotInputReleaseBridgeTime &&
+		PivotInputReleaseSpeedReference >= DerivedPivotMinSpeed;
+	if (bDeferStopForPotentialPivot)
+	{
+		bPendingStopRequest = true;
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		PreviousMoveInputForTurn = FVector2D::ZeroVector;
+		bResolvedMoveInputLastUpdate = false;
+
+		return;
+	}
+
+	// A diagonal chord can pass through a one-key intermediate direction while
+	// the player changes fingers. Preserve the current locomotion pose during
+	// that very short settle interval; Pivot or normal Start is chosen only after
+	// the final direction is known.
+	const bool bDeferStartForPivotInputSettle =
+		bAllowSharpTurn &&
+		bStartEdge &&
+		bHasMoveInput &&
+		bPivotInputReleaseSequenceActive &&
+		PivotInputReleaseElapsedTime <= DerivedPivotInputReleaseBridgeTime &&
+		PivotInputReleaseSpeedReference >= DerivedPivotMinSpeed;
+	if (bDeferStartForPivotInputSettle)
+	{
+		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
+		PreviousMoveInputForTurn = FVector2D::ZeroVector;
+		bResolvedMoveInputLastUpdate = false;
+		return;
+	}
 
 	UpdateSharpTurnRequest(bAllowSharpTurn);
 

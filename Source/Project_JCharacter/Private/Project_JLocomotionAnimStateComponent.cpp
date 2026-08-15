@@ -34,6 +34,9 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 	DerivedTurnMinSpeed = InPolicy.TurnRedirectMinSpeed;
 	DerivedPivotMinSpeed = FMath::Max(InPolicy.PivotMinSpeed, InPolicy.TurnRedirectMinSpeed);
 	DerivedTurnMinHoldTime = InPolicy.TurnRedirectMinHoldTime;
+	DerivedPivotInputReleaseGraceTime = InPolicy.PivotInputReleaseGraceTime;
+	DerivedPivotInputReleaseBridgeTime = InPolicy.PivotInputReleaseBridgeTime;
+	DerivedPivotInputReleaseMinimumTurnAngle = InPolicy.PivotInputReleaseMinimumTurnAngle;
 	TurnRedirectReselectCooldown = InPolicy.TurnRedirectReselectCooldown;
 	SprintStopMemoryDuration = InPolicy.SprintStopMemoryDuration;
 }
@@ -452,9 +455,8 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		return;
 	}
 
-	const bool bKeepMovingRedirect =
-		(PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
-			PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
+	const bool bKeepTurnRedirect =
+		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
 		InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		DerivedPhaseFamilyElapsedTime < DerivedTurnMinHoldTime &&
 		KinematicContext.bHasMoveInput &&
@@ -462,9 +464,33 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		!bIsInAir &&
 		!IsLandingStateActive();
 
-	if (bKeepMovingRedirect)
+	if (bKeepTurnRedirect)
 	{
 		InOutContext.PhaseFamily = PreviousDerivedPhaseFamily;
+		DerivedPhaseFamilyElapsedTime += DeltaTime;
+		return;
+	}
+
+	// GASP caches its previous movement direction and lets its re-entry path
+	// survive a short input discontinuity. Keyboard direction reversals commonly
+	// contain one released-input frame (W+A -> release -> S+D); do not replace a
+	// Pivot already selected on the preceding frame with Stop during that gap.
+	const bool bKeepPivotAcrossInputRelease =
+		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+		(InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle ||
+			InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Stop) &&
+		!KinematicContext.bHasMoveInput &&
+		KinematicContext.GroundSpeed > StopIntentSpeedThreshold &&
+		DerivedPhaseFamilyElapsedTime < DerivedPivotInputReleaseGraceTime &&
+		!bIsInAir &&
+		!IsLandingStateActive();
+
+	if (bKeepPivotAcrossInputRelease)
+	{
+		InOutContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
+		// The StateController maps Pivot to TransitionToLocomotion only while this
+		// flag is true. Keep the direct one-shot path selected for the grace frame.
+		InOutContext.bIsMotionMatchingMoving = true;
 		DerivedPhaseFamilyElapsedTime += DeltaTime;
 		return;
 	}
@@ -529,10 +555,6 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	{
 		return EProject_JLocomotionPhaseFamily::Fall;
 	}
-	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
-	{
-		return EProject_JLocomotionPhaseFamily::Stop;
-	}
 	if (Context.bShouldTurnInPlace)
 	{
 		return EProject_JLocomotionPhaseFamily::TurnInPlace;
@@ -540,6 +562,12 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	if (Context.bIsPivoting)
 	{
 		return EProject_JLocomotionPhaseFamily::Pivot;
+	}
+	// A released input may have put the semantic ground state in Stop one frame
+	// earlier. A new high-speed reverse input is a Pivot, not a Start/Stop pair.
+	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
+	{
+		return EProject_JLocomotionPhaseFamily::Stop;
 	}
 	if (Context.bIsStarting)
 	{
@@ -634,25 +662,67 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
+	const float TurnEvidence = FMath::Max3(
+		FMath::Abs(InKinematicContext.MoveInputTurnAngle),
+		InKinematicContext.VelocityToMoveInputAngle,
+		InKinematicContext.FutureTrajectoryTurnAngle);
+	const bool bRotationAllowsPivot =
+		AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const bool bHasInput = InKinematicContext.bHasMoveInput;
+	// A keyboard release can let CharacterMovement decelerate for a frame before
+	// the opposite chord arrives. Retain the outgoing speed only inside the same
+	// tiny input bridge window; outside it the normal live-speed requirement is
+	// unchanged.
+	const bool bHasReleaseBridgeSpeed =
+		bLastMoveInputTurnUsedReleaseBridge &&
+		FMath::Abs(InKinematicContext.MoveInputTurnAngle) >= DerivedPivotInputReleaseMinimumTurnAngle &&
+		PivotInputReleaseSpeedReference >= DerivedPivotMinSpeed;
+	const bool bHasPivotSpeed =
+		InKinematicContext.GroundSpeed >= DerivedPivotMinSpeed || bHasReleaseBridgeSpeed;
+	// The input turn is authoritative for a local keyboard redirect. In
+	// particular, W+A -> release -> S+D has not yet had time to bend velocity or
+	// future trajectory, but is still an intentional 180-degree Pivot. The short
+	// release bridge in RefreshMovementInputState makes that input sample valid.
+	const bool bHasPivotTurn = FMath::Max3(
+		FMath::Abs(InKinematicContext.MoveInputTurnAngle),
+		InKinematicContext.VelocityToMoveInputAngle,
+		InKinematicContext.FutureTrajectoryTurnAngle) >= DerivedPivotAngleThreshold;
+	const bool bResult = bRotationAllowsPivot && bHasInput && bHasPivotSpeed && bHasPivotTurn;
+
+	// The bridge itself reports every partial keyboard chord.  Keep this second
+	// line only for a committed Pivot gate so the trace remains event-oriented.
+	if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace() && bResult)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("PivotDiag GateAccepted Source=%s InputTurn=%.1f Speed=%.1f/%.1f BridgeSpeed=%.1f BridgeAge=%.3f VelToInput=%.1f FutureTurn=%.1f Threshold=%.1f"),
+			bHasReleaseBridgeSpeed ? TEXT("ReleaseBridge") : TEXT("LiveKinematics"),
+			InKinematicContext.MoveInputTurnAngle,
+			InKinematicContext.GroundSpeed,
+			DerivedPivotMinSpeed,
+			PivotInputReleaseSpeedReference,
+			PivotInputReleaseElapsedTime,
+			InKinematicContext.VelocityToMoveInputAngle,
+			InKinematicContext.FutureTrajectoryTurnAngle,
+			DerivedPivotAngleThreshold);
+	}
+
 	// Orient-to-Movement already rotates the character toward the requested
 	// WASD direction.  A Pivot there would fight CharacterMovement's natural
 	// heading update and select a strafe-authored foot redirect unnecessarily.
-	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
+	if (!bRotationAllowsPivot)
 	{
 		return false;
 	}
 
-	if (!InKinematicContext.bHasMoveInput || InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
+	if (!bHasInput || !bHasPivotSpeed)
 	{
 		return false;
 	}
 
-	// A Pivot is a reversal of the actual/prospective movement trajectory, not
-	// merely a sharp change between two input samples. The latter is a normal
-	// moving TurnRedirect and remains owned by the combat TurnRedirect PSD.
-	return FMath::Max(
-		InKinematicContext.VelocityToMoveInputAngle,
-		InKinematicContext.FutureTrajectoryTurnAngle) >= DerivedPivotAngleThreshold;
+	// A Pivot requires a high-commitment reversal in either current intent or
+	// actual/prospective trajectory. Lesser direction changes remain owned by the
+	// combat TurnRedirect PSD.
+	return bHasPivotTurn;
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
@@ -897,7 +967,9 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
 	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
 	MoveInputTurnAngle = 0.0f;
+	bHasPivotInputReleaseDirections = false;
 	bSharpTurnRequested = false;
+	bLastMoveInputTurnUsedReleaseBridge = false;
 
 	// A moving landing may hand off into Stop only when movement intent survived
 	// touchdown for a short, real interval. This rejects the common case where
@@ -909,13 +981,83 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 			LandingPostTouchdownMoveInputTime >= LandingExitStopInputHoldTime;
 	}
 
-	if (bTrackTurnAngle && bHasMoveInput && bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone)
+	const bool bHasPreviousContinuousInput =
+		bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone;
+	const bool bReleaseSequenceStillValid =
+		bPivotInputReleaseSequenceActive &&
+		PivotInputReleaseElapsedTime <= DerivedPivotInputReleaseBridgeTime;
+
+	if (bTrackTurnAngle && bHasMoveInput && bReleaseSequenceStillValid)
 	{
-		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
+		const FVector2D NormalizedMoveInput = MoveInput.GetClampedToMaxSize(1.0f);
+		const bool bCandidateChanged =
+			PivotInputCandidate.Size() <= MoveInputDeadZone ||
+			!PivotInputCandidate.Equals(NormalizedMoveInput, 0.01f);
+		if (bCandidateChanged)
+		{
+			// Do not let a remaining W/A/S/D key replace the outgoing direction.
+			// It is only a candidate until the complete chord has settled.
+			PivotInputCandidate = NormalizedMoveInput;
+			const FVector2D PreviousDirection = PivotInputReleaseReference.GetSafeNormal();
+			const FVector2D CurrentDirection = PivotInputCandidate.GetSafeNormal();
+			const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
+			const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
+			const float CandidateTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+			const bool bAcceptsReleaseBridge =
+				FMath::Abs(CandidateTurnAngle) >= DerivedPivotInputReleaseMinimumTurnAngle;
+			if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("PivotDiag InputCandidate Verdict=%s From=(%.2f,%.2f) Candidate=(%.2f,%.2f) Turn=%.1f ReleaseAge=%.3f MinBridgeTurn=%.1f"),
+					bAcceptsReleaseBridge ? TEXT("Accepted") : TEXT("PartialChord"),
+					PivotInputReleaseReference.X,
+					PivotInputReleaseReference.Y,
+					PivotInputCandidate.X,
+					PivotInputCandidate.Y,
+					CandidateTurnAngle,
+					PivotInputReleaseElapsedTime,
+					DerivedPivotInputReleaseMinimumTurnAngle);
+			}
+
+			if (bAcceptsReleaseBridge)
+			{
+				MoveInputTurnAngle = CandidateTurnAngle;
+				PivotInputReleaseFromMovementDirection = FMath::RadiansToDegrees(
+					FMath::Atan2(PivotInputReleaseReference.X, PivotInputReleaseReference.Y));
+				PivotInputReleaseToMovementDirection = FMath::RadiansToDegrees(
+					FMath::Atan2(PivotInputCandidate.X, PivotInputCandidate.Y));
+				bHasPivotInputReleaseDirections = true;
+				bLastMoveInputTurnUsedReleaseBridge = true;
+				bPivotInputReleaseSequenceActive = false;
+			}
+		}
+	}
+	else if (bTrackTurnAngle && bHasMoveInput && bHasPreviousContinuousInput)
+	{
+		const FVector2D PreviousDirection = (bHasPreviousContinuousInput
+			? PreviousMoveInputForTurn
+			: PivotInputReleaseReference).GetSafeNormal();
 		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
 		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
 		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+	}
+
+	if (bHasMoveInput && !bPivotInputReleaseSequenceActive)
+	{
+		PivotInputReleaseReference = MoveInput.GetClampedToMaxSize(1.0f);
+		PivotInputReleaseElapsedTime = 0.0f;
+	}
+	if (bPivotInputReleaseSequenceActive)
+	{
+		PivotInputReleaseElapsedTime = FMath::Min(
+			PivotInputReleaseElapsedTime + DeltaTime,
+			DerivedPivotInputReleaseBridgeTime + 1.0f);
+		if (PivotInputReleaseElapsedTime > DerivedPivotInputReleaseBridgeTime)
+		{
+			bPivotInputReleaseSequenceActive = false;
+			PivotInputCandidate = FVector2D::ZeroVector;
+		}
 	}
 }
 

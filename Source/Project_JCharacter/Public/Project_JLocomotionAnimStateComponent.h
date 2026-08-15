@@ -470,6 +470,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedTurnMinHoldTime = 0.18f;
 
+	/** Presentation-only grace for a selected Pivot across a one-frame WASD release. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedPivotInputReleaseGraceTime = 0.12f;
+
+	/** Short input-history window used only to classify a new Pivot after a released WASD chord. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedPivotInputReleaseBridgeTime = 0.15f;
+
+	/** Minimum angle for a release-bridged input to qualify as an intentional reversal. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float DerivedPivotInputReleaseMinimumTurnAngle = 150.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float TurnRedirectReselectCooldown = 0.10f;
 
@@ -636,6 +648,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	float MoveInputTurnAngle = 0.0f;
 
+	/** Immutable source/destination for the frame that resolved a release-bridged Pivot. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
+	float PivotInputReleaseFromMovementDirection = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
+	float PivotInputReleaseToMovementDirection = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
+	bool bHasPivotInputReleaseDirections = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input")
 	bool bHasMoveInput = false;
 
@@ -737,6 +759,13 @@ private:
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
+	/** Last non-zero local intent retained across a very short keyboard-release gap. */
+	FVector2D PivotInputReleaseReference = FVector2D::ZeroVector;
+	float PivotInputReleaseElapsedTime = TNumericLimits<float>::Max();
+	float PivotInputReleaseSpeedReference = 0.0f;
+	FVector2D PivotInputCandidate = FVector2D::ZeroVector;
+	bool bPivotInputReleaseSequenceActive = false;
+	bool bLastMoveInputTurnUsedReleaseBridge = false;
 	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	float InitialLandingActorYaw = 0.0f;
