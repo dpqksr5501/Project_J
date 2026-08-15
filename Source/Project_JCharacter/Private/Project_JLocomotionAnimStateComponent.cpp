@@ -293,6 +293,11 @@ FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent:
 	Context.bSprintAllowed = PlayerOwner.IsSprintLocomotionAllowed();
 	Context.bJumpAllowed = PlayerOwner.IsJumpLocomotionAllowed();
 	Context.bCombatMode = PlayerOwner.IsCombatModeActive();
+	if (const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile())
+	{
+		Context.bUseMovingTurnRedirectInCombatStrafe =
+			CombatProfile->bUseMovingTurnRedirectInCombatStrafe;
+	}
 	Context.GaitIntent = ResolveGaitIntent(PlayerOwner, Snapshot);
 	Context.RotationMode = ResolveRotationMode(PlayerOwner);
 	return Context;
@@ -551,11 +556,14 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
 	const bool bIsCombatStrafe =
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const bool bMovingTurnRedirectAllowed =
+		!bIsCombatStrafe || AuthoritativeContext.bUseMovingTurnRedirectInCombatStrafe;
 	// TurnRedirect triggers when the player changes WASD input heading (e.g. W -> D).
 	// Mouse camera rotation while holding W does not change MoveInputTurnAngle, allowing
 	// smooth Orient-To-Movement capsule turning in Motion Matching Cycle phase.
 	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
-		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold;
+		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold &&
+		bMovingTurnRedirectAllowed;
 	if (bShouldUseTurnRedirect)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;

@@ -56,6 +56,9 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionAuthoritativeContext
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bCombatMode = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bUseMovingTurnRedirectInCombatStrafe = false;
 };
 
 USTRUCT(BlueprintType)
