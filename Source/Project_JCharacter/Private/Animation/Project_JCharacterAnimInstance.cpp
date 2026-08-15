@@ -3028,9 +3028,8 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	const FProject_JMotionMatchingSelectionContext& SelectionContext = Data.MotionMatching.SelectionContext;
 	FProject_JMotionMatchingSelectionContext CombatSelectionContext = SelectionContext;
 	// State Controller owns authored Start, Stop, Pivot, air and landing one-shots.
-	// Regular Motion Matching still owns the continuous combat Cycle and the
-	// moving TurnRedirect PSD. Do not flatten Turn to Cycle: the combat asset
-	// set can therefore supply its authored turn database through the DA.
+	// Combat Strafe keeps continuous movement and moving redirects inside its
+	// Cycle PSD so that normal keyboard chord edges never force a separate PSD.
 	switch (SelectionContext.PhaseFamily)
 	{
 	case EProject_JLocomotionPhaseFamily::Idle:
@@ -3060,7 +3059,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn))
 	{
 		// Combat sprint is intentionally limited to forward / forward-diagonal input.
-		// Until dedicated sprint Cycle or TurnRedirect PSDs are assigned, retain
+	// Until a dedicated sprint Cycle PSD is assigned, retain
 		// a coherent combat result by falling back to the Run family, never OTM.
 		FProject_JMotionMatchingSelectionContext RunFallbackContext = CombatSelectionContext;
 		RunFallbackContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
@@ -3123,68 +3122,6 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		SelectedDatabase = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle && IdleDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
-	}
-	if (bUsesCombatStrafe &&
-		Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace() &&
-		(Data.MotionMatching.bSelectionChanged || Data.MotionMatching.bForceReselect))
-	{
-		const FProject_JMotionMatchingGaitDatabaseFamily& CombatGaitFamily =
-			CombatSelectionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint
-				? CombatStrafeAssetSet->SprintDatabases
-				: CombatStrafeAssetSet->RunDatabases;
-		int32 MatchingEntryCount = 0;
-		int32 BestMatchingEntryIndex = INDEX_NONE;
-		int32 BestMatchingEntrySpecificity = INDEX_NONE;
-		for (int32 EntryIndex = 0; EntryIndex < CombatStrafeAssetSet->DatabaseEntries.Num(); ++EntryIndex)
-		{
-			const FProject_JMotionMatchingDatabaseEntry& Entry = CombatStrafeAssetSet->DatabaseEntries[EntryIndex];
-			if (!Entry.Matches(
-				CombatSelectionContext.GaitIntent,
-				CombatSelectionContext.RotationMode,
-				CombatSelectionContext.PhaseFamily))
-			{
-				continue;
-			}
-
-			++MatchingEntryCount;
-			const int32 Specificity = Entry.GetSpecificity();
-			if (BestMatchingEntryIndex == INDEX_NONE || Specificity > BestMatchingEntrySpecificity)
-			{
-				BestMatchingEntryIndex = EntryIndex;
-				BestMatchingEntrySpecificity = Specificity;
-			}
-		}
-
-		const TCHAR* SelectionSource = TEXT("Fallback");
-		if (BestMatchingEntryIndex != INDEX_NONE &&
-			SelectedDatabase == CombatStrafeAssetSet->DatabaseEntries[BestMatchingEntryIndex].PoseSearchDatabase.Get())
-		{
-			SelectionSource = TEXT("DatabaseEntry");
-		}
-		else if (SelectedDatabase == CombatGaitFamily.Cycle.Get())
-		{
-			SelectionSource = TEXT("GaitFamily.Cycle");
-		}
-		else if (SelectedDatabase == CombatGaitFamily.TurnRedirect.Get())
-		{
-			SelectionSource = TEXT("GaitFamily.TurnRedirect");
-		}
-		else if (SelectedDatabase == CombatStrafeAssetSet->DefaultPoseSearchDatabase.Get())
-		{
-			SelectionSource = TEXT("Default");
-		}
-
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StrafeMMRoute RequestedPhase=%d RequestedGait=%d SelectedPSD=%s Source=%s MatchingEntries=%d BestEntry=%d BestSpecificity=%d FamilyCycle=%s FamilyTurn=%s"),
-			static_cast<int32>(CombatSelectionContext.PhaseFamily),
-			static_cast<int32>(CombatSelectionContext.GaitIntent),
-			*GetNameSafe(SelectedDatabase),
-			SelectionSource,
-			MatchingEntryCount,
-			BestMatchingEntryIndex,
-			BestMatchingEntrySpecificity,
-			*GetNameSafe(CombatGaitFamily.Cycle.Get()),
-			*GetNameSafe(CombatGaitFamily.TurnRedirect.Get()));
 	}
 	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
 		? nullptr

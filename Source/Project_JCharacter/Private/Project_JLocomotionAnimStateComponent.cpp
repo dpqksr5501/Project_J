@@ -296,11 +296,6 @@ FProject_JLocomotionAuthoritativeContext UProject_JLocomotionAnimStateComponent:
 	Context.bSprintAllowed = PlayerOwner.IsSprintLocomotionAllowed();
 	Context.bJumpAllowed = PlayerOwner.IsJumpLocomotionAllowed();
 	Context.bCombatMode = PlayerOwner.IsCombatModeActive();
-	if (const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile())
-	{
-		Context.bUseMovingTurnRedirectInCombatStrafe =
-			CombatProfile->bUseMovingTurnRedirectInCombatStrafe;
-	}
 	Context.GaitIntent = ResolveGaitIntent(PlayerOwner, Snapshot);
 	Context.RotationMode = ResolveRotationMode(PlayerOwner);
 	return Context;
@@ -583,33 +578,14 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 		KinematicContext.bHasMoveInput &&
 		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
 	const bool bIsCombatStrafe =
+		AuthoritativeContext.bCombatMode &&
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
-	const bool bMovingTurnRedirectAllowed =
-		!bIsCombatStrafe || AuthoritativeContext.bUseMovingTurnRedirectInCombatStrafe;
 	// TurnRedirect triggers when the player changes WASD input heading (e.g. W -> D).
 	// Mouse camera rotation while holding W does not change MoveInputTurnAngle, allowing
 	// smooth Orient-To-Movement capsule turning in Motion Matching Cycle phase.
-	const bool bInputPassesTurnRedirectThreshold = bHasMovingTurnIntent &&
+	const bool bShouldUseTurnRedirect = !bIsCombatStrafe &&
+		bHasMovingTurnIntent &&
 		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold;
-	const bool bShouldUseTurnRedirect =
-		bInputPassesTurnRedirectThreshold && bMovingTurnRedirectAllowed;
-	if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace() && bInputPassesTurnRedirectThreshold)
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StrafeTurnDiag PhaseGate Decision=%s Mode=%s Combat=%s TurnPSDAllowed=%s MoveWorld=(%.2f,%.2f) InputTurn=%.1f Threshold=%.1f Speed=%.1f/%.1f VelToInput=%.1f FutureTurn=%.1f"),
-			bShouldUseTurnRedirect ? TEXT("Turn") : TEXT("CycleReselect"),
-			AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? TEXT("Strafe") : TEXT("OrientToMovement"),
-			AuthoritativeContext.bCombatMode ? TEXT("true") : TEXT("false"),
-			bMovingTurnRedirectAllowed ? TEXT("true") : TEXT("false"),
-			KinematicContext.MoveWorldDirection.X,
-			KinematicContext.MoveWorldDirection.Y,
-			KinematicContext.MoveInputTurnAngle,
-			DerivedTurnAngleThreshold,
-			KinematicContext.GroundSpeed,
-			DerivedTurnMinSpeed,
-			KinematicContext.VelocityToMoveInputAngle,
-			KinematicContext.FutureTrajectoryTurnAngle);
-	}
 	if (bShouldUseTurnRedirect)
 	{
 		return EProject_JLocomotionPhaseFamily::Turn;
@@ -747,7 +723,7 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 
 	// A Pivot requires a high-commitment reversal in either current intent or
 	// actual/prospective trajectory. Lesser direction changes remain owned by the
-	// combat TurnRedirect PSD.
+	// combat Cycle PSD, which contains the authored moving redirect clips.
 	return bHasPivotTurn;
 }
 
