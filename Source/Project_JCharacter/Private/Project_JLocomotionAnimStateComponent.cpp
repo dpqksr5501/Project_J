@@ -990,54 +990,9 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 
 	const bool bHasPreviousContinuousInput =
 		bPrevHasMoveInput && PreviousMoveInputForTurn.Size() > MoveInputDeadZone;
-	bool bReleaseSequenceStillValid =
+	const bool bReleaseSequenceStillValid =
 		bPivotInputReleaseSequenceActive &&
 		PivotInputReleaseElapsedTime <= DerivedPivotInputReleaseBridgeTime;
-
-	// A diagonal keyboard redirect frequently does not pass through zero input:
-	// FL -> L -> BR, for example, briefly produces a 135-degree one-key chord.
-	// Treat that intermediate direction exactly like the existing all-keys-up
-	// bridge.  It is not a movement event yet; it is only a pending candidate
-	// until the player either completes an opposite chord or the short settle
-	// window expires.  This is deliberately limited to high-speed Combat Strafe
-	// so OTM and ordinary 90-degree steering remain entirely MM-owned.
-	if (bTrackTurnAngle &&
-		bHasMoveInput &&
-		bHasPreviousContinuousInput &&
-		!bReleaseSequenceStillValid &&
-		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
-		GroundSpeed >= DerivedPivotMinSpeed)
-	{
-		const FVector2D PreviousDirection = PreviousMoveInputForTurn.GetSafeNormal();
-		const FVector2D CurrentDirection = MoveInput.GetSafeNormal();
-		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
-		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
-		const float CandidateTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
-		const float AbsoluteCandidateTurn = FMath::Abs(CandidateTurnAngle);
-		const bool bIsIntermediateDiagonalChord =
-			AbsoluteCandidateTurn >= DerivedPivotAngleThreshold &&
-			AbsoluteCandidateTurn < DerivedPivotInputReleaseMinimumTurnAngle;
-		if (bIsIntermediateDiagonalChord)
-		{
-			PivotInputReleaseReference = PreviousMoveInputForTurn.GetClampedToMaxSize(1.0f);
-			PivotInputReleaseElapsedTime = 0.0f;
-			PivotInputReleaseSpeedReference = GroundSpeed;
-			PivotInputCandidate = MoveInput.GetClampedToMaxSize(1.0f);
-			bPivotInputReleaseSequenceActive = true;
-			bReleaseSequenceStillValid = true;
-			if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
-			{
-				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("PivotDiag InputSettle Open Reason=IntermediateChord From=(%.2f,%.2f) Candidate=(%.2f,%.2f) Turn=%.1f Window=%.3f"),
-					PivotInputReleaseReference.X,
-					PivotInputReleaseReference.Y,
-					PivotInputCandidate.X,
-					PivotInputCandidate.Y,
-					CandidateTurnAngle,
-					DerivedPivotInputReleaseBridgeTime);
-			}
-		}
-	}
 
 	if (bTrackTurnAngle && bHasMoveInput && bReleaseSequenceStillValid)
 	{
@@ -1107,21 +1062,6 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 			DerivedPivotInputReleaseBridgeTime + 1.0f);
 		if (PivotInputReleaseElapsedTime > DerivedPivotInputReleaseBridgeTime)
 		{
-			// The candidate remained a genuine non-Pivot direction. Commit it as
-			// ordinary locomotion input without replaying the stale From->Candidate
-			// delta next frame; MM/TurnRedirect can now own it normally.
-			if (bHasMoveInput && PivotInputCandidate.Size() > MoveInputDeadZone)
-			{
-				PreviousMoveInputForTurn = PivotInputCandidate;
-				bResolvedMoveInputLastUpdate = true;
-			}
-			if (Project_J::MotionMatchingCVars::ShouldCapturePivotDebugTrace())
-			{
-				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("PivotDiag InputSettle Expired Candidate=(%.2f,%.2f)"),
-					PivotInputCandidate.X,
-					PivotInputCandidate.Y);
-			}
 			bPivotInputReleaseSequenceActive = false;
 			PivotInputCandidate = FVector2D::ZeroVector;
 		}
