@@ -648,10 +648,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	float MoveInputTurnAngle = 0.0f;
 
-	/** Local/remote movement-input heading relative to the character. Unlike MovementDirection, this is valid outside Combat Strafe. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
-	float MoveInputDirection = 0.0f;
-
 	/** Immutable source/destination for the frame that resolved a release-bridged Pivot. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement|Input|Turn")
 	float PivotInputReleaseFromMovementDirection = 0.0f;

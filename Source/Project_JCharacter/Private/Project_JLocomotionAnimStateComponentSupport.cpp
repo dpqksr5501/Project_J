@@ -321,6 +321,5 @@ void UProject_JLocomotionAnimStateComponent::ClearResolvedMoveInputState()
 	bResolvedMoveInputLastUpdate = false;
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
-	MoveInputDirection = 0.0f;
 	PreviousMoveInputForTurn = FVector2D::ZeroVector;
 }

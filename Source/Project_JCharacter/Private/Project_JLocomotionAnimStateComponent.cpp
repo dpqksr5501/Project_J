@@ -967,13 +967,6 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 	bHasMoveInput = MoveInputSize > MoveInputDeadZone;
 	MoveInputHeldTime = bHasMoveInput ? MoveInputHeldTime + DeltaTime : 0.0f;
 	MoveInputTurnAngle = 0.0f;
-	if (bHasMoveInput)
-	{
-		// This is deliberately independent from the Combat-only MovementDirection.
-		// State Controller Start cancellation needs the same heading in OTM and
-		// Strafe, including intermediate W -> WA -> A keyboard chords.
-		MoveInputDirection = FMath::RadiansToDegrees(FMath::Atan2(MoveInput.X, MoveInput.Y));
-	}
 	bHasPivotInputReleaseDirections = false;
 	bSharpTurnRequested = false;
 	bLastMoveInputTurnUsedReleaseBridge = false;
