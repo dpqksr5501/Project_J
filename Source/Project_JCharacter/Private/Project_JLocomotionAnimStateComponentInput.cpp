@@ -199,18 +199,6 @@ void UProject_JLocomotionAnimStateComponent::QueueLocalMoveStartIfNeeded(bool bH
 
 void UProject_JLocomotionAnimStateComponent::ClearLocalMoveInputState()
 {
-	// Keyboard direction changes can contain a one-frame all-keys-up gap.
-	// Preserve the outgoing intent solely for Pivot angle classification; the
-	// actual cached input is still cleared immediately, so movement/Stop logic
-	// retains its existing behavior.
-	if (CachedMoveInput.Size() > MoveInputDeadZone)
-	{
-		PivotInputReleaseReference = CachedMoveInput.GetClampedToMaxSize(1.0f);
-		PivotInputReleaseElapsedTime = 0.0f;
-		PivotInputReleaseSpeedReference = GroundSpeed;
-		PivotInputCandidate = FVector2D::ZeroVector;
-		bPivotInputReleaseSequenceActive = true;
-	}
 	CachedMoveInput = FVector2D::ZeroVector;
 	MoveInputSize = 0.0f;
 	MoveInputHeldTime = 0.0f;
