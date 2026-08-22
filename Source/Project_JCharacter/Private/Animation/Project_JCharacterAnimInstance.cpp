@@ -288,6 +288,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bCachedStateControllerHasSelectedAnimation = false;
 		bStateControllerForceTurnInPlaceReselect = false;
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputYaw = false;
 		++StateControllerChooserSelectionRevision;
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
@@ -381,22 +382,72 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
 		bHasStateControllerOneShotControlYaw = true;
+
+		const FVector LastInput = OwningPlayerCharacter->GetLastMovementInputVector();
+		if (LastInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER)
+		{
+			StateControllerOneShotMoveInputYaw = LastInput.ToOrientationRotator().Yaw;
+			bHasStateControllerOneShotMoveInputYaw = true;
+		}
+		else
+		{
+			bHasStateControllerOneShotMoveInputYaw = false;
+		}
 	}
 
 	const bool bIsTurnCancellableOneShot =
 		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
 		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
-	const bool bShouldCancelOneShotForMouseTurn =
-		bIsTurnCancellableOneShot &&
-		bHasStateControllerOneShotControlYaw &&
-		OwningPlayerCharacter &&
-		OwningPlayerCharacter->IsLocallyControlled() &&
-		FMath::Abs(FMath::FindDeltaAngleDegrees(
-			StateControllerOneShotControlYaw,
-			OwningPlayerCharacter->GetControlRotation().Yaw)) >= StateControllerOneShotMouseTurnCancelAngle;
-	if (bShouldCancelOneShotForMouseTurn)
+
+	const UProject_JLocomotionProfile* LocomotionProfile = GetLocomotionProfile();
+	const float EffectiveMouseTurnCancelAngle = LocomotionProfile
+		? LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle
+		: StateControllerOneShotMouseTurnCancelAngle;
+	const float EffectiveMoveInputCancelAngle = LocomotionProfile
+		? LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle
+		: 30.0f;
+
+	bool bShouldCancelOneShot = false;
+	if (bIsTurnCancellableOneShot && OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
 	{
-		// A local mouse turn invalidates the trajectory that selected an authored
+		if (bHasStateControllerOneShotControlYaw)
+		{
+			const float ControlYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+				StateControllerOneShotControlYaw,
+				OwningPlayerCharacter->GetControlRotation().Yaw));
+			if (ControlYawDelta >= EffectiveMouseTurnCancelAngle)
+			{
+				bShouldCancelOneShot = true;
+			}
+		}
+
+		if (!bShouldCancelOneShot)
+		{
+			const FVector CurrentInput = OwningPlayerCharacter->GetLastMovementInputVector();
+			const bool bHasCurrentInput = CurrentInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
+
+			if (bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
+			{
+				const float CurrentMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
+				const float MoveInputYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+					StateControllerOneShotMoveInputYaw,
+					CurrentMoveInputYaw));
+				if (MoveInputYawDelta >= EffectiveMoveInputCancelAngle)
+				{
+					bShouldCancelOneShot = true;
+				}
+			}
+			else if (!bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
+			{
+				StateControllerOneShotMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
+				bHasStateControllerOneShotMoveInputYaw = true;
+			}
+		}
+	}
+
+	if (bShouldCancelOneShot)
+	{
+		// A local mouse turn or movement input change invalidates the trajectory that selected an authored
 		// Start/Land one-shot. Release it and refresh regular MM immediately. We do
 		// not route this through a Turn asset: Project_J has not yet authored a
 		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
@@ -416,10 +467,12 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		StateControllerPlaybackHoldState = CurrentStateControllerPresentationState;
 		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputYaw = false;
 	}
 	else if (!bIsTurnCancellableOneShot)
 	{
 		bHasStateControllerOneShotControlYaw = false;
+		bHasStateControllerOneShotMoveInputYaw = false;
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the

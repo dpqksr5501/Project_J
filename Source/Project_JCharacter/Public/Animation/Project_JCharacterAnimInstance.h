@@ -1221,9 +1221,11 @@ public:
 	float CachedStateControllerTurnInPlaceIndex = 0.0f;
 	bool bCachedStateControllerCombatMode = false;
 	bool bCachedStateControllerFallOff = false;
-	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn. */
+	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn or movement input change. */
 	bool bHasStateControllerOneShotControlYaw = false;
 	float StateControllerOneShotControlYaw = 0.0f;
+	bool bHasStateControllerOneShotMoveInputYaw = false;
+	float StateControllerOneShotMoveInputYaw = 0.0f;
 	bool bHasStateControllerLeftFootContactCurve = false;
 	bool bHasStateControllerRightFootContactCurve = false;
 	bool bHasStateControllerFootContactCurves = false;

@@ -253,6 +253,14 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.1", ClampMax = "1.0", UIMin = "0.1", UIMax = "1.0"))
 	float StartCompletionSpeedFraction = 0.90f;
 
+	/** Mouse/camera yaw delta threshold to cancel Start/Land one-shot and blend to Motion Matching. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartMouseTurnCancelAngle = 15.0f;
+
+	/** Movement input yaw delta threshold to cancel Start one-shot and blend to Motion Matching (e.g. W -> WA/A/S/D). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float StartMoveInputCancelAngle = 30.0f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnAngleThreshold = 60.0f;
