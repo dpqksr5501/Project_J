@@ -164,6 +164,11 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	}
 
 	const bool bHadMoveInput = BoundPlayerCharacter->bHadMoveInputForReplication;
+	const bool bWasSprintingAtStop =
+		BoundPlayerCharacter->IsSprintLocomotionAllowed() ||
+		(BoundPlayerCharacter->LocomotionAnimStateComponent &&
+			(BoundPlayerCharacter->LocomotionAnimStateComponent->bUseSprintLocomotion ||
+			 BoundPlayerCharacter->LocomotionAnimStateComponent->bWantsSprint));
 	BoundPlayerCharacter->ResetMoveStartReplicationState();
 
 	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
@@ -175,7 +180,7 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 
 	if (bHadMoveInput)
 	{
-		BoundPlayerCharacter->DispatchMoveStopAnimationEvent();
+		BoundPlayerCharacter->DispatchMoveStopAnimationEvent(bWasSprintingAtStop);
 	}
 }
 

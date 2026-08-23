@@ -102,14 +102,20 @@ void UProject_JReplicatedJumpStateComponent::ApplyConfirmedJumpState(
 	}
 
 	LastAppliedRemoteJumpSequence = ConfirmedState.Sequence;
-	BeginUrgentRemoteAnimationUpdate();
+	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(Owner);
+	const UProject_JLocomotionProfile* LocomotionProfile =
+		PlayerCharacter ? PlayerCharacter->GetLocomotionProfile() : nullptr;
+	RequestUrgentRemoteAnimationUpdate(
+		LocomotionProfile
+			? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
+			: 0.10f);
 	LocomotionAnimStateComponent->HandleConfirmedRemoteJump(
 		ConfirmedState.Sequence,
 		ResolveServerStartAgeSeconds(ConfirmedState),
 		ConfirmedState.LaunchVelocity);
 }
 
-void UProject_JReplicatedJumpStateComponent::BeginUrgentRemoteAnimationUpdate()
+void UProject_JReplicatedJumpStateComponent::RequestUrgentRemoteAnimationUpdate(float DurationSeconds)
 {
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner || CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)
@@ -142,15 +148,7 @@ void UProject_JReplicatedJumpStateComponent::BeginUrgentRemoteAnimationUpdate()
 	// the transition has been consumed.
 	bUrgentAnimationUpdateActive = true;
 	MeshComponent->bEnableUpdateRateOptimizations = false;
-	const AProject_JPlayerCharacter* PlayerCharacter =
-		Cast<AProject_JPlayerCharacter>(CharacterOwner);
-	const UProject_JLocomotionProfile* LocomotionProfile =
-		PlayerCharacter ? PlayerCharacter->GetLocomotionProfile() : nullptr;
-	const float UrgentUpdateDuration = FMath::Max(
-		0.0f,
-		LocomotionProfile
-			? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
-			: 0.10f);
+	const float UrgentUpdateDuration = FMath::Max(0.0f, DurationSeconds);
 	if (UrgentUpdateDuration <= 0.0f)
 	{
 		RestoreRemoteAnimationUpdateRateOptimization();

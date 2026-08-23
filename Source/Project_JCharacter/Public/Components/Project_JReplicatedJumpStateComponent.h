@@ -26,6 +26,8 @@ public:
 
 	void Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent);
 	void RecordServerConfirmedJump(const FVector& LaunchVelocity);
+	/** Shared short URO bypass for latency-sensitive replicated locomotion boundaries. */
+	void RequestUrgentRemoteAnimationUpdate(float DurationSeconds);
 
 	const FProject_JReplicatedJumpState& GetJumpState() const { return JumpState; }
 
@@ -42,7 +44,6 @@ private:
 
 	void ApplyConfirmedJumpState(const FProject_JReplicatedJumpState& ConfirmedState);
 	float ResolveServerStartAgeSeconds(const FProject_JReplicatedJumpState& ConfirmedState) const;
-	void BeginUrgentRemoteAnimationUpdate();
 	void RestoreRemoteAnimationUpdateRateOptimization();
 
 	UPROPERTY(ReplicatedUsing=OnRep_JumpState)

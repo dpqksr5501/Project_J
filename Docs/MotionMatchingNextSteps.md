@@ -4,11 +4,54 @@ Project J uses a C++ locomotion state component, a thread-safe animation snapsho
 
 ## Current Architecture
 
+Remote player Start/Stop/Land boundaries now follow the semantic snapshot contract in
+[RemoteOneShotReplication.md](RemoteOneShotReplication.md). Keep trajectory and continuous
+cycle selection locally derived; add replicated fields only for sparse authored one-shot
+boundaries whose edge semantics cannot be reconstructed after network smoothing.
+
 - `UProject_JLocomotionAnimStateComponent` reconstructs ground, air, landing, start, stop, gait, and phase context.
 - `UProject_JCharacterAnimInstance` publishes a thread-safe snapshot to the native animation proxy.
 - `UProject_JMotionMatchingAssetSet` owns run, sprint, start, remote start, stop, turn, jump, fall, and landing databases.
 - `UProject_JMotionMatchingTrajectoryComponent` owns Motion Matching trajectory samples used by the Pose Search query.
-- Animation budget settings throttle database selection and expensive update work, but the Pose Search trajectory input must remain current every animation update.
+- Animation budget settings throttle database selection and expensive update work. Eligible local/visible players publish a current trajectory; hidden actors suspend generation and re-seed on visibility wake instead of advancing stale history.
+
+## Trajectory ownership and scope
+
+- `AProject_JPlayerCharacter` is the default trajectory owner. Ordinary field
+  monsters and NPCs remain on cheaper non-MM animation paths and do not construct
+  this component.
+- A special NPC or boss may opt in, but its class must explicitly own the
+  component, call `UpdateTrajectoryState` after its movement policy is applied,
+  and participate in the same visibility budget.
+- The engine example component's unconditional movement delegate is removed.
+  Character Tick is the normal single generation entry; AnimInstance only copies
+  the completed trajectory into thread-safe proxy data.
+- Dedicated servers skip generation. Trajectory is animation presentation data,
+  is reconstructed from local/replicated CharacterMovement state, and is never
+  replicated as an array.
+- Hidden non-local actors suspend generation. Their history is reset on
+  visibility wake so off-screen displacement cannot become a false query path.
+- Mounted players suspend the on-foot generator and reset on dismount.
+- Recorded history is never rescaled when gait or maximum speed changes. Current
+  CharacterMovement limits are applied to the next future prediction only.
+- Generation revision, reset revision, reset reason, eligibility and snapshot age
+  are available in diagnostics. Keep these when changing URO or significance
+  policy so stale-data problems remain distinguishable from bad asset selection.
+
+### Required PIE checks after trajectory policy changes
+
+- local OTM and combat Strafe start, stop, run and sprint keep a current
+  generation revision;
+- an observing client sees straight run, actual turns, stop and restart without
+  persistent Arc/Prism selection;
+- a hidden remote actor stops advancing generation revision, then receives a
+  `PresentationWake` reset and a fresh trajectory when visible again;
+- mount and dismount suspend and re-seed the on-foot trajectory;
+- a dedicated server reports no generated samples after component BeginPlay;
+- rotation-mode and acceleration-stop resets increment reset revision without
+  rewriting the historical samples published before the reset;
+- network correction or teleport behavior is inspected before adding an
+  automatic distance-based reset policy.
 
 ## Locomotion-Only Policy
 

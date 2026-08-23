@@ -29,13 +29,13 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bW
 	QueueReplicatedMoveStart(bWasSprintingForStart);
 }
 
-void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped()
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped(bool bWasSprintingAtStop)
 {
 	if (ShouldUseLocalInputState())
 	{
 		return;
 	}
-	QueueReplicatedMoveStop();
+	QueueReplicatedMoveStop(bWasSprintingAtStop);
 	MarkRemoteMoveReleasedIfAirborne();
 	TryFinishLandingForReplicatedMoveStop();
 }
@@ -89,14 +89,20 @@ bool UProject_JLocomotionAnimStateComponent::ShouldIgnoreRedundantReplicatedMove
 void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStart(bool bWasSprintingForStart)
 {
 	bStartWasSprinting = bWasSprintingForStart;
+	bHasReplicatedStartGait = true;
+	bReplicatedStartWasSprinting = bWasSprintingForStart;
+	bHasReplicatedStopGait = false;
 	bPendingStartRequest = true;
 }
 
-void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStop()
+void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStop(bool bWasSprintingAtStop)
 {
 	ClearResolvedMoveInputState();
 	bPendingStartRequest = false;
 	bPendingStopRequest = true;
+	bHasReplicatedStartGait = false;
+	bHasReplicatedStopGait = true;
+	bReplicatedStopWasSprinting = bWasSprintingAtStop;
 	bRemoteStopVisualIntentActive = true;
 	RemoteStopStartSuppressTimeRemaining = FMath::Max(RemoteStopStartSuppressTimeRemaining, RemoteStopStartSuppressDuration);
 }

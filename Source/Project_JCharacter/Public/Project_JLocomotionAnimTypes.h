@@ -22,6 +22,27 @@ enum class EProject_JLocomotionGaitIntent : uint8
 	Sprint
 };
 
+namespace Project_J::Locomotion
+{
+	/**
+	 * Resolves the stable gait category captured at a landing boundary.
+	 *
+	 * Land one-shots must not be classified from live smoothed velocity: a
+	 * simulated proxy may briefly overshoot an authored speed range, and input or
+	 * sprint intent may change while the one-shot is playing. Moving/Sprinting are
+	 * semantic edge facts replicated with the landing event and therefore remain
+	 * deterministic for the complete presentation.
+	 */
+	constexpr EProject_JLocomotionGaitIntent ResolveLandingGaitIntent(
+		const bool bWasMoving,
+		const bool bWasSprinting)
+	{
+		return bWasMoving
+			? (bWasSprinting ? EProject_JLocomotionGaitIntent::Sprint : EProject_JLocomotionGaitIntent::Run)
+			: EProject_JLocomotionGaitIntent::Walk;
+	}
+}
+
 UENUM(BlueprintType)
 enum class EProject_JLocomotionRotationMode : uint8
 {

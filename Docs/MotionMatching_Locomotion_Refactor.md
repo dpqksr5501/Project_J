@@ -15,8 +15,8 @@ prevents continuous MM from becoming the owner of one-shot completion, keeps
 worker-thread reads safe, preserves noncombat OTM, and creates the required
 foundation for a later combat-Strafe-only TIP state machine.
 
-Last updated: 2026-07-31  
-Scope: on-foot noncombat Orient-to-Movement (OTM) and combat Strafe locomotion.  
+Last updated: 2026-08-23
+Scope: on-foot noncombat Orient-to-Movement (OTM) and combat Strafe locomotion.
 Out of scope: TIP, Traversal, Root Motion from Everything.
 
 ## Design boundary
@@ -60,7 +60,7 @@ The active Pose History is the ABP node. The proxy declares `NativePoseHistoryNo
 | PSD selection | C++ Asset Set/Profile; no ABP asset-name branching |
 | Light/heavy landing facts | C++ stores fall speed, movement/sprint intent and landing state |
 | Worker-thread safety | ABP consumes getters only; no Character/Controller/Component cast |
-| MMO cost policy | proxy-aware remote update, throttling and diagnostic traces |
+| MMO cost policy | player/opt-in ownership, dedicated-server skip, visibility budget, proxy-aware throttling and diagnostic traces |
 | Visual expression | ABP owns MM node, upper-body layer/slot, AO, Foot Placement, IK and Pose History |
 
 ### Future-trajectory velocity contract
@@ -78,17 +78,38 @@ The reconstructed `FutureTrajectoryVelocity`, `FutureTrajectorySpeed`, and `Futu
 
 ### Trajectory update ordering and sampling cost (2026-08-23)
 
-Visible and locally controlled player characters refresh their trajectory before
-`UProject_JLocomotionAnimStateComponent` derives the current frame's semantic
-context. The primary AnimInstance keeps its existing update call as a throttled
-fallback for hidden/URO paths, while the trajectory component rejects duplicate
-same-frame work.
+`UProject_JMotionMatchingTrajectoryComponent` removes the engine example
+component's unconditional `OnCharacterMovementUpdated` binding. PlayerCharacter
+owns the single normal update entry after movement policy and rotation mode have
+been applied and before `UProject_JLocomotionAnimStateComponent` derives the
+current frame's semantic context. AnimInstance no longer generates or
+post-processes trajectory; it only publishes an immutable copy to its proxy.
+
+Generation eligibility is presentation policy, not gameplay authority:
+
+- locally controlled players generate every eligible movement frame;
+- non-local players generate only while recently rendered;
+- hidden actors stop generating and re-seed history when they become visible;
+- mounted players stop generating the on-foot trajectory and re-seed on dismount;
+- dedicated servers never generate animation-only trajectory;
+- ordinary NPC/field-monster classes do not own this player component. A special
+  NPC or boss must opt into both the component and an explicit update call.
+
+Past samples are immutable observations. A gait or `MaxWalkSpeed` change affects
+the newly simulated future prediction only; it no longer scales already-recorded
+history. Rotation-mode changes, acceleration-stop policy, visibility wake and
+manual resets are recorded with a reset reason and revision.
 
 The present and configured short-horizon sample indices are cached inside
 `UProject_JMotionMatchingTrajectoryComponent`. Ordinary state updates therefore
 reconstruct future planar velocity without rescanning the stable trajectory time
 layout. A history reset invalidates this cache, and changing the configured
 prediction horizon rebuilds it automatically.
+
+The game-thread animation snapshot also publishes generation revision, reset
+revision, snapshot age and generation eligibility. These are diagnostics and
+thread-safety metadata only; trajectory arrays and raw client input are never
+replicated.
 
 ## GASP mapping
 

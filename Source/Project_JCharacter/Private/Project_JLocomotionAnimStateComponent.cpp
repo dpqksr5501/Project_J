@@ -274,11 +274,16 @@ void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnab
 		KinematicContext.RelativeAccelerationAmount.X,
 		KinematicContext.RelativeAccelerationAmount.Y);
 	UE_LOG(LogProjectJPlayer, Display,
-		TEXT("MMNetTrajectory Actor=%s Samples=%d History=%d Prediction=%d RemoteFacingRepair=%s RemotePosSmoothing=%s RemoteRotSmoothing=%s"),
+		TEXT("MMNetTrajectory Actor=%s Samples=%d History=%d Prediction=%d Eligible=%s Age=%.3f GenRev=%d ResetRev=%d ResetReason=%s RemoteFacingRepair=%s RemotePosSmoothing=%s RemoteRotSmoothing=%s"),
 		*GetNameSafe(&PlayerOwner),
 		Trajectory ? Trajectory->Samples.Num() : 0,
 		TrajectoryComponent ? TrajectoryComponent->GetSamplingData().NumHistorySamples : 0,
 		TrajectoryComponent ? TrajectoryComponent->GetSamplingData().NumPredictionSamples : 0,
+		TrajectoryComponent && TrajectoryComponent->IsTrajectoryGenerationEligible() ? TEXT("true") : TEXT("false"),
+		TrajectoryComponent ? TrajectoryComponent->GetTrajectoryAgeSeconds() : -1.0f,
+		TrajectoryComponent ? TrajectoryComponent->GetGenerationRevision() : 0,
+		TrajectoryComponent ? TrajectoryComponent->GetResetRevision() : 0,
+		TrajectoryComponent ? *UEnum::GetValueAsString(TrajectoryComponent->GetLastResetReason()) : TEXT("None"),
 		Project_J::MotionMatchingCVars::ShouldRepairRemoteTrajectoryFacing() ? TEXT("true") : TEXT("false"),
 		Project_J::MotionMatchingCVars::ShouldSmoothRemoteTrajectoryPosition() ? TEXT("true") : TEXT("false"),
 		Project_J::MotionMatchingCVars::ShouldSmoothRemoteTrajectoryRotation() ? TEXT("true") : TEXT("false"));

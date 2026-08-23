@@ -311,15 +311,10 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	UpdateMaxWalkSpeed();
 	ApplyCombatRotationMode(IsCombatModeActive());
 
-	// Visible and locally controlled characters need the current frame's
-	// trajectory before locomotion semantics are derived. Hidden remote meshes
-	// retain the AnimInstance's throttled fallback update instead of paying this
-	// cost every actor tick. UpdateTrajectoryState guards duplicate same-frame
-	// calls from the primary AnimInstance.
-	const bool bNeedsCurrentTrajectory =
-		IsLocallyControlled() ||
-		(GetMesh() && GetMesh()->WasRecentlyRendered(0.25f));
-	if (bNeedsCurrentTrajectory && MotionMatchingTrajectoryComponent)
+	// The component owns generation eligibility and same-frame de-duplication.
+	// Calling here guarantees locomotion semantics consume the current movement
+	// frame even when CharacterMovement did not broadcast an update.
+	if (MotionMatchingTrajectoryComponent)
 	{
 		MotionMatchingTrajectoryComponent->UpdateTrajectoryState(DeltaTime);
 	}
@@ -597,7 +592,8 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
 	{
-		MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
+		MotionMatchingTrajectoryComponent->ResetTrajectoryHistoryWithReason(
+			EProject_JTrajectoryResetReason::RotationModeChanged);
 	}
 }
 
@@ -1346,11 +1342,11 @@ void AProject_JPlayerCharacter::DispatchMoveStartAnimationEvent(bool bWasSprinti
 	}
 }
 
-void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent()
+void AProject_JPlayerCharacter::DispatchMoveStopAnimationEvent(bool bWasSprintingAtStop)
 {
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->DispatchMoveStopped();
+		ReplicatedAnimEventComponent->DispatchMoveStopped(bWasSprintingAtStop);
 	}
 }
 
@@ -1682,6 +1678,26 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 
 void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 {
+	const FVector PreLandingVelocity = GetVelocity();
+	const FVector PreLandingAcceleration = GetCharacterMovement()
+		? GetCharacterMovement()->GetCurrentAcceleration()
+		: FVector::ZeroVector;
+	const float ImpactFallSpeed = FMath::Abs(PreLandingVelocity.Z);
+	const float HorizontalSpeedSquared = FVector(PreLandingVelocity.X, PreLandingVelocity.Y, 0.0f).SizeSquared();
+	const float LandingMovingSpeedThreshold = LocomotionAnimStateComponent
+		? LocomotionAnimStateComponent->IdleSpeedThreshold
+		: 30.0f;
+	const bool bWasMovingAtLanding =
+		HorizontalSpeedSquared > FMath::Square(LandingMovingSpeedThreshold) ||
+		PreLandingAcceleration.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
+	const bool bWasSprintingAtLanding =
+		IsSprintLocomotionAllowed() ||
+		(LocomotionAnimStateComponent &&
+			(LocomotionAnimStateComponent->bUseSprintLocomotion || LocomotionAnimStateComponent->bWantsSprint));
+	const bool bWasHeavyLanding = LocomotionAnimStateComponent
+		? ImpactFallSpeed >= LocomotionAnimStateComponent->HeavyLandSpeedThreshold
+		: false;
+
 	Super::Landed(Hit);
 
 	if (LocomotionAnimStateComponent)
@@ -1692,6 +1708,15 @@ void AProject_JPlayerCharacter::Landed(const FHitResult& Hit)
 		{
 			K2_OnRealLanded();
 		}
+	}
+
+	if (HasAuthority() && ReplicatedAnimEventComponent)
+	{
+		ReplicatedAnimEventComponent->DispatchLandingStarted(
+			ImpactFallSpeed,
+			bWasMovingAtLanding,
+			bWasSprintingAtLanding,
+			bWasHeavyLanding);
 	}
 }
 

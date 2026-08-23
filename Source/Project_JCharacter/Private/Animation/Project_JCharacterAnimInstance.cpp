@@ -245,16 +245,6 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	if (IsPrimaryMeshAnimInstance() &&
-		OwningPlayerCharacter &&
-		(!OwningPlayerCharacter->GetMountComponent() || !OwningPlayerCharacter->GetMountComponent()->IsMounted()))
-	{
-		if (UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent())
-		{
-			TrajectoryComponent->UpdateTrajectoryState(DeltaSeconds);
-		}
-	}
-
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
 	// A combat draw/sheathe montage temporarily owns the final pose through its
 	// FullBody slot. Do not allow a direct State Controller asset (most visibly Land)
@@ -444,6 +434,24 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			}
 		}
 	}
+	const bool bRemoteResponsiveStartExit =
+		OwningPlayerCharacter &&
+		!OwningPlayerCharacter->IsLocallyControlled() &&
+		ThreadSafeData.Ground.StartResponsiveExitRevision != LastHandledStartResponsiveExitRevision;
+	if (bRemoteResponsiveStartExit)
+	{
+		LastHandledStartResponsiveExitRevision = ThreadSafeData.Ground.StartResponsiveExitRevision;
+		bShouldCancelOneShot =
+			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion;
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerResponsiveStartExit Revision=%d Held=%d Cancel=%s"),
+				LastHandledStartResponsiveExitRevision,
+				static_cast<int32>(StateControllerPlaybackHoldState),
+				bShouldCancelOneShot ? TEXT("true") : TEXT("false"));
+		}
+	}
 
 	if (bShouldCancelOneShot)
 	{
@@ -531,8 +539,13 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (!bStateControllerStartGaitCommitted)
 		{
 			// During the small grace window a released Shift can still choose the
-			// correct Run Start instead of briefly showing Sprint Start.
-			StateControllerStartGaitForChooser = CurrentStartGait;
+			// correct Run Start instead of briefly showing Sprint Start. A simulated
+			// proxy keeps the replicated edge gait during this window because its GAS
+			// sprint tag may arrive on a different replication frame.
+			if (OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
+			{
+				StateControllerStartGaitForChooser = CurrentStartGait;
+			}
 			bStateControllerStartGaitCommitted =
 				FPlatformTime::Seconds() - StateControllerStartGaitStartedAtSeconds >=
 				StateControllerStartGaitCommitWindowSeconds;
@@ -598,9 +611,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
 	if (bEnteringStateControllerLand)
 	{
-		StateControllerLandGaitForChooser = ThreadSafeData.Landing.bLandWasSprinting
-			? EProject_JLocomotionGaitIntent::Sprint
-			: (ThreadSafeData.Landing.bLandWasMoving ? EProject_JLocomotionGaitIntent::Run : EProject_JLocomotionGaitIntent::Walk);
+		StateControllerLandGaitForChooser = Project_J::Locomotion::ResolveLandingGaitIntent(
+			ThreadSafeData.Landing.bLandWasMoving,
+			ThreadSafeData.Landing.bLandWasSprinting);
 		bHasStateControllerLandGaitForChooser = true;
 	}
 	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToLand)
@@ -924,6 +937,17 @@ float UProject_JCharacterAnimInstance::GetThreadSafeAimOffsetAlpha() const
 
 float UProject_JCharacterAnimInstance::GetThreadSafeGroundSpeed() const
 {
+	// Chooser tables are evaluated on the game thread before the newly built
+	// immutable snapshot is copied into the animation proxy. CHT_Player_Land is
+	// bound to this function, so reading the proxy here would expose the previous
+	// animation update (commonly zero on an urgent remote landing frame). The
+	// reflected mirror is published from the current snapshot immediately before
+	// game-thread chooser evaluation. Worker-thread AnimGraph callers continue to
+	// consume the immutable proxy only.
+	if (IsInGameThread())
+	{
+		return ChooserGroundSpeed;
+	}
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
 }
 
@@ -1690,12 +1714,17 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.Ground.bUseSprintLocomotion = AnimState->bUseSprintLocomotion;
 	Data.Ground.bStartWasSprinting =
 		AnimState->bStartWasSprinting ||
-		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
+		(IsLocallyControlledCharacter() &&
+		 Data.Ground.bStartRequested &&
+		 Data.Ground.bWantsSprint &&
+		 Data.Input.bHasMoveInput);
 	Data.Ground.bStopWasSprinting = AnimState->bStopWasSprinting;
 	Data.Ground.GroundMotionMode = AnimState->GroundMotionMode;
 	Data.Ground.GroundMotionModeElapsedTime = AnimState->GetGroundMotionModeElapsedTime();
+	Data.Ground.StartResponsiveExitRevision = AnimState->StartResponsiveExitRevision;
 	Data.Air.bIsJumping = AnimState->bIsJumping;
 	Data.Air.bIsFallOffStart = AnimState->bIsFallOffStart;
+	Data.Landing.PresentationRevision = AnimState->LandingPresentationRevision;
 	Data.Landing.bIsLanding = AnimState->bIsLanding || AnimState->bLandingRequested;
 	Data.Landing.bUseHeavyLand = AnimState->bUseHeavyLand;
 	Data.Landing.bLandWasSprinting = AnimState->bLandWasSprinting;
@@ -1865,17 +1894,24 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const bool bHeldTransition = IsTransitionState(StateControllerPlaybackHoldState);
 	const bool bNaturalContinuation = bHeldTransition &&
 		IsNaturalLoopContinuation(StateControllerPlaybackHoldState, DesiredState);
+	const bool bNewLandingPresentation =
+		DesiredState == EProject_JStateControllerPresentationState::TransitionToLand &&
+		Data.Landing.PresentationRevision != StateControllerHeldLandingPresentationRevision;
 
 	// Gameplay intent changes must replace a transition immediately.  In
 	// particular, releasing movement during Start must enter Stop on that frame;
 	// BP_NotifyState_EarlyTransition only controls Transition -> Loop/Re-enter,
 	// never Start -> Stop or Stop -> Start intent replacement.
-	bool bStartedNewPlaybackHold = !bHeldTransition ||
+	bool bStartedNewPlaybackHold = bNewLandingPresentation || !bHeldTransition ||
 		(!bNaturalContinuation && DesiredState != StateControllerPlaybackHoldState);
 	if (bStartedNewPlaybackHold)
 	{
 		StateControllerPlaybackHoldState = DesiredState;
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
+		if (bNewLandingPresentation)
+		{
+			StateControllerHeldLandingPresentationRevision = Data.Landing.PresentationRevision;
+		}
 		bStartedNewPlaybackHold = IsTransitionState(DesiredState);
 	}
 
@@ -1900,10 +1936,13 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("StateControllerTransition Requested=%d PreviousHeld=%d NewHeld=%d Reason=GameplayIntentReplacement"),
+				TEXT("StateControllerTransition Actor=%s Requested=%d PreviousHeld=%d NewHeld=%d LandEpoch=%d NewLand=%s Reason=GameplayIntentReplacement"),
+				*GetNameSafe(OwningCharacter),
 				static_cast<int32>(RequestedState),
 				static_cast<int32>(PreviousHeldState),
-				static_cast<int32>(StateControllerPlaybackHoldState));
+				static_cast<int32>(StateControllerPlaybackHoldState),
+				Data.Landing.PresentationRevision,
+				bNewLandingPresentation ? TEXT("true") : TEXT("false"));
 		}
 		return;
 	}
@@ -1939,23 +1978,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	InOutOneShot.TransitionTimeRemaining = Remaining;
 	InOutOneShot.bTransitionAnimationAlmostComplete =
 		InOutOneShot.bEarlyTransitionWindowOpen || bReachedCompletion;
-
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() &&
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand)
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerLandDiag: LandWasSprinting=%s LandWasMoving=%s WantsSprint=%s HasMoveInput=%s DesiredState=%d Elapsed=%.3f/%.3f EarlyOpen=%s AlmostComp=%s Asset=%s"),
-			Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
-			Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
-			Data.Ground.bWantsSprint ? TEXT("true") : TEXT("false"),
-			Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
-			static_cast<int32>(DesiredState),
-			Elapsed,
-			EffectivePlayableLength,
-			InOutOneShot.bEarlyTransitionWindowOpen ? TEXT("true") : TEXT("false"),
-			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"),
-			HeldAsset ? *HeldAsset->GetName() : TEXT("None"));
-	}
 
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bStartedNewPlaybackHold)
 	{
@@ -2038,9 +2060,11 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 	{
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerExitHold: Exiting State=%d to State=%d (Elapsed=%.3f Remaining=%.3f AlmostComp=%s)"),
+			TEXT("StateControllerExitHold Actor=%s Exiting State=%d to State=%d LandEpoch=%d (Elapsed=%.3f Remaining=%.3f AlmostComp=%s)"),
+			*GetNameSafe(OwningCharacter),
 			static_cast<int32>(StateControllerPlaybackHoldState),
 			static_cast<int32>(DesiredState),
+			Data.Landing.PresentationRevision,
 			Elapsed,
 			Remaining,
 			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
@@ -2091,6 +2115,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		!FMath::IsNearlyEqual(
 			CachedStateControllerTurnInPlaceIndex,
 			StateControllerTurnInPlaceIndexForChooser);
+	const bool bLandingContextChanged =
+		OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
+		(CachedStateControllerLandingPresentationRevision != Data.Landing.PresentationRevision ||
+		 bCachedStateControllerLandWasMoving != Data.Landing.bLandWasMoving ||
+		 bCachedStateControllerLandWasSprinting != Data.Landing.bLandWasSprinting ||
+		 bCachedStateControllerUseHeavyLand != Data.Landing.bUseHeavyLand);
 	const bool bContextChanged =
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
@@ -2104,10 +2134,19 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		bStateControllerForceTurnInPlaceReselect ||
 		bTurnInPlaceIndexChanged ||
 		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
-		bCachedStateControllerFallOff != bStateControllerFallOffForChooser;
+		bCachedStateControllerFallOff != bStateControllerFallOffForChooser ||
+		bLandingContextChanged;
 
 	if (bContextChanged)
 	{
+		// The direct State Controller chooser is evaluated before the throttled
+		// regular PSD chooser. Publish its UObject-backed chooser columns from this
+		// exact immutable snapshot first; otherwise a remote semantic boundary can
+		// evaluate with the previous MM search frame's Landing booleans (Heavy or no
+		// valid Land row). This remains event-driven because it only runs when the
+		// State Controller cache key changed.
+		PublishChooserProperties(Data);
+
 		FChooserEvaluationContext ChooserContext;
 		ChooserContext.AddObjectParam(this);
 		FChooserPlayerSettings ChooserPlayerSettings;
@@ -2115,6 +2154,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		FProject_JStateControllerChooserOutput ChooserOutput;
 		ChooserContext.AddStructParam(ChooserOutput);
 
+		FString EvaluatedChooserPath = GetNameSafe(ChooserTable);
 		const FInstancedStruct ChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(ChooserTable);
 		UObject* ResultObject = ChooserObject.IsValid()
 			? UChooserFunctionLibrary::EvaluateObjectChooserBase(
@@ -2126,6 +2166,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		// If Parent Chooser returned a Sub-Chooser Table, evaluate the Sub-Chooser recursively
 		while (UChooserTable* SubChooserTable = Cast<UChooserTable>(ResultObject))
 		{
+			EvaluatedChooserPath += FString::Printf(TEXT(" -> %s"), *GetNameSafe(SubChooserTable));
 			const FInstancedStruct SubChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(SubChooserTable);
 			if (!SubChooserObject.IsValid())
 			{
@@ -2139,6 +2180,35 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		}
 
 		UAnimationAsset* SelectedAsset = Cast<UAnimationAsset>(ResultObject);
+		if (!SelectedAsset &&
+			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
+			Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			const FProject_JRemoteVisualLocomotionPolicy RemotePolicy = GetEffectiveRemoteVisualPolicy();
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerChooserMiss Actor=%s World=%s Role=%d Local=%s Path=%s StateProp=%d RotationProp=%d GaitProp=%d FootProp=%d GroundSpeedProp=%.1f HeavyProp=%s IsLandingProp=%s RunLightProp=%s SprintLightProp=%s StandLightProp=%s RunHeavyProp=%s SprintHeavyProp=%s StandHeavyProp=%s Tier=%d FarRows=%s DisableFarLand=%s"),
+				*GetNameSafe(OwningCharacter),
+				*GetNameSafe(GetWorld()),
+				OwningCharacter ? static_cast<int32>(OwningCharacter->GetLocalRole()) : -1,
+				IsLocallyControlledCharacter() ? TEXT("true") : TEXT("false"),
+				*EvaluatedChooserPath,
+				static_cast<int32>(StateControllerPresentationStateForChooser),
+				static_cast<int32>(RotationModeForChooser),
+				static_cast<int32>(GaitIntentForChooser),
+				static_cast<int32>(StateControllerOneShotFootForChooser),
+				GetThreadSafeGroundSpeed(),
+				bChooserUseHeavyLand ? TEXT("true") : TEXT("false"),
+				bChooserIsLanding ? TEXT("true") : TEXT("false"),
+				bChooserUseRunLightLand ? TEXT("true") : TEXT("false"),
+				bChooserUseSprintLightLand ? TEXT("true") : TEXT("false"),
+				bChooserUseStandLightLand ? TEXT("true") : TEXT("false"),
+				bChooserUseRunHeavyLand ? TEXT("true") : TEXT("false"),
+				bChooserUseSprintHeavyLand ? TEXT("true") : TEXT("false"),
+				bChooserUseStandHeavyLand ? TEXT("true") : TEXT("false"),
+				static_cast<int32>(CurrentOptimizationPolicy.Tier),
+				CurrentOptimizationPolicy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
+				RemotePolicy.bDisableLandChooserBeyondFarDistance ? TEXT("true") : TEXT("false"));
+		}
 		if (SelectedAsset && ChooserOutput.bUseMotionMatch)
 		{
 			TArray<UObject*> AssetsToSearch;
@@ -2184,6 +2254,10 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		CachedStateControllerTurnInPlaceIndex = StateControllerTurnInPlaceIndexForChooser;
 		bCachedStateControllerCombatMode = Data.Combat.bIsCombatMode;
 		bCachedStateControllerFallOff = bStateControllerFallOffForChooser;
+		bCachedStateControllerLandWasMoving = Data.Landing.bLandWasMoving;
+		bCachedStateControllerLandWasSprinting = Data.Landing.bLandWasSprinting;
+		bCachedStateControllerUseHeavyLand = Data.Landing.bUseHeavyLand;
+		CachedStateControllerLandingPresentationRevision = Data.Landing.PresentationRevision;
 		CachedStateControllerSelectedAnimation = SelectedAsset;
 		CachedStateControllerSelectedAnimationOutput = ChooserOutput;
 		bCachedStateControllerHasSelectedAnimation = CachedStateControllerSelectedAnimation != nullptr;
@@ -2196,9 +2270,14 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerChooser Rev=%d State=%d Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s"),
+			TEXT("StateControllerChooser Actor=%s Rev=%d State=%d LandEpoch=%d LandMoving=%s LandSprint=%s LandHeavy=%s Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s ForceBlend=%s"),
+				*GetNameSafe(OwningCharacter),
 				StateControllerChooserSelectionRevision,
 				static_cast<int32>(OneShot.PresentationState),
+				Data.Landing.PresentationRevision,
+				Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+				Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+				Data.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
 				static_cast<int32>(Data.LocomotionContext.RotationMode),
 				static_cast<int32>(GaitIntentForChooser),
 				static_cast<int32>(StateControllerStartGaitForChooser),
@@ -2230,7 +2309,8 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				ChooserOutput.Tags.Num(),
 				OneShot.TransitionElapsedTime,
 				OneShot.TransitionTimeRemaining,
-				OneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
+				OneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"),
+				OneShot.bForceBlendNextUpdate ? TEXT("true") : TEXT("false"));
 		}
 	}
 
@@ -2287,9 +2367,12 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	Data.Ground.bWantsSprint =
 		(Data.Ground.bWantsSprint || OwningPlayerCharacter->IsSprintLocomotionAllowed()) &&
 		OwningPlayerCharacter->IsSprintLocomotionAllowed();
-	Data.Ground.bStartWasSprinting =
-		Data.Ground.bStartWasSprinting ||
-		(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
+	if (OwningPlayerCharacter->IsLocallyControlled())
+	{
+		Data.Ground.bStartWasSprinting =
+			Data.Ground.bStartWasSprinting ||
+			(Data.Ground.bStartRequested && Data.Ground.bWantsSprint && Data.Input.bHasMoveInput);
+	}
 	Data.Ground.bUseSprintLocomotion =
 		Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		Data.Ground.bWantsSprint &&
@@ -2309,6 +2392,10 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 	{
 		Data.Movement.Trajectory = TrajectoryComponent->GetTrajectory();
 		Data.Movement.bHasTrajectory = !Data.Movement.Trajectory.Samples.IsEmpty();
+		Data.Movement.TrajectoryGenerationRevision = TrajectoryComponent->GetGenerationRevision();
+		Data.Movement.TrajectoryResetRevision = TrajectoryComponent->GetResetRevision();
+		Data.Movement.TrajectoryAgeSeconds = TrajectoryComponent->GetTrajectoryAgeSeconds();
+		Data.Movement.bTrajectoryGenerationEligible = TrajectoryComponent->IsTrajectoryGenerationEligible();
 		Data.MotionMatching.TrajectorySampleCount = Data.Movement.Trajectory.Samples.Num();
 	}
 
@@ -2868,7 +2955,9 @@ void UProject_JCharacterAnimInstance::PublishChooserCombatProperties(const FProj
 
 void UProject_JCharacterAnimInstance::ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data)
 {
-	if (!GetEffectiveRemoteVisualPolicy().bDisableStartStopChooserBeyondFarDistance)
+	const FProject_JRemoteVisualLocomotionPolicy RemotePolicy = GetEffectiveRemoteVisualPolicy();
+	if (!RemotePolicy.bDisableStartStopChooserBeyondFarDistance &&
+		!RemotePolicy.bDisableLandChooserBeyondFarDistance)
 	{
 		return;
 	}
@@ -2880,27 +2969,32 @@ void UProject_JCharacterAnimInstance::ApplyFarChooserOverrides(const FProject_JA
 	const bool bUseFarRunLocomotion = bUseFarLocomotion && !Data.Ground.bUseSprintLocomotion;
 	const bool bUseFarSprintLocomotion = bUseFarLocomotion && Data.Ground.bUseSprintLocomotion;
 
-	bChooserStartRequested = false;
-	bChooserStopRequested = false;
-	bChooserSharpTurnRequested = false;
-	bChooserUseRunStart = false;
-	bChooserUseRemoteRunStart = false;
-	bChooserUseSprintStart = false;
-	bChooserUseRunStop = false;
-	bChooserUseSprintStop = false;
-	bChooserUseFallOff = false;
-	bChooserUseLightLand = false;
-	bChooserUseHeavyLandRow = false;
-	bChooserUseStandLightLand = false;
-	bChooserUseStandHeavyLand = false;
-	bChooserUseRunLightLand = false;
-	bChooserUseSprintLightLand = false;
-	bChooserUseRunHeavyLand = false;
-	bChooserUseSprintHeavyLand = false;
-	bChooserIsLanding = false;
-	bChooserUseHeavyLand = false;
-	bChooserLandWasMoving = false;
-	bChooserLandWasSprinting = false;
+	if (RemotePolicy.bDisableStartStopChooserBeyondFarDistance)
+	{
+		bChooserStartRequested = false;
+		bChooserStopRequested = false;
+		bChooserSharpTurnRequested = false;
+		bChooserUseRunStart = false;
+		bChooserUseRemoteRunStart = false;
+		bChooserUseSprintStart = false;
+		bChooserUseRunStop = false;
+		bChooserUseSprintStop = false;
+	}
+	if (RemotePolicy.bDisableLandChooserBeyondFarDistance)
+	{
+		bChooserUseLightLand = false;
+		bChooserUseHeavyLandRow = false;
+		bChooserUseStandLightLand = false;
+		bChooserUseStandHeavyLand = false;
+		bChooserUseRunLightLand = false;
+		bChooserUseSprintLightLand = false;
+		bChooserUseRunHeavyLand = false;
+		bChooserUseSprintHeavyLand = false;
+		bChooserIsLanding = false;
+		bChooserUseHeavyLand = false;
+		bChooserLandWasMoving = false;
+		bChooserLandWasSprinting = false;
+	}
 	bChooserUseSprintLocomotion = bUseFarSprintLocomotion;
 	bChooserUseRunLocomotion = false;
 	bChooserUseRemoteRunLocomotion = bUseFarRunLocomotion;
@@ -3053,7 +3147,8 @@ void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(c
 
 	if (CachedTrajectoryComponent)
 	{
-		CachedTrajectoryComponent->ResetTrajectoryHistory();
+		CachedTrajectoryComponent->ResetTrajectoryHistoryWithReason(
+			EProject_JTrajectoryResetReason::AccelerationStopped);
 	}
 }
 

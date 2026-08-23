@@ -43,7 +43,7 @@
 - **결과**: `sprint_land` (2.333초)를 끝까지 홀드하며 억지로 잡고 있지 않고, Shift를 떼거나 지면에 부착되는 즉시 **모션 매칭 Database (`PSD_Run_Cycle` / `PSD_Sprint_Cycle` / `PSD_Idle`)로 즉시 인터럽트 직행**.
 
 ### 7) 정밀 진단 트레이스 로그 추가 (`Project_JCharacterAnimInstance.cpp`)
-- `p.ProjectJ.MMTransitionDebug 1` 실행 시 착지 상태의 프레임 단위 데이터(`LandWasSprinting`, `WantsSprint`, `Elapsed/Total`, `DesiredState`, `Asset` 등)를 추적 출력하는 `StateControllerLandDiag` 지원.
+- 과거에는 `StateControllerLandDiag`가 착지 중 매 프레임 출력됐지만 현재는 제거됐다. `p.ProjectJ.MMTransitionDebug 1`의 `RemoteAnimSemantic`과 상태 변경 시점 `StateControllerChooser` 로그로 server order, gait, impact, event age와 실제 선택 에셋을 확인한다.
 
 ---
 

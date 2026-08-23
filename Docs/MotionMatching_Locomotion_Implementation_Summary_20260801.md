@@ -40,7 +40,7 @@ Through iterative empirical log analysis and architectural refinement, the locom
 |    - Result Class Filter: UObject (AnimationAsset + PoseSearchDB)     |
 |    - State Controller Presentation State Matching                         |
 |    - ChooserGaitIntent Matching (Run vs Sprint)                       |
-|    - Speed 2D Matching (GetThreadSafeGroundSpeed) for Landing          |
+|    - Latched landing semantics (Moving/Sprint/Heavy/Foot)             |
 +-----------------------------------------------------------------------+
                                    |
                                    v
@@ -108,14 +108,20 @@ if (bIsJumpingOrJumpStart || Data.Air.bIsFallOffStart)
 ### B. `CHT_Player_Land`
 - **Columns**:
   1. `State Controller Presentation State` = `Transition to Land`
-  2. `GetThreadSafeGroundSpeed` (Float Range)
-  3. `Project_JStateControllerChooserOutput` (`BlendTime = 0.3s`, `bUseMotionMatch = False`)
+  2. Latched `Gait Intent` (`Walk` / `Run` / `Sprint`)
+  3. `One Shot Foot`
+  4. `Use Heavy Land`
+  5. `Project_JStateControllerChooserOutput` (`BlendTime = 0.3s`, `bUseMotionMatch = False`)
 
-| Row Range | Landing Type | Ground Speed Range (2D) | Selected Animation Asset |
-| :--- | :--- | :--- | :--- |
-| **Rows 0 ~ 3** | Stand Land (Light/Heavy) | `(-inf, 10.0)` | `M_Neutral_Jump_B_Land_Stand_Light_Lfoot / Rfoot` |
-| **Rows 4 ~ 7** | Run Land (Light/Heavy) | `(10.0, 450.0)` | `M_Neutral_Jump_F_Land_Run_Light_Lfoot / Rfoot` |
-| **Rows 8 ~ 9** | Sprint Land (Light/Heavy) | `(450.0, inf)` | `M_Neutral_Jump_F_Land_Sprint_Light_Lfoot / Rfoot` |
+| Landing Type | Latched Gait | Selected Animation Asset |
+| :--- | :--- | :--- |
+| Stand Land (Light/Heavy) | `Walk` | `M_Neutral_Jump_B_Land_Stand_Light_Lfoot / Rfoot` |
+| Run Land (Light/Heavy) | `Run` | `M_Neutral_Jump_F_Land_Run_Light_Lfoot / Rfoot` |
+| Sprint Land (Light/Heavy) | `Sprint` | `M_Neutral_Jump_F_Land_Sprint_Light_Lfoot / Rfoot` |
+
+> 2026-08-23 correction: the former live GroundSpeed Float Range was redundant
+> with latched gait and could reject a simulated proxy near the 500 uu/s Run
+> boundary. It is intentionally not part of the current Land selector contract.
 
 ---
 

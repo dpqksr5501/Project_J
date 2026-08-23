@@ -5,6 +5,7 @@
 #include "Misc/AutomationTest.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Combat/Project_JCombatCommandSet.h"
 #include "Combat/Project_JCombatHitValidation.h"
@@ -13,6 +14,7 @@
 #include "Network/Project_JNetObjectFilter_Distance.h"
 #include "Project_JMMOTypes.h"
 #include "Project_JGameplayTags.h"
+#include "Project_JLocomotionAnimTypes.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJMotionMatchingSearchPolicyTest,
@@ -272,6 +274,36 @@ bool FProjectJRemoteJumpPredictionPolicyTest::RunTest(const FString& Parameters)
 		TEXT("Landing state suppresses remote jump prediction"),
 		Policy.ShouldPredict(false, true, 300.0f, false, true, false));
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJRemoteOneShotSemanticPolicyTest,
+	"ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJRemoteOneShotSemanticPolicyTest::RunTest(const FString& Parameters)
+{
+	const FProject_JRemoteVisualLocomotionPolicy Policy;
+	TestTrue(TEXT("Far Start and Stop remain budgeted by default"), Policy.bDisableStartStopChooserBeyondFarDistance);
+	TestFalse(TEXT("Rare Land one-shots remain visible by default"), Policy.bDisableLandChooserBeyondFarDistance);
+	TestTrue(TEXT("Urgent one-shot URO bypass is short and enabled"),
+		Policy.UrgentOneShotAnimationUpdateDuration > 0.0f &&
+		Policy.UrgentOneShotAnimationUpdateDuration <= 0.25f);
+
+	const FProject_JReplicatedAnimEventState State;
+	TestEqual(TEXT("Move semantic sequence starts empty"), State.MoveSequence, 0);
+	TestEqual(TEXT("Landing semantic revision starts empty"), State.LandingRevision, 0);
+	TestFalse(TEXT("A default replicated snapshot cannot start a stale landing"), State.bLandingActive);
+	TestFalse(TEXT("Stop gait is not inferred as Sprint by default"), State.bIsSprinting);
+
+	using Project_J::Locomotion::ResolveLandingGaitIntent;
+	TestEqual(TEXT("A standing landing stays Walk regardless of a stale Sprint bit"),
+		ResolveLandingGaitIntent(false, true), EProject_JLocomotionGaitIntent::Walk);
+	TestEqual(TEXT("A moving non-Sprint landing resolves to Run"),
+		ResolveLandingGaitIntent(true, false), EProject_JLocomotionGaitIntent::Run);
+	TestEqual(TEXT("A moving Sprint landing resolves to Sprint"),
+		ResolveLandingGaitIntent(true, true), EProject_JLocomotionGaitIntent::Sprint);
 	return true;
 }
 

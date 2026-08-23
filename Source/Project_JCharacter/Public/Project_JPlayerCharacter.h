@@ -294,7 +294,7 @@ protected:
 	void UpdateMoveStartReplicationState(const FVector2D& MoveInput);
 	void ResetMoveStartReplicationState();
 	void DispatchMoveStartAnimationEvent(bool bWasSprintingForStart);
-	void DispatchMoveStopAnimationEvent();
+	void DispatchMoveStopAnimationEvent(bool bWasSprintingAtStop);
 	void DispatchFallOffStartAnimationEvent();
 	void DispatchLandingCancelAnimationEvent();
 

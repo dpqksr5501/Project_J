@@ -42,6 +42,7 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 - [Combat Animation Architecture Notes](CombatAnimationArchitectureNotes.md)
   - Locomotion/combat ownership boundaries and future weapon, attack, dodge, and hit reaction animation paths.
 - [Combat Locomotion Architecture](CombatLocomotionArchitecture.md)
+- [Remote Locomotion One-Shot Replication](RemoteOneShotReplication.md)
   - Reusable weapon-family linked layers, socket/IK rules, and combat animation priority.
 - [Combat Animation Composition](CombatAnimationComposition.md)
   - Data-driven upper-body overlay versus validated full-body weapon locomotion, including the master-layer contract.

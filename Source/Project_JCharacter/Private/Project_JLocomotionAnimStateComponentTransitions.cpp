@@ -99,13 +99,49 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()
 	RemoteAirborneTime = 0.0f;
 }
 
-void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled()
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingStarted(
+	int32 Sequence,
+	float ServerStartAgeSeconds,
+	float ImpactFallSpeed,
+	bool bWasMoving,
+	bool bWasSprinting,
+	bool bWasHeavy)
 {
-	if (ShouldUseLocalInputState() || !IsLandingStateActive())
+	if (ShouldUseLocalInputState() || Sequence <= LastConfirmedRemoteLandingSequence)
 	{
 		return;
 	}
 
+	LastConfirmedRemoteLandingSequence = Sequence;
+	const float MaxPresentationDuration = bWasMoving ? LandingRequestDuration : StandLandingRequestDuration;
+	if (ServerStartAgeSeconds >= MaxPresentationDuration)
+	{
+		// A newly relevant proxy must not replay an old semantic landing snapshot.
+		return;
+	}
+
+	if (!IsLandingStateActive())
+	{
+		StartLanding(ImpactFallSpeed, false, false);
+	}
+	ApplyReplicatedLandingSemantics(
+		ServerStartAgeSeconds,
+		ImpactFallSpeed,
+		bWasMoving,
+		bWasSprinting,
+		bWasHeavy);
+}
+
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingCancelled(int32 Sequence)
+{
+	if (ShouldUseLocalInputState() ||
+		Sequence < LastConfirmedRemoteLandingSequence ||
+		!IsLandingStateActive())
+	{
+		return;
+	}
+
+	LastConfirmedRemoteLandingSequence = FMath::Max(LastConfirmedRemoteLandingSequence, Sequence);
 	bLandWasMoving = true;
 	bForceLandingFinishToLocomotion = true;
 	FinishLandingImmediately();
@@ -344,6 +380,11 @@ void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Dura
 void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed)
 {
 	StopFallOffStart();
+	++LandingPresentationRevision;
+	if (LandingPresentationRevision == 0)
+	{
+		LandingPresentationRevision = 1;
+	}
 
 	bIsJumping = false;
 	bIgnoreNextLandingForJumpStart = false;
@@ -392,6 +433,35 @@ void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JP
 	bForceLandingFinishToStop = false;
 	bLandingExitStopWasSprinting = false;
 	bLandingFinishPendingExit = false;
+}
+
+void UProject_JLocomotionAnimStateComponent::ApplyReplicatedLandingSemantics(
+	float ServerStartAgeSeconds,
+	float ImpactFallSpeed,
+	bool bWasMoving,
+	bool bWasSprinting,
+	bool bWasHeavy)
+{
+	LastFallSpeed = FMath::Max(ImpactFallSpeed, 0.0f);
+	LandStartFallSpeed = LastFallSpeed;
+	bLandWasMoving = bWasMoving;
+	bLandWasSprinting = bWasMoving && bWasSprinting;
+	bUseHeavyLand = bWasHeavy;
+	LandingElapsedTime = FMath::Max(ServerStartAgeSeconds, 0.0f);
+	bCanExitLanding = LandingElapsedTime >= LandingMinHoldTime;
+
+	const float PresentationDuration = bLandWasMoving ? LandingRequestDuration : StandLandingRequestDuration;
+	const float RemainingDuration = FMath::Max(0.01f, PresentationDuration - LandingElapsedTime);
+	ClearLandingTimers();
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			LandingTimerHandle,
+			this,
+			&UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished,
+			RemainingDuration,
+			false);
+	}
 }
 
 void UProject_JLocomotionAnimStateComponent::ScheduleLandingTimeout()

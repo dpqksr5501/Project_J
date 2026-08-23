@@ -211,11 +211,19 @@ struct PROJECT_JCHARACTER_API FProject_JRemoteVisualLocomotionPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
 	bool bDisableStartStopChooserBeyondFarDistance = true;
 
+	/** Land is event-driven and rare; keep it visible by default even when Start/Stop are budgeted out. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual")
+	bool bDisableLandChooserBeyondFarDistance = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteStartTurnExitAngle = 15.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float RemoteStopStartSuppressDuration = 0.20f;
+
+	/** Short event-driven URO bypass for visible remote Start/Stop/Land boundaries. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Remote Visual", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float UrgentOneShotAnimationUpdateDuration = 0.10f;
 };
 
 /**

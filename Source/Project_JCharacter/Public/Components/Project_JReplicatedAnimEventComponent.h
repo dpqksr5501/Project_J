@@ -13,6 +13,7 @@ enum class EProject_JReplicatedAnimEventType : uint8
 	MoveStart,
 	MoveStop,
 	FallOffStart,
+	LandingStart,
 	LandingCancel
 };
 
@@ -34,23 +35,38 @@ public:
 
 	void Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent);
 	void DispatchMoveStarted(bool bWasSprintingForStart);
-	void DispatchMoveStopped();
+	void DispatchMoveStopped(bool bWasSprintingAtStop);
 	void DispatchFallOffStarted();
+	void DispatchLandingStarted(float ImpactSpeed, bool bWasMoving, bool bWasSprinting, bool bWasHeavy);
 	void DispatchLandingCancelled();
 
 private:
 	void DispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag = false);
 	void ApplyEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag);
+	void ApplyMoveEvent(bool bIsMoving, bool bWasSprintingAtBoundary);
+	void ApplyLandingStart(float ImpactSpeed, bool bWasMoving, bool bWasSprinting, bool bWasHeavy);
+	void ApplyLandingCancel();
+	void ReplicateLatestState();
 	void ApplyReplicatedEvents(
 		const FProject_JReplicatedAnimEventState& CurrentState,
-		const FProject_JReplicatedAnimEventState& PreviousState) const;
+		const FProject_JReplicatedAnimEventState& PreviousState);
+	void ApplyRemoteMoveState(const FProject_JReplicatedAnimEventState& State);
+	void ApplyRemoteLandingState(const FProject_JReplicatedAnimEventState& State);
+	void ApplyRemoteFallOffState(const FProject_JReplicatedAnimEventState& State);
+	float ResolveServerEventAgeSeconds(float ServerTimeSeconds) const;
+	void RequestUrgentRemoteAnimationUpdate() const;
 
 	// Movement transitions are infrequent state boundaries. Keep them on a dedicated
 	// reliable channel so the final stop cannot be lost without making cosmetic events reliable.
 	UFUNCTION(Server, Reliable)
-	void ServerDispatchMoveState(bool bIsMoving);
+	void ServerDispatchMoveState(bool bIsMoving, bool bWasSprintingAtBoundary);
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastAnimEventState(FProject_JReplicatedAnimEventState EventState);
+
+	// These are rare semantic boundaries. Reliable delivery keeps cancellation
+	// ordered with reliable movement edges on the owning actor channel.
+	UFUNCTION(Server, Reliable)
 	void ServerDispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag);
 
 	UFUNCTION()
@@ -61,4 +77,10 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+
+	int32 NextSemanticEventOrder = 0;
+	int32 LastAppliedMoveSequence = 0;
+	int32 LastAppliedLandingRevision = 0;
+	int32 LastAppliedFallOffCounter = 0;
+	int32 LastAppliedSemanticEventOrder = 0;
 };

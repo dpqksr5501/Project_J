@@ -3,11 +3,12 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 
 #include "Animation/Project_JMotionMatchingCVars.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Mount/Project_JMountComponent.h"
 #include "MotionTrajectoryLibrary.h"
 #include "Project_JPlayerCharacter.h"
-#include "Async/ParallelFor.h"
 
 namespace
 {
@@ -89,13 +90,49 @@ UProject_JMotionMatchingTrajectoryComponent::UProject_JMotionMatchingTrajectoryC
 void UProject_JMotionMatchingTrajectoryComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
+
+	// UCharacterTrajectoryComponent is an example implementation that generates
+	// unconditionally from OnCharacterMovementUpdated. Project_J generates from
+	// the player presentation pipeline after movement policy/rotation are applied,
+	// so remove the example binding and retain only its protected data model.
+	if (ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner()))
+	{
+		CharacterOwner->OnCharacterMovementUpdated.RemoveAll(this);
+	}
+
 	EnsureTrajectoryBuffers();
 }
 
+void UProject_JMotionMatchingTrajectoryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// The parent example allocates its sample buffers in BeginPlay. A dedicated
+	// server never consumes animation trajectory, so release that persistent
+	// per-player storage after base lifecycle initialization completes.
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		Trajectory.Samples.Empty();
+		TranslationHistory.Empty();
+		PreviousFilteredTrajectory.Samples.Empty();
+		InvalidateSamplingIndexCache();
+	}
+}
+
 void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistory()
+
+{
+	ResetTrajectoryHistoryWithReason(EProject_JTrajectoryResetReason::Manual);
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReason(EProject_JTrajectoryResetReason Reason)
 {
 	EnsureTrajectoryBuffers();
 	InvalidateSamplingIndexCache();
+	LastResetReason = Reason;
+	++ResetRevision;
+	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
+	LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner)
@@ -103,32 +140,27 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistory()
 		Trajectory.Samples.Reset();
 		TranslationHistory.Reset();
 		LastUpdateFrameNumber = 0;
+		bWasTrajectoryGenerationEligible = false;
 		return;
 	}
 
 	SamplingData.Init();
-	CharacterTrajectoryData.UpdateDataFromCharacter(0.0f, CharacterOwner);
 	Trajectory.Samples.Reset();
 	TranslationHistory.Reset();
+	const USkeletalMeshComponent* MeshComponent = CharacterOwner->GetMesh();
+	const FVector InitialPosition = MeshComponent ? MeshComponent->GetComponentLocation() : CharacterOwner->GetActorLocation();
+	const FQuat InitialFacing = MeshComponent ? MeshComponent->GetComponentQuat() : CharacterOwner->GetActorQuat();
 
 	FMotionTrajectoryLibrary::InitTrajectorySamples(
 		Trajectory,
 		SamplingData,
-		CharacterOwner->GetActorLocation(),
-		CharacterOwner->GetActorQuat());
+		InitialPosition,
+		InitialFacing);
 
 	TranslationHistory.SetNumZeroed(SamplingData.NumHistorySamples);
-	LastUpdateFrameNumber = GFrameCounter;
+	LastUpdateFrameNumber = 0;
 
 	PreviousFilteredTrajectory = Trajectory;
-	if (CharacterOwner && CharacterOwner->GetCharacterMovement())
-	{
-		LastMaxWalkSpeed = CharacterOwner->GetCharacterMovement()->MaxWalkSpeed;
-	}
-	else
-	{
-		LastMaxWalkSpeed = 0.0f;
-	}
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::EnsureTrajectoryBuffers()
@@ -142,45 +174,111 @@ void UProject_JMotionMatchingTrajectoryComponent::EnsureTrajectoryBuffers()
 
 void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float DeltaTime)
 {
-	// PlayerCharacter updates visible/local trajectories before locomotion state
-	// is derived. AnimInstance retains a fallback call for throttled/hidden mesh
-	// paths, so guard against evaluating the base trajectory twice in one frame.
-	if (LastUpdateFrameNumber == GFrameCounter)
-	{
-		return;
-	}
-
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
-	if (!CharacterOwner)
+	if (!CharacterOwner || DeltaTime <= 0.0f)
 	{
 		return;
 	}
 
-	// 0. Update the actual trajectory samples manually since component tick is disabled
-	if (IsRegistered())
+	const bool bShouldGenerate = ShouldGenerateTrajectory(*CharacterOwner);
+	if (!bShouldGenerate)
 	{
-		Super::TickComponent(DeltaTime, ELevelTick::LEVELTICK_All, nullptr);
+		bWasTrajectoryGenerationEligible = false;
+		return;
 	}
-	LastUpdateFrameNumber = GFrameCounter;
 
-	// 1. Speed change correction (applies to all characters, local or simulated)
-	if (bEnableSpeedChangeCorrection)
+	if (!bWasTrajectoryGenerationEligible)
 	{
-		if (const UCharacterMovementComponent* MoveComp = CharacterOwner->GetCharacterMovement())
+		ResetTrajectoryHistoryWithReason(
+			bHasGeneratedTrajectory
+				? EProject_JTrajectoryResetReason::PresentationWake
+				: EProject_JTrajectoryResetReason::Initialization);
+		bWasTrajectoryGenerationEligible = true;
+	}
+
+	if (LastGenerationFrameCounter != GFrameCounter)
+	{
+		GenerateTrajectory(*CharacterOwner, DeltaTime);
+	}
+	PostProcessTrajectory(*CharacterOwner, DeltaTime);
+}
+
+float UProject_JMotionMatchingTrajectoryComponent::GetTrajectoryAgeSeconds() const
+{
+	const UWorld* World = GetWorld();
+	if (!World || LastGeneratedWorldTimeSeconds < 0.0)
+	{
+		return -1.0f;
+	}
+
+	return static_cast<float>(FMath::Max(World->GetTimeSeconds() - LastGeneratedWorldTimeSeconds, 0.0));
+}
+bool UProject_JMotionMatchingTrajectoryComponent::ShouldGenerateTrajectory(const ACharacter& CharacterOwner) const
+{
+	if (CharacterOwner.GetNetMode() == NM_DedicatedServer)
+	{
+		return false;
+	}
+	if (const AProject_JPlayerCharacter* PlayerOwner = Cast<AProject_JPlayerCharacter>(&CharacterOwner))
+	{
+		const UProject_JMountComponent* MountComponent = PlayerOwner->GetMountComponent();
+		if (MountComponent && MountComponent->IsMounted())
 		{
-			float CurrentMaxWalkSpeed = MoveComp->MaxWalkSpeed;
-			if (LastMaxWalkSpeed > 0.0f && !FMath::IsNearlyEqual(CurrentMaxWalkSpeed, LastMaxWalkSpeed))
-			{
-				float SpeedScaleRatio = CurrentMaxWalkSpeed / LastMaxWalkSpeed;
-				ScaleTrajectoryHistory(SpeedScaleRatio);
-			}
-			LastMaxWalkSpeed = CurrentMaxWalkSpeed;
+			return false;
 		}
 	}
 
-	const bool bSimulatedProxy = CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy;
+	if (CharacterOwner.IsLocallyControlled())
+	{
+		return true;
+	}
 
-	// 2. Trajectory smoothing (only for simulated proxies)
+	const USkeletalMeshComponent* MeshComponent = CharacterOwner.GetMesh();
+	return MeshComponent && MeshComponent->WasRecentlyRendered(RemoteRecentlyRenderedTolerance);
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter& CharacterOwner, float DeltaTime)
+{
+	EnsureTrajectoryBuffers();
+	const int32 RequiredTrajectorySamples = SamplingData.NumHistorySamples + 1 + SamplingData.NumPredictionSamples;
+	if (Trajectory.Samples.Num() != RequiredTrajectorySamples ||
+		TranslationHistory.Num() != SamplingData.NumHistorySamples)
+	{
+		ResetTrajectoryHistoryWithReason(EProject_JTrajectoryResetReason::Initialization);
+		bWasTrajectoryGenerationEligible = true;
+	}
+
+	CharacterTrajectoryData.UpdateDataFromCharacter(DeltaTime, &CharacterOwner);
+	FMotionTrajectoryLibrary::UpdateHistory_TransformHistory(
+		Trajectory,
+		TranslationHistory,
+		CharacterTrajectoryData,
+		SamplingData,
+		DeltaTime);
+	FMotionTrajectoryLibrary::UpdatePrediction_SimulateCharacterMovement(
+		Trajectory,
+		CharacterTrajectoryData,
+		SamplingData);
+
+	LastGenerationFrameCounter = GFrameCounter;
+	LastUpdateFrameNumber = GFrameNumber;
+	LastGeneratedWorldTimeSeconds = CharacterOwner.GetWorld()
+		? CharacterOwner.GetWorld()->GetTimeSeconds()
+		: -1.0;
+	bHasGeneratedTrajectory = true;
+	++GenerationRevision;
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::PostProcessTrajectory(ACharacter& CharacterOwner, float DeltaTime)
+{
+	if (LastPostProcessFrameCounter == GFrameCounter || LastGenerationFrameCounter != GFrameCounter)
+	{
+		return;
+	}
+	LastPostProcessFrameCounter = GFrameCounter;
+
+	const bool bSimulatedProxy = CharacterOwner.GetLocalRole() == ROLE_SimulatedProxy;
+
 	// Keep remote smoothing opt-in. Network smoothing can make positions look correct while delaying
 	// trajectory sample rotations, which Pose Search interprets as an arc/turn query.
 	if (bEnableTrajectorySmoothing &&
@@ -198,7 +296,7 @@ void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float De
 	if (bSimulatedProxy &&
 		Project_J::MotionMatchingCVars::ShouldRepairRemoteTrajectoryFacing())
 	{
-		RepairRemoteTrajectoryFacing(*CharacterOwner);
+		RepairRemoteTrajectoryFacing(CharacterOwner);
 	}
 }
 
@@ -293,39 +391,6 @@ void UProject_JMotionMatchingTrajectoryComponent::RefreshSamplingIndexCache(floa
 	}
 }
 
-void UProject_JMotionMatchingTrajectoryComponent::ScaleTrajectoryHistory(float ScaleRatio)
-{
-	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
-	if (!CharacterOwner || Trajectory.Samples.IsEmpty() || ScaleRatio <= 0.0f)
-	{
-		return;
-	}
-
-	FTransform ActorTransform = CharacterOwner->GetActorTransform();
-
-	for (FTransformTrajectorySample& Sample : Trajectory.Samples)
-	{
-		// Only scale history samples (TimeInSeconds < 0)
-		if (Sample.TimeInSeconds < -UE_KINDA_SMALL_NUMBER)
-		{
-			// Convert to local space
-			FTransform LocalTransform = Sample.GetTransform().GetRelativeTransform(ActorTransform);
-
-			// Scale the local position offset
-			FVector LocalPosition = LocalTransform.GetLocation();
-			LocalPosition.X *= ScaleRatio;
-			LocalPosition.Y *= ScaleRatio;
-			LocalTransform.SetLocation(LocalPosition);
-
-			// Convert back to world space
-			Sample.SetTransform(LocalTransform * ActorTransform);
-		}
-	}
-
-	// Update the cache as well so we don't snap back in the next smoothing step
-	PreviousFilteredTrajectory = Trajectory;
-}
-
 void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float DeltaTime)
 {
 	if (Trajectory.Samples.IsEmpty() || DeltaTime <= 0.0f)
@@ -356,13 +421,10 @@ void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float
 		CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy ||
 		Project_J::MotionMatchingCVars::ShouldSmoothRemoteTrajectoryRotation();
 
-	const int32 NumSamples = Trajectory.Samples.Num();
-	constexpr int32 ParallelSmoothingSampleThreshold = 64;
-
-	auto SmoothingLogic = [&](int32 i)
+	for (int32 Index = 0; Index < Trajectory.Samples.Num(); ++Index)
 	{
-		FTransformTrajectorySample& CurrentSample = Trajectory.Samples[i];
-		const FTransformTrajectorySample& PrevSample = PreviousFilteredTrajectory.Samples[i];
+		FTransformTrajectorySample& CurrentSample = Trajectory.Samples[Index];
+		const FTransformTrajectorySample& PrevSample = PreviousFilteredTrajectory.Samples[Index];
 
 		// Convert both current and previous samples to local space relative to the CURRENT actor transform.
 		// This guarantees that constant-speed movement has zero lag.
@@ -381,18 +443,6 @@ void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float
 
 		// Convert back to world space
 		CurrentSample.SetTransform(LocalSmoothed * ActorTransform);
-	};
-
-	if (NumSamples >= ParallelSmoothingSampleThreshold)
-	{
-		ParallelFor(NumSamples, SmoothingLogic);
-	}
-	else
-	{
-		for (int32 i = 0; i < NumSamples; ++i)
-		{
-			SmoothingLogic(i);
-		}
 	}
 
 	PreviousFilteredTrajectory = Trajectory;

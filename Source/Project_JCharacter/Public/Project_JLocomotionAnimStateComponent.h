@@ -197,8 +197,15 @@ public:
 	void HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
 	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
-	void HandleReplicatedMoveStopped();
-	void HandleReplicatedLandingCancelled();
+	void HandleReplicatedMoveStopped(bool bWasSprintingAtStop);
+	void HandleReplicatedLandingStarted(
+		int32 Sequence,
+		float ServerStartAgeSeconds,
+		float ImpactFallSpeed,
+		bool bWasMoving,
+		bool bWasSprinting,
+		bool bWasHeavy);
+	void HandleReplicatedLandingCancelled(int32 Sequence);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
@@ -250,7 +257,7 @@ private:
 	bool TryPromoteReplicatedStartToLocomotion();
 	bool ShouldIgnoreRedundantReplicatedMoveStart() const;
 	void QueueReplicatedMoveStart(bool bWasSprintingForStart);
-	void QueueReplicatedMoveStop();
+	void QueueReplicatedMoveStop(bool bWasSprintingAtStop);
 	void MarkRemoteMoveReleasedIfAirborne();
 	void TryFinishLandingForReplicatedMoveStop();
 
@@ -288,6 +295,12 @@ private:
 	void BeginJumpStartState();
 	void ScheduleJumpStartTimeout(float Duration);
 	void BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed);
+	void ApplyReplicatedLandingSemantics(
+		float ServerStartAgeSeconds,
+		float ImpactFallSpeed,
+		bool bWasMoving,
+		bool bWasSprinting,
+		bool bWasHeavy);
 	void ScheduleLandingTimeout();
 	void ClearActiveLandingState();
 	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
@@ -572,6 +585,16 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
 	int32 MotionMatchingSelectionRevision = 1;
 
+	/** Monotonic pulse consumed by the AnimInstance to break a held remote Start. */
+	int32 StartResponsiveExitRevision = 0;
+
+	/**
+	 * Monotonic physical landing boundary consumed by the presentation layer.
+	 * A bool landing state cannot distinguish two consecutive landings that reach
+	 * the AnimInstance before the previous direct Blend Stack entry is forgotten.
+	 */
+	int32 LandingPresentationRevision = 0;
+
 	/** True only for the update in which a database-selection input changed. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
 	bool bMotionMatchingSelectionChanged = true;
@@ -777,6 +800,11 @@ private:
 	bool bRemoteStopVisualIntentActive = false;
 	bool bHasRemoteStartTurnReference = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
+	bool bHasReplicatedStartGait = false;
+	bool bReplicatedStartWasSprinting = false;
+	bool bHasReplicatedStopGait = false;
+	bool bReplicatedStopWasSprinting = false;
+	int32 LastConfirmedRemoteLandingSequence = 0;
 	bool bLandingCancelEventDispatched = false;
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;

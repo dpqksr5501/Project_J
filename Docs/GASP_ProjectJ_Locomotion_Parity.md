@@ -97,7 +97,7 @@ AProject_JPlayerCharacter
 | `Update_PropertiesFromCharacter` | Character Properties를 ABP에 수집 | `UProject_JCharacterAnimInstance::BuildThreadSafeData` | 구현됨 | ABP가 Actor/Component를 직접 읽지 않고 native snapshot을 사용한다. |
 | `Blueprint Thread Safe Update Animation` | worker-thread용 driver 값 갱신 | `FProject_JCharacterAnimInstanceProxy` 및 thread-safe getters | 구현됨 | proxy snapshot이 동일 책임을 수행한다. |
 | `Update_Logic` | Trajectory, essential value, state, direction, target rotation orchestration | `UProject_JLocomotionAnimStateComponent` + `UProject_JCharacterAnimInstance` | 구현됨(분리형) | 단일 Blueprint 함수 대신 C++ 책임으로 분리했다. |
-| `Update Trajectory` | 미래 trajectory 생성 | `UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState` | 구현됨 | AnimInstance가 primary mesh일 때 game thread에서 갱신한다. |
+| `Update Trajectory` | 미래 trajectory 생성 | `UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState` | 구현됨 | PlayerCharacter가 이동 정책 적용 후 game thread에서 단일 갱신한다. AnimInstance는 생성하지 않고 snapshot만 소비한다. 로컬/가시 플레이어만 생성하며 dedicated server와 hidden remote는 생성을 중단한다. |
 | `IsMoving` | 현재/미래 속도와 가속을 고려한 이동 의도 | `IsMotionMatchingMovingForContext` -> `bIsMotionMatchingMoving` | 구현됨 | broad gameplay movement와 MM presentation movement를 분리한다. |
 | `IsStarting` | 미래 속도가 현재 속도보다 충분히 빠르고 Pivot DB가 아닐 때 Start | `IsStartingForContext` 및 `bIsStarting` | 구현됨/부분 | 미래 velocity 기반이다. GASP의 `Current Database Tags contains Pivots` 차단은 State Controller direct-asset 경로에는 그대로 존재하지 않으며, OTM에는 필요 없다. |
 | `Get_TrajectoryTurnAngle` | GASP 화면상 Acceleration 방향과 Velocity 방향의 signed yaw delta | `MoveInputTurnAngle`, `VelocityToMoveInputAngle`, `FutureTrajectoryTurnAngle` | 부분 구현 | Project_J `FutureTrajectoryTurnAngle`은 velocity→future trajectory의 **절대값**이다. Reface 자산 좌/우 선택에는 직접 쓰지 않는다. |
@@ -618,10 +618,12 @@ OTM Start and Reface selection. GASP's value is visual-root based and is useful
 when Root Offset, Steering, and the associated rotation pipeline are active;
 those systems are not part of this OTM path yet.
 
-Project_J already exposes landing snapshots for light/heavy and
-stand/run/sprint chooser selection. No new Land C++ selector is required until
-the direct `CHT_Player_Land` rows need a condition that the current snapshots
-cannot express.
+Project_J already exposes latched landing snapshots for light/heavy and
+stand/run/sprint chooser selection. Both OTM and Strafe Land selection must use
+those edge facts rather than live smoothed GroundSpeed: adding a Float Range on
+top of the latched gait creates two competing classifiers and can leave no row
+near a movement-speed boundary. No new Land C++ selector is required until the
+direct rows need a condition that these snapshots cannot express.
 
 ### GASP landing facts
 

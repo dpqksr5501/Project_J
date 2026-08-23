@@ -48,17 +48,33 @@ void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProj
 
 void UProject_JLocomotionAnimStateComponent::EnterStartGroundMotionMode()
 {
-	bStartWasSprinting = IsSprintRequestedForAnimation() || GroundSpeed >= SprintLocomotionSpeedThreshold;
+	if (!bUsingLocalInputState && bHasReplicatedStartGait)
+	{
+		bStartWasSprinting = bReplicatedStartWasSprinting;
+		bHasReplicatedStartGait = false;
+	}
+	else
+	{
+		bStartWasSprinting = IsSprintRequestedForAnimation() || GroundSpeed >= SprintLocomotionSpeedThreshold;
+	}
 	CacheRemoteStartTurnReference();
 }
 
 void UProject_JLocomotionAnimStateComponent::EnterStopGroundMotionMode()
 {
-	bStopWasSprinting =
-		bUseSprintLocomotion ||
-		bWantsSprint ||
-		GroundSpeed >= SprintLocomotionSpeedThreshold ||
-		SprintStopMemoryTimeRemaining > 0.0f;
+	if (!bUsingLocalInputState && bHasReplicatedStopGait)
+	{
+		bStopWasSprinting = bReplicatedStopWasSprinting;
+		bHasReplicatedStopGait = false;
+	}
+	else
+	{
+		bStopWasSprinting =
+			bUseSprintLocomotion ||
+			bWantsSprint ||
+			GroundSpeed >= SprintLocomotionSpeedThreshold ||
+			SprintStopMemoryTimeRemaining > 0.0f;
+	}
 	SprintStopMemoryTimeRemaining = 0.0f;
 }
 
@@ -224,8 +240,14 @@ bool UProject_JLocomotionAnimStateComponent::UpdateRemoteStartTurnExitRequest(co
 		bRemoteStartTurnExitRequested = bRemoteStartTurnExitRequested || ActorYawDelta >= RemoteStartTurnExitAngle;
 	}
 
-	RemoteStartPreviousMoveWorldDirection = bHasRemoteMoveDirection ? CurrentRemoteMoveWorldDirection : FVector::ZeroVector;
-	RemoteStartPreviousActorYaw = CurrentRemoteActorYaw;
+	// Preserve the Start-entry reference. Network smoothing deliberately splits a
+	// large turn into small frame deltas, so a previous-frame comparison can miss
+	// the turn forever. If Start began before velocity was available, latch only
+	// the first meaningful direction and keep it immutable afterwards.
+	if (RemoteStartPreviousMoveWorldDirection.IsNearlyZero() && bHasRemoteMoveDirection)
+	{
+		RemoteStartPreviousMoveWorldDirection = CurrentRemoteMoveWorldDirection;
+	}
 	bHasRemoteStartTurnReference = true;
 
 	return bRemoteStartTurnExitRequested || FMath::Abs(MoveInputTurnAngle) >= RemoteStartTurnExitAngle;
@@ -233,7 +255,7 @@ bool UProject_JLocomotionAnimStateComponent::UpdateRemoteStartTurnExitRequest(co
 
 void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const FVector2D& MoveInput, bool bAllowSharpTurn)
 {
-	if (bWantsSprint && bHasMoveInput)
+	if (bUsingLocalInputState && bWantsSprint && bHasMoveInput)
 	{
 		bStartWasSprinting = true;
 	}
@@ -275,10 +297,15 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	}
 	else if (bResponsiveTurnExitRequested)
 	{
+		if (!bUsingLocalInputState)
+		{
+			++StartResponsiveExitRevision;
+		}
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else if (!bAllowSharpTurn && bStartTurnExitRequested)
 	{
+		++StartResponsiveExitRevision;
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else if (bStartTurnExitRequested)

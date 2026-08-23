@@ -110,6 +110,19 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bHasTrajectory = false;
 
+	/** Monotonic game-thread revisions used to diagnose stale or reset trajectory snapshots. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 TrajectoryGenerationRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 TrajectoryResetRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	float TrajectoryAgeSeconds = -1.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bTrajectoryGenerationEligible = false;
+
 };
 
 USTRUCT(BlueprintType)
@@ -164,6 +177,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimGroundThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float GroundMotionModeElapsedTime = 0.0f;
+
+	/** Revision emitted when a remote Start must release its authored playback hold. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 StartResponsiveExitRevision = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -185,6 +202,10 @@ USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimLandingThreadSafeData
 {
 	GENERATED_BODY()
+
+	/** Monotonic physical landing boundary; changes once for every new landing. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 PresentationRevision = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float LastFallSpeed = 0.0f;
@@ -1221,6 +1242,11 @@ public:
 	float CachedStateControllerTurnInPlaceIndex = 0.0f;
 	bool bCachedStateControllerCombatMode = false;
 	bool bCachedStateControllerFallOff = false;
+	bool bCachedStateControllerLandWasMoving = false;
+	bool bCachedStateControllerLandWasSprinting = false;
+	bool bCachedStateControllerUseHeavyLand = false;
+	int32 CachedStateControllerLandingPresentationRevision = INDEX_NONE;
+	int32 LastHandledStartResponsiveExitRevision = 0;
 	/** Captured at a Start/Land one-shot entry to detect a local-player mouse turn or movement input change. */
 	bool bHasStateControllerOneShotControlYaw = false;
 	float StateControllerOneShotControlYaw = 0.0f;
@@ -1251,6 +1277,8 @@ public:
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
 	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	/** Landing epoch currently owned by the logical one-shot hold. */
+	mutable int32 StateControllerHeldLandingPresentationRevision = INDEX_NONE;
 	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
 	mutable bool bStateControllerForceTurnInPlaceReselect = false;
 	/**
