@@ -70,7 +70,8 @@ Non-combat / OTM
 
 Combat / Strafe
   Combat Motion Matching for continuous Cycle and Turn Redirect,
-  State Controller Blend Stack for Start, Stop, Pivot, Jump, Fall Off and Land.
+  State Controller Blend Stack for Start, Stop, Jump, Fall Off and Land.
+  Run Pivot is currently disabled/deferred; it is not a direct Blend Stack owner.
 ```
 
 The master graph selects the State Controller direct pose only while
@@ -86,6 +87,19 @@ Component` and `Component To Local`; do not apply it globally to the final
 locomotion pose. See
 [`CombatStrafe_Implementation_2026-08-04.md`](CombatStrafe_Implementation_2026-08-04.md)
 for the pin and bone contract.
+
+### Combat Strafe Run Pivot status
+
+Do not enable the disabled `CHT_Player_Strafe_Run_Pivot` direct chooser row as a
+standalone fix. The existing direct Blend Stack is also used by Start/Stop, and
+its historical hold/re-entry behavior allowed Start/Stop/Pivot to overlap.
+Pivot therefore has no active direct-pose ownership in the current composition.
+
+The preferred follow-up is a Combat Strafe Run-only Pivot PSD selected by the
+regular Motion Matching database chooser, protected by the current-database
+`Pivots` tag so a Pivot cannot be interpreted as a Start midway through. This is
+not implemented by this document; see
+[`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md).
 
 ## Greatsword Now
 

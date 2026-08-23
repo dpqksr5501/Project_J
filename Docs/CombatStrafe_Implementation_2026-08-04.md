@@ -1,5 +1,13 @@
 # Combat Strafe implementation status - 2026-08-04
 
+> **2026-08-24 correction:** The moving Run Pivot direct-row plan in this
+> historical implementation note is not active. Do not enable
+> `CHT_Player_Strafe_Run_Pivot` from this document. GASP has separate regular-MM
+> and Experimental-State-Machine routes; Project_J's current direct Blend Stack
+> has a known Start/Stop/Pivot overlap failure. The current Pivot reference is
+> [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md).
+> Idle TIP remains a separate direct-one-shot decision.
+
 > **Design update (2026-08-05, superseding prior TIP wording):** Combat Strafe
 > gains a separate direct Idle TIP family. Camera yaw leads while idle; direct
 > `UseMM=false` 90/180 left/right one-shots resolve the body yaw once the

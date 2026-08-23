@@ -1,5 +1,13 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+> **2026-08-24 Pivot architecture correction (takes precedence):** GASP에는
+> regular Motion Matching PSD 경로와 Experimental State Machine/Blend Stack 경로가
+> 공존한다. `IsPivoting`은 `Use Experimental State Machine`으로 둘 중 하나를
+> 선택한다. 이 문서의 과거 direct Pivot/`UseMM=false` 또는 BranchIn 관련 서술은
+> 당시 Project_J 계획이며, 현재 GASP 사실이나 Project_J의 확정 Pivot 설계로 읽으면 안 된다.
+> 상세는 [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md)를
+> 우선한다.
+
 > **2026-08-06 OTM & Offset Root Bone addendum:** 
 > OTM (Orient to Movement) non-combat locomotion during WASD movement caused severe mesh/capsule rotation conflicts when combined with procedural Offset Root Bone holds or direction-fixed Start/Reface oneshots.
 > **Key Decisions:**
@@ -99,13 +107,13 @@ AProject_JPlayerCharacter
 | `Update_Logic` | Trajectory, essential value, state, direction, target rotation orchestration | `UProject_JLocomotionAnimStateComponent` + `UProject_JCharacterAnimInstance` | 구현됨(분리형) | 단일 Blueprint 함수 대신 C++ 책임으로 분리했다. |
 | `Update Trajectory` | 미래 trajectory 생성 | `UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState` | 구현됨 | PlayerCharacter가 이동 정책 적용 후 game thread에서 단일 갱신한다. AnimInstance는 생성하지 않고 snapshot만 소비한다. 로컬/가시 플레이어만 생성하며 dedicated server와 hidden remote는 생성을 중단한다. |
 | `IsMoving` | 현재/미래 속도와 가속을 고려한 이동 의도 | `IsMotionMatchingMovingForContext` -> `bIsMotionMatchingMoving` | 구현됨 | broad gameplay movement와 MM presentation movement를 분리한다. |
-| `IsStarting` | 미래 속도가 현재 속도보다 충분히 빠르고 Pivot DB가 아닐 때 Start | `IsStartingForContext` 및 `bIsStarting` | 구현됨/부분 | 미래 velocity 기반이다. GASP의 `Current Database Tags contains Pivots` 차단은 State Controller direct-asset 경로에는 그대로 존재하지 않으며, OTM에는 필요 없다. |
+| `IsStarting` | 미래 속도가 현재 속도보다 충분히 빠르고 regular MM Pivot PSD가 아닐 때 Start | `IsStartingForContext` 및 `bIsStarting` | 구현됨/부분 | GASP regular-MM 경로는 `Current Database Tags contains Pivots`일 때 Start를 억제한다. 이는 Experimental SM chooser의 단수 `Pivot` tag와 다른 계약이다. Project_J에는 아직 같은 Pivot PSD 보호가 없다. |
 | `Get_TrajectoryTurnAngle` | GASP 화면상 Acceleration 방향과 Velocity 방향의 signed yaw delta | `MoveInputTurnAngle`, `VelocityToMoveInputAngle`, `FutureTrajectoryTurnAngle` | 부분 구현 | Project_J `FutureTrajectoryTurnAngle`은 velocity→future trajectory의 **절대값**이다. Reface 자산 좌/우 선택에는 직접 쓰지 않는다. |
 | `Update States` | Movement Mode, State, Gait, Stance 등 결정 | `BuildLocomotionContext` / `FProject_JDerivedLocomotionContext` | 구현됨 | Gait, OTM/Strafe, phase, air/landing snapshot을 보유한다. |
 | `Update Movement Direction` | GASP F/B/LL/LR/RL/RR 및 foot bias | `ResolveStateControllerStrafeDirection` | 구현됨 | Strafe에서 F/B/LL/LR/RL/RR와 static bias를 지원한다. OTM은 항상 Forward이며 OTM Reface에는 사용하지 않는다. |
 | `Get_MovementDirectionThresholds` | direction hysteresis/foot-forward 결정 | Strafe sector boundaries (-45/45/-135/135) | 부분 구현 | 현재는 고정 경계다. GASP식 per-profile threshold/hysteresis는 Combat Strafe 저작 후 확장한다. |
 | `Update Target Rotation` | target yaw, root/visual rotation 갱신 | `DesiredFacingDeltaYaw` 계산만 존재 | 부분 구현 | OTM Reface에 필요한 signed actor→입력 yaw는 이미 있다. GASP의 strafe target-rotation/steering은 보류다. |
-| `IsPivoting` | moving Pivot 선별 | `IsPivotingForContext` | 부분 구현 | Combat Strafe 전용으로 제한된다. OTM Reface Start에 Pivot을 섞지 않는다. |
+| `IsPivoting` | moving Pivot 선별 | `IsPivotingForContext` | 비활성/재설계 필요 | Combat Strafe 외에는 금지한다. direct Blend Stack Pivot은 현재 충돌 이력 때문에 활성화하지 않으며, Pivot PSD 경로를 별도 검토한다. |
 | rotation-break reselect | Start/Pivot 중 target yaw 변화로 재선택 | 없음 | 의도적 보류 | GASP는 Start/Pivot tag와 target rotation cache가 필요하다. OTM 첫 Reface 범위에는 불필요하다. |
 | `ShouldTurnInPlace` | idle 상태 yaw mismatch의 TIP 조건 | `ShouldTurnInPlaceForContext` | 부분 구현/비활성 | TIP 표현/asset 경로는 아직 연결하지 않는다. |
 | `ShouldSpinTransition` | 큰 yaw mismatch의 회전 transition | `ShouldSpinTransitionForContext` | 부분 구현/비활성 | no-root-motion 정책상 GASP graph를 그대로 활성화하지 않는다. |

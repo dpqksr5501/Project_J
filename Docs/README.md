@@ -4,6 +4,9 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [GASP Pivot Architecture Correction (2026-08-24)](GASP_Pivot_Architecture_Correction_2026-08-24.md)
+  - GASP의 regular MM PSD와 Experimental State Machine 경로를 분리해 정리하고, `Pivots` PSD 태그·`Pivot` chooser 태그·Project_J Run Pivot의 현재 비활성 상태를 바로잡은 기준 문서.
+
 - [Combat Strafe Turn In Place Implementation (2026-08-12)](CombatStrafe_TurnInPlace_Implementation_2026-08-12.md)
   - Combat Strafe Idle TIP의 C++/State Controller/Chooser/Blend Stack/Steering 구조, 연속 재생 Force Blend, MM fallback 문제와 해결, 에디터 저작 및 디버그 절차.
 - [Combat Draw/Sheathe Stale One-shot Resolution (2026-08-12)](CombatIntro_StaleOneShot_Resolution_2026-08-12.md)

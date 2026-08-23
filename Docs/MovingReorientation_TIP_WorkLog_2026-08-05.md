@@ -1,5 +1,12 @@
 # Moving Reorientation (Rotation Break) & TIP 작업 기록 및 인수인계 문서 (2026-08-05)
 
+> **2026-08-24 status correction:** This worklog records a discarded direct
+> moving Start/Pivot reselect experiment. Its moving Pivot `UseMM=false` and
+> Blend Stack policy is not current Project_J architecture. Keep its Idle TIP
+> history separate; use
+> [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md)
+> for the verified GASP Pivot paths and current Project_J decision.
+
 > **이 문서는 다른 대화 세션에서도 이어서 작업을 진행할 수 있도록, 작업 배경, 기술 결정 사항, C++ 구현 내역 및 에디터 검증 절차를 상세히 기록하는 문서입니다.**
 
 ---

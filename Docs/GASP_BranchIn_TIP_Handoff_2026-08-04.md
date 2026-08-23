@@ -1,5 +1,12 @@
 # GASP BranchIn + TIP Handoff (2026-08-04)
 
+> **2026-08-24 correction:** This is a historical BranchIn/direct-one-shot
+> exploration, not the current moving Pivot authority. It predates confirmation
+> that GASP has separate regular-MM and Experimental-State-Machine paths. In
+> particular, its `UseMM=false` moving Pivot recommendation must not be used to
+> activate Project_J's disabled Pivot chooser row. See
+> [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md).
+
 > **Superseding design update (2026-08-05):** Project_J will keep all current
 > State Controller one-shots on the direct path. `UseMM=false` is the intended
 > policy for Start, Stop, Pivot, Jump, FallOff, Land, and InAirLoop. BranchIn
