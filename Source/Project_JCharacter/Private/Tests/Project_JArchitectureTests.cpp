@@ -7,6 +7,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Animation/Project_JReplicatedJumpState.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Combat/Project_JCombatCommandSet.h"
 #include "Combat/Project_JCombatHitValidation.h"
 #include "Equipment/Project_JEquipmentTypes.h"
@@ -296,6 +297,13 @@ bool FProjectJRemoteOneShotSemanticPolicyTest::RunTest(const FString& Parameters
 	TestEqual(TEXT("Landing semantic revision starts empty"), State.LandingRevision, 0);
 	TestFalse(TEXT("A default replicated snapshot cannot start a stale landing"), State.bLandingActive);
 	TestFalse(TEXT("Stop gait is not inferred as Sprint by default"), State.bIsSprinting);
+
+	const UProject_JAnimationUpdateCoordinatorComponent* UpdateCoordinatorDefaults =
+		GetDefault<UProject_JAnimationUpdateCoordinatorComponent>();
+	TestFalse(TEXT("The presentation update coordinator adds no replication state"),
+		UpdateCoordinatorDefaults->GetIsReplicated());
+	TestFalse(TEXT("The presentation update coordinator is event-driven and never ticks"),
+		UpdateCoordinatorDefaults->PrimaryComponentTick.bCanEverTick);
 
 	using Project_J::Locomotion::ResolveLandingGaitIntent;
 	TestEqual(TEXT("A standing landing stays Walk regardless of a stale Sprint bit"),

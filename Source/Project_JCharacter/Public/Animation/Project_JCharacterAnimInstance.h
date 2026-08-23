@@ -838,9 +838,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
 	float GetThreadSafeAimOffsetAlpha() const;
 
-	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
-	float GetThreadSafeGroundSpeed() const;
-
 	/** Actual XY speed for directional combat locomotion Blend Spaces. */
 	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
 	float GetThreadSafeCombatLocomotionSpeed() const;
@@ -1306,9 +1303,6 @@ public:
 	double LastTurnInPlaceDebugSampleTime = -DBL_MAX;
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
-	float ChooserGroundSpeed = 0.0f;
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Motion Matching|Chooser")
 	float ChooserVerticalSpeed = 0.0f;

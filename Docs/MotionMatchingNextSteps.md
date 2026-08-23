@@ -13,6 +13,7 @@ boundaries whose edge semantics cannot be reconstructed after network smoothing.
 - `UProject_JCharacterAnimInstance` publishes a thread-safe snapshot to the native animation proxy.
 - `UProject_JMotionMatchingAssetSet` owns run, sprint, start, remote start, stop, turn, jump, fall, and landing databases.
 - `UProject_JMotionMatchingTrajectoryComponent` owns Motion Matching trajectory samples used by the Pose Search query.
+- `UProject_JAnimationUpdateCoordinatorComponent` owns the shared, non-replicated and non-ticking URO bypass window for sparse remote one-shot boundaries.
 - Animation budget settings throttle database selection and expensive update work. Eligible local/visible players publish a current trajectory; hidden actors suspend generation and re-seed on visibility wake instead of advancing stale history.
 
 ## Trajectory ownership and scope
@@ -171,7 +172,7 @@ This was not caused by:
 
 ### Required runtime behavior
 
-- `UProject_JReplicatedJumpStateComponent` temporarily disables skeletal mesh URO for a visible simulated proxy when a confirmed jump arrives.
+- `UProject_JReplicatedJumpStateComponent` requests a short priority window from `UProject_JAnimationUpdateCoordinatorComponent` when a confirmed jump arrives; the replication component does not mutate skeletal mesh URO itself.
 - The urgent update window is configured by `MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration` and defaults to `0.10` seconds, after which the previous URO setting is restored.
 - Motion Matching BlendStack state is not modified for JumpStart. The same authored transition used by other locomotion changes remains responsible for visual continuity.
 - Local, autonomous, and simulated-proxy characters therefore use the same Motion Matching blend behavior once their AnimGraph updates.

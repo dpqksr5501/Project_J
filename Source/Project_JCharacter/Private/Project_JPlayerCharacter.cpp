@@ -33,6 +33,7 @@
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JReplicatedAnimEventComponent.h"
 #include "Components/Project_JReplicatedJumpStateComponent.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatAnimationLayerComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
@@ -169,10 +170,11 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	PlayerInputBindingComponent = CreateDefaultSubobject<UProject_JPlayerInputBindingComponent>(TEXT("PlayerInputBindingComponent"));
 	SkillInputRouterComponent = CreateDefaultSubobject<UProject_JSkillInputRouterComponent>(TEXT("SkillInputRouterComponent"));
 	SkillInputExecutionComponent = CreateDefaultSubobject<UProject_JSkillInputExecutionComponent>(TEXT("SkillInputExecutionComponent"));
+	AnimationUpdateCoordinator = CreateDefaultSubobject<UProject_JAnimationUpdateCoordinatorComponent>(TEXT("AnimationUpdateCoordinator"));
 	ReplicatedAnimEventComponent = CreateDefaultSubobject<UProject_JReplicatedAnimEventComponent>(TEXT("ReplicatedAnimEventComponent"));
-	ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
+	ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent, AnimationUpdateCoordinator);
 	ReplicatedJumpStateComponent = CreateDefaultSubobject<UProject_JReplicatedJumpStateComponent>(TEXT("ReplicatedJumpStateComponent"));
-	ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
+	ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent, AnimationUpdateCoordinator);
 	CombatStateComponent = CreateDefaultSubobject<UProject_JCombatStateComponent>(TEXT("CombatStateComponent"));
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 	CombatAnimationLayerComponent = CreateDefaultSubobject<UProject_JCombatAnimationLayerComponent>(TEXT("CombatAnimationLayerComponent"));
@@ -205,11 +207,11 @@ void AProject_JPlayerCharacter::BeginPlay()
 	}
 	if (ReplicatedAnimEventComponent)
 	{
-		ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent);
+		ReplicatedAnimEventComponent->Initialize(LocomotionAnimStateComponent, AnimationUpdateCoordinator);
 	}
 	if (ReplicatedJumpStateComponent)
 	{
-		ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent);
+		ReplicatedJumpStateComponent->Initialize(LocomotionAnimStateComponent, AnimationUpdateCoordinator);
 	}
 	if (MountComponent)
 	{

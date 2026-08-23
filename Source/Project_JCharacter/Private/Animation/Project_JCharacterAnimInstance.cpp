@@ -935,22 +935,6 @@ float UProject_JCharacterAnimInstance::GetThreadSafeAimOffsetAlpha() const
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Aim.AimOffsetAlpha;
 }
 
-float UProject_JCharacterAnimInstance::GetThreadSafeGroundSpeed() const
-{
-	// Chooser tables are evaluated on the game thread before the newly built
-	// immutable snapshot is copied into the animation proxy. CHT_Player_Land is
-	// bound to this function, so reading the proxy here would expose the previous
-	// animation update (commonly zero on an urgent remote landing frame). The
-	// reflected mirror is published from the current snapshot immediately before
-	// game-thread chooser evaluation. Worker-thread AnimGraph callers continue to
-	// consume the immutable proxy only.
-	if (IsInGameThread())
-	{
-		return ChooserGroundSpeed;
-	}
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
-}
-
 float UProject_JCharacterAnimInstance::GetThreadSafeCombatLocomotionSpeed() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.GroundSpeed;
@@ -2196,7 +2180,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				static_cast<int32>(RotationModeForChooser),
 				static_cast<int32>(GaitIntentForChooser),
 				static_cast<int32>(StateControllerOneShotFootForChooser),
-				GetThreadSafeGroundSpeed(),
+				Data.Movement.GroundSpeed,
 				bChooserUseHeavyLand ? TEXT("true") : TEXT("false"),
 				bChooserIsLanding ? TEXT("true") : TEXT("false"),
 				bChooserUseRunLightLand ? TEXT("true") : TEXT("false"),
@@ -2833,7 +2817,6 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 
 void UProject_JCharacterAnimInstance::PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data)
 {
-	ChooserGroundSpeed = Data.Movement.GroundSpeed;
 	ChooserVerticalSpeed = Data.Movement.VerticalSpeed;
 	ChooserAccelerationRatio = Data.Movement.AccelerationRatio;
 	ChooserMoveInputSize = Data.Input.MoveInputSize;

@@ -2,7 +2,7 @@
 
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
-#include "Components/Project_JReplicatedJumpStateComponent.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameStateBase.h"
 #include "Net/UnrealNetwork.h"
@@ -37,9 +37,12 @@ void UProject_JReplicatedAnimEventComponent::GetLifetimeReplicatedProps(TArray<F
 	DOREPLIFETIME_CONDITION(UProject_JReplicatedAnimEventComponent, ReplicatedAnimEvents, COND_SkipOwner);
 }
 
-void UProject_JReplicatedAnimEventComponent::Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent)
+void UProject_JReplicatedAnimEventComponent::Initialize(
+	UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent,
+	UProject_JAnimationUpdateCoordinatorComponent* InAnimationUpdateCoordinator)
 {
 	LocomotionAnimStateComponent = InLocomotionAnimStateComponent;
+	AnimationUpdateCoordinator = InAnimationUpdateCoordinator;
 }
 
 void UProject_JReplicatedAnimEventComponent::DispatchMoveStarted(bool bWasSprintingForStart)
@@ -364,9 +367,7 @@ void UProject_JReplicatedAnimEventComponent::RequestUrgentRemoteAnimationUpdate(
 	{
 		return;
 	}
-	UProject_JReplicatedJumpStateComponent* UpdateCoordinator =
-		PlayerCharacter->FindComponentByClass<UProject_JReplicatedJumpStateComponent>();
-	if (!UpdateCoordinator)
+	if (!AnimationUpdateCoordinator)
 	{
 		return;
 	}
@@ -374,5 +375,5 @@ void UProject_JReplicatedAnimEventComponent::RequestUrgentRemoteAnimationUpdate(
 	const float Duration = Profile
 		? Profile->RemoteVisualPolicy.UrgentOneShotAnimationUpdateDuration
 		: 0.10f;
-	UpdateCoordinator->RequestUrgentRemoteAnimationUpdate(Duration);
+	AnimationUpdateCoordinator->RequestUrgentRemoteAnimationUpdate(Duration);
 }

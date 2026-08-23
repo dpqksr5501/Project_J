@@ -32,6 +32,7 @@ class UProject_JCharacterViewModel;
 class UProject_JCharacterUIBindingComponent;
 class UProject_JReplicatedAnimEventComponent;
 class UProject_JReplicatedJumpStateComponent;
+class UProject_JAnimationUpdateCoordinatorComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
 class UProject_JCombatAnimationLayerComponent;
@@ -110,6 +111,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JReplicatedAnimEventComponent> ReplicatedAnimEventComponent = nullptr;
+
+	/** Owns short URO bypass windows shared by all replicated animation boundaries. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Optimization", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> AnimationUpdateCoordinator = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Animation|Replication", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JReplicatedJumpStateComponent> ReplicatedJumpStateComponent = nullptr;

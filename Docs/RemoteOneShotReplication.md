@@ -60,9 +60,17 @@ playback hold and forces the regular trajectory-aware Cycle Motion Matching path
 ## URO and distance budgets
 
 Confirmed Start, Stop, Fall Off, and Land boundaries request a short URO bypass through
-the same coordinator used by confirmed JumpStart. The default is 0.10 seconds and the
-previous mesh URO state is restored after the last urgent request. Do not permanently
-disable URO for remote players.
+`UProject_JAnimationUpdateCoordinatorComponent`, the same coordinator used by confirmed
+JumpStart. Replication components own only transport and semantic application; they do not
+own skeletal-mesh optimization timers. The coordinator is non-replicated, non-ticking, and
+restores the mesh URO state captured before the first overlapping urgent request. The
+default window is 0.10 seconds. Do not permanently disable URO for remote players.
+
+`UProject_JLocomotionProfile::IsDataValid` recursively follows the configured State
+Controller table and its referenced Choosers. A Land table that binds a Float Range to
+`GetThreadSafeGroundSpeed` is invalid: Land row selection must use the latched semantic
+gait. This is an editor/commandlet validation only; it neither edits assets nor adds a
+runtime animation tick.
 
 Far-distance Start/Stop suppression and Land suppression are separate policies. Land is
 rare and remains enabled by default. This prevents the old Start/Stop budget switch from

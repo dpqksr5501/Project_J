@@ -6,6 +6,7 @@
 #include "Project_JReplicatedAnimEventComponent.generated.h"
 
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JAnimationUpdateCoordinatorComponent;
 
 UENUM()
 enum class EProject_JReplicatedAnimEventType : uint8
@@ -33,7 +34,9 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	void Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent);
+	void Initialize(
+		UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent,
+		UProject_JAnimationUpdateCoordinatorComponent* InAnimationUpdateCoordinator);
 	void DispatchMoveStarted(bool bWasSprintingForStart);
 	void DispatchMoveStopped(bool bWasSprintingAtStop);
 	void DispatchFallOffStarted();
@@ -77,6 +80,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> AnimationUpdateCoordinator = nullptr;
 
 	int32 NextSemanticEventOrder = 0;
 	int32 LastAppliedMoveSequence = 0;

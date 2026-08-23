@@ -6,6 +6,7 @@
 #include "Project_JReplicatedJumpStateComponent.generated.h"
 
 class UProject_JLocomotionAnimStateComponent;
+class UProject_JAnimationUpdateCoordinatorComponent;
 
 /**
  * Replicates server-confirmed jump presentation state to simulated proxies.
@@ -22,12 +23,11 @@ public:
 	UProject_JReplicatedJumpStateComponent();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	void Initialize(UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent);
+	void Initialize(
+		UProject_JLocomotionAnimStateComponent* InLocomotionAnimStateComponent,
+		UProject_JAnimationUpdateCoordinatorComponent* InAnimationUpdateCoordinator);
 	void RecordServerConfirmedJump(const FVector& LaunchVelocity);
-	/** Shared short URO bypass for latency-sensitive replicated locomotion boundaries. */
-	void RequestUrgentRemoteAnimationUpdate(float DurationSeconds);
 
 	const FProject_JReplicatedJumpState& GetJumpState() const { return JumpState; }
 
@@ -44,7 +44,6 @@ private:
 
 	void ApplyConfirmedJumpState(const FProject_JReplicatedJumpState& ConfirmedState);
 	float ResolveServerStartAgeSeconds(const FProject_JReplicatedJumpState& ConfirmedState) const;
-	void RestoreRemoteAnimationUpdateRateOptimization();
 
 	UPROPERTY(ReplicatedUsing=OnRep_JumpState)
 	FProject_JReplicatedJumpState JumpState;
@@ -52,8 +51,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
 
-	FTimerHandle RestoreAnimationUpdateRateTimer;
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> AnimationUpdateCoordinator = nullptr;
+
 	int32 LastAppliedRemoteJumpSequence = 0;
-	bool bUrgentAnimationUpdateActive = false;
-	bool bRestoreAnimationUpdateRateOptimization = false;
 };
