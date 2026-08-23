@@ -91,19 +91,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Significance")
 	float SignificanceFarDistance = 12000.0f;
 
-	/** Deprecated: global actor tick throttling is intentionally no longer applied. */
-	UPROPERTY(EditAnywhere, Category = "Significance|Deprecated", meta = (ClampMin = "0.0", UIMin = "0.0", DeprecatedProperty, DeprecationMessage = "Use an explicit AI, mesh URO, or Mass LOD budget instead."))
-	float NearSignificanceTickInterval = 0.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Significance|Deprecated", meta = (ClampMin = "0.0", UIMin = "0.0", DeprecatedProperty, DeprecationMessage = "Use an explicit AI, mesh URO, or Mass LOD budget instead."))
-	float MidSignificanceTickInterval = 0.033f;
-
-	UPROPERTY(EditAnywhere, Category = "Significance|Deprecated", meta = (ClampMin = "0.0", UIMin = "0.0", DeprecatedProperty, DeprecationMessage = "Use an explicit AI, mesh URO, or Mass LOD budget instead."))
-	float FarSignificanceTickInterval = 0.083f;
-
-	UPROPERTY(EditAnywhere, Category = "Significance|Deprecated", meta = (ClampMin = "0.0", UIMin = "0.0", DeprecatedProperty, DeprecationMessage = "Use an explicit AI, mesh URO, or Mass LOD budget instead."))
-	float HiddenSignificanceTickInterval = 0.15f;
-
 	// The Ability System Component for this character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
 	UProject_JAbilitySystemComponent* AbilitySystemComponent;

@@ -257,7 +257,6 @@ protected:
 	bool TryActivateAbilityByTag(const FGameplayTag& AbilityTag);
 	void CancelAbilitiesByTag(const FGameplayTag& AbilityTag);
 	bool IsCombatActionBlockingSprint() const;
-	bool ShouldAllowSprintInCombat() const;
 	bool ShouldRequestSprintAbility() const;
 	void RefreshSprintAbilityFromInput();
 
@@ -284,10 +283,6 @@ protected:
 	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
 	void ApplySprintAnimationState();
-	float GetEffectiveWalkSpeed() const;
-	float GetEffectiveSprintSpeed() const;
-	float GetEffectiveWalkRotationRateYaw() const;
-	float GetEffectiveSprintRotationRateYaw() const;
 	UAnimMontage* GetEffectiveCombatIntroMontage() const;
 	float GetEffectiveCombatIntroMontagePlayRate() const;
 	UAnimMontage* GetEffectiveCombatOutroMontage() const;

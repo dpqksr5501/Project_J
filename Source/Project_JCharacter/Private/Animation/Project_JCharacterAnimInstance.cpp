@@ -29,9 +29,6 @@
 #include "Project_JLocomotionDebugUtils.h"
 #include "StructUtils/InstancedStruct.h"
 
-// SyncLegacyFieldsFromStructuredData() removed.
-// All code now uses sub-struct paths (e.g., Data.Movement.GroundSpeed) directly.
-
 namespace
 {
 	constexpr float StateControllerOneShotMouseTurnCancelAngle = 15.0f;
@@ -279,6 +276,8 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bStateControllerForceTurnInPlaceReselect = false;
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
+		bHasStateControllerRemoteStartReference = false;
+		bHasStateControllerRemoteStartMoveYaw = false;
 		++StateControllerChooserSelectionRevision;
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
@@ -368,20 +367,40 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		PreviousStateControllerPresentationState != CurrentStateControllerPresentationState &&
 		(CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
 			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand);
-	if (bEnteringStateControllerTurnCancellableOneShot && OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
+	if (bEnteringStateControllerTurnCancellableOneShot && OwningPlayerCharacter)
 	{
-		StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
-		bHasStateControllerOneShotControlYaw = true;
+		if (OwningPlayerCharacter->IsLocallyControlled())
+		{
+			StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
+			bHasStateControllerOneShotControlYaw = true;
 
-		const FVector LastInput = OwningPlayerCharacter->GetLastMovementInputVector();
-		if (LastInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER)
-		{
-			StateControllerOneShotMoveInputYaw = LastInput.ToOrientationRotator().Yaw;
-			bHasStateControllerOneShotMoveInputYaw = true;
+			const FVector LastInput = OwningPlayerCharacter->GetLastMovementInputVector();
+			if (LastInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER)
+			{
+				StateControllerOneShotMoveInputYaw = LastInput.ToOrientationRotator().Yaw;
+				bHasStateControllerOneShotMoveInputYaw = true;
+			}
+			else
+			{
+				bHasStateControllerOneShotMoveInputYaw = false;
+			}
 		}
-		else
+		else if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion)
 		{
-			bHasStateControllerOneShotMoveInputYaw = false;
+			StateControllerRemoteStartActorYaw = OwningPlayerCharacter->GetActorRotation().Yaw;
+			bHasStateControllerRemoteStartReference = true;
+
+			FVector HorizontalVelocity = OwningPlayerCharacter->GetVelocity();
+			HorizontalVelocity.Z = 0.0f;
+			const float RemoteMoveSpeedThreshold = LocomotionAnimStateComponent
+				? LocomotionAnimStateComponent->RemoteMoveSpeedThreshold
+				: 3.0f;
+			bHasStateControllerRemoteStartMoveYaw =
+				HorizontalVelocity.SizeSquared2D() > FMath::Square(RemoteMoveSpeedThreshold);
+			if (bHasStateControllerRemoteStartMoveYaw)
+			{
+				StateControllerRemoteStartMoveYaw = HorizontalVelocity.ToOrientationRotator().Yaw;
+			}
 		}
 	}
 
@@ -434,6 +453,63 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			}
 		}
 	}
+
+	float RemoteStartActorYawDelta = 0.0f;
+	float RemoteStartMoveYawDelta = 0.0f;
+	const bool bRemoteHeldStart =
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+		OwningPlayerCharacter &&
+		!OwningPlayerCharacter->IsLocallyControlled();
+	if (!bShouldCancelOneShot && bRemoteHeldStart)
+	{
+		const float RemoteStartExitAngle = LocomotionProfile
+			? LocomotionProfile->RemoteVisualPolicy.RemoteStartTurnExitAngle
+			: 15.0f;
+		if (!bHasStateControllerRemoteStartReference)
+		{
+			StateControllerRemoteStartActorYaw = OwningPlayerCharacter->GetActorRotation().Yaw;
+			bHasStateControllerRemoteStartReference = true;
+		}
+		else
+		{
+			RemoteStartActorYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+				StateControllerRemoteStartActorYaw,
+				OwningPlayerCharacter->GetActorRotation().Yaw));
+			bShouldCancelOneShot = RemoteStartActorYawDelta >= RemoteStartExitAngle;
+		}
+
+		FVector HorizontalVelocity = OwningPlayerCharacter->GetVelocity();
+		HorizontalVelocity.Z = 0.0f;
+		const float RemoteMoveSpeedThreshold = LocomotionAnimStateComponent
+			? LocomotionAnimStateComponent->RemoteMoveSpeedThreshold
+			: 3.0f;
+		if (HorizontalVelocity.SizeSquared2D() > FMath::Square(RemoteMoveSpeedThreshold))
+		{
+			const float CurrentMoveYaw = HorizontalVelocity.ToOrientationRotator().Yaw;
+			if (bHasStateControllerRemoteStartMoveYaw)
+			{
+				RemoteStartMoveYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+					StateControllerRemoteStartMoveYaw,
+					CurrentMoveYaw));
+				bShouldCancelOneShot = bShouldCancelOneShot || RemoteStartMoveYawDelta >= RemoteStartExitAngle;
+			}
+			else
+			{
+				StateControllerRemoteStartMoveYaw = CurrentMoveYaw;
+				bHasStateControllerRemoteStartMoveYaw = true;
+			}
+		}
+
+		if (bShouldCancelOneShot && Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("StateControllerRemoteStartTurnExit Actor=%s ActorDelta=%.1f MoveDelta=%.1f Threshold=%.1f"),
+				*GetNameSafe(OwningPlayerCharacter),
+				RemoteStartActorYawDelta,
+				RemoteStartMoveYawDelta,
+				RemoteStartExitAngle);
+		}
+	}
 	const bool bRemoteResponsiveStartExit =
 		OwningPlayerCharacter &&
 		!OwningPlayerCharacter->IsLocallyControlled() &&
@@ -441,7 +517,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (bRemoteResponsiveStartExit)
 	{
 		LastHandledStartResponsiveExitRevision = ThreadSafeData.Ground.StartResponsiveExitRevision;
-		bShouldCancelOneShot =
+		bShouldCancelOneShot = bShouldCancelOneShot ||
 			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion;
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
@@ -455,8 +531,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (bShouldCancelOneShot)
 	{
-		// A local mouse turn or movement input change invalidates the trajectory that selected an authored
-		// Start/Land one-shot. Release it and refresh regular MM immediately. We do
+		// A local input turn, or its remote replicated-movement equivalent, invalidates
+		// the trajectory that selected an authored Start/Land one-shot. Release it and
+		// refresh regular MM immediately. We do
 		// not route this through a Turn asset: Project_J has not yet authored a
 		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
 		// already trajectory-aware and stable for Run and Sprint.
@@ -476,11 +553,15 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
+		bHasStateControllerRemoteStartReference = false;
+		bHasStateControllerRemoteStartMoveYaw = false;
 	}
 	else if (!bIsTurnCancellableOneShot)
 	{
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
+		bHasStateControllerRemoteStartReference = false;
+		bHasStateControllerRemoteStartMoveYaw = false;
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the
@@ -667,11 +748,6 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		StateControllerOneShotFootForChooser = ResolveStateControllerFootFromContactCurves(
 			bAllowPhaseHistoryFallback,
 			StateControllerOneShotFootSelectionReasonForChooser);
-		if (CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle)
-		{
-			StateControllerStopFootForChooser = StateControllerOneShotFootForChooser;
-		}
-
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
@@ -910,9 +986,9 @@ void UProject_JCharacterAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProx
 	delete InProxy;
 }
 
-FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::GetThreadSafeData() const
+FProject_JAnimMotionMatchingThreadSafeData UProject_JCharacterAnimInstance::GetMotionMatchingDebugSnapshot() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().MotionMatching;
 }
 
 FTransformTrajectory UProject_JCharacterAnimInstance::GetThreadSafeTrajectory() const
@@ -1112,11 +1188,6 @@ EProject_JLocomotionPhaseFamily UProject_JCharacterAnimInstance::GetThreadSafeOn
 bool UProject_JCharacterAnimInstance::GetThreadSafeOneShotEarlyTransitionWindowOpen() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bEarlyTransitionWindowOpen;
-}
-
-float UProject_JCharacterAnimInstance::GetThreadSafeOneShotFallbackLeadTime() const
-{
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.FallbackLeadTime;
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerLocomotionSemanticStateChanged() const
@@ -2254,7 +2325,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StateControllerChooser Actor=%s Rev=%d State=%d LandEpoch=%d LandMoving=%s LandSprint=%s LandHeavy=%s Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f StopFoot=%d FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s ForceBlend=%s"),
+			TEXT("StateControllerChooser Actor=%s Rev=%d State=%d LandEpoch=%d LandMoving=%s LandSprint=%s LandHeavy=%s Rotation=%d Gait=%d StartGait=%d StartCommitted=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s ForceBlend=%s"),
 				*GetNameSafe(OwningCharacter),
 				StateControllerChooserSelectionRevision,
 				static_cast<int32>(OneShot.PresentationState),
@@ -2281,7 +2352,6 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				Data.Input.bHasMoveInput ? TEXT("true") : TEXT("false"),
 				StateControllerInputFacingDeltaYawForChooser,
 				StateControllerStopVelocityDeltaYawForChooser,
-				static_cast<int32>(StateControllerStopFootForChooser),
 				Data.Movement.FutureTrajectorySpeed,
 				Data.Movement.bIsAccelerating ? TEXT("true") : TEXT("false"),
 				CachedStateControllerSelectedAnimation ? *CachedStateControllerSelectedAnimation->GetName() : TEXT("None"),
@@ -2799,7 +2869,6 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 
 void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JAnimThreadSafeData& Data)
 {
-	// All accesses now use sub-struct paths; no legacy flat fields.
 	const FProject_JAnimOptimizationPolicy OptimizationPolicy = BuildOptimizationPolicy();
 	CurrentOptimizationPolicy = OptimizationPolicy;
 
@@ -3245,16 +3314,6 @@ FProject_JRemoteVisualLocomotionPolicy UProject_JCharacterAnimInstance::GetEffec
 float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const
 {
 	return GetEffectiveAnimationBudgetSettings().HiddenUpdateInterval;
-}
-
-float UProject_JCharacterAnimInstance::GetEffectiveNearMotionMatchingDistance() const
-{
-	return GetEffectiveAnimationBudgetSettings().NearDistance;
-}
-
-float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingDistance() const
-{
-	return GetEffectiveAnimationBudgetSettings().MidDistance;
 }
 
 float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const

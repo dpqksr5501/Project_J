@@ -29,8 +29,6 @@ public:
 		UProject_JAnimationUpdateCoordinatorComponent* InAnimationUpdateCoordinator);
 	void RecordServerConfirmedJump(const FVector& LaunchVelocity);
 
-	const FProject_JReplicatedJumpState& GetJumpState() const { return JumpState; }
-
 private:
 	/**
 	 * Low-latency visual notification. JumpState remains replicated as the

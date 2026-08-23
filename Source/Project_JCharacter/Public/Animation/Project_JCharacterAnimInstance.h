@@ -815,16 +815,12 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
 	EProject_JStateControllerFoot StateControllerFootPhaseHistoryForChooser = EProject_JStateControllerFoot::None;
 
-	/** Backward-compatible Stop-only mirror of StateControllerOneShotFootForChooser. */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
-	EProject_JStateControllerFoot StateControllerStopFootForChooser = EProject_JStateControllerFoot::None;
-
 	/** Latched at TransitionToInAir entry so Jump Start and Fall Off rows cannot overlap. */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Animation|Chooser Context")
 	bool bStateControllerFallOffForChooser = false;
 
-	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe, DeprecatedFunction, DeprecationMessage = "Use dedicated thread-safe getters such as GetThreadSafeTrajectory, GetThreadSafeAimYaw, GetThreadSafeAimPitch, and GetThreadSafeAimOffsetAlpha in AnimGraph."))
-	FProject_JAnimThreadSafeData GetThreadSafeData() const;
+	/** Small native-only snapshot used by the MMO animation profiling command. */
+	FProject_JAnimMotionMatchingThreadSafeData GetMotionMatchingDebugSnapshot() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	FTransformTrajectory GetThreadSafeTrajectory() const;
@@ -1000,9 +996,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeOneShotEarlyTransitionWindowOpen() const;
-
-	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
-	float GetThreadSafeOneShotFallbackLeadTime() const;
 
 	/** GASP Loco - State Changed condition; apply only from a locomotion-loop re-entry rule. */
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
@@ -1199,8 +1192,6 @@ protected:
 	float GetEffectiveSprintLocomotionSpeedThreshold() const;
 	FProject_JRemoteVisualLocomotionPolicy GetEffectiveRemoteVisualPolicy() const;
 	float GetEffectiveHiddenRemoteUpdateInterval() const;
-	float GetEffectiveNearMotionMatchingDistance() const;
-	float GetEffectiveMidMotionMatchingDistance() const;
 	float GetEffectiveMidMotionMatchingUpdateInterval() const;
 	float GetEffectiveFarMotionMatchingUpdateInterval() const;
 	bool ShouldDisableMotionMatchingBeyondFarDistance() const;
@@ -1249,6 +1240,11 @@ public:
 	float StateControllerOneShotControlYaw = 0.0f;
 	bool bHasStateControllerOneShotMoveInputYaw = false;
 	float StateControllerOneShotMoveInputYaw = 0.0f;
+	/** Fixed Start-entry reference used while a simulated proxy's direct Start asset remains held. */
+	bool bHasStateControllerRemoteStartReference = false;
+	float StateControllerRemoteStartActorYaw = 0.0f;
+	bool bHasStateControllerRemoteStartMoveYaw = false;
+	float StateControllerRemoteStartMoveYaw = 0.0f;
 	bool bHasStateControllerLeftFootContactCurve = false;
 	bool bHasStateControllerRightFootContactCurve = false;
 	bool bHasStateControllerFootContactCurves = false;

@@ -295,20 +295,6 @@ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 	EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 }
 
-void UProject_JLocomotionAnimStateComponent::ClearTransientAnimationRequests()
-{
-	bSharpTurnRequested = false;
-	bStartRequested = false;
-	bPendingStartRequest = false;
-	bPendingStopRequest = false;
-	ClearPendingAnimationExitRequests();
-	bLandingCancelEventDispatched = false;
-	bRealLandingEventRequested = false;
-	bResolvedMoveInputLastUpdate = bHasMoveInput;
-	EnterGroundMotionMode(bHasMoveInput ? EProject_JGroundMotionMode::Locomotion : EProject_JGroundMotionMode::Idle);
-	ClearLandingTimers();
-}
-
 void UProject_JLocomotionAnimStateComponent::ClearPendingAnimationExitRequests()
 {
 	bLandingFinishPendingExit = false;

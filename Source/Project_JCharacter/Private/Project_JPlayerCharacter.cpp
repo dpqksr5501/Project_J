@@ -795,11 +795,6 @@ void AProject_JPlayerCharacter::ApplyCombatPresentationState(
 	}
 }
 
-bool AProject_JPlayerCharacter::ShouldAllowSprintInCombat() const
-{
-	return BuildCombatMovementPolicy(*this).bAllowSprintInCombat;
-}
-
 void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 {
 	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
@@ -817,8 +812,6 @@ void AProject_JPlayerCharacter::ApplyLocomotionProfile()
 		SignificanceNearDistance = EffectiveLocomotionProfile->NearMotionMatchingDistance;
 		SignificanceMidDistance = EffectiveLocomotionProfile->MidMotionMatchingDistance;
 		SignificanceFarDistance = EffectiveLocomotionProfile->FarMotionMatchingDistance;
-		MidSignificanceTickInterval = EffectiveLocomotionProfile->MidMotionMatchingUpdateInterval;
-		FarSignificanceTickInterval = EffectiveLocomotionProfile->FarMotionMatchingUpdateInterval;
 	}
 
 	UpdateMaxWalkSpeed();
@@ -972,46 +965,6 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 	{
 		MoveComp->RotationRate = FRotator(0.0f, DesiredRotationRateYaw, 0.0f);
 	}
-}
-
-float AProject_JPlayerCharacter::GetEffectiveWalkSpeed() const
-{
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
-	{
-		return EffectiveLocomotionProfile->WalkSpeed;
-	}
-
-	return WalkSpeed;
-}
-
-float AProject_JPlayerCharacter::GetEffectiveSprintSpeed() const
-{
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
-	{
-		return EffectiveLocomotionProfile->SprintSpeed;
-	}
-
-	return SprintSpeed;
-}
-
-float AProject_JPlayerCharacter::GetEffectiveWalkRotationRateYaw() const
-{
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
-	{
-		return EffectiveLocomotionProfile->WalkRotationRateYaw;
-	}
-
-	return WalkRotationRateYaw;
-}
-
-float AProject_JPlayerCharacter::GetEffectiveSprintRotationRateYaw() const
-{
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
-	{
-		return EffectiveLocomotionProfile->SprintRotationRateYaw;
-	}
-
-	return SprintRotationRateYaw;
 }
 
 UAnimMontage* AProject_JPlayerCharacter::GetEffectiveCombatIntroMontage() const

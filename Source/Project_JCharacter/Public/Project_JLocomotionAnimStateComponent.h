@@ -365,7 +365,6 @@ private:
 	void RemoveOwnedLandingGameplayTag();
 	void ClearOwnedMovementGameplayTags();
 	void ClearMovementRequests();
-	void ClearTransientAnimationRequests();
 	void ClearPendingAnimationExitRequests();
 	void ClearResolvedMoveInputState();
 

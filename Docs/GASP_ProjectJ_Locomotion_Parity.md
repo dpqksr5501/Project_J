@@ -379,11 +379,11 @@ StateControllerStopVelocityDeltaYawForChooser
   = DeltaAngle(CharacterActorYaw, HorizontalVelocityYaw at Stop entry)
   negative: Forward-Left, positive: Forward-Right
 
-StateControllerStopFootForChooser
-  = StateControllerOneShotFootForChooser (Stop-only compatibility mirror)
+StateControllerOneShotFootForChooser
+  = contact curve에서 판정한 현재 swing/airborne foot
 ```
 
-속도 방향은 Stop 재생 중 계속 감속해도 바뀌지 않도록 진입 순간에 latch한다. `StateControllerStopFootForChooser`는 이전 Stop-only table과의 호환용 미러다. 새 Chooser 열과 기존 OTM/InAir의 모든 직접 one-shot 행은 **반드시** `StateControllerOneShotFootForChooser`를 사용한다. Start/Jump/Fall/Land에서 StopFoot를 쓰면 해당 값은 갱신되지 않아 이전 Stop 값 또는 기본값으로 잘못 선택된다.
+속도 방향은 Stop 재생 중 계속 감속해도 바뀌지 않도록 진입 순간에 latch한다. 모든 Start/Stop/Jump/Fall/Land Chooser는 단일 `StateControllerOneShotFootForChooser`를 사용한다. 이전 Stop 전용 호환 mirror는 에셋 마이그레이션 완료 후 제거했다.
 
 단발성 Start / Stop / Jump / Land는 `NativePostEvaluateAnimation`에서 이전 최종 포즈의
 `contact_l`, `contact_r` curve를 읽고, 다음 update에서 상태 진입 시
@@ -395,7 +395,7 @@ StateControllerStopFootForChooser
 | `Right` | `contact_r`가 더 낮아 Right가 현재 swing/airborne foot으로 판정됨 | `_Rfoot` 에셋 행 |
 | `None` | 진단/명시적 opt-out 값 | 일반 에셋 fallback에는 사용하지 않음 |
 
-`_Lfoot`/`_Rfoot`가 각각 해당 발부터 동작을 시작한다는 현재 네이밍을 전제로, 낮은 contact(이미 들린 발)를 선택한다. 이 매핑은 PIE에서 로그의 contact 값과 실제 재생을 함께 확인해야 한다. 반대로 보이면 resolver의 Left/Right 반환만 뒤집으면 된다. `StateControllerStopFootForChooser`는 기존 Stop child chooser와 호환되도록 같은 값을 미러링한다.
+`_Lfoot`/`_Rfoot`가 각각 해당 발부터 동작을 시작한다는 현재 네이밍을 전제로, 낮은 contact(이미 들린 발)를 선택한다. 이 매핑은 PIE에서 로그의 contact 값과 실제 재생을 함께 확인해야 한다. 반대로 보이면 resolver의 Left/Right 반환만 뒤집으면 된다.
 
 `p.ProjectJ.MMTransitionDebug 1` 상태에서는 one-shot 진입마다
 `StateControllerFootLatch` 로그도 출력한다. `Reason` 값은 순서대로

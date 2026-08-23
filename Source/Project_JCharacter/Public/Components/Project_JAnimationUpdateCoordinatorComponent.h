@@ -24,8 +24,6 @@ public:
 	/** Extends the current urgent update window without changing replication. */
 	void RequestUrgentRemoteAnimationUpdate(float DurationSeconds);
 
-	bool IsUrgentAnimationUpdateActive() const { return bUrgentAnimationUpdateActive; }
-
 private:
 	void RestoreRemoteAnimationUpdateRateOptimization();
 

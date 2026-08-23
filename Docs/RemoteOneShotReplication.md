@@ -50,12 +50,15 @@ or server gameplay authority.
 
 The local player can release a held Start immediately when control yaw or movement input
 changes. A simulated proxy cannot read that local input. It compares replicated velocity
-direction and Actor yaw against an immutable Start-entry reference instead. The reference
-is not advanced every smoothing frame, so several small smoothed rotations still produce
-the correct cumulative turn.
+direction and Actor yaw against an immutable Start-entry reference instead. The AnimInstance
+keeps this presentation reference for as long as the direct Start asset is held, even if the
+remote locomotion component has already reached its maximum-speed `Locomotion` state. The
+reference is not advanced every smoothing frame, so several small smoothed rotations still
+produce the correct cumulative turn.
 
-When the threshold is crossed, `StartResponsiveExitRevision` releases the State Controller
-playback hold and forces the regular trajectory-aware Cycle Motion Matching path.
+When the threshold is crossed, either the locomotion component's
+`StartResponsiveExitRevision` or the held-Start presentation check releases the State
+Controller playback hold and forces the regular trajectory-aware Cycle Motion Matching path.
 
 ## URO and distance budgets
 
@@ -92,6 +95,8 @@ Relevant event-driven records:
   revision, moving/Sprint/heavy semantics, impact speed, and age.
 - `StateControllerResponsiveStartExit`: responsive revision, held presentation state, and
   whether the held Start was cancelled.
+- `StateControllerRemoteStartTurnExit`: cumulative Actor/velocity direction deltas used to
+  release a Start that outlived the remote component's semantic Start state.
 - `RemoteAnimSemanticDrop`: an out-of-order multicast/property recovery snapshot was
   rejected, including its server order and the last accepted order.
 - `StateControllerChooser Actor=... LandEpoch=... ForceBlend=...`: selected asset, physical

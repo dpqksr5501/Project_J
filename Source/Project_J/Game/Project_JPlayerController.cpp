@@ -412,7 +412,8 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 		FString AnimSummary = TEXT("Anim=None");
 		if (AnimInstance)
 		{
-			const FProject_JAnimThreadSafeData AnimData = AnimInstance->GetThreadSafeData();
+			const FProject_JAnimMotionMatchingThreadSafeData MotionMatchingData =
+				AnimInstance->GetMotionMatchingDebugSnapshot();
 			++AnimInstanceCount;
 			const FProject_JAnimOptimizationPolicy& Policy = AnimInstance->CurrentOptimizationPolicy;
 			++TierCounts[GetBudgetTierIndex(Policy.Tier)];
@@ -430,9 +431,9 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 				Policy.bUseFarChooserRowsOnly ? TEXT("true") : TEXT("false"),
 				Policy.MotionMatchingUpdateInterval,
 				*GetNameSafe(AnimInstance->CurrentActivePoseSearchDatabase.Get()),
-				AnimData.MotionMatching.SelectionRevision,
-				AnimData.MotionMatching.bForceReselect ? TEXT("true") : TEXT("false"),
-				AnimData.MotionMatching.TrajectorySampleCount);
+				MotionMatchingData.SelectionRevision,
+				MotionMatchingData.bForceReselect ? TEXT("true") : TEXT("false"),
+				MotionMatchingData.TrajectorySampleCount);
 		}
 
 		if (DetailedLinesPrinted < MaxDetailedCharacters)

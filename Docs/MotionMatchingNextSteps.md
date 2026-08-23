@@ -257,6 +257,14 @@ Keep these invariants when refactoring the Motion Matching pipeline:
 - Do not remove the event-driven remote JumpStart URO exception merely because ordinary MM updates appear correct. URO scheduling and MM BlendStack convergence are separate latency layers.
 - Do not permanently disable player mesh URO as a jump fix. Preserve the short exception and restore the previous setting.
 
+### 2026-08-23 legacy audit
+
+- The deprecated full `FProject_JAnimThreadSafeData` Blueprint getter was removed. Native MMO profiling now copies only `FProject_JAnimMotionMatchingThreadSafeData`; AnimGraph code continues to use dedicated thread-safe getters.
+- The migrated Stop-only foot mirror was removed. All one-shot Choosers use `StateControllerOneShotFootForChooser`.
+- Unused global actor tick-interval properties and their profile assignments were removed. Character significance still selects animation policy; mesh URO, Motion Matching intervals, AI LOD, and replication policy remain separate budgets.
+- Declaration/definition-only locomotion helpers were removed after C++ and binary asset-reference checks.
+- Serialized profile fallbacks, legacy enum values, the skill-input modifier compatibility field, and direct profile assignment fallbacks remain intentionally. Removing those requires an explicit asset migration and resave, not a source-only cleanup.
+
 If this area is rewritten, validate with two-client PIE from the observing client and compare:
 
 - straight run immediately after start,
