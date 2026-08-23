@@ -353,58 +353,25 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 		Context.VelocityToMoveInputAngle = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
 	}
 
-	// Pose Search already consumes the full trajectory. Reconstruct the same
-	// short-horizon future velocity for C++ state decisions rather than relying
-	// only on acceleration/braking extrapolation. This stays on the game thread.
+	// Pose Search already consumes the full trajectory. Reuse the trajectory
+	// component's cached sampling indices for the same short-horizon velocity
+	// needed by C++ state decisions. This stays on the game thread.
 	if (const UProject_JMotionMatchingTrajectoryComponent* TrajectoryComponent = PlayerOwner.GetMotionMatchingTrajectoryComponent())
 	{
-		const FTransformTrajectory& Trajectory = TrajectoryComponent->GetTrajectory();
-		const FTransformTrajectorySample* PresentSample = nullptr;
-		const FTransformTrajectorySample* FutureSample = nullptr;
-		float BestPresentTime = TNumericLimits<float>::Max();
-		float BestFutureTimeDelta = TNumericLimits<float>::Max();
-
-		for (const FTransformTrajectorySample& Sample : Trajectory.Samples)
+		float FutureTurnAngle = 0.0f;
+		if (TrajectoryComponent->TryGetFuturePlanarVelocity(
+			DerivedMovementPredictionTime,
+			Context.HorizontalVelocity,
+			Context.FutureTrajectoryVelocity,
+			FutureTurnAngle))
 		{
-			const float AbsoluteSampleTime = FMath::Abs(Sample.TimeInSeconds);
-			if (AbsoluteSampleTime < BestPresentTime)
-			{
-				BestPresentTime = AbsoluteSampleTime;
-				PresentSample = &Sample;
-			}
-
-			if (Sample.TimeInSeconds > UE_KINDA_SMALL_NUMBER)
-			{
-				const float HorizonDelta = FMath::Abs(Sample.TimeInSeconds - DerivedMovementPredictionTime);
-				if (HorizonDelta < BestFutureTimeDelta)
-				{
-					BestFutureTimeDelta = HorizonDelta;
-					FutureSample = &Sample;
-				}
-			}
-		}
-
-		if (PresentSample && FutureSample)
-		{
-			const float SampleDeltaTime = FutureSample->TimeInSeconds - PresentSample->TimeInSeconds;
-			if (SampleDeltaTime > UE_KINDA_SMALL_NUMBER)
-			{
-				Context.FutureTrajectoryVelocity =
-					(FutureSample->GetTransform().GetLocation() - PresentSample->GetTransform().GetLocation()) / SampleDeltaTime;
-				Context.FutureTrajectoryVelocity.Z = 0.0f;
-				Context.FutureTrajectorySpeed = Context.FutureTrajectoryVelocity.Size2D();
-				Context.bHasFutureTrajectoryVelocity = true;
-
-				if (Context.GroundSpeed > DerivedMovingSpeedThreshold &&
-					Context.FutureTrajectorySpeed > DerivedMovingSpeedThreshold)
-				{
-					const float FutureDirectionDot = FMath::Clamp(
-						FVector::DotProduct(Context.HorizontalVelocity.GetSafeNormal2D(), Context.FutureTrajectoryVelocity.GetSafeNormal2D()),
-						-1.0f,
-						1.0f);
-					Context.FutureTrajectoryTurnAngle = FMath::RadiansToDegrees(FMath::Acos(FutureDirectionDot));
-				}
-			}
+			Context.FutureTrajectorySpeed = Context.FutureTrajectoryVelocity.Size2D();
+			Context.bHasFutureTrajectoryVelocity = true;
+			Context.FutureTrajectoryTurnAngle =
+				Context.GroundSpeed > DerivedMovingSpeedThreshold &&
+				Context.FutureTrajectorySpeed > DerivedMovingSpeedThreshold
+					? FutureTurnAngle
+					: 0.0f;
 		}
 	}
 

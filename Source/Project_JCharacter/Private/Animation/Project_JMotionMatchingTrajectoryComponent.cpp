@@ -95,6 +95,7 @@ void UProject_JMotionMatchingTrajectoryComponent::InitializeComponent()
 void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistory()
 {
 	EnsureTrajectoryBuffers();
+	InvalidateSamplingIndexCache();
 
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner)
@@ -141,6 +142,14 @@ void UProject_JMotionMatchingTrajectoryComponent::EnsureTrajectoryBuffers()
 
 void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float DeltaTime)
 {
+	// PlayerCharacter updates visible/local trajectories before locomotion state
+	// is derived. AnimInstance retains a fallback call for throttled/hidden mesh
+	// paths, so guard against evaluating the base trajectory twice in one frame.
+	if (LastUpdateFrameNumber == GFrameCounter)
+	{
+		return;
+	}
+
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner)
 	{
@@ -152,6 +161,7 @@ void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float De
 	{
 		Super::TickComponent(DeltaTime, ELevelTick::LEVELTICK_All, nullptr);
 	}
+	LastUpdateFrameNumber = GFrameCounter;
 
 	// 1. Speed change correction (applies to all characters, local or simulated)
 	if (bEnableSpeedChangeCorrection)
@@ -189,6 +199,97 @@ void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float De
 		Project_J::MotionMatchingCVars::ShouldRepairRemoteTrajectoryFacing())
 	{
 		RepairRemoteTrajectoryFacing(*CharacterOwner);
+	}
+}
+
+bool UProject_JMotionMatchingTrajectoryComponent::TryGetFuturePlanarVelocity(
+	float PredictionHorizon,
+	const FVector& CurrentPlanarVelocity,
+	FVector& OutVelocity,
+	float& OutTurnAngleDegrees) const
+{
+	OutVelocity = FVector::ZeroVector;
+	OutTurnAngleDegrees = 0.0f;
+	RefreshSamplingIndexCache(PredictionHorizon);
+
+	if (!Trajectory.Samples.IsValidIndex(CachedPresentSampleIndex) ||
+		!Trajectory.Samples.IsValidIndex(CachedFutureSampleIndex))
+	{
+		return false;
+	}
+
+	const FTransformTrajectorySample& PresentSample = Trajectory.Samples[CachedPresentSampleIndex];
+	const FTransformTrajectorySample& FutureSample = Trajectory.Samples[CachedFutureSampleIndex];
+	const float SampleDeltaTime = FutureSample.TimeInSeconds - PresentSample.TimeInSeconds;
+	if (SampleDeltaTime <= UE_KINDA_SMALL_NUMBER)
+	{
+		return false;
+	}
+
+	OutVelocity =
+		(FutureSample.GetTransform().GetLocation() - PresentSample.GetTransform().GetLocation()) /
+		SampleDeltaTime;
+	OutVelocity.Z = 0.0f;
+
+	FVector HorizontalVelocity = CurrentPlanarVelocity;
+	HorizontalVelocity.Z = 0.0f;
+	if (!HorizontalVelocity.IsNearlyZero() && !OutVelocity.IsNearlyZero())
+	{
+		const float DirectionDot = FMath::Clamp(
+			FVector::DotProduct(HorizontalVelocity.GetSafeNormal2D(), OutVelocity.GetSafeNormal2D()),
+			-1.0f,
+			1.0f);
+		OutTurnAngleDegrees = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
+	}
+
+	return true;
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::InvalidateSamplingIndexCache()
+{
+	CachedPresentSampleIndex = INDEX_NONE;
+	CachedFutureSampleIndex = INDEX_NONE;
+	CachedTrajectorySampleCount = INDEX_NONE;
+	CachedPredictionHorizon = -1.0f;
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::RefreshSamplingIndexCache(float PredictionHorizon) const
+{
+	const float SafePredictionHorizon = FMath::Max(PredictionHorizon, 0.0f);
+	if (CachedTrajectorySampleCount == Trajectory.Samples.Num() &&
+		FMath::IsNearlyEqual(CachedPredictionHorizon, SafePredictionHorizon) &&
+		Trajectory.Samples.IsValidIndex(CachedPresentSampleIndex) &&
+		Trajectory.Samples.IsValidIndex(CachedFutureSampleIndex))
+	{
+		return;
+	}
+
+	CachedPresentSampleIndex = INDEX_NONE;
+	CachedFutureSampleIndex = INDEX_NONE;
+	CachedTrajectorySampleCount = Trajectory.Samples.Num();
+	CachedPredictionHorizon = SafePredictionHorizon;
+
+	float BestPresentTime = TNumericLimits<float>::Max();
+	float BestFutureTimeDelta = TNumericLimits<float>::Max();
+	for (int32 Index = 0; Index < Trajectory.Samples.Num(); ++Index)
+	{
+		const FTransformTrajectorySample& Sample = Trajectory.Samples[Index];
+		const float AbsoluteSampleTime = FMath::Abs(Sample.TimeInSeconds);
+		if (AbsoluteSampleTime < BestPresentTime)
+		{
+			BestPresentTime = AbsoluteSampleTime;
+			CachedPresentSampleIndex = Index;
+		}
+
+		if (Sample.TimeInSeconds > UE_KINDA_SMALL_NUMBER)
+		{
+			const float HorizonDelta = FMath::Abs(Sample.TimeInSeconds - SafePredictionHorizon);
+			if (HorizonDelta < BestFutureTimeDelta)
+			{
+				BestFutureTimeDelta = HorizonDelta;
+				CachedFutureSampleIndex = Index;
+			}
+		}
 	}
 }
 

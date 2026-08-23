@@ -309,13 +309,25 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	UpdateMaxWalkSpeed();
+	ApplyCombatRotationMode(IsCombatModeActive());
+
+	// Visible and locally controlled characters need the current frame's
+	// trajectory before locomotion semantics are derived. Hidden remote meshes
+	// retain the AnimInstance's throttled fallback update instead of paying this
+	// cost every actor tick. UpdateTrajectoryState guards duplicate same-frame
+	// calls from the primary AnimInstance.
+	const bool bNeedsCurrentTrajectory =
+		IsLocallyControlled() ||
+		(GetMesh() && GetMesh()->WasRecentlyRendered(0.25f));
+	if (bNeedsCurrentTrajectory && MotionMatchingTrajectoryComponent)
+	{
+		MotionMatchingTrajectoryComponent->UpdateTrajectoryState(DeltaTime);
+	}
 
 	if (LocomotionAnimStateComponent)
 	{
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
 	}
-
-	ApplyCombatRotationMode(IsCombatModeActive());
 }
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const
@@ -889,13 +901,34 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 	}
 
 	const bool bCanSprint = IsSprintLocomotionAllowed();
+	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
+	const float EffectiveWalkSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->WalkSpeed : WalkSpeed;
+	const float EffectiveSprintSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->SprintSpeed : SprintSpeed;
+	const float EffectiveWalkRotationRateYaw = EffectiveLocomotionProfile
+		? EffectiveLocomotionProfile->WalkRotationRateYaw
+		: WalkRotationRateYaw;
+	const float EffectiveSprintRotationRateYaw = EffectiveLocomotionProfile
+		? EffectiveLocomotionProfile->SprintRotationRateYaw
+		: SprintRotationRateYaw;
 	float DirectionalSpeedMultiplier = 1.0f;
-	if (const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile())
+	if (EffectiveLocomotionProfile)
 	{
 		const FProject_JLocomotionMovementPolicy& Policy = EffectiveLocomotionProfile->MovementPolicy;
-		MoveComp->MaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
-		MoveComp->BrakingDecelerationWalking = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
-		MoveComp->GroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
+		const float DesiredMaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
+		const float DesiredBrakingDeceleration = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
+		const float DesiredGroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
+		if (!FMath::IsNearlyEqual(MoveComp->MaxAcceleration, DesiredMaxAcceleration))
+		{
+			MoveComp->MaxAcceleration = DesiredMaxAcceleration;
+		}
+		if (!FMath::IsNearlyEqual(MoveComp->BrakingDecelerationWalking, DesiredBrakingDeceleration))
+		{
+			MoveComp->BrakingDecelerationWalking = DesiredBrakingDeceleration;
+		}
+		if (!FMath::IsNearlyEqual(MoveComp->GroundFriction, DesiredGroundFriction))
+		{
+			MoveComp->GroundFriction = DesiredGroundFriction;
+		}
 
 		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
 		{
@@ -928,8 +961,19 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 		}
 	}
 
-	MoveComp->MaxWalkSpeed = (bCanSprint ? GetEffectiveSprintSpeed() : GetEffectiveWalkSpeed()) * DirectionalSpeedMultiplier;
-	MoveComp->RotationRate = FRotator(0.0f, bCanSprint ? GetEffectiveSprintRotationRateYaw() : GetEffectiveWalkRotationRateYaw(), 0.0f);
+	const float DesiredMaxWalkSpeed =
+		(bCanSprint ? EffectiveSprintSpeed : EffectiveWalkSpeed) * DirectionalSpeedMultiplier;
+	const float DesiredRotationRateYaw = bCanSprint
+		? EffectiveSprintRotationRateYaw
+		: EffectiveWalkRotationRateYaw;
+	if (!FMath::IsNearlyEqual(MoveComp->MaxWalkSpeed, DesiredMaxWalkSpeed))
+	{
+		MoveComp->MaxWalkSpeed = DesiredMaxWalkSpeed;
+	}
+	if (!FMath::IsNearlyEqual(MoveComp->RotationRate.Yaw, DesiredRotationRateYaw))
+	{
+		MoveComp->RotationRate = FRotator(0.0f, DesiredRotationRateYaw, 0.0f);
+	}
 }
 
 float AProject_JPlayerCharacter::GetEffectiveWalkSpeed() const

@@ -76,6 +76,20 @@ no input:   predicted speed = max(0, ground speed - braking deceleration * predi
 
 The reconstructed `FutureTrajectoryVelocity`, `FutureTrajectorySpeed`, and `FutureTrajectoryTurnAngle` are used for Start speed-gain prediction and combat-Strafe Pivot qualification. If trajectory samples are unavailable, the prior acceleration/braking formula remains a safe fallback. `MoveInputTurnAngle` remains an independent input-direction signal; that is intentional because OTM and Strafe do not share the same rotation semantics.
 
+### Trajectory update ordering and sampling cost (2026-08-23)
+
+Visible and locally controlled player characters refresh their trajectory before
+`UProject_JLocomotionAnimStateComponent` derives the current frame's semantic
+context. The primary AnimInstance keeps its existing update call as a throttled
+fallback for hidden/URO paths, while the trajectory component rejects duplicate
+same-frame work.
+
+The present and configured short-horizon sample indices are cached inside
+`UProject_JMotionMatchingTrajectoryComponent`. Ordinary state updates therefore
+reconstruct future planar velocity without rescanning the stable trajectory time
+layout. A history reset invalidates this cache, and changing the configured
+prediction horizon rebuilds it automatically.
+
 ## GASP mapping
 
 ### Motion Matching

@@ -29,6 +29,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Motion Matching|Trajectory")
 	const FCharacterTrajectoryData& GetCharacterTrajectoryData() const { return CharacterTrajectoryData; }
 
+	/**
+	 * Reconstructs planar velocity between the sample nearest the present and the
+	 * positive sample nearest PredictionHorizon. Sampling indices are cached
+	 * because the trajectory time layout is stable during ordinary updates.
+	 */
+	bool TryGetFuturePlanarVelocity(
+		float PredictionHorizon,
+		const FVector& CurrentPlanarVelocity,
+		FVector& OutVelocity,
+		float& OutTurnAngleDegrees) const;
+
 	void UpdateTrajectoryState(float DeltaTime);
 
 protected:
@@ -47,10 +58,17 @@ private:
 	void ApplyTrajectorySmoothing(float DeltaTime);
 	void RepairRemoteTrajectoryFacing(const ACharacter& CharacterOwner);
 	void ScaleTrajectoryHistory(float ScaleRatio);
+	void InvalidateSamplingIndexCache();
+	void RefreshSamplingIndexCache(float PredictionHorizon) const;
 
 	UPROPERTY(Transient)
 	FTransformTrajectory PreviousFilteredTrajectory;
 
 	UPROPERTY(Transient)
 	float LastMaxWalkSpeed = 0.0f;
+
+	mutable int32 CachedPresentSampleIndex = INDEX_NONE;
+	mutable int32 CachedFutureSampleIndex = INDEX_NONE;
+	mutable int32 CachedTrajectorySampleCount = INDEX_NONE;
+	mutable float CachedPredictionHorizon = -1.0f;
 };
