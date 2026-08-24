@@ -139,6 +139,14 @@ void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMov
 {
 	const bool bHadMoveInput = HasAnyMoveInputState();
 	CachedMoveInput = InMoveInput.GetClampedToMaxSize(1.0f);
+	// A non-zero final Move Action value wins over a stale Completed/Canceled
+	// callback from another mapping of that same action.  This is local-input
+	// state only; replicated Stop events continue to use QueueReplicatedMoveStop.
+	if (HasCachedMoveInput())
+	{
+		bPendingStopRequest = false;
+	}
+	UpdateLocalMoveIntentSnapshot(CachedMoveInput);
 	QueueLocalMoveStartIfNeeded(bHadMoveInput, HasCachedMoveInput());
 }
 

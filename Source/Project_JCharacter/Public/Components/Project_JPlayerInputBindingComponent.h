@@ -65,11 +65,14 @@ public:
 	UProject_JPlayerInputBindingComponent();
 
 	bool BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet);
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
 	void HandleMove(const FInputActionValue& Value);
 	void HandleLook(const FInputActionValue& Value);
 	void HandleMoveStopped();
+	void FinalizeMoveStopped();
+	void CancelPendingMoveStopReconciliation();
 	void HandleJumpStarted();
 	void HandleJumpStopped();
 	void HandlePrimarySkillPressed();
@@ -84,6 +87,12 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<AProject_JPlayerCharacter> BoundPlayerCharacter = nullptr;
+
+	// Enhanced Input can report a Completed/Canceled edge while another mapping of
+	// the same 2D Move Action becomes Triggered in the same input update (A+D,
+	// W+S, gamepad direction changes).  Defer only the semantic Stop until the
+	// update has settled; gameplay movement remains immediate in HandleMove.
+	bool bPendingMoveStopReconciliation = false;
 
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;
 	TMap<UInputAction*, FGameplayTag> ActiveDirectInputTags;

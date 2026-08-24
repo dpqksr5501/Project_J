@@ -406,13 +406,18 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 
 FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::BuildDerivedLocomotionContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
-	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+	const FProject_JLocomotionKinematicContext& InKinematicContext)
 {
 	FProject_JDerivedLocomotionContext Context;
 	Context.bIsMoving = IsMovingForContext(InKinematicContext);
 	Context.bIsMotionMatchingMoving = IsMotionMatchingMovingForContext(InKinematicContext);
-	Context.bIsStarting = IsStartingForContext(AuthContext, InKinematicContext);
 	Context.bIsPivoting = IsPivotingForContext(AuthContext, InKinematicContext);
+	// Pivot and Start share the same locomotion edge. A committed Pivot owns it.
+	Context.bIsStarting = !Context.bIsPivoting && IsStartingForContext(AuthContext, InKinematicContext);
+	Context.MoveIntentRevision = MoveIntentRevision;
+	Context.PivotRequestRevision = PivotRequestRevision;
+	Context.PivotPreviousMovementDirection = LatchedPivotPreviousMovementDirection;
+	Context.PivotMoveIntentDirection = LatchedPivotMoveIntentDirection;
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
 	Context.PhaseFamily = ResolvePhaseFamily(Context);
@@ -592,7 +597,10 @@ bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(
 		!bIsInAir &&
 		!IsLandingStateActive();
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && InKinematicContext.bHasMoveInput)
+	// Start is evaluated every locomotion update. Only emit a trace for an
+	// accepted Start edge; candidates/rejections are otherwise visible through
+	// the State Controller chooser trace without flooding the log.
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bResult)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("IsStartingForContext: Result=%s HasInput=%s HeldTime=%.3f/%.3f Speed=%.1f/%.1f Accel=%s Gain=%.1f/%.1f Air=%s Landing=%s RotationMode=%d"),
@@ -612,16 +620,209 @@ bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(
 
 bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
-	const FProject_JLocomotionKinematicContext& InKinematicContext) const
+	const FProject_JLocomotionKinematicContext& InKinematicContext)
 {
-	// [Project J Locomotion Policy]
-	// State Controller One-Shot 피벗(Pivot)은 의도적으로 완전히 비활성화(Disabled)되었습니다.
-	// 이유:
-	// 1. One-Shot 피벗 강제 실행 시 발생하는 Blend Stack 3중 중첩(Start + Stop + Pivot) 및 고스트 레이어 오염 방지.
-	// 2. 키보드 스위치 접점 시차(8ms~15ms)로 인한 0.01초 단위 피벗 캔슬 및 떨림(Jitter) 현상 방지.
-	// 3. 이동 중 180도 급회전 및 방향 전환은 Motion Matching(Pose Search Database)이
-	//    실시간 궤적(Trajectory)과 발 디딤(Foot Phase)을 추적하여 100% 전담 처리합니다.
-	return false;
+	const UProject_JCombatAnimProfile* CombatProfile = GetPlayerOwner()
+		? GetPlayerOwner()->GetCombatAnimProfile()
+		: nullptr;
+	const auto ClearPivotIntentTransition = [this]()
+	{
+		bHasPivotIntentTransition = false;
+		PivotIntentTransitionStartRevision = INDEX_NONE;
+		PivotIntentTransitionPreviousMovementDirection = FVector::ZeroVector;
+	};
+	const FVector PreviousDirection = InKinematicContext.HorizontalVelocity.GetSafeNormal2D();
+	const FVector IntentDirection = InKinematicContext.MoveWorldDirection.GetSafeNormal2D();
+	const float PhysicalReversalAngle = !PreviousDirection.IsNearlyZero() && !IntentDirection.IsNearlyZero()
+		? FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(FVector::DotProduct(PreviousDirection, IntentDirection), -1.0f, 1.0f)))
+		: -1.0f;
+	FVector PivotReferenceDirection = PreviousDirection;
+	float PivotReferenceReversalAngle = PhysicalReversalAngle;
+	bool bUsingPivotIntentTransition = false;
+	int32 PivotIntentTransitionRevisionAge = 0;
+	const auto LogRejectedPivot = [this, &AuthContext, &InKinematicContext, CombatProfile, PreviousDirection, IntentDirection, PhysicalReversalAngle, &PivotReferenceDirection, &PivotReferenceReversalAngle, &bUsingPivotIntentTransition, &PivotIntentTransitionRevisionAge](const TCHAR* Reason)
+	{
+		// One line per input-intent revision: useful for a real key/analog edge,
+		// without turning the locomotion update into a per-frame trace.
+		if (!Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() ||
+			!InKinematicContext.bHasMoveInput ||
+			LastLoggedPivotRejectionMoveIntentRevision == MoveIntentRevision)
+		{
+			return;
+		}
+
+		LastLoggedPivotRejectionMoveIntentRevision = MoveIntentRevision;
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("CombatStrafeRunPivotRejected Actor=%s Reason=%s IntentRev=%d Profile=%s Enabled=%s Local=%s Combat=%s Rotation=%d Gait=%d Input=%s Speed=%.1f/%.1f PhysicalPrev=(%.2f,%.2f) PivotRef=(%.2f,%.2f) Intent=(%.2f,%.2f) PhysicalAngle=%.1f RefAngle=%.1f/%.1f Transition=%s Age=%d RawInput=(%.2f,%.2f) StableInput=(%.2f,%.2f) Velocity=%s IntentValid=%s Air=%s Jump=%s Landing=%s Consumed=%s"),
+			*GetNameSafe(GetOwner()), Reason, MoveIntentRevision, *GetNameSafe(CombatProfile),
+			CombatProfile && CombatProfile->bEnableCombatStrafeRunPivot ? TEXT("true") : TEXT("false"),
+			ShouldUseLocalInputState() ? TEXT("true") : TEXT("false"),
+			AuthContext.bCombatMode ? TEXT("true") : TEXT("false"),
+			static_cast<int32>(AuthContext.RotationMode), static_cast<int32>(AuthContext.GaitIntent),
+			InKinematicContext.bHasMoveInput ? TEXT("true") : TEXT("false"),
+			InKinematicContext.GroundSpeed, DerivedPivotMinSpeed,
+			PreviousDirection.X, PreviousDirection.Y, PivotReferenceDirection.X, PivotReferenceDirection.Y,
+			IntentDirection.X, IntentDirection.Y, PhysicalReversalAngle, PivotReferenceReversalAngle, DerivedPivotAngleThreshold,
+			bUsingPivotIntentTransition ? TEXT("true") : TEXT("false"), PivotIntentTransitionRevisionAge,
+			CachedMoveInput.X, CachedMoveInput.Y,
+			LastStableMoveInputDirection.X, LastStableMoveInputDirection.Y,
+			InKinematicContext.HorizontalVelocity.IsNearlyZero() ? TEXT("zero") : TEXT("valid"),
+			InKinematicContext.MoveWorldDirection.IsNearlyZero() ? TEXT("zero") : TEXT("valid"),
+			bIsInAir ? TEXT("true") : TEXT("false"), bIsJumping ? TEXT("true") : TEXT("false"),
+			IsLandingStateActive() ? TEXT("true") : TEXT("false"),
+			MoveIntentRevision == LastConsumedPivotMoveIntentRevision ? TEXT("true") : TEXT("false"));
+	};
+
+	if (!CombatProfile)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NoCombatProfile"));
+		return false;
+	}
+	if (!CombatProfile->bEnableCombatStrafeRunPivot)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("ProfileDisabled"));
+		return false;
+	}
+	if (!ShouldUseLocalInputState())
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NotLocalOwner"));
+		return false;
+	}
+	if (!AuthContext.bCombatMode)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NotCombat"));
+		return false;
+	}
+	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NotStrafe"));
+		return false;
+	}
+	if (AuthContext.GaitIntent != EProject_JLocomotionGaitIntent::Run)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NotRun"));
+		return false;
+	}
+	if (!InKinematicContext.bHasMoveInput)
+	{
+		if (InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
+		{
+			ClearPivotIntentTransition();
+		}
+		return false;
+	}
+	if (InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("BelowMinimumSpeed"));
+		return false;
+	}
+	if (InKinematicContext.HorizontalVelocity.IsNearlyZero())
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NoActualVelocity"));
+		return false;
+	}
+	if (InKinematicContext.MoveWorldDirection.IsNearlyZero())
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("NoMoveIntent"));
+		return false;
+	}
+	if (bIsInAir || bIsJumping || bIsFallOffStart || IsLandingStateActive())
+	{
+		ClearPivotIntentTransition();
+		LogRejectedPivot(TEXT("AirOrLanding"));
+		return false;
+	}
+	if (MoveIntentRevision == LastConsumedPivotMoveIntentRevision)
+	{
+		return false;
+	}
+
+	const int32 MaxTransitionInputRevisions = FMath::Max(CombatProfile->CombatStrafePivotTransitionMaxInputRevisions, 1);
+	const float TransitionCaptureAngle = FMath::Max(
+		CombatProfile->StrafeInputTurnReselectAngle,
+		CombatProfile->StrafeDirectionHysteresisDegrees);
+	if (bHasPivotIntentTransition)
+	{
+		PivotIntentTransitionRevisionAge = FMath::Max(MoveIntentRevision - PivotIntentTransitionStartRevision, 0);
+		if (PivotIntentTransitionRevisionAge > MaxTransitionInputRevisions)
+		{
+			ClearPivotIntentTransition();
+		}
+		else
+		{
+			PivotReferenceDirection = PivotIntentTransitionPreviousMovementDirection;
+			bUsingPivotIntentTransition = true;
+			PivotReferenceReversalAngle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(
+				FVector::DotProduct(PivotReferenceDirection, IntentDirection), -1.0f, 1.0f)));
+		}
+	}
+	if (!bHasPivotIntentTransition &&
+		PhysicalReversalAngle >= TransitionCaptureAngle &&
+		PhysicalReversalAngle < DerivedPivotAngleThreshold)
+	{
+		// A keyboard diagonal is often emitted as a short sequence of valid 2D
+		// action vectors. Capture the physical travel direction once, then let the
+		// next small number of semantic intent edges complete that same reversal.
+		bHasPivotIntentTransition = true;
+		PivotIntentTransitionStartRevision = MoveIntentRevision;
+		PivotIntentTransitionPreviousMovementDirection = PreviousDirection;
+		PivotReferenceDirection = PreviousDirection;
+		PivotReferenceReversalAngle = PhysicalReversalAngle;
+		bUsingPivotIntentTransition = true;
+		PivotIntentTransitionRevisionAge = 0;
+	}
+
+	// A diagonal key replacement can leave a short-lived reference direction
+	// behind while CharacterMovement has already turned through a real reversal.
+	// The reference exists only to complete that one semantic diagonal transition;
+	// it must never mask a current physical 135-180 degree reversal. Prefer the
+	// current velocity direction in that case, then consume the transition below.
+	if (PhysicalReversalAngle >= DerivedPivotAngleThreshold)
+	{
+		PivotReferenceDirection = PreviousDirection;
+		PivotReferenceReversalAngle = PhysicalReversalAngle;
+		bUsingPivotIntentTransition = false;
+		PivotIntentTransitionRevisionAge = 0;
+	}
+
+	if (PivotReferenceReversalAngle < DerivedPivotAngleThreshold)
+	{
+		LogRejectedPivot(bUsingPivotIntentTransition
+			? TEXT("TransitionAwaitingFinalIntent")
+			: TEXT("AngleBelowThreshold"));
+		return false;
+	}
+
+	LastConsumedPivotMoveIntentRevision = MoveIntentRevision;
+	LatchedPivotPreviousMovementDirection = PivotReferenceDirection;
+	LatchedPivotMoveIntentDirection = IntentDirection;
+	ClearPivotIntentTransition();
+	++PivotRequestRevision;
+	if (PivotRequestRevision == 0)
+	{
+		PivotRequestRevision = 1;
+	}
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("CombatStrafeRunPivotAccepted Actor=%s IntentRev=%d PivotRev=%d Speed=%.1f Min=%.1f Angle=%.1f Threshold=%.1f Transition=%s Age=%d Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) RawInput=(%.2f,%.2f) StableInput=(%.2f,%.2f)"),
+			*GetNameSafe(GetOwner()), MoveIntentRevision, PivotRequestRevision,
+			InKinematicContext.GroundSpeed, DerivedPivotMinSpeed, PivotReferenceReversalAngle, DerivedPivotAngleThreshold,
+			bUsingPivotIntentTransition ? TEXT("true") : TEXT("false"), PivotIntentTransitionRevisionAge,
+			PivotReferenceDirection.X, PivotReferenceDirection.Y, IntentDirection.X, IntentDirection.Y,
+			CachedMoveInput.X, CachedMoveInput.Y,
+			LastStableMoveInputDirection.X, LastStableMoveInputDirection.Y);
+	}
+	return true;
 }
 
 bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
@@ -885,6 +1086,44 @@ void UProject_JLocomotionAnimStateComponent::RefreshMovementInputState(float Del
 		const float Dot = FMath::Clamp(FVector2D::DotProduct(PreviousDirection, CurrentDirection), -1.0f, 1.0f);
 		const float Cross = PreviousDirection.Y * CurrentDirection.X - PreviousDirection.X * CurrentDirection.Y;
 		MoveInputTurnAngle = FMath::RadiansToDegrees(FMath::Atan2(Cross, Dot));
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateLocalMoveIntentSnapshot(const FVector2D& MoveInput)
+{
+	if (MoveInput.Size() <= MoveInputDeadZone)
+	{
+		// Preserve the last non-zero intent across a keyboard release gap. We do
+		// not guess why it was zero; a later non-zero action produces the edge.
+		return;
+	}
+
+	const FVector2D StableDirection = MoveInput.GetSafeNormal();
+	const UProject_JCombatAnimProfile* CombatProfile = GetPlayerOwner()
+		? GetPlayerOwner()->GetCombatAnimProfile()
+		: nullptr;
+	const float DirectionHysteresisDegrees = CombatProfile
+		? FMath::Max(CombatProfile->StrafeDirectionHysteresisDegrees, 1.0f)
+		: 7.5f;
+	if (bHasLastStableMoveInputDirection)
+	{
+		const float Dot = FMath::Clamp(
+			FVector2D::DotProduct(StableDirection, LastStableMoveInputDirection),
+			-1.0f,
+			1.0f);
+		const float DirectionDeltaDegrees = FMath::RadiansToDegrees(FMath::Acos(Dot));
+		if (DirectionDeltaDegrees < DirectionHysteresisDegrees)
+		{
+			return;
+		}
+	}
+
+	LastStableMoveInputDirection = StableDirection;
+	bHasLastStableMoveInputDirection = true;
+	++MoveIntentRevision;
+	if (MoveIntentRevision == 0)
+	{
+		MoveIntentRevision = 1;
 	}
 }
 

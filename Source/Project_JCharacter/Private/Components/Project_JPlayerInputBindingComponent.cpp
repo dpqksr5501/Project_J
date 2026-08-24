@@ -8,7 +8,9 @@
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	PrimaryComponentTick.TickGroup = TG_PostUpdateWork;
 }
 
 bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
@@ -96,6 +98,27 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	return true;
 }
 
+void UProject_JPlayerInputBindingComponent::TickComponent(
+	float DeltaTime,
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (!bPendingMoveStopReconciliation)
+	{
+		SetComponentTickEnabled(false);
+		return;
+	}
+
+	// This tick runs after Enhanced Input has dispatched all mappings for the
+	// frame.  A Triggered Move callback cancels this candidate before we get
+	// here, so only a final zero-valued action becomes a semantic Stop.
+	bPendingMoveStopReconciliation = false;
+	SetComponentTickEnabled(false);
+	FinalizeMoveStopped();
+}
+
 void UProject_JPlayerInputBindingComponent::HandleInteract()
 {
 	if (BoundPlayerCharacter)
@@ -110,6 +133,8 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 	{
 		return;
 	}
+
+	CancelPendingMoveStopReconciliation();
 
 	const FVector2D MoveInput = Value.Get<FVector2D>();
 
@@ -157,6 +182,25 @@ void UProject_JPlayerInputBindingComponent::HandleLook(const FInputActionValue& 
 }
 
 void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
+{
+	if (!BoundPlayerCharacter)
+	{
+		return;
+	}
+
+	// Do not translate an individual mapping's Completed/Canceled callback into
+	// a Stop yet.  The same IA_Move can receive another non-zero mapping during
+	// this Enhanced Input update (for example, holding A while pressing D).
+	bPendingMoveStopReconciliation = true;
+	SetComponentTickEnabled(true);
+}
+
+void UProject_JPlayerInputBindingComponent::CancelPendingMoveStopReconciliation()
+{
+	bPendingMoveStopReconciliation = false;
+}
+
+void UProject_JPlayerInputBindingComponent::FinalizeMoveStopped()
 {
 	if (!BoundPlayerCharacter)
 	{

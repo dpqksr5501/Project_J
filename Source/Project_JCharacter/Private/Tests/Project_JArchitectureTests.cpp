@@ -5,6 +5,7 @@
 #include "Misc/AutomationTest.h"
 
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
@@ -56,6 +57,29 @@ bool FProjectJMotionMatchingSearchPolicyTest::RunTest(const FString& Parameters)
 		Policy.ResolveSearchThrottleTime(EProject_JLocomotionPhaseFamily::Stop, false, 0.0f, false),
 		120.0f);
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJCombatStrafeRunPivotPolicyTest,
+	"ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJCombatStrafeRunPivotPolicyTest::RunTest(const FString& Parameters)
+{
+	FProject_JLocomotionTransitionPolicy Policy;
+	TestEqual(TEXT("Pivot defaults to a reversal-only threshold"), Policy.PivotAngleThreshold, 135.0f);
+	TestTrue(TEXT("Pivot minimum speed exceeds ordinary TurnRedirect"), Policy.PivotMinSpeed >= Policy.TurnRedirectMinSpeed);
+
+	const UProject_JCombatAnimProfile* Profile = GetDefault<UProject_JCombatAnimProfile>();
+	TestNotNull(TEXT("Combat profile class default exists"), Profile);
+	if (Profile)
+	{
+		TestFalse(TEXT("Pivot remains opt-in for every combat profile"), Profile->bEnableCombatStrafeRunPivot);
+		TestTrue(TEXT("Pivot diagonal transition uses a bounded semantic edge budget"),
+			Profile->CombatStrafePivotTransitionMaxInputRevisions >= 1 &&
+			Profile->CombatStrafePivotTransitionMaxInputRevisions <= 6);
+	}
 	return true;
 }
 

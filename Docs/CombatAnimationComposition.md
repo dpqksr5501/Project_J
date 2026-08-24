@@ -71,7 +71,8 @@ Non-combat / OTM
 Combat / Strafe
   Combat Motion Matching for continuous Cycle and Turn Redirect,
   State Controller Blend Stack for Start, Stop, Jump, Fall Off and Land.
-  Run Pivot is currently disabled/deferred; it is not a direct Blend Stack owner.
+Run Pivot is an opt-in Combat-Strafe Run-only direct one-shot. Cycle and ordinary
+moving turns remain owned by the regular Motion Matching PSD.
 ```
 
 The master graph selects the State Controller direct pose only while
@@ -80,6 +81,10 @@ the active Motion Matching pose is used. Both paths then flow through the same
 combat upper-body, slots, aim offset, foot placement, Leg IK and Pose History
 chain. This is why combat strafe does not need a second master AnimGraph or a
 separate full-body combat layer.
+
+Only the mesh's primary AnimInstance may evaluate and own the State Controller
+direct Blend Stack. Linked combat layers consume the already-resolved pose; they
+must not independently select Start, Stop, Pivot, or a foot variant.
 
 Combat Strafe's State Controller Blend Stack may contain local, per-one-shot
 Orientation Warping. It must remain inside that direct path, between `Local To
@@ -90,16 +95,20 @@ for the pin and bone contract.
 
 ### Combat Strafe Run Pivot status
 
-Do not enable the disabled `CHT_Player_Strafe_Run_Pivot` direct chooser row as a
-standalone fix. The existing direct Blend Stack is also used by Start/Stop, and
-its historical hold/re-entry behavior allowed Start/Stop/Pivot to overlap.
-Pivot therefore has no active direct-pose ownership in the current composition.
-
-The preferred follow-up is a Combat Strafe Run-only Pivot PSD selected by the
-regular Motion Matching database chooser, protected by the current-database
-`Pivots` tag so a Pivot cannot be interpreted as a Start midway through. This is
-not implemented by this document; see
-[`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md).
+`CHT_Player_Strafe_Ground` remains the parent chooser: Start, Stop and Pivot
+are its mutually exclusive child choosers. C++ latches one local Pivot request
+revision from physical velocity versus local Enhanced Input intent, then the
+State Controller holds the selected direct Pivot asset until its authored exit.
+An explicit Stop preempts it with the normal Stop one-shot. A later independently
+accepted reversal replaces the active Pivot with a fresh Pivot; an ordinary
+direction change instead releases directly to Cycle Motion Matching and forces
+one reselect. Multi-key diagonal input uses a bounded semantic input-revision
+transition, not a time bridge, so only its final qualifying reversal can Pivot.
+Each accepted Pivot request independently latches its foot from current contact,
+then phase history, then the authored fallback; a replacement Pivot never
+inherits the previous Pivot's foot variant. Air, Land and a full-body montage
+also preempt it. The Pivot leaf must use `UseMotionMatch=false`; its imported
+PoseSearch BranchIn metadata is not a Project_J entry-MM dependency.
 
 ## Greatsword Now
 

@@ -86,10 +86,12 @@ Recommended initial schema for the third-person combat overlay:
   with position and velocity features, with a relative channel weight of `1.0`.
   Do not index spine, hands, or weapon bones while the upper body is owned by
   Aim Offset, linked layers, and montages.
-- Author and assign separate idle, start, cycle, stop, pivot, moving-turn, and
-  turn-in-place strafe PSDs. The cycle database needs forward, backward, left,
-  right, diagonal, and direction-change clips before it can provide reliable
-  camera-facing combat.
+- Author and assign separate idle, cycle, moving-turn, and turn-in-place strafe
+  PSDs. The cycle database needs forward, backward, left, right, diagonal, and
+  direction-change clips before it can provide reliable camera-facing combat.
+  Keep authored Start, Stop, Land, and Combat-Strafe Run Pivot clips in the
+  State Controller chooser/Blend Stack path; Pivot is a direct one-shot rather
+  than a Pose Search Branch-In selection.
 - Create a `UProject_JMotionMatchingAssetSet` DA such as
   `DA_Player_Combat_Strafe`, then assign it to
   `CharacterAnimProfile -> CombatAnimProfile -> Combat Strafe Motion Matching

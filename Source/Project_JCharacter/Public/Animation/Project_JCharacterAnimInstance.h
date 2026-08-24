@@ -334,6 +334,18 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	bool bIsPivoting = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 MoveIntentRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 PivotRequestRevision = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector PivotPreviousMovementDirection = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	FVector PivotMoveIntentDirection = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bShouldTurnInPlace = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -1225,6 +1237,7 @@ public:
 	EProject_JStateControllerStance CachedStateControllerStance = EProject_JStateControllerStance::Stand;
 	EProject_JStateControllerStrafeDirection CachedStateControllerStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 	EProject_JStateControllerStrafeDirection CachedStateControllerPreviousStrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+	int32 CachedStateControllerPivotRequestRevision = 0;
 	EProject_JStateControllerFoot CachedStateControllerOneShotFoot = EProject_JStateControllerFoot::None;
 	/** TIP chooser row (L90/L180/R90/R180) last used by the cached direct asset. */
 	float CachedStateControllerTurnInPlaceIndex = 0.0f;
@@ -1252,6 +1265,8 @@ public:
 	float CachedStateControllerRightFootContact = 0.0f;
 	EProject_JStateControllerFoot StateControllerFootPhaseHistory = EProject_JStateControllerFoot::None;
 	bool bHasStateControllerFootPhaseHistory = false;
+	/** Last Pivot semantic request that latched a direct one-shot foot. */
+	int32 StateControllerPivotFootLatchRequestRevision = 0;
 	/** Start gait is briefly provisional, then held until the authored Start exits. */
 	EProject_JLocomotionGaitIntent StateControllerStartGaitForChooser = EProject_JLocomotionGaitIntent::Run;
 	double StateControllerStartGaitStartedAtSeconds = 0.0;
@@ -1266,6 +1281,15 @@ public:
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;
 	int32 StateControllerChooserSelectionRevision = 0;
+	/** Direct Blend Stack ownership for one committed local Combat-Strafe Pivot. */
+	mutable int32 ActiveStateControllerPivotPlaybackRequestRevision = 0;
+	mutable int32 ActiveStateControllerPivotMoveIntentRevision = 0;
+	/** Debug-only edge guard for a linked instance that observes a Pivot request. */
+	int32 LastLoggedNonPrimaryPivotRequestRevision = 0;
+	/** Candidate revision consumed by a redirect; it may not re-enter from a stale snapshot. */
+	mutable int32 SuppressedStateControllerPivotRequestRevision = 0;
+	mutable FVector ActiveStateControllerPivotPreviousMovementDirection = FVector::ZeroVector;
+	mutable FVector ActiveStateControllerPivotMoveIntentDirection = FVector::ZeroVector;
 
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
 	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;

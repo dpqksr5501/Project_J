@@ -36,6 +36,7 @@ struct PROJECT_JCHARACTER_API FProject_JStateControllerChooserOutput
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller", meta = (ClampMin = "0.0", Units = "s"))
 	float BlendTime = 0.3f;
 
+
 	/**
 	 * Keep this as an asset reference rather than an FName so a Chooser output
 	 * can connect directly to the Blend Stack's Blend Profile input. The former
@@ -277,7 +278,7 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	float SharpTurnMinSpeed = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float PivotAngleThreshold = 110.0f;
+	float PivotAngleThreshold = 135.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float TurnRedirectAngleThreshold = 45.0f;

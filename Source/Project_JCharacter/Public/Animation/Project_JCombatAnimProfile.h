@@ -61,6 +61,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
 	bool bUseMovingTurnRedirectInCombatStrafe = false;
 
+	/** Enables the local-only authored Combat-Strafe Run Pivot presentation. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Pivot")
+	bool bEnableCombatStrafeRunPivot = false;
+
+	/**
+	 * Maximum meaningful action-direction revisions that may belong to one
+	 * keyboard-chord / analog intent transition before it stops being eligible
+	 * for a Pivot. This is a semantic-edge budget, not a time bridge.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Pivot", meta = (EditCondition = "bEnableCombatStrafeRunPivot", ClampMin = "1", ClampMax = "6", UIMin = "1", UIMax = "4"))
+	int32 CombatStrafePivotTransitionMaxInputRevisions = 3;
+
 	/** Minimum camera-relative input direction change that forces a fresh combat strafe pose search. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (EditCondition = "bForceReselectOnStrafeInputTurn", ClampMin = "0.0", ClampMax = "180.0", UIMin = "15.0", UIMax = "90.0"))
 	float StrafeInputTurnReselectAngle = 35.0f;

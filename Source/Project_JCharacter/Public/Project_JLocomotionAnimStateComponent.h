@@ -168,6 +168,22 @@ struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsPivoting = false;
 
+	/** Monotonic local action-intent edge, kept separate from a consumed Pivot request. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	int32 MoveIntentRevision = 0;
+
+	/** Monotonic local presentation edge. A direct Pivot consumes this once. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	int32 PivotRequestRevision = 0;
+
+	/** Physical travel direction captured before the reversal. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector PivotPreviousMovementDirection = FVector::ZeroVector;
+
+	/** Local movement intent captured at the same reversal edge. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	FVector PivotMoveIntentDirection = FVector::ZeroVector;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bShouldTurnInPlace = false;
 
@@ -236,7 +252,7 @@ private:
 	void LogMotionMatchingNetworkDebugIfEnabled(const AProject_JPlayerCharacter& PlayerOwner) const;
 	FProject_JLocomotionAuthoritativeContext BuildAuthoritativeContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot, float DeltaTime);
-	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext);
 	void ApplyLocomotionPhaseStability(float DeltaTime, FProject_JDerivedLocomotionContext& InOutContext);
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
@@ -244,7 +260,7 @@ private:
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsMotionMatchingMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsStartingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
-	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext);
 	bool ShouldTurnInPlaceForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldSpinTransitionForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool ShouldUseLocalInputState() const;
@@ -337,6 +353,7 @@ private:
 	bool ConsumeRemoteStopStartSuppress(float DeltaTime);
 	void ApplyRemoteStopStartSuppress();
 	void RefreshMovementInputState(float DeltaTime, const FVector2D& MoveInput, bool bTrackTurnAngle);
+	void UpdateLocalMoveIntentSnapshot(const FVector2D& MoveInput);
 	bool TryFinishLandingFromMovementInput(const FVector2D& MoveInput, bool bAllowSprintTurnCancel);
 	bool TryFinishLandingFromInputChange();
 	bool TryFinishLandingRedirectCancel(const FVector2D& MoveInput);
@@ -471,7 +488,7 @@ public:
 	float DerivedStartMaxGroundSpeed = 180.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float DerivedPivotAngleThreshold = 110.0f;
+	float DerivedPivotAngleThreshold = 135.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedTurnAngleThreshold = 45.0f;
@@ -762,6 +779,18 @@ private:
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
+	FVector2D LastStableMoveInputDirection = FVector2D::ZeroVector;
+	bool bHasLastStableMoveInputDirection = false;
+	int32 MoveIntentRevision = 0;
+	int32 LastConsumedPivotMoveIntentRevision = INDEX_NONE;
+	int32 LastLoggedPivotRejectionMoveIntentRevision = INDEX_NONE;
+	int32 PivotRequestRevision = 0;
+	FVector LatchedPivotPreviousMovementDirection = FVector::ZeroVector;
+	FVector LatchedPivotMoveIntentDirection = FVector::ZeroVector;
+	/** Physical direction captured at the first edge of a multi-key input transition. */
+	FVector PivotIntentTransitionPreviousMovementDirection = FVector::ZeroVector;
+	int32 PivotIntentTransitionStartRevision = INDEX_NONE;
+	bool bHasPivotIntentTransition = false;
 	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	float InitialLandingActorYaw = 0.0f;
