@@ -90,8 +90,8 @@ private:
 
 	// Enhanced Input can report a Completed/Canceled edge while another mapping of
 	// the same 2D Move Action becomes Triggered in the same input update (A+D,
-	// W+S, gamepad direction changes).  Defer only the semantic Stop until the
-	// update has settled; gameplay movement remains immediate in HandleMove.
+	// W+S, gamepad direction changes). Defer semantic Stop until that update has
+	// settled; gameplay movement remains immediate in HandleMove.
 	bool bPendingMoveStopReconciliation = false;
 
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;

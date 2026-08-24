@@ -102,7 +102,10 @@ State Controller holds the selected direct Pivot asset until its authored exit.
 An explicit Stop preempts it with the normal Stop one-shot. A later independently
 accepted reversal replaces the active Pivot with a fresh Pivot; an ordinary
 direction change instead releases directly to Cycle Motion Matching and forces
-one reselect. Multi-key diagonal input uses a bounded semantic input-revision
+one reselect. Enhanced Input applies non-zero movement intent immediately so the
+Pivot sees the high-speed reversal before CharacterMovement decelerates; only a
+Completed/Canceled Stop is deferred until all mappings in that input update have
+settled. Multi-key diagonal input uses a bounded semantic input-revision
 transition, not a time bridge, so only its final qualifying reversal can Pivot.
 Each accepted Pivot request independently latches its foot from current contact,
 then phase history, then the authored fallback; a replacement Pivot never

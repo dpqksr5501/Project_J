@@ -105,18 +105,19 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (bPendingMoveStopReconciliation)
+	{
+		// This tick runs after Enhanced Input has dispatched all mappings for the
+		// frame. A non-zero Triggered Move callback clears this candidate before
+		// we get here, so only a final zero-valued action becomes a semantic Stop.
+		bPendingMoveStopReconciliation = false;
+		FinalizeMoveStopped();
+	}
+
 	if (!bPendingMoveStopReconciliation)
 	{
 		SetComponentTickEnabled(false);
-		return;
 	}
-
-	// This tick runs after Enhanced Input has dispatched all mappings for the
-	// frame.  A Triggered Move callback cancels this candidate before we get
-	// here, so only a final zero-valued action becomes a semantic Stop.
-	bPendingMoveStopReconciliation = false;
-	SetComponentTickEnabled(false);
-	FinalizeMoveStopped();
 }
 
 void UProject_JPlayerInputBindingComponent::HandleInteract()
@@ -134,17 +135,22 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 		return;
 	}
 
-	CancelPendingMoveStopReconciliation();
-
 	const FVector2D MoveInput = Value.Get<FVector2D>();
+	if (MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
+	{
+		CancelPendingMoveStopReconciliation();
+	}
 
 	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
 	{
+		// Pivot has to observe the reversal on this movement update, before
+		// CharacterMovement decelerates below its authored minimum speed.
 		BoundPlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
 	}
 
+	// Sprint ability state affects CharacterMovement, so preserve its immediate
+	// gameplay update as well.
 	BoundPlayerCharacter->UpdateSprintInputFromMove(MoveInput);
-
 	BoundPlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
 
 	if (BoundPlayerCharacter->GetController() != nullptr)
