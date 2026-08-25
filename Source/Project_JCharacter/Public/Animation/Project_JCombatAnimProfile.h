@@ -54,13 +54,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
 	bool bForceReselectOnStrafeInputTurn = true;
 
-	/**
-	 * When false (default), turning WASD in combat strafe stays in the camera-facing
-	 * Cycle PSD without routing to the Orient-To-Movement TurnRedirect PSD.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching")
-	bool bUseMovingTurnRedirectInCombatStrafe = false;
-
 	/** Enables the local-only authored Combat-Strafe Run Pivot presentation. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Pivot")
 	bool bEnableCombatStrafeRunPivot = false;

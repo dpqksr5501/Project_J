@@ -1783,6 +1783,11 @@ FString UProject_JCharacterAnimInstance::GetMotionMatchingPivotTraceSummary() co
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetPivotTraceSummary();
 }
 
+FString UProject_JCharacterAnimInstance::GetMotionMatchingCombatTurnTraceSummary() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetCombatTurnTraceSummary();
+}
+
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeData(float DeltaSeconds) const
 {
 	FProject_JAnimThreadSafeData Data;

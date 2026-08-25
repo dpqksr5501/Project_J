@@ -250,6 +250,22 @@ void AProject_JPlayerController::DumpMotionMatchingTransitionTrace()
 #endif
 }
 
+void AProject_JPlayerController::DumpMotionMatchingCombatTurnTrace()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn());
+	const USkeletalMeshComponent* Mesh = ControlledCharacter ? ControlledCharacter->GetMesh() : nullptr;
+	const UProject_JCharacterAnimInstance* AnimInstance = Mesh ? Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance()) : nullptr;
+	const FString Trace = AnimInstance
+		? AnimInstance->GetMotionMatchingCombatTurnTraceSummary()
+		: FString(TEXT("Combat-Strafe Motion Matching Turn trace unavailable: possessed pawn does not use UProject_JCharacterAnimInstance."));
+	ClientMessage(TEXT("Combat-Strafe Motion Matching Turn trace written to Output Log."));
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Trace);
+#endif
+}
+
 void AProject_JPlayerController::DumpReplicationPolicy()
 {
 #if UE_BUILD_SHIPPING
