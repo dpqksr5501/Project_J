@@ -1163,8 +1163,6 @@ public:
 	FString GetMotionMatchingPivotTraceSummary() const;
 
 	/** Returns actual Motion Matching Cycle/Turn selection and BlendStack frames in Combat Strafe. */
-	FString GetMotionMatchingCombatTurnTraceSummary() const;
-
 protected:
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
 	void ResolveStateControllerPresentationStateWithPlaybackHold(

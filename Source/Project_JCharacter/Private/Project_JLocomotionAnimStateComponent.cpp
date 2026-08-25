@@ -178,11 +178,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	MotionMatchingSelectionContext.GaitIntent = AuthoritativeContext.GaitIntent;
 	MotionMatchingSelectionContext.RotationMode = AuthoritativeContext.RotationMode;
 	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
-	MotionMatchingSelectionContext.bUseHeavyLand = bUseHeavyLand;
-	MotionMatchingSelectionContext.bLandWasMoving = bLandWasMoving;
-	MotionMatchingSelectionContext.bLandWasSprinting = bLandWasSprinting;
-	MotionMatchingSelectionContext.bUseFallOffStart = bIsFallOffStart;
-	MotionMatchingSelectionContext.bUseRemoteStart = !bUsingLocalInputState && bUseForwardOnlyRemoteStart;
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 
 	const bool bSelectionChanged =
@@ -190,12 +185,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 		LastPublishedMotionMatchingGait != AuthoritativeContext.GaitIntent ||
 		LastPublishedMotionMatchingRotationMode != AuthoritativeContext.RotationMode ||
 		LastPublishedMotionMatchingPhase != DerivedLocomotionContext.PhaseFamily ||
-		LastPublishedGroundMotionMode != GroundMotionMode ||
-		bLastPublishedHeavyLand != bUseHeavyLand ||
-		bLastPublishedLandWasMoving != bLandWasMoving ||
-		bLastPublishedLandWasSprinting != bLandWasSprinting ||
-		bLastPublishedFallOffStart != bIsFallOffStart ||
-		bLastPublishedUseRemoteStart != MotionMatchingSelectionContext.bUseRemoteStart;
+		LastPublishedGroundMotionMode != GroundMotionMode;
 
 	bMotionMatchingSelectionChanged = bSelectionChanged;
 	if (bSelectionChanged)
@@ -204,11 +194,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 		LastPublishedMotionMatchingRotationMode = AuthoritativeContext.RotationMode;
 		LastPublishedMotionMatchingPhase = DerivedLocomotionContext.PhaseFamily;
 		LastPublishedGroundMotionMode = GroundMotionMode;
-		bLastPublishedHeavyLand = bUseHeavyLand;
-		bLastPublishedLandWasMoving = bLandWasMoving;
-		bLastPublishedLandWasSprinting = bLandWasSprinting;
-		bLastPublishedFallOffStart = bIsFallOffStart;
-		bLastPublishedUseRemoteStart = MotionMatchingSelectionContext.bUseRemoteStart;
 		bHasPublishedMotionMatchingSelection = true;
 		++MotionMatchingSelectionRevision;
 		if (MotionMatchingSelectionRevision == 0)
@@ -271,7 +256,7 @@ void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnab
 		: (PlayerOwner.GetLocalRole() == ROLE_AutonomousProxy ? TEXT("Autonomous") : TEXT("Simulated"));
 
 	UE_LOG(LogProjectJPlayer, Display,
-		TEXT("MMNetState Actor=%s Role=%s LocalInput=%s Rendered=%s Rev=%d Changed=%s ForceReselect=%s Gait=%d Rotation=%d Phase=%d GroundMode=%d RemoteStart=%s Speed=%.1f InputTurn=%.1f VelocityToInput=%.1f StopDist=%.1f RelativeAccel=(%.2f,%.2f)"),
+		TEXT("MMNetState Actor=%s Role=%s LocalInput=%s Rendered=%s Rev=%d Changed=%s ForceReselect=%s Gait=%d Rotation=%d Phase=%d GroundMode=%d Speed=%.1f InputTurn=%.1f VelocityToInput=%.1f StopDist=%.1f RelativeAccel=(%.2f,%.2f)"),
 		*GetNameSafe(&PlayerOwner), Role,
 		bUsingLocalInputState ? TEXT("true") : TEXT("false"),
 		bRecentlyRendered ? TEXT("true") : TEXT("false"),
@@ -282,7 +267,6 @@ void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnab
 		static_cast<int32>(MotionMatchingSelectionContext.RotationMode),
 		static_cast<int32>(MotionMatchingSelectionContext.PhaseFamily),
 		static_cast<int32>(GroundMotionMode),
-		MotionMatchingSelectionContext.bUseRemoteStart ? TEXT("true") : TEXT("false"),
 		GroundSpeed, MoveInputTurnAngle,
 		KinematicContext.VelocityToMoveInputAngle,
 		KinematicContext.PredictedStopDistance,

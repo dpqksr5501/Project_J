@@ -38,25 +38,6 @@ struct FProject_JMotionMatchingPivotTraceEntry
 	TArray<FProject_JMotionMatchingBlendStackPlayerDebug, TInlineAllocator<4>> BlendPlayers;
 };
 
-/** Captures the actual generated Motion Matching node during Combat-Strafe Cycle/Turn. */
-struct FProject_JMotionMatchingCombatTurnTraceEntry
-{
-	uint64 FrameNumber = 0;
-	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
-	FName RequestedDatabase;
-	FName NativeSelectedDatabase;
-	FName SelectedAnimation;
-	float SelectedAnimationTime = 0.0f;
-	float SearchCost = 0.0f;
-	float GroundSpeed = 0.0f;
-	float InputTurnAngle = 0.0f;
-	bool bHasMoveInput = false;
-	bool bForceReselect = false;
-	bool bContinuingPoseSearch = false;
-	bool bNewBlendThisFrame = false;
-	TArray<FProject_JMotionMatchingBlendStackPlayerDebug, TInlineAllocator<4>> BlendPlayers;
-};
-
 struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 {
 	FProject_JCharacterAnimInstanceProxy();
@@ -73,7 +54,6 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
 	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
 	FString GetPivotTraceSummary() const;
-	FString GetCombatTurnTraceSummary() const;
 
 protected:
 	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
@@ -91,7 +71,6 @@ private:
 	void ForceReselectMotionMatchingNodes();
 	void CapturePostSelection();
 	void CapturePivotDebugTrace();
-	void CaptureCombatTurnDebugTrace();
 	/**
 	 * Generated AnimBP graphs commonly contain far more nodes than Motion Matching
 	 * nodes. Cache only the latter's indices and rebuild when the generated class
@@ -117,7 +96,6 @@ private:
 	float NativeDefaultSearchThrottleTime = 0.0f;
 	bool bHasNativeDefaultSearchThrottleTime = false;
 	bool bWasPivotPhaseForDebug = false;
-	FName LastCombatTurnDebugSignature;
 	bool bHasMotionMatchingPolicyState = false;
 	bool bLastPolicyWasInAir = false;
 	bool bLastPolicyWasMoving = false;
@@ -127,7 +105,6 @@ private:
 	EPoseSearchInterruptMode LastResolvedDatabaseChangeInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
 	FProject_JAnimMotionMatchingPostSelectionData LatestPostSelection;
 	TArray<FProject_JMotionMatchingPivotTraceEntry> PivotDebugTrace;
-	TArray<FProject_JMotionMatchingCombatTurnTraceEntry> CombatTurnDebugTrace;
 
 	FAnimNode_PoseSearchHistoryCollector NativePoseHistoryNode;
 	FAnimNode_MotionMatching NativeMotionMatchingNode;

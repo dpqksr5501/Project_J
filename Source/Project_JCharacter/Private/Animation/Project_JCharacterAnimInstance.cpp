@@ -356,9 +356,6 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		ThreadSafeData.OneShotPresentation.bRequested = false;
 		ThreadSafeData.LocomotionContext.PhaseFamily = FallbackPhaseFamily;
 		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = FallbackPhaseFamily;
-		ThreadSafeData.MotionMatching.SelectionContext.bUseHeavyLand = false;
-		ThreadSafeData.MotionMatching.SelectionContext.bLandWasMoving = false;
-		ThreadSafeData.MotionMatching.SelectionContext.bLandWasSprinting = false;
 		// Re-query only at the presentation boundaries.  The fallback context is
 		// still published every frame, but repeatedly forcing a Pose Search while
 		// a montage is active would be needless per-frame work.
@@ -1783,11 +1780,6 @@ FString UProject_JCharacterAnimInstance::GetMotionMatchingPivotTraceSummary() co
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetPivotTraceSummary();
 }
 
-FString UProject_JCharacterAnimInstance::GetMotionMatchingCombatTurnTraceSummary() const
-{
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetCombatTurnTraceSummary();
-}
-
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeData(float DeltaSeconds) const
 {
 	FProject_JAnimThreadSafeData Data;
@@ -2756,11 +2748,6 @@ void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAni
 	Data.MotionMatching.SelectionContext.GaitIntent = Data.LocomotionContext.GaitIntent;
 	Data.MotionMatching.SelectionContext.RotationMode = Data.LocomotionContext.RotationMode;
 	Data.MotionMatching.SelectionContext.PhaseFamily = Data.LocomotionContext.PhaseFamily;
-	Data.MotionMatching.SelectionContext.bUseHeavyLand = false;
-	Data.MotionMatching.SelectionContext.bLandWasMoving = false;
-	Data.MotionMatching.SelectionContext.bLandWasSprinting = false;
-	Data.MotionMatching.SelectionContext.bUseFallOffStart = false;
-	Data.MotionMatching.SelectionContext.bUseRemoteStart = false;
 	Data.MotionMatching.SelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 }
 
@@ -3057,9 +3044,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	const FProject_JMotionMatchingSelectionContext& SelectionContext = Data.MotionMatching.SelectionContext;
 	FProject_JMotionMatchingSelectionContext CombatSelectionContext = SelectionContext;
 	// State Controller owns authored Start, Stop, Pivot, air and landing one-shots.
-	// Regular Motion Matching still owns the continuous combat Cycle and the
-	// moving TurnRedirect PSD. Do not flatten Turn to Cycle: the combat asset
-	// set can therefore supply its authored turn database through the DA.
+	// The Asset Set owns only continuous Cycle and optional moving TurnRedirect PSDs.
 	switch (SelectionContext.PhaseFamily)
 	{
 	case EProject_JLocomotionPhaseFamily::Idle:
@@ -3155,9 +3140,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 	}
 	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
 		? nullptr
-		: AssetSet && AssetSet->MotionMatchingChooserTable
-			? AssetSet->MotionMatchingChooserTable.Get()
-			: MotionMatchingChooserTable.Get();
+		: MotionMatchingChooserTable.Get();
 
 	bool bIsFarDistance = false;
 	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))

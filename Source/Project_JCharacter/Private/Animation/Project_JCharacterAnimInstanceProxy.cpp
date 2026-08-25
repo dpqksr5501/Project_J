@@ -89,7 +89,6 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
 	CapturePostSelection();
 	CapturePivotDebugTrace();
-	CaptureCombatTurnDebugTrace();
 }
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
@@ -250,48 +249,6 @@ FString FProject_JCharacterAnimInstanceProxy::GetPivotTraceSummary() const
 			const FProject_JMotionMatchingBlendStackPlayerDebug& Player = Entry.BlendPlayers[PlayerIndex];
 			Summary += FString::Printf(
 				TEXT("  Stack[%d] Anim=%s AssetTime=%.3f/%.3f Rate=%.2f Weight=%.3f Blend=%.3f/%.3f Active=%s Loop=%s Mirror=%s\n"),
-				PlayerIndex,
-				*Player.Animation.ToString(),
-				Player.AssetTime,
-				Player.AssetLength,
-				Player.PlayRate,
-				Player.BlendWeight,
-				Player.BlendElapsed,
-				Player.BlendTime,
-				Player.bActive ? TEXT("true") : TEXT("false"),
-				Player.bLooping ? TEXT("true") : TEXT("false"),
-				Player.bMirrored ? TEXT("true") : TEXT("false"));
-		}
-	}
-	return Summary;
-}
-
-FString FProject_JCharacterAnimInstanceProxy::GetCombatTurnTraceSummary() const
-{
-	FString Summary = FString::Printf(TEXT("==== Combat-Strafe Motion Matching Cycle/Turn Trace (%d entries) ====\n"), CombatTurnDebugTrace.Num());
-	for (const FProject_JMotionMatchingCombatTurnTraceEntry& Entry : CombatTurnDebugTrace)
-	{
-		Summary += FString::Printf(
-			TEXT("Frame=%llu Phase=%d RequestedPSD=%s NativePSD=%s Anim=%s AssetTime=%.3f Cost=%.3f Speed=%.1f InputTurn=%.1f HasInput=%s ForceReselect=%s Continuing=%s NewBlend=%s Players=%d\n"),
-			Entry.FrameNumber,
-			static_cast<int32>(Entry.PhaseFamily),
-			*Entry.RequestedDatabase.ToString(),
-			*Entry.NativeSelectedDatabase.ToString(),
-			*Entry.SelectedAnimation.ToString(),
-			Entry.SelectedAnimationTime,
-			Entry.SearchCost,
-			Entry.GroundSpeed,
-			Entry.InputTurnAngle,
-			Entry.bHasMoveInput ? TEXT("true") : TEXT("false"),
-			Entry.bForceReselect ? TEXT("true") : TEXT("false"),
-			Entry.bContinuingPoseSearch ? TEXT("true") : TEXT("false"),
-			Entry.bNewBlendThisFrame ? TEXT("true") : TEXT("false"),
-			Entry.BlendPlayers.Num());
-		for (int32 PlayerIndex = 0; PlayerIndex < Entry.BlendPlayers.Num(); ++PlayerIndex)
-		{
-			const FProject_JMotionMatchingBlendStackPlayerDebug& Player = Entry.BlendPlayers[PlayerIndex];
-			Summary += FString::Printf(
-				TEXT("  Stack[%d] Anim=%s Time=%.3f/%.3f Rate=%.2f Weight=%.3f Blend=%.3f/%.3f Active=%s Loop=%s Mirror=%s\n"),
 				PlayerIndex,
 				*Player.Animation.ToString(),
 				Player.AssetTime,
@@ -474,102 +431,6 @@ void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()
 		PivotDebugTrace.RemoveAt(0, PivotDebugTrace.Num() - MaxPivotTraceEntries, EAllowShrinking::No);
 	}
 	bWasPivotPhaseForDebug = bShouldCapturePhase;
-}
-
-void FProject_JCharacterAnimInstanceProxy::CaptureCombatTurnDebugTrace()
-{
-	const int32 DebugMode = Project_J::MotionMatchingCVars::GetCombatTurnDebugMode();
-	if (DebugMode <= 0)
-	{
-		LastCombatTurnDebugSignature = NAME_None;
-		return;
-	}
-
-	const EProject_JLocomotionPhaseFamily Phase = ThreadSafeData.LocomotionContext.PhaseFamily;
-	const bool bIsCombatStrafe = ThreadSafeData.Combat.bIsCombatMode &&
-		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
-	if (!bIsCombatStrafe || (Phase != EProject_JLocomotionPhaseFamily::Cycle && Phase != EProject_JLocomotionPhaseFamily::Turn))
-	{
-		LastCombatTurnDebugSignature = NAME_None;
-		return;
-	}
-
-	const FAnimNode_MotionMatching* ResultNode = nullptr;
-	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
-	{
-		const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
-		if (!Candidate || !Candidate->GetMotionMatchingState().SearchResult.SelectedAnim)
-		{
-			continue;
-		}
-		ResultNode = Candidate;
-		if (Candidate->GetMotionMatchingState().SearchResult.SelectedDatabase == CurrentActiveDatabase)
-		{
-			break;
-		}
-	}
-	if (!ResultNode)
-	{
-		ResultNode = &NativeMotionMatchingNode;
-	}
-
-	const FPoseSearchBlueprintResult& SearchResult = ResultNode->GetMotionMatchingState().SearchResult;
-	FString SignatureString = FString::Printf(
-		TEXT("%d|%s|%s|%s|%d"),
-		static_cast<int32>(Phase),
-		CurrentActiveDatabase ? *CurrentActiveDatabase->GetName() : TEXT("None"),
-		SearchResult.SelectedDatabase ? *SearchResult.SelectedDatabase->GetName() : TEXT("None"),
-		SearchResult.SelectedAnim ? *SearchResult.SelectedAnim->GetName() : TEXT("None"),
-		bForceMotionMatchingReselect ? 1 : 0);
-	for (const FBlendStackAnimPlayer& Player : ResultNode->AnimPlayers)
-	{
-		SignatureString += TEXT("|");
-		SignatureString += Player.GetAnimationAsset() ? Player.GetAnimationAsset()->GetName() : TEXT("None");
-	}
-	const FName Signature(*SignatureString);
-	if (DebugMode == 1 && Signature == LastCombatTurnDebugSignature)
-	{
-		return;
-	}
-	LastCombatTurnDebugSignature = Signature;
-
-	FProject_JMotionMatchingCombatTurnTraceEntry& Entry = CombatTurnDebugTrace.AddDefaulted_GetRef();
-	Entry.FrameNumber = GFrameCounter;
-	Entry.PhaseFamily = Phase;
-	Entry.RequestedDatabase = CurrentActiveDatabase ? CurrentActiveDatabase->GetFName() : NAME_None;
-	Entry.NativeSelectedDatabase = SearchResult.SelectedDatabase ? SearchResult.SelectedDatabase->GetFName() : NAME_None;
-	Entry.SelectedAnimation = SearchResult.SelectedAnim ? SearchResult.SelectedAnim->GetFName() : NAME_None;
-	Entry.SelectedAnimationTime = SearchResult.SelectedTime;
-	Entry.SearchCost = SearchResult.SearchCost;
-	Entry.GroundSpeed = ThreadSafeData.Movement.GroundSpeed;
-	Entry.InputTurnAngle = ThreadSafeData.Input.MoveInputTurnAngle;
-	Entry.bHasMoveInput = ThreadSafeData.Input.bHasMoveInput;
-	Entry.bForceReselect = bForceMotionMatchingReselect;
-	Entry.bContinuingPoseSearch = SearchResult.bIsContinuingPoseSearch;
-	Entry.bNewBlendThisFrame = ResultNode->AnyNewBlendToThisFrame();
-	for (const FBlendStackAnimPlayer& Player : ResultNode->AnimPlayers)
-	{
-		FProject_JMotionMatchingBlendStackPlayerDebug& PlayerEntry = Entry.BlendPlayers.AddDefaulted_GetRef();
-		if (const UAnimationAsset* Animation = Player.GetAnimationAsset())
-		{
-			PlayerEntry.Animation = Animation->GetFName();
-		}
-		PlayerEntry.AssetTime = Player.GetCurrentAssetTime();
-		PlayerEntry.AssetLength = Player.GetCurrentAssetLength();
-		PlayerEntry.PlayRate = Player.GetPlayRate();
-		PlayerEntry.BlendWeight = Player.GetBlendInWeight();
-		PlayerEntry.BlendTime = Player.GetTotalBlendInTime();
-		PlayerEntry.BlendElapsed = Player.GetCurrentBlendInTime();
-		PlayerEntry.bActive = Player.IsActive();
-		PlayerEntry.bLooping = Player.IsLooping();
-		PlayerEntry.bMirrored = Player.GetMirror();
-	}
-
-	constexpr int32 MaxTraceEntries = 720;
-	if (CombatTurnDebugTrace.Num() > MaxTraceEntries)
-	{
-		CombatTurnDebugTrace.RemoveAt(0, CombatTurnDebugTrace.Num() - MaxTraceEntries, EAllowShrinking::No);
-	}
 }
 
 FAnimNode_Base* FProject_JCharacterAnimInstanceProxy::GetCustomRootNode()

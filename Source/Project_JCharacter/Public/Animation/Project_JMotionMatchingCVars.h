@@ -14,8 +14,6 @@ int32 GetNetworkDebugMode();
 bool ShouldLogNetworkDebugPeriodically();
 bool ShouldCapturePivotDebugTrace();
 bool ShouldCaptureTransitionDebugTrace();
-/** 0=off, 1=Combat-Strafe Cycle/Turn selection changes, 2=every AnimGraph update. */
-int32 GetCombatTurnDebugMode();
 /** 0=off, 1=state/asset changes, 2=also sampled TIP telemetry every 0.1 seconds. */
 int32 GetTurnInPlaceDebugMode();
 }

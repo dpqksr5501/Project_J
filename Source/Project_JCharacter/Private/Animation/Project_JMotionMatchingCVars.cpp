@@ -49,11 +49,6 @@ TAutoConsoleVariable<int32> CVarProjectJMMTransitionDebug(
 	0,
 	TEXT("Captures native Motion Matching Start/Stop/Jump/Landing/Pivot BlendStack frames. Use DumpMotionMatchingTransitionTrace after moving. 0=off, 1=on."));
 
-TAutoConsoleVariable<int32> CVarProjectJMMCombatTurnDebug(
-	TEXT("p.ProjectJ.MMCombatTurnDebug"),
-	0,
-	TEXT("Captures the actual Combat-Strafe Motion Matching Cycle/Turn node. Use DumpMotionMatchingCombatTurnTrace. 0=off, 1=phase/database/asset or stack changes, 2=every AnimGraph update."));
-
 TAutoConsoleVariable<int32> CVarProjectJTurnInPlaceDebug(
 	TEXT("p.ProjectJ.TIPDebug"),
 	0,
@@ -110,11 +105,6 @@ bool ShouldCapturePivotDebugTrace()
 bool ShouldCaptureTransitionDebugTrace()
 {
 	return CVarProjectJMMTransitionDebug.GetValueOnAnyThread() != 0;
-}
-
-int32 GetCombatTurnDebugMode()
-{
-	return CVarProjectJMMCombatTurnDebug.GetValueOnAnyThread();
 }
 
 int32 GetTurnInPlaceDebugMode()

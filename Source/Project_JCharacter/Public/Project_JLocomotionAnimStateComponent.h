@@ -849,15 +849,10 @@ private:
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;
 	bool bHasPublishedMotionMatchingSelection = false;
-	bool bLastPublishedUseRemoteStart = false;
 	EProject_JLocomotionGaitIntent LastPublishedMotionMatchingGait = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode LastPublishedMotionMatchingRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 	EProject_JLocomotionPhaseFamily LastPublishedMotionMatchingPhase = EProject_JLocomotionPhaseFamily::Idle;
 	EProject_JGroundMotionMode LastPublishedGroundMotionMode = EProject_JGroundMotionMode::Idle;
-	bool bLastPublishedHeavyLand = false;
-	bool bLastPublishedLandWasMoving = false;
-	bool bLastPublishedLandWasSprinting = false;
-	bool bLastPublishedFallOffStart = false;
 	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;
 	bool bHasPreviousKinematicVelocity = false;
 };

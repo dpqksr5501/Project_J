@@ -38,8 +38,8 @@ public:
 
 	/**
 	 * Optional combat loop Motion Matching asset set used while this profile owns
-	 * camera-facing combat rotation. Assign Idle, Run/Sprint Cycle, and moving
-	 * Run/Sprint TurnRedirect PSDs;
+	 * camera-facing combat rotation. Assign Default/Idle and Run/Sprint Cycle PSDs.
+	 * Run/Sprint TurnRedirect PSDs are optional for locomotion modes that use them;
 	 * authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
 	 * the State Controller Chooser / direct Blend Stack path.
 	 */

@@ -68,10 +68,6 @@ protected:
 	UFUNCTION(Exec)
 	void DumpMotionMatchingTransitionTrace();
 
-	/** Prints actual Combat-Strafe Cycle/Turn Motion Matching selection and BlendStack frames. */
-	UFUNCTION(Exec)
-	void DumpMotionMatchingCombatTurnTrace();
-
 	UFUNCTION(Exec)
 	void DumpReplicationPolicy();
 
