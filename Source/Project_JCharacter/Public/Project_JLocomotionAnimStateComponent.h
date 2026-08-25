@@ -226,6 +226,13 @@ public:
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
 	void ClearMoveInput();
+	/**
+	 * Records a completed Enhanced Input semantic-direction snapshot for cosmetic
+	 * Pivot selection. It never changes CharacterMovement or replication.
+	 */
+	void SetSemanticMoveIntentInput(const FVector2D& InMoveIntent, bool bHasActiveIntent);
+	/** Marks an in-progress semantic chord update so raw IA_Move cannot consume an intermediate direction. */
+	void BeginSemanticMoveIntentUpdate();
 	void HandleSprintStarted();
 	void HandleSprintStopped();
 	bool CanStartJumpForAnimation() const;
@@ -778,19 +785,26 @@ private:
 	FTimerHandle LandingExitTimerHandle;
 
 	FVector2D CachedMoveInput = FVector2D::ZeroVector;
+	FVector2D CachedSemanticMoveIntentInput = FVector2D::ZeroVector;
 	FVector2D PreviousMoveInputForTurn = FVector2D::ZeroVector;
 	FVector2D LastStableMoveInputDirection = FVector2D::ZeroVector;
 	bool bHasLastStableMoveInputDirection = false;
+	/** Previous stable local intent, retained only to gate Combat-Strafe Pivot to cardinal -> cardinal changes. */
+	FVector2D PreviousStableMoveInputDirection = FVector2D::ZeroVector;
+	bool bHasPreviousStableMoveInputDirection = false;
+	bool bHasSemanticMoveIntentInput = false;
+	bool bSemanticMoveIntentUpdatePending = false;
+	/** One semantic-chord edge may be committed after CharacterMovement begins braking. */
+	bool bHasSemanticPivotKinematicCapture = false;
+	int32 SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
+	FVector SemanticPivotKinematicCapturePreviousDirection = FVector::ZeroVector;
+	float SemanticPivotKinematicCaptureGroundSpeed = 0.0f;
 	int32 MoveIntentRevision = 0;
 	int32 LastConsumedPivotMoveIntentRevision = INDEX_NONE;
 	int32 LastLoggedPivotRejectionMoveIntentRevision = INDEX_NONE;
 	int32 PivotRequestRevision = 0;
 	FVector LatchedPivotPreviousMovementDirection = FVector::ZeroVector;
 	FVector LatchedPivotMoveIntentDirection = FVector::ZeroVector;
-	/** Physical direction captured at the first edge of a multi-key input transition. */
-	FVector PivotIntentTransitionPreviousMovementDirection = FVector::ZeroVector;
-	int32 PivotIntentTransitionStartRevision = INDEX_NONE;
-	bool bHasPivotIntentTransition = false;
 	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	float InitialLandingActorYaw = 0.0f;

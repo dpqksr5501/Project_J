@@ -2,6 +2,8 @@
 
 #include "Project_JLocomotionAnimStateComponent.h"
 
+#include "Project_JPlayerCharacter.h"
+
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
 {
@@ -146,7 +148,13 @@ void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMov
 	{
 		bPendingStopRequest = false;
 	}
-	UpdateLocalMoveIntentSnapshot(CachedMoveInput);
+	// While the Enhanced Input layer is resolving a semantic chord, do not let
+	// the aggregate Axis2D value overwrite its final direction. Gameplay still
+	// consumes CachedMoveInput immediately below through the normal player path.
+	if (!bHasSemanticMoveIntentInput && !bSemanticMoveIntentUpdatePending)
+	{
+		UpdateLocalMoveIntentSnapshot(CachedMoveInput);
+	}
 	QueueLocalMoveStartIfNeeded(bHadMoveInput, HasCachedMoveInput());
 }
 
@@ -155,6 +163,53 @@ void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
 	const bool bHadMoveInput = HasAnyMoveInputState();
 	ClearLocalMoveInputState();
 	QueueLocalMoveStopIfNeeded(bHadMoveInput);
+}
+
+void UProject_JLocomotionAnimStateComponent::BeginSemanticMoveIntentUpdate()
+{
+	bSemanticMoveIntentUpdatePending = true;
+	bHasSemanticPivotKinematicCapture = false;
+	SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
+	SemanticPivotKinematicCapturePreviousDirection = FVector::ZeroVector;
+	SemanticPivotKinematicCaptureGroundSpeed = 0.0f;
+
+	if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
+	{
+		FVector HorizontalVelocity = PlayerOwner->GetVelocity();
+		HorizontalVelocity.Z = 0.0f;
+		SemanticPivotKinematicCaptureGroundSpeed = HorizontalVelocity.Size2D();
+		SemanticPivotKinematicCapturePreviousDirection = HorizontalVelocity.GetSafeNormal2D();
+		bHasSemanticPivotKinematicCapture = !SemanticPivotKinematicCapturePreviousDirection.IsNearlyZero();
+	}
+}
+
+void UProject_JLocomotionAnimStateComponent::SetSemanticMoveIntentInput(const FVector2D& InMoveIntent, const bool bHasActiveIntent)
+{
+	const int32 PreviousMoveIntentRevision = MoveIntentRevision;
+	bSemanticMoveIntentUpdatePending = false;
+	bHasSemanticMoveIntentInput = bHasActiveIntent;
+	CachedSemanticMoveIntentInput = bHasActiveIntent
+		? InMoveIntent.GetClampedToMaxSize(1.0f)
+		: FVector2D::ZeroVector;
+
+	if (bHasSemanticMoveIntentInput)
+	{
+		UpdateLocalMoveIntentSnapshot(CachedSemanticMoveIntentInput);
+		if (bHasSemanticPivotKinematicCapture && MoveIntentRevision != PreviousMoveIntentRevision)
+		{
+			SemanticPivotKinematicCaptureIntentRevision = MoveIntentRevision;
+		}
+		else
+		{
+			bHasSemanticPivotKinematicCapture = false;
+			SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
+		}
+	}
+	else
+	{
+		bHasSemanticPivotKinematicCapture = false;
+		SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
+	}
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleSprintStarted()

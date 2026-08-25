@@ -171,6 +171,19 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> MoveAction = nullptr;
 
+	/** Optional, device-independent movement-intent actions used by Combat Strafe Pivot presentation. */
+	UPROPERTY(EditAnywhere, Category="Input|Move Intent")
+	TObjectPtr<UInputAction> MoveIntentForwardAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category="Input|Move Intent")
+	TObjectPtr<UInputAction> MoveIntentBackwardAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category="Input|Move Intent")
+	TObjectPtr<UInputAction> MoveIntentLeftAction = nullptr;
+
+	UPROPERTY(EditAnywhere, Category="Input|Move Intent")
+	TObjectPtr<UInputAction> MoveIntentRightAction = nullptr;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> LookAction = nullptr;

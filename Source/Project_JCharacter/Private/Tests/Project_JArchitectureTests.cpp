@@ -76,9 +76,6 @@ bool FProjectJCombatStrafeRunPivotPolicyTest::RunTest(const FString& Parameters)
 	if (Profile)
 	{
 		TestFalse(TEXT("Pivot remains opt-in for every combat profile"), Profile->bEnableCombatStrafeRunPivot);
-		TestTrue(TEXT("Pivot diagonal transition uses a bounded semantic edge budget"),
-			Profile->CombatStrafePivotTransitionMaxInputRevisions >= 1 &&
-			Profile->CombatStrafePivotTransitionMaxInputRevisions <= 6);
 	}
 	return true;
 }

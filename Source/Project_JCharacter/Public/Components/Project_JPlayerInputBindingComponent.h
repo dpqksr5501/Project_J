@@ -11,6 +11,15 @@ class UInputComponent;
 class UProject_JSkillInputMappingData;
 struct FInputActionValue;
 
+/** Device-independent semantic movement directions used only by locomotion presentation. */
+enum class EProject_JMoveIntentDirection : uint8
+{
+	Forward,
+	Backward,
+	Left,
+	Right
+};
+
 USTRUCT(BlueprintType)
 struct FProject_JPlayerInputActionSet
 {
@@ -21,6 +30,12 @@ struct FProject_JPlayerInputActionSet
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction = nullptr;
+
+	/** Optional semantic direction actions. They do not drive CharacterMovement. */
+	TObjectPtr<UInputAction> MoveIntentForwardAction = nullptr;
+	TObjectPtr<UInputAction> MoveIntentBackwardAction = nullptr;
+	TObjectPtr<UInputAction> MoveIntentLeftAction = nullptr;
+	TObjectPtr<UInputAction> MoveIntentRightAction = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> LookAction = nullptr;
@@ -71,8 +86,12 @@ private:
 	void HandleMove(const FInputActionValue& Value);
 	void HandleLook(const FInputActionValue& Value);
 	void HandleMoveStopped();
+	void HandleMoveIntentDirectionStarted(EProject_JMoveIntentDirection Direction);
+	void HandleMoveIntentDirectionStopped(EProject_JMoveIntentDirection Direction);
 	void FinalizeMoveStopped();
 	void CancelPendingMoveStopReconciliation();
+	void QueueSemanticMoveIntentRefresh();
+	void RefreshSemanticMoveIntent();
 	void HandleJumpStarted();
 	void HandleJumpStopped();
 	void HandlePrimarySkillPressed();
@@ -93,6 +112,27 @@ private:
 	// W+S, gamepad direction changes). Defer semantic Stop until that update has
 	// settled; gameplay movement remains immediate in HandleMove.
 	bool bPendingMoveStopReconciliation = false;
+
+	// Enhanced Input can dispatch several Boolean direction edges for one physical
+	// chord change. Coalesce only this cosmetic semantic snapshot at the end of
+	// the input update; IA_Move and CharacterMovement remain immediate.
+	bool bPendingSemanticMoveIntentRefresh = false;
+	/**
+	 * Semantic direction input is an all-or-nothing optional presentation
+	 * contract. A class/profile with only some of the four actions configured
+	 * keeps the existing IA_Move Axis2D fallback instead of publishing a partial
+	 * (and therefore misleading) semantic intent.
+	 */
+	bool bSemanticMoveIntentActionsBound = false;
+	bool bMoveIntentForwardHeld = false;
+	bool bMoveIntentBackwardHeld = false;
+	bool bMoveIntentLeftHeld = false;
+	bool bMoveIntentRightHeld = false;
+	int32 MoveIntentPressSequence = 0;
+	int32 ForwardPressSequence = 0;
+	int32 BackwardPressSequence = 0;
+	int32 LeftPressSequence = 0;
+	int32 RightPressSequence = 0;
 
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;
 	TMap<UInputAction*, FGameplayTag> ActiveDirectInputTags;

@@ -475,6 +475,10 @@ void AProject_JPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	FProject_JPlayerInputActionSet ActionSet;
 	ActionSet.JumpAction = JumpAction;
 	ActionSet.MoveAction = MoveAction;
+	ActionSet.MoveIntentForwardAction = MoveIntentForwardAction;
+	ActionSet.MoveIntentBackwardAction = MoveIntentBackwardAction;
+	ActionSet.MoveIntentLeftAction = MoveIntentLeftAction;
+	ActionSet.MoveIntentRightAction = MoveIntentRightAction;
 	ActionSet.LookAction = LookAction;
 	ActionSet.MouseLookAction = MouseLookAction;
 	ActionSet.SprintAction = SprintAction;

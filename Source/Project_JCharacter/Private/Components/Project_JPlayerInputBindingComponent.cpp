@@ -1,6 +1,7 @@
 ﻿#include "Components/Project_JPlayerInputBindingComponent.h"
 
 #include "EnhancedInputComponent.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "InputActionValue.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -31,6 +32,42 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleMove);
 	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
 	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
+
+	const bool bHasCompleteSemanticMoveIntentActionSet =
+		ActionSet.MoveIntentForwardAction &&
+		ActionSet.MoveIntentBackwardAction &&
+		ActionSet.MoveIntentLeftAction &&
+		ActionSet.MoveIntentRightAction;
+	bSemanticMoveIntentActionsBound = bHasCompleteSemanticMoveIntentActionSet;
+	bPendingSemanticMoveIntentRefresh = false;
+	bMoveIntentForwardHeld = false;
+	bMoveIntentBackwardHeld = false;
+	bMoveIntentLeftHeld = false;
+	bMoveIntentRightHeld = false;
+	MoveIntentPressSequence = 0;
+	ForwardPressSequence = 0;
+	BackwardPressSequence = 0;
+	LeftPressSequence = 0;
+	RightPressSequence = 0;
+
+	const auto BindMoveIntentAction = [EnhancedInputComponent, this](UInputAction* Action, const EProject_JMoveIntentDirection Direction)
+	{
+		if (!Action)
+		{
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted, Direction);
+		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
+		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
+	};
+	if (bSemanticMoveIntentActionsBound)
+	{
+		BindMoveIntentAction(ActionSet.MoveIntentForwardAction, EProject_JMoveIntentDirection::Forward);
+		BindMoveIntentAction(ActionSet.MoveIntentBackwardAction, EProject_JMoveIntentDirection::Backward);
+		BindMoveIntentAction(ActionSet.MoveIntentLeftAction, EProject_JMoveIntentDirection::Left);
+		BindMoveIntentAction(ActionSet.MoveIntentRightAction, EProject_JMoveIntentDirection::Right);
+	}
 
 	EnhancedInputComponent->BindAction(ActionSet.MouseLookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
 	EnhancedInputComponent->BindAction(ActionSet.LookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
@@ -105,6 +142,12 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (bPendingSemanticMoveIntentRefresh)
+	{
+		bPendingSemanticMoveIntentRefresh = false;
+		RefreshSemanticMoveIntent();
+	}
+
 	if (bPendingMoveStopReconciliation)
 	{
 		// This tick runs after Enhanced Input has dispatched all mappings for the
@@ -114,7 +157,7 @@ void UProject_JPlayerInputBindingComponent::TickComponent(
 		FinalizeMoveStopped();
 	}
 
-	if (!bPendingMoveStopReconciliation)
+	if (!bPendingMoveStopReconciliation && !bPendingSemanticMoveIntentRefresh)
 	{
 		SetComponentTickEnabled(false);
 	}
@@ -199,6 +242,152 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	// this Enhanced Input update (for example, holding A while pressing D).
 	bPendingMoveStopReconciliation = true;
 	SetComponentTickEnabled(true);
+}
+
+void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted(const EProject_JMoveIntentDirection Direction)
+{
+	bool* HeldState = nullptr;
+	int32* PressSequence = nullptr;
+	switch (Direction)
+	{
+	case EProject_JMoveIntentDirection::Forward:
+		HeldState = &bMoveIntentForwardHeld;
+		PressSequence = &ForwardPressSequence;
+		break;
+	case EProject_JMoveIntentDirection::Backward:
+		HeldState = &bMoveIntentBackwardHeld;
+		PressSequence = &BackwardPressSequence;
+		break;
+	case EProject_JMoveIntentDirection::Left:
+		HeldState = &bMoveIntentLeftHeld;
+		PressSequence = &LeftPressSequence;
+		break;
+	case EProject_JMoveIntentDirection::Right:
+		HeldState = &bMoveIntentRightHeld;
+		PressSequence = &RightPressSequence;
+		break;
+	default:
+		return;
+	}
+
+	if (*HeldState)
+	{
+		return;
+	}
+
+	*HeldState = true;
+	++MoveIntentPressSequence;
+	if (MoveIntentPressSequence == 0)
+	{
+		MoveIntentPressSequence = 1;
+	}
+	*PressSequence = MoveIntentPressSequence;
+	QueueSemanticMoveIntentRefresh();
+}
+
+void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped(const EProject_JMoveIntentDirection Direction)
+{
+	bool* HeldState = nullptr;
+	switch (Direction)
+	{
+	case EProject_JMoveIntentDirection::Forward:
+		HeldState = &bMoveIntentForwardHeld;
+		break;
+	case EProject_JMoveIntentDirection::Backward:
+		HeldState = &bMoveIntentBackwardHeld;
+		break;
+	case EProject_JMoveIntentDirection::Left:
+		HeldState = &bMoveIntentLeftHeld;
+		break;
+	case EProject_JMoveIntentDirection::Right:
+		HeldState = &bMoveIntentRightHeld;
+		break;
+	default:
+		return;
+	}
+
+	if (!*HeldState)
+	{
+		return;
+	}
+
+	*HeldState = false;
+	QueueSemanticMoveIntentRefresh();
+}
+
+void UProject_JPlayerInputBindingComponent::QueueSemanticMoveIntentRefresh()
+{
+	if (!bSemanticMoveIntentActionsBound)
+	{
+		return;
+	}
+
+	bPendingSemanticMoveIntentRefresh = true;
+	SetComponentTickEnabled(true);
+
+	if (BoundPlayerCharacter && BoundPlayerCharacter->LocomotionAnimStateComponent)
+	{
+		BoundPlayerCharacter->LocomotionAnimStateComponent->BeginSemanticMoveIntentUpdate();
+	}
+}
+
+void UProject_JPlayerInputBindingComponent::RefreshSemanticMoveIntent()
+{
+	if (!BoundPlayerCharacter || !BoundPlayerCharacter->LocomotionAnimStateComponent)
+	{
+		return;
+	}
+
+	const bool bHasHorizontalIntent = bMoveIntentLeftHeld || bMoveIntentRightHeld;
+	const bool bHasVerticalIntent = bMoveIntentForwardHeld || bMoveIntentBackwardHeld;
+	const bool bHasActiveIntent = bHasHorizontalIntent || bHasVerticalIntent;
+
+	float Horizontal = 0.0f;
+	if (bMoveIntentLeftHeld && bMoveIntentRightHeld)
+	{
+		// Explicit semantic policy for opposed keys: the latest pressed direction
+		// wins. This mirrors the player's meaningful edge without querying keys.
+		Horizontal = RightPressSequence >= LeftPressSequence ? 1.0f : -1.0f;
+	}
+	else if (bMoveIntentRightHeld)
+	{
+		Horizontal = 1.0f;
+	}
+	else if (bMoveIntentLeftHeld)
+	{
+		Horizontal = -1.0f;
+	}
+
+	float Vertical = 0.0f;
+	if (bMoveIntentForwardHeld && bMoveIntentBackwardHeld)
+	{
+		Vertical = ForwardPressSequence >= BackwardPressSequence ? 1.0f : -1.0f;
+	}
+	else if (bMoveIntentForwardHeld)
+	{
+		Vertical = 1.0f;
+	}
+	else if (bMoveIntentBackwardHeld)
+	{
+		Vertical = -1.0f;
+	}
+
+	BoundPlayerCharacter->LocomotionAnimStateComponent->SetSemanticMoveIntentInput(
+		FVector2D(Horizontal, Vertical).GetSafeNormal(), bHasActiveIntent);
+
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("CombatStrafeSemanticIntent Actor=%s Held[F=%s B=%s L=%s R=%s] PressSeq[F=%d B=%d L=%d R=%d] Final=(%.2f,%.2f) Active=%s"),
+			*GetNameSafe(BoundPlayerCharacter.Get()),
+			bMoveIntentForwardHeld ? TEXT("true") : TEXT("false"),
+			bMoveIntentBackwardHeld ? TEXT("true") : TEXT("false"),
+			bMoveIntentLeftHeld ? TEXT("true") : TEXT("false"),
+			bMoveIntentRightHeld ? TEXT("true") : TEXT("false"),
+			ForwardPressSequence, BackwardPressSequence, LeftPressSequence, RightPressSequence,
+			Horizontal, Vertical,
+			bHasActiveIntent ? TEXT("true") : TEXT("false"));
+	}
 }
 
 void UProject_JPlayerInputBindingComponent::CancelPendingMoveStopReconciliation()

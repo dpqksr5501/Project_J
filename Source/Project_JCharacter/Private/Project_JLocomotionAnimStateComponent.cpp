@@ -14,6 +14,21 @@
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
 
+namespace
+{
+	// Combat-Strafe Run Pivot has authored cardinal pairs only. A generous axis
+	// tolerance keeps an analog stick near a cardinal direction eligible, while
+	// rejecting the normalized keyboard diagonals (~0.707/0.707).
+	bool IsCardinalPivotIntent(const FVector2D& Intent)
+	{
+		const FVector2D Direction = Intent.GetSafeNormal();
+		const float AbsX = FMath::Abs(Direction.X);
+		const float AbsY = FMath::Abs(Direction.Y);
+		return (AbsX <= 0.25f && AbsY >= 0.75f) ||
+			(AbsY <= 0.25f && AbsX >= 0.75f);
+	}
+}
+
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
 {
 }
@@ -625,22 +640,36 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const UProject_JCombatAnimProfile* CombatProfile = GetPlayerOwner()
 		? GetPlayerOwner()->GetCombatAnimProfile()
 		: nullptr;
-	const auto ClearPivotIntentTransition = [this]()
+	const bool bUsingSemanticPivotKinematicCapture =
+		!bSemanticMoveIntentUpdatePending &&
+		bHasSemanticPivotKinematicCapture &&
+		SemanticPivotKinematicCaptureIntentRevision == MoveIntentRevision;
+	const auto ConsumeSemanticPivotKinematicCapture = [this, bUsingSemanticPivotKinematicCapture]()
 	{
-		bHasPivotIntentTransition = false;
-		PivotIntentTransitionStartRevision = INDEX_NONE;
-		PivotIntentTransitionPreviousMovementDirection = FVector::ZeroVector;
+		if (bUsingSemanticPivotKinematicCapture)
+		{
+			bHasSemanticPivotKinematicCapture = false;
+			SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
+		}
 	};
-	const FVector PreviousDirection = InKinematicContext.HorizontalVelocity.GetSafeNormal2D();
-	const FVector IntentDirection = InKinematicContext.MoveWorldDirection.GetSafeNormal2D();
+	const FVector PreviousDirection = bUsingSemanticPivotKinematicCapture
+		? SemanticPivotKinematicCapturePreviousDirection
+		: InKinematicContext.HorizontalVelocity.GetSafeNormal2D();
+	const float PivotGroundSpeed = bUsingSemanticPivotKinematicCapture
+		? SemanticPivotKinematicCaptureGroundSpeed
+		: InKinematicContext.GroundSpeed;
+	// Semantic input is only an owning-client presentation source. It preserves
+	// which device-independent directions are held while IA_Move remains the
+	// authoritative gameplay input. Never inspect an intermediate chord.
+	const FVector IntentDirection = bSemanticMoveIntentUpdatePending
+		? FVector::ZeroVector
+		: (bHasSemanticMoveIntentInput
+			? CalculateMoveWorldDirection(CachedSemanticMoveIntentInput).GetSafeNormal2D()
+			: InKinematicContext.MoveWorldDirection.GetSafeNormal2D());
 	const float PhysicalReversalAngle = !PreviousDirection.IsNearlyZero() && !IntentDirection.IsNearlyZero()
 		? FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(FVector::DotProduct(PreviousDirection, IntentDirection), -1.0f, 1.0f)))
 		: -1.0f;
-	FVector PivotReferenceDirection = PreviousDirection;
-	float PivotReferenceReversalAngle = PhysicalReversalAngle;
-	bool bUsingPivotIntentTransition = false;
-	int32 PivotIntentTransitionRevisionAge = 0;
-	const auto LogRejectedPivot = [this, &AuthContext, &InKinematicContext, CombatProfile, PreviousDirection, IntentDirection, PhysicalReversalAngle, &PivotReferenceDirection, &PivotReferenceReversalAngle, &bUsingPivotIntentTransition, &PivotIntentTransitionRevisionAge](const TCHAR* Reason)
+	const auto LogRejectedPivot = [this, &AuthContext, &InKinematicContext, CombatProfile, PreviousDirection, IntentDirection, PhysicalReversalAngle, PivotGroundSpeed, bUsingSemanticPivotKinematicCapture](const TCHAR* Reason)
 	{
 		// One line per input-intent revision: useful for a real key/analog edge,
 		// without turning the locomotion update into a per-frame trace.
@@ -653,18 +682,20 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 
 		LastLoggedPivotRejectionMoveIntentRevision = MoveIntentRevision;
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("CombatStrafeRunPivotRejected Actor=%s Reason=%s IntentRev=%d Profile=%s Enabled=%s Local=%s Combat=%s Rotation=%d Gait=%d Input=%s Speed=%.1f/%.1f PhysicalPrev=(%.2f,%.2f) PivotRef=(%.2f,%.2f) Intent=(%.2f,%.2f) PhysicalAngle=%.1f RefAngle=%.1f/%.1f Transition=%s Age=%d RawInput=(%.2f,%.2f) StableInput=(%.2f,%.2f) Velocity=%s IntentValid=%s Air=%s Jump=%s Landing=%s Consumed=%s"),
+			TEXT("CombatStrafeRunPivotRejected Actor=%s Reason=%s IntentRev=%d Profile=%s Enabled=%s Local=%s Combat=%s Rotation=%d Gait=%d Input=%s Speed=%.1f/%.1f ActualSpeed=%.1f SemanticCapture=%s Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) Angle=%.1f/%.1f RawInput=(%.2f,%.2f) SemanticInput=(%.2f,%.2f) SemanticPending=%s StableInput=(%.2f,%.2f) Velocity=%s IntentValid=%s Air=%s Jump=%s Landing=%s Consumed=%s"),
 			*GetNameSafe(GetOwner()), Reason, MoveIntentRevision, *GetNameSafe(CombatProfile),
 			CombatProfile && CombatProfile->bEnableCombatStrafeRunPivot ? TEXT("true") : TEXT("false"),
 			ShouldUseLocalInputState() ? TEXT("true") : TEXT("false"),
 			AuthContext.bCombatMode ? TEXT("true") : TEXT("false"),
 			static_cast<int32>(AuthContext.RotationMode), static_cast<int32>(AuthContext.GaitIntent),
 			InKinematicContext.bHasMoveInput ? TEXT("true") : TEXT("false"),
-			InKinematicContext.GroundSpeed, DerivedPivotMinSpeed,
-			PreviousDirection.X, PreviousDirection.Y, PivotReferenceDirection.X, PivotReferenceDirection.Y,
-			IntentDirection.X, IntentDirection.Y, PhysicalReversalAngle, PivotReferenceReversalAngle, DerivedPivotAngleThreshold,
-			bUsingPivotIntentTransition ? TEXT("true") : TEXT("false"), PivotIntentTransitionRevisionAge,
+			PivotGroundSpeed, DerivedPivotMinSpeed, InKinematicContext.GroundSpeed,
+			bUsingSemanticPivotKinematicCapture ? TEXT("true") : TEXT("false"),
+			PreviousDirection.X, PreviousDirection.Y, IntentDirection.X, IntentDirection.Y,
+			PhysicalReversalAngle, DerivedPivotAngleThreshold,
 			CachedMoveInput.X, CachedMoveInput.Y,
+			CachedSemanticMoveIntentInput.X, CachedSemanticMoveIntentInput.Y,
+			bSemanticMoveIntentUpdatePending ? TEXT("true") : TEXT("false"),
 			LastStableMoveInputDirection.X, LastStableMoveInputDirection.Y,
 			InKinematicContext.HorizontalVelocity.IsNearlyZero() ? TEXT("zero") : TEXT("valid"),
 			InKinematicContext.MoveWorldDirection.IsNearlyZero() ? TEXT("zero") : TEXT("valid"),
@@ -675,137 +706,103 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 
 	if (!CombatProfile)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NoCombatProfile"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (!CombatProfile->bEnableCombatStrafeRunPivot)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("ProfileDisabled"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (!ShouldUseLocalInputState())
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NotLocalOwner"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (!AuthContext.bCombatMode)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NotCombat"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (AuthContext.RotationMode != EProject_JLocomotionRotationMode::Strafe)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NotStrafe"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (AuthContext.GaitIntent != EProject_JLocomotionGaitIntent::Run)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NotRun"));
+		ConsumeSemanticPivotKinematicCapture();
+		return false;
+	}
+	if (bSemanticMoveIntentUpdatePending)
+	{
+		// A Boolean direction edge is being coalesced in the input component's
+		// post-update tick. Evaluate only the completed chord.
 		return false;
 	}
 	if (!InKinematicContext.bHasMoveInput)
 	{
-		if (InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
-		{
-			ClearPivotIntentTransition();
-		}
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
-	if (InKinematicContext.GroundSpeed < DerivedPivotMinSpeed)
+	if (PivotGroundSpeed < DerivedPivotMinSpeed)
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("BelowMinimumSpeed"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (InKinematicContext.HorizontalVelocity.IsNearlyZero())
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NoActualVelocity"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
-	if (InKinematicContext.MoveWorldDirection.IsNearlyZero())
+	if (IntentDirection.IsNearlyZero())
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("NoMoveIntent"));
+		ConsumeSemanticPivotKinematicCapture();
+		return false;
+	}
+	const FVector2D CurrentPivotIntent = bHasSemanticMoveIntentInput
+		? CachedSemanticMoveIntentInput
+		: CachedMoveInput;
+	if (!IsCardinalPivotIntent(CurrentPivotIntent) ||
+		!bHasPreviousStableMoveInputDirection ||
+		!IsCardinalPivotIntent(PreviousStableMoveInputDirection))
+	{
+		LogRejectedPivot(TEXT("DiagonalIntentUnsupported"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (bIsInAir || bIsJumping || bIsFallOffStart || IsLandingStateActive())
 	{
-		ClearPivotIntentTransition();
 		LogRejectedPivot(TEXT("AirOrLanding"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 	if (MoveIntentRevision == LastConsumedPivotMoveIntentRevision)
 	{
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 
-	const int32 MaxTransitionInputRevisions = FMath::Max(CombatProfile->CombatStrafePivotTransitionMaxInputRevisions, 1);
-	const float TransitionCaptureAngle = FMath::Max(
-		CombatProfile->StrafeInputTurnReselectAngle,
-		CombatProfile->StrafeDirectionHysteresisDegrees);
-	if (bHasPivotIntentTransition)
+	if (PhysicalReversalAngle < DerivedPivotAngleThreshold)
 	{
-		PivotIntentTransitionRevisionAge = FMath::Max(MoveIntentRevision - PivotIntentTransitionStartRevision, 0);
-		if (PivotIntentTransitionRevisionAge > MaxTransitionInputRevisions)
-		{
-			ClearPivotIntentTransition();
-		}
-		else
-		{
-			PivotReferenceDirection = PivotIntentTransitionPreviousMovementDirection;
-			bUsingPivotIntentTransition = true;
-			PivotReferenceReversalAngle = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(
-				FVector::DotProduct(PivotReferenceDirection, IntentDirection), -1.0f, 1.0f)));
-		}
-	}
-	if (!bHasPivotIntentTransition &&
-		PhysicalReversalAngle >= TransitionCaptureAngle &&
-		PhysicalReversalAngle < DerivedPivotAngleThreshold)
-	{
-		// A keyboard diagonal is often emitted as a short sequence of valid 2D
-		// action vectors. Capture the physical travel direction once, then let the
-		// next small number of semantic intent edges complete that same reversal.
-		bHasPivotIntentTransition = true;
-		PivotIntentTransitionStartRevision = MoveIntentRevision;
-		PivotIntentTransitionPreviousMovementDirection = PreviousDirection;
-		PivotReferenceDirection = PreviousDirection;
-		PivotReferenceReversalAngle = PhysicalReversalAngle;
-		bUsingPivotIntentTransition = true;
-		PivotIntentTransitionRevisionAge = 0;
-	}
-
-	// A diagonal key replacement can leave a short-lived reference direction
-	// behind while CharacterMovement has already turned through a real reversal.
-	// The reference exists only to complete that one semantic diagonal transition;
-	// it must never mask a current physical 135-180 degree reversal. Prefer the
-	// current velocity direction in that case, then consume the transition below.
-	if (PhysicalReversalAngle >= DerivedPivotAngleThreshold)
-	{
-		PivotReferenceDirection = PreviousDirection;
-		PivotReferenceReversalAngle = PhysicalReversalAngle;
-		bUsingPivotIntentTransition = false;
-		PivotIntentTransitionRevisionAge = 0;
-	}
-
-	if (PivotReferenceReversalAngle < DerivedPivotAngleThreshold)
-	{
-		LogRejectedPivot(bUsingPivotIntentTransition
-			? TEXT("TransitionAwaitingFinalIntent")
-			: TEXT("AngleBelowThreshold"));
+		LogRejectedPivot(TEXT("AngleBelowThreshold"));
+		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
 
 	LastConsumedPivotMoveIntentRevision = MoveIntentRevision;
-	LatchedPivotPreviousMovementDirection = PivotReferenceDirection;
+	LatchedPivotPreviousMovementDirection = PreviousDirection;
 	LatchedPivotMoveIntentDirection = IntentDirection;
-	ClearPivotIntentTransition();
+	ConsumeSemanticPivotKinematicCapture();
 	++PivotRequestRevision;
 	if (PivotRequestRevision == 0)
 	{
@@ -814,12 +811,12 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 	{
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("CombatStrafeRunPivotAccepted Actor=%s IntentRev=%d PivotRev=%d Speed=%.1f Min=%.1f Angle=%.1f Threshold=%.1f Transition=%s Age=%d Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) RawInput=(%.2f,%.2f) StableInput=(%.2f,%.2f)"),
+			TEXT("CombatStrafeRunPivotAccepted Actor=%s IntentRev=%d PivotRev=%d Speed=%.1f Min=%.1f Angle=%.1f Threshold=%.1f Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) RawInput=(%.2f,%.2f) SemanticInput=(%.2f,%.2f) StableInput=(%.2f,%.2f)"),
 			*GetNameSafe(GetOwner()), MoveIntentRevision, PivotRequestRevision,
-			InKinematicContext.GroundSpeed, DerivedPivotMinSpeed, PivotReferenceReversalAngle, DerivedPivotAngleThreshold,
-			bUsingPivotIntentTransition ? TEXT("true") : TEXT("false"), PivotIntentTransitionRevisionAge,
-			PivotReferenceDirection.X, PivotReferenceDirection.Y, IntentDirection.X, IntentDirection.Y,
+			PivotGroundSpeed, DerivedPivotMinSpeed, PhysicalReversalAngle, DerivedPivotAngleThreshold,
+			PreviousDirection.X, PreviousDirection.Y, IntentDirection.X, IntentDirection.Y,
 			CachedMoveInput.X, CachedMoveInput.Y,
+			CachedSemanticMoveIntentInput.X, CachedSemanticMoveIntentInput.Y,
 			LastStableMoveInputDirection.X, LastStableMoveInputDirection.Y);
 	}
 	return true;
@@ -1118,6 +1115,11 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocalMoveIntentSnapshot(const
 		}
 	}
 
+	if (bHasLastStableMoveInputDirection)
+	{
+		PreviousStableMoveInputDirection = LastStableMoveInputDirection;
+		bHasPreviousStableMoveInputDirection = true;
+	}
 	LastStableMoveInputDirection = StableDirection;
 	bHasLastStableMoveInputDirection = true;
 	++MoveIntentRevision;

@@ -105,8 +105,27 @@ direction change instead releases directly to Cycle Motion Matching and forces
 one reselect. Enhanced Input applies non-zero movement intent immediately so the
 Pivot sees the high-speed reversal before CharacterMovement decelerates; only a
 Completed/Canceled Stop is deferred until all mappings in that input update have
-settled. Multi-key diagonal input uses a bounded semantic input-revision
-transition, not a time bridge, so only its final qualifying reversal can Pivot.
+settled. Keyboard chord semantics are supplied separately by the optional
+Boolean `IA_MoveIntent_Forward`, `Backward`, `Left`, and `Right` actions: their
+IMC mappings, rather than C++ key checks, define the device-independent meaning.
+They are an all-or-nothing optional set: a class/profile must provide all four
+actions to enable semantic chord handling; otherwise Project_J retains the
+existing `IA_Move` Axis2D presentation fallback. This prevents a partially
+configured input profile from publishing a false one-axis intent.
+Those edges are coalesced once after the Enhanced Input update, while `IA_Move`
+continues to drive gameplay immediately. When opposite semantic directions are
+held, the most recently pressed direction wins for that axis. An unmapped analog
+device continues to use the existing Axis2D intent fallback.
+Because the semantic snapshot is finalized after the input callbacks, Project_J
+also latches the actual horizontal velocity direction and speed at the first
+semantic edge. That single revision consumes the latch during Pivot evaluation;
+it is not a delay window and cannot replay a stale reversal after a real Stop.
+An in-progress semantic update is coalesced before presentation consumes it; a
+completed semantic snapshot with no held direction clears it as a genuine Stop.
+Run Pivot is intentionally cardinal-only: both the prior and new stable input
+intent must be Forward, Backward, Left, or Right. Diagonal direction changes
+remain the responsibility of Combat-Strafe Cycle Motion Matching and its normal
+Start/Stop presentation.
 Each accepted Pivot request independently latches its foot from current contact,
 then phase history, then the authored fallback; a replacement Pivot never
 inherits the previous Pivot's foot variant. Air, Land and a full-body montage
