@@ -219,6 +219,15 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
 	bUseMultiThreadedAnimationUpdate = true;
 
+	FootPlacementPlantSettingsDefault.DistanceToGround = 0.0f;
+	FootPlacementPlantSettingsDefault.MaxExtensionRatio = 0.95f;
+	FootPlacementPlantSettingsDefault.MinExtensionRatio = 0.1f;
+	FootPlacementPlantSettingsDefault.AnkleTwistReduction = 0.75f;
+
+	FootPlacementPlantSettingsStops.DistanceToGround = 0.0f;
+	FootPlacementPlantSettingsStops.MaxExtensionRatio = 0.95f;
+	FootPlacementPlantSettingsStops.MinExtensionRatio = 0.1f;
+	FootPlacementPlantSettingsStops.AnkleTwistReduction = 0.75f;
 	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;
 	FootPlacementPlantSettingsStops.UnplantRadius = 25.0f;
 	FootPlacementPlantSettingsStops.UnplantAngle = 35.0f;
