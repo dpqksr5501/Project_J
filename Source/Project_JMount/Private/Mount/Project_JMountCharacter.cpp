@@ -1,5 +1,7 @@
 #include "Mount/Project_JMountCharacter.h"
 
+#include "Animation/Project_JRiderAnimationProfile.h"
+#include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Camera/CameraComponent.h"
@@ -12,6 +14,8 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Interaction/Project_JInteractionTargetComponent.h"
 #include "Net/UnrealNetwork.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJMountCharacter, Log, All);
 
 AProject_JMountCharacter::AProject_JMountCharacter()
 {
@@ -48,13 +52,18 @@ UAbilitySystemComponent* AProject_JMountCharacter::GetAbilitySystemComponent() c
 bool AProject_JMountCharacter::CanInteract_Implementation(ACharacter* Interactor) const { return CanMountRider(Interactor); }
 void AProject_JMountCharacter::Interact_Implementation(ACharacter* Interactor) { TryMountRider(Interactor); }
 
+bool AProject_JMountCharacter::ShouldUseRiderHandIK() const
+{
+	return bEnableRiderHandIK && (!RiderAnimationProfile || RiderAnimationProfile->bUseHandIK);
+}
+
 bool AProject_JMountCharacter::GetRiderHandIKTargetsWorld(FVector& OutLeftTarget, FVector& OutRightTarget) const
 {
 	OutLeftTarget = FVector::ZeroVector;
 	OutRightTarget = FVector::ZeroVector;
 
 	const USkeletalMeshComponent* MountMesh = GetMesh();
-	if (!bEnableRiderHandIK || !MountMesh ||
+	if (!ShouldUseRiderHandIK() || !MountMesh ||
 		!MountMesh->DoesSocketExist(RiderLeftHandSocketName) ||
 		!MountMesh->DoesSocketExist(RiderRightHandSocketName))
 	{
@@ -109,26 +118,70 @@ bool AProject_JMountCharacter::ApplyMountDamage(float Damage)
 
 bool AProject_JMountCharacter::CanMountRider(const ACharacter* NewRider) const
 {
-	if (!NewRider || Rider || Health <= 0.0f || !NewRider->GetController())
+	return GetMountEligibilityFailure(NewRider) == EProject_JMountEligibilityFailure::None;
+}
+
+EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityFailure(const ACharacter* NewRider) const
+{
+	if (!NewRider)
 	{
-		return false;
+		return EProject_JMountEligibilityFailure::InvalidRider;
+	}
+	if (Rider)
+	{
+		return EProject_JMountEligibilityFailure::Occupied;
+	}
+	if (Health <= 0.0f || MountState != EProject_JMountState::Unmounted)
+	{
+		return EProject_JMountEligibilityFailure::MountUnavailable;
+	}
+	if (!NewRider->GetController())
+	{
+		return EProject_JMountEligibilityFailure::MissingController;
 	}
 
 	if (const UProject_JMountComponent* MountComponent = NewRider->FindComponentByClass<UProject_JMountComponent>())
 	{
 		if (MountComponent->IsMounted())
 		{
-			return false;
+			return EProject_JMountEligibilityFailure::AlreadyMounted;
 		}
 	}
 
-	return FVector::DistSquared(NewRider->GetActorLocation(), GetActorLocation()) <= FMath::Square(MountInteractionDistance);
+	if (const IAbilitySystemInterface* AbilityOwner = Cast<IAbilitySystemInterface>(NewRider))
+	{
+		if (const UAbilitySystemComponent* AbilitySystemComponent = AbilityOwner->GetAbilitySystemComponent())
+		{
+			FGameplayTagContainer RiderTags;
+			AbilitySystemComponent->GetOwnedGameplayTags(RiderTags);
+			const EProject_JMountEligibilityFailure GameplayFailure =
+				Project_J::Mount::EvaluateRiderGameplayTags(RiderTags);
+			if (GameplayFailure != EProject_JMountEligibilityFailure::None)
+			{
+				return GameplayFailure;
+			}
+		}
+	}
+
+	return FVector::DistSquared(NewRider->GetActorLocation(), GetActorLocation()) <= FMath::Square(MountInteractionDistance)
+		? EProject_JMountEligibilityFailure::None
+		: EProject_JMountEligibilityFailure::TooFar;
 }
 
 bool AProject_JMountCharacter::TryMountRider(ACharacter* NewRider)
 {
-	if (!HasAuthority() || !CanMountRider(NewRider))
+	if (!HasAuthority())
 	{
+		return false;
+	}
+
+	const EProject_JMountEligibilityFailure EligibilityFailure = GetMountEligibilityFailure(NewRider);
+	if (EligibilityFailure != EProject_JMountEligibilityFailure::None)
+	{
+		UE_LOG(LogProjectJMountCharacter, Verbose, TEXT("Mount request rejected. Mount=%s Rider=%s Failure=%s"),
+			*GetNameSafe(this),
+			*GetNameSafe(NewRider),
+			*UEnum::GetValueAsString(EligibilityFailure));
 		return false;
 	}
 

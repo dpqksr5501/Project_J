@@ -27,6 +27,7 @@ public:
 
 	// Combat States
 	FGameplayTag State_CombatMode;
+	FGameplayTag State_CombatTransition;
 	FGameplayTag State_Attacking;
 	FGameplayTag State_Dodging;
 	FGameplayTag State_HitReacting;

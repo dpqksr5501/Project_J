@@ -16,6 +16,7 @@ Project_JCore
 Project_JMount
   ├─ Project_JMountCharacter / Project_JMountComponent
   ├─ Project_JFlyingMountCharacter
+  ├─ RiderAnimationProfile (shared rider presentation policy)
   ├─ Mount ASC and MountAttributeSet
   ├─ Mount camera components
   └─ Common mount AnimInstance classes
@@ -23,6 +24,7 @@ Project_JMount
 Project_JCharacter
   ├─ Player input bridge and server interaction request
   ├─ Inventory mount-item use bridge
+  ├─ MountedAnimationLayerComponent (client-side async layer linking)
   └─ Mount item definition
 ```
 
@@ -112,9 +114,100 @@ The mount ASC receives replicated loose tags for the protected phases: `State.Mo
 
 ## Rider animation and hand IK
 
+### Scalable MMORPG content boundary
+
+Every concrete mount selects a small `UProject_JRiderAnimationProfile`. Multiple
+mounts with the same rider behavior should share the same profile (for example,
+horse, elk, and wolf can all use a ground-riding profile). The profile contains:
+
+- a soft class reference to the AnimBP implementing `MountedLocomotion`;
+- hierarchical gameplay tags used to select pose families/features inside that layer;
+- hand-IK policy;
+- the profile-specific transition blend duration.
+
+`UProject_JMountedAnimationLayerComponent` is the only runtime owner of the
+player's mounted linked layer. It reacts to `MountComponent.OnMountChanged`,
+does no ticking, skips dedicated servers, discards stale async-load completions,
+and keeps a one-entry preload cache for the player's active or summoned mount.
+`SummonedMount` begins early preloading only for the locally controlled player;
+simulated proxies wait for the actual replicated mount event so a crowded area
+does not preload every remote player's idle summon. A missing or loading external layer safely leaves the
+master AnimBP's `MountedLocomotion` passthrough implementation active.
+
+Mounting and combat are mutually exclusive. `AProject_JMountCharacter` evaluates
+a stable `EProject_JMountEligibilityFailure` on both interaction queries and the
+authoritative server request. `State.CombatMode`, `State.Combat.Transition`,
+attack, dodge, hit-react, and death tags reject mounting. The combat transition
+tag closes the draw-montage window before the persistent combat GameplayEffect
+has applied its tag. Conversely, the player's combat-toggle guard rejects combat
+entry while `State.Mounted` is active. The server always repeats eligibility
+checks, so a stale client interaction prompt cannot bypass the policy.
+
+The profile is static content referenced by the replicated mount class, so its
+selection does not add per-frame or per-character network state. Dynamic mount
+state remains server-authoritative and already replicated by the mount actor.
+The player animation proxy copies profile tags and scalar policy into its
+game-thread snapshot before worker-thread evaluation; AnimGraph code must not
+poll the mount actor or profile object directly.
+
+Recommended content topology:
+
+```text
+ABP_Player_Master
+  └─ one MountedLocomotion linked-layer slot
+       ├─ generic ABP_Player_Mount shared by similar profiles
+       └─ specialized rider layer only when graph logic truly differs
+
+DA_RiderProfile_Ground
+  ├─ Layer = ABP_Player_Mount
+  └─ Tags = Animation.Mount.Pose.Ground
+
+DA_RiderProfile_Flying
+  ├─ Layer = ABP_Player_Mount (or a specialized flying rider layer)
+  └─ Tags = Animation.Mount.Pose.Flying
+```
+
+Do not branch on concrete Blueprint classes in `ABP_Player_Mount`. Add or reuse
+a profile/tag instead. This keeps the master graph fixed as the mount catalog
+grows and prevents an enum entry per shop item or cosmetic variant.
+
 The player `UProject_JCharacterAnimInstance` now publishes a mount snapshot through its animation proxy.  It includes mounted state, mount speed, vertical speed, flying/gliding state, and optional left/right hand targets in the player mesh's component space.  The snapshot is collected on the game thread before worker-thread AnimGraph evaluation, so it is safe to use with the project's multi-threaded animation update.
 
-While mounted, player Motion Matching trajectory updates and searches are disabled.  The player ABP should select a separate mounted locomotion layer, bypassing foot placement, leg IK, aim offsets, and pose history for that layer.  This avoids evaluating ground-only systems for an attached rider and also prevents attached-player velocity from driving an incorrect locomotion pose.
+While mounted, player Motion Matching trajectory updates and searches are disabled. The master selects `OnFoot` or `Mounted` through `Blend Poses by EProject_JAnimationLocomotionMode`. The mounted branch contains one `MountedLocomotion` linked layer. A linked rider layer returns its authored full-body pose; the master implementation passes through `BasePose` whenever no rider layer is linked.
+
+### Full-body locomotion contexts
+
+`EProject_JAnimationLocomotionMode` is the stable, coarse full-body context
+contract: `OnFoot`, `Mounted`, `Swimming`, `Vehicle`, and `Transformed`. It is
+not a list of mount species or vehicle models. The player publishes it through
+the thread-safe animation snapshot, allowing the master AnimGraph to use a
+single top-level context router when those systems are authored.
+
+The recommended long-term topology is:
+
+```text
+OnFoot       -> shared Motion Matching / standing aim / foot presentation
+Mounted      -> MountedLocomotion Linked Layer -> RiderAnimationProfile -> rider AnimBP
+Swimming     -> Swimming full-body layer
+Vehicle      -> seat/vehicle full-body layer
+Transformed  -> transformation full-body layer
+```
+
+Mount species, flying/gliding, rider pose families, and vehicle seat roles stay
+inside the selected context's profile and AnimBP state machine. Combat, casting,
+hit reactions, emotes, and short actions remain overlays or montages rather
+than new locomotion contexts. The native animation snapshot now zeros shared
+standing aim, Foot Placement, and Leg IK outside `OnFoot`; specialized layers
+must author any equivalent procedural work themselves.
+
+`Swimming`, `Vehicle`, and `Transformed` are reserved contracts, not partially
+implemented features. Introduce one only when its gameplay system exists. That
+work requires both C++ and editor content: an authoritative context-selection
+condition in `GetAnimationLocomotionMode`, any replicated/source state the
+presentation needs (for example water state, vehicle seat role, steering, or
+transformation data), thread-safe snapshot getters, and a dedicated full-body
+AnimBP/Linked Layer connected to the matching context pin. Do not add empty
+master-graph branches or placeholder Blueprint casts before then.
 
 For a Wyvern Blueprint, create the following mesh sockets near the reins/neck handle and tune their position before enabling IK:
 
@@ -125,7 +218,7 @@ These are configurable as `Rider Left Hand Socket Name` and `Rider Right Hand So
 
 ### Current player ABP layout
 
-`ABP_Player` currently has a Motion Matching based locomotion path.  Its high-level flow is:
+`ABP_Humanoid_Master` currently has a Motion Matching based locomotion path. Its high-level flow is:
 
 ```text
 Pose Search Database
@@ -139,27 +232,23 @@ Use Cached Pose: Locomotion
   -> Mesh Space Aim Offset
   -> Local To Component
   -> Foot Placement
-  -> Leg IK
-  -> Component To Local
-  -> Pose History
-  -> Output Pose
+   -> Leg IK
+   -> Component To Local
+   -> Pose History
+   -> Blend Poses by EProject_JAnimationLocomotionMode : Default Pose
+
+Use Cached Pose: Locomotion
+   -> MountedLocomotion Linked Anim Layer
+   -> Blend Poses by EProject_JAnimationLocomotionMode : Mounted Pose
+
+Get Thread Safe Locomotion Mode
+   -> Blend Poses by EProject_JAnimationLocomotionMode : Active Enum Value
+
+Blend Poses by EProject_JAnimationLocomotionMode
+   -> Output Pose
 ```
 
-The lower path is intentionally left unchanged for an on-foot player.  It should not be reused directly for a rider: attached-player trajectory, foot planting, leg IK, and standing aim offsets all describe the wrong motion while seated on a mount.
-
-### Required locomotion-layer selection in ABP_Player
-
-Create separate `OnFootLocomotion` and `MountedLocomotion` Anim Layers.  `ABP_Player` remains the composition graph: select the full-body layer near the root with `Blend Poses by Enum`, using `GetThreadSafeLocomotionMode`.
-
-```text
-OnFootLocomotion Layer ---------------------- OnFoot
-MountedLocomotion Layer --------------------- Mounted
-Swimming / Vehicle / Transformed Layers ----- future entries
-                                                  Blend Poses by Enum -> action slots -> Output Pose
-Active Enum: GetThreadSafeLocomotionMode
-```
-
-The current Motion Matching / Aim Offset / Foot Placement / Leg IK / Pose History graph is the body of `OnFootLocomotion`.  It is not evaluated in `MountedLocomotion`.
+The on-foot chain is the `Default Pose`; its cached locomotion pose is the mounted layer's `BasePose` fallback. A specialized rider layer may ignore that input and return its own full-body pose, as `ABP_Rider_Dragon` does. Use the enum only for coarse full-body contexts, never for a concrete mount Blueprint, species, or cosmetic variant.
 
 `MountedLocomotion` for the current imported idle animation should be:
 
@@ -192,22 +281,31 @@ Only `ANIM_Rider_Idle` is needed for the first test.  Do not make a second State
 | MountedGlide | `MountedIsGliding` |
 | Mount/Dismount transition | Explicit replicated mount state or montage notification |
 
-`GetAnimationLocomotionMode` is a Blueprint-native extension point on the player.  Its default result is replicated mount state (`OnFoot` or `Mounted`).  Future swimming, vehicle, or transformation systems may override it in their player Blueprint or native subclass.  The current code intentionally exposes mounted speed and flight state now, so adding rider states later does not require player-input polling or new replication rules.
+The current code intentionally exposes mounted speed and flight state now, so adding rider states later does not require player-input polling or new replication rules.
 
-### Optional linked mounted AnimBP
+### Linked mounted AnimBP
 
-The initial implementation can use `MountedLocomotion` as a self layer inside `ABP_Player`.  When rider logic grows, create a separate `ABP_Player_Mounted` and assign it to `Mounted Animation Layer Class` in the player Blueprint defaults.  The player character listens to the replicated `MountComponent.OnMountChanged` event and calls `LinkAnimClassLayers` only while mounted; it unlinks the class on dismount and end play.  This is event-driven rather than tick-driven.
+Assign the rider layer on each shared `RiderAnimationProfile`, then assign that
+profile on the concrete mount Blueprint. `Fallback Mounted Animation Layer
+Class` remains on the player for the legacy/test mount path; production mount
+content should configure the Rider Profile instead.
 
-For the external class to override the master layer, both `ABP_Player` and `ABP_Player_Mounted` must implement the same Animation Layer Interface and expose the layer selected by the master's `Linked Anim Layer` node.  If no class is assigned, or the layer cannot be linked yet, the self-layer implementation remains the safe fallback during setup.
+The external class and `ABP_Humanoid_Master` must implement the same Animation Layer
+Interface and expose the layer selected by the master's `Linked Anim Layer`
+node. Combat layers are always suppressed while mounted, so mounted and combat
+classes never compete for linked interface functions. If no profile layer is
+assigned or an async load has not finished, the master passthrough layer
+remains the safe fallback.
 
 ## Validation checklist
 
 1. Place `BP_Wyvern` in a level and confirm its mesh has `RiderSocket`.
-2. In PIE, approach the mount and press F; verify the player possesses the Wyvern and the camera follows the mount.
-3. Verify ground movement and camera rotation first.
-4. Press Space to begin flight, hold Space to climb, and hold Left Control to descend.
-5. Confirm the mount switches back to ground movement when it reaches the terrain.
-6. Press the configured dismount interaction to return safely to the ground.
+2. Create or reuse a Rider Animation Profile, assign its linked layer/tags, and set it on `BP_Wyvern`.
+3. In PIE, approach the mount and press F; verify the player possesses the Wyvern and the camera follows the mount.
+4. Verify ground movement and camera rotation first.
+5. Press Space to begin flight, hold Space to climb, and hold Left Control to descend.
+6. Confirm the mount switches back to ground movement when it reaches the terrain.
+7. Press the configured dismount interaction to return safely to the ground.
 
 ## Planned extensions
 

@@ -11,7 +11,7 @@ Class + permanent advancement + equipped item
   -> ABP_Humanoid_Master
 ```
 
-`BP_Player` is a test pawn and is not part of the production job hierarchy. Promote the tested common graph into a new production asset named `ABP_Humanoid_Master`; do not make the test asset a dependency. The master owns shared Motion Matching, montage slots, aim, foot/leg IK, pose history, and mount selection. Every production job owns a thin Blueprint pair such as `BP_GreatswordCharacter` and `ABP_Greatsword_Layers`. The job layer supplies the full-body armed idle, directional BlendSpace, and—when authored—armed jump/fall/landing poses. Shared C++ character state remains available through `AProject_JPlayerCharacter` and `UProject_JCharacterAnimInstance`.
+`BP_Player` is a test pawn and is not part of the production job hierarchy. `ABP_Humanoid_Master` owns shared Motion Matching, montage slots, aim, foot/leg IK, pose history, and mount selection. Every production job owns a thin Blueprint pair such as `BP_GreatswordCharacter` and `ABP_Greatsword_Layers`. The job layer supplies the full-body armed idle, directional BlendSpace, and—when authored—armed jump/fall/landing poses. Shared C++ character state remains available through `AProject_JPlayerCharacter` and `UProject_JCharacterAnimInstance`.
 
 ## Job Blueprint Pattern
 
@@ -23,15 +23,15 @@ AProject_JPlayerCharacter
        -> BP_GreatswordCharacter
 ```
 
-`BP_GreatswordCharacter` assigns the mesh, class/advancement data, `ABP_Humanoid_Master`, and the mounted layer class if needed. Its greatsword `WeaponAnimProfile` points to `ABP_Greatsword_Layers` through `CombatAnimationLayerClass`. It does not duplicate player input, GAS ownership, weapon presentation, or SSR validation. The native greatsword class stays empty until it needs genuine job rules such as charge, guard, counter, or weapon-length policy.
+`BP_GreatswordCharacter` assigns the mesh, class/advancement data, and `ABP_Humanoid_Master`. Its greatsword `WeaponAnimProfile` points to `ABP_Greatsword_Layers` through `CombatAnimationLayerClass`. Mount presentation is selected by the mounted actor's `RiderAnimationProfile`, never by a job Blueprint. It does not duplicate player input, GAS ownership, weapon presentation, or SSR validation. The native greatsword class stays empty until it needs genuine job rules such as charge, guard, counter, or weapon-length policy.
 
 ## Editor Asset Setup
 
-Keep `BP_Player` and `ABP_Player` as test assets. Duplicate the tested common AnimGraph into a new production asset named `ABP_Humanoid_Master`; future common changes go there, not into each job graph.
+Keep `BP_Player` and `ABP_Player` as test assets. New production content uses `ABP_Humanoid_Master`; future common changes go there, not into each job graph.
 
 1. Create `ALI_HumanoidCombat` with `FullBody`, `UpperBody`, and `IK` layers in a non-default shared group.
 2. Add the interface to `ABP_Humanoid_Master`. Its default layer implementations provide the non-combat Motion Matching fallback, generic upper-body behavior, and common foot/leg IK.
-3. Preserve the existing `MountedLocomotion` interface and mount blend in the master. All humanoid job meshes using the master automatically receive this common mount presentation path.
+3. Add `ALI_HumanoidMount` and place one `MountedLocomotion` Linked Anim Layer on the `Mounted` input of the master's full-body context blend. All humanoid job meshes using the master automatically receive this common mount presentation path.
 4. Create `ABP_Greatsword_Layers` on the compatible skeleton, add `ALI_HumanoidCombat`, and implement only the greatsword-specific layers. `FullBody` contains armed idle, combat movement BlendSpace, and armed airborne poses; `UpperBody` and `IK` are implemented only when the greatsword needs them.
 5. Create `BP_GreatswordCharacter` from `AProject_JGreatswordCharacter`, set its Mesh Anim Class to `ABP_Humanoid_Master`, and configure its class/advancement assets.
 6. Set `DA_WeaponProfile_Greatsword.CombatAnimationLayerClass` to `ABP_Greatsword_Layers`. At runtime the combat animation component links it on combat entry, and unlinks it on combat exit, weapon change, or mounting.
@@ -65,7 +65,7 @@ This prevents the procedural Leg IK solver from overwriting authored full-body p
 
 When entering combat with a draw/equip montage, the job combat layer is linked as soon as that montage starts, while `State.CombatMode` remains pending until the montage completes. This makes the armed idle the montage's blend-out pose and prevents a one-frame fallback to base locomotion. If the intro is cancelled, the prelinked layer is immediately removed unless combat mode is already active.
 
-Weapon profiles keep their combat layer as a soft class reference. `UProject_JCombatAnimationLayerComponent` requests an asynchronous preload when the character starts and whenever the equipped profile changes, then retains the resolved class in a cache. If a player enters combat before the request completes, the component performs the one safe synchronous fallback needed to guarantee a valid linked layer. Dedicated servers skip this presentation-only preload.
+Weapon profiles keep their combat layer as a soft class reference. `UProject_JCombatAnimationLayerComponent` requests an asynchronous preload for the locally controlled player's equipped profile and retains the resolved class in a one-entry cache. Inactive simulated proxies do not preload merely because their style replicated; they stream the layer only when combat presentation becomes active. If combat begins before loading finishes, the master AnimBP's safe default layer remains active and the requested class is linked by the completion callback. Combat input never performs a synchronous AnimBP load. Dedicated servers skip this presentation-only path entirely, and stale/cancelled requests cannot replace a newer weapon style.
 
 The layer component exposes an explicit presentation state: `Inactive`, `PreparingCombat`, `CombatActive`, or `SuppressedByMount`. This is intentionally separate from authoritative gameplay state; it establishes mount > intro > active > inactive priority without making an entering montage grant combat gameplay privileges early.
 

@@ -18,6 +18,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
+#include "Animation/Project_JRiderAnimationProfile.h"
 #include "Animation/AnimationAsset.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchLibrary.h"
@@ -1428,7 +1429,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootTranslationRadius(
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDisableLegIK() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	return Data.Air.bIsInAir;
+	return Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot || Data.Air.bIsInAir;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerLegIKAlpha() const
@@ -1579,9 +1580,30 @@ FVector UProject_JCharacterAnimInstance::GetThreadSafeMountedRightHandTargetComp
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.RightHandTargetComponentSpace;
 }
 
+FGameplayTagContainer UProject_JCharacterAnimInstance::GetThreadSafeMountedAnimationTags() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.AnimationTags;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeMountedHasAnimationTag(FGameplayTag Tag) const
+{
+	return Tag.IsValid() &&
+		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.AnimationTags.HasTag(Tag);
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafeMountedTransitionBlendTime() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Mount.TransitionBlendTime;
+}
+
 EProject_JAnimationLocomotionMode UProject_JCharacterAnimInstance::GetThreadSafeLocomotionMode() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().LocomotionMode;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeUsesOnFootLocomotion() const
+{
+	return GetThreadSafeLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot;
 }
 
 FFootPlacementPlantSettings UProject_JCharacterAnimInstance::Get_FootPlacementPlantSettings() const
@@ -2829,7 +2851,15 @@ void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThre
 		return;
 	}
 
-	Data.Mount.bIsMounted = Data.LocomotionMode == EProject_JAnimationLocomotionMode::Mounted;
+	// This snapshot describes the physical rider/mount relation. It must not
+	// depend on the broader presentation context: a future vehicle context may
+	// still use the same attachment and rider hand-target contract.
+	Data.Mount.bIsMounted = true;
+	if (const UProject_JRiderAnimationProfile* RiderProfile = MountedMount->GetRiderAnimationProfile())
+	{
+		Data.Mount.AnimationTags = RiderProfile->AnimationTags;
+		Data.Mount.TransitionBlendTime = RiderProfile->TransitionBlendTime;
+	}
 	const FVector MountVelocity = MountedMount->GetVelocity();
 	Data.Mount.Speed = MountVelocity.Size2D();
 	Data.Mount.VerticalSpeed = MountVelocity.Z;
@@ -2854,9 +2884,13 @@ void UProject_JCharacterAnimInstance::FillMountThreadSafeData(FProject_JAnimThre
 
 void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const
 {
-	if (bHasAimData)
+	if (bHasAimData && Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot)
 	{
 		Data.Aim.AimOffsetAlpha = CalculateAimOffsetAlpha(Data);
+	}
+	else
+	{
+		Data.Aim.AimOffsetAlpha = 0.0f;
 	}
 
 	const UProject_JLocomotionProfile* Profile = GetLocomotionProfile();
@@ -2882,6 +2916,17 @@ void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThrea
 
 void UProject_JCharacterAnimInstance::FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const
 {
+	// Foot contact and standing-leg correction are valid only for the shared
+	// on-foot body provider. Mounted, swimming, vehicle, and transformed layers
+	// own any applicable procedural work inside their own linked AnimBP.
+	if (Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot)
+	{
+		Data.ProceduralIK.FullBodyMontageWeight = 0.0f;
+		Data.ProceduralIK.FootPlacementAlpha = 0.0f;
+		Data.ProceduralIK.LegIKAlpha = 0.0f;
+		return;
+	}
+
 	// Slot state belongs to UAnimInstance and is therefore sampled on the game
 	// thread here. The result is copied to the proxy before AnimGraph worker
 	// thread evaluation, avoiding an unsafe montage query from Blueprint.

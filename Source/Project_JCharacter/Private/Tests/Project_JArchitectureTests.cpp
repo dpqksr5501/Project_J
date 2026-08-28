@@ -8,7 +8,10 @@
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Animation/Project_JReplicatedJumpState.h"
+#include "Animation/Project_JRiderAnimationProfile.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
+#include "Components/Project_JCombatAnimationLayerComponent.h"
+#include "Components/Project_JMountedAnimationLayerComponent.h"
 #include "Combat/Project_JCombatCommandSet.h"
 #include "Combat/Project_JCombatHitValidation.h"
 #include "Equipment/Project_JEquipmentTypes.h"
@@ -17,6 +20,69 @@
 #include "Project_JMMOTypes.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JLocomotionAnimTypes.h"
+#include "Mount/Project_JMountTypes.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJMountedAnimationProfilePolicyTest,
+	"ProjectJ.Architecture.Animation.MountedProfilePolicy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJMountedAnimationProfilePolicyTest::RunTest(const FString& Parameters)
+{
+	const UProject_JRiderAnimationProfile* ProfileDefaults = GetDefault<UProject_JRiderAnimationProfile>();
+	TestNotNull(TEXT("Rider animation profile class default exists"), ProfileDefaults);
+	if (ProfileDefaults)
+	{
+		TestTrue(TEXT("Hand IK remains enabled for ordinary rider profiles"), ProfileDefaults->bUseHandIK);
+		TestTrue(TEXT("Profile transition blend cannot start negative"), ProfileDefaults->TransitionBlendTime >= 0.0f);
+	}
+
+	const UProject_JMountedAnimationLayerComponent* ComponentDefaults =
+		GetDefault<UProject_JMountedAnimationLayerComponent>();
+	TestFalse(TEXT("Mounted layer linking is event-driven and never ticks"),
+		ComponentDefaults->PrimaryComponentTick.bCanEverTick);
+	const UProject_JCombatAnimationLayerComponent* CombatLayerDefaults =
+		GetDefault<UProject_JCombatAnimationLayerComponent>();
+	TestFalse(TEXT("Combat layer linking is event-driven and never ticks"),
+		CombatLayerDefaults->PrimaryComponentTick.bCanEverTick);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJMountEligibilityGameplayPolicyTest,
+	"ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJMountEligibilityGameplayPolicyTest::RunTest(const FString& Parameters)
+{
+	using Project_J::Mount::EvaluateRiderGameplayTags;
+	const FProject_JGameplayTags& Tags = FProject_JGameplayTags::Get();
+	FGameplayTagContainer RiderTags;
+
+	TestEqual(TEXT("An idle rider has no gameplay-state rejection"),
+		EvaluateRiderGameplayTags(RiderTags), EProject_JMountEligibilityFailure::None);
+
+	RiderTags.AddTag(Tags.State_CombatMode);
+	TestEqual(TEXT("Combat mode rejects mounting"),
+		EvaluateRiderGameplayTags(RiderTags), EProject_JMountEligibilityFailure::RiderInCombat);
+
+	RiderTags.Reset();
+	RiderTags.AddTag(Tags.State_CombatTransition);
+	TestEqual(TEXT("Combat entry transition rejects mounting before persistent combat begins"),
+		EvaluateRiderGameplayTags(RiderTags), EProject_JMountEligibilityFailure::RiderInCombat);
+
+	RiderTags.Reset();
+	RiderTags.AddTag(Tags.State_Attacking);
+	TestEqual(TEXT("An action state rejects mounting even if the persistent combat tag is late"),
+		EvaluateRiderGameplayTags(RiderTags), EProject_JMountEligibilityFailure::RiderBusy);
+
+	RiderTags.Reset();
+	RiderTags.AddTag(Tags.State_Dead);
+	TestEqual(TEXT("Death has a stable, UI-readable rejection reason"),
+		EvaluateRiderGameplayTags(RiderTags), EProject_JMountEligibilityFailure::RiderDead);
+
+	return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FProjectJMotionMatchingSearchPolicyTest,

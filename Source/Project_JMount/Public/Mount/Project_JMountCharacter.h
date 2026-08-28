@@ -8,6 +8,7 @@
 #include "Project_JMountCharacter.generated.h"
 
 class ACharacter;
+class UProject_JRiderAnimationProfile;
 
 /**
  * Base class for controllable mounts. Create Blueprint children (for example
@@ -27,6 +28,10 @@ public:
 	virtual bool CanInteract_Implementation(ACharacter* Interactor) const override;
 	virtual void Interact_Implementation(ACharacter* Interactor) override;
 
+	/** Same deterministic checks used by interaction UI and the authoritative mount request. */
+	UFUNCTION(BlueprintPure, Category = "Mount|Eligibility")
+	EProject_JMountEligibilityFailure GetMountEligibilityFailure(const ACharacter* NewRider) const;
+
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	ACharacter* GetRider() const { return Rider; }
 
@@ -35,6 +40,14 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	EProject_JMountState GetMountState() const { return MountState; }
+
+	/** Presentation profile used by the humanoid rider, not by the mount mesh. */
+	UFUNCTION(BlueprintPure, Category = "Mount|Rider Animation")
+	const UProject_JRiderAnimationProfile* GetRiderAnimationProfile() const { return RiderAnimationProfile; }
+
+	/** Effective rider hand-IK policy, including the shared profile. */
+	UFUNCTION(BlueprintPure, Category = "Mount|Rider Animation")
+	bool ShouldUseRiderHandIK() const;
 
 	/** Resolves optional hand targets for the rider animation blueprint. */
 	UFUNCTION(BlueprintPure, Category = "Mount|Rider IK")
@@ -87,6 +100,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Rider IK")
 	bool bEnableRiderHandIK = true;
+
+	/**
+	 * Shared rider presentation data. Horse-like mounts should normally share one
+	 * profile instead of creating one profile or master-graph branch per mount.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Rider Animation")
+	TObjectPtr<UProject_JRiderAnimationProfile> RiderAnimationProfile = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount", meta = (ClampMin = "0.0"))
 	float MountInteractionDistance = 300.0f;

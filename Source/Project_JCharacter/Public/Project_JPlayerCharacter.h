@@ -36,6 +36,7 @@ class UProject_JAnimationUpdateCoordinatorComponent;
 class UProject_JCombatStateComponent;
 class UProject_JCombatIntroComponent;
 class UProject_JCombatAnimationLayerComponent;
+class UProject_JMountedAnimationLayerComponent;
 class UProject_JCombatHitValidationComponent;
 class UProject_JWeaponPresentationComponent;
 class UProject_JInventoryComponent;
@@ -141,16 +142,16 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JMountComponent> MountComponent = nullptr;
 
+	/** Owns async streaming and runtime linking for the single MountedLocomotion layer slot. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mount|Animation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JMountedAnimationLayerComponent> MountedAnimationLayerComponent = nullptr;
+
 	/** The one world mount currently summoned from this player's mount item. */
-	UPROPERTY(Replicated, Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_SummonedMount, Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class AProject_JMountCharacter> SummonedMount = nullptr;
 
-	/**
-	 * Optional linked AnimBP used to override the master's mounted locomotion
-	 * layer only while this avatar is riding. It must implement the Animation
-	 * Layer Interface selected by ABP_Player's Mounted linked-layer node.
-	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Layers", meta = (AllowPrivateAccess = "true"))
+	/** Compatibility default for legacy/test mount presentation. New mounts use RiderAnimationProfile. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Layers", meta = (AllowPrivateAccess = "true", DisplayName = "Fallback Mounted Animation Layer Class"))
 	TSoftClassPtr<UAnimInstance> MountedAnimationLayerClass;
 
 protected:
@@ -251,13 +252,14 @@ protected:
 
 	void CancelCombatIntroMontage();
 	void CancelCombatOutroMontage();
+	void SetCombatTransitionState(bool bTransitionActive);
 	void RefreshAbilitySystemDependentComponents();
 
 	UFUNCTION()
 	void OnMountChangedForAnimation(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount);
 
-	void RefreshMountedAnimationLayer();
-	void UnlinkMountedAnimationLayer();
+	UFUNCTION()
+	void OnRep_SummonedMount();
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -387,11 +389,13 @@ public:
 	bool AllowsStraightRunningTrajectoryRepair() const;
 
 	FORCEINLINE class UProject_JMountComponent* GetMountComponent() const { return MountComponent; }
+	FORCEINLINE UProject_JMountedAnimationLayerComponent* GetMountedAnimationLayerComponent() const { return MountedAnimationLayerComponent; }
+	const TSoftClassPtr<UAnimInstance>& GetFallbackMountedAnimationLayerClass() const { return MountedAnimationLayerClass; }
 
 	/**
-	 * Persistent full-body animation context. Blueprint subclasses may extend
-	 * this for swimming, vehicles, or transformations; brief actions belong in
-	 * montages instead of changing this mode.
+	 * Selects the persistent full-body context. Override only for a genuinely
+	 * different body provider such as swimming, a vehicle seat, or transformation;
+	 * temporary actions belong to montages or linked overlay layers.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "Animation|Locomotion")
 	EProject_JAnimationLocomotionMode GetAnimationLocomotionMode() const;
@@ -410,9 +414,6 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
-
-	/** Hard reference held only while the matching linked instance is active. */
-	TSubclassOf<UAnimInstance> LinkedMountedAnimationLayerClass;
 
 public:
 

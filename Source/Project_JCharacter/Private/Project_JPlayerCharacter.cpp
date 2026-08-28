@@ -36,6 +36,7 @@
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Components/Project_JCombatIntroComponent.h"
 #include "Components/Project_JCombatAnimationLayerComponent.h"
+#include "Components/Project_JMountedAnimationLayerComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatStateComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
@@ -181,6 +182,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	WeaponPresentationComponent = CreateDefaultSubobject<UProject_JWeaponPresentationComponent>(TEXT("WeaponPresentationComponent"));
 	CombatHitValidationComponent = CreateDefaultSubobject<UProject_JCombatHitValidationComponent>(TEXT("CombatHitValidationComponent"));
 	MountComponent = CreateDefaultSubobject<UProject_JMountComponent>(TEXT("MountComponent"));
+	MountedAnimationLayerComponent = CreateDefaultSubobject<UProject_JMountedAnimationLayerComponent>(TEXT("MountedAnimationLayerComponent"));
 }
 
 void AProject_JPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -216,7 +218,6 @@ void AProject_JPlayerCharacter::BeginPlay()
 	if (MountComponent)
 	{
 		MountComponent->OnMountChanged.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnMountChangedForAnimation);
-		RefreshMountedAnimationLayer();
 	}
 
 	ApplyLocomotionProfile();
@@ -243,7 +244,6 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 	{
 		MountComponent->OnMountChanged.RemoveDynamic(this, &AProject_JPlayerCharacter::OnMountChangedForAnimation);
 	}
-	UnlinkMountedAnimationLayer();
 	UnregisterCombatStateTagEvents();
 	if (CombatStateComponent)
 	{
@@ -340,13 +340,15 @@ void AProject_JPlayerCharacter::OnMountChangedForAnimation(AProject_JMountCharac
 {
 	if (NewMount)
 	{
-		// Mounted presentation has priority over any unfinished draw animation.
-		// Persistent combat-state removal remains a server gameplay policy.
+		// Authority rejects active/entering combat before this point. A completed
+		// combat exit may still be blending its cosmetic sheathe montage, so mounted
+		// presentation terminates either transition and normalizes the weapon socket.
 		CancelCombatIntroMontage();
+		CancelCombatOutroMontage();
+		MoveWeaponToSheathedSocket();
 		ApplyCombatRotationMode(false);
 	}
 
-	RefreshMountedAnimationLayer();
 	if (CombatAnimationLayerComponent)
 	{
 		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
@@ -354,53 +356,15 @@ void AProject_JPlayerCharacter::OnMountChangedForAnimation(AProject_JMountCharac
 	}
 }
 
-void AProject_JPlayerCharacter::RefreshMountedAnimationLayer()
+void AProject_JPlayerCharacter::OnRep_SummonedMount()
 {
-	if (GetNetMode() == NM_DedicatedServer)
+	// Do not make every client preload every remote player's merely summoned
+	// mount. Simulated proxies stream the rider layer only on the actual replicated
+	// mount event; the local owner gets the latency-hiding early preload.
+	if (IsLocallyControlled() && MountedAnimationLayerComponent)
 	{
-		return;
+		MountedAnimationLayerComponent->PreloadLayerForMount(SummonedMount);
 	}
-
-	const bool bShouldLinkMountedLayer = MountComponent && MountComponent->IsMounted() && !MountedAnimationLayerClass.IsNull();
-	if (!bShouldLinkMountedLayer)
-	{
-		UnlinkMountedAnimationLayer();
-		return;
-	}
-
-	UClass* LoadedLayerClass = MountedAnimationLayerClass.LoadSynchronous();
-	if (!LoadedLayerClass || !LoadedLayerClass->IsChildOf(UAnimInstance::StaticClass()))
-	{
-		UnlinkMountedAnimationLayer();
-		return;
-	}
-
-	if (LinkedMountedAnimationLayerClass == LoadedLayerClass)
-	{
-		return;
-	}
-
-	UnlinkMountedAnimationLayer();
-	if (USkeletalMeshComponent* PlayerMesh = GetMesh())
-	{
-		PlayerMesh->LinkAnimClassLayers(LoadedLayerClass);
-		LinkedMountedAnimationLayerClass = LoadedLayerClass;
-	}
-}
-
-void AProject_JPlayerCharacter::UnlinkMountedAnimationLayer()
-{
-	if (!LinkedMountedAnimationLayerClass)
-	{
-		return;
-	}
-
-	if (USkeletalMeshComponent* PlayerMesh = GetMesh())
-	{
-		PlayerMesh->UnlinkAnimClassLayers(LinkedMountedAnimationLayerClass);
-	}
-
-	LinkedMountedAnimationLayerClass = nullptr;
 }
 
 EProject_JAnimationLocomotionMode AProject_JPlayerCharacter::GetAnimationLocomotionMode_Implementation() const
@@ -464,6 +428,7 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 	const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * MountItem->SpawnDistance;
 	AProject_JMountCharacter* Mount = GetWorld()->SpawnActor<AProject_JMountCharacter>(MountClass, SpawnLocation, GetActorRotation(), SpawnParameters);
 	SummonedMount = Mount;
+	OnRep_SummonedMount();
 	if (Mount && MountItem->bAutoMountAfterSpawn)
 	{
 		Mount->TryMountRider(this);
@@ -682,6 +647,10 @@ void AProject_JPlayerCharacter::OnCombatStateTagChanged(const FGameplayTag Callb
 			// The gameplay tag is applied after the local draw montage. Clear the
 			// earlier cosmetic transition once that authoritative state arrives.
 			bReplicatedCombatIntroPresentation = false;
+			if (bIsCombatModeActive)
+			{
+				SetCombatTransitionState(false);
+			}
 			ForceNetUpdate();
 			LogCombatPresentationTrace(*this, TEXT("ServerCombatStateReplicated"));
 		}
@@ -1410,10 +1379,41 @@ void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(
 	bReplicatedCombatIntroPresentation = bShouldShowIntro &&
 		!bReplicatedCombatModePresentation &&
 		!(MountComponent && MountComponent->IsMounted());
+	SetCombatTransitionState(bReplicatedCombatIntroPresentation);
 	ForceNetUpdate();
 	LogCombatPresentationTrace(
 		*this,
 		bReplicatedCombatIntroPresentation ? TEXT("ServerIntroPresentationSetTrue") : TEXT("ServerIntroPresentationSetFalse"));
+}
+
+void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent());
+	if (!ProjectJASC)
+	{
+		return;
+	}
+
+	const FGameplayTag TransitionTag = FProject_JGameplayTags::Get().State_CombatTransition;
+	const bool bAlreadyActive = ProjectJASC->HasMatchingGameplayTag(TransitionTag);
+	if (bTransitionActive == bAlreadyActive)
+	{
+		return;
+	}
+
+	if (bTransitionActive)
+	{
+		ProjectJASC->AddProjectJLooseGameplayTag(TransitionTag, true);
+	}
+	else
+	{
+		ProjectJASC->RemoveProjectJLooseGameplayTag(TransitionTag, true);
+	}
 }
 
 bool AProject_JPlayerCharacter::CanToggleCombatMode() const

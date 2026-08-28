@@ -38,6 +38,11 @@ void FProject_JGameplayTags::InitializeNativeGameplayTags()
 		FString("Character is in combat mode")
 	);
 
+	GameplayTags.State_CombatTransition = GameplayTagsManager.AddNativeGameplayTag(
+		FName("State.Combat.Transition"),
+		FString("Character is entering or leaving combat and cannot start mutually exclusive interactions")
+	);
+
 	GameplayTags.State_Attacking = GameplayTagsManager.AddNativeGameplayTag(
 		FName("State.Attacking"),
 		FString("Character is attacking")

@@ -44,9 +44,10 @@ public:
 
 private:
 	EProject_JCombatAnimationLayerState CalculatePresentationState(const class AProject_JPlayerCharacter& Player) const;
-	UClass* ResolveLayerClass(const class UProject_JWeaponAnimProfile* WeaponProfile);
+	FSoftObjectPath ResolveLayerPath(const class UProject_JWeaponAnimProfile* WeaponProfile) const;
 	void HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath);
 	void UnlinkLayer();
+	void ResetPreload();
 
 	/** Hard reference held only while the weapon layer is actively linked. */
 	TSubclassOf<class UAnimInstance> LinkedAnimationLayerClass;

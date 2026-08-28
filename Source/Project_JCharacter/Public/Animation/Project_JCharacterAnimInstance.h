@@ -12,6 +12,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Combat/Project_JCombatTypes.h"
+#include "GameplayTagContainer.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "BoneControllers/AnimNode_OffsetRootBone.h"
 #include "Project_JCharacterAnimInstance.generated.h"
@@ -623,6 +624,13 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMountThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
 	FVector RightHandTargetComponentSpace = FVector::ZeroVector;
 
+	/** Profile-defined pose family/features; copied on the game thread. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	FGameplayTagContainer AnimationTags;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
+	float TransitionBlendTime = 0.2f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
 	bool bIsMounted = false;
 
@@ -634,6 +642,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMountThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Mount")
 	bool bHasHandIKTargets = false;
+
 };
 
 /**
@@ -1121,8 +1130,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
 	FVector GetThreadSafeMountedRightHandTargetComponentSpace() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	FGameplayTagContainer GetThreadSafeMountedAnimationTags() const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeMountedHasAnimationTag(FGameplayTag Tag) const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
+	float GetThreadSafeMountedTransitionBlendTime() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
 	EProject_JAnimationLocomotionMode GetThreadSafeLocomotionMode() const;
+
+	/** True only while the shared on-foot Motion Matching and foot presentation are valid. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeUsesOnFootLocomotion() const;
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Foot Placement", meta = (BlueprintThreadSafe))
 	FFootPlacementPlantSettings Get_FootPlacementPlantSettings() const;

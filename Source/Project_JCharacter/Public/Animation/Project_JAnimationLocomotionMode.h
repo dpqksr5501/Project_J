@@ -4,8 +4,9 @@
 #include "Project_JAnimationLocomotionMode.generated.h"
 
 /**
- * Selects the player's full-body locomotion animation layer. This represents
- * persistent movement context, not a short interaction montage.
+ * Selects the persistent full-body locomotion context. This is deliberately
+ * coarse-grained: mount species, vehicle seats, and swim styles belong to the
+ * linked-layer profile/state machine inside a context, not to this enum.
  */
 UENUM(BlueprintType)
 enum class EProject_JAnimationLocomotionMode : uint8
