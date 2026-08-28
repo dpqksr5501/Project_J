@@ -6,6 +6,12 @@ This document describes the reusable mount foundation currently added to Project
 
 The system is a gameplay foundation, not a completed MMORPG mount feature.  In particular, mount health is networked and the GAS AttributeSet exists, but combat GameplayEffects, stamina consumption, persistence, and UI remain follow-up work.
 
+For the common rule for adding future locomotion contexts such as vehicles,
+swimming, and transformations, see
+[DataDrivenLocomotionExtensionGuide.md](DataDrivenLocomotionExtensionGuide.md).
+That guide defines the boundary between profile Data Assets, authoritative C++,
+and presentation-only Anim Blueprints.
+
 ## Module boundaries
 
 ```text
