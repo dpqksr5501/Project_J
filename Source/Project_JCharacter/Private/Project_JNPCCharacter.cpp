@@ -42,3 +42,36 @@ void AProject_JNPCCharacter::ApplyDefaultNPCOptimizationPolicy()
 		MeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	}
 }
+
+EProject_JNPCUpdateBudgetTier AProject_JNPCCharacter::GetNPCUpdateBudgetTier() const
+{
+	if (CurrentSignificance >= 3.0f)
+	{
+		return EProject_JNPCUpdateBudgetTier::Hidden;
+	}
+	if (CurrentSignificance >= 2.0f)
+	{
+		return EProject_JNPCUpdateBudgetTier::Far;
+	}
+	if (CurrentSignificance >= 1.0f)
+	{
+		return EProject_JNPCUpdateBudgetTier::Mid;
+	}
+	return EProject_JNPCUpdateBudgetTier::Near;
+}
+
+float AProject_JNPCCharacter::GetRecommendedAIUpdateInterval() const
+{
+	switch (GetNPCUpdateBudgetTier())
+	{
+	case EProject_JNPCUpdateBudgetTier::Mid:
+		return NPCUpdateBudget.MidUpdateInterval;
+	case EProject_JNPCUpdateBudgetTier::Far:
+		return NPCUpdateBudget.FarUpdateInterval;
+	case EProject_JNPCUpdateBudgetTier::Hidden:
+		return NPCUpdateBudget.HiddenUpdateInterval;
+	case EProject_JNPCUpdateBudgetTier::Near:
+	default:
+		return NPCUpdateBudget.NearUpdateInterval;
+	}
+}

@@ -28,6 +28,8 @@ NPC는 player-grade Motion Matching을 사용하지 않는 것을 기본으로 �
 
 `AProject_JNPCCharacter`는 초기 저비용 정책으로 actor tick 비활성화, 낮은 net update frequency, 낮은 cull distance, slower significance tick interval, skeletal mesh URO, hidden mesh visibility tick policy를 적용합니다.
 
+NPC, boss, monster는 Motion Matching을 사용하지 않는다. AI tick cadence, perception/path refresh, pooling, Mass representation의 상세 계약과 Unreal Insights 측정 기준은 [Performance Optimization Foundation](PerformanceOptimizationFoundation.md)를 따른다.
+
 ## Replication Policy Settings
 
 `FProject_JReplicationPolicySettings`는 distance filter threshold를 reusable struct로 보관합니다. `UProject_JNetObjectFilter_Distance`는 default settings 또는 explicit settings에서 decision을 만들 수 있습니다.

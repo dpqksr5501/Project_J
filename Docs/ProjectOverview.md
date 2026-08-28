@@ -220,3 +220,5 @@ Project J의 리팩터링은 다음 기준을 따른다.
 - [Combat Animation Architecture Notes](CombatAnimationArchitectureNotes.md)
 - [Motion Matching Notes](MotionMatchingNextSteps.md)
 - [Deferred MMORPG Systems](DeferredMMORPGSystems.md)
+- [Performance Optimization Foundation](PerformanceOptimizationFoundation.md)
+- [Deferred Optimization Architecture](DeferredOptimizationArchitecture.md)

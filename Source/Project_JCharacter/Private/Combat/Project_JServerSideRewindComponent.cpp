@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
 {
@@ -36,11 +37,14 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 	SetComponentTickEnabled(Owner && Owner->HasAuthority());
 	
 	const int32 ExpectedRecordCount = FMath::CeilToInt(FMath::Max(1.0f, MaxRecordTime) * FMath::Max(1.0f, RecordRateHz)) + 2;
-	PoseHistory.Reserve(ExpectedRecordCount);
+	PoseHistory.SetNum(ExpectedRecordCount);
+	PoseHistoryStartIndex = 0;
+	PoseHistoryCount = 0;
 }
 
 void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_ServerSideRewindTick);
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	AActor* Owner = GetOwner();
@@ -62,19 +66,8 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	NewRecord.Location = Owner->GetActorLocation();
 	NewRecord.Rotation = Owner->GetActorQuat();
 
-	PoseHistory.Add(NewRecord);
-
-	const float CurrentTime = NewRecord.Timestamp;
-	int32 RemoveCount = 0;
-	while (RemoveCount < PoseHistory.Num() && (CurrentTime - PoseHistory[RemoveCount].Timestamp) > MaxRecordTime)
-	{
-		RemoveCount++;
-	}
-
-	if (RemoveCount > 0)
-	{
-		PoseHistory.RemoveAt(0, RemoveCount, EAllowShrinking::No);
-	}
+	AppendPoseHistoryRecord(NewRecord);
+	DiscardExpiredPoseHistoryRecords(NewRecord.Timestamp);
 }
 
 bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
@@ -116,27 +109,26 @@ bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp,
 
 bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const
 {
-	if (PoseHistory.Num() < 2)
+	if (PoseHistoryCount < 2)
 	{
 		return false;
 	}
 
-	// Because PoseHistory is sorted oldest to newest:
-	// PoseHistory[0] is oldest (smallest timestamp), PoseHistory.Last() is newest (largest timestamp).
-	if (Time < PoseHistory[0].Timestamp || Time > PoseHistory.Last().Timestamp)
+	// Logical indices are sorted oldest to newest even though the physical array wraps.
+	if (Time < GetPoseHistoryRecord(0).Timestamp || Time > GetPoseHistoryRecord(PoseHistoryCount - 1).Timestamp)
 	{
 		return false;
 	}
 
 	// Binary Search to find the two bounding frames
 	int32 Low = 0;
-	int32 High = PoseHistory.Num() - 1;
+	int32 High = PoseHistoryCount - 1;
 	int32 FoundIndex = -1;
 
 	while (Low <= High)
 	{
 		int32 Mid = Low + (High - Low) / 2;
-		if (PoseHistory[Mid].Timestamp >= Time)
+		if (GetPoseHistoryRecord(Mid).Timestamp >= Time)
 		{
 			FoundIndex = Mid;
 			High = Mid - 1;
@@ -152,8 +144,8 @@ bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_J
 		return false;
 	}
 
-	OutPose2 = PoseHistory[FoundIndex];
-	OutPose1 = PoseHistory[FoundIndex - 1];
+	OutPose2 = GetPoseHistoryRecord(FoundIndex);
+	OutPose1 = GetPoseHistoryRecord(FoundIndex - 1);
 
 	const float TimeDiff = OutPose2.Timestamp - OutPose1.Timestamp;
 	if (FMath::IsNearlyZero(TimeDiff))
@@ -166,4 +158,36 @@ bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_J
 	}
 
 	return true;
+}
+
+const FProject_JPoseHistoryBuffer& UProject_JServerSideRewindComponent::GetPoseHistoryRecord(int32 LogicalIndex) const
+{
+	check(PoseHistoryCount > 0);
+	check(LogicalIndex >= 0 && LogicalIndex < PoseHistoryCount);
+	return PoseHistory[(PoseHistoryStartIndex + LogicalIndex) % PoseHistory.Num()];
+}
+
+void UProject_JServerSideRewindComponent::AppendPoseHistoryRecord(const FProject_JPoseHistoryBuffer& Record)
+{
+	check(PoseHistory.Num() > 0);
+
+	if (PoseHistoryCount == PoseHistory.Num())
+	{
+		PoseHistory[PoseHistoryStartIndex] = Record;
+		PoseHistoryStartIndex = (PoseHistoryStartIndex + 1) % PoseHistory.Num();
+		return;
+	}
+
+	const int32 WriteIndex = (PoseHistoryStartIndex + PoseHistoryCount) % PoseHistory.Num();
+	PoseHistory[WriteIndex] = Record;
+	++PoseHistoryCount;
+}
+
+void UProject_JServerSideRewindComponent::DiscardExpiredPoseHistoryRecords(float CurrentTime)
+{
+	while (PoseHistoryCount > 0 && (CurrentTime - GetPoseHistoryRecord(0).Timestamp) > MaxRecordTime)
+	{
+		PoseHistoryStartIndex = (PoseHistoryStartIndex + 1) % PoseHistory.Num();
+		--PoseHistoryCount;
+	}
 }

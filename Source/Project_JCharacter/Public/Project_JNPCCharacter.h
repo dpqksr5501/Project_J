@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Optimization/Project_JNPCUpdateBudget.h"
 #include "Project_JBaseCharacter.h"
 #include "Project_JNPCCharacter.generated.h"
 
@@ -18,6 +19,10 @@ class PROJECT_JCHARACTER_API AProject_JNPCCharacter : public AProject_JBaseChara
 public:
 	AProject_JNPCCharacter();
 
+	/** Returns policy data only; no AI is throttled until its owner opts in. */
+	float GetRecommendedAIUpdateInterval() const;
+	EProject_JNPCUpdateBudgetTier GetNPCUpdateBudgetTier() const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -32,6 +37,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization", meta = (ClampMin = "1.0", UIMin = "1.0"))
 	float NPCMinNetUpdateFrequency = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Optimization")
+	FProject_JNPCUpdateBudgetSettings NPCUpdateBudget;
 
 	void ApplyDefaultNPCOptimizationPolicy();
 };

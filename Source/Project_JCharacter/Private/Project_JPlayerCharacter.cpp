@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -309,6 +310,7 @@ void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
 
 void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick);
 	Super::Tick(DeltaTime);
 	UpdateMaxWalkSpeed();
 	ApplyCombatRotationMode(IsCombatModeActive());
