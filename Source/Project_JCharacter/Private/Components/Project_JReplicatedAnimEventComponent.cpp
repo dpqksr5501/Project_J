@@ -440,17 +440,6 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteTurnInPlaceState(const F
 		ResolveServerEventAgeSeconds(State.TurnInPlaceServerTimeSeconds),
 		State.TurnInPlaceDirectionBucket,
 		State.TurnInPlaceTargetFacingYaw);
-
-	// A remote TIP is most usefully diagnosed alongside the local TIP state/asset
-	// telemetry. Do not require the unrelated generic transition trace CVar.
-	if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("RemoteAnimSemantic Actor=%s Type=TurnInPlace Order=%d Seq=%d Bucket=%d TargetYaw=%.1f Age=%.3f"),
-			*GetNameSafe(GetOwner()), State.TurnInPlaceEventOrder, State.TurnInPlaceSequence,
-			State.TurnInPlaceDirectionBucket, State.TurnInPlaceTargetFacingYaw,
-			ResolveServerEventAgeSeconds(State.TurnInPlaceServerTimeSeconds));
-	}
 }
 
 float UProject_JReplicatedAnimEventComponent::ResolveServerEventAgeSeconds(float ServerTimeSeconds) const

@@ -1341,17 +1341,7 @@ public:
 	/** Rising-edge detector for local combat draw/sheathe presentation boundaries. */
 	bool bWasPlayingCombatPresentationTransitionForStateController = false;
 
-	/** Game-thread only TIP diagnostics; never consumed by animation evaluation. */
-	bool bHasTurnInPlaceDebugSample = false;
-	bool bLastTurnInPlaceDebugRelevant = false;
-	bool bLastTurnInPlaceDebugShouldTurn = false;
-	int32 LastTurnInPlaceDebugIndex = INDEX_NONE;
-	EProject_JLocomotionPhaseFamily LastTurnInPlaceDebugPhase = EProject_JLocomotionPhaseFamily::Idle;
-	EProject_JStateControllerPresentationState LastTurnInPlaceDebugPresentationState = EProject_JStateControllerPresentationState::Disabled;
-	TWeakObjectPtr<UAnimationAsset> LastTurnInPlaceDebugAsset;
-	float LastTurnInPlaceDebugActorYaw = 0.0f;
-	float LastTurnInPlaceDebugRootYaw = 0.0f;
-	double LastTurnInPlaceDebugSampleTime = -DBL_MAX;
+
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 

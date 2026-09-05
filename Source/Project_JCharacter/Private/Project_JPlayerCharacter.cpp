@@ -600,35 +600,6 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
 					}
 
-					if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
-					{
-						const float CtrlYaw = (IsLocallyControlled() && GetController()) ? GetController()->GetControlRotation().Yaw : 0.0f;
-						UE_LOG(LogProjectJPlayer, Display,
-							TEXT("[TIP_Rot] Pawn=%s Role=%d Rev=%d Seq=%s Elapsed=%.3f/%.3f RootDelta=%.2f FacingDelta=%.2f ClampedDelta=%.2f ActorYaw=%.1f CtrlYaw=%.1f TargetYaw=%.1f"),
-							*GetName(),
-							static_cast<int32>(GetLocalRole()),
-							SelectionRevision,
-							*AnimSeq->GetName(),
-							Elapsed,
-							AnimSeq->GetPlayLength(),
-							RootYawDelta,
-							FacingDelta,
-							ClampedRootYawDelta,
-							GetActorRotation().Yaw,
-							CtrlYaw,
-							AuthoredTargetActorYaw);
-
-						if (GEngine && IsLocallyControlled())
-						{
-							GEngine->AddOnScreenDebugMessage(
-								1001,
-								0.0f,
-								FColor::Cyan,
-								FString::Printf(TEXT("[TIP] Seq=%s Elapsed=%.2f/%.2f RootDelta=%.1f FacingDelta=%.1f Clamped=%.1f ActorYaw=%.1f"),
-									*AnimSeq->GetName(), Elapsed, AnimSeq->GetPlayLength(), RootYawDelta, FacingDelta, ClampedRootYawDelta, GetActorRotation().Yaw));
-						}
-					}
-
 					if (!HasAuthority() && IsLocallyControlled())
 					{
 						const UWorld* World = GetWorld();
@@ -657,19 +628,6 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 			ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
 			bLastSentTurnInPlaceActive = false;
 			LastSentTurnInPlaceActorYaw = GetActorRotation().Yaw;
-
-			if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
-			{
-				UE_LOG(LogProjectJPlayer, Display,
-					TEXT("[TIP_Exit] Pawn=%s Role=%d FinalActorYaw=%.1f"),
-					*GetName(),
-					static_cast<int32>(GetLocalRole()),
-					GetActorRotation().Yaw);
-				if (GEngine && IsLocallyControlled())
-				{
-					GEngine->RemoveOnScreenDebugMessage(1001);
-				}
-			}
 		}
 	}
 

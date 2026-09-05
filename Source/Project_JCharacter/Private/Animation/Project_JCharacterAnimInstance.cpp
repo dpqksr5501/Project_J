@@ -922,92 +922,6 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		OneShot.bShouldOverrideMotionMatching = false;
 		OneShot.bForceBlendNextUpdate = false;
 	}
-	const int32 TurnInPlaceDebugMode = Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode();
-	if (TurnInPlaceDebugMode > 0 && OwningPlayerCharacter && IsPrimaryMeshAnimInstance())
-	{
-		const FProject_JAnimOneShotPresentationThreadSafeData& OneShot = ThreadSafeData.OneShotPresentation;
-		const bool bTurnRelevant =
-			ThreadSafeData.LocomotionContext.bShouldTurnInPlace ||
-			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace ||
-			OneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace ||
-			StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace;
-		const float ActorYaw = OwningPlayerCharacter->GetActorRotation().Yaw;
-		const float ControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
-		float RootYaw = ActorYaw;
-		float MeshYaw = ActorYaw;
-		if (const USkeletalMeshComponent* Mesh = OwningPlayerCharacter->GetMesh())
-		{
-			MeshYaw = Mesh->GetComponentRotation().Yaw;
-			if (Mesh->GetNumBones() > 0)
-			{
-				RootYaw = Mesh->GetBoneTransform(0).Rotator().Yaw;
-			}
-		}
-
-		UAnimationAsset* SelectedAsset = OneShot.SelectedAnimation;
-		const bool bStateChanged =
-			bLastTurnInPlaceDebugRelevant != bTurnRelevant ||
-			(bTurnRelevant &&
-				(bLastTurnInPlaceDebugShouldTurn != ThreadSafeData.LocomotionContext.bShouldTurnInPlace ||
-			LastTurnInPlaceDebugIndex != FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser) ||
-			LastTurnInPlaceDebugPhase != ThreadSafeData.LocomotionContext.PhaseFamily ||
-			LastTurnInPlaceDebugPresentationState != OneShot.PresentationState ||
-			LastTurnInPlaceDebugAsset.Get() != SelectedAsset ||
-			OneShot.bForceBlendNextUpdate));
-		const double NowSeconds = FPlatformTime::Seconds();
-		const bool bPeriodicSample =
-			TurnInPlaceDebugMode >= 2 && bTurnRelevant &&
-			NowSeconds - LastTurnInPlaceDebugSampleTime >= 0.10;
-		if (bTurnRelevant && (bStateChanged || bPeriodicSample))
-		{
-			const float ActorTurnSinceLastSample = bHasTurnInPlaceDebugSample
-				? FMath::FindDeltaAngleDegrees(LastTurnInPlaceDebugActorYaw, ActorYaw)
-				: 0.0f;
-			const float RootTurnSinceLastSample = bHasTurnInPlaceDebugSample
-				? FMath::FindDeltaAngleDegrees(LastTurnInPlaceDebugRootYaw, RootYaw)
-				: 0.0f;
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("TIPDiag Kind=%s Should=%s DesiredYaw=%.1f DesiredDelta=%.1f ActorYaw=%.1f ControlYaw=%.1f RootYaw=%.1f MeshYaw=%.1f RootVsCapsule=%.1f ActorTurn=%.1f RootTurn=%.1f Index=%d CachedIndex=%d Phase=%d Presentation=%d Hold=%d ForceReselect=%s ForceBlend=%s Asset=%s Time=%.3f Remaining=%.3f"),
-				bStateChanged ? TEXT("Change") : TEXT("Sample"),
-				ThreadSafeData.LocomotionContext.bShouldTurnInPlace ? TEXT("true") : TEXT("false"),
-				ThreadSafeData.LocomotionContext.DesiredFacingYaw,
-				ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw,
-				ActorYaw,
-				ControlYaw,
-				RootYaw,
-				MeshYaw,
-				FMath::FindDeltaAngleDegrees(ActorYaw, RootYaw),
-				ActorTurnSinceLastSample,
-				RootTurnSinceLastSample,
-				FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser),
-				FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex),
-				static_cast<int32>(ThreadSafeData.LocomotionContext.PhaseFamily),
-				static_cast<int32>(OneShot.PresentationState),
-				static_cast<int32>(StateControllerPlaybackHoldState),
-				bStateControllerForceTurnInPlaceReselect ? TEXT("true") : TEXT("false"),
-				OneShot.bForceBlendNextUpdate ? TEXT("true") : TEXT("false"),
-				SelectedAsset ? *SelectedAsset->GetName() : TEXT("None"),
-				OneShot.TransitionElapsedTime,
-				OneShot.TransitionTimeRemaining);
-			LastTurnInPlaceDebugSampleTime = NowSeconds;
-		}
-
-		bHasTurnInPlaceDebugSample = true;
-		bLastTurnInPlaceDebugRelevant = bTurnRelevant;
-		bLastTurnInPlaceDebugShouldTurn = ThreadSafeData.LocomotionContext.bShouldTurnInPlace;
-		LastTurnInPlaceDebugIndex = FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser);
-		LastTurnInPlaceDebugPhase = ThreadSafeData.LocomotionContext.PhaseFamily;
-		LastTurnInPlaceDebugPresentationState = OneShot.PresentationState;
-		LastTurnInPlaceDebugAsset = SelectedAsset;
-		LastTurnInPlaceDebugActorYaw = ActorYaw;
-		LastTurnInPlaceDebugRootYaw = RootYaw;
-	}
-	else if (TurnInPlaceDebugMode == 0)
-	{
-		// Re-enabling the CVar should always emit a complete first snapshot.
-		bHasTurnInPlaceDebugSample = false;
-		LastTurnInPlaceDebugSampleTime = -DBL_MAX;
-	}
 	if (IsPrimaryMeshAnimInstance())
 	{
 		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
@@ -2469,15 +2383,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		InOutOneShot.TransitionElapsedTime = 0.0f;
 		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
 		InOutOneShot.bTransitionAnimationAlmostComplete = false;
-		if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("RemoteTIPSequenceTrigger Actor=%s Seq=%d Bucket=%d DesiredYaw=%.1f"),
-				*GetNameSafe(OwningCharacter),
-				Data.LocomotionContext.TurnInPlaceSequence,
-				CurrentTurnInPlaceBucket,
-				Data.LocomotionContext.DesiredFacingYaw);
-		}
 		return;
 	}
 
@@ -2517,21 +2422,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 
 	if (bShouldReenterTurnInPlace)
 	{
-		const TCHAR* ReenterReason = bTurnInPlaceDirectionBucketChanged
-			? TEXT("DirectionBucketChanged")
-			: (bTurnInPlaceSameDirectionResidual ? TEXT("SameDirectionResidual") : TEXT("ClipFinishedResidual"));
-
-		if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("TIPReenter Reason=%s CurrentBucket=%d ActiveBucket=%d DesiredDelta=%.1f Elapsed=%.3f"),
-				ReenterReason,
-				CurrentTurnInPlaceBucket,
-				ActiveTurnInPlaceIndex,
-				Data.LocomotionContext.DesiredFacingDeltaYaw,
-				Elapsed);
-		}
-
 		if (bIsLocallyControlled && OwningPlayerCharacter)
 		{
 			if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
