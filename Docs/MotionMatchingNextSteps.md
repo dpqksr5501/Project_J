@@ -230,6 +230,29 @@ its desired-facing delta remains near +/-90 degrees. That persistent offset is
 not a continuing turn; after the short turn hold, the selector returns to the
 combat Cycle PSD, where Pose Search selects the sustained lateral pose.
 
+## Locomotion Turn Tuning and Interrupt Mode (2026-09-06)
+
+### Problem Addressed
+During rapid alternating input (e.g. `W+D` <-> `W+A` zigzagging / weaving), continuous locomotion in `PSD_Run_Turn` suffered from severe asset flapping (frequent inter-turn switching between Turn 45, 90, 135) and stride resetting (foot stepping stutter).
+
+### Root Causes & Architectural Resolutions
+1. **Interrupt Mode Relaxation (C++)**:
+   - `FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()` was using `EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose`.
+   - This purged the continuing pose on every redirect reselection, resetting foot contacts.
+   - **Resolution**: Relaxed to `EPoseSearchInterruptMode::ForceInterrupt`. This preserves continuing pose continuity so Pose Search Schema foot and phase channels can match against the active gait cycle.
+
+2. **Continuing Pose Cost Bias in `PSD_Run_Turn`**:
+   - `PSD_Run_Turn` had `ContinuingPoseCostBias` set to `-0.01`, which provided negligible stickiness (<1% bonus).
+   - Because competing turn candidate costs differed by only `0.02 ~ 0.10`, Pose Search hopped between 45°, 90°, and 135° turn clips within fractions of a second.
+   - **Resolution**: Configured `PSD_Run_Turn` `ContinuingPoseCostBias` to `-0.25`. This anchors the active turn clip until the stride/rotation completes or a dominant trajectory divergence occurs.
+
+3. **Motion Matching Node Search Throttle Time**:
+   - The primary `Motion Matching` node in `ABP_Humanoid_Master` was set to `SearchThrottleTime = 0.0` (unthrottled per-tick search).
+   - **Resolution**: Configured `SearchThrottleTime = 0.05s`. This provides a stable evaluation window preventing sub-frame asset hopping while preserving tight responsiveness.
+
+4. **Pose Search Schema Foot Phase Channels**:
+   - Added `foot_l` and `foot_r` Phase Channels to `PSS_Player` with weights `2.0`, aligning foot step cycles across locomotion database transitions.
+
 ## Landing recovery duration
 
 `LandingRequestDuration` and `StandLandingRequestDuration` are the maximum

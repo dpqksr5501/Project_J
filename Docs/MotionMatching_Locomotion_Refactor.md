@@ -15,7 +15,7 @@ prevents continuous MM from becoming the owner of one-shot completion, keeps
 worker-thread reads safe, preserves noncombat OTM, and creates the required
 foundation for a later combat-Strafe-only TIP state machine.
 
-Last updated: 2026-08-23
+Last updated: 2026-09-06 (Locomotion Turn continuous-reselect & ContinuingPoseCostBias stabilization)
 Scope: on-foot noncombat Orient-to-Movement (OTM) and combat Strafe locomotion.
 Out of scope: TIP, Traversal, Root Motion from Everything.
 

@@ -327,7 +327,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
 {
 	const EPoseSearchInterruptMode InterruptMode =
-		EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose;
+		EPoseSearchInterruptMode::ForceInterrupt;
 	NativeMotionMatchingNode.SetInterruptMode(InterruptMode);
 
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
