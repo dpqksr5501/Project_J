@@ -186,6 +186,12 @@ struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
 	bool bShouldTurnInPlace = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	uint8 TurnInPlaceDirectionBucket = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	int32 TurnInPlaceSequence = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bShouldSpinTransition = false;
 };
 
@@ -224,6 +230,17 @@ public:
 	void HandleReplicatedTurnInPlaceStarted(int32 Sequence, float ServerStartAgeSeconds, uint8 DirectionBucket, float TargetFacingYaw);
 	/** Consumes one locally-authored TIP edge for server validation and replication. */
 	bool ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw);
+
+	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
+	uint8 GetRemoteTurnInPlaceDirectionBucket() const { return RemoteTurnInPlaceDirectionBucket; }
+
+	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
+	bool IsRemoteTurnInPlaceActive() const { return bRemoteTurnInPlaceActive; }
+
+	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
+	int32 GetRemoteTurnInPlaceSequence() const { return RemoteTurnInPlaceSequence; }
+
+	void NotifyTurnInPlaceReentered(uint8 DirectionBucket);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
@@ -848,8 +865,11 @@ private:
 	float RemoteTurnInPlaceTimeRemaining = 0.0f;
 	uint8 RemoteTurnInPlaceDirectionBucket = 0;
 	float RemoteTurnInPlaceTargetFacingYaw = 0.0f;
+	int32 RemoteTurnInPlaceSequence = 0;
 	bool bTurnInPlaceReplicationRequestPending = false;
+	uint8 PendingTurnInPlaceBucket = 0;
 	bool bWasLocallyRequestingTurnInPlace = false;
+	uint8 LastLocalTurnInPlaceBucket = 0;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
 	bool bHasReplicatedStartGait = false;
 	bool bReplicatedStartWasSprinting = false;

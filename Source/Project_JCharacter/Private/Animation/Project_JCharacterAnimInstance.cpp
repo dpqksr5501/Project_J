@@ -154,7 +154,10 @@ namespace
 			case EProject_JLocomotionPhaseFamily::Stop:
 				return EProject_JStateControllerPresentationState::TransitionToIdle;
 			case EProject_JLocomotionPhaseFamily::TurnInPlace:
-				return EProject_JStateControllerPresentationState::TurnInPlace;
+				return (Data.LocomotionContext.TurnInPlaceDirectionBucket > 0 ||
+						(Data.LocomotionContext.bShouldTurnInPlace && FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f))
+					? EProject_JStateControllerPresentationState::TurnInPlace
+					: EProject_JStateControllerPresentationState::IdleLoop;
 			case EProject_JLocomotionPhaseFamily::Landing:
 				return EProject_JStateControllerPresentationState::TransitionToLand;
 			case EProject_JLocomotionPhaseFamily::JumpStart:
@@ -165,7 +168,9 @@ namespace
 			}
 		}
 
-		if (Data.LocomotionContext.bShouldTurnInPlace)
+		if (Data.LocomotionContext.bShouldTurnInPlace &&
+			(FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f ||
+			 Data.LocomotionContext.TurnInPlaceDirectionBucket > 0))
 		{
 			return EProject_JStateControllerPresentationState::TurnInPlace;
 		}
@@ -614,22 +619,34 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
 	RotationModeForChooser = ThreadSafeData.LocomotionContext.RotationMode;
 	GaitIntentForChooser = ThreadSafeData.LocomotionContext.GaitIntent;
-	const float DeltaYawForTurn = ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw;
-	if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn <= -30.0f)
+	if (ThreadSafeData.LocomotionContext.TurnInPlaceDirectionBucket >= 1 &&
+		ThreadSafeData.LocomotionContext.TurnInPlaceDirectionBucket <= 4)
 	{
-		StateControllerTurnInPlaceIndexForChooser = 1.0f; // Left 090
+		StateControllerTurnInPlaceIndexForChooser = static_cast<float>(ThreadSafeData.LocomotionContext.TurnInPlaceDirectionBucket);
 	}
-	else if (DeltaYawForTurn < -135.0f)
+	else if (IsLocallyControlledCharacter())
 	{
-		StateControllerTurnInPlaceIndexForChooser = 2.0f; // Left 180
-	}
-	else if (DeltaYawForTurn >= 30.0f && DeltaYawForTurn < 135.0f)
-	{
-		StateControllerTurnInPlaceIndexForChooser = 3.0f; // Right 090
-	}
-	else if (DeltaYawForTurn >= 135.0f)
-	{
-		StateControllerTurnInPlaceIndexForChooser = 4.0f; // Right 180
+		const float DeltaYawForTurn = ThreadSafeData.LocomotionContext.DesiredFacingDeltaYaw;
+		if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn <= -30.0f)
+		{
+			StateControllerTurnInPlaceIndexForChooser = 1.0f; // Left 090
+		}
+		else if (DeltaYawForTurn < -135.0f)
+		{
+			StateControllerTurnInPlaceIndexForChooser = 2.0f; // Left 180
+		}
+		else if (DeltaYawForTurn >= 30.0f && DeltaYawForTurn < 135.0f)
+		{
+			StateControllerTurnInPlaceIndexForChooser = 3.0f; // Right 090
+		}
+		else if (DeltaYawForTurn >= 135.0f)
+		{
+			StateControllerTurnInPlaceIndexForChooser = 4.0f; // Right 180
+		}
+		else
+		{
+			StateControllerTurnInPlaceIndexForChooser = 0.0f;
+		}
 	}
 	else
 	{
@@ -906,7 +923,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		OneShot.bForceBlendNextUpdate = false;
 	}
 	const int32 TurnInPlaceDebugMode = Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode();
-	if (TurnInPlaceDebugMode > 0 && OwningPlayerCharacter)
+	if (TurnInPlaceDebugMode > 0 && OwningPlayerCharacter && IsPrimaryMeshAnimInstance())
 	{
 		const FProject_JAnimOneShotPresentationThreadSafeData& OneShot = ThreadSafeData.OneShotPresentation;
 		const bool bTurnRelevant =
@@ -1358,21 +1375,20 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldTurnInPl
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldAbortTurnInPlace() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	// Do not use GenericMoveInputSpeedThreshold here.  TIP itself is allowed to
-	// start during the final stationary braking window (IdleSpeedThreshold), so
-	// the generic 3 cm/s movement threshold used to abort the state immediately.
-	// The locomotion component is the single source of truth for whether we are
-	// still stationary enough to finish this direct animation.
+	// Abort if presentation is disabled, or character is airborne, or has movement intent/motion.
+	// Do not abort purely on !bShouldTurnInPlace: once entered, the authored one-shot completes
+	// naturally unless interrupted by movement or air state.
 	return !Data.OneShotPresentation.bEnabled ||
 		Data.Air.bIsInAir ||
 		Data.Input.bHasMoveInput ||
-		!Data.LocomotionContext.bShouldTurnInPlace;
+		Data.LocomotionContext.bIsMoving;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceSteeringAlpha() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
-	return Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace
+	return (Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace ||
+	        Data.OneShotPresentation.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace)
 		? 1.0f
 		: 0.0f;
 }
@@ -1380,6 +1396,16 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceSt
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerTurnInPlaceIndex() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	if (Data.LocomotionContext.TurnInPlaceDirectionBucket >= 1 && Data.LocomotionContext.TurnInPlaceDirectionBucket <= 4)
+	{
+		return static_cast<float>(Data.LocomotionContext.TurnInPlaceDirectionBucket);
+	}
+
+	if (!IsLocallyControlledCharacter())
+	{
+		return 0.0f;
+	}
+
 	const float DeltaYaw = Data.LocomotionContext.DesiredFacingDeltaYaw;
 
 	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
@@ -2053,6 +2079,8 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 		Data.LocomotionContext.PivotMoveIntentDirection = ActiveStateControllerPivotMoveIntentDirection;
 	}
 	Data.LocomotionContext.bShouldTurnInPlace = AnimState->DerivedLocomotionContext.bShouldTurnInPlace;
+	Data.LocomotionContext.TurnInPlaceDirectionBucket = AnimState->DerivedLocomotionContext.TurnInPlaceDirectionBucket;
+	Data.LocomotionContext.TurnInPlaceSequence = AnimState->DerivedLocomotionContext.TurnInPlaceSequence;
 	Data.LocomotionContext.bShouldSpinTransition = AnimState->DerivedLocomotionContext.bShouldSpinTransition;
 	Data.Movement.RelativeAccelerationAmount = AnimState->KinematicContext.RelativeAccelerationAmount;
 	Data.Movement.PredictedStopDistance = AnimState->KinematicContext.PredictedStopDistance;
@@ -2392,32 +2420,126 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
 	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
-	// A different TIP direction bucket must preempt immediately. Keeping a
-	// right-turn root-motion clip alive after a left request makes the capsule
-	// keep rotating the wrong way until the generic repeat timer expires. The
-	// 0.75s delay remains only for repeating the same direction bucket.
-	constexpr float TurnInPlaceReentryDelay = 0.75f;
-	const int32 RequestedTurnInPlaceIndex = FMath::RoundToInt(StateControllerTurnInPlaceIndexForChooser);
-	const int32 CachedTurnInPlaceIndex = FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex);
-	const bool bTurnInPlaceDirectionBucketChanged =
-		RequestedTurnInPlaceIndex > 0 && RequestedTurnInPlaceIndex != CachedTurnInPlaceIndex;
-	const bool bShouldReenterTurnInPlace =
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
-		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
-		Data.LocomotionContext.bShouldTurnInPlace &&
-		(bTurnInPlaceDirectionBucketChanged || Elapsed >= TurnInPlaceReentryDelay);
-	if (bShouldReenterTurnInPlace)
+	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
+
+	// Calculate current desired turn bucket directly from latest thread-safe locomotion context
+	int32 CurrentTurnInPlaceBucket = 0;
+	if (Data.LocomotionContext.TurnInPlaceDirectionBucket >= 1 && Data.LocomotionContext.TurnInPlaceDirectionBucket <= 4)
 	{
+		CurrentTurnInPlaceBucket = Data.LocomotionContext.TurnInPlaceDirectionBucket;
+	}
+	else if (bIsLocallyControlled)
+	{
+		const float DeltaYawForTurn = Data.LocomotionContext.DesiredFacingDeltaYaw;
+		if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn <= -30.0f)
+		{
+			CurrentTurnInPlaceBucket = 1; // Left 090
+		}
+		else if (DeltaYawForTurn < -135.0f)
+		{
+			CurrentTurnInPlaceBucket = 2; // Left 180
+		}
+		else if (DeltaYawForTurn >= 30.0f && DeltaYawForTurn < 135.0f)
+		{
+			CurrentTurnInPlaceBucket = 3; // Right 090
+		}
+		else if (DeltaYawForTurn >= 135.0f)
+		{
+			CurrentTurnInPlaceBucket = 4; // Right 180
+		}
+	}
+
+	constexpr float TurnInPlaceReentryDelay = 0.75f;
+	constexpr float TurnInPlaceReplayRemainingAngle = 45.0f;
+	const int32 ActiveTurnInPlaceIndex = FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex);
+
+	// Remote proxy: Server replicated a new Turn In Place sequence edge
+	const bool bRemoteTurnInPlaceNewSequence =
+		!bIsLocallyControlled &&
+		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
+		Data.LocomotionContext.TurnInPlaceSequence != LastHandledRemoteTurnInPlaceSequence;
+
+	if (bRemoteTurnInPlaceNewSequence)
+	{
+		LastHandledRemoteTurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
+		StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::TurnInPlace;
+		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
+		bStateControllerForceTurnInPlaceReselect = true;
+		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
+		InOutOneShot.TransitionElapsedTime = 0.0f;
+		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
+		InOutOneShot.bTransitionAnimationAlmostComplete = false;
 		if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
 		{
 			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("TIPReenter Reason=%s RequestedIndex=%d CachedIndex=%d DesiredDelta=%.1f Elapsed=%.3f"),
-				bTurnInPlaceDirectionBucketChanged ? TEXT("DirectionBucketChanged") : TEXT("SameDirectionTimer"),
-				RequestedTurnInPlaceIndex,
-				CachedTurnInPlaceIndex,
+				TEXT("RemoteTIPSequenceTrigger Actor=%s Seq=%d Bucket=%d DesiredYaw=%.1f"),
+				*GetNameSafe(OwningCharacter),
+				Data.LocomotionContext.TurnInPlaceSequence,
+				CurrentTurnInPlaceBucket,
+				Data.LocomotionContext.DesiredFacingYaw);
+		}
+		return;
+	}
+
+	// Reason 1: Direction bucket changed (e.g. left -> right reversal, or 90 -> 180 extension)
+	const bool bTurnInPlaceDirectionBucketChanged =
+		CurrentTurnInPlaceBucket > 0 &&
+		ActiveTurnInPlaceIndex > 0 &&
+		CurrentTurnInPlaceBucket != ActiveTurnInPlaceIndex &&
+		(!bIsLocallyControlled || FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f);
+
+	// Reason 2: Long continuous turn in the same direction, with enough residual angle (>= 45 deg)
+	// (Only applicable to locally controlled player who continues sweeping the camera)
+	const bool bTurnInPlaceSameDirectionResidual =
+		bIsLocallyControlled &&
+		CurrentTurnInPlaceBucket > 0 &&
+		CurrentTurnInPlaceBucket == ActiveTurnInPlaceIndex &&
+		FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= TurnInPlaceReplayRemainingAngle &&
+		Elapsed >= TurnInPlaceReentryDelay;
+
+	// Reason 3: The current clip has finished its authored playback, but residual facing delta >= 30 deg remains
+	// (Only applicable to locally controlled player whose camera is still facing away)
+	const bool bTurnInPlaceClipFinishedWithResidual =
+		bIsLocallyControlled &&
+		CurrentTurnInPlaceBucket > 0 &&
+		InOutOneShot.bTransitionAnimationAlmostComplete &&
+		FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f;
+
+	const bool bIsHoldingTurnInPlace =
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		(DesiredState == EProject_JStateControllerPresentationState::TurnInPlace || (bIsLocallyControlled && CurrentTurnInPlaceBucket > 0));
+
+	const bool bShouldReenterTurnInPlace =
+		bIsHoldingTurnInPlace &&
+		(bTurnInPlaceDirectionBucketChanged ||
+		 bTurnInPlaceSameDirectionResidual ||
+		 bTurnInPlaceClipFinishedWithResidual);
+
+	if (bShouldReenterTurnInPlace)
+	{
+		const TCHAR* ReenterReason = bTurnInPlaceDirectionBucketChanged
+			? TEXT("DirectionBucketChanged")
+			: (bTurnInPlaceSameDirectionResidual ? TEXT("SameDirectionResidual") : TEXT("ClipFinishedResidual"));
+
+		if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPReenter Reason=%s CurrentBucket=%d ActiveBucket=%d DesiredDelta=%.1f Elapsed=%.3f"),
+				ReenterReason,
+				CurrentTurnInPlaceBucket,
+				ActiveTurnInPlaceIndex,
 				Data.LocomotionContext.DesiredFacingDeltaYaw,
 				Elapsed);
 		}
+
+		if (bIsLocallyControlled && OwningPlayerCharacter)
+		{
+			if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
+			{
+				AnimState->NotifyTurnInPlaceReentered(static_cast<uint8>(CurrentTurnInPlaceBucket));
+			}
+		}
+
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 		bStateControllerForceTurnInPlaceReselect = true;
 		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
@@ -2445,6 +2567,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	{
 		InOutOneShot.PresentationState = StateControllerPlaybackHoldState;
 		return;
+	}
+
+	// Remote simulated proxies play exactly one authored TIP per sequence edge.
+	// Once that sequence completes, exit back to IdleLoop to prevent looping on the spot.
+	if (!bIsLocallyControlled &&
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace)
+	{
+		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
 	}
 
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())

@@ -350,6 +350,12 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	bool bShouldTurnInPlace = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	uint8 TurnInPlaceDirectionBucket = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	int32 TurnInPlaceSequence = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bShouldSpinTransition = false;
 };
 
@@ -1322,6 +1328,7 @@ public:
 	mutable int32 StateControllerHeldLandingPresentationRevision = INDEX_NONE;
 	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
 	mutable bool bStateControllerForceTurnInPlaceReselect = false;
+	mutable int32 LastHandledRemoteTurnInPlaceSequence = 0;
 	/**
 	 * A combat draw/sheathe montage is a presentation boundary.  A direct Land asset
 	 * selected before that boundary must never resume after the montage blends

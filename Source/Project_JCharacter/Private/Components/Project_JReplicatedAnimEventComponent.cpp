@@ -264,7 +264,12 @@ void UProject_JReplicatedAnimEventComponent::MulticastAnimEventState_Implementat
 	FProject_JReplicatedAnimEventState EventState)
 {
 	const AActor* Owner = GetOwner();
-	if (!Owner || Owner->GetLocalRole() != ROLE_SimulatedProxy)
+	if (!Owner || Owner->GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+	const APawn* PawnOwner = Cast<APawn>(Owner);
+	if (PawnOwner && PawnOwner->IsLocallyControlled())
 	{
 		return;
 	}

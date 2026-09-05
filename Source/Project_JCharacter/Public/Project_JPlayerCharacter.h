@@ -415,6 +415,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
 
+	UFUNCTION(Server, Reliable)
+	void ServerSetTurnInPlaceRotation(bool bInTurnInPlace, float InTargetActorYaw);
+
 public:
 
 	UFUNCTION(BlueprintPure, Category = "UI")
@@ -586,4 +589,11 @@ private:
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
+
+	TWeakObjectPtr<UAnimSequence> CachedTurnInPlaceSequence = nullptr;
+	int32 CachedTurnInPlaceSelectionRevision = INDEX_NONE;
+	float TurnInPlaceSelectionStartActorYaw = 0.0f;
+	bool bLastSentTurnInPlaceActive = false;
+	float LastSentTurnInPlaceActorYaw = 0.0f;
+	double LastTurnInPlaceSendTime = 0.0;
 };

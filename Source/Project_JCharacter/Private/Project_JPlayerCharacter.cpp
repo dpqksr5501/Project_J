@@ -56,6 +56,7 @@
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
 #include "HAL/IConsoleManager.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 
 DEFINE_LOG_CATEGORY(LogProjectJPlayer);
 
@@ -535,54 +536,147 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
 
-	// Local characters have a controller, but a simulated proxy does not. A
-	// server-confirmed remote TIP still selects the same authored turn sequence,
-	// so it must be allowed to accumulate that sequence's root-yaw delta into its
-	// presentation actor rotation. Restricting this to Controller!=nullptr made
-	// the remote mesh play a turn while its actor/capsule never changed facing.
+	bool bCurrentlyInTurnInPlace = false;
 	if (bShouldUseCombatRotation && !bIsMovingInCombat)
 	{
 		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
 		{
 			const EProject_JStateControllerPresentationState PresentationState =
 				AnimInst->GetThreadSafeStateControllerPresentationState();
-			const bool bInTurnInPlace = PresentationState == EProject_JStateControllerPresentationState::TurnInPlace;
+			bCurrentlyInTurnInPlace = (PresentationState == EProject_JStateControllerPresentationState::TurnInPlace);
 			const UAnimationAsset* SelectedAnim = AnimInst->GetThreadSafeStateControllerSelectedAnimation();
-			if (bInTurnInPlace)
+			if (bCurrentlyInTurnInPlace)
 			{
 				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
 				{
-					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
-					const float DeltaTime = GetWorld()->GetDeltaSeconds();
-					const float PrevTime = FMath::Max(Elapsed - DeltaTime, 0.0f);
-					const float CurrTime = FMath::Min(Elapsed, AnimSeq->GetPlayLength());
-
-					FAnimExtractContext ExtractionContext(static_cast<double>(CurrTime));
-					const FTransform RootMotionTransform = AnimSeq->ExtractRootMotionFromRange(static_cast<double>(PrevTime), static_cast<double>(CurrTime), ExtractionContext);
-					const float RootYawDelta = RootMotionTransform.Rotator().Yaw;
-
-					if (FMath::Abs(RootYawDelta) > KINDA_SMALL_NUMBER)
+					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
+					if (CachedTurnInPlaceSequence.Get() != AnimSeq || CachedTurnInPlaceSelectionRevision != SelectionRevision)
 					{
-						const float FacingDelta = LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw : 0.0f;
-						float ClampedRootYawDelta = RootYawDelta;
-						if (RootYawDelta > 0.0f)
-						{
-							ClampedRootYawDelta = FMath::Min(RootYawDelta, FMath::Max(FacingDelta, 0.0f));
-						}
-						else if (RootYawDelta < 0.0f)
-						{
-							ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
-						}
+						CachedTurnInPlaceSequence = const_cast<UAnimSequence*>(AnimSeq);
+						CachedTurnInPlaceSelectionRevision = SelectionRevision;
+						TurnInPlaceSelectionStartActorYaw = GetActorRotation().Yaw;
+					}
 
-						if (FMath::Abs(ClampedRootYawDelta) > KINDA_SMALL_NUMBER)
+					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
+					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
+					const float StartTime = FMath::Clamp(
+						AnimInst->GetThreadSafeStateControllerSelectedAnimationStartTime(),
+						0.0f,
+						AnimSeq->GetPlayLength());
+					const float CumulativeCurrentTime = FMath::Clamp(StartTime + CurrTime, StartTime, AnimSeq->GetPlayLength());
+
+					FAnimExtractContext CurrentCumulativeContext(static_cast<double>(CumulativeCurrentTime));
+					const float CurrentCumulativeYaw = AnimSeq->ExtractRootMotionFromRange(
+						static_cast<double>(StartTime), static_cast<double>(CumulativeCurrentTime), CurrentCumulativeContext).Rotator().Yaw;
+
+					const float AuthoredTargetActorYaw = FRotator::NormalizeAxis(
+						TurnInPlaceSelectionStartActorYaw + CurrentCumulativeYaw);
+					const float RootYawDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, AuthoredTargetActorYaw);
+
+					// Local player clamps against camera facing delta so we don't turn past the camera.
+					float FacingDelta = RootYawDelta;
+					if (IsLocallyControlled() && GetController())
+					{
+						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
+					}
+					else if (LocomotionAnimStateComponent)
+					{
+						FacingDelta = LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw;
+					}
+
+					float ClampedRootYawDelta = RootYawDelta;
+					if (RootYawDelta > 0.0f)
+					{
+						ClampedRootYawDelta = FMath::Min(RootYawDelta, FMath::Max(FacingDelta, 0.0f));
+					}
+					else if (RootYawDelta < 0.0f)
+					{
+						ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
+					}
+
+					const bool bCanApplyActorRotation = IsLocallyControlled();
+					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
+					{
+						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
+					}
+
+					if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
+					{
+						const float CtrlYaw = (IsLocallyControlled() && GetController()) ? GetController()->GetControlRotation().Yaw : 0.0f;
+						UE_LOG(LogProjectJPlayer, Display,
+							TEXT("[TIP_Rot] Pawn=%s Role=%d Rev=%d Seq=%s Elapsed=%.3f/%.3f RootDelta=%.2f FacingDelta=%.2f ClampedDelta=%.2f ActorYaw=%.1f CtrlYaw=%.1f TargetYaw=%.1f"),
+							*GetName(),
+							static_cast<int32>(GetLocalRole()),
+							SelectionRevision,
+							*AnimSeq->GetName(),
+							Elapsed,
+							AnimSeq->GetPlayLength(),
+							RootYawDelta,
+							FacingDelta,
+							ClampedRootYawDelta,
+							GetActorRotation().Yaw,
+							CtrlYaw,
+							AuthoredTargetActorYaw);
+
+						if (GEngine && IsLocallyControlled())
 						{
-							AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
+							GEngine->AddOnScreenDebugMessage(
+								1001,
+								0.0f,
+								FColor::Cyan,
+								FString::Printf(TEXT("[TIP] Seq=%s Elapsed=%.2f/%.2f RootDelta=%.1f FacingDelta=%.1f Clamped=%.1f ActorYaw=%.1f"),
+									*AnimSeq->GetName(), Elapsed, AnimSeq->GetPlayLength(), RootYawDelta, FacingDelta, ClampedRootYawDelta, GetActorRotation().Yaw));
 						}
 					}
 
+					if (!HasAuthority() && IsLocallyControlled())
+					{
+						const UWorld* World = GetWorld();
+						const double Now = World ? World->GetTimeSeconds() : 0.0;
+						const float CurrentActorYaw = GetActorRotation().Yaw;
+						const bool bYawChangedSignificantly = FMath::Abs(FRotator::NormalizeAxis(CurrentActorYaw - LastSentTurnInPlaceActorYaw)) >= 2.0f;
+						const bool bTimeElapsed = (Now - LastTurnInPlaceSendTime) >= 0.05;
+
+						if (!bLastSentTurnInPlaceActive || (bYawChangedSignificantly && bTimeElapsed))
+						{
+							ServerSetTurnInPlaceRotation(true, CurrentActorYaw);
+							bLastSentTurnInPlaceActive = true;
+							LastSentTurnInPlaceActorYaw = CurrentActorYaw;
+							LastTurnInPlaceSendTime = Now;
+						}
+					}
 				}
 			}
 		}
+	}
+
+	if (!HasAuthority() && IsLocallyControlled())
+	{
+		if (bLastSentTurnInPlaceActive && !bCurrentlyInTurnInPlace)
+		{
+			ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
+			bLastSentTurnInPlaceActive = false;
+			LastSentTurnInPlaceActorYaw = GetActorRotation().Yaw;
+
+			if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("[TIP_Exit] Pawn=%s Role=%d FinalActorYaw=%.1f"),
+					*GetName(),
+					static_cast<int32>(GetLocalRole()),
+					GetActorRotation().Yaw);
+				if (GEngine && IsLocallyControlled())
+				{
+					GEngine->RemoveOnScreenDebugMessage(1001);
+				}
+			}
+		}
+	}
+
+	if (!bCurrentlyInTurnInPlace && CachedTurnInPlaceSequence.IsValid())
+	{
+		CachedTurnInPlaceSequence.Reset();
+		CachedTurnInPlaceSelectionRevision = INDEX_NONE;
 	}
 
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
@@ -1408,6 +1502,14 @@ void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(
 	LogCombatPresentationTrace(
 		*this,
 		bReplicatedCombatIntroPresentation ? TEXT("ServerIntroPresentationSetTrue") : TEXT("ServerIntroPresentationSetFalse"));
+}
+
+void AProject_JPlayerCharacter::ServerSetTurnInPlaceRotation_Implementation(bool bInTurnInPlace, float InTargetActorYaw)
+{
+	if (bInTurnInPlace || FMath::Abs(FRotator::NormalizeAxis(InTargetActorYaw - GetActorRotation().Yaw)) > 0.5f)
+	{
+		SetActorRotation(FRotator(0.0f, InTargetActorYaw, 0.0f));
+	}
 }
 
 void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)

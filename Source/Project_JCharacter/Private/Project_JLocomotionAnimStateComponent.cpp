@@ -188,27 +188,64 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot, DeltaTime);
 	if (!bUsingLocalInputState && bRemoteTurnInPlaceActive)
 	{
-		const float RemainingFacingDelta = FMath::FindDeltaAngleDegrees(
-			PlayerOwner->GetActorRotation().Yaw,
-			RemoteTurnInPlaceTargetFacingYaw);
-		if (FMath::Abs(RemainingFacingDelta) > 5.0f)
-		{
-			KinematicContext.DesiredFacingDeltaYaw = RemainingFacingDelta;
-			KinematicContext.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
-		}
-		else
+		// Remote proxies face the replicated cosmetic target while TIP presentation is active.
+		// Abort immediately if the remote character starts moving or becomes airborne.
+		if (KinematicContext.bHasMoveInput || KinematicContext.GroundSpeed > IdleSpeedThreshold || bIsInAir || IsLandingStateActive())
 		{
 			bRemoteTurnInPlaceActive = false;
 			RemoteTurnInPlaceTimeRemaining = 0.0f;
 			RemoteTurnInPlaceDirectionBucket = 0;
 		}
+		else
+		{
+			const float RemainingFacingDelta = FMath::FindDeltaAngleDegrees(
+				PlayerOwner->GetActorRotation().Yaw,
+				RemoteTurnInPlaceTargetFacingYaw);
+			if (FMath::Abs(RemainingFacingDelta) <= 5.0f)
+			{
+				bRemoteTurnInPlaceActive = false;
+				RemoteTurnInPlaceTimeRemaining = 0.0f;
+				RemoteTurnInPlaceDirectionBucket = 0;
+				KinematicContext.DesiredFacingDeltaYaw = 0.0f;
+				KinematicContext.DesiredFacingYaw = PlayerOwner->GetActorRotation().Yaw;
+			}
+			else
+			{
+				KinematicContext.DesiredFacingDeltaYaw = RemainingFacingDelta;
+				KinematicContext.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
+			}
+		}
 	}
 	FProject_JDerivedLocomotionContext NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
 	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
+	uint8 CurrentLocalTurnBucket = 0;
+	const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
+	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
+	{
+		CurrentLocalTurnBucket = 1;
+	}
+	else if (DeltaYaw < -135.0f)
+	{
+		CurrentLocalTurnBucket = 2;
+	}
+	else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
+	{
+		CurrentLocalTurnBucket = 3;
+	}
+	else if (DeltaYaw >= 135.0f)
+	{
+		CurrentLocalTurnBucket = 4;
+	}
+
 	const bool bLocalTurnInPlace = bUsingLocalInputState && NewDerivedContext.bShouldTurnInPlace;
-	if (bLocalTurnInPlace && !bWasLocallyRequestingTurnInPlace)
+	if (bLocalTurnInPlace && (!bWasLocallyRequestingTurnInPlace || (CurrentLocalTurnBucket != 0 && CurrentLocalTurnBucket != LastLocalTurnInPlaceBucket)))
 	{
 		bTurnInPlaceReplicationRequestPending = true;
+		LastLocalTurnInPlaceBucket = CurrentLocalTurnBucket;
+	}
+	else if (!bLocalTurnInPlace)
+	{
+		LastLocalTurnInPlaceBucket = 0;
 	}
 	bWasLocallyRequestingTurnInPlace = bLocalTurnInPlace;
 	DerivedLocomotionContext = NewDerivedContext;
@@ -429,9 +466,17 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 	{
 		Context.DesiredFacingYaw = Context.MoveWorldDirection.Rotation().Yaw;
 	}
-	else
+	else if (ShouldUseLocalInputState())
 	{
 		Context.DesiredFacingYaw = PlayerOwner.GetControlRotation().Yaw;
+	}
+	else if (bRemoteTurnInPlaceActive)
+	{
+		Context.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
+	}
+	else
+	{
+		Context.DesiredFacingYaw = PlayerOwner.GetActorRotation().Yaw;
 	}
 	Context.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
 		PlayerOwner.GetActorRotation().Yaw,
@@ -455,6 +500,10 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	Context.PivotPreviousMovementDirection = LatchedPivotPreviousMovementDirection;
 	Context.PivotMoveIntentDirection = LatchedPivotMoveIntentDirection;
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
+	Context.TurnInPlaceDirectionBucket = !bUsingLocalInputState && bRemoteTurnInPlaceActive
+		? RemoteTurnInPlaceDirectionBucket
+		: 0;
+	Context.TurnInPlaceSequence = !bUsingLocalInputState ? RemoteTurnInPlaceSequence : 0;
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
 	Context.PhaseFamily = ResolvePhaseFamily(Context);
 	return Context;
@@ -487,13 +536,17 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		return;
 	}
 
+	const bool bFacingDeltaSufficient = bUsingLocalInputState
+		? FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold
+		: (bRemoteTurnInPlaceActive && FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold);
+
 	const bool bKeepTurnInPlace =
 		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace &&
 		(GroundMotionMode == EProject_JGroundMotionMode::Idle ||
 			GroundMotionMode == EProject_JGroundMotionMode::Stop) &&
 		!KinematicContext.bHasMoveInput &&
 		KinematicContext.GroundSpeed <= IdleSpeedThreshold &&
-		FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) > 5.0f &&
+		bFacingDeltaSufficient &&
 		DerivedPhaseFamilyElapsedTime < 1.5f &&
 		!bIsInAir &&
 		!IsLandingStateActive();

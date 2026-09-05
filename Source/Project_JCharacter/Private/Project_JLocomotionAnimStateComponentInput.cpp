@@ -5,7 +5,7 @@
 #include "Project_JPlayerCharacter.h"
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
-	int32,
+	int32 Sequence,
 	float ServerStartAgeSeconds,
 	uint8 DirectionBucket,
 	float TargetFacingYaw)
@@ -18,14 +18,25 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
 	// The state-controller owns actual authored completion. This is only the
 	// remote eligibility window, deliberately long enough to absorb normal RTT
 	// while still releasing budgeted proxies promptly.
-	constexpr float RemoteTurnInPlacePresentationDuration = 1.25f;
+	constexpr float RemoteTurnInPlacePresentationDuration = 2.5f;
 	constexpr float MinimumRemoteTurnInPlacePresentationDuration = 0.20f;
+	RemoteTurnInPlaceSequence = Sequence;
 	RemoteTurnInPlaceDirectionBucket = DirectionBucket;
 	RemoteTurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(TargetFacingYaw);
 	RemoteTurnInPlaceTimeRemaining = FMath::Max(
 		MinimumRemoteTurnInPlacePresentationDuration,
 		RemoteTurnInPlacePresentationDuration - FMath::Max(ServerStartAgeSeconds, 0.0f));
 	bRemoteTurnInPlaceActive = true;
+}
+
+void UProject_JLocomotionAnimStateComponent::NotifyTurnInPlaceReentered(uint8 DirectionBucket)
+{
+	if (ShouldUseLocalInputState() && DirectionBucket >= 1 && DirectionBucket <= 4)
+	{
+		bTurnInPlaceReplicationRequestPending = true;
+		PendingTurnInPlaceBucket = DirectionBucket;
+		LastLocalTurnInPlaceBucket = DirectionBucket;
+	}
 }
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw)
@@ -38,27 +49,46 @@ bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationReques
 	}
 
 	bTurnInPlaceReplicationRequestPending = false;
-	const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
-	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
+	if (PendingTurnInPlaceBucket >= 1 && PendingTurnInPlaceBucket <= 4)
 	{
-		OutDirectionBucket = 1;
+		OutDirectionBucket = PendingTurnInPlaceBucket;
+		PendingTurnInPlaceBucket = 0;
 	}
-	else if (DeltaYaw < -135.0f)
+	else
 	{
-		OutDirectionBucket = 2;
-	}
-	else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
-	{
-		OutDirectionBucket = 3;
-	}
-	else if (DeltaYaw >= 135.0f)
-	{
-		OutDirectionBucket = 4;
+		const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
+		if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
+		{
+			OutDirectionBucket = 1;
+		}
+		else if (DeltaYaw < -135.0f)
+		{
+			OutDirectionBucket = 2;
+		}
+		else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
+		{
+			OutDirectionBucket = 3;
+		}
+		else if (DeltaYaw >= 135.0f)
+		{
+			OutDirectionBucket = 4;
+		}
 	}
 
 	if (OutDirectionBucket != 0)
 	{
-		OutTargetFacingYaw = KinematicContext.DesiredFacingYaw;
+		float AuthoredTurnAngle = 0.0f;
+		switch (OutDirectionBucket)
+		{
+		case 1: AuthoredTurnAngle = -90.0f; break;
+		case 2: AuthoredTurnAngle = -180.0f; break;
+		case 3: AuthoredTurnAngle = 90.0f; break;
+		case 4: AuthoredTurnAngle = 180.0f; break;
+		default: break;
+		}
+		const AActor* OwnerActor = GetOwner();
+		const float BaseActorYaw = OwnerActor ? OwnerActor->GetActorRotation().Yaw : 0.0f;
+		OutTargetFacingYaw = FRotator::NormalizeAxis(BaseActorYaw + AuthoredTurnAngle);
 	}
 	return OutDirectionBucket != 0;
 }
