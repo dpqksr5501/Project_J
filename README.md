@@ -5,6 +5,49 @@
 
 ---
 
+## 📊 Profiling Snapshot — 측정으로 확인한 현재 기반
+
+`Development Editor PIE`에서 재현 가능한 harness와 Unreal/Network Insights로
+수집한 결과입니다. 아래 숫자는 프레임 평균 FPS가 아니라 선택 구간의 timer 또는
+network aggregate이며, workload별 조건이 다르므로 서로의 절대 우열 비교에는 사용하지 않습니다.
+
+| 영역 | 측정 workload | 확인한 결과 |
+|---|---|---|
+| Animation CPU | local player + 이동 visual clone 100명 | `AnimNativeUpdate` 평균 **4.44 µs/call**, thread-safe snapshot **1.84 µs/call**, PoseSearch DB Chooser **0.21 µs/call** |
+| Parallel animation | 동일 100명 local visual workload | thread-safe update 표본의 약 **99.99%**가 parallel-evaluation 상태 |
+| GPU | 동일 camera의 `ProfileGPU` 1-frame sample | Frame **3.99 ms**, SceneRender **3.70 ms** |
+| Iris runtime | PIE dedicated server + client 2 | server/client 모두 **IrisActive=1**, N2 baseline에서 write failure/pending backlog **0** |
+| Movement replication | server-authoritative mover 50명 → client 2, 30 Hz | aggregate **62.3 KB/s**, 연결당 약 **31.2 KB/s**, mover 1개·연결 1개당 약 **4.84 kbit/s** |
+
+N50은 전투, TIP, inventory mutation, 실제 player input을 제외한 **이동 복제 전용**
+baseline입니다. mover를 always-relevant로 둔 의도적 worst-nearby 조건이므로,
+AOI가 적용된 production bandwidth 예산이나 50개 실제 client connection 결과로
+해석하지 않습니다.
+
+**Engineering decision:** 현 측정에서는 animation worker를 더 쪼개거나
+NetUpdateFrequency를 성급히 낮추지 않습니다. 다음 확장 지점은 대규모 NPC에 대한
+representation tier와 connection별 AOI/relevance 정책입니다.
+
+### Why the current baseline holds up
+
+현재 결과가 단순히 “운 좋게 낮게 나온 sample”이 아니라는 근거는 아래 구조에 있습니다.
+
+| 시스템적 선택 | 측정에서 확인된 효과 | 확장 시의 의미 |
+|---|---|---|
+| **C++ semantic locomotion snapshot → AnimInstance proxy** | `BuildThreadSafeData`가 100명에서 평균 1.84 µs/call로 작고, gameplay UObject 접근을 animation evaluation과 분리 | worker path에 Actor/GAS 조회나 임의 동기화를 밀어 넣지 않고, immutable input을 소비하는 구조 유지 |
+| **엔진 지원 parallel animation 경로 준수** | `CanRunParallel=1`, thread-safe update의 약 99.99%가 parallel-evaluation 상태 | 임의 Task Graph 분리보다 엔진의 evaluation scheduling을 활용; dispatch/fence/copy overhead 회피 |
+| **distance tier / URO 중심 cadence 제어** | S70에서 actor tick 약 7,369회/s와 animation native update 약 2,495회/s가 분리됨 | 모든 보이는 character를 매 frame 같은 빈도로 animation update하지 않는 기반 |
+| **server-authoritative mover와 Iris batching** | N50에서 50 mover가 30 Hz로 두 client에 실제 전달되고, payload가 `Location`/`ReplicatedMovement`에 집중 | 전투·TIP·inventory traffic과 이동 baseline을 분리해 class별 bandwidth 정책을 설계할 수 있음 |
+| **측정용 workload 분리** | local visual CPU harness와 replicated-movement harness를 별도로 유지 | “animation CPU가 좋다”와 “network가 좋다”를 잘못 섞어 최적화하는 판단 오류 방지 |
+
+이는 현재 단계의 **좋은 기반**이지, 모든 규모에서 최적화가 끝났다는 주장은 아닙니다.
+특히 N50은 always-relevant mover 50개를 client 2에 보내는 조건이고, custom AOI/Iris
+filter, 50 real client input, NPC/Mass, 전투·VFX worst case는 아직 별도 검증 대상입니다.
+
+→ [통합 프로파일링 결과와 해석](Docs/Architecture/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [원본 trace/세부 결과](Docs/Architecture/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) · [네트워크 세부 결과](Docs/Architecture/ProjectJ_Network_Baseline_Results_2026-09-04.md)
+
+---
+
 ## 🎨 아티스트 / 디자이너 분들을 위한 협업 안내
 본 프로젝트는 기획하신 다양한 비주얼 리소스와 애니메이션이 게임 속에서 실제로 구동되는 모습을 빠르게 확인하고 검증할 수 있도록 설계되었습니다. 
 
@@ -32,16 +75,16 @@
 대규모 MMORPG로의 확장성과 성능 최적화를 고려하여 설계된 주요 기술적 강점입니다.
 
 ### 1. 영속성 상태와 캐릭터 표현의 엄격한 분리 (`AProject_JPlayerState` & `UProject_JEquipmentManagerComponent`)
-* **PlayerState 중심 구조**: 네트워크 불안정으로 인한 재접속이나 캐릭터 사망/리스폰 시 데이터 유실을 방지하기 위해 ASC(AbilitySystemComponent), AttributeSet, 인벤토리 및 장비 관리의 실질적 소유권을 [AProject_JPlayerState](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Game/Project_JPlayerState.h)에 부여했습니다.
-* **Avatar로서의 Character**: [AProject_JPlayerCharacter](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Public/Project_JPlayerCharacter.h) 클래스는 입력 처리, 이동, 애니메이션, 비주얼 메시와 같은 렌더링 및 클라이언트 표현(Avatar) 역할만 전담하여 아키텍처의 안정성을 확보했습니다.
+* **PlayerState 중심 구조**: 네트워크 불안정으로 인한 재접속이나 캐릭터 사망/리스폰 시 데이터 유실을 방지하기 위해 ASC(AbilitySystemComponent), AttributeSet, 인벤토리 및 장비 관리의 실질적 소유권을 [AProject_JPlayerState](Source/Project_J/Game/Project_JPlayerState.h)에 부여했습니다.
+* **Avatar로서의 Character**: [AProject_JPlayerCharacter](Source/Project_JCharacter/Public/Project_JPlayerCharacter.h) 클래스는 입력 처리, 이동, 애니메이션, 비주얼 메시와 같은 렌더링 및 클라이언트 표현(Avatar) 역할만 전담하여 아키텍처의 안정성을 확보했습니다.
 * **NPC와의 전략 분리**: `PlayerState`가 없는 일반 NPC들의 경우, `Character` 클래스 내부에 자체적인 `EquipmentManager` 등을 소유 기반으로 동작하도록 분기 처리하여 코드 재사용성과 런타임 효율성을 모두 챙겼습니다.
 
 ### 2. 멀티플레이어 환경을 고려한 모션 매칭 최적화 (`UProject_JMotionMatchingTrajectoryComponent`)
-* **원격 캐릭터(Simulated Proxy) 궤적 보정**: 로컬 예측 위주인 모션 매칭의 한계를 극복하기 위해, [UProject_JMotionMatchingTrajectoryComponent](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h)에서 복제된 이동 정보(Replicated Movement)와 시각적 부드러움(Visual Smoothing)을 기반으로 원격 플레이어의 이동 궤적을 보정 및 복원하는 `RepairRemoteTrajectoryFacing` 메커니즘을 구축했습니다.
+* **원격 캐릭터(Simulated Proxy) 궤적 보정**: 로컬 예측 위주인 모션 매칭의 한계를 극복하기 위해, [UProject_JMotionMatchingTrajectoryComponent](Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h)에서 복제된 이동 정보(Replicated Movement)와 시각적 부드러움(Visual Smoothing)을 기반으로 원격 플레이어의 이동 궤적을 보정 및 복원하는 `RepairRemoteTrajectoryFacing` 메커니즘을 구축했습니다.
 * **거리별 애니메이션 버젯팅**: 캐릭터의 거리 단계(Near/Mid/Far/Hidden)에 따라 연산 주기를 조절하여 대규모 멀티플레이 상황에서도 CPU 오버헤드를 최소화하도록 구조화했습니다.
 
 ### 3. 분산 세션 확장을 고려한 스레드 안전 핸드오버 직렬화 (`UProject_JHandoverManager`)
-* **심리스 서버 이동 준비**: 향후 메가서버나 분산 세션 게이트웨이 환경으로의 매끄러운 캐릭터 이동을 위해, 유저 상태 데이터를 스레드 안전(Thread-Safe)하고 가비지 컬렉터(GC)에 안전하게 직렬화/역직렬화(Round-trip)하는 [UProject_JHandoverManager](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_J/Public/Services/Project_JHandoverManager.h) 처리 구조를 마련했습니다.
+* **심리스 서버 이동 준비**: 향후 메가서버나 분산 세션 게이트웨이 환경으로의 매끄러운 캐릭터 이동을 위해, 유저 상태 데이터를 스레드 안전(Thread-Safe)하고 가비지 컬렉터(GC)에 안전하게 직렬화/역직렬화(Round-trip)하는 [UProject_JHandoverManager](Source/Project_J/Backend/Project_JHandoverManager.h) 처리 구조를 마련했습니다.
 
 ### 4. 의존성 격리를 위한 단방향 모듈화 구조
 * **Core ➡️ GAS ➡️ Character ➡️ Game Logic** 순서의 엄격한 단방향 의존성 규칙을 적용하여 코드 간 커플링을 방지했습니다. 이로 인해 특정 모듈의 변경이 다른 핵심 모듈의 손상으로 이어지지 않아 안정적인 확장이 가능합니다.
@@ -55,8 +98,8 @@
 * **모듈러 메시(Modular Mesh)** 시스템을 도입하여 장비 탈착 시 Main Mesh의 Bone 트랙 동작에 맞춰 부위별 파츠 메시들이 동적으로 결합(Leader Pose Component 방식)되도록 설정했습니다. 이로 인해 애니메이션 연산(Evaluation)의 중복 계산을 원천 차단하여 캐릭터 스킨 구성 시의 CPU 비용을 크게 낮췄습니다.
 
 ### 2. 네트워크 패킷량 최적화 (`FFastArraySerializer` & Distance Relevance)
-* **변경분 전송**: 인벤토리 및 장착 중인 아이템 데이터 전송 시, 매번 복잡한 전체 배열을 동기화하지 않고 변경된 아이템 정보만 패킷에 실어 복제하는 [FFastArraySerializer](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h) 커스텀 직렬화 방식을 구현했습니다.
-* **독립형 네트워크 정책 필터**: 전송 대상과의 거리(Distance) 및 현재 전투 돌입 여부(Combat Tag)에 따라 우선순위를 동적으로 연산하고 패킷 주기를 자동 스로틀링하는 네트워크 Relevance 정책 필터를 마련했습니다.
+* **변경분 전송 기반**: 인벤토리 및 장착 중인 아이템 데이터는 [FFastArraySerializer](Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h) 기반으로 모델링했으며, Iris runtime activation과 초기 state 전달을 확인했습니다. 실제 add/remove/equip delta bandwidth는 기능 확장 시 별도 측정합니다.
+* **독립형 네트워크 정책 초안**: 거리(Distance)와 전투 상태(Combat Tag)를 입력으로 relevance/priority를 계산하는 정책 helper를 마련했습니다. 현재는 live Iris filter/prioritizer로 연결하지 않았으며, AOI 기준선이 필요한 시점에 connection별 정책으로 적용·측정합니다.
 
 ### 3. 리소스 로딩 예외 처리 (Async Asset Load Safety)
 * 장비 아이템의 3D 에셋을 비동기(Asynchronous)로 로딩하는 동안, 로딩이 완료되기 전에 장비를 해제하는 빠른 입력 레이스 컨디션(Race Condition)이 생길 수 있습니다. 이를 예방하기 위해 인스턴스 고유 ID와 비주얼 요청 ID를 상호 매칭하여 검증하는 방어 코드를 적용해 에셋의 좀비 장착이나 크래시를 방지했습니다.
@@ -74,7 +117,7 @@
 
 ## 🛠️ 주요 기술 스택 및 구현 현황
 * **Engine Version**: Unreal Engine 5.8
-* **Locomotion**: [LocomotionAnimStateComponent](file:///c:/Users/I/Documents/GitHub/Project_J/Source/Project_JCharacter) 및 C++ Motion Matching 기반 이동 제어
+* **Locomotion**: [LocomotionAnimStateComponent](Source/Project_JCharacter/) 및 C++ Motion Matching 기반 이동 제어
 * **Combat**: GAS(Gameplay Ability System) 기반 어빌리티, 속성 세트, 콤보 메커니즘
 * **Network**: 서버 권위형(Server-Authoritative) 판정 및 FastArray 기반 인벤토리/장비 복제
 * **Handover**: 분산 서버 환경을 고려한 캐릭터 데이터 직렬화 및 심리스 레벨 이동 바인딩
@@ -90,4 +133,4 @@
 ---
 
 ## 📁 관련 상세 문서
-* 더 자세한 시스템 구조와 정책은 [Docs/README.md](file:///c:/Users/I/Documents/GitHub/Project_J/Docs/README.md)에서 확인하실 수 있습니다.
+* 더 자세한 시스템 구조와 정책은 [Docs/README.md](Docs/README.md)에서 확인하실 수 있습니다.
