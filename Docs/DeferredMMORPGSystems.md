@@ -26,7 +26,7 @@ NPC는 player-grade Motion Matching을 사용하지 않는 것을 기본으로 �
 - server-authoritative state compression
 - simple blendspace/sequence/cached pose LOD path
 
-`AProject_JNPCCharacter`는 초기 저비용 정책으로 actor tick 비활성화, 낮은 net update frequency, 낮은 cull distance, slower significance tick interval, skeletal mesh URO, hidden mesh visibility tick policy를 적용합니다.
+`AProject_JNPCCharacter`는 초기 저비용 정책으로 actor tick 비활성화, 낮은 net update frequency, 낮은 cull distance, skeletal mesh URO, hidden mesh visibility tick policy를 적용합니다. Significance는 현재 budget tier를 측정하고 권장 AI update interval을 반환할 뿐, 이를 소비하는 AI scheduler나 representation tier 전환은 아직 구현하지 않습니다.
 
 NPC, boss, monster는 Motion Matching을 사용하지 않는다. AI tick cadence, perception/path refresh, pooling, Mass representation의 상세 계약과 Unreal Insights 측정 기준은 [Performance Optimization Foundation](PerformanceOptimizationFoundation.md)를 따른다.
 
@@ -34,7 +34,7 @@ NPC, boss, monster는 Motion Matching을 사용하지 않는다. AI tick cadence
 
 `FProject_JReplicationPolicySettings`는 distance filter threshold를 reusable struct로 보관합니다. `UProject_JNetObjectFilter_Distance`는 default settings 또는 explicit settings에서 decision을 만들 수 있습니다.
 
-현재는 Iris/RepGraph adapter 이전 단계입니다. (참고: UE 5.8에서도 Iris는 여전히 공식적으로 Experimental 단계이며 로컬 플러그인은 Beta 상태입니다.) 중요한 것은 policy calculation을 먼저 명확히 분리해, 나중에 transport layer를 바꿔도 relevance reason과 priority 계산 의미가 유지되도록 하는 것입니다.
+현재는 Iris/RepGraph adapter 이전 단계입니다. `.uproject`의 Iris plugin과 `DefaultEngine.ini`의 의도 설정은 존재하지만, UE 5.8 공식 런타임 경로인 `IrisNetDriverConfigs` 또는 `-UseIrisReplication=1` 검증, `SetupIrisSupport(Target)`, custom filter/prioritizer 등록·할당은 아직 없습니다. 중요한 것은 policy calculation을 먼저 명확히 분리해, 나중에 transport layer를 바꿔도 relevance reason과 priority 계산 의미가 유지되도록 하는 것입니다.
 
 ## Replication Policy Decision
 
@@ -105,7 +105,7 @@ SDK 연동보다 server authority boundary가 먼저입니다. Movement validati
 ## Next Priorities
 
 1. PIE에서 10/30/50 character profiling baseline 반복 측정
-2. replication policy에 party/guild/public event relevance 연결
+2. live Iris/RepGraph adapter를 도입한 뒤 replication policy에 party/guild/public event relevance 연결
 3. combat mode state와 ability activation boundary 추가 분리
 4. backend request/response contract를 실제 gateway call에 지속 적용
 5. Unreal Insights로 actor/component tick, AnimBP, skeletal mesh render cost 확인

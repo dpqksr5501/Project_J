@@ -98,7 +98,7 @@ Project_JCharacterEditor
 - `UProject_JReplicatedAnimEventComponent`
   - 원격 애니메이션 event counter를 캐릭터 본체에서 분리합니다.
 
-Iris를 고려하여 policy 계산을 adapter와 분리해둔 방향은 좋습니다. 다만 UE 5.8에서도 Iris는 여전히 공식적으로 Experimental 상태(로컬 플러그인은 Beta)이며, 필터/우선순위화 API가 FInternalNetRefIndex 및 신규 index manager를 경유하도록 리팩터링되는 등의 API 정밀화가 진행 중입니다. 따라서 실제 Iris filter/prioritizer adapter에 완전 바인딩하는 것은 향후 선택적인 추가 작업으로 남겨두고, gameplay policy를 우선 분리해둔 현재 상태를 유지하는 것이 적합합니다.
+Iris를 고려하여 policy 계산을 adapter와 분리해둔 방향은 좋습니다. 현재 Project_J에는 Iris plugin과 policy helper는 있으나, UE 5.8 공식 runtime activation 경로(`IrisNetDriverConfigs` 또는 `-UseIrisReplication=1`)의 검증, `SetupIrisSupport(Target)`, 실제 `UNetObjectFilter`/`UNetObjectPrioritizer` 구현·등록·NetHandle 할당은 없습니다. 따라서 custom Iris interest management가 이미 동작한다고 해석하면 안 됩니다. 실제 Iris filter/prioritizer adapter에 완전 바인딩하는 것은 다중 클라이언트 NetTrace와 connection budget이 필요한 시점의 선택 작업으로 남기고, 지금은 gameplay policy 분리를 유지하는 것이 적합합니다.
 
 ### Backend And World Boundary
 

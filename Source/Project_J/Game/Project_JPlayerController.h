@@ -8,6 +8,7 @@
 
 class UInputMappingContext;
 class UUserWidget;
+class UProject_JProfilingCrowdComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -19,6 +20,7 @@ class AProject_JPlayerController : public APlayerController
 	GENERATED_BODY()
 	
 protected:
+	AProject_JPlayerController();
 
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
@@ -79,6 +81,23 @@ protected:
 
 	UFUNCTION(Exec)
 	void DumpMMOProfilingSnapshot(int32 MaxDetailedCharacters = 8);
+
+	/** Starts non-replicated player-class clones for visual/animation CPU profiling only. */
+	UFUNCTION(Exec)
+	void StartProfilingVisualCrowd(int32 Count = 50);
+
+	UFUNCTION(Exec)
+	void StopProfilingVisualCrowd();
+
+	UFUNCTION(Exec)
+	void DumpProfilingVisualCrowd();
+
+	/** Reports engine parallel-animation CVars and the current pawn's anim instance. */
+	UFUNCTION(Exec)
+	void DumpAnimationExecutionPolicy();
+
+	UPROPERTY(VisibleAnywhere, Transient, Category = "Profiling")
+	TObjectPtr<UProject_JProfilingCrowdComponent> ProfilingCrowdComponent;
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;

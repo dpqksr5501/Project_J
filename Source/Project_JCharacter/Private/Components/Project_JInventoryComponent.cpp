@@ -265,18 +265,71 @@ bool UProject_JInventoryComponent::FindItemInstance(FGuid InstanceId, FProject_J
 	return true;
 }
 
+FString UProject_JInventoryComponent::GetReplicationDiagnosticSummary() const
+{
+	// ArrayReplicationKey is transport bookkeeping and can legitimately differ between server/client.
+	// Keep it visible in the summary, but exclude it from the payload-equivalence fingerprint.
+	uint32 StateHash = 0;
+	for (const FProject_JInventoryArrayItem& Item : InventoryArray.Items)
+	{
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.InstanceId));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.StackCount));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.ItemLevel));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.bIsLocked));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.bIsEquipped));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(GetNameSafe(Item.ItemInstance.ItemDef)));
+	}
+
+	return FString::Printf(
+		TEXT("Items=%d ArrayKey=%d StateHash=%08X"),
+		InventoryArray.Items.Num(),
+		InventoryArray.ArrayReplicationKey,
+		StateHash);
+}
+
+FString UProject_JInventoryComponent::GetReplicationDiagnosticDeltaSummary() const
+{
+#if !UE_BUILD_SHIPPING
+	return FString::Printf(
+		TEXT("Add=%d Change=%d Remove=%d"),
+		ReplicationDiagnosticAddedCount,
+		ReplicationDiagnosticChangedCount,
+		ReplicationDiagnosticRemovedCount);
+#else
+	return TEXT("Unavailable");
+#endif
+}
+
+void UProject_JInventoryComponent::ResetReplicationDiagnosticDeltaCounters()
+{
+#if !UE_BUILD_SHIPPING
+	ReplicationDiagnosticAddedCount = 0;
+	ReplicationDiagnosticChangedCount = 0;
+	ReplicationDiagnosticRemovedCount = 0;
+#endif
+}
+
 void UProject_JInventoryComponent::HandleReplicatedItemAdded(const FProject_JInventoryArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticAddedCount;
+#endif
 	OnItemAdded.Broadcast(Item.ItemInstance);
 }
 
 void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticChangedCount;
+#endif
 	OnItemChanged.Broadcast(Item.ItemInstance);
 }
 
 void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticRemovedCount;
+#endif
 	OnItemRemoved.Broadcast(Item.ItemInstance);
 }
 

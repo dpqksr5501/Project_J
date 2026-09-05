@@ -244,6 +244,7 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 
 void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeUpdate);
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
 	if (NeedsOwnerReferenceRefresh())
@@ -997,8 +998,30 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	PublishThreadSafeDataToProxy(ThreadSafeData);
 }
 
+void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
+{
+	// This callback is part of UE's thread-safe update phase, but the Task Graph
+	// may execute that phase as a foreground task. Record UE's runtime state so
+	// Insights distinguishes actual parallel evaluation from foreground work.
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeThreadSafeUpdate);
+	if (IsRunningParallelEvaluation())
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeThreadSafeUpdate_ParallelEvaluation);
+		Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
+	}
+	else
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeThreadSafeUpdate_Foreground);
+		Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
+	}
+}
+
 void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 {
+	// Post-evaluate is intentionally measured separately from NativeUpdate and
+	// NativeThreadSafeUpdate. Its thread lane in Insights distinguishes the
+	// completion-side contact-curve work from worker-side graph evaluation.
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativePostEvaluate);
 	Super::NativePostEvaluateAnimation();
 
 	if (!IsPrimaryMeshAnimInstance())
@@ -1814,6 +1837,7 @@ FString UProject_JCharacterAnimInstance::GetMotionMatchingPivotTraceSummary() co
 
 FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeData(float DeltaSeconds) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimBuildThreadSafeData);
 	FProject_JAnimThreadSafeData Data;
 	Data.DeltaTime = DeltaSeconds;
 	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
@@ -2443,6 +2467,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 
 void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnGameThread(FProject_JAnimThreadSafeData& Data)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimStateControllerChooser);
 	FProject_JAnimOneShotPresentationThreadSafeData& OneShot = Data.OneShotPresentation;
 	OneShot.SelectedAnimation = nullptr;
 	OneShot.SelectedAnimationOutput = FProject_JStateControllerChooserOutput();
@@ -2961,6 +2986,7 @@ void UProject_JCharacterAnimInstance::FillProceduralIKThreadSafeData(FProject_JA
 
 void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishProxy);
 	const bool bMotionMatchingEnabled =
 		IsPrimaryMeshAnimInstance() &&
 		OwningCharacter &&
@@ -3076,6 +3102,7 @@ void UProject_JCharacterAnimInstance::RecordMotionMatchingTrace(
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPoseSearchDatabaseChooser);
 	if (!OwningCharacter || IsDedicatedServerAnimationContext())
 	{
 		return nullptr;
@@ -3260,6 +3287,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 
 void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JAnimThreadSafeData& Data)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishChooserProperties);
 	const FProject_JAnimOptimizationPolicy OptimizationPolicy = BuildOptimizationPolicy();
 	CurrentOptimizationPolicy = OptimizationPolicy;
 
@@ -3510,6 +3538,7 @@ void UProject_JCharacterAnimInstance::CacheEvaluatedMotionMatchingContext(const 
 
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimBuildOptimizationPolicy);
 	FProject_JAnimOptimizationPolicy Policy;
 	if (!OwningCharacter)
 	{

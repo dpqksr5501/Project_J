@@ -181,6 +181,47 @@ TArray<UProject_JEquipmentItemDefinition*> UProject_JEquipmentManagerComponent::
 	return Result;
 }
 
+FString UProject_JEquipmentManagerComponent::GetReplicationDiagnosticSummary() const
+{
+	// ArrayReplicationKey is transport bookkeeping and can legitimately differ between server/client.
+	// Keep it visible in the summary, but exclude it from the payload-equivalence fingerprint.
+	uint32 StateHash = 0;
+	for (const FProject_JEquipmentArrayItem& Item : EquipmentArray.Items)
+	{
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.ItemInstance.InstanceId));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(Item.Slot));
+		StateHash = HashCombineFast(StateHash, GetTypeHash(GetNameSafe(Item.ItemDef)));
+	}
+
+	return FString::Printf(
+		TEXT("Items=%d ArrayKey=%d StateHash=%08X"),
+		EquipmentArray.Items.Num(),
+		EquipmentArray.ArrayReplicationKey,
+		StateHash);
+}
+
+FString UProject_JEquipmentManagerComponent::GetReplicationDiagnosticDeltaSummary() const
+{
+#if !UE_BUILD_SHIPPING
+	return FString::Printf(
+		TEXT("Add=%d Change=%d Remove=%d"),
+		ReplicationDiagnosticAddedCount,
+		ReplicationDiagnosticChangedCount,
+		ReplicationDiagnosticRemovedCount);
+#else
+	return TEXT("Unavailable");
+#endif
+}
+
+void UProject_JEquipmentManagerComponent::ResetReplicationDiagnosticDeltaCounters()
+{
+#if !UE_BUILD_SHIPPING
+	ReplicationDiagnosticAddedCount = 0;
+	ReplicationDiagnosticChangedCount = 0;
+	ReplicationDiagnosticRemovedCount = 0;
+#endif
+}
+
 void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstanceById_Implementation(FGuid InstanceId)
 {
 	const FProject_JEquipmentOperationResult Result = TryEquipItemInstanceById(InstanceId);
@@ -430,15 +471,24 @@ bool UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticAddedCount;
+#endif
 	BroadcastEquipmentEquipped(Item);
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentChanged(FProject_JEquipmentArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticChangedCount;
+#endif
 	// Slot / Item changes on existing element
 }
 
 void UProject_JEquipmentManagerComponent::OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem& Item)
 {
+#if !UE_BUILD_SHIPPING
+	++ReplicationDiagnosticRemovedCount;
+#endif
 	BroadcastEquipmentUnequipped(Item);
 }

@@ -6,6 +6,9 @@ public class Project_JCharacter : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		// Generates Iris replication fragments for this module's FFastArraySerializer types.
+		SetupIrisSupport(Target);
+
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",

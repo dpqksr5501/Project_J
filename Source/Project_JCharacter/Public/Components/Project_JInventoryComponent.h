@@ -103,6 +103,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData& OutItemInstance) const;
 
+	/** Development diagnostics: compact state identity for verifying FastArray replication across PIE worlds. */
+	FString GetReplicationDiagnosticSummary() const;
+
+	/** Development diagnostics: client-side FastArray delta callbacks observed since the last reset. */
+	FString GetReplicationDiagnosticDeltaSummary() const;
+	void ResetReplicationDiagnosticDeltaCounters();
+
 	void HandleReplicatedItemAdded(const FProject_JInventoryArrayItem& Item);
 	void HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item);
 	void HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item);
@@ -116,4 +123,10 @@ private:
 
 	UPROPERTY(Replicated)
 	FProject_JInventoryArray InventoryArray;
+
+#if !UE_BUILD_SHIPPING
+	int32 ReplicationDiagnosticAddedCount = 0;
+	int32 ReplicationDiagnosticChangedCount = 0;
+	int32 ReplicationDiagnosticRemovedCount = 0;
+#endif
 };

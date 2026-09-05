@@ -3,12 +3,14 @@
 
 #include "Project_JPlayerController.h"
 #include "EnhancedInputSubsystems.h"
+#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
+#include "HAL/IConsoleManager.h"
 #include "Project_J.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Project_JGameState.h"
@@ -18,6 +20,7 @@
 #include "Project_JNPCCharacter.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Game/Project_JProfilingCrowdComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
@@ -78,6 +81,11 @@ int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
 }
 }
 
+AProject_JPlayerController::AProject_JPlayerController()
+{
+	ProfilingCrowdComponent = CreateDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"));
+}
+
 void AProject_JPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -133,6 +141,93 @@ bool AProject_JPlayerController::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+}
+
+void AProject_JPlayerController::StartProfilingVisualCrowd(int32 Count)
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const AProject_JPlayerCharacter* SourceCharacter = Cast<AProject_JPlayerCharacter>(GetPawn());
+	if (!ProfilingCrowdComponent || !SourceCharacter)
+	{
+		ClientMessage(TEXT("Profiling visual crowd unavailable: possess an AProject_JPlayerCharacter first."));
+		return;
+	}
+
+	const bool bStarted = ProfilingCrowdComponent->Start(
+		SourceCharacter->GetClass(),
+		SourceCharacter->GetActorLocation(),
+		SourceCharacter->GetActorForwardVector(),
+		Count);
+	const FString Message = bStarted
+		? FString::Printf(TEXT("Profiling visual crowd started: %d local non-replicated clones."), ProfilingCrowdComponent->GetSpawnedCount())
+		: TEXT("Profiling visual crowd did not start. Check the Output Log for the spawn failure.");
+	ClientMessage(Message);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Message);
+#endif
+}
+
+void AProject_JPlayerController::StopProfilingVisualCrowd()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	if (ProfilingCrowdComponent)
+	{
+		ProfilingCrowdComponent->Stop();
+	}
+	ClientMessage(TEXT("Profiling visual crowd stopped."));
+	UE_LOG(LogProject_J, Display, TEXT("Profiling visual crowd stopped."));
+#endif
+}
+
+void AProject_JPlayerController::DumpProfilingVisualCrowd()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	const int32 Count = ProfilingCrowdComponent ? ProfilingCrowdComponent->GetSpawnedCount() : 0;
+	const int32 MovingCount = ProfilingCrowdComponent ? ProfilingCrowdComponent->GetMovingCharacterCount() : 0;
+	const FString Message = FString::Printf(
+		TEXT("ProfilingVisualCrowd Spawned=%d Moving=%d Replicated=false Purpose=VisualAnimationCpuOnly"),
+		Count,
+		MovingCount);
+	ClientMessage(Message);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Message);
+#endif
+}
+
+void AProject_JPlayerController::DumpAnimationExecutionPolicy()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	auto ReadCVar = [](const TCHAR* Name)
+	{
+		const IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name);
+		return Variable ? Variable->GetInt() : INDEX_NONE;
+	};
+
+	const ACharacter* ProfiledCharacter = Cast<ACharacter>(GetPawn());
+	const USkeletalMeshComponent* Mesh = ProfiledCharacter ? ProfiledCharacter->GetMesh() : nullptr;
+	const UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
+	const UEngine* EngineDefaults = GetDefault<UEngine>();
+	const FString Message = FString::Printf(
+		TEXT("AnimationExecutionPolicy ParallelEval=%d ParallelUpdate=%d ForceParallelUpdate=%d ParallelInterpolation=%d EngineAllowMT=%d AnimAllowMT=%d CanRunParallel=%d RootMotionMode=%d Mesh=%s AnimInstance=%s"),
+		ReadCVar(TEXT("a.ParallelAnimEvaluation")),
+		ReadCVar(TEXT("a.ParallelAnimUpdate")),
+		ReadCVar(TEXT("a.ForceParallelAnimUpdate")),
+		ReadCVar(TEXT("a.ParallelAnimInterpolation")),
+		EngineDefaults && EngineDefaults->bAllowMultiThreadedAnimationUpdate ? 1 : 0,
+		AnimInstance && AnimInstance->bUseMultiThreadedAnimationUpdate ? 1 : 0,
+		AnimInstance && AnimInstance->CanRunParallelWork() ? 1 : 0,
+		AnimInstance ? static_cast<int32>(AnimInstance->RootMotionMode.GetValue()) : INDEX_NONE,
+		*GetNameSafe(Mesh),
+		*GetNameSafe(AnimInstance));
+	ClientMessage(Message);
+	UE_LOG(LogProject_J, Display, TEXT("%s"), *Message);
+#endif
 }
 
 void AProject_JPlayerController::DumpMMOState()

@@ -60,4 +60,24 @@ struct PROJECT_JCHARACTER_API FProject_JReplicatedAnimEventState
 
 	UPROPERTY()
 	uint8 LandingCancelCounter = 0;
+
+	/** Monotonic identity for a server-confirmed stationary combat turn. */
+	UPROPERTY()
+	int32 TurnInPlaceSequence = 0;
+
+	/** Shares the event ordering domain with movement, landing, and fall events. */
+	UPROPERTY()
+	int32 TurnInPlaceEventOrder = 0;
+
+	/** Server world time at which the visual turn was accepted. */
+	UPROPERTY()
+	float TurnInPlaceServerTimeSeconds = 0.0f;
+
+	/** Chooser-compatible bucket: 1=L90, 2=L180, 3=R90, 4=R180. */
+	UPROPERTY()
+	uint8 TurnInPlaceDirectionBucket = 0;
+
+	/** Absolute local facing target captured at the semantic TIP edge. */
+	UPROPERTY()
+	float TurnInPlaceTargetFacingYaw = 0.0f;
 };

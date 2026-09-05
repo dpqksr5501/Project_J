@@ -8,7 +8,7 @@
 
 - Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
 - 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Motion Matching 애니메이션이다.
-- 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
+- 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하는 빈 wrapper이며, GameState/PlayerState/Default Pawn 등은 C++ 기준 클래스로 설정되어 있다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
 - 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`, `ABP_Player`는 테스트 자산이며 생산 직업 구조의 기준은 아니다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
 - 전투 공간 인덱스, 중앙집중식 에셋 스트리밍 수명주기, 실제 서버 간 handover transport는 아직 도입하지 않는다. 현재는 SSR, 각 표현 컴포넌트의 로컬 `FStreamableHandle` 소유, handover envelope/상태 머신 계약만 유지한다.
@@ -136,7 +136,8 @@ ABP_Humanoid_Master
 
 - 새 휴머노이드 직업은 얇은 native 직업 클래스 + 해당 Blueprint + 직업 layer/DA 조합으로 확장한다.
 - 공통 입력, GAS 소유권, 장비 시스템, SSR, Motion Matching graph를 직업 Blueprint에 복사하지 않는다.
-- `ABP_Humanoid_Master`는 공통 Motion Matching, 슬롯, Aim, Foot Placement/Leg IK, Pose History, Mount 선택을 소유한다.
+- `ABP_Humanoid_Master`는 공통 Motion Matching, 슬롯, Aim, Foot Placement/Leg IK, Pose History, Mount 선택을 소유한다. 현재 `BP_GreatSword`가 이 Master ABP와 `DA_Greatsword_AnimProfile`을 실제 사용한다.
+- Master ABP에서 State Controller는 연속 locomotion의 Motion Matching 경로와 authored one-shot의 Chooser/Blend Stack 경로를 선택적으로 합성한다. State Controller는 gameplay 권위가 아니라 C++ locomotion snapshot을 소비하는 presentation 계층으로 유지한다.
 - 직업 layer는 무기 자세/상체 오버레이/직업 고유 전투 이동 등 **차이가 실제로 필요한 부분만** 구현한다.
 
 ### 태그와 데이터의 역할

@@ -1,0 +1,145 @@
+Project_J is a personal MMORPG project built with Unreal Engine 5.8.
+Repository:
+[https://github.com/dpqksr5501/Project_J](https://github.com/dpqksr5501/Project_J)
+The project is C++-first and uses Unreal Animation Blueprint as the animation presentation/composition layer.
+Major animation technologies include:
+- Motion Matching / Pose Search
+- Motion Trajectory
+- Chooser
+- Blend Stack
+- Linked Anim Layers
+- Animation Warping
+- Gameplay Ability System
+- CharacterMovement networking
+- Significance-based optimization
+Do not assume old documentation represents the current implementation.
+Use this priority order:
+1. Current source code and assets
+2. Recent git history / commits
+3. Current architecture documentation
+4. Older handoff / historical documents
+When documentation conflicts with current code, current code wins unless a newer document explicitly describes an unfinished migration.
+Before performing substantial locomotion or animation architecture work, read:
+Docs/Animation/ProjectJ_Animation_Architecture.md
+Also inspect relevant existing documents under:
+Docs/
+especially Motion Matching, State Controller, GASP, Combat Locomotion, networking, and optimization documents.
+Do not independently reinvent an architecture without first reviewing these sources.
+When Unreal Engine 5.8 source is locally available, inspect engine implementation instead of guessing API behavior.
+Relevant areas include:
+- PoseSearch
+- BlendStack
+- Chooser
+- AnimationBudgetAllocator
+- AnimInstance / AnimInstanceProxy
+- SkeletalMeshComponent
+- CharacterMovementComponent
+Important classes include:
+- FAnimNode_MotionMatching
+- FAnimNode_BlendStack_Standalone
+- UPoseSearchLibrary
+- UMotionMatchingAnimNodeLibrary
+- Pose Search History Collector
+- UAnimInstance
+- FAnimInstanceProxy
+Do not infer UE 5.8 behavior from older UE versions when engine source can resolve the question.
+The Game Animation Sample Project is reference material, not the architecture specification for Project_J.
+GASP Full Motion Matching and GASP Experimental State Machine / State Controller paths must be treated as separate architectures.
+Do not copy the Experimental State Machine wholesale merely because GASP uses it.
+Take individual ideas from GASP only when they improve Project_J.
+Prefer clear ownership of responsibilities.
+Target responsibility split:
+- Gameplay / CharacterMovement:
+authoritative movement and gameplay state
+- UProject_JLocomotionAnimStateComponent:
+semantic locomotion state authority
+- Thread-safe AnimInstance snapshot / proxy:
+communication between gameplay state and animation execution
+- Chooser:
+data-driven animation / pose-source selection
+- Motion Matching:
+continuous locomotion pose selection
+- One-shot Blend Stack:
+authored transition playback
+- AnimGraph:
+pose routing and composition
+- Linked Anim Layers:
+weapon / combat / mount / class-specific animation composition
+Avoid duplicated semantic state authority between C++ and Animation Blueprint.
+Project_J is an MMORPG.
+Always consider scaling beyond one character.
+Optimization reviews must consider:
+- Game Thread cost
+- Worker Thread cost
+- Parallel animation update/evaluation
+- Motion Matching search cost
+- Pose Search database size
+- Chooser evaluation cost
+- Blend Stack evaluation
+- Animation Fast Path
+- Blueprint VM
+- AnimNotify Game Thread work
+- temporary allocation / memory churn
+- task synchronization
+- remote-player scaling
+- NPC scaling
+- worst-frame spikes, not only average CPU time
+Do not optimize solely by distance LOD.
+Also consider:
+- significance
+- search staggering
+- event-driven state changes
+- search throttling
+- Pose Search DB partitioning
+- PCA/KDTree settings
+- Pose pruning
+- Animation Budget Allocator
+- Animation Sharing
+- Leader Pose
+- Linked Anim Layer loading/evaluation
+- IK / cloth / procedural feature budgets
+Do not apply speculative micro-optimizations without profiling evidence.
+For substantial animation changes, explicitly identify:
+- Game Thread work
+- Worker Thread work
+- Parallel Update
+- Parallel Evaluation
+- synchronization points
+Prefer:
+Gameplay/C++ state
+→ minimal thread-safe snapshot
+→ Worker Thread animation computation
+over performing complex Blueprint logic or repeated UObject access in the animation hot path.
+Do not introduce unsafe UObject access merely to move work to worker threads.
+Always distinguish:
+- local autonomous player
+- simulated remote player
+- AI/NPC
+They do not need identical animation cost or prediction behavior.
+Avoid replicating presentation details when equivalent animation presentation can be reconstructed from authoritative gameplay / movement state.
+Do not edit .uasset files as binary/text files manually.
+If Unreal Editor automation or MCP is available, use the editor.
+If an asset cannot be safely modified automatically:
+1. make safe C++ changes,
+2. document the exact Blueprint/AnimGraph modification required,
+3. request the necessary screenshot or editor information.
+Never infer complex AnimGraph topology solely from C++ documentation when screenshots can resolve the uncertainty.
+When additional visual information is necessary, request:
+1. exact asset name,
+2. graph or node,
+3. region to capture,
+4. whether Details Panel is required,
+5. why the information is required.
+For architectural work:
+1. inspect
+2. audit
+3. compare alternatives
+4. propose architecture
+5. identify risks
+6. make small safe changes
+7. compile
+8. run tests
+9. perform runtime validation
+10. profile before further optimization
+Do not start with a large rewrite.
+When asked only for analysis, do not modify the repository until explicitly asked.

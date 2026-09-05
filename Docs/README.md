@@ -4,6 +4,30 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [MMORPG Execution Roadmap (2026-09-03)](Architecture/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md)
+  - 전체 MMORPG 확장 작업을 P0~P3와 Stage 0~9로 분리한 실행 로드맵. Animation threading/fast-path 감사, dedicated-server vertical slice, Iris/AOI, NPC tier, streaming·rendering·backend의 선행 조건과 검증 게이트를 정의한다.
+
+- [Animation Execution & Threading Audit Plan (2026-09-03)](Architecture/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md)
+  - UE 5.8 source와 Insights로 Game Thread, parallel update/evaluate, proxy snapshot, Fast Path, Chooser/MM/BlendStack 실행 비용을 확인하는 분석 계획이다.
+
+- [Scalability Profiling & Validation Plan (2026-09-03)](Architecture/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md)
+  - 1/10/30/50/100 population ladder와 CPU·GPU·memory·network·correctness의 공통 측정/회귀 기준을 정의한다.
+
+- [Baseline Capture Guide (2026-09-03)](Architecture/ProjectJ_Baseline_Capture_Guide_2026-09-03.md)
+  - Development build에서 Unreal Insights trace와 existing Exec dump를 수집하는 실제 실행 순서 및 전달 자료를 정리한다.
+
+- [Profiling Baseline Results (2026-09-03)](Architecture/ProjectJ_Profiling_Baseline_Results_2026-09-03.md)
+  - S0 단일 플레이어 anchor와 실제 이동 중인 70 local clone(S70) Unreal Insights CPU 결과, workload 조건, timer 원시값, 해석 한계와 후속 비교 규격을 보관한다.
+
+- [Network Baseline Capture Guide (2026-09-04)](Architecture/ProjectJ_Network_Baseline_Capture_Guide_2026-09-04.md)
+  - 2-client PIE dedicated-server 기준선, live NetDriver/Iris 확인, replication functional path 및 server/client trace 수집 절차를 정의한다.
+
+- [Network Baseline Results (2026-09-04)](Architecture/ProjectJ_Network_Baseline_Results_2026-09-04.md)
+  - N2 PIE에서 실제 dedicated-server/client topology와 Legacy `IpNetDriver` 사용, Iris 비활성 상태를 보관한다.
+
+- [Project_J Architecture & Performance Audit (2026-09-03)](Architecture/ProjectJ_Architecture_Audit_2026-09-03.md)
+  - 현재 C++/Config와 최소 에디터 증거를 대조한 전체 구조 감사. 구현됨·기반만 존재함·계획 상태를 구분하고, Iris/Mass/backend/전용 서버의 실제 범위를 명시한다.
+
 - [GASP Pivot Architecture Correction (2026-08-24)](GASP_Pivot_Architecture_Correction_2026-08-24.md)
   - GASP의 regular MM PSD와 Experimental State Machine 경로를 분리해 정리하고, `Pivots` PSD 태그·`Pivot` chooser 태그·Project_J Run Pivot의 현재 비활성 상태를 바로잡은 기준 문서.
 
@@ -64,6 +88,7 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 - `DumpMMOState`
 - `DumpAnimBudget`
 - `DumpReplicationPolicy`
+- `ProjectJ.DumpNetworkRuntime`
 - `DumpCharacterComponents`
 - `DumpCombatState`
 - `DumpMMOProfilingSnapshot [MaxDetailedCharacters]`

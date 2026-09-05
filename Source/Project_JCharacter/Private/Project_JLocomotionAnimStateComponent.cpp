@@ -27,6 +27,18 @@ namespace
 		return (AbsX <= 0.25f && AbsY >= 0.75f) ||
 			(AbsY <= 0.25f && AbsX >= 0.75f);
 	}
+
+	float GetTurnInPlaceBucketYaw(const uint8 DirectionBucket)
+	{
+		switch (DirectionBucket)
+		{
+		case 1: return -90.0f;
+		case 2: return -180.0f;
+		case 3: return 90.0f;
+		case 4: return 180.0f;
+		default: return 0.0f;
+		}
+	}
 }
 
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
@@ -68,6 +80,13 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	}
 
 	SprintStopMemoryTimeRemaining = FMath::Max(0.0f, SprintStopMemoryTimeRemaining - DeltaTime);
+	RemoteTurnInPlaceTimeRemaining = FMath::Max(0.0f, RemoteTurnInPlaceTimeRemaining - DeltaTime);
+	if (RemoteTurnInPlaceTimeRemaining <= 0.0f)
+	{
+		bRemoteTurnInPlaceActive = false;
+		RemoteTurnInPlaceDirectionBucket = 0;
+		RemoteTurnInPlaceTargetFacingYaw = 0.0f;
+	}
 
 	AProject_JPlayerCharacter* PlayerOwner = nullptr;
 	if (!RefreshOwnerReferencesForUpdate(PlayerOwner))
@@ -167,8 +186,31 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 
 	AuthoritativeContext = BuildAuthoritativeContext(*PlayerOwner, Snapshot);
 	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot, DeltaTime);
+	if (!bUsingLocalInputState && bRemoteTurnInPlaceActive)
+	{
+		const float RemainingFacingDelta = FMath::FindDeltaAngleDegrees(
+			PlayerOwner->GetActorRotation().Yaw,
+			RemoteTurnInPlaceTargetFacingYaw);
+		if (FMath::Abs(RemainingFacingDelta) > 5.0f)
+		{
+			KinematicContext.DesiredFacingDeltaYaw = RemainingFacingDelta;
+			KinematicContext.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
+		}
+		else
+		{
+			bRemoteTurnInPlaceActive = false;
+			RemoteTurnInPlaceTimeRemaining = 0.0f;
+			RemoteTurnInPlaceDirectionBucket = 0;
+		}
+	}
 	FProject_JDerivedLocomotionContext NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
 	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
+	const bool bLocalTurnInPlace = bUsingLocalInputState && NewDerivedContext.bShouldTurnInPlace;
+	if (bLocalTurnInPlace && !bWasLocallyRequestingTurnInPlace)
+	{
+		bTurnInPlaceReplicationRequestPending = true;
+	}
+	bWasLocallyRequestingTurnInPlace = bLocalTurnInPlace;
 	DerivedLocomotionContext = NewDerivedContext;
 	UpdateMotionMatchingSelectionState(*PlayerOwner);
 }
@@ -802,11 +844,16 @@ bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
 	// A simulated proxy does not have the owning player's current controller
 	// yaw. Treating its replicated/fallback control rotation as authoritative
 	// produces a permanent facing delta and repeatedly selects a Turn PSD while
-	// the remote character is actually stationary. Remote idle must remain Idle;
-	// future replicated aim/lock-on state can opt into a dedicated remote turn.
+	// the remote character is actually stationary. It may only enter TIP through
+	// the short server-confirmed event window, whose direction is injected into
+	// the kinematic context before this method is evaluated.
 	if (!ShouldUseLocalInputState())
 	{
-		return false;
+		return bRemoteTurnInPlaceActive &&
+			(InKinematicContext.GroundSpeed <= IdleSpeedThreshold) &&
+			!InKinematicContext.bHasMoveInput &&
+			!bIsInAir &&
+			!IsLandingStateActive();
 	}
 
 	// TIP is deliberately a stationary combat-Strafe presentation.  Movement

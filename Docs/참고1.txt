@@ -1,0 +1,404 @@
+응. **기존 프롬프트에도 이미 Game Thread / Worker Thread 분리와 Animation Fast Path, Native Proxy, Blueprint VM 비용을 점검하도록 들어가 있다.** 다만 MMORPG 최적화 관점에서는 이 부분을 더 강하게 명시하는 게 좋다.
+
+현재 프롬프트에는 이미 다음이 포함돼 있어.
+
+```text
+NativeUpdateAnimation
+Thread Safe Proxy
+Blueprint Thread Safe Update
+Animation Fast Path
+Blueprint VM
+Property Access
+AnimNotify
+Parallel Animation Evaluation
+```
+
+즉 기본적인 스레드 구조는 체크하게 되어 있어.
+
+하지만 나는 **Game Thread 병목을 별도 감사 항목으로 추가하는 걸 추천**해. 단순히 "멀티스레드 사용 중인가?"가 아니라:
+
+```text
+Game Thread에서 무엇을 계산?
+Worker Thread에서 무엇을 계산?
+매 캐릭터마다 GT에서 반복되는 작업?
+Chooser는 어디서 평가?
+Trajectory는 어디서 생성?
+MM DB selection은 어디서?
+AnimNotify는 어디서?
+UObject 접근 때문에 Worker Thread → GT fallback 발생?
+락/할당/컨테이너 복사?
+```
+
+까지 보게 만드는 거야.
+
+기존 Codex 프롬프트에 아래를 추가하면 된다.
+
+# Animation Threading / Game Thread Cost Audit
+
+MMORPG에서는 Animation의 총 CPU 비용뿐 아니라 Game Thread 병목이 매우 중요합니다.
+
+Project_J의 animation pipeline을 Game Thread / Worker Thread / Parallel Evaluation 기준으로 실제 코드와 Unreal Engine 5.8 source를 확인하여 분석하세요.
+
+단순히 "멀티스레드 애니메이션을 사용한다"는 수준으로 판단하지 마세요.
+
+## 1. Thread Ownership Map 작성
+
+현재 animation pipeline의 각 작업이 실제로 어느 thread에서 수행되는지 표로 작성하세요.
+
+최소한 다음을 분류하세요.
+
+* CharacterMovement state 수집
+* locomotion semantic state 계산
+* trajectory generation
+* animation significance 계산
+* optimization policy 계산
+* AnimInstance NativeUpdateAnimation
+* Thread Safe Update
+* AnimInstance Proxy publish/copy
+* Chooser evaluation
+* Motion Matching database selection
+* Pose Search query generation
+* Pose Search database search
+* Motion Matching post-selection
+* State Controller logic
+* Blend Stack update
+* pose evaluation
+* Pose History
+* Aim Offset
+* Foot Placement
+* Leg IK
+* Linked Anim Layer
+* AnimNotify
+* montage events
+* curves
+* physics / cloth
+* final skeletal mesh evaluation
+
+각 항목을 다음으로 분류하세요.
+
+Game Thread
+Worker Thread
+Parallel Animation Update
+Parallel Animation Evaluation
+Render Thread 관련
+Unknown / Engine source 확인 필요
+
+추측하지 말고 UE 5.8 source를 확인하세요.
+
+---
+
+# 2. Game Thread Hot Path Audit
+
+다수의 캐릭터가 존재할 때 매 프레임 Game Thread에서 반복되는 animation 관련 작업을 찾으세요.
+
+특히 다음을 조사하세요.
+
+* Actor / Component getter 반복 호출
+* Cast 반복
+* FindObject / asset lookup
+* GameplayTag query 반복
+* Chooser evaluation
+* UObject traversal
+* dynamic allocation
+* TArray / TMap temporary allocation
+* container copy
+* FString / FName 변환
+* debug string 생성
+* log formatting
+* Blueprint VM 호출
+* Blueprint AnimNotify
+* delegates
+* per-frame profile resolution
+* repeated GetWorld / GetOwner / GetComponent calls
+* skeletal mesh component access
+* animation asset lookup
+* Pose Search database switching
+* Linked Anim Layer switching
+
+Hot path에 존재하면 캐시 또는 thread-safe snapshot으로 이동할 가치가 있는지 판단하세요.
+
+---
+
+# 3. Thread-Safe Snapshot Audit
+
+현재:
+
+UProject_JCharacterAnimInstance
+↓
+Thread-Safe Snapshot
+↓
+FProject_JCharacterAnimInstanceProxy
+
+구조를 조사하세요.
+
+다음을 검증하세요.
+
+* Snapshot에 Worker Thread가 필요한 값이 충분히 포함되어 있는가?
+* Worker Thread에서 Actor / CharacterMovementComponent / UObject를 다시 읽고 있지 않은가?
+* 동일 데이터를 GT와 Worker Thread에서 중복 계산하지 않는가?
+* Snapshot 전체를 불필요하게 큰 구조체로 복사하지 않는가?
+* TArray / TMap / UObject reference가 불필요하게 복사되지 않는가?
+* cache line locality를 개선할 수 있는가?
+* rarely-used 데이터와 hot 데이터가 같은 구조체에 섞여 있지 않은가?
+
+필요하다면:
+
+Hot Anim Snapshot
+Cold / Debug Snapshot
+
+처럼 분리하는 것도 검토하세요.
+
+---
+
+# 4. Parallel Animation Update / Evaluation
+
+USkeletalMeshComponent와 UAnimInstance의 UE 5.8 source를 확인하여 Project_J에서 다음이 실제로 활성화되는지 검증하세요.
+
+* Multi Threaded Animation Update
+* Parallel Animation Update
+* Parallel Animation Evaluation
+* Animation Task Graph
+* AnimInstance Proxy
+
+Project_J의 Blueprint 또는 C++ 사용 방식 때문에 parallel update/evaluation이 비활성화되거나 Game Thread fallback이 발생할 가능성을 찾으세요.
+
+특히 Blueprint 함수 호출이나 thread-unsafe UObject 접근 때문에 Worker Thread 경로를 잃는 부분이 있는지 조사하세요.
+
+---
+
+# 5. Animation Fast Path
+
+ABP_Humanoid_Master와 Linked Anim Layers에서 Animation Fast Path를 깨는 노드를 찾으세요.
+
+확인 대상:
+
+* Blueprint function call
+* Blueprint getter
+* dynamic cast
+* struct break/make
+* complex expressions
+* UObject dereference
+* non-thread-safe functions
+
+가능한 경우:
+
+Game Thread C++
+↓
+thread-safe value snapshot
+↓
+AnimGraph direct property access
+
+구조로 변경하세요.
+
+Fast Path가 가능한 노드와 불가능한 노드를 구분해서 보고하세요.
+
+---
+
+# 6. Chooser Threading
+
+Project_J의 Chooser가 정확히 어느 thread에서 평가되는지 확인하세요.
+
+현재 architecture에서 Chooser가 Game Thread에서 평가된다면:
+
+* 왜 Game Thread가 필요한지
+* Worker Thread로 이동 가능한지
+* 이동할 가치가 있는지
+* 캐릭터 50~100명에서 예상되는 scaling 특성
+* Chooser row/filter 복잡도가 비용에 미치는 영향
+
+을 조사하세요.
+
+단, thread safety를 깨면서 억지로 Worker Thread화하지 마세요.
+
+Chooser evaluation frequency를 줄이거나 state change 시에만 재평가하는 event-driven 방식이 더 나은지도 검토하세요.
+
+---
+
+# 7. Event-Driven Animation Decisions
+
+모든 animation decision을 매 프레임 계산할 필요가 있는지 확인하세요.
+
+예:
+
+* weapon 변경
+* rotation mode 변경
+* gait 변경
+* mount 변경
+* combat mode 변경
+* stance 변경
+
+등은 매 프레임 다시 계산하기보다 상태 변경 시 cache invalidation / revision 방식으로 처리할 수 있는지 조사하세요.
+
+가능하다면:
+
+per-frame polling
+
+보다
+
+state revision
+dirty flag
+event-driven cache update
+
+를 우선 검토하세요.
+
+단, velocity / acceleration / trajectory처럼 실제 매 프레임 필요한 데이터와 구분하세요.
+
+---
+
+# 8. Motion Matching Thread Cost
+
+Pose Search의 다음 단계를 thread 관점에서도 분리해서 측정하세요.
+
+Query construction
+Database selection
+Search
+Cost evaluation
+Result selection
+Blend Stack update
+
+어느 부분이 Worker Thread이고 어느 부분이 Game Thread인지 UE 5.8 PoseSearch source에서 확인하세요.
+
+Motion Matching의 평균 비용뿐 아니라 Game Thread contribution도 별도로 보고하세요.
+
+---
+
+# 9. Allocation / Memory Churn
+
+Animation hot path에서 매 프레임 발생하는 heap allocation을 조사하세요.
+
+특히:
+
+TArray 생성
+TMap 생성
+temporary candidate arrays
+Chooser result arrays
+Pose Search candidate buffers
+FString
+GameplayTagContainer copy
+shared pointer/ref counting
+dynamic delegate allocations
+
+등을 확인하세요.
+
+가능한 경우:
+
+preallocated buffer
+TInlineAllocator
+fixed-size storage
+persistent cache
+ring buffer
+reuse
+
+등을 검토하세요.
+
+단, 실제 profiling 없이 micro-optimization을 적용하지 마세요.
+
+---
+
+# 10. Lock / Synchronization Audit
+
+Game Thread ↔ Worker Thread 사이에 다음이 존재하는지 확인하세요.
+
+* mutex
+* critical section
+* atomics
+* task synchronization
+* forced completion
+* wait
+* fence
+
+특히 Game Thread가 animation worker task completion을 자주 기다리는 상황이 있는지 Unreal Insights에서 확인하세요.
+
+평균 CPU 사용량뿐 아니라:
+
+Game Thread stall
+Worker Thread starvation
+Task Graph synchronization
+
+도 분석하세요.
+
+---
+
+# 11. Scalability Test
+
+다음 환경을 Unreal Insights로 비교하세요.
+
+1 local player
+
+1 local + 10 remote
+
+1 local + 30 remote
+
+1 local + 50 remote
+
+1 local + 100 low-significance characters
+
+각 경우 최소 다음을 측정하세요.
+
+Game Thread:
+
+* Character animation state update
+* AnimInstance update
+* Chooser
+* Notifies
+* SkeletalMesh tick overhead
+
+Worker Thread:
+
+* Parallel Anim Update
+* Parallel Anim Evaluation
+* Motion Matching / Pose Search
+* Blend Stack
+* IK / Foot Placement
+
+그리고 다음을 별도로 기록하세요.
+
+Average Frame
+Worst Frame
+95th percentile
+99th percentile
+
+MMORPG에서는 평균보다 spike도 중요합니다.
+
+---
+
+# 12. 최종 Threading Architecture 제안
+
+최종 보고서에는 다음 형태의 구조도를 반드시 포함하세요.
+
+Game Thread
+│
+├ Gameplay / CharacterMovement
+├ semantic locomotion state
+├ network state
+└ minimal animation snapshot
+│
+▼
+Worker Thread
+├ Motion Matching
+├ Pose Search
+├ AnimGraph Update
+├ Blend Stack
+├ Pose Composition
+└ 가능한 procedural animation
+│
+▼
+Parallel Evaluation
+│
+▼
+Final Skeletal Pose
+
+실제 UE 5.8 제약상 이 구조와 다른 부분이 있다면 정확한 engine behavior를 설명하세요.
+
+목표는 단순히 "멀티스레딩을 많이 사용하는 것"이 아니라:
+
+Game Thread에서 꼭 필요한 작업만 수행하고,
+캐릭터 수 증가에 따라 Game Thread animation cost가 선형으로 크게 증가하지 않도록 설계하는 것입니다.
+
+이걸 넣으면 Codex가 **애니메이션 기능 구조뿐 아니라 CPU 실행 구조까지** 보게 돼.
+
+특히 Project_J에서는 이미 `CharacterAnimInstance → thread-safe snapshot → native proxy`가 있으니까 , 나는 다음 네 가지를 중점적으로 확인하게 할 거야.
+
+**① Chooser를 매 프레임 GT에서 얼마나 평가하는지, ② C++ locomotion 상태 계산과 ABP 계산이 중복되는지, ③ MM Search를 얼마나 Worker 쪽에 유지할 수 있는지, ④ remote 50~100명에서 update/search를 서로 다른 프레임으로 분산할 수 있는지.**
+
+이 정도까지 넣으면 단순한 `LOD 최적화`가 아니라 **Game Thread/Worker Thread/Task Graph 레벨까지 보는 MMORPG 애니메이션 성능 감사 프롬프트**가 된다.

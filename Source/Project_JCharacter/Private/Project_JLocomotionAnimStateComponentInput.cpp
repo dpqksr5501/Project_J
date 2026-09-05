@@ -4,6 +4,65 @@
 
 #include "Project_JPlayerCharacter.h"
 
+void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
+	int32,
+	float ServerStartAgeSeconds,
+	uint8 DirectionBucket,
+	float TargetFacingYaw)
+{
+	if (ShouldUseLocalInputState() || DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
+	{
+		return;
+	}
+
+	// The state-controller owns actual authored completion. This is only the
+	// remote eligibility window, deliberately long enough to absorb normal RTT
+	// while still releasing budgeted proxies promptly.
+	constexpr float RemoteTurnInPlacePresentationDuration = 1.25f;
+	constexpr float MinimumRemoteTurnInPlacePresentationDuration = 0.20f;
+	RemoteTurnInPlaceDirectionBucket = DirectionBucket;
+	RemoteTurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(TargetFacingYaw);
+	RemoteTurnInPlaceTimeRemaining = FMath::Max(
+		MinimumRemoteTurnInPlacePresentationDuration,
+		RemoteTurnInPlacePresentationDuration - FMath::Max(ServerStartAgeSeconds, 0.0f));
+	bRemoteTurnInPlaceActive = true;
+}
+
+bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw)
+{
+	OutDirectionBucket = 0;
+	OutTargetFacingYaw = 0.0f;
+	if (!bTurnInPlaceReplicationRequestPending || !ShouldUseLocalInputState())
+	{
+		return false;
+	}
+
+	bTurnInPlaceReplicationRequestPending = false;
+	const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
+	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
+	{
+		OutDirectionBucket = 1;
+	}
+	else if (DeltaYaw < -135.0f)
+	{
+		OutDirectionBucket = 2;
+	}
+	else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
+	{
+		OutDirectionBucket = 3;
+	}
+	else if (DeltaYaw >= 135.0f)
+	{
+		OutDirectionBucket = 4;
+	}
+
+	if (OutDirectionBucket != 0)
+	{
+		OutTargetFacingYaw = KinematicContext.DesiredFacingYaw;
+	}
+	return OutDirectionBucket != 0;
+}
+
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStarted(bool bWasSprintingForStart)
 {

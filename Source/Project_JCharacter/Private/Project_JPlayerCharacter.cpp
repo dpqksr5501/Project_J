@@ -312,20 +312,37 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick);
 	Super::Tick(DeltaTime);
-	UpdateMaxWalkSpeed();
-	ApplyCombatRotationMode(IsCombatModeActive());
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_MovementPolicy);
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_UpdateMaxWalkSpeed);
+			UpdateMaxWalkSpeed();
+		}
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_ApplyCombatRotationMode);
+			ApplyCombatRotationMode(IsCombatModeActive());
+		}
+	}
 
 	// The component owns generation eligibility and same-frame de-duplication.
 	// Calling here guarantees locomotion semantics consume the current movement
 	// frame even when CharacterMovement did not broadcast an update.
 	if (MotionMatchingTrajectoryComponent)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_Trajectory);
 		MotionMatchingTrajectoryComponent->UpdateTrajectoryState(DeltaTime);
 	}
 
 	if (LocomotionAnimStateComponent)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_LocomotionState);
 		LocomotionAnimStateComponent->UpdateState(DeltaTime);
+		uint8 TurnInPlaceDirectionBucket = 0;
+		float TurnInPlaceTargetFacingYaw = 0.0f;
+		if (LocomotionAnimStateComponent->ConsumeTurnInPlaceReplicationRequest(TurnInPlaceDirectionBucket, TurnInPlaceTargetFacingYaw) && ReplicatedAnimEventComponent)
+		{
+			ReplicatedAnimEventComponent->DispatchTurnInPlaceStarted(TurnInPlaceDirectionBucket, TurnInPlaceTargetFacingYaw);
+		}
 	}
 }
 
@@ -518,7 +535,12 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
 
-	if (bShouldUseCombatRotation && !bIsMovingInCombat && Controller)
+	// Local characters have a controller, but a simulated proxy does not. A
+	// server-confirmed remote TIP still selects the same authored turn sequence,
+	// so it must be allowed to accumulate that sequence's root-yaw delta into its
+	// presentation actor rotation. Restricting this to Controller!=nullptr made
+	// the remote mesh play a turn while its actor/capsule never changed facing.
+	if (bShouldUseCombatRotation && !bIsMovingInCombat)
 	{
 		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
 		{

@@ -106,6 +106,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	TArray<UProject_JEquipmentItemDefinition*> GetAllEquippedItems() const;
 
+	/** Development diagnostics: compact state identity for verifying FastArray replication across PIE worlds. */
+	FString GetReplicationDiagnosticSummary() const;
+
+	/** Development diagnostics: client-side FastArray delta callbacks observed since the last reset. */
+	FString GetReplicationDiagnosticDeltaSummary() const;
+	void ResetReplicationDiagnosticDeltaCounters();
+
 	void OnRep_EquipmentAdded(FProject_JEquipmentArrayItem& Item);
 	void OnRep_EquipmentChanged(FProject_JEquipmentArrayItem& Item);
 	void OnRep_EquipmentRemoved(FProject_JEquipmentArrayItem& Item);
@@ -135,4 +142,10 @@ private:
 private:
 	UPROPERTY(Replicated)
 	FProject_JEquipmentArray EquipmentArray;
+
+#if !UE_BUILD_SHIPPING
+	int32 ReplicationDiagnosticAddedCount = 0;
+	int32 ReplicationDiagnosticChangedCount = 0;
+	int32 ReplicationDiagnosticRemovedCount = 0;
+#endif
 };

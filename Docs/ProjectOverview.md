@@ -23,7 +23,7 @@ Project J는 Unreal Engine 5.8 기반의 **3인칭 액션 MMORPG 프로토타입
 - PlayerState 기반 플레이어 ASC, 속성, 인벤토리 및 장비 소유
 - 저비용 NPC 정책과 Mass 확장을 위한 초기 기반
 - 월드 인스턴스 ID, 백엔드 요청 ID, 트랜잭션 ID와 같은 MMO 공통 타입
-- 거리와 전투 상태를 고려하는 replication policy 기반
+- 거리와 전투 상태를 고려하는 transport-independent replication policy 기반 (실제 Iris/RepGraph adapter 및 관심 관리는 아직 미구현)
 - **[추가]** 서버 권위 레벨 동기화(SetCharacterLevel API) 및 핸드오버 플레이어 캐릭터 직렬화/역직렬화(Round-trip)
 - **[추가]** 설정 파일(DefaultEngine.ini)을 활용한 소프트 클래스 경로 동적 로딩 및 스레드 안전 비동기 응답 처리
 

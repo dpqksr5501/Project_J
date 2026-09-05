@@ -4,6 +4,7 @@
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Project_JLocomotionAnimStateComponent.h"
@@ -99,6 +100,27 @@ void UProject_JReplicatedAnimEventComponent::DispatchLandingCancelled()
 	DispatchEvent(EProject_JReplicatedAnimEventType::LandingCancel);
 }
 
+void UProject_JReplicatedAnimEventComponent::DispatchTurnInPlaceStarted(uint8 DirectionBucket, float TargetFacingYaw)
+{
+	AActor* Owner = GetOwner();
+	if (!Owner || DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
+	{
+		return;
+	}
+
+	if (Owner->HasAuthority())
+	{
+		if (CanServerAcceptTurnInPlace(DirectionBucket, TargetFacingYaw))
+		{
+			ApplyTurnInPlace(DirectionBucket, TargetFacingYaw);
+			ReplicateLatestState();
+		}
+		return;
+	}
+
+	ServerDispatchTurnInPlace(DirectionBucket, TargetFacingYaw);
+}
+
 void UProject_JReplicatedAnimEventComponent::DispatchEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
 	AActor* Owner = GetOwner();
@@ -135,6 +157,17 @@ void UProject_JReplicatedAnimEventComponent::ServerDispatchEvent_Implementation(
 	ReplicateLatestState();
 }
 
+void UProject_JReplicatedAnimEventComponent::ServerDispatchTurnInPlace_Implementation(uint8 DirectionBucket, float TargetFacingYaw)
+{
+	if (!CanServerAcceptTurnInPlace(DirectionBucket, TargetFacingYaw))
+	{
+		return;
+	}
+
+	ApplyTurnInPlace(DirectionBucket, TargetFacingYaw);
+	ReplicateLatestState();
+}
+
 void UProject_JReplicatedAnimEventComponent::ApplyEvent(EProject_JReplicatedAnimEventType EventType, bool bFlag)
 {
 	switch (EventType)
@@ -153,9 +186,36 @@ void UProject_JReplicatedAnimEventComponent::ApplyEvent(EProject_JReplicatedAnim
 		ApplyLandingCancel();
 		break;
 	case EProject_JReplicatedAnimEventType::LandingStart:
+	case EProject_JReplicatedAnimEventType::TurnInPlace:
 	default:
 		break;
 	}
+}
+
+void UProject_JReplicatedAnimEventComponent::ApplyTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw)
+{
+	++ReplicatedAnimEvents.TurnInPlaceSequence;
+	ReplicatedAnimEvents.TurnInPlaceEventOrder = ++NextSemanticEventOrder;
+	ReplicatedAnimEvents.TurnInPlaceServerTimeSeconds = GetServerWorldTimeSeconds(GetWorld());
+	ReplicatedAnimEvents.TurnInPlaceDirectionBucket = DirectionBucket;
+	ReplicatedAnimEvents.TurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(TargetFacingYaw);
+}
+
+bool UProject_JReplicatedAnimEventComponent::CanServerAcceptTurnInPlace(uint8 DirectionBucket, float TargetFacingYaw) const
+{
+	if (DirectionBucket < 1 || DirectionBucket > 4 || !FMath::IsFinite(TargetFacingYaw))
+	{
+		return false;
+	}
+
+	const AProject_JPlayerCharacter* PlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
+	if (!PlayerOwner || !PlayerOwner->IsCombatModeActive())
+	{
+		return false;
+	}
+
+	const UCharacterMovementComponent* Movement = PlayerOwner->GetCharacterMovement();
+	return Movement && Movement->IsMovingOnGround() && PlayerOwner->GetVelocity().Size2D() <= 20.0f;
 }
 
 void UProject_JReplicatedAnimEventComponent::ApplyMoveEvent(bool bIsMoving, bool bWasSprintingAtBoundary)
@@ -228,29 +288,36 @@ void UProject_JReplicatedAnimEventComponent::ApplyReplicatedEvents(
 	bool bMovePending = CurrentState.MoveSequence > LastAppliedMoveSequence;
 	bool bLandingPending = CurrentState.LandingRevision > LastAppliedLandingRevision;
 	bool bFallOffPending = CurrentState.FallOffStartCounter > LastAppliedFallOffCounter;
+	bool bTurnInPlacePending = CurrentState.TurnInPlaceSequence > LastAppliedTurnInPlaceSequence;
 	(void)PreviousState;
 
 	// Apply coalesced state in the authoritative server order. This prevents an old
 	// MoveStart from cancelling a newer landing when both arrive in one net update.
-	while (bMovePending || bLandingPending || bFallOffPending)
+	while (bMovePending || bLandingPending || bFallOffPending || bTurnInPlacePending)
 	{
 		const int32 MoveOrder = bMovePending ? CurrentState.MoveEventOrder : MAX_int32;
 		const int32 LandingOrder = bLandingPending ? CurrentState.LandingEventOrder : MAX_int32;
 		const int32 FallOffOrder = bFallOffPending ? CurrentState.FallOffEventOrder : MAX_int32;
-		if (MoveOrder <= LandingOrder && MoveOrder <= FallOffOrder)
+		const int32 TurnInPlaceOrder = bTurnInPlacePending ? CurrentState.TurnInPlaceEventOrder : MAX_int32;
+		if (MoveOrder <= LandingOrder && MoveOrder <= FallOffOrder && MoveOrder <= TurnInPlaceOrder)
 		{
 			ApplyRemoteMoveState(CurrentState);
 			bMovePending = false;
 		}
-		else if (LandingOrder <= FallOffOrder)
+		else if (LandingOrder <= FallOffOrder && LandingOrder <= TurnInPlaceOrder)
 		{
 			ApplyRemoteLandingState(CurrentState);
 			bLandingPending = false;
 		}
-		else
+		else if (FallOffOrder <= TurnInPlaceOrder)
 		{
 			ApplyRemoteFallOffState(CurrentState);
 			bFallOffPending = false;
+		}
+		else
+		{
+			ApplyRemoteTurnInPlaceState(CurrentState);
+			bTurnInPlacePending = false;
 		}
 	}
 }
@@ -351,6 +418,34 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProj
 	LastAppliedSemanticEventOrder = State.FallOffEventOrder;
 	RequestUrgentRemoteAnimationUpdate();
 	LocomotionAnimStateComponent->HandleReplicatedFallOffStarted();
+}
+
+void UProject_JReplicatedAnimEventComponent::ApplyRemoteTurnInPlaceState(const FProject_JReplicatedAnimEventState& State)
+{
+	LastAppliedTurnInPlaceSequence = State.TurnInPlaceSequence;
+	if (State.TurnInPlaceEventOrder <= LastAppliedSemanticEventOrder)
+	{
+		return;
+	}
+
+	LastAppliedSemanticEventOrder = State.TurnInPlaceEventOrder;
+	RequestUrgentRemoteAnimationUpdate();
+	LocomotionAnimStateComponent->HandleReplicatedTurnInPlaceStarted(
+		State.TurnInPlaceSequence,
+		ResolveServerEventAgeSeconds(State.TurnInPlaceServerTimeSeconds),
+		State.TurnInPlaceDirectionBucket,
+		State.TurnInPlaceTargetFacingYaw);
+
+	// A remote TIP is most usefully diagnosed alongside the local TIP state/asset
+	// telemetry. Do not require the unrelated generic transition trace CVar.
+	if (Project_J::MotionMatchingCVars::GetTurnInPlaceDebugMode() > 0)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("RemoteAnimSemantic Actor=%s Type=TurnInPlace Order=%d Seq=%d Bucket=%d TargetYaw=%.1f Age=%.3f"),
+			*GetNameSafe(GetOwner()), State.TurnInPlaceEventOrder, State.TurnInPlaceSequence,
+			State.TurnInPlaceDirectionBucket, State.TurnInPlaceTargetFacingYaw,
+			ResolveServerEventAgeSeconds(State.TurnInPlaceServerTimeSeconds));
+	}
 }
 
 float UProject_JReplicatedAnimEventComponent::ResolveServerEventAgeSeconds(float ServerTimeSeconds) const

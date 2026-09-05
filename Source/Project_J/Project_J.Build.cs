@@ -22,13 +22,15 @@ public class Project_J : ModuleRules
 			"Project_JCore",
 			"Project_JGAS",
 			"Project_JCharacter",
-			"SignificanceManager"
+			"SignificanceManager",
+			"AIModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"HTTP",
 			"Json",
-			"JsonUtilities"
+			"JsonUtilities",
+			"NetCore"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {

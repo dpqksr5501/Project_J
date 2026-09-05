@@ -220,6 +220,10 @@ public:
 		bool bWasSprinting,
 		bool bWasHeavy);
 	void HandleReplicatedLandingCancelled(int32 Sequence);
+	/** Applies a server-confirmed remote TIP target without reading remote controller yaw. */
+	void HandleReplicatedTurnInPlaceStarted(int32 Sequence, float ServerStartAgeSeconds, uint8 DirectionBucket, float TargetFacingYaw);
+	/** Consumes one locally-authored TIP edge for server validation and replication. */
+	bool ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
@@ -839,6 +843,13 @@ private:
 	/** A replicated MoveStop owns remote visual intent until a later MoveStart; residual network velocity must not restart locomotion. */
 	bool bRemoteStopVisualIntentActive = false;
 	bool bHasRemoteStartTurnReference = false;
+	/** Remote TIP is an event-driven presentation override; it never uses proxy control rotation. */
+	bool bRemoteTurnInPlaceActive = false;
+	float RemoteTurnInPlaceTimeRemaining = 0.0f;
+	uint8 RemoteTurnInPlaceDirectionBucket = 0;
+	float RemoteTurnInPlaceTargetFacingYaw = 0.0f;
+	bool bTurnInPlaceReplicationRequestPending = false;
+	bool bWasLocallyRequestingTurnInPlace = false;
 	bool bLandingIgnoresRemoteGroundSpeed = false;
 	bool bHasReplicatedStartGait = false;
 	bool bReplicatedStartWasSprinting = false;
