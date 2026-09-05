@@ -10,11 +10,13 @@ class AProject_JPlayerCharacter;
 class AAIController;
 
 /**
- * Development-only visual crowd harness.
+ * Development-only crowd harness.
  *
- * It clones the locally possessed player character class into one local world and
- * drives deterministic movement without replication. It is intentionally not a
- * substitute for simulated-proxy or dedicated-server profiling.
+ * It clones the possessed player-character class and drives deterministic
+ * movement. The visual mode deliberately disables
+ * replication; the replicated-movement mode runs only on the server and creates
+ * simulated proxies on connected clients. Neither mode emulates player input
+ * from many real client connections.
  */
 UCLASS(ClassGroup = (Profiling), meta = (BlueprintSpawnableComponent))
 class PROJECT_J_API UProject_JProfilingCrowdComponent : public UActorComponent
@@ -25,8 +27,10 @@ public:
 	UProject_JProfilingCrowdComponent();
 
 	bool Start(TSubclassOf<AProject_JPlayerCharacter> CharacterClass, const FVector& Center, const FVector& Forward, int32 RequestedCount);
+	bool StartReplicatedMovement(TSubclassOf<AProject_JPlayerCharacter> CharacterClass, const FVector& Center, const FVector& Forward, int32 RequestedCount);
 	void Stop();
 	bool IsRunning() const { return SpawnedCharacters.Num() > 0; }
+	bool IsReplicatedMovementProfile() const { return bReplicatedMovementProfile; }
 	int32 GetSpawnedCount() const { return SpawnedCharacters.Num(); }
 	int32 GetMovingCharacterCount() const;
 
@@ -34,6 +38,7 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+	bool StartInternal(TSubclassOf<AProject_JPlayerCharacter> CharacterClass, const FVector& Center, const FVector& Forward, int32 RequestedCount, bool bReplicatedMovement);
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AProject_JPlayerCharacter>> SpawnedCharacters;
 
@@ -45,4 +50,5 @@ private:
 	TArray<float> PhaseOffsets;
 	float ElapsedSeconds = 0.0f;
 	bool bMovementHealthReported = false;
+	bool bReplicatedMovementProfile = false;
 };

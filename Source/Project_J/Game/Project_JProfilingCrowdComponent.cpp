@@ -13,9 +13,11 @@
 namespace
 {
 	constexpr int32 MaxProfilingCrowdCount = 100;
+	constexpr int32 MaxReplicatedMovementProfileCount = 50;
 	constexpr float CrowdSpacing = 260.0f;
 	constexpr float CrowdForwardOffset = 700.0f;
 	constexpr float CrowdTravelFrequency = 0.75f;
+	constexpr float ReplicatedMovementNetUpdateFrequency = 30.0f;
 }
 
 UProject_JProfilingCrowdComponent::UProject_JProfilingCrowdComponent()
@@ -30,15 +32,35 @@ bool UProject_JProfilingCrowdComponent::Start(
 	const FVector& Forward,
 	int32 RequestedCount)
 {
+	return StartInternal(CharacterClass, Center, Forward, RequestedCount, false);
+}
+
+bool UProject_JProfilingCrowdComponent::StartReplicatedMovement(
+	TSubclassOf<AProject_JPlayerCharacter> CharacterClass,
+	const FVector& Center,
+	const FVector& Forward,
+	int32 RequestedCount)
+{
+	return StartInternal(CharacterClass, Center, Forward, RequestedCount, true);
+}
+
+bool UProject_JProfilingCrowdComponent::StartInternal(
+	TSubclassOf<AProject_JPlayerCharacter> CharacterClass,
+	const FVector& Center,
+	const FVector& Forward,
+	int32 RequestedCount,
+	bool bReplicatedMovement)
+{
 	Stop();
 
 	UWorld* World = GetWorld();
-	if (!World || !CharacterClass || World->GetNetMode() == NM_DedicatedServer)
+	if (!World || !CharacterClass || (!bReplicatedMovement && World->GetNetMode() == NM_DedicatedServer) || (bReplicatedMovement && World->GetNetMode() == NM_Client))
 	{
 		return false;
 	}
 
-	const int32 Count = FMath::Clamp(RequestedCount, 1, MaxProfilingCrowdCount);
+	const int32 MaxCount = bReplicatedMovement ? MaxReplicatedMovementProfileCount : MaxProfilingCrowdCount;
+	const int32 Count = FMath::Clamp(RequestedCount, 1, MaxCount);
 	const int32 Columns = FMath::CeilToInt(FMath::Sqrt(static_cast<float>(Count)));
 	const FVector FlatForward = Forward.GetSafeNormal2D();
 	const FVector SafeForward = FlatForward.IsNearlyZero() ? FVector::ForwardVector : FlatForward;
@@ -57,7 +79,9 @@ bool UProject_JProfilingCrowdComponent::Start(
 		const FVector SpawnLocation = Center + SafeForward * (CrowdForwardOffset + Row * CrowdSpacing) + Right * ColumnOffset;
 
 		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Owner = GetOwner();
+		// Network-profile movers deliberately have no owning connection, so every
+		// connected client receives a simulated proxy rather than an autonomous one.
+		SpawnParameters.Owner = bReplicatedMovement ? nullptr : GetOwner();
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		AProject_JPlayerCharacter* Character = World->SpawnActor<AProject_JPlayerCharacter>(
 			CharacterClass,
@@ -69,11 +93,27 @@ bool UProject_JProfilingCrowdComponent::Start(
 			continue;
 		}
 
-		// The harness is visual/CPU-only. It must neither create network traffic nor
-		// claim to be a simulated proxy. Client PIE does not reliably advance CMC
-		// input for an unpossessed local actor, so use a non-ticking controller.
-		Character->SetReplicates(false);
-		Character->SetReplicateMovement(false);
+		if (bReplicatedMovement)
+		{
+			// This is intentionally a stable, bounded server-to-client movement load:
+			// 50 authoritative movers, replicated at 30 Hz, with no combat/RPC/input
+			// traffic mixed into the capture. Always-relevant is only for this harness;
+			// AOI/relevancy is measured in its own gate.
+			Character->SetReplicates(true);
+			Character->SetReplicateMovement(true);
+			Character->bAlwaysRelevant = true;
+			Character->SetNetDormancy(DORM_Awake);
+			Character->SetNetUpdateFrequency(ReplicatedMovementNetUpdateFrequency);
+			Character->SetMinNetUpdateFrequency(ReplicatedMovementNetUpdateFrequency);
+		}
+		else
+		{
+			// The visual harness must neither create network traffic nor claim to be a
+			// simulated proxy. Client PIE does not reliably advance CMC input for an
+			// unpossessed local actor, so use a non-ticking controller.
+			Character->SetReplicates(false);
+			Character->SetReplicateMovement(false);
+		}
 		// Keep world-floor/static collision, but prevent profiling clones from
 		// pushing each other into corrective CMC movement.
 		Character->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
@@ -99,8 +139,16 @@ bool UProject_JProfilingCrowdComponent::Start(
 
 	ElapsedSeconds = 0.0f;
 	bMovementHealthReported = false;
+	bReplicatedMovementProfile = bReplicatedMovement;
 	SetComponentTickEnabled(IsRunning());
-	UE_LOG(LogProject_J, Display, TEXT("ProfilingVisualCrowd started Requested=%d Spawned=%d Replicated=false Mode=VisualCpuOnly"), RequestedCount, SpawnedCharacters.Num());
+	UE_LOG(
+		LogProject_J,
+		Display,
+		TEXT("ProfilingCrowd started Requested=%d Spawned=%d Replicated=%s Mode=%s"),
+		RequestedCount,
+		SpawnedCharacters.Num(),
+		bReplicatedMovement ? TEXT("true") : TEXT("false"),
+		bReplicatedMovement ? TEXT("ServerToClientMovementOnly") : TEXT("VisualCpuOnly"));
 	return IsRunning();
 }
 
@@ -128,6 +176,7 @@ void UProject_JProfilingCrowdComponent::Stop()
 	PhaseOffsets.Reset();
 	ElapsedSeconds = 0.0f;
 	bMovementHealthReported = false;
+	bReplicatedMovementProfile = false;
 }
 
 int32 UProject_JProfilingCrowdComponent::GetMovingCharacterCount() const
@@ -145,7 +194,7 @@ int32 UProject_JProfilingCrowdComponent::GetMovingCharacterCount() const
 
 void UProject_JProfilingCrowdComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_ProfilingVisualCrowdTick);
+	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_ProfilingCrowdTick);
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	ElapsedSeconds += DeltaTime;
@@ -176,7 +225,13 @@ void UProject_JProfilingCrowdComponent::TickComponent(float DeltaTime, ELevelTic
 	else if (!bMovementHealthReported && ElapsedSeconds >= 2.0f)
 	{
 		bMovementHealthReported = true;
-		UE_LOG(LogProject_J, Display, TEXT("ProfilingVisualCrowd movement health Moving=%d Spawned=%d"), GetMovingCharacterCount(), SpawnedCharacters.Num());
+		UE_LOG(
+			LogProject_J,
+			Display,
+			TEXT("ProfilingCrowd movement health Moving=%d Spawned=%d Replicated=%s"),
+			GetMovingCharacterCount(),
+			SpawnedCharacters.Num(),
+			bReplicatedMovementProfile ? TEXT("true") : TEXT("false"));
 	}
 }
 

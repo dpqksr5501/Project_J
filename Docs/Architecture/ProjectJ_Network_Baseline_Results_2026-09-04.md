@@ -112,6 +112,60 @@ Net Stats의 `Incl`/`Excl`은 **bits**다. 아래 값은 선택 구간의 합계
 - 가장 먼저 자세히 볼 대상은 `BP_Greatsword_C`, `RPCs`, `Project_JGameState`다. 다만 현재 2-client 단일 연결의 짧은 baseline만으로 100 Hz, cull distance, AOI 또는 prioritizer를 변경하지 않는다.
 - 다음 비교는 **동일 조건의 idle vs movement vs combat action**을 각각 15~20초로 나누어 capture하고, 초당 bit/packet을 비교하는 방식으로 한다. 그 뒤 N10/N30 server pressure에서 replication frequency/AOI 결정을 내린다.
 
+## N50-PIE Iris replicated-movement capture
+
+**Date:** 2026-09-06
+
+**Trace:** `Saved/Profiling/N50_MovementOnly.utrace`
+
+**Build/topology:** Development Editor PIE, dedicated-server world + client 2, Iris active
+
+**Selection:** server outgoing aggregate, steady-state 19.362 s, 1,520 packets
+**Workload:** `StartProfilingReplicatedMovementCrowd 50`.
+
+이 하네스는 server가 권한을 가진 character-class mover 50개를 생성하고, 두
+client에는 owner 없는 simulated proxy로만 보낸다. mover는 30 Hz로 움직이며,
+profiling 중 두 실제 player는 입력하지 않았다. harness에서는 일관된 payload를
+위해 mover를 always-relevant로 설정했다. 따라서 이 결과는 **AOI를 적용하지 않은
+50 server mover -> 2 client의 outbound movement 비용**이며, 50개의 실제 접속이나
+50개의 client input/CMC prediction 부하는 아니다.
+
+Runtime 확인:
+
+```text
+ProfilingReplicatedMovementCrowd Spawned=50 Moving=50 Replicated=true
+NetUpdateHz=30 Purpose=ServerToClientMovementOnly
+```
+
+| Top event / object | Count | Incl (bits) | 관찰 |
+|---|---:|---:|---|
+| `DataStream` | 1,435 | 9,649,722 | aggregate payload, 약 62.3 KB/s |
+| `ReplicationData` | 1,435 | 9,599,497 | Iris replication payload |
+| `Batch` | 55,038 | 9,550,907 | Iris batch aggregate |
+| `BP_Greatsword_C` | 54,844 | 9,368,417 | 현재 profiler mover가 사용하는 character class payload |
+| `Location` | 108,319 | 4,365,512 | movement position payload |
+| `ReplicatedMovement` | 54,669 | 3,227,738 | actor movement state |
+| `Rotation` | 54,669 | 551,933 | movement rotation payload |
+| `LinearVelocity` | 54,669 | 447,984 | movement velocity payload |
+| `RPCs` | 175 | 17,500 | action/TIP 없이 유지한 background RPC 수준 |
+
+### Interpretation / decision
+
+- `BP_Greatsword_C` update count는 mover 1개당 초당 약 56.7회다. 이는 50 mover,
+  두 recipient, 30 Hz 목표의 aggregate 이론치 60회에 가까워서, 두 client에
+  movement update가 실제 전달된다는 증거다.
+- `DataStream` aggregate는 약 62.3 KB/s다. 같은 selection이 두 connection을
+  합산한 것이므로, 균등 분배를 전제로 한 connection당 비용은 약 31.2 KB/s,
+  mover 1개·connection 1개당 약 4.84 kbit/s다. 이는 항상 relevance인 30 Hz
+  synthetic mover의 기준선이며 production budget 또는 AOI 결과가 아니다.
+- capture 목적이었던 movement payload가 `Location`/`ReplicatedMovement`에
+  집중되어 있고, combat/TIP/inventory delta가 섞이지 않았다. **N50
+  server-to-client movement baseline은 통과로 보관한다.**
+- 이 한 번의 capture만으로 NetUpdateFrequency, cull distance 또는 Iris
+  prioritizer를 변경하지 않는다. 다음 network measurement는 실제 AOI 정책,
+  inventory/equipment mutation, 또는 50 real connections라는 별도 요구가 생길
+  때만 수행한다.
+
 ## N2-PIE CPU baseline
 
 `N2_PIE_AllWorlds.utrace`의 Insights 선택 구간에서 확인된 값이다. PIE single process의 dedicated-server + client 2개 world가 합산된 수치이므로, 이를 server-only 또는 client-only 비용으로 해석하지 않는다.

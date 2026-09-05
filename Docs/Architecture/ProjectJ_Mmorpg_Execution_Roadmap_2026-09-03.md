@@ -54,10 +54,10 @@ Game Thread는 authority, UObject/Actor access, CharacterMovement, GAS, RPC와 r
 | 로컬 CPU / animation | 부분 완료 | S0, S70, S100 visual-crowd CPU 기준선과 S100 parallel evaluation 경로 확인 | remote/dedicated-server role별 p95/p99 및 actual PoseSearch 비용 |
 | GPU | 초기 확인 완료 | S100 `ProfileGPU` single-frame sample 약 3.99 ms | target camera/effects/population의 p95/p99 GPU capture |
 | worker / Task Graph | 현 경로 검증 완료 | S100 `NativeThreadSafeUpdate` 표본의 약 99.99%가 parallel-evaluation 상태 | 측정 근거 없이 추가 worker 분리하지 않음 |
-| 2-client networking | 부분 완료 | Legacy 기준선 보관, PIE dedicated-server + client 2 topology 및 Iris runtime activation 확인. Iris verbose Net Stats에서 header, replication payload, RPC, CMC, GameState의 실제 bit cost 확보 | inventory/equipment FastArray delta 기능, idle/movement/combat 구간별 bytes, loss·relevancy 검증 |
+| 2-client networking | 규모 기준선 완료 | Legacy 기준선 보관, PIE dedicated-server + client 2 topology 및 Iris runtime activation 확인. N50 server-mover -> client 2 movement capture에서 50 mover/30 Hz의 실제 outbound packet·bit cost 확보 | 실제 inventory/equipment FastArray delta, AOI/relevance 정책, 50 real connections가 제품 목표가 될 때의 입력·connection 부하 |
 | Iris adoption | 활성화 완료, 검증 진행 | server/client 모두 `IrisActive=1`, `ReplicationModel=Iris`; FastArray Iris module support 적용; N2 verbose packet baseline 확보 | FastArray delta smoke 및 connection별 relevance 정책 |
 | dedicated-server binary | 보류 | PIE dedicated-server world는 동작 | installed UE 배포판이 Server target build를 지원하지 않음; source-built/server-capable environment에서 별도 검증 |
-| remote TIP | 구현 대기 | simulated proxy TIP이 의도적으로 비활성이고, TIP direction/start-time event가 복제되지 않음 | server-authoritative TIP event, interruption/relevancy regression test |
+| remote TIP | 구현·수동 회귀 진행 | server-authoritative event와 simulated-proxy presentation 경로를 구현했고, 2-client에서 기본 presentation을 확인 | 빠른 연속 회전/방향 반전/거리 이탈·재진입의 수동 회귀 및 실제 gameplay polish |
 | NPC / Mass / AOI / memory / assets / rendering / physics | 미착수 | 구조 감사·계획만 존재 | population/CPU/network evidence 후 우선순위 순서대로 착수 |
 
 `프로파일링 완료`는 전체 프로젝트의 종료 상태가 아니다. 현재는 **로컬 animation CPU 기준선과 Iris 전환 전후의 runtime 기준선을 확보한 상태**다. 이후 모든 최적화는 동일 workload의 전후 trace와 correctness gate를 함께 통과해야 한다.

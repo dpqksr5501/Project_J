@@ -92,6 +92,25 @@ protected:
 	UFUNCTION(Exec)
 	void DumpProfilingVisualCrowd();
 
+	/** Starts up to 50 server-authoritative, replicated movers for a bounded server-to-client movement capture. */
+	UFUNCTION(Exec)
+	void StartProfilingReplicatedMovementCrowd(int32 Count = 50);
+
+	UFUNCTION(Exec)
+	void StopProfilingReplicatedMovementCrowd();
+
+	UFUNCTION(Exec)
+	void DumpProfilingReplicatedMovementCrowd();
+
+	UFUNCTION(Server, Reliable)
+	void ServerStartProfilingReplicatedMovementCrowd(int32 Count);
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopProfilingReplicatedMovementCrowd();
+
+	UFUNCTION(Server, Reliable)
+	void ServerDumpProfilingReplicatedMovementCrowd();
+
 	/** Reports engine parallel-animation CVars and the current pawn's anim instance. */
 	UFUNCTION(Exec)
 	void DumpAnimationExecutionPolicy();

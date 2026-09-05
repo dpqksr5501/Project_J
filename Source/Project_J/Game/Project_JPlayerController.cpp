@@ -198,6 +198,114 @@ void AProject_JPlayerController::DumpProfilingVisualCrowd()
 #endif
 }
 
+void AProject_JPlayerController::StartProfilingReplicatedMovementCrowd(int32 Count)
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	if (HasAuthority())
+	{
+		ServerStartProfilingReplicatedMovementCrowd_Implementation(Count);
+	}
+	else
+	{
+		ServerStartProfilingReplicatedMovementCrowd(Count);
+		ClientMessage(TEXT("Requested server-side replicated movement crowd. Check the server Output Log for its start confirmation."));
+	}
+#endif
+}
+
+void AProject_JPlayerController::StopProfilingReplicatedMovementCrowd()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	if (HasAuthority())
+	{
+		ServerStopProfilingReplicatedMovementCrowd_Implementation();
+	}
+	else
+	{
+		ServerStopProfilingReplicatedMovementCrowd();
+	}
+#endif
+}
+
+void AProject_JPlayerController::DumpProfilingReplicatedMovementCrowd()
+{
+#if UE_BUILD_SHIPPING
+	return;
+#else
+	if (HasAuthority())
+	{
+		ServerDumpProfilingReplicatedMovementCrowd_Implementation();
+	}
+	else
+	{
+		ServerDumpProfilingReplicatedMovementCrowd();
+	}
+#endif
+}
+
+void AProject_JPlayerController::ServerStartProfilingReplicatedMovementCrowd_Implementation(int32 Count)
+{
+#if !UE_BUILD_SHIPPING
+	const AProject_JPlayerCharacter* SourceCharacter = Cast<AProject_JPlayerCharacter>(GetPawn());
+	if (!ProfilingCrowdComponent || !SourceCharacter)
+	{
+		UE_LOG(LogProject_J, Warning, TEXT("Profiling replicated movement crowd unavailable: no possessed AProject_JPlayerCharacter on the server."));
+		return;
+	}
+
+	const bool bStarted = ProfilingCrowdComponent->StartReplicatedMovement(
+		SourceCharacter->GetClass(),
+		SourceCharacter->GetActorLocation(),
+		SourceCharacter->GetActorForwardVector(),
+		Count);
+	if (bStarted)
+	{
+		UE_LOG(
+			LogProject_J,
+			Display,
+			TEXT("ProfilingReplicatedMovementCrowd started Requested=%d Spawned=%d Moving=%d NetUpdateHz=30 Purpose=ServerToClientMovementOnly"),
+			Count,
+			ProfilingCrowdComponent->GetSpawnedCount(),
+			ProfilingCrowdComponent->GetMovingCharacterCount());
+	}
+	else
+	{
+		UE_LOG(LogProject_J, Warning, TEXT("ProfilingReplicatedMovementCrowd failed to start Requested=%d."), Count);
+	}
+#endif
+}
+
+void AProject_JPlayerController::ServerStopProfilingReplicatedMovementCrowd_Implementation()
+{
+#if !UE_BUILD_SHIPPING
+	if (ProfilingCrowdComponent)
+	{
+		ProfilingCrowdComponent->Stop();
+	}
+	UE_LOG(LogProject_J, Display, TEXT("ProfilingReplicatedMovementCrowd stopped."));
+#endif
+}
+
+void AProject_JPlayerController::ServerDumpProfilingReplicatedMovementCrowd_Implementation()
+{
+#if !UE_BUILD_SHIPPING
+	const int32 Count = ProfilingCrowdComponent ? ProfilingCrowdComponent->GetSpawnedCount() : 0;
+	const int32 MovingCount = ProfilingCrowdComponent ? ProfilingCrowdComponent->GetMovingCharacterCount() : 0;
+	const bool bReplicated = ProfilingCrowdComponent && ProfilingCrowdComponent->IsReplicatedMovementProfile();
+	UE_LOG(
+		LogProject_J,
+		Display,
+		TEXT("ProfilingReplicatedMovementCrowd Spawned=%d Moving=%d Replicated=%s NetUpdateHz=30 Purpose=ServerToClientMovementOnly"),
+		Count,
+		MovingCount,
+		bReplicated ? TEXT("true") : TEXT("false"));
+#endif
+}
+
 void AProject_JPlayerController::DumpAnimationExecutionPolicy()
 {
 #if UE_BUILD_SHIPPING
