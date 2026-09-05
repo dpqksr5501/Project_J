@@ -1464,10 +1464,52 @@ void AProject_JPlayerCharacter::ServerSetCombatIntroPresentation_Implementation(
 
 void AProject_JPlayerCharacter::ServerSetTurnInPlaceRotation_Implementation(bool bInTurnInPlace, float InTargetActorYaw)
 {
-	if (bInTurnInPlace || FMath::Abs(FRotator::NormalizeAxis(InTargetActorYaw - GetActorRotation().Yaw)) > 0.5f)
+	if (!FMath::IsFinite(InTargetActorYaw))
 	{
-		SetActorRotation(FRotator(0.0f, InTargetActorYaw, 0.0f));
+		return;
 	}
+
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	if (!IsCombatModeActive() || !Movement || !Movement->IsMovingOnGround() || GetVelocity().Size2D() > 20.0f)
+	{
+		bServerTurnInPlaceRotationActive = false;
+		return;
+	}
+
+	const UWorld* World = GetWorld();
+	const double Now = World ? World->GetTimeSeconds() : 0.0;
+	const float CurrentYaw = GetActorRotation().Yaw;
+	const float RequestedYaw = FRotator::NormalizeAxis(InTargetActorYaw);
+
+	// A 180 degree authored TIP can legitimately rotate at about 180 deg/s.
+	// Permit a conservative burst for an initial packet/hitch, but clamp every
+	// server-side step so a client cannot instantly set arbitrary facing.
+	constexpr double MinServerTurnInPlaceUpdateInterval = 1.0 / 30.0;
+	constexpr float MaxTurnInPlaceYawRateDegreesPerSecond = 240.0f;
+	constexpr float InitialTurnInPlaceYawBurstDegrees = 15.0f;
+	constexpr float MaxTurnInPlaceYawBurstDegrees = 35.0f;
+	if (bServerTurnInPlaceRotationActive &&
+		(Now - LastServerTurnInPlaceRotationTime) < MinServerTurnInPlaceUpdateInterval)
+	{
+		return;
+	}
+
+	const double Elapsed = bServerTurnInPlaceRotationActive
+		? FMath::Max(0.0, Now - LastServerTurnInPlaceRotationTime)
+		: 0.0;
+	const float MaxAcceptedDelta = bServerTurnInPlaceRotationActive
+		? FMath::Clamp(MaxTurnInPlaceYawRateDegreesPerSecond * static_cast<float>(Elapsed) + 4.0f,
+			4.0f, MaxTurnInPlaceYawBurstDegrees)
+		: InitialTurnInPlaceYawBurstDegrees;
+	const float RequestedDelta = FMath::FindDeltaAngleDegrees(CurrentYaw, RequestedYaw);
+	const float AcceptedDelta = FMath::Clamp(RequestedDelta, -MaxAcceptedDelta, MaxAcceptedDelta);
+	if (!FMath::IsNearlyZero(AcceptedDelta, 0.01f))
+	{
+		SetActorRotation(FRotator(0.0f, FRotator::NormalizeAxis(CurrentYaw + AcceptedDelta), 0.0f));
+	}
+
+	LastServerTurnInPlaceRotationTime = Now;
+	bServerTurnInPlaceRotationActive = bInTurnInPlace;
 }
 
 void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)

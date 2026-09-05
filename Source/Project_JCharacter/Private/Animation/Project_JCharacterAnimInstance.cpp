@@ -2371,7 +2371,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const bool bRemoteTurnInPlaceNewSequence =
 		!bIsLocallyControlled &&
 		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
-		Data.LocomotionContext.TurnInPlaceSequence != LastHandledRemoteTurnInPlaceSequence;
+		Data.LocomotionContext.TurnInPlaceSequence > LastHandledRemoteTurnInPlaceSequence;
 
 	if (bRemoteTurnInPlaceNewSequence)
 	{

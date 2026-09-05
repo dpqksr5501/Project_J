@@ -427,12 +427,16 @@ void UProject_JReplicatedAnimEventComponent::ApplyRemoteFallOffState(const FProj
 
 void UProject_JReplicatedAnimEventComponent::ApplyRemoteTurnInPlaceState(const FProject_JReplicatedAnimEventState& State)
 {
-	LastAppliedTurnInPlaceSequence = State.TurnInPlaceSequence;
-	if (State.TurnInPlaceEventOrder <= LastAppliedSemanticEventOrder)
+	// An unreliable multicast may arrive before, after, or not at all relative
+	// to the replicated state.  Never let either path rewind a newer semantic
+	// edge that has already been presented.
+	if (State.TurnInPlaceSequence <= LastAppliedTurnInPlaceSequence ||
+		State.TurnInPlaceEventOrder <= LastAppliedSemanticEventOrder)
 	{
 		return;
 	}
 
+	LastAppliedTurnInPlaceSequence = State.TurnInPlaceSequence;
 	LastAppliedSemanticEventOrder = State.TurnInPlaceEventOrder;
 	RequestUrgentRemoteAnimationUpdate();
 	LocomotionAnimStateComponent->HandleReplicatedTurnInPlaceStarted(

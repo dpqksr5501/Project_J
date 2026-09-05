@@ -415,7 +415,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerTryInteract();
 
-	UFUNCTION(Server, Reliable)
+	// Cosmetic TIP yaw is sampled repeatedly while the turn plays.  It must not
+	// occupy the reliable RPC queue behind gameplay-critical requests.
+	UFUNCTION(Server, Unreliable)
 	void ServerSetTurnInPlaceRotation(bool bInTurnInPlace, float InTargetActorYaw);
 
 public:
@@ -596,4 +598,10 @@ private:
 	bool bLastSentTurnInPlaceActive = false;
 	float LastSentTurnInPlaceActorYaw = 0.0f;
 	double LastTurnInPlaceSendTime = 0.0;
+
+	// Server-side acceptance state for client-sampled cosmetic TIP yaw.  These
+	// bounds prevent the RPC from being used as an unrestricted actor-rotation
+	// path while still tolerating ordinary packet jitter and frame hitches.
+	bool bServerTurnInPlaceRotationActive = false;
+	double LastServerTurnInPlaceRotationTime = 0.0;
 };
