@@ -537,6 +537,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	}
 
 	bool bCurrentlyInTurnInPlace = false;
+	bool bApplyingLocalTurnInPlaceRootYaw = false;
 	if (bShouldUseCombatRotation && !bIsMovingInCombat)
 	{
 		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
@@ -573,15 +574,16 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						TurnInPlaceSelectionStartActorYaw + CurrentCumulativeYaw);
 					const float RootYawDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, AuthoredTargetActorYaw);
 
-					// Local player clamps against camera facing delta so we don't turn past the camera.
+					// TIP owns one fixed authored target. Prefer the locomotion context so
+					// the capsule, Blend Stack Steering and replicated event agree.
 					float FacingDelta = RootYawDelta;
-					if (IsLocallyControlled() && GetController())
-					{
-						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
-					}
-					else if (LocomotionAnimStateComponent)
+					if (LocomotionAnimStateComponent)
 					{
 						FacingDelta = LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw;
+					}
+					else if (IsLocallyControlled() && GetController())
+					{
+						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
 					}
 
 					float ClampedRootYawDelta = RootYawDelta;
@@ -594,13 +596,18 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
 					}
 
-					const bool bCanApplyActorRotation = IsLocallyControlled();
+					// A reversed TIP spends a short release window unwinding Blend Stack /
+					// Offset Root Bone. Do not continue applying the old authored root yaw
+					// to the capsule during that visual hand-off.
+					const bool bCanApplyActorRotation = IsLocallyControlled() &&
+						(!LocomotionAnimStateComponent || LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive());
 					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
 					{
 						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
 					}
+					bApplyingLocalTurnInPlaceRootYaw = bCanApplyActorRotation;
 
-					if (!HasAuthority() && IsLocallyControlled())
+					if (!HasAuthority() && bCanApplyActorRotation)
 					{
 						const UWorld* World = GetWorld();
 						const double Now = World ? World->GetTimeSeconds() : 0.0;
@@ -623,7 +630,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 	if (!HasAuthority() && IsLocallyControlled())
 	{
-		if (bLastSentTurnInPlaceActive && !bCurrentlyInTurnInPlace)
+		if (bLastSentTurnInPlaceActive && !bApplyingLocalTurnInPlaceRootYaw)
 		{
 			ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
 			bLastSentTurnInPlaceActive = false;

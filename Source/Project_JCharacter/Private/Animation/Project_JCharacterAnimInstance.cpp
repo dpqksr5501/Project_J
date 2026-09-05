@@ -2363,19 +2363,30 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		}
 	}
 
-	constexpr float TurnInPlaceReentryDelay = 0.75f;
-	constexpr float TurnInPlaceReplayRemainingAngle = 45.0f;
 	const int32 ActiveTurnInPlaceIndex = FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex);
 
-	// Remote proxy: Server replicated a new Turn In Place sequence edge
+	// Local and remote paths both expose a monotonic TIP edge. The local edge
+	// is advanced only when the live camera has moved beyond the fixed target;
+	// it is what safely restarts an identical 90/180 Blend Stack asset.
+	const bool bLocalTurnInPlaceNewSequence =
+		bIsLocallyControlled &&
+		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
+		Data.LocomotionContext.TurnInPlaceSequence > LastHandledLocalTurnInPlaceSequence;
 	const bool bRemoteTurnInPlaceNewSequence =
 		!bIsLocallyControlled &&
 		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
 		Data.LocomotionContext.TurnInPlaceSequence > LastHandledRemoteTurnInPlaceSequence;
 
-	if (bRemoteTurnInPlaceNewSequence)
+	if (bLocalTurnInPlaceNewSequence || bRemoteTurnInPlaceNewSequence)
 	{
-		LastHandledRemoteTurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
+		if (bIsLocallyControlled)
+		{
+			LastHandledLocalTurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
+		}
+		else
+		{
+			LastHandledRemoteTurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
+		}
 		StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::TurnInPlace;
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 		bStateControllerForceTurnInPlaceReselect = true;
@@ -2393,16 +2404,11 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		CurrentTurnInPlaceBucket != ActiveTurnInPlaceIndex &&
 		(!bIsLocallyControlled || FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f);
 
-	// Reason 2: Long continuous turn in the same direction, with enough residual angle (>= 45 deg)
-	// (Only applicable to locally controlled player who continues sweeping the camera)
-	const bool bTurnInPlaceSameDirectionResidual =
-		bIsLocallyControlled &&
-		CurrentTurnInPlaceBucket > 0 &&
-		CurrentTurnInPlaceBucket == ActiveTurnInPlaceIndex &&
-		FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= TurnInPlaceReplayRemainingAngle &&
-		Elapsed >= TurnInPlaceReentryDelay;
+	// The locomotion component locks a local 90/180 target until it is reached.
+	// Re-entering mid-clip merely because that fixed target still has residual yaw
+	// would restart the same asset and reintroduce the foot-slide/repeat loop.
 
-	// Reason 3: The current clip has finished its authored playback, but residual facing delta >= 30 deg remains
+	// Reason 2: The current clip has finished its authored playback, but residual facing delta remains.
 	// (Only applicable to locally controlled player whose camera is still facing away)
 	const bool bTurnInPlaceClipFinishedWithResidual =
 		bIsLocallyControlled &&
@@ -2417,7 +2423,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const bool bShouldReenterTurnInPlace =
 		bIsHoldingTurnInPlace &&
 		(bTurnInPlaceDirectionBucketChanged ||
-		 bTurnInPlaceSameDirectionResidual ||
 		 bTurnInPlaceClipFinishedWithResidual);
 
 	if (bShouldReenterTurnInPlace)

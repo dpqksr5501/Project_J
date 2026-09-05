@@ -39,6 +39,27 @@ namespace
 		default: return 0.0f;
 		}
 	}
+
+	uint8 GetTurnInPlaceBucketForDelta(const float DeltaYaw, const float MinimumTurnAngle)
+	{
+		if (DeltaYaw <= -MinimumTurnAngle && DeltaYaw >= -135.0f)
+		{
+			return 1; // Left 090
+		}
+		if (DeltaYaw < -135.0f)
+		{
+			return 2; // Left 180
+		}
+		if (DeltaYaw >= MinimumTurnAngle && DeltaYaw < 135.0f)
+		{
+			return 3; // Right 090
+		}
+		if (DeltaYaw >= 135.0f)
+		{
+			return 4; // Right 180
+		}
+		return 0;
+	}
 }
 
 UProject_JLocomotionAnimStateComponent::UProject_JLocomotionAnimStateComponent()
@@ -186,6 +207,102 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 
 	AuthoritativeContext = BuildAuthoritativeContext(*PlayerOwner, Snapshot);
 	KinematicContext = BuildKinematicContext(*PlayerOwner, Snapshot, DeltaTime);
+	const UWorld* World = PlayerOwner->GetWorld();
+	const double LocalNowSeconds = World ? World->GetTimeSeconds() : 0.0;
+	if (bUsingLocalInputState && bLocalTurnInPlaceTargetActive)
+	{
+		// Keep camera intent unwrapped while TIP is active. A one-shot
+		// FindDeltaAngleDegrees(ActorYaw, ControlYaw) folds at +/-180 degrees and
+		// can mistake a fast continuing left turn for a right-turn reversal.
+		float LiveFacingDelta = KinematicContext.DesiredFacingDeltaYaw;
+		if (AController* Controller = PlayerOwner->GetController())
+		{
+			const float CurrentControlYaw = Controller->GetControlRotation().Yaw;
+			const float CurrentActorYaw = PlayerOwner->GetActorRotation().Yaw;
+			if (bHasLocalTurnInPlaceYawSamples)
+			{
+				const float ControlYawStep = FMath::FindDeltaAngleDegrees(
+					LastLocalTurnInPlaceControlYaw,
+					CurrentControlYaw);
+				const float ActorYawStep = FMath::FindDeltaAngleDegrees(
+					LastLocalTurnInPlaceActorYaw,
+					CurrentActorYaw);
+				LocalTurnInPlaceUnwrappedFacingDeltaYaw += ControlYawStep - ActorYawStep;
+			}
+			else
+			{
+				LocalTurnInPlaceUnwrappedFacingDeltaYaw = LiveFacingDelta;
+				bHasLocalTurnInPlaceYawSamples = true;
+			}
+			LastLocalTurnInPlaceControlYaw = CurrentControlYaw;
+			LastLocalTurnInPlaceActorYaw = CurrentActorYaw;
+			LiveFacingDelta = LocalTurnInPlaceUnwrappedFacingDeltaYaw;
+		}
+		const float RemainingTargetDelta = FMath::FindDeltaAngleDegrees(
+			PlayerOwner->GetActorRotation().Yaw,
+			LocalTurnInPlaceTargetFacingYaw);
+		const bool bLocomotionInterrupt = KinematicContext.bHasMoveInput ||
+			KinematicContext.GroundSpeed > IdleSpeedThreshold ||
+			bIsInAir ||
+			IsLandingStateActive();
+		const bool bCameraReversedPastTurnThreshold =
+			FMath::Abs(LiveFacingDelta) >= DerivedTurnInPlaceAngleThreshold &&
+			!FMath::IsNearlyZero(RemainingTargetDelta) &&
+			FMath::Sign(LiveFacingDelta) != FMath::Sign(RemainingTargetDelta);
+		const bool bCameraExtendsCurrentTurn =
+			!FMath::IsNearlyZero(LiveFacingDelta) &&
+			!FMath::IsNearlyZero(RemainingTargetDelta) &&
+			FMath::Sign(LiveFacingDelta) == FMath::Sign(RemainingTargetDelta) &&
+			FMath::Abs(LiveFacingDelta) >= FMath::Abs(RemainingTargetDelta) + 45.0f;
+		const bool bCanExtendCurrentTurn = bCameraExtendsCurrentTurn &&
+			(LocalNowSeconds - LocalTurnInPlaceTargetStartedAtSeconds) >= 0.75;
+		if (bLocomotionInterrupt || bCameraReversedPastTurnThreshold)
+		{
+			bLocalTurnInPlaceTargetActive = false;
+			LocalTurnInPlaceDirectionBucket = 0;
+			LocalTurnInPlaceTargetFacingYaw = 0.0f;
+			bHasLocalTurnInPlaceYawSamples = false;
+			if (bCameraReversedPastTurnThreshold)
+			{
+				// Let the current Blend Stack and Offset Root Bone release their
+				// right/left rotation before selecting the opposite authored asset.
+				LocalTurnInPlaceTargetSelectionBlockedUntilSeconds =
+					LocalNowSeconds + LocalTurnInPlaceReversalReleaseDuration;
+			}
+		}
+		else if (bCanExtendCurrentTurn)
+		{
+			// The player has kept turning beyond this clip's fixed target. Start
+			// one new authored turn after the re-entry window instead of letting
+			// steering drag the current 90/180 asset toward a live camera yaw.
+			LocalTurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(
+				PlayerOwner->GetActorRotation().Yaw + GetTurnInPlaceBucketYaw(LocalTurnInPlaceDirectionBucket));
+			LocalTurnInPlaceTargetStartedAtSeconds = LocalNowSeconds;
+			++LocalTurnInPlaceSequence;
+			if (LocalTurnInPlaceSequence <= 0)
+			{
+				LocalTurnInPlaceSequence = 1;
+			}
+			bTurnInPlaceReplicationRequestPending = true;
+			PendingTurnInPlaceBucket = LocalTurnInPlaceDirectionBucket;
+			KinematicContext.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
+				PlayerOwner->GetActorRotation().Yaw,
+				LocalTurnInPlaceTargetFacingYaw);
+			KinematicContext.DesiredFacingYaw = LocalTurnInPlaceTargetFacingYaw;
+		}
+		else if (FMath::Abs(RemainingTargetDelta) <= 5.0f)
+		{
+			bLocalTurnInPlaceTargetActive = false;
+			LocalTurnInPlaceDirectionBucket = 0;
+			LocalTurnInPlaceTargetFacingYaw = 0.0f;
+			bHasLocalTurnInPlaceYawSamples = false;
+		}
+		else
+		{
+			KinematicContext.DesiredFacingDeltaYaw = RemainingTargetDelta;
+			KinematicContext.DesiredFacingYaw = LocalTurnInPlaceTargetFacingYaw;
+		}
+	}
 	if (!bUsingLocalInputState && bRemoteTurnInPlaceActive)
 	{
 		// Remote proxies face the replicated cosmetic target while TIP presentation is active.
@@ -217,27 +334,63 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		}
 	}
 	FProject_JDerivedLocomotionContext NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
-	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
-	uint8 CurrentLocalTurnBucket = 0;
-	const float DeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
-	if (DeltaYaw >= -135.0f && DeltaYaw <= -30.0f)
+	const bool bLocalTurnInPlaceSelectionBlocked = bUsingLocalInputState &&
+		!bLocalTurnInPlaceTargetActive &&
+		LocalNowSeconds < LocalTurnInPlaceTargetSelectionBlockedUntilSeconds;
+	if (bUsingLocalInputState && !bLocalTurnInPlaceTargetActive && !bLocalTurnInPlaceSelectionBlocked && NewDerivedContext.bShouldTurnInPlace)
 	{
-		CurrentLocalTurnBucket = 1;
-	}
-	else if (DeltaYaw < -135.0f)
-	{
-		CurrentLocalTurnBucket = 2;
-	}
-	else if (DeltaYaw >= 30.0f && DeltaYaw < 135.0f)
-	{
-		CurrentLocalTurnBucket = 3;
-	}
-	else if (DeltaYaw >= 135.0f)
-	{
-		CurrentLocalTurnBucket = 4;
+		const uint8 CandidateBucket = GetTurnInPlaceBucketForDelta(
+			KinematicContext.DesiredFacingDeltaYaw,
+			DerivedTurnInPlaceAngleThreshold);
+		if (CandidateBucket != 0)
+		{
+			bLocalTurnInPlaceTargetActive = true;
+			LocalTurnInPlaceDirectionBucket = CandidateBucket;
+			LocalTurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(
+				PlayerOwner->GetActorRotation().Yaw + GetTurnInPlaceBucketYaw(CandidateBucket));
+			LocalTurnInPlaceTargetStartedAtSeconds = LocalNowSeconds;
+			bHasLocalTurnInPlaceYawSamples = false;
+			LocalTurnInPlaceUnwrappedFacingDeltaYaw = KinematicContext.DesiredFacingDeltaYaw;
+			if (AController* Controller = PlayerOwner->GetController())
+			{
+				LastLocalTurnInPlaceControlYaw = Controller->GetControlRotation().Yaw;
+				LastLocalTurnInPlaceActorYaw = PlayerOwner->GetActorRotation().Yaw;
+				bHasLocalTurnInPlaceYawSamples = true;
+			}
+			++LocalTurnInPlaceSequence;
+			if (LocalTurnInPlaceSequence <= 0)
+			{
+				LocalTurnInPlaceSequence = 1;
+			}
+			KinematicContext.DesiredFacingYaw = LocalTurnInPlaceTargetFacingYaw;
+			KinematicContext.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
+				PlayerOwner->GetActorRotation().Yaw,
+				LocalTurnInPlaceTargetFacingYaw);
+			NewDerivedContext = BuildDerivedLocomotionContext(AuthoritativeContext, KinematicContext);
+		}
 	}
 
-	const bool bLocalTurnInPlace = bUsingLocalInputState && NewDerivedContext.bShouldTurnInPlace;
+	ApplyLocomotionPhaseStability(DeltaTime, NewDerivedContext);
+	if (bLocalTurnInPlaceSelectionBlocked)
+	{
+		// Keep the active one-shot free to blend/release, but do not let the
+		// state selector replace it with an opposite TIP on the same update.
+		NewDerivedContext.bShouldTurnInPlace = false;
+		NewDerivedContext.TurnInPlaceDirectionBucket = 0;
+		NewDerivedContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+	}
+	if (bUsingLocalInputState && bLocalTurnInPlaceTargetActive)
+	{
+		// Keep the direct Blend Stack path until the target or an interrupt ends it.
+		NewDerivedContext.bShouldTurnInPlace = true;
+		NewDerivedContext.TurnInPlaceDirectionBucket = LocalTurnInPlaceDirectionBucket;
+		NewDerivedContext.PhaseFamily = EProject_JLocomotionPhaseFamily::TurnInPlace;
+	}
+
+	const uint8 CurrentLocalTurnBucket = bLocalTurnInPlaceTargetActive
+		? LocalTurnInPlaceDirectionBucket
+		: GetTurnInPlaceBucketForDelta(KinematicContext.DesiredFacingDeltaYaw, DerivedTurnInPlaceAngleThreshold);
+	const bool bLocalTurnInPlace = bUsingLocalInputState && bLocalTurnInPlaceTargetActive;
 	if (bLocalTurnInPlace && (!bWasLocallyRequestingTurnInPlace || (CurrentLocalTurnBucket != 0 && CurrentLocalTurnBucket != LastLocalTurnInPlaceBucket)))
 	{
 		bTurnInPlaceReplicationRequestPending = true;
@@ -500,10 +653,14 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	Context.PivotPreviousMovementDirection = LatchedPivotPreviousMovementDirection;
 	Context.PivotMoveIntentDirection = LatchedPivotMoveIntentDirection;
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
-	Context.TurnInPlaceDirectionBucket = !bUsingLocalInputState && bRemoteTurnInPlaceActive
-		? RemoteTurnInPlaceDirectionBucket
-		: 0;
-	Context.TurnInPlaceSequence = !bUsingLocalInputState ? RemoteTurnInPlaceSequence : 0;
+	Context.TurnInPlaceDirectionBucket = bUsingLocalInputState && bLocalTurnInPlaceTargetActive
+		? LocalTurnInPlaceDirectionBucket
+		: (!bUsingLocalInputState && bRemoteTurnInPlaceActive
+			? RemoteTurnInPlaceDirectionBucket
+			: 0);
+	Context.TurnInPlaceSequence = bUsingLocalInputState
+		? LocalTurnInPlaceSequence
+		: RemoteTurnInPlaceSequence;
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
 	Context.PhaseFamily = ResolvePhaseFamily(Context);
 	return Context;

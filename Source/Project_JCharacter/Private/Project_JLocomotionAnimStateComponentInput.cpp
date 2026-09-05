@@ -77,18 +77,27 @@ bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationReques
 
 	if (OutDirectionBucket != 0)
 	{
-		float AuthoredTurnAngle = 0.0f;
-		switch (OutDirectionBucket)
+		// Publish the target selected at the local TIP edge. Sampling the actor or
+		// camera again here would make remote Steering disagree with local playback.
+		if (bLocalTurnInPlaceTargetActive && OutDirectionBucket == LocalTurnInPlaceDirectionBucket)
 		{
-		case 1: AuthoredTurnAngle = -90.0f; break;
-		case 2: AuthoredTurnAngle = -180.0f; break;
-		case 3: AuthoredTurnAngle = 90.0f; break;
-		case 4: AuthoredTurnAngle = 180.0f; break;
-		default: break;
+			OutTargetFacingYaw = LocalTurnInPlaceTargetFacingYaw;
 		}
-		const AActor* OwnerActor = GetOwner();
-		const float BaseActorYaw = OwnerActor ? OwnerActor->GetActorRotation().Yaw : 0.0f;
-		OutTargetFacingYaw = FRotator::NormalizeAxis(BaseActorYaw + AuthoredTurnAngle);
+		else
+		{
+			float AuthoredTurnAngle = 0.0f;
+			switch (OutDirectionBucket)
+			{
+			case 1: AuthoredTurnAngle = -90.0f; break;
+			case 2: AuthoredTurnAngle = -180.0f; break;
+			case 3: AuthoredTurnAngle = 90.0f; break;
+		case 4: AuthoredTurnAngle = 180.0f; break;
+			default: break;
+			}
+			const AActor* OwnerActor = GetOwner();
+			const float BaseActorYaw = OwnerActor ? OwnerActor->GetActorRotation().Yaw : 0.0f;
+			OutTargetFacingYaw = FRotator::NormalizeAxis(BaseActorYaw + AuthoredTurnAngle);
+		}
 	}
 	return OutDirectionBucket != 0;
 }

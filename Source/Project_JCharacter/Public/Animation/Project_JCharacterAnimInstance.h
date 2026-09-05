@@ -1328,6 +1328,8 @@ public:
 	mutable int32 StateControllerHeldLandingPresentationRevision = INDEX_NONE;
 	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
 	mutable bool bStateControllerForceTurnInPlaceReselect = false;
+	/** Monotonic local edge for a same-bucket 90/180 extension. */
+	mutable int32 LastHandledLocalTurnInPlaceSequence = 0;
 	mutable int32 LastHandledRemoteTurnInPlaceSequence = 0;
 	/**
 	 * A combat draw/sheathe montage is a presentation boundary.  A direct Land asset

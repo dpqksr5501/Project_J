@@ -240,6 +240,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
 	int32 GetRemoteTurnInPlaceSequence() const { return RemoteTurnInPlaceSequence; }
 
+	/** True only while a locally controlled character may apply authored TIP root yaw to its capsule. */
+	bool IsLocalTurnInPlaceTargetActive() const { return bLocalTurnInPlaceTargetActive; }
+
 	void NotifyTurnInPlaceReentered(uint8 DirectionBucket);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
@@ -532,8 +535,16 @@ public:
 	float TurnRedirectReselectCooldown = 0.10f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	/** GASP's actual ShouldTurnInPlace node uses 30 degrees; authored TIP rows then choose 90/180 assets. */
-	float DerivedTurnInPlaceAngleThreshold = 30.0f;
+	/**
+	 * The smallest authored TIP asset is 90 degrees. Keep sub-threshold camera
+	 * yaw as normal combat-idle steering instead of starting a 90 degree clip
+	 * that would have to be continuously clamped and slide the feet.
+	 */
+	float DerivedTurnInPlaceAngleThreshold = 70.0f;
+
+	/** Time reserved for Blend Stack/Offset Root Bone release before a reversed TIP may begin. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LocalTurnInPlaceReversalReleaseDuration = 0.25f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Derived Context", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float DerivedSpinTransitionAngleThreshold = 135.0f;
@@ -866,6 +877,19 @@ private:
 	uint8 RemoteTurnInPlaceDirectionBucket = 0;
 	float RemoteTurnInPlaceTargetFacingYaw = 0.0f;
 	int32 RemoteTurnInPlaceSequence = 0;
+	/** Local TIP shares one fixed authored target across capsule, AnimGraph and replication. */
+	bool bLocalTurnInPlaceTargetActive = false;
+	uint8 LocalTurnInPlaceDirectionBucket = 0;
+	float LocalTurnInPlaceTargetFacingYaw = 0.0f;
+	/** Monotonic local TIP edge; also drives same-bucket Blend Stack reselection. */
+	int32 LocalTurnInPlaceSequence = 0;
+	double LocalTurnInPlaceTargetStartedAtSeconds = 0.0;
+	double LocalTurnInPlaceTargetSelectionBlockedUntilSeconds = 0.0;
+	/** Keeps continuous local camera intent across the -180/+180 yaw seam during TIP. */
+	bool bHasLocalTurnInPlaceYawSamples = false;
+	float LocalTurnInPlaceUnwrappedFacingDeltaYaw = 0.0f;
+	float LastLocalTurnInPlaceControlYaw = 0.0f;
+	float LastLocalTurnInPlaceActorYaw = 0.0f;
 	bool bTurnInPlaceReplicationRequestPending = false;
 	uint8 PendingTurnInPlaceBucket = 0;
 	bool bWasLocallyRequestingTurnInPlace = false;
