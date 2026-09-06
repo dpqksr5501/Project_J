@@ -23,6 +23,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")
 	FName SocketName = FName("WeaponSocket_R");
 
+	/**
+	 * Optional socket on the spawned weapon actor (for example WeaponHit_Tip).
+	 * When present, hit sweeps follow an independently moved weapon visual;
+	 * the character socket above remains the backwards-compatible fallback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation")
+	bool bUseWeaponPresentationSocket = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation", meta = (EditCondition = "bUseWeaponPresentationSocket"))
+	FName WeaponSocketName = TEXT("WeaponHit_Tip");
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")
 	float TraceRadius = 40.0f;
 
@@ -33,4 +44,6 @@ protected:
 	/** Per-mesh state: notify objects are shared by animation assets, so a single
 	 * previous-position field would leak traces between characters. */
 	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FVector> PreviousSocketLocations;
+
+	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const;
 };

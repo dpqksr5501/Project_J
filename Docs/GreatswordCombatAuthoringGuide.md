@@ -157,6 +157,110 @@ The shared melee ability changes CharacterMovement to `Flying` only while this o
 
 The Animation Blueprint should remain configured as **Root Motion from Montages Only**. If an aerial montage still never rises after enabling the option, inspect the source animation/montage root-motion preview: it likely contains no positive Z root translation.
 
+## Independent Weapon Motion and Ground Contact
+
+This is the reusable visual-motion path for a weapon whose authored motion must
+depart from the primary hand during a Montage, for example a greatsword planted
+on the floor, a spear drag, or an aerial spin. It does **not** add a bone,
+virtual bone, or socket to the shared humanoid skeleton.
+
+```text
+WeaponPresentationProfile (per visual weapon/presentation family)
+  -> spawned BP weapon actor (WeaponRoot -> WeaponMesh)
+  -> drawn character socket
+  -> weapon-local grip/contact sockets
+
+Weapon Motion Notify State (per Montage interval)
+  -> compact inline transform keys
+  -> optional Weapon Ground Contact Notify State (per contact interval)
+```
+
+### Ownership and asset count
+
+- Create `BP_<Weapon>_Weapon` from `AProject_JWeaponPresentationActor`. Its
+  root must remain `WeaponRoot`; place the visual static mesh under
+  `WeaponMesh`. This actor is cosmetic and is spawned locally by
+  `UProject_JWeaponPresentationComponent`.
+- Create one `UProject_JWeaponPresentationProfile` only for a distinct visual
+  presentation: a different mesh, drawn/sheath socket policy, grip layout, or
+  terrain-contact layout. A skin with the same layout may reuse it. It is not
+  one Data Asset per Montage, and combat/gameplay data remains elsewhere.
+- The Montage owns the actual motion keys. Therefore a Montage that has a
+  distinct planted/dragging section gets its own **Weapon Motion** Notify
+  State and keys inline; no extra motion Data Asset is created.
+- The shared Master ABP reads generic grip targets from
+  `UProject_JWeaponPresentationComponent`. It should not receive greatsword-
+  named nodes or a special skeleton.
+
+### Weapon-local sockets
+
+Author these on the weapon Static Mesh, never on `SKM_Quinn_Simple`.
+
+| Socket | Required when | Placement |
+| --- | --- | --- |
+| `WeaponGrip_R` | Primary-hand IK is enabled | The right hand's intended grip point. Normally its IK alpha is `0` because `hand_r` already drives the weapon attachment. |
+| `WeaponGrip_L` | Two-handed pose / left-hand IK | The left hand's intended grip point. |
+| `WeaponGroundProbe_Tip` | Ground Contact is used | Exact lowest authored point that should touch the floor, normally the blade tip. |
+| `WeaponGroundProbe_Base` | Optional fallback only | An alternate contact point only for weapon assets that lack the tip socket. It is not averaged with the tip. |
+
+In `DA_Greatsword_Presentation`, set `Weapon Actor Class`, `Drawn Socket Name`,
+and `Motion Presentation > Supports Independent Motion`. Configure the grip and
+ground-contact socket names there. The contact solver reads its trace height,
+length, clearance, maximum translation, trace channel, and interpolation speed
+from this profile, so none of those values are hard-coded into a Montage.
+
+### Montage authoring workflow
+
+1. In the Montage, add **Weapon Motion** as a Notify State over only the
+   interval where the weapon may move independently.
+2. Set `Entry Blend Seconds` and `Exit Blend Seconds` for the state boundary.
+   They automatically fade the entire key timeline from/to the ordinary drawn-
+   socket pose. Start with `0.08` seconds; increase only when the authored
+   action visibly needs a softer hand-off. This is not another key and avoids
+   a one-frame pose jump even when the first/last authored key is non-identity.
+3. Add two or more `Motion Keys`. `Normalized Time` is local to this Notify
+   State: `0` is its left edge and `1` is its right edge. Each
+   `Relative Transform` is relative to the weapon root at the drawn character
+   socket; identity (`Location 0,0,0`, `Rotation 0,0,0`, `Scale 1,1,1`) is the
+   ordinary attached pose.
+4. Click a yellow marker on the Weapon Motion state bar. The editor scrubs to
+   that exact key and activates the standard viewport transform widget. Use
+   **W** for translation and **E** for rotation, then drag the widget while
+   viewing the actual weapon preview. The selected key is written back to the
+   Montage and supports Undo/Redo. Press **Esc** to leave key-edit mode.
+5. Use the Details panel for precise values or to add/delete/re-time keys. Do
+   not rely on dragging a numeric rotation field through zero; type an exact
+   negative value when that is clearer.
+6. Add **Weapon Ground Contact** as a separate Notify State only over the
+   frames that should be constrained to terrain. It overlaps Weapon Motion,
+   has no keys of its own, and can be shorter than the visual-motion interval.
+
+The Persona preview uses the same key evaluation as runtime. Its normal
+Preview Attached Asset is still required so the static weapon is visible in the
+Montage editor. The preview transform has exactly one editor writer: the
+`Project_JCharacterEditor` Montage preview path. Do not add transform-setting
+logic to `UProject_JAnimNotifyState_WeaponMotion` for Persona; a second writer
+causes the visible source-pose-to-key-pose reset/jitter while scrubbing.
+
+### Runtime and networking contract
+
+The weapon actor, inline transform keys, hand IK targets, and ground correction
+are presentation only. The owning ability/Montage remains responsible for
+networked combat timing; gameplay events, hit validation, damage, movement,
+and root motion do not depend on the cosmetic weapon actor. Every client
+evaluates the same Montage and local weapon profile, while the terrain trace is
+an intentionally local visual correction.
+
+For a runtime-only visual discrepancy, use:
+
+```text
+Project_J.Combat.WeaponPresentationDebug 1
+```
+
+It reports the spawned actor class, attachment parent/socket, root transform,
+and active Montage position. Disable it after inspection with
+`Project_J.Combat.WeaponPresentationDebug 0`.
+
 ## Debugging
 
 Use the console command below in PIE to log combo selection, buffered inputs, transitions, and montage playback:
@@ -193,3 +297,4 @@ The `LogProjectJWeaponPresentation` output logs the actual spawned weapon class,
 6. Place ComboWindow and hit notifies in each montage and test both buffered and late-window input.
 7. Test root-motion attacks on flat ground, near ledges, and when interrupted. Verify the character lands/falls cleanly.
 8. For every new two-button chord, test both button orders, a quick single-button tap, a held first button beyond the grace period, and client PIE root-motion playback.
+9. For any planted/dragging weapon attack, verify the preview attached weapon has its weapon-local grip/probe sockets, edit the inline Weapon Motion keys in the Montage, then test flat ground and a slope in client PIE. Keep `Weapon Ground Contact` limited to the actual contact frames.

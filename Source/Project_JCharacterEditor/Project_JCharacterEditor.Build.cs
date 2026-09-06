@@ -9,7 +9,18 @@ public class Project_JCharacterEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",
-			"Engine"
+			"Engine",
+			"Project_JCharacter"
+		});
+
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Persona",
+			"AnimGraph",
+			"EditorFramework",
+			"InputCore",
+			"Slate",
+			"SlateCore",
+			"UnrealEd"
 		});
 	}
 }

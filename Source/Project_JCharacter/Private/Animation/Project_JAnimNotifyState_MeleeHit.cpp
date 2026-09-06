@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
 
 UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
@@ -16,7 +17,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* Mes
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
-		PreviousSocketLocations.Add(MeshComp, MeshComp->GetSocketLocation(SocketName));
+		PreviousSocketLocations.Add(MeshComp, ResolveTraceLocation(MeshComp));
 		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
 			HitValidation->SetHitWindowOpen(true);
@@ -40,7 +41,7 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		return;
 	}
 
-	const FVector TraceLocation = MeshComp->GetSocketLocation(SocketName);
+	const FVector TraceLocation = ResolveTraceLocation(MeshComp);
 	const FVector TraceStart = PreviousSocketLocations.FindRef(MeshComp);
 	PreviousSocketLocations.Add(MeshComp, TraceLocation);
 	float EffectiveTraceRadius = TraceRadius;
@@ -95,6 +96,26 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OwnerActor, HitEventTag, Payload);
 		}
 	}
+}
+
+FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const
+{
+	if (bUseWeaponPresentationSocket)
+	{
+		if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+		{
+			if (const UProject_JWeaponPresentationComponent* Presentation = OwnerActor->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+			{
+				FTransform WeaponSocketTransform;
+				if (Presentation->GetWeaponSocketTransform(WeaponSocketName, WeaponSocketTransform))
+				{
+					return WeaponSocketTransform.GetLocation();
+				}
+			}
+		}
+	}
+
+	return MeshComp ? MeshComp->GetSocketLocation(SocketName) : FVector::ZeroVector;
 }
 
 void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
