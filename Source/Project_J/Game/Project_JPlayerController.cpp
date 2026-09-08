@@ -2,6 +2,7 @@
 
 
 #include "Project_JPlayerController.h"
+#include "Testing/Project_JEquipmentClientTestComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
@@ -83,6 +84,9 @@ int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
 
 AProject_JPlayerController::AProject_JPlayerController()
 {
+#if WITH_EDITOR
+	EquipmentClientTestComponent = CreateDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"));
+#endif
 	ProfilingCrowdComponent = CreateDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"));
 }
 
@@ -680,4 +684,9 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 	ClientMessage(SummaryLine);
 	UE_LOG(LogProject_J, Display, TEXT("%s"), *SummaryLine);
 #endif
+}
+
+void AProject_JPlayerController::EquipmentClientTest(const FString& Action)
+{
+	if (EquipmentClientTestComponent) { EquipmentClientTestComponent->Execute(Action); }
 }

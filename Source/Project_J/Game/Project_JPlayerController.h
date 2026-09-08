@@ -9,6 +9,7 @@
 class UInputMappingContext;
 class UUserWidget;
 class UProject_JProfilingCrowdComponent;
+class UProject_JEquipmentClientTestComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -117,6 +118,13 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Profiling")
 	TObjectPtr<UProject_JProfilingCrowdComponent> ProfilingCrowdComponent;
+
+	/** PIE-only inventory-ID network test. */
+	UFUNCTION(Exec)
+	void EquipmentClientTest(const FString& Action);
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JEquipmentClientTestComponent> EquipmentClientTestComponent;
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
