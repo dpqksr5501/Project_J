@@ -51,7 +51,11 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag 
 
 void UProject_JSkillInputExecutionComponent::ServerSendCombatInputEvent_Implementation(const FGameplayTag InputTag, const float ClientTimestamp, const int32 InputSequence)
 {
-	if (!InputTag.IsValid() || !BoundPlayerCharacter || InputSequence <= LastServerInputSequence)
+	// This RPC carries raw player intent only. Montage events and resolved Command
+	// aliases must originate on the server, never from a client-supplied event tag.
+	static const FGameplayTag InputRoot = FGameplayTag::RequestGameplayTag(FName(TEXT("InputTag")));
+	if (!InputTag.MatchesTag(InputRoot) || InputTag.MatchesTagExact(InputRoot) ||
+		!BoundPlayerCharacter || !BoundPlayerCharacter->HasAuthority() || InputSequence <= LastServerInputSequence)
 	{
 		return;
 	}

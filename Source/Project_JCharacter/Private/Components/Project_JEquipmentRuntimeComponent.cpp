@@ -17,6 +17,8 @@
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJEquipmentRuntime, Log, All);
+
 UProject_JEquipmentRuntimeComponent::UProject_JEquipmentRuntimeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -25,19 +27,33 @@ UProject_JEquipmentRuntimeComponent::UProject_JEquipmentRuntimeComponent()
 
 void UProject_JEquipmentRuntimeComponent::BeginPlay()
 {
+	bIsEndingPlay = false;
 	Super::BeginPlay();
 }
 
 void UProject_JEquipmentRuntimeComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bIsEndingPlay = true;
 	BindToEquipmentManager(nullptr);
 
 	Super::EndPlay(EndPlayReason);
 }
 
+void UProject_JEquipmentRuntimeComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	// A component may be destroyed before BeginPlay (and therefore without EndPlay).
+	bIsEndingPlay = true;
+	for (TPair<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem>& Pair : RuntimeItems)
+	{
+		CancelEquipmentMeshLoad(Pair.Value);
+	}
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager)
 {
-	if (BoundEquipmentManager == InEquipmentManager)
+	if ((bIsEndingPlay && InEquipmentManager) ||
+		(BoundEquipmentManager == InEquipmentManager && (InEquipmentManager || RuntimeItems.IsEmpty())))
 	{
 		return;
 	}
@@ -46,15 +62,15 @@ void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquip
 	{
 		BoundEquipmentManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
 		BoundEquipmentManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
-		
-		// Cleanup existing runtime items
-		TArray<EProject_JEquipmentSlot> Keys;
-		RuntimeItems.GetKeys(Keys);
-		for (const EProject_JEquipmentSlot Slot : Keys)
-		{
-			const FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
-			OnEquipmentUnequipped(Slot, RuntimeItem ? RuntimeItem->ItemDef : nullptr);
-		}
+	}
+
+	// Also clean up if the old manager is absent but a slot still owns a request.
+	TArray<EProject_JEquipmentSlot> Keys;
+	RuntimeItems.GetKeys(Keys);
+	for (const EProject_JEquipmentSlot Slot : Keys)
+	{
+		const FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
+		OnEquipmentUnequipped(Slot, RuntimeItem ? RuntimeItem->ItemDef : nullptr);
 	}
 
 	BoundEquipmentManager = InEquipmentManager;
@@ -75,7 +91,7 @@ void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquip
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (!ItemDef) return;
+	if (bIsEndingPlay || !IsValid(ItemDef)) return;
 
 	if (RuntimeItems.Contains(Slot))
 	{
@@ -105,10 +121,9 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 
 	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
 	UProject_JEquipmentItemDefinition* RuntimeItemDef = RuntimeItem.ItemDef ? RuntimeItem.ItemDef : ItemDef;
-	if (!RuntimeItemDef) return;
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter)
+	if (OwnerCharacter && RuntimeItemDef)
 	{
 		RemoveEquipmentGameplay(*OwnerCharacter, *RuntimeItemDef, RuntimeItem);
 	}
@@ -185,16 +200,26 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& Ow
 
 void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (!ItemDef || ItemDef->EquipmentMesh.IsNull()) return;
+	check(IsInGameThread());
+	if (bIsEndingPlay || !IsValid(ItemDef) || ItemDef->EquipmentMesh.IsNull()) return;
+	FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
+	if (!RuntimeItem || RuntimeItem->ItemDef != ItemDef) return;
+	CancelEquipmentMeshLoad(*RuntimeItem);
 
 	TWeakObjectPtr<UProject_JEquipmentRuntimeComponent> WeakThis(this);
-	UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
-		ItemDef->EquipmentMesh.ToSoftObjectPath(),
-		FStreamableDelegate::CreateLambda([WeakThis, Slot, ItemDef]()
+	TWeakObjectPtr<UProject_JEquipmentItemDefinition> WeakItemDef(ItemDef);
+	const FSoftObjectPath RequestedPath = ItemDef->EquipmentMesh.ToSoftObjectPath();
+	RuntimeItem->MeshLoadHandle = UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
+		RequestedPath,
+		FStreamableDelegate::CreateLambda([WeakThis, WeakItemDef, Slot, RequestedPath]()
 		{
 			if (UProject_JEquipmentRuntimeComponent* StrongThis = WeakThis.Get())
 			{
-				StrongThis->OnEquipmentMeshLoaded(Slot, ItemDef);
+				UProject_JEquipmentItemDefinition* LoadedItemDef = WeakItemDef.Get();
+				if (LoadedItemDef && LoadedItemDef->EquipmentMesh.ToSoftObjectPath() == RequestedPath)
+				{
+					StrongThis->OnEquipmentMeshLoaded(Slot, LoadedItemDef);
+				}
 			}
 		})
 	);
@@ -202,21 +227,32 @@ void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEqu
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (!ItemDef || !RuntimeItems.Contains(Slot)) return;
+	check(IsInGameThread());
+	if (bIsEndingPlay || !IsValid(ItemDef) || !RuntimeItems.Contains(Slot)) return;
 
 	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
 	if (RuntimeItem.ItemDef != ItemDef) return;
+	// Keep the loaded asset referenced until the mesh component takes ownership.
+	TSharedPtr<FStreamableHandle> CompletedLoad = MoveTemp(RuntimeItem.MeshLoadHandle);
 	if (RuntimeItem.SpawnedMesh) return;
+	USkeletalMesh* LoadedMesh = ItemDef->EquipmentMesh.Get();
+	if (!LoadedMesh)
+	{
+		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Equipment mesh load failed. Item=%s Path=%s"),
+			*GetNameSafe(ItemDef), *ItemDef->EquipmentMesh.ToSoftObjectPath().ToString());
+		return;
+	}
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter) return;
+	if (!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed() ||
+		OwnerCharacter->GetNetMode() == NM_DedicatedServer) return;
 
 	USkeletalMeshComponent* MainMesh = OwnerCharacter->GetMesh();
 	if (!MainMesh) return;
 
 	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
 	NewMeshComp->RegisterComponent();
-	NewMeshComp->SetSkeletalMesh(ItemDef->EquipmentMesh.Get());
+	NewMeshComp->SetSkeletalMesh(LoadedMesh);
 	NewMeshComp->SetCastShadow(ItemDef->bCastDynamicShadow);
 	NewMeshComp->SetCullDistance(ItemDef->MaxDrawDistance);
 
@@ -233,8 +269,21 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	RuntimeItem.SpawnedMesh = NewMeshComp;
 }
 
+void UProject_JEquipmentRuntimeComponent::CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const
+{
+	check(IsInGameThread());
+	if (RuntimeItem.MeshLoadHandle)
+	{
+		// UE also removes completions already queued for a later frame. This covers
+		// A -> B -> A re-equips without accepting a callback from the first A.
+		RuntimeItem.MeshLoadHandle->CancelHandle();
+		RuntimeItem.MeshLoadHandle.Reset();
+	}
+}
+
 void UProject_JEquipmentRuntimeComponent::DestroyEquipmentVisual(FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
+	CancelEquipmentMeshLoad(RuntimeItem);
 	if (RuntimeItem.SpawnedMesh)
 	{
 		RuntimeItem.SpawnedMesh->DestroyComponent();

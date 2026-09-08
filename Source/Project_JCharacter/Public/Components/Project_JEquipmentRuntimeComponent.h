@@ -15,6 +15,7 @@ class UProject_JModularMeshComponent;
 class UProject_JCombatStyleDefinition;
 class UProject_JWeaponPresentationProfile;
 class UAbilitySystemComponent;
+struct FStreamableHandle;
 
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentRuntimeItem
@@ -36,6 +37,9 @@ struct FProject_JEquipmentRuntimeItem
 
 	UPROPERTY(Transient)
 	bool bAppliedStatModifierFallback = false;
+
+	// Owned by this equipped slot. Only accessed/cancelled on the Game Thread.
+	TSharedPtr<FStreamableHandle> MeshLoadHandle;
 };
 
 /**
@@ -53,6 +57,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 public:
 	/** Binds to a specific equipment manager (usually on PlayerState) */
@@ -67,10 +72,13 @@ protected:
 	void OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 
 private:
+	friend class FProjectJEquipmentLoadLifecycleTest;
+
 	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+	void CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void DestroyEquipmentVisual(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	UProject_JCombatStyleDefinition* ResolveCurrentCombatStyle() const;
 	UProject_JWeaponPresentationProfile* ResolveCurrentWeaponPresentationProfile() const;
@@ -85,4 +93,6 @@ private:
 
 	UPROPERTY(Transient)
 	TMap<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem> RuntimeItems;
+
+	bool bIsEndingPlay = false;
 };
