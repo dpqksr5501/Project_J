@@ -31,6 +31,9 @@ public:
 	double DistanceWeight = 1.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Target Scoring", meta=(ClampMin="0.0", ClampMax="1000.0"))
 	double DirectionWeight = 1.0;
+	/** Explicit combat/quest urgency seam for the NPC scheduler; does not grant authority or activate abilities. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Target Scoring|NPC")
+	bool bUseUrgentNPCDecisionInterval = false;
 
 	/** Accepted means queued. A completed query may produce nullptr; cancellation has no callback. */
 	UFUNCTION(BlueprintCallable, Category="Target Scoring")
@@ -53,7 +56,9 @@ protected:
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
 	friend class UProject_JNPCDecisionSubsystem;
-	bool PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot);
+	/** Optional positions were captured on GT in the current scheduling pass, in candidate order. */
+	bool PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot,
+		const TArray<FVector>* CapturedPositions = nullptr);
 	UProject_JEquipmentManagerComponent* ResolveEquipmentManager() const;
 	void BindEquipment(UProject_JEquipmentManagerComponent* Manager);
 	void ApplyResult(const FProjectJTargetScoringCompletion& Completion);

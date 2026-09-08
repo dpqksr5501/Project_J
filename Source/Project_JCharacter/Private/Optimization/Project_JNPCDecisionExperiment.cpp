@@ -8,6 +8,7 @@
 #include "EngineUtils.h"
 #include "DrawDebugHelpers.h"
 #include "HAL/IConsoleManager.h"
+#include "Misc/DefaultValueHelper.h"
 
 AProject_JNPCDecisionExperiment::AProject_JNPCDecisionExperiment()
 {
@@ -65,6 +66,7 @@ void AProject_JNPCDecisionExperiment::StopExperiment()
 	SetActorTickEnabled(false);
 	if (auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr)
 	{
+		Scheduler->UnregisterObserver(this);
 		for (const auto& Target : RegisteredTargets) { if (Target.IsValid()) { Scheduler->UnregisterTarget(Target.Get()); } }
 	}
 	RegisteredTargets.Empty();
@@ -84,9 +86,11 @@ FString AProject_JNPCDecisionExperiment::GetSummary() const
 	const auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr;
 	if (!Scheduler) { return TEXT("NPC decision scheduler unavailable"); }
 	const auto& Stats = Scheduler->GetStats();
-	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f"),
+	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f target_reads=%d cells=%d fallback=%d observers=%d incomplete_observers=%d promotions=%d"),
 		Scheduler->GetAgentCount(), Scheduler->GetTargetCount(), Scheduler->GetOutstandingCount(), Stats.SubmittedBatches,
-		Stats.SubmittedDecisions, Stats.AppliedDecisions, Stats.DiscardedDecisions, Stats.RejectedBatches, Stats.LastTickGameThreadMilliseconds);
+		Stats.SubmittedDecisions, Stats.AppliedDecisions, Stats.DiscardedDecisions, Stats.RejectedBatches, Stats.LastTickGameThreadMilliseconds,
+		Stats.LastTickTargetPositionReads, Stats.LastTickSpatialCells, Stats.LastTickLinearFallbacks, Stats.LastTickObservers,
+		Stats.bObserverCoverageIncomplete ? 1 : 0, Stats.LastTickPromotions);
 }
 
 void AProject_JNPCDecisionExperiment::Tick(float DeltaSeconds)
@@ -125,7 +129,7 @@ namespace
 			}
 		}));
 	FAutoConsoleCommandWithWorldAndArgs ControlNPCDecisionExperiment(TEXT("ProjectJ.NPCDecision.Control"),
-		TEXT("Native sandbox: status | nodraw | draw | stop. Disable debug drawing during performance capture."),
+		TEXT("Native sandbox: status | nodraw | draw | stop | observer [X Y Z] | observer-off. Disable drawing during performance capture."),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
 		{
 			if (!World) { return; }
@@ -134,6 +138,25 @@ namespace
 				if (Args.Num() && Args[0] == TEXT("stop")) { It->StopExperiment(); It->Destroy(); }
 				else if (Args.Num() && Args[0] == TEXT("nodraw")) { It->SetActorTickEnabled(false); }
 				else if (Args.Num() && Args[0] == TEXT("draw")) { It->SetActorTickEnabled(true); }
+				else if (Args.Num() && Args[0] == TEXT("observer"))
+				{
+					FVector Location = It->GetActorLocation();
+					const bool bValid = Args.Num() == 1 || (Args.Num() == 4 && FDefaultValueHelper::ParseDouble(Args[1], Location.X)
+						&& FDefaultValueHelper::ParseDouble(Args[2], Location.Y) && FDefaultValueHelper::ParseDouble(Args[3], Location.Z));
+					if (!bValid || Location.ContainsNaN() || Location.GetAbsMax() > 1.e9)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Observer expects finite X Y Z coordinates within +/- 1e9."));
+						continue;
+					}
+					if (auto* Scheduler = World->GetSubsystem<UProject_JNPCDecisionSubsystem>(); Scheduler && Scheduler->RegisterObserver(*It))
+					{
+						It->SetActorLocation(Location); // Spawned NPCs/targets are not attached to this interest point.
+					}
+				}
+				else if (Args.Num() && Args[0] == TEXT("observer-off"))
+				{
+					if (auto* Scheduler = World->GetSubsystem<UProject_JNPCDecisionSubsystem>()) { Scheduler->UnregisterObserver(*It); }
+				}
 				else { UE_LOG(LogTemp, Display, TEXT("%s"), *It->GetSummary()); }
 			}
 		}));

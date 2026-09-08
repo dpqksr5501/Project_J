@@ -2,7 +2,9 @@
 #include "Components/Project_JTargetScoringComponent.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JCombatInterface.h"
+#include "Optimization/Project_JTargetSpatialSnapshot.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
@@ -11,6 +13,9 @@ struct FProjectJNPCDecisionAgent
 	TWeakObjectPtr<UProject_JTargetScoringComponent> Component;
 	int32 Team = 0;
 	double NextDue = 0.0;
+	double LastScheduled = -1.0;
+	double Interval = 0.05;
+	EProject_JNPCUpdateBudgetTier DecisionTier = EProject_JNPCUpdateBudgetTier::Near;
 	bool bRegistered = true;
 	bool bPending = false;
 };
@@ -106,6 +111,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 	{
 		if (Entry.Actor.Get() == Target)
 		{
+			if (Entry.Team != TeamId) { ++TargetRegistryRevision; }
 			Entry.Team = TeamId;
 			// A faction change must not leave a cached friendly target selected.
 			for (const auto& Agent : Agents)
@@ -121,13 +127,14 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 	Targets.RemoveAll([](const FTarget& Entry) { return !Entry.Actor.IsValid(); });
 	if (Targets.Num() >= MaxTargets) { return false; }
 	Targets.Add({Target, TeamId});
+	++TargetRegistryRevision;
 	return true;
 }
 
 void UProject_JNPCDecisionSubsystem::UnregisterTarget(AActor* Target)
 {
 	check(IsInGameThread());
-	Targets.RemoveAll([Target](const FTarget& Entry) { return Entry.Actor.Get() == Target; });
+	if (Targets.RemoveAll([Target](const FTarget& Entry) { return Entry.Actor.Get() == Target; }) > 0) { ++TargetRegistryRevision; }
 	for (const auto& Agent : Agents)
 	{
 		if (auto* Component = Agent->Component.Get(); Component && Component->SelectedTarget.Get() == Target) { Component->InvalidateQueryContext(); }
@@ -140,13 +147,71 @@ bool UProject_JNPCDecisionSubsystem::IsEligibleTarget(AActor* Target, int32 Team
 		&& Targets.ContainsByPredicate([Target, Team](const FTarget& Entry) { return Entry.Actor.Get() == Target && Entry.Team != Team; });
 }
 
+bool UProject_JNPCDecisionSubsystem::RegisterObserver(AActor* Observer)
+{
+	check(IsInGameThread());
+	if (!IsActiveServer() || !IsValid(Observer) || Observer->IsActorBeingDestroyed()
+		|| !Observer->HasAuthority() || Observer->GetWorld() != GetWorld()) { return false; }
+	Observers.RemoveAll([](const auto& Entry) { return !Entry.IsValid(); });
+	if (Observers.Contains(Observer)) { return true; }
+	if (Observers.Num() >= MaxObservers) { return false; }
+	Observers.Add(Observer);
+	return true;
+}
+
+void UProject_JNPCDecisionSubsystem::UnregisterObserver(AActor* Observer)
+{
+	check(IsInGameThread());
+	Observers.Remove(Observer);
+}
+
+bool UProject_JNPCDecisionSubsystem::GetAgentDecisionBudget(const UProject_JTargetScoringComponent* Component,
+	EProject_JNPCUpdateBudgetTier& OutTier, double& OutInterval) const
+{
+	check(IsInGameThread());
+	for (const auto& Agent : Agents)
+	{
+		if (Agent->Component.Get() == Component) { OutTier = Agent->DecisionTier; OutInterval = Agent->Interval; return true; }
+	}
+	return false;
+}
+
+bool UProject_JNPCDecisionSubsystem::CaptureObserverPositions(TArray<FVector>& Positions)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_Observers);
+	Positions.Reset();
+	TSet<TWeakObjectPtr<AActor>> Seen;
+	bool bComplete = true;
+	const auto Capture = [&](AActor* Actor)
+	{
+		if (!IsValid(Actor) || Actor->IsActorBeingDestroyed() || Seen.Contains(Actor)) { return; }
+		Seen.Add(Actor);
+		if (Positions.Num() >= MaxObservers || Actor->GetWorld() != GetWorld() || !Actor->HasAuthority()) { bComplete = false; return; }
+		const FVector Position = Actor->GetActorLocation();
+		if (Position.ContainsNaN()) { bComplete = false; return; }
+		Positions.Add(Position);
+	};
+	Observers.RemoveAll([](const auto& Entry) { return !Entry.IsValid(); });
+	for (const auto& Observer : Observers) { Capture(Observer.Get()); }
+	int32 ControllerVisits = 0;
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (++ControllerVisits > MaxObservers) { bComplete = false; break; }
+		if (const APlayerController* Controller = It->Get()) { Capture(Controller->GetPawnOrSpectator()); }
+	}
+	Stats.LastTickObservers = Positions.Num();
+	Stats.bObserverCoverageIncomplete = !bComplete || Positions.IsEmpty();
+	return !Stats.bObserverCoverageIncomplete;
+}
+
 void UProject_JNPCDecisionSubsystem::StopScheduler()
 {
 	check(IsInGameThread());
 	bAccepting = false;
 	if (auto* Service = Scoring.Get()) { Service->CancelForOwner(this); }
 	const auto PreviousAgents = MoveTemp(Agents);
-	Ready.Empty(); ActiveBatches.Empty(); Targets.Empty(); OutstandingDecisions = 0;
+	Ready.Empty(); ActiveBatches.Empty(); Targets.Empty(); Observers.Empty(); OutstandingDecisions = 0;
+	++TargetRegistryRevision;
 	for (const auto& Agent : PreviousAgents)
 	{
 		Agent->bRegistered = false;
@@ -199,6 +264,9 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_CollectAndApply);
 	const double Started = FPlatformTime::Seconds();
 	Stats.LastTickAgentVisits = Stats.LastTickCandidateVisits = Stats.LastTickResults = 0;
+	Stats.LastTickTargetPositionReads = Stats.LastTickSnapshotBuilds = Stats.LastTickSpatialCells = Stats.LastTickLinearFallbacks = 0;
+	Stats.LastTickObservers = Stats.LastTickImportanceUpdates = Stats.LastTickPromotions = 0;
+	Stats.bObserverCoverageIncomplete = false;
 	const auto WithinBudget = [&]() { return (FPlatformTime::Seconds() - Started) * 1000.0 < GameThreadBudgetMilliseconds; };
 	while (!Ready.IsEmpty() && Stats.LastTickResults < MaxResultsPerTick && WithinBudget())
 	{
@@ -227,6 +295,39 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		if (!IsActiveServer()) { return; }
 	}
 
+	// Keep completed-result draining independent of producer admission pressure.
+	if (Agents.IsEmpty() || OutstandingDecisions >= MaxOutstandingDecisions
+		|| Scoring->GetPendingCount() >= Scoring->MaxPendingRequests || !WithinBudget())
+	{
+		Stats.LastTickGameThreadMilliseconds = (FPlatformTime::Seconds() - Started) * 1000.0;
+		return;
+	}
+	TArray<FVector> ObserverPositions;
+	const bool bCompleteObservers = CaptureObserverPositions(ObserverPositions);
+	// These caches belong only to this Tick. No actor position is reused in another collection pass.
+	ProjectJ::TargetScoring::FTargetSpatialSnapshot Spatial;
+	TArray<TWeakObjectPtr<AActor>> CapturedActors;
+	bool bCapturedTargets = false;
+	uint64 CapturedRegistryRevision = 0;
+	const auto CaptureTargets = [&]()
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_SharedSnapshot);
+		CapturedRegistryRevision = TargetRegistryRevision;
+		const auto Registry = Targets; // IsDead is a GT interface call; do not hold registry references across it.
+		TArray<ProjectJ::TargetScoring::FSpatialTarget> Values;
+		for (const FTarget& Entry : Registry)
+		{
+			AActor* Target = Entry.Actor.Get();
+			if (!IsLivingActor(Target) || !IsValid(Target) || Target->GetWorld() != GetWorld()) { continue; }
+			const FVector Position = Target->GetActorLocation();
+			++Stats.LastTickTargetPositionReads;
+			if (Position.ContainsNaN()) { continue; }
+			const int32 Id = CapturedActors.Add(Target);
+			Values.Add({Id, Position, Entry.Team});
+		}
+		++Stats.LastTickSnapshotBuilds;
+		return IsActiveServer() && CapturedRegistryRevision == TargetRegistryRevision && Spatial.Build(MoveTemp(Values));
+	};
 	TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots;
 	TArray<TSharedPtr<FProjectJNPCDecisionAgent>> BatchAgents;
 	TArray<uint64> Revisions;
@@ -247,24 +348,50 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 			continue;
 		}
 		const double Now = FPlatformTime::Seconds();
-		if (Agent->bPending || Now < Agent->NextDue) { continue; }
-		const float Recommended = NPC->GetRecommendedAIUpdateInterval();
-		const double Interval = FMath::IsFinite(Recommended) ? FMath::Clamp(double(Recommended), 0.05, 2.0) : 1.0;
-		Agent->NextDue = Now + Interval; // No catch-up burst after stalls; round-robin prevents a fixed-index bias.
-		if (!IsLivingActor(NPC)) { Component->InvalidateQueryContext(); continue; }
-		TArray<AActor*> Candidates;
-		for (const FTarget& Entry : Targets)
+		const FVector Origin = NPC->GetActorLocation();
+		const auto PreviousTier = Agent->DecisionTier;
+		Agent->DecisionTier = EProject_JNPCUpdateBudgetTier::Near;
+		if (bCompleteObservers && !Origin.ContainsNaN() && !Component->bUseUrgentNPCDecisionInterval)
 		{
-			++Stats.LastTickCandidateVisits;
-			AActor* Target = Entry.Actor.Get();
-			if (Entry.Team != Agent->Team && Target != NPC && IsLivingActor(Target) && Target->GetWorld() == GetWorld()
-				&& FVector::DistSquared(Target->GetActorLocation(), NPC->GetActorLocation()) <= FMath::Square(Component->Range))
+			double NearestSquared = TNumericLimits<double>::Max();
+			for (const FVector& Position : ObserverPositions) { NearestSquared = FMath::Min(NearestSquared, FVector::DistSquared(Origin, Position)); }
+			Agent->DecisionTier = NPC->GetDecisionTierForDistance(FMath::Sqrt(NearestSquared), PreviousTier);
+		}
+		++Stats.LastTickImportanceUpdates;
+		if (static_cast<uint8>(Agent->DecisionTier) < static_cast<uint8>(PreviousTier)) { ++Stats.LastTickPromotions; }
+		const float Recommended = NPC->GetRecommendedAIUpdateIntervalForTier(Agent->DecisionTier);
+		Agent->Interval = FMath::IsFinite(Recommended) ? FMath::Clamp(double(Recommended), 0.05, 2.0) : 1.0;
+		// Recalculate from the last issue time, so promotion does not wait out an old far/hidden interval.
+		Agent->NextDue = Agent->LastScheduled < 0.0 ? 0.0 : Agent->LastScheduled + Agent->Interval;
+		if (Agent->bPending || Now < Agent->NextDue) { continue; }
+		Agent->LastScheduled = Now;
+		if (!IsLivingActor(NPC)) { Component->InvalidateQueryContext(); continue; }
+		if (!bCapturedTargets)
+		{
+			if (!CaptureTargets()) { break; }
+			bCapturedTargets = true;
+		}
+		if (!IsActiveServer() || CapturedRegistryRevision != TargetRegistryRevision) { break; }
+		TArray<int32> CandidateIndices;
+		ProjectJ::TargetScoring::FSpatialQueryStats QueryStats;
+		if (!Spatial.Query(Origin, Component->Range, Agent->Team, CandidateIndices, QueryStats)) { Component->InvalidateQueryContext(); continue; }
+		Stats.LastTickCandidateVisits += QueryStats.CandidatesVisited;
+		Stats.LastTickSpatialCells += QueryStats.CellsVisited;
+		Stats.LastTickLinearFallbacks += QueryStats.bLinearFallback ? 1 : 0;
+		TArray<AActor*> Candidates;
+		TArray<FVector> CapturedPositions;
+		for (int32 Index : CandidateIndices)
+		{
+			const auto& Value = Spatial.GetTargets()[Index];
+			AActor* Target = CapturedActors[Value.Id].Get();
+			if (IsValid(Target) && Target != NPC && !Target->IsActorBeingDestroyed())
 			{
 				Candidates.Add(Target);
+				CapturedPositions.Add(Value.Position);
 			}
 		}
 		ProjectJ::TargetScoring::FSnapshot Snapshot;
-		if (!Component->PrepareSnapshot(Candidates, Snapshot)) { continue; }
+		if (!Component->PrepareSnapshot(Candidates, Snapshot, &CapturedPositions)) { continue; }
 		Snapshots.Add(MoveTemp(Snapshot));
 		BatchAgents.Add(Agent);
 		Revisions.Add(Component->ContextRevision);

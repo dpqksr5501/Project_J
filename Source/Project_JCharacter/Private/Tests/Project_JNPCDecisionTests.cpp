@@ -190,4 +190,52 @@ bool FNPCRevalidationTest::RunTest(const FString& Parameters) { ADD_LATENT_AUTOM
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNPCExperimentTest, "ProjectJ.NPCDecision.Experiment",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FNPCExperimentTest::RunTest(const FString& Parameters) { ADD_LATENT_AUTOMATION_COMMAND(FNPCExperimentCommand(this)); return true; }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNPCSpatialImportanceTest, "ProjectJ.NPCDecision.SpatialImportance",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FNPCSpatialImportanceTest::RunTest(const FString& Parameters)
+{
+	FDecisionFixture Fixture;
+	Fixture.Target(100, 2);
+	for (int32 Index = 0; Index < 32; ++Index) { Fixture.Target(100000 + Index * 1000, 2); }
+	AActor* Observer = Fixture.Target(20000, 1);
+	TestTrue(TEXT("Explicit server observer registered"), Fixture.Scheduler->RegisterObserver(Observer));
+	TArray<UProject_JTargetScoringComponent*> Components;
+	for (int32 Index = 0; Index < 12; ++Index) { Components.Add(Fixture.Agent()); }
+	auto* NPC = CastChecked<AProject_JNPCCharacter>(Components[0]->GetOwner());
+	const float PreviousSignificance = NPC->GetSignificance();
+	Fixture.Scheduler->Tick(0); // Queue only: test the GT producer independently of task completion timing.
+	const auto InitialStats = Fixture.Scheduler->GetStats();
+	TestEqual(TEXT("Single shared snapshot per collection pass"), InitialStats.LastTickSnapshotBuilds, 1);
+	TestEqual(TEXT("Registered target positions sampled once, not once per NPC"), InitialStats.LastTickTargetPositionReads, Fixture.Scheduler->GetTargetCount());
+	TestTrue(TEXT("Spatial lookup prunes remote targets"), InitialStats.LastTickCandidateVisits < 12 * Fixture.Scheduler->GetTargetCount());
+	EProject_JNPCUpdateBudgetTier Tier = EProject_JNPCUpdateBudgetTier::Near;
+	double Interval = 0;
+	TestTrue(TEXT("Registered agent exposes its local budget"), Fixture.Scheduler->GetAgentDecisionBudget(Components[0], Tier, Interval));
+	TestTrue(TEXT("Distant observer selects hidden-distance tier"), Tier == EProject_JNPCUpdateBudgetTier::Hidden);
+	TestEqual(TEXT("Existing hidden interval reused"), Interval, 1.0);
+	Observer->SetActorLocation(FVector::ZeroVector);
+	Fixture.Scheduler->Tick(0);
+	Fixture.Scheduler->GetAgentDecisionBudget(Components[0], Tier, Interval);
+	TestTrue(TEXT("Approaching observer promotes before old interval expires"), Tier == EProject_JNPCUpdateBudgetTier::Near);
+	TestEqual(TEXT("Near cadence is bounded at 50ms"), Interval, 0.05);
+	Observer->SetActorLocation(FVector(20000, 0, 0));
+	Components[0]->bUseUrgentNPCDecisionInterval = true;
+	Fixture.Scheduler->Tick(0);
+	Fixture.Scheduler->GetAgentDecisionBudget(Components[0], Tier, Interval);
+	TestTrue(TEXT("Explicit urgency keeps decision near"), Tier == EProject_JNPCUpdateBudgetTier::Near);
+	Components[0]->bUseUrgentNPCDecisionInterval = false;
+	Fixture.Scheduler->UnregisterObserver(Observer);
+	Fixture.Scheduler->Tick(0);
+	Fixture.Scheduler->GetAgentDecisionBudget(Components[0], Tier, Interval);
+	TestTrue(TEXT("No observers falls back conservatively"), Tier == EProject_JNPCUpdateBudgetTier::Near && Fixture.Scheduler->GetStats().bObserverCoverageIncomplete);
+	TestEqual(TEXT("Consumer-local tiers do not mutate global significance"), NPC->GetSignificance(), PreviousSignificance);
+	TestTrue(TEXT("Demotion hysteresis holds near inside the margin"), NPC->GetDecisionTierForDistance(2600, EProject_JNPCUpdateBudgetTier::Near) == EProject_JNPCUpdateBudgetTier::Near);
+	TestTrue(TEXT("Outside margin demotes to mid"), NPC->GetDecisionTierForDistance(2800, EProject_JNPCUpdateBudgetTier::Near) == EProject_JNPCUpdateBudgetTier::Mid);
+	TestTrue(TEXT("Mid does not oscillate back inside demotion margin"), NPC->GetDecisionTierForDistance(2600, EProject_JNPCUpdateBudgetTier::Mid) == EProject_JNPCUpdateBudgetTier::Mid);
+	TestTrue(TEXT("Promotion uses the base boundary"), NPC->GetDecisionTierForDistance(2400, EProject_JNPCUpdateBudgetTier::Mid) == EProject_JNPCUpdateBudgetTier::Near);
+	Fixture.World->BeginTearingDown();
+	TestFalse(TEXT("Teardown rejects observer registration"), Fixture.Scheduler->RegisterObserver(Observer));
+	return true;
+}
 #endif

@@ -21,6 +21,9 @@ public:
 
 	/** Returns policy data only; no AI is throttled until its owner opts in. */
 	float GetRecommendedAIUpdateInterval() const;
+	/** Read-only policy access for consumer-local distance tiers; does not change global significance. */
+	float GetRecommendedAIUpdateIntervalForTier(EProject_JNPCUpdateBudgetTier Tier) const;
+	EProject_JNPCUpdateBudgetTier GetDecisionTierForDistance(double Distance, EProject_JNPCUpdateBudgetTier PreviousTier) const;
 	EProject_JNPCUpdateBudgetTier GetNPCUpdateBudgetTier() const;
 
 protected:

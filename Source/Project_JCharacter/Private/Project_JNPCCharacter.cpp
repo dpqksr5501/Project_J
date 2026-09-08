@@ -62,7 +62,31 @@ EProject_JNPCUpdateBudgetTier AProject_JNPCCharacter::GetNPCUpdateBudgetTier() c
 
 float AProject_JNPCCharacter::GetRecommendedAIUpdateInterval() const
 {
-	switch (GetNPCUpdateBudgetTier())
+	return GetRecommendedAIUpdateIntervalForTier(GetNPCUpdateBudgetTier());
+}
+
+EProject_JNPCUpdateBudgetTier AProject_JNPCCharacter::GetDecisionTierForDistance(double Distance, EProject_JNPCUpdateBudgetTier PreviousTier) const
+{
+	const double Gates[] = {SignificanceNearDistance, SignificanceMidDistance, SignificanceFarDistance};
+	if (!FMath::IsFinite(Distance) || Distance < 0 || !FMath::IsFinite(Gates[0]) || !FMath::IsFinite(Gates[1])
+		|| !FMath::IsFinite(Gates[2]) || Gates[0] <= 0 || Gates[1] <= Gates[0] || Gates[2] <= Gates[1])
+	{
+		return EProject_JNPCUpdateBudgetTier::Near;
+	}
+	int32 Tier = 0;
+	for (int32 Boundary = 0; Boundary < 3; ++Boundary)
+	{
+		// Promotion is immediate; demotion requires 10% extra distance to avoid boundary oscillation.
+		const double Gate = Gates[Boundary] * (Boundary >= static_cast<int32>(PreviousTier) ? 1.1 : 1.0);
+		if (Distance < Gate) { break; }
+		Tier = Boundary + 1;
+	}
+	return static_cast<EProject_JNPCUpdateBudgetTier>(Tier);
+}
+
+float AProject_JNPCCharacter::GetRecommendedAIUpdateIntervalForTier(EProject_JNPCUpdateBudgetTier Tier) const
+{
+	switch (Tier)
 	{
 	case EProject_JNPCUpdateBudgetTier::Mid:
 		return NPCUpdateBudget.MidUpdateInterval;

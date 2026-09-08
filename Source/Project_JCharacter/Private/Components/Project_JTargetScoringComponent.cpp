@@ -55,12 +55,14 @@ bool UProject_JTargetScoringComponent::RequestTargets(const TArray<AActor*>& Can
 	return PendingToken.IsValid();
 }
 
-bool UProject_JTargetScoringComponent::PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot)
+bool UProject_JTargetScoringComponent::PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot,
+	const TArray<FVector>* CapturedPositions)
 {
 	check(IsInGameThread());
 	InvalidateQueryContext();
 	if (bEndingPlay || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed() || !GetWorld()
-		|| Candidates.Num() > ProjectJ::TargetScoring::MaxCandidates) { return false; }
+		|| Candidates.Num() > ProjectJ::TargetScoring::MaxCandidates
+		|| (CapturedPositions && CapturedPositions->Num() != Candidates.Num())) { return false; }
 	auto* Subsystem = GetWorld()->GetSubsystem<UProject_JTargetScoringSubsystem>();
 	if (!Subsystem) { return false; }
 	BindEquipment(ResolveEquipmentManager());
@@ -71,11 +73,12 @@ bool UProject_JTargetScoringComponent::PrepareSnapshot(const TArray<AActor*>& Ca
 	Snapshot.DistanceWeight = DistanceWeight;
 	Snapshot.DirectionWeight = DirectionWeight;
 	RequestedRange = Range;
-	for (AActor* Candidate : Candidates)
+	for (int32 Index = 0; Index < Candidates.Num(); ++Index)
 	{
+		AActor* Candidate = Candidates[Index];
 		if (!IsValid(Candidate) || Candidate == GetOwner() || Candidate->IsActorBeingDestroyed() || Candidate->GetWorld() != GetWorld()) { continue; }
 		const int32 Id = CandidateActors.Add(Candidate);
-		Snapshot.Candidates.Add({Id, Candidate->GetActorLocation()});
+		Snapshot.Candidates.Add({Id, CapturedPositions ? (*CapturedPositions)[Index] : Candidate->GetActorLocation()});
 	}
 	return true;
 }

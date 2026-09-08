@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "System/Project_JTargetScoringSubsystem.h"
+#include "Optimization/Project_JNPCUpdateBudget.h"
 #include "Project_JNPCDecisionSubsystem.generated.h"
 
 class UProject_JTargetScoringComponent;
@@ -19,6 +20,14 @@ struct FProjectJNPCDecisionStats
 	int32 LastTickAgentVisits = 0;
 	int32 LastTickCandidateVisits = 0;
 	int32 LastTickResults = 0;
+	int32 LastTickTargetPositionReads = 0;
+	int32 LastTickSnapshotBuilds = 0;
+	int32 LastTickSpatialCells = 0;
+	int32 LastTickLinearFallbacks = 0;
+	int32 LastTickObservers = 0;
+	int32 LastTickImportanceUpdates = 0;
+	int32 LastTickPromotions = 0;
+	bool bObserverCoverageIncomplete = false;
 	double LastTickGameThreadMilliseconds = 0.0;
 };
 
@@ -34,6 +43,7 @@ public:
 	static constexpr int32 MaxOutstandingDecisions = 64;
 	static constexpr int32 MaxAgentVisitsPerTick = 128;
 	static constexpr int32 MaxResultsPerTick = 16;
+	static constexpr int32 MaxObservers = 128;
 	static constexpr double GameThreadBudgetMilliseconds = 1.0;
 	static constexpr double MaxResultAgeSeconds = 0.5;
 
@@ -44,6 +54,13 @@ public:
 	bool RegisterTarget(AActor* Target, int32 TeamId);
 	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
 	void UnregisterTarget(AActor* Target);
+	/** Additional server-owned interest points. Player-controller pawn positions are included automatically. */
+	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
+	bool RegisterObserver(AActor* Observer);
+	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
+	void UnregisterObserver(AActor* Observer);
+	bool GetAgentDecisionBudget(const UProject_JTargetScoringComponent* Component,
+		EProject_JNPCUpdateBudgetTier& OutTier, double& OutInterval) const;
 	int32 GetAgentCount() const { return Agents.Num(); }
 	int32 GetTargetCount() const { return Targets.Num(); }
 	int32 GetOutstandingCount() const { return OutstandingDecisions; }
@@ -63,10 +80,12 @@ private:
 	void OnWorldTearDown(UWorld* World);
 	bool IsActiveServer() const;
 	bool IsEligibleTarget(AActor* Target, int32 AgentTeam) const;
+	bool CaptureObserverPositions(TArray<FVector>& Positions);
 	void QueueResults(const FProjectJTargetScoringBatchCompletion& Completion,
 		const TArray<TSharedPtr<FProjectJNPCDecisionAgent>>& BatchAgents, const TArray<uint64>& Revisions, double Submitted);
 	TArray<TSharedPtr<FProjectJNPCDecisionAgent>> Agents;
 	TArray<FTarget> Targets;
+	TArray<TWeakObjectPtr<AActor>> Observers;
 	TArray<TSharedPtr<FProjectJNPCDecisionReady>> Ready;
 	TArray<FProject_JGameplayAsyncRequestToken> ActiveBatches;
 	TWeakObjectPtr<UProject_JTargetScoringSubsystem> Scoring;
@@ -75,4 +94,5 @@ private:
 	int32 Cursor = 0;
 	int32 OutstandingDecisions = 0;
 	bool bAccepting = false;
+	uint64 TargetRegistryRevision = 0;
 };
