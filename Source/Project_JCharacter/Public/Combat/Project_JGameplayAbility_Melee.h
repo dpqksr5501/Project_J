@@ -20,6 +20,9 @@ class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Melee : public UGameplayA
 
 public:
 	UProject_JGameplayAbility_Melee();
+	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
+		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
@@ -59,6 +62,7 @@ protected:
 	FGameplayTag MeleeHitEventTag;
 
 private:
+	bool bEndingAttack = false;
 	FGameplayTag CurrentComboNodeTag;
 	FGameplayTag QueuedInputTag;
 	TObjectPtr<UProject_JComboDefinition> ActiveComboDefinition = nullptr;

@@ -51,6 +51,20 @@ UProject_JGameplayAbility_Melee::UProject_JGameplayAbility_Melee()
 	ActivationRequiredTags.AddTag(FProject_JGameplayTags::Get().State_CombatMode);
 }
 
+bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	// Class and equipment grants may coexist. A single combo owns the shared montage,
+	// hit window and presentation; subsequent inputs go to that active combo's event tasks.
+	// Enforce this natively so existing Blueprint tag overrides cannot bypass the contract.
+	if (bEndingAttack || (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking)))
+	{
+		return false;
+	}
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
 void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
@@ -111,6 +125,15 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 
 void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// Montage cancellation and Blueprint end hooks may re-enter this override. The
+	// base class guard runs too late to protect our shared hit/presentation cleanup.
+	if (!IsActive() || bEndingAttack) { return; }
+	TGuardValue<bool> EndingGuard(bEndingAttack, true);
+	if (IsComboDebugEnabled())
+	{
+		UE_LOG(LogProjectJCombatCombo, Log, TEXT("End Owner=%s Ability=%s Cancelled=%d"),
+			*GetNameSafe(GetAvatarActorFromActorInfo()), *GetName(), bWasCancelled);
+	}
 	RestoreAttackMovementMode(bWasCancelled);
 	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
 	{
@@ -128,6 +151,7 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	ActiveAttackDefinition = nullptr;
 	ActiveComboMontage = nullptr;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	MontageTask = nullptr;
 }
 
 void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition)
