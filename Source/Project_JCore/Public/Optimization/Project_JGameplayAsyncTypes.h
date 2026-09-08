@@ -3,6 +3,15 @@
 #include "CoreMinimal.h"
 #include "Project_JGameplayAsyncTypes.generated.h"
 
+/** Explicit experiment modes. Serial remains the default until measurements justify workers. */
+UENUM(BlueprintType)
+enum class EProject_JTargetScoringExecution : uint8
+{
+	Serial,
+	Task,
+	TaskParallelFor
+};
+
 /**
  * Identifies one data-only gameplay job. The worker owns only copied plain data;
  * UObject, Actor, Component, and World access belongs to the game-thread apply step.

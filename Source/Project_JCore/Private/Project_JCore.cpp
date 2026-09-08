@@ -1,5 +1,6 @@
 #include "Project_JCore.h"
 #include "Project_JGameplayTags.h"
+#include "Optimization/Project_JTargetScoring.h"
 
 DEFINE_LOG_CATEGORY(LogProject_JCore);
 
@@ -12,6 +13,7 @@ void FProject_JCoreModule::StartupModule()
 
 void FProject_JCoreModule::ShutdownModule()
 {
+	ProjectJ::TargetScoring::DrainTasksForModuleShutdown();
 }
 
 #undef LOCTEXT_NAMESPACE
