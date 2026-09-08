@@ -271,5 +271,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationBudgetProbeBudgeted, "Project
 bool FProjectJAnimationBudgetProbeBudgeted::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FSmoke(this, 1, false)); return true; }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationBudgetProbeCleanup, "ProjectJ.GroupB.AnimationProbe.WorldCleanup", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationBudgetProbeCleanup::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FSmoke(this, 1, true)); return true; }
+#include "Testing/Project_JAnimationBudgetCombatTests.inl"
 #endif
 #endif

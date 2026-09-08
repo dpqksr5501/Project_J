@@ -63,7 +63,7 @@ void UProject_JCombatHitValidationComponent::SubmitPredictedHit(AActor* HitActor
 
 bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActor)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen || ServerHitActors.Contains(HitActor))
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen || !bHasAuthoritativeTrace || ServerHitActors.Contains(HitActor))
 	{
 		return false;
 	}
@@ -71,11 +71,15 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 	FProject_JCombatHitRequest Request;
 	Request.Target = HitActor;
 	Request.AttackNodeTag = ActiveAttackNodeTag;
+	// Validate the server's recorded weapon sweep, not the request struct's zero
+	// default. Otherwise legitimate authority hits depend on distance to world origin.
+	Request.TraceStart = LastAuthoritativeTraceStart;
+	Request.TraceEnd = LastAuthoritativeTraceEnd;
 	if (HitValidationPolicy.ValidateActors(GetOwner(), Request) != EProject_JCombatHitValidationFailure::None)
 	{
 		return false;
 	}
-	if (!bHasAuthoritativeTrace || IsTargetObstructed(HitActor))
+	if (IsTargetObstructed(HitActor))
 	{
 		return false;
 	}
