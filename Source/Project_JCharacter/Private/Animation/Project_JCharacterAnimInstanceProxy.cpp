@@ -6,6 +6,7 @@
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Project_JPlayerCharacter.h"
 #include "UObject/UnrealType.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
 {
@@ -64,6 +65,7 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_PreUpdate_GameThread);
 	FAnimInstanceProxy::PreUpdate(InAnimInstance, DeltaSeconds);
 	ThreadSafeData = PendingGameThreadData;
 	ThreadSafeData.DeltaTime = DeltaSeconds;
@@ -74,6 +76,7 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FAnimNode_Base* InRootNode,
 	FName InLayerName)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(IsInGameThread() ? TEXT("ProjectJ_AnimProxy_Update_GameThread") : TEXT("ProjectJ_AnimProxy_Update_Worker"));
 	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
 
 	if (bUpdateMotionMatchingThisFrame || !bMotionMatchingEnabled)

@@ -935,6 +935,7 @@ void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float Delt
 	// may execute that phase as a foreground task. Record UE's runtime state so
 	// Insights distinguishes actual parallel evaluation from foreground work.
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeThreadSafeUpdate);
+	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(IsInGameThread() ? TEXT("ProjectJ_AnimThreadSafeUpdate_GameThread") : TEXT("ProjectJ_AnimThreadSafeUpdate_Worker"));
 	if (IsRunningParallelEvaluation())
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeThreadSafeUpdate_ParallelEvaluation);

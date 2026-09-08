@@ -299,6 +299,7 @@ void UProject_JCombatPresentationComponent::StopCue(const FGameplayTag CueTag)
 
 void UProject_JCombatPresentationComponent::StopCueLocal(const FGameplayTag CueTag)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatVFX_StopCueLocal);
 	if (TObjectPtr<UNiagaraComponent>* ActiveComponent = ActiveLoopingCues.Find(CueTag))
 	{
 		if (*ActiveComponent)

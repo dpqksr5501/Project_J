@@ -33,6 +33,11 @@ public class Project_J : ModuleRules
 			"NetCore"
 		});
 
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
+		}
+
 		PublicIncludePaths.AddRange(new string[] {
 			"Project_J",
 			"Project_J/Game"
