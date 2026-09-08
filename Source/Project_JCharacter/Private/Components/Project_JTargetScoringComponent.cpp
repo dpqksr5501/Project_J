@@ -59,7 +59,7 @@ bool UProject_JTargetScoringComponent::PrepareSnapshot(const TArray<AActor*>& Ca
 	const TArray<FVector>* CapturedPositions)
 {
 	check(IsInGameThread());
-	InvalidateQueryContext();
+	ResetPendingQuery();
 	if (bEndingPlay || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed() || !GetWorld()
 		|| Candidates.Num() > ProjectJ::TargetScoring::MaxCandidates
 		|| (CapturedPositions && CapturedPositions->Num() != Candidates.Num())) { return false; }
@@ -96,11 +96,18 @@ void UProject_JTargetScoringComponent::StopBatchedNPCDecisions()
 	check(IsInGameThread());
 	if (auto* Scheduler = NPCDecisionSubsystem.Get()) { Scheduler->UnregisterAgent(this); }
 	bNPCBatchRegistered = false;
+	NPCDecisionTeam = INDEX_NONE;
 	NPCDecisionSubsystem.Reset();
 	InvalidateQueryContext();
 }
 
 void UProject_JTargetScoringComponent::InvalidateQueryContext()
+{
+	ResetPendingQuery();
+	OnContextInvalidated.Broadcast();
+}
+
+void UProject_JTargetScoringComponent::ResetPendingQuery()
 {
 	check(IsInGameThread());
 	++ContextRevision;

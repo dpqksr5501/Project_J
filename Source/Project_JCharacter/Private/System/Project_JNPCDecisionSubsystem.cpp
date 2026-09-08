@@ -64,7 +64,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterAgent(UProject_JTargetScoringCompon
 	{
 		if (Agent->Component.Get() == Component)
 		{
-			if (Agent->Team != TeamId) { Agent->Team = TeamId; Component->InvalidateQueryContext(); }
+			if (Agent->Team != TeamId) { Agent->Team = TeamId; Component->NPCDecisionTeam = TeamId; Component->InvalidateQueryContext(); }
 			return true;
 		}
 	}
@@ -77,6 +77,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterAgent(UProject_JTargetScoringCompon
 	Agents.Add(Agent);
 	Component->NPCDecisionSubsystem = this;
 	Component->bNPCBatchRegistered = true;
+	Component->NPCDecisionTeam = TeamId;
 	return true;
 }
 
@@ -92,6 +93,7 @@ void UProject_JNPCDecisionSubsystem::UnregisterAgent(UProject_JTargetScoringComp
 	if (IsValid(Component))
 	{
 		Component->bNPCBatchRegistered = false;
+		Component->NPCDecisionTeam = INDEX_NONE;
 		Component->NPCDecisionSubsystem.Reset();
 		Component->InvalidateQueryContext();
 	}
@@ -114,7 +116,8 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 			if (Entry.Team != TeamId) { ++TargetRegistryRevision; }
 			Entry.Team = TeamId;
 			// A faction change must not leave a cached friendly target selected.
-			for (const auto& Agent : Agents)
+			const auto AgentSnapshot = Agents;
+			for (const auto& Agent : AgentSnapshot)
 			{
 				if (auto* Component = Agent->Component.Get(); Component && Agent->Team == TeamId && Component->SelectedTarget.Get() == Target)
 				{
@@ -131,11 +134,21 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 	return true;
 }
 
+bool UProject_JNPCDecisionSubsystem::CanActOnTarget(const UProject_JTargetScoringComponent* Component, AActor* Target) const
+{
+	check(IsInGameThread());
+	if (!IsActiveServer() || !IsValid(Component) || !Component->bNPCBatchRegistered
+		|| Component->NPCDecisionSubsystem.Get() != this || Component->NPCDecisionTeam < 0
+		|| !IsLivingActor(Component->GetOwner()) || !Component->GetOwner()->HasAuthority()) { return false; }
+	return IsEligibleTarget(Target, Component->NPCDecisionTeam);
+}
+
 void UProject_JNPCDecisionSubsystem::UnregisterTarget(AActor* Target)
 {
 	check(IsInGameThread());
 	if (Targets.RemoveAll([Target](const FTarget& Entry) { return Entry.Actor.Get() == Target; }) > 0) { ++TargetRegistryRevision; }
-	for (const auto& Agent : Agents)
+	const auto AgentSnapshot = Agents;
+	for (const auto& Agent : AgentSnapshot)
 	{
 		if (auto* Component = Agent->Component.Get(); Component && Component->SelectedTarget.Get() == Target) { Component->InvalidateQueryContext(); }
 	}
@@ -218,6 +231,7 @@ void UProject_JNPCDecisionSubsystem::StopScheduler()
 		if (auto* Component = Agent->Component.Get())
 		{
 			Component->bNPCBatchRegistered = false;
+			Component->NPCDecisionTeam = INDEX_NONE;
 			Component->NPCDecisionSubsystem.Reset();
 			Component->InvalidateQueryContext();
 		}

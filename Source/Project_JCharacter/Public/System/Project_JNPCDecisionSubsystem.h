@@ -49,6 +49,8 @@ public:
 
 	bool RegisterAgent(UProject_JTargetScoringComponent* Component, int32 TeamId);
 	void UnregisterAgent(UProject_JTargetScoringComponent* Component);
+	/** Revalidate authoritative registry membership/team/life when consuming an advisory decision. */
+	bool CanActOnTarget(const UProject_JTargetScoringComponent* Component, AActor* Target) const;
 	/** Explicit, bounded registry. Caller updates team metadata when its authoritative faction changes. */
 	UFUNCTION(BlueprintCallable, Category="NPC|Decision")
 	bool RegisterTarget(AActor* Target, int32 TeamId);
