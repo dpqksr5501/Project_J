@@ -253,6 +253,10 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	if (Cue->bLooping && NiagaraComponent)
 	{
 		ActiveLoopingCues.Add(CueTag, NiagaraComponent);
+		if (Cue->bDestroyImmediatelyOnStop)
+		{
+			ImmediateDestroyCueTags.AddTag(CueTag);
+		}
 	}
 	if (NiagaraComponent)
 	{
@@ -284,9 +288,17 @@ void UProject_JCombatPresentationComponent::StopCueLocal(const FGameplayTag CueT
 	{
 		if (*ActiveComponent)
 		{
-			(*ActiveComponent)->Deactivate();
+			if (ImmediateDestroyCueTags.HasTagExact(CueTag))
+			{
+				(*ActiveComponent)->DestroyComponent();
+			}
+			else
+			{
+				(*ActiveComponent)->Deactivate();
+			}
 		}
 		ActiveLoopingCues.Remove(CueTag);
+		ImmediateDestroyCueTags.RemoveTag(CueTag);
 	}
 }
 
@@ -403,9 +415,17 @@ void UProject_JCombatPresentationComponent::StopAllCues()
 	{
 		if (Pair.Value)
 		{
-			Pair.Value->Deactivate();
+			if (ImmediateDestroyCueTags.HasTagExact(Pair.Key))
+			{
+				Pair.Value->DestroyComponent();
+			}
+			else
+			{
+				Pair.Value->Deactivate();
+			}
 		}
 	}
 	ActiveLoopingCues.Reset();
+	ImmediateDestroyCueTags.Reset();
 	StartedCueTags.Reset();
 }

@@ -83,6 +83,10 @@ private:
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UNiagaraComponent>> ActiveLoopingCues;
 
+	/** Stop policy captured at spawn time, so a style/weapon swap cannot change cleanup behavior for an already-running cue. */
+	UPROPERTY(Transient)
+	FGameplayTagContainer ImmediateDestroyCueTags;
+
 	/** Each semantic cue starts once per attack, preventing local prediction and server multicast from double-spawning it. */
 	UPROPERTY(Transient)
 	FGameplayTagContainer StartedCueTags;

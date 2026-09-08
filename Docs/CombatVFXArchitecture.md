@@ -26,8 +26,9 @@ An override set changes only cues it contains. This permits Demon Greatsword and
 1. Make an `AttackPresentationProfile` per visual attack family and assign Niagara systems to `PresentationCue.Combat.Trail`, `PresentationCue.Combat.Release`, or project-specific cue tags.
 2. Add those profiles to a `CombatPresentationSet`, keyed by the stable `Attack.*` tag.
 3. Assign the base set to the CombatStyle. Add only changed cues to advancement and skin override sets.
-4. Place `Project J Combat Presentation Cue` as a Notify State over the precise montage interval for a looping trail. Its CueTag must match the profile.
-5. For a weapon trail, attach the Niagara system to the weapon's existing Base/Tip-authored socket contract. The Niagara asset owns endpoint sampling; gameplay trace sockets remain independent.
+4. For a Notify State-bound trail, assign an internally looping Niagara system, check `Keep Alive Until Notify End`, and place `Project J Combat Presentation Cue` over the exact montage interval. The CueTag must match the profile. This component option tracks the spawned system; it does not make a one-shot Niagara system loop.
+5. Select `Destroy Immediately On Notify End` only when no residual particle fade is wanted. Leave it off for a natural trail fade.
+6. For a weapon trail, attach the Niagara system to the weapon's existing Base/Tip-authored socket contract. The Niagara asset owns endpoint sampling; gameplay trace sockets remain independent.
 
 ## Confirmed impacts
 

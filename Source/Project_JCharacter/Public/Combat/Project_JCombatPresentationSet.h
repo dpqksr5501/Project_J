@@ -39,9 +39,20 @@ struct PROJECT_JCHARACTER_API FProject_JCombatVFXCueDefinition
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
 	FTransform RelativeTransform = FTransform::Identity;
 
-	/** Looping effects are kept until the matching notify ends or the attack is cancelled. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
+	/**
+	 * Keeps this spawned Niagara component alive until the matching notify state ends
+	 * (or until the attack is cancelled). The Niagara system itself must be authored
+	 * to loop; this flag owns component lifetime, not Niagara's internal loop mode.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX|Lifetime", meta = (DisplayName = "Keep Alive Until Notify End"))
 	bool bLooping = false;
+
+	/**
+	 * Removes any surviving particles at notify end instead of allowing their Niagara
+	 * lifetime/fade to finish. Use for trails that must end exactly with the swing.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX|Lifetime", meta = (EditCondition = "bLooping", DisplayName = "Destroy Immediately On Notify End"))
+	bool bDestroyImmediatelyOnStop = false;
 };
 
 /** All cosmetic cues for one reusable AttackTag. */
