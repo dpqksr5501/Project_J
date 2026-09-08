@@ -349,8 +349,7 @@ void UProject_JEquipmentRuntimeComponent::RefreshCurrentWeaponConfiguration()
 	AProject_JPlayerCharacter* OwnerPlayer = Cast<AProject_JPlayerCharacter>(GetOwner());
 	if (!OwnerPlayer) return;
 
-	OwnerPlayer->SetCurrentCombatStyle(ResolveCurrentCombatStyle());
-	OwnerPlayer->SetCurrentWeaponPresentationProfile(ResolveCurrentWeaponPresentationProfile());
+	OwnerPlayer->SetCurrentEquipmentConfiguration(ResolveCurrentCombatStyle(), ResolveCurrentWeaponPresentationProfile());
 }
 
 UProject_JCombatStyleDefinition* UProject_JEquipmentRuntimeComponent::ResolveCurrentCombatStyle() const

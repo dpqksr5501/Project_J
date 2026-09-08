@@ -7,6 +7,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Engine/World.h"
+#include "Engine/SkeletalMesh.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
 #include "Project_JPlayerCharacter.h"
@@ -185,15 +187,30 @@ void UProject_JWeaponPresentationComponent::SetWeaponPresentationSocket(EProject
 
 void UProject_JWeaponPresentationComponent::RefreshPresentation()
 {
+	check(IsInGameThread());
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Refresh);
 	if (bRefreshingPresentation) { return; }
 	TGuardValue<bool> RefreshGuard(bRefreshingPresentation, true);
-	DestroyWeaponPresentation();
-	if (!CanCreatePresentation()) { return; }
+	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-	if (!PresentationProfile || !PresentationProfile->WeaponActorClass || !Mesh || !GetWorld())
+	if (!PresentationProfile)
+	{
+		// An empty weapon slot is a valid state, not a failed spawn.
+		DestroyWeaponPresentation();
+		return;
+	}
+	if (IsValid(SpawnedWeapon) && !SpawnedWeapon->IsActorBeingDestroyed() && Mesh
+		&& AppliedProfile.Get() == PresentationProfile && AppliedActorClass.Get() == PresentationProfile->WeaponActorClass.Get()
+		&& AppliedCharacterMesh.Get() == Mesh && AppliedSkeletalMesh.Get() == Mesh->GetSkeletalMeshAsset())
+	{
+		// Preserve notify-owned motion and weapon-local VFX on repeated callbacks.
+		return;
+	}
+	DestroyWeaponPresentation();
+	if (!PresentationProfile->WeaponActorClass || !Mesh)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Refresh failed: Owner=%s Profile=%s ActorClass=%s Mesh=%s World=%s"),
 			*GetNameSafe(OwnerCharacter),
@@ -207,10 +224,17 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = OwnerCharacter;
 	SpawnParams.Instigator = OwnerCharacter;
-	SpawnedWeapon = GetWorld()->SpawnActor<AActor>(PresentationProfile->WeaponActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Spawn);
+		SpawnedWeapon = GetWorld()->SpawnActor<AActor>(PresentationProfile->WeaponActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
+	}
 	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
 	if (SpawnedWeapon)
 	{
+		AppliedProfile = PresentationProfile;
+		AppliedActorClass = PresentationProfile->WeaponActorClass.Get();
+		AppliedCharacterMesh = Mesh;
+		AppliedSkeletalMesh = Mesh->GetSkeletalMeshAsset();
 		SetWeaponPresentationSocket(CurrentPresentationSocket);
 		UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] Spawn success: Weapon=%s SocketState=%d"),
 			*GetNameSafe(SpawnedWeapon), static_cast<int32>(CurrentPresentationSocket));
@@ -251,9 +275,14 @@ bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SocketNam
 
 void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 {
+	AppliedProfile.Reset();
+	AppliedActorClass.Reset();
+	AppliedCharacterMesh.Reset();
+	AppliedSkeletalMesh.Reset();
 	EndIndependentMotion();
 	if (SpawnedWeapon)
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Destroy);
 		AActor* PreviousWeapon = SpawnedWeapon;
 		SpawnedWeapon = nullptr;
 		PreviousWeapon->Destroy();

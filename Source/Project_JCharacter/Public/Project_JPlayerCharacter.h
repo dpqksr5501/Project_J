@@ -444,6 +444,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void SetCurrentWeaponPresentationProfile(UProject_JWeaponPresentationProfile* InPresentationProfile);
 
+	/** Commit both equipment-derived values before notifying presentation consumers. */
+	void SetCurrentEquipmentConfiguration(UProject_JCombatStyleDefinition* InCombatStyle, UProject_JWeaponPresentationProfile* InPresentationProfile);
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Style")
 	UProject_JCombatStyleDefinition* GetCurrentCombatStyle() const { return CurrentCombatStyle.Get(); }
 

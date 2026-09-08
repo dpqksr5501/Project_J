@@ -7,6 +7,8 @@
 
 class UProject_JWeaponPresentationProfile;
 class USceneComponent;
+class USkeletalMeshComponent;
+class USkeletalMesh;
 
 /** The stable character socket that currently owns the visual weapon actor. */
 UENUM(BlueprintType)
@@ -88,7 +90,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void SetWeaponPresentationSocket(EProject_JWeaponPresentationSocket Socket);
 
-	/** Rebuilds the visible weapon when the effective weapon profile changes. */
+	/** Reconciles the visible weapon; unchanged identity preserves its actor and motion. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void RefreshPresentation();
 
@@ -135,6 +137,7 @@ public:
 
 private:
 	friend class FProjectJWeaponPresentationTeardownTest;
+	friend class FProjectJWeaponPresentationIdentityTest;
 	bool CanCreatePresentation() const;
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;
@@ -149,6 +152,11 @@ private:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> SpawnedWeapon = nullptr;
+
+	TWeakObjectPtr<const UProject_JWeaponPresentationProfile> AppliedProfile;
+	TWeakObjectPtr<UClass> AppliedActorClass;
+	TWeakObjectPtr<USkeletalMeshComponent> AppliedCharacterMesh;
+	TWeakObjectPtr<USkeletalMesh> AppliedSkeletalMesh;
 
 	FVector SmoothedGroundCorrectionComponentSpace = FVector::ZeroVector;
 	FProject_JWeaponGripTargets GripTargets;

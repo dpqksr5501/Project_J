@@ -1224,46 +1224,41 @@ bool AProject_JPlayerCharacter::IsCombatModeActive() const
 
 void AProject_JPlayerCharacter::SetCurrentCombatStyle(UProject_JCombatStyleDefinition* InCombatStyle)
 {
-	if (CurrentCombatStyle == InCombatStyle)
-	{
-		return;
-	}
-
-	CurrentCombatStyle = InCombatStyle;
-	if (SkillInputExecutionComponent)
-	{
-		SkillInputExecutionComponent->ClearCommandInputHistory();
-	}
-	if (WeaponPresentationComponent)
-	{
-		WeaponPresentationComponent->RefreshPresentation();
-	}
-	if (CombatPresentationComponent)
-	{
-		CombatPresentationComponent->RefreshPresentation();
-	}
-	if (CombatAnimationLayerComponent)
-	{
-		CombatAnimationLayerComponent->PreloadLayerForCurrentWeapon();
-		CombatAnimationLayerComponent->RefreshLayer();
-	}
-	if (HasAuthority())
-	{
-		ForceNetUpdate();
-	}
+	SetCurrentEquipmentConfiguration(InCombatStyle, CurrentWeaponPresentationProfile);
 }
 
 void AProject_JPlayerCharacter::SetCurrentWeaponPresentationProfile(UProject_JWeaponPresentationProfile* InPresentationProfile)
 {
-	if (CurrentWeaponPresentationProfile == InPresentationProfile)
+	SetCurrentEquipmentConfiguration(CurrentCombatStyle, InPresentationProfile);
+}
+
+void AProject_JPlayerCharacter::SetCurrentEquipmentConfiguration(
+	UProject_JCombatStyleDefinition* InCombatStyle, UProject_JWeaponPresentationProfile* InPresentationProfile)
+{
+	check(IsInGameThread());
+	const bool bStyleChanged = CurrentCombatStyle != InCombatStyle;
+	const bool bProfileChanged = CurrentWeaponPresentationProfile != InPresentationProfile;
+	if (!bStyleChanged && !bProfileChanged)
 	{
 		return;
 	}
 
+	// All consumers observe the new pair, never a new style with the old weapon.
+	// Existing replicated properties and Blueprint setter signatures stay intact.
+	CurrentCombatStyle = InCombatStyle;
 	CurrentWeaponPresentationProfile = InPresentationProfile;
-	if (WeaponPresentationComponent)
+	if (CombatPresentationComponent)
+	{
+		CombatPresentationComponent->RefreshPresentation();
+	}
+	if (bProfileChanged && WeaponPresentationComponent)
 	{
 		WeaponPresentationComponent->RefreshPresentation();
+	}
+	if (bStyleChanged)
+	{
+		// Shared local/replicated style reaction: input history and animation layer.
+		OnRep_CurrentCombatStyle();
 	}
 	if (HasAuthority())
 	{
