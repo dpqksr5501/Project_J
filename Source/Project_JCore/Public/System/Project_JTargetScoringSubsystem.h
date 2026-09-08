@@ -17,6 +17,15 @@ struct FProjectJTargetScoringCompletion
 	double DeliveryMilliseconds = 0.0;
 };
 
+struct FProjectJTargetScoringBatchCompletion
+{
+	FProject_JGameplayAsyncRequestToken Token;
+	FGuid WorldEpoch;
+	uint64 ContextRevision = 0;
+	ProjectJ::TargetScoring::FBatchResult Result;
+	double DeliveryMilliseconds = 0.0;
+};
+
 /** Opt-in, bounded data-only experiment. It never selects actors or applies gameplay itself. */
 UCLASS()
 class PROJECT_JCORE_API UProject_JTargetScoringSubsystem : public UTickableWorldSubsystem
@@ -27,9 +36,14 @@ public:
 	static constexpr int32 MaxGlobalWorkerTasks = 2;
 	static constexpr int32 MaxCompletionsPerTick = 2;
 	using FCompletion = TFunction<void(const FProjectJTargetScoringCompletion&)>;
+	using FBatchCompletion = TFunction<void(const FProjectJTargetScoringBatchCompletion&)>;
 
 	FProject_JGameplayAsyncRequestToken Submit(UObject* Owner, ProjectJ::TargetScoring::FSnapshot Snapshot,
 		EProject_JTargetScoringExecution Mode, uint64 ContextRevision, FCompletion Completion, double TimeoutSeconds = 0.25);
+	/** One admission slot/root task for up to 64 queries and 16,384 total candidate values. */
+	FProject_JGameplayAsyncRequestToken SubmitBatch(UObject* Owner, TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots,
+		EProject_JTargetScoringExecution Mode, uint64 ContextRevision, FBatchCompletion Completion, double TimeoutSeconds = 0.25);
+	uint64 GetLaunchedTaskCount() const { return LaunchedTaskCount; }
 	void Cancel(FProject_JGameplayAsyncRequestToken Token);
 	void CancelForOwner(const UObject* Owner);
 	bool IsPending(FProject_JGameplayAsyncRequestToken Token) const;
@@ -50,5 +64,6 @@ private:
 	FDelegateHandle TearDownHandle;
 	bool bAcceptingQueries = false;
 	FGuid WorldEpoch;
+	uint64 LaunchedTaskCount = 0;
 	TArray<TSharedPtr<FProjectJTargetScoringJob>> Jobs;
 };

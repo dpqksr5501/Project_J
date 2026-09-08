@@ -7,6 +7,7 @@ namespace ProjectJ::TargetScoring
 {
 inline constexpr int32 MaxCandidates = 16384;
 inline constexpr int32 BatchSize = 128;
+inline constexpr int32 MaxQueriesPerBatch = 64;
 
 struct FCandidate
 {
@@ -35,6 +36,16 @@ struct FResult
 	int32 EligibleCandidates = 0;
 	double ComputeMicroseconds = 0.0;
 };
+
+struct FBatchResult
+{
+	TArray<FResult> Results;
+	double ComputeMicroseconds = 0.0;
+};
+
+/** Parallelize across independent queries without nesting their candidate ParallelFor loops. */
+PROJECT_JCORE_API FBatchResult EvaluateBatch(TConstArrayView<FSnapshot> Snapshots, bool bParallel,
+	const std::atomic<bool>& Cancelled);
 
 /** Parallel mode writes disjoint array elements and reduces in stable input order. */
 PROJECT_JCORE_API FResult Evaluate(const FSnapshot& Snapshot, bool bParallel,

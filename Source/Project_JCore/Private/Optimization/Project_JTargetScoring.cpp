@@ -5,6 +5,37 @@
 
 namespace ProjectJ::TargetScoring
 {
+FBatchResult EvaluateBatch(TConstArrayView<FSnapshot> Snapshots, bool bParallel, const std::atomic<bool>& Cancelled)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TargetScoring_QueryBatch);
+	FBatchResult Batch;
+	const double Started = FPlatformTime::Seconds();
+	if (Snapshots.IsEmpty() || Snapshots.Num() > MaxQueriesPerBatch) { return Batch; }
+	int32 TotalCandidates = 0;
+	for (const FSnapshot& Snapshot : Snapshots)
+	{
+		if (Snapshot.Candidates.Num() > MaxCandidates - TotalCandidates) { return Batch; }
+		TotalCandidates += Snapshot.Candidates.Num();
+	}
+	Batch.Results.SetNum(Snapshots.Num());
+	if (bParallel && Snapshots.Num() > 1)
+	{
+		ParallelFor(TEXT("ProjectJ_TargetScoring_Queries"), Snapshots.Num(), 1, [&](int32 Index)
+		{
+			Batch.Results[Index] = Evaluate(Snapshots[Index], false, Cancelled);
+		}, EParallelForFlags::Unbalanced);
+	}
+	else
+	{
+		for (int32 Index = 0; Index < Snapshots.Num(); ++Index)
+		{
+			Batch.Results[Index] = Evaluate(Snapshots[Index], bParallel, Cancelled);
+		}
+	}
+	Batch.ComputeMicroseconds = (FPlatformTime::Seconds() - Started) * 1.e6;
+	return Batch;
+}
+
 FResult Evaluate(const FSnapshot& Snapshot, bool bParallel, const std::atomic<bool>& Cancelled)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TargetScoring_Compute);

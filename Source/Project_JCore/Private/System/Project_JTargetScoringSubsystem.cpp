@@ -10,14 +10,14 @@ namespace
 {
 	struct FWork
 	{
-		explicit FWork(ProjectJ::TargetScoring::FSnapshot&& Input) : Snapshot(MoveTemp(Input)) {}
-		const ProjectJ::TargetScoring::FSnapshot Snapshot;
+		explicit FWork(TArray<ProjectJ::TargetScoring::FSnapshot>&& Input) : Snapshots(MoveTemp(Input)) {}
+		const TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots;
 		std::atomic<bool> Cancelled{false};
 	};
 	struct FTrackedTask
 	{
 		TSharedPtr<FWork, ESPMode::ThreadSafe> Work;
-		UE::Tasks::TTask<ProjectJ::TargetScoring::FResult> Task;
+		UE::Tasks::TTask<ProjectJ::TargetScoring::FBatchResult> Task;
 	};
 	// Accessed only on GT. Retains data-only jobs across world teardown, not worlds or callbacks.
 	TArray<FTrackedTask> TrackedTasks;
@@ -43,9 +43,9 @@ struct FProjectJTargetScoringJob
 	double Submitted = 0.0;
 	double Deadline = 0.0;
 	EProject_JTargetScoringExecution Mode = EProject_JTargetScoringExecution::Serial;
-	UProject_JTargetScoringSubsystem::FCompletion Completion;
+	UProject_JTargetScoringSubsystem::FBatchCompletion Completion;
 	TSharedPtr<FWork, ESPMode::ThreadSafe> Work;
-	UE::Tasks::TTask<ProjectJ::TargetScoring::FResult> Task;
+	UE::Tasks::TTask<ProjectJ::TargetScoring::FBatchResult> Task;
 	bool bExpired = false;
 };
 
@@ -109,13 +109,40 @@ FProject_JGameplayAsyncRequestToken UProject_JTargetScoringSubsystem::Submit(UOb
 	FCompletion Completion, double TimeoutSeconds)
 {
 	check(IsInGameThread());
+	if (!Completion) { return {}; }
+	TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots;
+	Snapshots.Add(MoveTemp(Snapshot));
+	return SubmitBatch(Owner, MoveTemp(Snapshots), Mode, Revision,
+		[Callback = MoveTemp(Completion)](const FProjectJTargetScoringBatchCompletion& Batch)
+		{
+			FProjectJTargetScoringCompletion Single;
+			Single.Token = Batch.Token;
+			Single.WorldEpoch = Batch.WorldEpoch;
+			Single.ContextRevision = Batch.ContextRevision;
+			Single.DeliveryMilliseconds = Batch.DeliveryMilliseconds;
+			if (Batch.Result.Results.Num() == 1) { Single.Result = Batch.Result.Results[0]; }
+			Callback(Single);
+		}, TimeoutSeconds);
+}
+
+FProject_JGameplayAsyncRequestToken UProject_JTargetScoringSubsystem::SubmitBatch(UObject* Owner,
+	TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots, EProject_JTargetScoringExecution Mode, uint64 Revision,
+	FBatchCompletion Completion, double TimeoutSeconds)
+{
+	check(IsInGameThread());
 	if (!IsInitialized() || !bAcceptingQueries || bShuttingDown || !IsLiveOwner(Owner) || Owner->GetWorld() != GetWorld() || !Completion
-		|| Snapshot.Candidates.Num() > ProjectJ::TargetScoring::MaxCandidates || Jobs.Num() >= MaxPendingRequests
+		|| Snapshots.IsEmpty() || Snapshots.Num() > ProjectJ::TargetScoring::MaxQueriesPerBatch || Jobs.Num() >= MaxPendingRequests
 		|| !FMath::IsFinite(TimeoutSeconds) || TimeoutSeconds <= 0.0 || TimeoutSeconds > 30.0
 		|| static_cast<uint8>(Mode) > static_cast<uint8>(EProject_JTargetScoringExecution::TaskParallelFor)
 		|| NextToken == MAX_int64)
 	{
 		return {};
+	}
+	int32 TotalCandidates = 0;
+	for (const auto& Snapshot : Snapshots)
+	{
+		if (Snapshot.Candidates.Num() > ProjectJ::TargetScoring::MaxCandidates - TotalCandidates) { return {}; }
+		TotalCandidates += Snapshot.Candidates.Num();
 	}
 	const auto Job = MakeShared<FProjectJTargetScoringJob>();
 	Job->Token.Value = ++NextToken;
@@ -125,7 +152,7 @@ FProject_JGameplayAsyncRequestToken UProject_JTargetScoringSubsystem::Submit(UOb
 	Job->Deadline = Job->Submitted + TimeoutSeconds;
 	Job->Mode = Mode;
 	Job->Completion = MoveTemp(Completion);
-	Job->Work = MakeShared<FWork, ESPMode::ThreadSafe>(MoveTemp(Snapshot));
+	Job->Work = MakeShared<FWork, ESPMode::ThreadSafe>(MoveTemp(Snapshots));
 	Jobs.Add(Job);
 	return Job->Token;
 }
@@ -167,7 +194,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 	if (!IsInitialized() || !bAcceptingQueries) { return; }
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TargetScoring_DispatchAndApply);
 	TrackedTasks.RemoveAll([](const FTrackedTask& Entry) { return Entry.Task.IsCompleted(); });
-	struct FReady { TSharedPtr<FProjectJTargetScoringJob> Job; FProjectJTargetScoringCompletion Completion; };
+	struct FReady { TSharedPtr<FProjectJTargetScoringJob> Job; FProjectJTargetScoringBatchCompletion Completion; };
 	TArray<FReady, TInlineAllocator<MaxCompletionsPerTick>> Ready;
 	for (int32 Index = 0; Index < Jobs.Num() && Ready.Num() < MaxCompletionsPerTick;)
 	{
@@ -178,7 +205,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 			Job->bExpired = true;
 			Job->Work->Cancelled.store(true, std::memory_order_relaxed);
 		}
-		ProjectJ::TargetScoring::FResult Result;
+		ProjectJ::TargetScoring::FBatchResult Result;
 		if (Job->Task.IsValid())
 		{
 			if (!Job->Task.IsCompleted()) { ++Index; continue; }
@@ -187,11 +214,12 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 		}
 		else if (Job->Work->Cancelled.load(std::memory_order_relaxed))
 		{
-			Result.Status = ProjectJ::TargetScoring::EStatus::Cancelled;
+			Result.Results.SetNum(Job->Work->Snapshots.Num());
+			for (auto& Entry : Result.Results) { Entry.Status = ProjectJ::TargetScoring::EStatus::Cancelled; }
 		}
 		else if (Job->Mode == EProject_JTargetScoringExecution::Serial)
 		{
-			Result = ProjectJ::TargetScoring::Evaluate(Job->Work->Snapshot, false, Job->Work->Cancelled);
+			Result = ProjectJ::TargetScoring::EvaluateBatch(Job->Work->Snapshots, false, Job->Work->Cancelled);
 		}
 		else
 		{
@@ -201,18 +229,22 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 			const bool bParallel = Job->Mode == EProject_JTargetScoringExecution::TaskParallelFor;
 			Job->Task = UE::Tasks::Launch(UE_SOURCE_LOCATION, [Work, bParallel]()
 			{
-				return ProjectJ::TargetScoring::Evaluate(Work->Snapshot, bParallel, Work->Cancelled);
+				return ProjectJ::TargetScoring::EvaluateBatch(Work->Snapshots, bParallel, Work->Cancelled);
 			});
 			TrackedTasks.Add({Work, Job->Task});
+			++LaunchedTaskCount;
 			++Index;
 			continue;
 		}
-		if (Job->bExpired) { Result.Status = ProjectJ::TargetScoring::EStatus::Expired; }
-		FProjectJTargetScoringCompletion Completion;
+		if (Job->bExpired)
+		{
+			for (auto& Entry : Result.Results) { Entry.Status = ProjectJ::TargetScoring::EStatus::Expired; }
+		}
+		FProjectJTargetScoringBatchCompletion Completion;
 		Completion.Token = Job->Token;
 		Completion.WorldEpoch = WorldEpoch;
 		Completion.ContextRevision = Job->Revision;
-		Completion.Result = Result;
+		Completion.Result = MoveTemp(Result);
 		Completion.DeliveryMilliseconds = (FPlatformTime::Seconds() - Job->Submitted) * 1000.0;
 		Ready.Add({Job, Completion});
 		++Index;

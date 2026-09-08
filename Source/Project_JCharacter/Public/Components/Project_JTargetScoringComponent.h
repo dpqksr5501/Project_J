@@ -9,7 +9,9 @@
 class UProject_JEquipmentManagerComponent;
 class UProject_JEquipmentItemDefinition;
 class UProject_JTargetScoringSubsystem;
+class UProject_JNPCDecisionSubsystem;
 struct FProjectJTargetScoringCompletion;
+namespace ProjectJ::TargetScoring { struct FSnapshot; }
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProjectJTargetScored, AActor*, Target, double, Score);
 
@@ -33,6 +35,11 @@ public:
 	/** Accepted means queued. A completed query may produce nullptr; cancellation has no callback. */
 	UFUNCTION(BlueprintCallable, Category="Target Scoring")
 	bool RequestTargets(const TArray<AActor*>& Candidates);
+	/** Opt-in NPC/server scheduler. Team is explicit experiment metadata, not replicated faction state. */
+	UFUNCTION(BlueprintCallable, Category="Target Scoring|NPC")
+	bool StartBatchedNPCDecisions(int32 TeamId);
+	UFUNCTION(BlueprintCallable, Category="Target Scoring|NPC")
+	void StopBatchedNPCDecisions();
 	/** Call when class, skill, possession, or query eligibility changes. Equipment changes bind automatically. */
 	UFUNCTION(BlueprintCallable, Category="Target Scoring")
 	void InvalidateQueryContext();
@@ -45,6 +52,8 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
+	friend class UProject_JNPCDecisionSubsystem;
+	bool PrepareSnapshot(const TArray<AActor*>& Candidates, ProjectJ::TargetScoring::FSnapshot& Snapshot);
 	UProject_JEquipmentManagerComponent* ResolveEquipmentManager() const;
 	void BindEquipment(UProject_JEquipmentManagerComponent* Manager);
 	void ApplyResult(const FProjectJTargetScoringCompletion& Completion);
@@ -52,10 +61,13 @@ private:
 	void OnEquipmentChanged(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* Item);
 	TWeakObjectPtr<UProject_JEquipmentManagerComponent> BoundEquipment;
 	TWeakObjectPtr<UProject_JTargetScoringSubsystem> QuerySubsystem;
+	TWeakObjectPtr<UProject_JNPCDecisionSubsystem> NPCDecisionSubsystem;
 	TArray<TWeakObjectPtr<AActor>> CandidateActors;
 	TWeakObjectPtr<AActor> SelectedTarget;
 	FProject_JGameplayAsyncRequestToken PendingToken;
 	uint64 ContextRevision = 0;
 	double RequestedRange = 0.0;
 	bool bEndingPlay = false;
+	bool bSharedBatchRequest = false;
+	bool bNPCBatchRegistered = false;
 };
