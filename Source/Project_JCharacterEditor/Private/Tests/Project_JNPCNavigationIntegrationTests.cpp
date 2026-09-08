@@ -18,6 +18,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/WorldSettings.h"
 #include "System/Project_JNPCPathSubsystem.h"
+#include "System/Project_JNPCDecisionSubsystem.h"
+#include "Components/Project_JNPCActionComponent.h"
+#include "Components/Project_JTargetScoringComponent.h"
 #include "HAL/PlatformTime.h"
 
 namespace
@@ -25,7 +28,8 @@ namespace
 	class FNativeNavCommand : public IAutomationLatentCommand
 	{
 	public:
-		explicit FNativeNavCommand(FAutomationTestBase* InTest) : Test(InTest), Started(FPlatformTime::Seconds())
+		explicit FNativeNavCommand(FAutomationTestBase* InTest, bool bTestMovingTarget = false)
+			: Test(InTest), Started(FPlatformTime::Seconds()), bMovingTarget(bTestMovingTarget)
 		{
 			World = UWorld::CreateWorld(EWorldType::Game, false);
 			GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -63,6 +67,20 @@ namespace
 			World->GetWorldSettings()->NotifyBeginPlay();
 			World->GetWorldSettings()->NotifyMatchStarted();
 			Service = World->GetSubsystem<UProject_JNPCPathSubsystem>();
+			if (bMovingTarget)
+			{
+				MovingTarget = World->SpawnActor<AActor>();
+				auto* Root = NewObject<USceneComponent>(MovingTarget); MovingTarget->SetRootComponent(Root); Root->RegisterComponent();
+				MovingTarget->SetActorLocation(FVector(900, 0, 90));
+				World->GetSubsystem<UProject_JNPCDecisionSubsystem>()->RegisterTarget(MovingTarget, 2);
+				auto* Scoring = NewObject<UProject_JTargetScoringComponent>(NPC); NPC->AddInstanceComponent(Scoring); Scoring->RegisterComponent();
+				Scoring->Range = 4000; Scoring->bUseUrgentNPCDecisionInterval = true;
+				Scoring->StartBatchedNPCDecisions(1);
+				Actions = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(Actions); Actions->RegisterComponent();
+				Actions->RetryInterval = 0.1;
+				Test->TestTrue(TEXT("Real moving-target consumer starts"), Actions->StartActions(Scoring, {}));
+				NPC->GetCharacterMovement()->GetNavMovementProperties()->bUseAccelerationForPaths = true;
+			}
 		}
 		~FNativeNavCommand()
 		{
@@ -77,6 +95,32 @@ namespace
 				Test->AddError(FString::Printf(TEXT("Nav integration timed out: issued=%d completed=%d points=%d position=%s navbuilding=%d"),
 					bIssued, bCompleted, PathPoints, *NPC->GetActorLocation().ToString(), Nav->IsNavigationBuildInProgress()));
 				return true;
+			}
+			if (bMovingTarget)
+			{
+				SimulatedSeconds += 0.05;
+				MovingTarget->SetActorLocation(FVector(900, FMath::Min(SimulatedSeconds * 100.0, 800.0), 90));
+				const auto PreviousMove = AI->GetPathFollowingComponent()->GetCurrentRequestId();
+				const bool bWasFollowing = AI->GetPathFollowingComponent()->GetStatus() == EPathFollowingStatus::Moving;
+				const uint64 AcceptedBefore = Service->GetStats().Accepted;
+				Actions->UpdateAction();
+				if (bWasFollowing && Service->GetStats().Accepted > AcceptedBefore)
+				{
+					Test->TestEqual(TEXT("Repath admission preserves current movement ID"), AI->GetPathFollowingComponent()->GetCurrentRequestId(), PreviousMove);
+					Test->TestEqual(TEXT("Repath admission preserves active path following"), AI->GetPathFollowingComponent()->GetStatus(), EPathFollowingStatus::Moving);
+					++ContinuousRepaths;
+				}
+				World->Tick(LEVELTICK_All, 0.05f);
+				if (SimulatedSeconds >= 8.0 && Actions->GetActionState() == EProjectJNPCActionState::InRange)
+				{
+					Test->TestTrue(TEXT("Moving target causes multiple asynchronous paths"), Service->GetStats().Dispatched > 1);
+					Test->TestTrue(TEXT("Observed replacement requests while continuing a valid old path"), ContinuousRepaths > 0);
+					Test->TestTrue(TEXT("NPC reaches the moved target"), FVector::Dist(NPC->GetActorLocation(), MovingTarget->GetActorLocation()) <= Actions->AttackRange);
+					Test->AddInfo(FString::Printf(TEXT("Moving target: dispatches=%llu continuous_repaths=%d final=%s"),
+						Service->GetStats().Dispatched, ContinuousRepaths, *NPC->GetActorLocation().ToString()));
+					return true;
+				}
+				return false;
 			}
 			World->Tick(LEVELTICK_All, 0.05f);
 			if (!bIssued)
@@ -118,6 +162,11 @@ namespace
 		double Started;
 		int32 PathPoints = 0;
 		bool bIssued = false, bCompleted = false;
+		bool bMovingTarget = false;
+		AActor* MovingTarget = nullptr;
+		UProject_JNPCActionComponent* Actions = nullptr;
+		double SimulatedSeconds = 0;
+		int32 ContinuousRepaths = 0;
 	};
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNativeNavigationTest, "ProjectJ.Integrated.NativeNavMovement",
@@ -125,6 +174,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNativeNavigationTest, "ProjectJ.Integr
 bool FProjectJNativeNavigationTest::RunTest(const FString& Parameters)
 {
 	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMovingTargetNavigationTest, "ProjectJ.Integrated.MovingTargetPursuit",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJMovingTargetNavigationTest::RunTest(const FString& Parameters)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, true));
 	return true;
 }
 #endif

@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
@@ -121,5 +122,31 @@ bool FProjectJEquipmentLoadLifecycleTest::RunTest(const FString& Parameters)
  TestEqual(TEXT("Early destruction releases lease"), Service->GetLeaseCount(), 0);
  World->DestroyWorld(false);
  return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJWeaponPresentationTeardownTest,
+	"ProjectJ.NPCGameplay.WeaponPresentationTeardown", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJWeaponPresentationTeardownTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	auto* Owner = World->SpawnActor<ACharacter>();
+	auto* Presentation = NewObject<UProject_JWeaponPresentationComponent>(Owner); Presentation->RegisterComponent();
+	TestTrue(TEXT("Live component permits visuals"), Presentation->CanCreatePresentation());
+	Presentation->BeginPlay();
+	auto* Weapon = World->SpawnActor<AActor>(); Presentation->SpawnedWeapon = Weapon;
+	Presentation->EndPlay(EEndPlayReason::LevelTransition);
+	TestFalse(TEXT("Ended component blocks visuals"), Presentation->CanCreatePresentation());
+	TestNull(TEXT("Owned weapon removed"), Presentation->GetSpawnedWeapon());
+	TestTrue(TEXT("Owned weapon destroyed"), !IsValid(Weapon) || Weapon->IsActorBeingDestroyed());
+	Presentation->RefreshPresentation(); Presentation->ExitCombatPresentation(); // No attempt to resolve/spawn after end.
+	TestNull(TEXT("Late callbacks do not recreate weapon"), Presentation->GetSpawnedWeapon());
+	Presentation->DestroyComponent();
+	auto* Early = NewObject<UProject_JWeaponPresentationComponent>(Owner); Early->RegisterComponent();
+	auto* EarlyWeapon = World->SpawnActor<AActor>(); Early->SpawnedWeapon = EarlyWeapon;
+	World->bIsTearingDown = true;
+	TestFalse(TEXT("World teardown blocks visuals before component EndPlay"), Early->CanCreatePresentation());
+	Early->RefreshPresentation();
+	TestNull(TEXT("Teardown refresh only cleans up"), Early->GetSpawnedWeapon());
+	Early->DestroyComponent(); World->DestroyWorld(false);
+	return true;
 }
 #endif

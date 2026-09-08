@@ -83,8 +83,28 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 	UpdateTickState();
 }
 
+void UProject_JWeaponPresentationComponent::BeginPlay()
+{
+	bEndingPlay = false;
+	Super::BeginPlay();
+}
+
+bool UProject_JWeaponPresentationComponent::CanCreatePresentation() const
+{
+	return !bEndingPlay && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed()
+		&& GetWorld() && !GetWorld()->bIsTearingDown;
+}
+
+void UProject_JWeaponPresentationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bEndingPlay = true;
+	DestroyWeaponPresentation();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JWeaponPresentationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bEndingPlay = true;
 	EndIndependentMotion();
 	DestroyWeaponPresentation();
 	Super::EndPlay(EndPlayReason);
@@ -165,7 +185,10 @@ void UProject_JWeaponPresentationComponent::SetWeaponPresentationSocket(EProject
 
 void UProject_JWeaponPresentationComponent::RefreshPresentation()
 {
+	if (bRefreshingPresentation) { return; }
+	TGuardValue<bool> RefreshGuard(bRefreshingPresentation, true);
 	DestroyWeaponPresentation();
+	if (!CanCreatePresentation()) { return; }
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
@@ -185,6 +208,7 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	SpawnParams.Owner = OwnerCharacter;
 	SpawnParams.Instigator = OwnerCharacter;
 	SpawnedWeapon = GetWorld()->SpawnActor<AActor>(PresentationProfile->WeaponActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
+	if (!CanCreatePresentation()) { DestroyWeaponPresentation(); return; }
 	if (SpawnedWeapon)
 	{
 		SetWeaponPresentationSocket(CurrentPresentationSocket);
@@ -230,8 +254,9 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 	EndIndependentMotion();
 	if (SpawnedWeapon)
 	{
-		SpawnedWeapon->Destroy();
+		AActor* PreviousWeapon = SpawnedWeapon;
 		SpawnedWeapon = nullptr;
+		PreviousWeapon->Destroy();
 	}
 }
 
@@ -542,7 +567,7 @@ bool UProject_JWeaponPresentationComponent::TryGetGroundCorrection(float DeltaTi
 
 void UProject_JWeaponPresentationComponent::UpdateTickState()
 {
-	SetComponentTickEnabled(bIndependentMotionActive || (SpawnedWeapon && Project_J::WeaponPresentation::IsDebugEnabled()));
+	SetComponentTickEnabled(CanCreatePresentation() && (bIndependentMotionActive || (SpawnedWeapon && Project_J::WeaponPresentation::IsDebugEnabled())));
 }
 
 const UProject_JWeaponPresentationProfile* UProject_JWeaponPresentationComponent::GetCurrentPresentationProfile() const

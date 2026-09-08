@@ -10,6 +10,16 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Project_JGameplayTags.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimInstance.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "HAL/IConsoleManager.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJNPCAttack, Log, All);
+namespace
+{
+	TAutoConsoleVariable<int32> CVarNPCAttackDebug(TEXT("ProjectJ.NPC.Attack.Debug"), 0,
+		TEXT("Logs NPC attack activation/rejection/end. 0: off, 1: on."), ECVF_Default);
+}
 
 UProject_JGameplayAbility_NPCAttack::UProject_JGameplayAbility_NPCAttack()
 {
@@ -31,25 +41,55 @@ bool UProject_JGameplayAbility_NPCAttack::ConfigureHitEvent(FGameplayTag EventTa
 		|| !GetAvatarActorFromActorInfo() || !GetAvatarActorFromActorInfo()->HasAuthority()) { return false; }
 	HitEventTag = EventTag; return true;
 }
+bool UProject_JGameplayAbility_NPCAttack::SupportsMovementPolicy(const UProject_JAttackDefinition& Definition)
+{
+	return !Definition.bUseFlyingMovementModeForRootMotion
+		&& (Definition.MovementPolicy == EProject_JAttackMovementPolicy::RootMotionMontage
+			|| (Definition.MovementPolicy == EProject_JAttackMovementPolicy::InPlace
+				&& Definition.Montage && !Definition.Montage->HasRootMotion()));
+}
+
+FName UProject_JGameplayAbility_NPCAttack::ValidateAttackContext(const AProject_JNPCCharacter* NPC,
+	const UProject_JAttackDefinition* Attack) const
+{
+	if (!IsValid(NPC) || !NPC->HasAuthority() || NPC->IsActorBeingDestroyed()) { return TEXT("InvalidAuthorityOrAvatar"); }
+	const auto* Action = NPC ? NPC->FindComponentByClass<UProject_JNPCActionComponent>() : nullptr;
+	if (!Action || !Action->CanCommitToTarget(Action->GetIntentTarget())) { return TEXT("InvalidTargetRangeLOSOrContext"); }
+	const auto* Anim = NPC->GetMesh() ? NPC->GetMesh()->GetAnimInstance() : nullptr;
+	if (!Anim) { return TEXT("MissingAnimInstance"); }
+	if (!NPC->FindComponentByClass<UProject_JCombatHitValidationComponent>()) { return TEXT("MissingHitValidationComponent"); }
+	if (!Attack || !Attack->AttackTag.IsValid() || !Attack->Montage || !Attack->DamageEffect) { return TEXT("IncompleteAttackDefinition"); }
+	if (!HitEventTag.IsValid()) { return TEXT("MissingHitEventTag"); }
+	if (!FMath::IsFinite(Attack->PlayRate) || Attack->PlayRate <= 0 || Attack->Montage->GetPlayLength() <= 0) { return TEXT("InvalidMontageRateOrLength"); }
+	if (!Attack->MontageSectionName.IsNone() && Attack->Montage->GetSectionIndex(Attack->MontageSectionName) == INDEX_NONE) { return TEXT("MissingMontageSection"); }
+	if (!SupportsMovementPolicy(*Attack)) { return TEXT("UnsupportedWarpedAerialOrInPlaceRootMotion"); }
+	if (!NPC->GetCharacterMovement() || !NPC->GetCharacterMovement()->IsMovingOnGround()) { return TEXT("NotGrounded"); }
+	// Keep the authored ABP policy consistent on server and simulated proxies; do not change it only on authority.
+	if (Attack->Montage->HasRootMotion() && Anim->RootMotionMode != ERootMotionMode::RootMotionFromMontagesOnly)
+	{
+		return TEXT("ABPRequiresRootMotionFromMontagesOnly");
+	}
+	return NAME_None;
+}
+
+void UProject_JGameplayAbility_NPCAttack::LogAttackRejection(FName Reason) const
+{
+	UE_CLOG(CVarNPCAttackDebug.GetValueOnGameThread() != 0, LogProjectJNPCAttack, Log,
+		TEXT("Rejected Owner=%s Reason=%s"), *GetNameSafe(GetAvatarActorFromActorInfo()), *Reason.ToString());
+}
+
 bool UProject_JGameplayAbility_NPCAttack::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
 	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
 {
-	if (!Super::CanActivateAbility(Handle, Info, SourceTags, TargetTags, RelevantTags)) { return false; }
+	if (bEndingAttack || !Super::CanActivateAbility(Handle, Info, SourceTags, TargetTags, RelevantTags)) { LogAttackRejection(TEXT("GASGate")); return false; }
 	const auto* NPC = Info ? Cast<AProject_JNPCCharacter>(Info->AvatarActor.Get()) : nullptr;
-	const auto* Action = NPC ? NPC->FindComponentByClass<UProject_JNPCActionComponent>() : nullptr;
 	const auto* Attack = ResolveAttack(Handle, Info);
-	if (!NPC || !NPC->HasAuthority() || !Action || !Action->CanCommitToTarget(Action->GetIntentTarget())
-		|| !NPC->GetMesh() || !NPC->GetMesh()->GetAnimInstance()
-		|| !NPC->FindComponentByClass<UProject_JCombatHitValidationComponent>()
-		|| !Attack || !Attack->AttackTag.IsValid() || !Attack->Montage || !Attack->DamageEffect
-		|| !HitEventTag.IsValid() || !FMath::IsFinite(Attack->PlayRate) || Attack->PlayRate <= 0
-		|| Attack->Montage->GetPlayLength() <= 0 || Attack->Montage->HasRootMotion()
-		|| Attack->MovementPolicy != EProject_JAttackMovementPolicy::InPlace || Attack->bUseFlyingMovementModeForRootMotion)
-	{
-		return false; // Warped/aerial attacks need a separate authored movement contract.
-	}
+	const FName Failure = ValidateAttackContext(NPC, Attack);
+	if (!Failure.IsNone()) { LogAttackRejection(Failure); return false; }
 	FGameplayTagContainer Tags; Info->AbilitySystemComponent->GetOwnedGameplayTags(Tags);
-	return Tags.HasAll(Attack->RequiredOwnerTags) && !Tags.HasAny(Attack->BlockedOwnerTags);
+	const bool bTagsAllow = Tags.HasAll(Attack->RequiredOwnerTags) && !Tags.HasAny(Attack->BlockedOwnerTags);
+	if (!bTagsAllow) { LogAttackRejection(TEXT("AttackOwnerTags")); }
+	return bTagsAllow;
 }
 void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
 	FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -59,6 +99,7 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	const TWeakObjectPtr<AActor> RequestedTarget = Action ? Action->GetIntentTarget() : nullptr;
 	const TWeakObjectPtr<UProject_JAttackDefinition> RequestedAttack = ResolveAttack(Handle, Info);
 	if (!NPC || !NPC->HasAuthority() || !Action || !Action->CanCommitToTarget(RequestedTarget.Get())
+		|| !Action->PrepareForAttack(RequestedTarget.Get())
 		|| !CommitAbility(Handle, Info, ActivationInfo))
 	{
 		EndAbility(Handle, Info, ActivationInfo, true, true); return;
@@ -74,6 +115,10 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 		EndAbility(Handle, Info, ActivationInfo, true, true); return;
 	}
 	LockedTarget = RequestedTarget; ActiveDefinition = RequestedAttack.Get();
+	const FName Failure = ValidateAttackContext(NPC, ActiveDefinition);
+	if (!Failure.IsNone()) { LogAttackRejection(Failure); EndAbility(Handle, Info, ActivationInfo, true, true); return; }
+	AttackCharacter = NPC;
+	NPC->MovementModeChangedDelegate.AddDynamic(this, &ThisClass::OnMovementModeChanged);
 	FRotator Facing = (LockedTarget->GetActorLocation() - NPC->GetActorLocation()).Rotation();
 	Facing.Pitch = Facing.Roll = 0; NPC->SetActorRotation(Facing);
 	AttackMesh = NPC->GetMesh();
@@ -95,6 +140,17 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	Montage->OnInterrupted.AddDynamic(this, &ThisClass::OnInterrupted);
 	Montage->OnCancelled.AddDynamic(this, &ThisClass::OnInterrupted);
 	Montage->ReadyForActivation();
+	UE_CLOG(IsActive() && CVarNPCAttackDebug.GetValueOnGameThread() != 0, LogProjectJNPCAttack, Log,
+		TEXT("Started Owner=%s Montage=%s RootMotion=%d"), *GetNameSafe(NPC), *GetNameSafe(RequestedAttack->Montage), RequestedAttack->Montage->HasRootMotion());
+}
+
+void UProject_JGameplayAbility_NPCAttack::OnMovementModeChanged(ACharacter* Character, EMovementMode PreviousMode, uint8 PreviousCustomMode)
+{
+	if (IsActive() && !bEndingAttack && Character == AttackCharacter.Get()
+		&& (!Character->GetCharacterMovement() || !Character->GetCharacterMovement()->IsMovingOnGround()))
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	}
 }
 void UProject_JGameplayAbility_NPCAttack::OnHit(FGameplayEventData Payload)
 {
@@ -114,6 +170,16 @@ void UProject_JGameplayAbility_NPCAttack::OnInterrupted() { EndAbility(CurrentSp
 void UProject_JGameplayAbility_NPCAttack::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
 	FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (!IsActive() || bEndingAttack) { return; }
+	TGuardValue<bool> EndingGuard(bEndingAttack, true);
+	if (auto* Character = AttackCharacter.Get()) { Character->MovementModeChangedDelegate.RemoveDynamic(this, &ThisClass::OnMovementModeChanged); }
+	AttackCharacter.Reset();
+	// Cancel only our montage, without a residual root-motion blend after action ownership ends.
+	if (auto* ASC = Info ? Info->AbilitySystemComponent.Get() : nullptr;
+		ASC && ActiveDefinition && ASC->GetAnimatingAbility() == this && ASC->GetCurrentMontage() == ActiveDefinition->Montage)
+	{
+		ASC->CurrentMontageStop(0.0f);
+	}
 	if (auto* Avatar = Info ? Info->AvatarActor.Get() : nullptr)
 	{
 		if (auto* Hit = Avatar->FindComponentByClass<UProject_JCombatHitValidationComponent>(); Hit && ActiveDefinition && Hit->GetActiveAttackDefinition() == ActiveDefinition) { Hit->EndAttack(); }
@@ -128,5 +194,7 @@ void UProject_JGameplayAbility_NPCAttack::EndAbility(FGameplayAbilitySpecHandle 
 		if (!Mesh->bEnableUpdateRateOptimizations) { Mesh->bEnableUpdateRateOptimizations = bSavedURO; }
 	}
 	bChangedMeshPolicy = false; AttackMesh.Reset(); LockedTarget.Reset(); ActiveDefinition = nullptr;
+	UE_CLOG(CVarNPCAttackDebug.GetValueOnGameThread() != 0, LogProjectJNPCAttack, Log,
+		TEXT("Ended Owner=%s Cancelled=%d"), *GetNameSafe(Info ? Info->AvatarActor.Get() : nullptr), bWasCancelled);
 	Super::EndAbility(Handle, Info, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

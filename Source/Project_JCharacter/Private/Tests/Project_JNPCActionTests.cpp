@@ -16,6 +16,13 @@
 #include "Combat/Project_JGameplayAbility_NPCAttack.h"
 #include "Combat/Project_JAttackDefinition.h"
 #include "NativeGameplayTags.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/Project_JCombatHitValidationComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "GameplayEffect.h"
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(NPCTestHitTag, "ProjectJ.Tests.NPC.Hit");
 
@@ -207,6 +214,56 @@ bool FProjectJNPCAttackContractTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Current target is attackable inside melee range"), F.Actions->CanCommitToTarget(Target));
 	TestFalse(TEXT("Missing montage/hit data fails closed without an empty attack"), ASC->TryActivateAbility(Handle, false));
 	TestFalse(TEXT("Rejected attack leaves no active spec"), Spec->IsActive());
+	F.Actions->StopActions(); ASC->ClearAbility(Handle);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCAttackMovementPolicyTest, "ProjectJ.NPCGameplay.GroundRootMotion",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
+{
+	FActionFixture F;
+	auto* MeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
+	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1.AM_Greatsword_LMB1"));
+	if (!TestNotNull(TEXT("Existing NPC mesh fixture"), MeshAsset) || !TestNotNull(TEXT("Existing greatsword montage fixture"), Montage)) { return false; }
+	auto* Mesh = F.NPC->GetMesh(); Mesh->SetSkeletalMesh(MeshAsset); Mesh->SetAnimInstanceClass(UAnimInstance::StaticClass());
+	if (!TestNotNull(TEXT("Native animation instance"), Mesh->GetAnimInstance())) { return false; }
+	auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(F.NPC); F.NPC->AddInstanceComponent(Hit); Hit->RegisterComponent();
+	auto* Definition = NewObject<UProject_JAttackDefinition>(F.NPC);
+	Definition->AttackTag = NPCTestHitTag; Definition->Montage = Montage; Definition->DamageEffect = UGameplayEffect::StaticClass();
+	Definition->MovementPolicy = EProject_JAttackMovementPolicy::RootMotionMontage;
+	TestTrue(TEXT("Ground root-motion policy accepted"), UProject_JGameplayAbility_NPCAttack::SupportsMovementPolicy(*Definition));
+	Definition->MovementPolicy = EProject_JAttackMovementPolicy::RootMotionWarped;
+	TestFalse(TEXT("Warping still requires a separate contract"), UProject_JGameplayAbility_NPCAttack::SupportsMovementPolicy(*Definition));
+	Definition->MovementPolicy = EProject_JAttackMovementPolicy::RootMotionMontage; Definition->bUseFlyingMovementModeForRootMotion = true;
+	TestFalse(TEXT("Flying override remains rejected"), UProject_JGameplayAbility_NPCAttack::SupportsMovementPolicy(*Definition));
+	Definition->bUseFlyingMovementModeForRootMotion = false;
+	auto* ASC = F.NPC->GetAbilitySystemComponent();
+	const auto Handle = ASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_NPCAttack::StaticClass(), 1, INDEX_NONE, Definition));
+	auto* Ability = CastChecked<UProject_JGameplayAbility_NPCAttack>(ASC->FindAbilitySpecFromHandle(Handle)->GetPrimaryInstance());
+	Ability->ConfigureHitEvent(NPCTestHitTag);
+	F.Scoring->StartBatchedNPCDecisions(1); F.Actions->StartActions(F.Scoring, Handle);
+	F.Scoring->OnQueryCompleted.Broadcast(F.Target(100), 1);
+	const auto Visibility = Mesh->VisibilityBasedAnimTickOption;
+	const bool bURO = Mesh->bEnableUpdateRateOptimizations;
+	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	F.Actions->UpdateAction();
+	TestTrue(TEXT("Real montage activates through the action consumer"), Ability->IsActive());
+	TestEqual(TEXT("Movement remains walking; no flying override"), F.NPC->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Walking);
+	TestTrue(TEXT("Existing server hit validation starts"), Hit->GetActiveAttackDefinition() == Definition);
+	F.NPC->GetAttributeSet()->InitHealth(0); F.Actions->UpdateAction();
+	TestFalse(TEXT("Death stops the owned ability"), Ability->IsActive());
+	TestNull(TEXT("Death closes the hit definition"), Hit->GetActiveAttackDefinition());
+	TestEqual(TEXT("Animation visibility policy restored"), Mesh->VisibilityBasedAnimTickOption, Visibility);
+	TestEqual(TEXT("URO restored"), Mesh->bEnableUpdateRateOptimizations != 0, bURO);
+	F.NPC->GetAttributeSet()->InitHealth(100);
+	F.Actions->StartActions(F.Scoring, Handle); F.Scoring->OnQueryCompleted.Broadcast(F.Target(100), 1);
+	TestTrue(TEXT("Ability reusable after cancellation"), ASC->TryActivateAbility(Handle, false));
+	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+	TestFalse(TEXT("Leaving the ground cancels the ground attack"), Ability->IsActive());
+	TestEqual(TEXT("Cleanup preserves the new falling mode"), F.NPC->GetCharacterMovement()->MovementMode.GetValue(), MOVE_Falling);
+	TestNull(TEXT("Falling closes the hit definition"), Hit->GetActiveAttackDefinition());
+	AddInfo(FString::Printf(TEXT("Existing montage root_motion=%d; activation, death, falling cancellation verified; no asset saved."), Montage->HasRootMotion()));
 	F.Actions->StopActions(); ASC->ClearAbility(Handle);
 	return true;
 }

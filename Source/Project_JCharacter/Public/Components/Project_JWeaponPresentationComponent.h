@@ -57,7 +57,9 @@ public:
 	UProject_JWeaponPresentationComponent();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	/** Ensures the equipped weapon is available for a draw transition, initially at its sheathed socket. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
@@ -132,6 +134,8 @@ public:
 	USceneComponent* GetWeaponVFXAttachmentComponent(FName SocketName) const;
 
 private:
+	friend class FProjectJWeaponPresentationTeardownTest;
+	bool CanCreatePresentation() const;
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;
 	void UpdateIndependentMotion(float DeltaTime);
@@ -163,4 +167,6 @@ private:
 	bool bCombatPresentationActive = false;
 	EProject_JWeaponPresentationSocket CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
 	bool bIndependentMotionActive = false;
+	bool bEndingPlay = false;
+	bool bRefreshingPresentation = false;
 };

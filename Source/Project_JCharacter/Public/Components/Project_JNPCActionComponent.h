@@ -35,6 +35,8 @@ public:
 	AActor* GetIntentTarget() const { return IntentTarget.Get(); }
 	/** Current registry, authority, life, range and decision age, rechecked at ability/hit commit. */
 	bool CanCommitToTarget(AActor* Target) const;
+	/** Stops only this consumer's pursuit before the ability commits. Rejects another system's movement. */
+	bool PrepareForAttack(AActor* Target);
 	void UpdateAction();
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	EProjectJNPCActionState GetActionState() const { return State; }
@@ -55,6 +57,7 @@ private:
 	void OnScored(AActor* Target, double Score);
 	void ClearIntent();
 	void CancelPathAndMove();
+	void CancelMove();
 	void CancelOwnedAttack();
 	void OnPathReady(const FProjectJNPCPathCompletion& Completion);
 	void OnMoveFinished(FAIRequestID RequestId, const FPathFollowingResult& Result);
@@ -74,7 +77,7 @@ private:
 	FAIRequestID MoveId = FAIRequestID::InvalidRequest;
 	FDelegateHandle ContextHandle, MoveHandle, AbilityEndedHandle, TearDownHandle;
 	uint64 IntentRevision = 0, PathToken = 0;
-	FVector RequestedGoal = FVector::ZeroVector;
+	FVector FollowingGoal = FVector::ZeroVector;
 	double LastDecision = 0, NextPathTime = 0, NextAttackTime = 0;
 	EProjectJNPCActionState State = EProjectJNPCActionState::Disabled;
 	bool bEnabled = false, bEndingPlay = false, bOwnsAttack = false, bStopping = false;

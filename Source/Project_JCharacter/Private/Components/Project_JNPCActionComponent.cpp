@@ -11,9 +11,15 @@
 #include "Abilities/GameplayAbility.h"
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
+#include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJNPCAction, Log, All);
+namespace
+{
+	TAutoConsoleVariable<int32> CVarNPCActionDebug(TEXT("ProjectJ.NPC.Action.Debug"), 0,
+		TEXT("Logs NPC pursuit requests, stale paths and invalid context. 0: off, 1: on."), ECVF_Default);
+}
 
 UProject_JNPCActionComponent::UProject_JNPCActionComponent()
 {
@@ -116,6 +122,14 @@ bool UProject_JNPCActionComponent::HasForeignMovement() const
 		&& (!MoveId.IsValid() || Following->GetCurrentRequestId() != MoveId);
 }
 
+bool UProject_JNPCActionComponent::PrepareForAttack(AActor* Target)
+{
+	check(IsInGameThread());
+	if (!CanCommitToTarget(Target) || HasForeignMovement()) { return false; }
+	CancelPathAndMove();
+	return CanCommitToTarget(Target) && !HasForeignMovement();
+}
+
 FVector UProject_JNPCActionComponent::GetTargetGoal() const
 {
 	if (const auto* Pawn = Cast<APawn>(IntentTarget.Get())) { return Pawn->GetNavAgentLocation(); }
@@ -141,6 +155,11 @@ void UProject_JNPCActionComponent::CancelPathAndMove()
 {
 	const uint64 Token = PathToken; PathToken = 0;
 	if (auto* Service = Paths.Get()) { Service->Cancel(Token); }
+	CancelMove();
+}
+
+void UProject_JNPCActionComponent::CancelMove()
+{
 	const FAIRequestID Previous = MoveId; MoveId = FAIRequestID::InvalidRequest;
 	if (auto* AI = Controller.Get())
 	{
@@ -177,8 +196,20 @@ void UProject_JNPCActionComponent::UpdateAction()
 {
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCAction_Update);
-	if (!IsContextValid() || HasForeignMovement()) { StopActions(); return; }
-	if (!IsTargetValid()) { ClearIntent(); return; }
+	if (!IsContextValid() || HasForeignMovement())
+	{
+		UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
+			TEXT("Stopped Owner=%s ContextValid=%d ForeignMove=%d"), *GetNameSafe(GetOwner()), IsContextValid(), HasForeignMovement());
+		StopActions(); return;
+	}
+	if (!IsTargetValid())
+	{
+		UE_CLOG(IntentTarget.IsValid() && CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
+			TEXT("Intent invalid Owner=%s Target=%s Distance=%.1f Range=%.1f Age=%.2f"), *GetNameSafe(GetOwner()),
+			*GetNameSafe(IntentTarget.Get()), IntentTarget.IsValid() ? FVector::Dist(GetOwner()->GetActorLocation(), IntentTarget->GetActorLocation()) : 0,
+			ScoringComponent->Range, FPlatformTime::Seconds() - LastDecision);
+		ClearIntent(); return;
+	}
 	const double Now = FPlatformTime::Seconds();
 	if (bOwnsAttack) { State = EProjectJNPCActionState::Attacking; return; }
 	const FVector Delta = IntentTarget->GetActorLocation() - GetOwner()->GetActorLocation();
@@ -208,30 +239,32 @@ void UProject_JNPCActionComponent::UpdateAction()
 	}
 	const FVector Goal = GetTargetGoal();
 	if (Goal.ContainsNaN() || Goal.GetAbsMax() > 1.e9) { ClearIntent(); return; }
-	if ((PathToken || MoveId.IsValid()) && FVector::DistSquared(Goal, RequestedGoal) > FMath::Square(RepathDistance))
-	{
-		++IntentRevision; CancelPathAndMove();
-	}
 	if (MoveId.IsValid())
 	{
 		const auto* Following = Controller->GetPathFollowingComponent();
 		const auto Path = Following->GetPath();
 		if (Following->GetStatus() == EPathFollowingStatus::Idle || !Path.IsValid() || !Path->IsValid() || !Path->IsUpToDate())
 		{
-			++IntentRevision; CancelPathAndMove(); NextPathTime = Now + RetryInterval;
-			if (bEnabled) { State = EProjectJNPCActionState::Backoff; }
+			// A pending replacement remains useful even if the old path has become invalid.
+			CancelMove();
+			if (bEnabled) { State = PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff; }
 		}
 	}
 	if (!IsTargetValid()) { ClearIntent(); return; }
-	if (PathToken || MoveId.IsValid() || Now < NextPathTime) { return; }
-	RequestedGoal = Goal; NextPathTime = Now + RetryInterval;
+	if (PathToken || Now < NextPathTime) { return; }
+	if (MoveId.IsValid() && FVector::DistSquared(Goal, FollowingGoal) <= FMath::Square(RepathDistance)) { return; }
+	// Keep the valid old path until a replacement is ready. Target motion does not repeatedly cancel in-flight work.
+	NextPathTime = Now + RetryInterval;
 	const TWeakObjectPtr<ThisClass> WeakThis(this);
 	PathToken = Paths->Submit(this, CastChecked<APawn>(GetOwner()), Goal, IntentRevision,
 		[WeakThis](const FProjectJNPCPathCompletion& Completion)
 		{
 			if (auto* Self = WeakThis.Get()) { Self->OnPathReady(Completion); }
 		});
-	State = PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff;
+	State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath
+		: (PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff);
+	UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
+		TEXT("Path requested Owner=%s Token=%llu Following=%d Goal=%s"), *GetNameSafe(GetOwner()), PathToken, MoveId.IsValid(), *Goal.ToString());
 }
 
 void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion& Completion)
@@ -251,7 +284,10 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 		|| FVector::DistSquared(GetTargetGoal(), Completion.Goal) > FMath::Square(RepathDistance)
 		|| FVector::DistSquared(Pawn->GetNavAgentLocation(), Completion.Start) > FMath::Square(RepathDistance))
 	{
-		State = EProjectJNPCActionState::Backoff; return;
+		UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
+			TEXT("Path discarded Owner=%s Status=%d StartDrift=%.1f GoalDrift=%.1f"), *GetNameSafe(GetOwner()), int32(Completion.Status),
+			FVector::Dist(Pawn->GetNavAgentLocation(), Completion.Start), FVector::Dist(GetTargetGoal(), Completion.Goal));
+		State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath : EProjectJNPCActionState::Backoff; return;
 	}
 	FAIMoveRequest Move;
 	Move.SetGoalLocation(Completion.Goal);
@@ -273,6 +309,7 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 		return;
 	}
 	MoveId = StartedMove;
+	FollowingGoal = Completion.Goal;
 	State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath : EProjectJNPCActionState::Backoff;
 }
 
@@ -281,7 +318,7 @@ void UProject_JNPCActionComponent::OnMoveFinished(FAIRequestID RequestId, const 
 	if (!bEnabled || !MoveId.IsValid() || MoveId != RequestId) { return; }
 	MoveId = FAIRequestID::InvalidRequest;
 	NextPathTime = FPlatformTime::Seconds() + RetryInterval;
-	State = EProjectJNPCActionState::Backoff;
+	State = PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff;
 }
 void UProject_JNPCActionComponent::OnAbilityEnded(const FAbilityEndedData& Data)
 {
