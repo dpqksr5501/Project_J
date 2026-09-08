@@ -20,8 +20,9 @@ class PROJECT_JCHARACTER_API UProject_JTargetScoringComponent : public UActorCom
 	GENERATED_BODY()
 public:
 	UProject_JTargetScoringComponent();
+	/** Learning default: worker dispatch with batched parallel scoring. Serial remains a comparison mode. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Target Scoring")
-	EProject_JTargetScoringExecution Execution = EProject_JTargetScoringExecution::Serial;
+	EProject_JTargetScoringExecution Execution = EProject_JTargetScoringExecution::TaskParallelFor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Target Scoring", meta=(ClampMin="1.0", ClampMax="1000000000.0"))
 	double Range = 2000.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Target Scoring", meta=(ClampMin="0.0", ClampMax="1000.0"))

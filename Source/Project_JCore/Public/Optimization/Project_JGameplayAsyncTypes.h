@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Project_JGameplayAsyncTypes.generated.h"
 
-/** Explicit experiment modes. Serial remains the default until measurements justify workers. */
+/** Explicit experiment modes. Components choose their default; Serial provides the measurement baseline. */
 UENUM(BlueprintType)
 enum class EProject_JTargetScoringExecution : uint8
 {
