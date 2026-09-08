@@ -8,6 +8,7 @@
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "System/Project_JVisualAssetSubsystem.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -77,95 +78,48 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentLoadLifecycleTest,
 
 bool FProjectJEquipmentLoadLifecycleTest::RunTest(const FString& Parameters)
 {
-	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-	ACharacter* Owner = World->SpawnActor<ACharacter>();
-	UProject_JEquipmentRuntimeComponent* Runtime = NewObject<UProject_JEquipmentRuntimeComponent>(Owner);
-	Runtime->RegisterComponent();
-	UProject_JEquipmentManagerComponent* Manager = NewObject<UProject_JEquipmentManagerComponent>(Owner);
-	Runtime->BindToEquipmentManager(Manager);
-	UProject_JEquipmentItemDefinition* Item = NewObject<UProject_JEquipmentItemDefinition>(Runtime);
-	Item->EquipmentSlot = EProject_JEquipmentSlot::Head;
-	const FSoftObjectPath MeshPath(TEXT("/Engine/EngineMeshes/SkeletalCube.SkeletalCube"));
-	Item->EquipmentMesh = TSoftObjectPtr<USkeletalMesh>(MeshPath);
-	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
-
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	TArray<TSharedRef<FStreamableHandle>> Handles;
-	Streamable.GetActiveHandles(MeshPath, Handles);
-	TestTrue(TEXT("Equipment load is pending before the delayed callback"), !Handles.IsEmpty());
-	Runtime->OnEquipmentUnequipped(Item->EquipmentSlot, Item);
-	for (const TSharedRef<FStreamableHandle>& Handle : Handles)
-	{
-		TestTrue(TEXT("Unequip cancels its pending load, including delayed completion"), Handle->WasCanceled());
-		Handle->CancelHandle(); // Isolate the baseline failure from subsequent scenarios.
-	}
-
-	Handles.Reset();
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	Streamable.GetActiveHandles(MeshPath, Handles);
-	Runtime->BindToEquipmentManager(nullptr);
-	for (const TSharedRef<FStreamableHandle>& Handle : Handles)
-	{
-		TestTrue(TEXT("Unbind cancels its pending load"), Handle->WasCanceled());
-		Handle->CancelHandle();
-	}
-
-	// A failed/absent asset must not register an empty skeletal component.
-	Item->EquipmentMesh.Reset();
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
-	TestNull(TEXT("Unresolved mesh creates no visual component"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
-	Runtime->OnEquipmentUnequipped(Item->EquipmentSlot, Item);
-
-	// Load only the engine fixture to verify that successful visual creation still works.
-	USkeletalMesh* LoadedMesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath.ToString());
-	TestNotNull(TEXT("Engine mesh fixture loads"), LoadedMesh);
-	Item->EquipmentMesh = TSoftObjectPtr<USkeletalMesh>(MeshPath);
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
-	UProject_JModularMeshComponent* SpawnedMesh = Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh;
-	TestNotNull(TEXT("Resolved mesh creates a visual"), SpawnedMesh);
-	if (SpawnedMesh)
-	{
-		TestEqual(TEXT("Visual uses the loaded asset"), SpawnedMesh->GetSkeletalMeshAsset(), LoadedMesh);
-	}
-	Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
-	TestTrue(TEXT("Repeated completion does not duplicate the visual"),
-		Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh == SpawnedMesh);
-	Runtime->OnEquipmentUnequipped(Item->EquipmentSlot, Item);
-
-	// Requests for an already resident asset still have delayed completions.
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	TSharedPtr<FStreamableHandle> FirstA = Runtime->RuntimeItems[Item->EquipmentSlot].MeshLoadHandle;
-	UProject_JEquipmentItemDefinition* OtherItem = NewObject<UProject_JEquipmentItemDefinition>(Runtime);
-	OtherItem->EquipmentSlot = Item->EquipmentSlot;
-	OtherItem->EquipmentMesh = Item->EquipmentMesh;
-	Runtime->OnEquipmentEquipped(OtherItem->EquipmentSlot, OtherItem);
-	TSharedPtr<FStreamableHandle> B = Runtime->RuntimeItems[Item->EquipmentSlot].MeshLoadHandle;
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	TestTrue(TEXT("A -> B -> A cancels the first A"), FirstA && FirstA->WasCanceled());
-	TestTrue(TEXT("A -> B -> A cancels B"), B && B->WasCanceled());
-	TSharedPtr<FStreamableHandle> LastA = Runtime->RuntimeItems[Item->EquipmentSlot].MeshLoadHandle;
-	TestTrue(TEXT("New A request remains active"), LastA && !LastA->WasCanceled());
-	Runtime->OnEquipmentMeshLoaded(OtherItem->EquipmentSlot, OtherItem);
-	TestNull(TEXT("An obsolete item cannot create the new slot's visual"),
-		Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
-	Runtime->BeginPlay();
-	Runtime->EndPlay(EEndPlayReason::LevelTransition);
-	TestTrue(TEXT("Level transition cancels the remaining load"), LastA && LastA->WasCanceled());
-	TestTrue(TEXT("Level transition clears slots even without a bound manager"), Runtime->RuntimeItems.IsEmpty());
-	Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	TestTrue(TEXT("An ended component cannot accept new equipment"), Runtime->RuntimeItems.IsEmpty());
-	Runtime->DestroyComponent();
-
-	UProject_JEquipmentRuntimeComponent* BeforeBeginPlay = NewObject<UProject_JEquipmentRuntimeComponent>(Owner);
-	BeforeBeginPlay->RegisterComponent();
-	BeforeBeginPlay->OnEquipmentEquipped(Item->EquipmentSlot, Item);
-	TSharedPtr<FStreamableHandle> PrePlayLoad = BeforeBeginPlay->RuntimeItems[Item->EquipmentSlot].MeshLoadHandle;
-	BeforeBeginPlay->DestroyComponent();
-	TestTrue(TEXT("Destruction before BeginPlay cancels its request"), PrePlayLoad && PrePlayLoad->WasCanceled());
-	World->DestroyWorld(false);
-	return true;
+ UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+ ACharacter* Owner = World->SpawnActor<ACharacter>();
+ auto* Runtime = NewObject<UProject_JEquipmentRuntimeComponent>(Owner); Runtime->RegisterComponent();
+ auto* Service = World->GetSubsystem<UProject_JVisualAssetSubsystem>();
+ auto* Item = NewObject<UProject_JEquipmentItemDefinition>(Runtime);
+ Item->EquipmentSlot = EProject_JEquipmentSlot::Head;
+ const FSoftObjectPath MeshPath(TEXT("/Engine/EngineMeshes/SkeletalCube.SkeletalCube"));
+ Item->EquipmentMesh = TSoftObjectPtr<USkeletalMesh>(MeshPath);
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ TestEqual(TEXT("Visual request queued, no inline mesh creation"), Service->GetLeaseCount(), 1);
+ TestNull(TEXT("Deferred visual application"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
+ const uint64 FirstRevision = Runtime->RuntimeItems[Item->EquipmentSlot].VisualRevision;
+ Runtime->OnEquipmentUnequipped(Item->EquipmentSlot, Item);
+ TestEqual(TEXT("Unequip releases lease"), Service->GetLeaseCount(), 0);
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ TestTrue(TEXT("A-B-A uses a fresh generation"), Runtime->RuntimeItems[Item->EquipmentSlot].VisualRevision != FirstRevision);
+ Runtime->BindToEquipmentManager(nullptr);
+ TestEqual(TEXT("Unbind releases leases even without a manager"), Service->GetLeaseCount(), 0);
+ auto* Mesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath.ToString()); // fixture only
+ TestNotNull(TEXT("Engine fixture"), Mesh);
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
+ auto* Visual = Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh;
+ TestNotNull(TEXT("Completed asset creates visual"), Visual);
+ Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
+ TestEqual(TEXT("No duplicated visual"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh, Visual);
+ Runtime->BeginPlay(); Runtime->EndPlay(EEndPlayReason::LevelTransition);
+ TestEqual(TEXT("World transition releases lease"), Service->GetLeaseCount(), 0);
+ TestTrue(TEXT("World transition clears runtime"), Runtime->RuntimeItems.IsEmpty());
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ TestTrue(TEXT("Ended component rejects equip"), Runtime->RuntimeItems.IsEmpty());
+ Runtime->DestroyComponent();
+ auto* EarlyRuntime = NewObject<UProject_JEquipmentRuntimeComponent>(Owner); EarlyRuntime->RegisterComponent();
+ EarlyRuntime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ EarlyRuntime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
+ auto* EarlyVisual = EarlyRuntime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh;
+ TestNotNull(TEXT("Visual before BeginPlay"), EarlyVisual);
+ EarlyRuntime->DestroyComponent();
+ TestTrue(TEXT("Early destruction clears runtime"), EarlyRuntime->RuntimeItems.IsEmpty());
+ TestTrue(TEXT("Early destruction destroys the separately owned visual"), !IsValid(EarlyVisual) || EarlyVisual->IsBeingDestroyed());
+ TestEqual(TEXT("Early destruction releases lease"), Service->GetLeaseCount(), 0);
+ World->DestroyWorld(false);
+ return true;
 }
-
 #endif

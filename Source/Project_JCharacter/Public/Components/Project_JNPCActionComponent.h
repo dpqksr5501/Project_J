@@ -33,6 +33,9 @@ public:
 	void StopActions();
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	AActor* GetIntentTarget() const { return IntentTarget.Get(); }
+	/** Current registry, authority, life, range and decision age, rechecked at ability/hit commit. */
+	bool CanCommitToTarget(AActor* Target) const;
+	void UpdateAction();
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	EProjectJNPCActionState GetActionState() const { return State; }
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="50", ClampMax="2000"))

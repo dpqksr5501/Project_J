@@ -1,5 +1,6 @@
 #include "System/Project_JNPCDecisionSubsystem.h"
 #include "Components/Project_JTargetScoringComponent.h"
+#include "Components/Project_JNPCActionComponent.h"
 #include "Project_JNPCCharacter.h"
 #include "Project_JCombatInterface.h"
 #include "Optimization/Project_JTargetSpatialSnapshot.h"
@@ -79,6 +80,52 @@ bool UProject_JNPCDecisionSubsystem::RegisterAgent(UProject_JTargetScoringCompon
 	Component->bNPCBatchRegistered = true;
 	Component->NPCDecisionTeam = TeamId;
 	return true;
+}
+
+bool UProject_JNPCDecisionSubsystem::RegisterAction(UProject_JNPCActionComponent* Component)
+{
+	check(IsInGameThread());
+	if (!IsActiveServer() || !IsValid(Component) || Component->GetWorld() != GetWorld()
+		|| !Component->IsRegistered() || Component->IsBeingDestroyed()) { return false; }
+	if (Actions.ContainsByPredicate([Component](const auto& E) { return E.Component.Get() == Component; })) { return true; }
+	if (Actions.Num() >= MaxAgents) { return false; }
+	// Spread the first update; round-robin preserves fairness when the soft budget is exhausted.
+	Actions.Add({Component, FPlatformTime::Seconds() + (Actions.Num() % 10) * 0.01});
+	return true;
+}
+
+void UProject_JNPCDecisionSubsystem::UnregisterAction(UProject_JNPCActionComponent* Component)
+{
+	check(IsInGameThread());
+	Actions.RemoveAll([Component](const auto& E) { return E.Component.Get() == Component; });
+}
+
+void UProject_JNPCDecisionSubsystem::UpdateActions()
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCAction_Budget);
+	const double Started = FPlatformTime::Seconds();
+	Stats.LastTickActionVisits = Stats.LastTickActionUpdates = 0;
+	const int32 Limit = FMath::Min(Actions.Num(), MaxActionVisitsPerTick);
+	for (int32 Visit = 0; Visit < Limit && !Actions.IsEmpty() && IsActiveServer()
+		&& Stats.LastTickActionUpdates < MaxActionUpdatesPerTick
+		&& (FPlatformTime::Seconds() - Started) * 1000.0 < ActionBudgetMilliseconds; ++Visit)
+	{
+		ActionCursor %= Actions.Num();
+		auto& Entry = Actions[ActionCursor];
+		auto* Component = Entry.Component.Get();
+		++Stats.LastTickActionVisits;
+		if (!IsValid(Component) || Component->IsBeingDestroyed())
+		{
+			Actions.RemoveAt(ActionCursor); continue;
+		}
+		const double Now = FPlatformTime::Seconds();
+		const bool bDue = Now >= Entry.NextDue;
+		if (bDue) { Entry.NextDue = Now + 0.1; }
+		ActionCursor = (ActionCursor + 1) % Actions.Num();
+		if (bDue) { ++Stats.LastTickActionUpdates; Component->UpdateAction(); }
+		// No array reference is used after a callback (which may unregister or end the world).
+	}
+	Stats.LastTickActionMilliseconds = (FPlatformTime::Seconds() - Started) * 1000.0;
 }
 
 void UProject_JNPCDecisionSubsystem::UnregisterAgent(UProject_JTargetScoringComponent* Component)
@@ -221,6 +268,9 @@ void UProject_JNPCDecisionSubsystem::StopScheduler()
 {
 	check(IsInGameThread());
 	bAccepting = false;
+	const auto OldActions = MoveTemp(Actions);
+	ActionCursor = 0;
+	for (const auto& Entry : OldActions) { if (auto* Action = Entry.Component.Get()) { Action->StopActions(); } }
 	if (auto* Service = Scoring.Get()) { Service->CancelForOwner(this); }
 	const auto PreviousAgents = MoveTemp(Agents);
 	Ready.Empty(); ActiveBatches.Empty(); Targets.Empty(); Observers.Empty(); OutstandingDecisions = 0;
@@ -246,7 +296,7 @@ void UProject_JNPCDecisionSubsystem::Deinitialize()
 	StopScheduler();
 	Super::Deinitialize();
 }
-bool UProject_JNPCDecisionSubsystem::IsTickable() const { return IsActiveServer() && (!Agents.IsEmpty() || OutstandingDecisions > 0); }
+bool UProject_JNPCDecisionSubsystem::IsTickable() const { return IsActiveServer() && (!Agents.IsEmpty() || !Actions.IsEmpty() || OutstandingDecisions > 0); }
 TStatId UProject_JNPCDecisionSubsystem::GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJ_NPCDecision, STATGROUP_Tickables); }
 
 void UProject_JNPCDecisionSubsystem::QueueResults(const FProjectJTargetScoringBatchCompletion& Batch,
@@ -275,6 +325,8 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
 	if (!IsActiveServer() || !Scoring.IsValid()) { return; }
+	UpdateActions();
+	if (!IsActiveServer()) { return; }
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_CollectAndApply);
 	const double Started = FPlatformTime::Seconds();
 	Stats.LastTickAgentVisits = Stats.LastTickCandidateVisits = Stats.LastTickResults = 0;

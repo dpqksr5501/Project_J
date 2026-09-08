@@ -7,6 +7,7 @@
 #include "Project_JNPCDecisionSubsystem.generated.h"
 
 class UProject_JTargetScoringComponent;
+class UProject_JNPCActionComponent;
 struct FProjectJNPCDecisionAgent;
 struct FProjectJNPCDecisionReady;
 
@@ -29,6 +30,8 @@ struct FProjectJNPCDecisionStats
 	int32 LastTickPromotions = 0;
 	bool bObserverCoverageIncomplete = false;
 	double LastTickGameThreadMilliseconds = 0.0;
+	int32 LastTickActionVisits = 0, LastTickActionUpdates = 0;
+	double LastTickActionMilliseconds = 0.0;
 };
 
 /** GT collection/scheduling only. Reuses Core's bounded task service; never owns worker threads. */
@@ -48,6 +51,12 @@ public:
 	static constexpr double MaxResultAgeSeconds = 0.5;
 
 	bool RegisterAgent(UProject_JTargetScoringComponent* Component, int32 TeamId);
+	bool RegisterAction(UProject_JNPCActionComponent* Component);
+	void UnregisterAction(UProject_JNPCActionComponent* Component);
+	int32 GetActionCount() const { return Actions.Num(); }
+	static constexpr int32 MaxActionVisitsPerTick = 128;
+	static constexpr int32 MaxActionUpdatesPerTick = 32;
+	static constexpr double ActionBudgetMilliseconds = 0.75;
 	void UnregisterAgent(UProject_JTargetScoringComponent* Component);
 	/** Revalidate authoritative registry membership/team/life when consuming an advisory decision. */
 	bool CanActOnTarget(const UProject_JTargetScoringComponent* Component, AActor* Target) const;
@@ -79,6 +88,10 @@ protected:
 private:
 	struct FTarget { TWeakObjectPtr<AActor> Actor; int32 Team = 0; };
 	void StopScheduler();
+	void UpdateActions();
+	struct FActionEntry { TWeakObjectPtr<UProject_JNPCActionComponent> Component; double NextDue = 0; };
+	TArray<FActionEntry> Actions;
+	int32 ActionCursor = 0;
 	void OnWorldTearDown(UWorld* World);
 	bool IsActiveServer() const;
 	bool IsEligibleTarget(AActor* Target, int32 AgentTeam) const;

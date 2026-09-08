@@ -11,6 +11,13 @@
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSettings.h"
+#include "Project_JCombatInterface.h"
+#include "Combat/Project_JGameplayAbility_NPCAttack.h"
+#include "Combat/Project_JAttackDefinition.h"
+#include "NativeGameplayTags.h"
+
+UE_DEFINE_GAMEPLAY_TAG_STATIC(NPCTestHitTag, "ProjectJ.Tests.NPC.Hit");
 
 namespace
 {
@@ -39,9 +46,15 @@ namespace
 			NPC->AddInstanceComponent(Actions); Actions->RegisterComponent();
 			Decisions = World->GetSubsystem<UProject_JNPCDecisionSubsystem>();
 			Paths = World->GetSubsystem<UProject_JNPCPathSubsystem>();
+			// AActor::ProcessEvent requires initialized actors even for native interface events.
+			World->InitializeActorsForPlay(FURL());
+			World->GetWorldSettings()->NotifyBeginPlay();
+			World->GetWorldSettings()->NotifyMatchStarted();
+			NPC->GetAttributeSet()->InitMaxHealth(100); NPC->GetAttributeSet()->InitHealth(100);
 		}
 		~FActionFixture()
 		{
+			if (World->GetBegunPlay()) { World->EndPlay(EEndPlayReason::LevelTransition); }
 			World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
 		}
 		AActor* Target(double X, int32 Team = 2)
@@ -167,6 +180,107 @@ bool FProjectJNPCPathLateCompletionTest::RunTest(const FString& Parameters)
 	F.Paths->SimulateDispatchForTest(Teardown, false); F.Paths->OnWorldEndPlay(*F.World);
 	F.Paths->Complete(Teardown, 1, ENavigationQueryResult::Fail, nullptr);
 	TestEqual(TEXT("World end prevents late delivery"), Callbacks, 1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCAttackContractTest, "ProjectJ.Integrated.NPCAttackContract",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCAttackContractTest::RunTest(const FString& Parameters)
+{
+	FActionFixture F;
+	auto* CDO = GetMutableDefault<UProject_JGameplayAbility_NPCAttack>();
+	TestEqual(TEXT("NPC ability runs on the server"), CDO->GetNetExecutionPolicy(), EGameplayAbilityNetExecutionPolicy::ServerOnly);
+	TestFalse(TEXT("Runtime configuration cannot modify an ability asset/CDO"), CDO->ConfigureHitEvent(NPCTestHitTag));
+	auto* Definition = NewObject<UProject_JAttackDefinition>(F.NPC);
+	auto* ASC = F.NPC->GetAbilitySystemComponent();
+	const auto Handle = ASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_NPCAttack::StaticClass(), 1, INDEX_NONE, Definition));
+	auto* Spec = ASC->FindAbilitySpecFromHandle(Handle);
+	auto* Ability = Spec ? Cast<UProject_JGameplayAbility_NPCAttack>(Spec->GetPrimaryInstance()) : nullptr;
+	if (!TestNotNull(TEXT("Granted NPC ability has a private instance"), Ability)) { return false; }
+	TestTrue(TEXT("Granted instance can configure the authored notify event"), Ability->ConfigureHitEvent(NPCTestHitTag));
+	F.Scoring->StartBatchedNPCDecisions(1);
+	TestTrue(TEXT("Action consumer accepts the native NPC attack spec"), F.Actions->StartActions(F.Scoring, Handle));
+	auto* Target = F.Target(700);
+	F.Scoring->OnQueryCompleted.Broadcast(Target, 1);
+	TestFalse(TEXT("Search range does not authorize an out-of-range attack"), F.Actions->CanCommitToTarget(Target));
+	Target->SetActorLocation(FVector(100, 0, 0));
+	TestTrue(TEXT("Current target is attackable inside melee range"), F.Actions->CanCommitToTarget(Target));
+	TestFalse(TEXT("Missing montage/hit data fails closed without an empty attack"), ASC->TryActivateAbility(Handle, false));
+	TestFalse(TEXT("Rejected attack leaves no active spec"), Spec->IsActive());
+	F.Actions->StopActions(); ASC->ClearAbility(Handle);
+	return true;
+}
+
+namespace
+{
+	class FActionBudgetCommand : public IAutomationLatentCommand
+	{
+	public:
+		explicit FActionBudgetCommand(FAutomationTestBase* InTest) : Test(InTest), Started(FPlatformTime::Seconds())
+		{
+			for (int32 I = 0; I < 96; ++I)
+			{
+				FActorSpawnParameters P; P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				auto* NPC = Fixture.World->SpawnActor<AProject_JNPCCharacter>(AProject_JNPCCharacter::StaticClass(), FVector(I * 200, 0, 0), FRotator::ZeroRotator, P);
+				auto* AI = Fixture.World->SpawnActor<AAIController>(); AI->Possess(NPC);
+				NPC->GetAbilitySystemComponent()->InitAbilityActorInfo(NPC, NPC);
+				NPC->GetAttributeSet()->InitHealth(100);
+				auto* Scoring = NewObject<UProject_JTargetScoringComponent>(NPC); NPC->AddInstanceComponent(Scoring); Scoring->RegisterComponent(); Scoring->StartBatchedNPCDecisions(1);
+				auto* Action = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(Action); Action->RegisterComponent();
+				Test->TestTrue(TEXT("Native action admitted"), Action->StartActions(Scoring, {}));
+				Test->TestFalse(TEXT("No per-NPC action Tick"), Action->PrimaryComponentTick.bCanEverTick);
+				Actions.Add(Action);
+				NPC->GetAttributeSet()->InitHealth(0); // All consumers must eventually observe invalidation and self-unregister.
+				Test->TestTrue(TEXT("Death is observable through the actual combat interface"), IProject_JCombatInterface::Execute_IsDead(NPC));
+			}
+		}
+		bool Update() override
+		{
+			Fixture.Decisions->Tick(0);
+			const auto& Stats = Fixture.Decisions->GetStats();
+			Peak = FMath::Max(Peak, Stats.LastTickActionUpdates);
+			Test->TestTrue(TEXT("Action applications bounded"), Stats.LastTickActionUpdates <= Fixture.Decisions->MaxActionUpdatesPerTick);
+			Test->TestTrue(TEXT("Action visits bounded"), Stats.LastTickActionVisits <= Fixture.Decisions->MaxActionVisitsPerTick);
+			const bool Finished = !Actions.ContainsByPredicate([](const auto* Action) { return Action->GetActionState() != EProjectJNPCActionState::Disabled; });
+			if (Finished)
+			{
+				Test->AddInfo(FString::Printf(TEXT("96 action consumers serviced and removed; peak_updates=%d cap=%d elapsed=%.3fs"), Peak, Fixture.Decisions->MaxActionUpdatesPerTick, FPlatformTime::Seconds() - Started));
+				return true;
+			}
+			if (FPlatformTime::Seconds() - Started > 5)
+			{
+				int32 Remaining = 0;
+				for (const auto* Action : Actions)
+				{
+					if (Action->GetActionState() != EProjectJNPCActionState::Disabled)
+					{
+						++Remaining;
+						if (Remaining == 1)
+						{
+							Test->AddInfo(FString::Printf(TEXT("First remaining state=%d health=%.1f"), int32(Action->GetActionState()),
+								CastChecked<AProject_JNPCCharacter>(Action->GetOwner())->GetAttributeSet()->GetHealth()));
+						}
+					}
+				}
+				Test->AddError(FString::Printf(TEXT("Action budget fairness timed out remaining=%d registered=%d peak=%d last_visits=%d last_updates=%d"),
+					Remaining, Fixture.Decisions->GetActionCount(), Peak, Stats.LastTickActionVisits, Stats.LastTickActionUpdates));
+				return true;
+			}
+			return false;
+		}
+	private:
+		FAutomationTestBase* Test;
+		FActionFixture Fixture;
+		TArray<UProject_JNPCActionComponent*> Actions;
+		double Started;
+		int32 Peak = 0;
+	};
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCActionBudgetTest, "ProjectJ.Integrated.ActionBudget",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCActionBudgetTest::RunTest(const FString& Parameters)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FActionBudgetCommand(this));
 	return true;
 }
 #endif

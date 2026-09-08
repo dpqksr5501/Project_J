@@ -15,7 +15,7 @@ class UProject_JModularMeshComponent;
 class UProject_JCombatStyleDefinition;
 class UProject_JWeaponPresentationProfile;
 class UAbilitySystemComponent;
-struct FStreamableHandle;
+class UProject_JVisualAssetSubsystem;
 
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentRuntimeItem
@@ -39,7 +39,8 @@ struct FProject_JEquipmentRuntimeItem
 	bool bAppliedStatModifierFallback = false;
 
 	// Owned by this equipped slot. Only accessed/cancelled on the Game Thread.
-	TSharedPtr<FStreamableHandle> MeshLoadHandle;
+	uint64 VisualLoadToken = 0;
+	uint64 VisualRevision = 0;
 };
 
 /**
@@ -63,6 +64,9 @@ public:
 	/** Binds to a specific equipment manager (usually on PlayerState) */
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager);
+	/** Retry rejected/failed cosmetics only; never repeats gameplay grants or stat changes. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RetryEquipmentVisuals();
 
 protected:
 	UFUNCTION()
@@ -95,4 +99,6 @@ private:
 	TMap<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem> RuntimeItems;
 
 	bool bIsEndingPlay = false;
+	uint64 NextVisualRevision = 0;
+	TWeakObjectPtr<UProject_JVisualAssetSubsystem> VisualAssets;
 };

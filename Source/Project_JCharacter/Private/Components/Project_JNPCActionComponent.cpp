@@ -17,7 +17,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJNPCAction, Log, All);
 
 UProject_JNPCActionComponent::UProject_JNPCActionComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.TickInterval = 0.1f;
 }
@@ -60,6 +60,8 @@ bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent
 	}
 	Paths = GetWorld()->GetSubsystem<UProject_JNPCPathSubsystem>();
 	if (!Paths.IsValid()) { AbilitySystem.Reset(); AttackHandle = {}; return false; }
+	auto* Scheduler = GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>();
+	if (!Scheduler || !Scheduler->RegisterAction(this)) { Paths.Reset(); AbilitySystem.Reset(); AttackHandle = {}; return false; }
 	Controller = AI; ScoringComponent = Scoring;
 	Scoring->OnQueryCompleted.AddUniqueDynamic(this, &ThisClass::OnScored);
 	ContextHandle = Scoring->OnContextInvalidated.AddUObject(this, &ThisClass::ClearIntent);
@@ -68,7 +70,6 @@ bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent
 	TearDownHandle = FWorldDelegates::OnWorldBeginTearDown.AddUObject(this, &ThisClass::OnTearDown);
 	bEnabled = true; State = EProjectJNPCActionState::Idle;
 	NextPathTime = NextAttackTime = 0;
-	SetComponentTickEnabled(true);
 	return true;
 }
 
@@ -98,6 +99,13 @@ bool UProject_JNPCActionComponent::IsTargetValid() const
 		&& FMath::IsFinite(ScoringComponent->Range) && ScoringComponent->Range > 0
 		&& FVector::DistSquared(GetOwner()->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(ScoringComponent->Range)
 		&& FPlatformTime::Seconds() - LastDecision <= DecisionLifetime;
+}
+
+bool UProject_JNPCActionComponent::CanCommitToTarget(AActor* Target) const
+{
+	return IntentTarget.Get() == Target && IsTargetValid()
+		&& FVector::DistSquared(GetOwner()->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(AttackRange)
+		&& Controller->LineOfSightTo(Target);
 }
 
 bool UProject_JNPCActionComponent::HasForeignMovement() const
@@ -162,6 +170,11 @@ void UProject_JNPCActionComponent::ClearIntent()
 void UProject_JNPCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, TickFunction);
+	UpdateAction();
+}
+
+void UProject_JNPCActionComponent::UpdateAction()
+{
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCAction_Update);
 	if (!IsContextValid() || HasForeignMovement()) { StopActions(); return; }
@@ -281,6 +294,10 @@ void UProject_JNPCActionComponent::StopActions()
 	if (bStopping) { return; }
 	TGuardValue<bool> Guard(bStopping, true);
 	bEnabled = false; SetComponentTickEnabled(false);
+	if (auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr)
+	{
+		Scheduler->UnregisterAction(this);
+	}
 	if (auto* Scoring = ScoringComponent.Get())
 	{
 		Scoring->OnQueryCompleted.RemoveDynamic(this, &ThisClass::OnScored);

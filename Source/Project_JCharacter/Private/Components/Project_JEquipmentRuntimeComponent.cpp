@@ -10,6 +10,8 @@
 #include "Project_JAttributeSet.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "System/Project_JAssetManager.h"
+#include "System/Project_JVisualAssetSubsystem.h"
+#include "Engine/World.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/SkeletalMesh.h"
 #include "Project_JPlayerCharacter.h"
@@ -43,10 +45,7 @@ void UProject_JEquipmentRuntimeComponent::OnComponentDestroyed(bool bDestroyingH
 {
 	// A component may be destroyed before BeginPlay (and therefore without EndPlay).
 	bIsEndingPlay = true;
-	for (TPair<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem>& Pair : RuntimeItems)
-	{
-		CancelEquipmentMeshLoad(Pair.Value);
-	}
+	BindToEquipmentManager(nullptr);
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
@@ -103,6 +102,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 
 	FProject_JEquipmentRuntimeItem NewRuntimeItem;
 	NewRuntimeItem.ItemDef = ItemDef;
+	NewRuntimeItem.VisualRevision = ++NextVisualRevision;
 
 	ApplyEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
 
@@ -209,20 +209,28 @@ void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEqu
 	TWeakObjectPtr<UProject_JEquipmentRuntimeComponent> WeakThis(this);
 	TWeakObjectPtr<UProject_JEquipmentItemDefinition> WeakItemDef(ItemDef);
 	const FSoftObjectPath RequestedPath = ItemDef->EquipmentMesh.ToSoftObjectPath();
-	RuntimeItem->MeshLoadHandle = UProject_JAssetManager::Get().GetStreamableManager().RequestAsyncLoad(
-		RequestedPath,
-		FStreamableDelegate::CreateLambda([WeakThis, WeakItemDef, Slot, RequestedPath]()
+	auto* Service = GetWorld() ? GetWorld()->GetSubsystem<UProject_JVisualAssetSubsystem>() : nullptr;
+	if (!Service) { return; }
+	VisualAssets = Service;
+	const uint64 Revision = RuntimeItem->VisualRevision;
+	RuntimeItem->VisualLoadToken = Service->Request(this, RequestedPath,
+		[WeakThis, WeakItemDef, Slot, RequestedPath, Revision](UObject* Asset)
 		{
 			if (UProject_JEquipmentRuntimeComponent* StrongThis = WeakThis.Get())
 			{
 				UProject_JEquipmentItemDefinition* LoadedItemDef = WeakItemDef.Get();
-				if (LoadedItemDef && LoadedItemDef->EquipmentMesh.ToSoftObjectPath() == RequestedPath)
+				const auto* Current = StrongThis->RuntimeItems.Find(Slot);
+				if (Current && Current->VisualRevision == Revision && LoadedItemDef && LoadedItemDef->EquipmentMesh.ToSoftObjectPath() == RequestedPath)
 				{
 					StrongThis->OnEquipmentMeshLoaded(Slot, LoadedItemDef);
 				}
 			}
-		})
+		}
 	);
+	if (!RuntimeItem->VisualLoadToken)
+	{
+		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Visual load admission rejected. Slot=%d Item=%s; RetryEquipmentVisuals may retry."), int32(Slot), *GetNameSafe(ItemDef));
+	}
 }
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
@@ -232,12 +240,13 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 
 	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
 	if (RuntimeItem.ItemDef != ItemDef) return;
-	// Keep the loaded asset referenced until the mesh component takes ownership.
-	TSharedPtr<FStreamableHandle> CompletedLoad = MoveTemp(RuntimeItem.MeshLoadHandle);
+	// The shared visual lease pins the asset across budgeted application and until unequip.
 	if (RuntimeItem.SpawnedMesh) return;
 	USkeletalMesh* LoadedMesh = ItemDef->EquipmentMesh.Get();
 	if (!LoadedMesh)
 	{
+		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
+		RuntimeItem.VisualLoadToken = 0;
 		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Equipment mesh load failed. Item=%s Path=%s"),
 			*GetNameSafe(ItemDef), *ItemDef->EquipmentMesh.ToSoftObjectPath().ToString());
 		return;
@@ -272,12 +281,20 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 void UProject_JEquipmentRuntimeComponent::CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
 	check(IsInGameThread());
-	if (RuntimeItem.MeshLoadHandle)
+	if (RuntimeItem.VisualLoadToken)
 	{
-		// UE also removes completions already queued for a later frame. This covers
-		// A -> B -> A re-equips without accepting a callback from the first A.
-		RuntimeItem.MeshLoadHandle->CancelHandle();
-		RuntimeItem.MeshLoadHandle.Reset();
+		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
+		RuntimeItem.VisualLoadToken = 0;
+	}
+}
+
+void UProject_JEquipmentRuntimeComponent::RetryEquipmentVisuals()
+{
+	check(IsInGameThread());
+	if (bIsEndingPlay || !GetOwner() || GetOwner()->GetNetMode() == NM_DedicatedServer) { return; }
+	for (auto& Pair : RuntimeItems)
+	{
+		if (!Pair.Value.SpawnedMesh && !Pair.Value.VisualLoadToken) { StartLocalSpawnEquipment(Pair.Key, Pair.Value.ItemDef); }
 	}
 }
 

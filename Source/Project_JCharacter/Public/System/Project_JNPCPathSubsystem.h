@@ -34,6 +34,7 @@ public:
 	static constexpr int32 MaxDispatchesPerTick = 4;
 	static constexpr int32 MaxDeliveriesPerTick = 8;
 	static constexpr double RequestLifetimeSeconds = 2.0;
+	static constexpr double GameThreadBudgetMilliseconds = 0.5;
 	/** One outstanding request per owner. Rejected submissions return zero, without a callback. */
 	uint64 Submit(UObject* Owner, APawn* Pawn, const FVector& Goal, uint64 IntentRevision,
 		TFunction<void(const FProjectJNPCPathCompletion&)> Completion);

@@ -6,6 +6,7 @@
 #include "Project_JCombatPresentationComponent.generated.h"
 
 class UNiagaraComponent;
+class UProject_JCombatPresentationSet;
 struct FProject_JCombatVFXCueDefinition;
 
 /** Recovery state for persistent cosmetic cues; Niagara components themselves never replicate. */
@@ -22,6 +23,10 @@ struct PROJECT_JCHARACTER_API FProject_JReplicatedCombatPresentationState
 
 	UPROPERTY()
 	int32 Revision = 0;
+	UPROPERTY()
+	int32 EventOrder = 0;
+	UPROPERTY()
+	uint32 AttackInstance = 0;
 };
 
 /**
@@ -39,6 +44,10 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	/** NPC/non-player base set. Player combat-style -> advancement -> skin precedence is unchanged. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Presentation")
+	TObjectPtr<UProject_JCombatPresentationSet> BasePresentationSet;
 
 	/** Sets the current attack identity used by montage presentation notifies. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
@@ -62,6 +71,7 @@ public:
 	FGameplayTag GetActiveAttackTag() const { return ActiveAttackTag; }
 
 private:
+	friend class FProjectJPresentationRecoveryTest;
 	const FProject_JCombatVFXCueDefinition* ResolveCue(FGameplayTag CueTag) const;
 	void PlayCueLocal(FGameplayTag CueTag);
 	void StopCueLocal(FGameplayTag CueTag);
@@ -70,7 +80,7 @@ private:
 	void ApplyReplicatedState();
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastPlayPresentationCue(FGameplayTag AttackTag, FGameplayTag CueTag, bool bStart, int32 EventOrder);
+	void MulticastPlayPresentationCue(FGameplayTag AttackTag, FGameplayTag CueTag, bool bStart, int32 EventOrder, uint32 AttackInstance);
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastEndAttackPresentation(int32 EventOrder);
@@ -97,4 +107,6 @@ private:
 	int32 NextPresentationEventOrder = 0;
 	int32 LastAppliedPresentationEventOrder = 0;
 	int32 LastAppliedPresentationRevision = 0;
+	uint32 ActiveAttackInstance = 0;
+	int32 LastAppliedRecoveryEventOrder = 0;
 };

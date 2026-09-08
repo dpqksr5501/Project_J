@@ -12,6 +12,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "Net/UnrealNetwork.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatPresentation, Log, All);
 
@@ -19,7 +20,7 @@ namespace ProjectJCombatPresentationDebug
 {
 	static TAutoConsoleVariable<int32> CVarEnabled(
 		TEXT("ProjectJ.Combat.Presentation.Debug"),
-		1,
+		0,
 		TEXT("Logs the combat VFX cue resolution and Niagara spawn path. 0: off, 1: on."),
 		ECVF_Default);
 
@@ -50,6 +51,12 @@ void UProject_JCombatPresentationComponent::EndPlay(const EEndPlayReason::Type E
 	Super::EndPlay(EndPlayReason);
 }
 
+void UProject_JCombatPresentationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	StopAllCues();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGameplayTag AttackTag)
 {
 	if (!AttackTag.IsValid())
@@ -62,10 +69,11 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 		return;
 	}
 
-	if (!ActiveAttackTag.MatchesTagExact(AttackTag))
+	// Each ability/node begin is a new instance, including repeated attacks with the same tag.
 	{
 		StopAllCues();
 		ActiveAttackTag = AttackTag;
+		++ActiveAttackInstance;
 		if (ProjectJCombatPresentationDebug::IsEnabled())
 		{
 			UE_LOG(LogProjectJCombatPresentation, Log, TEXT("[CombatVFX] BeginAttack Owner=%s Attack=%s Authority=%d"),
@@ -74,6 +82,7 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 		if (GetOwner() && GetOwner()->HasAuthority())
 		{
 			ReplicatedPresentationState.ActiveAttackTag = AttackTag;
+			ReplicatedPresentationState.AttackInstance = ActiveAttackInstance;
 			ReplicatedPresentationState.ActiveLoopingCueTags.Reset();
 			PublishRecoveryState();
 		}
@@ -82,6 +91,8 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 
 void UProject_JCombatPresentationComponent::EndAttackPresentation()
 {
+	const bool bHadAttack = ActiveAttackTag.IsValid() || !ActiveLoopingCues.IsEmpty()
+		|| ReplicatedPresentationState.ActiveAttackTag.IsValid();
 	if (ProjectJCombatPresentationDebug::IsEnabled())
 	{
 		UE_LOG(LogProjectJCombatPresentation, Log, TEXT("[CombatVFX] EndAttack Owner=%s PreviousAttack=%s Authority=%d"),
@@ -89,7 +100,7 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 	}
 	StopAllCues();
 	ActiveAttackTag = FGameplayTag();
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (bHadAttack && GetOwner() && GetOwner()->HasAuthority())
 	{
 		ReplicatedPresentationState.ActiveAttackTag = FGameplayTag();
 		ReplicatedPresentationState.ActiveLoopingCueTags.Reset();
@@ -131,15 +142,18 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 	{
 		if (Cue->bLooping)
 		{
-			ReplicatedPresentationState.ActiveLoopingCueTags.AddTag(CueTag);
-			PublishRecoveryState();
+			if (!ReplicatedPresentationState.ActiveLoopingCueTags.HasTagExact(CueTag))
+			{
+				ReplicatedPresentationState.ActiveLoopingCueTags.AddTag(CueTag);
+				PublishRecoveryState();
+			}
 		}
 
 		// A listen server is both the authority and a local viewer.  The multicast
 		// handler deliberately skips authority to avoid duplicate effects, so play
 		// the cosmetic locally before notifying remote clients.
 		PlayCueLocal(CueTag);
-		MulticastPlayPresentationCue(ActiveAttackTag, CueTag, true, ++NextPresentationEventOrder);
+		MulticastPlayPresentationCue(ActiveAttackTag, CueTag, true, ++NextPresentationEventOrder, ActiveAttackInstance);
 		return;
 	}
 
@@ -148,6 +162,7 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 
 void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueTag)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatPresentation_Spawn);
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		if (ProjectJCombatPresentationDebug::IsEnabled())
@@ -185,23 +200,23 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	}
 
 	USceneComponent* AttachComponent = nullptr;
-	if (AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetOwner()))
+	if (AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(GetOwner()))
 	{
 		if (Cue->AttachmentTarget == EProject_JCombatVFXAttachmentTarget::Weapon)
 		{
-			if (UProject_JWeaponPresentationComponent* WeaponPresentation = PlayerCharacter->GetWeaponPresentationComponent())
+			if (UProject_JWeaponPresentationComponent* WeaponPresentation = Character->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 			{
 				AttachComponent = WeaponPresentation->GetWeaponVFXAttachmentComponent(Cue->AttachSocketName);
 			}
 		}
 		else if (Cue->AttachmentTarget == EProject_JCombatVFXAttachmentTarget::CharacterMesh)
 		{
-			AttachComponent = PlayerCharacter->GetMesh();
+			AttachComponent = Character->GetMesh();
 		}
 	}
 	else if (ProjectJCombatPresentationDebug::IsEnabled())
 	{
-		UE_LOG(LogProjectJCombatPresentation, Warning, TEXT("[CombatVFX] Local spawn failed: owner is not AProject_JPlayerCharacter. Owner=%s"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogProjectJCombatPresentation, Warning, TEXT("[CombatVFX] Local spawn failed: owner is not AProject_JBaseCharacter. Owner=%s"), *GetNameSafe(GetOwner()));
 	}
 
 	UNiagaraComponent* NiagaraComponent = nullptr;
@@ -274,7 +289,7 @@ void UProject_JCombatPresentationComponent::StopCue(const FGameplayTag CueTag)
 		if (bWasActiveLoop)
 		{
 			PublishRecoveryState();
-			MulticastPlayPresentationCue(ActiveAttackTag, CueTag, false, ++NextPresentationEventOrder);
+			MulticastPlayPresentationCue(ActiveAttackTag, CueTag, false, ++NextPresentationEventOrder, ActiveAttackInstance);
 		}
 		return;
 	}
@@ -312,7 +327,8 @@ void UProject_JCombatPresentationComponent::RefreshPresentation()
 const FProject_JCombatVFXCueDefinition* UProject_JCombatPresentationComponent::ResolveCue(const FGameplayTag CueTag) const
 {
 	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetOwner());
-	if (!PlayerCharacter || !ActiveAttackTag.IsValid())
+	const AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(GetOwner());
+	if (!Character || !ActiveAttackTag.IsValid())
 	{
 		return nullptr;
 	}
@@ -329,15 +345,16 @@ const FProject_JCombatVFXCueDefinition* UProject_JCombatPresentationComponent::R
 		}
 	};
 
-	if (const UProject_JCombatStyleDefinition* Style = PlayerCharacter->GetCombatStyleDefinition())
+	if (!PlayerCharacter) { ApplySet(BasePresentationSet); }
+	if (const UProject_JCombatStyleDefinition* Style = PlayerCharacter ? PlayerCharacter->GetCombatStyleDefinition() : nullptr)
 	{
 		ApplySet(Style->CombatPresentationSet);
 	}
-	if (const UProject_JCharacterAdvancementDefinition* Advancement = PlayerCharacter->GetAdvancementDefinition())
+	if (const UProject_JCharacterAdvancementDefinition* Advancement = Character->GetAdvancementDefinition())
 	{
 		ApplySet(Advancement->CombatPresentationOverrideSet);
 	}
-	if (const UProject_JWeaponPresentationProfile* WeaponProfile = PlayerCharacter->GetCurrentWeaponPresentationProfile())
+	if (const UProject_JWeaponPresentationProfile* WeaponProfile = PlayerCharacter ? PlayerCharacter->GetCurrentWeaponPresentationProfile() : nullptr)
 	{
 		ApplySet(WeaponProfile->CosmeticPresentationOverrideSet);
 	}
@@ -352,18 +369,35 @@ void UProject_JCombatPresentationComponent::PublishRecoveryState()
 	}
 
 	++ReplicatedPresentationState.Revision;
+	ReplicatedPresentationState.EventOrder = ++NextPresentationEventOrder;
 	GetOwner()->ForceNetUpdate();
 }
 
 void UProject_JCombatPresentationComponent::ApplyReplicatedState()
 {
-	if (ReplicatedPresentationState.Revision <= LastAppliedPresentationRevision)
+	if (ReplicatedPresentationState.Revision <= LastAppliedPresentationRevision
+		|| ReplicatedPresentationState.EventOrder <= LastAppliedRecoveryEventOrder)
 	{
 		return;
 	}
 
 	LastAppliedPresentationRevision = ReplicatedPresentationState.Revision;
-	StopAllCues();
+	LastAppliedRecoveryEventOrder = ReplicatedPresentationState.EventOrder;
+	LastAppliedPresentationEventOrder = FMath::Max(LastAppliedPresentationEventOrder, ReplicatedPresentationState.EventOrder);
+	if (ActiveAttackInstance != ReplicatedPresentationState.AttackInstance || ActiveAttackTag != ReplicatedPresentationState.ActiveAttackTag)
+	{
+		StopAllCues();
+	}
+	else
+	{
+		TArray<FGameplayTag> Existing;
+		ActiveLoopingCues.GetKeys(Existing);
+		for (const auto& Tag : Existing)
+		{
+			if (!ReplicatedPresentationState.ActiveLoopingCueTags.HasTagExact(Tag)) { StopCueLocal(Tag); }
+		}
+	}
+	ActiveAttackInstance = ReplicatedPresentationState.AttackInstance;
 	ActiveAttackTag = ReplicatedPresentationState.ActiveAttackTag;
 	for (const FGameplayTag& CueTag : ReplicatedPresentationState.ActiveLoopingCueTags)
 	{
@@ -377,7 +411,7 @@ void UProject_JCombatPresentationComponent::OnRep_PresentationState(FProject_JRe
 }
 
 void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Implementation(
-	const FGameplayTag AttackTag, const FGameplayTag CueTag, const bool bStart, const int32 EventOrder)
+	const FGameplayTag AttackTag, const FGameplayTag CueTag, const bool bStart, const int32 EventOrder, const uint32 AttackInstance)
 {
 	if (GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
 		EventOrder <= LastAppliedPresentationEventOrder)
@@ -388,11 +422,18 @@ void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Impleme
 	LastAppliedPresentationEventOrder = EventOrder;
 	if (bStart)
 	{
+		if (ActiveAttackTag != AttackTag || ActiveAttackInstance != AttackInstance)
+		{
+			StopAllCues(); LastAppliedRecoveryEventOrder = EventOrder;
+		}
 		ActiveAttackTag = AttackTag;
+		ActiveAttackInstance = AttackInstance;
+		if (const auto* Cue = ResolveCue(CueTag); Cue && Cue->bLooping) { LastAppliedRecoveryEventOrder = EventOrder; }
 		PlayCueLocal(CueTag);
 	}
 	else
 	{
+		LastAppliedRecoveryEventOrder = EventOrder;
 		StopCueLocal(CueTag);
 	}
 }
@@ -406,6 +447,7 @@ void UProject_JCombatPresentationComponent::MulticastEndAttackPresentation_Imple
 	}
 
 	LastAppliedPresentationEventOrder = EventOrder;
+	LastAppliedRecoveryEventOrder = EventOrder;
 	EndAttackPresentation();
 }
 

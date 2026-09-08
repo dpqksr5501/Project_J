@@ -14,6 +14,10 @@ public class Project_JCharacterEditor : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"AIModule",
+			"NavigationSystem",
+			"Project_JGAS",
+			"GameplayAbilities",
 			"Persona",
 			"AnimGraph",
 			"EditorFramework",

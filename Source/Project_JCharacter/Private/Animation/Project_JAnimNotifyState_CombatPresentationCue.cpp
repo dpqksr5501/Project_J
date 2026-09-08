@@ -12,7 +12,7 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyBegin(USkeletalMeshC
 	{
 		if (UProject_JCombatPresentationComponent* Presentation = OwnerActor->FindComponentByClass<UProject_JCombatPresentationComponent>())
 		{
-			UE_LOG(LogProjectJCombatPresentationNotify, Log, TEXT("[CombatVFX] Notify begin. Owner=%s Animation=%s Cue=%s Duration=%.3f"),
+			UE_LOG(LogProjectJCombatPresentationNotify, Verbose, TEXT("[CombatVFX] Notify begin. Owner=%s Animation=%s Cue=%s Duration=%.3f"),
 				*GetNameSafe(OwnerActor), *GetNameSafe(Animation), *CueTag.ToString(), TotalDuration);
 			Presentation->PlayCue(CueTag);
 			return;
@@ -31,7 +31,7 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyEnd(USkeletalMeshCom
 	{
 		if (UProject_JCombatPresentationComponent* Presentation = OwnerActor->FindComponentByClass<UProject_JCombatPresentationComponent>())
 		{
-			UE_LOG(LogProjectJCombatPresentationNotify, Log, TEXT("[CombatVFX] Notify end. Owner=%s Animation=%s Cue=%s"),
+			UE_LOG(LogProjectJCombatPresentationNotify, Verbose, TEXT("[CombatVFX] Notify end. Owner=%s Animation=%s Cue=%s"),
 				*GetNameSafe(OwnerActor), *GetNameSafe(Animation), *CueTag.ToString());
 			Presentation->StopCue(CueTag);
 			return;

@@ -114,6 +114,7 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 	const auto Snapshot = Requests;
 	for (const auto& R : Snapshot)
 	{
+		if ((FPlatformTime::Seconds() - Now) * 1000.0 >= GameThreadBudgetMilliseconds) { break; }
 		if (!IsActiveServer()) { return; }
 		if (!Requests.Contains(R)) { continue; }
 		auto* Pawn = R->Pawn.Get();

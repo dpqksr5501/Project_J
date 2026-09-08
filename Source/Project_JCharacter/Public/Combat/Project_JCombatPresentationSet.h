@@ -66,6 +66,9 @@ public:
 	TArray<FProject_JCombatVFXCueDefinition> Cues;
 
 	const FProject_JCombatVFXCueDefinition* FindCue(FGameplayTag CueTag) const;
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };
 
 /** Maps stable gameplay attack identity to client-only presentation data. */
@@ -95,4 +98,7 @@ public:
 	TArray<FProject_JCombatAttackPresentationEntry> AttackPresentations;
 
 	const UProject_JAttackPresentationProfile* FindProfile(FGameplayTag AttackTag) const;
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 };
