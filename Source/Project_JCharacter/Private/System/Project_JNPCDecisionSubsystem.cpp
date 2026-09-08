@@ -52,7 +52,7 @@ void UProject_JNPCDecisionSubsystem::Initialize(FSubsystemCollectionBase& Collec
 
 bool UProject_JNPCDecisionSubsystem::IsActiveServer() const
 {
-	return IsInitialized() && bAccepting && GetWorld() && CanScheduleNetworkMode(GetWorld()->GetNetMode());
+	return IsInitialized() && bAccepting && GetWorld() && !GetWorld()->bIsTearingDown && CanScheduleNetworkMode(GetWorld()->GetNetMode());
 }
 
 bool UProject_JNPCDecisionSubsystem::RegisterAgent(UProject_JTargetScoringComponent* Component, int32 TeamId)
@@ -120,7 +120,11 @@ void UProject_JNPCDecisionSubsystem::UpdateActions()
 		}
 		const double Now = FPlatformTime::Seconds();
 		const bool bDue = Now >= Entry.NextDue;
-		if (bDue) { Entry.NextDue = Now + 0.1; }
+		if (bDue)
+		{
+			Stats.MaxActionLatenessMilliseconds = FMath::Max(Stats.MaxActionLatenessMilliseconds, (Now - Entry.NextDue) * 1000.0);
+			Entry.NextDue = Now + 0.1;
+		}
 		ActionCursor = (ActionCursor + 1) % Actions.Num();
 		if (bDue) { ++Stats.LastTickActionUpdates; Component->UpdateAction(); }
 		// No array reference is used after a callback (which may unregister or end the world).
@@ -324,7 +328,8 @@ void UProject_JNPCDecisionSubsystem::QueueResults(const FProjectJTargetScoringBa
 void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
-	if (!IsActiveServer() || !Scoring.IsValid()) { return; }
+	if (!IsActiveServer() || !Scoring.IsValid() || bTicking) { return; }
+	TGuardValue<bool> TickGuard(bTicking, true);
 	UpdateActions();
 	if (!IsActiveServer()) { return; }
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_CollectAndApply);

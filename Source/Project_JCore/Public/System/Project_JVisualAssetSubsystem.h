@@ -8,6 +8,8 @@ struct FProjectJVisualAssetLease;
 struct FProjectJVisualAssetStats
 {
 	uint64 Accepted = 0, Rejected = 0, Loads = 0, Delivered = 0, Failed = 0;
+	uint64 TimedOut = 0, BackoffRejected = 0;
+	int32 InFlight = 0, PeakInFlight = 0;
 	int32 LastTickApplications = 0;
 	double LastTickMilliseconds = 0;
 };
@@ -20,6 +22,9 @@ class PROJECT_JCORE_API UProject_JVisualAssetSubsystem : public UTickableWorldSu
 public:
 	static constexpr int32 MaxGroups = 256;
 	static constexpr int32 MaxLeases = 2048;
+	static constexpr int32 MaxLeasesPerOwner = 64;
+	static constexpr double RequestLifetimeSeconds = 30.0;
+	static constexpr double FailureBackoffSeconds = 2.0;
 	static constexpr int32 MaxLoadsInFlight = 16;
 	static constexpr int32 MaxStartsPerTick = 4;
 	static constexpr int32 MaxApplicationsPerTick = 8;
@@ -41,13 +46,19 @@ public:
 protected:
 	virtual bool DoesSupportWorldType(EWorldType::Type Type) const override;
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+	friend class FProjectJVisualPressureTest;
+	void ExpireForTest(uint64 Token);
+#endif
 	void Stop();
 	void OnTearDown(UWorld* World);
 	TArray<TSharedPtr<FProjectJVisualAssetGroup>> Groups;
 	TArray<TSharedPtr<FProjectJVisualAssetLease>> Leases;
+	TMap<FSoftObjectPath, double> FailedUntil;
 	FDelegateHandle TearDownHandle;
 	FProjectJVisualAssetStats Stats;
 	uint64 NextToken = 0;
 	int32 Cursor = 0;
 	bool bAccepting = false;
+	bool bTicking = false;
 };

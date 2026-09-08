@@ -15,6 +15,8 @@ struct FProjectJNPCPathEntry
 	FProjectJNPCPathCompletion Result;
 	TFunction<void(const FProjectJNPCPathCompletion&)> Callback;
 	double Deadline = 0;
+	double Submitted = 0;
+	EProjectJNPCPathPriority Priority = EProjectJNPCPathPriority::Normal;
 	uint32 EngineId = INVALID_NAVQUERYID;
 	bool bDispatched = false, bFinished = false, bCancelled = false, bDelivered = false;
 };
@@ -41,11 +43,11 @@ void UProject_JNPCPathSubsystem::Initialize(FSubsystemCollectionBase& Collection
 
 bool UProject_JNPCPathSubsystem::IsActiveServer() const
 {
-	return bAccepting && IsInitialized() && GetWorld() && GetWorld()->GetNetMode() != NM_Client;
+	return bAccepting && IsInitialized() && GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_Client;
 }
 
 uint64 UProject_JNPCPathSubsystem::Submit(UObject* Owner, APawn* Pawn, const FVector& Goal, uint64 Revision,
-	TFunction<void(const FProjectJNPCPathCompletion&)> Callback)
+	TFunction<void(const FProjectJNPCPathCompletion&)> Callback, EProjectJNPCPathPriority Priority)
 {
 	check(IsInGameThread());
 	if (!IsActiveServer() || !IsValid(Owner) || Owner->GetWorld() != GetWorld() || !IsValid(Pawn)
@@ -61,7 +63,8 @@ uint64 UProject_JNPCPathSubsystem::Submit(UObject* Owner, APawn* Pawn, const FVe
 	Entry->Result.Token = ++NextToken;
 	if (Entry->Result.Token == 0) { Entry->Result.Token = ++NextToken; }
 	Entry->Result.IntentRevision = Revision; Entry->Result.Goal = Goal;
-	Entry->Deadline = FPlatformTime::Seconds() + RequestLifetimeSeconds;
+	Entry->Submitted = FPlatformTime::Seconds(); Entry->Priority = Priority;
+	Entry->Deadline = Entry->Submitted + RequestLifetimeSeconds;
 	Entry->Callback = MoveTemp(Callback);
 	Requests.Add(Entry); ++Stats.Accepted;
 	return Entry->Result.Token;
@@ -106,12 +109,21 @@ void UProject_JNPCPathSubsystem::Complete(uint64 Token, uint32 EngineId, ENaviga
 void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
-	if (!IsActiveServer()) { return; }
+	if (!IsActiveServer() || bTicking) { return; }
+	TGuardValue<bool> TickGuard(bTicking, true);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCPath_AdmissionAndDelivery);
 	Stats.LastTickDispatches = Stats.LastTickDeliveries = 0;
 	const double Now = FPlatformTime::Seconds();
 	// Snapshot permits callbacks to cancel/submit/tear down without invalidating iteration.
-	const auto Snapshot = Requests;
+	auto Snapshot = Requests;
+	// A finite urgency credit lets old normal requests overtake newly arriving urgent ones.
+	Snapshot.StableSort([](const auto& A, const auto& B)
+	{
+		return A->Submitted - (A->Priority == EProjectJNPCPathPriority::Urgent ? UrgentBoostSeconds : 0)
+			< B->Submitted - (B->Priority == EProjectJNPCPathPriority::Urgent ? UrgentBoostSeconds : 0);
+	});
+	int32 InFlight = 0;
+	for (const auto& R : Snapshot) { InFlight += R->bDispatched && !R->bFinished ? 1 : 0; }
 	for (const auto& R : Snapshot)
 	{
 		if ((FPlatformTime::Seconds() - Now) * 1000.0 >= GameThreadBudgetMilliseconds) { break; }
@@ -136,10 +148,11 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 			if (!R->bDispatched || R->bFinished) { Requests.RemoveSingle(R); }
 			auto Callback = MoveTemp(R->Callback);
 			++Stats.LastTickDeliveries; ++Stats.Delivered;
+			Stats.MaxDeliveryMilliseconds = FMath::Max(Stats.MaxDeliveryMilliseconds, (Now - R->Submitted) * 1000.0);
 			if (Callback) { Callback(R->Result); }
 			continue;
 		}
-		if (R->bDispatched || Stats.LastTickDispatches >= MaxDispatchesPerTick) { continue; }
+		if (R->bDispatched || Stats.LastTickDispatches >= MaxDispatchesPerTick || InFlight >= MaxInFlight) { continue; }
 		++Stats.LastTickDispatches;
 		auto* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 		const FVector Start = Pawn->GetNavAgentLocation();
@@ -157,8 +170,12 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 			}));
 		R->bDispatched = R->EngineId != INVALID_NAVQUERYID;
 		R->bFinished = !R->bDispatched;
-		if (R->bDispatched) { ++Stats.Dispatched; }
+		if (R->bDispatched) { ++Stats.Dispatched; ++InFlight; }
 	}
+	Stats.InFlight = InFlight; Stats.PeakInFlight = FMath::Max(Stats.PeakInFlight, InFlight);
+	Stats.Queued = 0;
+	for (const auto& R : Requests) { Stats.Queued += !R->bDispatched && !R->bFinished && !R->bCancelled ? 1 : 0; }
+	Stats.LastTickMilliseconds = (FPlatformTime::Seconds() - Now) * 1000.0;
 }
 
 void UProject_JNPCPathSubsystem::Stop()
@@ -174,6 +191,7 @@ void UProject_JNPCPathSubsystem::Stop()
 		}
 	}
 	Requests.Empty();
+	Stats.InFlight = Stats.Queued = 0;
 }
 void UProject_JNPCPathSubsystem::OnTearDown(UWorld* World) { if (World == GetWorld()) { Stop(); } }
 void UProject_JNPCPathSubsystem::OnWorldEndPlay(UWorld& World) { Stop(); Super::OnWorldEndPlay(World); }
@@ -185,6 +203,10 @@ bool UProject_JNPCPathSubsystem::IsTickable() const { return !IsTemplate() && Is
 TStatId UProject_JNPCPathSubsystem::GetStatId() const { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJNPCPathSubsystem, STATGROUP_Tickables); }
 
 #if WITH_DEV_AUTOMATION_TESTS
+void UProject_JNPCPathSubsystem::AgeForTest(uint64 Token, double Seconds)
+{
+	for (const auto& R : Requests) { if (R->Result.Token == Token) { R->Submitted -= Seconds; } }
+}
 void UProject_JNPCPathSubsystem::SimulateDispatchForTest(uint64 Token, bool bExpired)
 {
 	check(IsInGameThread());

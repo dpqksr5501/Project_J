@@ -11,6 +11,9 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "System/Project_JAssetManager.h"
 #include "System/Project_JVisualAssetSubsystem.h"
+#include "Optimization/Project_JRetryDelay.h"
+#include "HAL/PlatformTime.h"
+#include "TimerManager.h"
 #include "Engine/World.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/SkeletalMesh.h"
@@ -131,6 +134,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	DestroyEquipmentVisual(RuntimeItem);
 
 	RuntimeItems.Remove(Slot);
+	ScheduleVisualRetry();
 	RefreshCurrentWeaponConfiguration();
 }
 
@@ -204,6 +208,9 @@ void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEqu
 	if (bIsEndingPlay || !IsValid(ItemDef) || ItemDef->EquipmentMesh.IsNull()) return;
 	FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
 	if (!RuntimeItem || RuntimeItem->ItemDef != ItemDef) return;
+	if (RuntimeItem->SpawnedMesh || RuntimeItem->VisualLoadToken || RuntimeItem->VisualAttempts >= MaxVisualAttempts
+		|| FPlatformTime::Seconds() < RuntimeItem->NextVisualRetry) { return; }
+	RuntimeItem->NextVisualRetry = FPlatformTime::Seconds() + ProjectJ::RetryDelay(RuntimeItem->VisualAttempts++, GetUniqueID() + uint32(Slot), 0.5, 8.0);
 	CancelEquipmentMeshLoad(*RuntimeItem);
 
 	TWeakObjectPtr<UProject_JEquipmentRuntimeComponent> WeakThis(this);
@@ -219,18 +226,24 @@ void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEqu
 			if (UProject_JEquipmentRuntimeComponent* StrongThis = WeakThis.Get())
 			{
 				UProject_JEquipmentItemDefinition* LoadedItemDef = WeakItemDef.Get();
-				const auto* Current = StrongThis->RuntimeItems.Find(Slot);
+				auto* Current = StrongThis->RuntimeItems.Find(Slot);
 				if (Current && Current->VisualRevision == Revision && LoadedItemDef && LoadedItemDef->EquipmentMesh.ToSoftObjectPath() == RequestedPath)
 				{
-					StrongThis->OnEquipmentMeshLoaded(Slot, LoadedItemDef);
+					if (Asset) { StrongThis->OnEquipmentMeshLoaded(Slot, LoadedItemDef); }
+					else
+					{
+						StrongThis->CancelEquipmentMeshLoad(*Current);
+						StrongThis->ScheduleVisualRetry();
+					}
 				}
 			}
 		}
 	);
 	if (!RuntimeItem->VisualLoadToken)
 	{
-		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Visual load admission rejected. Slot=%d Item=%s; RetryEquipmentVisuals may retry."), int32(Slot), *GetNameSafe(ItemDef));
+		UE_LOG(LogProjectJEquipmentRuntime, Verbose, TEXT("Visual admission deferred. Slot=%d Item=%s Attempt=%u/%u"), int32(Slot), *GetNameSafe(ItemDef), RuntimeItem->VisualAttempts, MaxVisualAttempts);
 	}
+	ScheduleVisualRetry();
 }
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
@@ -247,6 +260,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	{
 		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
 		RuntimeItem.VisualLoadToken = 0;
+		ScheduleVisualRetry();
 		UE_LOG(LogProjectJEquipmentRuntime, Warning, TEXT("Equipment mesh load failed. Item=%s Path=%s"),
 			*GetNameSafe(ItemDef), *ItemDef->EquipmentMesh.ToSoftObjectPath().ToString());
 		return;
@@ -295,6 +309,28 @@ void UProject_JEquipmentRuntimeComponent::RetryEquipmentVisuals()
 	for (auto& Pair : RuntimeItems)
 	{
 		if (!Pair.Value.SpawnedMesh && !Pair.Value.VisualLoadToken) { StartLocalSpawnEquipment(Pair.Key, Pair.Value.ItemDef); }
+	}
+	ScheduleVisualRetry();
+}
+
+void UProject_JEquipmentRuntimeComponent::ScheduleVisualRetry()
+{
+	if (!GetWorld()) { return; }
+	GetWorld()->GetTimerManager().ClearTimer(VisualRetryTimer);
+	if (bIsEndingPlay || IsBeingDestroyed() || GetWorld()->bIsTearingDown || !IsValid(GetOwner())
+		|| GetOwner()->IsActorBeingDestroyed() || GetOwner()->GetNetMode() == NM_DedicatedServer) { return; }
+	double Earliest = TNumericLimits<double>::Max();
+	for (const auto& Pair : RuntimeItems)
+	{
+		const auto& Item = Pair.Value;
+		if (!Item.SpawnedMesh && !Item.VisualLoadToken && Item.VisualAttempts < MaxVisualAttempts
+			&& IsValid(Item.ItemDef) && !Item.ItemDef->EquipmentMesh.IsNull())
+		{ Earliest = FMath::Min(Earliest, Item.NextVisualRetry); }
+	}
+	if (Earliest != TNumericLimits<double>::Max())
+	{
+		GetWorld()->GetTimerManager().SetTimer(VisualRetryTimer, this, &ThisClass::RetryEquipmentVisuals,
+			float(FMath::Max(0.05, Earliest - FPlatformTime::Seconds())), false);
 	}
 }
 

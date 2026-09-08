@@ -22,14 +22,15 @@
 #include "Components/Project_JNPCActionComponent.h"
 #include "Components/Project_JTargetScoringComponent.h"
 #include "HAL/PlatformTime.h"
+#include "UObject/UnrealType.h"
 
 namespace
 {
 	class FNativeNavCommand : public IAutomationLatentCommand
 	{
 	public:
-		explicit FNativeNavCommand(FAutomationTestBase* InTest, bool bTestMovingTarget = false)
-			: Test(InTest), Started(FPlatformTime::Seconds()), bMovingTarget(bTestMovingTarget)
+		explicit FNativeNavCommand(FAutomationTestBase* InTest, bool bTestMovingTarget = false, bool bTestRebuild = false)
+			: Test(InTest), Started(FPlatformTime::Seconds()), bMovingTarget(bTestMovingTarget), bRebuild(bTestRebuild)
 		{
 			World = UWorld::CreateWorld(EWorldType::Game, false);
 			GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -41,9 +42,11 @@ namespace
 				Actor->SetRootComponent(Mesh); Mesh->SetStaticMesh(Cube);
 				Mesh->SetCollisionProfileName(TEXT("BlockAll")); Mesh->SetMobility(EComponentMobility::Static);
 				Mesh->RegisterComponent(); Actor->SetActorLocation(Location); Actor->SetActorScale3D(Scale);
+				return Actor;
 			};
 			AddBox(FVector(0, 0, -50), FVector(40, 30, 1));
-			AddBox(FVector(0, 0, 150), FVector(4, 5, 3)); // obstacle on the straight route
+			Obstacle = AddBox(FVector(0, 0, 150), FVector(4, 5, 3)); // obstacle on the straight route
+			if (bRebuild) { CastChecked<UStaticMeshComponent>(Obstacle->GetRootComponent())->SetMobility(EComponentMobility::Movable); }
 			auto* Bounds = World->SpawnActor<ANavMeshBoundsVolume>();
 			auto* Builder = NewObject<UCubeBuilder>();
 			Builder->X = 3800; Builder->Y = 2800; Builder->Z = 1000;
@@ -53,7 +56,15 @@ namespace
 			if (Nav)
 			{
 				Nav->OnNavigationBoundsUpdated(Bounds);
-				if (auto* Data = Nav->GetDefaultNavDataInstance(FNavigationSystem::Create)) { Data->MarkRequiresInitialRebuild(); }
+				if (auto* Data = Nav->GetDefaultNavDataInstance(FNavigationSystem::Create))
+				{
+					if (bRebuild)
+					{
+						auto* Property = FindFProperty<FEnumProperty>(ANavigationData::StaticClass(), TEXT("RuntimeGeneration"));
+						Property->GetUnderlyingProperty()->SetIntPropertyValue(Property->ContainerPtrToValuePtr<void>(Data), int64(ERuntimeGenerationType::Dynamic));
+					}
+					Data->MarkRequiresInitialRebuild();
+				}
 				Nav->Build();
 			}
 			FActorSpawnParameters P; P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -102,9 +113,17 @@ namespace
 				MovingTarget->SetActorLocation(FVector(900, FMath::Min(SimulatedSeconds * 100.0, 800.0), 90));
 				const auto PreviousMove = AI->GetPathFollowingComponent()->GetCurrentRequestId();
 				const bool bWasFollowing = AI->GetPathFollowingComponent()->GetStatus() == EPathFollowingStatus::Moving;
+				if (bRebuild && !bRebuilt && bWasFollowing)
+				{
+					bRebuilt = true; DispatchBeforeRebuild = Service->GetStats().Dispatched;
+					Obstacle->SetActorLocation(FVector(0, 500, 150));
+					// Explicitly invalidate the consumed path, then rebuild actual Recast data.
+					if (auto Path = AI->GetPathFollowingComponent()->GetPath()) { Path->Invalidate(); }
+					Nav->Build();
+				}
 				const uint64 AcceptedBefore = Service->GetStats().Accepted;
 				Actions->UpdateAction();
-				if (bWasFollowing && Service->GetStats().Accepted > AcceptedBefore)
+				if (bWasFollowing && !(bRebuild && bRebuilt && Service->GetStats().Dispatched == DispatchBeforeRebuild) && Service->GetStats().Accepted > AcceptedBefore)
 				{
 					Test->TestEqual(TEXT("Repath admission preserves current movement ID"), AI->GetPathFollowingComponent()->GetCurrentRequestId(), PreviousMove);
 					Test->TestEqual(TEXT("Repath admission preserves active path following"), AI->GetPathFollowingComponent()->GetStatus(), EPathFollowingStatus::Moving);
@@ -116,6 +135,11 @@ namespace
 					Test->TestTrue(TEXT("Moving target causes multiple asynchronous paths"), Service->GetStats().Dispatched > 1);
 					Test->TestTrue(TEXT("Observed replacement requests while continuing a valid old path"), ContinuousRepaths > 0);
 					Test->TestTrue(TEXT("NPC reaches the moved target"), FVector::Dist(NPC->GetActorLocation(), MovingTarget->GetActorLocation()) <= Actions->AttackRange);
+					if (bRebuild)
+					{
+						Test->TestTrue(TEXT("Dynamic obstacle rebuild exercised"), bRebuilt);
+						Test->TestTrue(TEXT("Async service recovers after path invalidation and rebuild"), Service->GetStats().Dispatched > DispatchBeforeRebuild);
+					}
 					Test->AddInfo(FString::Printf(TEXT("Moving target: dispatches=%llu continuous_repaths=%d final=%s"),
 						Service->GetStats().Dispatched, ContinuousRepaths, *NPC->GetActorLocation().ToString()));
 					return true;
@@ -163,6 +187,9 @@ namespace
 		int32 PathPoints = 0;
 		bool bIssued = false, bCompleted = false;
 		bool bMovingTarget = false;
+		bool bRebuild = false, bRebuilt = false;
+		AActor* Obstacle = nullptr;
+		uint64 DispatchBeforeRebuild = 0;
 		AActor* MovingTarget = nullptr;
 		UProject_JNPCActionComponent* Actions = nullptr;
 		double SimulatedSeconds = 0;
@@ -181,6 +208,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMovingTargetNavigationTest, "ProjectJ.
 bool FProjectJMovingTargetNavigationTest::RunTest(const FString& Parameters)
 {
 	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, true));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJDynamicNavRecoveryTest, "ProjectJ.GroupA.DynamicNavRecovery",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJDynamicNavRecoveryTest::RunTest(const FString& Parameters)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FNativeNavCommand(this, true, true));
 	return true;
 }
 #endif

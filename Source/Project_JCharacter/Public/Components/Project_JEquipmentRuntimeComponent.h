@@ -41,6 +41,8 @@ struct FProject_JEquipmentRuntimeItem
 	// Owned by this equipped slot. Only accessed/cancelled on the Game Thread.
 	uint64 VisualLoadToken = 0;
 	uint64 VisualRevision = 0;
+	uint32 VisualAttempts = 0;
+	double NextVisualRetry = 0;
 };
 
 /**
@@ -77,6 +79,10 @@ protected:
 
 private:
 	friend class FProjectJEquipmentLoadLifecycleTest;
+	friend class FProjectJEquipmentRetryTest;
+	static constexpr uint32 MaxVisualAttempts = 4;
+	void ScheduleVisualRetry();
+	FTimerHandle VisualRetryTimer;
 
 	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;

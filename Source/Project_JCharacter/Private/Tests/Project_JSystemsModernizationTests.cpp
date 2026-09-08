@@ -17,6 +17,8 @@
 #include "Project_JPlayerCharacter.h"
 #include "Project_JGreatswordCharacter.h"
 #include "UObject/UnrealType.h"
+#include "Engine/Engine.h"
+#include "TimerManager.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCombatInputBoundaryTest,
 	"ProjectJ.Modernization.CombatInputBoundary",
@@ -148,5 +150,40 @@ bool FProjectJWeaponPresentationTeardownTest::RunTest(const FString& Parameters)
 	TestNull(TEXT("Teardown refresh only cleans up"), Early->GetSpawnedWeapon());
 	Early->DestroyComponent(); World->DestroyWorld(false);
 	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentRetryTest, "ProjectJ.GroupA.EquipmentRetry",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJEquipmentRetryTest::RunTest(const FString& Parameters)
+{
+ UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+ GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+ auto* Owner = World->SpawnActor<ACharacter>();
+ auto* Runtime = NewObject<UProject_JEquipmentRuntimeComponent>(Owner); Runtime->RegisterComponent();
+ auto* Service = World->GetSubsystem<UProject_JVisualAssetSubsystem>();
+ TArray<uint64> Fill;
+ Runtime->BeginPlay();
+ const FSoftObjectPath Path(TEXT("/Engine/EngineMeshes/SkeletalCube.SkeletalCube"));
+ for (int32 I = 0; I < Service->MaxLeasesPerOwner; ++I) { Fill.Add(Service->Request(Runtime, Path)); }
+ auto* Item = NewObject<UProject_JEquipmentItemDefinition>(Runtime);
+ Item->EquipmentSlot = EProject_JEquipmentSlot::Head; Item->EquipmentMesh = TSoftObjectPtr<USkeletalMesh>(Path);
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ auto& State = Runtime->RuntimeItems[Item->EquipmentSlot];
+ TestEqual(TEXT("Rejected admission consumes first bounded attempt"), State.VisualAttempts, uint32(1));
+ TestTrue(TEXT("Rejected admission automatically schedules retry"), World->GetTimerManager().TimerExists(Runtime->VisualRetryTimer));
+ for (int32 I = 0; I < 10; ++I) { Runtime->RetryEquipmentVisuals(); }
+ TestEqual(TEXT("Repeated manual retry respects deadline"), State.VisualAttempts, uint32(1));
+ for (uint32 I = 1; I < Runtime->MaxVisualAttempts; ++I) { State.NextVisualRetry = 0; Runtime->RetryEquipmentVisuals(); }
+ TestEqual(TEXT("Retry count bounded"), State.VisualAttempts, Runtime->MaxVisualAttempts);
+ TestFalse(TEXT("Exhaustion leaves no retry timer"), World->GetTimerManager().TimerExists(Runtime->VisualRetryTimer));
+ for (const auto Token : Fill) { Service->Release(Token); }
+ const auto OldRevision = State.VisualRevision;
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ TestTrue(TEXT("Re-equip creates fresh generation"), Runtime->RuntimeItems[Item->EquipmentSlot].VisualRevision != OldRevision);
+ TestTrue(TEXT("Fresh generation can request again"), Runtime->RuntimeItems[Item->EquipmentSlot].VisualLoadToken != 0);
+ Runtime->EndPlay(EEndPlayReason::LevelTransition);
+ TestFalse(TEXT("EndPlay clears pending retry"), World->GetTimerManager().TimerExists(Runtime->VisualRetryTimer));
+ TestEqual(TEXT("EndPlay releases equipment lease"), Service->GetLeaseCount(), 0);
+ World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
+ return true;
 }
 #endif

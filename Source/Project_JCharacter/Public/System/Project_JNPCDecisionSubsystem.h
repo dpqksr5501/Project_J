@@ -32,6 +32,7 @@ struct FProjectJNPCDecisionStats
 	double LastTickGameThreadMilliseconds = 0.0;
 	int32 LastTickActionVisits = 0, LastTickActionUpdates = 0;
 	double LastTickActionMilliseconds = 0.0;
+	double MaxActionLatenessMilliseconds = 0.0;
 };
 
 /** GT collection/scheduling only. Reuses Core's bounded task service; never owns worker threads. */
@@ -109,5 +110,6 @@ private:
 	int32 Cursor = 0;
 	int32 OutstandingDecisions = 0;
 	bool bAccepting = false;
+	bool bTicking = false;
 	uint64 TargetRegistryRevision = 0;
 };

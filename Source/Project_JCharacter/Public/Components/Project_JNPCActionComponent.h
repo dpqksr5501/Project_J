@@ -53,6 +53,9 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:
+	friend class FProjectJNPCPathPressureTest;
+	void BackoffPath();
+	uint32 PathFailures = 0;
 	UFUNCTION()
 	void OnScored(AActor* Target, double Score);
 	void ClearIntent();

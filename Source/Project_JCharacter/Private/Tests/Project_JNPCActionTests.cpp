@@ -340,4 +340,42 @@ bool FProjectJNPCActionBudgetTest::RunTest(const FString& Parameters)
 	ADD_LATENT_AUTOMATION_COMMAND(FActionBudgetCommand(this));
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCPathPressureTest, "ProjectJ.GroupA.PathPressure",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCPathPressureTest::RunTest(const FString& Parameters)
+{
+ FActionFixture F;
+ TArray<TStrongObjectPtr<USceneComponent>> Owners;
+ TArray<uint64> Tokens; TArray<int32> Delivered;
+ for (int32 I = 0; I < F.Paths->MaxInFlight + 6; ++I)
+ {
+  Owners.Emplace(NewObject<USceneComponent>(F.NPC));
+  Tokens.Add(F.Paths->Submit(Owners.Last().Get(), F.NPC, FVector(700,0,0), 1,
+   [&, I](const auto&) { Delivered.Add(I); }, I == F.Paths->MaxInFlight + 5 ? EProjectJNPCPathPriority::Urgent : EProjectJNPCPathPriority::Normal));
+  if (I < F.Paths->MaxInFlight) { F.Paths->SimulateDispatchForTest(Tokens.Last(), false); }
+ }
+ F.Paths->AgeForTest(Tokens[F.Paths->MaxInFlight], 0.5);
+ F.Paths->Tick(0);
+ TestEqual(TEXT("Physical in-flight cap blocks new dispatch"), F.Paths->GetStats().LastTickDispatches, 0);
+ for (int32 I = 0; I < F.Paths->MaxInFlight; ++I) { F.Paths->Cancel(Tokens[I]); }
+ F.Paths->Tick(0);
+ TestEqual(TEXT("Cancellation cannot bypass the physical cap"), F.Paths->GetStats().LastTickDispatches, 0);
+ for (int32 I = 0; I < F.Paths->MaxInFlight; ++I) { F.Paths->Complete(Tokens[I], 1, ENavigationQueryResult::Fail, nullptr); }
+ for (int32 I = 0; I < 20 && Delivered.Num() < 6; ++I) { F.Paths->Tick(0); }
+ TestEqual(TEXT("All queued owners eventually delivered"), Delivered.Num(), 6);
+ if (Delivered.Num() >= 2)
+ {
+  TestEqual(TEXT("Aged normal request beats fresh urgent"), Delivered[0], F.Paths->MaxInFlight);
+  TestEqual(TEXT("Urgent request beats fresh normal"), Delivered[1], F.Paths->MaxInFlight + 5);
+ }
+ TestEqual(TEXT("All tombstones drained"), F.Paths->GetRequestCount(), 0);
+ F.Actions->RetryInterval = 0.1;
+ F.Actions->BackoffPath(); const double FirstDeadline = F.Actions->NextPathTime;
+ F.Actions->BackoffPath();
+ TestTrue(TEXT("Repeated failure increases retry delay"), F.Actions->NextPathTime > FirstDeadline);
+ F.Actions->ClearIntent();
+ TestEqual(TEXT("New semantic context resets failure backoff"), F.Actions->PathFailures, uint32(0));
+ AddInfo(TEXT("16 physical slots retained through cancel; 6 queued owners drained with bounded urgency and aging."));
+ return true;
+}
 #endif

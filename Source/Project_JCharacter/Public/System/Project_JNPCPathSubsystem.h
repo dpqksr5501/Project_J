@@ -9,6 +9,7 @@ class APawn;
 struct FProjectJNPCPathEntry;
 
 enum class EProjectJNPCPathStatus : uint8 { Success, Failed, Expired };
+enum class EProjectJNPCPathPriority : uint8 { Normal, Urgent };
 struct FProjectJNPCPathCompletion
 {
 	uint64 Token = 0;
@@ -22,6 +23,8 @@ struct FProjectJNPCPathStats
 {
 	uint64 Accepted = 0, Rejected = 0, Dispatched = 0, Cancelled = 0, Expired = 0, Delivered = 0, Discarded = 0;
 	int32 LastTickDispatches = 0, LastTickDeliveries = 0;
+	int32 InFlight = 0, PeakInFlight = 0, Queued = 0;
+	double LastTickMilliseconds = 0, MaxDeliveryMilliseconds = 0;
 };
 
 /** GT admission/delivery around engine-owned async navigation. No custom worker accesses UObjects. */
@@ -32,12 +35,15 @@ class PROJECT_JCHARACTER_API UProject_JNPCPathSubsystem : public UTickableWorldS
 public:
 	static constexpr int32 MaxRequests = 64;
 	static constexpr int32 MaxDispatchesPerTick = 4;
+	static constexpr int32 MaxInFlight = 16;
+	static constexpr double UrgentBoostSeconds = 0.25;
 	static constexpr int32 MaxDeliveriesPerTick = 8;
 	static constexpr double RequestLifetimeSeconds = 2.0;
 	static constexpr double GameThreadBudgetMilliseconds = 0.5;
 	/** One outstanding request per owner. Rejected submissions return zero, without a callback. */
 	uint64 Submit(UObject* Owner, APawn* Pawn, const FVector& Goal, uint64 IntentRevision,
-		TFunction<void(const FProjectJNPCPathCompletion&)> Completion);
+		TFunction<void(const FProjectJNPCPathCompletion&)> Completion,
+		EProjectJNPCPathPriority Priority = EProjectJNPCPathPriority::Normal);
 	/** No callback after cancellation. Dispatched slots remain reserved until engine completion. */
 	void Cancel(uint64 Token);
 	int32 GetRequestCount() const { return Requests.Num(); }
@@ -53,8 +59,10 @@ protected:
 private:
 #if WITH_DEV_AUTOMATION_TESTS
 	friend class FProjectJNPCPathLateCompletionTest;
+	friend class FProjectJNPCPathPressureTest;
 	/** Deterministic engine-boundary simulation; does not execute navigation or create a worker. */
 	void SimulateDispatchForTest(uint64 Token, bool bExpired);
+	void AgeForTest(uint64 Token, double Seconds);
 #endif
 	void Stop();
 	void OnTearDown(UWorld* World);
@@ -65,4 +73,5 @@ private:
 	FProjectJNPCPathStats Stats;
 	uint64 NextToken = 0;
 	bool bAccepting = false;
+	bool bTicking = false;
 };

@@ -60,4 +60,35 @@ bool FProjectJVisualAssetsTest::RunTest(const FString& Parameters)
 	ADD_LATENT_AUTOMATION_COMMAND(FVisualAssetCommand(this));
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJVisualPressureTest, "ProjectJ.GroupA.VisualPressure",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJVisualPressureTest::RunTest(const FString& Parameters)
+{
+ UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+ GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+ auto* Owner = World->SpawnActor<AActor>(); auto* Other = World->SpawnActor<AActor>();
+ auto* S = World->GetSubsystem<UProject_JVisualAssetSubsystem>();
+ const FSoftObjectPath Path(TEXT("/Engine/BasicShapes/Cube.Cube"));
+ TArray<uint64> Tokens;
+ for (int32 I = 0; I < S->MaxLeasesPerOwner; ++I) { Tokens.Add(S->Request(Owner, Path)); }
+ TestEqual(TEXT("One owner cannot monopolize global capacity"), S->Request(Owner, Path), uint64(0));
+ const auto OtherToken = S->Request(Other, Path);
+ TestTrue(TEXT("Another owner retains admission capacity"), OtherToken != 0);
+ for (auto Token : Tokens) { S->Release(Token); } S->Release(OtherToken);
+ int32 Calls = 0;
+ const auto Token = S->Request(Owner, Path, [&](UObject* Asset)
+ {
+  ++Calls; TestNull(TEXT("Expired request delivers null"), Asset);
+  TestEqual(TEXT("Reentrant failed-path request observes cooldown"), S->Request(Owner, Path), uint64(0));
+ });
+ S->ExpireForTest(Token); S->Tick(0); S->Tick(0);
+ TestEqual(TEXT("Timeout delivered once"), Calls, 1);
+ TestEqual(TEXT("Timed-out lease released"), S->GetLeaseCount(), 0);
+ TestEqual(TEXT("Unfinished load keeps its reservation"), S->GetGroupCount(), 1);
+ TestEqual(TEXT("Timeout diagnostic"), S->GetStats().TimedOut, uint64(1));
+ S->OnWorldEndPlay(*World);
+ TestEqual(TEXT("World end drains reserved work"), S->GetGroupCount(), 0);
+ World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
+ return true;
+}
 #endif
