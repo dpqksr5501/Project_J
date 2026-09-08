@@ -580,6 +580,7 @@ struct FProject_JMotionMatchingTraceEntry
 	EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	EProject_JLocomotionGaitIntent GaitIntent = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	bool bUseSettledCycle = false;
 	EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
 	float GroundModeAgeSeconds = 0.0f;
 	float GroundSpeed = 0.0f;

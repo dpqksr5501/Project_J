@@ -12,6 +12,7 @@
 #include "Project_JPlayerCharacter.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 #include "HAL/IConsoleManager.h"
@@ -113,6 +114,10 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	RestoreAttackMovementMode(bWasCancelled);
 	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
 	{
+		if (UProject_JCombatPresentationComponent* Presentation = AvatarActor->FindComponentByClass<UProject_JCombatPresentationComponent>())
+		{
+			Presentation->EndAttackPresentation();
+		}
 		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
 			HitValidation->EndAttack();
@@ -410,6 +415,10 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	ActiveAttackDefinition = AttackDefinition;
 	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
 	{
+		if (UProject_JCombatPresentationComponent* Presentation = AvatarActor->FindComponentByClass<UProject_JCombatPresentationComponent>())
+		{
+			Presentation->BeginAttackPresentation(AttackDefinition->AttackTag);
+		}
 		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
 			HitValidation->BeginAttackNode(CurrentComboNodeTag, AttackDefinition);

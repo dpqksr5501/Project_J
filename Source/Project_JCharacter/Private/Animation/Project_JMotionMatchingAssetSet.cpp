@@ -8,14 +8,17 @@ namespace
 {
 UPoseSearchDatabase* SelectGaitDatabase(
 	const FProject_JMotionMatchingGaitDatabaseFamily& DatabaseFamily,
-	EProject_JLocomotionPhaseFamily PhaseFamily)
+	EProject_JLocomotionPhaseFamily PhaseFamily,
+	bool bUseSettledCycle)
 {
 	switch (PhaseFamily)
 	{
 	case EProject_JLocomotionPhaseFamily::Turn:
 		return DatabaseFamily.TurnRedirect.Get();
 	case EProject_JLocomotionPhaseFamily::Cycle:
-		return DatabaseFamily.Cycle.Get();
+		return bUseSettledCycle && DatabaseFamily.SettledCycle
+			? DatabaseFamily.SettledCycle.Get()
+			: DatabaseFamily.Cycle.Get();
 	default:
 		return nullptr;
 	}
@@ -70,7 +73,7 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 	{
 		const FProject_JMotionMatchingGaitDatabaseFamily& GaitFamily =
 			GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
-		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily))
+		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily, Context.bUseSettledCycle))
 		{
 			return GaitDatabase;
 		}

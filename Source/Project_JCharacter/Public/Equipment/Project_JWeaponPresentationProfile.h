@@ -9,6 +9,7 @@
 #include "Project_JWeaponPresentationProfile.generated.h"
 
 class AActor;
+class UProject_JCombatPresentationSet;
 
 /** Data-only contact configuration. Probe sockets live on the weapon visual, never on the shared character skeleton. */
 USTRUCT(BlueprintType)
@@ -109,6 +110,13 @@ public:
 	/** Optional data-driven independent weapon motion. Kept separate from combat rules and item stats. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	FProject_JWeaponMotionPresentation MotionPresentation;
+
+	/**
+	 * Optional cosmetic-only per-attack overrides for a particular weapon skin.
+	 * This is applied after the combat style and advancement presentation sets.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<UProject_JCombatPresentationSet> CosmeticPresentationOverrideSet = nullptr;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

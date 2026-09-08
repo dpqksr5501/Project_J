@@ -10,6 +10,7 @@ class UProject_JAttackSet;
 class UProject_JCombatCommandSet;
 class UProject_JComboDefinition;
 class UProject_JWeaponAnimProfile;
+class UProject_JCombatPresentationSet;
 
 /**
  * Stable aggregation root for one job/weapon combat style. Gameplay systems
@@ -29,6 +30,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UProject_JWeaponAnimProfile> WeaponAnimationProfile = nullptr;
+
+	/**
+	 * Client presentation selected by this combat style. It maps stable AttackTag
+	 * identities to cosmetic VFX profiles and is never consulted by authority.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	TObjectPtr<UProject_JCombatPresentationSet> CombatPresentationSet = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TObjectPtr<UProject_JComboDefinition> ComboDefinition = nullptr;

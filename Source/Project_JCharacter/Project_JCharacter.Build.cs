@@ -16,6 +16,7 @@ public class Project_JCharacter : ModuleRules
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
+			"Niagara",
 			"PoseSearch",
 			"Chooser",
 			"BlendStack",

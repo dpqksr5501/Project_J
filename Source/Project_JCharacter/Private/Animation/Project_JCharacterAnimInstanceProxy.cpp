@@ -202,12 +202,22 @@ EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseCh
 	const bool bLocomotionStanceChanged =
 		ThreadSafeData.Combat.bIsCombatMode != bLastPolicyWasCombat ||
 		ThreadSafeData.LocomotionContext.RotationMode != LastPolicyRotationMode;
+	// Dynamic and Settled are deliberately different Combat-Strafe Cycle PSDs.
+	// Treat their boundary as an interrupt even though gait, movement, and phase
+	// are unchanged; otherwise a continuing Full-PSD Arc/Diamond can survive
+	// after the Loop-only PSD has been selected (or vice versa).
+	const bool bCombatStrafeCycleFamilyChanged =
+		ThreadSafeData.Combat.bIsCombatMode &&
+		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle != bLastPolicyUsedSettledCycle;
 
 	// GASP Get_MMInterruptMode: default to DoNotInterrupt and only interrupt on
 	// a core locomotion change. Project_J has no separate stance enum yet, so
 	// combat stance and rotation family are its safe equivalent.
 	const bool bInterrupt = bMovementModeChanged ||
-		(!bIsInAir && (bMovementStateChanged || (!bIsMoving && bGaitChanged) || bLocomotionStanceChanged));
+		(!bIsInAir && (bMovementStateChanged || (!bIsMoving && bGaitChanged) ||
+			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged));
 	return bInterrupt
 		? EPoseSearchInterruptMode::InterruptOnDatabaseChange
 		: EPoseSearchInterruptMode::DoNotInterrupt;
@@ -219,6 +229,7 @@ void FProject_JCharacterAnimInstanceProxy::CacheMotionMatchingPolicyState()
 	bLastPolicyWasInAir = ThreadSafeData.Air.bIsInAir;
 	bLastPolicyWasMoving = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving;
 	bLastPolicyWasCombat = ThreadSafeData.Combat.bIsCombatMode;
+	bLastPolicyUsedSettledCycle = ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle;
 	LastPolicyGaitIntent = ThreadSafeData.LocomotionContext.GaitIntent;
 	LastPolicyRotationMode = ThreadSafeData.LocomotionContext.RotationMode;
 }

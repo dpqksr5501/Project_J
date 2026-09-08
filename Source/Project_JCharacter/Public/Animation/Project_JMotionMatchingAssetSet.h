@@ -34,6 +34,13 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSelectionContext
 	/** Allow family slots on a non-OTM asset set when no specific override exists. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bUseGenericFamiliesForNonOrientToMovement = false;
+
+	/**
+	 * Requests the optional steady-state Cycle PSD. This is authored only by the
+	 * local Combat-Strafe policy; all other locomotion modes retain Cycle.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bUseSettledCycle = false;
 };
 
 USTRUCT(BlueprintType)
@@ -43,6 +50,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
 	TObjectPtr<UPoseSearchDatabase> Cycle = nullptr;
+
+	/** Optional Loop-only PSD used after a Combat-Strafe direction has settled. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
+	TObjectPtr<UPoseSearchDatabase> SettledCycle = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Turn Redirect")
 	TObjectPtr<UPoseSearchDatabase> TurnRedirect = nullptr;

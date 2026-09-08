@@ -39,6 +39,7 @@ class UProject_JCombatAnimationLayerComponent;
 class UProject_JMountedAnimationLayerComponent;
 class UProject_JCombatHitValidationComponent;
 class UProject_JWeaponPresentationComponent;
+class UProject_JCombatPresentationComponent;
 class UProject_JInventoryComponent;
 class UProject_JSkillInputExecutionComponent;
 class UProject_JSkillInputRouterComponent;
@@ -133,6 +134,10 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** Shared runtime weapon actor management. Job data selects actor and socket. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JWeaponPresentationComponent> WeaponPresentationComponent = nullptr;
+
+	/** Client-only owner for attack trails and other short weapon/character VFX. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|Presentation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UProject_JCombatPresentationComponent> CombatPresentationComponent = nullptr;
 
 	/** Shared server-side rewind validation for all player jobs. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat", meta = (AllowPrivateAccess = "true"))
@@ -373,6 +378,7 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE UProject_JWeaponPresentationComponent* GetWeaponPresentationComponent() const { return WeaponPresentationComponent; }
+	FORCEINLINE UProject_JCombatPresentationComponent* GetCombatPresentationComponent() const { return CombatPresentationComponent; }
 	FORCEINLINE UProject_JCombatHitValidationComponent* GetCombatHitValidationComponent() const { return CombatHitValidationComponent; }
 
 	/** Returns LocomotionAnimStateComponent subobject **/

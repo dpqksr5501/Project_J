@@ -85,7 +85,8 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 
 void UProject_JWeaponPresentationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ExitCombatPresentation();
+	EndIndependentMotion();
+	DestroyWeaponPresentation();
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -93,7 +94,12 @@ void UProject_JWeaponPresentationComponent::EnterCombatPresentation()
 {
 	bCombatPresentationActive = true;
 	UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] EnterCombatPresentation: Owner=%s"), *GetNameSafe(GetOwner()));
-	RefreshPresentation();
+	// The draw notify owns the exact hand-transfer frame.  Entering combat only
+	// guarantees that an equipped weapon exists at its stable sheathed socket.
+	if (!SpawnedWeapon)
+	{
+		RefreshPresentation();
+	}
 }
 
 void UProject_JWeaponPresentationComponent::ExitCombatPresentation()
@@ -101,11 +107,7 @@ void UProject_JWeaponPresentationComponent::ExitCombatPresentation()
 	bCombatPresentationActive = false;
 	EndIndependentMotion();
 	WeaponPresentationDebugElapsedSeconds = 0.0f;
-	if (SpawnedWeapon)
-	{
-		SpawnedWeapon->Destroy();
-		SpawnedWeapon = nullptr;
-	}
+	AttachWeaponToSheathedSocket();
 	UpdateTickState();
 }
 
@@ -122,57 +124,60 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToSheathedSocket()
 	EndIndependentMotion();
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-	if (!SpawnedWeapon || !PresentationProfile || PresentationProfile->SheathedSocketName.IsNone() || !Mesh)
+	if (!SpawnedWeapon)
 	{
-		return;
+		RefreshPresentation();
 	}
 
-	if (!Mesh->DoesSocketExist(PresentationProfile->SheathedSocketName))
+	if (PresentationProfile)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Sheathe failed: Socket '%s' does not exist on Mesh=%s."),
-			*PresentationProfile->SheathedSocketName.ToString(), *GetNameSafe(Mesh));
-		return;
+		AttachWeaponToSocket(PresentationProfile->SheathedSocketName, TEXT("Sheathe"));
+	}
+	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
+}
+
+void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
+{
+	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
+	if (!SpawnedWeapon)
+	{
+		RefreshPresentation();
 	}
 
-	SpawnedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, PresentationProfile->SheathedSocketName);
+	if (PresentationProfile)
+	{
+		AttachWeaponToSocket(PresentationProfile->DrawnSocketName, TEXT("Draw"));
+	}
+	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
+}
+
+void UProject_JWeaponPresentationComponent::SetWeaponPresentationSocket(EProject_JWeaponPresentationSocket Socket)
+{
+	if (Socket == EProject_JWeaponPresentationSocket::Drawn)
+	{
+		AttachWeaponToDrawnSocket();
+	}
+	else
+	{
+		AttachWeaponToSheathedSocket();
+	}
 }
 
 void UProject_JWeaponPresentationComponent::RefreshPresentation()
 {
-	if (!ShouldShowWeapon())
-	{
-		return;
-	}
-	if (SpawnedWeapon)
-	{
-		EndIndependentMotion();
-		SpawnedWeapon->Destroy();
-		SpawnedWeapon = nullptr;
-	}
+	DestroyWeaponPresentation();
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-	if (!PresentationProfile || !PresentationProfile->WeaponActorClass || PresentationProfile->DrawnSocketName.IsNone() || !Mesh || !GetWorld())
+	if (!PresentationProfile || !PresentationProfile->WeaponActorClass || !Mesh || !GetWorld())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Draw failed: Owner=%s Profile=%s ActorClass=%s Socket=%s Mesh=%s World=%s"),
+		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Refresh failed: Owner=%s Profile=%s ActorClass=%s Mesh=%s World=%s"),
 			*GetNameSafe(OwnerCharacter),
 			*GetNameSafe(PresentationProfile),
 			PresentationProfile ? *GetNameSafe(PresentationProfile->WeaponActorClass) : TEXT("None"),
-			PresentationProfile ? *PresentationProfile->DrawnSocketName.ToString() : TEXT("None"),
 			*GetNameSafe(Mesh),
 			*GetNameSafe(GetWorld()));
-		return;
-	}
-
-	if (!Mesh->DoesSocketExist(PresentationProfile->DrawnSocketName))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Draw failed: Socket '%s' does not exist on Mesh=%s (SkeletalMesh=%s)."),
-			*PresentationProfile->DrawnSocketName.ToString(),
-			*GetNameSafe(Mesh),
-			*GetNameSafe(Mesh->GetSkeletalMeshAsset()));
 		return;
 	}
 
@@ -182,9 +187,9 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	SpawnedWeapon = GetWorld()->SpawnActor<AActor>(PresentationProfile->WeaponActorClass, OwnerCharacter->GetActorLocation(), OwnerCharacter->GetActorRotation(), SpawnParams);
 	if (SpawnedWeapon)
 	{
-		AttachWeaponToDrawnSocket();
-		UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] Draw success: Weapon=%s Socket=%s"),
-			*GetNameSafe(SpawnedWeapon), *PresentationProfile->DrawnSocketName.ToString());
+		SetWeaponPresentationSocket(CurrentPresentationSocket);
+		UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] Spawn success: Weapon=%s SocketState=%d"),
+			*GetNameSafe(SpawnedWeapon), static_cast<int32>(CurrentPresentationSocket));
 
 		if (Project_J::WeaponPresentation::IsDebugEnabled())
 		{
@@ -197,6 +202,36 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Draw failed: SpawnActor returned null for class %s."),
 			*GetNameSafe(PresentationProfile->WeaponActorClass));
+	}
+}
+
+bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SocketName, const TCHAR* Context)
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	if (!SpawnedWeapon || SocketName.IsNone() || !Mesh)
+	{
+		return false;
+	}
+
+	if (!Mesh->DoesSocketExist(SocketName))
+	{
+		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] %s failed: Socket '%s' does not exist on Mesh=%s."),
+			Context, *SocketName.ToString(), *GetNameSafe(Mesh));
+		return false;
+	}
+
+	SpawnedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+	return true;
+}
+
+void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
+{
+	EndIndependentMotion();
+	if (SpawnedWeapon)
+	{
+		SpawnedWeapon->Destroy();
+		SpawnedWeapon = nullptr;
 	}
 }
 
@@ -420,6 +455,26 @@ bool UProject_JWeaponPresentationComponent::GetWeaponSocketTransform(FName Socke
 	return FindWeaponSocketTransform(SocketName, OutWorldTransform);
 }
 
+USceneComponent* UProject_JWeaponPresentationComponent::GetWeaponVFXAttachmentComponent(const FName SocketName) const
+{
+	if (!SpawnedWeapon)
+	{
+		return nullptr;
+	}
+
+	TInlineComponentArray<USceneComponent*> SceneComponents(SpawnedWeapon);
+	SpawnedWeapon->GetComponents(SceneComponents);
+	for (USceneComponent* Component : SceneComponents)
+	{
+		if (Component && !SocketName.IsNone() && Component->DoesSocketExist(SocketName))
+		{
+			return Component;
+		}
+	}
+
+	return SpawnedWeapon->GetRootComponent();
+}
+
 bool UProject_JWeaponPresentationComponent::TryGetGroundCorrection(float DeltaTime, FVector& OutComponentSpaceCorrection)
 {
 	OutComponentSpaceCorrection = FVector::ZeroVector;
@@ -485,22 +540,6 @@ bool UProject_JWeaponPresentationComponent::TryGetGroundCorrection(float DeltaTi
 	return true;
 }
 
-void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
-{
-	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-	if (!SpawnedWeapon || !PresentationProfile || !Mesh || PresentationProfile->DrawnSocketName.IsNone())
-	{
-		return;
-	}
-
-	if (Mesh->DoesSocketExist(PresentationProfile->DrawnSocketName))
-	{
-		SpawnedWeapon->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, PresentationProfile->DrawnSocketName);
-	}
-}
-
 void UProject_JWeaponPresentationComponent::UpdateTickState()
 {
 	SetComponentTickEnabled(bIndependentMotionActive || (SpawnedWeapon && Project_J::WeaponPresentation::IsDebugEnabled()));
@@ -514,7 +553,7 @@ const UProject_JWeaponPresentationProfile* UProject_JWeaponPresentationComponent
 
 bool UProject_JWeaponPresentationComponent::ShouldShowWeapon() const
 {
-	return bCombatPresentationActive;
+	return GetCurrentPresentationProfile() != nullptr;
 }
 
 void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCHAR* Context) const

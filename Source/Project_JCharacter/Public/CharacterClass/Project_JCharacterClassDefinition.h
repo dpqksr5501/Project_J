@@ -8,6 +8,7 @@
 class UProject_JAbilitySet;
 class UProject_JDefaultAttributeSetData;
 class UProject_JCombatStyleDefinition;
+class UProject_JCombatPresentationSet;
 
 UENUM(BlueprintType)
 enum class EProject_JAdvancementAbilityGrantPolicy : uint8
@@ -76,4 +77,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TObjectPtr<UProject_JCombatStyleDefinition> CombatStyleOverride = nullptr;
+
+	/**
+	 * Optional per-attack cosmetic overrides for this advancement. Use this when
+	 * mechanics remain the same but, for example, a demon and angel advancement
+	 * need different trails or impacts. Do not duplicate a CombatStyle just for VFX.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	TObjectPtr<UProject_JCombatPresentationSet> CombatPresentationOverrideSet = nullptr;
 };

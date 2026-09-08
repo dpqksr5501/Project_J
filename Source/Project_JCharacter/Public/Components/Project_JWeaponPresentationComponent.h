@@ -8,6 +8,14 @@
 class UProject_JWeaponPresentationProfile;
 class USceneComponent;
 
+/** The stable character socket that currently owns the visual weapon actor. */
+UENUM(BlueprintType)
+enum class EProject_JWeaponPresentationSocket : uint8
+{
+	Sheathed UMETA(DisplayName = "Sheathed / Back"),
+	Drawn UMETA(DisplayName = "Drawn / Hand")
+};
+
 /** Runtime IK values exposed to the shared Master ABP. Values are cosmetic and intentionally not replicated. */
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JWeaponGripTargets
@@ -51,11 +59,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	/** Shows the currently selected weapon in its authored combat socket. */
+	/** Ensures the equipped weapon is available for a draw transition, initially at its sheathed socket. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void EnterCombatPresentation();
 
-	/** Removes the runtime weapon actor. Draw/sheath notifies can replace this policy later. */
+	/** Ends combat presentation and normalizes the visual weapon to its sheathed socket. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void ExitCombatPresentation();
 
@@ -66,6 +74,17 @@ public:
 	/** Attaches the visible weapon to the authored back/sheath socket. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void AttachWeaponToSheathedSocket();
+
+	/** Attaches the visible weapon to the authored combat/hand socket. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void AttachWeaponToDrawnSocket();
+
+	/**
+	 * Shared montage-notify entry point. It moves the same weapon actor between
+	 * profile-authored sockets; it never changes authoritative equipment data.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void SetWeaponPresentationSocket(EProject_JWeaponPresentationSocket Socket);
 
 	/** Rebuilds the visible weapon when the effective weapon profile changes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
@@ -109,6 +128,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
 	bool GetWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
 
+	/** Returns the visual component that owns a weapon-local socket for attached cosmetic effects. */
+	USceneComponent* GetWeaponVFXAttachmentComponent(FName SocketName) const;
+
 private:
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;
@@ -116,7 +138,8 @@ private:
 	void UpdateGripTargets();
 	bool FindWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
 	bool TryGetGroundCorrection(float DeltaTime, FVector& OutComponentSpaceCorrection);
-	void AttachWeaponToDrawnSocket();
+	bool AttachWeaponToSocket(FName SocketName, const TCHAR* Context);
+	void DestroyWeaponPresentation();
 	void UpdateTickState();
 	void LogWeaponPresentationDebug(const TCHAR* Context) const;
 
@@ -138,5 +161,6 @@ private:
 
 	float WeaponPresentationDebugElapsedSeconds = 0.0f;
 	bool bCombatPresentationActive = false;
+	EProject_JWeaponPresentationSocket CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
 	bool bIndependentMotionActive = false;
 };

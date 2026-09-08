@@ -100,6 +100,8 @@ private:
 	bool bLastPolicyWasInAir = false;
 	bool bLastPolicyWasMoving = false;
 	bool bLastPolicyWasCombat = false;
+	/** Tracks the local Combat-Strafe Dynamic/Settled PSD boundary. */
+	bool bLastPolicyUsedSettledCycle = false;
 	EProject_JLocomotionGaitIntent LastPolicyGaitIntent = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode LastPolicyRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 	EPoseSearchInterruptMode LastResolvedDatabaseChangeInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;

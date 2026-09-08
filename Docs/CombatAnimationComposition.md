@@ -69,11 +69,25 @@ Non-combat / OTM
   Existing Motion Matching + OTM State Controller direct one-shots.
 
 Combat / Strafe
-  Combat Motion Matching for continuous Cycle and Turn Redirect,
+  Combat Motion Matching uses Dynamic Cycle while local camera/input trajectory
+  changes and optional Loop-only SettledCycle after it stabilizes,
   State Controller Blend Stack for Start, Stop, Jump, Fall Off and Land.
-Run Pivot is an opt-in Combat-Strafe Run-only direct one-shot. Cycle and ordinary
-moving turns remain owned by the regular Motion Matching PSD.
+Run Pivot is an opt-in Combat-Strafe Run-only direct one-shot. Combat Strafe
+leaves Turn Redirect empty: ordinary direction changes remain in its continuous
+Motion Matching Cycle PSDs. Dynamic/Settled is local-only; remote proxies stay
+on Dynamic Cycle because they do not own reliable Control-Yaw intent.
 ```
+
+`TurnRedirect` is intentionally OTM-only. A moving turn asset turns the body
+toward its travel direction, whereas Combat Strafe keeps body-facing camera-led
+while travel may be lateral, backward, or diagonal. Combat direction correction
+therefore belongs in a curated Dynamic Cycle PSD, not in a moving-turn family.
+The Combat PSD must include only clips that preserve that facing contract. In
+particular, `M_Neutral_Run_Arc_Tight_L/R` are excluded from Combat because they
+can numerically win a camera-rotating strafe query while visibly presenting an
+OTM curve. They remain valid candidates in OTM PSDs. Details and the regression
+contract are maintained in
+[`MotionMatchingNextSteps.md`](MotionMatchingNextSteps.md#combat-strafe-reselect-and-psd-ownership).
 
 The master graph selects the State Controller direct pose only while
 `GetThreadSafeStateControllerShouldOverrideMotionMatching` is true. Otherwise

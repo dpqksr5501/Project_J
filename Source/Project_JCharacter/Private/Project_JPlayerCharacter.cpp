@@ -45,6 +45,7 @@
 #include "Components/Project_JSkillInputExecutionComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
 #include "Mount/Project_JMountItemDefinition.h"
@@ -182,6 +183,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 	CombatIntroComponent = CreateDefaultSubobject<UProject_JCombatIntroComponent>(TEXT("CombatIntroComponent"));
 	CombatAnimationLayerComponent = CreateDefaultSubobject<UProject_JCombatAnimationLayerComponent>(TEXT("CombatAnimationLayerComponent"));
 	WeaponPresentationComponent = CreateDefaultSubobject<UProject_JWeaponPresentationComponent>(TEXT("WeaponPresentationComponent"));
+	CombatPresentationComponent = CreateDefaultSubobject<UProject_JCombatPresentationComponent>(TEXT("CombatPresentationComponent"));
 	CombatHitValidationComponent = CreateDefaultSubobject<UProject_JCombatHitValidationComponent>(TEXT("CombatHitValidationComponent"));
 	MountComponent = CreateDefaultSubobject<UProject_JMountComponent>(TEXT("MountComponent"));
 	MountedAnimationLayerComponent = CreateDefaultSubobject<UProject_JMountedAnimationLayerComponent>(TEXT("MountedAnimationLayerComponent"));
@@ -805,6 +807,10 @@ void AProject_JPlayerCharacter::OnRep_CurrentWeaponPresentationProfile()
 	{
 		WeaponPresentationComponent->RefreshPresentation();
 	}
+	if (CombatPresentationComponent)
+	{
+		CombatPresentationComponent->RefreshPresentation();
+	}
 }
 
 void AProject_JPlayerCharacter::ApplyCombatPresentationState(
@@ -1231,6 +1237,10 @@ void AProject_JPlayerCharacter::SetCurrentCombatStyle(UProject_JCombatStyleDefin
 	if (WeaponPresentationComponent)
 	{
 		WeaponPresentationComponent->RefreshPresentation();
+	}
+	if (CombatPresentationComponent)
+	{
+		CombatPresentationComponent->RefreshPresentation();
 	}
 	if (CombatAnimationLayerComponent)
 	{

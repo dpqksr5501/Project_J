@@ -38,13 +38,39 @@ public:
 
 	/**
 	 * Optional combat loop Motion Matching asset set used while this profile owns
-	 * camera-facing combat rotation. Assign Default/Idle and Run/Sprint Cycle PSDs.
-	 * Run/Sprint TurnRedirect PSDs are optional for locomotion modes that use them;
+	 * camera-facing combat rotation. Assign Default/Idle and Run/Sprint Dynamic
+	 * Cycle PSDs; an optional SettledCycle is a Loop-only PSD for stable local Strafe.
+	 * Combat Strafe deliberately leaves Run/Sprint TurnRedirect empty; moving turn
+	 * assets belong to OTM only.
 	 * authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
 	 * the State Controller Chooser / direct Blend Stack path.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle, Run/Sprint Cycle, and moving Run/Sprint TurnRedirect PSDs. One-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle and Run/Sprint Dynamic Cycle PSDs. Optionally assign Loop-only SettledCycle PSDs for stable local Strafe. Leave TurnRedirect empty for Combat Strafe. One-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
+
+	/**
+	 * Use a Loop-only Cycle PSD only after local Combat-Strafe input, Control Yaw,
+	 * and velocity alignment are stable. Dynamic Cycle retains Arc/Diamond/etc.
+	 * while a camera-relative trajectory is still changing.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle")
+	bool bEnableStrafeSettledCycle = true;
+
+	/** Continuous stable duration required before selecting the optional SettledCycle PSD. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
+	float StrafeSettledCycleDelay = 0.25f;
+
+	/** Input-direction turn at or above this angle keeps the Dynamic Cycle PSD active. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "45.0", Units = "deg"))
+	float StrafeDynamicInputTurnAngle = 5.0f;
+
+	/** Local Control-Yaw speed at or above this value keeps the Dynamic Cycle PSD active. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", UIMin = "0.0", Units = "deg/s"))
+	float StrafeDynamicFacingYawRate = 15.0f;
+
+	/** Velocity-to-current-input angle at or above this value keeps the Dynamic Cycle PSD active. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "90.0", Units = "deg"))
+	float StrafeDynamicVelocityToInputAngle = 15.0f;
 
 	/**
 	 * Re-query the current combat locomotion PSD when a held movement input turns

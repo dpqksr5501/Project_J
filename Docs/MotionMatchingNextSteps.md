@@ -213,7 +213,7 @@ skipped URO update frames.
 - `p.ProjectJ.MM.SmoothRemoteTrajectoryPosition` defaults to `0`.
 - `p.ProjectJ.MM.SmoothRemoteTrajectoryRotation` defaults to `0`.
 
-## Combat Strafe reselect
+## Combat Strafe reselect and PSD ownership
 
 The combat animation profile exposes `bForceReselectOnStrafeInputTurn` (default
 `true`) and `StrafeInputTurnReselectAngle` (default `35`). They apply only to
@@ -223,12 +223,81 @@ its continuing pose and searches the current combat Cycle PSD again. This keeps
 a forward running pose from surviving a lateral-direction transition without
 changing ordinary locomotion or remote-proxy budgeting.
 
-`TurnRedirect` remains part of the combat Strafe set: it is used once when an
-already-held input changes direction by the locomotion turn threshold. While a
-lateral input is held, the actor deliberately keeps camera-facing rotation, so
-its desired-facing delta remains near +/-90 degrees. That persistent offset is
-not a continuing turn; after the short turn hold, the selector returns to the
-combat Cycle PSD, where Pose Search selects the sustained lateral pose.
+### Why Combat Strafe leaves `TurnRedirect` empty
+
+Combat Strafe does **not** use moving `TurnRedirect` assets. Leave those slots
+empty: ordinary input direction changes stay in `Cycle`, while cardinal-only
+reversals may still enter the separate direct Pivot path.
+
+The moving Run Turn assets are authored for OTM: their body-facing direction
+turns into the travel direction while their root trajectory follows that turn.
+That is the correct contract for the OTM `TurnRedirect` PSD, but it conflicts
+with Combat Strafe, where body-facing follows the camera while travel may remain
+left, right, backward, or diagonal. Putting those assets in Combat
+`TurnRedirect` caused held sequences such as `S -> S+D -> S -> S+A` to select a
+turning travel clip instead of retaining the intended backward/strafe gait. It
+also lets an OTM turn hold leak across a Combat/OTM ownership change.
+
+The resolution is deliberately structural rather than a search-cost tweak:
+
+- OTM keeps its moving `TurnRedirect` PSD and its authored turn assets.
+- Combat Strafe keeps `TurnRedirect` empty and handles ordinary direction
+  corrections in its continuous Dynamic Cycle PSD.
+- The existing direct Pivot path remains cardinal-only (`F`, `B`, `L`, `R`);
+  there are no diagonal pivot assets.
+- Phase-stability holds are never carried from OTM into Combat Strafe, or in the
+  reverse direction.
+
+### Dynamic and Settled Cycle PSDs
+
+Combat Strafe uses two optional continuous Cycle PSDs, but only for the locally
+controlled character:
+
+- `Cycle` is the Dynamic PSD. It contains Loops plus only the correction
+  candidates which preserve the Combat-Strafe facing contract while input
+  direction changes, Control Yaw rotates, deceleration is active, or velocity
+  still disagrees with current input. Diamond and Hourglass candidates may stay
+  when visually validated as strafe-preserving corrections.
+- `SettledCycle` is a Loop-only PSD. It is used only after the current Cycle
+  input, Control Yaw, and velocity alignment remain stable for the profile's
+  delay (default 0.25 seconds). This prevents a static diagonal hold from
+  repeatedly selecting a correction clip after the correction is complete.
+
+Pose Search does not know semantic labels such as "OTM" or "Strafe". It only
+minimizes the schema's pose, trajectory, and continuing-pose costs. Consequently
+an OTM curve candidate can numerically win a Combat-Strafe query even when its
+authored facing is visually wrong. In the observed Combat PSD,
+`M_Neutral_Run_Arc_Tight_L/R` strongly matched the short rotating trajectory
+created by held lateral input plus camera rotation, so it repeatedly won over
+the desired strafe candidate. Disabling those entries in the **Combat** PSD
+resolved the mismatch.
+
+Do not delete a shared animation asset merely because it is invalid for Combat
+Strafe. Remove or disable that entry only in the Combat Dynamic PSD; retain it
+in OTM whenever it is a valid OTM curve/turn candidate. Treat every Dynamic PSD
+candidate as an authored movement-contract decision, not as a generic library
+of clips with a name-based guarantee.
+
+The Dynamic/Settled boundary increments the selection revision and forces a
+database-change interrupt even though gait and phase remain `Cycle`; a
+continuing pose selected in one PSD must never survive into the other. Remote
+proxies deliberately remain on Dynamic Cycle because they do not have reliable
+local Control-Yaw intent. If combat sprint is enabled, author both a Sprint
+Dynamic/Settled pair or leave that gait Dynamic-only; the policy never borrows
+an OTM or Run PSD for a missing Sprint Loop.
+
+### Search cadence and tuning scope
+
+This policy does not change Pose Search schema weights, PSD sample rates, or
+the Motion Matching node's normal search throttle. It does not periodically
+force a search while Control Yaw rotates. The pre-existing input-turn reselect
+still runs only when a held input crosses its configured angle and cooldown.
+Dynamic/Settled selection changes the database once at each stability boundary;
+that boundary intentionally interrupts so a continuing pose from the other PSD
+cannot survive. Keep candidate curation in the PSD as the first-line fix;
+avoid compensating for a directionally invalid asset by increasing query rate or
+adding a recurring force-reselect policy.
+
 
 ## Locomotion Turn Tuning and Interrupt Mode (2026-09-06)
 

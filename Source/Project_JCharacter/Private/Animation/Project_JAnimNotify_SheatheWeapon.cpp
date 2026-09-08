@@ -1,17 +1,18 @@
 #include "Animation/Project_JAnimNotify_SheatheWeapon.h"
 
+#include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Project_JPlayerCharacter.h"
+#include "GameFramework/Character.h"
 
 void UProject_JAnimNotify_SheatheWeapon::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (MeshComp)
+	if (ACharacter* Character = MeshComp ? Cast<ACharacter>(MeshComp->GetOwner()) : nullptr)
 	{
-		if (AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(MeshComp->GetOwner()))
+		if (UProject_JWeaponPresentationComponent* WeaponPresentation = Character->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
-			PlayerCharacter->MoveWeaponToSheathedSocket();
+			WeaponPresentation->AttachWeaponToSheathedSocket();
 		}
 	}
 }

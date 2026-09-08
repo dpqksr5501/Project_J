@@ -283,6 +283,7 @@ private:
 	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot, float DeltaTime);
 	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext);
 	void ApplyLocomotionPhaseStability(float DeltaTime, FProject_JDerivedLocomotionContext& InOutContext);
+	void UpdateCombatStrafeCycleSelection(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
@@ -656,6 +657,14 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
 	bool bForceMotionMatchingReselect = false;
 
+	/** True only when local Combat-Strafe is stable enough to select its optional Loop-only PSD. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	bool bUseCombatStrafeSettledCycle = false;
+
+	/** Accumulated local Combat-Strafe stability time; reset by input, yaw, or velocity changes. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
+	float CombatStrafeSettledCycleElapsedTime = 0.0f;
+
 	/** The complete selection input consumed by the animation snapshot and database resolver. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
 	FProject_JMotionMatchingSelectionContext MotionMatchingSelectionContext;
@@ -907,7 +916,10 @@ private:
 	EProject_JLocomotionGaitIntent LastPublishedMotionMatchingGait = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode LastPublishedMotionMatchingRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 	EProject_JLocomotionPhaseFamily LastPublishedMotionMatchingPhase = EProject_JLocomotionPhaseFamily::Idle;
+	bool bLastPublishedMotionMatchingUseSettledCycle = false;
 	EProject_JGroundMotionMode LastPublishedGroundMotionMode = EProject_JGroundMotionMode::Idle;
+	bool bHasCombatStrafeControlYawSample = false;
+	float LastCombatStrafeControlYaw = 0.0f;
 	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;
 	bool bHasPreviousKinematicVelocity = false;
 };

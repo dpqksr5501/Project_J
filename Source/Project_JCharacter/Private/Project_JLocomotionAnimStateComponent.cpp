@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Engine/World.h"
@@ -195,6 +196,9 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		DerivedPhaseFamilyElapsedTime = 0.0f;
 		bMotionMatchingSelectionChanged = true;
 		bForceMotionMatchingReselect = false;
+		bUseCombatStrafeSettledCycle = false;
+		CombatStrafeSettledCycleElapsedTime = 0.0f;
+		bHasCombatStrafeControlYawSample = false;
 		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
 		bHasPublishedMotionMatchingSelection = false;
 		++MotionMatchingSelectionRevision;
@@ -402,7 +406,91 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 	}
 	bWasLocallyRequestingTurnInPlace = bLocalTurnInPlace;
 	DerivedLocomotionContext = NewDerivedContext;
+	UpdateCombatStrafeCycleSelection(DeltaTime, *PlayerOwner);
 	UpdateMotionMatchingSelectionState(*PlayerOwner);
+}
+
+void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
+	float DeltaTime,
+	const AProject_JPlayerCharacter& PlayerOwner)
+{
+	const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile();
+	const UProject_JMotionMatchingAssetSet* AssetSet = CombatProfile
+		? CombatProfile->CombatStrafeMotionMatchingAssetSet.Get()
+		: nullptr;
+	const bool bIsLocalCombatStrafe =
+		bUsingLocalInputState &&
+		AuthoritativeContext.bCombatMode &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		CombatProfile &&
+		CombatProfile->bEnableStrafeSettledCycle &&
+		AssetSet;
+
+	if (!bIsLocalCombatStrafe)
+	{
+		bUseCombatStrafeSettledCycle = false;
+		CombatStrafeSettledCycleElapsedTime = 0.0f;
+		bHasCombatStrafeControlYawSample = false;
+		return;
+	}
+
+	const FProject_JMotionMatchingGaitDatabaseFamily& GaitFamily =
+		AuthoritativeContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint
+			? AssetSet->SprintDatabases
+			: AssetSet->RunDatabases;
+	const bool bHasSettledCyclePair = GaitFamily.Cycle && GaitFamily.SettledCycle;
+	if (!bHasSettledCyclePair)
+	{
+		// A missing optional pair must safely retain the authored Dynamic PSD;
+		// never borrow an OTM or another gait's Loop database.
+		bUseCombatStrafeSettledCycle = false;
+		CombatStrafeSettledCycleElapsedTime = 0.0f;
+		bHasCombatStrafeControlYawSample = false;
+		return;
+	}
+
+	float ControlYawRate = TNumericLimits<float>::Max();
+	if (const AController* Controller = PlayerOwner.GetController())
+	{
+		const float CurrentControlYaw = Controller->GetControlRotation().Yaw;
+		if (bHasCombatStrafeControlYawSample && DeltaTime > UE_KINDA_SMALL_NUMBER)
+		{
+			ControlYawRate = FMath::Abs(FMath::FindDeltaAngleDegrees(
+				LastCombatStrafeControlYaw,
+				CurrentControlYaw)) / DeltaTime;
+		}
+		LastCombatStrafeControlYaw = CurrentControlYaw;
+		bHasCombatStrafeControlYawSample = true;
+	}
+	else
+	{
+		bHasCombatStrafeControlYawSample = false;
+	}
+
+	const bool bCycleCanSettle =
+		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		KinematicContext.bHasMoveInput &&
+		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed &&
+		!KinematicContext.bIsDecelerating;
+	const bool bInputDirectionChanging = FMath::Abs(KinematicContext.MoveInputTurnAngle) >=
+		FMath::Max(CombatProfile->StrafeDynamicInputTurnAngle, 0.0f);
+	const bool bControlYawChanging = ControlYawRate >=
+		FMath::Max(CombatProfile->StrafeDynamicFacingYawRate, 0.0f);
+	const bool bVelocityNotAligned = KinematicContext.VelocityToMoveInputAngle >=
+		FMath::Max(CombatProfile->StrafeDynamicVelocityToInputAngle, 0.0f);
+	const bool bKeepDynamic = !bCycleCanSettle || bInputDirectionChanging ||
+		bControlYawChanging || bVelocityNotAligned;
+
+	if (bKeepDynamic)
+	{
+		bUseCombatStrafeSettledCycle = false;
+		CombatStrafeSettledCycleElapsedTime = 0.0f;
+		return;
+	}
+
+	CombatStrafeSettledCycleElapsedTime += FMath::Max(DeltaTime, 0.0f);
+	bUseCombatStrafeSettledCycle = CombatStrafeSettledCycleElapsedTime >=
+		FMath::Max(CombatProfile->StrafeSettledCycleDelay, 0.0f);
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(const AProject_JPlayerCharacter& PlayerOwner)
@@ -411,12 +499,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	MotionMatchingSelectionContext.RotationMode = AuthoritativeContext.RotationMode;
 	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
+	MotionMatchingSelectionContext.bUseSettledCycle = bUseCombatStrafeSettledCycle;
 
 	const bool bSelectionChanged =
 		!bHasPublishedMotionMatchingSelection ||
 		LastPublishedMotionMatchingGait != AuthoritativeContext.GaitIntent ||
 		LastPublishedMotionMatchingRotationMode != AuthoritativeContext.RotationMode ||
 		LastPublishedMotionMatchingPhase != DerivedLocomotionContext.PhaseFamily ||
+		bLastPublishedMotionMatchingUseSettledCycle != bUseCombatStrafeSettledCycle ||
 		LastPublishedGroundMotionMode != GroundMotionMode;
 
 	bMotionMatchingSelectionChanged = bSelectionChanged;
@@ -425,6 +515,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 		LastPublishedMotionMatchingGait = AuthoritativeContext.GaitIntent;
 		LastPublishedMotionMatchingRotationMode = AuthoritativeContext.RotationMode;
 		LastPublishedMotionMatchingPhase = DerivedLocomotionContext.PhaseFamily;
+		bLastPublishedMotionMatchingUseSettledCycle = bUseCombatStrafeSettledCycle;
 		LastPublishedGroundMotionMode = GroundMotionMode;
 		bHasPublishedMotionMatchingSelection = true;
 		++MotionMatchingSelectionRevision;
@@ -453,17 +544,17 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	const float ReselectAngle = bUsesCombatStrafeReselectPolicy && CombatProfile
 		? CombatProfile->StrafeInputTurnReselectAngle
 		: DerivedTurnAngleThreshold;
-	const bool bReselectPolicyEnabled = !bUsesCombatStrafeReselectPolicy ||
+	const bool bInputReselectPolicyEnabled = !bUsesCombatStrafeReselectPolicy ||
 		(CombatProfile && CombatProfile->bForceReselectOnStrafeInputTurn);
-	const bool bRequestsTurnRedirectReselect =
+	const bool bRequestsInputTurnReselect =
 		bCanForceTurnRedirectReselect &&
-		bReselectPolicyEnabled &&
+		bInputReselectPolicyEnabled &&
 		FMath::Abs(MoveInputTurnAngle) >= ReselectAngle;
 	const double WorldTimeSeconds = PlayerOwner.GetWorld() ? PlayerOwner.GetWorld()->GetTimeSeconds() : 0.0;
 	const float ReselectCooldown = bUsesCombatStrafeReselectPolicy && CombatProfile
 		? CombatProfile->StrafeInputTurnReselectCooldown
 		: TurnRedirectReselectCooldown;
-	bForceMotionMatchingReselect = bRequestsTurnRedirectReselect &&
+	bForceMotionMatchingReselect = bRequestsInputTurnReselect &&
 		(WorldTimeSeconds - LastCombatStrafeReselectTimeSeconds >= ReselectCooldown);
 	if (bForceMotionMatchingReselect)
 	{
@@ -488,7 +579,7 @@ void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnab
 		: (PlayerOwner.GetLocalRole() == ROLE_AutonomousProxy ? TEXT("Autonomous") : TEXT("Simulated"));
 
 	UE_LOG(LogProjectJPlayer, Display,
-		TEXT("MMNetState Actor=%s Role=%s LocalInput=%s Rendered=%s Rev=%d Changed=%s ForceReselect=%s Gait=%d Rotation=%d Phase=%d GroundMode=%d Speed=%.1f InputTurn=%.1f VelocityToInput=%.1f StopDist=%.1f RelativeAccel=(%.2f,%.2f)"),
+		TEXT("MMNetState Actor=%s Role=%s LocalInput=%s Rendered=%s Rev=%d Changed=%s ForceReselect=%s Gait=%d Rotation=%d Phase=%d SettledCycle=%s GroundMode=%d Speed=%.1f InputTurn=%.1f VelocityToInput=%.1f StopDist=%.1f RelativeAccel=(%.2f,%.2f)"),
 		*GetNameSafe(&PlayerOwner), Role,
 		bUsingLocalInputState ? TEXT("true") : TEXT("false"),
 		bRecentlyRendered ? TEXT("true") : TEXT("false"),
@@ -498,6 +589,7 @@ void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnab
 		static_cast<int32>(MotionMatchingSelectionContext.GaitIntent),
 		static_cast<int32>(MotionMatchingSelectionContext.RotationMode),
 		static_cast<int32>(MotionMatchingSelectionContext.PhaseFamily),
+		MotionMatchingSelectionContext.bUseSettledCycle ? TEXT("true") : TEXT("false"),
 		static_cast<int32>(GroundMotionMode),
 		GroundSpeed, MoveInputTurnAngle,
 		KinematicContext.VelocityToMoveInputAngle,
@@ -679,6 +771,10 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 	const bool bKeepMovingRedirect =
 		(PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
 			PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
+		// A short redirect hold is meaningful only inside the same rotation mode.
+		// Never carry an OTM Turn/Pivot into Combat Strafe (or the reverse) while
+		// a draw/sheathe presentation changes the locomotion owner.
+		LastPublishedMotionMatchingRotationMode == AuthoritativeContext.RotationMode &&
 		InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		DerivedPhaseFamilyElapsedTime < DerivedTurnMinHoldTime &&
 		KinematicContext.bHasMoveInput &&
@@ -772,6 +868,14 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	if (Context.bIsStarting)
 	{
 		return EProject_JLocomotionPhaseFamily::Start;
+	}
+	// Combat Strafe keeps all ordinary direction changes in its continuous Cycle
+	// PSD. Moving TurnRedirect assets are an OTM-only family; cardinal reversals
+	// remain eligible for the explicit Pivot path above.
+	if (AuthoritativeContext.bCombatMode &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe)
+	{
+		return Context.bIsMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
 	}
 	const bool bHasMovingTurnIntent =
 		Context.bIsMoving &&

@@ -1735,7 +1735,7 @@ FString UProject_JCharacterAnimInstance::GetMotionMatchingTraceSummary() const
 			? MotionMatchingTrace[EntryIndex + 1].WorldTimeSeconds - Entry.WorldTimeSeconds
 			: -1.0;
 		Summary += FString::Printf(
-			TEXT("t=%.3f Next=%.3f Rev=%d PSD=%s Anim=%s AnimTime=%.3f/%.3f PlayRate=%.2f Continuing=%s CurveSpeed=%.1f Warp=%.2f CurvePhase=%.2f Phase=%s Ground=%d Age=%.3f Gait=%s Rotation=%s Speed=%.1f FutureSpeed=%.1f Gain=%.1f FutureTurn=%.1f FutureValid=%s StopDist=%.1f Input=%s Accel=%s Decel=%s InputTurn=%.1f Trajectory=%d DBChanged=%s ForceReselect=%s\n"),
+			TEXT("t=%.3f Next=%.3f Rev=%d PSD=%s Anim=%s AnimTime=%.3f/%.3f PlayRate=%.2f Continuing=%s CurveSpeed=%.1f Warp=%.2f CurvePhase=%.2f Phase=%s Ground=%d Age=%.3f Gait=%s Rotation=%s SettledCycle=%s Speed=%.1f FutureSpeed=%.1f Gain=%.1f FutureTurn=%.1f FutureValid=%s StopDist=%.1f Input=%s Accel=%s Decel=%s InputTurn=%.1f Trajectory=%d DBChanged=%s ForceReselect=%s\n"),
 			Entry.WorldTimeSeconds,
 			UntilNextSeconds,
 			Entry.SelectionRevision,
@@ -1753,6 +1753,7 @@ FString UProject_JCharacterAnimInstance::GetMotionMatchingTraceSummary() const
 			Entry.GroundModeAgeSeconds,
 			ToDebugString(Entry.GaitIntent),
 			ToDebugString(Entry.RotationMode),
+			Entry.bUseSettledCycle ? TEXT("true") : TEXT("false"),
 			Entry.GroundSpeed,
 			Entry.FutureTrajectorySpeed,
 			Entry.PredictedSpeedGain,
@@ -3103,6 +3104,7 @@ void UProject_JCharacterAnimInstance::RecordMotionMatchingTrace(
 	Entry.PhaseFamily = Data.LocomotionContext.PhaseFamily;
 	Entry.GaitIntent = Data.LocomotionContext.GaitIntent;
 	Entry.RotationMode = Data.LocomotionContext.RotationMode;
+	Entry.bUseSettledCycle = Data.MotionMatching.SelectionContext.bUseSettledCycle;
 	Entry.GroundMotionMode = Data.Ground.GroundMotionMode;
 	Entry.GroundModeAgeSeconds = Data.Ground.GroundMotionModeElapsedTime;
 	Entry.GroundSpeed = Data.Movement.GroundSpeed;
