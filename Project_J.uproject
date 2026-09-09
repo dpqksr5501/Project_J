@@ -42,8 +42,7 @@
 	"Plugins": [
 		{
 			"Name": "AnimationBudgetAllocator",
-			"Enabled": true,
-			"TargetAllowList": [ "Editor" ]
+			"Enabled": true
 		},
 		{
 			"Name": "ModelingToolsEditorMode",

@@ -77,7 +77,9 @@ class FCombatComparison : public IAutomationLatentCommand
 		GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 		World->InitializeActorsForPlay(FURL());
 		World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+		World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(false);
 		if (!Start(World, Mode, 100, 20.0f)) { Test->AddError(TEXT("Cannot start background pose workload")); return false; }
+		World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(Mode == 1);
 		Item.Reset(LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip")));
 		UClass* VisualClass = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
 		if (!Item || !VisualClass) { Test->AddError(TEXT("Missing authored equipment/character fixture")); return false; }
@@ -103,6 +105,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		// Start with a throttled hidden mesh; production attack lifetime must protect it.
 		Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		Mesh->bEnableUpdateRateOptimizations = true;
+		CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Mesh)->bBudgetTickWhenNotRendered = true;
 		Player->SetActorEnableCollision(false);
 		State->SetOwner(Controller); Controller->SetPlayerState(State.Get()); Player->SetPlayerState(State.Get());
 		Player->FinishSpawning(FTransform(FRotator::ZeroRotator, Origin)); Controller->Possess(Player.Get());
@@ -111,7 +114,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		Presentation = Player->FindComponentByClass<UProject_JCombatPresentationComponent>();
 		Hit = Player->FindComponentByClass<UProject_JCombatHitValidationComponent>();
 		if (!ASC.IsValid() || !Presentation.IsValid() || !Hit.IsValid() || !Mesh->GetAnimInstance()) { return false; }
-		Test->TestNull(TEXT("Production combat mesh remains outside optional ABA"), Cast<USkeletalMeshComponentBudgeted>(Mesh));
+		Test->TestNotNull(TEXT("Production character uses budget-capable mesh"), Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh));
 		Test->TestFalse(TEXT("Production combat notifies are enabled"), Mesh->bSuppressNotifyEventDispatch);
 		State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);
 		State->GetEquipmentManagerComponent()->EquipItem(Item.Get());
@@ -160,6 +163,8 @@ class FCombatComparison : public IAutomationLatentCommand
 
 	bool StartAttack()
 	{
+		Test->TestEqual(TEXT("Idle combat character participates in actual ABA only in Mode1"),
+			CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh())->IsManagedByBudget(), Mode == 1);
 		auto* Input = Player->FindComponentByClass<UProject_JSkillInputExecutionComponent>();
 		Input->ClearCommandInputHistory();
 		// The current test equipment grants native Melee with an empty listener tag.
@@ -197,6 +202,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		MontageLength = Attack->Montage->GetPlayLength();
 		Test->TestTrue(TEXT("Production attack protects hidden pose updates"), Player->GetMesh()->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
 		Test->TestFalse(TEXT("Production attack disables URO for mandatory notifies"), Player->GetMesh()->bEnableUpdateRateOptimizations);
+		Test->TestFalse(TEXT("Attack immediately leaves allocator scheduling"), CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh())->IsManagedByBudget());
 		for (const auto& Spec : ASC->GetActivatableAbilities())
 		{
 			if (Spec.IsActive())
@@ -236,7 +242,9 @@ class FCombatComparison : public IAutomationLatentCommand
 			Test->TestEqual(TEXT("No retained looping trail"), ActiveCueCount(), 0);
 			Test->TestFalse(TEXT("Trail recovery state cleared"), HasTrailState());
 			Test->TestFalse(TEXT("Late hit rejected after attack end"), Hit->ProcessAuthorityHit(Target.Get()));
-			Test->TestTrue(TEXT("Attack end restores pre-attack URO"), Player->GetMesh()->bEnableUpdateRateOptimizations);
+			const bool bBudgeted = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh())->IsManagedByBudget();
+			Test->TestEqual(TEXT("Attack end restores URO or resumes allocator ownership"), bool(Player->GetMesh()->bEnableUpdateRateOptimizations), !bBudgeted);
+			if (Mode == 1) { Test->TestTrue(TEXT("Idle character rejoins allocator after attack"), bBudgeted); }
 			Test->TestTrue(TEXT("Attack end restores pre-attack visibility policy"), Player->GetMesh()->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered);
 		}
 		UE_LOG(LogProjectJAnimationBudgetProbe, Display, TEXT("CombatContinuity Mode=%d Exit=%d HitEvents=%d Effects=%d ComboWindows=%d Trail=%d RenderedTrail=%d BoneFinalizations=%d CombatFrames=%d Displacement=%s"),

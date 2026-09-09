@@ -11,6 +11,8 @@
 #include "HAL/IConsoleManager.h"
 #include "IAnimationBudgetAllocator.h"
 #include "SkeletalMeshComponentBudgeted.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "ProfilingDebugging/CountersTrace.h"
@@ -51,6 +53,7 @@ struct FRun : TSharedFromThis<FRun>
 		// Do not share allocator ownership with existing budgeted meshes in any world.
 		for (TObjectIterator<USkeletalMeshComponentBudgeted> It; It; ++It)
 		{
+			if (const auto* ProjectMesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(*It); ProjectMesh && !ProjectMesh->IsManagedByBudget()) { continue; }
 			if (!It->IsTemplate() && It->IsRegistered() && It->GetWorld() && It->GetWorld()->IsGameWorld())
 			{
 				UE_LOG(LogProjectJAnimationBudgetProbe, Warning, TEXT("Existing budgeted mesh found; refusing to change allocator ownership."));
@@ -242,6 +245,7 @@ public:
 			GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 			World->InitializeActorsForPlay(FURL());
 			World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+			World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(false);
 			if (!Start(World, Mode, 100, 3.0f))
 			{
 				Test->AddError(TEXT("Probe failed to start. Launch with a.Budget.Enabled=1 before worlds start."));
@@ -272,5 +276,6 @@ bool FProjectJAnimationBudgetProbeBudgeted::RunTest(const FString&) { ADD_LATENT
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationBudgetProbeCleanup, "ProjectJ.GroupB.AnimationProbe.WorldCleanup", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationBudgetProbeCleanup::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FSmoke(this, 1, true)); return true; }
 #include "Testing/Project_JAnimationBudgetCombatTests.inl"
+#include "Testing/Project_JCharacterBudgetTests.inl"
 #endif
 #endif

@@ -31,7 +31,7 @@ class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public
 
 public:
 	// Sets default values for this character's properties
-	AProject_JBaseCharacter();
+	AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	// Implement IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

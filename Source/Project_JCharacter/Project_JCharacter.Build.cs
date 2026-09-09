@@ -24,6 +24,7 @@ public class Project_JCharacter : ModuleRules
 			"BlendStack",
 			"MotionTrajectory",
 			"AnimationCore",
+			"AnimationBudgetAllocator",
 			"AnimGraphRuntime",
 			"AnimationWarpingRuntime",
 			"Project_JCore",

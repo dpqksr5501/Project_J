@@ -16,9 +16,11 @@
 #include "SignificanceManager.h"
 #include "Engine/World.h"
 #include "Project_JAbilitySystemOwnerInterface.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 
 
-AProject_JBaseCharacter::AProject_JBaseCharacter()
+AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JBudgetedSkeletalMeshComponent>(ACharacter::MeshComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
 	

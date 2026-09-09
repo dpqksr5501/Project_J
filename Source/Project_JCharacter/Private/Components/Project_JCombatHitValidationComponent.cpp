@@ -11,6 +11,7 @@
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatHitValidation, Log, All);
 
@@ -56,6 +57,7 @@ void UProject_JCombatHitValidationComponent::ProtectAttackPose()
 	if (ProtectedMesh.Get() != Mesh)
 	{
 		RestoreAttackPose();
+		if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh)) { Budgeted->SetCombatCritical(true); }
 		ProtectedMesh = Mesh;
 		SavedVisibility = uint8(Mesh->VisibilityBasedAnimTickOption);
 		bSavedURO = Mesh->bEnableUpdateRateOptimizations;
@@ -77,6 +79,7 @@ void UProject_JCombatHitValidationComponent::RestoreAttackPose()
 		{ Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption(SavedVisibility); }
 		if (!Mesh->bEnableUpdateRateOptimizations) { Mesh->bEnableUpdateRateOptimizations = bSavedURO; }
 		if (!Mesh->bSuppressNotifyEventDispatch) { Mesh->bSuppressNotifyEventDispatch = bSavedSuppressNotifies; }
+		if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh)) { Budgeted->SetCombatCritical(false); }
 	}
 	ProtectedMesh.Reset();
 }
