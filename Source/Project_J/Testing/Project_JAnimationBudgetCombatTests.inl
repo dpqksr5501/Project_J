@@ -23,7 +23,7 @@
 
 namespace ProjectJAnimationBudgetProbe
 {
-enum class ECombatExit { Complete, Cancel, Destroy, Unequip };
+enum class ECombatExit { Complete, Cancel, Destroy, Unequip, UnequipBeforeHit };
 
 struct FCombatResult
 {
@@ -100,8 +100,9 @@ class FCombatComparison : public IAutomationLatentCommand
 		Mesh->SetSkeletalMesh(Template->GetMesh()->GetSkeletalMeshAsset());
 		Mesh->SetRelativeTransform(Template->GetMesh()->GetRelativeTransform());
 		Mesh->SetAnimInstanceClass(Template->GetMesh()->GetAnimClass());
-		Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-		Mesh->bEnableUpdateRateOptimizations = false;
+		// Start with a throttled hidden mesh; production attack lifetime must protect it.
+		Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		Mesh->bEnableUpdateRateOptimizations = true;
 		Player->SetActorEnableCollision(false);
 		State->SetOwner(Controller); Controller->SetPlayerState(State.Get()); Player->SetPlayerState(State.Get());
 		Player->FinishSpawning(FTransform(FRotator::ZeroRotator, Origin)); Controller->Possess(Player.Get());
@@ -194,6 +195,8 @@ class FCombatComparison : public IAutomationLatentCommand
 		if (!Attack || !Attack->Montage || !Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 		{ Test->AddError(TEXT("Actual LMB input did not start an authored attack")); return false; }
 		MontageLength = Attack->Montage->GetPlayLength();
+		Test->TestTrue(TEXT("Production attack protects hidden pose updates"), Player->GetMesh()->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
+		Test->TestFalse(TEXT("Production attack disables URO for mandatory notifies"), Player->GetMesh()->bEnableUpdateRateOptimizations);
 		for (const auto& Spec : ASC->GetActivatableAbilities())
 		{
 			if (Spec.IsActive())
@@ -212,10 +215,17 @@ class FCombatComparison : public IAutomationLatentCommand
 	bool EndCase()
 	{
 		const FCombatResult& R = Results[Mode];
-		Test->TestTrue(TEXT("Authored melee notify sent gameplay events"), R.HitEvents > 0);
-		Test->TestEqual(TEXT("Authority applied exactly one GE to the target per swing"), R.AppliedEffects, 1);
-		Test->TestTrue(TEXT("Authored trail notify opened recovery state (GPU rendering tested separately)"), R.bSawTrail);
-		if (FApp::CanEverRender()) { Test->TestTrue(TEXT("Rendered run created a tracked Niagara trail"), R.bSawRenderedTrail); }
+		if (Exit == ECombatExit::UnequipBeforeHit)
+		{
+			Test->TestEqual(TEXT("Unequip before contact prevents every damage application"), R.AppliedEffects, 0);
+		}
+		else
+		{
+			Test->TestTrue(TEXT("Authored melee notify sent gameplay events"), R.HitEvents > 0);
+			Test->TestEqual(TEXT("Authority applied exactly one GE to the target per swing"), R.AppliedEffects, 1);
+			Test->TestTrue(TEXT("Authored trail notify opened recovery state (GPU rendering tested separately)"), R.bSawTrail);
+			if (FApp::CanEverRender()) { Test->TestTrue(TEXT("Rendered run created a tracked Niagara trail"), R.bSawRenderedTrail); }
+		}
 		if (ASC.IsValid()) { Test->TestFalse(TEXT("ASC attack tag cleared even if avatar was destroyed"), ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking)); }
 		if (Exit == ECombatExit::Complete) { Test->TestTrue(TEXT("Authored combo window notify delivered"), R.ComboWindows > 0); }
 		if (Player.IsValid())
@@ -226,6 +236,8 @@ class FCombatComparison : public IAutomationLatentCommand
 			Test->TestEqual(TEXT("No retained looping trail"), ActiveCueCount(), 0);
 			Test->TestFalse(TEXT("Trail recovery state cleared"), HasTrailState());
 			Test->TestFalse(TEXT("Late hit rejected after attack end"), Hit->ProcessAuthorityHit(Target.Get()));
+			Test->TestTrue(TEXT("Attack end restores pre-attack URO"), Player->GetMesh()->bEnableUpdateRateOptimizations);
+			Test->TestTrue(TEXT("Attack end restores pre-attack visibility policy"), Player->GetMesh()->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered);
 		}
 		UE_LOG(LogProjectJAnimationBudgetProbe, Display, TEXT("CombatContinuity Mode=%d Exit=%d HitEvents=%d Effects=%d ComboWindows=%d Trail=%d RenderedTrail=%d BoneFinalizations=%d CombatFrames=%d Displacement=%s"),
 			Mode, int32(Exit), R.HitEvents, R.AppliedEffects, R.ComboWindows, R.bSawTrail, R.bSawRenderedTrail, R.BoneFrames, R.CombatFrames, *R.Displacement.ToString());
@@ -234,7 +246,7 @@ class FCombatComparison : public IAutomationLatentCommand
 		Test->TestEqual(TEXT("Budget pressure preserves confirmed hit count"), Results[1].AppliedEffects, Results[0].AppliedEffects);
 		Test->TestEqual(TEXT("Budget pressure preserves authored hit event count"), Results[1].HitEvents, Results[0].HitEvents);
 		Test->TestEqual(TEXT("Budget pressure preserves combo events"), Results[1].ComboWindows, Results[0].ComboWindows);
-		Test->TestTrue(TEXT("Authored root motion produced nonzero movement"), Results[0].Displacement.Size() > 1.0);
+		if (Exit != ECombatExit::UnequipBeforeHit) { Test->TestTrue(TEXT("Authored root motion produced nonzero movement"), Results[0].Displacement.Size() > 1.0); }
 		Test->TestTrue(TEXT("Budget pressure preserves movement within 1cm"), Results[1].Displacement.Equals(Results[0].Displacement, 1.0));
 		return true;
 	}
@@ -260,14 +272,17 @@ public:
 		Results[Mode].bSawRenderedTrail |= ActiveCueCount() > 0;
 		// Interrupt after root motion has actually started, not just at the first
 		// notify frame (the authored anticipation portion is stationary).
-		if (Exit != ECombatExit::Complete && Results[Mode].AppliedEffects > 0 && Results[Mode].bSawTrail && Results[Mode].Displacement.Size() > 10.0)
+		if (Exit == ECombatExit::UnequipBeforeHit || (Exit != ECombatExit::Complete && Results[Mode].AppliedEffects > 0 && Results[Mode].bSawTrail && Results[Mode].Displacement.Size() > 10.0))
 		{
 			if (Exit == ECombatExit::Cancel) { ASC->CancelAllAbilities(); }
-			else if (Exit == ECombatExit::Unequip)
+			else if (Exit == ECombatExit::Unequip || Exit == ECombatExit::UnequipBeforeHit)
 			{
 				State->GetEquipmentManagerComponent()->UnequipSlot(EProject_JEquipmentSlot::Weapon);
 				Test->TestNull(TEXT("Equipment removed during active root-motion attack"), State->GetEquipmentManagerComponent()->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon));
 				Test->TestEqual(TEXT("Unequip clears local looping components immediately"), ActiveCueCount(), 0);
+				Test->TestNull(TEXT("Unequip immediately closes damage definition"), Hit->GetActiveAttackDefinition());
+				Test->TestFalse(TEXT("Unequip immediately ends attacking state"), ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking));
+				Test->TestFalse(TEXT("Unequip rejects subsequent hits"), Hit->ProcessAuthorityHit(Target.Get()));
 			}
 			else
 			{
@@ -292,3 +307,5 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationCombatDestroy, "ProjectJ.Grou
 bool FProjectJAnimationCombatDestroy::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FCombatComparison(this, ProjectJAnimationBudgetProbe::ECombatExit::Destroy)); return true; }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationCombatUnequip, "ProjectJ.GroupB.CombatContinuity.Unequip", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAnimationCombatUnequip::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FCombatComparison(this, ProjectJAnimationBudgetProbe::ECombatExit::Unequip)); return true; }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationCombatUnequipBeforeHit, "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJAnimationCombatUnequipBeforeHit::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(ProjectJAnimationBudgetProbe::FCombatComparison(this, ProjectJAnimationBudgetProbe::ECombatExit::UnequipBeforeHit)); return true; }

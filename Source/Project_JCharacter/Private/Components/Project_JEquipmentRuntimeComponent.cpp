@@ -120,9 +120,11 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 
 void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (!RuntimeItems.Contains(Slot)) return;
-
-	FProject_JEquipmentRuntimeItem& RuntimeItem = RuntimeItems[Slot];
+	// Revoke first: cancellation callbacks must not observe or reuse this weapon.
+	// Own a copy across callbacks rather than retaining a mutable map reference.
+	FProject_JEquipmentRuntimeItem RuntimeItem;
+	if (!RuntimeItems.RemoveAndCopyValue(Slot, RuntimeItem)) return;
+	if (Slot == EProject_JEquipmentSlot::Weapon) { WeaponRevoked.Broadcast(); }
 	UProject_JEquipmentItemDefinition* RuntimeItemDef = RuntimeItem.ItemDef ? RuntimeItem.ItemDef : ItemDef;
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
@@ -133,7 +135,6 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 
 	DestroyEquipmentVisual(RuntimeItem);
 
-	RuntimeItems.Remove(Slot);
 	ScheduleVisualRetry();
 	RefreshCurrentWeaponConfiguration();
 }
@@ -300,6 +301,12 @@ void UProject_JEquipmentRuntimeComponent::CancelEquipmentMeshLoad(FProject_JEqui
 		if (auto* Service = VisualAssets.Get()) { Service->Release(RuntimeItem.VisualLoadToken); }
 		RuntimeItem.VisualLoadToken = 0;
 	}
+}
+
+uint64 UProject_JEquipmentRuntimeComponent::GetWeaponRevision() const
+{
+	const auto* Weapon = RuntimeItems.Find(EProject_JEquipmentSlot::Weapon);
+	return !bIsEndingPlay && Weapon && IsValid(Weapon->ItemDef) ? Weapon->VisualRevision : 0;
 }
 
 void UProject_JEquipmentRuntimeComponent::RetryEquipmentVisuals()

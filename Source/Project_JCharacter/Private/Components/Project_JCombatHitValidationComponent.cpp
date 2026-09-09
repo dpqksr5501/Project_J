@@ -7,6 +7,10 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameplayEffect.h"
 #include "Engine/World.h"
+#include "Project_JPlayerCharacter.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Character.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatHitValidation, Log, All);
 
@@ -16,8 +20,13 @@ UProject_JCombatHitValidationComponent::UProject_JCombatHitValidationComponent()
 	SetIsReplicatedByDefault(true);
 }
 
-void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition)
+void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition, const int32 PredictionKey)
 {
+	ProtectAttackPose();
+	bRequiresWeapon = Cast<AProject_JPlayerCharacter>(GetOwner()) != nullptr;
+	AttackEquipment = GetOwner() ? GetOwner()->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
+	AttackWeaponRevision = AttackEquipment.IsValid() ? AttackEquipment->GetWeaponRevision() : 0;
+	ActivePredictionKey = PredictionKey;
 	ActiveAttackNodeTag = AttackNodeTag;
 	ActiveAttackDefinition = AttackDefinition;
 	bHitWindowOpen = false;
@@ -27,11 +36,67 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 
 void UProject_JCombatHitValidationComponent::EndAttack()
 {
+	AttackEquipment.Reset();
+	AttackWeaponRevision = 0;
+	ActivePredictionKey = 0;
 	ActiveAttackNodeTag = FGameplayTag();
 	ActiveAttackDefinition = nullptr;
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
+	RestoreAttackPose();
+}
+
+void UProject_JCombatHitValidationComponent::ProtectAttackPose()
+{
+	check(IsInGameThread());
+	const auto* Character = Cast<ACharacter>(GetOwner());
+	auto* Mesh = Character ? Character->GetMesh() : nullptr;
+	if (!Mesh) { return; }
+	if (ProtectedMesh.Get() != Mesh)
+	{
+		RestoreAttackPose();
+		ProtectedMesh = Mesh;
+		SavedVisibility = uint8(Mesh->VisibilityBasedAnimTickOption);
+		bSavedURO = Mesh->bEnableUpdateRateOptimizations;
+		bSavedSuppressNotifies = Mesh->bSuppressNotifyEventDispatch;
+	}
+	// A hit window is authoritative gameplay. Hidden meshes/DS must still refresh
+	// sockets and dispatch notifies. Do not change root-motion mode or force GT evaluation.
+	Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+	Mesh->bEnableUpdateRateOptimizations = false;
+	Mesh->bSuppressNotifyEventDispatch = false;
+}
+
+void UProject_JCombatHitValidationComponent::RestoreAttackPose()
+{
+	if (auto* Mesh = ProtectedMesh.Get())
+	{
+		// Preserve a newer explicit policy written by another system.
+		if (Mesh->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
+		{ Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption(SavedVisibility); }
+		if (!Mesh->bEnableUpdateRateOptimizations) { Mesh->bEnableUpdateRateOptimizations = bSavedURO; }
+		if (!Mesh->bSuppressNotifyEventDispatch) { Mesh->bSuppressNotifyEventDispatch = bSavedSuppressNotifies; }
+	}
+	ProtectedMesh.Reset();
+}
+
+void UProject_JCombatHitValidationComponent::EndPlay(const EEndPlayReason::Type Reason)
+{
+	EndAttack();
+	Super::EndPlay(Reason);
+}
+
+void UProject_JCombatHitValidationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	EndAttack();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+bool UProject_JCombatHitValidationComponent::HasValidAttackWeapon() const
+{
+	return !bRequiresWeapon || (AttackWeaponRevision != 0 && AttackEquipment.IsValid()
+		&& AttackEquipment->GetWeaponRevision() == AttackWeaponRevision);
 }
 
 void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVector& TraceStart, const FVector& TraceEnd)
@@ -53,17 +118,17 @@ void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
 
 void UProject_JCombatHitValidationComponent::SubmitPredictedHit(AActor* HitActor, const float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd)
 {
-	if (!HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen)
+	if (!HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen || !HasValidAttackWeapon() || ActivePredictionKey == 0)
 	{
 		return;
 	}
 
-	ServerRequestSSRHit(HitActor, ClientTimestamp, TraceStart, TraceEnd, ActiveAttackNodeTag, ++LocalRequestSequence);
+	ServerRequestSSRHit(HitActor, ClientTimestamp, TraceStart, TraceEnd, ActiveAttackNodeTag, ++LocalRequestSequence, ActivePredictionKey);
 }
 
 bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActor)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen || !bHasAuthoritativeTrace || ServerHitActors.Contains(HitActor))
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !HitActor || !ActiveAttackNodeTag.IsValid() || !bHitWindowOpen || !bHasAuthoritativeTrace || !HasValidAttackWeapon() || ServerHitActors.Contains(HitActor))
 	{
 		return false;
 	}
@@ -88,7 +153,7 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 	return ApplyConfirmedHit(HitActor);
 }
 
-void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence)
+void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence, int32 PredictionKey)
 {
 	FProject_JCombatHitRequest Request;
 	Request.Target = HitActor;
@@ -97,6 +162,7 @@ void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(
 	Request.TraceEnd = TraceEnd;
 	Request.AttackNodeTag = AttackNodeTag;
 	Request.RequestSequence = RequestSequence;
+	Request.PredictionKey = PredictionKey;
 
 	if (const EProject_JCombatHitValidationFailure ActiveFailure = ValidateActiveAttack(Request); ActiveFailure != EProject_JCombatHitValidationFailure::None)
 	{
@@ -133,9 +199,13 @@ void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(
 
 EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::ValidateActiveAttack(const FProject_JCombatHitRequest& Request)
 {
-	if (!ActiveAttackNodeTag.IsValid())
+	if (!ActiveAttackNodeTag.IsValid() || !HasValidAttackWeapon())
 	{
 		return EProject_JCombatHitValidationFailure::NoActiveAttack;
+	}
+	if (Request.PredictionKey == 0 || Request.PredictionKey != ActivePredictionKey)
+	{
+		return EProject_JCombatHitValidationFailure::AttackActivationMismatch;
 	}
 	if (!Request.AttackNodeTag.MatchesTagExact(ActiveAttackNodeTag))
 	{

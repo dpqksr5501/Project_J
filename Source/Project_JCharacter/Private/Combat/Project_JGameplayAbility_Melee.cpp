@@ -13,6 +13,7 @@
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatPresentationComponent.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 #include "HAL/IConsoleManager.h"
@@ -57,6 +58,9 @@ bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHan
 	// Class and equipment grants may coexist. A single combo owns the shared montage,
 	// hit window and presentation; subsequent inputs go to that active combo's event tasks.
 	// Enforce this natively so existing Blueprint tag overrides cannot bypass the contract.
+	const auto* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
+	const auto* Equipment = Avatar ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
+	if (!Equipment || Equipment->GetWeaponRevision() == 0) { return false; }
 	if (bEndingAttack || (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
 		&& ActorInfo->AbilitySystemComponent->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking)))
 	{
@@ -67,11 +71,22 @@ bool UProject_JGameplayAbility_Melee::CanActivateAbility(FGameplayAbilitySpecHan
 
 void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	AActor* Avatar = GetAvatarActorFromActorInfo();
+	AttackEquipment = Avatar ? Avatar->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
+	AttackWeaponRevision = AttackEquipment.IsValid() ? AttackEquipment->GetWeaponRevision() : 0;
+	if (!HasActiveWeapon())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+	WeaponRevokedHandle = AttackEquipment->OnWeaponRevoked().AddUObject(this, &ThisClass::OnWeaponRevoked);
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
+	// Commit hooks may revoke equipment and synchronously end this activation.
+	if (!IsActive() || !HasActiveWeapon()) { return; }
 
 	ApplyCameraDirectionRotation();
 
@@ -129,6 +144,10 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	// base class guard runs too late to protect our shared hit/presentation cleanup.
 	if (!IsActive() || bEndingAttack) { return; }
 	TGuardValue<bool> EndingGuard(bEndingAttack, true);
+	if (AttackEquipment.IsValid()) { AttackEquipment->OnWeaponRevoked().Remove(WeaponRevokedHandle); }
+	WeaponRevokedHandle.Reset();
+	AttackEquipment.Reset();
+	AttackWeaponRevision = 0;
 	if (IsComboDebugEnabled())
 	{
 		UE_LOG(LogProjectJCombatCombo, Log, TEXT("End Owner=%s Ability=%s Cancelled=%d"),
@@ -146,12 +165,31 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 			HitValidation->EndAttack();
 		}
 	}
+	if (auto* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+		bWasCancelled && ASC && ASC->GetAnimatingAbility() == this && ASC->GetCurrentMontage() == ActiveComboMontage)
+	{
+		// Revoked attacks must not retain root motion during a montage blend-out.
+		ASC->CurrentMontageStop(0.0f);
+	}
 	ComboEventTasks.Reset();
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
 	ActiveComboMontage = nullptr;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 	MontageTask = nullptr;
+}
+
+bool UProject_JGameplayAbility_Melee::HasActiveWeapon() const
+{
+	return AttackWeaponRevision != 0 && AttackEquipment.IsValid()
+		&& AttackEquipment->GetWeaponRevision() == AttackWeaponRevision;
+}
+
+void UProject_JGameplayAbility_Melee::OnWeaponRevoked()
+{
+	// End directly: equipment validity is a hard lifetime boundary, including
+	// class-granted abilities and locally predicted instances on replication removal.
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UProject_JGameplayAbility_Melee::ApplyAttackMovementPolicy(const UProject_JAttackDefinition& AttackDefinition)
@@ -398,6 +436,7 @@ bool UProject_JGameplayAbility_Melee::TryQueueOrConsumeComboInput(const FGamepla
 
 void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& Node)
 {
+	if (!IsActive() || bEndingAttack || !HasActiveWeapon()) { OnWeaponRevoked(); return; }
 	UProject_JAttackDefinition* AttackDefinition = Node.AttackDefinition;
 	if (AttackDefinition)
 	{
@@ -445,7 +484,7 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		}
 		if (UProject_JCombatHitValidationComponent* HitValidation = AvatarActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
-			HitValidation->BeginAttackNode(CurrentComboNodeTag, AttackDefinition);
+			HitValidation->BeginAttackNode(CurrentComboNodeTag, AttackDefinition, CurrentActivationInfo.GetActivationPredictionKey().Current);
 		}
 	}
 	if (MontageTask && ActiveComboMontage == NodeMontage)
@@ -490,6 +529,7 @@ void UProject_JGameplayAbility_Melee::OnMontageInterrupted()
 
 void UProject_JGameplayAbility_Melee::OnMeleeHitReceived(FGameplayEventData Payload)
 {
+	if (!IsActive() || bEndingAttack || !HasActiveWeapon()) { return; }
 	AActor* HitActor = const_cast<AActor*>(Payload.Target.Get());
 	if (HitActor && !HitActorsThisSwing.Contains(HitActor))
 	{

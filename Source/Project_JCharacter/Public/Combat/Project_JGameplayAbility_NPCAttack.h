@@ -43,9 +43,6 @@ private:
 	UFUNCTION() void OnMovementModeChanged(ACharacter* Character, EMovementMode PreviousMode, uint8 PreviousCustomMode);
 	UPROPERTY(Transient) TObjectPtr<UProject_JAttackDefinition> ActiveDefinition;
 	TWeakObjectPtr<AActor> LockedTarget;
-	TWeakObjectPtr<USkeletalMeshComponent> AttackMesh;
 	TWeakObjectPtr<ACharacter> AttackCharacter;
-	uint8 SavedVisibility = 0;
-	bool bSavedURO = false, bChangedMeshPolicy = false;
 	bool bEndingAttack = false;
 };

@@ -70,6 +70,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void RetryEquipmentVisuals();
 
+	/** Local GT identity of this equipped weapon. Zero means no usable weapon. */
+	uint64 GetWeaponRevision() const;
+	DECLARE_EVENT(UProject_JEquipmentRuntimeComponent, FWeaponRevoked);
+	FWeaponRevoked& OnWeaponRevoked() { return WeaponRevoked; }
+
 protected:
 	UFUNCTION()
 	void OnEquipmentEquipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
@@ -105,6 +110,7 @@ private:
 	TMap<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem> RuntimeItems;
 
 	bool bIsEndingPlay = false;
+	FWeaponRevoked WeaponRevoked;
 	uint64 NextVisualRevision = 0;
 	TWeakObjectPtr<UProject_JVisualAssetSubsystem> VisualAssets;
 };

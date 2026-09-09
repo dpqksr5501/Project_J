@@ -18,7 +18,7 @@ public:
 	UProject_JCombatHitValidationComponent();
 
 	/** Called by the authoritative/predicted melee ability when a new combo node starts. */
-	void BeginAttackNode(FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition);
+	void BeginAttackNode(FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition, int32 PredictionKey = 0);
 	void EndAttack();
 	void SetHitWindowOpen(bool bOpen);
 
@@ -39,11 +39,27 @@ public:
 	const UProject_JAttackDefinition* GetActiveAttackDefinition() const { return ActiveAttackDefinition.Get(); }
 
 	UFUNCTION(Server, Unreliable)
-	void ServerRequestSSRHit(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence);
+	void ServerRequestSSRHit(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence, int32 PredictionKey);
 
 	FProject_JCombatHitValidationResult ValidateServerHitRequest(const FProject_JCombatHitRequest& Request) const;
 
+protected:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+
 private:
+	void ProtectAttackPose();
+	void RestoreAttackPose();
+	TWeakObjectPtr<class USkeletalMeshComponent> ProtectedMesh;
+	uint8 SavedVisibility = 0;
+	bool bSavedURO = false;
+	bool bSavedSuppressNotifies = false;
+	friend class FProjectJWeaponAttackLifetimeTest;
+	bool HasValidAttackWeapon() const;
+	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;
+	uint64 AttackWeaponRevision = 0;
+	int32 ActivePredictionKey = 0;
+	bool bRequiresWeapon = false;
 	UAbilitySystemComponent* ResolveOwnerAbilitySystemComponent() const;
 	bool ApplyConfirmedHit(AActor* HitActor);
 	EProject_JCombatHitValidationFailure ValidateActiveAttack(const FProject_JCombatHitRequest& Request);

@@ -121,12 +121,7 @@ void UProject_JGameplayAbility_NPCAttack::ActivateAbility(FGameplayAbilitySpecHa
 	NPC->MovementModeChangedDelegate.AddDynamic(this, &ThisClass::OnMovementModeChanged);
 	FRotator Facing = (LockedTarget->GetActorLocation() - NPC->GetActorLocation()).Rotation();
 	Facing.Pitch = Facing.Roll = 0; NPC->SetActorRotation(Facing);
-	AttackMesh = NPC->GetMesh();
-	SavedVisibility = uint8(AttackMesh->VisibilityBasedAnimTickOption); bSavedURO = AttackMesh->bEnableUpdateRateOptimizations;
-	bChangedMeshPolicy = true;
-	// Dedicated servers must refresh bones and execute hit notifies even without a rendered mesh.
-	AttackMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-	AttackMesh->bEnableUpdateRateOptimizations = false;
+	// Shared hit lifetime protects mandatory pose/notifies for both NPC and player.
 	NPC->FindComponentByClass<UProject_JCombatHitValidationComponent>()->BeginAttackNode(ActiveDefinition->AttackTag, ActiveDefinition);
 	if (auto* Presentation = NPC->FindComponentByClass<UProject_JCombatPresentationComponent>())
 	{
@@ -185,15 +180,7 @@ void UProject_JGameplayAbility_NPCAttack::EndAbility(FGameplayAbilitySpecHandle 
 		if (auto* Hit = Avatar->FindComponentByClass<UProject_JCombatHitValidationComponent>(); Hit && ActiveDefinition && Hit->GetActiveAttackDefinition() == ActiveDefinition) { Hit->EndAttack(); }
 		if (auto* VFX = Avatar->FindComponentByClass<UProject_JCombatPresentationComponent>(); VFX && ActiveDefinition && VFX->GetActiveAttackTag() == ActiveDefinition->AttackTag) { VFX->EndAttackPresentation(); }
 	}
-	if (auto* Mesh = AttackMesh.Get(); Mesh && bChangedMeshPolicy)
-	{
-		if (Mesh->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
-		{
-			Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption(SavedVisibility);
-		}
-		if (!Mesh->bEnableUpdateRateOptimizations) { Mesh->bEnableUpdateRateOptimizations = bSavedURO; }
-	}
-	bChangedMeshPolicy = false; AttackMesh.Reset(); LockedTarget.Reset(); ActiveDefinition = nullptr;
+	LockedTarget.Reset(); ActiveDefinition = nullptr;
 	UE_CLOG(CVarNPCAttackDebug.GetValueOnGameThread() != 0, LogProjectJNPCAttack, Log,
 		TEXT("Ended Owner=%s Cancelled=%d"), *GetNameSafe(Info ? Info->AvatarActor.Get() : nullptr), bWasCancelled);
 	Super::EndAbility(Handle, Info, ActivationInfo, bReplicateEndAbility, bWasCancelled);

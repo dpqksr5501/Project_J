@@ -7,6 +7,9 @@
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JSkillInputExecutionComponent.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "Components/Project_JEquipmentManagerComponent.h"
+#include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Project_JGreatswordCharacter.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
@@ -34,6 +37,12 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
  { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); return false; }
  FindFProperty<FObjectPropertyBase>(AProject_JPlayerCharacter::StaticClass(), TEXT("CurrentCombatStyle"))->SetObjectPropertyValue_InContainer(Player, Style);
  Player->GetMesh()->SetSkeletalMesh(Mesh); Player->GetMesh()->SetAnimInstanceClass(UAnimInstance::StaticClass());
+ // Supply a real equipped slot without granting extra abilities from authored assets.
+ auto* Equipment = NewObject<UProject_JEquipmentManagerComponent>(Player); Equipment->RegisterComponent();
+ Player->FindComponentByClass<UProject_JEquipmentRuntimeComponent>()->BindToEquipmentManager(Equipment);
+ auto* Item = NewObject<UProject_JEquipmentItemDefinition>(Player); Item->EquipmentSlot = EProject_JEquipmentSlot::Weapon;
+ auto* EquippedStyle = DuplicateObject(Style, Item); EquippedStyle->AbilitySets.Reset(); Item->CombatStyleDefinition = EquippedStyle;
+ Equipment->EquipItem(Item);
  const auto& Tags = FProject_JGameplayTags::Get();
  ASC->AddLooseGameplayTag(Tags.State_CombatMode);
  auto* Input = Player->FindComponentByClass<UProject_JSkillInputExecutionComponent>(); Input->Initialize(Player);
@@ -74,6 +83,26 @@ bool FProjectJMeleeLifetimeTest::RunTest(const FString& Parameters)
   TestEqual(TEXT("Opening the combo window advances presentation"), Presentation->GetActiveAttackTag(), NextNode->AttackDefinition->AttackTag);
   TestTrue(TEXT("Opening the combo window advances hit validation"), Hit->GetActiveAttackDefinition() == NextNode->AttackDefinition);
  }
+ ASC->CancelAllAbilities();
+ Input->ClearCommandInputHistory(); Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+ TestTrue(TEXT("Class-granted attack is active before unequip"), First->IsActive());
+ UAnimMontage* RevokedMontage = ASC->GetCurrentMontage();
+ Equipment->UnequipSlot(EProject_JEquipmentSlot::Weapon);
+ TestFalse(TEXT("Unequip immediately ends class-granted melee"), First->IsActive());
+ // IsAnyMontagePlaying counts stopped instances awaiting the next animation tick.
+ TestTrue(TEXT("Unequip stops the owned montage immediately"), Player->GetMesh()->GetAnimInstance()->Montage_GetIsStopped(RevokedMontage));
+ TestFalse(TEXT("Revoked montage is no longer playing"), Player->GetMesh()->GetAnimInstance()->Montage_IsPlaying(RevokedMontage));
+ TestFalse(TEXT("Unequip clears owned attacking state"), ASC->HasMatchingGameplayTag(Tags.State_Attacking));
+ TestNull(TEXT("Unequip clears authoritative hit definition immediately"), Hit->GetActiveAttackDefinition());
+ TestFalse(TEXT("Unequip clears presentation immediately"), Presentation->GetActiveAttackTag().IsValid());
+ TestTrue(TEXT("Class grant is retained for future equipment"), ASC->FindAbilitySpecFromHandle(FirstHandle) != nullptr);
+ Input->ClearCommandInputHistory(); Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+ TestFalse(TEXT("Retained class grant cannot attack without a weapon"), First->IsActive());
+ Equipment->EquipItem(Item);
+ Input->ClearCommandInputHistory(); Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+ TestTrue(TEXT("Same item can attack after re-equip"), First->IsActive());
+ Equipment->EquipItem(Item);
+ TestFalse(TEXT("Replacing with the same definition still revokes the old swing"), First->IsActive());
  ASC->CancelAllAbilities();
  World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
  return true;

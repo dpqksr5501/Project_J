@@ -24,7 +24,8 @@ enum class EProject_JCombatHitValidationFailure : uint8
 	AttackNodeMismatch,
 	HitWindowClosed,
 	DuplicateTarget,
-	RequestRateLimited
+	RequestRateLimited,
+	AttackActivationMismatch
 };
 
 inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
@@ -49,6 +50,7 @@ inline const TCHAR* LexToString(EProject_JCombatHitValidationFailure Failure)
 	case EProject_JCombatHitValidationFailure::HitWindowClosed: return TEXT("HitWindowClosed");
 	case EProject_JCombatHitValidationFailure::DuplicateTarget: return TEXT("DuplicateTarget");
 	case EProject_JCombatHitValidationFailure::RequestRateLimited: return TEXT("RequestRateLimited");
+	case EProject_JCombatHitValidationFailure::AttackActivationMismatch: return TEXT("AttackActivationMismatch");
 	default: return TEXT("Unknown");
 	}
 }
@@ -75,6 +77,9 @@ struct PROJECT_JCHARACTER_API FProject_JCombatHitRequest
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Hit Validation")
 	int32 RequestSequence = 0;
+
+	// GAS activation identity; prevents an old predicted swing hitting a new one.
+	int32 PredictionKey = 0;
 };
 
 USTRUCT(BlueprintType)

@@ -62,6 +62,11 @@ protected:
 	FGameplayTag MeleeHitEventTag;
 
 private:
+	bool HasActiveWeapon() const;
+	void OnWeaponRevoked();
+	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;
+	FDelegateHandle WeaponRevokedHandle;
+	uint64 AttackWeaponRevision = 0;
 	bool bEndingAttack = false;
 	FGameplayTag CurrentComboNodeTag;
 	FGameplayTag QueuedInputTag;
