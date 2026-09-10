@@ -1,0 +1,347 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "succeeded": 50,
+  "succeededWithWarnings": 6,
+  "errors": 0,
+  "warnings": 10,
+  "missing": [],
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.AsyncTargeting.BatchMath",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.AsyncTargeting.Lifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 1
+    },
+    {
+      "fullTestPath": "ProjectJ.AsyncTargeting.SpatialEdgeCases",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.AsyncTargeting.SpatialEquivalence",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.MeleeLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.WeaponAttackLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.WeaponPresentationIdentity",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.AnimationPhases",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.Decision2048",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.EffectsAssetAudit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.MassSpacing",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.MassSpacingEdges",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.NavigationBurst512",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.OutOfRangeDuringPathCooldown",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.RemoteEquipmentBurst",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Crowd.VisualSharing1024",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupA.DynamicNavRecovery",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupA.EquipmentRetry",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupA.PathPressure",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupA.VisualPressure",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.Budgeted",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.FullRate",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.WorldCleanup",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationContractAudit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 1
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatPosePolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupC.AutomaticDirtyRecovery",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupC.NavigationLoad100",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupD.MassActionHandoff",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupD.MassHandoff",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupD.MassNativeNavigation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupD.MassValues",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.ActionBudget",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.MovingTargetPursuit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.NativeNavMovement",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.NPCAttackContract",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.PresentationRecovery",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Integrated.VisualAssetSharing",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Modernization.CombatInputBoundary",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.ContextSeparation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.IntentLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.LatePathCompletion",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCAction.PathAdmission",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCDecision.Experiment",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCDecision.NativeBatch",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCDecision.Revalidation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCDecision.SpatialImportance",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCGameplay.GroundRootMotion",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 2
+    }
+  ]
+}

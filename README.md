@@ -1,136 +1,151 @@
-# Project J - UE5.8 기반 3인칭 액션 MMORPG 프로토타입
+# Project J
 
-> **학습 및 포트폴리오 제작을 목적으로 진행 중인 개인 MMORPG 개발 프로젝트입니다.**
-> 탄탄한 C++ 시스템 뼈대를 바탕으로, 구현하고 싶은 다양한 액션과 비주얼 요소를 안정적으로 얹어 나가는 것을 목표로 합니다.
+### Unreal Engine 5.8 · C++ · Third-person Action MMORPG Prototype
 
----
+서버 권위형 전투·장비 시스템과 Motion Matching을 기반으로, **다수 캐릭터의 판단·이동·애니메이션·이펙트 비용을 제어하는 개인 개발 프로젝트**입니다.
 
-## 📊 Profiling Snapshot — 측정으로 확인한 현재 기반
+멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-`Development Editor PIE`에서 재현 가능한 harness와 Unreal/Network Insights로
-수집한 결과입니다. 아래 숫자는 프레임 평균 FPS가 아니라 선택 구간의 timer 또는
-network aggregate이며, workload별 조건이 다르므로 서로의 절대 우열 비교에는 사용하지 않습니다.
+[멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [문서 목록](Docs/README.md)
 
-| 영역 | 측정 workload | 확인한 결과 |
+## 측정으로 확인한 변화
+
+| 영역 | 비교 조건 | Before → After | 결과 |
+|---|---|---|---|
+| **Mass 이동·간격 계산** | 2,048 moving agents, 직렬 / 병렬 | CPU 구간 p95 **0.6342 → 0.2409 ms** | **62.0% 감소** |
+| **Niagara 생성** | 100개 동시 생성, 풀 미사용 / 사용 | 생성 CPU p95 **4.5739 → 3.3451 ms** | **26.9% 감소** |
+| **네트워크 관심 영역** | NPC 100개 + client 2개, AllRelevant / Spatial | aggregate **18,786 → 13,223 B/s** | **29.6% 감소** |
+| **Trail PSO coverage** | 같은 packaged binary, 보완 OFF / ON | Full PSO miss **1 → 0** | 누락된 render target 구성 보완 |
+
+**측정 범위:** UE 5.8 / Windows 11 / Ryzen 7 9800X3D. GPU 실험은 Radeon RX 9070 XT, D3D12를 사용했습니다. 각각 독립된 workload이며, 전체 게임 FPS 개선율이나 2,048명 동시 접속 성능을 의미하지 않습니다. 표본 수·실행 조건·실패 기록은 [벤치마크 문서](Docs/Benchmarks/SystemsModernization.md), 재계산 가능한 CSV/JSON은 [Data](Docs/Benchmarks/Data)에 공개합니다.
+
+## 멀티스레드 구조
+
+Game Thread(GT)가 Actor·World·GAS 상태를 읽고 변경합니다. 직접 제출하는 작업에는 값 스냅샷을 전달하고, 엔진이 제공하는 Navigation·로딩·애니메이션 비동기 경로는 해당 엔진 서비스가 실행을 관리합니다.
+
+```mermaid
+flowchart TD
+    S["GT: Actor / World / ASC 상태"] --> D["GT: 판단 주기 분산 · 요청 예산"]
+    D --> V["불변 값 스냅샷 · world epoch · revision"]
+    V --> Q["유한 대기열 · 동시 실행 상한"]
+    Q --> W["Worker: UE::Tasks / ParallelFor 타깃 점수 계산"]
+    W --> C["GT: 완료 수집"]
+    C --> G{"Owner 생존 · 세대 일치 · 취소 여부"}
+    G -->|유효| A["GT: 판단 / 행동 / GAS 결과 반영"]
+    G -->|만료| X["늦은 결과 폐기"]
+    A --> N["엔진 Async Navigation / Asset Loading"]
+    N --> C
+    A --> P["GT: 애니메이션 스냅샷 / Proxy"]
+    P --> E["엔진 Worker: Animation Update / Evaluate"]
+    E --> R["GT: 포즈 결과 반영 · 전투 경계 보호"]
+```
+
+이 흐름은 NPC 판단·행동의 책임 경계를 나타냅니다. Mass는 별도의 **GT snapshot/grid → 직렬 또는 병렬 chunk 계산 → join → GT 적용** 경로를 사용합니다. 모든 비동기 서비스가 하나의 공통 작업 큐를 공유하는 구조는 아닙니다.
+
+### 장비 권한과 시각 표현의 처리 순서
+
+```mermaid
+flowchart LR
+    I["장착 / 해제 요청"] --> A["서버 GT: 장비 상태 · Ability 수명 갱신"]
+    A --> R["소유자 인벤토리 / 공개 장비 상태 복제"]
+    R --> C{"표현 갱신의 긴급성"}
+    C -->|로컬 · 공격 · Draw| F["GT 즉시 처리"]
+    C -->|원격 비전투 생성| Q["World FIFO · 최신 revision 병합"]
+    Q --> B["GT tick당 최대 4개 · soft budget 1 ms"]
+    B --> V["Owner / revision 재검증 후 표현 적용"]
+```
+
+장비 상태와 GAS 변경에는 GT 실행 순서를 유지합니다. 원격 비전투 캐릭터의 시각 오브젝트 **생성**을 프레임에 분산하며, 기존 표현 해제는 즉시 처리합니다. 해제 비용까지 모두 분산된 것으로 해석하지 않습니다.
+
+## A–E 구현 범위
+
+| 단계 | 구현한 내용 | 확인한 규모·동작 |
 |---|---|---|
-| Animation CPU | local player + 이동 visual clone 100명 | `AnimNativeUpdate` 평균 **4.44 µs/call**, thread-safe snapshot **1.84 µs/call**, PoseSearch DB Chooser **0.21 µs/call** |
-| Parallel animation | 동일 100명 local visual workload | thread-safe update 표본의 약 **99.99%**가 parallel-evaluation 상태 |
-| GPU | 동일 camera의 `ProfileGPU` 1-frame sample | Frame **3.99 ms**, SceneRender **3.70 ms** |
-| Iris runtime | PIE dedicated server + client 2 | server/client 모두 **IrisActive=1**, N2 baseline에서 write failure/pending backlog **0** |
-| Movement replication | server-authoritative mover 50명 → client 2, 30 Hz | aggregate **62.3 KB/s**, 연결당 약 **31.2 KB/s**, mover 1개·연결 1개당 약 **4.84 kbit/s** |
+| **A · 비동기 기반** | 배치 타깃 scoring, 공유 공간 스냅샷, owner lease 기반 로딩 공유, 요청 상한과 취소 수명 | 256 owners / 1,024 공유 요청에서 실제 load 1회, 취소64 / 완료960 |
+| **B · 애니메이션 예산** | C++ snapshot/AnimInstance proxy, 엔진 병렬 평가, Animation Budget Allocator, 필수 전투 포즈 보호 | 공격 완료·취소·해제·파괴와 예산 등록/복귀 회귀 |
+| **C · NPC 판단·Navigation** | observer 기반 갱신, 후보 예산, Async Navigation admission/retry, stale InRange 해제 | 판단 대상2,048 / observers512, Nav burst512 전달·timeout0 |
+| **D · 군중·복제·표현** | Mass 값 이동과 Character 인계, 공간 관련성, 원격 표현 생성 FIFO | Mass2,048 값 일치, 서버+실제 socket clients4 / NPC512 기능 검증 |
+| **E · VFX·PSO·애니메이션 보완** | Niagara pool 수명, 선택 갱신 위상 분산, cooked 초기화 보호, Trail PSO 보완, 거리 컬링 실험 | 최종 packaged 스킬3회 × 신규/재사용 cache, 렌더링 회귀24개 |
 
-N50은 전투, TIP, inventory mutation, 실제 player input을 제외한 **이동 복제 전용**
-baseline입니다. mover를 always-relevant로 둔 의도적 worst-nearby 조건이므로,
-AOI가 적용된 production bandwidth 예산이나 50개 실제 client connection 결과로
-해석하지 않습니다.
+A–E의 현재 구현은 `main`에 통합되어 있습니다. **E의 운영 에셋별 최적화·품질 검증은 진행 중**이며, 단계별 실험 통과와 모든 기능의 운영 적용을 구분합니다.
 
-**Engineering decision:** 현 측정에서는 animation worker를 더 쪼개거나
-NetUpdateFrequency를 성급히 낮추지 않습니다. 다음 확장 지점은 대규모 NPC에 대한
-representation tier와 connection별 AOI/relevance 정책입니다.
+## 설계에서 중요하게 다룬 경계
 
-### Why the current baseline holds up
+### 작업량에 맞춘 병렬 실행
 
-현재 결과가 단순히 “운 좋게 낮게 나온 sample”이 아니라는 근거는 아래 구조에 있습니다.
+Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용까지 측정합니다. 기본 `ProjectJ.Mass.Parallel=-1`은 **실제 이동 중인 agent가 1,024개 이상이고 간격 계산이 켜진 경우** 병렬 chunk를 선택합니다. 작은 단순 이동 작업에서는 직렬이 더 저렴했던 결과도 판단에 반영했습니다.
 
-| 시스템적 선택 | 측정에서 확인된 효과 | 확장 시의 의미 |
+이 Mass 경로는 **선택적으로 등록한 NPC의 Character·ASC·장비를 유지하는 프로토타입**입니다. 전투·몽타주·root motion 등을 보호하고, 과밀하거나 막힌 경로는 Character 이동으로 복귀합니다. Actor 메모리 절감이나 원거리 ISM 표현까지 구현된 상태는 아닙니다.
+
+→ [Mass 인계와 실행 선택](Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp) · [값 계산 Processor](Source/Project_JCharacter/Private/Mass/Project_JMassMovementProcessor.cpp)
+
+### 과부하와 늦은 완료를 함께 제어
+
+요청을 무제한으로 쌓는 대신 대기열·실행 중 작업·프레임별 적용에 상한을 둡니다. 배치 후보 예산에 도달하면 미처리 NPC부터 다음 tick에 재개하고, Navigation 입장이 거절되면 분산 재시도로 넘깁니다. 취소는 결과 적용 권한을 제거하며 실제 작업 완료와는 구분합니다.
+
+완료 시점에 weak owner, world epoch, revision을 확인해 이전 장비·이전 월드의 결과가 현재 상태에 적용되는 것을 막습니다. 공유 참조의 수명 안전성과 Worker가 읽는 데이터의 안전성을 별도 계약으로 다룹니다.
+
+→ [Scoring 수명](Source/Project_JCore/Private/System/Project_JTargetScoringSubsystem.cpp) · [Navigation 압력 제어](Source/Project_JCharacter/Private/System/Project_JNPCPathSubsystem.cpp) · [표현 FIFO](Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp)
+
+### 실행 방식보다 실제 측정 결과를 우선
+
+| 관측 | 반영한 판단 |
+|---|---|
+| 병렬 Net Tick에서 실제 worker overlap 확인, CPU 개선은 일관되지 않음 | 기본 Net Tick 병렬화를 활성화하지 않음 |
+| Niagara 생성 p95 감소, 종료 비용은 큰 차이 없음 | 풀의 생성 비용·반환 수명을 구분해서 관리 |
+| 거리 컬링 이후 simulation 감소, 보이는 ribbon 렌더 비용은 거의 동일 | GPU 렌더링 전체 개선으로 확대 해석하지 않음 |
+| 신규 application cache와 재사용 비교에서 preload 이득 불명확 | driver cold 또는 hitch 제거로 주장하지 않음 |
+
+### Editor와 packaged 실행의 차이를 회귀로 포착
+
+- **Cooked 애니메이션 초기화:** authored AnimBP가 설치되기 전 native Motion Matching 노드가 folded NodeData 없이 실행되는 crash를 수정했습니다. 임시 구간은 엔진 reference pose를 사용하고, AnimBP 연결 후 generated graph를 사용합니다. native-only MM fallback은 cooked에서 지원하지 않습니다.
+- **UE 5.8 Trail PSO:** 기존 Distortion collector의 shader/state를 재사용하면서 rough-refraction의 누락된 RT 구성을 보완했습니다. validation 옵션에 의존하지 않는 검색과 **monolithic 게임에 한정한 등록**으로 적용 범위를 제한합니다. 엔진 소스와 화질 설정은 변경하지 않았습니다.
+
+→ [Animation Proxy](Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp) · [PSO 보완](Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp)
+
+## 검증 현황
+
+| 검증 | 결과 | 해석 범위 |
 |---|---|---|
-| **C++ semantic locomotion snapshot → AnimInstance proxy** | `BuildThreadSafeData`가 100명에서 평균 1.84 µs/call로 작고, gameplay UObject 접근을 animation evaluation과 분리 | worker path에 Actor/GAS 조회나 임의 동기화를 밀어 넣지 않고, immutable input을 소비하는 구조 유지 |
-| **엔진 지원 parallel animation 경로 준수** | `CanRunParallel=1`, thread-safe update의 약 99.99%가 parallel-evaluation 상태 | 임의 Task Graph 분리보다 엔진의 evaluation scheduling을 활용; dispatch/fence/copy overhead 회피 |
-| **distance tier / URO 중심 cadence 제어** | S70에서 actor tick 약 7,369회/s와 animation native update 약 2,495회/s가 분리됨 | 모든 보이는 character를 매 frame 같은 빈도로 animation update하지 않는 기반 |
-| **server-authoritative mover와 Iris batching** | N50에서 50 mover가 30 Hz로 두 client에 실제 전달되고, payload가 `Location`/`ReplicatedMovement`에 집중 | 전투·TIP·inventory traffic과 이동 baseline을 분리해 class별 bandwidth 정책을 설계할 수 있음 |
-| **측정용 workload 분리** | local visual CPU harness와 replicated-movement harness를 별도로 유지 | “animation CPU가 좋다”와 “network가 좋다”를 잘못 섞어 최적화하는 판단 오류 방지 |
+| main 직접 UBT Editor / Game 빌드 | 모두 성공 | Win64 Development |
+| main 다인원·수명 회귀 | **56개 통과 / 오류0 / 경고10** | NullRHI, 기존 경고 포함 |
+| main 실제 RHI 전투·애니메이션·장비 회귀 | **24개 통과 / 오류0 / 경고0** | 56개 집합과 중복 있음 |
+| 별도 socket 다중 접속 | 서버1 + clients4, NPC512 검증·정상 종료 | AOI 재입장, owner-only inventory, 공개 장비, 삭제·접속 종료 |
+| packaged 스킬 통합 | 신규/재사용 application cache 각각3회 성공 | 장착 → GAS → 몽타주 → hit window → Trail → 해제/정리 |
 
-이는 현재 단계의 **좋은 기반**이지, 모든 규모에서 최적화가 끝났다는 주장은 아닙니다.
-특히 N50은 always-relevant mover 50개를 client 2에 보내는 조건이고, custom AOI/Iris
-filter, 50 real client input, NPC/Mass, 전투·VFX worst case는 아직 별도 검증 대상입니다.
+수치는 **2026-09-10의 보존된 실행 결과**입니다. main 회귀는 코드 `f2c31fb`, 전투 에셋 `89f94b4` 기준이며, 이후 테스트 목적으로 캐릭터 BP 이벤트 그래프를 비운 로컬 변경까지 재검증한 결과는 아닙니다. [검증 근거와 재현 조건](Docs/Benchmarks/SystemsModernization.md)을 함께 확인할 수 있습니다.
 
-→ [통합 프로파일링 결과와 해석](Docs/Architecture/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [원본 trace/세부 결과](Docs/Architecture/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) · [네트워크 세부 결과](Docs/Architecture/ProjectJ_Network_Baseline_Results_2026-09-04.md)
+## 프로젝트 구성
 
----
+| 모듈 | 주요 책임 |
+|---|---|
+| [Project_JCore](Source/Project_JCore) | 값 타입, 비동기 scoring, 공간 스냅샷, 공유 시각 에셋 서비스 |
+| [Project_JGAS](Source/Project_JGAS) | Ability System Component와 Attribute 기반 |
+| [Project_JCharacter](Source/Project_JCharacter) | 캐릭터·장비·전투·애니메이션·NPC 판단/이동·Mass 인계 |
+| [Project_J](Source/Project_J) | PlayerState/Controller, 게임 연결, 통합 진단 fixture |
+| [Project_JCharacterEditor](Source/Project_JCharacterEditor) | Editor 전용 Navigation 통합·부하 시험 |
+| [Project_JMount](Source/Project_JMount) | 탈것과 탑승 캐릭터 연결 |
 
-## 🎨 아티스트 / 디자이너 분들을 위한 협업 안내
-본 프로젝트는 기획하신 다양한 비주얼 리소스와 애니메이션이 게임 속에서 실제로 구동되는 모습을 빠르게 확인하고 검증할 수 있도록 설계되었습니다. 
+플레이어의 ASC·인벤토리·장비 소유권은 PlayerState에 두고 Character의 표현 수명과 분리합니다. GAS 전투 정의, 장비별 animation/presentation profile, Motion Matching/Chooser, Niagara 에셋을 조합하는 방식으로 기능을 확장합니다. 일반 NPC는 플레이어와 다른 소유 경로를 사용합니다.
 
-### 1. 다양한 키 입력 조합을 지원하는 스킬 시스템
-* `Shift + 좌클릭` 등 여러 마우스와 키 입력 조합을 통해 다채로운 스킬 발동 경로를 구성할 수 있는 입력 시스템이 구현되어 있습니다. 
-* 기획하시는 고유의 액션 메커니즘과 스킬 연출을 프로그램 제약 없이 다양하게 실험해 보실 수 있습니다.
+## 빌드와 실행
 
-### 2. 캐릭터 모델 호환성 (표준 스켈레탈 메시 규격 지원)
-* 제작하시는 캐릭터 모델이 **언리얼 엔진의 표준 규격에 맞춘 스켈레탈 메시(Skeletal Mesh)**이기만 하면, 프로젝트 내의 모션 매칭 및 리타게팅 시스템을 통해 기존 애니메이션을 문제없이 적용하고 활용할 수 있습니다. 
-* 새로운 형태의 아바타나 몬스터 모델링이라도 표준 뼈대 규격만 충족하면 큰 번거로움 없이 즉시 인게임에서 구동 가능합니다.
+Unreal Engine **5.8**, Win64 C++ 도구 체인과 **Git LFS**가 필요합니다. 에셋은 LFS 파일까지 받은 후 `Project_J.uproject`를 사용합니다. 저장소 루트의 PowerShell에서:
 
-### 3. 제한 없는 자유로운 창작 환경 (캐릭터, 의상, 이펙트, 장비 등)
-* 특정 콘셉트에 국한되지 않고, **다양한 클래스(직업)의 캐릭터, 독창적인 의상, 화려한 마법/전투 이펙트(Niagara), 다채로운 장비** 등 만들어보고 싶으신 리소스가 있다면 무엇이든 자유롭게 시도해 보실 수 있습니다.
-* 아티스트님의 창의적인 아이디어와 개성이 담긴 작업물들이 인게임에 원활하게 적용될 수 있도록, 유연하고 확장성 있는 구조를 계속 유지해 나갈 예정입니다.
+```powershell
+git lfs pull
+$engineRoot = 'C:/Program Files/Epic Games/UE_5.8'
+$projectFile = (Resolve-Path './Project_J.uproject').Path
+& "$engineRoot/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" `
+    Project_JEditor Win64 Development "-Project=$projectFile" -WaitMutex
+```
 
-### 4. 자연스러운 캐릭터 locomotion (Motion Matching)
-* 언리얼 엔진 5의 최신 애니메이션 기술인 **모션 매칭(Motion Matching)** 및 Chooser 시스템이 구현되어 있어, 캐릭터의 이동과 회전이 슬라이딩 현상 없이 자연스럽고 매끄럽게 연결됩니다.
+빌드 전에 Unreal Editor·Live Coding·기존 컴파일 프로세스가 종료됐는지 확인하고, 실행한 빌드는 완료까지 기다립니다. 검증 스크립트는 [Scripts/Validation](Scripts/Validation)에 있으며, [벤치마크 재현 안내](Docs/Benchmarks/SystemsModernization.md#재현)를 따릅니다.
 
-### 5. 장착 시 비주얼이 동적으로 바뀌는 장비 시스템
-* 장비를 장착할 때 동적으로 3D 메시가 교체되고, 장비 종류에 따라 대기 자세나 공격 모션 프로필이 실시간으로 전환되는 서버 권위형 시스템이 완비되어 있습니다.
+## 다음 작업
 
----
+- **E:** 운영 전투 장면의 ABP 노드별 최적화와 시각 비교, Niagara 에셋별 거리/bounds/instance 예산 적용, 별도 `DefaultLightFunctionMaterial` PSO 누락과 driver cold 검증.
+- **F:** Tasks/TaskGraph/ThreadPool, Tick 의존성, 전용 스레드·동기화, 물리 snapshot, RDG/Async Compute, Audio·PCG의 독립 실험과 적용 판단.
+- **MMORPG 확장:** 실제 전투 서버 tick과 더 많은 접속·패킷 조건, 운영 Mass 표현 전환 검증.
 
-## 🧠 기술 아키텍처의 강점 및 고도화 부분
-대규모 MMORPG로의 확장성과 성능 최적화를 고려하여 설계된 주요 기술적 강점입니다.
-
-### 1. 영속성 상태와 캐릭터 표현의 엄격한 분리 (`AProject_JPlayerState` & `UProject_JEquipmentManagerComponent`)
-* **PlayerState 중심 구조**: 네트워크 불안정으로 인한 재접속이나 캐릭터 사망/리스폰 시 데이터 유실을 방지하기 위해 ASC(AbilitySystemComponent), AttributeSet, 인벤토리 및 장비 관리의 실질적 소유권을 [AProject_JPlayerState](Source/Project_J/Game/Project_JPlayerState.h)에 부여했습니다.
-* **Avatar로서의 Character**: [AProject_JPlayerCharacter](Source/Project_JCharacter/Public/Project_JPlayerCharacter.h) 클래스는 입력 처리, 이동, 애니메이션, 비주얼 메시와 같은 렌더링 및 클라이언트 표현(Avatar) 역할만 전담하여 아키텍처의 안정성을 확보했습니다.
-* **NPC와의 전략 분리**: `PlayerState`가 없는 일반 NPC들의 경우, `Character` 클래스 내부에 자체적인 `EquipmentManager` 등을 소유 기반으로 동작하도록 분기 처리하여 코드 재사용성과 런타임 효율성을 모두 챙겼습니다.
-
-### 2. 멀티플레이어 환경을 고려한 모션 매칭 최적화 (`UProject_JMotionMatchingTrajectoryComponent`)
-* **원격 캐릭터(Simulated Proxy) 궤적 보정**: 로컬 예측 위주인 모션 매칭의 한계를 극복하기 위해, [UProject_JMotionMatchingTrajectoryComponent](Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h)에서 복제된 이동 정보(Replicated Movement)와 시각적 부드러움(Visual Smoothing)을 기반으로 원격 플레이어의 이동 궤적을 보정 및 복원하는 `RepairRemoteTrajectoryFacing` 메커니즘을 구축했습니다.
-* **거리별 애니메이션 버젯팅**: 캐릭터의 거리 단계(Near/Mid/Far/Hidden)에 따라 연산 주기를 조절하여 대규모 멀티플레이 상황에서도 CPU 오버헤드를 최소화하도록 구조화했습니다.
-
-### 3. 분산 세션 확장을 고려한 스레드 안전 핸드오버 직렬화 (`UProject_JHandoverManager`)
-* **심리스 서버 이동 준비**: 향후 메가서버나 분산 세션 게이트웨이 환경으로의 매끄러운 캐릭터 이동을 위해, 유저 상태 데이터를 스레드 안전(Thread-Safe)하고 가비지 컬렉터(GC)에 안전하게 직렬화/역직렬화(Round-trip)하는 [UProject_JHandoverManager](Source/Project_J/Backend/Project_JHandoverManager.h) 처리 구조를 마련했습니다.
-
-### 4. 의존성 격리를 위한 단방향 모듈화 구조
-* **Core ➡️ GAS ➡️ Character ➡️ Game Logic** 순서의 엄격한 단방향 의존성 규칙을 적용하여 코드 간 커플링을 방지했습니다. 이로 인해 특정 모듈의 변경이 다른 핵심 모듈의 손상으로 이어지지 않아 안정적인 확장이 가능합니다.
-
----
-
-## ⚡ 성능 최적화 및 안정성 설계 (Performance & Reliability)
-대규모 멀티플레이 환경과 견고한 런타임 예외 처리를 목표로 구현한 핵심 최적화 기술입니다.
-
-### 1. 렌더링 및 애니메이션 연산 최적화 (Modular Mesh & Leader Pose)
-* **모듈러 메시(Modular Mesh)** 시스템을 도입하여 장비 탈착 시 Main Mesh의 Bone 트랙 동작에 맞춰 부위별 파츠 메시들이 동적으로 결합(Leader Pose Component 방식)되도록 설정했습니다. 이로 인해 애니메이션 연산(Evaluation)의 중복 계산을 원천 차단하여 캐릭터 스킨 구성 시의 CPU 비용을 크게 낮췄습니다.
-
-### 2. 네트워크 패킷량 최적화 (`FFastArraySerializer` & Distance Relevance)
-* **변경분 전송 기반**: 인벤토리 및 장착 중인 아이템 데이터는 [FFastArraySerializer](Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h) 기반으로 모델링했으며, Iris runtime activation과 초기 state 전달을 확인했습니다. 실제 add/remove/equip delta bandwidth는 기능 확장 시 별도 측정합니다.
-* **독립형 네트워크 정책 초안**: 거리(Distance)와 전투 상태(Combat Tag)를 입력으로 relevance/priority를 계산하는 정책 helper를 마련했습니다. 현재는 live Iris filter/prioritizer로 연결하지 않았으며, AOI 기준선이 필요한 시점에 connection별 정책으로 적용·측정합니다.
-
-### 3. 리소스 로딩 예외 처리 (Async Asset Load Safety)
-* 장비 아이템의 3D 에셋을 비동기(Asynchronous)로 로딩하는 동안, 로딩이 완료되기 전에 장비를 해제하는 빠른 입력 레이스 컨디션(Race Condition)이 생길 수 있습니다. 이를 예방하기 위해 인스턴스 고유 ID와 비주얼 요청 ID를 상호 매칭하여 검증하는 방어 코드를 적용해 에셋의 좀비 장착이나 크래시를 방지했습니다.
-
-### 4. 이벤트 기반 URO 제어 (`Skeletal Mesh URO Guard`)
-* 원격 캐릭터의 이동 및 회전 애니메이션 프레임을 생략하여 최적화하는 URO(Update Rate Optimization) 기능을 상시 켜두면서도, **원격 점프 신호가 올 때만 순간적으로 URO 예외 처리(프레임 강제 갱신)**를 수행해 모션 전송 지연을 지연 없이 매끄럽게 잡았습니다.
-
-### 5. 데이터 안정성 자가 검증 (Global Validation System)
-* 에디터 시작(PIE) 및 빌드 빌딩 단계에서 모션 매칭용 애니메이션 에셋(Pose Search Database)의 유효성, 잘못 설정된 속도 스레숄드값, 장비 데이터 정의(`IsDataValid`) 등을 자동으로 에러 및 워닝으로 검출하는 검증 시스템이 내장되어 있습니다. 작업 과정에서 발생할 수 있는 데이터 휴먼 에러를 즉각 예방합니다.
-
-### 6. Mass Entity 기반 대규모 개체 최적화 초안 마련
-* 추후 대량의 몬스터나 NPC 무리가 스폰되는 상황에 대비해, 개별 캐릭터 클래스 대신 가벼운 Mass Entity 프레임워크를 기반으로 스탯 조각(Stat Fragment)을 할당하고 개체를 대량 생산할 수 있는 Mass Spawner 최적화 기반이 선제 적용되어 있습니다.
-
----
-
-## 🛠️ 주요 기술 스택 및 구현 현황
-* **Engine Version**: Unreal Engine 5.8
-* **Locomotion**: [LocomotionAnimStateComponent](Source/Project_JCharacter/) 및 C++ Motion Matching 기반 이동 제어
-* **Combat**: GAS(Gameplay Ability System) 기반 어빌리티, 속성 세트, 콤보 메커니즘
-* **Network**: 서버 권위형(Server-Authoritative) 판정 및 FastArray 기반 인벤토리/장비 복제
-* **Handover**: 분산 서버 환경을 고려한 캐릭터 데이터 직렬화 및 심리스 레벨 이동 바인딩
-
----
-
-## 🚀 개발 로드맵 (Roadmap)
-* [ ] 🏇 **탈것(Mount) 시스템**: 이동의 편의성과 다양성을 더할 탈것 승하차 및 전용 locomotion 구현
-* [ ] ⚔️ **전투 시스템 고도화**: 공중 콤보, 회피/패링 판정 및 피격 반응 애니메이션 다양화
-* [ ] 몬스터 AI 및 보스전 프로토타이핑
-* [ ] UI/UX 시스템 스킨 리뉴얼
-
----
-
-## 📁 관련 상세 문서
-* 더 자세한 시스템 구조와 정책은 [Docs/README.md](Docs/README.md)에서 확인하실 수 있습니다.
+[벤치마크와 데이터](Docs/Benchmarks/SystemsModernization.md) · [설계·검증 이력](Docs/Architecture/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) · [초기 프로파일링 기준선](Docs/Architecture/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [전체 문서](Docs/README.md)

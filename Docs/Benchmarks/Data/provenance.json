@@ -1,0 +1,63 @@
+{
+  "measurementDate": "2026-09-10",
+  "integratedCodeCommit": "f2c31fb266740ab337c025a91ecfd884bb8eb49d",
+  "mainAssetCommit": "89f94b4",
+  "note": "Historical runs have separate source snapshots and binaries. Main regression predates the later character BP event-graph deletion. Source run paths identify local archives, not hosted download links.",
+  "files": [
+    {
+      "file": "mass-crowd.csv",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/CrowdE_20260910/RegressionFinal02/Metrics/mass-crowd.csv",
+      "sha256": "dd64776602f5fe330f9784d0d7ffa943f7a4374b9575d3b8b8689d69544c1ae8",
+      "sourceRawSHA256": "dd64776602f5fe330f9784d0d7ffa943f7a4374b9575d3b8b8689d69544c1ae8"
+    },
+    {
+      "file": "animation-phases.csv",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/CrowdE_20260910/RegressionFinal02/Metrics/animation-phases.csv",
+      "sha256": "492a4ef69cde2cd05f45de67eeb27145daed08a582bc4a04cef0a9469a64dbd3",
+      "sourceRawSHA256": "492a4ef69cde2cd05f45de67eeb27145daed08a582bc4a04cef0a9469a64dbd3"
+    },
+    {
+      "file": "effects-pool.csv",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/CrowdE_20260910/RenderedFinal01/Metrics/effects-pool.csv",
+      "sha256": "6990f704520b4ebee0703f0f38969e540920b661fcd10f47b5ea09f7a29a1be2",
+      "sourceRawSHA256": "6990f704520b4ebee0703f0f38969e540920b661fcd10f47b5ea09f7a29a1be2"
+    },
+    {
+      "file": "network.csv",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/GroupD_20260910/Comparison/network.csv",
+      "sha256": "ae774cf286f85367dcb412013a7bdead043e39eb722acdc0859698940cb0b34d",
+      "sourceRawSHA256": "25d639924efac1bc885afeeab05c7ff36df75eb689949e98ed8c3ccdbd31b80d"
+    },
+    {
+      "file": "pso-comparison.json",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/GroupE_20260910/Comparison/pso-comparison.json",
+      "sha256": "458fa388fd1aa584f57868b54cba00162e2aaaf3c3fce72cd340b226a504fad3",
+      "sourceRawSHA256": "c90e08404fefa22f8f7e64f3b2f621e524788664540466172b63f353762986a4"
+    },
+    {
+      "file": "culling-active.json",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/GroupE_20260910/Comparison/final-culling-active.json",
+      "sha256": "624045df8b5d813391741498746465dceb1c9968bc0f47ecdb544d07084ce7fe",
+      "sourceRawSHA256": "eed921dffe68bbc93c7f3d888cb84d2f17330cf27f8ed55635530dd61ca7a855"
+    },
+    {
+      "file": "culling-timers.json",
+      "sourceRunPath": "Saved/Worktrees/SystemsModernization/Saved/Validation/GroupE_20260910/Comparison/final-cost-comparison.json",
+      "sha256": "00fd21e3da01fa0d873d12ae932e5a25df50e3f378d4bec1fb9703953dcc84f3",
+      "sourceRawSHA256": "e5a37e00765db83153a30c902a58678e95a4dd45537003cdb0b37d3d4b770064"
+    },
+    {
+      "file": "main-regression.json",
+      "sourceRunPath": "Saved/Validation/MergeMain_20260910/Regression01/verification.json",
+      "sha256": "97cec5753d3f70901e199636cc4716d1f0d5f4fdfc7f9e8f423b69d6ffc96e2f",
+      "sourceRawSHA256": "93cd43a879b3d3b0dbf515d905923ac9760576b6d3ed5a2fb06bd246232feedf"
+    },
+    {
+      "file": "main-rendered.json",
+      "sourceRunPath": "Saved/Validation/MergeMain_20260910/Rendered01/verification.json",
+      "sha256": "f7e0a85a343f74fbbe7925fefcc13656a9adc0c0544046e4cd653c0458ea1fc5",
+      "sourceRawSHA256": "144c362dc82a01b048a23599ccb75d702548596f9e07c1a914531e349308e86a"
+    }
+  ],
+  "checksumEncoding": "UTF-8 without BOM; CRLF/CR normalized to LF"
+}

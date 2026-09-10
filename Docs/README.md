@@ -4,6 +4,9 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [A–E Performance Measurements & Evidence](Benchmarks/SystemsModernization.md)
+  - main에 통합한 멀티스레드 구조의 측정 조건, Mass·Niagara·네트워크·PSO 비교와 공개 CSV/JSON. Python 표준 라이브러리로 대표 수치를 재계산할 수 있다.
+
 - [MMORPG Execution Roadmap (2026-09-03)](Architecture/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md)
   - 전체 MMORPG 확장 작업을 P0~P3와 Stage 0~9로 분리한 실행 로드맵. Animation threading/fast-path 감사, dedicated-server vertical slice, Iris/AOI, NPC tier, streaming·rendering·backend의 선행 조건과 검증 게이트를 정의한다.
 

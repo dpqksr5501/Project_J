@@ -1,0 +1,66 @@
+[
+  {
+    "run": "CullBaseline02",
+    "timer": "Niagara GPU Ribbons",
+    "thread": "GPU0-Graphics0",
+    "count": 98,
+    "totalMs": 22.18010000000703,
+    "p95Ms": 0.45659999999969614
+  },
+  {
+    "run": "CullBaseline02",
+    "timer": "NiagaraComponent",
+    "thread": "GameThread",
+    "count": 37046,
+    "totalMs": 17.92739999979709,
+    "p95Ms": 0.0012999999974283583
+  },
+  {
+    "run": "CullBaseline02",
+    "timer": "Niagara Manager Tick [GT]",
+    "thread": "GameThread",
+    "count": 6973,
+    "totalMs": 17.55790000033386,
+    "p95Ms": 0.012900000001536682
+  },
+  {
+    "run": "CullBaseline02",
+    "timer": "NiagaraGpuComputeDispatch",
+    "thread": "GPU0-Graphics0",
+    "count": 216,
+    "totalMs": 12.249600000032501,
+    "p95Ms": 0.44320000000297455
+  },
+  {
+    "run": "CullAfter03",
+    "timer": "Niagara GPU Ribbons",
+    "thread": "GPU0-Graphics0",
+    "count": 98,
+    "totalMs": 22.328099999995743,
+    "p95Ms": 0.4771999999988452
+  },
+  {
+    "run": "CullAfter03",
+    "timer": "Niagara Manager Tick [GT]",
+    "thread": "GameThread",
+    "count": 6973,
+    "totalMs": 15.51060000000426,
+    "p95Ms": 0.012800000000368073
+  },
+  {
+    "run": "CullAfter03",
+    "timer": "NiagaraComponent",
+    "thread": "GameThread",
+    "count": 32486,
+    "totalMs": 12.861700000000198,
+    "p95Ms": 0.0008000000022434506
+  },
+  {
+    "run": "CullAfter03",
+    "timer": "NiagaraGpuComputeDispatch",
+    "thread": "GPU0-Graphics0",
+    "count": 216,
+    "totalMs": 0.23200000001821763,
+    "p95Ms": 0.002600000000185787
+  }
+]

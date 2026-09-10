@@ -1,0 +1,20 @@
+[
+  {
+    "run": "PSOBaseline01",
+    "binaryHash": "6FDB0989C6C1A60C805B644B8C0D032F61224BAD9BF2E09F8914BE9C0A95AB36",
+    "exit": 0,
+    "fullPrecached": "6620",
+    "fullMissed": "1",
+    "fullTooLate": "0",
+    "fullUntracked": "0"
+  },
+  {
+    "run": "PSOAfter01",
+    "binaryHash": "6FDB0989C6C1A60C805B644B8C0D032F61224BAD9BF2E09F8914BE9C0A95AB36",
+    "exit": 0,
+    "fullPrecached": "6621",
+    "fullMissed": "0",
+    "fullTooLate": "0",
+    "fullUntracked": "0"
+  }
+]
