@@ -17,6 +17,8 @@ public:
 	void SetCombatCritical(bool bCritical);
 	bool IsManagedByBudget() const { return bManaged; }
 	bool IsCombatCritical() const { return bCombatCritical; }
+	/** Requested tick state is distinct from the allocator's current scheduled tick. */
+	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;
 	virtual void SetComponentTickEnabled(bool bEnabled) override;
 

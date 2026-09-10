@@ -219,6 +219,7 @@ void UProject_JNPCActionComponent::UpdateAction()
 	{
 		CancelPathAndMove();
 		if (!IsTargetValid()) { ClearIntent(); return; }
+		if (State != EProjectJNPCActionState::InRange && State != EProjectJNPCActionState::Attacking) { ++Stats.Arrivals; }
 		State = EProjectJNPCActionState::InRange;
 		if (!AttackHandle.IsValid() || Now < NextAttackTime) { return; }
 		auto* Spec = AbilitySystem->FindAbilitySpecFromHandle(AttackHandle);
@@ -232,6 +233,13 @@ void UProject_JNPCActionComponent::UpdateAction()
 		if (!bEnabled || IntentRevision != Revision) { CancelOwnedAttack(); return; }
 		if (bOwnsAttack) { State = EProjectJNPCActionState::Attacking; }
 		return;
+	}
+	// Leaving attack range invalidates the old arrival state immediately, even
+	// while the next path request is waiting for its rate limit or admission slot.
+	if (State == EProjectJNPCActionState::InRange)
+	{
+		State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath
+			: (PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff);
 	}
 	// A different system's active attack is not ours to cancel or move through.
 	if (AttackHandle.IsValid())
@@ -258,12 +266,13 @@ void UProject_JNPCActionComponent::UpdateAction()
 	// Keep the valid old path until a replacement is ready. Target motion does not repeatedly cancel in-flight work.
 	NextPathTime = Now + RetryInterval;
 	const TWeakObjectPtr<ThisClass> WeakThis(this);
+	++Stats.PathRequests;
 	PathToken = Paths->Submit(this, CastChecked<APawn>(GetOwner()), Goal, IntentRevision,
 		[WeakThis](const FProjectJNPCPathCompletion& Completion)
 		{
 			if (auto* Self = WeakThis.Get()) { Self->OnPathReady(Completion); }
 		}, MoveId.IsValid() ? EProjectJNPCPathPriority::Normal : EProjectJNPCPathPriority::Urgent);
-	if (!PathToken) { BackoffPath(); }
+	if (!PathToken) { ++Stats.PathRejected; BackoffPath(); }
 	State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath
 		: (PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff);
 	UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
@@ -290,7 +299,8 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 		UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
 			TEXT("Path discarded Owner=%s Status=%d StartDrift=%.1f GoalDrift=%.1f"), *GetNameSafe(GetOwner()), int32(Completion.Status),
 			FVector::Dist(Pawn->GetNavAgentLocation(), Completion.Start), FVector::Dist(GetTargetGoal(), Completion.Goal));
-		if (Completion.Status != EProjectJNPCPathStatus::Success) { BackoffPath(); }
+		if (Completion.Status != EProjectJNPCPathStatus::Success) { ++Stats.PathFailed; BackoffPath(); }
+		else { ++Stats.PathStale; }
 		State = MoveId.IsValid() ? EProjectJNPCActionState::FollowingPath : EProjectJNPCActionState::Backoff; return;
 	}
 	FAIMoveRequest Move;
@@ -299,7 +309,13 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 	// RequestMove consumes our completed path. MoveTo would synchronously find another one.
 	const uint64 Revision = IntentRevision;
 	const TWeakObjectPtr<AAIController> RequestController = Controller;
-	const FAIRequestID StartedMove = Controller->RequestMove(Move, Completion.Path);
+	FAIRequestID StartedMove;
+	{
+		// RequestMove synchronously finishes the old move with Aborted|NewRequest.
+		// That intentional replacement must not schedule failure backoff for a successful new path.
+		TGuardValue<FAIRequestID> ReplacingGuard(ReplacingMoveId, MoveId);
+		StartedMove = Controller->RequestMove(Move, Completion.Path);
+	}
 	if (!bEnabled || IntentRevision != Revision)
 	{
 		if (auto* AI = RequestController.Get())
@@ -321,6 +337,12 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 void UProject_JNPCActionComponent::OnMoveFinished(FAIRequestID RequestId, const FPathFollowingResult& Result)
 {
 	if (!bEnabled || !MoveId.IsValid() || MoveId != RequestId) { return; }
+	if (ReplacingMoveId == RequestId && Result.Code == EPathFollowingResult::Aborted
+		&& (Result.Flags & FPathFollowingResultFlags::NewRequest) != 0)
+	{
+		++Stats.ReplacedMoves;
+		return;
+	}
 	MoveId = FAIRequestID::InvalidRequest;
 	if (Result.IsSuccess()) { PathFailures = 0; NextPathTime = FPlatformTime::Seconds() + RetryInterval; }
 	else { BackoffPath(); }
@@ -333,6 +355,7 @@ void UProject_JNPCActionComponent::OnAbilityEnded(const FAbilityEndedData& Data)
 
 void UProject_JNPCActionComponent::BackoffPath()
 {
+	++Stats.RetryScheduled;
 	NextPathTime = FPlatformTime::Seconds() + ProjectJ::RetryDelay(PathFailures, GetUniqueID(), RetryInterval, 5.0);
 	PathFailures = FMath::Min(PathFailures + 1, 5u);
 }

@@ -449,15 +449,25 @@ void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()
 
 FAnimNode_Base* FProject_JCharacterAnimInstanceProxy::GetCustomRootNode()
 {
+#if WITH_EDITORONLY_DATA
 	LinkNativeGraph();
 	return &NativePoseHistoryNode;
+#else
+	// Plain proxy-owned MotionMatching nodes have no compiler-generated folded
+	// NodeData in cooked builds. A mesh can initialize before its AnimBP is set.
+	// Use the engine's reference-pose fallback for that interval; the generated
+	// AnimBP root takes precedence once installed. Never tick an uncompiled node.
+	return nullptr;
+#endif
 }
 
 void FProject_JCharacterAnimInstanceProxy::GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes)
 {
+#if WITH_EDITORONLY_DATA
 	LinkNativeGraph();
 	OutNodes.Add(&NativePoseHistoryNode);
 	OutNodes.Add(&NativeMotionMatchingNode);
+#endif
 }
 
 void FProject_JCharacterAnimInstanceProxy::LinkNativeGraph()

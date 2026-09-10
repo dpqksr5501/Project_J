@@ -18,6 +18,9 @@ struct FProjectJNPCDecisionStats
 	uint64 AppliedDecisions = 0;
 	uint64 DiscardedDecisions = 0;
 	uint64 RejectedBatches = 0;
+	uint64 BatchCapacityDeferrals = 0, RejectedTargets = 0, RejectedObservers = 0;
+	int32 LastTickSnapshotValues = 0;
+	double MaxDecisionLatenessMilliseconds = 0;
 	int32 LastTickAgentVisits = 0;
 	int32 LastTickCandidateVisits = 0;
 	int32 LastTickResults = 0;
@@ -42,12 +45,12 @@ class PROJECT_JCHARACTER_API UProject_JNPCDecisionSubsystem : public UTickableWo
 	GENERATED_BODY()
 public:
 	static constexpr int32 MaxAgents = 2048;
-	static constexpr int32 MaxTargets = 256;
+	static constexpr int32 MaxTargets = 2048;
 	static constexpr int32 MaxQueriesPerDispatch = 32;
 	static constexpr int32 MaxOutstandingDecisions = 64;
 	static constexpr int32 MaxAgentVisitsPerTick = 128;
 	static constexpr int32 MaxResultsPerTick = 16;
-	static constexpr int32 MaxObservers = 128;
+	static constexpr int32 MaxObservers = 512;
 	static constexpr double GameThreadBudgetMilliseconds = 1.0;
 	static constexpr double MaxResultAgeSeconds = 0.5;
 

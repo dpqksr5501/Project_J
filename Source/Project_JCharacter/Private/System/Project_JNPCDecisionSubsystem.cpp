@@ -179,7 +179,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterTarget(AActor* Target, int32 TeamId
 		}
 	}
 	Targets.RemoveAll([](const FTarget& Entry) { return !Entry.Actor.IsValid(); });
-	if (Targets.Num() >= MaxTargets) { return false; }
+	if (Targets.Num() >= MaxTargets) { ++Stats.RejectedTargets; return false; }
 	Targets.Add({Target, TeamId});
 	++TargetRegistryRevision;
 	return true;
@@ -218,7 +218,7 @@ bool UProject_JNPCDecisionSubsystem::RegisterObserver(AActor* Observer)
 		|| !Observer->HasAuthority() || Observer->GetWorld() != GetWorld()) { return false; }
 	Observers.RemoveAll([](const auto& Entry) { return !Entry.IsValid(); });
 	if (Observers.Contains(Observer)) { return true; }
-	if (Observers.Num() >= MaxObservers) { return false; }
+	if (Observers.Num() >= MaxObservers) { ++Stats.RejectedObservers; return false; }
 	Observers.Add(Observer);
 	return true;
 }
@@ -335,6 +335,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_CollectAndApply);
 	const double Started = FPlatformTime::Seconds();
 	Stats.LastTickAgentVisits = Stats.LastTickCandidateVisits = Stats.LastTickResults = 0;
+	Stats.LastTickSnapshotValues = 0;
 	Stats.LastTickTargetPositionReads = Stats.LastTickSnapshotBuilds = Stats.LastTickSpatialCells = Stats.LastTickLinearFallbacks = 0;
 	Stats.LastTickObservers = Stats.LastTickImportanceUpdates = Stats.LastTickPromotions = 0;
 	Stats.bObserverCoverageIncomplete = false;
@@ -435,7 +436,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		// Recalculate from the last issue time, so promotion does not wait out an old far/hidden interval.
 		Agent->NextDue = Agent->LastScheduled < 0.0 ? 0.0 : Agent->LastScheduled + Agent->Interval;
 		if (Agent->bPending || Now < Agent->NextDue) { continue; }
-		Agent->LastScheduled = Now;
+		if (Agent->LastScheduled >= 0) { Stats.MaxDecisionLatenessMilliseconds = FMath::Max(Stats.MaxDecisionLatenessMilliseconds, (Now - Agent->NextDue) * 1000); }
 		if (!IsLivingActor(NPC)) { Component->InvalidateQueryContext(); continue; }
 		if (!bCapturedTargets)
 		{
@@ -449,6 +450,14 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		Stats.LastTickCandidateVisits += QueryStats.CandidatesVisited;
 		Stats.LastTickSpatialCells += QueryStats.CellsVisited;
 		Stats.LastTickLinearFallbacks += QueryStats.bLinearFallback ? 1 : 0;
+		// Admission is bounded by total candidate values as well as query count. A dense crowd must
+		// flush a smaller valid batch, rather than repeatedly reject the entire batch in Core.
+		if (Stats.LastTickSnapshotValues + CandidateIndices.Num() > ProjectJ::TargetScoring::MaxCandidates)
+		{
+			++Stats.BatchCapacityDeferrals;
+			Cursor = (Cursor + Agents.Num() - 1) % Agents.Num(); // Retry this unsubmitted agent first next tick.
+			break;
+		}
 		TArray<AActor*> Candidates;
 		TArray<FVector> CapturedPositions;
 		for (int32 Index : CandidateIndices)
@@ -463,6 +472,8 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		}
 		ProjectJ::TargetScoring::FSnapshot Snapshot;
 		if (!Component->PrepareSnapshot(Candidates, Snapshot, &CapturedPositions)) { continue; }
+		Agent->LastScheduled = Now;
+		Stats.LastTickSnapshotValues += Snapshot.Candidates.Num();
 		Snapshots.Add(MoveTemp(Snapshot));
 		BatchAgents.Add(Agent);
 		Revisions.Add(Component->ContextRevision);

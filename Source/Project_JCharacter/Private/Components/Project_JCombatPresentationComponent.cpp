@@ -18,6 +18,23 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatPresentation, Log, All);
 
 namespace ProjectJCombatPresentationDebug
 {
+	static TAutoConsoleVariable<int32> CVarPool(
+		TEXT("ProjectJ.Combat.Presentation.Pool"), 1,
+		TEXT("Use engine Niagara pools for cosmetic cues. 0 restores unpooled creation for comparison."));
+
+	static void StopComponent(UNiagaraComponent* Component, bool bImmediate)
+	{
+		if (!IsValid(Component)) { return; }
+		if (Component->PoolingMethod == ENCPoolMethod::ManualRelease)
+		{
+			// Manual ownership prevents a completed tracked loop from being recycled
+			// under a different attack before this component releases its reference.
+			if (bImmediate) { Component->DeactivateImmediate(); }
+			Component->ReleaseToPool();
+		}
+		else if (bImmediate) { Component->DestroyComponent(); }
+		else { Component->Deactivate(); }
+	}
 	static TAutoConsoleVariable<int32> CVarEnabled(
 		TEXT("ProjectJ.Combat.Presentation.Debug"),
 		0,
@@ -220,6 +237,8 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 	}
 
 	UNiagaraComponent* NiagaraComponent = nullptr;
+	const ENCPoolMethod Pool = ProjectJCombatPresentationDebug::CVarPool.GetValueOnGameThread()
+		? (Cue->bLooping ? ENCPoolMethod::ManualRelease : ENCPoolMethod::AutoRelease) : ENCPoolMethod::None;
 	if (Cue->AttachmentTarget == EProject_JCombatVFXAttachmentTarget::World)
 	{
 		if (UWorld* World = GetWorld())
@@ -227,7 +246,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 			const FTransform OwnerTransform = GetOwner() ? GetOwner()->GetActorTransform() : FTransform::Identity;
 			const FTransform SpawnTransform = Cue->RelativeTransform * OwnerTransform;
 			NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-				World, Cue->NiagaraSystem, SpawnTransform.GetLocation(), SpawnTransform.Rotator(), SpawnTransform.GetScale3D(), true, true);
+				World, Cue->NiagaraSystem, SpawnTransform.GetLocation(), SpawnTransform.Rotator(), SpawnTransform.GetScale3D(), true, true, Pool);
 		}
 	}
 	else if (AttachComponent)
@@ -235,7 +254,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 		NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			Cue->NiagaraSystem, AttachComponent, Cue->AttachSocketName,
 			Cue->RelativeTransform.GetLocation(), Cue->RelativeTransform.Rotator(),
-			EAttachLocation::KeepRelativeOffset, true, true);
+			EAttachLocation::KeepRelativeOffset, true, true, Pool);
 		if (NiagaraComponent)
 		{
 			NiagaraComponent->SetRelativeScale3D(Cue->RelativeTransform.GetScale3D());
@@ -302,17 +321,7 @@ void UProject_JCombatPresentationComponent::StopCueLocal(const FGameplayTag CueT
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatVFX_StopCueLocal);
 	if (TObjectPtr<UNiagaraComponent>* ActiveComponent = ActiveLoopingCues.Find(CueTag))
 	{
-		if (*ActiveComponent)
-		{
-			if (ImmediateDestroyCueTags.HasTagExact(CueTag))
-			{
-				(*ActiveComponent)->DestroyComponent();
-			}
-			else
-			{
-				(*ActiveComponent)->Deactivate();
-			}
-		}
+		ProjectJCombatPresentationDebug::StopComponent(*ActiveComponent, ImmediateDestroyCueTags.HasTagExact(CueTag));
 		ActiveLoopingCues.Remove(CueTag);
 		ImmediateDestroyCueTags.RemoveTag(CueTag);
 	}
@@ -456,17 +465,7 @@ void UProject_JCombatPresentationComponent::StopAllCues()
 {
 	for (TPair<FGameplayTag, TObjectPtr<UNiagaraComponent>>& Pair : ActiveLoopingCues)
 	{
-		if (Pair.Value)
-		{
-			if (ImmediateDestroyCueTags.HasTagExact(Pair.Key))
-			{
-				Pair.Value->DestroyComponent();
-			}
-			else
-			{
-				Pair.Value->Deactivate();
-			}
-		}
+		ProjectJCombatPresentationDebug::StopComponent(Pair.Value, ImmediateDestroyCueTags.HasTagExact(Pair.Key));
 	}
 	ActiveLoopingCues.Reset();
 	ImmediateDestroyCueTags.Reset();

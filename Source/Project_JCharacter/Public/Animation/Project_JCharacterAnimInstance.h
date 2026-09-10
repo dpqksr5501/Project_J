@@ -8,6 +8,7 @@
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
+#include "Animation/Project_JAnimationUpdateSchedule.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
@@ -1218,7 +1219,7 @@ protected:
 	void PublishChooserLandingProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserCombatProperties(const FProject_JAnimThreadSafeData& Data);
 	void ApplyFarChooserOverrides(const FProject_JAnimThreadSafeData& Data);
-	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds);
+	bool ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds, bool bForceRefresh);
 	bool ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldForceMotionMatchingReselect(const FProject_JAnimThreadSafeData& Data) const;
 	void CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data);
@@ -1581,7 +1582,7 @@ public:
 
 private:
 	float HiddenRemoteUpdateAccumulator = 0.0f;
-	float MotionMatchingUpdateAccumulator = 0.0f;
+	FProjectJAnimationUpdateSchedule MotionMatchingSelectionSchedule;
 
 	EProject_JGroundMotionMode LastEvaluatedGroundMotionMode = EProject_JGroundMotionMode::Idle;
 	EProject_JLocomotionGaitIntent LastEvaluatedGaitIntent = EProject_JLocomotionGaitIntent::Run;

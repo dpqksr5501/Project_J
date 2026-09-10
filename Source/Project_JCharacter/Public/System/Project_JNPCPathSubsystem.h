@@ -18,14 +18,33 @@ struct FProjectJNPCPathCompletion
 	FVector Start = FVector::ZeroVector;
 	FVector Goal = FVector::ZeroVector;
 	FNavPathSharedPtr Path;
+	/** Wall latencies; engine latency includes its queue and GT completion dispatch, not worker CPU. */
+	double QueueMilliseconds = 0, EngineMilliseconds = 0, DeliveryMilliseconds = 0, TotalMilliseconds = 0;
 };
 struct FProjectJNPCPathStats
 {
 	uint64 Accepted = 0, Rejected = 0, Dispatched = 0, Cancelled = 0, Expired = 0, Delivered = 0, Discarded = 0;
 	int32 LastTickDispatches = 0, LastTickDeliveries = 0;
 	int32 InFlight = 0, PeakInFlight = 0, Queued = 0;
+	int32 PeakQueued = 0, Tombstones = 0;
+	uint64 Succeeded = 0, Failed = 0, EngineCompleted = 0, StoppedRequests = 0;
+	uint64 TickSequence = 0;
+	uint64 IgnoredAfterStop = 0;
+	double QueueMilliseconds = 0, EngineMilliseconds = 0, DeliveryMilliseconds = 0;
 	double LastTickMilliseconds = 0, MaxDeliveryMilliseconds = 0;
 };
+
+#if WITH_DEV_AUTOMATION_TESTS
+/** Value-only diagnostic record: never retains owner, path or callback. */
+struct FProjectJNPCPathLatencySample
+{
+	uint64 Token = 0;
+	uint32 PawnId = 0;
+	int32 Phase = 0;
+	EProjectJNPCPathStatus Status = EProjectJNPCPathStatus::Failed;
+	double QueueMilliseconds = 0, EngineMilliseconds = 0, DeliveryMilliseconds = 0, TotalMilliseconds = 0;
+};
+#endif
 
 /** GT admission/delivery around engine-owned async navigation. No custom worker accesses UObjects. */
 UCLASS()
@@ -48,6 +67,12 @@ public:
 	void Cancel(uint64 Token);
 	int32 GetRequestCount() const { return Requests.Num(); }
 	const FProjectJNPCPathStats& GetStats() const { return Stats; }
+#if WITH_DEV_AUTOMATION_TESTS
+	/** Opt-in bounded capture of delivered results, including Action consumers. Phase is captured on Submit. */
+	void SetLatencyCapturePhaseForTest(int32 Phase) { check(IsInGameThread()); CapturePhase = Phase; }
+	void DrainLatencySamplesForTest(TArray<FProjectJNPCPathLatencySample>& Out) { check(IsInGameThread()); Out = MoveTemp(LatencySamples); LatencySamples.Reset(); }
+	uint64 GetDroppedLatencySamplesForTest() const { return DroppedLatencySamples; }
+#endif
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	virtual void OnWorldEndPlay(UWorld& InWorld) override;
@@ -58,6 +83,9 @@ protected:
 	virtual bool DoesSupportWorldType(EWorldType::Type Type) const override;
 private:
 #if WITH_DEV_AUTOMATION_TESTS
+	int32 CapturePhase = INDEX_NONE;
+	TArray<FProjectJNPCPathLatencySample> LatencySamples;
+	uint64 DroppedLatencySamples = 0;
 	friend class FProjectJNPCPathLateCompletionTest;
 	friend class FProjectJNPCPathPressureTest;
 	/** Deterministic engine-boundary simulation; does not execute navigation or create a worker. */

@@ -13,11 +13,14 @@
 #include "HAL/IConsoleManager.h"
 #include "Project_JPlayerCharacter.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "System/Project_JPresentationBudgetSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJWeaponPresentation, Log, All);
 
 namespace Project_J::WeaponPresentation
 {
+	static TAutoConsoleVariable<int32> CVarBudgetRemote(TEXT("ProjectJ.Presentation.BudgetRemote"), 1,
+		TEXT("Budget non-combat remote weapon creation on GT; authority, local and draw-notify work stay immediate."));
 	static TAutoConsoleVariable<int32> CVarDebug(
 		TEXT("Project_J.Combat.WeaponPresentationDebug"),
 		0,
@@ -50,6 +53,8 @@ UProject_JWeaponPresentationComponent::UProject_JWeaponPresentationComponent()
 void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (bRetryBudget && FPlatformTime::Seconds() >= NextBudgetRetry)
+	{ bRetryBudget = false; RefreshPresentation(); }
 
 	if (!SpawnedWeapon)
 	{
@@ -63,6 +68,7 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 		GroundContactStateCount = 0;
 		GripTargets = FProject_JWeaponGripTargets();
 		UpdateTickState();
+		if (bRetryBudget) { SetComponentTickEnabled(true); }
 		return;
 	}
 
@@ -160,6 +166,7 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToSheathedSocket()
 
 void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
 {
+	TGuardValue<bool> ImmediateGuard(bApplyingBudget, true); // Authored draw frame cannot wait in a cosmetic queue.
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	if (!SpawnedWeapon)
 	{
@@ -209,15 +216,27 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 		// Preserve notify-owned motion and weapon-local VFX on repeated callbacks.
 		return;
 	}
-	DestroyWeaponPresentation();
+	if (SpawnedWeapon) { DestroyWeaponPresentation(); }
 	if (!PresentationProfile->WeaponActorClass || !Mesh)
 	{
+		CancelBudgetedPresentation();
 		UE_LOG(LogTemp, Warning, TEXT("[ProjectJ][WeaponPresentation] Refresh failed: Owner=%s Profile=%s ActorClass=%s Mesh=%s World=%s"),
 			*GetNameSafe(OwnerCharacter),
 			*GetNameSafe(PresentationProfile),
 			PresentationProfile ? *GetNameSafe(PresentationProfile->WeaponActorClass) : TEXT("None"),
 			*GetNameSafe(Mesh),
 			*GetNameSafe(GetWorld()));
+		return;
+	}
+	if (ShouldBudgetPresentation())
+	{
+		auto* Budget = GetWorld()->GetSubsystem<UProject_JPresentationBudgetSubsystem>();
+		bRetryBudget = !Budget || !Budget->Request(this, ++PresentationRevision);
+		if (bRetryBudget)
+		{
+			NextBudgetRetry = FPlatformTime::Seconds() + 0.1 + (GetUniqueID() % 17) * 0.003;
+			SetComponentTickEnabled(true);
+		}
 		return;
 	}
 
@@ -275,6 +294,7 @@ bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SocketNam
 
 void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 {
+	CancelBudgetedPresentation();
 	AppliedProfile.Reset();
 	AppliedActorClass.Reset();
 	AppliedCharacterMesh.Reset();
@@ -287,6 +307,27 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 		SpawnedWeapon = nullptr;
 		PreviousWeapon->Destroy();
 	}
+}
+
+bool UProject_JWeaponPresentationComponent::ShouldBudgetPresentation() const
+{
+	if (bApplyingBudget || bCombatPresentationActive || bIndependentMotionActive) { return false; }
+#if WITH_DEV_AUTOMATION_TESTS
+	if (bForceBudgetForTest) { return true; }
+#endif
+	const auto* Pawn = Cast<APawn>(GetOwner());
+	return Project_J::WeaponPresentation::CVarBudgetRemote.GetValueOnGameThread() != 0 && Pawn
+		&& GetNetMode() == NM_Client && !Pawn->IsLocallyControlled();
+}
+void UProject_JWeaponPresentationComponent::CancelBudgetedPresentation()
+{
+	++PresentationRevision; bRetryBudget = false;
+	if (auto* Budget = GetWorld() ? GetWorld()->GetSubsystem<UProject_JPresentationBudgetSubsystem>() : nullptr) { Budget->Cancel(this); }
+}
+void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Revision)
+{
+	if (Revision != PresentationRevision || !CanCreatePresentation()) { return; }
+	TGuardValue<bool> Guard(bApplyingBudget, true); RefreshPresentation();
 }
 
 bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)

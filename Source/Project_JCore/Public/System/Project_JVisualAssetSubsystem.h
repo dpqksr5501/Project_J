@@ -54,6 +54,8 @@ private:
 	void OnTearDown(UWorld* World);
 	TArray<TSharedPtr<FProjectJVisualAssetGroup>> Groups;
 	TArray<TSharedPtr<FProjectJVisualAssetLease>> Leases;
+	// Admission must not scan every other player's leases during an arrival burst.
+	TMap<TWeakObjectPtr<UObject>, int32> OwnerLeaseCounts;
 	TMap<FSoftObjectPath, double> FailedUntil;
 	FDelegateHandle TearDownHandle;
 	FProjectJVisualAssetStats Stats;

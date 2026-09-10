@@ -56,15 +56,20 @@ namespace
 	class FNativeNPCBatchCommand : public IAutomationLatentCommand
 	{
 	public:
-		explicit FNativeNPCBatchCommand(FAutomationTestBase* InTest) : Test(InTest), Started(FPlatformTime::Seconds())
+		explicit FNativeNPCBatchCommand(FAutomationTestBase* InTest, int32 Count = 96, bool bDense = false) : Test(InTest), Started(FPlatformTime::Seconds())
 		{
 			Enemy = Fixture.Target(100, 2);
 			Fixture.Target(20, 1); // Closer friendly must not enter the scoring snapshot.
-			for (int32 Index = 0; Index < 96; ++Index) { Components.Add(Fixture.Agent()); }
+			if (bDense)
+			{
+				for (int32 I = 2; I < Fixture.Scheduler->MaxTargets; ++I) { Fixture.Target(1000 + I % 500, 2); }
+				Test->TestEqual(TEXT("Crowded registry accepts 2048 targets"), Fixture.Scheduler->GetTargetCount(), 2048);
+			}
+			for (int32 Index = 0; Index < Count; ++Index) { Components.Add(Fixture.Agent()); }
 			Seen.Init(false, Components.Num());
-			Test->TestEqual(TEXT("Native NPCs registered"), Fixture.Scheduler->GetAgentCount(), 96);
+			Test->TestEqual(TEXT("Native NPCs registered"), Fixture.Scheduler->GetAgentCount(), Count);
 			Components[0]->StartBatchedNPCDecisions(1);
-			Test->TestEqual(TEXT("Duplicate registration is idempotent"), Fixture.Scheduler->GetAgentCount(), 96);
+			Test->TestEqual(TEXT("Duplicate registration is idempotent"), Fixture.Scheduler->GetAgentCount(), Count);
 			Test->TestFalse(TEXT("Manual query cannot compete with registered batching"), Components[0]->RequestTargets({Enemy}));
 			Fixture.Scheduler->Tick(0);
 			Fixture.Service->Tick(0);
@@ -79,6 +84,7 @@ namespace
 			Test->TestTrue(TEXT("Outstanding capacity bounded"), Fixture.Scheduler->GetOutstandingCount() <= Fixture.Scheduler->MaxOutstandingDecisions);
 			Test->TestTrue(TEXT("GT result count bounded"), Stats.LastTickResults <= Fixture.Scheduler->MaxResultsPerTick);
 			Test->TestTrue(TEXT("Agent scan bounded"), Stats.LastTickAgentVisits <= Fixture.Scheduler->MaxAgentVisitsPerTick);
+			Test->TestTrue(TEXT("Dense batch respects Core total value capacity"), Stats.LastTickSnapshotValues <= ProjectJ::TargetScoring::MaxCandidates);
 			Test->TestTrue(TEXT("Candidate collection bounded"), Stats.LastTickCandidateVisits <= Fixture.Scheduler->MaxQueriesPerDispatch * Fixture.Scheduler->MaxTargets);
 			for (int32 Index = 1; Index < Components.Num(); ++Index)
 			{
@@ -92,6 +98,7 @@ namespace
 			if (SeenCount != Components.Num() - 1) { return false; }
 			Test->TestNull(TEXT("Cancelled agent cannot receive its old shared result"), Components[0]->GetLastScoredTarget());
 			Test->TestTrue(TEXT("Late registered NPC was serviced"), Seen.Last());
+			Test->TestEqual(TEXT("Dense input never produces an oversized rejected batch"), Stats.RejectedBatches, uint64(0));
 			Test->TestTrue(TEXT("Multiple NPC queries share submissions"), Stats.SubmittedDecisions > Stats.SubmittedBatches);
 			Test->TestEqual(TEXT("All unregistered agents release scheduler reservation"), Fixture.Scheduler->GetOutstandingCount(), 0);
 			Test->AddInfo(FString::Printf(TEXT("NativeNPCBatch serviced=%d submitted_decisions=%llu root_batches=%llu discarded=%llu"), SeenCount, Stats.SubmittedDecisions, Stats.SubmittedBatches, Stats.DiscardedDecisions));
@@ -184,6 +191,9 @@ namespace
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNativeNPCBatchTest, "ProjectJ.NPCDecision.NativeBatch",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FNativeNPCBatchTest::RunTest(const FString& Parameters) { ADD_LATENT_AUTOMATION_COMMAND(FNativeNPCBatchCommand(this)); return true; }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCrowdDecisionTest, "ProjectJ.Crowd.Decision2048",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJCrowdDecisionTest::RunTest(const FString&) { ADD_LATENT_AUTOMATION_COMMAND(FNativeNPCBatchCommand(this, 2048, true)); return true; }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNPCRevalidationTest, "ProjectJ.NPCDecision.Revalidation",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FNPCRevalidationTest::RunTest(const FString& Parameters) { ADD_LATENT_AUTOMATION_COMMAND(FNPCRevalidationCommand(this)); return true; }

@@ -17,6 +17,13 @@ struct FAbilityEndedData;
 UENUM(BlueprintType)
 enum class EProjectJNPCActionState : uint8 { Disabled, Idle, AwaitingPath, FollowingPath, InRange, Attacking, Backoff };
 
+/** Per-consumer lifetime counts. RetryScheduled counts backoff decisions, not successful new submissions. */
+struct FProjectJNPCActionStats
+{
+	uint64 PathRequests = 0, PathRejected = 0, PathFailed = 0, PathStale = 0, RetryScheduled = 0, Arrivals = 0;
+	uint64 ReplacedMoves = 0;
+};
+
 /** Explicit server-only consumer. Existing controller, faction registry, grants and abilities remain authoritative. */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JNPCActionComponent : public UActorComponent
@@ -40,6 +47,11 @@ public:
 	void UpdateAction();
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	EProjectJNPCActionState GetActionState() const { return State; }
+	const FProjectJNPCActionStats& GetStats() const { return Stats; }
+	/** GT representation handoff reads the start contract before StopActions releases it. */
+	UProject_JTargetScoringComponent* GetScoringSource() const { return ScoringComponent.Get(); }
+	FGameplayAbilitySpecHandle GetAttackAbilityHandle() const { return AttackHandle; }
+	bool CanSuspendMovement() const { return bEnabled && !HasForeignMovement(); }
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="50", ClampMax="2000"))
 	double AttackRange = 200;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="25", ClampMax="1000"))
@@ -78,10 +90,12 @@ private:
 	TWeakObjectPtr<AActor> IntentTarget;
 	FGameplayAbilitySpecHandle AttackHandle;
 	FAIRequestID MoveId = FAIRequestID::InvalidRequest;
+	FAIRequestID ReplacingMoveId = FAIRequestID::InvalidRequest;
 	FDelegateHandle ContextHandle, MoveHandle, AbilityEndedHandle, TearDownHandle;
 	uint64 IntentRevision = 0, PathToken = 0;
 	FVector FollowingGoal = FVector::ZeroVector;
 	double LastDecision = 0, NextPathTime = 0, NextAttackTime = 0;
 	EProjectJNPCActionState State = EProjectJNPCActionState::Disabled;
 	bool bEnabled = false, bEndingPlay = false, bOwnsAttack = false, bStopping = false;
+	FProjectJNPCActionStats Stats;
 };

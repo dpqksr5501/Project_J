@@ -53,8 +53,7 @@ uint64 UProject_JVisualAssetSubsystem::Request(UObject* Owner, FSoftObjectPath P
 	const double Now = FPlatformTime::Seconds();
 	for (auto It = FailedUntil.CreateIterator(); It; ++It) { if (It.Value() <= Now) { It.RemoveCurrent(); } }
 	if (FailedUntil.Contains(Path)) { ++Stats.Rejected; ++Stats.BackoffRejected; return 0; }
-	int32 OwnerLeases = 0;
-	for (const auto& Lease : Leases) { OwnerLeases += Lease->Owner.Get() == Owner ? 1 : 0; }
+	const int32 OwnerLeases = OwnerLeaseCounts.FindRef(Owner);
 	if (OwnerLeases >= MaxLeasesPerOwner) { ++Stats.Rejected; return 0; }
 	auto* Found = Groups.FindByPredicate([&](const auto& G) { return G->Path == Path; });
 	TSharedPtr<FProjectJVisualAssetGroup> Group = Found ? *Found : nullptr;
@@ -67,7 +66,7 @@ uint64 UProject_JVisualAssetSubsystem::Request(UObject* Owner, FSoftObjectPath P
 	Lease->Token = ++NextToken; if (!Lease->Token) { Lease->Token = ++NextToken; }
 	Lease->Owner = Owner; Lease->Group = Group; Lease->Apply = MoveTemp(Apply); ++Group->Consumers;
 	Lease->Deadline = Now + RequestLifetimeSeconds;
-	Leases.Add(Lease); ++Stats.Accepted;
+	Leases.Add(Lease); ++OwnerLeaseCounts.FindOrAdd(Lease->Owner); ++Stats.Accepted;
 	return Lease->Token;
 }
 void UProject_JVisualAssetSubsystem::Release(uint64 Token)
@@ -76,6 +75,10 @@ void UProject_JVisualAssetSubsystem::Release(uint64 Token)
 	const int32 Index = Leases.IndexOfByPredicate([Token](const auto& L) { return L->Token == Token; });
 	if (Index == INDEX_NONE) { return; }
 	const auto Lease = Leases[Index]; Lease->Apply = nullptr;
+	if (int32* Count = OwnerLeaseCounts.Find(Lease->Owner))
+	{
+		if (--*Count == 0) { OwnerLeaseCounts.Remove(Lease->Owner); }
+	}
 	Leases.RemoveAt(Index);
 	if (Index < Cursor) { --Cursor; }
 	const auto Group = Lease->Group;
@@ -159,7 +162,7 @@ void UProject_JVisualAssetSubsystem::Stop()
 	check(IsInGameThread()); bAccepting = false;
 	for (const auto& Lease : Leases) { Lease->Apply = nullptr; }
 	for (const auto& Group : Groups) { if (Group->Handle) { Group->Handle->CancelHandle(); } }
-	Leases.Empty(); Groups.Empty(); FailedUntil.Empty(); Cursor = 0; Stats.InFlight = 0;
+	Leases.Empty(); OwnerLeaseCounts.Empty(); Groups.Empty(); FailedUntil.Empty(); Cursor = 0; Stats.InFlight = 0;
 }
 void UProject_JVisualAssetSubsystem::OnTearDown(UWorld* World) { if (World == GetWorld()) { Stop(); } }
 void UProject_JVisualAssetSubsystem::OnWorldEndPlay(UWorld& World) { Stop(); Super::OnWorldEndPlay(World); }

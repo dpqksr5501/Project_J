@@ -93,6 +93,8 @@ public:
 	/** Reconciles the visible weapon; unchanged identity preserves its actor and motion. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void RefreshPresentation();
+	/** Budget subsystem applies only the current request; no stale weapon profile is captured. */
+	void ApplyBudgetedPresentation(uint64 Revision);
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon")
 	AActor* GetSpawnedWeapon() const { return SpawnedWeapon; }
@@ -138,6 +140,15 @@ public:
 private:
 	friend class FProjectJWeaponPresentationTeardownTest;
 	friend class FProjectJWeaponPresentationIdentityTest;
+	friend class FProjectJCrowdPresentationTest;
+	bool ShouldBudgetPresentation() const;
+	void CancelBudgetedPresentation();
+	uint64 PresentationRevision = 0;
+	bool bApplyingBudget = false, bRetryBudget = false;
+	double NextBudgetRetry = 0;
+#if WITH_DEV_AUTOMATION_TESTS
+	bool bForceBudgetForTest = false;
+#endif
 	bool CanCreatePresentation() const;
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;

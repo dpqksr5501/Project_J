@@ -30,7 +30,9 @@ public class Project_J : ModuleRules
 			"HTTP",
 			"Json",
 			"JsonUtilities",
-			"NetCore"
+			"NetCore",
+			"RHI",
+			"Niagara"
 		});
 
 		if (Target.bBuildEditor)

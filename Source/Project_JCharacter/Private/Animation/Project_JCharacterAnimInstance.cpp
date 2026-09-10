@@ -3030,7 +3030,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 		Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Stop;
 	const bool bUpdateMotionMatchingThisFrame =
 		bMotionMatchingEnabled &&
-		(bForceMotionMatchingRefresh || ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime));
+		ShouldEvaluateMotionMatchingThisFrame(Data.DeltaTime, bForceMotionMatchingRefresh);
 	UPoseSearchDatabase* PreviousActiveDatabase = CurrentActivePoseSearchDatabase.Get();
 
 	if (bUpdateMotionMatchingThisFrame)
@@ -3504,30 +3504,19 @@ void UProject_JCharacterAnimInstance::ApplyFarChooserOverrides(const FProject_JA
 	bChooserIsIdle = !Data.Air.bIsInAir && Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Idle;
 }
 
-bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds)
+bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(float DeltaSeconds, bool bForceRefresh)
 {
 	if (!OwningCharacter || IsDedicatedServerAnimationContext())
 	{
-		MotionMatchingUpdateAccumulator = 0.0f;
+		MotionMatchingSelectionSchedule = {};
 		return false;
 	}
 
 	CurrentOptimizationPolicy = BuildOptimizationPolicy();
 	const float UpdateInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
-	if (UpdateInterval <= 0.0f)
-	{
-		MotionMatchingUpdateAccumulator = 0.0f;
-		return true;
-	}
-
-	MotionMatchingUpdateAccumulator += DeltaSeconds;
-	if (MotionMatchingUpdateAccumulator < UpdateInterval)
-	{
-		return false;
-	}
-
-	MotionMatchingUpdateAccumulator = 0.0f;
-	return true;
+	// Stagger periodic GT Chooser/database selection. State changes and full-rate policies stay immediate.
+	// PoseSearch's actual worker search cadence remains owned by its separate search policy in the proxy.
+	return MotionMatchingSelectionSchedule.Advance(DeltaSeconds, UpdateInterval, OwningCharacter->GetUniqueID(), bForceRefresh);
 }
 
 bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const
@@ -3562,7 +3551,6 @@ void UProject_JCharacterAnimInstance::CacheEvaluatedMotionMatchingContext(const 
 	bLastEvaluatedStartWasSprinting = Data.Ground.bStartWasSprinting;
 	LastEvaluatedMotionMatchingSelectionRevision = Data.MotionMatching.SelectionRevision;
 	bHasEvaluatedMotionMatchingContext = true;
-	MotionMatchingUpdateAccumulator = 0.0f;
 }
 
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const

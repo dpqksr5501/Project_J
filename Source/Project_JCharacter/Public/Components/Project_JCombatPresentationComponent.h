@@ -31,8 +31,8 @@ struct PROJECT_JCHARACTER_API FProject_JReplicatedCombatPresentationState
 
 /**
  * Client-only owner for short combat cosmetics attached to the current weapon
-	 * or character. It has no Niagara-component replication, pool, or per-frame
-	 * tick; the server only replicates a compact recovery state for active loops.
+ * or character. Optional engine pooling preserves manual ownership of tracked loops.
+ * No per-frame tick; the server replicates a compact recovery state for active loops.
  */
 UCLASS(ClassGroup = (Combat), meta = (BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JCombatPresentationComponent : public UActorComponent
@@ -72,6 +72,7 @@ public:
 
 private:
 	friend class FProjectJPresentationRecoveryTest;
+	friend class FProjectJCrowdEffectsTest;
 	const FProject_JCombatVFXCueDefinition* ResolveCue(FGameplayTag CueTag) const;
 	void PlayCueLocal(FGameplayTag CueTag);
 	void StopCueLocal(FGameplayTag CueTag);

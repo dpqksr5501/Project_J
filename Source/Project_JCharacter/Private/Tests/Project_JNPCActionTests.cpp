@@ -126,6 +126,19 @@ bool FProjectJNPCActionContextTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCOutOfRangeTest, "ProjectJ.Crowd.OutOfRangeDuringPathCooldown",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJNPCOutOfRangeTest::RunTest(const FString&)
+{
+	FActionFixture F; F.Scoring->StartBatchedNPCDecisions(1); F.Actions->StartActions(F.Scoring, {});
+	auto* Target = F.Target(700); F.Scoring->OnQueryCompleted.Broadcast(Target, 1); F.ActionTick();
+	Target->SetActorLocation(FVector(50, 0, 0)); F.ActionTick();
+	TestEqual(TEXT("Approaching target reaches attack range"), F.Actions->GetActionState(), EProjectJNPCActionState::InRange);
+	Target->SetActorLocation(FVector(700, 0, 0)); F.ActionTick();
+	TestTrue(TEXT("Moving away clears arrival even before another path request is allowed"), F.Actions->GetActionState() != EProjectJNPCActionState::InRange);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCPathAdmissionTest, "ProjectJ.NPCAction.PathAdmission",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJNPCPathAdmissionTest::RunTest(const FString& Parameters)
@@ -162,6 +175,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNPCPathLateCompletionTest, "ProjectJ.N
 bool FProjectJNPCPathLateCompletionTest::RunTest(const FString& Parameters)
 {
 	FActionFixture F;
+	F.Paths->SetLatencyCapturePhaseForTest(17);
 	int32 Callbacks = 0;
 	const uint64 Cancelled = F.Paths->Submit(F.Actions, F.NPC, FVector(1000, 0, 0), 1, [&Callbacks](const auto&) { ++Callbacks; });
 	F.Paths->SimulateDispatchForTest(Cancelled, false);
@@ -174,6 +188,7 @@ bool FProjectJNPCPathLateCompletionTest::RunTest(const FString& Parameters)
 	EProjectJNPCPathStatus DeliveredStatus = EProjectJNPCPathStatus::Success;
 	const uint64 Expired = F.Paths->Submit(F.Actions, F.NPC, FVector(1000, 0, 0), 3,
 		[&](const auto& C) { ++Callbacks; DeliveredStatus = C.Status; });
+	F.Paths->SetLatencyCapturePhaseForTest(18); // A later stage must not relabel an older submission.
 	F.Paths->SimulateDispatchForTest(Expired, true); F.Paths->Tick(0);
 	TestEqual(TEXT("Deadline delivered once"), Callbacks, 1);
 	TestEqual(TEXT("Deadline reports expiry"), DeliveredStatus, EProjectJNPCPathStatus::Expired);
@@ -183,10 +198,20 @@ bool FProjectJNPCPathLateCompletionTest::RunTest(const FString& Parameters)
 	F.Paths->Complete(Expired, 1, ENavigationQueryResult::Fail, nullptr); F.Paths->Tick(0);
 	TestEqual(TEXT("Expired job cannot deliver again"), Callbacks, 1);
 	TestEqual(TEXT("Late expired completion releases slot"), F.Paths->GetRequestCount(), 0);
+	TArray<FProjectJNPCPathLatencySample> Samples;
+	F.Paths->DrainLatencySamplesForTest(Samples);
+	TestEqual(TEXT("Capture excludes cancelled and duplicate late results"), Samples.Num(), 1);
+	if (Samples.Num() == 1)
+	{
+		TestEqual(TEXT("Capture keeps submission phase"), Samples[0].Phase, 17);
+		TestEqual(TEXT("Capture keeps request token"), Samples[0].Token, Expired);
+		TestEqual(TEXT("Capture keeps expiry outcome"), Samples[0].Status, EProjectJNPCPathStatus::Expired);
+	}
 	const uint64 Teardown = F.Paths->Submit(F.Actions, F.NPC, FVector(1000, 0, 0), 4, [&Callbacks](const auto&) { ++Callbacks; });
 	F.Paths->SimulateDispatchForTest(Teardown, false); F.Paths->OnWorldEndPlay(*F.World);
 	F.Paths->Complete(Teardown, 1, ENavigationQueryResult::Fail, nullptr);
 	TestEqual(TEXT("World end prevents late delivery"), Callbacks, 1);
+	TestEqual(TEXT("Late engine callback after stop is observable"), F.Paths->GetStats().IgnoredAfterStop, uint64(1));
 	return true;
 }
 
