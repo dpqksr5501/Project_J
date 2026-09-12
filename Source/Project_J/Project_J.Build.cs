@@ -20,6 +20,7 @@ public class Project_J : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"Project_JCore",
+			"Project_JMMO",
 			"Project_JGAS",
 			"Project_JCharacter",
 			"SignificanceManager",

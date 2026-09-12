@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "Project J Execution Experiments",
+  "Description": "Explicit automation fixtures for scheduling, lifetime and presentation audits. No shipping gameplay dependencies.",
+  "Category": "Testing",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [
+    { "Name": "Niagara", "Enabled": true },
+    { "Name": "PCG", "Enabled": true, "TargetAllowList": ["Editor"] }
+  ],
+  "Modules": [
+    { "Name": "ProjectJExperiments", "Type": "Editor", "LoadingPhase": "PostConfigInit", "PlatformAllowList": ["Win64"] }
+  ]
+}

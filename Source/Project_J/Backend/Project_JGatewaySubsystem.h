@@ -5,6 +5,9 @@
 #include "Project_JBackendConnection.h"
 #include "Project_JGatewaySubsystem.generated.h"
 
+class IHttpRequest;
+namespace ProjectJ::MMO { class FRequestTracker; }
+
 /**
  * Subsystem to manage all connections to the Gateway backend.
  * Uses the IProject_JBackendConnection interface to decouple the underlying implementation (HTTP/Socket).
@@ -37,6 +40,16 @@ public:
 	bool IsRemoteTelemetryEnabled() const;
 
 private:
+	friend class FProjectJGatewayAdmissionTest;
+	void DispatchTrackedRequest(const FString& Endpoint, const FString& Payload,
+		const FProject_JBackendRequestContext& RequestContext,
+		TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion);
+	TSharedPtr<ProjectJ::MMO::FRequestTracker, ESPMode::ThreadSafe> RequestTracker;
+	TMap<FGuid, TSharedPtr<IHttpRequest, ESPMode::ThreadSafe>> ActiveRequests;
+	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend", meta = (ClampMin = "1", ClampMax = "4096"))
+	int32 MaxInFlightRequests = 128;
+	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend", meta = (ClampMin = "1.0"))
+	float RequestTimeoutSeconds = 15.0f;
 	/** Remote telemetry is opt-in. Do not enable it without a production HTTPS endpoint and a server-side redaction policy. */
 	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend|Telemetry")
 	bool bEnableRemoteTelemetry = false;

@@ -1,0 +1,196 @@
+{
+  "catalogEntries": 205,
+  "catalogDomains": 20,
+  "newFoundationRun": "Foundation04",
+  "newFoundation": {
+    "passed": true,
+    "exitCode": 0,
+    "succeeded": 8,
+    "succeededWithWarnings": 0,
+    "errors": 0,
+    "warnings": 0,
+    "missing": [],
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Catalog",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ]
+  },
+  "existingRegressionRun": "Foundation03",
+  "existingRegression": [
+    {
+      "fullTestPath": "ProjectJ.Animation.StopIdleInterrupt",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Combat.CommandResolution",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Equipment.OperationResult",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 2
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Replication.OwnerRelevance",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Architecture.Social.Membership",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "note": "Separate runs. Historical handover cleanup warnings were resolved and all 3 handover tests passed without warnings in worldCleanupFollowup. No population/FPS claim.",
+  "worldCleanupFollowup": {
+    "run": "HandoverWorldCleanup_20260912/Handover01",
+    "result": {
+      "passed": true,
+      "exitCode": 0,
+      "succeeded": 3,
+      "succeededWithWarnings": 0,
+      "errors": 0,
+      "warnings": 0,
+      "missing": [],
+      "tests": [
+        {
+          "fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        }
+      ]
+    }
+  }
+}

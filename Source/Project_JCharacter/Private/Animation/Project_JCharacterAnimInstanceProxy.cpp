@@ -189,6 +189,19 @@ void ApplyMotionMatchingPresentationPolicy(
 
 EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseChangeInterruptMode() const
 {
+	// Stop and Idle both have false movement intent. A database change at that
+	// boundary must nevertheless retire the Stop/Cycle continuing pose. Keep this
+	// based on the destination snapshot, not a one-frame edge: a throttled chooser
+	// or a newly relevant graph may apply the Idle database on a later update.
+	// SetDatabaseToSearch is called only when the database changes, so settled
+	// Idle does not trigger repeated searches or restart its animation every frame.
+	if (!ThreadSafeData.Air.bIsInAir &&
+		!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle)
+	{
+		return EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose;
+	}
+
 	if (!bHasMotionMatchingPolicyState)
 	{
 		return EPoseSearchInterruptMode::InterruptOnDatabaseChange;
@@ -341,7 +354,9 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
 {
 	const EPoseSearchInterruptMode InterruptMode =
-		EPoseSearchInterruptMode::ForceInterrupt;
+		ResolveDatabaseChangeInterruptMode() == EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose
+			? EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose
+			: EPoseSearchInterruptMode::ForceInterrupt;
 	NativeMotionMatchingNode.SetInterruptMode(InterruptMode);
 
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())

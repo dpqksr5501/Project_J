@@ -5,6 +5,11 @@
 	"Description": "",
 	"Modules": [
 		{
+			"Name": "Project_JMMO",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
 			"Name": "Project_J",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",

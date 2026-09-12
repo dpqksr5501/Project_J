@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "succeeded": 10,
+  "withWarnings": 0,
+  "missing": [],
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.GroupE.AnimationMigrationPreflight",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupE.AuthoringAudit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Audio.VoiceLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.GPU.ReadbackLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.PCG.GenerationLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Physics.SnapshotLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Scheduling.APIs",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Scheduling.ConsumerContention",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Scheduling.ConsumerLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupF.Tick.SnapshotOrdering",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

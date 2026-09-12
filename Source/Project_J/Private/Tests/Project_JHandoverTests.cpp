@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "Game/Project_JPlayerState.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
 #include "Social/Project_JSocialSubsystem.h"
 
 namespace
@@ -241,11 +242,24 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameters)
 {
+	if (!TestNotNull(TEXT("Engine is available for the test world context"), GEngine))
+	{
+		return false;
+	}
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, TEXT("TestSerializationWorld"));
 	if (!World)
 	{
 		return false;
 	}
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+	// Actor destruction needs a registered context. Keep it alive through world
+	// cleanup, and release both resources on success and every early return.
+	ON_SCOPE_EXIT
+	{
+		World->DestroyWorld(false);
+		GEngine->DestroyWorldContext(World);
+		TestNull(TEXT("Serialization fixture releases its world context"), GEngine->GetWorldContextFromWorld(World));
+	};
 
 	FString PlayerClassPathString = TEXT("/Game/Character_BPs/BP_Player.BP_Player_C");
 	GConfig->GetString(TEXT("ProjectJ.Tests"), TEXT("PlayerCharacterClassPath"), PlayerClassPathString, GEngineIni);
@@ -255,7 +269,6 @@ bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameter
 	TestNotNull(TEXT("Configured player character class must be loaded"), PlayerClass);
 	if (!PlayerClass)
 	{
-		World->DestroyWorld(true);
 		return false;
 	}
 
@@ -267,7 +280,6 @@ bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameter
 	TestNotNull(TEXT("Source Character must be spawned"), SourceCharacter);
 	if (!SourceCharacter)
 	{
-		World->DestroyWorld(true);
 		return false;
 	}
 
@@ -292,7 +304,6 @@ bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameter
 		{
 			SourceCharacter->Destroy();
 		}
-		World->DestroyWorld(true);
 		return false;
 	}
 
@@ -318,7 +329,6 @@ bool FProjectJPlayerCharacterSerializationTest::RunTest(const FString& Parameter
 	{
 		DestCharacter->Destroy();
 	}
-	World->DestroyWorld(true);
 	return true;
 }
 

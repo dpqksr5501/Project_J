@@ -4,6 +4,12 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [MMORPG Extension Foundation (2026-09-12)](Architecture/MMO_Foundation_2026-09-12.md)
+  - 기존 C++ 진단, Core-only 기반 모듈, 요청·저장·동시성 계약과 후속 구현 절차. [205개 콘텐츠·운영 확장 항목](Architecture/MMO_Content_Catalog.md)은 구현 완료 목록과 구분한다. 신규 8개·기존 회귀 16개 검증 및 월드 정리 경고 해결 결과는 [검증 JSON](Architecture/MMO_Foundation_Validation_2026-09-12.json)에 기록한다.
+
+- [E Follow-up & F Execution Experiments (2026-09-12)](Benchmarks/ExecutionExperiments_2026-09-12/README.md)
+  - 기본 조명 PSO 누락 보완, 승인된 ABP·Trail 적용, 실제 Tasks/Tick/FRunnable/Chaos/RDG/Audio/PCG 실험과 CSV. 실험 통과와 production 채택을 구분한다.
+
 - [A–E Performance Measurements & Evidence](Benchmarks/SystemsModernization.md)
   - main에 통합한 멀티스레드 구조의 측정 조건, Mass·Niagara·네트워크·PSO 비교와 공개 CSV/JSON. Python 표준 라이브러리로 대표 수치를 재계산할 수 있다.
 

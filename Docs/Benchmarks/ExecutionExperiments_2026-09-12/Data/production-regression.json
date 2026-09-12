@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "succeeded": 17,
+  "succeededWithWarnings": 0,
+  "errors": 0,
+  "warnings": 0,
+  "missing": [],
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.Combat.MeleeLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Combat.WeaponAttackLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.EquipmentSoak.HundredCharacters",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.EquipmentSoak.StopDuringAttack",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.Budgeted",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.FullRate",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationProbe.WorldCleanup",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.AnimationContractAudit",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupB.CombatPosePolicy",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.GroupE.DistortionPrecacheLayout",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

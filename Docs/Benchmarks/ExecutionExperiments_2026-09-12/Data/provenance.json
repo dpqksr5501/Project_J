@@ -1,0 +1,304 @@
+{
+  "baseCommit": "7ed9467b810b1c8843806d8eeb4c85b2be63a050",
+  "engine": "5.8.2-56702186",
+  "cpu": "Ryzen 7 9800X3D",
+  "gpu": "Radeon RX 9070 XT",
+  "driver": "26.8.1 / 32.0.31041.1004",
+  "finalFSourceFiles": [
+    {
+      "path": "Plugins/ProjectJExperiments/ProjectJExperiments.uplugin",
+      "sha256": "8FA3AAA745FC168EE25B9E89316551B5723737E231AA8E893E21A14967109DCE"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Shaders/ValueCompute.usf",
+      "sha256": "8119F8A2D8B9528D7E19530EF4CD2FDE6DF7220E55D282BA28003288AC636E6D"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AnimationMigrationTests.cpp",
+      "sha256": "AB1988E441F349DE2F3C6DBBCC471B551A3F5F2EB9513A1EA8DD81BF7F1FA3F2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AudioTests.cpp",
+      "sha256": "000C54596ADFC1590E5B27E8924DE9B0C0DD934DD473312AE44BBEA7DD95EDD0"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ExperimentOutput.h",
+      "sha256": "30D62C14238278A32ACF68D90D3A8E63C0ABF635E8B86FB688C315F321DD6C14"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/GpuTests.cpp",
+      "sha256": "B9306FBF0EFDAC7BC988B85EF9CCE5B627347B3FEF432F7DA167C014AC95C8CD"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PcgTests.cpp",
+      "sha256": "8F00174B9491B4B2ADC7FBBD1F980D1851E554F706ADDF56EB149327F95CC321"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PhysicsTests.cpp",
+      "sha256": "6D8A39A93AD3E2F1837C8E2322FC7C2AE2D204059D75D9D59C182EDBC8648793"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationAudit.cpp",
+      "sha256": "95581A7305E7FE61C8EA8AE3A392A5AA9CD2804AB98440B2930F9FEB17B85332"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJExperimentsModule.cpp",
+      "sha256": "E4955A406323F40131AB59595AFDB856E1F82000E1AC65A5A1E0F84317C3712C"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJPresentationMigrationCommandlet.h",
+      "sha256": "AFBF4E2436EF1CC0395B53785D9426C9DE6E4CE59FC300EE9503EF4632132C89"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/SchedulingTests.cpp",
+      "sha256": "F6F7B8B84FDE8F8900E036C08D63FDC2B68E55E447F462F1EA2F73AB17191FE2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/TickTests.cpp",
+      "sha256": "6B51C63DD803FE809256829ED7C39BB9E9C5AAA04BA35F213B1C88F16883586A"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/ProjectJExperiments.Build.cs",
+      "sha256": "342867A7DAB2B5810D25AC15161F5917E386033D4FB3AAC53012D2224F155FA7"
+    },
+    {
+      "path": "Scripts/Validation/Build-Experiments.ps1",
+      "sha256": "68CF979BB642C72FD3CB71689DCB6A433EBEE011A5AF2ADEF9D6CB032E43AB27"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Experiments.ps1",
+      "sha256": "7E0A79109A89B87E4821E5EAED3C128FDF400518F6297E10CB9D3E5C402496F4"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.cpp",
+      "sha256": "4E3DFD1D5D62D205B8706AB9B0B68106B41A326B79AC76BC0B894EFEB2668072"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.h",
+      "sha256": "967A33F25864FC1796922EF49617341E04793E63B6BED5D6BBFE1D3E8FD7D19D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "sha256": "C1326A840D311967688E36312D66E8A396C132BCFE6F46564BBCED0F383BBAC7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "sha256": "9C581918BDB08F63C5A80FA2001794DE4AA3C429239FFA8F7F5BE99490A9E203"
+    }
+  ],
+  "gpuFinalSourceFiles": [
+    {
+      "path": "Plugins/ProjectJExperiments/ProjectJExperiments.uplugin",
+      "sha256": "8FA3AAA745FC168EE25B9E89316551B5723737E231AA8E893E21A14967109DCE"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Shaders/ValueCompute.usf",
+      "sha256": "89D800AF8E7A6A825EDCE66B68DF99998EE3A34B27FEE403B3F782B00D36C7B0"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AnimationMigrationTests.cpp",
+      "sha256": "AB1988E441F349DE2F3C6DBBCC471B551A3F5F2EB9513A1EA8DD81BF7F1FA3F2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AudioTests.cpp",
+      "sha256": "000C54596ADFC1590E5B27E8924DE9B0C0DD934DD473312AE44BBEA7DD95EDD0"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ExperimentOutput.h",
+      "sha256": "30D62C14238278A32ACF68D90D3A8E63C0ABF635E8B86FB688C315F321DD6C14"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/GpuTests.cpp",
+      "sha256": "DED259BD7171085A9A7EB2A69EF51F775A6589FB1EE40F2BA92382D36A827BC4"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PcgTests.cpp",
+      "sha256": "8F00174B9491B4B2ADC7FBBD1F980D1851E554F706ADDF56EB149327F95CC321"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PhysicsTests.cpp",
+      "sha256": "6D8A39A93AD3E2F1837C8E2322FC7C2AE2D204059D75D9D59C182EDBC8648793"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationAudit.cpp",
+      "sha256": "95581A7305E7FE61C8EA8AE3A392A5AA9CD2804AB98440B2930F9FEB17B85332"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJExperimentsModule.cpp",
+      "sha256": "E4955A406323F40131AB59595AFDB856E1F82000E1AC65A5A1E0F84317C3712C"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJPresentationMigrationCommandlet.h",
+      "sha256": "AFBF4E2436EF1CC0395B53785D9426C9DE6E4CE59FC300EE9503EF4632132C89"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/SchedulingTests.cpp",
+      "sha256": "F6F7B8B84FDE8F8900E036C08D63FDC2B68E55E447F462F1EA2F73AB17191FE2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/TickTests.cpp",
+      "sha256": "6B51C63DD803FE809256829ED7C39BB9E9C5AAA04BA35F213B1C88F16883586A"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/ProjectJExperiments.Build.cs",
+      "sha256": "342867A7DAB2B5810D25AC15161F5917E386033D4FB3AAC53012D2224F155FA7"
+    },
+    {
+      "path": "Scripts/Validation/Build-Experiments.ps1",
+      "sha256": "68CF979BB642C72FD3CB71689DCB6A433EBEE011A5AF2ADEF9D6CB032E43AB27"
+    },
+    {
+      "path": "Scripts/Validation/Export-Experiments.ps1",
+      "sha256": "3D17ADECB294077727DF7EAC2A41CB53177EC4CEB22F92C8382AC89EBD5D601A"
+    },
+    {
+      "path": "Scripts/Validation/Measure-CookedCombat.ps1",
+      "sha256": "7273643E6ACF49B9AEFFF05300CAA2A27A928D73D2BECCFAEAC1C179C37F8077"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Experiments.ps1",
+      "sha256": "7E0A79109A89B87E4821E5EAED3C128FDF400518F6297E10CB9D3E5C402496F4"
+    },
+    {
+      "path": "Scripts/Validation/Summarize-Experiments.py",
+      "sha256": "66B104DFBD606FDAF4FEFC2F1FF796B28848AA5E8A3B28B5F3D2E8FA7E26B3E5"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.cpp",
+      "sha256": "4E3DFD1D5D62D205B8706AB9B0B68106B41A326B79AC76BC0B894EFEB2668072"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.h",
+      "sha256": "967A33F25864FC1796922EF49617341E04793E63B6BED5D6BBFE1D3E8FD7D19D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "sha256": "C1326A840D311967688E36312D66E8A396C132BCFE6F46564BBCED0F383BBAC7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "sha256": "9C581918BDB08F63C5A80FA2001794DE4AA3C429239FFA8F7F5BE99490A9E203"
+    }
+  ],
+  "cookedRuns": [
+    {
+      "run": "LightPSOBaseline01",
+      "binarySHA256": "0A31996823152282C23ED9F3F1C657D2CC6093EBA775C39DB798684B2AE82A51",
+      "disabled": true,
+      "reusedAppCache": false,
+      "result": "success=1\ncooked=1\ncycles=3\nreason=Three real input/GAS/montage/notify/unequip cycles; native character with authored visuals\n",
+      "load": "visual_and_equipment_load_ms=35.447500\ncooked=1\n"
+    },
+    {
+      "run": "LightPSOAfter01",
+      "binarySHA256": "0A31996823152282C23ED9F3F1C657D2CC6093EBA775C39DB798684B2AE82A51",
+      "disabled": false,
+      "reusedAppCache": false,
+      "result": "success=1\ncooked=1\ncycles=3\nreason=Three real input/GAS/montage/notify/unequip cycles; native character with authored visuals\n",
+      "load": "visual_and_equipment_load_ms=33.607200\ncooked=1\n"
+    },
+    {
+      "run": "LightPSOAfterWarm01",
+      "binarySHA256": "0A31996823152282C23ED9F3F1C657D2CC6093EBA775C39DB798684B2AE82A51",
+      "disabled": false,
+      "reusedAppCache": true,
+      "result": "success=1\ncooked=1\ncycles=3\nreason=Three real input/GAS/montage/notify/unequip cycles; native character with authored visuals\n",
+      "load": "visual_and_equipment_load_ms=33.725300\ncooked=1\n"
+    }
+  ],
+  "cacheScope": "OS and driver caches preserved. Not driver cold.",
+  "gpuGenerationSourceFiles": [
+    {
+      "path": "Plugins/ProjectJExperiments/ProjectJExperiments.uplugin",
+      "sha256": "8FA3AAA745FC168EE25B9E89316551B5723737E231AA8E893E21A14967109DCE"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Shaders/ValueCompute.usf",
+      "sha256": "89D800AF8E7A6A825EDCE66B68DF99998EE3A34B27FEE403B3F782B00D36C7B0"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AnimationMigrationTests.cpp",
+      "sha256": "AB1988E441F349DE2F3C6DBBCC471B551A3F5F2EB9513A1EA8DD81BF7F1FA3F2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AudioTests.cpp",
+      "sha256": "000C54596ADFC1590E5B27E8924DE9B0C0DD934DD473312AE44BBEA7DD95EDD0"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ExperimentOutput.h",
+      "sha256": "30D62C14238278A32ACF68D90D3A8E63C0ABF635E8B86FB688C315F321DD6C14"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/GpuTests.cpp",
+      "sha256": "CD5DCF49C927EFEBA964931E581B4F439C80CB7EBED5FCE0FA27E3D473B6C567"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PcgTests.cpp",
+      "sha256": "8F00174B9491B4B2ADC7FBBD1F980D1851E554F706ADDF56EB149327F95CC321"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PhysicsTests.cpp",
+      "sha256": "6D8A39A93AD3E2F1837C8E2322FC7C2AE2D204059D75D9D59C182EDBC8648793"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationAudit.cpp",
+      "sha256": "95581A7305E7FE61C8EA8AE3A392A5AA9CD2804AB98440B2930F9FEB17B85332"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJExperimentsModule.cpp",
+      "sha256": "E4955A406323F40131AB59595AFDB856E1F82000E1AC65A5A1E0F84317C3712C"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJPresentationMigrationCommandlet.h",
+      "sha256": "AFBF4E2436EF1CC0395B53785D9426C9DE6E4CE59FC300EE9503EF4632132C89"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/SchedulingTests.cpp",
+      "sha256": "F6F7B8B84FDE8F8900E036C08D63FDC2B68E55E447F462F1EA2F73AB17191FE2"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/TickTests.cpp",
+      "sha256": "6B51C63DD803FE809256829ED7C39BB9E9C5AAA04BA35F213B1C88F16883586A"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/ProjectJExperiments.Build.cs",
+      "sha256": "342867A7DAB2B5810D25AC15161F5917E386033D4FB3AAC53012D2224F155FA7"
+    },
+    {
+      "path": "Scripts/Validation/Build-Experiments.ps1",
+      "sha256": "68CF979BB642C72FD3CB71689DCB6A433EBEE011A5AF2ADEF9D6CB032E43AB27"
+    },
+    {
+      "path": "Scripts/Validation/Export-Experiments.ps1",
+      "sha256": "3D17ADECB294077727DF7EAC2A41CB53177EC4CEB22F92C8382AC89EBD5D601A"
+    },
+    {
+      "path": "Scripts/Validation/Measure-CookedCombat.ps1",
+      "sha256": "7273643E6ACF49B9AEFFF05300CAA2A27A928D73D2BECCFAEAC1C179C37F8077"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Experiments.ps1",
+      "sha256": "85CB1DE4760628D8125D432D96933FC053D40B95B15750DD01E09C1D69D8F9F1"
+    },
+    {
+      "path": "Scripts/Validation/Summarize-Experiments.py",
+      "sha256": "740A829789FBEAAEA9A48112BD2D40307363B1849D4527BF5AF009A5C80CBB20"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.cpp",
+      "sha256": "4E3DFD1D5D62D205B8706AB9B0B68106B41A326B79AC76BC0B894EFEB2668072"
+    },
+    {
+      "path": "Source/Project_J/Rendering/Project_JRenderingWarmupSubsystem.h",
+      "sha256": "967A33F25864FC1796922EF49617341E04793E63B6BED5D6BBFE1D3E8FD7D19D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "sha256": "C1326A840D311967688E36312D66E8A396C132BCFE6F46564BBCED0F383BBAC7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "sha256": "9C581918BDB08F63C5A80FA2001794DE4AA3C429239FFA8F7F5BE99490A9E203"
+    }
+  ]
+}

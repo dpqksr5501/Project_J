@@ -1,0 +1,2083 @@
+{
+  "schemaVersion": 1,
+  "status": "extension-contracts-not-implemented-content",
+  "features": [
+    {
+      "id": "Foundation.Identity",
+      "label": "안정 식별자",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": []
+    },
+    {
+      "id": "Foundation.Access",
+      "label": "권한·소유권 검증 계약",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Identity"
+      ]
+    },
+    {
+      "id": "Foundation.Persistence",
+      "label": "버전·저장 계약",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Identity"
+      ]
+    },
+    {
+      "id": "Foundation.Commands",
+      "label": "요청 수명·소유 단위 조정",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Foundation.Events",
+      "label": "이벤트·중복 소비 계약",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Identity"
+      ]
+    },
+    {
+      "id": "Foundation.Clock",
+      "label": "서버 시간·리셋 기준",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": []
+    },
+    {
+      "id": "Foundation.Transport",
+      "label": "외부 서비스 연결 계약",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Commands"
+      ]
+    },
+    {
+      "id": "Foundation.Observability",
+      "label": "계측·운영 추적",
+      "domain": "Foundation",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Identity"
+      ]
+    },
+    {
+      "id": "Identity.Account",
+      "label": "계정 프로필",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Characters",
+      "label": "캐릭터 슬롯·생성",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Roster",
+      "label": "계정 공유 성장",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Entitlements",
+      "label": "이용 권한",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Session",
+      "label": "접속 세션·재접속",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Appearance",
+      "label": "외형·이름 변경",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Preferences",
+      "label": "계정 설정",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Identity.Returnee",
+      "label": "복귀 지원",
+      "domain": "Identity",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Inventory",
+      "label": "인벤토리",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Equipment",
+      "label": "장비 장착",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Storage",
+      "label": "창고",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Loot",
+      "label": "드롭·획득 권리",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Enhancement",
+      "label": "강화·실패 누적",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence",
+        "Economy.Wallet"
+      ]
+    },
+    {
+      "id": "Items.Durability",
+      "label": "내구도·수리",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Sockets",
+      "label": "보석·각인",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Affixes",
+      "label": "옵션 재설정",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Binding",
+      "label": "귀속·거래 제한",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Salvage",
+      "label": "분해·추출",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Loadouts",
+      "label": "장비 프리셋",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Items.Expiration",
+      "label": "기간제 아이템",
+      "domain": "Items",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.Wallet",
+      "label": "재화·원장",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.Vendor",
+      "label": "상점 구매·판매",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence",
+        "Economy.Wallet",
+        "Items.Inventory"
+      ]
+    },
+    {
+      "id": "Economy.Trade",
+      "label": "개인 거래",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence",
+        "Economy.Escrow",
+        "Items.Binding"
+      ]
+    },
+    {
+      "id": "Economy.Market",
+      "label": "거래소·경매",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence",
+        "Economy.Escrow",
+        "Items.Binding"
+      ]
+    },
+    {
+      "id": "Economy.Mail",
+      "label": "우편·첨부 수령",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence",
+        "Economy.RewardClaims",
+        "Items.Inventory"
+      ]
+    },
+    {
+      "id": "Economy.Escrow",
+      "label": "대금·아이템 보관",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.BuyOrders",
+      "label": "구매 예약",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.Taxes",
+      "label": "수수료·세금",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.Buyback",
+      "label": "재구매",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.CraftingOrders",
+      "label": "제작 의뢰",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.RewardClaims",
+      "label": "보상 수령",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Economy.Gift",
+      "label": "선물·수신 제한",
+      "domain": "Economy",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Commands",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Social.Party",
+      "label": "파티",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.RaidGroup",
+      "label": "공격대 편성",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Guild",
+      "label": "길드·역할·권한",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Alliance",
+      "label": "길드 연합",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Friends",
+      "label": "친구·접속 상태",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Blocklist",
+      "label": "차단·무시",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Invitations",
+      "label": "초대·수락",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Recruitment",
+      "label": "모집·지원",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.GuildBank",
+      "label": "길드 창고",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events",
+        "Social.Guild",
+        "Items.Storage"
+      ]
+    },
+    {
+      "id": "Social.GuildProjects",
+      "label": "길드 연구·공동 목표",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Mentorship",
+      "label": "멘토·사제",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Social.Relationships",
+      "label": "유저 관계",
+      "domain": "Social",
+      "stateOwner": "Group",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Abilities",
+      "label": "스킬·자원",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Damage",
+      "label": "피해·치유",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Status",
+      "label": "상태 이상·면역",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Threat",
+      "label": "위협도·어그로",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Death",
+      "label": "사망·부활",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Assist",
+      "label": "기여도·지원 판정",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Rulesets",
+      "label": "전투 규칙 세트",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Duels",
+      "label": "결투",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Training",
+      "label": "훈련장·허수아비",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Combat.Spectator",
+      "label": "관전",
+      "domain": "Combat",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Access",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Experience",
+      "label": "레벨·경험치",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Talents",
+      "label": "특성·스킬 트리",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Classes",
+      "label": "전직·전문화",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Quests",
+      "label": "분기·연속 퀘스트",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Objectives",
+      "label": "목표 진행",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Achievements",
+      "label": "업적",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Reputation",
+      "label": "평판·세력",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Unlocks",
+      "label": "콘텐츠 해금",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Codex",
+      "label": "지식·도감",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.AccountMilestones",
+      "label": "계정 공유 업적",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Progression.Catchup",
+      "label": "후발 주자 성장 보정",
+      "domain": "Progression",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "PvE.Dungeons",
+      "label": "던전",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.Raids",
+      "label": "레이드",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.WorldBosses",
+      "label": "월드 보스",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.PublicEvents",
+      "label": "공개 협동 이벤트",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.SoloInstances",
+      "label": "솔로 인스턴스",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.Scaling",
+      "label": "인원·레벨 스케일링",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.Affixes",
+      "label": "주간 변형 규칙",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.Lockouts",
+      "label": "입장·보상 귀속",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "PvE.Challenges",
+      "label": "도전·시간 제한",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.CompanionSupport",
+      "label": "NPC 파티 지원",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvE.Hunting",
+      "label": "현상 수배·사냥 의뢰",
+      "domain": "PvE",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Arena",
+      "label": "투기장",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Battlegrounds",
+      "label": "전장",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.OpenWorld",
+      "label": "필드 PvP",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Siege",
+      "label": "공성전",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Territory",
+      "label": "영토·거점 점령",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.GuildWars",
+      "label": "길드 전쟁",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Matchmaking",
+      "label": "매칭·대기열",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Rating",
+      "label": "레이팅·랭킹",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "PvP.Seasons",
+      "label": "경쟁 시즌",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Tournaments",
+      "label": "대회·대진",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.Crime",
+      "label": "범죄·성향·현상금",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "PvP.FactionCampaign",
+      "label": "진영 공동 전쟁",
+      "domain": "PvP",
+      "stateOwner": "World",
+      "dependencies": [
+        "Combat.Rulesets",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Crafting.Recipes",
+      "label": "제작법·숙련도",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Processing",
+      "label": "가공",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Cooking",
+      "label": "요리",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Alchemy",
+      "label": "연금",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Quality",
+      "label": "품질·부산물",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Research",
+      "label": "연구·발견",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Stations",
+      "label": "제작대·시설",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Queues",
+      "label": "제작 예약",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Crafting.Specialization",
+      "label": "생산 전문화",
+      "domain": "Crafting",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Persistence"
+      ]
+    },
+    {
+      "id": "Life.Gathering",
+      "label": "채집",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Mining",
+      "label": "채광",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Logging",
+      "label": "벌목",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Fishing",
+      "label": "낚시",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Hunting",
+      "label": "수렵",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Farming",
+      "label": "농사",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Breeding",
+      "label": "교배·육성",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Trading",
+      "label": "무역·운송",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Workers",
+      "label": "일꾼·노드 생산",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Sailing",
+      "label": "항해·물물교환",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Life.Archaeology",
+      "label": "고고학·발굴",
+      "domain": "Life",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Items.Inventory",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Zones",
+      "label": "지역·채널",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Instances",
+      "label": "인스턴스 수명",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Weather",
+      "label": "날씨·환경",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.DayNight",
+      "label": "낮밤·시간",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Spawns",
+      "label": "스폰·자원 재생",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Phasing",
+      "label": "퀘스트 위상",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Discovery",
+      "label": "탐험·지도 해금",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.DynamicEvents",
+      "label": "동적 월드 이벤트",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Hazards",
+      "label": "지역 위험·환경 효과",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.Interaction",
+      "label": "상호작용·사용 권리",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "World.PublicObjectives",
+      "label": "서버 공동 목표",
+      "domain": "World",
+      "stateOwner": "World",
+      "dependencies": [
+        "Foundation.Events",
+        "Foundation.Clock"
+      ]
+    },
+    {
+      "id": "Travel.Mounts",
+      "label": "탈것",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Vehicles",
+      "label": "다인승 차량",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Ships",
+      "label": "선박",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Stable",
+      "label": "마구간·보관",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Routes",
+      "label": "자동 이동·교통편",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Teleport",
+      "label": "순간이동·귀환",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.FastTravel",
+      "label": "거점 이동",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Travel.Handover",
+      "label": "서버·채널 이동",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access",
+        "Platform.Routing"
+      ]
+    },
+    {
+      "id": "Travel.Passengers",
+      "label": "탑승자·좌석 권한",
+      "domain": "Travel",
+      "stateOwner": "Character",
+      "dependencies": [
+        "World.Zones",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Homes",
+      "label": "개인 주거",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.GuildHalls",
+      "label": "길드 거점",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Neighborhood",
+      "label": "주거 구역",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Placement",
+      "label": "가구 배치·충돌",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access",
+        "Housing.Permissions"
+      ]
+    },
+    {
+      "id": "Housing.Permissions",
+      "label": "방문·편집 권한",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Plots",
+      "label": "토지·임대",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Decor",
+      "label": "장식 수집",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Facilities",
+      "label": "주거 생산 시설",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Blueprints",
+      "label": "배치 설계도",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Housing.Islands",
+      "label": "개인 섬·영지",
+      "domain": "Housing",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Collections.Wardrobe",
+      "label": "외형 수집",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Transmog",
+      "label": "형상 변환·염색",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Pets",
+      "label": "애완동물 수집",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.MountJournal",
+      "label": "탈것 도감",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Titles",
+      "label": "칭호",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Emotes",
+      "label": "감정 표현",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Music",
+      "label": "악보·연주",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Toys",
+      "label": "장난감",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.Treasures",
+      "label": "보물·희귀 수집",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Collections.PhotoAlbum",
+      "label": "사진·전시",
+      "domain": "Collections",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Companions.Pets",
+      "label": "펫 행동·획득 보조",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.Mercenaries",
+      "label": "용병",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.Training",
+      "label": "동료 육성",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.Commands",
+      "label": "동료 명령",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.Bond",
+      "label": "친밀도",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.Expeditions",
+      "label": "동료 파견",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Companions.PetBattles",
+      "label": "펫 대전",
+      "domain": "Companions",
+      "stateOwner": "Character",
+      "dependencies": [
+        "Foundation.Persistence",
+        "Combat.Rulesets"
+      ]
+    },
+    {
+      "id": "Community.Chat",
+      "label": "지역·파티·길드 채팅",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Voice",
+      "label": "음성 서비스 연결",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.LookingForGroup",
+      "label": "파티 찾기",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Calendar",
+      "label": "행사·일정",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Bulletin",
+      "label": "게시판",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Minigames",
+      "label": "미니게임",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Racing",
+      "label": "경주",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Cards",
+      "label": "카드·보드게임",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Performance",
+      "label": "공연·합주",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.UserEvents",
+      "label": "유저 행사",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "Community.Reports",
+      "label": "신고·증거 참조",
+      "domain": "Community",
+      "stateOwner": "Account",
+      "dependencies": [
+        "Social.Blocklist",
+        "Foundation.Transport"
+      ]
+    },
+    {
+      "id": "LiveOps.Calendar",
+      "label": "운영 일정",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.SeasonPass",
+      "label": "시즌 패스",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events",
+        "Economy.RewardClaims"
+      ]
+    },
+    {
+      "id": "LiveOps.Attendance",
+      "label": "출석·접속 보상",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.DailyWeekly",
+      "label": "일간·주간 리셋",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.Holiday",
+      "label": "축제·기간 이벤트",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.WorldGoals",
+      "label": "서버 누적 목표",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.FeatureFlags",
+      "label": "기능 개방·점진 적용",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.Compensation",
+      "label": "장애 보상",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.Campaigns",
+      "label": "캠페인·프로모션",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.ContentVersion",
+      "label": "정의 데이터 버전",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "LiveOps.Leaderboards",
+      "label": "랭킹 집계",
+      "domain": "LiveOps",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Clock",
+        "Foundation.Persistence",
+        "Foundation.Events"
+      ]
+    },
+    {
+      "id": "Platform.Authentication",
+      "label": "인증 서비스 연결",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.ServerDirectory",
+      "label": "서버 검색",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Admission",
+      "label": "접속 대기·수용량",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Reconnect",
+      "label": "재접속 복구",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Presence",
+      "label": "온라인 상태",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Routing",
+      "label": "샤드·지역 라우팅",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Transfer",
+      "label": "캐릭터 이전",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Maintenance",
+      "label": "점검·드레인",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Localization",
+      "label": "지역화 계약",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Platform.Accessibility",
+      "label": "접근성 설정",
+      "domain": "Platform",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Transport",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Audit",
+      "label": "상태 변경 감사",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Metrics",
+      "label": "처리량·지연 계측",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Tracing",
+      "label": "요청 상관 추적",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Moderation",
+      "label": "제재·차단",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Support",
+      "label": "고객 지원 도구",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Recovery",
+      "label": "복구·재처리",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.Migration",
+      "label": "스키마 마이그레이션",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.AbuseLimits",
+      "label": "요청·경제 악용 제한",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.ConfigValidation",
+      "label": "설정 검증",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    },
+    {
+      "id": "Operations.DataExport",
+      "label": "운영 데이터 내보내기",
+      "domain": "Operations",
+      "stateOwner": "Service",
+      "dependencies": [
+        "Foundation.Observability",
+        "Foundation.Access"
+      ]
+    }
+  ]
+}

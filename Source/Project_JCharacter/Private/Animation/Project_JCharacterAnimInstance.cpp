@@ -931,6 +931,15 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
+	// The engine owns update/evaluation ordering for both primary and linked
+	// instances. Copy only immutable snapshot values here: state-controller values
+	// can change later during graph traversal and must keep their existing getters.
+	const auto& Snapshot = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	GraphAimYaw = Snapshot.Aim.AimYaw;
+	GraphAimPitch = Snapshot.Aim.AimPitch;
+	GraphAimOffsetAlpha = Snapshot.Aim.AimOffsetAlpha;
+	GraphCombatSpeed = Snapshot.Movement.GroundSpeed;
+	GraphCombatDirection = Snapshot.Movement.RelativeVelocityDirection;
 	// This callback is part of UE's thread-safe update phase, but the Task Graph
 	// may execute that phase as a foreground task. Record UE's runtime state so
 	// Insights distinguishes actual parallel evaluation from foreground work.

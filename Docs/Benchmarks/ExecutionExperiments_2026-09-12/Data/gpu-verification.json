@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "succeeded": 1,
+  "withWarnings": 0,
+  "missing": [],
+  "tests": [
+    {
+      "fullTestPath": "ProjectJ.GroupF.GPU.ReadbackLifetime",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ]
+}

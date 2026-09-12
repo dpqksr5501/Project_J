@@ -1,5 +1,7 @@
 # Project_J MMORPG Execution Roadmap
 
+> **2026-09-12 후속 상태:** 아래 표는 9월 3일의 우선순위 기록이다. 이후 A–E 보완과 F 실행 실험, 승인된 ABP·Trail 적용을 진행했고, `Project_JMMO` 공통 기반과 20개 영역·205개 콘텐츠/운영 확장 계약을 추가했다. 사용자의 현재 범위는 콘텐츠 전체 구현보다 향후 연결 기반 마련이다. 최신 구현·검증·미구현 경계는 [MMORPG 확장 기반](MMO_Foundation_2026-09-12.md), [전체 카탈로그](MMO_Content_Catalog.md), [E/F 보고서](../Benchmarks/ExecutionExperiments_2026-09-12/README.md)를 우선한다. 운영 DB·인증·대규모 서버 검증은 후속 범위다.
+
 **Date:** 2026-09-03  
 **Scope:** 전체 MMORPG 아키텍처·성능·애니메이션 확장 로드맵. 이 문서는 구현 명령이 아니라 우선순위, 검증 기준, 보류 기준을 정한다.  
 **Non-goal:** 이 문서 자체는 C++/Blueprint/에셋/프로젝트 설정을 변경하지 않는다.

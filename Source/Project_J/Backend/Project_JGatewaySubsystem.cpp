@@ -7,6 +7,7 @@
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonSerializer.h"
+#include "MMO/Coordination.h"
 
 namespace
 {
@@ -71,7 +72,7 @@ FProject_JBackendResponseEnvelope BuildResponseEnvelope(
 	return Envelope;
 }
 
-void DispatchGatewayRequest(
+TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	const FString& GatewayUrl,
 	const FString& Endpoint,
 	const FString& Payload,
@@ -93,24 +94,63 @@ void DispatchGatewayRequest(
 		Request->SetHeader(TEXT("X-ProjectJ-Transaction-Id"), RequestContext.TransactionId.ToString());
 	}
 	Request->SetContentAsString(Payload);
+	Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
 
 	Request->OnProcessRequestComplete().BindLambda([RequestContext, OnEnvelope](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
 	{
 		OnEnvelope(BuildResponseEnvelope(RequestContext, ResponsePtr, bConnectedSuccessfully, false));
 	});
 
+	return Request;
+}
+}
+
+void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint, const FString& Payload,
+	const FProject_JBackendRequestContext& InContext,
+	TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion)
+{
+	check(IsInGameThread());
+	const auto Context = NormalizeRequestContext(InContext);
+	const auto Tracker = RequestTracker;
+	FGuid Ticket;
+	const auto Admission = Tracker ? Tracker->Begin(Ticket) : ProjectJ::MMO::EAdmission::Closed;
+	if (Admission != ProjectJ::MMO::EAdmission::Accepted)
+	{
+		FProject_JBackendResponseEnvelope Response;
+		Response.RequestContext = Context;
+		Response.FailureKind = Admission == ProjectJ::MMO::EAdmission::Capacity
+			? EProject_JBackendFailureKind::Overloaded : EProject_JBackendFailureKind::Unavailable;
+		Response.bRetryable = Admission == ProjectJ::MMO::EAdmission::Capacity;
+		Completion(Response); return;
+	}
+	TWeakObjectPtr<UProject_JGatewaySubsystem> WeakThis(this);
+	auto Finish = [WeakThis, Tracker, Ticket, Completion](const FProject_JBackendResponseEnvelope& Response)
+	{
+		check(IsInGameThread());
+		// ProcessRequest failure and HTTP completion may race/reenter. Deliver once;
+		// old-session completions after Deinitialize are deliberately suppressed.
+		if (!Tracker->Complete(Ticket)) { return; }
+		if (auto* Self = WeakThis.Get())
+		{
+			Self->ActiveRequests.Remove(Ticket);
+			Completion(Response);
+		}
+	};
+	auto Request = CreateGatewayRequest(GatewayUrl, Endpoint, Payload, Context, Finish);
+	Request->SetTimeout(FMath::Max(1.0f, RequestTimeoutSeconds));
+	ActiveRequests.Add(Ticket, Request);
 	if (!Request->ProcessRequest())
 	{
-		FProject_JBackendResponseEnvelope Envelope = BuildResponseEnvelope(RequestContext, nullptr, false, true);
-		Envelope.ResponseData = TEXT("Request dispatch failed");
-		OnEnvelope(Envelope);
+		auto Response = BuildResponseEnvelope(Context, nullptr, false, true);
+		Response.ResponseData = TEXT("Request dispatch failed");
+		Finish(Response);
 	}
-}
 }
 
 void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	RequestTracker = MakeShared<ProjectJ::MMO::FRequestTracker, ESPMode::ThreadSafe>(FMath::Clamp(MaxInFlightRequests, 1, 4096));
 	
 	// Set up rate-limited flush timer (e.g. every 5 seconds)
 	if (UWorld* World = GetWorld())
@@ -121,6 +161,12 @@ void UProject_JGatewaySubsystem::Initialize(FSubsystemCollectionBase& Collection
 
 void UProject_JGatewaySubsystem::Deinitialize()
 {
+	check(IsInGameThread());
+	if (RequestTracker) { RequestTracker->Close(); }
+	// Close first so cancellation callbacks cannot mutate ActiveRequests during iteration.
+	for (auto& Pair : ActiveRequests) { Pair.Value->CancelRequest(); }
+	ActiveRequests.Reset();
+	RequestTracker.Reset();
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(LogFlushTimerHandle);
@@ -153,7 +199,7 @@ void UProject_JGatewaySubsystem::SendAsyncRequestWithContext(
 		OnResponse.ExecuteIfBound(false, Envelope.ResponseData);
 		return;
 	}
-	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
+	DispatchTrackedRequest(Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope.bSucceeded, Envelope.ResponseData);
 	});
@@ -174,7 +220,7 @@ void UProject_JGatewaySubsystem::SendAsyncRequestEnvelope(
 		OnResponse.ExecuteIfBound(Envelope);
 		return;
 	}
-	DispatchGatewayRequest(GatewayUrl, Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
+	DispatchTrackedRequest(Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope);
 	});

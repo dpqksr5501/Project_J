@@ -1,0 +1,16 @@
+#include "/Engine/Public/Platform.ush"
+RWStructuredBuffer<uint> Output;
+uint Count;
+uint Seed;
+[numthreads(64, 1, 1)]
+void MainCS(uint3 Id : SV_DispatchThreadID)
+{
+    if (Id.x >= Count) return;
+    uint Value = Id.x ^ Seed;
+    for (uint I = 0; I < 64; ++I)
+    {
+        Value ^= Value >> 13;
+        Value = Value * 1664525u + 1013904223u;
+    }
+    Output[Id.x] = Value;
+}

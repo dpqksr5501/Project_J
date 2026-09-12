@@ -12,7 +12,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JMessageDelegate, FGamepla
 
 /**
  * Custom Message Router Subsystem for Event-Driven Architecture.
- * Allows systems (like GameFeatures) to broadcast events globally without direct coupling to other systems.
+ * Game-thread, GameInstance-local notifications only; not a durable cross-server bus.
+ * Listener changes during broadcast take effect on the next broadcast.
  */
 UCLASS()
 class PROJECT_JCORE_API UProject_JMessageSubsystem : public UGameInstanceSubsystem
@@ -31,7 +32,8 @@ public:
 
 	/** 
 	 * Returns the delegate for a specific channel so other classes can bind to it. 
-	 * In C++, you can bind using GetChannelDelegate(Tag).AddDynamic(...) or AddUObject(...)
+ * In C++, bind immediately with GetChannelDelegate(Tag).AddDynamic(...).
+ * Do not retain the returned map reference across channel registration or dispatch.
 	 */
 	FProject_JMessageDelegate& GetChannelDelegate(FGameplayTag Channel);
 

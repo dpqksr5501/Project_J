@@ -1,0 +1,622 @@
+{
+  "method": "Median; p95 nearest rank ceil(0.95*N). One process run; samples are not independent process replications.",
+  "scheduling": [
+    {
+      "candidates": "128",
+      "api": "Serial",
+      "total_us": {
+        "n": 40,
+        "median": 1.201406,
+        "p95": 1.400709,
+        "maximum": 1.803041
+      }
+    },
+    {
+      "candidates": "128",
+      "api": "TaskGraph",
+      "total_us": {
+        "n": 40,
+        "median": 2.101064,
+        "p95": 4.198402,
+        "maximum": 16.599894
+      }
+    },
+    {
+      "candidates": "128",
+      "api": "Tasks",
+      "total_us": {
+        "n": 40,
+        "median": 1.899898,
+        "p95": 4.101545,
+        "maximum": 18.101186
+      }
+    },
+    {
+      "candidates": "128",
+      "api": "TasksParallelFor",
+      "total_us": {
+        "n": 40,
+        "median": 2.6486815,
+        "p95": 4.500151,
+        "maximum": 6.400049
+      }
+    },
+    {
+      "candidates": "128",
+      "api": "ThreadPool",
+      "total_us": {
+        "n": 40,
+        "median": 6.99982,
+        "p95": 10.896474,
+        "maximum": 14.998019
+      }
+    },
+    {
+      "candidates": "16384",
+      "api": "Serial",
+      "total_us": {
+        "n": 40,
+        "median": 230.0497145,
+        "p95": 293.899328,
+        "maximum": 469.397753
+      }
+    },
+    {
+      "candidates": "16384",
+      "api": "TaskGraph",
+      "total_us": {
+        "n": 40,
+        "median": 230.60105700000003,
+        "p95": 266.801566,
+        "maximum": 471.998006
+      }
+    },
+    {
+      "candidates": "16384",
+      "api": "Tasks",
+      "total_us": {
+        "n": 40,
+        "median": 230.750069,
+        "p95": 249.400735,
+        "maximum": 316.601247
+      }
+    },
+    {
+      "candidates": "16384",
+      "api": "TasksParallelFor",
+      "total_us": {
+        "n": 40,
+        "median": 111.1514865,
+        "p95": 147.901475,
+        "maximum": 168.498605
+      }
+    },
+    {
+      "candidates": "16384",
+      "api": "ThreadPool",
+      "total_us": {
+        "n": 40,
+        "median": 249.60003799999998,
+        "p95": 315.397978,
+        "maximum": 534.400344
+      }
+    }
+  ],
+  "tick": [
+    {
+      "iterations": "128",
+      "concurrent": "0",
+      "prerequisite": "0",
+      "world_tick_us": {
+        "n": 60,
+        "median": 252.2003,
+        "p95": 330.6977,
+        "maximum": 518.1022
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 0
+    },
+    {
+      "iterations": "128",
+      "concurrent": "0",
+      "prerequisite": "1",
+      "world_tick_us": {
+        "n": 60,
+        "median": 252.2003,
+        "p95": 322.9007,
+        "maximum": 378.1989
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 0
+    },
+    {
+      "iterations": "128",
+      "concurrent": "1",
+      "prerequisite": "0",
+      "world_tick_us": {
+        "n": 60,
+        "median": 252.80005,
+        "p95": 313.6992,
+        "maximum": 358.8013
+      },
+      "stale_sum": 3833,
+      "off_gt_sum": 3840
+    },
+    {
+      "iterations": "128",
+      "concurrent": "1",
+      "prerequisite": "1",
+      "world_tick_us": {
+        "n": 60,
+        "median": 250.20165,
+        "p95": 330.6009,
+        "maximum": 405.8033
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 3840
+    },
+    {
+      "iterations": "16384",
+      "concurrent": "0",
+      "prerequisite": "0",
+      "world_tick_us": {
+        "n": 60,
+        "median": 1043.8002999999999,
+        "p95": 1124.1995,
+        "maximum": 1417.3016
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 0
+    },
+    {
+      "iterations": "16384",
+      "concurrent": "0",
+      "prerequisite": "1",
+      "world_tick_us": {
+        "n": 60,
+        "median": 1054.5495999999998,
+        "p95": 1136.8021,
+        "maximum": 1226.7008
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 0
+    },
+    {
+      "iterations": "16384",
+      "concurrent": "1",
+      "prerequisite": "0",
+      "world_tick_us": {
+        "n": 60,
+        "median": 299.60085000000004,
+        "p95": 351.0974,
+        "maximum": 513.0991
+      },
+      "stale_sum": 1632,
+      "off_gt_sum": 3840
+    },
+    {
+      "iterations": "16384",
+      "concurrent": "1",
+      "prerequisite": "1",
+      "world_tick_us": {
+        "n": 60,
+        "median": 323.7482,
+        "p95": 391.9005,
+        "maximum": 432.8005
+      },
+      "stale_sum": 0,
+      "off_gt_sum": 3840
+    }
+  ],
+  "consumer_shutdown_ms": {
+    "n": 16,
+    "median": 1.3119985,
+    "p95": 1.917198,
+    "maximum": 1.917198
+  },
+  "contention": [
+    {
+      "drain_ms": {
+        "n": 8,
+        "median": 2.0958,
+        "p95": 2.5886,
+        "maximum": 2.5886
+      },
+      "stop_join_ms": {
+        "n": 8,
+        "median": 1.3489,
+        "p95": 1.6477,
+        "maximum": 1.6477
+      },
+      "completed_sum": 8192
+    }
+  ],
+  "physics": [
+    {
+      "taskgraph": "0",
+      "compute_us": {
+        "n": 160,
+        "median": 46.8008,
+        "p95": 53.7001,
+        "maximum": 118.5015
+      },
+      "dispatch_us": {
+        "n": 160,
+        "median": 58.34925,
+        "p95": 74.4015,
+        "maximum": 174.1983
+      },
+      "gt_wait_us": {
+        "n": 160,
+        "median": 0.0,
+        "p95": 0.1006,
+        "maximum": 0.1006
+      },
+      "delivery_us": {
+        "n": 160,
+        "median": 58.399550000000005,
+        "p95": 74.4015,
+        "maximum": 174.1983
+      },
+      "off_gt_sum": 0,
+      "discarded_sum": 16
+    },
+    {
+      "taskgraph": "1",
+      "compute_us": {
+        "n": 160,
+        "median": 46.8977,
+        "p95": 47.2032,
+        "maximum": 125.1027
+      },
+      "dispatch_us": {
+        "n": 160,
+        "median": 1.3001,
+        "p95": 9.7975,
+        "maximum": 15.8995
+      },
+      "gt_wait_us": {
+        "n": 160,
+        "median": 68.75210000000001,
+        "p95": 110.101,
+        "maximum": 156.6969
+      },
+      "delivery_us": {
+        "n": 160,
+        "median": 70.54955,
+        "p95": 116.6016,
+        "maximum": 160.6978
+      },
+      "off_gt_sum": 106,
+      "discarded_sum": 16
+    }
+  ],
+  "gpu": [
+    {
+      "requested_async": "0",
+      "host_delivery_ms": {
+        "n": 16,
+        "median": 16.63835,
+        "p95": 24.3455,
+        "maximum": 24.3455
+      },
+      "cancelled_sum": 3
+    },
+    {
+      "requested_async": "1",
+      "host_delivery_ms": {
+        "n": 16,
+        "median": 16.68405,
+        "p95": 16.7928,
+        "maximum": 16.7928
+      },
+      "cancelled_sum": 2
+    }
+  ],
+  "audio": [
+    {
+      "mode": "0",
+      "stopping": "0",
+      "fixture_active_sounds": {
+        "n": 31,
+        "median": 128.0,
+        "p95": 128.0,
+        "maximum": 128.0
+      },
+      "device_sources": {
+        "n": 31,
+        "median": 32.0,
+        "p95": 32.0,
+        "maximum": 32.0
+      },
+      "virtual_components": {
+        "n": 31,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      }
+    },
+    {
+      "mode": "0",
+      "stopping": "1",
+      "fixture_active_sounds": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "device_sources": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "virtual_components": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      }
+    },
+    {
+      "mode": "1",
+      "stopping": "0",
+      "fixture_active_sounds": {
+        "n": 31,
+        "median": 16.0,
+        "p95": 16.0,
+        "maximum": 16.0
+      },
+      "device_sources": {
+        "n": 31,
+        "median": 16.0,
+        "p95": 16.0,
+        "maximum": 16.0
+      },
+      "virtual_components": {
+        "n": 31,
+        "median": 112.0,
+        "p95": 112.0,
+        "maximum": 112.0
+      }
+    },
+    {
+      "mode": "1",
+      "stopping": "1",
+      "fixture_active_sounds": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "device_sources": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "virtual_components": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      }
+    },
+    {
+      "mode": "2",
+      "stopping": "0",
+      "fixture_active_sounds": {
+        "n": 31,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "device_sources": {
+        "n": 31,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "virtual_components": {
+        "n": 31,
+        "median": 128.0,
+        "p95": 128.0,
+        "maximum": 128.0
+      }
+    },
+    {
+      "mode": "2",
+      "stopping": "1",
+      "fixture_active_sounds": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "device_sources": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "virtual_components": {
+        "n": 1,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      }
+    }
+  ],
+  "pcg": [
+    {
+      "round": "0",
+      "component": "0",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "31.9805",
+      "peak_world_tick_us": "1073.5989"
+    },
+    {
+      "round": "0",
+      "component": "1",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "32.1024",
+      "peak_world_tick_us": "1073.5989"
+    },
+    {
+      "round": "0",
+      "component": "2",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "32.1596",
+      "peak_world_tick_us": "1073.5989"
+    },
+    {
+      "round": "0",
+      "component": "3",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "32.2124",
+      "peak_world_tick_us": "1073.5989"
+    },
+    {
+      "round": "1",
+      "component": "0",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "33.4598",
+      "peak_world_tick_us": "694.8002"
+    },
+    {
+      "round": "1",
+      "component": "1",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "33.5665",
+      "peak_world_tick_us": "694.8002"
+    },
+    {
+      "round": "1",
+      "component": "2",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "33.6232",
+      "peak_world_tick_us": "694.8002"
+    },
+    {
+      "round": "1",
+      "component": "3",
+      "points": "4096",
+      "hash": "3196585957",
+      "delivery_ms": "33.6751",
+      "peak_world_tick_us": "694.8002"
+    },
+    {
+      "round": "2",
+      "component": "0",
+      "points": "0",
+      "hash": "0",
+      "delivery_ms": "33.2422",
+      "peak_world_tick_us": "226.0990"
+    },
+    {
+      "round": "2",
+      "component": "1",
+      "points": "0",
+      "hash": "0",
+      "delivery_ms": "33.2704",
+      "peak_world_tick_us": "226.0990"
+    },
+    {
+      "round": "2",
+      "component": "2",
+      "points": "0",
+      "hash": "0",
+      "delivery_ms": "33.2816",
+      "peak_world_tick_us": "226.0990"
+    },
+    {
+      "round": "2",
+      "component": "3",
+      "points": "0",
+      "hash": "0",
+      "delivery_ms": "33.2871",
+      "peak_world_tick_us": "226.0990"
+    }
+  ],
+  "gpu_queue": [
+    {
+      "requested_async": "0",
+      "scope_us": {
+        "n": 16,
+        "median": 3.7999999999982492,
+        "p95": 4.600000000465343,
+        "maximum": 4.600000000465343
+      },
+      "graphics_scope_us": {
+        "n": 16,
+        "median": 1.6999999985500835,
+        "p95": 2.2000000008404186,
+        "maximum": 2.2000000008404186
+      },
+      "overlap_us": {
+        "n": 16,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "overlapped_sum": 0,
+      "compute_queue_sum": 0
+    },
+    {
+      "requested_async": "1",
+      "scope_us": {
+        "n": 16,
+        "median": 130.10000000157618,
+        "p95": 324.7000000001776,
+        "maximum": 324.7000000001776
+      },
+      "graphics_scope_us": {
+        "n": 16,
+        "median": 3.5999999994373866,
+        "p95": 3.7000000006059963,
+        "maximum": 3.7000000006059963
+      },
+      "overlap_us": {
+        "n": 16,
+        "median": 3.5999999994373866,
+        "p95": 3.7000000006059963,
+        "maximum": 3.7000000006059963
+      },
+      "overlapped_sum": 16,
+      "compute_queue_sum": 16
+    }
+  ],
+  "light_pso": [
+    {
+      "condition": "baseline",
+      "Full Precached": "6628",
+      "Full Missed": "1",
+      "Full TooLate": "0",
+      "Full Untracked": "0",
+      "Total Time (sec)": "0.50"
+    },
+    {
+      "condition": "after",
+      "Full Precached": "6667",
+      "Full Missed": "0",
+      "Full TooLate": "0",
+      "Full Untracked": "0",
+      "Total Time (sec)": "3.92"
+    },
+    {
+      "condition": "warm",
+      "Full Precached": "6667",
+      "Full Missed": "0",
+      "Full TooLate": "0",
+      "Full Untracked": "0",
+      "Total Time (sec)": "0.40"
+    }
+  ]
+}

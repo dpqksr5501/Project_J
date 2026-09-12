@@ -19,6 +19,7 @@ void UProject_JMessageSubsystem::Deinitialize()
 
 void UProject_JMessageSubsystem::BroadcastMessage(FGameplayTag Channel, UObject* Payload)
 {
+	check(IsInGameThread());
 	if (!Channel.IsValid())
 	{
 		UE_LOG(LogProject_JCore, Warning, TEXT("Attempted to broadcast on an invalid GameplayTag channel."));
@@ -27,18 +28,23 @@ void UProject_JMessageSubsystem::BroadcastMessage(FGameplayTag Channel, UObject*
 
 	if (FProject_JMessageDelegate* DelegatePtr = ListenerMap.Find(Channel))
 	{
-		DelegatePtr->Broadcast(Channel, Payload);
+		// Listeners may register another channel (rehashing ListenerMap), clear a
+		// channel, or tear down this subsystem. Snapshot this dispatch's listeners.
+		const FProject_JMessageDelegate Snapshot = *DelegatePtr;
+		Snapshot.Broadcast(Channel, Payload);
 	}
 }
 
 FProject_JMessageDelegate& UProject_JMessageSubsystem::GetChannelDelegate(FGameplayTag Channel)
 {
+	check(IsInGameThread());
 	// FindOrAdd will return a reference to the existing delegate, or create a new one if it doesn't exist
 	return ListenerMap.FindOrAdd(Channel);
 }
 
 void UProject_JMessageSubsystem::ClearChannel(FGameplayTag Channel)
 {
+	check(IsInGameThread());
 	if (Channel.IsValid())
 	{
 		if (FProject_JMessageDelegate* DelegatePtr = ListenerMap.Find(Channel))

@@ -727,6 +727,20 @@ public:
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
 
+	// Snapshot-only AnimGraph inputs. Written in UE's thread-safe update phase,
+	// then read by generated property-copy handlers on the same animation task.
+	// Do not use these as gameplay state or write them from Blueprint callbacks.
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Graph Snapshot")
+	float GraphAimYaw = 0.0f;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Graph Snapshot")
+	float GraphAimPitch = 0.0f;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Graph Snapshot")
+	float GraphAimOffsetAlpha = 0.0f;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Graph Snapshot")
+	float GraphCombatSpeed = 0.0f;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Graph Snapshot")
+	float GraphCombatDirection = 0.0f;
+
 	/**
 	 * Game-thread mirror used exclusively by Chooser property columns.
 	 *

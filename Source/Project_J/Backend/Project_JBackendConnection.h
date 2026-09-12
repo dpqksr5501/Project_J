@@ -17,7 +17,9 @@ enum class EProject_JBackendFailureKind : uint8
 	ClientError,
 	RateLimited,
 	ServerError,
-	Unknown
+	Unknown,
+	Overloaded,
+	Unavailable
 };
 
 USTRUCT(BlueprintType)

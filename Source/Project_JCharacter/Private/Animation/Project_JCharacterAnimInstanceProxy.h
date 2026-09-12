@@ -65,6 +65,7 @@ protected:
 	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
 
 private:
+	friend class FProjectJStopIdleInterruptTest;
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
