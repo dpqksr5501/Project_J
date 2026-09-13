@@ -19,7 +19,7 @@ $files=@(& git -c core.fsmonitor=false ls-files --modified --others --exclude-st
  }
 })
 [ordered]@{head=(& git -c core.fsmonitor=false rev-parse HEAD);filters=$Filters;rendered=[bool]$Rendered;files=$files;cpu=(Get-CimInstance Win32_Processor).Name} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
-$extra=if($Rendered){@('-windowed','-ResX=1280','-ResY=720')}else{@('-NullRHI')}
+[string[]]$extra=if($Rendered){@('-windowed','-ResX=1280','-ResY=720')}else{@('-NullRHI')}
 $setup=if($Filters.Contains('ProjectJ.GroupB.')){'a.Budget.Enabled 1,a.Budget.BudgetMs 0.1,'}else{''}
 & "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$projectRoot/Project_J.uproject" -unattended -nop4 -nosplash -nosound -statnamedevents "-ExecCmds=${setup}Automation RunTests $Filters" '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$runRoot/Automation" "-ABSLOG=$runRoot/Automation.log" '-trace=cpu,frame,bookmark,region,counters,task,log,gpu' "-tracefile=$runRoot/Run.utrace" "-ProjectJCrowdOutput=$runRoot/Metrics" "-ProjectJMassOutput=$runRoot/MassMetrics" "-ProjectJNavOutput=$runRoot/NavMetrics" @extra
 $exitCode=$LASTEXITCODE

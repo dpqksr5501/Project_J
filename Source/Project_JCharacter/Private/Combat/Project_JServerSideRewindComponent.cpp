@@ -33,13 +33,20 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AActor* Owner = GetOwner();
-	SetComponentTickEnabled(Owner && Owner->HasAuthority());
-	
-	const int32 ExpectedRecordCount = FMath::CeilToInt(FMath::Max(1.0f, MaxRecordTime) * FMath::Max(1.0f, RecordRateHz)) + 2;
-	PoseHistory.SetNum(ExpectedRecordCount);
-	PoseHistoryStartIndex = 0;
-	PoseHistoryCount = 0;
+	const ACharacter* Owner = Cast<ACharacter>(GetOwner());
+	const bool bRecord = Owner && Owner->HasAuthority();
+	SetComponentTickEnabled(bRecord);
+	MaxRecordTime = FMath::IsFinite(MaxRecordTime) ? FMath::Clamp(MaxRecordTime, 0.05f, 10.0f) : 1.0f;
+	RecordRateHz = FMath::IsFinite(RecordRateHz) ? FMath::Clamp(RecordRateHz, 1.0f, 120.0f) : 30.0f;
+	PoseHistory.SetNum(bRecord ? FMath::CeilToInt(MaxRecordTime * RecordRateHz) + 2 : 0);
+	ResetHistory();
+}
+
+void UProject_JServerSideRewindComponent::ResetHistory()
+{
+	check(IsInGameThread());
+	PoseHistoryStartIndex = PoseHistoryCount = 0;
+	TimeSinceLastRecord = 0.0f;
 }
 
 void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -48,14 +55,15 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	AActor* Owner = GetOwner();
-	if (!Owner || !Owner->HasAuthority() || !GetWorld())
+	if (!Owner || !Owner->HasAuthority() || !GetWorld() || PoseHistory.IsEmpty() ||
+		!FMath::IsFinite(DeltaTime) || DeltaTime <= 0.0f)
 	{
 		return;
 	}
 
 	TimeSinceLastRecord += DeltaTime;
 	const float RecordInterval = 1.0f / FMath::Max(1.0f, RecordRateHz);
-	if (PoseHistory.Num() > 0 && TimeSinceLastRecord < RecordInterval)
+	if (PoseHistoryCount > 0 && TimeSinceLastRecord < RecordInterval)
 	{
 		return;
 	}
@@ -65,6 +73,13 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 	NewRecord.Timestamp = GetWorld()->GetTimeSeconds();
 	NewRecord.Location = Owner->GetActorLocation();
 	NewRecord.Rotation = Owner->GetActorQuat();
+	const ACharacter* Character = Cast<ACharacter>(Owner);
+	const UCapsuleComponent* Capsule = Character ? Character->GetCapsuleComponent() : nullptr;
+	if (!Capsule) return;
+	NewRecord.CapsuleLocation = Capsule->GetComponentLocation();
+	NewRecord.CapsuleRotation = Capsule->GetComponentQuat();
+	NewRecord.CapsuleRadius = Capsule->GetScaledCapsuleRadius();
+	NewRecord.CapsuleHalfHeight = Capsule->GetScaledCapsuleHalfHeight();
 
 	AppendPoseHistoryRecord(NewRecord);
 	DiscardExpiredPoseHistoryRecords(NewRecord.Timestamp);
@@ -72,44 +87,27 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 
 bool UProject_JServerSideRewindComponent::ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius)
 {
+	check(IsInGameThread());
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld() ||
+		!FMath::IsFinite(ClientTimestamp) || !FMath::IsFinite(TraceRadius) || TraceRadius < 0.0f ||
+		TraceStart.ContainsNaN() || TraceEnd.ContainsNaN() ||
+		GetWorld()->GetTimeSeconds() - ClientTimestamp > MaxRecordTime) return false;
+
 	FProject_JPoseHistoryBuffer Pose1, Pose2;
 	float Alpha = 0.0f;
-
-	if (!GetPosesForTime(ClientTimestamp, Pose1, Pose2, Alpha))
-	{
-		return false;
-	}
-
-	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter)
-	{
-		return false;
-	}
-
-	const UCapsuleComponent* CapsuleComponent = OwnerCharacter->GetCapsuleComponent();
-	if (!CapsuleComponent)
-	{
-		return false;
-	}
-
-	const FVector InterpolatedLocation = FMath::Lerp(Pose1.Location, Pose2.Location, Alpha);
-	const FQuat InterpolatedRotation = FQuat::Slerp(Pose1.Rotation, Pose2.Rotation, Alpha);
-	const FTransform HistoricalActorTransform(InterpolatedRotation, InterpolatedLocation);
-	const FTransform HistoricalCapsuleTransform = CapsuleComponent->GetRelativeTransform() * HistoricalActorTransform;
-
-	return DoesTraceIntersectCapsule(
-		TraceStart,
-		TraceEnd,
-		HistoricalCapsuleTransform.GetLocation(),
-		HistoricalCapsuleTransform.GetRotation(),
-		CapsuleComponent->GetScaledCapsuleRadius(),
-		CapsuleComponent->GetScaledCapsuleHalfHeight(),
-		TraceRadius);
+	if (!GetPosesForTime(ClientTimestamp, Pose1, Pose2, Alpha)) return false;
+	return DoesTraceIntersectCapsule(TraceStart, TraceEnd,
+		FMath::Lerp(Pose1.CapsuleLocation, Pose2.CapsuleLocation, Alpha),
+		FQuat::Slerp(Pose1.CapsuleRotation, Pose2.CapsuleRotation, Alpha),
+		FMath::Lerp(Pose1.CapsuleRadius, Pose2.CapsuleRadius, Alpha),
+		FMath::Lerp(Pose1.CapsuleHalfHeight, Pose2.CapsuleHalfHeight, Alpha), TraceRadius);
 }
 
 bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const
 {
-	if (PoseHistoryCount < 2)
+	OutPose1 = OutPose2 = FProject_JPoseHistoryBuffer();
+	OutAlpha = 0.0f;
+	if (PoseHistoryCount == 0 || !FMath::IsFinite(Time))
 	{
 		return false;
 	}
@@ -139,6 +137,11 @@ bool UProject_JServerSideRewindComponent::GetPosesForTime(float Time, FProject_J
 		}
 	}
 
+	if (FoundIndex >= 0 && GetPoseHistoryRecord(FoundIndex).Timestamp == Time)
+	{
+		OutPose1 = OutPose2 = GetPoseHistoryRecord(FoundIndex);
+		return true;
+	}
 	if (FoundIndex <= 0)
 	{
 		return false;
@@ -170,6 +173,19 @@ const FProject_JPoseHistoryBuffer& UProject_JServerSideRewindComponent::GetPoseH
 void UProject_JServerSideRewindComponent::AppendPoseHistoryRecord(const FProject_JPoseHistoryBuffer& Record)
 {
 	check(PoseHistory.Num() > 0);
+	if (!FMath::IsFinite(Record.Timestamp) || Record.Location.ContainsNaN() || Record.Rotation.ContainsNaN() ||
+		Record.CapsuleLocation.ContainsNaN() || Record.CapsuleRotation.ContainsNaN() ||
+		!FMath::IsFinite(Record.CapsuleRadius) || !FMath::IsFinite(Record.CapsuleHalfHeight)) return;
+	if (PoseHistoryCount > 0)
+	{
+		const float LastTime = GetPoseHistoryRecord(PoseHistoryCount - 1).Timestamp;
+		if (Record.Timestamp < LastTime) ResetHistory();
+		else if (Record.Timestamp == LastTime)
+		{
+			PoseHistory[(PoseHistoryStartIndex + PoseHistoryCount - 1) % PoseHistory.Num()] = Record;
+			return;
+		}
+	}
 
 	if (PoseHistoryCount == PoseHistory.Num())
 	{

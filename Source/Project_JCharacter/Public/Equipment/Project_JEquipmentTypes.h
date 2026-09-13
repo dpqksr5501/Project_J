@@ -30,7 +30,8 @@ enum class EProject_JEquipmentOperationFailure : uint8
 	InvalidDefinition,
 	InvalidSlot,
 	AlreadyEquipped,
-	InventoryLockFailed
+	InventoryLockFailed,
+	OperationInProgress
 };
 
 inline const TCHAR* LexToString(EProject_JEquipmentOperationFailure Failure)
@@ -47,6 +48,7 @@ inline const TCHAR* LexToString(EProject_JEquipmentOperationFailure Failure)
 	case EProject_JEquipmentOperationFailure::InvalidSlot: return TEXT("InvalidSlot");
 	case EProject_JEquipmentOperationFailure::AlreadyEquipped: return TEXT("AlreadyEquipped");
 	case EProject_JEquipmentOperationFailure::InventoryLockFailed: return TEXT("InventoryLockFailed");
+	case EProject_JEquipmentOperationFailure::OperationInProgress: return TEXT("OperationInProgress");
 	default: return TEXT("Unknown");
 	}
 }

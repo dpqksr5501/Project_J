@@ -140,6 +140,9 @@ private:
 	bool RemoveEquipmentAt(int32 Index);
 
 private:
+	// Prevent delegate callbacks from nesting slot replacement/teardown. No worker lock.
+	bool bEquipmentOperationInProgress = false;
+
 	UPROPERTY(Replicated)
 	FProject_JEquipmentArray EquipmentArray;
 

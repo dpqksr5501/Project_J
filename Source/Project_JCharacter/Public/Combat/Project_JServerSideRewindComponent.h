@@ -21,6 +21,12 @@ struct FProject_JPoseHistoryBuffer
 
 	UPROPERTY()
 	FQuat Rotation = FQuat::Identity;
+
+	// World-space collision geometry at capture time, including crouch and scale.
+	UPROPERTY() FVector CapsuleLocation = FVector::ZeroVector;
+	UPROPERTY() FQuat CapsuleRotation = FQuat::Identity;
+	UPROPERTY() float CapsuleRadius = 0.0f;
+	UPROPERTY() float CapsuleHalfHeight = 0.0f;
 };
 
 /**
@@ -34,6 +40,9 @@ class PROJECT_JCHARACTER_API UProject_JServerSideRewindComponent : public UActor
 
 public:
 	UProject_JServerSideRewindComponent();
+
+	/** Call after a teleport/handover; interpolation must not bridge separate locations. */
+	void ResetHistory();
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,6 +61,7 @@ public:
 	bool ServerVerifyHit(float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd, float TraceRadius = 0.0f);
 
 private:
+	friend class FProjectJRewindHistoryTest;
 	// Fixed-capacity circular buffer storing past transforms. It allocates once in
 	// BeginPlay and never shifts elements when old records expire.
 	TArray<FProject_JPoseHistoryBuffer> PoseHistory;

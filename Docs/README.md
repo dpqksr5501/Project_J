@@ -4,6 +4,12 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+- [콘텐츠 확장·DA 작성 구조 검토 (2026-09-13)](Architecture/Extension_Architecture_Review_2026-09-13.md)
+  - 공통 Master ABP, 직업·전직·스킬 조합과 콘텐츠 작성 방식의 개선안. 현재 진단과 제안이며 구현 완료 기록은 아니다.
+
+- [런타임 내부 리팩터링 (2026-09-13)](Architecture/Internal_Refinement_2026-09-13.md)
+  - 궤적·AnimGraph 읽기 경계, 입력/커맨드 해제, 인벤토리·장비 재진입, 카메라 빙의, 서버 되감기와 상호작용 책임을 보강한 변경 및 검증 범위.
+
 - [MMORPG Extension Foundation (2026-09-12)](Architecture/MMO_Foundation_2026-09-12.md)
   - 기존 C++ 진단, Core-only 기반 모듈, 요청·저장·동시성 계약과 후속 구현 절차. [205개 콘텐츠·운영 확장 항목](Architecture/MMO_Content_Catalog.md)은 구현 완료 목록과 구분한다. 신규 8개·기존 회귀 16개 검증 및 월드 정리 경고 해결 결과는 [검증 JSON](Architecture/MMO_Foundation_Validation_2026-09-12.json)에 기록한다.
 

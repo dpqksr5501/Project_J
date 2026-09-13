@@ -65,6 +65,7 @@ protected:
 	virtual void GetCustomNodes(TArray<FAnimNode_Base*>& OutNodes) override;
 
 private:
+	friend class FProjectJAnimationSnapshotBoundaryTest;
 	friend class FProjectJStopIdleInterruptTest;
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();

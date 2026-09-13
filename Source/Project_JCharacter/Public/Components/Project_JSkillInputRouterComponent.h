@@ -128,6 +128,8 @@ public:
 	UProject_JSkillInputRouterComponent();
 
 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
+	void ResetInputState();
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Input|Skills")
 	void SetModifierHeld(bool bHeld);

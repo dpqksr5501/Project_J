@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Project_JGameplayTags.h"
 
@@ -24,62 +25,49 @@ void UProject_JCameraComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+	if (APawn* Pawn = Cast<APawn>(GetOwner()))
 	{
-		bIsLocallyControlled = OwnerChar->IsLocallyControlled();
+		Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &UProject_JCameraComponent::OnControllerChanged);
 	}
+	RefreshAbilitySystemBinding();
+}
 
-	// Remote proxies do not need camera interpolation or an active view camera.
-	if (!bIsLocallyControlled)
-	{
-		SetComponentTickEnabled(false);
-
-		if (CameraBoom)
-		{
-			CameraBoom->bEnableCameraLag = false;
-			CameraBoom->bEnableCameraRotationLag = false;
-		}
-		if (FollowCamera)
-		{
-			FollowCamera->Deactivate();
-		}
-		return;
-	}
-
+void UProject_JCameraComponent::OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
+{
 	RefreshAbilitySystemBinding();
 }
 
 void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 {
-	if (!bIsLocallyControlled)
+	check(IsInGameThread());
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	const bool bWasLocal = bIsLocallyControlled;
+	bIsLocallyControlled = Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled();
+	SetComponentTickEnabled(bIsLocallyControlled);
+	// Preserve authored lag settings across remote -> local possession.
+	if (CameraBoom) CameraBoom->SetComponentTickEnabled(bIsLocallyControlled);
+	if (FollowCamera) FollowCamera->SetActive(bIsLocallyControlled);
+
+	UAbilitySystemComponent* ASC = bIsLocallyControlled
+		? UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner()) : nullptr;
+	if (BoundAbilitySystemComponent.Get() == ASC && CombatModeTagEventHandle.IsValid() && bWasLocal == bIsLocallyControlled)
 	{
 		return;
 	}
+	UnregisterAbilitySystemBinding();
+	bIsCombatMode = ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+	if (!bIsLocallyControlled) return;
 
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	if (CameraBoom)
+	{
+		CameraBoom->TargetArmLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
+		CameraBoom->SocketOffset = bIsCombatMode
+			? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
+			: NormalSocketOffset;
+	}
+	if (FollowCamera) FollowCamera->SetFieldOfView(bIsCombatMode ? CombatFieldOfView : NormalFieldOfView);
 	if (ASC)
 	{
-		if (BoundAbilitySystemComponent.Get() == ASC && CombatModeTagEventHandle.IsValid())
-		{
-			return;
-		}
-
-		UnregisterAbilitySystemBinding();
-
-		bIsCombatMode = ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		if (CameraBoom)
-		{
-			CameraBoom->TargetArmLength = bIsCombatMode ? CombatTargetArmLength : NormalTargetArmLength;
-			const FVector TargetOffset = bIsCombatMode
-				? FVector(CombatSocketOffset.X, bUseRightCombatShoulder ? CombatSocketOffset.Y : -CombatSocketOffset.Y, CombatSocketOffset.Z)
-				: NormalSocketOffset;
-			CameraBoom->SocketOffset = TargetOffset;
-		}
-		if (FollowCamera)
-		{
-			FollowCamera->SetFieldOfView(bIsCombatMode ? CombatFieldOfView : NormalFieldOfView);
-		}
-
 		BoundAbilitySystemComponent = ASC;
 		CombatModeTagEventHandle = ASC->RegisterGameplayTagEvent(FProject_JGameplayTags::Get().State_CombatMode, EGameplayTagEventType::NewOrRemoved)
 			.AddUObject(this, &UProject_JCameraComponent::OnCombatStateTagChanged);
@@ -88,6 +76,10 @@ void UProject_JCameraComponent::RefreshAbilitySystemBinding()
 
 void UProject_JCameraComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &UProject_JCameraComponent::OnControllerChanged);
+	}
 	UnregisterAbilitySystemBinding();
 
 	Super::EndPlay(EndPlayReason);

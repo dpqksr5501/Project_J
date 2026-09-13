@@ -71,6 +71,8 @@ struct FProject_JPlayerInputActionSet
  * The component intentionally calls the character's existing public gameplay methods so
  * locomotion, motion matching, and server RPC timing stay unchanged.
  */
+class UEnhancedInputComponent;
+
 UCLASS(ClassGroup=(Input), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JPlayerInputBindingComponent : public UActorComponent
 {
@@ -78,11 +80,15 @@ class PROJECT_JCHARACTER_API UProject_JPlayerInputBindingComponent : public UAct
 
 public:
 	UProject_JPlayerInputBindingComponent();
+	void UnbindInput();
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	bool BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet);
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
+	TArray<uint32> OwnedBindingHandles;
 	void HandleMove(const FInputActionValue& Value);
 	void HandleLook(const FInputActionValue& Value);
 	void HandleMoveStopped();
@@ -134,6 +140,7 @@ private:
 	int32 LeftPressSequence = 0;
 	int32 RightPressSequence = 0;
 
+	UPROPERTY(Transient)
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;
 	TMap<UInputAction*, FGameplayTag> ActiveDirectInputTags;
 };

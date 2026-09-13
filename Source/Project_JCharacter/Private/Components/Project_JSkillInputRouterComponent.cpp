@@ -105,18 +105,34 @@ UProject_JSkillInputRouterComponent::UProject_JSkillInputRouterComponent()
 
 void UProject_JSkillInputRouterComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter)
 {
+	ResetInputState();
 	BoundPlayerCharacter = InPlayerCharacter;
-	bLMBHeld = false;
-	bRMBHeld = false;
-	bHasPendingChordButton = false;
-	ActiveLMBInputTag = FGameplayTag();
-	ActiveRMBInputTag = FGameplayTag();
-	ActiveCombinedInputTag = FGameplayTag();
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
-	}
 	GetEffectiveChords();
+}
+
+void UProject_JSkillInputRouterComponent::ResetInputState()
+{
+	check(IsInGameThread());
+	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
+	FGameplayTagContainer ReleasedTags;
+	if (ActiveLMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveLMBInputTag);
+	if (ActiveRMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveRMBInputTag);
+	if (ActiveCombinedInputTag.IsValid()) ReleasedTags.AddTag(ActiveCombinedInputTag);
+	bLMBHeld = bRMBHeld = bModifierHeld = bHasPendingChordButton = false;
+	ActiveModifierTags.Reset();
+	ActiveLMBInputTag = ActiveRMBInputTag = ActiveCombinedInputTag = FGameplayTag();
+	// Clear before dispatch so a release callback cannot observe stale held state.
+	if (IsValid(BoundPlayerCharacter))
+	{
+		for (const FGameplayTag& Tag : ReleasedTags) BoundPlayerCharacter->HandleSkillInputTagReleased(Tag);
+	}
+}
+
+void UProject_JSkillInputRouterComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ResetInputState();
+	BoundPlayerCharacter = nullptr;
+	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JSkillInputRouterComponent::SetModifierHeld(bool bHeld)
@@ -242,7 +258,8 @@ const TArray<FProject_JSkillInputChord>& UProject_JSkillInputRouterComponent::Ge
 
 float UProject_JSkillInputRouterComponent::GetEffectiveSimultaneousChordGraceSeconds() const
 {
-	return InputMappingData ? InputMappingData->SimultaneousChordGraceSeconds : 0.08f;
+	const float Grace = InputMappingData ? InputMappingData->SimultaneousChordGraceSeconds : 0.08f;
+	return FMath::IsFinite(Grace) ? FMath::Clamp(Grace, 0.0f, 0.25f) : 0.0f;
 }
 
 void UProject_JSkillInputRouterComponent::BuildDefaultChordsIfNeeded()
@@ -395,8 +412,9 @@ void UProject_JSkillInputRouterComponent::ReleaseActiveChordIfReady()
 		return;
 	}
 
-	BoundPlayerCharacter->HandleSkillInputTagReleased(ActiveCombinedInputTag);
+	const FGameplayTag ReleasedTag = ActiveCombinedInputTag;
 	ActiveCombinedInputTag = FGameplayTag();
+	BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
 }
 
 bool UProject_JSkillInputRouterComponent::DoesChordMatchButton(const FProject_JSkillInputChord& Chord, EProject_JSkillInputButton Button) const
@@ -430,7 +448,8 @@ void UProject_JSkillInputRouterComponent::ReleaseActiveTagForButton(EProject_JSk
 	FGameplayTag& ActiveInputTag = Button == EProject_JSkillInputButton::LMB ? ActiveLMBInputTag : ActiveRMBInputTag;
 	if (ActiveInputTag.IsValid())
 	{
-		BoundPlayerCharacter->HandleSkillInputTagReleased(ActiveInputTag);
+		const FGameplayTag ReleasedTag = ActiveInputTag;
 		ActiveInputTag = FGameplayTag();
+		BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
 	}
 }

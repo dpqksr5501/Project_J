@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JTrajectoryQuery.h"
 
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -115,7 +116,6 @@ void UProject_JMotionMatchingTrajectoryComponent::BeginPlay()
 		Trajectory.Samples.Empty();
 		TranslationHistory.Empty();
 		PreviousFilteredTrajectory.Samples.Empty();
-		InvalidateSamplingIndexCache();
 	}
 }
 
@@ -127,16 +127,17 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistory()
 
 void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReason(EProject_JTrajectoryResetReason Reason)
 {
-	EnsureTrajectoryBuffers();
-	InvalidateSamplingIndexCache();
+	if (GetNetMode() != NM_DedicatedServer) EnsureTrajectoryBuffers();
+	LastGeneratedWorldTimeSeconds = -1.0;
 	LastResetReason = Reason;
 	++ResetRevision;
 	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
 	LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
-	if (!CharacterOwner)
+	if (!CharacterOwner || GetNetMode() == NM_DedicatedServer)
 	{
+		PreviousFilteredTrajectory.Samples.Reset();
 		Trajectory.Samples.Reset();
 		TranslationHistory.Reset();
 		LastUpdateFrameNumber = 0;
@@ -175,7 +176,7 @@ void UProject_JMotionMatchingTrajectoryComponent::EnsureTrajectoryBuffers()
 void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float DeltaTime)
 {
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
-	if (!CharacterOwner || DeltaTime <= 0.0f)
+	if (!CharacterOwner || !FMath::IsFinite(DeltaTime) || DeltaTime <= 0.0f)
 	{
 		return;
 	}
@@ -306,89 +307,8 @@ bool UProject_JMotionMatchingTrajectoryComponent::TryGetFuturePlanarVelocity(
 	FVector& OutVelocity,
 	float& OutTurnAngleDegrees) const
 {
-	OutVelocity = FVector::ZeroVector;
-	OutTurnAngleDegrees = 0.0f;
-	RefreshSamplingIndexCache(PredictionHorizon);
-
-	if (!Trajectory.Samples.IsValidIndex(CachedPresentSampleIndex) ||
-		!Trajectory.Samples.IsValidIndex(CachedFutureSampleIndex))
-	{
-		return false;
-	}
-
-	const FTransformTrajectorySample& PresentSample = Trajectory.Samples[CachedPresentSampleIndex];
-	const FTransformTrajectorySample& FutureSample = Trajectory.Samples[CachedFutureSampleIndex];
-	const float SampleDeltaTime = FutureSample.TimeInSeconds - PresentSample.TimeInSeconds;
-	if (SampleDeltaTime <= UE_KINDA_SMALL_NUMBER)
-	{
-		return false;
-	}
-
-	OutVelocity =
-		(FutureSample.GetTransform().GetLocation() - PresentSample.GetTransform().GetLocation()) /
-		SampleDeltaTime;
-	OutVelocity.Z = 0.0f;
-
-	FVector HorizontalVelocity = CurrentPlanarVelocity;
-	HorizontalVelocity.Z = 0.0f;
-	if (!HorizontalVelocity.IsNearlyZero() && !OutVelocity.IsNearlyZero())
-	{
-		const float DirectionDot = FMath::Clamp(
-			FVector::DotProduct(HorizontalVelocity.GetSafeNormal2D(), OutVelocity.GetSafeNormal2D()),
-			-1.0f,
-			1.0f);
-		OutTurnAngleDegrees = FMath::RadiansToDegrees(FMath::Acos(DirectionDot));
-	}
-
-	return true;
-}
-
-void UProject_JMotionMatchingTrajectoryComponent::InvalidateSamplingIndexCache()
-{
-	CachedPresentSampleIndex = INDEX_NONE;
-	CachedFutureSampleIndex = INDEX_NONE;
-	CachedTrajectorySampleCount = INDEX_NONE;
-	CachedPredictionHorizon = -1.0f;
-}
-
-void UProject_JMotionMatchingTrajectoryComponent::RefreshSamplingIndexCache(float PredictionHorizon) const
-{
-	const float SafePredictionHorizon = FMath::Max(PredictionHorizon, 0.0f);
-	if (CachedTrajectorySampleCount == Trajectory.Samples.Num() &&
-		FMath::IsNearlyEqual(CachedPredictionHorizon, SafePredictionHorizon) &&
-		Trajectory.Samples.IsValidIndex(CachedPresentSampleIndex) &&
-		Trajectory.Samples.IsValidIndex(CachedFutureSampleIndex))
-	{
-		return;
-	}
-
-	CachedPresentSampleIndex = INDEX_NONE;
-	CachedFutureSampleIndex = INDEX_NONE;
-	CachedTrajectorySampleCount = Trajectory.Samples.Num();
-	CachedPredictionHorizon = SafePredictionHorizon;
-
-	float BestPresentTime = TNumericLimits<float>::Max();
-	float BestFutureTimeDelta = TNumericLimits<float>::Max();
-	for (int32 Index = 0; Index < Trajectory.Samples.Num(); ++Index)
-	{
-		const FTransformTrajectorySample& Sample = Trajectory.Samples[Index];
-		const float AbsoluteSampleTime = FMath::Abs(Sample.TimeInSeconds);
-		if (AbsoluteSampleTime < BestPresentTime)
-		{
-			BestPresentTime = AbsoluteSampleTime;
-			CachedPresentSampleIndex = Index;
-		}
-
-		if (Sample.TimeInSeconds > UE_KINDA_SMALL_NUMBER)
-		{
-			const float HorizonDelta = FMath::Abs(Sample.TimeInSeconds - SafePredictionHorizon);
-			if (HorizonDelta < BestFutureTimeDelta)
-			{
-				BestFutureTimeDelta = HorizonDelta;
-				CachedFutureSampleIndex = Index;
-			}
-		}
-	}
+	return Project_J::Animation::TryGetFuturePlanarVelocity(
+		Trajectory, PredictionHorizon, CurrentPlanarVelocity, OutVelocity, OutTurnAngleDegrees);
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float DeltaTime)
@@ -427,7 +347,7 @@ void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float
 		const FTransformTrajectorySample& PrevSample = PreviousFilteredTrajectory.Samples[Index];
 
 		// Convert both current and previous samples to local space relative to the CURRENT actor transform.
-		// This guarantees that constant-speed movement has zero lag.
+		// This preserves the current reference frame; filtering can still introduce positional lag.
 		FTransform LocalCurrent = CurrentSample.GetTransform().GetRelativeTransform(ActorTransform);
 		FTransform LocalPrev = PrevSample.GetTransform().GetRelativeTransform(ActorTransform);
 

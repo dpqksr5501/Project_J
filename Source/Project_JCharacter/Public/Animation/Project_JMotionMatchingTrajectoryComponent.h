@@ -52,14 +52,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Motion Matching|Trajectory")
 	bool IsTrajectoryGenerationEligible() const { return bWasTrajectoryGenerationEligible; }
 
-	/** Age of the last generated snapshot, or -1 when this component has never generated one. */
+	/** Age of the last generated snapshot, or -1 after reset until the next generation. */
 	UFUNCTION(BlueprintPure, Category = "Motion Matching|Trajectory")
 	float GetTrajectoryAgeSeconds() const;
 
 	/**
 	 * Reconstructs planar velocity between the sample nearest the present and the
-	 * positive sample nearest PredictionHorizon. Sampling indices are cached
-	 * because the trajectory time layout is stable during ordinary updates.
+	 * positive sample nearest PredictionHorizon. Resolves the current time layout
+	 * using a value-only query; invalid numerical input returns false and zero outputs.
 	 */
 	bool TryGetFuturePlanarVelocity(
 		float PredictionHorizon,
@@ -89,8 +89,6 @@ private:
 	void PostProcessTrajectory(ACharacter& CharacterOwner, float DeltaTime);
 	void ApplyTrajectorySmoothing(float DeltaTime);
 	void RepairRemoteTrajectoryFacing(const ACharacter& CharacterOwner);
-	void InvalidateSamplingIndexCache();
-	void RefreshSamplingIndexCache(float PredictionHorizon) const;
 
 	UPROPERTY(Transient)
 	FTransformTrajectory PreviousFilteredTrajectory;
@@ -104,8 +102,4 @@ private:
 	double LastGeneratedWorldTimeSeconds = -1.0;
 	EProject_JTrajectoryResetReason LastResetReason = EProject_JTrajectoryResetReason::Initialization;
 
-	mutable int32 CachedPresentSampleIndex = INDEX_NONE;
-	mutable int32 CachedFutureSampleIndex = INDEX_NONE;
-	mutable int32 CachedTrajectorySampleCount = INDEX_NONE;
-	mutable float CachedPredictionHorizon = -1.0f;
 };

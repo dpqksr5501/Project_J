@@ -19,7 +19,44 @@ UProject_JSkillInputExecutionComponent::UProject_JSkillInputExecutionComponent()
 
 void UProject_JSkillInputExecutionComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter)
 {
+	if (BoundPlayerCharacter != InPlayerCharacter)
+	{
+		ReleaseAllDispatchedInputs();
+		ClearCommandInputHistory();
+	}
 	BoundPlayerCharacter = InPlayerCharacter;
+	RefreshInputAbilitySystem();
+}
+
+void UProject_JSkillInputExecutionComponent::RefreshInputAbilitySystem()
+{
+	UProject_JAbilitySystemComponent* Current = BoundPlayerCharacter
+		? Cast<UProject_JAbilitySystemComponent>(BoundPlayerCharacter->GetAbilitySystemComponent()) : nullptr;
+	if (InputAbilitySystem.Get() != Current)
+	{
+		ReleaseAllDispatchedInputs();
+		InputAbilitySystem = Current;
+	}
+}
+
+void UProject_JSkillInputExecutionComponent::ReleaseAllDispatchedInputs()
+{
+	const auto Released = MoveTemp(ActiveDispatchTags);
+	FGameplayTagContainer Tags;
+	for (const auto& Entry : Released) Tags.AppendTags(Entry.Value);
+	if (UProject_JAbilitySystemComponent* ASC = InputAbilitySystem.Get())
+	{
+		for (const FGameplayTag& Tag : Tags) ASC->AbilityInputTagReleased(Tag);
+	}
+}
+
+void UProject_JSkillInputExecutionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ReleaseAllDispatchedInputs();
+	InputAbilitySystem.Reset();
+	ClearCommandInputHistory();
+	BoundPlayerCharacter = nullptr;
+	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag InputTag)
@@ -29,11 +66,16 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag 
 		return;
 	}
 
+	RefreshInputAbilitySystem();
 	const double InputTimestamp = GetSynchronizedInputTimestamp();
 	bool bConsumeRawInput = false;
 	const FGameplayTag DispatchTag = ResolveDispatchInputTag(InputTag, InputTimestamp, bConsumeRawInput);
 	if (DispatchTag.IsValid())
 	{
+		// Capture aliases before dispatch: activation may synchronously change equipment/style.
+		FGameplayTagContainer& Tags = ActiveDispatchTags.FindOrAdd(InputTag);
+		Tags.AddTag(DispatchTag);
+		if (!bConsumeRawInput) Tags.AddTag(InputTag);
 		DispatchInputTag(DispatchTag);
 		if (!bConsumeRawInput && !DispatchTag.MatchesTagExact(InputTag))
 		{
@@ -236,13 +278,18 @@ FGameplayTagContainer UProject_JSkillInputExecutionComponent::GetOwnerGameplayTa
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagReleased(FGameplayTag InputTag)
 {
-	if (!InputTag.IsValid() || !BoundPlayerCharacter)
+	if (!InputTag.IsValid()) return;
+	RefreshInputAbilitySystem();
+	FGameplayTagContainer ReleasedTags;
+	ActiveDispatchTags.RemoveAndCopyValue(InputTag, ReleasedTags);
+	ReleasedTags.AddTag(InputTag); // Retain compatibility with direct GAS input callers.
+	if (UProject_JAbilitySystemComponent* ASC = InputAbilitySystem.Get())
 	{
-		return;
-	}
-
-	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(BoundPlayerCharacter->GetAbilitySystemComponent()))
-	{
-		ProjectJASC->AbilityInputTagReleased(InputTag);
+		for (const FGameplayTag& Tag : ReleasedTags)
+		{
+			bool bStillHeld = false;
+			for (const auto& Entry : ActiveDispatchTags) bStillHeld |= Entry.Value.HasTagExact(Tag);
+			if (!bStillHeld) ASC->AbilityInputTagReleased(Tag);
+		}
 	}
 }

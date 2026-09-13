@@ -332,9 +332,9 @@ void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Rev
 
 bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
-	if (MotionKeys.Num() < 2)
+	if (MotionKeys.IsEmpty())
 	{
-		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion requires at least two ordered transform keys."));
+		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion requires at least one transform key."));
 		return false;
 	}
 
@@ -427,7 +427,7 @@ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float N
 
 void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
-	if (!bIndependentMotionActive || MotionKeys.Num() < 2)
+	if (!bIndependentMotionActive || MotionKeys.IsEmpty())
 	{
 		return;
 	}
@@ -472,7 +472,7 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 {
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	USceneComponent* WeaponRoot = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
-	if (!PresentationProfile || !PresentationProfile->MotionPresentation.bSupportsIndependentMotion || !WeaponRoot || ActiveMotionKeys.Num() < 2)
+	if (!PresentationProfile || !PresentationProfile->MotionPresentation.bSupportsIndependentMotion || !WeaponRoot || ActiveMotionKeys.IsEmpty())
 	{
 		EndIndependentMotion();
 		return;

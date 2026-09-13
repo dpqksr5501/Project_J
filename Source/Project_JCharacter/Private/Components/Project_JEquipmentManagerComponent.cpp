@@ -120,6 +120,9 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::TryEquip
 
 void UProject_JEquipmentManagerComponent::UnequipItem(UProject_JEquipmentItemDefinition* ItemDef)
 {
+	check(IsInGameThread());
+	if (bEquipmentOperationInProgress) return;
+	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
 	if (!ItemDef || !GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return;
@@ -134,6 +137,9 @@ void UProject_JEquipmentManagerComponent::UnequipItem(UProject_JEquipmentItemDef
 
 void UProject_JEquipmentManagerComponent::UnequipSlot(EProject_JEquipmentSlot Slot)
 {
+	check(IsInGameThread());
+	if (bEquipmentOperationInProgress) return;
+	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return;
@@ -317,6 +323,13 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 	const FProject_JItemInstanceData& ItemInstance,
 	bool bRequireInventoryOwnership)
 {
+	check(IsInGameThread());
+	if (bEquipmentOperationInProgress)
+	{
+		return FProject_JEquipmentOperationResult::FailureResult(EProject_JEquipmentOperationFailure::OperationInProgress, ItemInstance.InstanceId);
+	}
+	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
+
 	UProject_JEquipmentItemDefinition* ItemDef = Cast<UProject_JEquipmentItemDefinition>(ItemInstance.ItemDef);
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
@@ -461,11 +474,10 @@ bool UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 	}
 
 	const FProject_JEquipmentArrayItem RemovedItem = EquipmentArray.Items[Index];
-	SetInventoryEquipmentLock(RemovedItem.ItemInstance, false);
-	BroadcastEquipmentUnequipped(RemovedItem);
-
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();
+	SetInventoryEquipmentLock(RemovedItem.ItemInstance, false);
+	BroadcastEquipmentUnequipped(RemovedItem);
 	return true;
 }
 

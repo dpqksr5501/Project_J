@@ -2,7 +2,7 @@
 
 bool UProject_JObjectPoolRegistrySubsystem::RegisterDefinition(const FProject_JObjectPoolDefinition& Definition)
 {
-	if (Definition.PoolId.IsNone() || Definition.MaxRetainedCount < Definition.PrewarmCount)
+	if (Definition.PoolId.IsNone() || Definition.PrewarmCount < 0 || Definition.MaxRetainedCount < 0 || Definition.MaxRetainedCount < Definition.PrewarmCount)
 	{
 		return false;
 	}

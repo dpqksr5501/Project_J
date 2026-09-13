@@ -57,6 +57,7 @@ void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePr
 
 FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProject_JItemDefinition* ItemDef, int32 StackCount, int32 ItemLevel)
 {
+	check(IsInGameThread());
 	FProject_JItemInstanceData NewItem;
 	NewItem.InstanceId = FGuid::NewGuid();
 	NewItem.ItemDef = ItemDef;
@@ -71,12 +72,14 @@ FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProj
 	FProject_JInventoryArrayItem& AddedItem = InventoryArray.Items.Add_GetRef(FProject_JInventoryArrayItem());
 	AddedItem.ItemInstance = NewItem;
 	InventoryArray.MarkItemDirty(AddedItem);
-	OnItemAdded.Broadcast(AddedItem.ItemInstance);
-	return AddedItem.ItemInstance;
+	// Listeners may mutate the array. Publish a value snapshot after commit.
+	OnItemAdded.Broadcast(NewItem);
+	return NewItem;
 }
 
 bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 {
+	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return false;
@@ -94,14 +97,15 @@ bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 	}
 
 	const FProject_JInventoryArrayItem RemovedItem = InventoryArray.Items[FoundIndex];
-	OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
 	InventoryArray.Items.RemoveAt(FoundIndex);
 	InventoryArray.MarkArrayDirty();
+	OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
 	return true;
 }
 
 bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 NewStackCount)
 {
+	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority() || NewStackCount < 0)
 	{
 		return false;
@@ -135,20 +139,22 @@ bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 New
 	if (NewStackCount == 0)
 	{
 		const FProject_JInventoryArrayItem RemovedItem = Item;
-		OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
 		InventoryArray.Items.RemoveAt(FoundIndex);
 		InventoryArray.MarkArrayDirty();
+		OnItemRemoved.Broadcast(RemovedItem.ItemInstance);
 		return true;
 	}
 
 	Item.ItemInstance.StackCount = NewStackCount;
 	InventoryArray.MarkItemDirty(Item);
-	OnItemChanged.Broadcast(Item.ItemInstance);
+	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
+	OnItemChanged.Broadcast(Snapshot);
 	return true;
 }
 
 bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 DeltaStackCount)
 {
+	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return false;
@@ -156,7 +162,7 @@ bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 Del
 
 	if (DeltaStackCount == 0)
 	{
-		return true;
+		return HasItemInstance(InstanceId);
 	}
 
 	const int32 FoundIndex = FindItemIndex(InstanceId);
@@ -166,11 +172,14 @@ bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 Del
 	}
 
 	const int32 CurrentStackCount = InventoryArray.Items[FoundIndex].ItemInstance.StackCount;
-	return SetItemStackCount(InstanceId, CurrentStackCount + DeltaStackCount);
+	const int64 NewStackCount = static_cast<int64>(CurrentStackCount) + DeltaStackCount;
+	return NewStackCount >= 0 && NewStackCount <= MAX_int32 &&
+		SetItemStackCount(InstanceId, static_cast<int32>(NewStackCount));
 }
 
 bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 CountToConsume)
 {
+	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return false;
@@ -198,6 +207,7 @@ bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 Coun
 
 bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped)
 {
+	check(IsInGameThread());
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 	{
 		return false;
@@ -213,7 +223,8 @@ bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool 
 	Item.ItemInstance.bIsLocked = bLocked;
 	Item.ItemInstance.bIsEquipped = bLocked && bEquipped;
 	InventoryArray.MarkItemDirty(Item);
-	OnItemChanged.Broadcast(Item.ItemInstance);
+	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
+	OnItemChanged.Broadcast(Snapshot);
 	return true;
 }
 
@@ -255,6 +266,7 @@ bool UProject_JInventoryComponent::CanMoveItemInstance(FGuid InstanceId, int32 C
 
 bool UProject_JInventoryComponent::FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData& OutItemInstance) const
 {
+	OutItemInstance = FProject_JItemInstanceData();
 	const int32 FoundIndex = FindItemIndex(InstanceId);
 	if (FoundIndex == INDEX_NONE)
 	{
@@ -314,7 +326,8 @@ void UProject_JInventoryComponent::HandleReplicatedItemAdded(const FProject_JInv
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticAddedCount;
 #endif
-	OnItemAdded.Broadcast(Item.ItemInstance);
+	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
+	OnItemAdded.Broadcast(Snapshot);
 }
 
 void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item)
@@ -322,7 +335,8 @@ void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JI
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticChangedCount;
 #endif
-	OnItemChanged.Broadcast(Item.ItemInstance);
+	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
+	OnItemChanged.Broadcast(Snapshot);
 }
 
 void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item)
@@ -330,7 +344,8 @@ void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JI
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticRemovedCount;
 #endif
-	OnItemRemoved.Broadcast(Item.ItemInstance);
+	const FProject_JItemInstanceData Snapshot = Item.ItemInstance;
+	OnItemRemoved.Broadcast(Snapshot);
 }
 
 bool UProject_JInventoryComponent::CanCommitItemInstance(const FProject_JItemInstanceData& ItemInstance) const

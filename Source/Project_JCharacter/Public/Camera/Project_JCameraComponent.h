@@ -1,4 +1,4 @@
-﻿// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "Project_JCameraComponent.generated.h"
 
+class APawn;
+class AController;
 class USpringArmComponent;
 class UCameraComponent;
 class UAbilitySystemComponent;
@@ -78,6 +80,9 @@ private:
 	/** GAS 상태 변경 콜백 (전투 모드 전환 감지) */
 	UFUNCTION()
 	void OnCombatStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+	UFUNCTION()
+	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
 
 	void UnregisterAbilitySystemBinding();
 

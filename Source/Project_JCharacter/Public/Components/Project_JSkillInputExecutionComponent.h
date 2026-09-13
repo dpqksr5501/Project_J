@@ -7,6 +7,7 @@
 #include "Project_JSkillInputExecutionComponent.generated.h"
 
 class AProject_JPlayerCharacter;
+class UProject_JAbilitySystemComponent;
 
 /**
  * Executes resolved skill InputTags against GAS.
@@ -23,6 +24,7 @@ public:
 	UProject_JSkillInputExecutionComponent();
 
 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleInputTagPressed(FGameplayTag InputTag);
@@ -39,6 +41,12 @@ public:
 	void ClearCommandInputHistory();
 
 private:
+	friend class FProjectJCommandReleaseTest;
+	void RefreshInputAbilitySystem();
+	void ReleaseAllDispatchedInputs();
+	TWeakObjectPtr<UProject_JAbilitySystemComponent> InputAbilitySystem;
+	// One physical input may activate a command alias as well as its raw tag.
+	TMap<FGameplayTag, FGameplayTagContainer> ActiveDispatchTags;
 	FGameplayTag ResolveDispatchInputTag(FGameplayTag RawInputTag, double TimestampSeconds, bool& bOutConsumeRawInput);
 	void DispatchInputTag(FGameplayTag InputTag, bool bAllowAbilityActivation = true);
 	/**

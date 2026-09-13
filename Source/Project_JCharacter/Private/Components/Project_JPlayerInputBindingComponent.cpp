@@ -1,4 +1,4 @@
-﻿#include "Components/Project_JPlayerInputBindingComponent.h"
+#include "Components/Project_JPlayerInputBindingComponent.h"
 
 #include "EnhancedInputComponent.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
@@ -16,6 +16,7 @@ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 
 bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
 {
+	UnbindInput();
 	BoundPlayerCharacter = PlayerCharacter;
 	ActiveSkillInputMappingData = ActionSet.SkillInputMappingData;
 	ActiveDirectInputTags.Reset();
@@ -26,12 +27,20 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		return false;
 	}
 
-	EnhancedInputComponent->BindAction(ActionSet.JumpAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleJumpStarted);
-	EnhancedInputComponent->BindAction(ActionSet.JumpAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleJumpStopped);
+	BoundEnhancedInputComponent = EnhancedInputComponent;
+	const auto BindOwnedAction = [this, EnhancedInputComponent](auto Action, ETriggerEvent Event, auto* Object, auto Method, auto... Args)
+	{
+		const UInputAction* InputAction = Action;
+		if (InputAction) OwnedBindingHandles.Add(EnhancedInputComponent->BindAction(InputAction, Event, Object, Method, Args...).GetHandle());
+	};
 
-	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleMove);
-	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
-	EnhancedInputComponent->BindAction(ActionSet.MoveAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
+	BindOwnedAction(ActionSet.JumpAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleJumpStarted);
+	BindOwnedAction(ActionSet.JumpAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleJumpStopped);
+	BindOwnedAction(ActionSet.JumpAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleJumpStopped);
+
+	BindOwnedAction(ActionSet.MoveAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleMove);
+	BindOwnedAction(ActionSet.MoveAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
+	BindOwnedAction(ActionSet.MoveAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveStopped);
 
 	const bool bHasCompleteSemanticMoveIntentActionSet =
 		ActionSet.MoveIntentForwardAction &&
@@ -50,16 +59,16 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	LeftPressSequence = 0;
 	RightPressSequence = 0;
 
-	const auto BindMoveIntentAction = [EnhancedInputComponent, this](UInputAction* Action, const EProject_JMoveIntentDirection Direction)
+	const auto BindMoveIntentAction = [BindOwnedAction, this](UInputAction* Action, const EProject_JMoveIntentDirection Direction)
 	{
 		if (!Action)
 		{
 			return;
 		}
 
-		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted, Direction);
-		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
-		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
+		BindOwnedAction(Action, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted, Direction);
+		BindOwnedAction(Action, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
+		BindOwnedAction(Action, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped, Direction);
 	};
 	if (bSemanticMoveIntentActionsBound)
 	{
@@ -69,29 +78,30 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		BindMoveIntentAction(ActionSet.MoveIntentRightAction, EProject_JMoveIntentDirection::Right);
 	}
 
-	EnhancedInputComponent->BindAction(ActionSet.MouseLookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
-	EnhancedInputComponent->BindAction(ActionSet.LookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
+	BindOwnedAction(ActionSet.MouseLookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
+	BindOwnedAction(ActionSet.LookAction, ETriggerEvent::Triggered, this, &UProject_JPlayerInputBindingComponent::HandleLook);
 
-	EnhancedInputComponent->BindAction(ActionSet.SprintAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StartSprint);
-	EnhancedInputComponent->BindAction(ActionSet.SprintAction, ETriggerEvent::Completed, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
-	EnhancedInputComponent->BindAction(ActionSet.ToggleCombatAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::ToggleCombatMode);
+	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StartSprint);
+	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Completed, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
+	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Canceled, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
+	BindOwnedAction(ActionSet.ToggleCombatAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::ToggleCombatMode);
 	if (ActionSet.AttackAction)
 	{
-		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed);
-		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
-		EnhancedInputComponent->BindAction(ActionSet.AttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
+		BindOwnedAction(ActionSet.AttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed);
+		BindOwnedAction(ActionSet.AttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
+		BindOwnedAction(ActionSet.AttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased);
 	}
 	if (ActionSet.HeavyAttackAction)
 	{
-		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed);
-		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
-		EnhancedInputComponent->BindAction(ActionSet.HeavyAttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
+		BindOwnedAction(ActionSet.HeavyAttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed);
+		BindOwnedAction(ActionSet.HeavyAttackAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
+		BindOwnedAction(ActionSet.HeavyAttackAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSecondarySkillReleased);
 	}
 	if (ActionSet.SkillModifierAction)
 	{
-		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierPressed);
-		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
-		EnhancedInputComponent->BindAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
+		BindOwnedAction(ActionSet.SkillModifierAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierPressed);
+		BindOwnedAction(ActionSet.SkillModifierAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
+		BindOwnedAction(ActionSet.SkillModifierAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased);
 	}
 
 	TSet<const UInputAction*> BoundSkillActions;
@@ -107,9 +117,9 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 				}
 
 				BoundSkillActions.Add(ModifierBinding.InputAction);
-				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Started, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierPressed, ModifierBinding.ModifierTag);
-				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Completed, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
-				EnhancedInputComponent->BindAction(ModifierBinding.InputAction, ETriggerEvent::Canceled, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
+				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Started, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierPressed, ModifierBinding.ModifierTag);
+				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Completed, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
+				BindOwnedAction(ModifierBinding.InputAction, ETriggerEvent::Canceled, SkillInputRouter, &UProject_JSkillInputRouterComponent::HandleModifierReleased, ModifierBinding.ModifierTag);
 			}
 		}
 
@@ -121,18 +131,50 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 			}
 
 			BoundSkillActions.Add(SkillBinding.InputAction);
-			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed, SkillBinding.InputAction.Get());
-			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
-			EnhancedInputComponent->BindAction(SkillBinding.InputAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
+			BindOwnedAction(SkillBinding.InputAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed, SkillBinding.InputAction.Get());
+			BindOwnedAction(SkillBinding.InputAction, ETriggerEvent::Completed, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
+			BindOwnedAction(SkillBinding.InputAction, ETriggerEvent::Canceled, this, &UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased, SkillBinding.InputAction.Get());
 		}
 	}
 
 	if (ActionSet.InteractAction)
 	{
-		EnhancedInputComponent->BindAction(ActionSet.InteractAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleInteract);
+		BindOwnedAction(ActionSet.InteractAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleInteract);
 	}
 
 	return true;
+}
+
+void UProject_JPlayerInputBindingComponent::UnbindInput()
+{
+	check(IsInGameThread());
+	if (UEnhancedInputComponent* Input = BoundEnhancedInputComponent.Get())
+	{
+		for (uint32 Handle : OwnedBindingHandles) Input->RemoveBindingByHandle(Handle);
+	}
+	OwnedBindingHandles.Reset();
+	BoundEnhancedInputComponent.Reset();
+	const auto ReleasedInputs = MoveTemp(ActiveDirectInputTags);
+	if (IsValid(BoundPlayerCharacter))
+	{
+		for (const auto& Entry : ReleasedInputs) BoundPlayerCharacter->HandleSkillInputTagReleased(Entry.Value);
+		if (BoundPlayerCharacter->SkillInputRouterComponent) BoundPlayerCharacter->SkillInputRouterComponent->ResetInputState();
+		HandleJumpStopped();
+		BoundPlayerCharacter->StopSprint();
+		FinalizeMoveStopped();
+	}
+	bPendingMoveStopReconciliation = bPendingSemanticMoveIntentRefresh = false;
+	bSemanticMoveIntentActionsBound = false;
+	bMoveIntentForwardHeld = bMoveIntentBackwardHeld = bMoveIntentLeftHeld = bMoveIntentRightHeld = false;
+	SetComponentTickEnabled(false);
+	ActiveSkillInputMappingData = nullptr;
+	BoundPlayerCharacter = nullptr;
+}
+
+void UProject_JPlayerInputBindingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UnbindInput();
+	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JPlayerInputBindingComponent::TickComponent(
@@ -534,9 +576,9 @@ void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased(UInp
 		return;
 	}
 
-	if (FGameplayTag* ActiveInputTag = ActiveDirectInputTags.Find(InputAction))
+	FGameplayTag ReleasedTag;
+	if (ActiveDirectInputTags.RemoveAndCopyValue(InputAction, ReleasedTag))
 	{
-		BoundPlayerCharacter->HandleSkillInputTagReleased(*ActiveInputTag);
-		ActiveDirectInputTags.Remove(InputAction);
+		BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
 	}
 }

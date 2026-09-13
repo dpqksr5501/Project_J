@@ -268,6 +268,14 @@ struct PROJECT_JCHARACTER_API FProject_JAnimProceduralIKThreadSafeData
 {
 	GENERATED_BODY()
 
+	// Copied from the profile on the game thread, never resolved through the pawn in AnimGraph.
+	UPROPERTY()
+	FFootPlacementPlantSettings PlantSettings;
+
+	UPROPERTY()
+	FFootPlacementInterpolationSettings InterpolationSettings;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Procedural IK")
 	float FullBodyMontageWeight = 0.0f;
 
@@ -664,6 +672,10 @@ USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bIsLocallyControlled = false;
+
 
 	// DeltaTime is injected by Proxy.PreUpdate, kept here as metadata for worker thread logic.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
@@ -1359,6 +1371,10 @@ public:
 	/** Rising-edge detector for local combat draw/sheathe presentation boundaries. */
 	bool bWasPlayingCombatPresentationTransitionForStateController = false;
 
+	/** Rising/falling-edge detector and hold timestamp for full-body action montages (attacks, skills, dodges). */
+	bool bWasPlayingFullBodyMontageForStateController = false;
+	double LastFullBodyMontageEndedAtSeconds = -100.0;
+
 
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
@@ -1595,6 +1611,7 @@ public:
 	FFootPlacementInterpolationSettings FootPlacementInterpolationSettingsStops;
 
 private:
+	friend class FProjectJAnimationSnapshotBoundaryTest;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	FProjectJAnimationUpdateSchedule MotionMatchingSelectionSchedule;
 

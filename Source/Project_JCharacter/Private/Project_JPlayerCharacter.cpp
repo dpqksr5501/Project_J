@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Interaction/Project_JInteractionQuery.h"
+#include "Combat/Project_JServerSideRewindComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
@@ -274,6 +276,12 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 	ApplyPrototypeStartingEquipment();
 }
 
+void AProject_JPlayerCharacter::UnPossessed()
+{
+	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
+	Super::UnPossessed();
+}
+
 void AProject_JPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -495,13 +503,7 @@ void AProject_JPlayerCharacter::TryInteract()
 		ServerTryInteract();
 		return;
 	}
-	TArray<FOverlapResult> Results;
-	FCollisionObjectQueryParams ObjectTypes; ObjectTypes.AddObjectTypesToQuery(ECC_Pawn);
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(ProjectJInteract), false, this);
-	if (!GetWorld()->OverlapMultiByObjectType(Results, GetActorLocation(), FQuat::Identity, ObjectTypes, FCollisionShape::MakeSphere(300.0f), Params)) return;
-	AActor* Best = nullptr; float BestDistance = TNumericLimits<float>::Max();
-	for (const FOverlapResult& Result : Results) { AActor* Candidate = Result.GetActor(); if (Candidate && Candidate->GetClass()->ImplementsInterface(UProject_JInteractable::StaticClass())) { const float D = FVector::DistSquared(GetActorLocation(), Candidate->GetActorLocation()); if (D < BestDistance && IProject_JInteractable::Execute_CanInteract(Candidate, this)) { Best = Candidate; BestDistance = D; } } }
-	if (Best) IProject_JInteractable::Execute_Interact(Best, this);
+	Project_J::Interaction::TryInteract(*this);
 }
 
 void AProject_JPlayerCharacter::ServerTryInteract_Implementation()
@@ -1895,6 +1897,8 @@ void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InD
 	}
 
 	SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics);
+	if (MotionMatchingTrajectoryComponent) MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
+	if (UProject_JServerSideRewindComponent* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) Rewind->ResetHistory();
 	ForceNetUpdate();
 }
 

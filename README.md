@@ -6,7 +6,7 @@
 
 멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [문서 목록](Docs/README.md)
+[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Internal_Refinement_2026-09-13.md) · [문서 목록](Docs/README.md)
 
 **MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/MMO_Foundation_2026-09-12.md)
 
