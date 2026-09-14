@@ -41,10 +41,10 @@ struct FInternalTestWorld
 	FInternalTestWorld() { GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World); }
 	~FInternalTestWorld() { if (World->GetBegunPlay()) World->EndPlay(EEndPlayReason::LevelTransition); World->DestroyWorld(false); GEngine->DestroyWorldContext(World); }
 };
-constexpr auto Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+constexpr auto InternalTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInventoryCallbacksTest, "ProjectJ.Internal.Inventory.CallbacksAndBounds", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInventoryCallbacksTest, "ProjectJ.Internal.Inventory.CallbacksAndBounds", InternalTestFlags)
 bool FProjectJInventoryCallbacksTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -75,7 +75,7 @@ bool FProjectJInventoryCallbacksTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentCallbacksTest, "ProjectJ.Internal.Equipment.ReentrantRemoval", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentCallbacksTest, "ProjectJ.Internal.Equipment.ReentrantRemoval", InternalTestFlags)
 bool FProjectJEquipmentCallbacksTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -96,7 +96,7 @@ bool FProjectJEquipmentCallbacksTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTrajectoryQueryTest, "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTrajectoryQueryTest, "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput", InternalTestFlags)
 bool FProjectJTrajectoryQueryTest::RunTest(const FString&)
 {
 	FTransformTrajectory Trajectory; Trajectory.Samples.SetNum(3);
@@ -119,7 +119,7 @@ bool FProjectJTrajectoryQueryTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRewindHistoryTest, "ProjectJ.Internal.Combat.RewindHistory", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRewindHistoryTest, "ProjectJ.Internal.Combat.RewindHistory", InternalTestFlags)
 bool FProjectJRewindHistoryTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -152,7 +152,7 @@ bool FProjectJRewindHistoryTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInputLifecycleTest, "ProjectJ.Internal.Input.Rebinding", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInputLifecycleTest, "ProjectJ.Internal.Input.Rebinding", InternalTestFlags)
 bool FProjectJInputLifecycleTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -175,7 +175,7 @@ bool FProjectJInputLifecycleTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCameraOwnershipTest, "ProjectJ.Internal.Camera.Possession", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCameraOwnershipTest, "ProjectJ.Internal.Camera.Possession", InternalTestFlags)
 bool FProjectJCameraOwnershipTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -196,7 +196,7 @@ bool FProjectJCameraOwnershipTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPoolDefinitionBoundsTest, "ProjectJ.Internal.Pooling.DefinitionBounds", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPoolDefinitionBoundsTest, "ProjectJ.Internal.Pooling.DefinitionBounds", InternalTestFlags)
 bool FProjectJPoolDefinitionBoundsTest::RunTest(const FString&)
 {
 	auto* Registry = NewObject<UProject_JObjectPoolRegistrySubsystem>(NewObject<UGameInstance>());
@@ -208,7 +208,7 @@ bool FProjectJPoolDefinitionBoundsTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationSnapshotBoundaryTest, "ProjectJ.Internal.Animation.SnapshotBoundary", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAnimationSnapshotBoundaryTest, "ProjectJ.Internal.Animation.SnapshotBoundary", InternalTestFlags)
 bool FProjectJAnimationSnapshotBoundaryTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -228,7 +228,7 @@ bool FProjectJAnimationSnapshotBoundaryTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInteractionSelectionTest, "ProjectJ.Internal.Interaction.ServerSelection", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInteractionSelectionTest, "ProjectJ.Internal.Interaction.ServerSelection", InternalTestFlags)
 bool FProjectJInteractionSelectionTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;
@@ -263,7 +263,7 @@ bool FProjectJInteractionSelectionTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReleaseTest, "ProjectJ.Internal.Input.CommandAliasRelease", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReleaseTest, "ProjectJ.Internal.Input.CommandAliasRelease", InternalTestFlags)
 bool FProjectJCommandReleaseTest::RunTest(const FString&)
 {
 	FInternalTestWorld Scope;

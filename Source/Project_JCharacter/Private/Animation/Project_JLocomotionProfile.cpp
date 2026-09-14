@@ -172,12 +172,12 @@ float FProject_JMotionMatchingSearchPolicy::ResolveBlendTime(
 
 UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 {
-	FootPlacementPlantSettingsDefault.DistanceToGround = 0.0f;
+	FootPlacementPlantSettingsDefault.DistanceToGround = 10.0f;
 	FootPlacementPlantSettingsDefault.MaxExtensionRatio = 0.95f;
 	FootPlacementPlantSettingsDefault.MinExtensionRatio = 0.1f;
 	FootPlacementPlantSettingsDefault.AnkleTwistReduction = 0.75f;
 
-	FootPlacementPlantSettingsStops.DistanceToGround = 0.0f;
+	FootPlacementPlantSettingsStops.DistanceToGround = 10.0f;
 	FootPlacementPlantSettingsStops.MaxExtensionRatio = 0.95f;
 	FootPlacementPlantSettingsStops.MinExtensionRatio = 0.1f;
 	FootPlacementPlantSettingsStops.AnkleTwistReduction = 0.75f;
