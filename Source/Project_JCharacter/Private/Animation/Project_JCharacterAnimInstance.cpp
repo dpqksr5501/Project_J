@@ -66,6 +66,31 @@ namespace
 		}
 	}
 
+	const TCHAR* StateControllerStrafeDirectionToString(const EProject_JStateControllerStrafeDirection Direction)
+	{
+		switch (Direction)
+		{
+		case EProject_JStateControllerStrafeDirection::Forward:
+			return TEXT("Forward");
+		case EProject_JStateControllerStrafeDirection::ForwardLeft:
+			return TEXT("ForwardLeft");
+		case EProject_JStateControllerStrafeDirection::Left:
+			return TEXT("Left");
+		case EProject_JStateControllerStrafeDirection::BackwardLeft:
+			return TEXT("BackwardLeft");
+		case EProject_JStateControllerStrafeDirection::Backward:
+			return TEXT("Backward");
+		case EProject_JStateControllerStrafeDirection::BackwardRight:
+			return TEXT("BackwardRight");
+		case EProject_JStateControllerStrafeDirection::Right:
+			return TEXT("Right");
+		case EProject_JStateControllerStrafeDirection::ForwardRight:
+			return TEXT("ForwardRight");
+		default:
+			return TEXT("None");
+		}
+	}
+
 	EProject_JStateControllerStrafeDirection ResolveStateControllerStrafeDirection(
 		const float DirectionDegrees,
 		const EProject_JStateControllerStrafeDirection PreviousDirection,
@@ -1581,6 +1606,67 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 			OneShot.StrafeDirection = PreviousStrafeDirection;
 		}
 	}
+	else if (OneShot.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
+	{
+		const UProject_JLocomotionProfile* CurrentProfile = GetLocomotionProfile();
+		const FProject_JMotionMatchingSearchPolicy& SearchPolicy = CurrentProfile
+			? CurrentProfile->MotionMatchingSearchPolicy
+			: FProject_JMotionMatchingSearchPolicy();
+
+		const bool bIsEnteringJump = (Data.Air.bIsJumping || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart);
+		if (bIsJumpAirReselecting)
+		{
+			// 공중에서 마우스/입력 회전으로 인한 재선택 시 실시간 꺾인 방향 적용
+			OneShot.StrafeDirection = PendingJumpAirDirection;
+		}
+		else if (bIsEnteringJump)
+		{
+			// OTM 지상 점프 진입 순간: [Actor Facing vs Velocity] 각도 오차 확인
+			const float GroundSpeed = Data.Movement.GroundSpeed;
+			if (GroundSpeed > 10.0f && OwningCharacter)
+			{
+				const float ActorYaw = OwningCharacter->GetActorRotation().Yaw;
+				const float VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;
+				const float FacingVelocityDeltaYaw = FMath::FindDeltaAngleDegrees(ActorYaw, VelocityYaw);
+				const float LaunchThreshold = SearchPolicy.OTMJumpLaunchAngleThreshold > 0.0f
+					? SearchPolicy.OTMJumpLaunchAngleThreshold
+					: 45.0f;
+
+				if (FMath::Abs(FacingVelocityDeltaYaw) <= LaunchThreshold)
+				{
+					OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+				}
+				else if (FacingVelocityDeltaYaw < -LaunchThreshold && FacingVelocityDeltaYaw >= -135.0f)
+				{
+					OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Left;
+				}
+				else if (FacingVelocityDeltaYaw > LaunchThreshold && FacingVelocityDeltaYaw <= 135.0f)
+				{
+					OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Right;
+				}
+				else
+				{
+					OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Backward;
+				}
+				OneShot.StrafeDirectionAngle = FacingVelocityDeltaYaw;
+				OneShot.bHasStrafeDirectionAngle = true;
+			}
+			else
+			{
+				// 제자리 점프 (Standing Jump)
+				OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+			}
+		}
+		else
+		{
+			OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
+		}
+	}
+	else if (bIsJumpAirReselecting)
+	{
+		// Strafe 모드 공중 재선택 시
+		OneShot.StrafeDirection = PendingJumpAirDirection;
+	}
 	OneShot.Stance = OwningCharacter && OwningCharacter->bIsCrouched
 		? EProject_JStateControllerStance::Crouch
 		: EProject_JStateControllerStance::Stand;
@@ -1957,6 +2043,97 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		return;
 	}
 
+	// TransitionToInAir 상태 중 마우스 회전 또는 이동 입력으로 인한 점프 방향 재평가 감지
+	bool bJumpAirInputReselectDue = false;
+	const UProject_JLocomotionProfile* CurrentProfile = GetLocomotionProfile();
+	const FProject_JMotionMatchingSearchPolicy& SearchPolicy = CurrentProfile
+		? CurrentProfile->MotionMatchingSearchPolicy
+		: FProject_JMotionMatchingSearchPolicy();
+
+	if (SearchPolicy.bEnableAirJumpReselection &&
+		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+		DesiredState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+		!Data.Air.bIsFallOffStart &&
+		EffectivePlayableLength > 0.05f)
+	{
+		// 1. 진행률 가드: 모션의 AirJumpMaxProgressRatio(기본 85%) 이전까지만 재선택 허용
+		const bool bWithinReselectProgressWindow =
+			Elapsed < (EffectivePlayableLength * FMath::Clamp(SearchPolicy.AirJumpMaxProgressRatio, 0.1f, 1.0f));
+
+		// 2. 쿨다운 가드: 마지막 재선택 후 최소 AirJumpReselectCooldown(기본 0.08초) 경과
+		const bool bCooldownPassed =
+			(Elapsed - LastJumpAirReselectElapsed) >= FMath::Max(0.01f, SearchPolicy.AirJumpReselectCooldown);
+
+		if (bWithinReselectProgressWindow && bCooldownPassed && OwningCharacter)
+		{
+			FVector HorizontalVelocity = Data.Movement.Velocity;
+			HorizontalVelocity.Z = 0.0f;
+			const float IdleSpeed = 10.0f;
+			float AirDirectionDegrees = 0.0f;
+			bool bHasAirDirection = false;
+
+			if (HorizontalVelocity.SizeSquared() > FMath::Square(IdleSpeed))
+			{
+				const FVector LocalDir = OwningCharacter->GetActorTransform().InverseTransformVectorNoScale(HorizontalVelocity.GetSafeNormal());
+				AirDirectionDegrees = FMath::RadiansToDegrees(FMath::Atan2(LocalDir.Y, LocalDir.X));
+				bHasAirDirection = true;
+			}
+			else if (Data.Input.bHasMoveInput)
+			{
+				AirDirectionDegrees = Data.Input.MovementDirection;
+				bHasAirDirection = true;
+			}
+
+			if (bHasAirDirection)
+			{
+				const EProject_JStateControllerStrafeDirection LiveAirDirection = ResolveStateControllerStrafeDirection(
+					AirDirectionDegrees,
+					CachedStateControllerStrafeDirection,
+					10.0f); // 10도 히스테리시스
+
+				// 3. Gait-Aware 필터링: Sprint 점프는 정면(Forward, FL, FR)만 지원
+				const bool bIsSprintJump = (GaitIntentForChooser == EProject_JLocomotionGaitIntent::Sprint) ||
+					Data.Ground.bUseSprintLocomotion;
+				const bool bIsDirectionSupportedBySprint =
+					(LiveAirDirection == EProject_JStateControllerStrafeDirection::Forward ||
+					 LiveAirDirection == EProject_JStateControllerStrafeDirection::ForwardLeft ||
+					 LiveAirDirection == EProject_JStateControllerStrafeDirection::ForwardRight);
+
+				if (bIsSprintJump && !bIsDirectionSupportedBySprint)
+				{
+					bJumpAirInputReselectDue = false;
+				}
+				else if (LiveAirDirection != CachedStateControllerStrafeDirection)
+				{
+					PendingJumpAirDirection = LiveAirDirection;
+					bJumpAirInputReselectDue = true;
+
+					UE_LOG(LogTemp, Warning,
+						TEXT("[AIR_JUMP_TRIGGER] Actor=%s OldDir=%s -> NewDir=%s AirAngle=%.1f (Elapsed=%.3f/%.3f, Progress=%.1f%%)"),
+						*GetNameSafe(OwningCharacter),
+						StateControllerStrafeDirectionToString(CachedStateControllerStrafeDirection),
+						StateControllerStrafeDirectionToString(LiveAirDirection),
+						AirDirectionDegrees,
+						Elapsed,
+						EffectivePlayableLength,
+						(EffectivePlayableLength > 0.0f ? (Elapsed / EffectivePlayableLength) * 100.0f : 0.0f));
+				}
+			}
+		}
+	}
+
+	if (bJumpAirInputReselectDue)
+	{
+		SavedJumpAirElapsed = Elapsed;
+		LastJumpAirReselectElapsed = Elapsed;
+		bIsJumpAirReselecting = true;
+		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TransitionToInAir;
+		InOutOneShot.TransitionElapsedTime = Elapsed;
+		InOutOneShot.TransitionTimeRemaining = Remaining;
+		InOutOneShot.bTransitionAnimationAlmostComplete = false;
+		return;
+	}
+
 	// When sprint_land is held, if the landing component phase has finished (!bIsLanding)
 	// or if the user released sprint input (!bWantsSprint), interrupt the land one-shot
 	// early so Motion Matching (PSD_Run / PSD_Sprint_Cycle / PSD_Idle) takes over immediately.
@@ -1997,6 +2174,13 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 			Elapsed,
 			Remaining,
 			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
+	}
+
+	if (DesiredState != EProject_JStateControllerPresentationState::TransitionToInAir)
+	{
+		bIsJumpAirReselecting = false;
+		LastJumpAirReselectElapsed = 0.0f;
+		SavedJumpAirElapsed = 0.0f;
 	}
 
 	StateControllerPlaybackHoldState = DesiredState;
@@ -2059,7 +2243,8 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 		ActiveStateControllerPivotPlaybackRequestRevision == Data.LocomotionContext.PivotRequestRevision;
 	const bool bContextChanged = !bLockCommittedPivotChooser &&
-		(CachedStateControllerChooserTable.Get() != ChooserTable ||
+		(bIsJumpAirReselecting ||
+		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
 		CachedStateControllerPivotRequestRevision != Data.LocomotionContext.PivotRequestRevision ||
 		CachedStateControllerRotationMode != Data.LocomotionContext.RotationMode ||
@@ -2196,6 +2381,81 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				SelectedAsset = Cast<UAnimationAsset>(const_cast<UObject*>(MMResult.SelectedAnim.Get()));
 				ChooserOutput.StartTime = MMResult.SelectedTime;
 			}
+		}
+
+		if (bIsJumpAirReselecting)
+		{
+			if (SelectedAsset)
+			{
+				const float MaxSafeStartTime = FMath::Max(0.0f, SelectedAsset->GetPlayLength() - 0.05f);
+				const float PreservedStartTime = FMath::Clamp(
+					FMath::Max(ChooserOutput.StartTime, SavedJumpAirElapsed),
+					0.0f,
+					MaxSafeStartTime);
+				ChooserOutput.StartTime = PreservedStartTime;
+
+				const double NowSeconds = FPlatformTime::Seconds();
+				StateControllerPlaybackHoldStartedAtSeconds = NowSeconds - PreservedStartTime;
+				OneShot.TransitionElapsedTime = PreservedStartTime;
+				OneShot.TransitionTimeRemaining = FMath::Max(SelectedAsset->GetPlayLength() - PreservedStartTime, 0.0f);
+
+				ChooserOutput.BlendTime = ChooserOutput.BlendTime > 0.0f ? ChooserOutput.BlendTime : 0.15f;
+
+				UE_LOG(LogTemp, Warning,
+					TEXT("[AIR_JUMP_SUCCESS] Actor=%s NewDir=%s Asset=%s PreservedStartTime=%.3f (SavedElapsed=%.3f) BlendTime=%.3f"),
+					*GetNameSafe(OwningCharacter),
+					StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
+					*GetNameSafe(SelectedAsset),
+					PreservedStartTime,
+					SavedJumpAirElapsed,
+					ChooserOutput.BlendTime);
+			}
+			else
+			{
+				// Chooser Null Fallback Guard: 새 방향 에셋이 테이블에 없으면 기존 점프 에셋 유지
+				SelectedAsset = const_cast<UAnimationAsset*>(CachedStateControllerSelectedAnimation.Get());
+				ChooserOutput = CachedStateControllerSelectedAnimationOutput;
+
+				UE_LOG(LogTemp, Warning,
+					TEXT("[AIR_JUMP_FALLBACK] Actor=%s Chooser returned NULL for Dir=%s! Keeping PreviousAsset=%s"),
+					*GetNameSafe(OwningCharacter),
+					StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
+					*GetNameSafe(SelectedAsset));
+			}
+			bIsJumpAirReselecting = false;
+		}
+
+		const EProject_JStateControllerPresentationState PreviousChooserPresentationState = CachedStateControllerPresentationState;
+		const bool bIsFreshJumpLaunch =
+			PreviousChooserPresentationState != EProject_JStateControllerPresentationState::TransitionToInAir &&
+			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+			!bStateControllerFallOffForChooser;
+		if (bIsFreshJumpLaunch)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[JUMP_LAUNCH] Actor=%s Mode=%s Dir=%s Angle=%.1f Speed=%.1f Asset=%s Start=%.3f Blend=%.3f"),
+				*GetNameSafe(OwningCharacter),
+				(Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? TEXT("Strafe") : TEXT("OTM")),
+				StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
+				OneShot.StrafeDirectionAngle,
+				Data.Movement.GroundSpeed,
+				*GetNameSafe(SelectedAsset),
+				ChooserOutput.StartTime,
+				ChooserOutput.BlendTime);
+		}
+
+		const bool bIsFreshJumpLand =
+			PreviousChooserPresentationState != EProject_JStateControllerPresentationState::TransitionToLand &&
+			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+		if (bIsFreshJumpLand)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[JUMP_LAND] Actor=%s Moving=%s Sprint=%s Heavy=%s Asset=%s"),
+				*GetNameSafe(OwningCharacter),
+				Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
+				Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
+				Data.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
+				*GetNameSafe(SelectedAsset));
 		}
 
 		CachedStateControllerChooserTable = ChooserTable;

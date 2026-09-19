@@ -1359,6 +1359,12 @@ public:
 	/** Monotonic local edge for a same-bucket 90/180 extension. */
 	mutable int32 LastHandledLocalTurnInPlaceSequence = 0;
 	mutable int32 LastHandledRemoteTurnInPlaceSequence = 0;
+
+	/** 공중 점프 재선택 상태 변수 */
+	mutable float LastJumpAirReselectElapsed = 0.0f;
+	mutable bool bIsJumpAirReselecting = false;
+	mutable float SavedJumpAirElapsed = 0.0f;
+	mutable EProject_JStateControllerStrafeDirection PendingJumpAirDirection = EProject_JStateControllerStrafeDirection::Forward;
 	/**
 	 * A combat draw/sheathe montage is a presentation boundary.  A direct Land asset
 	 * selected before that boundary must never resume after the montage blends

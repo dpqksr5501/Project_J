@@ -527,13 +527,43 @@ void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
+	const bool bIsInAir = GetCharacterMovement() && GetCharacterMovement()->IsFalling();
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
 	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
 		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
 
-	const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
-	const bool bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
-	bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
+	bool bRotationModeChanged = false;
+	if (bShouldUseCombatRotation && bIsInAir)
+	{
+		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
+		const float CurrentYaw = GetActorRotation().Yaw;
+		const float YawDelta = FMath::Abs(FRotator::NormalizeAxis(TargetYaw - CurrentYaw));
+
+		if (YawDelta > 0.5f)
+		{
+			bRotationModeChanged = bUseControllerRotationYaw != false;
+			bUseControllerRotationYaw = false;
+			const FRotator CurrentRot = GetActorRotation();
+			const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
+			const float DeltaSeconds = GetWorld() ? GetWorld()->GetDeltaSeconds() : 0.016f;
+			const float CatchUpSpeed = GetLocomotionProfile()
+				? GetLocomotionProfile()->MotionMatchingSearchPolicy.AirRotationCatchUpSpeed
+				: 12.0f;
+			const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
+			SetActorRotation(NewRot);
+		}
+		else
+		{
+			bRotationModeChanged = bUseControllerRotationYaw != true;
+			bUseControllerRotationYaw = true;
+		}
+	}
+	else
+	{
+		const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
+		bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
+		bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
+	}
 
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{

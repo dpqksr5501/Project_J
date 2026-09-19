@@ -192,6 +192,26 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
 	float ExperimentalIdleBreakMinimumStateTime = 3.0f;
 
+	/** 공중 점프 체공 중 마우스 회전 또는 이동 입력 변경 시 점프 스타트 방향 재선택 활성화 여부 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump")
+	bool bEnableAirJumpReselection = true;
+
+	/** 공중 점프 재선택 간 최소 쿨다운 시간 (기본 0.08초) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.01", Units = "s"))
+	float AirJumpReselectCooldown = 0.08f;
+
+	/** 점프 스타트 모션 길이 대비 재선택 허용 최대 진행률 (0.85 = 85% 이전까지만 재선택 허용하여 착지/루프 핸드오프 보장) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	float AirJumpMaxProgressRatio = 0.85f;
+
+	/** OTM 지상 점프 진입 시 [Actor Facing vs Velocity] 각도 오차 허용치 (기본 45도, 이내면 Forward, 초과 시 사이드/후방 점프) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "10.0", ClampMax = "90.0", Units = "deg"))
+	float OTMJumpLaunchAngleThreshold = 45.0f;
+
+	/** 공중 체공 중 마우스 회전 시 캡슐이 카메라 Yaw를 추종하는 회전 보간 속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "1.0", Units = "deg/s"))
+	float AirRotationCatchUpSpeed = 12.0f;
+
 	bool ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily PhaseFamily, bool bIsFallOffStart) const;
 	float ResolveSearchThrottleTime(
 		EProject_JLocomotionPhaseFamily PhaseFamily,
