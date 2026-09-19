@@ -247,6 +247,18 @@ void AProject_JMountCharacter::OnRep_Rider(ACharacter* PreviousRider)
 	{
 		AttachRider(Rider);
 	}
+	else if (PreviousRider)
+	{
+		PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		if (UCapsuleComponent* Capsule = PreviousRider->GetCapsuleComponent())
+		{
+			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		}
+		if (UCharacterMovementComponent* MoveComp = PreviousRider->GetCharacterMovement())
+		{
+			MoveComp->SetMovementMode(MOVE_Walking);
+		}
+	}
 }
 
 void AProject_JMountCharacter::OnRep_MountState(EProject_JMountState PreviousState)

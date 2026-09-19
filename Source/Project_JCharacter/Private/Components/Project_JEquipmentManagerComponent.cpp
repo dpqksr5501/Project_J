@@ -47,6 +47,7 @@ UProject_JEquipmentManagerComponent::UProject_JEquipmentManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
+	EquipmentArray.OwnerComponent = this;
 }
 
 void UProject_JEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

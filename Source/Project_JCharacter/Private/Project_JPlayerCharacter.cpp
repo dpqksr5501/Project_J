@@ -535,28 +535,18 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	bool bRotationModeChanged = false;
 	if (bShouldUseCombatRotation && bIsInAir)
 	{
-		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
-		const float CurrentYaw = GetActorRotation().Yaw;
-		const float YawDelta = FMath::Abs(FRotator::NormalizeAxis(TargetYaw - CurrentYaw));
+		bRotationModeChanged = bUseControllerRotationYaw != false;
+		bUseControllerRotationYaw = false;
 
-		if (YawDelta > 0.5f)
-		{
-			bRotationModeChanged = bUseControllerRotationYaw != false;
-			bUseControllerRotationYaw = false;
-			const FRotator CurrentRot = GetActorRotation();
-			const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
-			const float DeltaSeconds = GetWorld() ? GetWorld()->GetDeltaSeconds() : 0.016f;
-			const float CatchUpSpeed = GetLocomotionProfile()
-				? GetLocomotionProfile()->MotionMatchingSearchPolicy.AirRotationCatchUpSpeed
-				: 12.0f;
-			const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
-			SetActorRotation(NewRot);
-		}
-		else
-		{
-			bRotationModeChanged = bUseControllerRotationYaw != true;
-			bUseControllerRotationYaw = true;
-		}
+		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
+		const FRotator CurrentRot = GetActorRotation();
+		const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
+		const float DeltaSeconds = GetWorld() ? GetWorld()->GetDeltaSeconds() : 0.016f;
+		const float CatchUpSpeed = GetLocomotionProfile()
+			? GetLocomotionProfile()->MotionMatchingSearchPolicy.AirRotationCatchUpSpeed
+			: 12.0f;
+		const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
+		SetActorRotation(NewRot);
 	}
 	else
 	{

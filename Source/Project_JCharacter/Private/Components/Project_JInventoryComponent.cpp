@@ -41,6 +41,7 @@ UProject_JInventoryComponent::UProject_JInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
+	InventoryArray.OwnerComponent = this;
 }
 
 void UProject_JInventoryComponent::BeginPlay()

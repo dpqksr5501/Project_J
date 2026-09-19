@@ -45,8 +45,13 @@ bool UProject_JTargetScoringComponent::RequestTargets(const TArray<AActor*>& Can
 	if (bNPCBatchRegistered) { return false; }
 	ProjectJ::TargetScoring::FSnapshot Snapshot;
 	if (!PrepareSnapshot(Candidates, Snapshot)) { return false; }
+	UProject_JTargetScoringSubsystem* Subsystem = QuerySubsystem.Get();
+	if (!Subsystem)
+	{
+		return false;
+	}
 	const TWeakObjectPtr<ThisClass> WeakThis(this);
-	PendingToken = QuerySubsystem->Submit(this, MoveTemp(Snapshot), Execution, ContextRevision,
+	PendingToken = Subsystem->Submit(this, MoveTemp(Snapshot), Execution, ContextRevision,
 		[WeakThis](const FProjectJTargetScoringCompletion& Completion)
 		{
 			if (auto* Self = WeakThis.Get()) { Self->ApplyResult(Completion); }
