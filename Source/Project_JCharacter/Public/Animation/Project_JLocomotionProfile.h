@@ -200,6 +200,14 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.01", Units = "s"))
 	float AirJumpReselectCooldown = 0.08f;
 
+	/** 공중 점프 재선택 크로스페이드 블렌드 시간 (기본 0.15초) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.05", ClampMax = "0.5", Units = "s"))
+	float AirJumpBlendTime = 0.15f;
+
+	/** 이전 점프 재선택 블렌드가 이 비율 이상 진행된 후 다음 재선택 허용 (0.7 = 70% 진행 후 허용, 블렌드 중첩 및 팝핑 원천 방지) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.3", ClampMax = "1.0"))
+	float AirJumpMinBlendProgressRatio = 0.70f;
+
 	/** 점프 스타트 모션 길이 대비 재선택 허용 최대 진행률 (0.85 = 85% 이전까지만 재선택 허용하여 착지/루프 핸드오프 보장) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.1", ClampMax = "1.0"))
 	float AirJumpMaxProgressRatio = 0.85f;
@@ -289,6 +297,10 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	/** Movement input yaw delta threshold to cancel Start one-shot and blend to Motion Matching (e.g. W -> WA/A/S/D). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartMoveInputCancelAngle = 30.0f;
+
+	/** Mouse/camera yaw delta threshold to cancel Land one-shot and blend to Motion Matching. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Land", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float LandMouseTurnCancelAngle = 25.0f;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))

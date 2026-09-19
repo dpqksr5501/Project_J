@@ -1362,6 +1362,7 @@ public:
 
 	/** 공중 점프 재선택 상태 변수 */
 	mutable float LastJumpAirReselectElapsed = 0.0f;
+	mutable float LastJumpAirBlendDuration = 0.15f;
 	mutable bool bIsJumpAirReselecting = false;
 	mutable float SavedJumpAirElapsed = 0.0f;
 	mutable EProject_JStateControllerStrafeDirection PendingJumpAirDirection = EProject_JStateControllerStrafeDirection::Forward;

@@ -525,9 +525,11 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand);
 
 	const UProject_JLocomotionProfile* LocomotionProfile = GetLocomotionProfile();
+	const bool bIsLandOneShot =
+		CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
 	const float EffectiveMouseTurnCancelAngle = LocomotionProfile
-		? LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle
-		: StateControllerOneShotMouseTurnCancelAngle;
+		? (bIsLandOneShot ? LocomotionProfile->TransitionPolicy.LandMouseTurnCancelAngle : LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle)
+		: (bIsLandOneShot ? 25.0f : StateControllerOneShotMouseTurnCancelAngle);
 	const float EffectiveMoveInputCancelAngle = LocomotionProfile
 		? LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle
 		: 30.0f;
@@ -1787,6 +1789,18 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		DesiredState = EProject_JStateControllerPresentationState::TransitionToIdle;
 	}
 
+	// If a landing transition was already handled and exited (e.g. interrupted by movement or completed),
+	// do not allow stale Data.Landing.bIsLanding to force re-entering TransitionToLand on subsequent frames
+	// before the component resets its landing state revision.
+	if (DesiredState == EProject_JStateControllerPresentationState::TransitionToLand &&
+		Data.Landing.PresentationRevision == StateControllerHeldLandingPresentationRevision &&
+		StateControllerPlaybackHoldState != EProject_JStateControllerPresentationState::TransitionToLand)
+	{
+		DesiredState = Data.LocomotionContext.bIsMotionMatchingMoving
+			? EProject_JStateControllerPresentationState::LocomotionLoop
+			: EProject_JStateControllerPresentationState::IdleLoop;
+	}
+
 	const EProject_JStateControllerPresentationState RequestedState = DesiredState;
 	const EProject_JStateControllerPresentationState PreviousHeldState = StateControllerPlaybackHoldState;
 	const bool bHeldTransition = IsTransitionState(StateControllerPlaybackHoldState);
@@ -2060,9 +2074,14 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		const bool bWithinReselectProgressWindow =
 			Elapsed < (EffectivePlayableLength * FMath::Clamp(SearchPolicy.AirJumpMaxProgressRatio, 0.1f, 1.0f));
 
-		// 2. 쿨다운 가드: 마지막 재선택 후 최소 AirJumpReselectCooldown(기본 0.08초) 경과
-		const bool bCooldownPassed =
-			(Elapsed - LastJumpAirReselectElapsed) >= FMath::Max(0.01f, SearchPolicy.AirJumpReselectCooldown);
+		// 2. 블렌드 진행률 동기화 가드: 이전 재선택 블렌드가 MinBlendProgressRatio(기본 70%) 이상 진행되었는지 확인 (블렌드 중첩 및 팝핑 원천 방지)
+		const float ActiveBlendDuration = LastJumpAirBlendDuration > 0.0f
+			? LastJumpAirBlendDuration
+			: (SearchPolicy.AirJumpBlendTime > 0.0f ? SearchPolicy.AirJumpBlendTime : 0.15f);
+		const float RequiredBlendWaitTime = ActiveBlendDuration * FMath::Clamp(SearchPolicy.AirJumpMinBlendProgressRatio, 0.3f, 1.0f);
+		const bool bCooldownPassed = (LastJumpAirReselectElapsed <= 0.0f)
+			? (Elapsed >= 0.05f)
+			: ((Elapsed - LastJumpAirReselectElapsed) >= RequiredBlendWaitTime);
 
 		if (bWithinReselectProgressWindow && bCooldownPassed && OwningCharacter)
 		{
@@ -2107,16 +2126,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 				{
 					PendingJumpAirDirection = LiveAirDirection;
 					bJumpAirInputReselectDue = true;
-
-					UE_LOG(LogTemp, Warning,
-						TEXT("[AIR_JUMP_TRIGGER] Actor=%s OldDir=%s -> NewDir=%s AirAngle=%.1f (Elapsed=%.3f/%.3f, Progress=%.1f%%)"),
-						*GetNameSafe(OwningCharacter),
-						StateControllerStrafeDirectionToString(CachedStateControllerStrafeDirection),
-						StateControllerStrafeDirectionToString(LiveAirDirection),
-						AirDirectionDegrees,
-						Elapsed,
-						EffectivePlayableLength,
-						(EffectivePlayableLength > 0.0f ? (Elapsed / EffectivePlayableLength) * 100.0f : 0.0f));
 				}
 			}
 		}
@@ -2180,6 +2189,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	{
 		bIsJumpAirReselecting = false;
 		LastJumpAirReselectElapsed = 0.0f;
+		LastJumpAirBlendDuration = 0.15f;
 		SavedJumpAirElapsed = 0.0f;
 	}
 
@@ -2399,63 +2409,30 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				OneShot.TransitionElapsedTime = PreservedStartTime;
 				OneShot.TransitionTimeRemaining = FMath::Max(SelectedAsset->GetPlayLength() - PreservedStartTime, 0.0f);
 
-				ChooserOutput.BlendTime = ChooserOutput.BlendTime > 0.0f ? ChooserOutput.BlendTime : 0.15f;
-
-				UE_LOG(LogTemp, Warning,
-					TEXT("[AIR_JUMP_SUCCESS] Actor=%s NewDir=%s Asset=%s PreservedStartTime=%.3f (SavedElapsed=%.3f) BlendTime=%.3f"),
-					*GetNameSafe(OwningCharacter),
-					StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
-					*GetNameSafe(SelectedAsset),
-					PreservedStartTime,
-					SavedJumpAirElapsed,
-					ChooserOutput.BlendTime);
+				const UProject_JLocomotionProfile* CurrentProfile = GetLocomotionProfile();
+				const float ConfiguredBlendTime = CurrentProfile ? CurrentProfile->MotionMatchingSearchPolicy.AirJumpBlendTime : 0.15f;
+				const float EffectiveAirBlendTime = ChooserOutput.BlendTime > 0.0f
+					? ChooserOutput.BlendTime
+					: (ConfiguredBlendTime > 0.0f ? ConfiguredBlendTime : 0.15f);
+				ChooserOutput.BlendTime = EffectiveAirBlendTime;
+				LastJumpAirBlendDuration = EffectiveAirBlendTime;
 			}
 			else
 			{
 				// Chooser Null Fallback Guard: 새 방향 에셋이 테이블에 없으면 기존 점프 에셋 유지
 				SelectedAsset = const_cast<UAnimationAsset*>(CachedStateControllerSelectedAnimation.Get());
 				ChooserOutput = CachedStateControllerSelectedAnimationOutput;
-
-				UE_LOG(LogTemp, Warning,
-					TEXT("[AIR_JUMP_FALLBACK] Actor=%s Chooser returned NULL for Dir=%s! Keeping PreviousAsset=%s"),
-					*GetNameSafe(OwningCharacter),
-					StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
-					*GetNameSafe(SelectedAsset));
 			}
 			bIsJumpAirReselecting = false;
 		}
 
 		const EProject_JStateControllerPresentationState PreviousChooserPresentationState = CachedStateControllerPresentationState;
-		const bool bIsFreshJumpLaunch =
-			PreviousChooserPresentationState != EProject_JStateControllerPresentationState::TransitionToInAir &&
-			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToInAir &&
-			!bStateControllerFallOffForChooser;
-		if (bIsFreshJumpLaunch)
+		const bool bIsFreshLandExit =
+			PreviousChooserPresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
+			OneShot.PresentationState == EProject_JStateControllerPresentationState::LocomotionLoop;
+		if (bIsFreshLandExit)
 		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("[JUMP_LAUNCH] Actor=%s Mode=%s Dir=%s Angle=%.1f Speed=%.1f Asset=%s Start=%.3f Blend=%.3f"),
-				*GetNameSafe(OwningCharacter),
-				(Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? TEXT("Strafe") : TEXT("OTM")),
-				StateControllerStrafeDirectionToString(OneShot.StrafeDirection),
-				OneShot.StrafeDirectionAngle,
-				Data.Movement.GroundSpeed,
-				*GetNameSafe(SelectedAsset),
-				ChooserOutput.StartTime,
-				ChooserOutput.BlendTime);
-		}
-
-		const bool bIsFreshJumpLand =
-			PreviousChooserPresentationState != EProject_JStateControllerPresentationState::TransitionToLand &&
-			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
-		if (bIsFreshJumpLand)
-		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("[JUMP_LAND] Actor=%s Moving=%s Sprint=%s Heavy=%s Asset=%s"),
-				*GetNameSafe(OwningCharacter),
-				Data.Landing.bLandWasMoving ? TEXT("true") : TEXT("false"),
-				Data.Landing.bLandWasSprinting ? TEXT("true") : TEXT("false"),
-				Data.Landing.bUseHeavyLand ? TEXT("true") : TEXT("false"),
-				*GetNameSafe(SelectedAsset));
+			Data.MotionMatching.bForceReselect = true;
 		}
 
 		CachedStateControllerChooserTable = ChooserTable;
