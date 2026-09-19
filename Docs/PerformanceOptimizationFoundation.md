@@ -72,15 +72,17 @@ throttled by Significance.
 - `OnlyTickPoseWhenRendered`
 - a non-Motion-Matching animation expectation
 
-`FProject_JNPCUpdateBudgetSettings` is a declaration-only AI policy. It provides
-Near/Mid/Far/Hidden update intervals plus perception/path-refresh permissions.
-It does **not** alter AI tick rate until a future AI component explicitly consumes
-the policy. This prevents a distance policy from accidentally changing boss combat
-or server authority behaviour.
+`FProject_JNPCUpdateBudgetSettings` provides Near/Mid/Far/Hidden intervals.
+The current `Project_JNPCDecisionSubsystem` consumes the recommended tier interval
+for registered NPC decisions and schedules registered `NPCActionComponent` work.
+This is an opt-in runtime path, not a global Actor tick throttle. Registration and
+each consumer's policy determine which work is reduced. Never reduce server hit
+validation simply because an NPC is distant.
 
-When AI is added, use the policy for expensive, independently safe work such as
-target scans, perception refresh, path refresh, and crowd steering. Never reduce
-server hit validation or state transitions simply because an NPC is distant.
+For current UI demand, mesh update-request composition and locomotion cadence
+contracts, see [Character component ownership](Architecture/Character_Component_Ownership_2026-09-20.md).
+Other future-looking sections below describe the original foundation; consult
+the current system documents before treating an item as unimplemented.
 
 ## Future pooling contract
 

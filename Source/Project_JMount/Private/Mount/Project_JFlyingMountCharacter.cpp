@@ -22,6 +22,66 @@ AProject_JFlyingMountCharacter::AProject_JFlyingMountCharacter()
 	MovementComponent->bUseSeparateBrakingFriction = true;
 }
 
+void AProject_JFlyingMountCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	bHasBlueprintTick = GetClass()->IsFunctionImplementedInScript(TEXT("ReceiveTick"));
+	RefreshFlightTickEnabled();
+}
+
+void AProject_JFlyingMountCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ClearFlightInputBindings();
+	bTakeOffRequestPending = false;
+	Super::EndPlay(EndPlayReason);
+}
+
+void AProject_JFlyingMountCharacter::UnPossessed()
+{
+	ClearFlightInputBindings();
+	ClearPendingTakeOffRequest();
+	Super::UnPossessed();
+}
+
+void AProject_JFlyingMountCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	if (!IsLocallyControlled())
+	{
+		ClearFlightInputBindings();
+		ClearPendingTakeOffRequest();
+	}
+	RefreshFlightTickEnabled();
+}
+
+void AProject_JFlyingMountCharacter::RefreshFlightTickEnabled()
+{
+	// Movement and mesh components have their own ticks. Only the authority runs
+	// the flight state machine; clients need this tick solely during a pending request.
+	SetActorTickEnabled(bHasBlueprintTick || bKeepActorTickEnabled ||
+		(HasAuthority() && FlightState != EProject_JMountFlightState::Grounded) || bTakeOffRequestPending);
+}
+
+void AProject_JFlyingMountCharacter::ClearPendingTakeOffRequest()
+{
+	bTakeOffRequestPending = false;
+	TakeOffRequestExpiryTime = 0.0f;
+	RefreshFlightTickEnabled();
+}
+
+void AProject_JFlyingMountCharacter::ClearFlightInputBindings()
+{
+	if (UEnhancedInputComponent* Input = BoundFlightInputComponent.Get())
+	{
+		for (const uint32 Handle : FlightInputBindingHandles)
+		{
+			Input->RemoveBindingByHandle(Handle);
+		}
+	}
+	FlightInputBindingHandles.Reset();
+	BoundFlightInputComponent.Reset();
+}
+
 void AProject_JFlyingMountCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -125,7 +185,7 @@ void AProject_JFlyingMountCharacter::Tick(float DeltaSeconds)
 	{
 		if (bTakeOffRequestPending && GetWorld() && GetWorld()->GetTimeSeconds() >= TakeOffRequestExpiryTime)
 		{
-			bTakeOffRequestPending = false;
+			ClearPendingTakeOffRequest();
 		}
 		return;
 	}
@@ -294,6 +354,7 @@ void AProject_JFlyingMountCharacter::SetFlightState(EProject_JMountFlightState N
 	const EProject_JMountFlightState PreviousState = FlightState;
 	FlightState = NewState;
 	FlightPhaseStartServerTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+	RefreshFlightTickEnabled();
 	ApplyFlightStateTags(PreviousState, NewState);
 	ForceNetUpdate();
 	K2_OnFlightStateChanged(PreviousState, NewState);
@@ -303,8 +364,9 @@ void AProject_JFlyingMountCharacter::OnRep_FlightState(EProject_JMountFlightStat
 {
 	if (FlightState != EProject_JMountFlightState::Grounded)
 	{
-		bTakeOffRequestPending = false;
+		ClearPendingTakeOffRequest();
 	}
+	RefreshFlightTickEnabled();
 
 	// Clear locally predicted horizontal velocity as soon as the server enters
 	// the landing phase; input is already rejected by IsFlightInputLocked().
@@ -376,18 +438,20 @@ float AProject_JFlyingMountCharacter::ResolveFlightCueTime(const UAnimSequenceBa
 
 void AProject_JFlyingMountCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	ClearFlightInputBindings();
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		if (MoveAction) Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleMove);
-		if (LookAction) Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleLook);
+		BoundFlightInputComponent = Input;
+		if (MoveAction) FlightInputBindingHandles.Add(Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleMove).GetHandle());
+		if (LookAction) FlightInputBindingHandles.Add(Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleLook).GetHandle());
 		if (AscendAction)
 		{
-			Input->BindAction(AscendAction, ETriggerEvent::Started, this, &AProject_JFlyingMountCharacter::HandleTakeOff);
-			Input->BindAction(AscendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleAscend);
+			FlightInputBindingHandles.Add(Input->BindAction(AscendAction, ETriggerEvent::Started, this, &AProject_JFlyingMountCharacter::HandleTakeOff).GetHandle());
+			FlightInputBindingHandles.Add(Input->BindAction(AscendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleAscend).GetHandle());
 		}
-		if (DescendAction) Input->BindAction(DescendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleDescend);
-		if (InteractAction) Input->BindAction(InteractAction, ETriggerEvent::Started, this, &AProject_JFlyingMountCharacter::HandleDismount);
+		if (DescendAction) FlightInputBindingHandles.Add(Input->BindAction(DescendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleDescend).GetHandle());
+		if (InteractAction) FlightInputBindingHandles.Add(Input->BindAction(InteractAction, ETriggerEvent::Started, this, &AProject_JFlyingMountCharacter::HandleDismount).GetHandle());
 	}
 }
 
@@ -432,6 +496,7 @@ void AProject_JFlyingMountCharacter::HandleTakeOff()
 		{
 			bTakeOffRequestPending = true;
 			TakeOffRequestExpiryTime = GetWorld()->GetTimeSeconds() + 0.75f;
+			RefreshFlightTickEnabled();
 		}
 		ServerRequestBeginFlight();
 	}

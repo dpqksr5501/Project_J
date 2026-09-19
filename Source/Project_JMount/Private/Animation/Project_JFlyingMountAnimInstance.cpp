@@ -12,4 +12,12 @@ void UProject_JFlyingMountAnimInstance::NativeUpdateAnimation(float DeltaSeconds
 		bIsAutoAscending = State == EProject_JMountFlightState::AutoAscending;
 		bIsLanding = State == EProject_JMountFlightState::Landing;
 	}
+	else
+	{
+		bIsFlying = false;
+		bIsGliding = false;
+		bIsTakingOff = false;
+		bIsAutoAscending = false;
+		bIsLanding = false;
+	}
 }

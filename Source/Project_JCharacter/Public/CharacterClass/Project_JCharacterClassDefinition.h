@@ -57,6 +57,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement")
 	TObjectPtr<UProject_JCharacterClassDefinition> BaseClass = nullptr;
 
+	/** All IDs must have been acquired. Registry validation rejects missing IDs and cycles. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Requirements")
+	TArray<FName> RequiredAdvancementIds;
+
+	/** Nonempty equal keys identify mutually exclusive active branches. Replace retires old grants. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Requirements")
+	FName ExclusiveBranch;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Requirements", meta = (ClampMin = "1"))
 	int32 RequiredLevel = 1;
 
@@ -78,6 +86,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	TObjectPtr<UProject_JCombatStyleDefinition> CombatStyleOverride = nullptr;
 
+	/** Opt-in: advancement supplies combo/commands/VFX while equipment still supplies weapon animation. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat")
+	bool bOverrideEquippedGameplay = false;
+
 	/**
 	 * Optional per-attack cosmetic overrides for this advancement. Use this when
 	 * mechanics remain the same but, for example, a demon and angel advancement
@@ -86,3 +98,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TObjectPtr<UProject_JCombatPresentationSet> CombatPresentationOverrideSet = nullptr;
 };
+
+namespace ProjectJ
+{
+	PROJECT_JCHARACTER_API bool ValidateAdvancementGraph(const TArray<UProject_JCharacterClassDefinition*>& Classes,
+		const TArray<UProject_JCharacterAdvancementDefinition*>& Advancements, TArray<FText>& Errors);
+}

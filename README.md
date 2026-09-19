@@ -6,11 +6,17 @@
 
 멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Internal_Refinement_2026-09-13.md) · [문서 목록](Docs/README.md)
+[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Internal_Polish_2026-09-19.md) · [직업 제작 도구](Docs/Architecture/Content_Bundle_Authoring_2026-09-19.md) · [문서 목록](Docs/README.md)
 
 **MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/MMO_Foundation_2026-09-12.md)
 
+**직업·전직 확장:** 지속 진행 상태와 능력 소유권을 PlayerState에 모으고, 직업·전직·장비의 전투/애니메이션 구성을 영역별로 선택합니다. 스타일 내부에 능력을 직접 작성하거나 콤보에서 공격 목록을 생성할 수 있어 중복 DA 연결을 줄입니다. [구현 범위·작성법·검증](Docs/Architecture/Extension_Foundation_2026-09-19.md)
+
 ## 측정으로 확인한 변화
+
+**최신 구조 검증 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Internal_Polish_Validation_2026-09-19.json)
+
+아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이번 내부 정리의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최신 자동화는 NullRHI 검사이며, 제작 메뉴 조작·저장과 실제 멀티플레이 확인은 별도입니다.
 
 | 영역 | 비교 조건 | Before → After | 결과 |
 |---|---|---|---|
@@ -49,6 +55,7 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 
 ### 바로 활용할 수 있는 기반
 
+- **직업·전직 제작 도구:** 에디터 Tools 메뉴에서 기존 직업을 참고해 새 루트·전투 스타일·콤보를 검증하고 연결해 생성합니다. 공격·애니메이션은 공유하고, 저장·게임 등록은 명시적으로 진행합니다. [사용법](Docs/Architecture/Content_Bundle_Authoring_2026-09-19.md)
 - **입력 조합과 콤보:** 좌·우클릭, 동시 입력, Shift/Ctrl/Alt 같은 modifier를 입력 태그로 해석하고, 콤보 그래프에서 공격 정의를 선택합니다. 조합별 실제 동작은 데이터로 구성합니다.
 - **무기별 액션과 외형:** 장착한 장비의 메시·표현 프로필과 전투 스타일을 연결해 무기 외형, 대기·공격 애니메이션 구성을 바꿀 수 있습니다.
 - **같은 공격의 다른 연출:** 기본 전투 스타일의 VFX를 전직 또는 스킨별 cue로 덮어쓸 수 있습니다. 동일한 공격 정의에 서로 다른 Trail·방출 효과를 붙이는 방식입니다.

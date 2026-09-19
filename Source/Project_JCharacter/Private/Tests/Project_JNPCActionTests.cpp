@@ -71,7 +71,7 @@ namespace
 			Actor->SetRootComponent(Root); Root->RegisterComponent(); Actor->SetActorLocation(FVector(X, 0, 0));
 			Decisions->RegisterTarget(Actor, Team); return Actor;
 		}
-		void ActionTick() { Actions->TickComponent(0.1f, LEVELTICK_All, nullptr); }
+		void ActionTick() { Actions->UpdateAction(); }
 	};
 }
 

@@ -4,7 +4,9 @@
 
 This document describes the reusable mount foundation currently added to Project J.  The first playable implementation is the Wyvern: it can be interacted with, mounted, moved on the ground, flown, glided, automatically landed, and dismounted.  The code is intentionally split so horses and other ground mounts can reuse the base class without inheriting flight-only behavior.
 
-The system is a gameplay foundation, not a completed MMORPG mount feature.  In particular, mount health is networked and the GAS AttributeSet exists, but combat GameplayEffects, stamina consumption, persistence, and UI remain follow-up work.
+The system is a gameplay foundation, not a completed MMORPG mount feature. Health uses replicated GAS attributes, and direct damage and GameplayEffects share the same clamping/depletion path. Authored mount combat effects, stamina consumption, persistence, and UI remain follow-up work.
+
+As of 2026-09-19, native flight Actor Tick runs only for authoritative flight or a pending client takeoff request. Blueprint Event Tick and explicit native subclass requirements are preserved; movement and mesh components retain their own updates. Input rebinding removes only owned binding handles, and animation values reset when the owner is lost. Four mount regression tests passed in the [81-test integration run](Architecture/Internal_Polish_Validation_2026-09-19.json); actual flight/network presentation remains an editor play check.
 
 For the common rule for adding future locomotion contexts such as vehicles,
 swimming, and transformations, see
@@ -102,7 +104,7 @@ The present target scan is the first playable server-side version: it searches n
 
 Every mount owns a replicated `UProject_JAbilitySystemComponent` and `UProject_JMountAttributeSet` with Health, MaxHealth, Stamina, and MaxStamina.  This creates the correct ownership boundary for future mount-specific abilities and effects.
 
-The current mount availability and damage path still uses replicated primitive health as a transitional gameplay path.  Before adding mount combat, move the authoritative health update fully to GameplayEffects/AttributeSet callbacks, then attach death, stagger, stamina drain, and cooldown logic to the ASC.
+Health and MaxHealth now use the replicated AttributeSet as their authoritative runtime source. The existing actor properties/getters are compatibility mirrors maintained by owned ASC delegates, not a second replication path. Direct damage and GameplayEffects reach the same clamping and positive-to-zero depletion callback; reducing maximum health also clamps current health. Depletion requests the existing forced dismount policy. Stagger, stamina consumption, mount-specific combat effects and cooldown content remain follow-up work. See [internal refinement](Architecture/Internal_Polish_2026-09-19.md).
 
 ## Flight phases and automatic takeoff
 

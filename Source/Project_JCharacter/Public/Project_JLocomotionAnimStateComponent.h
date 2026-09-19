@@ -274,7 +274,9 @@ public:
 
 private:
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
-	bool ShouldSkipUpdateForCurrentContext(float DeltaTime);
+	bool ShouldSkipUpdateForCurrentContext(float& DeltaTime);
+	void AdvanceStateClocks(float DeltaTime);
+	friend class FProjectJLocomotionCadenceTest;
 	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
 	void UpdateLocomotionContexts(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
 	void UpdateMotionMatchingSelectionState(const AProject_JPlayerCharacter& PlayerOwner);

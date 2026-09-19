@@ -4,6 +4,10 @@
 
 > 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
 
+최근 내부 변경은 [갱신·수명 정리](Architecture/Internal_Polish_2026-09-19.md)를 따른다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](Architecture/Content_Bundle_Authoring_2026-09-19.md)를 함께 사용한다.
+
+이전 통합 검증은 [2026-09-19 기록](Architecture/Internal_Polish_Validation_2026-09-19.json)이다. 후속 캐릭터 변경과 검증 범위는 [2026-09-20 컴포넌트 실행·수명 정리](Architecture/Character_Component_Ownership_2026-09-20.md)를 따른다. UI는 소비 수명에 따라 구독하고, 임시 애니메이션 요구는 메시에서 합성하며, 발도·납도 실행 상태는 기존 CombatIntroComponent가 소유한다. 궤적은 현재 생성 경계를 유지한다. 자동화 기록은 실제 멀티플레이·제작 메뉴·에셋 저장의 수동 확인을 대신하지 않는다.
+
 ## 1. 프로젝트 성격과 현재 범위
 
 - Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
@@ -11,7 +15,9 @@
 - 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하는 빈 wrapper이며, GameState/PlayerState/Default Pawn 등은 C++ 기준 클래스로 설정되어 있다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
 - 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`, `ABP_Player`는 테스트 자산이며 생산 직업 구조의 기준은 아니다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
-- 전투 공간 인덱스, 중앙집중식 에셋 스트리밍 수명주기, 실제 서버 간 handover transport는 아직 도입하지 않는다. 현재는 SSR, 각 표현 컴포넌트의 로컬 `FStreamableHandle` 소유, handover envelope/상태 머신 계약만 유지한다.
+- NPC 타깃 후보는 중앙 스케줄러의 공간 질의를 사용하며, 장비 메시 스트리밍은 `VisualAssetSubsystem`의 요청·수명 관리를 사용한다. 전투/탑승 애니메이션 레이어에는 컴포넌트 로컬 `FStreamableHandle` 경로도 남아 있다. 이를 모든 전투 질의·표현 로딩의 단일 서비스로 일반화하지 않는다. 서버 간 이동은 handover envelope/상태 머신/transport 계약이며 실제 라이브 서버 연결 완료를 의미하지 않는다.
+
+직업·전직·능력 부여 및 DA 작성의 최신 계약은 [2026-09-19 확장 기반](Architecture/Extension_Foundation_2026-09-19.md)을 참고한다. 같은 PlayerState 안의 아바타 교체를 지원하며, 저장 계약이 실제 DB/재접속/handover 연결 완료를 의미하지는 않는다.
 
 ## 2. 모듈 경계
 
@@ -60,7 +66,7 @@ Mount가 역참조하지 않도록 한다.
 ### 플레이어와 NPC는 같은 방식으로 상태를 소유하지 않는다
 
 - `AProject_JPlayerCharacter`는 Avatar다. 카메라, 입력, Locomotion, 전투 표현과 캐릭터 조정을 맡는다.
-- 플레이어의 장기 상태(ASC, AttributeSet, Inventory, EquipmentManager)는 기본적으로 `AProject_JPlayerState`에 둔다. 재접속·Possess 변경을 고려한 구조다.
+- 플레이어의 장기 상태(ASC, AttributeSet, Inventory, EquipmentManager, ProgressionComponent)는 기본적으로 `AProject_JPlayerState`에 둔다. 재접속·Possess 변경을 고려한 구조다.
 - `AProject_JBaseCharacter`는 플레이어/NPC 공통 기반이다. NPC는 PlayerState 없이 자신에게 로컬 ASC/장비 런타임을 둘 수 있다.
 - 어떤 시스템이든 `GetAbilitySystemComponent()`, `GetInventoryComponent()`, `ResolveEquipmentManagerForRuntime()` 같은 해석 경로를 우회해 캐릭터에 직접 상태를 중복 생성하면 안 된다.
 

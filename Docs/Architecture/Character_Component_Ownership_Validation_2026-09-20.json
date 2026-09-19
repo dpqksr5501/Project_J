@@ -1,0 +1,624 @@
+{
+  "date": "2026-09-20",
+  "engine": "Unreal Engine 5.8",
+  "platform": "Win64 Development",
+  "baseCommit": "f9178cace833f2ba81befee794416fc49b996dc2",
+  "builds": [
+    {
+      "target": "Project_JEditor",
+      "result": "Succeeded",
+      "log": "Saved/Logs/ComponentOwnership_Editor_03.log",
+      "sha256": "412616071330d7c494bf8cdb9ea29a6eda7eaf06ca3b1291ae2d3f1498e9576d"
+    },
+    {
+      "target": "Project_J",
+      "result": "Succeeded",
+      "log": "Saved/Logs/ComponentOwnership_Game_01.log",
+      "sha256": "e563bc1136694de01fb5daf76c4a5891bb5b0024e037d7b08e5d4138ecafc248"
+    }
+  ],
+  "automation": {
+    "passed": true,
+    "exitCode": 0,
+    "succeeded": 86,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "errors": 0.0,
+    "warnings": 0.0,
+    "missingPreviousTests": [],
+    "report": "Saved/Validation/ComponentOwnership_20260920/Regression02/index.json",
+    "reportSha256": "dce2496960fa9bc1e9631928950f22011586e3b6100c5ad156b5a126d0b33c11",
+    "log": "Saved/Validation/ComponentOwnership_20260920/Regression02/Run.log",
+    "logSha256": "a333e43c6f579249957594843e5d1463ddb93c62d6c5b41a99f70a8c74e75e29",
+    "setupCommands": [
+      "a.Budget.Enabled 1",
+      "a.Budget.BudgetMs 0.1"
+    ],
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.CommandResolution",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Equipment.OperationResult",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.TransportReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.OwnerRelevance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Social.Membership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Authoring.Bundle.AdvancementSafety",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Authoring.Bundle.DraftIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Authoring.Bundle.PlanValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.AnimationDemandComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.CombatTransitionOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.UIDedicatedServer",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.UIDemand",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.HundredCharacters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.StopDuringAttack",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Configuration.DomainComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Grants.SharedOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.BranchesAndGrants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.GraphValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.Budgeted",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.FullRate",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.WorldCleanup",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationContractAudit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatPosePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Animation.SnapshotBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Camera.Possession",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Combat.RewindHistory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Equipment.ReentrantRemoval",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.GAS.TaskTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.CommandAliasRelease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.Rebinding",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Interaction.ServerSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Inventory.CallbacksAndBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.HealthSingleSource",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.InputBindingOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Pooling.DefinitionBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Updates.RewindScheduling",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Updates.UrgentAnimationWindow",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Catalog",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCAction.ContextSeparation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCAction.IntentLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCAction.LatePathCompletion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCAction.PathAdmission",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCDecision.Experiment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCDecision.NativeBatch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCDecision.Revalidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.NPCDecision.SpatialImportance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ]
+  },
+  "sourceHashes": [
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JBudgetedSkeletalMeshComponent.h",
+      "sha256": "34382707ba50ffafc12a5592f0b7ba34042c46f5b9a28f2eb60ef15d523f7d37"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp",
+      "sha256": "593e8000e64244ef7c87f2efd8022f5123dd8b43b2cbbd48424f0f4ad42daa7f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JAnimationUpdateCoordinatorComponent.h",
+      "sha256": "02d713f3735e41ae144f90e459395139030e34b0a0797a94300f6a977f35dc0c"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp",
+      "sha256": "f26e55441af672c34cffba01b4db11a6044325d166f7111577db54fb142c7e62"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatHitValidationComponent.cpp",
+      "sha256": "f38c13d93dfab3cda02ecd0259eb554588fb5119e43f22a4d14dd3b982b02634"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatIntroComponent.h",
+      "sha256": "ff9463ac421f8bb033a88dc8c6045d00edee8c341ce802507d68c1943cedafeb"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatIntroComponent.cpp",
+      "sha256": "adac5e1fb8fdc023488768f4eecca33c7c0205b01cc5b8f1696da5ae5689e26f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/UI/Project_JCharacterUIBindingComponent.h",
+      "sha256": "45b4265f88f0de254edc798e82855da32806c412143dff3f2731288eecceecfa"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/UI/Project_JCharacterUIBindingComponent.cpp",
+      "sha256": "367262ce564b122347d9af67bd97aafc4916bc7c0fe7c19a08eeeb20a6efa216"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+      "sha256": "6dbb6a42954014fa354c5f12fef7c998fd8beaf4c7053d1211a2345a54ef0b7f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "4c167950da292cfab9f67b7b02c2a02c8c12e7c40a877d1a0b3435ac9f9d6f11"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "sha256": "0fca1d293275ffb6aa690395cd2ec5d6d541661c75b380812628e162ad49dc30"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "sha256": "58dcbc15c1ca7fb7e0f86b27bbe07adb55829bc3a3976239273e3a24801eec14"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JCharacterAnimationBudgetSubsystem.cpp",
+      "sha256": "c0f100abe768e1260656de2eb8413798b16ad93f5a41582651d4ac00d067b053"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JComponentOwnershipTests.cpp",
+      "sha256": "ccbc3037f01a3c185d6c912ea68e62cb3405c1ae85196e81dedba77c72feed20"
+    }
+  ],
+  "scopeNotes": [
+    "Source hashes include pre-existing uncommitted work in shared files.",
+    "The coordinator header description was updated after builds; executable code is unchanged.",
+    "No Blueprint/Data Asset/level changes or saves.",
+    "No new performance measurements or manual network PIE validation."
+  ]
+}

@@ -10,6 +10,7 @@
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Project_JPlayerState.generated.h"
 
+class UProject_JProgressionComponent;
 class UProject_JInventoryComponent;
 class UProject_JEquipmentManagerComponent;
 
@@ -34,6 +35,7 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// Implement IAbilitySystemInterface
@@ -107,6 +109,9 @@ protected:
 	FGuid GuildLeaderCharacterId;
 
 private:
+	void RefreshPublicProgressionSnapshot();
+	UPROPERTY(VisibleAnywhere, Category="Character")
+	TObjectPtr<UProject_JProgressionComponent> ProgressionComponent;
 	UPROPERTY(Transient)
 	bool bDefaultAbilitiesGranted = false;
 

@@ -14,6 +14,11 @@ public class Project_JCharacterEditor : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"AssetRegistry",
+			"ApplicationCore",
+			"PropertyEditor",
+			"ToolMenus",
+			"GameplayTags",
 			"AIModule",
 			"NavigationSystem",
 			"Project_JGAS",

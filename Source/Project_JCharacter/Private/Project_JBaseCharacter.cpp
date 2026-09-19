@@ -2,6 +2,7 @@
 
 
 #include "Project_JBaseCharacter.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Project_JDefaultAttributeSetData.h"
@@ -106,6 +107,8 @@ void AProject_JBaseCharacter::BeginPlay()
 
 void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+	BoundProgression.Reset();
 	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
 		SignificanceManager->UnregisterObject(this);
@@ -122,6 +125,13 @@ void AProject_JBaseCharacter::PossessedBy(AController* NewController)
 	BindEquipmentRuntimeToResolvedEquipmentManager();
 }
 
+void AProject_JBaseCharacter::UnPossessed()
+{
+	if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+	BoundProgression.Reset();
+	Super::UnPossessed();
+}
+
 void AProject_JBaseCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -133,8 +143,10 @@ void AProject_JBaseCharacter::OnRep_PlayerState()
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
 {
-	const int32 ClassStartingLevel = CharacterClassDefinition ? CharacterClassDefinition->StartingLevel : 1;
-	return FMath::Max(CharacterLevel, ClassStartingLevel);
+	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+		return Progression->GetState().Level;
+	const auto* Class = GetCharacterClassDefinition();
+	return FMath::Max(CharacterLevel, Class ? Class->StartingLevel : 1);
 }
 
 FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FName& SocketName)
@@ -157,127 +169,69 @@ bool AProject_JBaseCharacter::IsDead_Implementation() const
 	return false;
 }
 
+UProject_JProgressionComponent* AProject_JBaseCharacter::GetProgressionComponent() const
+{
+	AActor* StateOwner = GetAbilitySystemOwnerActor();
+	return StateOwner ? StateOwner->FindComponentByClass<UProject_JProgressionComponent>() : nullptr;
+}
+
+const UProject_JCharacterClassDefinition* AProject_JBaseCharacter::GetCharacterClassDefinition() const
+{
+	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+		return Progression->GetState().ClassDefinition;
+	return CharacterClassDefinition;
+}
+
+const UProject_JCharacterAdvancementDefinition* AProject_JBaseCharacter::GetAdvancementDefinition() const
+{
+	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+		return Progression->GetState().Advancement;
+	return AdvancementDefinition;
+}
+
+void AProject_JBaseCharacter::OnProgressionChanged() {}
+
 bool AProject_JBaseCharacter::InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition)
 {
-	if (!HasAuthority() || !NewClassDefinition)
-	{
-		return false;
-	}
-
-	if (CharacterClassDefinition == NewClassDefinition)
-	{
-		return true;
-	}
-
-	if (CharacterClassDefinition || AdvancementDefinition)
-	{
-		return false;
-	}
-
-	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
-	{
-		if (const IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor);
-			OwnerInterface && OwnerInterface->HasGrantedDefaultAbilities())
-		{
-			return false;
-		}
-	}
-	else if (bDefaultAbilitiesGranted)
-	{
-		return false;
-	}
-
-	CharacterClassDefinition = NewClassDefinition;
-	CharacterLevel = FMath::Max(CharacterLevel, NewClassDefinition->StartingLevel);
-	InitializeDefaultAttributes(true);
+	if (!HasAuthority() || !NewClassDefinition) return false;
 	InitializeAbilitySystem();
+	auto* Progression = GetProgressionComponent();
+	const bool bHadClass = GetCharacterClassDefinition() != nullptr;
+	if (!Progression || !Progression->InitializeClass(NewClassDefinition)) return false;
+	if (!bHadClass) InitializeDefaultAttributes(true);
 	return true;
 }
 
 FName AProject_JBaseCharacter::GetCharacterClassId() const
 {
-	return CharacterClassDefinition ? CharacterClassDefinition->ClassId : NAME_None;
+	const auto* Class = GetCharacterClassDefinition();
+	return Class ? Class->ClassId : NAME_None;
 }
 
 FName AProject_JBaseCharacter::GetAdvancementId() const
 {
-	return AdvancementDefinition ? AdvancementDefinition->AdvancementId : NAME_None;
+	const auto* Advancement = GetAdvancementDefinition();
+	return Advancement ? Advancement->AdvancementId : NAME_None;
 }
 
 const UProject_JCombatStyleDefinition* AProject_JBaseCharacter::GetClassCombatStyleDefinition() const
 {
-	if (AdvancementDefinition && AdvancementDefinition->CombatStyleOverride)
-	{
-		return AdvancementDefinition->CombatStyleOverride;
-	}
-	return CharacterClassDefinition ? CharacterClassDefinition->DefaultCombatStyle.Get() : nullptr;
+	const auto* Advancement = GetAdvancementDefinition();
+	if (Advancement && Advancement->CombatStyleOverride) return Advancement->CombatStyleOverride;
+	const auto* Class = GetCharacterClassDefinition();
+	return Class ? Class->DefaultCombatStyle.Get() : nullptr;
 }
 
 bool AProject_JBaseCharacter::CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const
 {
-	if (!HasAuthority() || !NewAdvancementDefinition || NewAdvancementDefinition == AdvancementDefinition)
-	{
-		return false;
-	}
-
-	if (NewAdvancementDefinition->BaseClass && CharacterClassDefinition && NewAdvancementDefinition->BaseClass != CharacterClassDefinition)
-	{
-		return false;
-	}
-
-	if (GetCharacterLevel_Implementation() < NewAdvancementDefinition->RequiredLevel)
-	{
-		return false;
-	}
-
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC)
-	{
-		return false;
-	}
-
-	FGameplayTagContainer OwnedTags;
-	ASC->GetOwnedGameplayTags(OwnedTags);
-	if (!OwnedTags.HasAll(NewAdvancementDefinition->RequiredTags))
-	{
-		return false;
-	}
-
-	if (OwnedTags.HasAny(NewAdvancementDefinition->BlockedTags))
-	{
-		return false;
-	}
-
-	return true;
+	const auto* Progression = GetProgressionComponent();
+	return HasAuthority() && Progression && Progression->CanApplyAdvancement(NewAdvancementDefinition);
 }
 
 bool AProject_JBaseCharacter::ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition)
 {
-	if (!CanApplyAdvancementDefinition(NewAdvancementDefinition))
-	{
-		return false;
-	}
-
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC)
-	{
-		return false;
-	}
-
-	if (NewAdvancementDefinition->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement)
-	{
-		RemoveAdvancementAbilitySets(*ASC);
-	}
-
-	AdvancementDefinition = NewAdvancementDefinition;
-	if (!CharacterClassDefinition && AdvancementDefinition->BaseClass)
-	{
-		CharacterClassDefinition = AdvancementDefinition->BaseClass;
-	}
-
-	UObject* AbilitySourceObject = GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
-	GiveAdvancementAbilitySets(*ASC, AbilitySourceObject, AdvancementGrantedHandles);
-	return true;
+	auto* Progression = GetProgressionComponent();
+	return HasAuthority() && Progression && Progression->ApplyAdvancement(NewAdvancementDefinition);
 }
 
 void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) const
@@ -330,9 +284,31 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) cons
 void AProject_JBaseCharacter::InitializeAbilitySystem()
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	if (!ASC)
+	{
+		// PlayerState can replicate away before the old avatar is destroyed.
+		if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+		BoundProgression.Reset();
+		return;
+	}
 
 	ASC->InitAbilityActorInfo(GetAbilitySystemOwnerActor(), this);
+	auto* Progression = GetProgressionComponent();
+	if (!Progression && HasAuthority())
+	{
+		// Compatibility adapter for custom character subclasses with a local ASC.
+		Progression = NewObject<UProject_JProgressionComponent>(GetAbilitySystemOwnerActor());
+		GetAbilitySystemOwnerActor()->AddInstanceComponent(Progression);
+		Progression->RegisterComponent();
+	}
+	if (BoundProgression.Get() != Progression)
+	{
+		if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+		BoundProgression = Progression;
+		if (Progression) Progression->OnChanged.AddUObject(this, &ThisClass::OnProgressionChanged);
+	}
+	if (Progression) Progression->InitializeDefaults(CharacterClassDefinition, AdvancementDefinition, CharacterLevel);
+	OnProgressionChanged();
 
 	if (HasAuthority())
 	{
@@ -344,11 +320,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 		}
 
 		const bool bAlreadyGranted = OwnerInterface ? OwnerInterface->HasGrantedDefaultAbilities() : bDefaultAbilitiesGranted;
-		const bool bHasGrantContent =
-			!DefaultAbilities.IsEmpty() ||
-			(CharacterClassDefinition && !CharacterClassDefinition->AbilitySets.IsEmpty()) ||
-			(CharacterClassDefinition && CharacterClassDefinition->DefaultCombatStyle && !CharacterClassDefinition->DefaultCombatStyle->AbilitySets.IsEmpty()) ||
-			(AdvancementDefinition && !AdvancementDefinition->AdditionalAbilitySets.IsEmpty());
+		const bool bHasGrantContent = !DefaultAbilities.IsEmpty();
 		if (!bAlreadyGranted && bHasGrantContent)
 		{
 			for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultAbilities)
@@ -371,7 +343,7 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 					}
 				}
 			}
-			GiveDefaultAbilitySets(*ASC, AbilitySourceObject);
+
 
 			if (OwnerInterface)
 			{
@@ -387,125 +359,11 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 
 const UProject_JDefaultAttributeSetData* AProject_JBaseCharacter::GetEffectiveDefaultAttributeData() const
 {
-	if (AdvancementDefinition && AdvancementDefinition->OverrideAttributeData)
-	{
-		return AdvancementDefinition->OverrideAttributeData;
-	}
-
-	if (CharacterClassDefinition && CharacterClassDefinition->DefaultAttributeData)
-	{
-		return CharacterClassDefinition->DefaultAttributeData;
-	}
-
+	const auto* Advancement = GetAdvancementDefinition();
+	if (Advancement && Advancement->OverrideAttributeData) return Advancement->OverrideAttributeData;
+	const auto* Class = GetCharacterClassDefinition();
+	if (Class && Class->DefaultAttributeData) return Class->DefaultAttributeData;
 	return DefaultAttributeData;
-}
-
-void AProject_JBaseCharacter::GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject)
-{
-	FProject_JAbilitySet_GrantedHandles IgnoredGrantedHandles;
-
-	if (CharacterClassDefinition)
-	{
-		for (const UProject_JAbilitySet* AbilitySet : CharacterClassDefinition->AbilitySets)
-		{
-			if (AbilitySet)
-			{
-				const FName GrantSource(*FString::Printf(TEXT("Class.%s.%s"), *GetCharacterClassId().ToString(), *AbilitySet->GetName()));
-				AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
-			}
-		}
-		if (CharacterClassDefinition->DefaultCombatStyle)
-		{
-			for (const UProject_JAbilitySet* AbilitySet : CharacterClassDefinition->DefaultCombatStyle->AbilitySets)
-			{
-				if (AbilitySet)
-				{
-					const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *CharacterClassDefinition->DefaultCombatStyle->CombatStyleTag.ToString(), *AbilitySet->GetName()));
-					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
-				}
-			}
-		}
-	}
-
-	if (AdvancementDefinition)
-	{
-		if (AdvancementDefinition->BaseClass && AdvancementDefinition->BaseClass != CharacterClassDefinition)
-		{
-			for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->BaseClass->AbilitySets)
-			{
-				if (AbilitySet)
-				{
-					const FName GrantSource(*FString::Printf(TEXT("Class.%s.%s"), *AdvancementDefinition->BaseClass->ClassId.ToString(), *AbilitySet->GetName()));
-					AbilitySet->GiveToAbilitySystem(&ASC, &IgnoredGrantedHandles, AbilitySourceObject, GrantSource);
-				}
-			}
-		}
-
-		GiveAdvancementAbilitySets(ASC, AbilitySourceObject, AdvancementGrantedHandles);
-	}
-}
-
-void AProject_JBaseCharacter::GiveAdvancementAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject, FProject_JAbilitySet_GrantedHandles& OutGrantedHandles) const
-{
-	if (!AdvancementDefinition)
-	{
-		return;
-	}
-
-	for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->AdditionalAbilitySets)
-	{
-		if (AbilitySet)
-		{
-			const FName GrantSource(*FString::Printf(TEXT("Advancement.%s.%s"), *GetAdvancementId().ToString(), *AbilitySet->GetName()));
-			AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject, GrantSource);
-		}
-	}
-	if (AdvancementDefinition->CombatStyleOverride)
-	{
-		for (const UProject_JAbilitySet* AbilitySet : AdvancementDefinition->CombatStyleOverride->AbilitySets)
-		{
-			if (AbilitySet)
-			{
-				const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *AdvancementDefinition->CombatStyleOverride->CombatStyleTag.ToString(), *AbilitySet->GetName()));
-				AbilitySet->GiveToAbilitySystem(&ASC, &OutGrantedHandles, AbilitySourceObject, GrantSource);
-			}
-		}
-	}
-}
-
-void AProject_JBaseCharacter::RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC)
-{
-	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(&ASC); ProjectJASC && !AdvancementGrantedHandles.GrantSourceIds.IsEmpty())
-	{
-		for (const FName GrantSourceId : AdvancementGrantedHandles.GrantSourceIds)
-		{
-			ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
-		}
-		AdvancementGrantedHandles.AbilitySpecHandles.Reset();
-		AdvancementGrantedHandles.GameplayEffectHandles.Reset();
-		AdvancementGrantedHandles.GrantSourceIds.Reset();
-		return;
-	}
-
-	for (const FGameplayAbilitySpecHandle& AbilitySpecHandle : AdvancementGrantedHandles.AbilitySpecHandles)
-	{
-		if (AbilitySpecHandle.IsValid())
-		{
-			ASC.ClearAbility(AbilitySpecHandle);
-		}
-	}
-
-	for (const FActiveGameplayEffectHandle& EffectHandle : AdvancementGrantedHandles.GameplayEffectHandles)
-	{
-		if (EffectHandle.IsValid())
-		{
-			ASC.RemoveActiveGameplayEffect(EffectHandle);
-		}
-	}
-
-	AdvancementGrantedHandles.AbilitySpecHandles.Reset();
-	AdvancementGrantedHandles.GameplayEffectHandles.Reset();
-	AdvancementGrantedHandles.GrantSourceIds.Reset();
 }
 
 UProject_JEquipmentManagerComponent* AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const
@@ -538,10 +396,14 @@ AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
 
 void AProject_JBaseCharacter::SetCharacterLevel(int32 NewLevel)
 {
-	const int32 GuardedLevel = FMath::Max(1, NewLevel);
-	if (CharacterLevel != GuardedLevel)
+	if (!HasAuthority()) return;
+	const int32 PreviousLevel = GetCharacterLevel_Implementation();
+	int32 GuardedLevel = FMath::Max(1, NewLevel);
+	if (auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
 	{
-		CharacterLevel = GuardedLevel;
-		InitializeDefaultAttributes(true);
+		if (!Progression->SetLevel(NewLevel)) return;
+		GuardedLevel = Progression->GetState().Level;
 	}
+	CharacterLevel = GuardedLevel;
+	if (PreviousLevel != GuardedLevel) InitializeDefaultAttributes(true);
 }

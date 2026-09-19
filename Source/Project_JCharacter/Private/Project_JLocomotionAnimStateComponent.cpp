@@ -96,7 +96,7 @@ void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type 
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 {
-	if (!IsRegistered())
+	if (!IsRegistered() || !FMath::IsFinite(DeltaTime) || DeltaTime <= 0.0f)
 	{
 		return;
 	}
@@ -113,9 +113,13 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	AProject_JPlayerCharacter* PlayerOwner = nullptr;
 	if (!RefreshOwnerReferencesForUpdate(PlayerOwner))
 	{
+		HiddenRemoteUpdateAccumulator = 0.0f;
 		return;
 	}
 
+	// These clocks track semantic events, including events arriving between sparse
+	// samples. Advance them once per frame, never by a pre-event accumulated delta.
+	AdvanceStateClocks(DeltaTime);
 	if (ShouldSkipUpdateForCurrentContext(DeltaTime))
 	{
 		return;
@@ -141,22 +145,23 @@ bool UProject_JLocomotionAnimStateComponent::RefreshOwnerReferencesForUpdate(APr
 	return OutPlayerOwner != nullptr;
 }
 
-bool UProject_JLocomotionAnimStateComponent::ShouldSkipUpdateForCurrentContext(float DeltaTime)
+bool UProject_JLocomotionAnimStateComponent::ShouldSkipUpdateForCurrentContext(float& DeltaTime)
 {
 	bUsingLocalInputState = ShouldUseLocalInputState();
 	bDedicatedServerContext = IsDedicatedServerContext();
 	if (bDedicatedServerContext && bSkipDedicatedServerAnimStateUpdate)
 	{
+		HiddenRemoteUpdateAccumulator = 0.0f;
 		return true;
 	}
 
+	HiddenRemoteUpdateAccumulator += DeltaTime;
 	bRecentlyRendered = WasRecentlyRendered(RecentlyRenderedTolerance);
 	if (!bUsingLocalInputState && !bRecentlyRendered)
 	{
 		const float UpdateInterval = HiddenRemoteUpdateInterval;
 		if (UpdateInterval > 0.0f)
 		{
-			HiddenRemoteUpdateAccumulator += DeltaTime;
 			if (HiddenRemoteUpdateAccumulator < UpdateInterval)
 			{
 				return true;
@@ -164,6 +169,9 @@ bool UProject_JLocomotionAnimStateComponent::ShouldSkipUpdateForCurrentContext(f
 		}
 	}
 
+	// Include skipped frames when sampling velocity and updating movement context,
+	// also when visibility or the configured interval changes between samples.
+	DeltaTime = HiddenRemoteUpdateAccumulator;
 	HiddenRemoteUpdateAccumulator = 0.0f;
 	return false;
 }
@@ -1317,6 +1325,10 @@ void UProject_JLocomotionAnimStateComponent::ApplyMovementSnapshot(float DeltaTi
 		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
 		bWantsSprint &&
 		Snapshot.bHasSprintMovementIntent;
+}
+
+void UProject_JLocomotionAnimStateComponent::AdvanceStateClocks(float DeltaTime)
+{
 	GroundMotionModeElapsedTime += DeltaTime;
 	if (bIsJumping)
 	{

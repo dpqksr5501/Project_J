@@ -208,7 +208,7 @@ bool UProject_JSkillInputExecutionComponent::ShouldRouteInputToActiveComboOnly(c
 	}
 
 	const UProject_JCombatStyleDefinition* CombatStyle = BoundPlayerCharacter->GetCombatStyleDefinition();
-	const UProject_JComboDefinition* ComboDefinition = CombatStyle ? CombatStyle->ComboDefinition.Get() : nullptr;
+	const UProject_JComboDefinition* ComboDefinition = CombatStyle && CombatStyle->bUsesCombo ? CombatStyle->ComboDefinition.Get() : nullptr;
 	if (!ComboDefinition)
 	{
 		return false;

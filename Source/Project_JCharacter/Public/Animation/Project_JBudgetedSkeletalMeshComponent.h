@@ -7,6 +7,13 @@ class UProject_JCharacterAnimationBudgetSubsystem;
 class UAnimInstance;
 class UAnimMontage;
 
+/** Temporary demands compose on the mesh, independently of their callers' lifetimes. */
+enum class EProject_JAnimationUpdateRequirement : uint8
+{
+	Presentation,
+	GameplayPose
+};
+
 /** Character mesh with explicit ABA ownership. Gameplay-critical poses use the normal engine path. */
 UCLASS(ClassGroup=(Animation), meta=(BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JBudgetedSkeletalMeshComponent : public USkeletalMeshComponentBudgeted
@@ -15,8 +22,10 @@ class PROJECT_JCHARACTER_API UProject_JBudgetedSkeletalMeshComponent : public US
 public:
 	UProject_JBudgetedSkeletalMeshComponent(const FObjectInitializer& Initializer);
 	void SetCombatCritical(bool bCritical);
+	void RequestAnimationUpdate(UObject* Requester, EProject_JAnimationUpdateRequirement Requirement);
+	void ReleaseAnimationUpdate(UObject* Requester);
 	bool IsManagedByBudget() const { return bManaged; }
-	bool IsCombatCritical() const { return bCombatCritical; }
+	bool IsCombatCritical() const { return bCombatCritical || bGameplayPoseOverride; }
 	/** Requested tick state is distinct from the allocator's current scheduled tick. */
 	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;
@@ -37,6 +46,11 @@ private:
 	void EnterBudget();
 	void LeaveBudget();
 	void DetachService();
+	void RefreshAnimationUpdateRequirements();
+	TMap<TWeakObjectPtr<UObject>, EProject_JAnimationUpdateRequirement> UpdateRequirements;
+	bool bUpdateOverride = false, bGameplayPoseOverride = false;
+	bool bOverrideSavedURO = false, bOverrideSavedSuppressNotifies = false;
+	EVisibilityBasedAnimTickOption OverrideSavedVisibility = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	UFUNCTION() void BindAnimationEvents();
 	UFUNCTION() void OnMontageStarted(UAnimMontage* Montage);
 	TWeakObjectPtr<UAnimInstance> BoundAnimation;

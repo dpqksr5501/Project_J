@@ -80,7 +80,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
+	/** Called once per positive-to-zero transition on authority, after the health mirror is updated. */
+	virtual void HandleHealthDepleted();
 	UFUNCTION()
 	void OnRep_Rider(ACharacter* PreviousRider);
 
@@ -137,13 +140,20 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_MountState, Transient)
 	EProject_JMountState MountState = EProject_JMountState::Unmounted;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Mount|Health", meta = (ClampMin = "1.0"))
+	/** Authored initial maximum; after initialization this mirrors the replicated GAS attribute. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mount|Health", meta = (ClampMin = "1.0"))
 	float MaxHealth = 1000.0f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Mount|Health")
+	/** Read-only compatibility mirror. Runtime writes go through the ability system. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mount|Health")
 	float Health = 1000.0f;
 
 private:
+	void OnHealthAttributeChanged(const struct FOnAttributeChangeData& Data);
+	void OnMaxHealthAttributeChanged(const struct FOnAttributeChangeData& Data);
+	FDelegateHandle HealthChangedHandle;
+	FDelegateHandle MaxHealthChangedHandle;
+	bool bHandlingHealthDepletion = false;
 	bool CanMountRider(const ACharacter* NewRider) const;
 	bool FindDismountLocation(FVector& OutLocation) const;
 	void AttachRider(ACharacter* NewRider) const;

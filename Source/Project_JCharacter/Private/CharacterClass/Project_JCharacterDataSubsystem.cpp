@@ -77,6 +77,18 @@ void UProject_JCharacterDataSubsystem::PopulateRegistry()
 			AdvancementMap.Add(AdvId, LoadedAdv);
 		}
 	}
+	TArray<UProject_JCharacterClassDefinition*> Classes;
+	TArray<UProject_JCharacterAdvancementDefinition*> Advancements;
+	for (const auto& Pair : ClassMap) Classes.Add(Pair.Value);
+	for (const auto& Pair : AdvancementMap) Advancements.Add(Pair.Value);
+	TArray<FText> Errors;
+	if (!ProjectJ::ValidateAdvancementGraph(Classes, Advancements, Errors))
+	{
+		for (const auto& Error : Errors) UE_LOG(LogProjectJCharacterData, Error, TEXT("%s"), *Error.ToString());
+		// Invalid dependency graphs are never made available to authoritative requests.
+		AdvancementMap.Reset();
+	}
+
 }
 
 UProject_JCharacterClassDefinition* UProject_JCharacterDataSubsystem::GetClassDefinition(FName ClassId) const
@@ -237,5 +249,9 @@ bool UProject_JCharacterDataSubsystem::ValidateDataRegistry(TArray<FText>& OutVa
 		}
 	}
 
-	return bIsValid;
+	TArray<UProject_JCharacterClassDefinition*> Classes;
+	TArray<UProject_JCharacterAdvancementDefinition*> Advancements;
+	for (const auto& Ref : ClassDefinitions) Classes.Add(Ref.LoadSynchronous());
+	for (const auto& Ref : AdvancementDefinitions) Advancements.Add(Ref.LoadSynchronous());
+	return ProjectJ::ValidateAdvancementGraph(Classes, Advancements, OutValidationErrors) && bIsValid;
 }

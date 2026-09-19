@@ -9,6 +9,7 @@
 #include "Project_JCombatInterface.h"
 #include "Project_JBaseCharacter.generated.h"
 
+class UProject_JProgressionComponent;
 class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
 class UProject_JDefaultAttributeSetData;
@@ -50,11 +51,12 @@ public:
 	FName GetAdvancementId() const;
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
-	const UProject_JCharacterClassDefinition* GetCharacterClassDefinition() const { return CharacterClassDefinition; }
+	const UProject_JCharacterClassDefinition* GetCharacterClassDefinition() const;
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
-	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const { return AdvancementDefinition; }
+	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const;
 	const UProject_JCombatStyleDefinition* GetClassCombatStyleDefinition() const;
+	UProject_JProgressionComponent* GetProgressionComponent() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
 	bool InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition);
@@ -72,6 +74,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void UnPossessed() override;
 	virtual void OnRep_PlayerState() override;
 
 public:
@@ -125,8 +128,8 @@ protected:
 	UPROPERTY(Transient)
 	bool bDefaultAbilitiesGranted = false;
 
-	UPROPERTY(Transient)
-	FProject_JAbilitySet_GrantedHandles AdvancementGrantedHandles;
+	TWeakObjectPtr<UProject_JProgressionComponent> BoundProgression;
+	virtual void OnProgressionChanged();
 
 	/**
 	 * NPCs own runtime state directly on the character. Player characters resolve
@@ -140,9 +143,6 @@ protected:
 	virtual void InitializeDefaultAttributes(bool bForceReset = false) const;
 	void InitializeAbilitySystem();
 	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;
-	void GiveDefaultAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject);
-	void GiveAdvancementAbilitySets(UAbilitySystemComponent& ASC, UObject* AbilitySourceObject, FProject_JAbilitySet_GrantedHandles& OutGrantedHandles) const;
-	void RemoveAdvancementAbilitySets(UAbilitySystemComponent& ASC);
 	UProject_JEquipmentManagerComponent* ResolveEquipmentManagerForRuntime() const;
 	void BindEquipmentRuntimeToResolvedEquipmentManager();
 	virtual AActor* GetAbilitySystemOwnerActor() const;

@@ -77,12 +77,57 @@ bool AProject_JMountCharacter::GetRiderHandIKTargetsWorld(FVector& OutLeftTarget
 
 void AProject_JMountCharacter::BeginPlay()
 {
-	Super::BeginPlay();
 	MountAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	if (HasAuthority())
 	{
-		MountAttributeSet->SetMaxHealth(MaxHealth); MountAttributeSet->SetHealth(Health);
+		MountAttributeSet->SetMaxHealth(MaxHealth);
+		MountAttributeSet->SetHealth(Health);
 	}
+	Health = MountAttributeSet->GetHealth();
+	MaxHealth = MountAttributeSet->GetMaxHealth();
+	HealthChangedHandle = MountAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UProject_JMountAttributeSet::GetHealthAttribute())
+		.AddUObject(this, &AProject_JMountCharacter::OnHealthAttributeChanged);
+	MaxHealthChangedHandle = MountAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UProject_JMountAttributeSet::GetMaxHealthAttribute())
+		.AddUObject(this, &AProject_JMountCharacter::OnMaxHealthAttributeChanged);
+	// Blueprint BeginPlay observes initialized attributes and can safely apply effects.
+	Super::BeginPlay();
+}
+
+void AProject_JMountCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (MountAbilitySystemComponent)
+	{
+		MountAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UProject_JMountAttributeSet::GetHealthAttribute()).Remove(HealthChangedHandle);
+		MountAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UProject_JMountAttributeSet::GetMaxHealthAttribute()).Remove(MaxHealthChangedHandle);
+	}
+	HealthChangedHandle.Reset();
+	MaxHealthChangedHandle.Reset();
+	Super::EndPlay(EndPlayReason);
+}
+
+void AProject_JMountCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	Health = Data.NewValue;
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
+		if (Data.OldValue > 0.0f && Data.NewValue <= 0.0f && !bHandlingHealthDepletion)
+		{
+			TGuardValue<bool> DeathGuard(bHandlingHealthDepletion, true);
+			HandleHealthDepleted();
+		}
+	}
+}
+
+void AProject_JMountCharacter::OnMaxHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	MaxHealth = Data.NewValue;
+	if (HasAuthority()) ForceNetUpdate();
+}
+
+void AProject_JMountCharacter::HandleHealthDepleted()
+{
+	DismountRider(true);
 }
 
 void AProject_JMountCharacter::PossessedBy(AController* NewController)
@@ -96,23 +141,16 @@ void AProject_JMountCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AProject_JMountCharacter, Rider);
 	DOREPLIFETIME(AProject_JMountCharacter, MountState);
-	DOREPLIFETIME(AProject_JMountCharacter, MaxHealth);
-	DOREPLIFETIME(AProject_JMountCharacter, Health);
 }
 
 bool AProject_JMountCharacter::ApplyMountDamage(float Damage)
 {
-	if (!HasAuthority() || Damage <= 0.0f || Health <= 0.0f)
+	if (!HasAuthority() || !HealthChangedHandle.IsValid() || !MountAbilitySystemComponent || !FMath::IsFinite(Damage) || Damage <= 0.0f || Health <= 0.0f)
 	{
 		return false;
 	}
 
-	Health = FMath::Max(0.0f, Health - Damage);
-	if (Health <= 0.0f)
-	{
-		DismountRider(true);
-	}
-	ForceNetUpdate();
+	MountAbilitySystemComponent->ApplyModToAttribute(UProject_JMountAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive, -Damage);
 	return true;
 }
 

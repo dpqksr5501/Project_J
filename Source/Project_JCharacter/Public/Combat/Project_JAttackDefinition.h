@@ -43,6 +43,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity", meta = (ClampMin = "1"))
 	int32 SchemaVersion = 1;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Execution")
+	bool bMontageDriven = true;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> Montage = nullptr;
 

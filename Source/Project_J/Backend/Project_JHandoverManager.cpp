@@ -9,14 +9,22 @@
 void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	bShuttingDown = false;
 	TickHandle = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateUObject(this, &UProject_JHandoverManager::Tick));
 }
 
 void UProject_JHandoverManager::Deinitialize()
 {
+	bShuttingDown = true;
 	FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
-	HandoverStates.Reset();
+	// Detach state before cancellation can invoke a transport completion.
+	auto OldStates = MoveTemp(HandoverStates);
+	auto OldTransport = MoveTemp(Transport);
+	if (OldTransport)
+	{
+		for (const auto& Pair : OldStates) { OldTransport->Cancel(Pair.Key); }
+	}
 	AppliedTransferIds.Reset();
 	Super::Deinitialize();
 }
@@ -52,7 +60,7 @@ void UProject_JHandoverManager::InitiateHandover(AActor* ActorToHandover, const 
 
 bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor)
 {
-	if (!Envelope.TransferId.IsValid())
+	if (bShuttingDown || !Envelope.TransferId.IsValid())
 	{
 		return false;
 	}
@@ -78,32 +86,21 @@ bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEn
 			EProject_JHandoverFailureReason::InvalidEnvelope);
 		return false;
 	}
+	const FGuid TransferId = Envelope.TransferId;
 	SetRecordState(Record, EProject_JHandoverState::Preparing);
-
-	DispatchTransfer(Envelope.TransferId);
+	// Notifications can cancel, add records (rehashing the map), or shut down.
+	if (GetHandoverState(TransferId) == EProject_JHandoverState::Preparing)
+	{
+		DispatchTransfer(TransferId);
+	}
 	return true;
 }
 
 bool UProject_JHandoverManager::IsHandoverInProgress(AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return false;
-	}
-
-	for (const auto& Pair : HandoverStates)
-	{
-		const FProject_JHandoverRecord& Record = Pair.Value;
-		if (Record.Actor.Get() == Actor)
-		{
-			return Record.State == EProject_JHandoverState::Preparing ||
-				Record.State == EProject_JHandoverState::Sending ||
-				Record.State == EProject_JHandoverState::AwaitingAck ||
-				Record.State == EProject_JHandoverState::Ghosting ||
-				Record.State == EProject_JHandoverState::SwitchingAuthority;
-		}
-	}
-	return false;
+	// Terminal records remain for diagnostics. A previous transfer must not hide
+	// a later active transfer for the same actor.
+	return HasActiveTransferForActor(Actor);
 }
 
 EProject_JHandoverState UProject_JHandoverManager::GetHandoverState(const FGuid& TransferId) const
@@ -157,11 +154,10 @@ void UProject_JHandoverManager::CancelHandoverByTransferId(const FGuid& Transfer
 		return;
 	}
 
-	if (Transport)
-	{
-		Transport->Cancel(TransferId);
-	}
+	const FGuid CancelledId = TransferId;
+	const auto ActiveTransport = Transport;
 	SetRecordState(*Record, EProject_JHandoverState::Cancelled, EProject_JHandoverFailureReason::Cancelled);
+	if (ActiveTransport) { ActiveTransport->Cancel(CancelledId); }
 }
 
 bool UProject_JHandoverManager::BuildEnvelope(
@@ -239,7 +235,7 @@ bool UProject_JHandoverManager::ApplyEnvelope(
 	AActor* DestinationActor,
 	const FProject_JHandoverEnvelope& Envelope)
 {
-	if (!DestinationActor || !DestinationActor->HasAuthority())
+	if (bShuttingDown || !DestinationActor || !DestinationActor->HasAuthority())
 	{
 		return false;
 	}
@@ -274,40 +270,41 @@ int32 UProject_JHandoverManager::CalculatePayloadChecksum(const TArray<uint8>& P
 
 void UProject_JHandoverManager::SetTransport(TSharedPtr<IProject_JHandoverTransport> InTransport)
 {
+	if (bShuttingDown) { return; }
 	Transport = MoveTemp(InTransport);
 }
 
 void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 {
+	if (bShuttingDown || bTicking) { return; }
+	TGuardValue<bool> TickGuard(bTicking, true);
 	const float SafeDeltaSeconds = FMath::Max(0.0f, DeltaSeconds);
-	if (Transport)
+	if (const auto ActiveTransport = Transport)
 	{
-		Transport->Tick(SafeDeltaSeconds);
+		ActiveTransport->Tick(SafeDeltaSeconds);
 	}
+	if (bShuttingDown) { return; }
 
 	TArray<FGuid> TransfersToDispatch;
 	TArray<FGuid> TransfersToTimeout;
 	TArray<FGuid> RecordsToRemove;
 
-	for (auto& Pair : HandoverStates)
+	TArray<FGuid> TransferIds;
+	HandoverStates.GetKeys(TransferIds);
+	for (const FGuid& TransferId : TransferIds)
 	{
-		FProject_JHandoverRecord& Record = Pair.Value;
+		FProject_JHandoverRecord* Found = HandoverStates.Find(TransferId);
+		if (!Found) { continue; }
+		FProject_JHandoverRecord& Record = *Found;
 		Record.StateElapsedTime += SafeDeltaSeconds;
 
-		// Cancel active transport before retaining a lightweight terminal record.
+		// Commit cancellation before notifying transport or external listeners.
 		if (Record.bHasTrackedActor && !Record.Actor.IsValid() &&
 			Record.State != EProject_JHandoverState::Completed &&
 			Record.State != EProject_JHandoverState::Failed &&
 			Record.State != EProject_JHandoverState::Cancelled)
 		{
-			if (Transport)
-			{
-				Transport->Cancel(Pair.Key);
-			}
-			SetRecordState(
-				Record,
-				EProject_JHandoverState::Cancelled,
-				EProject_JHandoverFailureReason::Cancelled);
+			CancelHandoverByTransferId(TransferId);
 			continue;
 		}
 
@@ -318,7 +315,7 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 		{
 			if (Record.StateElapsedTime >= FMath::Max(1.0f, TerminalRecordTtlSeconds))
 			{
-				RecordsToRemove.Add(Pair.Key);
+				RecordsToRemove.Add(TransferId);
 			}
 			continue;
 		}
@@ -328,13 +325,13 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 			Record.RetryDelayRemaining -= SafeDeltaSeconds;
 			if (Record.RetryDelayRemaining <= 0.0f)
 			{
-				TransfersToDispatch.Add(Pair.Key);
+				TransfersToDispatch.Add(TransferId);
 			}
 		}
 		else if (Record.State == EProject_JHandoverState::AwaitingAck &&
 			Record.StateElapsedTime >= FMath::Max(0.05f, AckTimeoutSeconds))
 		{
-			TransfersToTimeout.Add(Pair.Key);
+			TransfersToTimeout.Add(TransferId);
 		}
 	}
 
@@ -350,11 +347,15 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 	{
 		if (FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId))
 		{
-			if (Transport)
+			if (const auto ActiveTransport = Transport)
 			{
-				Transport->Cancel(TransferId);
+				ActiveTransport->Cancel(TransferId);
 			}
-			ScheduleRetry(*Record, EProject_JHandoverFailureReason::TimedOut);
+			Record = HandoverStates.Find(TransferId);
+			if (Record && Record->State == EProject_JHandoverState::AwaitingAck)
+			{
+				ScheduleRetry(*Record, EProject_JHandoverFailureReason::TimedOut);
+			}
 		}
 	}
 
@@ -369,8 +370,10 @@ bool UProject_JHandoverManager::Tick(float DeltaSeconds)
 
 void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 {
-	FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId);
-	if (!Record)
+	// The caller may pass an ID stored inside the map. Own it across notifications.
+	const FGuid Id = TransferId;
+	FProject_JHandoverRecord* Record = HandoverStates.Find(Id);
+	if (!Record || Record->State != EProject_JHandoverState::Preparing)
 	{
 		return;
 	}
@@ -382,12 +385,18 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 
 	++Record->AttemptCount;
 	SetRecordState(*Record, EProject_JHandoverState::Sending);
+	Record = HandoverStates.Find(Id);
+	if (!Record || Record->State != EProject_JHandoverState::Sending) { return; }
 
 	FProject_JHandoverTransportRequest Request;
 	Request.Envelope = Record->Envelope;
 	Request.Attempt = Record->AttemptCount;
 	SetRecordState(*Record, EProject_JHandoverState::AwaitingAck);
-	const bool bDispatched = Transport->Send(
+	Record = HandoverStates.Find(Id);
+	if (!Record || Record->State != EProject_JHandoverState::AwaitingAck) { return; }
+	const auto ActiveTransport = Transport;
+	if (!ActiveTransport) { FailTransfer(*Record, EProject_JHandoverFailureReason::TransportUnavailable); return; }
+	const bool bDispatched = ActiveTransport->Send(
 		Request,
 		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this)](
 			const FProject_JHandoverTransportResponse& Response)
@@ -412,7 +421,8 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 
 	if (!bDispatched)
 	{
-		if (Record->State == EProject_JHandoverState::AwaitingAck)
+		Record = HandoverStates.Find(Id);
+		if (Record && Record->State == EProject_JHandoverState::AwaitingAck && Record->AttemptCount == Request.Attempt)
 		{
 			ScheduleRetry(*Record, EProject_JHandoverFailureReason::DispatchFailed);
 		}
@@ -456,19 +466,26 @@ void UProject_JHandoverManager::ScheduleRetry(
 		return;
 	}
 
-	SetRecordState(Record, EProject_JHandoverState::Preparing, FailureReason);
+	const FGuid Id = Record.Envelope.TransferId;
 	Record.RetryDelayRemaining = FMath::Max(0.0f, RetryDelaySeconds);
-	if (Record.RetryDelayRemaining <= 0.0f)
+	SetRecordState(Record, EProject_JHandoverState::Preparing, FailureReason);
+	const FProject_JHandoverRecord* Current = HandoverStates.Find(Id);
+	if (Current && Current->State == EProject_JHandoverState::Preparing && Current->RetryDelayRemaining <= 0.0f)
 	{
-		DispatchTransfer(Record.Envelope.TransferId);
+		DispatchTransfer(Id);
 	}
 }
 
 void UProject_JHandoverManager::CompleteTransfer(FProject_JHandoverRecord& Record)
 {
+	const FGuid Id = Record.Envelope.TransferId;
 	SetRecordState(Record, EProject_JHandoverState::Ghosting);
-	SetRecordState(Record, EProject_JHandoverState::SwitchingAuthority);
-	SetRecordState(Record, EProject_JHandoverState::Completed);
+	FProject_JHandoverRecord* Current = HandoverStates.Find(Id);
+	if (!Current || Current->State != EProject_JHandoverState::Ghosting) { return; }
+	SetRecordState(*Current, EProject_JHandoverState::SwitchingAuthority);
+	Current = HandoverStates.Find(Id);
+	if (!Current || Current->State != EProject_JHandoverState::SwitchingAuthority) { return; }
+	SetRecordState(*Current, EProject_JHandoverState::Completed);
 }
 
 void UProject_JHandoverManager::FailTransfer(

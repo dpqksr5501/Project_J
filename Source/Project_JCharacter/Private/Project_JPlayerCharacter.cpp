@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Interaction/Project_JInteractionQuery.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -16,7 +17,6 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
-#include "Combat/Project_JCombatMovementPolicy.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Engine/LocalPlayer.h"
@@ -92,22 +92,6 @@ void LogCombatPresentationTrace(const AProject_JPlayerCharacter& Character, cons
 		Character.HasAuthority() ? TEXT("true") : TEXT("false"),
 		static_cast<int32>(Character.GetLocalRole()),
 		static_cast<int32>(Character.GetRemoteRole()));
-}
-
-FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerCharacter& PlayerCharacter)
-{
-	FProject_JCombatMovementPolicy Policy;
-	Policy.bCombatMode = PlayerCharacter.IsCombatModeActive();
-	Policy.bAttacking = PlayerCharacter.IsAttacking();
-	Policy.bDodging = PlayerCharacter.IsDodging();
-	Policy.bHitReacting = PlayerCharacter.IsHitReacting();
-	if (const UProject_JCombatAnimProfile* CombatAnimProfile = PlayerCharacter.GetCombatAnimProfile())
-	{
-		Policy.bAllowSprintInCombat = CombatAnimProfile->bAllowSprintInCombat;
-		Policy.bUseCombatRotationMode = CombatAnimProfile->bUseCombatRotationMode;
-		Policy.bInterruptIntroOnHit = CombatAnimProfile->bInterruptCombatIntroOnHit;
-	}
-	return Policy;
 }
 
 int32 GetCharacterLevelForInterfaceObject(const UObject* Object)
@@ -212,6 +196,9 @@ void AProject_JPlayerCharacter::BeginPlay()
 	if (CombatIntroComponent)
 	{
 		CombatIntroComponent->OnCombatIntroEnded.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+		CombatIntroComponent->OnCombatOutroEnded.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnCombatOutroMontageEnded);
+		CombatIntroComponent->OnTransitionStateChanged.AddUObject(this, &ThisClass::RefreshCombatTransitionViews);
+		RefreshCombatTransitionViews();
 	}
 	if (ReplicatedAnimEventComponent)
 	{
@@ -258,6 +245,8 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 	if (CombatIntroComponent)
 	{
 		CombatIntroComponent->OnCombatIntroEnded.RemoveDynamic(this, &AProject_JPlayerCharacter::OnCombatIntroMontageEnded);
+		CombatIntroComponent->OnCombatOutroEnded.RemoveDynamic(this, &AProject_JPlayerCharacter::OnCombatOutroMontageEnded);
+		CombatIntroComponent->OnTransitionStateChanged.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -511,10 +500,6 @@ void AProject_JPlayerCharacter::ServerTryInteract_Implementation()
 	TryInteract();
 }
 
-
-
-
-
 void AProject_JPlayerCharacter::NotifyFallOffStartedForAnimation()
 {
 	DispatchFallOffStartAnimationEvent();
@@ -524,166 +509,6 @@ void AProject_JPlayerCharacter::NotifyLandingCancelledForAnimation()
 {
 	DispatchLandingCancelAnimationEvent();
 }
-
-void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
-{
-	const bool bIsInAir = GetCharacterMovement() && GetCharacterMovement()->IsFalling();
-	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
-	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
-		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
-
-	bool bRotationModeChanged = false;
-	if (bShouldUseCombatRotation && bIsInAir)
-	{
-		bRotationModeChanged = bUseControllerRotationYaw != false;
-		bUseControllerRotationYaw = false;
-
-		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
-		const FRotator CurrentRot = GetActorRotation();
-		const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
-		const float DeltaSeconds = GetWorld() ? GetWorld()->GetDeltaSeconds() : 0.016f;
-		const float CatchUpSpeed = GetLocomotionProfile()
-			? GetLocomotionProfile()->MotionMatchingSearchPolicy.AirRotationCatchUpSpeed
-			: 12.0f;
-		const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
-		SetActorRotation(NewRot);
-	}
-	else
-	{
-		const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
-		bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
-		bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
-	}
-
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
-	}
-
-	bool bCurrentlyInTurnInPlace = false;
-	bool bApplyingLocalTurnInPlaceRootYaw = false;
-	if (bShouldUseCombatRotation && !bIsMovingInCombat)
-	{
-		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
-		{
-			const EProject_JStateControllerPresentationState PresentationState =
-				AnimInst->GetThreadSafeStateControllerPresentationState();
-			bCurrentlyInTurnInPlace = (PresentationState == EProject_JStateControllerPresentationState::TurnInPlace);
-			const UAnimationAsset* SelectedAnim = AnimInst->GetThreadSafeStateControllerSelectedAnimation();
-			if (bCurrentlyInTurnInPlace)
-			{
-				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
-				{
-					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
-					if (CachedTurnInPlaceSequence.Get() != AnimSeq || CachedTurnInPlaceSelectionRevision != SelectionRevision)
-					{
-						CachedTurnInPlaceSequence = const_cast<UAnimSequence*>(AnimSeq);
-						CachedTurnInPlaceSelectionRevision = SelectionRevision;
-						TurnInPlaceSelectionStartActorYaw = GetActorRotation().Yaw;
-					}
-
-					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
-					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
-					const float StartTime = FMath::Clamp(
-						AnimInst->GetThreadSafeStateControllerSelectedAnimationStartTime(),
-						0.0f,
-						AnimSeq->GetPlayLength());
-					const float CumulativeCurrentTime = FMath::Clamp(StartTime + CurrTime, StartTime, AnimSeq->GetPlayLength());
-
-					FAnimExtractContext CurrentCumulativeContext(static_cast<double>(CumulativeCurrentTime));
-					const float CurrentCumulativeYaw = AnimSeq->ExtractRootMotionFromRange(
-						static_cast<double>(StartTime), static_cast<double>(CumulativeCurrentTime), CurrentCumulativeContext).Rotator().Yaw;
-
-					const float AuthoredTargetActorYaw = FRotator::NormalizeAxis(
-						TurnInPlaceSelectionStartActorYaw + CurrentCumulativeYaw);
-					const float RootYawDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, AuthoredTargetActorYaw);
-
-					// TIP owns one fixed authored target. Prefer the locomotion context so
-					// the capsule, Blend Stack Steering and replicated event agree.
-					float FacingDelta = RootYawDelta;
-					if (LocomotionAnimStateComponent)
-					{
-						FacingDelta = LocomotionAnimStateComponent->KinematicContext.DesiredFacingDeltaYaw;
-					}
-					else if (IsLocallyControlled() && GetController())
-					{
-						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
-					}
-
-					float ClampedRootYawDelta = RootYawDelta;
-					if (RootYawDelta > 0.0f)
-					{
-						ClampedRootYawDelta = FMath::Min(RootYawDelta, FMath::Max(FacingDelta, 0.0f));
-					}
-					else if (RootYawDelta < 0.0f)
-					{
-						ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
-					}
-
-					// A reversed TIP spends a short release window unwinding Blend Stack /
-					// Offset Root Bone. Do not continue applying the old authored root yaw
-					// to the capsule during that visual hand-off.
-					const bool bCanApplyActorRotation = IsLocallyControlled() &&
-						(!LocomotionAnimStateComponent || LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive());
-					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
-					{
-						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
-					}
-					bApplyingLocalTurnInPlaceRootYaw = bCanApplyActorRotation;
-
-					if (!HasAuthority() && bCanApplyActorRotation)
-					{
-						const UWorld* World = GetWorld();
-						const double Now = World ? World->GetTimeSeconds() : 0.0;
-						const float CurrentActorYaw = GetActorRotation().Yaw;
-						const bool bYawChangedSignificantly = FMath::Abs(FRotator::NormalizeAxis(CurrentActorYaw - LastSentTurnInPlaceActorYaw)) >= 2.0f;
-						const bool bTimeElapsed = (Now - LastTurnInPlaceSendTime) >= 0.05;
-
-						if (!bLastSentTurnInPlaceActive || (bYawChangedSignificantly && bTimeElapsed))
-						{
-							ServerSetTurnInPlaceRotation(true, CurrentActorYaw);
-							bLastSentTurnInPlaceActive = true;
-							LastSentTurnInPlaceActorYaw = CurrentActorYaw;
-							LastTurnInPlaceSendTime = Now;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (!HasAuthority() && IsLocallyControlled())
-	{
-		if (bLastSentTurnInPlaceActive && !bApplyingLocalTurnInPlaceRootYaw)
-		{
-			ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
-			bLastSentTurnInPlaceActive = false;
-			LastSentTurnInPlaceActorYaw = GetActorRotation().Yaw;
-		}
-	}
-
-	if (!bCurrentlyInTurnInPlace && CachedTurnInPlaceSequence.IsValid())
-	{
-		CachedTurnInPlaceSequence.Reset();
-		CachedTurnInPlaceSelectionRevision = INDEX_NONE;
-	}
-
-	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
-	{
-		MotionMatchingTrajectoryComponent->ResetTrajectoryHistoryWithReason(
-			EProject_JTrajectoryResetReason::RotationModeChanged);
-	}
-}
-
-bool AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair() const
-{
-	// Combat currently owns yaw through the controller and therefore permits
-	// movement that intentionally differs from facing. Future lock-on or forced
-	// facing modes should return false here as well, rather than changing the
-	// global simulated-proxy repair CVar.
-	return !bUseControllerRotationYaw;
-}
-
 
 bool AProject_JPlayerCharacter::HasCombatStateTag(const FGameplayTag& StateTag) const
 {
@@ -701,11 +526,6 @@ void AProject_JPlayerCharacter::CancelAbilitiesByTag(const FGameplayTag& Ability
 	{
 		CombatStateComponent->CancelAbilitiesByTag(AbilityTag);
 	}
-}
-
-bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
-{
-	return BuildCombatMovementPolicy(*this).IsSprintBlocked();
 }
 
 void AProject_JPlayerCharacter::RefreshAbilitySystemDependentComponents()
@@ -810,8 +630,21 @@ void AProject_JPlayerCharacter::OnRep_ReplicatedCombatIntroPresentation()
 	}
 }
 
+void AProject_JPlayerCharacter::OnProgressionChanged()
+{
+	const int32 PreviousRevision = CombatConfiguration.Revision;
+	if (GetCombatConfiguration().Revision != PreviousRevision)
+	{
+		OnRep_CurrentCombatStyle();
+		if (CombatPresentationComponent) CombatPresentationComponent->RefreshPresentation();
+	}
+	// A level-only update must not clear command sequences or reload animation layers.
+	if (CharacterUIBindingComponent) CharacterUIBindingComponent->UpdateCharacterLevel(GetCharacterLevel_Implementation());
+}
+
 void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
 {
+	GetCombatConfiguration();
 	if (SkillInputExecutionComponent)
 	{
 		SkillInputExecutionComponent->ClearCommandInputHistory();
@@ -967,90 +800,6 @@ void AProject_JPlayerCharacter::LogAnimationProfileConfiguration() const
 	}
 }
 
-void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
-{
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-	if (!MoveComp || (!IsLocallyControlled() && GetLocalRole() != ROLE_Authority))
-	{
-		return;
-	}
-
-	const bool bCanSprint = IsSprintLocomotionAllowed();
-	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
-	const float EffectiveWalkSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->WalkSpeed : WalkSpeed;
-	const float EffectiveSprintSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->SprintSpeed : SprintSpeed;
-	const float EffectiveWalkRotationRateYaw = EffectiveLocomotionProfile
-		? EffectiveLocomotionProfile->WalkRotationRateYaw
-		: WalkRotationRateYaw;
-	const float EffectiveSprintRotationRateYaw = EffectiveLocomotionProfile
-		? EffectiveLocomotionProfile->SprintRotationRateYaw
-		: SprintRotationRateYaw;
-	float DirectionalSpeedMultiplier = 1.0f;
-	if (EffectiveLocomotionProfile)
-	{
-		const FProject_JLocomotionMovementPolicy& Policy = EffectiveLocomotionProfile->MovementPolicy;
-		const float DesiredMaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
-		const float DesiredBrakingDeceleration = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
-		const float DesiredGroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
-		if (!FMath::IsNearlyEqual(MoveComp->MaxAcceleration, DesiredMaxAcceleration))
-		{
-			MoveComp->MaxAcceleration = DesiredMaxAcceleration;
-		}
-		if (!FMath::IsNearlyEqual(MoveComp->BrakingDecelerationWalking, DesiredBrakingDeceleration))
-		{
-			MoveComp->BrakingDecelerationWalking = DesiredBrakingDeceleration;
-		}
-		if (!FMath::IsNearlyEqual(MoveComp->GroundFriction, DesiredGroundFriction))
-		{
-			MoveComp->GroundFriction = DesiredGroundFriction;
-		}
-
-		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
-		{
-			FVector Direction = GetPendingMovementInputVector();
-			Direction.Z = 0.0f;
-			if (Direction.IsNearlyZero())
-			{
-				Direction = GetVelocity();
-				Direction.Z = 0.0f;
-			}
-
-			if (!Direction.IsNearlyZero())
-			{
-				const FVector LocalDirection = GetActorTransform().InverseTransformVectorNoScale(Direction.GetSafeNormal());
-				const float ForwardAmount = LocalDirection.X;
-				const float SideAmount = FMath::Abs(LocalDirection.Y);
-				if (ForwardAmount < -0.5f)
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeBackwardSpeedMultiplier;
-				}
-				else if (SideAmount > FMath::Abs(ForwardAmount))
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeSideSpeedMultiplier;
-				}
-				else
-				{
-					DirectionalSpeedMultiplier = Policy.StrafeForwardSpeedMultiplier;
-				}
-			}
-		}
-	}
-
-	const float DesiredMaxWalkSpeed =
-		(bCanSprint ? EffectiveSprintSpeed : EffectiveWalkSpeed) * DirectionalSpeedMultiplier;
-	const float DesiredRotationRateYaw = bCanSprint
-		? EffectiveSprintRotationRateYaw
-		: EffectiveWalkRotationRateYaw;
-	if (!FMath::IsNearlyEqual(MoveComp->MaxWalkSpeed, DesiredMaxWalkSpeed))
-	{
-		MoveComp->MaxWalkSpeed = DesiredMaxWalkSpeed;
-	}
-	if (!FMath::IsNearlyEqual(MoveComp->RotationRate.Yaw, DesiredRotationRateYaw))
-	{
-		MoveComp->RotationRate = FRotator(0.0f, DesiredRotationRateYaw, 0.0f);
-	}
-}
-
 UAnimMontage* AProject_JPlayerCharacter::GetEffectiveCombatIntroMontage() const
 {
 	if (const UProject_JWeaponAnimProfile* EffectiveWeaponAnimProfile = GetWeaponAnimProfile())
@@ -1107,21 +856,6 @@ bool AProject_JPlayerCharacter::ShouldPlayCombatIntroMontage() const
 	return true;
 }
 
-bool AProject_JPlayerCharacter::ShouldUseCombatRotationMode() const
-{
-	return BuildCombatMovementPolicy(*this).ShouldUseCombatRotationMode();
-}
-
-bool AProject_JPlayerCharacter::ShouldInterruptCombatIntroOnHit() const
-{
-	FProject_JCombatMovementPolicy Policy = BuildCombatMovementPolicy(*this);
-	if (!GetCombatAnimProfile())
-	{
-		Policy.bInterruptIntroOnHit = bInterruptCombatIntroOnHit;
-	}
-	return Policy.ShouldInterruptIntroOnHit();
-}
-
 float AProject_JPlayerCharacter::GetEffectiveCombatAimAlpha() const
 {
 	if (const UProject_JCombatAnimProfile* EffectiveCombatAnimProfile = GetCombatAnimProfile())
@@ -1131,8 +865,6 @@ float AProject_JPlayerCharacter::GetEffectiveCombatAimAlpha() const
 
 	return 1.0f;
 }
-
-
 
 void AProject_JPlayerCharacter::ApplySprintAnimationState()
 {
@@ -1150,10 +882,6 @@ void AProject_JPlayerCharacter::ApplySprintAnimationState()
 		}
 	}
 }
-
-
-
-
 
 float AProject_JPlayerCharacter::GetMoveInputDeadZoneForAnimation() const
 {
@@ -1199,7 +927,7 @@ const UProject_JMotionMatchingAssetSet* AProject_JPlayerCharacter::GetCombatStra
 
 const UProject_JWeaponAnimProfile* AProject_JPlayerCharacter::GetWeaponAnimProfile() const
 {
-	if (const UProject_JCombatStyleDefinition* CombatStyle = GetCombatStyleDefinition())
+	if (const UProject_JCombatStyleDefinition* CombatStyle = GetCombatConfiguration().AnimationStyle)
 	{
 		return CombatStyle->WeaponAnimationProfile;
 	}
@@ -1211,18 +939,29 @@ const UProject_JCombatAnimProfile* AProject_JPlayerCharacter::GetCombatAnimProfi
 	return CharacterAnimProfile ? CharacterAnimProfile->CombatAnimProfile.Get() : nullptr;
 }
 
+const FProject_JCombatConfiguration& AProject_JPlayerCharacter::GetCombatConfiguration() const
+{
+	check(IsInGameThread());
+	const auto* Class = GetCharacterClassDefinition();
+	const auto* Advancement = GetAdvancementDefinition();
+	if (!bCombatConfigurationBuilt || ConfigurationClass.Get() != Class
+		|| ConfigurationAdvancement.Get() != Advancement || ConfigurationEquipment.Get() != CurrentCombatStyle)
+	{
+		auto* Self = const_cast<AProject_JPlayerCharacter*>(this);
+		auto Resolved = FProject_JCombatConfiguration::Resolve(Class ? Class->DefaultCombatStyle.Get() : nullptr, Advancement, CurrentCombatStyle);
+		Resolved.Revision = CombatConfiguration.Revision == MAX_int32 ? 1 : CombatConfiguration.Revision + 1;
+		Self->CombatConfiguration = Resolved;
+		Self->ConfigurationClass = Class;
+		Self->ConfigurationAdvancement = Advancement;
+		Self->ConfigurationEquipment = CurrentCombatStyle;
+		Self->bCombatConfigurationBuilt = true;
+	}
+	return CombatConfiguration;
+}
+
 const UProject_JCombatStyleDefinition* AProject_JPlayerCharacter::GetCombatStyleDefinition() const
 {
-	if (CurrentCombatStyle)
-	{
-		return CurrentCombatStyle;
-	}
-	if (const UProject_JCombatStyleDefinition* ClassCombatStyle = GetClassCombatStyleDefinition())
-	{
-		return ClassCombatStyle;
-	}
-
-	return nullptr;
+	return GetCombatConfiguration().GameplayStyle;
 }
 
 UProject_JCharacterViewModel* AProject_JPlayerCharacter::GetCharacterViewModel() const
@@ -1313,49 +1052,6 @@ bool AProject_JPlayerCharacter::IsHitReacting() const
 	return bIsHitReacting || (CombatStateComponent && CombatStateComponent->IsHitReacting());
 }
 
-bool AProject_JPlayerCharacter::IsSprintLocomotionAllowed() const
-{
-	return CombatStateComponent && CombatStateComponent->IsSprintTagActive() && !IsCombatActionBlockingSprint();
-}
-
-bool AProject_JPlayerCharacter::IsSprintInputDirectionAllowed() const
-{
-	// Simulated proxies have no raw input. Their replicated Sprint tag remains authoritative.
-	if (!IsLocallyControlled() || !IsCombatModeActive())
-	{
-		return true;
-	}
-
-	const UProject_JCombatAnimProfile* CombatAnimProfile = GetCombatAnimProfile();
-	if (!CombatAnimProfile || !CombatAnimProfile->bAllowSprintInCombat)
-	{
-		return false;
-	}
-
-	return !CombatAnimProfile->bRequireForwardInputForSprintInCombat ||
-		SprintMoveInput.Y > CombatAnimProfile->CombatSprintForwardInputThreshold;
-}
-
-bool AProject_JPlayerCharacter::IsJumpLocomotionAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsJumpAllowed();
-}
-
-bool AProject_JPlayerCharacter::IsGroundStartAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsGroundStartAllowed();
-}
-
-bool AProject_JPlayerCharacter::IsGroundStopAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsGroundStopAllowed();
-}
-
-bool AProject_JPlayerCharacter::IsCombatLocomotionOverlayAllowed() const
-{
-	return BuildCombatMovementPolicy(*this).IsCombatLocomotionOverlayAllowed();
-}
-
 void AProject_JPlayerCharacter::UpdateMoveStartReplicationState(const FVector2D& MoveInput)
 {
 	const bool bHasMoveInput = MoveInput.SizeSquared() > FMath::Square(GetMoveInputDeadZoneForAnimation());
@@ -1404,52 +1100,6 @@ void AProject_JPlayerCharacter::DispatchLandingCancelAnimationEvent()
 	}
 }
 
-
-
-void AProject_JPlayerCharacter::StartSprint()
-{
-	bSprintInputHeld = true;
-	RefreshSprintAbilityFromInput();
-}
-
-void AProject_JPlayerCharacter::StopSprint()
-{
-	bSprintInputHeld = false;
-	CancelAbilitiesByTag(SprintAbilityTag);
-}
-
-void AProject_JPlayerCharacter::UpdateSprintInputFromMove(const FVector2D& MoveInput)
-{
-	SprintMoveInput = MoveInput.GetClampedToMaxSize(1.0f);
-	RefreshSprintAbilityFromInput();
-}
-
-bool AProject_JPlayerCharacter::ShouldRequestSprintAbility() const
-{
-	return bSprintInputHeld && IsSprintInputDirectionAllowed();
-}
-
-void AProject_JPlayerCharacter::RefreshSprintAbilityFromInput()
-{
-	if (!IsLocallyControlled())
-	{
-		return;
-	}
-
-	const bool bSprintAbilityActive = CombatStateComponent && CombatStateComponent->IsSprintTagActive();
-	if (ShouldRequestSprintAbility())
-	{
-		if (!bSprintAbilityActive)
-		{
-			TryActivateAbilityByTag(SprintAbilityTag);
-		}
-	}
-	else if (bSprintAbilityActive)
-	{
-		CancelAbilitiesByTag(SprintAbilityTag);
-	}
-}
-
 void AProject_JPlayerCharacter::ToggleCombatMode()
 {
 	if (!CanToggleCombatMode())
@@ -1466,8 +1116,6 @@ void AProject_JPlayerCharacter::ToggleCombatMode()
 		TryActivateAbilityByTag(CombatToggleAbilityTag);
 	}
 }
-
-
 
 void AProject_JPlayerCharacter::BeginCombatModeWithIntro()
 {
@@ -1576,11 +1224,27 @@ void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)
 	}
 }
 
+void AProject_JPlayerCharacter::RefreshCombatTransitionViews()
+{
+	bIsPlayingCombatIntro = CombatIntroComponent && CombatIntroComponent->IsPlayingIntro();
+	bPendingCombatModeFromIntro = CombatIntroComponent && CombatIntroComponent->IsPendingCombatMode();
+}
+
+bool AProject_JPlayerCharacter::IsCombatIntroPlaying() const
+{
+	return (CombatIntroComponent && CombatIntroComponent->IsPlayingIntro()) || bReplicatedCombatIntroPresentation;
+}
+
+bool AProject_JPlayerCharacter::IsCombatOutroPlaying() const
+{
+	return CombatIntroComponent && CombatIntroComponent->IsPlayingOutro();
+}
+
 bool AProject_JPlayerCharacter::CanToggleCombatMode() const
 {
 	if ((MountComponent && MountComponent->IsMounted()) ||
-		bIsPlayingCombatIntro ||
-		bIsPlayingCombatOutro ||
+		(CombatIntroComponent && CombatIntroComponent->IsPlayingIntro()) ||
+		IsCombatOutroPlaying() ||
 		IsAttacking() ||
 		IsDodging() ||
 		IsHitReacting())
@@ -1612,8 +1276,6 @@ void AProject_JPlayerCharacter::PlayCombatIntroMontage()
 
 	if (CombatIntroComponent->PlayIntro(*this, EffectiveCombatIntroMontage, GetEffectiveCombatIntroMontagePlayRate()))
 	{
-		bIsPlayingCombatIntro = CombatIntroComponent->IsPlayingIntro();
-		bPendingCombatModeFromIntro = CombatIntroComponent->IsPendingCombatMode();
 		// Send the presentation signal only after the local montage really starts.
 		// This avoids remote draw visuals for a missing asset or incompatible slot.
 		if (IsLocallyControlled())
@@ -1656,24 +1318,17 @@ void AProject_JPlayerCharacter::PlayCosmeticCombatIntroMontage()
 void AProject_JPlayerCharacter::PlayCombatOutroMontage()
 {
 	UAnimMontage* EffectiveCombatOutroMontage = GetEffectiveCombatOutroMontage();
-	if (!EffectiveCombatOutroMontage || bIsPlayingCombatOutro)
+	if (!EffectiveCombatOutroMontage || !CombatIntroComponent || IsCombatOutroPlaying())
 	{
 		return;
 	}
 
-	UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
-	if (!AnimInstance || PlayAnimMontage(EffectiveCombatOutroMontage, GetEffectiveCombatOutroMontagePlayRate()) <= 0.0f)
+	if (!CombatIntroComponent->PlayOutro(*this, EffectiveCombatOutroMontage, GetEffectiveCombatOutroMontagePlayRate()))
 	{
 		// A broken/missing slot must not strand the weapon in the hand.
 		MoveWeaponToSheathedSocket();
 		return;
 	}
-
-	bIsPlayingCombatOutro = true;
-	ActiveCombatOutroMontage = EffectiveCombatOutroMontage;
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(this, &AProject_JPlayerCharacter::OnCombatOutroMontageEnded);
-	AnimInstance->Montage_SetEndDelegate(EndDelegate, EffectiveCombatOutroMontage);
 }
 
 void AProject_JPlayerCharacter::CancelCombatIntroMontage()
@@ -1688,8 +1343,6 @@ void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 		CombatIntroComponent->CancelIntro(*this, GetEffectiveCombatIntroMontage());
 	}
 
-	bIsPlayingCombatIntro = false;
-	bPendingCombatModeFromIntro = false;
 	if (CombatAnimationLayerComponent)
 	{
 		CombatAnimationLayerComponent->RefreshLayer();
@@ -1698,32 +1351,16 @@ void AProject_JPlayerCharacter::CancelCombatIntroMontage()
 
 void AProject_JPlayerCharacter::CancelCombatOutroMontage()
 {
-	if (bIsPlayingCombatOutro && ActiveCombatOutroMontage)
-	{
-		StopAnimMontage(ActiveCombatOutroMontage);
-	}
-
-	bIsPlayingCombatOutro = false;
-	ActiveCombatOutroMontage = nullptr;
+	if (CombatIntroComponent) { CombatIntroComponent->CancelOutro(*this); }
 }
 
 void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	bIsPlayingCombatIntro = CombatIntroComponent && CombatIntroComponent->IsPlayingIntro();
-	bPendingCombatModeFromIntro = CombatIntroComponent && CombatIntroComponent->IsPendingCombatMode();
-
-	if (bPendingCombatModeFromIntro && !bInterrupted && !IsHitReacting())
+	const bool bPendingCombatMode = CombatIntroComponent && CombatIntroComponent->IsPendingCombatMode();
+	if (CombatIntroComponent) { CombatIntroComponent->ClearPendingCombatMode(); }
+	if (bPendingCombatMode && !bInterrupted && !IsHitReacting())
 	{
-		if (CombatIntroComponent)
-		{
-			CombatIntroComponent->ClearPendingCombatMode();
-		}
-		// The intro component can still report its montage as playing during its
-		// end delegate. Clear the local transition flag before activating the
-		// persistent combat ability, otherwise the common toggle guard rejects
-		// the completed transition as an overlapping input.
-		bIsPlayingCombatIntro = false;
-		bPendingCombatModeFromIntro = false;
+		// The transition component commits Idle before publishing completion.
 		TryActivateAbilityByTag(CombatToggleAbilityTag);
 	}
 	else if (!IsCombatModeActive())
@@ -1732,11 +1369,6 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 		{
 			ServerSetCombatIntroPresentation(false);
 		}
-		if (CombatIntroComponent)
-		{
-			CombatIntroComponent->ClearPendingCombatMode();
-		}
-		bPendingCombatModeFromIntro = false;
 		ApplyCombatRotationMode(false);
 	}
 
@@ -1748,13 +1380,6 @@ void AProject_JPlayerCharacter::OnCombatIntroMontageEnded(UAnimMontage* Montage,
 
 void AProject_JPlayerCharacter::OnCombatOutroMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage != ActiveCombatOutroMontage)
-	{
-		return;
-	}
-
-	bIsPlayingCombatOutro = false;
-	ActiveCombatOutroMontage = nullptr;
 	if (!IsCombatModeActive())
 	{
 		// Fallback for an omitted/misplaced notify; a valid notify simply performs
@@ -1783,8 +1408,6 @@ void AProject_JPlayerCharacter::InterruptCombatIntroForHit()
 	{
 		ServerSetCombatIntroPresentation(false);
 	}
-	bIsPlayingCombatIntro = false;
-	bPendingCombatModeFromIntro = false;
 	if (CombatAnimationLayerComponent)
 	{
 		CombatAnimationLayerComponent->RefreshLayer();

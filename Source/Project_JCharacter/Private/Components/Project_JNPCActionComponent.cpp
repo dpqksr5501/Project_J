@@ -26,7 +26,6 @@ UProject_JNPCActionComponent::UProject_JNPCActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
-	PrimaryComponentTick.TickInterval = 0.1f;
 }
 
 bool UProject_JNPCActionComponent::IsAttackSupported() const
@@ -186,12 +185,6 @@ void UProject_JNPCActionComponent::ClearIntent()
 	PathFailures = 0; NextPathTime = 0;
 	CancelPathAndMove(); CancelOwnedAttack();
 	State = bEnabled ? EProjectJNPCActionState::Idle : EProjectJNPCActionState::Disabled;
-}
-
-void UProject_JNPCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, TickFunction);
-	UpdateAction();
 }
 
 void UProject_JNPCActionComponent::UpdateAction()

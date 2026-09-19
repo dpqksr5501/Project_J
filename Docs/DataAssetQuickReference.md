@@ -1,18 +1,26 @@
 # Project J 데이터 에셋 빠른 참조
 
+2026-09-19 기준. DA 구조를 유지하면서 전용 설정은 내부 작성, 공유 설정은 별도 에셋 참조로 구성한다. 새 직업·전직의 반복 연결은 [에디터 제작 도구](Architecture/Content_Bundle_Authoring_2026-09-19.md)를 사용할 수 있다. 생성·연결 후 저장과 runtime 목록 등록은 별도 단계다.
+
 ## 전투/직업
 
 - **CharacterClassDefinition**: 직업의 영구 정체성이다. 기본 전투 스타일, 기본 능력 세트, 성장 시작값을 지정한다.
-- **CharacterAdvancementDefinition**: 전직 데이터다. 기본 직업을 전제로 추가 능력과 전직 전투 스타일 오버라이드를 지정한다.
+- **CharacterAdvancementDefinition**: 기본 직업, 선행 전직 ID, 배타 분기, 레벨/태그 조건을 지정한다. 전직 능력은 Additive 또는 ReplacePreviousAdvancement 정책으로 부여하며, 전투 스타일을 덮어쓸 수 있다.
 - **CombatStyleDefinition**: 한 전투 스타일의 조립 루트다. 애니메이션, 콤보, 공격 목록, 커맨드, 전투 Ability Set을 한데 연결한다.
-- **AbilitySet**: 함께 부여·회수되는 GA/GE 묶음이다. 대검 전투 Ability Set은 CombatStyle에 한 번만 연결한다.
+- **AbilitySet**: 재사용할 GA/GE 묶음이다. 한 스타일에서만 사용하는 능력/효과는 CombatStyle의 `InlineAbilities`/`InlineEffects`에 직접 작성할 수 있다. 동일 능력을 공유 목록과 내부 목록에 중복 입력하지 않는다.
+
+진행 상태와 실제 부여 핸들은 DA에 저장하지 않는다. 플레이어는 PlayerState의 ProgressionComponent/ASC, NPC는 캐릭터 측 소유자가 관리한다. 전직의 `bOverrideEquippedGameplay`를 켜면 전직의 게임플레이 스타일과 장비의 애니메이션 스타일을 조합한다. 이 옵션 자체가 모든 장비 능력을 회수하는 것은 아니다. [상세 계약](Architecture/Extension_Foundation_2026-09-19.md)
 
 ## 공격/입력
 
 - **AttackDefinition**: 게임플레이적으로 구분되는 공격 한 번이다. 몽타주, 이동 정책, 타격 판정, 서버 피해 GE를 소유한다.
-- **AttackSet**: 해당 CombatStyle이 사용할 모든 AttackDefinition의 카탈로그다. Attack Tag는 세트 안에서 중복될 수 없다.
+- **AttackSet**: CombatStyle이 사용할 공격 카탈로그다. 기존 별도 DA 참조를 유지할 수 있다. `bDeriveAttackCatalog`를 켜면 ComboDefinition과 `AdditionalAttacks`로 실행 목록을 생성하므로 별도 AttackSet은 지정하지 않는다. 서로 다른 공격이 같은 Attack Tag를 사용하면 검증에 실패한다.
 - **ComboDefinition**: 공격 순서와 입력 전이 그래프다. 노드는 AttackDefinition을 참조하며 자체 몽타주나 피해 데이터를 갖지 않는다.
 - **CombatCommandSet**: `LMB → RMB → LMB` 같은 입력 시퀀스를 특정 GAS 입력 태그로 해석한다. 평타 콤보의 순서와는 별개다.
+
+콤보가 필요 없는 스타일은 `bUsesCombo=false`, 무기 애니메이션이 필요 없는 스타일은 `bRequiresWeaponAnimation=false`를 선택할 수 있다. Attack의 `bMontageDriven=false`는 데이터 작성 옵션이며, 새로운 투사체·채널링·소환 실행기를 자동 구현하지 않는다. 기존 근접 콤보 실행기는 여전히 몽타주를 요구한다.
+
+내부 능력 묶음과 자동 공격 카탈로그는 공유 스타일에서 생성·재사용하는 transient 실행 데이터다. 저장할 DA를 추가로 만드는 기능이 아니며, 플레이 중 정의를 수정하지 않고 변경 후 PIE를 다시 시작한다.
 
 ## 애니메이션/표시
 

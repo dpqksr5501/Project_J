@@ -11,9 +11,14 @@ class PROJECT_JMOUNT_API UProject_JMountAttributeSet : public UAttributeSet
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Health) FGameplayAttributeData Health; MOUNT_ATTR(UProject_JMountAttributeSet, Health)
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxHealth) FGameplayAttributeData MaxHealth; MOUNT_ATTR(UProject_JMountAttributeSet, MaxHealth)
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Stamina) FGameplayAttributeData Stamina; MOUNT_ATTR(UProject_JMountAttributeSet, Stamina)
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxStamina) FGameplayAttributeData MaxStamina; MOUNT_ATTR(UProject_JMountAttributeSet, MaxStamina)
 	UFUNCTION() void OnRep_Health(const FGameplayAttributeData& Old); UFUNCTION() void OnRep_MaxHealth(const FGameplayAttributeData& Old); UFUNCTION() void OnRep_Stamina(const FGameplayAttributeData& Old); UFUNCTION() void OnRep_MaxStamina(const FGameplayAttributeData& Old);
+private:
+	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
 };

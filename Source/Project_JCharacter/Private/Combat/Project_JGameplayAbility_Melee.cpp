@@ -95,7 +95,7 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 	if (AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		PlayerCharacter->FinishLanding(true);
-		if (const UProject_JCombatStyleDefinition* CombatStyle = PlayerCharacter->GetCombatStyleDefinition(); CombatStyle && CombatStyle->ComboDefinition)
+		if (const UProject_JCombatStyleDefinition* CombatStyle = PlayerCharacter->GetCombatStyleDefinition(); CombatStyle && CombatStyle->bUsesCombo && CombatStyle->ComboDefinition)
 		{
 			ActiveComboDefinition = CombatStyle->ComboDefinition;
 		}

@@ -8,6 +8,8 @@ class UProject_JAbilitySystemComponent;
 class UProject_JAttributeSet;
 class UProject_JCharacterViewModel;
 struct FOnAttributeChangeData;
+class APawn;
+class AController;
 
 /**
  * Owns character UI-facing attribute bindings.
@@ -25,13 +27,36 @@ public:
 	UProject_JCharacterUIBindingComponent();
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void BeginPlay() override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	void InitializeFromAttributes(UProject_JAbilitySystemComponent* InAbilitySystemComponent, UProject_JAttributeSet* InAttributeSet, int32 CharacterLevel);
 
 	UFUNCTION(BlueprintPure, Category = "UI")
-	UProject_JCharacterViewModel* GetCharacterViewModel() const { return CharacterViewModel; }
+	UProject_JCharacterViewModel* GetCharacterViewModel();
+
+	/** Remote panels acquire/release independently; local HUD demand is automatic. */
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	UProject_JCharacterViewModel* AcquireCharacterViewModel(UObject* Consumer);
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ReleaseCharacterViewModel(UObject* Consumer);
+	/** Ends the compatibility getter's persistent request without affecting other panels. */
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ReleaseLegacyViewModelRequest();
+	void UpdateCharacterLevel(int32 CharacterLevel);
+	UProject_JCharacterViewModel* PeekCharacterViewModel() const { return CharacterViewModel; }
 
 private:
+	void RefreshPresentationBinding();
+	void StopPresentation();
+	UFUNCTION()
+	void OnControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
+	TWeakObjectPtr<UProject_JAbilitySystemComponent> SourceAbilitySystem;
+	TWeakObjectPtr<UProject_JAttributeSet> SourceAttributes;
+	TSet<TWeakObjectPtr<UObject>> Consumers;
+	int32 SourceLevel = 1;
+	bool bLegacyViewModelRequested = false;
+	bool bEndingPlay = false;
 	void ClearAttributeBindings();
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);

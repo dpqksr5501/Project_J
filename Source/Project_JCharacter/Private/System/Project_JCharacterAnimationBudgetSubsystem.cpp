@@ -38,7 +38,9 @@ void UProject_JCharacterAnimationBudgetSubsystem::Initialize(FSubsystemCollectio
 }
 bool UProject_JCharacterAnimationBudgetSubsystem::IsEnabledForWorld() const
 {
-	const auto* EngineEnabled = IConsoleManager::Get().FindConsoleVariable(TEXT("a.Budget.Enabled"));
+	// Engine/plugin CVars outlive this world service; avoid a registry lookup per
+	// policy pass (and per PIE world) in large character workloads.
+	static const auto* EngineEnabled = IConsoleManager::Get().FindConsoleVariable(TEXT("a.Budget.Enabled"));
 	return !bEnding && GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_DedicatedServer
 		&& EnabledOverride.Get(CVarCharacterABA.GetValueOnGameThread() != 0) && EngineEnabled && EngineEnabled->GetInt() == 1;
 }

@@ -177,6 +177,8 @@ private:
 	TMap<FGuid, FDateTime> AppliedTransferIds;
 	TSharedPtr<IProject_JHandoverTransport> Transport;
 	FTSTicker::FDelegateHandle TickHandle;
+	bool bShuttingDown = false;
+	bool bTicking = false;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover")
 	FString LocalNodeId = TEXT("LocalNode");

@@ -154,12 +154,12 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	}
 	if (ASC && ItemDef.CombatStyleDefinition)
 	{
-		for (const UProject_JAbilitySet* StyleAbilitySet : ItemDef.CombatStyleDefinition->AbilitySets)
+		for (const UProject_JAbilitySet* StyleAbilitySet : ItemDef.CombatStyleDefinition->GetRuntimeAbilitySets())
 		{
 			if (StyleAbilitySet)
 			{
-				const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *ItemDef.CombatStyleDefinition->CombatStyleTag.ToString(), *StyleAbilitySet->GetName()));
-				StyleAbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef), GrantSource);
+				const FName GrantSource(*FString::Printf(TEXT("CombatStyle.%s.%s"), *ItemDef.CombatStyleDefinition->GetPathName(), *StyleAbilitySet->GetPathName()));
+				StyleAbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, ASC->GetOwnerActor(), GrantSource);
 			}
 		}
 	}

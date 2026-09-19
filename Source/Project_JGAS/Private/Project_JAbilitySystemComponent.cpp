@@ -6,8 +6,10 @@
 
 UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()
 {
-	// Set to true if you want to tick the ASC
-	PrimaryComponentTick.bCanEverTick = false;
+	// Preserve GAS/GameplayTasks tick capability. The engine's GetShouldTick /
+	// UpdateShouldTick owns activation for ticking tasks, replicated montages and
+	// tickable attributes, then sleeps when idle. bCanEverTick=false prevents all
+	// of those systems from waking the registered component.
 }
 
 void UProject_JAbilitySystemComponent::AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority)
@@ -165,6 +167,22 @@ bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName Sou
 	return true;
 }
 
+bool UProject_JAbilitySystemComponent::AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant)
+{
+	check(IsInGameThread());
+	bOutNeedsGrant = false;
+	if (!IsOwnerActorAuthoritative() || SourceId.IsNone()) return false;
+	if (auto* Record = AbilityGrantRecords.Find(SourceId))
+	{
+		if (Record->LeaseCount == MAX_int32) return false;
+		++Record->LeaseCount;
+		return true;
+	}
+	AbilityGrantRecords.Add(SourceId);
+	bOutNeedsGrant = true;
+	return true;
+}
+
 void UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, const FGameplayAbilitySpecHandle Handle)
 {
 	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
@@ -183,6 +201,13 @@ void UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceI
 
 bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId)
 {
+	check(IsInGameThread());
+	if (!IsOwnerActorAuthoritative()) return false;
+	if (auto* Existing = AbilityGrantRecords.Find(SourceId); Existing && Existing->LeaseCount > 1)
+	{
+		--Existing->LeaseCount;
+		return true;
+	}
 	FProject_JAbilityGrantRecord Record;
 	if (!IsOwnerActorAuthoritative() || SourceId.IsNone() || !AbilityGrantRecords.RemoveAndCopyValue(SourceId, Record))
 	{

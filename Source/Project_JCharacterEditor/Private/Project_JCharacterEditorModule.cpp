@@ -1,4 +1,6 @@
 #include "Animation/Project_JAnimNotifyState_WeaponMotion.h"
+#include "Authoring/Project_JContentBundleAuthoring.h"
+#include "ToolMenus.h"
 #include "Animation/AnimMontage.h"
 #include "AnimNotifyNodeFactory.h"
 #include "AnimPreviewInstance.h"
@@ -364,6 +366,8 @@ class FProject_JCharacterEditorModule final : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
+		if (!IsRunningCommandlet())
+			ContentMenuHandle = UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateStatic(&ProjectJ::ContentAuthoring::RegisterMenus));
 		FEditorModeRegistry::Get().RegisterMode<Project_J::WeaponMotionEditor::FWeaponMotionEditMode>(Project_J::WeaponMotionEditor::WeaponMotionEditModeId, LOCTEXT("WeaponMotionEditMode", "Weapon Motion Key"), FSlateIcon(), false);
 		NotifyNodeFactoryHandle = FAnimNotifyNodeFactory::RegisterFactory([](FAnimNotifyEvent* Event) -> TSharedPtr<SAnimNotifyNode>
 		{
@@ -378,6 +382,8 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+		UToolMenus::UnRegisterStartupCallback(ContentMenuHandle);
+		UToolMenus::UnregisterOwner(TEXT("ProjectJContentAuthoring"));
 		if (NotifyNodeFactoryHandle.IsValid()) FAnimNotifyNodeFactory::UnregisterFactory(NotifyNodeFactoryHandle);
 		if (PreviewTickerHandle.IsValid()) FTSTicker::GetCoreTicker().RemoveTicker(PreviewTickerHandle);
 		for (TPair<TWeakObjectPtr<UDebugSkelMeshComponent>, Project_J::WeaponMotionEditor::FPreviewBinding>& Pair : PreviewBindings)
@@ -458,6 +464,7 @@ private:
 	}
 
 	FDelegateHandle NotifyNodeFactoryHandle;
+	FDelegateHandle ContentMenuHandle;
 	FTSTicker::FDelegateHandle PreviewTickerHandle;
 	TMap<TWeakObjectPtr<UDebugSkelMeshComponent>, Project_J::WeaponMotionEditor::FPreviewBinding> PreviewBindings;
 };

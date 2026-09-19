@@ -48,17 +48,28 @@ void FProject_JLoopbackHandoverTransport::Tick(float DeltaSeconds)
 		return;
 	}
 
-	for (int32 Index = PendingResponses.Num() - 1; Index >= 0; --Index)
+	// Snapshot identities only: callbacks can cancel another ready response or
+	// enqueue a new response. New work starts accumulating time on the next tick.
+	struct FReadyResponse { FGuid TransferId; int32 Attempt; };
+	TArray<FReadyResponse, TInlineAllocator<16>> Ready;
+	for (FPendingResponse& Pending : PendingResponses)
 	{
-		FPendingResponse& Pending = PendingResponses[Index];
 		Pending.RemainingDelay -= DeltaSeconds;
 		if (Pending.RemainingDelay <= 0.0f)
 		{
-			if (Pending.Completion)
-			{
-				Pending.Completion(Pending.Response);
-			}
-			PendingResponses.RemoveAtSwap(Index, 1, EAllowShrinking::No);
+			Ready.Add({Pending.Response.TransferId, Pending.Response.Attempt});
 		}
+	}
+	for (const FReadyResponse& Entry : Ready)
+	{
+		const int32 Index = PendingResponses.IndexOfByPredicate([&Entry](const FPendingResponse& Pending)
+		{
+			return Pending.Response.TransferId == Entry.TransferId && Pending.Response.Attempt == Entry.Attempt
+				&& Pending.RemainingDelay <= 0.0f;
+		});
+		if (Index == INDEX_NONE) { continue; }
+		FPendingResponse Pending = MoveTemp(PendingResponses[Index]);
+		PendingResponses.RemoveAtSwap(Index, 1, EAllowShrinking::No);
+		if (Pending.Completion) { Pending.Completion(Pending.Response); }
 	}
 }

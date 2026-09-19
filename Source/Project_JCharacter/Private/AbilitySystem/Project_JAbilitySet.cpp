@@ -12,7 +12,8 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 {
 	check(ASC);
 
-	if (!OutGrantedHandles)
+	check(IsInGameThread());
+	if (!ASC->IsOwnerActorAuthoritative() || !OutGrantedHandles)
 	{
 		return;
 	}
@@ -20,11 +21,14 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
 	if (!GrantSourceId.IsNone())
 	{
-		if (!ProjectJASC || !ProjectJASC->ReserveAbilityGrantSource(GrantSourceId))
+		if (OutGrantedHandles->GrantSourceIds.Contains(GrantSourceId)) return;
+		bool bNeedsGrant = false;
+		if (!ProjectJASC || !ProjectJASC->AcquireAbilityGrantSource(GrantSourceId, bNeedsGrant))
 		{
 			return;
 		}
 		OutGrantedHandles->GrantSourceIds.Add(GrantSourceId);
+		if (!bNeedsGrant) return;
 	}
 
 	for (const FProject_JAbilitySet_GameplayAbility& AbilityEntry : GrantedAbilityEntries)

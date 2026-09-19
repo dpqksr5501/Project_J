@@ -4,8 +4,21 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 ## Documents
 
+현재 구조는 **캐릭터 컴포넌트 실행·수명 → 내부 갱신·수명 정리 → 확장 기반 → 제작 도구** 순으로 확인한다. 후속 변경과 검증은 [2026-09-20 컴포넌트 정리](Architecture/Character_Component_Ownership_2026-09-20.md)에 기록한다. [2026-09-19의 81개 테스트 및 Editor/Game 빌드 기록](Architecture/Internal_Polish_Validation_2026-09-19.json)과 이전 문서의 54개·61개 등은 당시 단계별 결과이며 합산하지 않는다. 성능 비교는 별도의 A–E 벤치마크 조건을 따른다.
+
+- [캐릭터 컴포넌트 실행·수명 정리 (2026-09-20)](Architecture/Character_Component_Ownership_2026-09-20.md)
+  - UI 소비자별 수명, 메시 갱신 요구 합성, 발도·납도 상태 소유권, 원격 locomotion의 시간 처리와 호환 경계.
+
+- [내부 갱신·수명 정리와 제작 도구 (2026-09-19)](Architecture/Internal_Polish_2026-09-19.md)
+  - GAS 필요 기반 Tick, 서버 피격 기록 주기, 애니메이션 요청 합성, NPC 갱신 책임, 이동 코드 분리, 탈것·Handover 수명 점검.
+- [직업·전직 묶음 제작 도구 사용법 (2026-09-19)](Architecture/Content_Bundle_Authoring_2026-09-19.md)
+  - 에디터에서 기존 DA를 참고해 미리보기·검증 후 새 직업/전직·스타일·콤보를 연결해 생성. 저장과 runtime 목록 등록은 명시적으로 진행.
+
+- [직업·전직·전투 콘텐츠 확장 기반 (2026-09-19)](Architecture/Extension_Foundation_2026-09-19.md)
+  - PlayerState 진행 상태, 공유 능력 수명, 구성 영역별 선택, inline 능력 및 공격 목록 생성, 저장 어댑터 계약과 검증 범위.
+
 - [콘텐츠 확장·DA 작성 구조 검토 (2026-09-13)](Architecture/Extension_Architecture_Review_2026-09-13.md)
-  - 공통 Master ABP, 직업·전직·스킬 조합과 콘텐츠 작성 방식의 개선안. 현재 진단과 제안이며 구현 완료 기록은 아니다.
+  - 9월 13일 당시 Master ABP, 직업·전직·스킬 조합과 콘텐츠 작성 방식의 진단·제안. 후속 구현 여부는 9월 19일 문서를 기준으로 확인한다.
 
 - [런타임 내부 리팩터링 (2026-09-13)](Architecture/Internal_Refinement_2026-09-13.md)
   - 궤적·AnimGraph 읽기 경계, 입력/커맨드 해제, 인벤토리·장비 재진입, 카메라 빙의, 서버 되감기와 상호작용 책임을 보강한 변경 및 검증 범위.

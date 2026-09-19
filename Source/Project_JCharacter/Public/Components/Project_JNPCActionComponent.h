@@ -60,7 +60,6 @@ public:
 	double RetryInterval = 0.5;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="0.5", ClampMax="10"))
 	double DecisionLifetime = 3.0;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction) override;
 protected:
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;

@@ -3,6 +3,7 @@
 #include "Backend/Project_JHandoverManager.h"
 #include "Project_JPlayerCharacter.h"
 #include "Backend/Project_JHandoverTransport.h"
+#include "Tests/Project_JHandoverTestReceiver.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Game/Project_JPlayerState.h"
@@ -15,6 +16,7 @@ namespace
 class FImmediateAcceptHandoverTransport final : public IProject_JHandoverTransport
 {
 public:
+	bool bReportDispatchSuccess = true;
 	virtual bool Send(
 		const FProject_JHandoverTransportRequest& Request,
 		FProject_JHandoverTransportCallback Completion) override
@@ -24,7 +26,7 @@ public:
 		Response.Attempt = Request.Attempt;
 		Response.Outcome = EProject_JHandoverTransportOutcome::Accepted;
 		Completion(Response);
-		return true;
+		return bReportDispatchSuccess;
 	}
 
 	virtual void Cancel(const FGuid& TransferId) override {}
@@ -167,7 +169,105 @@ bool FProjectJHandoverStateMachineTest::RunTest(const FString& Parameters)
 		TEXT("The same actor cannot start a second active handover"),
 		Manager->StartEnvelopeTransfer(DuplicateActorEnvelope, SourceActor));
 	Manager->CancelHandover(SourceActor);
+	TestFalse(TEXT("Cancelled actor handover is not active"), Manager->IsHandoverInProgress(SourceActor));
+	TestTrue(TEXT("The actor can hand over again while the previous record is retained"),
+		Manager->StartEnvelopeTransfer(DuplicateActorEnvelope, SourceActor));
+	TestTrue(TEXT("A retained terminal record does not hide the actor's new active transfer"),
+		Manager->IsHandoverInProgress(SourceActor));
+	Manager->CancelHandover(SourceActor);
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJHandoverTransportReentrancyTest,
+	"ProjectJ.Architecture.Handover.TransportReentrancy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJHandoverTransportReentrancyTest::RunTest(const FString& Parameters)
+{
+	FProject_JLoopbackHandoverTransport Transport;
+	Transport.SetResponseDelay(1.0f);
+	FProject_JHandoverTransportRequest First, Second, FollowUp;
+	First.Envelope.TransferId = FGuid::NewGuid();
+	Second.Envelope.TransferId = FGuid::NewGuid();
+	FollowUp.Envelope.TransferId = FGuid::NewGuid();
+	int32 InitialCompletions = 0;
+	int32 FollowUpCompletions = 0;
+	auto OnInitialResponse = [&](const FProject_JHandoverTransportResponse& Response)
+	{
+		++InitialCompletions;
+		// Exercise self cancellation and cancellation of another ready request.
+		Transport.Cancel(First.Envelope.TransferId);
+		Transport.Cancel(Second.Envelope.TransferId);
+		Transport.Send(FollowUp, [&](const FProject_JHandoverTransportResponse&)
+		{
+			++FollowUpCompletions;
+		});
+	};
+	Transport.Send(First, OnInitialResponse);
+	Transport.Send(Second, OnInitialResponse);
+	Transport.Tick(1.0f);
+	TestEqual(TEXT("Cancellation inside completion suppresses the other ready response"), InitialCompletions, 1);
+	TestEqual(TEXT("New work is not advanced by the tick that created it"), FollowUpCompletions, 0);
+	Transport.Tick(1.0f);
+	TestEqual(TEXT("New response survives callback queue mutation and completes once"), FollowUpCompletions, 1);
+	Transport.Tick(1.0f);
+	TestEqual(TEXT("No response is delivered twice"), FollowUpCompletions, 1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FProjectJHandoverNotificationReentrancyTest,
+	"ProjectJ.Architecture.Handover.NotificationReentrancy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJHandoverNotificationReentrancyTest::RunTest(const FString& Parameters)
+{
+	UGameInstance* GameInstance = NewObject<UGameInstance>(GEngine);
+	UProject_JHandoverManager* Manager = NewObject<UProject_JHandoverManager>(GameInstance);
+	auto Transport = MakeShared<FImmediateAcceptHandoverTransport>();
+	Transport->bReportDispatchSuccess = false; // Completion wins over a late dispatch failure.
+	Manager->SetTransport(Transport);
+	UProject_JHandoverTestReceiver* Receiver = NewObject<UProject_JHandoverTestReceiver>();
+	Manager->OnHandoverStateChanged.AddDynamic(Receiver, &UProject_JHandoverTestReceiver::HandleState);
+
+	const auto Expanded = MakeValidEnvelope(*Manager);
+	Receiver->OnState = [&](FGuid Id, EProject_JHandoverState State)
+	{
+		if (Id == Expanded.TransferId && State == EProject_JHandoverState::Sending)
+		{
+			for (int32 Index = 0; Index < 64; ++Index)
+			{
+				Manager->StartEnvelopeTransfer(MakeValidEnvelope(*Manager));
+			}
+		}
+	};
+	TestTrue(TEXT("A notification can start additional transfers"), Manager->StartEnvelopeTransfer(Expanded));
+	TestEqual(TEXT("Map growth during notification preserves the original transfer"),
+		Manager->GetHandoverState(Expanded.TransferId), EProject_JHandoverState::Completed);
+
+	const auto Cancelled = MakeValidEnvelope(*Manager);
+	Receiver->OnState = [&](FGuid Id, EProject_JHandoverState State)
+	{
+		if (Id == Cancelled.TransferId && State == EProject_JHandoverState::Ghosting)
+		{
+			Manager->CancelHandoverByTransferId(Id);
+		}
+	};
+	Manager->StartEnvelopeTransfer(Cancelled);
+	TestEqual(TEXT("Cancellation during acknowledgement cannot be overwritten by completion"),
+		Manager->GetHandoverState(Cancelled.TransferId), EProject_JHandoverState::Cancelled);
+
+	const auto Shutdown = MakeValidEnvelope(*Manager);
+	Receiver->OnState = [&](FGuid Id, EProject_JHandoverState State)
+	{
+		if (Id == Shutdown.TransferId && State == EProject_JHandoverState::Preparing) { Manager->Deinitialize(); }
+	};
+	Manager->StartEnvelopeTransfer(Shutdown);
+	TestEqual(TEXT("Shutdown inside a notification discards state safely"),
+		Manager->GetHandoverState(Shutdown.TransferId), EProject_JHandoverState::None);
+	TestFalse(TEXT("Shutdown cannot admit later work"), Manager->StartEnvelopeTransfer(MakeValidEnvelope(*Manager)));
 	return true;
 }
 

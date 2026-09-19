@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JNPCCharacter.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
@@ -10,6 +11,7 @@ AProject_JNPCCharacter::AProject_JNPCCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	CreateDefaultSubobject<UProject_JProgressionComponent>(TEXT("Progression"));
 
 	// In Stage 5, NPC characters must construct their own local GAS/Equipment components.
 	AbilitySystemComponent = CreateDefaultSubobject<UProject_JAbilitySystemComponent>(TEXT("NPCAbilitySystemComponent"));

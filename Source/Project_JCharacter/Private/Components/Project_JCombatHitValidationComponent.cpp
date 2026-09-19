@@ -57,11 +57,15 @@ void UProject_JCombatHitValidationComponent::ProtectAttackPose()
 	if (ProtectedMesh.Get() != Mesh)
 	{
 		RestoreAttackPose();
-		if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh)) { Budgeted->SetCombatCritical(true); }
 		ProtectedMesh = Mesh;
 		SavedVisibility = uint8(Mesh->VisibilityBasedAnimTickOption);
 		bSavedURO = Mesh->bEnableUpdateRateOptimizations;
 		bSavedSuppressNotifies = Mesh->bSuppressNotifyEventDispatch;
+	}
+	if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh))
+	{
+		Budgeted->RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::GameplayPose);
+		return;
 	}
 	// A hit window is authoritative gameplay. Hidden meshes/DS must still refresh
 	// sockets and dispatch notifies. Do not change root-motion mode or force GT evaluation.
@@ -74,12 +78,17 @@ void UProject_JCombatHitValidationComponent::RestoreAttackPose()
 {
 	if (auto* Mesh = ProtectedMesh.Get())
 	{
+		if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh))
+		{
+			Budgeted->ReleaseAnimationUpdate(this);
+			ProtectedMesh.Reset();
+			return;
+		}
 		// Preserve a newer explicit policy written by another system.
 		if (Mesh->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
 		{ Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption(SavedVisibility); }
 		if (!Mesh->bEnableUpdateRateOptimizations) { Mesh->bEnableUpdateRateOptimizations = bSavedURO; }
 		if (!Mesh->bSuppressNotifyEventDispatch) { Mesh->bSuppressNotifyEventDispatch = bSavedSuppressNotifies; }
-		if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Mesh)) { Budgeted->SetCombatCritical(false); }
 	}
 	ProtectedMesh.Reset();
 }

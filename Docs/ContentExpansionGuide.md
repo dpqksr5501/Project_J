@@ -1,5 +1,7 @@
 # Project J 콘텐츠 확장 구현 가이드
 
+직업·전직의 반복 DA 생성·연결은 에디터 **Tools → Project J → Create Class / Advancement Bundle**에서 시작할 수 있다. 기존 직업/스타일을 선택하고 미리보기 검증 후 미저장 에셋을 생성한다. 공격·애니메이션 등 공유 참조의 범위와 저장 후 runtime 등록 절차는 [제작 도구 가이드](Architecture/Content_Bundle_Authoring_2026-09-19.md)를 따른다.
+
 이 문서는 Project J에 콘텐츠를 추가할 때 현재 C++ 구조를 깨뜨리지 않고 연결하는 방법을 정리한다.
 
 대상 작업:
@@ -106,7 +108,7 @@ Advancement.OverrideAttributeData
   ```cpp
   Character->SetCharacterLevel(NewLevel);
   ```
-  이 함수는 내부적으로 레벨을 검증(`FMath::Max(1, NewLevel)`)하고, `InitializeDefaultAttributes(true)`를 통해 어트리뷰트 스케일링 값을 동기화하며, 플레이어 캐릭터의 경우 UI ViewModel과 어빌리티 바인딩을 리프레시합니다.
+  서버 권한에서 호출한다. 진행 상태 초기화 후에는 ProgressionComponent가 레벨을 최소 1 및 직업의 StartingLevel 이상으로 보정하고 변경 이벤트를 게시한다. 실제 레벨이 바뀌면 `InitializeDefaultAttributes(true)`로 속성을 동기화하며, 플레이어의 UI와 ASC 연결도 갱신한다. 같은 PlayerState를 유지하는 리스폰에서는 캐릭터 기본값으로 진행 레벨을 덮어쓰지 않는다.
 
 `AttackPower`와 `Defense`는 복제되고 장비 보너스도 적용되지만, 현재 `AttackPower`를 최종 피해량으로 변환하는 Damage Execution Calculation은 아직 없다. 실제 전투 공식은 아래 구조로 추가하는 것이 적합하다.
 
@@ -238,21 +240,11 @@ GrantedEffectEntries
 
 플레이어 Character Blueprint의 `Character Class Defaults > Character Class Definition`에 `DA_Class_Warrior`를 연결한다.
 
-현재 런타임에는 전직 적용 함수는 있지만 기본 직업을 안전하게 교체하는 공개 서버 API는 없다. 캐릭터 생성 화면에서 직업을 선택하게 만들 때는 다음 단계로 별도의 서버 전용 API를 추가한다.
+서버는 기존 `InitializeCharacterClassDefinition()` 또는 registry의 `InitializeCharacterClassById()`로 기본 직업을 최초 지정한다. 동일 직업의 재요청은 중복 부여하지 않으며 이미 지정된 직업을 다른 직업으로 바꾸는 API는 아니다.
 
-```cpp
-bool InitializeCharacterClass(UProject_JCharacterClassDefinition* NewClassDefinition);
-```
+직업·전직·레벨·능력 부여 수명은 `ProgressionComponent`가 소유한다. 플레이어는 PlayerState, NPC는 Character에 위치한다. BP 직업/전직 값은 최초 초기화용이며 리스폰의 기본값으로 지속 상태를 덮어쓰지 않는다. PlayerState의 공개 ClassId/Level은 진행 변경을 따라 갱신된다.
 
-이 함수가 담당해야 할 일:
-
-- 서버 권한 확인
-- 이미 초기화된 직업의 중복 적용 방지
-- `CharacterClassDefinition` 설정
-- 기본 Attribute 초기화
-- 직업 AbilitySet 지급
-- PlayerState의 `SetPublicCharacterSnapshot()` 갱신
-- 영속 저장 요청
+저장 어댑터에는 `CaptureSnapshot()`의 ID·레벨·전직 이력을 전달하고, 새 소유자 초기화 전에 `RestoreSnapshot()`으로 검증·복원한다. DB 저장과 handover 연결은 별도 구현 범위다. 자세한 사용 조건은 [확장 기반 문서](Architecture/Extension_Foundation_2026-09-19.md)를 따른다.
 
 Character Blueprint 변수에 클라이언트가 직접 직업 DataAsset을 쓰게 만들면 안 된다.
 
@@ -274,6 +266,8 @@ DA_Advancement_Berserker
 AdvancementId        = Berserker
 BaseClass             = DA_Class_Warrior
 RequiredLevel         = 20
+RequiredAdvancementIds = 모두 취득해야 하는 선행 전직 ID
+ExclusiveBranch       = 동시에 활성화할 수 없는 분기의 공통 키 (선택)
 RequiredTags          = 요구 조건 태그
 BlockedTags           = 금지 조건 태그
 OverrideAttributeData = DA_Attributes_Berserker
@@ -297,9 +291,12 @@ if (Character->CanApplyAdvancementDefinition(AdvancementDefinition))
 - 레벨 확인
 - BaseClass 호환 확인
 - RequiredTags와 BlockedTags 확인
-- 이전 전직 AbilitySet 제거 정책 적용
-- 새 전직 AbilitySet 지급
-- OverrideAttributeData 적용
+- 선행 전직 취득 이력, 배타 분기, 반복 취득 및 변경 중 재진입 검사
+- Additive는 누적 부여, ReplacePreviousAdvancement는 전직 부여 묶음 전체 회수 후 새 묶음 부여
+- 직업·장비가 공유하는 스타일 능력은 마지막 제공자가 해제할 때 회수
+- 현재 전직·취득 이력·revision 게시
+
+`OverrideAttributeData`는 이후 명시적인 속성 초기화가 참조한다. 전직 적용 순간 체력/마나를 재충전하는 동작은 자동 수행하지 않는다.
 
 ### 권장 서버 흐름
 
@@ -315,7 +312,7 @@ if (Character->CanApplyAdvancementDefinition(AdvancementDefinition))
 
 클라이언트가 임의의 DataAsset 경로를 전송하게 하지 말고 `AdvancementId`만 요청한 뒤 서버 테이블에서 정의를 찾는 방식이 안전하다.
 
-현재 전직 정의와 AdvancementId 자체는 Character에서 복제되지 않는다. 다른 플레이어에게 공개해야 할 직업 표시는 `AProject_JPlayerState::SetPublicCharacterSnapshot()`을 통해 공개 스냅샷으로 전달해야 한다.
+현재 직업·전직·레벨·revision은 ProgressionComponent의 public 상태로 복제하고, 전체 전직 취득 이력은 owner-only로 복제한다. 공개 ClassId/Level도 PlayerState에서 자동 갱신한다. 서버가 정의를 변경하는 도중 다른 변경 요청은 거절한다.
 
 ---
 
@@ -336,7 +333,13 @@ Ability.*   = Ability 종류와 상태 식별
 State.*     = 현재 캐릭터 상태
 ```
 
-### 6.2 AbilitySet 생성
+### 6.2 AbilitySet 또는 스타일 내부 작성
+
+한 스타일에만 속하는 능력/효과는 `CombatStyle.InlineAbilities` / `InlineEffects`에서 직접 작성할 수 있다. 다른 콘텐츠와 공유할 묶음은 기존 AbilitySet을 사용한다. 두 경로의 입력 태그 중복은 검증 오류다. 콤보 없는 스타일은 `bUsesCombo=false`, 무기 애니메이션이 필요 없으면 `bRequiresWeaponAnimation=false`를 선택한다.
+
+`bDeriveAttackCatalog=true`이면 ComboDefinition과 AdditionalAttacks에서 공격 목록을 생성하므로 별도 AttackSet 연결은 비운다. 플레이 중 정의 변경은 지원하지 않으며 에디터 수정 후 PIE를 다시 시작한다.
+
+공유 AbilitySet을 작성하는 경우:
 
 `Project_JAbilitySet` DataAsset을 만들고 `GrantedAbilityEntries`에 추가한다.
 

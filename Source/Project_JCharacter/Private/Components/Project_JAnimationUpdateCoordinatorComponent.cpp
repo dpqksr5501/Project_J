@@ -1,6 +1,7 @@
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -17,9 +18,19 @@ void UProject_JAnimationUpdateCoordinatorComponent::EndPlay(const EEndPlayReason
 	Super::EndPlay(EndPlayReason);
 }
 
+void UProject_JAnimationUpdateCoordinatorComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	RestoreRemoteAnimationUpdateRateOptimization();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimationUpdate(
 	float DurationSeconds)
 {
+	if (!FMath::IsFinite(DurationSeconds) || DurationSeconds <= 0.0f)
+	{
+		return;
+	}
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner || CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)
 	{
@@ -33,8 +44,15 @@ void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimation
 		return;
 	}
 
+	// Release the exact mesh we changed if an avatar replaces its mesh mid-window.
+	if (bUrgentAnimationUpdateActive && OverriddenMesh.Get() != MeshComponent)
+	{
+		RestoreRemoteAnimationUpdateRateOptimization();
+	}
+	const float RemainingDuration = World->GetTimerManager().GetTimerRemaining(RestoreAnimationUpdateRateTimer);
 	if (!bUrgentAnimationUpdateActive)
 	{
+		OverriddenMesh = MeshComponent;
 		bRestoreAnimationUpdateRateOptimization = MeshComponent->bEnableUpdateRateOptimizations;
 	}
 
@@ -42,14 +60,15 @@ void UProject_JAnimationUpdateCoordinatorComponent::RequestUrgentRemoteAnimation
 	// one-shot boundaries briefly take presentation priority, then restore the
 	// exact mesh policy that was active before the first overlapping request.
 	bUrgentAnimationUpdateActive = true;
-	MeshComponent->bEnableUpdateRateOptimizations = false;
-
-	const float UrgentUpdateDuration = FMath::Max(0.0f, DurationSeconds);
-	if (UrgentUpdateDuration <= 0.0f)
+	if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(MeshComponent))
 	{
-		RestoreRemoteAnimationUpdateRateOptimization();
-		return;
+		Budgeted->RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::Presentation);
 	}
+	else { MeshComponent->bEnableUpdateRateOptimizations = false; }
+
+	// Requests compose by their latest expiry. A short landing/jump event must
+	// never shorten the presentation window already granted to another event.
+	const float UrgentUpdateDuration = FMath::Max(DurationSeconds, RemainingDuration);
 
 	World->GetTimerManager().SetTimer(
 		RestoreAnimationUpdateRateTimer,
@@ -71,12 +90,16 @@ void UProject_JAnimationUpdateCoordinatorComponent::RestoreRemoteAnimationUpdate
 		World->GetTimerManager().ClearTimer(RestoreAnimationUpdateRateTimer);
 	}
 
-	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* MeshComponent = CharacterOwner ? CharacterOwner->GetMesh() : nullptr;
-	if (MeshComponent)
+	USkeletalMeshComponent* MeshComponent = OverriddenMesh.Get();
+	if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(MeshComponent))
+	{
+		Budgeted->ReleaseAnimationUpdate(this);
+	}
+	else if (MeshComponent)
 	{
 		MeshComponent->bEnableUpdateRateOptimizations = bRestoreAnimationUpdateRateOptimization;
 	}
 
 	bUrgentAnimationUpdateActive = false;
+	OverriddenMesh.Reset();
 }

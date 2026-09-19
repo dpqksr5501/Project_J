@@ -8,6 +8,7 @@
 
 struct FProject_JAbilityGrantRecord
 {
+	int32 LeaseCount = 1;
 	TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	TArray<FActiveGameplayEffectHandle> EffectHandles;
 };
@@ -30,6 +31,8 @@ public:
 	bool AbilityInputTagPressed(const FGameplayTag& InputTag);
 	bool AbilityInputTagReleased(const FGameplayTag& InputTag);
 	bool ReserveAbilityGrantSource(FName SourceId);
+	/** Acquire one provider lease. Only the first provider creates specs/effects. */
+	bool AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant);
 	void RegisterGrantedAbility(FName SourceId, FGameplayAbilitySpecHandle Handle);
 	void RegisterGrantedEffect(FName SourceId, FActiveGameplayEffectHandle Handle);
 	bool RemoveAbilityGrantSource(FName SourceId);

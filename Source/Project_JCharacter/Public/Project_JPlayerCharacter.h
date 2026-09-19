@@ -7,6 +7,7 @@
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
+#include "Combat/Project_JCombatConfiguration.h"
 #include "GameplayTagContainer.h"
 #include "Logging/LogMacros.h"
 #include "Network/Project_JHandoverSerializable.h"
@@ -269,6 +270,7 @@ protected:
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
 	void OnCombatOutroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	void RegisterCombatStateTagEvents();
@@ -438,6 +440,8 @@ public:
 	const UProject_JWeaponAnimProfile* GetWeaponAnimProfile() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 	const UProject_JCombatStyleDefinition* GetCombatStyleDefinition() const;
+	const FProject_JCombatConfiguration& GetCombatConfiguration() const;
+	virtual void OnProgressionChanged() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Style")
 	void SetCurrentCombatStyle(UProject_JCombatStyleDefinition* InCombatStyle);
@@ -459,11 +463,11 @@ public:
 
 	/** True while an entering-combat montage is preparing the combat animation layer. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
-	bool IsCombatIntroPlaying() const { return bIsPlayingCombatIntro || bReplicatedCombatIntroPresentation; }
+	bool IsCombatIntroPlaying() const;
 
 	/** True while the combat-exit sheathe montage owns the FullBody presentation. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
-	bool IsCombatOutroPlaying() const { return bIsPlayingCombatOutro; }
+	bool IsCombatOutroPlaying() const;
 
 	/** Called by the weapon's sheathe montage notify at the hand-to-back frame. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
@@ -531,6 +535,12 @@ public:
 	TObjectPtr<UProject_JMotionMatchingAssetSet> MotionMatchingAssetSet = nullptr;
 
 	/** Derived locally from immutable equipped item data. */
+	UPROPERTY(Transient) FProject_JCombatConfiguration CombatConfiguration;
+	TWeakObjectPtr<const UProject_JCharacterClassDefinition> ConfigurationClass;
+	TWeakObjectPtr<const UProject_JCharacterAdvancementDefinition> ConfigurationAdvancement;
+	TWeakObjectPtr<const UProject_JCombatStyleDefinition> ConfigurationEquipment;
+	bool bCombatConfigurationBuilt = false;
+
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentCombatStyle, Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Style")
 	TObjectPtr<UProject_JCombatStyleDefinition> CurrentCombatStyle = nullptr;
 
@@ -571,16 +581,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Animation", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float CombatIntroMontagePlayRate = 1.0f;
 
-	/** True while the combat intro montage is active. */
+	/** Compatibility view of CombatIntroComponent; gameplay reads the component. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bIsPlayingCombatIntro = false;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UAnimMontage> ActiveCombatOutroMontage = nullptr;
-
-	bool bIsPlayingCombatOutro = false;
-
-	/** True while combat mode is waiting for the intro montage to finish. */
+	/** Compatibility view of CombatIntroComponent's pending gameplay transition. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation")
 	bool bPendingCombatModeFromIntro = false;
 
@@ -596,6 +601,7 @@ protected:
 	FGameplayTag CombatToggleAbilityTag;
 
 private:
+	void RefreshCombatTransitionViews();
 	bool bHadMoveInputForReplication = false;
 	bool bSprintInputHeld = false;
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;

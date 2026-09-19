@@ -34,6 +34,20 @@ public:
 	UFUNCTION(BlueprintPure, Category="Mount|Flight") bool IsLanding() const { return FlightState == EProject_JMountFlightState::Landing; }
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void UnPossessed() override;
+	virtual void OnRep_Controller() override;
+	/** Keeps inherited Blueprint Event Tick alive; native subclasses can opt in below. */
+	void RefreshFlightTickEnabled();
+	void ClearFlightInputBindings();
+	void ClearPendingTakeOffRequest();
+	/** Opt in when a native child Tick has work outside the authoritative flight state machine. */
+	UPROPERTY(EditDefaultsOnly, Category="Mount|Flight|Update")
+	bool bKeepActorTickEnabled = false;
+	TWeakObjectPtr<class UEnhancedInputComponent> BoundFlightInputComponent;
+	TArray<uint32> FlightInputBindingHandles;
+	bool bHasBlueprintTick = false;
 	void HandleMove(const struct FInputActionValue& Value);
 	void HandleLook(const struct FInputActionValue& Value);
 	void HandleAscend(const struct FInputActionValue& Value);

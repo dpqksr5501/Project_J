@@ -1,0 +1,532 @@
+{
+  "date": "2026-09-19",
+  "engine": "Unreal Engine 5.8",
+  "platform": "Win64 Development",
+  "baseCommit": "f9178cace833f2ba81befee794416fc49b996dc2",
+  "builds": [
+    {
+      "target": "Project_JEditor",
+      "result": "Succeeded",
+      "path": "Saved/Logs/ExtensionArchitecture_Project_JEditor_Final.log",
+      "sha256": "0d80e7d5ed8f1f9320a894b012a3be18dc5afe63613e624703b10b9a071f4ab8"
+    },
+    {
+      "target": "Project_J",
+      "result": "Succeeded",
+      "path": "Saved/Logs/ExtensionArchitecture_Game_Relink.log",
+      "sha256": "9a62c9492eb20dbc43d41443278db368897ee23d652f29906910dd3fcafd680e"
+    }
+  ],
+  "automation": {
+    "passed": true,
+    "exitCode": 0,
+    "succeeded": 61,
+    "succeededWithWarnings": 0,
+    "errors": 0,
+    "warnings": 0,
+    "missing": [],
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.CommandResolution",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Equipment.OperationResult",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.OwnerRelevance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Social.Membership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.HundredCharacters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.StopDuringAttack",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Configuration.DomainComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Grants.SharedOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.BranchesAndGrants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.GraphValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.Budgeted",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.FullRate",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.WorldCleanup",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationContractAudit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatPosePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Animation.SnapshotBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Camera.Possession",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Combat.RewindHistory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Equipment.ReentrantRemoval",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.CommandAliasRelease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.Rebinding",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Interaction.ServerSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Inventory.CallbacksAndBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Pooling.DefinitionBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMO.Catalog",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "run": "Saved/Validation/ExtensionArchitecture_20260919/Regression03",
+    "filters": "ProjectJ.Extension.+ProjectJ.Internal.+ProjectJ.Architecture.+ProjectJ.Animation.StopIdle+ProjectJ.Combat.+ProjectJ.Modernization.+ProjectJ.EquipmentSoak.+ProjectJ.GroupB.+ProjectJ.MMO.",
+    "rendered": false,
+    "reportArtifact": {
+      "path": "Saved/Validation/ExtensionArchitecture_20260919/Regression03/Automation/index.json",
+      "sha256": "ef4b0ae6c49539664ed4ba8b8fd98356570a043c728ec52bc587ce4465a6358e"
+    },
+    "logArtifact": {
+      "path": "Saved/Validation/ExtensionArchitecture_20260919/Regression03/Automation.log",
+      "sha256": "6c6e02951521e3ca113f8dbb39b1cdcb79a9ee1bc0683b0eb0e836c0994d554e"
+    }
+  },
+  "moduleValidation": {
+    "command": "python Scripts/Validation/Validate-MMOArchitecture.py",
+    "passed": true,
+    "features": 205,
+    "domains": 20,
+    "newModuleDependencies": false
+  },
+  "sourceSnapshot": [
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerState.cpp",
+      "sha256": "D0279AA3F84A99046CE4E235CDB11A9FF821D18D70B3254BDF6B509971731AE4"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerState.h",
+      "sha256": "B98963B12F5D8D6951AFB4FB86BDC82F8350618D44FD294564EBEA034090AB75"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JProgressionAvatarTests.cpp",
+      "sha256": "5C8181CFBBC61BB36696CABBBF093D586D71AA76F6901D976435B60D56EAE61A"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp",
+      "sha256": "761CBEBDF9430E4B29087DBB44D85842C3FCFA6610736837F894C34DBBF86082"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterClassDefinition.cpp",
+      "sha256": "46F25C5CC6228643C44A71C158B92F773A2FBBB2AE93A17E0818AFB17F696E11"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "sha256": "07EDADCD3DC355F7B5DA0299B3C241C594B7B8E62BA8A1B3CA11B66DC24213EC"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp",
+      "sha256": "5F9178F738DA9A7804E310658686FD3D9FF83CE125CB8D9BAA05EF51225D500E"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp",
+      "sha256": "BFB31D268DA0495387B5DB08FA070E380924FF94D655CFCD8FAA1C783C1B24DF"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JCombatConfiguration.cpp",
+      "sha256": "E6551B9D39A9D93E8317A727B2185B237BBD27EC3DFD1A644AACA251888A86C9"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JCombatStyleDefinition.cpp",
+      "sha256": "3BA476B5CCCB4E15749C83711B235147F83DEAE7B4DF4F9011B32549D9F556C3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+      "sha256": "88C26D88E97BC4C34F45837920D8D162797EF458185B4758CA6F70C5820D0A31"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp",
+      "sha256": "D0EBE8BDD3B4D314D40B3750E92974B574A90B645CA2BC8D55DA30350A6CA781"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp",
+      "sha256": "E000A546595A692D92BB5682CCFC50821CC60C3829F54BBA62BCDA346459721A"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp",
+      "sha256": "270D33F184B845B07E295FEF50F3CF68A2F3DC81EA8C3452F16D3F2EA51221BB"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "sha256": "29D58E585641B7573B269911BBE04ED11EB0B07ABEFA42BCD5C7D0DCC4A8DB67"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JNPCCharacter.cpp",
+      "sha256": "D0B9B483818EA8BD8F3BDB88F9BDA2BDBA8CC4EB9E1AB174BA3D7C8CC044CCE7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "5AE04AF4C212D071DA5C2832D26B4081029946881DC643C0A6BF9B0F4E3ACF11"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JExtensionArchitectureTests.cpp",
+      "sha256": "BCD86517B4895866196224403ABBA40DA32E49689AE92A7F4158B664AE9BEC61"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterClassDefinition.h",
+      "sha256": "83F0F5D4E06888AAF6D9D96B0E5A7007C5D55E5B7BBCBFEE3505DEDD9B2A4CE1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h",
+      "sha256": "A73E9D0115E902E4342F5C0C9E13E852874F1F36B895C0F580E2B0317D21A33F"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JAttackDefinition.h",
+      "sha256": "8E796068C313D6B1855FD9A4D7D0B7A41762E6485297ABEF0C6EAAA2D8CA941A"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatConfiguration.h",
+      "sha256": "BA55D0E32A71F46C68DD6F273E92CE0B79745528C6DD2CFBF7489AEADF97E000"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatStyleDefinition.h",
+      "sha256": "8890419AC0BFAE630E72EDF5C0DC9622ACD9768561E85D0F5183D88366FC694C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+      "sha256": "2773828C36584F104ED241232D9E2C505B4149987AB6AA262DA00B52E86EE360"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+      "sha256": "7B29F7688BA4172E04D97849E613F2B69FB45B7738C818990F406E42A12008F0"
+    },
+    {
+      "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+      "sha256": "152D1F0307A732D7F5684B26607BE0BB4A9671DDFD86693F71C12CC1F13BF863"
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+      "sha256": "8601626DAEDFEC167A28A742187AA1690F39394A5EE25C526F1E8CDCE5047BAD"
+    }
+  ],
+  "scopeNotes": [
+    "61 tests: 7 extension tests and 54 existing regression tests; final run has zero warnings and errors.",
+    "NullRHI native automation includes an authored locomotion fixture, not a manual visual ABP review or a multiplayer network test.",
+    "No assets, Config, project descriptor, or repository history were changed.",
+    "Game rebuild encountered transient generated-file access/sharing failures. Process and Windows Application Event Log checks found no matching active build process or runtime error event. A subsequent forced relink completed successfully; exact external lock source was not established.",
+    "Snapshot adapters do not implement database persistence, reconnect, PlayerState replacement during seamless travel, or handover payload integration."
+  ]
+}

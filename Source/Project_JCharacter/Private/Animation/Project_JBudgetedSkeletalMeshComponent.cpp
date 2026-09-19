@@ -46,7 +46,7 @@ bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
 	const auto* Pawn = Cast<APawn>(GetOwner());
 	const auto* Anim = GetAnimInstance();
 	const bool bLocalPlayer = Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled();
-	return !bEnding && bAllowProjectBudget && !bCombatCritical && bRequestedTick && IsRegistered() && HasBegunPlay()
+	return !bEnding && bAllowProjectBudget && !IsCombatCritical() && !bUpdateOverride && bRequestedTick && IsRegistered() && HasBegunPlay()
 		&& World && World->IsGameWorld() && !World->bIsTearingDown && World->GetNetMode() != NM_DedicatedServer
 		&& GetOwner() && !GetOwner()->IsActorBeingDestroyed() && !bLocalPlayer && !IsSimulatingPhysics()
 		&& !LeaderPoseComponent.IsValid() && Anim && Anim->RootMotionMode != ERootMotionMode::RootMotionFromEverything
@@ -86,6 +86,61 @@ void UProject_JBudgetedSkeletalMeshComponent::SetCombatCritical(bool bCritical)
 	// Rejoin only in the next policy pass, after all end/montage callbacks complete.
 }
 
+void UProject_JBudgetedSkeletalMeshComponent::RequestAnimationUpdate(UObject* Requester, EProject_JAnimationUpdateRequirement Requirement)
+{
+	check(IsInGameThread());
+	if (bEnding || !IsValid(Requester)) { return; }
+	UpdateRequirements.Add(Requester, Requirement);
+	RefreshAnimationUpdateRequirements();
+}
+
+void UProject_JBudgetedSkeletalMeshComponent::ReleaseAnimationUpdate(UObject* Requester)
+{
+	check(IsInGameThread());
+	UpdateRequirements.Remove(Requester);
+	RefreshAnimationUpdateRequirements();
+}
+
+void UProject_JBudgetedSkeletalMeshComponent::RefreshAnimationUpdateRequirements()
+{
+	bool bNeedsGameplayPose = false;
+	for (auto It = UpdateRequirements.CreateIterator(); It; ++It)
+	{
+		if (!It.Key().IsValid()) { It.RemoveCurrent(); }
+		else { bNeedsGameplayPose |= It.Value() == EProject_JAnimationUpdateRequirement::GameplayPose; }
+	}
+	const bool bNeedsUpdate = !UpdateRequirements.IsEmpty();
+	if (bNeedsUpdate && !bUpdateOverride)
+	{
+		// ABA must return its saved policy before we capture the baseline.
+		LeaveBudget();
+		bOverrideSavedURO = bEnableUpdateRateOptimizations;
+	}
+	if (bNeedsGameplayPose && !bGameplayPoseOverride)
+	{
+		OverrideSavedVisibility = VisibilityBasedAnimTickOption;
+		bOverrideSavedSuppressNotifies = bSuppressNotifyEventDispatch;
+	}
+	if (bNeedsGameplayPose)
+	{
+		VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		bSuppressNotifyEventDispatch = false;
+	}
+	else if (bGameplayPoseOverride)
+	{
+		// Respect newer explicit policies where the effective value differs.
+		if (VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones)
+		{
+			VisibilityBasedAnimTickOption = OverrideSavedVisibility;
+		}
+		if (!bSuppressNotifyEventDispatch) { bSuppressNotifyEventDispatch = bOverrideSavedSuppressNotifies; }
+	}
+	if (bNeedsUpdate) { bEnableUpdateRateOptimizations = false; }
+	else if (bUpdateOverride && !bEnableUpdateRateOptimizations) { bEnableUpdateRateOptimizations = bOverrideSavedURO; }
+	bGameplayPoseOverride = bNeedsGameplayPose;
+	bUpdateOverride = bNeedsUpdate;
+}
+
 void UProject_JBudgetedSkeletalMeshComponent::SetComponentTickEnabled(bool bEnabled)
 {
 	bRequestedTick = bEnabled;
@@ -96,6 +151,8 @@ void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 {
 	bEnding = true;
 	LeaveBudget();
+	UpdateRequirements.Reset();
+	RefreshAnimationUpdateRequirements();
 	if (Service.IsValid()) { Service->UnregisterMesh(this); }
 	Service.Reset();
 	OnAnimInitialized.RemoveDynamic(this, &ThisClass::BindAnimationEvents);

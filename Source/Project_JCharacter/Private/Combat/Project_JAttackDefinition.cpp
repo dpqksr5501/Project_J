@@ -31,11 +31,11 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingTag", "AttackTag is required."));
 	}
-	if (!Montage)
+	if ((bMontageDriven || MovementPolicy != EProject_JAttackMovementPolicy::InPlace) && !Montage)
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingMontage", "Montage is required."));
 	}
-	if (PlayRate <= 0.0f)
+	if (!FMath::IsFinite(PlayRate) || PlayRate <= 0.0f)
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidPlayRate", "PlayRate must be greater than zero."));
 	}

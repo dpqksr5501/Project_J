@@ -62,14 +62,13 @@ public:
 
 private:
 	friend class FProjectJRewindHistoryTest;
+	friend class FProjectJRewindSchedulingTest;
 	// Fixed-capacity circular buffer storing past transforms. It allocates once in
 	// BeginPlay and never shifts elements when old records expire.
 	TArray<FProject_JPoseHistoryBuffer> PoseHistory;
 	int32 PoseHistoryStartIndex = 0;
 	int32 PoseHistoryCount = 0;
 
-	float TimeSinceLastRecord = 0.0f;
-	
 	// Helper to find the closest poses to interpolate between
 	bool GetPosesForTime(float Time, FProject_JPoseHistoryBuffer& OutPose1, FProject_JPoseHistoryBuffer& OutPose2, float& OutAlpha) const;
 	const FProject_JPoseHistoryBuffer& GetPoseHistoryRecord(int32 LogicalIndex) const;

@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerState.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
+#include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
@@ -11,6 +13,7 @@
 AProject_JPlayerState::AProject_JPlayerState()
 {
 	SetNetUpdateFrequency(100.0f);
+	ProgressionComponent = CreateDefaultSubobject<UProject_JProgressionComponent>(TEXT("Progression"));
 
 	InventoryComponent = CreateDefaultSubobject<UProject_JInventoryComponent>(TEXT("InventoryComponent"));
 	EquipmentManagerComponent = CreateDefaultSubobject<UProject_JEquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
@@ -37,6 +40,19 @@ UProject_JAttributeSet* AProject_JPlayerState::GetProjectJAttributeSet() const
 	return AttributeSet;
 }
 
+void AProject_JPlayerState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	ProgressionComponent->OnChanged.AddUObject(this, &ThisClass::RefreshPublicProgressionSnapshot);
+}
+
+void AProject_JPlayerState::RefreshPublicProgressionSnapshot()
+{
+	const auto& State = ProgressionComponent->GetState();
+	if (HasAuthority() && State.Revision > 0)
+		SetPublicCharacterSnapshot(State.ClassDefinition ? State.ClassDefinition->ClassId : NAME_None, State.Level);
+}
+
 void AProject_JPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
@@ -55,6 +71,7 @@ void AProject_JPlayerState::BeginPlay()
 
 void AProject_JPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	ProgressionComponent->OnChanged.RemoveAll(this);
 	if (HasAuthority())
 	{
 		if (UGameInstance* GameInstance = GetGameInstance())

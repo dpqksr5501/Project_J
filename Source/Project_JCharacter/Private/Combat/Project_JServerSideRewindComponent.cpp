@@ -25,6 +25,10 @@ bool DoesTraceIntersectCapsule(const FVector& TraceStart, const FVector& TraceEn
 UProject_JServerSideRewindComponent::UProject_JServerSideRewindComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	// Capture the final world capsule after movement/physics, not an arbitrary
+	// pre-movement pose carrying this frame's timestamp.
+	PrimaryComponentTick.TickGroup = TG_PostPhysics;
 	// By default, we only want this ticking on the server
 	bTickInEditor = false;
 }
@@ -38,6 +42,7 @@ void UProject_JServerSideRewindComponent::BeginPlay()
 	SetComponentTickEnabled(bRecord);
 	MaxRecordTime = FMath::IsFinite(MaxRecordTime) ? FMath::Clamp(MaxRecordTime, 0.05f, 10.0f) : 1.0f;
 	RecordRateHz = FMath::IsFinite(RecordRateHz) ? FMath::Clamp(RecordRateHz, 1.0f, 120.0f) : 30.0f;
+	SetComponentTickInterval(1.0f / RecordRateHz);
 	PoseHistory.SetNum(bRecord ? FMath::CeilToInt(MaxRecordTime * RecordRateHz) + 2 : 0);
 	ResetHistory();
 }
@@ -46,7 +51,6 @@ void UProject_JServerSideRewindComponent::ResetHistory()
 {
 	check(IsInGameThread());
 	PoseHistoryStartIndex = PoseHistoryCount = 0;
-	TimeSinceLastRecord = 0.0f;
 }
 
 void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -61,13 +65,8 @@ void UProject_JServerSideRewindComponent::TickComponent(float DeltaTime, ELevelT
 		return;
 	}
 
-	TimeSinceLastRecord += DeltaTime;
-	const float RecordInterval = 1.0f / FMath::Max(1.0f, RecordRateHz);
-	if (PoseHistoryCount > 0 && TimeSinceLastRecord < RecordInterval)
-	{
-		return;
-	}
-	TimeSinceLastRecord = FMath::Fmod(TimeSinceLastRecord, RecordInterval);
+	// The engine's interval scheduler owns cadence (including frame overrun).
+	// Do not run a second accumulator or invent historical poses after a hitch.
 
 	FProject_JPoseHistoryBuffer NewRecord;
 	NewRecord.Timestamp = GetWorld()->GetTimeSeconds();

@@ -1,4 +1,5 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Inventory/Project_JItemDefinition.h"
@@ -339,7 +340,7 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 			ItemInstance.InstanceId);
 	}
 
-	if (!ItemDef)
+	if (!ItemDef || (ItemDef->CombatStyleDefinition && !ItemDef->CombatStyleDefinition->IsRuntimeReady()))
 	{
 		return FProject_JEquipmentOperationResult::FailureResult(
 			EProject_JEquipmentOperationFailure::InvalidDefinition,
