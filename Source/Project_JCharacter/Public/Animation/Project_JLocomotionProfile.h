@@ -400,6 +400,35 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionPresentationPolicy
 	/** Maximum absolute value of either lean axis exposed to the AnimGraph. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LeanAxisClamp = 1.0f;
+
+	/** Enables lean additive calculation while in air (jumping/falling). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean")
+	bool bEnableLeanInAir = true;
+
+	/** Scale applied to lean while in air to avoid extreme distortion. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float AirLeanMultiplier = 1.0f;
+
+	/** OTM 스프린트 중 코너링/선회 시 Additive Lean을 비활성화할지 여부.
+	 * 스프린트 선회 시에는 모션 매칭이 자체 뱅킹/기울기가 포함된 Sprint Diamond 애니메이션을
+	 * 선택하므로, Additive Lean이 중첩되어 척추가 과도하게 비틀리는 현상을 방지합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean")
+	bool bDisableSprintLeanOnCurvature = true;
+
+	/** OTM 스프린트 중 Additive Lean을 차단하는 속도-입력 편차 각도 임계값 (기본값: 16.0도).
+	 * 이동 속도 벡터와 이동 입력 벡터의 사이 각(VelocityToMoveInputAngle)이 이 값 이상이면
+	 * 곡선 주행(Diamond) 상태로 판정하여 Lean을 비활성화합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "5.0", ClampMax = "90.0", Units = "deg"))
+	float SprintLeanCutoffVelocityAngle = 16.0f;
+
+	/** 린 차단 해제 시 깜빡임(Flapping) 방지를 위한 히스테리시스 각도 (기본값: 3.0도).
+	 * 차단된 후 (CutoffAngle - HysteresisAngle, 예: 16 - 3 = 13도) 이하로 복귀해야 다시 Lean이 활성화됩니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", ClampMax = "10.0", Units = "deg"))
+	float SprintLeanAngleHysteresis = 3.0f;
+
+	/** 스프린트 곡선 주행 린 차단 판정을 적용할 최소 지상 속도 (기본값: 550.0 cm/s). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Presentation|Lean", meta = (ClampMin = "0.0", Units = "cm/s"))
+	float SprintLeanMinSpeedThreshold = 550.0f;
 };
 
 /**

@@ -1733,7 +1733,6 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 		// has no State Controller lifetime of its own, so it must not emit empty
 		// hold/exit diagnostics or request a second direct Blend Stack path.
 		OneShot.PresentationState = EProject_JStateControllerPresentationState::Disabled;
-		OneShot.bRequested = false;
 	}
 }
 
@@ -2699,15 +2698,85 @@ void UProject_JCharacterAnimInstance::FinalizeThreadSafeData(FProject_JAnimThrea
 	const FProject_JLocomotionPresentationPolicy* PresentationPolicy = Profile
 		? &Profile->PresentationPolicy
 		: nullptr;
-	if (!PresentationPolicy || !PresentationPolicy->bEnableLean || Data.Air.bIsInAir)
+	if (!PresentationPolicy || !PresentationPolicy->bEnableLean)
+	{
+		bSprintCurvatureLeanSuppressed = false;
+		Data.Movement.bSprintCurvatureLeanSuppressed = false;
+		Data.Movement.bShouldApplyLeanAdditive = false;
+		Data.Movement.LeanAmount = FVector2D::ZeroVector;
+		return;
+	}
+
+	const bool bIsActivelySprinting = Data.LocomotionContext.bIsMoving &&
+		(Data.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint);
+	const bool bIsAirLeanAllowed = Data.Air.bIsInAir && PresentationPolicy->bEnableLeanInAir;
+
+	bool bShouldApplyLean = (bIsActivelySprinting || bIsAirLeanAllowed);
+
+	// OTM 스프린트 중 코너링/곡선 주행 시 린 차단 판정:
+	// 모션 매칭이 자체 뱅킹/기울기가 포함된 Sprint Diamond 애니메이션을 재생하므로,
+	// Additive Lean 중첩으로 인한 척추 왜곡을 방지하기 위해 각도 임계값 기반으로 차단합니다.
+	if (bShouldApplyLean && !Data.Air.bIsInAir && PresentationPolicy->bDisableSprintLeanOnCurvature)
+	{
+		const bool bIsOTMSprint = (Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement) &&
+			bIsActivelySprinting &&
+			(Data.Movement.GroundSpeed >= PresentationPolicy->SprintLeanMinSpeedThreshold);
+
+		if (bIsOTMSprint)
+		{
+			const float Angle = Data.Movement.VelocityToMoveInputAngle;
+			const float CutoffAngle = PresentationPolicy->SprintLeanCutoffVelocityAngle;
+			const float Hysteresis = PresentationPolicy->SprintLeanAngleHysteresis;
+
+			if (bSprintCurvatureLeanSuppressed)
+			{
+				// 이미 차단 중인 경우: (CutoffAngle - Hysteresis) 이하로 떨어져야 직선 복귀로 판정하여 린 재활성화
+				if (Angle <= FMath::Max(0.0f, CutoffAngle - Hysteresis))
+				{
+					bSprintCurvatureLeanSuppressed = false;
+				}
+			}
+			else
+			{
+				// 정상 린 적용 중: CutoffAngle 이상이면 곡선 주행(Diamond)으로 판정하여 린 차단
+				if (Angle >= CutoffAngle)
+				{
+					bSprintCurvatureLeanSuppressed = true;
+				}
+			}
+
+			if (bSprintCurvatureLeanSuppressed)
+			{
+				bShouldApplyLean = false;
+			}
+		}
+		else
+		{
+			bSprintCurvatureLeanSuppressed = false;
+		}
+	}
+	else
+	{
+		bSprintCurvatureLeanSuppressed = false;
+	}
+
+	Data.Movement.bSprintCurvatureLeanSuppressed = bSprintCurvatureLeanSuppressed;
+	Data.Movement.bShouldApplyLeanAdditive = bShouldApplyLean;
+	if (!Data.Movement.bShouldApplyLeanAdditive)
 	{
 		Data.Movement.LeanAmount = FVector2D::ZeroVector;
 		return;
 	}
 
-	const float LeanMultiplier = Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+	float LeanMultiplier = Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
 		? PresentationPolicy->CombatStrafeLeanMultiplier
 		: PresentationPolicy->OrientToMovementLeanMultiplier;
+
+	if (Data.Air.bIsInAir)
+	{
+		LeanMultiplier *= PresentationPolicy->AirLeanMultiplier;
+	}
+
 	const float LeanClamp = FMath::Max(0.0f, PresentationPolicy->LeanAxisClamp);
 	// The state component stores local X as forward/braking and local Y as lateral.
 	// Lean consumers conventionally expose X=lateral and Y=forward/back.

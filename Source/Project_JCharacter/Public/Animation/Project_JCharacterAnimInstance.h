@@ -59,6 +59,14 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FVector2D LeanAmount = FVector2D::ZeroVector;
 
+	/** True if additive lean should be enabled (e.g. while actively sprinting or allowed in-air). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bShouldApplyLeanAdditive = false;
+
+	/** True if sprint additive lean is suppressed due to cornering/curvature (Sprint Diamond). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bSprintCurvatureLeanSuppressed = false;
+
 	/** Animation-only predicted braking distance, in centimetres. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float PredictedStopDistance = 0.0f;
@@ -933,6 +941,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
 	FVector2D GetThreadSafeLeanAmount() const;
 
+	/** Returns true when additive lean should be enabled (actively sprinting or allowed in-air). */
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeShouldApplyLeanAdditive() const;
+
+	/** Returns true when sprint additive lean is suppressed due to cornering/curvature (Sprint Diamond active). */
+	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
+	bool GetThreadSafeIsSprintCurvatureLeanSuppressed() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Locomotion", meta = (BlueprintThreadSafe))
 	float GetThreadSafePredictedStopDistance() const;
 
@@ -1366,6 +1382,9 @@ public:
 	mutable bool bIsJumpAirReselecting = false;
 	mutable float SavedJumpAirElapsed = 0.0f;
 	mutable EProject_JStateControllerStrafeDirection PendingJumpAirDirection = EProject_JStateControllerStrafeDirection::Forward;
+
+	/** 스프린트 곡선 주행(Diamond) 시 린 차단 히스테리시스 상태 플래그 */
+	mutable bool bSprintCurvatureLeanSuppressed = false;
 	/**
 	 * A combat draw/sheathe montage is a presentation boundary.  A direct Land asset
 	 * selected before that boundary must never resume after the montage blends

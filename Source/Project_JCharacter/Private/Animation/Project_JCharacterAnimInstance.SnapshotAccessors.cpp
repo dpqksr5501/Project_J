@@ -84,6 +84,16 @@ FVector2D UProject_JCharacterAnimInstance::GetThreadSafeLeanAmount() const
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.LeanAmount;
 }
 
+bool UProject_JCharacterAnimInstance::GetThreadSafeShouldApplyLeanAdditive() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.bShouldApplyLeanAdditive;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafeIsSprintCurvatureLeanSuppressed() const
+{
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.bSprintCurvatureLeanSuppressed;
+}
+
 float UProject_JCharacterAnimInstance::GetThreadSafePredictedStopDistance() const
 {
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().Movement.PredictedStopDistance;

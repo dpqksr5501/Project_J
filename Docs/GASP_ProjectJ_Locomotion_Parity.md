@@ -168,8 +168,8 @@ AProject_JPlayerCharacter
 | `Get_AOValue` | `GetThreadSafeAimYaw`, `GetThreadSafeAimPitch` | 구현됨/부분 | yaw/pitch snapshot은 구현됨; GASP curve 세부 튜닝은 확인 필요 |
 | `Get_AO_Yaw` | `GetThreadSafeAimYaw` | 구현됨 | 유지 |
 | `CalculateRelativeAccelerationAmount` | `RelativeAccelerationAmount` 계산 | 구현됨 | 유지 |
-| `Get_LeanAmount` | `LeanAmount` snapshot | 구현됨 | 유지 |
-| `Get_FootPlacementPlantSettings` | `Get_FootPlacementPlantSettings` | 구현됨 | Stop/Default profile 설정 선택 |
+| `Get_LeanAmount` | `LeanAmount` snapshot & `GetThreadSafeShouldApplyLeanAdditive` | 구현 완료 (2026-09-19) | `BS1D_Additive_Lean_Run` Mesh Space Additive 연동 완료. Sprint + In-Air C++ 스냅샷 일원화(`bIsMoving && Sprint` 또는 `InAir && bEnableLeanInAir`), `AirLeanMultiplier`(기본 1.0), 제자리 Shift/벽 비비기 방어, Sprint Arc/Diamond 곡선 주행과의 조화 완료 |
+| `Get_FootPlacementPlantSettings` | `Get_FootPlacementPlantSettings` | 구현됨 (2026-09-19 설정 갱신) | Stop/Default profile 설정 선택. ABP FootPlacement 노드: Pelvis Height Mode = `Front Planted Feet Uphill Front Feet Downhill`, Actor Movement Compensation Mode = `Sudden Motion Only` 반영 |
 | `Get_FootPlacementInterpolationSettings` | `Get_FootPlacementInterpolationSettings` | 구현됨 | Stop/Default profile 설정 선택 |
 
 ### Motion Matching
