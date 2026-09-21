@@ -1,5 +1,7 @@
 # Combat Animation Composition
 
+> **스켈레톤 및 본 리타기팅 표준:** 휴머노이드 표준 스켈레톤(`SK_Mannequin`)의 본 트랜슬레이션 리타기팅 규칙 및 GASP 호환 표준은 [`HumanoidSkeletonRetargetingStandards.md`](HumanoidSkeletonRetargetingStandards.md)를 참조한다.
+
 ## Decision
 
 Continuous weapon presentation is selected per `WeaponAnimProfile` through

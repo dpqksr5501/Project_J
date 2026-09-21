@@ -1,5 +1,7 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+> **2026-09-22 Skeleton Retargeting Standard:** GASP(`SK_UEFN_Mannequin`) 애니메이션의 Project_J 표준 스켈레톤(`SK_Mannequin`) 호환 및 본 트랜슬레이션 리타기팅 규칙은 [`HumanoidSkeletonRetargetingStandards.md`](HumanoidSkeletonRetargetingStandards.md)를 따른다.
+
 > **2026-08-24 Pivot architecture correction (takes precedence):** GASP에는
 > regular Motion Matching PSD 경로와 Experimental State Machine/Blend Stack 경로가
 > 공존한다. `IsPivoting`은 `Use Experimental State Machine`으로 둘 중 하나를
