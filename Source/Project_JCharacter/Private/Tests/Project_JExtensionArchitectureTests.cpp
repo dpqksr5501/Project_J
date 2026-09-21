@@ -20,7 +20,7 @@
 
 namespace
 {
-constexpr auto Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+constexpr auto ExtensionTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 struct FExtensionWorld
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
@@ -37,7 +37,7 @@ UProject_JAbilitySet* MakeSet()
 }
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGrantLeaseTest, "ProjectJ.Extension.Grants.SharedOwnership", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGrantLeaseTest, "ProjectJ.Extension.Grants.SharedOwnership", ExtensionTestFlags)
 bool FProjectJGrantLeaseTest::RunTest(const FString&)
 {
 	FExtensionWorld Scope;
@@ -59,7 +59,7 @@ bool FProjectJGrantLeaseTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProgressionTest, "ProjectJ.Extension.Progression.BranchesAndGrants", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProgressionTest, "ProjectJ.Extension.Progression.BranchesAndGrants", ExtensionTestFlags)
 bool FProjectJProgressionTest::RunTest(const FString&)
 {
 	FExtensionWorld Scope;
@@ -107,7 +107,7 @@ bool FProjectJProgressionTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProgressionGraphTest, "ProjectJ.Extension.Progression.GraphValidation", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProgressionGraphTest, "ProjectJ.Extension.Progression.GraphValidation", ExtensionTestFlags)
 bool FProjectJProgressionGraphTest::RunTest(const FString&)
 {
 	auto* Class = NewObject<UProject_JCharacterClassDefinition>(); Class->ClassId = TEXT("Base");
@@ -128,7 +128,7 @@ bool FProjectJProgressionGraphTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStyleAuthoringTest, "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStyleAuthoringTest, "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities", ExtensionTestFlags)
 bool FProjectJStyleAuthoringTest::RunTest(const FString&)
 {
 	const auto& Tags = FProject_JGameplayTags::Get();
@@ -156,7 +156,7 @@ bool FProjectJStyleAuthoringTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJConfigurationTest, "ProjectJ.Extension.Configuration.DomainComposition", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJConfigurationTest, "ProjectJ.Extension.Configuration.DomainComposition", ExtensionTestFlags)
 bool FProjectJConfigurationTest::RunTest(const FString&)
 {
 	auto* ClassStyle = NewObject<UProject_JCombatStyleDefinition>();
@@ -175,7 +175,7 @@ bool FProjectJConfigurationTest::RunTest(const FString&)
 	TestTrue(TEXT("Class fallback preserved"), Base.GameplayStyle == ClassStyle);
 	return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInvalidStyleEquipTest, "ProjectJ.Extension.Authoring.InvalidEquipPreservesState", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInvalidStyleEquipTest, "ProjectJ.Extension.Authoring.InvalidEquipPreservesState", ExtensionTestFlags)
 bool FProjectJInvalidStyleEquipTest::RunTest(const FString&)
 {
 	FExtensionWorld Scope;
