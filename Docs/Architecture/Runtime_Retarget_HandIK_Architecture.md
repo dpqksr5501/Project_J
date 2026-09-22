@@ -106,26 +106,23 @@ flowchart TD
 
 실제 캐릭터 블루프린트(`BP_GreatSword` / `AProject_JPlayerCharacter`) 내부의 컴포넌트 부모-자식 트리 구조는 다음과 같이 구성되어 있습니다:
 
-```
-[Character Root] CapsuleComponent (이동 및 물리 충돌체)
- └── [Leader Mesh] Mesh (CharacterMesh0 - 기본 상속 SkeletalMeshComponent)
-      │   ├── Skeletal Mesh: SK_Mannequin
-      │   ├── Anim Class: ABP_Humanoid_Master (모션 매칭 로코모션 마스터)
-      │   ├── Visibility: false (인게임 비가시화)
-      │   ├── Collision: NoCollision
-      │   └── Tick Option: AlwaysTickPoseAndRefreshBones (필수: 숨겨진 상태에서도 포즈 연산 보장)
-      │
-      ├── [Follower Mesh] VisualMesh (SkeletalMeshComponent - Mesh의 '자식'으로 Attach)
-      │   ├── Skeletal Mesh: GreatSword_Woman (외부 Bip01 골격 외형 메시)
-      │   ├── Anim Class: ABP_Greatsword_Woman_RunTIme (부모: UProject_JRetargetAnimInstance)
-      │   ├── Relative Transform: Location (0,0,0), Rotation (0,0,0), Scale (1,1,1)
-      │   ├── Visibility: true (인게임 렌더링)
-      │   └── AnimGraph: Retarget Pose From Mesh (Source: Parent Mesh) ➔ Two-Bone IK
-      │
-      └── [Weapon Component / Actor] StaticMeshComponent 또는 PresentationActor
-          ├── 소켓 부착: Sheathe_Socket (등 납도) ↔ hand_rSocket (손 발도)
-          └── 손잡이 기준점: 무기 에셋 자체에 'WeaponGrip_R' 소켓 생성
-```
+* **`[Root] CapsuleComponent`** (이동 및 물리 충돌체)
+  * **`[Leader Mesh] Mesh`** (`CharacterMesh0`: 언리얼 기본 상속 `SkeletalMeshComponent`)
+    * **골격 에셋**: `SK_Mannequin`
+    * **애님 클래스**: `ABP_Humanoid_Master` (모션 매칭 로코모션 마스터)
+    * **인게임 가시성**: `Hidden` (`SetVisibility(false)`)
+    * **충돌 설정**: `NoCollision`
+    * **틱 옵션**: `AlwaysTickPoseAndRefreshBones` (숨겨진 상태에서도 포즈 연산 보장)
+    * ↳ **`[Follower Mesh] VisualMesh`** (`Mesh`의 자식 컴포넌트로 Attach)
+      * **골격 에셋**: `GreatSword_Woman` (외부 Bip01 골격 외형 메시)
+      * **애님 클래스**: `ABP_Greatsword_Woman_RunTIme` (부모: `UProject_JRetargetAnimInstance`)
+      * **상대 트랜스폼**: 위치 `(0, 0, 0)`, 회전 `(0, 0, 0)`, 스케일 `(1, 1, 1)`
+      * **인게임 가시성**: `Visible` (실제 화면 렌더링 메시)
+      * **애님 그래프**: `Retarget Pose From Mesh` (부모 메시 자동 감지) ➔ `Two-Bone IK`
+    * ↳ **`[Weapon Component / Actor]`** (무기 컴포넌트 또는 PresentationActor)
+      * **부착 소켓**: 등 납도 `Sheathe_Socket` ↔ 손 발도 `hand_rSocket`
+      * **손잡이 기준점**: 무기 에셋 자체에 `WeaponGrip_R` 소켓 생성
+
 
 #### 왜 리더 메시(Mesh)의 '자식(Child)'으로 팔로워 메시를 달아서 구성하는가?
 1. **`Retarget Pose From Mesh` 노드의 자동 소스 인식 (Zero Wiring)**:
