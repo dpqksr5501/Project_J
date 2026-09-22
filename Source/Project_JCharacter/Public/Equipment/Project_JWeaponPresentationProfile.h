@@ -85,7 +85,7 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
 
 	/** Default right-hand IK alpha when weapon is sheathed (e.g. 1.0 if right hand rests on sheathed hilt, 0.0 if not). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float DefaultSheathedPrimaryIKAlpha = 1.0f;
+	float DefaultSheathedPrimaryIKAlpha = 0.0f;
 
 	/** Default left-hand IK alpha when weapon is sheathed. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))

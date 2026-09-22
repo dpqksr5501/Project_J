@@ -239,9 +239,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			SnapshotRightGripWorldTransform = WeaponComp->GetSocketTransform(PrimaryGripSocketName, RTS_World);
 			bHasValidRightSnapshot = true;
-			// In sheathed state (weapon on back): Right hand grips hilt (alpha 1.0)
+			// In sheathed state (weapon on back): Right hand alpha is 0.0 unless combat mode is active
 			// In combat state (weapon drawn): Right hand aligns to grip if enabled
-			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 1.0f;
+			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
 		}
 		else
 		{
