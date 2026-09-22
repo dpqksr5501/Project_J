@@ -102,7 +102,41 @@ flowchart TD
 
 ## 3. 핵심 구성 요소 상세 (Key Components)
 
-### 3.1 리더 메시 (Leader Mesh - `ABP_Humanoid_Master`)
+### 3.1 캐릭터 블루프린트 컴포넌트 트리 계층 구조 (Character Blueprint Component Hierarchy)
+
+실제 캐릭터 블루프린트(`BP_GreatSword` / `AProject_JPlayerCharacter`) 내부의 컴포넌트 부모-자식 트리 구조는 다음과 같이 구성되어 있습니다:
+
+```
+[Character Root] CapsuleComponent (이동 및 물리 충돌체)
+ └── [Leader Mesh] Mesh (CharacterMesh0 - 기본 상속 SkeletalMeshComponent)
+      │   ├── Skeletal Mesh: SK_Mannequin
+      │   ├── Anim Class: ABP_Humanoid_Master (모션 매칭 로코모션 마스터)
+      │   ├── Visibility: false (인게임 비가시화)
+      │   ├── Collision: NoCollision
+      │   └── Tick Option: AlwaysTickPoseAndRefreshBones (필수: 숨겨진 상태에서도 포즈 연산 보장)
+      │
+      ├── [Follower Mesh] VisualMesh (SkeletalMeshComponent - Mesh의 '자식'으로 Attach)
+      │   ├── Skeletal Mesh: GreatSword_Woman (외부 Bip01 골격 외형 메시)
+      │   ├── Anim Class: ABP_Greatsword_Woman_RunTIme (부모: UProject_JRetargetAnimInstance)
+      │   ├── Relative Transform: Location (0,0,0), Rotation (0,0,0), Scale (1,1,1)
+      │   ├── Visibility: true (인게임 렌더링)
+      │   └── AnimGraph: Retarget Pose From Mesh (Source: Parent Mesh) ➔ Two-Bone IK
+      │
+      └── [Weapon Component / Actor] StaticMeshComponent 또는 PresentationActor
+          ├── 소켓 부착: Sheathe_Socket (등 납도) ↔ hand_rSocket (손 발도)
+          └── 손잡이 기준점: 무기 에셋 자체에 'WeaponGrip_R' 소켓 생성
+```
+
+#### 왜 리더 메시(Mesh)의 '자식(Child)'으로 팔로워 메시를 달아서 구성하는가?
+1. **`Retarget Pose From Mesh` 노드의 자동 소스 인식 (Zero Wiring)**:
+   - 언리얼 엔진의 `Retarget Pose From Mesh` 노드는 `Source Mesh Component` 핀을 비워둘 경우, **자신의 부모(Parent)에 위치한 SkeletalMeshComponent를 자동으로 감지하여 포즈 소스로 바인딩**합니다.
+   - 블루프린트 이벤트 그래프에서 복잡한 컴포넌트 레퍼런스 연결 노드를 둘 필요 없이 완벽하게 자동 연결됩니다.
+2. **좌표계 및 캡슐 동기화 보장**:
+   - 캐릭터가 웅크리기(Crouch)를 하여 캡슐 높이가 절반으로 줄어들거나 회전할 때, 리더 메시와 팔로워 메시의 로컬 원점(0,0,0)이 영구적으로 고정되어 메시 간 위치 이격이 원천 방지됩니다.
+3. **무기 소켓 트랜스폼 추적의 일관성**:
+   - 무기가 팔로워 메시의 등 소켓(`Sheathe_Socket`)에 부착되었을 때, C++ `UProject_JRetargetAnimInstance`는 팔로워 메시의 로컬 공간(`InverseTransformPosition`)으로 손잡이 소켓(`WeaponGrip_R`)을 역변환합니다. 부모-자식 트리 상에서 상대적 트랜스폼이 가장 정밀하게 유지됩니다.
+
+### 3.2 리더 메시 (Leader Mesh - `ABP_Humanoid_Master`)
 - **역할**: 오직 고품질 모션 연산(Motion Matching, Chooser, 궤적 예측, 블렌드스택, 턴인플레이스)만을 전담하는 마스터 포즈 제공자.
 - **스켈레톤**: 언리얼 표준 골격인 `SK_Mannequin`.
 - **렌더링**: 게임 내에서는 `SetVisibility(false)`로 보이지 않으며 충돌체를 갖지 않음.
@@ -111,13 +145,13 @@ flowchart TD
   - 이로 인해 팔로워 메시가 정지된 T-Pose 상태의 리더 메시를 리타깃하여 캐릭터가 굳어버리는 버그가 발생했습니다.
   - 따라서 C++ 초기화 단계에서 리더 메시를 **`EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones`**로 명시 설정하여, 비가시화 상태에서도 본 행렬을 상시 평가해 하위 팔로워로 포즈를 실시간 공급하도록 보장했습니다.
 
-### 3.2 팔로워 메시 및 런타임 리타기팅 (`ABP_Greatsword_Woman_RunTIme`)
+### 3.3 팔로워 메시 및 런타임 리타기팅 (`ABP_Greatsword_Woman_RunTIme`)
 - **역할**: 플레이어의 실제 화면에 렌더링되는 시각적 캐릭터 메시(예: Bip01 골격 기반 여성 대검 캐릭터).
 - **AnimGraph 구성**:
   - **`Retarget Pose From Mesh`** 노드: 리더 메시의 포즈를 실시간으로 가져와 `RTG_To_UE5`(IK Retargeter)를 거쳐 실시간 골격 변환.
   - 에셋 복제 없이 수천 개의 언리얼 마네킹 시퀀스를 이종 캐릭터가 100% 실시간 공유.
 
-### 3.3 C++ 무기 손 IK 컨트롤러 (`UProject_JRetargetAnimInstance`)
+### 3.4 C++ 무기 손 IK 컨트롤러 (`UProject_JRetargetAnimInstance`)
 
 #### A. 게임 스레드와 워커 스레드 완전 분리 (Worker-Thread Safe)
 언리얼 엔진의 병렬 애니메이션 평가(Parallel Animation Evaluation)를 저해하지 않도록 철저히 스레드 안전성을 확보했습니다:
