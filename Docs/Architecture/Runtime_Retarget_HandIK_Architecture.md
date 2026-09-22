@@ -164,6 +164,31 @@ flowchart TD
      $$\text{RightGripLocation} = \text{OwningCompTransform}^{-1} \times \text{WeaponSocketTransform}$$
    - `FMath::FInterpTo`를 활용하여 납도(등 파지: Alpha 1.0) ↔ 발도(전투: Alpha 0.0) 간의 급격한 포즈 튐(Popping)을 방지하고 부드럽게 감쇄.
 
+### 3.5 공격/스킬 몽타주와 루트 모션(Root Motion) 처리 규격
+- **`CharacterMovementComponent` 종속성**:
+  - 언리얼 엔진의 캐릭터 무브먼트는 오직 오너 캐릭터의 메인 메시(`Character->GetMesh()`, 즉 **Leader Mesh**)의 루트 본 이동량만을 감지하여 캡슐을 월드 상에서 이동시킵니다.
+  - 따라서 돌진, 대검 회전 베기, 점프 스매시 등 루트 모션이 포함된 모든 스킬 몽타주는 **Leader Mesh에서 재생**되어야 물리 충돌과 캡슐 이동이 정상 작동합니다.
+- **포즈 전송 흐름**:
+  - Leader Mesh가 몽타주를 재생하면, 해당 포즈가 `Retarget Pose From Mesh`를 통해 Follower Mesh로 실시간 전송됩니다.
+  - Follower Mesh의 루트 본은 로컬 (0,0,0)에 고정되고 상/하체 모션만 리타깃되어 재생되므로 완벽한 싱크가 유지됩니다.
+
+### 3.6 대검 양손 파지(Two-Handed Grip) 및 왼손 보조 IK 확장 로드맵
+- 대검(Greatsword)은 대표적인 양손 무기입니다. 현재 구현된 `WeaponGrip_R`(주 손잡이)에 이어, 왼손 보조 손잡이(`WeaponGrip_L`) 파지를 지원하도록 C++ 클래스 확장이 예정되어 있습니다:
+  - `LeftGripLocation` (컴포넌트 공간 FVector) 및 `LeftGripIKAlpha` (float) 추가.
+  - 양손 파지 공격 및 가드(Guard) 모션 시 오른손은 주 손잡이에 고정되고, 왼손은 무기 칼등이나 보조 그립 소켓에 Two-Bone IK로 자동 밀착.
+
+### 3.7 발도/납도 무기 소켓 트랜지션 및 애님 노티파이(AnimNotify) 동기화
+- 무기가 등 소켓(`Sheathe_Socket`)에서 손 소켓(`hand_rSocket`)으로 스위칭되는 순간:
+  - 순간적인 소켓 교체로 인한 손/무기 튐을 방지하기 위해, 애니메이션 몽타주 내의 특정 프레임에 `AttachWeaponToHand` / `AttachWeaponToSheathe` 애님 노티파이를 배치합니다.
+  - C++ `UProject_JRetargetAnimInstance`의 `GripInterpSpeed`(기본값 12.0f)가 노티파이 발생 타이밍과 정합하여 부드러운 감쇄 곡선을 형성합니다.
+
+### 3.8 래그돌(Ragdoll) 및 보조 물리(Chaos Cloth/Hair)와의 공존
+- **시각적 메시 우선 물리**:
+  - 피격 사망, 넉다운 등의 상황에서 래그돌(`SetAllBodiesSimulatePhysics`)은 시각적 본체인 **Follower Mesh**에서 실행됩니다.
+  - 팔로워 애님 그래프에서 `Blend Poses by bool`을 통해 `Retarget Pose From Mesh`의 블렌드 가중치를 1.0에서 0.0으로 전환하며 피직스 애셋으로 자연스럽게 핸드오프합니다.
+- **천/헤어 시뮬레이션**:
+  - 망토나 치마, 머리카락 등의 본 시뮬레이션(KawaiiPhysics / AnimDynamics)은 팔로워 애님 그래프의 `Two-Bone IK` 노드 뒷단(Post-IK)에 배치되어 자연스러운 2차 모션을 완성합니다.
+
 ---
 
 ## 4. 네트워크 동기화 및 최적화 전략 (Iris & Dedicated Server)
@@ -184,6 +209,17 @@ flowchart TD
 ### 4.2 전용 서버(Dedicated Server) 부하 최소화
 - 시각적 메시 리타기팅과 투본 IK는 클라이언트 전용(Visual Only) 연산입니다.
 - 서버 환경에서는 `NativeUpdateAnimation`에서 즉시 반환되어 CPU 사이클 소모가 0에 수렴합니다.
+
+### 4.3 단계별 거리 기반 LOD 및 Significance 최적화 로드맵 (Tiered LOD Roadmap)
+대규모 인원(RVR/레이드) 밀집 환경을 위해 향후 적용될 단계별 LOD 부하 제어 구조입니다:
+- **Tier 0 (근거리 < 15m)**:
+  - Leader Mesh 60Hz 틱 + Follower Mesh 60Hz 런타임 리타기팅 + Two-Bone Hand IK 활성화 (풀 퀄리티 무기 파지).
+- **Tier 1 (중거리 15m ~ 40m)**:
+  - Leader Mesh 30Hz 스킵 틱 (Anim Budget Allocator 적용).
+  - Follower Mesh 런타임 리타기팅 유지하되, 미세 손가락/손목 Two-Bone IK 비활성화 (`GripIKAlpha = 0.0f`로 연산 스킵).
+- **Tier 2 (원거리 > 40m)**:
+  - Leader Mesh 포즈 갱신 중단 또는 초저빈도(10Hz) 갱신.
+  - Follower Mesh의 `Retarget Pose From Mesh` 노드를 우회하고, 초저비용 캐시된 포즈 또는 버텍스 애니메이션 텍스처(VAT) / Impostor로 완전 대체.
 
 ---
 
@@ -207,6 +243,16 @@ flowchart TD
 ### [Q4] 메모리(RAM) vs CPU 비용의 트레이드오프 분석
 - 수십 개 종족/직업에 대해 모든 애니메이션과 Pose Search Database를 사전 베이킹(오프라인 복제)하는 방식(메모리 소모 극대화, CPU 소모 최소) 대비,
 - 본 문서의 런타임 리타기팅 방식(메모리 최소화, 틱당 런타임 CPU 소모 증가)의 최적 임계점(Tipping Point)은 유저 수/에셋 수 기준 어디에 형성되는가?
+
+### [Q5] 루트 모션(Root Motion) 몽타주와 캡슐 이동 동기화 검증
+- 모든 공격/회피 스킬 몽타주를 Leader Mesh에서 재생하고 `Retarget Pose From Mesh`로 팔로워에 흘려보내는 구조에서, 루트 이동량(Delta Translation)이 캡슐에 반영되는 동안 클라이언트 렌더링 메시의 발 미끄러짐(Foot Sliding)이나 딜레이가 발생하지 않는가?
+
+### [Q6] 래그돌(Ragdoll) 및 피직스 애셋 핸드오프
+- 피격 사망 시 Follower Mesh가 래그돌로 전환될 때, Leader Mesh는 어떻게 처리해야 하는가? (Leader의 애니메이션 틱을 정지시키고 팔로워가 완전한 피직스 시뮬레이션을 수행하게 만드는 생명주기 관리 베스트 프랙티스는?)
+
+### [Q7] 발도/납도 무기 소켓 스위칭 시 시각적 결함 억제
+- 무기가 등 소켓(`Sheathe_Socket`)에서 손 소켓(`hand_rSocket`)으로 이동할 때 발생하는 1프레임 소켓 스위칭 튐을 방지하기 위한 가장 우아한 어태치먼트 블렌딩(Attachment Blending) 실무 기법은?
+
 
 ---
 
