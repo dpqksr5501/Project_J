@@ -8,6 +8,7 @@
 
 class USceneComponent;
 class ACharacter;
+class UProject_JWeaponPresentationComponent;
 
 /**
  * Lightweight native AnimInstance optimized for large-scale MMORPG runtime retargeting.
@@ -40,23 +41,36 @@ public:
 	void SetCombatMode(bool bInCombatMode);
 
 public:
-	/**
-	 * Target location for Two-Bone IK effector in Component Space.
-	 * Connect directly to Two-Bone IK 'Effector Location' (Space: Component Space).
-	 */
+	/** Target location for Right Hand Two-Bone IK effector in Component Space. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	FVector RightGripLocation = FVector::ZeroVector;
 
+	/** Target location for Left Hand Two-Bone IK effector in Component Space (two-handed grip). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FVector LeftGripLocation = FVector::ZeroVector;
+
 	/**
-	 * Dynamic blending weight for Hand IK.
-	 * Automatically interpolates between 1.0 (sheathed on back) and 0.0 (drawn/combat).
+	 * Dynamic blending weight for Right Hand IK.
+	 * Automatically interpolates between 1.0 (sheathed on back) and target combat grip alpha.
 	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	float RightGripAlpha = 1.0f;
+
+	/** Dynamic blending weight for Left Hand IK (secondary grip). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	float LeftGripAlpha = 0.0f;
+
+	/** Alias for RightGripAlpha for backward compatibility with existing Two-Bone IK blueprints. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	float GripIKAlpha = 1.0f;
 
-	/** Socket name on the weapon to align the hand with. */
+	/** Primary socket name on the weapon to align the right hand with. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
 	FName PrimaryGripSocketName = TEXT("WeaponGrip_R");
+
+	/** Secondary socket name on the weapon to align the left hand with (two-handed weapons). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
+	FName SecondaryGripSocketName = TEXT("WeaponGrip_L");
 
 	/** Speed of alpha interpolation during draw/sheathe transitions. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config", meta = (ClampMin = "1.0", UIMin = "1.0"))
@@ -66,18 +80,29 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|State")
 	bool bIsCombatMode = false;
 
-	/** Fallback: automatically queries weapon component on owner actor if not explicitly set. */
+	/** Whether combat-mode drawn grip IK is enabled (e.g. aligning hands to weapon handle in combat). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
-	bool bAutoDetectWeaponIfNull = true;
+	bool bEnableCombatGripIK = true;
+
+	/** Fallback: automatically queries weapon component on owner actor if not explicitly set (default false for production). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
+	bool bAutoDetectWeaponIfNull = false;
 
 protected:
 	/** Weak reference to the currently tracked weapon visual component. */
 	UPROPERTY(Transient)
 	TWeakObjectPtr<USceneComponent> CachedWeaponComponent = nullptr;
 
+	/** Weak reference to weapon presentation component on owner if present. */
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UProject_JWeaponPresentationComponent> CachedPresentationComp = nullptr;
+
 	/** Cached game-thread snapshot passed to worker thread evaluation. */
-	FTransform SnapshotWeaponSocketWorldTransform = FTransform::Identity;
+	FTransform SnapshotRightGripWorldTransform = FTransform::Identity;
+	FTransform SnapshotLeftGripWorldTransform = FTransform::Identity;
 	FTransform SnapshotOwningCompWorldTransform = FTransform::Identity;
-	bool bHasValidSocketSnapshot = false;
-	float TargetAlphaSnapshot = 1.0f;
+	bool bHasValidRightSnapshot = false;
+	bool bHasValidLeftSnapshot = false;
+	float TargetRightAlphaSnapshot = 1.0f;
+	float TargetLeftAlphaSnapshot = 0.0f;
 };

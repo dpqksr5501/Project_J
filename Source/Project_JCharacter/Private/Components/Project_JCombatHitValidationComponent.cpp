@@ -7,6 +7,7 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameplayEffect.h"
 #include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
 #include "Project_JPlayerCharacter.h"
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -33,6 +34,7 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
+	AuthoritativeSweepHistory.Reset();
 }
 
 void UProject_JCombatHitValidationComponent::EndAttack()
@@ -45,6 +47,7 @@ void UProject_JCombatHitValidationComponent::EndAttack()
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
+	AuthoritativeSweepHistory.Reset();
 	RestoreAttackPose();
 }
 
@@ -121,6 +124,64 @@ void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVec
 	LastAuthoritativeTraceStart = TraceStart;
 	LastAuthoritativeTraceEnd = TraceEnd;
 	bHasAuthoritativeTrace = true;
+
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
+	const float CurrentTime = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
+
+	FProject_JAuthoritativeSweepRecord Record;
+	Record.ServerTimestamp = CurrentTime;
+	Record.TraceStart = TraceStart;
+	Record.TraceEnd = TraceEnd;
+	Record.AttackNodeTag = ActiveAttackNodeTag;
+
+	if (AuthoritativeSweepHistory.Num() >= 32)
+	{
+		AuthoritativeSweepHistory.RemoveAt(0);
+	}
+	AuthoritativeSweepHistory.Add(Record);
+}
+
+bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const
+{
+	if (AuthoritativeSweepHistory.IsEmpty())
+	{
+		if (bHasAuthoritativeTrace)
+		{
+			OutStart = LastAuthoritativeTraceStart;
+			OutEnd = LastAuthoritativeTraceEnd;
+			return true;
+		}
+		return false;
+	}
+
+	int32 BestIndex = INDEX_NONE;
+	float MinTimeDelta = MAX_flt;
+
+	for (int32 i = 0; i < AuthoritativeSweepHistory.Num(); ++i)
+	{
+		const FProject_JAuthoritativeSweepRecord& Record = AuthoritativeSweepHistory[i];
+		if (!ActiveAttackNodeTag.IsValid() || Record.AttackNodeTag.MatchesTagExact(ActiveAttackNodeTag))
+		{
+			const float Delta = FMath::Abs(Record.ServerTimestamp - TargetTimestamp);
+			if (Delta < MinTimeDelta)
+			{
+				MinTimeDelta = Delta;
+				BestIndex = i;
+			}
+		}
+	}
+
+	if (BestIndex != INDEX_NONE)
+	{
+		OutStart = AuthoritativeSweepHistory[BestIndex].TraceStart;
+		OutEnd = AuthoritativeSweepHistory[BestIndex].TraceEnd;
+		return true;
+	}
+
+	OutStart = LastAuthoritativeTraceStart;
+	OutEnd = LastAuthoritativeTraceEnd;
+	return bHasAuthoritativeTrace;
 }
 
 void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
@@ -191,13 +252,19 @@ void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(
 
 	bool bHitConfirmed = false;
 	const float TraceRadius = ActiveAttackDefinition ? FMath::Max(0.0f, ActiveAttackDefinition->HitSpec.TraceRadius) : 0.0f;
+
+	// Synchronize attacker weapon sweep to the client's timestamp using the authoritative sweep history
+	FVector SynchronizedTraceStart = LastAuthoritativeTraceStart;
+	FVector SynchronizedTraceEnd = LastAuthoritativeTraceEnd;
+	FindAuthoritativeTraceAtTime(ClientTimestamp, SynchronizedTraceStart, SynchronizedTraceEnd);
+
 	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
 	{
-		bHitConfirmed = SSRComp->ServerVerifyHit(ClientTimestamp, LastAuthoritativeTraceStart, LastAuthoritativeTraceEnd, TraceRadius);
+		bHitConfirmed = SSRComp->ServerVerifyHit(ClientTimestamp, SynchronizedTraceStart, SynchronizedTraceEnd, TraceRadius);
 	}
 	else
 	{
-		bHitConfirmed = HitActor->GetComponentsBoundingBox().Intersect(FBox(LastAuthoritativeTraceStart.ComponentMin(LastAuthoritativeTraceEnd), LastAuthoritativeTraceStart.ComponentMax(LastAuthoritativeTraceEnd)).ExpandBy(TraceRadius));
+		bHitConfirmed = HitActor->GetComponentsBoundingBox().Intersect(FBox(SynchronizedTraceStart.ComponentMin(SynchronizedTraceEnd), SynchronizedTraceStart.ComponentMax(SynchronizedTraceEnd)).ExpandBy(TraceRadius));
 	}
 
 	if (!bHitConfirmed)

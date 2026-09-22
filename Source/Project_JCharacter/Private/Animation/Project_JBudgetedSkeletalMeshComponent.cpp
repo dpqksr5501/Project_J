@@ -12,6 +12,8 @@ UProject_JBudgetedSkeletalMeshComponent::UProject_JBudgetedSkeletalMeshComponent
 {
 	SetAutoRegisterWithBudgetAllocator(false);
 	SetAutoCalculateSignificance(false);
+	SetShouldUseActorRenderedFlag(true);
+	bBudgetTickWhenNotRendered = true;
 }
 
 void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()

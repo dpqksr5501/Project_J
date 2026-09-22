@@ -191,23 +191,32 @@ flowchart TD
 ## 4. 네트워크 동기화 및 최적화 전략 (Iris & Dedicated Server)
 
 ### 4.1 Iris 복제 시스템과의 정합성
-- **대역폭 제로 (0 Network Bandwidth Overhead)**:
+- **본/IK 채널 틱당 대역폭 0바이트 (Zero Per-Frame IK Bandwidth)**:
   - 본 트랜스폼, IK 타깃 위치, 리타기팅 중간 포즈는 네트워크를 통해 전혀 복제되지 않습니다.
-  - 리플리케이션은 순수 게임플레이 상태(무기 장착 여부, 전투 태그 `State.CombatMode`)만 Iris를 통해 전송됩니다.
+  - 리플리케이션은 순수 게임플레이 상태(무기 장착 리비전, 전투 태그 `State.CombatMode`, 몽타주 노티파이)만 Iris를 통해 전송됩니다.
 - **결정론적 로컬 평가 (Deterministic Local Evaluation)**:
   - 모든 리모트 클라이언트는 서버로부터 받은 고수준 상태를 기반으로 자신의 로컬 머신에서 동일한 C++ IK 로직과 리타기팅 노드를 병렬 실행합니다.
-- **원격 클라이언트 관측 시 손 분리/비동기 문제 원천 차단 (Remote Client-to-Client View Immunity)**:
-  - *질문: "A 클라이언트가 B 클라이언트(타인)를 바라볼 때, 네트워크 지연(Lag)으로 인해 B의 손이 무기에서 떨어지는 문제가 발생하지 않는가?"*
-  - **답변: 완전히 안전합니다 (0% 손 분리).**
-  - 타인을 바라보는 A 클라이언트 화면에서도 B 캐릭터의 무기 컴포넌트와 팔로워 메시는 로컬 월드 좌표계에 그대로 실시간 부착(Attach)되어 있습니다.
-  - `UProject_JRetargetAnimInstance`는 네트워크 패킷으로 손 좌표를 수신하는 것이 아니라, **A 클라이언트의 로컬 머신에서 B의 로컬 무기 소켓 위치를 직접 역변환하여 실시간 흡착**시킵니다.
-  - 따라서 네트워크 핑 지연, 패킷 지터, 패킷 로스가 극심한 환경에서도 타인 캐릭터의 손이 무기 손잡이에서 분리되는 결함(Desync)이 물리적으로 발생할 수 없습니다.
+  - 동일한 로컬 프레젠테이션 상태가 확보된 환경에서는 손-무기 간 추가적인 좌표 복제 오차가 발생하지 않으며, 패킷 지터나 핑 지연 중에도 상대방 캐릭터의 손이 무기 손잡이에서 분리되는 결함(Desync)이 원천 차단됩니다.
 
-### 4.2 전용 서버(Dedicated Server) 부하 최소화
-- 시각적 메시 리타기팅과 투본 IK는 클라이언트 전용(Visual Only) 연산입니다.
-- 서버 환경에서는 `NativeUpdateAnimation`에서 즉시 반환되어 CPU 사이클 소모가 0에 수렴합니다.
+### 4.2 전용 서버(Dedicated Server) 완전 격리 (Zero CPU Waste)
+- **무기 시각 액터 스폰 차단**:
+  - `UProject_JWeaponPresentationComponent::CanCreatePresentation()`에 `NM_DedicatedServer` 가드를 적용하여, 서버 환경에서는 비주얼 무기 액터 스폰을 전면 차단합니다.
+- **팔로워 메시 틱 완전 비활성화**:
+  - `UProject_JRetargetAnimInstance::NativeInitializeAnimation()`에서 전용 서버 환경일 경우, 팔로워 `SkeletalMeshComponent`의 컴포넌트 틱 자체를 `SetComponentTickEnabled(false)`로 완전히 정지시켜 애님그래프(`Retarget Pose From Mesh`) 및 워커 스레드 평가를 0으로 만듭니다.
 
-### 4.3 단계별 거리 기반 LOD 및 Significance 최적화 로드맵 (Tiered LOD Roadmap)
+### 4.3 서버 사이드 리와인드(SSR) 시간축 동기화 (Time-Domain Sync)
+- **문제 해결**:
+  - 타깃(피격자) 캡슐은 `ClientTimestamp`로 과거 시간으로 되돌려 검증하는 반면, 공격자 칼날 궤적이 서버의 최신 1회 trace만 참조하던 시간축 불일치를 해결했습니다.
+- **공격자 무기 스윕 히스토리 링버퍼 (`FProject_JAuthoritativeSweepRecord`)**:
+  - `UProject_JCombatHitValidationComponent`에 서버 타임스탬프 기반의 32엔트리 슬라이딩 윈도우(약 0.5~1.0초)를 구축했습니다.
+  - 클라이언트 타격 검증 요청 시 `FindAuthoritativeTraceAtTime(ClientTimestamp)`로 당시 시점의 공격자 칼날 궤적을 정확히 복원하여, 타깃 캡슐과 공격자 궤적을 100% 동일한 시간축에서 교차 검증합니다.
+
+### 4.4 Hidden Leader 메시와 ABA(Anim Budget Allocator) 정합성
+- **액터 렌더링 플래그 연동 (`SetShouldUseActorRenderedFlag(true)`)**:
+  - `UProject_JBudgetedSkeletalMeshComponent`에서 액터 가시성 연동을 켬으로써, Leader 메시가 숨겨져 있어도 자식인 Follower 메시가 화면에 렌더링 중이면 ABA가 정상 렌더링 상태로 인식하여 틱 누락 없이 풀 퀄리티 포즈를 연산합니다.
+  - `bBudgetTickWhenNotRendered = true`를 기본값으로 보장하여 오프스크린 컴포넌트 스킵 정책에 의한 로코모션 굳음 현상을 원천 방지했습니다.
+
+### 4.5 단계별 거리 기반 LOD 및 Significance 최적화 로드맵 (Tiered LOD Roadmap)
 대규모 인원(RVR/레이드) 밀집 환경을 위해 향후 적용될 단계별 LOD 부하 제어 구조입니다:
 - **Tier 0 (근거리 < 15m)**:
   - Leader Mesh 60Hz 틱 + Follower Mesh 60Hz 런타임 리타기팅 + Two-Bone Hand IK 활성화 (풀 퀄리티 무기 파지).

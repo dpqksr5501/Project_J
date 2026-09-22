@@ -36,7 +36,7 @@ public:
 	bool bAllowProjectBudget = true;
 	/** Optional animation-only offscreen workload. Gameplay notifies are protected separately. */
 	UPROPERTY(EditAnywhere, Category="Budgeting|ProjectJ")
-	bool bBudgetTickWhenNotRendered = false;
+	bool bBudgetTickWhenNotRendered = true;
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;

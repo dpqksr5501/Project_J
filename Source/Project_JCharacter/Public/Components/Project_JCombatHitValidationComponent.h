@@ -8,6 +8,25 @@
 class UAbilitySystemComponent;
 class UProject_JAttackDefinition;
 
+/** Records authoritative weapon sweep at a specific server timestamp for lag-compensated intersection. */
+USTRUCT()
+struct FProject_JAuthoritativeSweepRecord
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float ServerTimestamp = 0.0f;
+
+	UPROPERTY()
+	FVector TraceStart = FVector::ZeroVector;
+
+	UPROPERTY()
+	FVector TraceEnd = FVector::ZeroVector;
+
+	UPROPERTY()
+	FGameplayTag AttackNodeTag;
+};
+
 /** Shared server-authoritative melee hit validation for all player jobs. */
 UCLASS(ClassGroup = (Combat), meta = (BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JCombatHitValidationComponent : public UActorComponent
@@ -77,6 +96,13 @@ private:
 	FVector LastAuthoritativeTraceStart = FVector::ZeroVector;
 	FVector LastAuthoritativeTraceEnd = FVector::ZeroVector;
 	bool bHasAuthoritativeTrace = false;
+
+	/** Authoritative weapon sweep ringbuffer indexed over recent server timestamps for lag compensation. */
+	UPROPERTY(Transient)
+	TArray<FProject_JAuthoritativeSweepRecord> AuthoritativeSweepHistory;
+
+	/** Retrieves the authoritative trace closest to TargetTimestamp matching the active combo node. */
+	bool FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const;
 	int32 LocalRequestSequence = 0;
 	int32 LastServerRequestSequence = 0;
 	double RateWindowStartSeconds = 0.0;

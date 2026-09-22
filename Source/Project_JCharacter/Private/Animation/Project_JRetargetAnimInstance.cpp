@@ -3,6 +3,7 @@
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/Project_JWeaponPresentationComponent.h"
 #include "GameFramework/Character.h"
 #include "Project_JPlayerCharacter.h"
 #include "AbilitySystemGlobals.h"
@@ -13,23 +14,50 @@
 UProject_JRetargetAnimInstance::UProject_JRetargetAnimInstance()
 {
 	RightGripLocation = FVector::ZeroVector;
+	LeftGripLocation = FVector::ZeroVector;
+	RightGripAlpha = 1.0f;
+	LeftGripAlpha = 0.0f;
 	GripIKAlpha = 1.0f;
 	PrimaryGripSocketName = TEXT("WeaponGrip_R");
+	SecondaryGripSocketName = TEXT("WeaponGrip_L");
 	GripInterpSpeed = 12.0f;
 	bIsCombatMode = false;
-	bAutoDetectWeaponIfNull = true;
+	bEnableCombatGripIK = true;
+	bAutoDetectWeaponIfNull = false; // Production default: event-driven via UpdateWeaponTarget
 
-	bHasValidSocketSnapshot = false;
-	TargetAlphaSnapshot = 1.0f;
+	bHasValidRightSnapshot = false;
+	bHasValidLeftSnapshot = false;
+	TargetRightAlphaSnapshot = 1.0f;
+	TargetLeftAlphaSnapshot = 0.0f;
 }
 
 void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
+	// Dedicated server: completely disable tick on follower visual mesh to avoid any wasted evaluation
+	if (const UWorld* World = GetWorld())
+	{
+		if (World->GetNetMode() == NM_DedicatedServer)
+		{
+			if (USkeletalMeshComponent* OwningComp = GetOwningComponent())
+			{
+				OwningComp->SetComponentTickEnabled(false);
+			}
+			return;
+		}
+	}
+
 	// Clear transient snapshots
-	bHasValidSocketSnapshot = false;
+	bHasValidRightSnapshot = false;
+	bHasValidLeftSnapshot = false;
 	CachedWeaponComponent.Reset();
+	CachedPresentationComp.Reset();
+
+	if (APawn* OwnerPawn = TryGetPawnOwner())
+	{
+		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+	}
 }
 
 void UProject_JRetargetAnimInstance::UpdateWeaponTarget(USceneComponent* InWeaponComponent, FName InSocketName)
@@ -55,8 +83,10 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
-			bHasValidSocketSnapshot = false;
-			TargetAlphaSnapshot = 0.0f;
+			bHasValidRightSnapshot = false;
+			bHasValidLeftSnapshot = false;
+			TargetRightAlphaSnapshot = 0.0f;
+			TargetLeftAlphaSnapshot = 0.0f;
 			return;
 		}
 	}
@@ -64,8 +94,10 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	APawn* OwnerPawn = TryGetPawnOwner();
 	if (!OwnerPawn)
 	{
-		bHasValidSocketSnapshot = false;
-		TargetAlphaSnapshot = 0.0f;
+		bHasValidRightSnapshot = false;
+		bHasValidLeftSnapshot = false;
+		TargetRightAlphaSnapshot = 0.0f;
+		TargetLeftAlphaSnapshot = 0.0f;
 		return;
 	}
 
@@ -79,78 +111,131 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsCombatMode = ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 	}
 
-	// 2. Fallback: Auto-detect weapon component on owner actor if not explicitly set
-	if (bAutoDetectWeaponIfNull && !CachedWeaponComponent.IsValid())
+	USkeletalMeshComponent* OwningComp = GetOwningComponent();
+	if (!OwningComp)
 	{
-		TArray<USceneComponent*> Components;
-		OwnerPawn->GetComponents(Components);
-		for (USceneComponent* Comp : Components)
-		{
-			if (Comp && Comp->DoesSocketExist(PrimaryGripSocketName))
-			{
-				CachedWeaponComponent = Comp;
-				break;
-			}
-		}
+		bHasValidRightSnapshot = false;
+		bHasValidLeftSnapshot = false;
+		return;
+	}
+	SnapshotOwningCompWorldTransform = OwningComp->GetComponentTransform();
 
-		// Also check child attached actors (e.g. WeaponPresentationActor)
-		if (!CachedWeaponComponent.IsValid())
+	// 2. Try consuming from UProject_JWeaponPresentationComponent if present
+	if (!CachedPresentationComp.IsValid())
+	{
+		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+	}
+
+	bool bResolvedFromPresentation = false;
+	if (CachedPresentationComp.IsValid())
+	{
+		const FProject_JWeaponGripTargets GripTargets = CachedPresentationComp->GetWeaponGripTargets();
+		if (GripTargets.bHasPrimaryGrip)
 		{
-			TArray<AActor*> AttachedActors;
-			OwnerPawn->GetAttachedActors(AttachedActors);
-			for (AActor* Attached : AttachedActors)
+			SnapshotRightGripWorldTransform = GripTargets.PrimaryGripWorldTransform;
+			bHasValidRightSnapshot = true;
+			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 1.0f;
+			bResolvedFromPresentation = true;
+		}
+		if (GripTargets.bHasSecondaryGrip)
+		{
+			SnapshotLeftGripWorldTransform = GripTargets.SecondaryGripWorldTransform;
+			bHasValidLeftSnapshot = true;
+			TargetLeftAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
+			bResolvedFromPresentation = true;
+		}
+	}
+
+	// 3. Fallback: Component tracking if not resolved via WeaponPresentationComponent
+	if (!bResolvedFromPresentation)
+	{
+		// Auto-detect fallback only when enabled explicitly
+		if (bAutoDetectWeaponIfNull && !CachedWeaponComponent.IsValid())
+		{
+			TArray<USceneComponent*> Components;
+			OwnerPawn->GetComponents(Components);
+			for (USceneComponent* Comp : Components)
 			{
-				if (Attached)
+				if (Comp && Comp->DoesSocketExist(PrimaryGripSocketName))
 				{
-					TArray<USceneComponent*> AttachedComponents;
-					Attached->GetComponents(AttachedComponents);
-					for (USceneComponent* AttachedComp : AttachedComponents)
+					CachedWeaponComponent = Comp;
+					break;
+				}
+			}
+
+			if (!CachedWeaponComponent.IsValid())
+			{
+				TArray<AActor*> AttachedActors;
+				OwnerPawn->GetAttachedActors(AttachedActors);
+				for (AActor* Attached : AttachedActors)
+				{
+					if (Attached)
 					{
-						if (AttachedComp && AttachedComp->DoesSocketExist(PrimaryGripSocketName))
+						TArray<USceneComponent*> AttachedComponents;
+						Attached->GetComponents(AttachedComponents);
+						for (USceneComponent* AttachedComp : AttachedComponents)
 						{
-							CachedWeaponComponent = AttachedComp;
+							if (AttachedComp && AttachedComp->DoesSocketExist(PrimaryGripSocketName))
+							{
+								CachedWeaponComponent = AttachedComp;
+								break;
+							}
+						}
+						if (CachedWeaponComponent.IsValid())
+						{
 							break;
 						}
-					}
-					if (CachedWeaponComponent.IsValid())
-					{
-						break;
 					}
 				}
 			}
 		}
-	}
 
-	// 3. Capture thread-safe spatial snapshots for worker-thread evaluation
-	USkeletalMeshComponent* OwningComp = GetOwningComponent();
-	USceneComponent* WeaponComp = CachedWeaponComponent.Get();
+		USceneComponent* WeaponComp = CachedWeaponComponent.Get();
+		if (WeaponComp && WeaponComp->DoesSocketExist(PrimaryGripSocketName))
+		{
+			SnapshotRightGripWorldTransform = WeaponComp->GetSocketTransform(PrimaryGripSocketName, RTS_World);
+			bHasValidRightSnapshot = true;
+			// In sheathed state (weapon on back): Right hand grips hilt (alpha 1.0)
+			// In combat state (weapon drawn): Right hand aligns to grip if enabled
+			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 1.0f;
+		}
+		else
+		{
+			bHasValidRightSnapshot = false;
+			TargetRightAlphaSnapshot = 0.0f;
+		}
 
-	if (OwningComp && WeaponComp && WeaponComp->DoesSocketExist(PrimaryGripSocketName))
-	{
-		SnapshotWeaponSocketWorldTransform = WeaponComp->GetSocketTransform(PrimaryGripSocketName, RTS_World);
-		SnapshotOwningCompWorldTransform = OwningComp->GetComponentTransform();
-		bHasValidSocketSnapshot = true;
+		if (WeaponComp && WeaponComp->DoesSocketExist(SecondaryGripSocketName))
+		{
+			SnapshotLeftGripWorldTransform = WeaponComp->GetSocketTransform(SecondaryGripSocketName, RTS_World);
+			bHasValidLeftSnapshot = true;
+			TargetLeftAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
+		}
+		else
+		{
+			bHasValidLeftSnapshot = false;
+			TargetLeftAlphaSnapshot = 0.0f;
+		}
 	}
-	else
-	{
-		bHasValidSocketSnapshot = false;
-	}
-
-	// Combat stance: weapon is drawn in hand -> turn off back-grip IK.
-	// Sheathed stance: weapon is on back -> turn on back-grip IK.
-	TargetAlphaSnapshot = bIsCombatMode ? 0.0f : (bHasValidSocketSnapshot ? 1.0f : 0.0f);
 }
 
 void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
 
-	// Worker-thread evaluation: no UObject or Actor queries.
-	if (bHasValidSocketSnapshot)
+	// Worker-thread evaluation: purely math on captured snapshots
+	if (bHasValidRightSnapshot)
 	{
-		RightGripLocation = SnapshotOwningCompWorldTransform.InverseTransformPosition(SnapshotWeaponSocketWorldTransform.GetLocation());
+		RightGripLocation = SnapshotOwningCompWorldTransform.InverseTransformPosition(SnapshotRightGripWorldTransform.GetLocation());
 	}
 
-	// Smoothly interpolate IK alpha to eliminate snapping between sheathed and drawn states
-	GripIKAlpha = FMath::FInterpTo(GripIKAlpha, TargetAlphaSnapshot, DeltaSeconds, GripInterpSpeed);
+	if (bHasValidLeftSnapshot)
+	{
+		LeftGripLocation = SnapshotOwningCompWorldTransform.InverseTransformPosition(SnapshotLeftGripWorldTransform.GetLocation());
+	}
+
+	// Smoothly interpolate IK alphas to eliminate snapping between states
+	RightGripAlpha = FMath::FInterpTo(RightGripAlpha, TargetRightAlphaSnapshot, DeltaSeconds, GripInterpSpeed);
+	LeftGripAlpha = FMath::FInterpTo(LeftGripAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed);
+	GripIKAlpha = RightGripAlpha;
 }

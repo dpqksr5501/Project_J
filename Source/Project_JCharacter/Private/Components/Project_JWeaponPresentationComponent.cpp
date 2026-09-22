@@ -100,7 +100,7 @@ void UProject_JWeaponPresentationComponent::BeginPlay()
 bool UProject_JWeaponPresentationComponent::CanCreatePresentation() const
 {
 	return !bEndingPlay && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed()
-		&& GetWorld() && !GetWorld()->bIsTearingDown;
+		&& GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_DedicatedServer;
 }
 
 void UProject_JWeaponPresentationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)

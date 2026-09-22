@@ -137,7 +137,7 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter()
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetAnimInstanceClass(UProject_JCharacterAnimInstance::StaticClass());
-	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	GetMesh()->bEnableUpdateRateOptimizations = true;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
