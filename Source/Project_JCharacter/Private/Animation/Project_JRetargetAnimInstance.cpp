@@ -58,6 +58,11 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 		}
 	}
 
+	if (USkeletalMeshComponent* OwningComp = GetOwningComponent())
+	{
+		OwningComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	}
+
 	// Clear transient snapshots
 	bHasValidRightSnapshot = false;
 	bHasValidLeftSnapshot = false;
@@ -122,15 +127,17 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			{
 				const FProject_JAnimOptimizationPolicy& Policy = LeaderAnim->GetCurrentOptimizationPolicy();
 				CurrentQualityTier = Policy.Tier;
+				bEnableFollowerRetarget = Policy.bEnableFollowerRetarget;
 				bTierAllowsHandIK = Policy.bEnableHandIK;
+				bTierAllowsFootIK = Policy.bEnableFootIK;
 				bTierAllowsRetargetIK = Policy.bEnableRetargetIK;
 				RetargetIKLODThreshold = Policy.RetargetIKLODThreshold;
 			}
 		}
 	}
 
-	// Early out if tier forbids Hand IK or if character is off-screen/hidden
-	if (!bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
+	// Early out if tier forbids Follower Retarget / Hand IK or if character is off-screen/hidden
+	if (!bEnableFollowerRetarget || !bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
 	{
 		return;
 	}

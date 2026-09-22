@@ -1269,6 +1269,7 @@ protected:
 	/** Linked layers may consume the snapshot, but only the mesh's primary instance may mutate MM/trajectory state. */
 	bool IsPrimaryMeshAnimInstance() const;
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
+	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);

@@ -58,3 +58,8 @@ private:
 	bool bManaged = false, bCombatCritical = false, bEnding = false;
 	bool bSavedURO = false, bRequestedTick = true;
 };
+
+namespace Project_J::Anim
+{
+	PROJECT_JCHARACTER_API bool GetBudgetTickWhenNotRendered();
+}

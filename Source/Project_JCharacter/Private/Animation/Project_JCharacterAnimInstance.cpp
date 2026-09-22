@@ -3145,7 +3145,7 @@ void UProject_JCharacterAnimInstance::PublishChooserProperties(const FProject_JA
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishChooserProperties);
 	const FProject_JAnimOptimizationPolicy OptimizationPolicy = BuildOptimizationPolicy();
-	CurrentOptimizationPolicy = OptimizationPolicy;
+	ApplyOptimizationPolicy(OptimizationPolicy);
 
 	PublishChooserMovementProperties(Data);
 	PublishChooserGroundProperties(Data);
@@ -3339,7 +3339,7 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 		return false;
 	}
 
-	CurrentOptimizationPolicy = BuildOptimizationPolicy();
+	ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	const float UpdateInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
 	// Stagger periodic GT Chooser/database selection. State changes and full-rate policies stay immediate.
 	// PoseSearch's actual worker search cadence remains owned by its separate search policy in the proxy.
@@ -3470,6 +3470,26 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 	return Policy;
 }
 
+void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy)
+{
+	const bool bFollowerStateChanged = (CurrentOptimizationPolicy.bEnableFollowerRetarget != NewPolicy.bEnableFollowerRetarget);
+	CurrentOptimizationPolicy = NewPolicy;
+
+	if (bFollowerStateChanged && OwningCharacter)
+	{
+		if (USkeletalMeshComponent* LeaderMesh = OwningCharacter->GetMesh())
+		{
+			for (USceneComponent* Child : LeaderMesh->GetAttachChildren())
+			{
+				if (USkeletalMeshComponent* FollowerMesh = Cast<USkeletalMeshComponent>(Child))
+				{
+					FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
+				}
+			}
+		}
+	}
+}
+
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const
 {
 	const bool bPreserveLocalCombatStrafeHistory =
@@ -3534,7 +3554,7 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 		return true;
 	}
 
-	CurrentOptimizationPolicy = BuildOptimizationPolicy();
+	ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	if (CurrentOptimizationPolicy.bUpdateAnimationData)
 	{
 		HiddenRemoteUpdateAccumulator = 0.0f;

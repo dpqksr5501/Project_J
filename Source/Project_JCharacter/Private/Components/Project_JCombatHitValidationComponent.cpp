@@ -38,12 +38,12 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 
 void UProject_JCombatHitValidationComponent::EndAttack()
 {
+	SetHitWindowOpen(false);
 	AttackEquipment.Reset();
 	AttackWeaponRevision = 0;
 	ActivePredictionKey = 0;
 	ActiveAttackNodeTag = FGameplayTag();
 	ActiveAttackDefinition = nullptr;
-	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
 	RestoreAttackPose();
@@ -193,6 +193,30 @@ void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVec
 	AppendSweepHistoryRecord(Record);
 }
 
+void UProject_JCombatHitValidationComponent::AppendCurrentAuthoritativeSweepState()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !ActiveAttackNodeTag.IsValid())
+	{
+		return;
+	}
+
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
+	const float CurrentTime = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
+
+	DiscardExpiredSweepRecords(CurrentTime);
+
+	FProject_JAuthoritativeSweepRecord Record;
+	Record.ServerTimestamp = CurrentTime;
+	Record.TraceStart = LastAuthoritativeTraceStart;
+	Record.TraceEnd = LastAuthoritativeTraceEnd;
+	Record.AttackNodeTag = ActiveAttackNodeTag;
+	Record.PredictionKey = ActivePredictionKey;
+	Record.bHitWindowOpen = bHitWindowOpen;
+
+	AppendSweepHistoryRecord(Record);
+}
+
 bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(
 	float TargetTimestamp,
 	int32 ExpectedPredictionKey,
@@ -282,7 +306,25 @@ bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(
 		const float Alpha = FMath::IsNearlyZero(TimeDelta) ? 0.0f : FMath::Clamp((TargetTimestamp - RecordA.ServerTimestamp) / TimeDelta, 0.0f, 1.0f);
 		OutStart = FMath::Lerp(RecordA.TraceStart, RecordB.TraceStart, Alpha);
 		OutEnd = FMath::Lerp(RecordA.TraceEnd, RecordB.TraceEnd, Alpha);
-		OutHitWindowOpen = RecordA.bHitWindowOpen && RecordB.bHitWindowOpen;
+		// Precise historical hit window interpolation based on transition boundary timestamps
+		if (RecordA.bHitWindowOpen && RecordB.bHitWindowOpen)
+		{
+			OutHitWindowOpen = true;
+		}
+		else if (RecordA.bHitWindowOpen && !RecordB.bHitWindowOpen)
+		{
+			// Window closed at RecordB; valid strictly prior to RecordB timestamp
+			OutHitWindowOpen = (TargetTimestamp < RecordB.ServerTimestamp);
+		}
+		else if (!RecordA.bHitWindowOpen && RecordB.bHitWindowOpen)
+		{
+			// Window opened at RecordB; valid starting from RecordB timestamp
+			OutHitWindowOpen = (TargetTimestamp >= RecordB.ServerTimestamp);
+		}
+		else
+		{
+			OutHitWindowOpen = false;
+		}
 		return true;
 	}
 	else if (bMatchA && FMath::Abs(TargetTimestamp - RecordA.ServerTimestamp) <= 0.05f)
@@ -311,7 +353,18 @@ bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float 
 
 void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
 {
-	bHitWindowOpen = bOpen && ActiveAttackNodeTag.IsValid();
+	const bool bNewState = bOpen && ActiveAttackNodeTag.IsValid();
+	if (bHitWindowOpen == bNewState)
+	{
+		return;
+	}
+
+	bHitWindowOpen = bNewState;
+
+	if (GetOwner() && GetOwner()->HasAuthority() && bHasAuthoritativeTrace && ActiveAttackNodeTag.IsValid())
+	{
+		AppendCurrentAuthoritativeSweepState();
+	}
 }
 
 void UProject_JCombatHitValidationComponent::SubmitPredictedHit(AActor* HitActor, const float ClientTimestamp, const FVector& TraceStart, const FVector& TraceEnd)

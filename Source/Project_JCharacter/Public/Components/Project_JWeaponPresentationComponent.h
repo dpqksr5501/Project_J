@@ -147,6 +147,7 @@ private:
 	friend class FProjectJWeaponPresentationTeardownTest;
 	friend class FProjectJWeaponPresentationIdentityTest;
 	friend class FProjectJCrowdPresentationTest;
+	friend class FProjectJStableGripTargetsTest;
 	bool ShouldBudgetPresentation() const;
 	void CancelBudgetedPresentation();
 	uint64 PresentationRevision = 0;
@@ -167,6 +168,13 @@ private:
 	void UpdateTickState();
 	void LogWeaponPresentationDebug(const TCHAR* Context) const;
 	void NotifyWeaponTargetChanged(USceneComponent* InWeaponComponent);
+	void UpdateSocketComponentCache();
+	void InvalidateSocketComponentCache();
+
+	TWeakObjectPtr<USceneComponent> CachedPrimaryGripComponent;
+	TWeakObjectPtr<USceneComponent> CachedSecondaryGripComponent;
+	FName CachedPrimaryGripSocket = NAME_None;
+	FName CachedSecondaryGripSocket = NAME_None;
 
 	TArray<TWeakObjectPtr<class UProject_JRetargetAnimInstance>> RegisteredRetargetAnimInstances;
 

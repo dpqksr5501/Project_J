@@ -94,17 +94,29 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	EProject_JAnimBudgetTier CurrentQualityTier = EProject_JAnimBudgetTier::Local;
 
+	/** Whether Follower Retarget evaluation is enabled under the current quality tier. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bEnableFollowerRetarget = true;
+
 	/** Whether Hand IK is enabled under the current quality tier. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bTierAllowsHandIK = true;
+
+	/** Whether Foot IK is enabled under the current quality tier. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bTierAllowsFootIK = true;
 
 	/** Whether Retarget IK is enabled under the current quality tier (can drive Retarget Pose From Mesh node). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	bool bTierAllowsRetargetIK = true;
 
-	/** LOD threshold for Retarget Pose From Mesh node. */
+	/** IK LOD threshold for Retarget Pose From Mesh node (LODThresholdForIK). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
 	int32 RetargetIKLODThreshold = 0;
+
+	/** Max LOD threshold for Retarget Pose From Mesh node (LODThreshold). -1 runs at all LODs. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	int32 RetargetLODThreshold = -1;
 
 protected:
 	/** Weak reference to the currently tracked weapon visual component. */

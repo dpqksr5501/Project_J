@@ -86,6 +86,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 		{
 			const auto* Character = Cast<AProject_JBaseCharacter>(Mesh->GetOwner());
 			const float Tier = Character ? FMath::Max(0.0f, Character->GetSignificance()) : 0.0f;
+			Mesh->bBudgetTickWhenNotRendered = Project_J::Anim::GetBudgetTickWhenNotRendered();
 			Allocator->SetComponentSignificance(Mesh, 1.0f / (1.0f + Tier), false, Mesh->bBudgetTickWhenNotRendered, false, false);
 			++Managed;
 		}

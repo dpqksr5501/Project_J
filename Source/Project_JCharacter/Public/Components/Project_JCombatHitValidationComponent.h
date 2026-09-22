@@ -116,13 +116,15 @@ private:
 
 	int32 SweepHistoryStartIndex = 0;
 	int32 SweepHistoryCount = 0;
-	static constexpr int32 MaxSweepHistoryCapacity = 64;
+	/** 128 slots guarantee at least 1.5s history at up to ~85 Hz sampling rate, covering MaxSweepHistorySeconds comfortably. */
+	static constexpr int32 MaxSweepHistoryCapacity = 128;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat|SSR", meta = (ClampMin = "0.1", Units = "s"))
 	float MaxSweepHistorySeconds = 1.5f;
 
 	const FProject_JAuthoritativeSweepRecord& GetSweepHistoryRecord(int32 LogicalIndex) const;
 	void AppendSweepHistoryRecord(const FProject_JAuthoritativeSweepRecord& Record);
+	void AppendCurrentAuthoritativeSweepState();
 	void DiscardExpiredSweepRecords(float CurrentTimestamp);
 
 	int32 LocalRequestSequence = 0;

@@ -197,6 +197,9 @@ flowchart TD
 - **항시 안정적인 Grip Target 공급 (Stable Grip Targets)**:
   - `UProject_JWeaponPresentationComponent::UpdateGripTargets()`는 Independent Weapon Motion 활성화 여부와 무관하게 무기가 스폰/장착된 동안 매 프레임 주손/보조손 소켓 트랜스폼을 계산하여 공급합니다.
   - Independent Motion은 기본 파지 타깃 위에 덧씌워지는 부가 레이어로 작동하며, 비활성 상태(납도/발도/전투 이동/일반 공격)에서도 안정적인 파지 타깃을 유지합니다.
+- **소켓 컴포넌트 캐싱 (Socket Component Caching)**:
+  - `UProject_JWeaponPresentationComponent`는 무기 스폰, 프로파일 변경, 소켓 전환 시점에 그립 소켓을 소유한 컴포넌트(`CachedPrimaryGripComponent`, `CachedSecondaryGripComponent`)를 선제적으로 캐싱합니다.
+  - 매 프레임 그립 트랜스폼 계산 시 전체 씬 컴포넌트 순회(`GetComponents<USceneComponent>`)를 거치지 않고, 캐시된 컴포넌트에서 즉시 월드 트랜스폼을 질의(Fast Path)합니다. (캐시 무효 시에만 폴백 탐색 및 재캐싱)
 - **Authored IK Alpha 권위 보장**:
   - 무기 프로필(`FProject_JWeaponMotionPresentation`)에 정의된 `DefaultDrawnPrimaryIKAlpha`, `DefaultDrawnSecondaryIKAlpha`, `DefaultSheathedPrimaryIKAlpha`, `DefaultSheathedSecondaryIKAlpha`가 최종 가중치 권위를 가집니다.
   - `UProject_JRetargetAnimInstance`는 코드로 1.0f를 강제 덮어쓰지 않고, 프로필에서 정의된 아티스트 authored alpha를 충실히 따릅니다.
@@ -213,23 +216,26 @@ flowchart TD
 
 ### 4.3 서버 사이드 리와인드(SSR) 과거 시점 검증 강화
 - **공격자 무기 스윕 히스토리 링버퍼 (`FProject_JAuthoritativeSweepRecord`)**:
-  - `UProject_JCombatHitValidationComponent`에 64슬롯 고정 크기 링 버퍼(`SweepHistoryStartIndex`, `SweepHistoryCount`) 및 `MaxSweepHistorySeconds`(1.5초) 기반 만료 관리 구조를 구축했습니다.
+  - `UProject_JCombatHitValidationComponent`에 128슬롯 고정 크기 링 버퍼(`SweepHistoryStartIndex`, `SweepHistoryCount`) 및 `MaxSweepHistorySeconds`(1.5초) 기반 만료 관리 구조를 구축했습니다. (60~85 Hz 샘플링 환경에서 1.5초를 완전히 커버)
   - 각 스윕 레코드는 `ServerTimestamp`, `TraceStart`, `TraceEnd`, `AttackNodeTag`, `PredictionKey`, `bHitWindowOpen`을 모두 기록합니다.
-- **시간 범위 밖 요청 거절 (Bounded Time Validation)**:
-  - `TargetTimestamp < OldestTimestamp - Tolerance` 또는 `TargetTimestamp > NewestTimestamp + FutureTolerance`인 요청은 즉시 거절하며, fallback으로 최신 트레이스를 임의 차용하지 않습니다.
-- **스윕 선형 보간 (Trace Interpolation)**:
-  - 요청 타임스탬프를 감싸는 두 바운딩 프레임 사이에서 `PredictionKey`와 `AttackNodeTag`가 일치하는 경우에만 선형 보간(`Lerp`)을 수행하여 오차를 최소화합니다. 서로 다른 공격 노드 간의 교차 보간은 차단됩니다.
-- **과거 시점 Hit Window 검증 (Historical Hit Window Validation)**:
-  - 서버의 현재 `bHitWindowOpen` 상태가 아니라, 클라이언트가 타격을 가했던 `ClientTimestamp` 시점의 과거 `bHitWindowOpen` 기록을 기준으로 판정 유효성을 검증합니다.
+- **HitWindow 상태 전이 경계 기록 (Transition Boundary Recording)**:
+  - `SetHitWindowOpen(bool bOpen)` 호출 시 상태 변화가 일어나는 즉시 전이 타임스탬프와 최신 스윕 위치를 담은 경계 레코드를 기록합니다.
+  - 공격이 예기치 않게 취소되거나 조기 종료(`EndAttack`)되더라도 종료 직전 즉시 Close 전이 레코드를 히스토리에 남깁니다.
+- **시간축 기반 서브프레임 보간 및 판정 (Sub-frame Interpolation)**:
+  - 요청 타임스탬프를 감싸는 두 바운딩 프레임 사이에서 `PredictionKey`와 `AttackNodeTag`가 일치하는 경우에만 선형 보간(`Lerp`)을 수행합니다. 서로 다른 공격 노드 간 교차 보간은 엄격히 차단됩니다.
+  - 판정 구간 내 `bHitWindowOpen`은 단순 bool AND가 아니라, Close 시점 타임스탬프 이전까지만 유효(`TargetTimestamp < CloseTimestamp`)하도록 판정하여 Close 직후 지연 요청의 거짓 긍정(False Positive)을 차단합니다.
+- **검증 유효 범위 (Active Attack Context Scope - Option A)**:
+  - SSR 히스토리는 **현재 활성 공격 activation 내부**의 weapon sweep 및 target rewind 정합성을 보장합니다.
+  - 공격 activation이 이미 종료되었거나 다음 콤보 노드로 넘어간 지연 요청은 의도적으로 거절(`AttackActivationMismatch` / `AttackNodeMismatch`)하여 공격 상태 머신 오염을 방지합니다.
 
 ### 4.4 Hidden Leader 메시와 ABA(Anim Budget Allocator) 정책
 - **액터 렌더링 플래그 연동 (`SetShouldUseActorRenderedFlag(true)`)**:
   - `UProject_JBudgetedSkeletalMeshComponent`에서 액터 가시성 연동을 활성화하여, Leader 메시가 숨겨져 있어도 자식인 Follower 메시가 화면에 렌더링 중이면 ABA가 정상 렌더링 상태로 인식하도록 지원합니다.
-- **Policy A / Policy B 프로파일링 비교 지원**:
-  - 콘솔 변수 `Project_J.Anim.BudgetTickWhenNotRendered`(기본값 1)를 통해:
+- **Policy A / Policy B 런타임 CVar 실시간 토글**:
+  - 콘솔 변수 `Project_J.Anim.BudgetTickWhenNotRendered`(기본값 1)를 지원합니다:
     - **Policy A (1)**: `bBudgetTickWhenNotRendered = true` (숨겨진 Leader도 ABA 관전 하에 틱 유지)
     - **Policy B (0)**: `bBudgetTickWhenNotRendered = false` (화면 밖 비전투 캐릭터 스킵, 전투 상태에서만 `GameplayPose` 요구)
-    를 Unreal Insights에서 비교 프로파일링할 수 있습니다.
+  - `UProject_JCharacterAnimationBudgetSubsystem::Refresh()`에서 매 프레임 Game Thread 상의 CVar 값을 읽어 등록된 메시의 `bBudgetTickWhenNotRendered` 및 `IAnimationBudgetAllocator`에 즉각 전파하므로, 런타임에 게임 재시작 없이 Unreal Insights에서 비교 프로파일링할 수 있습니다.
 
 ### 4.5 통합 애니메이션 퀄리티 티어 (Unified Animation Quality Tier)
 Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 단일 정책 구조체(`FProject_JAnimOptimizationPolicy`)를 공유하도록 통합되었습니다:
@@ -242,8 +248,9 @@ Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 �
 - **Far (원거리)**:
   - Leader 저빈도 틱 + Far Chooser 전용 + Retarget IK Off + Hand IK Off + Foot IK Off.
 - **Hidden (비가시화)**:
-  - Follower 리타깃 및 모든 비주얼 IK 평가 스킵, 필요 시 게임플레이 포즈만 갱신.
-- `UProject_JRetargetAnimInstance`는 Leader의 `FProject_JAnimOptimizationPolicy`를 직접 동기화받아 티어에 맞게 Hand IK와 Retarget IK를 제어합니다.
+  - Leader의 상태 전이에 따라 Follower 메시의 컴포넌트 틱 자체를 일괄 비활성화(`SetComponentTickEnabled(false)`)하여 완전한 0 CPU 달성. 다시 화면 내 진입 시 Leader 틱에 의해 즉각 복구.
+  - 클라이언트 Follower 메시 기본 옵션으로 `VisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered` 적용.
+  - `UProject_JRetargetAnimInstance`에서 `bEnableFollowerRetarget`, `bTierAllowsHandIK`, `bTierAllowsFootIK`, `bTierAllowsRetargetIK`, `RetargetIKLODThreshold`를 노출하여 AnimGraph 상의 조건 분기(`Blend Poses by Bool` 및 노드 LOD 핀) 지원.
 
 ---
 

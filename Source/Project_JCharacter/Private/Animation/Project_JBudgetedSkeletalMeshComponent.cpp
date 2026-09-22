@@ -16,6 +16,11 @@ namespace Project_J::Anim
 		TEXT("Policy A (1): bBudgetTickWhenNotRendered=true (keeps Hidden Leader ticked by ABA).\n")
 		TEXT("Policy B (0): bBudgetTickWhenNotRendered=false (skips off-screen non-combat characters, wakes only on GameplayPose).\n"),
 		ECVF_Scalability);
+
+	bool GetBudgetTickWhenNotRendered()
+	{
+		return CVarBudgetTickWhenNotRendered.GetValueOnGameThread() != 0;
+	}
 }
 
 UProject_JBudgetedSkeletalMeshComponent::UProject_JBudgetedSkeletalMeshComponent(const FObjectInitializer& Initializer)
