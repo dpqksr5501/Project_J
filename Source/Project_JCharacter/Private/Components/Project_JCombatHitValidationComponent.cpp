@@ -34,7 +34,6 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
-	AuthoritativeSweepHistory.Reset();
 }
 
 void UProject_JCombatHitValidationComponent::EndAttack()
@@ -47,7 +46,6 @@ void UProject_JCombatHitValidationComponent::EndAttack()
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
-	AuthoritativeSweepHistory.Reset();
 	RestoreAttackPose();
 }
 
@@ -98,12 +96,18 @@ void UProject_JCombatHitValidationComponent::RestoreAttackPose()
 
 void UProject_JCombatHitValidationComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+	AuthoritativeSweepHistory.Reset();
+	SweepHistoryStartIndex = 0;
+	SweepHistoryCount = 0;
 	EndAttack();
 	Super::EndPlay(Reason);
 }
 
 void UProject_JCombatHitValidationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
+	AuthoritativeSweepHistory.Reset();
+	SweepHistoryStartIndex = 0;
+	SweepHistoryCount = 0;
 	EndAttack();
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
@@ -112,6 +116,53 @@ bool UProject_JCombatHitValidationComponent::HasValidAttackWeapon() const
 {
 	return !bRequiresWeapon || (AttackWeaponRevision != 0 && AttackEquipment.IsValid()
 		&& AttackEquipment->GetWeaponRevision() == AttackWeaponRevision);
+}
+
+const FProject_JAuthoritativeSweepRecord& UProject_JCombatHitValidationComponent::GetSweepHistoryRecord(int32 LogicalIndex) const
+{
+	check(SweepHistoryCount > 0);
+	check(LogicalIndex >= 0 && LogicalIndex < SweepHistoryCount);
+	return AuthoritativeSweepHistory[(SweepHistoryStartIndex + LogicalIndex) % AuthoritativeSweepHistory.Num()];
+}
+
+void UProject_JCombatHitValidationComponent::AppendSweepHistoryRecord(const FProject_JAuthoritativeSweepRecord& Record)
+{
+	if (AuthoritativeSweepHistory.Num() < MaxSweepHistoryCapacity)
+	{
+		AuthoritativeSweepHistory.SetNum(MaxSweepHistoryCapacity);
+		SweepHistoryStartIndex = 0;
+		SweepHistoryCount = 0;
+	}
+
+	if (SweepHistoryCount < AuthoritativeSweepHistory.Num())
+	{
+		const int32 PhysicalIndex = (SweepHistoryStartIndex + SweepHistoryCount) % AuthoritativeSweepHistory.Num();
+		AuthoritativeSweepHistory[PhysicalIndex] = Record;
+		++SweepHistoryCount;
+	}
+	else
+	{
+		AuthoritativeSweepHistory[SweepHistoryStartIndex] = Record;
+		SweepHistoryStartIndex = (SweepHistoryStartIndex + 1) % AuthoritativeSweepHistory.Num();
+	}
+}
+
+void UProject_JCombatHitValidationComponent::DiscardExpiredSweepRecords(float CurrentTimestamp)
+{
+	const float EffectiveMaxAge = FMath::Max(MaxSweepHistorySeconds, HitValidationPolicy.MaxRequestAge + 0.25f);
+	while (SweepHistoryCount > 0)
+	{
+		const float Age = CurrentTimestamp - GetSweepHistoryRecord(0).ServerTimestamp;
+		if (Age > EffectiveMaxAge)
+		{
+			SweepHistoryStartIndex = (SweepHistoryStartIndex + 1) % AuthoritativeSweepHistory.Num();
+			--SweepHistoryCount;
+		}
+		else
+		{
+			break;
+		}
+	}
 }
 
 void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVector& TraceStart, const FVector& TraceEnd)
@@ -129,59 +180,133 @@ void UProject_JCombatHitValidationComponent::RecordAuthoritativeTrace(const FVec
 	const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
 	const float CurrentTime = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
 
+	DiscardExpiredSweepRecords(CurrentTime);
+
 	FProject_JAuthoritativeSweepRecord Record;
 	Record.ServerTimestamp = CurrentTime;
 	Record.TraceStart = TraceStart;
 	Record.TraceEnd = TraceEnd;
 	Record.AttackNodeTag = ActiveAttackNodeTag;
+	Record.PredictionKey = ActivePredictionKey;
+	Record.bHitWindowOpen = bHitWindowOpen;
 
-	if (AuthoritativeSweepHistory.Num() >= 32)
-	{
-		AuthoritativeSweepHistory.RemoveAt(0);
-	}
-	AuthoritativeSweepHistory.Add(Record);
+	AppendSweepHistoryRecord(Record);
 }
 
-bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const
+bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(
+	float TargetTimestamp,
+	int32 ExpectedPredictionKey,
+	const FGameplayTag& ExpectedAttackNodeTag,
+	FVector& OutStart,
+	FVector& OutEnd,
+	bool& OutHitWindowOpen) const
 {
-	if (AuthoritativeSweepHistory.IsEmpty())
+	OutStart = FVector::ZeroVector;
+	OutEnd = FVector::ZeroVector;
+	OutHitWindowOpen = false;
+
+	if (SweepHistoryCount == 0 || !FMath::IsFinite(TargetTimestamp))
 	{
-		if (bHasAuthoritativeTrace)
+		return false;
+	}
+
+	const float OldestTime = GetSweepHistoryRecord(0).ServerTimestamp;
+	const float NewestTime = GetSweepHistoryRecord(SweepHistoryCount - 1).ServerTimestamp;
+	const float FutureTolerance = FMath::Max(0.05f, HitValidationPolicy.MaxFutureTolerance);
+	const float PastTolerance = 0.05f;
+
+	// Reject requests outside recorded history bounds
+	if (TargetTimestamp < OldestTime - PastTolerance || TargetTimestamp > NewestTime + FutureTolerance)
+	{
+		return false;
+	}
+
+	// Binary search to find bounding frames in chronologically ordered ring buffer
+	int32 Low = 0;
+	int32 High = SweepHistoryCount - 1;
+	int32 FoundIndex = -1;
+
+	while (Low <= High)
+	{
+		const int32 Mid = Low + (High - Low) / 2;
+		if (GetSweepHistoryRecord(Mid).ServerTimestamp >= TargetTimestamp)
 		{
-			OutStart = LastAuthoritativeTraceStart;
-			OutEnd = LastAuthoritativeTraceEnd;
+			FoundIndex = Mid;
+			High = Mid - 1;
+		}
+		else
+		{
+			Low = Mid + 1;
+		}
+	}
+
+	if (FoundIndex == 0)
+	{
+		const FProject_JAuthoritativeSweepRecord& SingleRecord = GetSweepHistoryRecord(0);
+		if ((ExpectedPredictionKey == 0 || SingleRecord.PredictionKey == ExpectedPredictionKey) &&
+			(!ExpectedAttackNodeTag.IsValid() || SingleRecord.AttackNodeTag.MatchesTagExact(ExpectedAttackNodeTag)))
+		{
+			OutStart = SingleRecord.TraceStart;
+			OutEnd = SingleRecord.TraceEnd;
+			OutHitWindowOpen = SingleRecord.bHitWindowOpen;
 			return true;
 		}
 		return false;
 	}
 
-	int32 BestIndex = INDEX_NONE;
-	float MinTimeDelta = MAX_flt;
-
-	for (int32 i = 0; i < AuthoritativeSweepHistory.Num(); ++i)
+	if (FoundIndex == -1)
 	{
-		const FProject_JAuthoritativeSweepRecord& Record = AuthoritativeSweepHistory[i];
-		if (!ActiveAttackNodeTag.IsValid() || Record.AttackNodeTag.MatchesTagExact(ActiveAttackNodeTag))
+		const FProject_JAuthoritativeSweepRecord& SingleRecord = GetSweepHistoryRecord(SweepHistoryCount - 1);
+		if ((ExpectedPredictionKey == 0 || SingleRecord.PredictionKey == ExpectedPredictionKey) &&
+			(!ExpectedAttackNodeTag.IsValid() || SingleRecord.AttackNodeTag.MatchesTagExact(ExpectedAttackNodeTag)))
 		{
-			const float Delta = FMath::Abs(Record.ServerTimestamp - TargetTimestamp);
-			if (Delta < MinTimeDelta)
-			{
-				MinTimeDelta = Delta;
-				BestIndex = i;
-			}
+			OutStart = SingleRecord.TraceStart;
+			OutEnd = SingleRecord.TraceEnd;
+			OutHitWindowOpen = SingleRecord.bHitWindowOpen;
+			return true;
 		}
+		return false;
 	}
 
-	if (BestIndex != INDEX_NONE)
+	const FProject_JAuthoritativeSweepRecord& RecordA = GetSweepHistoryRecord(FoundIndex - 1);
+	const FProject_JAuthoritativeSweepRecord& RecordB = GetSweepHistoryRecord(FoundIndex);
+
+	const bool bMatchA = (ExpectedPredictionKey == 0 || RecordA.PredictionKey == ExpectedPredictionKey) &&
+		(!ExpectedAttackNodeTag.IsValid() || RecordA.AttackNodeTag.MatchesTagExact(ExpectedAttackNodeTag));
+	const bool bMatchB = (ExpectedPredictionKey == 0 || RecordB.PredictionKey == ExpectedPredictionKey) &&
+		(!ExpectedAttackNodeTag.IsValid() || RecordB.AttackNodeTag.MatchesTagExact(ExpectedAttackNodeTag));
+
+	if (bMatchA && bMatchB)
 	{
-		OutStart = AuthoritativeSweepHistory[BestIndex].TraceStart;
-		OutEnd = AuthoritativeSweepHistory[BestIndex].TraceEnd;
+		const float TimeDelta = RecordB.ServerTimestamp - RecordA.ServerTimestamp;
+		const float Alpha = FMath::IsNearlyZero(TimeDelta) ? 0.0f : FMath::Clamp((TargetTimestamp - RecordA.ServerTimestamp) / TimeDelta, 0.0f, 1.0f);
+		OutStart = FMath::Lerp(RecordA.TraceStart, RecordB.TraceStart, Alpha);
+		OutEnd = FMath::Lerp(RecordA.TraceEnd, RecordB.TraceEnd, Alpha);
+		OutHitWindowOpen = RecordA.bHitWindowOpen && RecordB.bHitWindowOpen;
+		return true;
+	}
+	else if (bMatchA && FMath::Abs(TargetTimestamp - RecordA.ServerTimestamp) <= 0.05f)
+	{
+		OutStart = RecordA.TraceStart;
+		OutEnd = RecordA.TraceEnd;
+		OutHitWindowOpen = RecordA.bHitWindowOpen;
+		return true;
+	}
+	else if (bMatchB && FMath::Abs(TargetTimestamp - RecordB.ServerTimestamp) <= 0.05f)
+	{
+		OutStart = RecordB.TraceStart;
+		OutEnd = RecordB.TraceEnd;
+		OutHitWindowOpen = RecordB.bHitWindowOpen;
 		return true;
 	}
 
-	OutStart = LastAuthoritativeTraceStart;
-	OutEnd = LastAuthoritativeTraceEnd;
-	return bHasAuthoritativeTrace;
+	return false;
+}
+
+bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const
+{
+	bool bIgnoredWindow = false;
+	return FindAuthoritativeTraceAtTime(TargetTimestamp, ActivePredictionKey, ActiveAttackNodeTag, OutStart, OutEnd, bIgnoredWindow);
 }
 
 void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
@@ -254,9 +379,21 @@ void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(
 	const float TraceRadius = ActiveAttackDefinition ? FMath::Max(0.0f, ActiveAttackDefinition->HitSpec.TraceRadius) : 0.0f;
 
 	// Synchronize attacker weapon sweep to the client's timestamp using the authoritative sweep history
-	FVector SynchronizedTraceStart = LastAuthoritativeTraceStart;
-	FVector SynchronizedTraceEnd = LastAuthoritativeTraceEnd;
-	FindAuthoritativeTraceAtTime(ClientTimestamp, SynchronizedTraceStart, SynchronizedTraceEnd);
+	FVector SynchronizedTraceStart = FVector::ZeroVector;
+	FVector SynchronizedTraceEnd = FVector::ZeroVector;
+	bool bHistoricalHitWindowOpen = false;
+
+	if (!FindAuthoritativeTraceAtTime(ClientTimestamp, PredictionKey, AttackNodeTag, SynchronizedTraceStart, SynchronizedTraceEnd, bHistoricalHitWindowOpen))
+	{
+		UE_LOG(LogProjectJCombatHitValidation, Verbose, TEXT("SSR sweep history lookup failed for ClientTimestamp=%.3f Key=%d Node=%s"), ClientTimestamp, PredictionKey, *AttackNodeTag.ToString());
+		return;
+	}
+
+	if (!bHistoricalHitWindowOpen)
+	{
+		UE_LOG(LogProjectJCombatHitValidation, Verbose, TEXT("SSR historical hit window was closed at ClientTimestamp=%.3f Key=%d Node=%s"), ClientTimestamp, PredictionKey, *AttackNodeTag.ToString());
+		return;
+	}
 
 	if (UProject_JServerSideRewindComponent* SSRComp = HitActor->FindComponentByClass<UProject_JServerSideRewindComponent>())
 	{
@@ -290,7 +427,7 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	{
 		return EProject_JCombatHitValidationFailure::AttackNodeMismatch;
 	}
-	if (!bHitWindowOpen)
+	if (Request.ClientTimestamp <= 0.0f && !bHitWindowOpen)
 	{
 		return EProject_JCombatHitValidationFailure::HitWindowClosed;
 	}

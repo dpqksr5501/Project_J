@@ -6,6 +6,17 @@
 #include "Engine/World.h"
 #include "IAnimationBudgetAllocator.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "HAL/IConsoleManager.h"
+
+namespace Project_J::Anim
+{
+	static TAutoConsoleVariable<int32> CVarBudgetTickWhenNotRendered(
+		TEXT("Project_J.Anim.BudgetTickWhenNotRendered"),
+		1,
+		TEXT("Policy A (1): bBudgetTickWhenNotRendered=true (keeps Hidden Leader ticked by ABA).\n")
+		TEXT("Policy B (0): bBudgetTickWhenNotRendered=false (skips off-screen non-combat characters, wakes only on GameplayPose).\n"),
+		ECVF_Scalability);
+}
 
 UProject_JBudgetedSkeletalMeshComponent::UProject_JBudgetedSkeletalMeshComponent(const FObjectInitializer& Initializer)
 	: Super(Initializer)
@@ -22,6 +33,7 @@ void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()
 	// Only the project service owns registration, including when a BP overrides defaults.
 	SetAutoRegisterWithBudgetAllocator(false);
 	Super::BeginPlay();
+	bBudgetTickWhenNotRendered = Project_J::Anim::CVarBudgetTickWhenNotRendered.GetValueOnGameThread() != 0;
 	bRequestedTick = IsComponentTickEnabled();
 	OnAnimInitialized.AddUniqueDynamic(this, &ThisClass::BindAnimationEvents);
 	BindAnimationEvents();

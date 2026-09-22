@@ -3390,11 +3390,21 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bUpdateAnimationData = false;
 		Policy.bUseFullChooserRows = false;
 		Policy.bUseFarChooserRowsOnly = false;
+		Policy.bEnableHandIK = false;
+		Policy.bEnableFootIK = false;
+		Policy.bEnableRetargetIK = false;
+		Policy.bEnableFollowerRetarget = false;
 		return Policy;
 	}
 
 	if (IsLocallyControlledCharacter())
 	{
+		Policy.Tier = EProject_JAnimBudgetTier::Local;
+		Policy.bEnableHandIK = true;
+		Policy.bEnableFootIK = true;
+		Policy.bEnableRetargetIK = true;
+		Policy.bEnableFollowerRetarget = true;
+		Policy.RetargetIKLODThreshold = 0;
 		return Policy;
 	}
 
@@ -3405,6 +3415,10 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bUpdateAnimationData = false;
 		Policy.bUseFullChooserRows = false;
 		Policy.bUseFarChooserRowsOnly = false;
+		Policy.bEnableHandIK = false;
+		Policy.bEnableFootIK = false;
+		Policy.bEnableRetargetIK = false;
+		Policy.bEnableFollowerRetarget = false;
 		Policy.MotionMatchingUpdateInterval = GetEffectiveHiddenRemoteUpdateInterval();
 		return Policy;
 	}
@@ -3415,6 +3429,11 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		if (Significance <= 0.0f)
 		{
 			Policy.Tier = EProject_JAnimBudgetTier::Near;
+			Policy.bEnableHandIK = true;
+			Policy.bEnableFootIK = true;
+			Policy.bEnableRetargetIK = true;
+			Policy.bEnableFollowerRetarget = true;
+			Policy.RetargetIKLODThreshold = 1;
 			return Policy;
 		}
 
@@ -3422,17 +3441,32 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		{
 			Policy.Tier = EProject_JAnimBudgetTier::Mid;
 			Policy.MotionMatchingUpdateInterval = GetEffectiveMidMotionMatchingUpdateInterval();
+			Policy.bEnableHandIK = false;
+			Policy.bEnableFootIK = true;
+			Policy.bEnableRetargetIK = false;
+			Policy.bEnableFollowerRetarget = true;
+			Policy.RetargetIKLODThreshold = 0;
 			return Policy;
 		}
 
 		Policy.Tier = EProject_JAnimBudgetTier::Far;
 		Policy.bUseFullChooserRows = false;
 		Policy.bUseFarChooserRowsOnly = true;
+		Policy.bEnableHandIK = false;
+		Policy.bEnableFootIK = false;
+		Policy.bEnableRetargetIK = false;
+		Policy.bEnableFollowerRetarget = true;
+		Policy.RetargetIKLODThreshold = 0;
 		Policy.MotionMatchingUpdateInterval = GetEffectiveFarMotionMatchingUpdateInterval();
 		return Policy;
 	}
 
 	Policy.Tier = EProject_JAnimBudgetTier::Near;
+	Policy.bEnableHandIK = true;
+	Policy.bEnableFootIK = true;
+	Policy.bEnableRetargetIK = true;
+	Policy.bEnableFollowerRetarget = true;
+	Policy.RetargetIKLODThreshold = 1;
 	return Policy;
 }
 

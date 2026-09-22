@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -31,6 +32,15 @@ UProject_JRetargetAnimInstance::UProject_JRetargetAnimInstance()
 	TargetLeftAlphaSnapshot = 0.0f;
 }
 
+void UProject_JRetargetAnimInstance::BeginDestroy()
+{
+	if (CachedPresentationComp.IsValid())
+	{
+		CachedPresentationComp->UnregisterRetargetAnimInstance(this);
+	}
+	Super::BeginDestroy();
+}
+
 void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
@@ -57,6 +67,10 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 	if (APawn* OwnerPawn = TryGetPawnOwner())
 	{
 		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+		if (CachedPresentationComp.IsValid())
+		{
+			CachedPresentationComp->RegisterRetargetAnimInstance(this);
+		}
 	}
 }
 
@@ -78,15 +92,17 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
+	// Per-frame snapshot initialization to eliminate stale transforms
+	bHasValidRightSnapshot = false;
+	bHasValidLeftSnapshot = false;
+	TargetRightAlphaSnapshot = 0.0f;
+	TargetLeftAlphaSnapshot = 0.0f;
+
 	// Dedicated server early-out: visual IK and retargeting evaluation are client-only concerns.
 	if (const UWorld* World = GetWorld())
 	{
 		if (World->GetNetMode() == NM_DedicatedServer)
 		{
-			bHasValidRightSnapshot = false;
-			bHasValidLeftSnapshot = false;
-			TargetRightAlphaSnapshot = 0.0f;
-			TargetLeftAlphaSnapshot = 0.0f;
 			return;
 		}
 	}
@@ -94,14 +110,32 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	APawn* OwnerPawn = TryGetPawnOwner();
 	if (!OwnerPawn)
 	{
-		bHasValidRightSnapshot = false;
-		bHasValidLeftSnapshot = false;
-		TargetRightAlphaSnapshot = 0.0f;
-		TargetLeftAlphaSnapshot = 0.0f;
 		return;
 	}
 
-	// 1. Synchronize combat state deterministically from local gameplay authority / ASC
+	// 1. Synchronize animation quality tier from Leader Mesh policy
+	if (const ACharacter* OwnerChar = Cast<ACharacter>(OwnerPawn))
+	{
+		if (const USkeletalMeshComponent* LeaderMesh = OwnerChar->GetMesh())
+		{
+			if (const UProject_JCharacterAnimInstance* LeaderAnim = Cast<UProject_JCharacterAnimInstance>(LeaderMesh->GetAnimInstance()))
+			{
+				const FProject_JAnimOptimizationPolicy& Policy = LeaderAnim->GetCurrentOptimizationPolicy();
+				CurrentQualityTier = Policy.Tier;
+				bTierAllowsHandIK = Policy.bEnableHandIK;
+				bTierAllowsRetargetIK = Policy.bEnableRetargetIK;
+				RetargetIKLODThreshold = Policy.RetargetIKLODThreshold;
+			}
+		}
+	}
+
+	// Early out if tier forbids Hand IK or if character is off-screen/hidden
+	if (!bTierAllowsHandIK || CurrentQualityTier == EProject_JAnimBudgetTier::Hidden)
+	{
+		return;
+	}
+
+	// 2. Synchronize combat state deterministically from local gameplay authority / ASC
 	if (const AProject_JPlayerCharacter* PlayerChar = Cast<AProject_JPlayerCharacter>(OwnerPawn))
 	{
 		bIsCombatMode = PlayerChar->IsCombatModeActive();
@@ -114,13 +148,11 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	USkeletalMeshComponent* OwningComp = GetOwningComponent();
 	if (!OwningComp)
 	{
-		bHasValidRightSnapshot = false;
-		bHasValidLeftSnapshot = false;
 		return;
 	}
 	SnapshotOwningCompWorldTransform = OwningComp->GetComponentTransform();
 
-	// 2. Try consuming from UProject_JWeaponPresentationComponent if present
+	// 3. Try consuming from UProject_JWeaponPresentationComponent if present
 	if (!CachedPresentationComp.IsValid())
 	{
 		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
@@ -134,14 +166,18 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			SnapshotRightGripWorldTransform = GripTargets.PrimaryGripWorldTransform;
 			bHasValidRightSnapshot = true;
-			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 1.0f;
+			TargetRightAlphaSnapshot = bIsCombatMode
+				? (bEnableCombatGripIK ? GripTargets.PrimaryIKAlpha : 0.0f)
+				: GripTargets.PrimaryIKAlpha;
 			bResolvedFromPresentation = true;
 		}
 		if (GripTargets.bHasSecondaryGrip)
 		{
 			SnapshotLeftGripWorldTransform = GripTargets.SecondaryGripWorldTransform;
 			bHasValidLeftSnapshot = true;
-			TargetLeftAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
+			TargetLeftAlphaSnapshot = bIsCombatMode
+				? (bEnableCombatGripIK ? GripTargets.SecondaryIKAlpha : 0.0f)
+				: GripTargets.SecondaryIKAlpha;
 			bResolvedFromPresentation = true;
 		}
 	}

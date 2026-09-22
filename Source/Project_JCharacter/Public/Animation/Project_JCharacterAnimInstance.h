@@ -1561,6 +1561,8 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	FProject_JAnimOptimizationPolicy CurrentOptimizationPolicy;
 
+	const FProject_JAnimOptimizationPolicy& GetCurrentOptimizationPolicy() const { return CurrentOptimizationPolicy; }
+
 	// --- Optimization Settings ---
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Advanced|Optimization", AdvancedDisplay, meta = (ToolTip = "Skips animation-only data work on dedicated servers. Event replication still runs."))

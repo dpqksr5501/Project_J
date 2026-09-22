@@ -32,6 +32,26 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOptimizationPolicy
 
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	float MotionMatchingUpdateInterval = 0.0f;
+
+	/** Whether Post-Retarget Hand IK should be evaluated. (On for Local/Near, Off for Mid/Far/Hidden). */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bEnableHandIK = true;
+
+	/** Whether Foot IK / Leg ground alignment should be evaluated. (On for Local/Near/Mid, Off for Far/Hidden). */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bEnableFootIK = true;
+
+	/** Whether Runtime Retarget IK is enabled on follower mesh. (On for Local/Near, Off for Mid/Far). */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bEnableRetargetIK = true;
+
+	/** Whether visual Follower Mesh evaluation should proceed or be throttled/bypassed. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	bool bEnableFollowerRetarget = true;
+
+	/** Maximum LOD threshold for Follower Retarget IK nodes. */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	int32 RetargetIKLODThreshold = 0;
 };
 
 USTRUCT(BlueprintType)

@@ -25,6 +25,12 @@ struct FProject_JAuthoritativeSweepRecord
 
 	UPROPERTY()
 	FGameplayTag AttackNodeTag;
+
+	UPROPERTY()
+	int32 PredictionKey = 0;
+
+	UPROPERTY()
+	bool bHitWindowOpen = false;
 };
 
 /** Shared server-authoritative melee hit validation for all player jobs. */
@@ -62,6 +68,12 @@ public:
 
 	FProject_JCombatHitValidationResult ValidateServerHitRequest(const FProject_JCombatHitRequest& Request) const;
 
+	/** Retrieves and interpolates the authoritative trace at TargetTimestamp matching the active combo node and prediction key. */
+	bool FindAuthoritativeTraceAtTime(float TargetTimestamp, int32 ExpectedPredictionKey, const FGameplayTag& ExpectedAttackNodeTag, FVector& OutStart, FVector& OutEnd, bool& OutHitWindowOpen) const;
+
+	/** Convenience overload matching active state. */
+	bool FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const;
+
 protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
@@ -74,6 +86,7 @@ private:
 	bool bSavedURO = false;
 	bool bSavedSuppressNotifies = false;
 	friend class FProjectJWeaponAttackLifetimeTest;
+	friend class FProjectJSSRHistoricalSweepTest;
 	bool HasValidAttackWeapon() const;
 	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;
 	uint64 AttackWeaponRevision = 0;
@@ -101,8 +114,17 @@ private:
 	UPROPERTY(Transient)
 	TArray<FProject_JAuthoritativeSweepRecord> AuthoritativeSweepHistory;
 
-	/** Retrieves the authoritative trace closest to TargetTimestamp matching the active combo node. */
-	bool FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const;
+	int32 SweepHistoryStartIndex = 0;
+	int32 SweepHistoryCount = 0;
+	static constexpr int32 MaxSweepHistoryCapacity = 64;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat|SSR", meta = (ClampMin = "0.1", Units = "s"))
+	float MaxSweepHistorySeconds = 1.5f;
+
+	const FProject_JAuthoritativeSweepRecord& GetSweepHistoryRecord(int32 LogicalIndex) const;
+	void AppendSweepHistoryRecord(const FProject_JAuthoritativeSweepRecord& Record);
+	void DiscardExpiredSweepRecords(float CurrentTimestamp);
+
 	int32 LocalRequestSequence = 0;
 	int32 LastServerRequestSequence = 0;
 	double RateWindowStartSeconds = 0.0;

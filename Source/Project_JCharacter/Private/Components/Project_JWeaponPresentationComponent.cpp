@@ -2,6 +2,7 @@
 
 #include "Animation/AnimMontage.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JRetargetAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -75,6 +76,10 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 	if (bIndependentMotionActive)
 	{
 		UpdateIndependentMotion(DeltaTime);
+	}
+	else
+	{
+		UpdateGripTargets();
 	}
 
 	if (Project_J::WeaponPresentation::IsDebugEnabled())
@@ -162,6 +167,7 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToSheathedSocket()
 		AttachWeaponToSocket(PresentationProfile->SheathedSocketName, TEXT("Sheathe"));
 	}
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
+	UpdateGripTargets();
 }
 
 void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
@@ -178,6 +184,7 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
 		AttachWeaponToSocket(PresentationProfile->DrawnSocketName, TEXT("Draw"));
 	}
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
+	UpdateGripTargets();
 }
 
 void UProject_JWeaponPresentationComponent::SetWeaponPresentationSocket(EProject_JWeaponPresentationSocket Socket)
@@ -255,6 +262,8 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 		AppliedCharacterMesh = Mesh;
 		AppliedSkeletalMesh = Mesh->GetSkeletalMeshAsset();
 		SetWeaponPresentationSocket(CurrentPresentationSocket);
+		UpdateGripTargets();
+		NotifyWeaponTargetChanged(SpawnedWeapon->GetRootComponent());
 		UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] Spawn success: Weapon=%s SocketState=%d"),
 			*GetNameSafe(SpawnedWeapon), static_cast<int32>(CurrentPresentationSocket));
 
@@ -302,11 +311,13 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 	EndIndependentMotion();
 	if (SpawnedWeapon)
 	{
+		NotifyWeaponTargetChanged(nullptr);
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponPresentation_Destroy);
 		AActor* PreviousWeapon = SpawnedWeapon;
 		SpawnedWeapon = nullptr;
 		PreviousWeapon->Destroy();
 	}
+	GripTargets = FProject_JWeaponGripTargets();
 }
 
 bool UProject_JWeaponPresentationComponent::ShouldBudgetPresentation() const
@@ -506,7 +517,7 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 {
 	GripTargets = FProject_JWeaponGripTargets();
 
-	if (!bIndependentMotionActive)
+	if (!SpawnedWeapon)
 	{
 		return;
 	}
@@ -518,10 +529,30 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	}
 
 	const FProject_JWeaponMotionPresentation& Motion = PresentationProfile->MotionPresentation;
-	GripTargets.bHasPrimaryGrip = FindWeaponSocketTransform(Motion.PrimaryGripSocketName, GripTargets.PrimaryGripWorldTransform);
-	GripTargets.bHasSecondaryGrip = FindWeaponSocketTransform(Motion.SecondaryGripSocketName, GripTargets.SecondaryGripWorldTransform);
-	GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? ActivePrimaryGripIKAlpha : 0.0f;
-	GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? ActiveSecondaryGripIKAlpha : 0.0f;
+	const FName PrimarySocket = Motion.PrimaryGripSocketName.IsNone() ? TEXT("WeaponGrip_R") : Motion.PrimaryGripSocketName;
+	const FName SecondarySocket = Motion.SecondaryGripSocketName.IsNone() ? TEXT("WeaponGrip_L") : Motion.SecondaryGripSocketName;
+
+	GripTargets.bHasPrimaryGrip = FindWeaponSocketTransform(PrimarySocket, GripTargets.PrimaryGripWorldTransform);
+	GripTargets.bHasSecondaryGrip = FindWeaponSocketTransform(SecondarySocket, GripTargets.SecondaryGripWorldTransform);
+
+	if (bIndependentMotionActive)
+	{
+		GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? ActivePrimaryGripIKAlpha : 0.0f;
+		GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? ActiveSecondaryGripIKAlpha : 0.0f;
+	}
+	else
+	{
+		if (CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
+		{
+			GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? Motion.DefaultDrawnPrimaryIKAlpha : 0.0f;
+			GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? Motion.DefaultDrawnSecondaryIKAlpha : 0.0f;
+		}
+		else
+		{
+			GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? Motion.DefaultSheathedPrimaryIKAlpha : 0.0f;
+			GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? Motion.DefaultSheathedSecondaryIKAlpha : 0.0f;
+		}
+	}
 }
 
 bool UProject_JWeaponPresentationComponent::FindWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const
@@ -727,3 +758,71 @@ void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCH
 			StaticMeshComponent ? *Project_J::WeaponPresentation::ToCompactTransformString(StaticMeshComponent->GetComponentTransform()) : TEXT("None"));
 	}
 }
+
+FProject_JWeaponGripTargets UProject_JWeaponPresentationComponent::GetWeaponGripTargets()
+{
+	if (!bIndependentMotionActive && SpawnedWeapon)
+	{
+		UpdateGripTargets();
+	}
+	return GripTargets;
+}
+
+void UProject_JWeaponPresentationComponent::RegisterRetargetAnimInstance(UProject_JRetargetAnimInstance* InAnimInstance)
+{
+	if (InAnimInstance)
+	{
+		RegisteredRetargetAnimInstances.AddUnique(InAnimInstance);
+
+		if (SpawnedWeapon)
+		{
+			const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+			const FName PrimarySocket = Profile ? Profile->MotionPresentation.PrimaryGripSocketName : TEXT("WeaponGrip_R");
+			InAnimInstance->UpdateWeaponTarget(SpawnedWeapon->GetRootComponent(), PrimarySocket);
+		}
+	}
+}
+
+void UProject_JWeaponPresentationComponent::UnregisterRetargetAnimInstance(UProject_JRetargetAnimInstance* InAnimInstance)
+{
+	RegisteredRetargetAnimInstances.Remove(InAnimInstance);
+}
+
+void UProject_JWeaponPresentationComponent::NotifyWeaponTargetChanged(USceneComponent* InWeaponComponent)
+{
+	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+	const FName PrimarySocket = Profile ? Profile->MotionPresentation.PrimaryGripSocketName : TEXT("WeaponGrip_R");
+
+	for (auto It = RegisteredRetargetAnimInstances.CreateIterator(); It; ++It)
+	{
+		if (UProject_JRetargetAnimInstance* AnimInst = It->Get())
+		{
+			AnimInst->UpdateWeaponTarget(InWeaponComponent, PrimarySocket);
+		}
+		else
+		{
+			It.RemoveCurrent();
+		}
+	}
+
+	if (RegisteredRetargetAnimInstances.IsEmpty())
+	{
+		if (const ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+		{
+			TInlineComponentArray<USkeletalMeshComponent*> SkeletalMeshes;
+			OwnerChar->GetComponents(SkeletalMeshes);
+			for (USkeletalMeshComponent* MeshComp : SkeletalMeshes)
+			{
+				if (MeshComp && MeshComp != OwnerChar->GetMesh())
+				{
+					if (UProject_JRetargetAnimInstance* RetargetInst = Cast<UProject_JRetargetAnimInstance>(MeshComp->GetAnimInstance()))
+					{
+						RegisteredRetargetAnimInstances.AddUnique(RetargetInst);
+						RetargetInst->UpdateWeaponTarget(InWeaponComponent, PrimarySocket);
+					}
+				}
+			}
+		}
+	}
+}
+

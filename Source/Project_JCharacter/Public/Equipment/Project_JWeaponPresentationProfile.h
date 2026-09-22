@@ -68,12 +68,28 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
 	bool bSupportsIndependentMotion = false;
 
 	/** Weapon-local socket used as the primary (usually right-hand) IK target. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	FName PrimaryGripSocketName = TEXT("WeaponGrip_R");
 
 	/** Weapon-local socket used as the secondary (usually left-hand) IK target. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	FName SecondaryGripSocketName = TEXT("WeaponGrip_L");
+
+	/** Default right-hand IK alpha when weapon is drawn outside of independent motion. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultDrawnPrimaryIKAlpha = 1.0f;
+
+	/** Default left-hand IK alpha when weapon is drawn outside of independent motion (e.g. 1.0 for two-handed weapons, 0.0 for one-handed). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultDrawnSecondaryIKAlpha = 0.0f;
+
+	/** Default right-hand IK alpha when weapon is sheathed (e.g. 1.0 if right hand rests on sheathed hilt, 0.0 if not). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultSheathedPrimaryIKAlpha = 1.0f;
+
+	/** Default left-hand IK alpha when weapon is sheathed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultSheathedSecondaryIKAlpha = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
 	FProject_JWeaponGroundContactSettings GroundContact;

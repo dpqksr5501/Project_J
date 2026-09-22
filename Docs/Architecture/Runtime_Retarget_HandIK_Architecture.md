@@ -190,42 +190,60 @@ flowchart TD
 
 ## 4. 네트워크 동기화 및 최적화 전략 (Iris & Dedicated Server)
 
-### 4.1 Iris 복제 시스템과의 정합성
-- **본/IK 채널 틱당 대역폭 0바이트 (Zero Per-Frame IK Bandwidth)**:
-  - 본 트랜스폼, IK 타깃 위치, 리타기팅 중간 포즈는 네트워크를 통해 전혀 복제되지 않습니다.
+### 4.1 Iris 복제 시스템 및 안정적 무기 파지 (Deterministic Grip Targets)
+- **프레임당 본/IK 좌표 복제 부재 (Zero Per-Frame IK Bandwidth)**:
+  - 본 트랜스폼, IK 타깃 위치, 리타기팅 중간 포즈는 네트워크를 통해 복제되지 않습니다.
   - 리플리케이션은 순수 게임플레이 상태(무기 장착 리비전, 전투 태그 `State.CombatMode`, 몽타주 노티파이)만 Iris를 통해 전송됩니다.
-- **결정론적 로컬 평가 (Deterministic Local Evaluation)**:
-  - 모든 리모트 클라이언트는 서버로부터 받은 고수준 상태를 기반으로 자신의 로컬 머신에서 동일한 C++ IK 로직과 리타기팅 노드를 병렬 실행합니다.
-  - 동일한 로컬 프레젠테이션 상태가 확보된 환경에서는 손-무기 간 추가적인 좌표 복제 오차가 발생하지 않으며, 패킷 지터나 핑 지연 중에도 상대방 캐릭터의 손이 무기 손잡이에서 분리되는 결함(Desync)이 원천 차단됩니다.
+- **항시 안정적인 Grip Target 공급 (Stable Grip Targets)**:
+  - `UProject_JWeaponPresentationComponent::UpdateGripTargets()`는 Independent Weapon Motion 활성화 여부와 무관하게 무기가 스폰/장착된 동안 매 프레임 주손/보조손 소켓 트랜스폼을 계산하여 공급합니다.
+  - Independent Motion은 기본 파지 타깃 위에 덧씌워지는 부가 레이어로 작동하며, 비활성 상태(납도/발도/전투 이동/일반 공격)에서도 안정적인 파지 타깃을 유지합니다.
+- **Authored IK Alpha 권위 보장**:
+  - 무기 프로필(`FProject_JWeaponMotionPresentation`)에 정의된 `DefaultDrawnPrimaryIKAlpha`, `DefaultDrawnSecondaryIKAlpha`, `DefaultSheathedPrimaryIKAlpha`, `DefaultSheathedSecondaryIKAlpha`가 최종 가중치 권위를 가집니다.
+  - `UProject_JRetargetAnimInstance`는 코드로 1.0f를 강제 덮어쓰지 않고, 프로필에서 정의된 아티스트 authored alpha를 충실히 따릅니다.
+- **이벤트 주도형 타깃 갱신 (Event-Driven Target Push)**:
+  - 무기 스폰/파괴/소켓 변경 시 `NotifyWeaponTargetChanged`를 통해 등록된 `UProject_JRetargetAnimInstance`에 즉각 타깃이 전달되므로, 매 프레임 월드 액터/컴포넌트를 탐색하는 낭비가 없습니다.
 
-### 4.2 전용 서버(Dedicated Server) 완전 격리 (Zero CPU Waste)
+### 4.2 전용 서버(Dedicated Server) 비주얼 격리
 - **무기 시각 액터 스폰 차단**:
-  - `UProject_JWeaponPresentationComponent::CanCreatePresentation()`에 `NM_DedicatedServer` 가드를 적용하여, 서버 환경에서는 비주얼 무기 액터 스폰을 전면 차단합니다.
+  - `UProject_JWeaponPresentationComponent::CanCreatePresentation()`에 `NM_DedicatedServer` 가드를 적용하여, 전용 서버 환경에서는 비주얼 무기 액터 스폰 및 비주얼 컴포넌트 런타임 비용을 제거합니다.
 - **팔로워 메시 틱 완전 비활성화**:
-  - `UProject_JRetargetAnimInstance::NativeInitializeAnimation()`에서 전용 서버 환경일 경우, 팔로워 `SkeletalMeshComponent`의 컴포넌트 틱 자체를 `SetComponentTickEnabled(false)`로 완전히 정지시켜 애님그래프(`Retarget Pose From Mesh`) 및 워커 스레드 평가를 0으로 만듭니다.
+  - `UProject_JRetargetAnimInstance::NativeInitializeAnimation()`에서 전용 서버일 경우 팔로워 `SkeletalMeshComponent`의 컴포넌트 틱을 `SetComponentTickEnabled(false)`로 정지시켜 애님그래프(`Retarget Pose From Mesh`) 및 워커 스레드 평가를 원천 차단합니다.
+- **판정의 정합성**:
+  - 서버 공격 판정은 비주얼 팔로워 메시나 시각 액터가 아닌, 서버의 정식 게임플레이 지오메트리(Leader Mesh 및 어택 정의)만을 기준으로 엄격히 집행됩니다.
 
-### 4.3 서버 사이드 리와인드(SSR) 시간축 동기화 (Time-Domain Sync)
-- **문제 해결**:
-  - 타깃(피격자) 캡슐은 `ClientTimestamp`로 과거 시간으로 되돌려 검증하는 반면, 공격자 칼날 궤적이 서버의 최신 1회 trace만 참조하던 시간축 불일치를 해결했습니다.
+### 4.3 서버 사이드 리와인드(SSR) 과거 시점 검증 강화
 - **공격자 무기 스윕 히스토리 링버퍼 (`FProject_JAuthoritativeSweepRecord`)**:
-  - `UProject_JCombatHitValidationComponent`에 서버 타임스탬프 기반의 32엔트리 슬라이딩 윈도우(약 0.5~1.0초)를 구축했습니다.
-  - 클라이언트 타격 검증 요청 시 `FindAuthoritativeTraceAtTime(ClientTimestamp)`로 당시 시점의 공격자 칼날 궤적을 정확히 복원하여, 타깃 캡슐과 공격자 궤적을 100% 동일한 시간축에서 교차 검증합니다.
+  - `UProject_JCombatHitValidationComponent`에 64슬롯 고정 크기 링 버퍼(`SweepHistoryStartIndex`, `SweepHistoryCount`) 및 `MaxSweepHistorySeconds`(1.5초) 기반 만료 관리 구조를 구축했습니다.
+  - 각 스윕 레코드는 `ServerTimestamp`, `TraceStart`, `TraceEnd`, `AttackNodeTag`, `PredictionKey`, `bHitWindowOpen`을 모두 기록합니다.
+- **시간 범위 밖 요청 거절 (Bounded Time Validation)**:
+  - `TargetTimestamp < OldestTimestamp - Tolerance` 또는 `TargetTimestamp > NewestTimestamp + FutureTolerance`인 요청은 즉시 거절하며, fallback으로 최신 트레이스를 임의 차용하지 않습니다.
+- **스윕 선형 보간 (Trace Interpolation)**:
+  - 요청 타임스탬프를 감싸는 두 바운딩 프레임 사이에서 `PredictionKey`와 `AttackNodeTag`가 일치하는 경우에만 선형 보간(`Lerp`)을 수행하여 오차를 최소화합니다. 서로 다른 공격 노드 간의 교차 보간은 차단됩니다.
+- **과거 시점 Hit Window 검증 (Historical Hit Window Validation)**:
+  - 서버의 현재 `bHitWindowOpen` 상태가 아니라, 클라이언트가 타격을 가했던 `ClientTimestamp` 시점의 과거 `bHitWindowOpen` 기록을 기준으로 판정 유효성을 검증합니다.
 
-### 4.4 Hidden Leader 메시와 ABA(Anim Budget Allocator) 정합성
+### 4.4 Hidden Leader 메시와 ABA(Anim Budget Allocator) 정책
 - **액터 렌더링 플래그 연동 (`SetShouldUseActorRenderedFlag(true)`)**:
-  - `UProject_JBudgetedSkeletalMeshComponent`에서 액터 가시성 연동을 켬으로써, Leader 메시가 숨겨져 있어도 자식인 Follower 메시가 화면에 렌더링 중이면 ABA가 정상 렌더링 상태로 인식하여 틱 누락 없이 풀 퀄리티 포즈를 연산합니다.
-  - `bBudgetTickWhenNotRendered = true`를 기본값으로 보장하여 오프스크린 컴포넌트 스킵 정책에 의한 로코모션 굳음 현상을 원천 방지했습니다.
+  - `UProject_JBudgetedSkeletalMeshComponent`에서 액터 가시성 연동을 활성화하여, Leader 메시가 숨겨져 있어도 자식인 Follower 메시가 화면에 렌더링 중이면 ABA가 정상 렌더링 상태로 인식하도록 지원합니다.
+- **Policy A / Policy B 프로파일링 비교 지원**:
+  - 콘솔 변수 `Project_J.Anim.BudgetTickWhenNotRendered`(기본값 1)를 통해:
+    - **Policy A (1)**: `bBudgetTickWhenNotRendered = true` (숨겨진 Leader도 ABA 관전 하에 틱 유지)
+    - **Policy B (0)**: `bBudgetTickWhenNotRendered = false` (화면 밖 비전투 캐릭터 스킵, 전투 상태에서만 `GameplayPose` 요구)
+    를 Unreal Insights에서 비교 프로파일링할 수 있습니다.
 
-### 4.5 단계별 거리 기반 LOD 및 Significance 최적화 로드맵 (Tiered LOD Roadmap)
-대규모 인원(RVR/레이드) 밀집 환경을 위해 향후 적용될 단계별 LOD 부하 제어 구조입니다:
-- **Tier 0 (근거리 < 15m)**:
-  - Leader Mesh 60Hz 틱 + Follower Mesh 60Hz 런타임 리타기팅 + Two-Bone Hand IK 활성화 (풀 퀄리티 무기 파지).
-- **Tier 1 (중거리 15m ~ 40m)**:
-  - Leader Mesh 30Hz 스킵 틱 (Anim Budget Allocator 적용).
-  - Follower Mesh 런타임 리타기팅 유지하되, 미세 손가락/손목 Two-Bone IK 비활성화 (`GripIKAlpha = 0.0f`로 연산 스킵).
-- **Tier 2 (원거리 > 40m)**:
-  - Leader Mesh 포즈 갱신 중단 또는 초저빈도(10Hz) 갱신.
-  - Follower Mesh의 `Retarget Pose From Mesh` 노드를 우회하고, 초저비용 캐시된 포즈 또는 버텍스 애니메이션 텍스처(VAT) / Impostor로 완전 대체.
+### 4.5 통합 애니메이션 퀄리티 티어 (Unified Animation Quality Tier)
+Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 단일 정책 구조체(`FProject_JAnimOptimizationPolicy`)를 공유하도록 통합되었습니다:
+- **Local (로컬 플레이어)**:
+  - Leader 풀 틱 + Follower 풀 리타깃 + Retarget IK (LOD 0) + Hand IK On + Foot IK On.
+- **Near (중요도 높음 / 근거리)**:
+  - Leader 풀 틱 + Follower 풀 리타깃 + Retarget IK (LOD 1) + Hand IK On + Foot IK On.
+- **Mid (중거리 / 일반 군집)**:
+  - Leader ABA 스킵 틱 + Follower 리타깃 유지 + Retarget IK Off (FK 위주 리타깃) + **Hand IK Off (연산 대폭 절감)** + Foot IK On.
+- **Far (원거리)**:
+  - Leader 저빈도 틱 + Far Chooser 전용 + Retarget IK Off + Hand IK Off + Foot IK Off.
+- **Hidden (비가시화)**:
+  - Follower 리타깃 및 모든 비주얼 IK 평가 스킵, 필요 시 게임플레이 포즈만 갱신.
+- `UProject_JRetargetAnimInstance`는 Leader의 `FProject_JAnimOptimizationPolicy`를 직접 동기화받아 티어에 맞게 Hand IK와 Retarget IK를 제어합니다.
 
 ---
 

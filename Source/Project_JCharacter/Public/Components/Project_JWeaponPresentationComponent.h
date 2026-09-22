@@ -127,8 +127,8 @@ public:
 	void EndGroundContact();
 
 	/** Master ABPs read this once per animation update and feed the transforms to their generic hand IK nodes. */
-	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
-	FProject_JWeaponGripTargets GetWeaponGripTargets() const { return GripTargets; }
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
+	FProject_JWeaponGripTargets GetWeaponGripTargets();
 
 	/** Lets hit-notifies trace the rendered weapon instead of a stale character hand socket. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
@@ -136,6 +136,12 @@ public:
 
 	/** Returns the visual component that owns a weapon-local socket for attached cosmetic effects. */
 	USceneComponent* GetWeaponVFXAttachmentComponent(FName SocketName) const;
+
+	/** Registers a retarget anim instance for event-driven weapon target push. */
+	void RegisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
+
+	/** Unregisters a retarget anim instance on teardown. */
+	void UnregisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
 
 private:
 	friend class FProjectJWeaponPresentationTeardownTest;
@@ -160,6 +166,9 @@ private:
 	void DestroyWeaponPresentation();
 	void UpdateTickState();
 	void LogWeaponPresentationDebug(const TCHAR* Context) const;
+	void NotifyWeaponTargetChanged(USceneComponent* InWeaponComponent);
+
+	TArray<TWeakObjectPtr<class UProject_JRetargetAnimInstance>> RegisteredRetargetAnimInstances;
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Combat|Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> SpawnedWeapon = nullptr;

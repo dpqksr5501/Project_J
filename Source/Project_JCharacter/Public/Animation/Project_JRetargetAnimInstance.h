@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Project_JRetargetAnimInstance.generated.h"
 
 class USceneComponent;
@@ -25,6 +26,7 @@ class PROJECT_JCHARACTER_API UProject_JRetargetAnimInstance : public UAnimInstan
 public:
 	UProject_JRetargetAnimInstance();
 
+	virtual void BeginDestroy() override;
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
@@ -87,6 +89,22 @@ public:
 	/** Fallback: automatically queries weapon component on owner actor if not explicitly set (default false for production). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
 	bool bAutoDetectWeaponIfNull = false;
+
+	/** Current animation quality tier inherited from the Leader character. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	EProject_JAnimBudgetTier CurrentQualityTier = EProject_JAnimBudgetTier::Local;
+
+	/** Whether Hand IK is enabled under the current quality tier. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bTierAllowsHandIK = true;
+
+	/** Whether Retarget IK is enabled under the current quality tier (can drive Retarget Pose From Mesh node). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	bool bTierAllowsRetargetIK = true;
+
+	/** LOD threshold for Retarget Pose From Mesh node. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Quality")
+	int32 RetargetIKLODThreshold = 0;
 
 protected:
 	/** Weak reference to the currently tracked weapon visual component. */
