@@ -52,6 +52,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimOptimizationPolicy
 	/** Maximum LOD threshold for Follower Retarget IK nodes. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
 	int32 RetargetIKLODThreshold = 0;
+
+	/** Maximum LOD threshold for Follower Retarget evaluation (-1 executes at all LOD levels). */
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Optimization")
+	int32 RetargetLODThreshold = -1;
 };
 
 USTRUCT(BlueprintType)

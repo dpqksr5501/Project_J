@@ -132,6 +132,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				bTierAllowsFootIK = Policy.bEnableFootIK;
 				bTierAllowsRetargetIK = Policy.bEnableRetargetIK;
 				RetargetIKLODThreshold = Policy.RetargetIKLODThreshold;
+				RetargetLODThreshold = Policy.RetargetLODThreshold;
 			}
 		}
 	}

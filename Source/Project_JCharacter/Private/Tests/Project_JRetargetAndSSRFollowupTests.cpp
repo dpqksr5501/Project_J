@@ -10,7 +10,17 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/Project_JModularMeshComponent.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameplayTagsManager.h"
+
+class FGameStateTestAccessor : public AGameStateBase
+{
+public:
+	using AGameStateBase::ServerWorldTimeSecondsDelta;
+};
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSSRHistoricalSweepTest, "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -252,6 +262,7 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	TestTrue(TEXT("Default: allows Hand IK"), RetargetAnim->bTierAllowsHandIK);
 	TestTrue(TEXT("Default: allows Foot IK"), RetargetAnim->bTierAllowsFootIK);
 	TestTrue(TEXT("Default: allows Retarget IK"), RetargetAnim->bTierAllowsRetargetIK);
+	TestEqual(TEXT("Default: RetargetLODThreshold is -1"), RetargetAnim->RetargetLODThreshold, -1);
 	TestEqual(TEXT("Default: Quality Tier is Local"), RetargetAnim->CurrentQualityTier, EProject_JAnimBudgetTier::Local);
 
 	// 2. Verify Policy structures for each tier
@@ -262,8 +273,10 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	PolicyLocal.bEnableRetargetIK = true;
 	PolicyLocal.bEnableFollowerRetarget = true;
 	PolicyLocal.RetargetIKLODThreshold = 0;
+	PolicyLocal.RetargetLODThreshold = -1;
 	TestTrue(TEXT("Local policy: Hand IK on"), PolicyLocal.bEnableHandIK);
 	TestTrue(TEXT("Local policy: Follower retarget on"), PolicyLocal.bEnableFollowerRetarget);
+	TestEqual(TEXT("Local policy: RetargetLODThreshold is -1"), PolicyLocal.RetargetLODThreshold, -1);
 
 	FProject_JAnimOptimizationPolicy PolicyNear;
 	PolicyNear.Tier = EProject_JAnimBudgetTier::Near;
@@ -272,7 +285,9 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	PolicyNear.bEnableRetargetIK = true;
 	PolicyNear.bEnableFollowerRetarget = true;
 	PolicyNear.RetargetIKLODThreshold = 1;
+	PolicyNear.RetargetLODThreshold = -1;
 	TestTrue(TEXT("Near policy: Retarget IK on"), PolicyNear.bEnableRetargetIK);
+	TestEqual(TEXT("Near policy: RetargetLODThreshold is -1"), PolicyNear.RetargetLODThreshold, -1);
 
 	FProject_JAnimOptimizationPolicy PolicyMid;
 	PolicyMid.Tier = EProject_JAnimBudgetTier::Mid;
@@ -280,9 +295,12 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	PolicyMid.bEnableFootIK = true;
 	PolicyMid.bEnableRetargetIK = false;
 	PolicyMid.bEnableFollowerRetarget = true;
+	PolicyMid.RetargetIKLODThreshold = 0;
+	PolicyMid.RetargetLODThreshold = -1;
 	TestFalse(TEXT("Mid policy: Hand IK off"), PolicyMid.bEnableHandIK);
 	TestFalse(TEXT("Mid policy: Retarget IK off"), PolicyMid.bEnableRetargetIK);
 	TestTrue(TEXT("Mid policy: Follower retarget on"), PolicyMid.bEnableFollowerRetarget);
+	TestEqual(TEXT("Mid policy: RetargetLODThreshold is -1"), PolicyMid.RetargetLODThreshold, -1);
 
 	FProject_JAnimOptimizationPolicy PolicyFar;
 	PolicyFar.Tier = EProject_JAnimBudgetTier::Far;
@@ -290,8 +308,11 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	PolicyFar.bEnableFootIK = false;
 	PolicyFar.bEnableRetargetIK = false;
 	PolicyFar.bEnableFollowerRetarget = true;
+	PolicyFar.RetargetIKLODThreshold = 0;
+	PolicyFar.RetargetLODThreshold = 2;
 	TestFalse(TEXT("Far policy: Foot IK off"), PolicyFar.bEnableFootIK);
 	TestFalse(TEXT("Far policy: Hand IK off"), PolicyFar.bEnableHandIK);
+	TestEqual(TEXT("Far policy: RetargetLODThreshold is 2"), PolicyFar.RetargetLODThreshold, 2);
 
 	FProject_JAnimOptimizationPolicy PolicyHidden;
 	PolicyHidden.Tier = EProject_JAnimBudgetTier::Hidden;
@@ -299,8 +320,263 @@ bool FProjectJAnimationQualityTierTest::RunTest(const FString&)
 	PolicyHidden.bEnableFootIK = false;
 	PolicyHidden.bEnableRetargetIK = false;
 	PolicyHidden.bEnableFollowerRetarget = false;
+	PolicyHidden.RetargetIKLODThreshold = 0;
+	PolicyHidden.RetargetLODThreshold = 0;
 	TestFalse(TEXT("Hidden policy: Follower retarget off"), PolicyHidden.bEnableFollowerRetarget);
 	TestFalse(TEXT("Hidden policy: Hand IK off"), PolicyHidden.bEnableHandIK);
+	TestEqual(TEXT("Hidden policy: RetargetLODThreshold is 0"), PolicyHidden.RetargetLODThreshold, 0);
+
+	World->DestroyWorld(false);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJHiddenLeaderVisibleFollowerTest, "ProjectJ.Animation.HiddenLeaderVisibleFollower",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJHiddenLeaderVisibleFollowerTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+
+	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
+	LeaderMesh->SetHiddenInGame(true);
+
+	// Create FollowerMesh as child of LeaderMesh with RetargetAnimInstance
+	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
+	FollowerMesh->SetupAttachment(LeaderMesh);
+	FollowerMesh->RegisterComponent();
+	FollowerMesh->SetHiddenInGame(false);
+
+	UProject_JRetargetAnimInstance* RetargetAnim = NewObject<UProject_JRetargetAnimInstance>(FollowerMesh);
+	FollowerMesh->AnimScriptInstance = RetargetAnim;
+
+	UProject_JCharacterAnimInstance* LeaderAnim = NewObject<UProject_JCharacterAnimInstance>(LeaderMesh);
+	LeaderMesh->AnimScriptInstance = LeaderAnim;
+	LeaderAnim->InitializeAnimation();
+
+	// 1. Verify FollowerMesh is properly identified by LeaderAnim
+	TestEqual(TEXT("FollowerMesh identified by GetRuntimeRetargetFollowerMesh"),
+		LeaderAnim->GetRuntimeRetargetFollowerMesh(), FollowerMesh);
+
+	// 2. Mark FollowerMesh as recently rendered
+	const float Now = World->GetTimeSeconds();
+	FollowerMesh->SetLastRenderTime(Now);
+
+	// LeaderMesh is bHiddenInGame = true, but FollowerMesh is rendered -> WasOwnerVisualRecentlyRendered must be true!
+	TestTrue(TEXT("WasOwnerVisualRecentlyRendered is true when Follower is rendered"),
+		LeaderAnim->WasOwnerVisualRecentlyRendered(1.0f));
+
+	FProject_JAnimOptimizationPolicy Policy = LeaderAnim->BuildOptimizationPolicy();
+	TestNotEqual(TEXT("Tier is NOT Hidden when Follower is rendered"),
+		Policy.Tier, EProject_JAnimBudgetTier::Hidden);
+	TestTrue(TEXT("Policy enables Follower Retarget"), Policy.bEnableFollowerRetarget);
+
+	World->DestroyWorld(false);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJHiddenToVisibleFollowerRestoreTest, "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJHiddenToVisibleFollowerRestoreTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+
+	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
+	LeaderMesh->SetHiddenInGame(true);
+
+	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
+	FollowerMesh->SetupAttachment(LeaderMesh);
+	FollowerMesh->RegisterComponent();
+	FollowerMesh->SetHiddenInGame(false);
+
+	UProject_JRetargetAnimInstance* RetargetAnim = NewObject<UProject_JRetargetAnimInstance>(FollowerMesh);
+	FollowerMesh->AnimScriptInstance = RetargetAnim;
+
+	UProject_JCharacterAnimInstance* LeaderAnim = NewObject<UProject_JCharacterAnimInstance>(LeaderMesh);
+	LeaderMesh->AnimScriptInstance = LeaderAnim;
+	FollowerMesh->SetLastRenderTime(World->GetTimeSeconds());
+	LeaderAnim->InitializeAnimation();
+	FollowerMesh->SetComponentTickEnabled(true);
+
+	TestTrue(TEXT("Initial: Follower tick enabled"), FollowerMesh->IsComponentTickEnabled());
+
+	// 1. Transition to Hidden: Follower not rendered (far past time)
+	FollowerMesh->SetLastRenderTime(-100.0f);
+
+	TestFalse(TEXT("WasOwnerVisualRecentlyRendered is false when off-screen"),
+		LeaderAnim->WasOwnerVisualRecentlyRendered(1.0f));
+
+	FProject_JAnimOptimizationPolicy HiddenPolicy = LeaderAnim->BuildOptimizationPolicy();
+	TestEqual(TEXT("Tier becomes Hidden"), HiddenPolicy.Tier, EProject_JAnimBudgetTier::Hidden);
+	TestFalse(TEXT("HiddenPolicy disables follower retarget"), HiddenPolicy.bEnableFollowerRetarget);
+
+	LeaderAnim->ApplyOptimizationPolicy(HiddenPolicy);
+	TestFalse(TEXT("Follower tick disabled after entering Hidden tier"), FollowerMesh->IsComponentTickEnabled());
+
+	// 2. Transition back to Visible: camera looks at character, Follower becomes rendered
+	const float Now = World->GetTimeSeconds();
+	FollowerMesh->SetLastRenderTime(Now);
+
+	TestTrue(TEXT("WasOwnerVisualRecentlyRendered recovers to true"),
+		LeaderAnim->WasOwnerVisualRecentlyRendered(1.0f));
+
+	FProject_JAnimOptimizationPolicy RestoredPolicy = LeaderAnim->BuildOptimizationPolicy();
+	TestNotEqual(TEXT("Restored tier is not Hidden"), RestoredPolicy.Tier, EProject_JAnimBudgetTier::Hidden);
+	TestTrue(TEXT("Restored policy enables follower retarget"), RestoredPolicy.bEnableFollowerRetarget);
+
+	LeaderAnim->ApplyOptimizationPolicy(RestoredPolicy);
+	TestTrue(TEXT("Follower tick restored after exiting Hidden tier"), FollowerMesh->IsComponentTickEnabled());
+
+	World->DestroyWorld(false);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJModularMeshIsolationTest, "ProjectJ.Animation.ModularMeshIsolation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJModularMeshIsolationTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+
+	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
+
+	// 1. Create Follower Mesh
+	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character, TEXT("FollowerVisualMesh"));
+	FollowerMesh->SetupAttachment(LeaderMesh);
+	FollowerMesh->RegisterComponent();
+	UProject_JRetargetAnimInstance* RetargetAnim = NewObject<UProject_JRetargetAnimInstance>(FollowerMesh);
+	FollowerMesh->AnimScriptInstance = RetargetAnim;
+
+	// 2. Create Modular Mesh (e.g. Armor/Helmet)
+	UProject_JModularMeshComponent* ModularArmorMesh = NewObject<UProject_JModularMeshComponent>(Character, TEXT("ModularArmorMesh"));
+	ModularArmorMesh->SetupAttachment(LeaderMesh);
+	ModularArmorMesh->RegisterComponent();
+
+	UProject_JCharacterAnimInstance* LeaderAnim = NewObject<UProject_JCharacterAnimInstance>(LeaderMesh);
+	LeaderMesh->AnimScriptInstance = LeaderAnim;
+	LeaderAnim->InitializeAnimation();
+
+	ModularArmorMesh->PrimaryComponentTick.bCanEverTick = true;
+	FollowerMesh->SetComponentTickEnabled(true);
+	ModularArmorMesh->SetComponentTickEnabled(true);
+	TestTrue(TEXT("Initial: FollowerMesh tick enabled"), FollowerMesh->IsComponentTickEnabled());
+	TestTrue(TEXT("Initial: ModularArmorMesh tick enabled"), ModularArmorMesh->IsComponentTickEnabled());
+
+	// 3. Apply Hidden policy (bEnableFollowerRetarget = false)
+	FProject_JAnimOptimizationPolicy HiddenPolicy;
+	HiddenPolicy.Tier = EProject_JAnimBudgetTier::Hidden;
+	HiddenPolicy.bEnableFollowerRetarget = false;
+	LeaderAnim->ApplyOptimizationPolicy(HiddenPolicy);
+
+	// FollowerMesh must be disabled, BUT ModularArmorMesh must NOT be disabled!
+	TestFalse(TEXT("FollowerMesh tick disabled in Hidden tier"), FollowerMesh->IsComponentTickEnabled());
+	TestTrue(TEXT("ModularArmorMesh tick preserved in Hidden tier (isolated)"), ModularArmorMesh->IsComponentTickEnabled());
+
+	// 4. Restore to Visible policy
+	FProject_JAnimOptimizationPolicy VisiblePolicy;
+	VisiblePolicy.Tier = EProject_JAnimBudgetTier::Near;
+	VisiblePolicy.bEnableFollowerRetarget = true;
+	LeaderAnim->ApplyOptimizationPolicy(VisiblePolicy);
+
+	TestTrue(TEXT("FollowerMesh tick restored in Visible tier"), FollowerMesh->IsComponentTickEnabled());
+	TestTrue(TEXT("ModularArmorMesh tick still enabled"), ModularArmorMesh->IsComponentTickEnabled());
+
+	World->DestroyWorld(false);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSSRHitWindowProductionTransitionTest, "ProjectJ.Combat.SSRHitWindowProductionTransition",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJSSRHitWindowProductionTransitionTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+
+	AGameStateBase* GameState = World->SpawnActor<AGameStateBase>(Params);
+	World->SetGameState(GameState);
+	auto* GameStateAccess = static_cast<FGameStateTestAccessor*>(GameState);
+
+	UProject_JCombatHitValidationComponent* HitVal = NewObject<UProject_JCombatHitValidationComponent>(Character);
+	Character->AddInstanceComponent(HitVal);
+	HitVal->RegisterComponent();
+
+	const FGameplayTag AttackTag = UGameplayTagsManager::Get().AddNativeGameplayTag(TEXT("ProjectJ.Tests.SSR.ProductionAttack"));
+	const int32 Key = 101;
+	const float WorldTime = World->GetTimeSeconds();
+
+	// 1. Begin Attack Node at 10.0s
+	GameStateAccess->ServerWorldTimeSecondsDelta = 10.0f - WorldTime;
+	HitVal->BeginAttackNode(AttackTag, nullptr, Key);
+
+	// 2. Open HitWindow at 10.0s (records open transition boundary)
+	HitVal->SetHitWindowOpen(true);
+
+	// 3. Record authoritative traces within hit window
+	GameStateAccess->ServerWorldTimeSecondsDelta = 10.1f - WorldTime;
+	HitVal->RecordAuthoritativeTrace(FVector(0, 0, 0), FVector(100, 0, 0));
+
+	GameStateAccess->ServerWorldTimeSecondsDelta = 10.2f - WorldTime;
+	HitVal->RecordAuthoritativeTrace(FVector(0, 100, 0), FVector(100, 100, 0));
+
+	// 4. Close HitWindow at 10.3s (records close transition boundary)
+	GameStateAccess->ServerWorldTimeSecondsDelta = 10.3f - WorldTime;
+	HitVal->SetHitWindowOpen(false);
+
+	// 5. Test SSR verification via FindAuthoritativeTraceAtTime
+	FVector OutStart = FVector::ZeroVector;
+	FVector OutEnd = FVector::ZeroVector;
+	bool bOutHitWindowOpen = false;
+
+	// Sub-frame inside hit window between Trace1 (10.1) and Trace2 (10.2) at 10.15s
+	const bool bValidMid = HitVal->FindAuthoritativeTraceAtTime(10.15f, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen);
+	TestTrue(TEXT("Production path: Sub-frame inside hit window is valid"), bValidMid);
+	TestTrue(TEXT("Production path: HitWindow was open"), bOutHitWindowOpen);
+	TestNearlyEqual(TEXT("Production path: Interpolated Y is 50"), OutStart.Y, 50.0, 0.1);
+
+	// Timestamp before hit window opened (9.95s)
+	const bool bBeforeOpen = HitVal->FindAuthoritativeTraceAtTime(9.95f, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen);
+	TestFalse(TEXT("Production path: Sample before open boundary is rejected"), bBeforeOpen);
+
+	// Timestamp after hit window closed (10.32s within tolerance): trace found, but window is closed
+	const bool bAfterClose = HitVal->FindAuthoritativeTraceAtTime(10.32f, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen);
+	TestTrue(TEXT("Production path: Trace after close found within tolerance"), bAfterClose);
+	TestFalse(TEXT("Production path: HitWindow is closed after close boundary"), bOutHitWindowOpen);
+
+	// Timestamp beyond future tolerance (10.45s) is rejected
+	const bool bBeyondFuture = HitVal->FindAuthoritativeTraceAtTime(10.45f, Key, AttackTag, OutStart, OutEnd, bOutHitWindowOpen);
+	TestFalse(TEXT("Production path: Sample beyond future tolerance is rejected"), bBeyondFuture);
+
+	// Mismatched PredictionKey
+	const bool bWrongKey = HitVal->FindAuthoritativeTraceAtTime(10.15f, 9999, AttackTag, OutStart, OutEnd, bOutHitWindowOpen);
+	TestFalse(TEXT("Production path: Mismatched key rejected"), bWrongKey);
+
+	// Active attack convenience overload succeeds during active combo node
+	TestTrue(TEXT("Production path: Active attack convenience overload succeeds"),
+		HitVal->FindAuthoritativeTraceAtTime(10.15f, OutStart, OutEnd));
+
+	// 6. Calling EndAttack() clears active attack context (Option A active attack context)
+	HitVal->EndAttack();
+	const bool bAfterEndAttack = HitVal->FindAuthoritativeTraceAtTime(10.15f, OutStart, OutEnd);
+	TestFalse(TEXT("Production path: Convenience overload after EndAttack is rejected (Option A active attack context)"), bAfterEndAttack);
+	TestFalse(TEXT("Production path: Active tag is cleared"), HitVal->GetActiveAttackNodeTag().IsValid());
+
+	FProject_JCombatHitRequest Request;
+	Request.PredictionKey = Key;
+	Request.AttackNodeTag = AttackTag;
+	TestEqual(TEXT("Production path: ValidateActiveAttack rejects with NoActiveAttack after EndAttack"),
+		HitVal->ValidateActiveAttack(Request), EProject_JCombatHitValidationFailure::NoActiveAttack);
 
 	World->DestroyWorld(false);
 	return true;

@@ -87,6 +87,7 @@ private:
 	bool bSavedSuppressNotifies = false;
 	friend class FProjectJWeaponAttackLifetimeTest;
 	friend class FProjectJSSRHistoricalSweepTest;
+	friend class FProjectJSSRHitWindowProductionTransitionTest;
 	bool HasValidAttackWeapon() const;
 	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;
 	uint64 AttackWeaponRevision = 0;

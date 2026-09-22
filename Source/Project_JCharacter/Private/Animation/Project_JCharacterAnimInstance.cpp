@@ -3405,6 +3405,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bEnableRetargetIK = true;
 		Policy.bEnableFollowerRetarget = true;
 		Policy.RetargetIKLODThreshold = 0;
+		Policy.RetargetLODThreshold = -1;
 		return Policy;
 	}
 
@@ -3419,6 +3420,8 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bEnableFootIK = false;
 		Policy.bEnableRetargetIK = false;
 		Policy.bEnableFollowerRetarget = false;
+		Policy.RetargetIKLODThreshold = 0;
+		Policy.RetargetLODThreshold = 0;
 		Policy.MotionMatchingUpdateInterval = GetEffectiveHiddenRemoteUpdateInterval();
 		return Policy;
 	}
@@ -3434,6 +3437,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 			Policy.bEnableRetargetIK = true;
 			Policy.bEnableFollowerRetarget = true;
 			Policy.RetargetIKLODThreshold = 1;
+			Policy.RetargetLODThreshold = -1;
 			return Policy;
 		}
 
@@ -3446,6 +3450,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 			Policy.bEnableRetargetIK = false;
 			Policy.bEnableFollowerRetarget = true;
 			Policy.RetargetIKLODThreshold = 0;
+			Policy.RetargetLODThreshold = -1;
 			return Policy;
 		}
 
@@ -3457,6 +3462,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.bEnableRetargetIK = false;
 		Policy.bEnableFollowerRetarget = true;
 		Policy.RetargetIKLODThreshold = 0;
+		Policy.RetargetLODThreshold = 2;
 		Policy.MotionMatchingUpdateInterval = GetEffectiveFarMotionMatchingUpdateInterval();
 		return Policy;
 	}
@@ -3467,6 +3473,7 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 	Policy.bEnableRetargetIK = true;
 	Policy.bEnableFollowerRetarget = true;
 	Policy.RetargetIKLODThreshold = 1;
+	Policy.RetargetLODThreshold = -1;
 	return Policy;
 }
 
@@ -3477,15 +3484,9 @@ void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAn
 
 	if (bFollowerStateChanged && OwningCharacter)
 	{
-		if (USkeletalMeshComponent* LeaderMesh = OwningCharacter->GetMesh())
+		if (USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
 		{
-			for (USceneComponent* Child : LeaderMesh->GetAttachChildren())
-			{
-				if (USkeletalMeshComponent* FollowerMesh = Cast<USkeletalMeshComponent>(Child))
-				{
-					FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
-				}
-			}
+			FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
 		}
 	}
 }

@@ -248,9 +248,10 @@ Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 �
 - **Far (원거리)**:
   - Leader 저빈도 틱 + Far Chooser 전용 + Retarget IK Off + Hand IK Off + Foot IK Off.
 - **Hidden (비가시화)**:
-  - Leader의 상태 전이에 따라 Follower 메시의 컴포넌트 틱 자체를 일괄 비활성화(`SetComponentTickEnabled(false)`)하여 완전한 0 CPU 달성. 다시 화면 내 진입 시 Leader 틱에 의해 즉각 복구.
+  - Leader의 상태 전이에 따라 Follower animation component tick 및 Runtime Retarget / IK evaluation을 비활성화(`SetComponentTickEnabled(false)`)하여 visual animation evaluation 비용을 제거한다. 다시 화면 내 진입 시 `WasOwnerVisualRecentlyRendered` 감지에 의해 즉각 복구.
+  - 모듈러 장비 메시(`UProject_JModularMeshComponent`)는 격리되어 독립적인 수명주기를 유지하며, 전용 팔로워 메시만 안전하게 식별 및 제어.
   - 클라이언트 Follower 메시 기본 옵션으로 `VisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered` 적용.
-  - `UProject_JRetargetAnimInstance`에서 `bEnableFollowerRetarget`, `bTierAllowsHandIK`, `bTierAllowsFootIK`, `bTierAllowsRetargetIK`, `RetargetIKLODThreshold`를 노출하여 AnimGraph 상의 조건 분기(`Blend Poses by Bool` 및 노드 LOD 핀) 지원.
+  - `UProject_JRetargetAnimInstance`에서 `bEnableFollowerRetarget`, `bTierAllowsHandIK`, `bTierAllowsFootIK`, `bTierAllowsRetargetIK`, `RetargetIKLODThreshold`, `RetargetLODThreshold`를 노출하여 AnimGraph 상의 조건 분기(`Blend Poses by Bool` 및 노드 LOD 핀) 지원.
 
 ---
 

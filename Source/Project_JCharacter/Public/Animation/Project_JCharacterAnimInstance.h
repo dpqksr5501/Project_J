@@ -747,6 +747,9 @@ public:
 	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
 	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* InProxy) override;
 
+	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
+	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
+
 	// Snapshot-only AnimGraph inputs. Written in UE's thread-safe update phase,
 	// then read by generated property-copy handlers on the same animation task.
 	// Do not use these as gameplay state or write them from Blueprint callbacks.
@@ -1268,8 +1271,6 @@ protected:
 	void RecordMotionMatchingTrace(const FProject_JAnimThreadSafeData& Data, bool bDatabaseChanged, bool bForceReselect);
 	/** Linked layers may consume the snapshot, but only the mesh's primary instance may mutate MM/trajectory state. */
 	bool IsPrimaryMeshAnimInstance() const;
-	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
-	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);

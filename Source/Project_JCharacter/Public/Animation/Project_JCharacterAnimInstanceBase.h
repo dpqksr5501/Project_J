@@ -12,6 +12,8 @@ class AProject_JPlayerCharacter;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingTrajectoryComponent;
 
+class USkeletalMeshComponent;
+
 /**
  * Shared owner/reference cache for native character animation instances.
  *
@@ -25,6 +27,17 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstanceBase : public UAnimI
 
 public:
 	virtual void NativeInitializeAnimation() override;
+
+	/** Returns the dedicated Runtime Retarget Follower mesh on the owning character if present. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Quality")
+	USkeletalMeshComponent* GetRuntimeRetargetFollowerMesh() const;
+
+	/**
+	 * Checks whether any visual representation of the owner was recently rendered.
+	 * Follower mesh and visual meshes take precedence over a gameplay-only hidden leader mesh.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Animation|Quality")
+	bool WasOwnerVisualRecentlyRendered(float RecentlyRenderedTolerance) const;
 
 protected:
 	void CacheOwnerReferences();
@@ -47,4 +60,7 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> CachedTrajectoryComponent = nullptr;
+
+	UPROPERTY(Transient)
+	mutable TWeakObjectPtr<USkeletalMeshComponent> CachedRuntimeRetargetFollowerMesh = nullptr;
 };

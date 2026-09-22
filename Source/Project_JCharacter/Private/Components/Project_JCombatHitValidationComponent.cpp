@@ -347,6 +347,10 @@ bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(
 
 bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float TargetTimestamp, FVector& OutStart, FVector& OutEnd) const
 {
+	if (!ActiveAttackNodeTag.IsValid())
+	{
+		return false;
+	}
 	bool bIgnoredWindow = false;
 	return FindAuthoritativeTraceAtTime(TargetTimestamp, ActivePredictionKey, ActiveAttackNodeTag, OutStart, OutEnd, bIgnoredWindow);
 }
