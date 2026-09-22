@@ -139,6 +139,10 @@ void UProject_JWeaponPresentationComponent::ExitCombatPresentation()
 {
 	bCombatPresentationActive = false;
 	EndIndependentMotion();
+	TwoHandGripStateCount = 0;
+	ActiveTwoHandSecondaryIKAlpha = 1.0f;
+	ActiveTwoHandPrimaryIKAlpha = 1.0f;
+	bActiveTwoHandOverridePrimary = false;
 	WeaponPresentationDebugElapsedSeconds = 0.0f;
 	AttachWeaponToSheathedSocket();
 	UpdateTickState();
@@ -311,6 +315,10 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 	AppliedCharacterMesh.Reset();
 	AppliedSkeletalMesh.Reset();
 	EndIndependentMotion();
+	TwoHandGripStateCount = 0;
+	ActiveTwoHandSecondaryIKAlpha = 1.0f;
+	ActiveTwoHandPrimaryIKAlpha = 1.0f;
+	bActiveTwoHandOverridePrimary = false;
 	if (SpawnedWeapon)
 	{
 		NotifyWeaponTargetChanged(nullptr);
@@ -481,6 +489,27 @@ void UProject_JWeaponPresentationComponent::EndGroundContact()
 	GroundContactStateCount = FMath::Max(0, GroundContactStateCount - 1);
 }
 
+void UProject_JWeaponPresentationComponent::BeginTwoHandGrip(float SecondaryIKAlpha, float PrimaryIKAlpha, bool bOverridePrimaryIK)
+{
+	++TwoHandGripStateCount;
+	ActiveTwoHandSecondaryIKAlpha = FMath::Clamp(SecondaryIKAlpha, 0.0f, 1.0f);
+	ActiveTwoHandPrimaryIKAlpha = FMath::Clamp(PrimaryIKAlpha, 0.0f, 1.0f);
+	bActiveTwoHandOverridePrimary = bOverridePrimaryIK;
+	UpdateGripTargets();
+}
+
+void UProject_JWeaponPresentationComponent::EndTwoHandGrip()
+{
+	TwoHandGripStateCount = FMath::Max(0, TwoHandGripStateCount - 1);
+	if (TwoHandGripStateCount == 0)
+	{
+		ActiveTwoHandSecondaryIKAlpha = 1.0f;
+		ActiveTwoHandPrimaryIKAlpha = 1.0f;
+		bActiveTwoHandOverridePrimary = false;
+	}
+	UpdateGripTargets();
+}
+
 void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
 {
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
@@ -598,8 +627,18 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	{
 		if (CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
 		{
-			GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? Motion.DefaultDrawnPrimaryIKAlpha : 0.0f;
-			GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? Motion.DefaultDrawnSecondaryIKAlpha : 0.0f;
+			if (TwoHandGripStateCount > 0)
+			{
+				GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? ActiveTwoHandSecondaryIKAlpha : 0.0f;
+				GripTargets.PrimaryIKAlpha = (GripTargets.bHasPrimaryGrip && bActiveTwoHandOverridePrimary)
+					? ActiveTwoHandPrimaryIKAlpha
+					: (GripTargets.bHasPrimaryGrip ? Motion.DefaultDrawnPrimaryIKAlpha : 0.0f);
+			}
+			else
+			{
+				GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? Motion.DefaultDrawnPrimaryIKAlpha : 0.0f;
+				GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? Motion.DefaultDrawnSecondaryIKAlpha : 0.0f;
+			}
 		}
 		else
 		{

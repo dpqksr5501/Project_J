@@ -160,7 +160,36 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	SnapshotOwningCompWorldTransform = OwningComp->GetComponentTransform();
 
-	// 3. Try consuming from UProject_JWeaponPresentationComponent if present
+	// 3. Check Leader AnimInstance curves (supports authored high-precision Float Curves on attack montages)
+	float LeaderLeftCurveValue = -1.0f;
+	float LeaderRightCurveValue = -1.0f;
+	if (const ACharacter* OwnerChar = Cast<ACharacter>(OwnerPawn))
+	{
+		if (const USkeletalMeshComponent* LeaderMesh = OwnerChar->GetMesh())
+		{
+			if (const UAnimInstance* LeaderAnim = LeaderMesh->GetAnimInstance())
+			{
+				if (!LeftHandIKCurveName.IsNone())
+				{
+					const float Val = LeaderAnim->GetCurveValue(LeftHandIKCurveName);
+					if (Val > UE_KINDA_SMALL_NUMBER)
+					{
+						LeaderLeftCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
+					}
+				}
+				if (!RightHandIKCurveName.IsNone())
+				{
+					const float Val = LeaderAnim->GetCurveValue(RightHandIKCurveName);
+					if (Val > UE_KINDA_SMALL_NUMBER)
+					{
+						LeaderRightCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
+					}
+				}
+			}
+		}
+	}
+
+	// 4. Try consuming from UProject_JWeaponPresentationComponent if present
 	if (!CachedPresentationComp.IsValid())
 	{
 		CachedPresentationComp = OwnerPawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
@@ -174,18 +203,20 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			SnapshotRightGripWorldTransform = GripTargets.PrimaryGripWorldTransform;
 			bHasValidRightSnapshot = true;
+			const float PrimaryBaseAlpha = (LeaderRightCurveValue >= 0.0f) ? LeaderRightCurveValue : GripTargets.PrimaryIKAlpha;
 			TargetRightAlphaSnapshot = bIsCombatMode
-				? (bEnableCombatGripIK ? GripTargets.PrimaryIKAlpha : 0.0f)
-				: GripTargets.PrimaryIKAlpha;
+				? (bEnableCombatGripIK ? PrimaryBaseAlpha : 0.0f)
+				: PrimaryBaseAlpha;
 			bResolvedFromPresentation = true;
 		}
 		if (GripTargets.bHasSecondaryGrip)
 		{
 			SnapshotLeftGripWorldTransform = GripTargets.SecondaryGripWorldTransform;
 			bHasValidLeftSnapshot = true;
+			const float SecondaryBaseAlpha = (LeaderLeftCurveValue >= 0.0f) ? LeaderLeftCurveValue : GripTargets.SecondaryIKAlpha;
 			TargetLeftAlphaSnapshot = bIsCombatMode
-				? (bEnableCombatGripIK ? GripTargets.SecondaryIKAlpha : 0.0f)
-				: GripTargets.SecondaryIKAlpha;
+				? (bEnableCombatGripIK ? SecondaryBaseAlpha : 0.0f)
+				: SecondaryBaseAlpha;
 			bResolvedFromPresentation = true;
 		}
 	}
@@ -240,8 +271,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			SnapshotRightGripWorldTransform = WeaponComp->GetSocketTransform(PrimaryGripSocketName, RTS_World);
 			bHasValidRightSnapshot = true;
 			// In sheathed state (weapon on back): Right hand alpha is 0.0 unless combat mode is active
-			// In combat state (weapon drawn): Right hand aligns to grip if enabled
-			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
+			// In combat state (weapon drawn): Right hand aligns to grip if enabled (or driven by curve)
+			const float PrimaryFallbackAlpha = (LeaderRightCurveValue >= 0.0f) ? LeaderRightCurveValue : 1.0f;
+			TargetRightAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? PrimaryFallbackAlpha : 0.0f) : 0.0f;
 		}
 		else
 		{
@@ -253,7 +285,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			SnapshotLeftGripWorldTransform = WeaponComp->GetSocketTransform(SecondaryGripSocketName, RTS_World);
 			bHasValidLeftSnapshot = true;
-			TargetLeftAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? 1.0f : 0.0f) : 0.0f;
+			// Secondary hand only follows if driven by curve; otherwise 0.0 in idle/run
+			const float SecondaryFallbackAlpha = (LeaderLeftCurveValue >= 0.0f) ? LeaderLeftCurveValue : 0.0f;
+			TargetLeftAlphaSnapshot = bIsCombatMode ? (bEnableCombatGripIK ? SecondaryFallbackAlpha : 0.0f) : 0.0f;
 		}
 		else
 		{

@@ -1,6 +1,6 @@
 # MMORPG Runtime Retargeting & Weapon Hand IK Architecture
 
-> **문서 버전:** 1.0.0  
+> **문서 버전:** 1.1.0  
 > **최종 수정일:** 2026-09-22  
 > **대상 엔진:** Unreal Engine 5.8  
 > **핵심 기술 스택:** Motion Matching, BlendStack, IK Rig & IK Retargeter, Iris Replication, Gameplay Ability System (GAS), Worker Thread Parallel Anim Evaluation  
@@ -169,10 +169,36 @@ flowchart TD
   - Leader Mesh가 몽타주를 재생하면, 해당 포즈가 `Retarget Pose From Mesh`를 통해 Follower Mesh로 실시간 전송됩니다.
   - Follower Mesh의 루트 본은 로컬 (0,0,0)에 고정되고 상/하체 모션만 리타깃되어 재생되므로 완벽한 싱크가 유지됩니다.
 
-### 3.6 대검 양손 파지(Two-Handed Grip) 및 왼손 보조 IK 확장 로드맵
-- 대검(Greatsword)은 대표적인 양손 무기입니다. 현재 구현된 `WeaponGrip_R`(주 손잡이)에 이어, 왼손 보조 손잡이(`WeaponGrip_L`) 파지를 지원하도록 C++ 클래스 확장이 예정되어 있습니다:
-  - `LeftGripLocation` (컴포넌트 공간 FVector) 및 `LeftGripIKAlpha` (float) 추가.
-  - 양손 파지 공격 및 가드(Guard) 모션 시 오른손은 주 손잡이에 고정되고, 왼손은 무기 칼등이나 보조 그립 소켓에 Two-Bone IK로 자동 밀착.
+### 3.6 대검 양손 파지(Two-Handed Grip) 및 공격 IK 하이브리드 연동 아키텍처
+
+대검(Greatsword) 등 양손 무기는 **전투 대기(Combat Idle) 및 이동 중에는 오른손만 무기 손잡이를 쥐고(`RightGripAlpha = 1.0`, `LeftGripAlpha = 0.0`), 공격 몽타주가 재생되는 스윙 구간에서만 왼손이 보조 손잡이(`WeaponGrip_L`)를 잡도록** 하는 하이브리드 파이프라인이 구축되어 있습니다:
+
+1. **역할 분리 및 데이터 에셋 디커플링 (Data Asset Decoupling)**:
+   - 무기 프로필(`UProject_JWeaponPresentationProfile`, 예: `DA_Greatsword_Presentation`)은 특정 몽타주나 커브 에셋에 종속되지 않습니다.
+   - DA는 무기 고유의 기본 상태만을 정의합니다:
+     - `PrimaryGripSocketName`: `WeaponGrip_R` (주 손잡이)
+     - `SecondaryGripSocketName`: `WeaponGrip_L` (보조 손잡이)
+     - `DefaultDrawnPrimaryIKAlpha`: `1.0f` (발도 대기 시 오른손 밀착)
+     - `DefaultDrawnSecondaryIKAlpha`: `0.0f` (발도 대기 시 왼손 자유)
+     - `DefaultSheathed...`: `0.0f` (등 납도 시 양손 0.0)
+
+2. **공격 구간 제어: 전용 노티파이 스테이트 (`UProject_JAnimNotifyState_TwoHandIK`)**:
+   - 공격 몽타주 타임라인의 Notifies 트랙에 마우스 드래그로 `Two-Hand Grip IK` 바(Bar)를 얹어 스윙 구간을 설정합니다.
+   - 키프레임을 일일이 찍지 않고 바의 시작/끝 지점만 조절하면 되므로 기획자 및 애니메이터의 작업 편의성이 극대화됩니다.
+   - `SecondaryIKAlpha` (기본값 `1.0f`), `PrimaryIKAlpha` (기본값 `1.0f`), `bOverridePrimaryIK` 지원.
+
+3. **콤보 오버랩 및 선입력 캔슬 방어 (Ref-Counting Architecture)**:
+   - `UProject_JWeaponPresentationComponent` 내부에서 `TwoHandGripStateCount` 참조 카운터로 활성 노티파이를 추적합니다.
+   - 선입력 콤보나 연속 공격으로 인해 이전 몽타주의 `NotifyEnd`보다 다음 몽타주의 `NotifyBegin`이 먼저 호출되는 오버랩 상황에서도, 카운터가 유지되어 왼손이 순간적으로 떨어졌다가 다시 붙는 플리커(Flicker) 현상이 원천 방지됩니다.
+   - 회피/피격 캔슬이나 전투 해제(`ExitCombatPresentation`), 무기 파괴 시 카운터가 안전하게 0으로 리셋됩니다.
+
+4. **하이브리드 커브 연동 및 스무딩 (`UProject_JRetargetAnimInstance`)**:
+   - Leader-Follower 분리 구조상 리타깃 노드는 Leader 몽타주의 커브를 자동 복사하지 못하므로, C++ Game Thread(`NativeUpdateAnimation`)에서 Leader AnimInstance의 `GetCurveValue()`를 질의합니다.
+   - 몽타주에 `LeftHandIK` 커브가 작성되어 있으면 커브 곡선 값이 우선 적용되고, 커브가 없으면 `Two-Hand Grip IK` 노티파이 상태 값을 적용합니다.
+   - Worker Thread(`NativeThreadSafeUpdateAnimation`)에서 `GripInterpSpeed = 12.0f` 속도로 `FMath::FInterpTo` 스무딩을 수행하여 손이 자석처럼 부드럽게 붙고 떨어집니다.
+
+5. **자동화 단위 테스트 검증**:
+   - `FProjectJTwoHandIKTransitionAndCurveTest`를 통해 납도(0.0), 발도 대기(우1/좌0), 공격 스윙(우1/좌1), 콤보 오버랩(플리커 없음), 노티파이 진입/종료, 전투 해제 리셋 전 과정이 회귀 테스트로 검증됩니다.
 
 ### 3.7 발도/납도 무기 소켓 트랜지션 및 애님 노티파이(AnimNotify) 동기화
 - 무기가 등 소켓(`Sheathe_Socket`)에서 손 소켓(`hand_rSocket`)으로 스위칭되는 순간:

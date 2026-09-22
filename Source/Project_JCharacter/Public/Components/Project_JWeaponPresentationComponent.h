@@ -126,6 +126,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	void EndGroundContact();
 
+	/**
+	 * Activates two-handed weapon grip during an attack swing or skill.
+	 * Overlapping calls (e.g. combo cancels) increment a reference count so the secondary grip does not flicker.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
+	void BeginTwoHandGrip(float SecondaryIKAlpha = 1.0f, float PrimaryIKAlpha = 1.0f, bool bOverridePrimaryIK = false);
+
+	/**
+	 * Deactivates two-handed weapon grip or decrements reference count.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
+	void EndTwoHandGrip();
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
+	bool IsTwoHandGripActive() const { return TwoHandGripStateCount > 0; }
+
 	/** Master ABPs read this once per animation update and feed the transforms to their generic hand IK nodes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	FProject_JWeaponGripTargets GetWeaponGripTargets();
@@ -148,6 +164,7 @@ private:
 	friend class FProjectJWeaponPresentationIdentityTest;
 	friend class FProjectJCrowdPresentationTest;
 	friend class FProjectJStableGripTargetsTest;
+	friend class FProjectJTwoHandIKTransitionAndCurveTest;
 	bool ShouldBudgetPresentation() const;
 	void CancelBudgetedPresentation();
 	uint64 PresentationRevision = 0;
@@ -198,6 +215,10 @@ private:
 	float ActivePrimaryGripIKAlpha = 0.0f;
 	float ActiveSecondaryGripIKAlpha = 0.0f;
 	int32 GroundContactStateCount = 0;
+	int32 TwoHandGripStateCount = 0;
+	float ActiveTwoHandSecondaryIKAlpha = 1.0f;
+	float ActiveTwoHandPrimaryIKAlpha = 1.0f;
+	bool bActiveTwoHandOverridePrimary = false;
 
 	float WeaponPresentationDebugElapsedSeconds = 0.0f;
 	bool bCombatPresentationActive = false;

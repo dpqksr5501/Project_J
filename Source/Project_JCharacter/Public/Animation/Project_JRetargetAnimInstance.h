@@ -74,6 +74,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
 	FName SecondaryGripSocketName = TEXT("WeaponGrip_L");
 
+	/** Optional curve name on Leader playing animation to dynamically drive Left Hand IK alpha. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
+	FName LeftHandIKCurveName = TEXT("LeftHandIK");
+
+	/** Optional curve name on Leader playing animation to dynamically drive Right Hand IK alpha. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config")
+	FName RightHandIKCurveName = TEXT("RightHandIK");
+
 	/** Speed of alpha interpolation during draw/sheathe transitions. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Project_J|IK|Config", meta = (ClampMin = "1.0", UIMin = "1.0"))
 	float GripInterpSpeed = 12.0f;

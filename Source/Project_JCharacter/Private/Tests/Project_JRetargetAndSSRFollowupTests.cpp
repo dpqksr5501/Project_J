@@ -582,4 +582,118 @@ bool FProjectJSSRHitWindowProductionTransitionTest::RunTest(const FString&)
 	return true;
 }
 
+#include "Animation/Project_JAnimNotifyState_TwoHandIK.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTwoHandIKTransitionAndCurveTest, "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJTwoHandIKTransitionAndCurveTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+
+	UProject_JWeaponPresentationComponent* Presentation = NewObject<UProject_JWeaponPresentationComponent>(Character);
+	Character->AddInstanceComponent(Presentation);
+	Presentation->RegisterComponent();
+
+	// 1. Mock Weapon Actor with Right and Left Grip Sockets
+	AActor* MockWeapon = World->SpawnActor<AActor>(Params);
+	UStaticMesh* StaticMesh = NewObject<UStaticMesh>(MockWeapon);
+	UStaticMeshSocket* SocketR = NewObject<UStaticMeshSocket>(StaticMesh);
+	SocketR->SocketName = TEXT("WeaponGrip_R");
+	SocketR->RelativeLocation = FVector(10.0, 20.0, 30.0);
+	StaticMesh->AddSocket(SocketR);
+
+	UStaticMeshSocket* SocketL = NewObject<UStaticMeshSocket>(StaticMesh);
+	SocketL->SocketName = TEXT("WeaponGrip_L");
+	SocketL->RelativeLocation = FVector(-10.0, -20.0, 30.0);
+	StaticMesh->AddSocket(SocketL);
+
+	UStaticMeshComponent* MeshComp = NewObject<UStaticMeshComponent>(MockWeapon);
+	MeshComp->SetStaticMesh(StaticMesh);
+	MockWeapon->SetRootComponent(MeshComp);
+	MeshComp->RegisterComponent();
+
+	// 2. Setup WeaponPresentationProfile with Greatsword settings (Secondary = 0 in drawn idle)
+	UProject_JWeaponPresentationProfile* Profile = NewObject<UProject_JWeaponPresentationProfile>(Character);
+	Profile->MotionPresentation.PrimaryGripSocketName = TEXT("WeaponGrip_R");
+	Profile->MotionPresentation.SecondaryGripSocketName = TEXT("WeaponGrip_L");
+	Profile->MotionPresentation.DefaultDrawnPrimaryIKAlpha = 1.0f;
+	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.0f; // Greatsword default: right hand only
+	Profile->MotionPresentation.DefaultSheathedPrimaryIKAlpha = 0.0f;
+	Profile->MotionPresentation.DefaultSheathedSecondaryIKAlpha = 0.0f;
+
+	Presentation->AppliedProfile = Profile;
+	Presentation->SpawnedWeapon = MockWeapon;
+	Presentation->UpdateSocketComponentCache();
+
+	// 3. Setup Follower Mesh and UProject_JRetargetAnimInstance
+	USkeletalMeshComponent* FollowerMesh = NewObject<USkeletalMeshComponent>(Character);
+	FollowerMesh->SetupAttachment(Character->GetMesh());
+	FollowerMesh->RegisterComponent();
+
+	UProject_JRetargetAnimInstance* RetargetAnim = NewObject<UProject_JRetargetAnimInstance>(FollowerMesh);
+	FollowerMesh->AnimScriptInstance = RetargetAnim;
+	Presentation->RegisterRetargetAnimInstance(RetargetAnim);
+
+	// Test A: Sheathed / Non-combat
+	Presentation->CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
+	Presentation->UpdateGripTargets();
+	FProject_JWeaponGripTargets Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Sheathed: Primary IK Alpha is 0.0"), Targets.PrimaryIKAlpha, 0.0f);
+	TestEqual(TEXT("Sheathed: Secondary IK Alpha is 0.0"), Targets.SecondaryIKAlpha, 0.0f);
+
+	// Test B: Drawn Combat Stance (Idle/Run outside attack) -> Right only
+	Presentation->CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
+	Presentation->UpdateGripTargets();
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Combat Idle: Primary IK Alpha is 1.0"), Targets.PrimaryIKAlpha, 1.0f);
+	TestEqual(TEXT("Combat Idle: Secondary IK Alpha is 0.0 (Left hand free)"), Targets.SecondaryIKAlpha, 0.0f);
+
+	// Test C: Begin TwoHandGrip (Attack swing starts) -> Left hand engages
+	Presentation->BeginTwoHandGrip(1.0f);
+	TestTrue(TEXT("TwoHandGrip is active"), Presentation->IsTwoHandGripActive());
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Attack Swing: Secondary IK Alpha is 1.0 (Left hand grips hilt)"), Targets.SecondaryIKAlpha, 1.0f);
+	TestEqual(TEXT("Attack Swing: Primary IK Alpha remains 1.0"), Targets.PrimaryIKAlpha, 1.0f);
+
+	// Test D: Combo overlap (Second attack begins before first ends) -> Ref count is 2
+	Presentation->BeginTwoHandGrip(1.0f);
+	TestTrue(TEXT("TwoHandGrip remains active during combo"), Presentation->IsTwoHandGripActive());
+	Presentation->EndTwoHandGrip(); // First attack notify ends
+	TestTrue(TEXT("TwoHandGrip still active after first notify ends (ref-count > 0)"), Presentation->IsTwoHandGripActive());
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Combo transition: Secondary IK Alpha stays 1.0 without popping"), Targets.SecondaryIKAlpha, 1.0f);
+
+	Presentation->EndTwoHandGrip(); // Second attack notify ends
+	TestFalse(TEXT("TwoHandGrip inactive after second notify ends"), Presentation->IsTwoHandGripActive());
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Combo finished: Secondary IK Alpha returns to 0.0"), Targets.SecondaryIKAlpha, 0.0f);
+
+	// Test E: UProject_JAnimNotifyState_TwoHandIK triggers presentation methods
+	UProject_JAnimNotifyState_TwoHandIK* NotifyState = NewObject<UProject_JAnimNotifyState_TwoHandIK>();
+	NotifyState->SecondaryIKAlpha = 0.9f;
+	FAnimNotifyEventReference EventRef;
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, EventRef);
+	TestTrue(TEXT("NotifyBegin activated TwoHandGrip"), Presentation->IsTwoHandGripActive());
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Notify target alpha applied (0.9)"), Targets.SecondaryIKAlpha, 0.9f);
+
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, EventRef);
+	TestFalse(TEXT("NotifyEnd deactivated TwoHandGrip"), Presentation->IsTwoHandGripActive());
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("NotifyEnd restored Secondary Alpha to 0.0"), Targets.SecondaryIKAlpha, 0.0f);
+
+	// Test F: ExitCombatPresentation clears TwoHandGrip count
+	Presentation->BeginTwoHandGrip(1.0f);
+	TestTrue(TEXT("Active before ExitCombat"), Presentation->IsTwoHandGripActive());
+	Presentation->ExitCombatPresentation();
+	TestFalse(TEXT("ExitCombatPresentation reset TwoHandGrip state count"), Presentation->IsTwoHandGripActive());
+
+	World->DestroyWorld(false);
+	return true;
+}
+
 #endif
