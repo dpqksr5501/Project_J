@@ -39,6 +39,16 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidPlayRate", "PlayRate must be greater than zero."));
 	}
+	if (!FMath::IsFinite(HitSpec.TraceDistance) || HitSpec.TraceDistance <= 0.0f ||
+		!FMath::IsFinite(HitSpec.TraceRadius) || HitSpec.TraceRadius < 0.0f)
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidTraceDimensions", "TraceDistance must be positive and TraceRadius must be non-negative; TraceDistance bounds submitted root travel per frame, not blade reach."));
+	}
+	if (HitSpec.bUseCanonicalBladeTipOffset &&
+		(HitSpec.CanonicalBladeTipOffset.IsNearlyZero() || HitSpec.CanonicalBladeTipOffset.ContainsNaN()))
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidCanonicalBladeTip", "CanonicalBladeTipOffset must be finite and non-zero when enabled; set it relative to the Melee Hit Notify Leader SocketName."));
+	}
 	if (!DamageEffect)
 	{
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "MissingDamageEffect", "DamageEffect is empty; this attack will not apply server damage."));

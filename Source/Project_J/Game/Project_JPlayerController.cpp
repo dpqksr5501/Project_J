@@ -87,10 +87,8 @@ AProject_JPlayerController::AProject_JPlayerController()
 #if WITH_EDITOR
 	EquipmentClientTestComponent = CreateDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"));
 #endif
-#if !UE_BUILD_SHIPPING
-#if !UE_BUILD_SHIPPING
+#if WITH_EDITOR
 	ProfilingCrowdComponent = CreateDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"));
-#endif
 #endif
 }
 
@@ -151,6 +149,7 @@ bool AProject_JPlayerController::ShouldUseTouchControls() const
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
 }
 
+#if WITH_EDITOR
 void AProject_JPlayerController::StartProfilingVisualCrowd(int32 Count)
 {
 #if UE_BUILD_SHIPPING
@@ -694,3 +693,4 @@ void AProject_JPlayerController::EquipmentClientTest(const FString& Action)
 {
 	if (EquipmentClientTestComponent) { EquipmentClientTestComponent->Execute(Action); }
 }
+#endif

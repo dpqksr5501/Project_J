@@ -492,8 +492,14 @@ EProject_JCombatHitValidationFailure UProject_JCombatHitValidationComponent::Val
 	{
 		return EProject_JCombatHitValidationFailure::AuthoritativeTraceUnavailable;
 	}
+	// A rotating blade tip can travel as far as its full diameter while the
+	// Leader root is stationary. The submitted segment is still only a hint;
+	// SSR intersects the target against the server-recorded canonical sweep.
+	const float TipRotationAllowance = ActiveAttackDefinition && ActiveAttackDefinition->HitSpec.bUseCanonicalBladeTipOffset
+		? 2.0f * ActiveAttackDefinition->HitSpec.CanonicalBladeTipOffset.Size() : 0.0f;
 	if (ActiveAttackDefinition &&
-		FVector::DistSquared(Request.TraceStart, Request.TraceEnd) > FMath::Square(FMath::Max(0.0f, ActiveAttackDefinition->HitSpec.TraceDistance + ActiveAttackDefinition->HitSpec.TraceRadius)))
+		FVector::DistSquared(Request.TraceStart, Request.TraceEnd) > FMath::Square(FMath::Max(0.0f,
+			ActiveAttackDefinition->HitSpec.TraceDistance + TipRotationAllowance + ActiveAttackDefinition->HitSpec.TraceRadius)))
 	{
 		return EProject_JCombatHitValidationFailure::TraceTooLong;
 	}

@@ -14,9 +14,15 @@ UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
 void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+	if (!MeshComp || SocketName.IsNone() || !MeshComp->DoesSocketExist(SocketName))
 	{
-		PreviousSocketLocations.Add(MeshComp, ResolveTraceLocation(MeshComp));
+		UE_LOG(LogTemp, Warning, TEXT("Melee Hit Trace requires Leader mesh socket '%s' on %s; hit window will not open."),
+			*SocketName.ToString(), *GetNameSafe(MeshComp));
+		return;
+	}
+	if (AActor* OwnerActor = MeshComp->GetOwner())
+	{
+		PreviousTraceLocations.Add(MeshComp, ResolveTraceLocation(MeshComp));
 		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 		{
 			HitValidation->SetHitWindowOpen(true);
@@ -28,6 +34,15 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 {
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
 
+	if (!MeshComp)
+	{
+		return;
+	}
+	const FVector* PreviousLocation = PreviousTraceLocations.Find(MeshComp);
+	if (!PreviousLocation)
+	{
+		return;
+	}
 	AActor* OwnerActor = MeshComp->GetOwner();
 	if (!OwnerActor || !HitEventTag.IsValid())
 	{
@@ -41,8 +56,8 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	}
 
 	const FVector TraceLocation = ResolveTraceLocation(MeshComp);
-	const FVector TraceStart = PreviousSocketLocations.FindRef(MeshComp);
-	PreviousSocketLocations.Add(MeshComp, TraceLocation);
+	const FVector TraceStart = *PreviousLocation;
+	PreviousTraceLocations.Add(MeshComp, TraceLocation);
 	float EffectiveTraceRadius = TraceRadius;
 	if (const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 	{
@@ -99,10 +114,20 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 
 FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const
 {
-	// Gameplay traces and the server's rewind history must use the same Leader
-	// pose on every net role. The presentation weapon exists only on clients and
-	// may be moved independently by cosmetic montage notifies.
-	return MeshComp ? MeshComp->GetSocketLocation(SocketName) : FVector::ZeroVector;
+	if (!MeshComp)
+	{
+		return FVector::ZeroVector;
+	}
+
+	// Both the predicted sweep and server rewind history use this Leader-pose
+	// endpoint. The presentation weapon and follower/IK pose are cosmetic only.
+	const AActor* OwnerActor = MeshComp->GetOwner();
+	const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor
+		? OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>() : nullptr;
+	const UProject_JAttackDefinition* AttackDefinition = HitValidation ? HitValidation->GetActiveAttackDefinition() : nullptr;
+	const FVector LocalTip = AttackDefinition && AttackDefinition->HitSpec.bUseCanonicalBladeTipOffset
+		? AttackDefinition->HitSpec.CanonicalBladeTipOffset : FVector::ZeroVector;
+	return MeshComp->GetSocketTransform(SocketName, RTS_World).TransformPosition(LocalTip);
 }
 
 void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -114,6 +139,6 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshC
 			HitValidation->SetHitWindowOpen(false);
 		}
 	}
-	PreviousSocketLocations.Remove(MeshComp);
+	PreviousTraceLocations.Remove(MeshComp);
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

@@ -765,12 +765,11 @@ void UProject_JWeaponPresentationComponent::UpdateTickState()
 
 const UProject_JWeaponPresentationProfile* UProject_JWeaponPresentationComponent::GetCurrentPresentationProfile() const
 {
-	if (AppliedProfile.IsValid())
-	{
-		return AppliedProfile.Get();
-	}
 	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetOwner());
-	return PlayerCharacter ? PlayerCharacter->GetCurrentWeaponPresentationProfile() : nullptr;
+	// A player's replicated equipment configuration is the source of truth.
+	// Other owners (including isolated presentation fixtures) may keep their
+	// explicitly applied profile until a replacement is supplied.
+	return PlayerCharacter ? PlayerCharacter->GetCurrentWeaponPresentationProfile() : AppliedProfile.Get();
 }
 
 bool UProject_JWeaponPresentationComponent::ShouldShowWeapon() const

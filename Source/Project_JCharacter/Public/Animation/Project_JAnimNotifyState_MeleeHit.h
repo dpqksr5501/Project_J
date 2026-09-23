@@ -21,14 +21,14 @@ public:
 
 protected:
 	friend class FProjectJCanonicalMeleeTraceTest;
-	friend class FProjectJCanonicalMeleeTraceTest;
+	friend class FProjectJCanonicalBladeTrajectoryTest;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")
 	FName SocketName = FName("WeaponSocket_R");
 
 	/**
 	 * Deprecated asset field retained for existing montage notifies. Gameplay
-	 * hit traces always use SocketName on the Leader mesh. Cosmetic effects can
-	 * still attach to the presentation weapon through WeaponPresentationComponent.
+	 * hit traces use the Leader SocketName plus the active attack's optional tip
+	 * offset. Cosmetic effects can attach to the presentation weapon separately.
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation", meta = (DeprecatedProperty, DeprecationMessage = "Gameplay hit traces always use the Leader mesh socket"))
 	bool bUseWeaponPresentationSocket = false;
@@ -45,7 +45,7 @@ protected:
 
 	/** Per-mesh state: notify objects are shared by animation assets, so a single
 	 * previous-position field would leak traces between characters. */
-	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FVector> PreviousSocketLocations;
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FVector> PreviousTraceLocations;
 
 	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const;
 };

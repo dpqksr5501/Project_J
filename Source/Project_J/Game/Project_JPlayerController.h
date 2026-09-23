@@ -49,6 +49,7 @@ protected:
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
+#if WITH_EDITOR
 	UFUNCTION(Exec)
 	void DumpMMOState();
 
@@ -115,16 +116,23 @@ protected:
 	/** Reports engine parallel-animation CVars and the current pawn's anim instance. */
 	UFUNCTION(Exec)
 	void DumpAnimationExecutionPolicy();
+#endif
 
+#if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Profiling")
 	TObjectPtr<UProject_JProfilingCrowdComponent> ProfilingCrowdComponent;
+#endif
 
+#if WITH_EDITOR
 	/** PIE-only inventory-ID network test. */
 	UFUNCTION(Exec)
 	void EquipmentClientTest(const FString& Action);
+#endif
 
+#if WITH_EDITORONLY_DATA
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JEquipmentClientTestComponent> EquipmentClientTestComponent;
+#endif
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;

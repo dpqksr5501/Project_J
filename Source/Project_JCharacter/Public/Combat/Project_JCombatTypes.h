@@ -40,8 +40,17 @@ struct FProject_JComboHitSpec
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Damage", meta = (ClampMin = "0.0"))
 	float BaseDamage = 1.5f;
 
+	/** Max client-submitted root travel per frame, not weapon reach. Tip rotation allowance is added by validation. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Trace", meta = (ClampMin = "0.0"))
 	float TraceDistance = 100.0f;
+
+	/** The canonical blade tip is reconstructed from the Leader socket, never the visual weapon. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Trace")
+	bool bUseCanonicalBladeTipOffset = false;
+
+	/** Local-space tip offset from the Melee Hit Notify's Leader SocketName. Configure per attack/weapon. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Trace", meta = (EditCondition = "bUseCanonicalBladeTipOffset", EditConditionHides))
+	FVector CanonicalBladeTipOffset = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Trace", meta = (ClampMin = "0.0"))
 	float TraceRadius = 50.0f;

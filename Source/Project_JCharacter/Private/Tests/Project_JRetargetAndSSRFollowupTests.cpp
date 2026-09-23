@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "Combat/Project_JAttackDefinition.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
@@ -60,8 +61,62 @@ bool FProjectJCanonicalMeleeTraceTest::RunTest(const FString&)
 	const FVector TraceLocation = Notify->ResolveTraceLocation(LeaderMesh);
 	TestTrue(TEXT("Gameplay trace uses the Leader socket"), TraceLocation.Equals(LeaderMesh->GetSocketLocation(Notify->SocketName)));
 	TestTrue(TEXT("Gameplay trace ignores the cosmetic weapon"), FVector::DistSquared(TraceLocation, VisualTransform.GetLocation()) > FMath::Square(100.0));
+	VisualMesh->SetWorldLocation(FVector(-1000.0, 0.0, 0.0));
+	TestTrue(TEXT("Presentation weapon moved"), Presentation->GetWeaponSocketTransform(TEXT("WeaponHit_Tip"), VisualTransform));
+	TestTrue(TEXT("Moved presentation weapon cannot change gameplay trace"), Notify->ResolveTraceLocation(LeaderMesh).Equals(TraceLocation));
+	TestTrue(TEXT("Visual tip moved independently from gameplay trace"), FVector::DistSquared(TraceLocation, VisualTransform.GetLocation()) > FMath::Square(100.0));
 
 	Presentation->SpawnedWeapon = nullptr;
+	World->DestroyWorld(false);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCanonicalBladeTrajectoryTest, "ProjectJ.Combat.CanonicalBladeTrajectory",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJCanonicalBladeTrajectoryTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
+	LeaderMesh->SetWorldLocation(FVector(100.0, 0.0, 0.0));
+
+	UProject_JCombatHitValidationComponent* HitValidation = NewObject<UProject_JCombatHitValidationComponent>(Character);
+	Character->AddInstanceComponent(HitValidation);
+	HitValidation->RegisterComponent();
+	UProject_JAttackDefinition* Attack = NewObject<UProject_JAttackDefinition>();
+	Attack->HitSpec.bUseCanonicalBladeTipOffset = true;
+	Attack->HitSpec.CanonicalBladeTipOffset = FVector(200.0, 0.0, 0.0);
+	const FGameplayTag AttackTag = UGameplayTagsManager::Get().AddNativeGameplayTag(TEXT("ProjectJ.Tests.CanonicalBlade.Attack"));
+	HitValidation->BeginAttackNode(AttackTag, Attack, 43);
+
+	UProject_JAnimNotifyState_MeleeHit* Notify = NewObject<UProject_JAnimNotifyState_MeleeHit>();
+	Notify->SocketName = NAME_None; // Component root stands in for a Leader socket without a skeletal asset.
+	const FVector Root = LeaderMesh->GetSocketLocation(Notify->SocketName);
+	const FVector FirstTip = Notify->ResolveTraceLocation(LeaderMesh);
+	TestTrue(TEXT("Canonical endpoint is beyond the root"), FirstTip.Equals(Root + FVector(200.0, 0.0, 0.0)));
+
+	AActor* VisualWeapon = World->SpawnActor<AActor>(Params);
+	VisualWeapon->SetActorLocation(FVector(5000.0, 0.0, 0.0));
+	TestTrue(TEXT("Initial visual position cannot change the endpoint"), Notify->ResolveTraceLocation(LeaderMesh).Equals(FirstTip));
+	VisualWeapon->SetActorLocation(FVector(-5000.0, 0.0, 0.0));
+	TestTrue(TEXT("Moved visual weapon cannot change the endpoint"), Notify->ResolveTraceLocation(LeaderMesh).Equals(FirstTip));
+
+	LeaderMesh->SetWorldRotation(FRotator(0.0, 90.0, 0.0));
+	const FVector SecondTip = Notify->ResolveTraceLocation(LeaderMesh);
+	TestTrue(TEXT("Leader pose rotates the canonical blade tip"), SecondTip.Equals(Root + FVector(0.0, 200.0, 0.0)));
+	TestTrue(TEXT("Sweep ends at the tip instead of the hand"), !SecondTip.Equals(LeaderMesh->GetSocketLocation(Notify->SocketName)));
+
+	HitValidation->SetHitWindowOpen(true);
+	HitValidation->RecordAuthoritativeTrace(FirstTip, SecondTip);
+	FVector HistoricalStart = FVector::ZeroVector;
+	FVector HistoricalEnd = FVector::ZeroVector;
+	bool bHistoricalWindowOpen = false;
+	TestTrue(TEXT("Canonical sweep enters SSR history"), HitValidation->FindAuthoritativeTraceAtTime(World->GetTimeSeconds() + 0.01f, 43, AttackTag, HistoricalStart, HistoricalEnd, bHistoricalWindowOpen));
+	TestTrue(TEXT("SSR records the canonical blade endpoints"), HistoricalStart.Equals(FirstTip) && HistoricalEnd.Equals(SecondTip) && bHistoricalWindowOpen);
+	HitValidation->EndAttack();
 	World->DestroyWorld(false);
 	return true;
 }
