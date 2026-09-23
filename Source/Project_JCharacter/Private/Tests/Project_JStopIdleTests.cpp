@@ -113,6 +113,27 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, OneShot);
 	TestEqual(TEXT("A fresh TIP sequence can play"),
 		OneShot.PresentationState, EProject_JStateControllerPresentationState::TurnInPlace);
+
+	UProject_JCharacterAnimInstance* UpperBodyAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
+	UpperBodyAnim->StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	FProject_JAnimThreadSafeData UpperBodyData;
+	UpperBodyData.Combat.bIsPlayingCombatIntro = true;
+	UpperBodyData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+	UpperBodyData.LocomotionContext.bIsMotionMatchingMoving = false;
+	FProject_JAnimOneShotPresentationThreadSafeData UpperBodyOneShot;
+	UpperBodyOneShot.bEnabled = true;
+	UpperBodyAnim->ResolveStateControllerPresentationStateWithPlaybackHold(UpperBodyData, UpperBodyOneShot);
+	TestEqual(TEXT("Upper-body combat draw allows the normal Stop transition"),
+		UpperBodyOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
+
+	UProject_JCharacterAnimInstance* FullBodyAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
+	FullBodyAnim->StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	FProject_JAnimThreadSafeData FullBodyData = UpperBodyData;
+	FullBodyData.ProceduralIK.FullBodyMontageWeight = 1.0f;
+	FProject_JAnimOneShotPresentationThreadSafeData FullBodyOneShot = UpperBodyOneShot;
+	FullBodyAnim->ResolveStateControllerPresentationStateWithPlaybackHold(FullBodyData, FullBodyOneShot);
+	TestEqual(TEXT("Full-body combat draw defers the Stop transition"),
+		FullBodyOneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
 	return true;
 }
 #endif
