@@ -1403,6 +1403,10 @@ public:
 
 	/** Rising-edge detector for local combat draw/sheathe presentation boundaries. */
 	bool bWasPlayingCombatPresentationTransitionForStateController = false;
+	/** Preserve a movement release hidden by a draw/sheathe montage until its Stop can be presented. */
+	bool bCombatTransitionHadMoveInput = false;
+	bool bPendingCombatTransitionStop = false;
+	double CombatTransitionStopQueuedAtSeconds = 0.0;
 
 	/** Rising/falling-edge detector and hold timestamp for full-body action montages (attacks, skills, dodges). */
 	bool bWasPlayingFullBodyMontageForStateController = false;

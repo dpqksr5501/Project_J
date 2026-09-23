@@ -325,6 +325,36 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const bool bCombatPresentationTransitionEnded =
 		!bCombatPresentationTransitionActive && bWasPlayingCombatPresentationTransitionForStateController;
 	bWasPlayingCombatPresentationTransitionForStateController = bCombatPresentationTransitionActive;
+	if (IsPrimaryMeshAnimInstance() && bCombatPresentationTransitionStarted)
+	{
+		bCombatTransitionHadMoveInput = ThreadSafeData.Input.bHasMoveInput ||
+			ThreadSafeData.Movement.GroundSpeed > 10.0f;
+		bPendingCombatTransitionStop = false;
+	}
+	if (IsPrimaryMeshAnimInstance() && bCombatPresentationTransitionActive)
+	{
+		if (ThreadSafeData.Input.bHasMoveInput)
+		{
+			bCombatTransitionHadMoveInput = true;
+			bPendingCombatTransitionStop = false;
+		}
+		else if (bCombatTransitionHadMoveInput && !ThreadSafeData.Air.bIsInAir)
+		{
+			bPendingCombatTransitionStop = true;
+			CombatTransitionStopQueuedAtSeconds = FPlatformTime::Seconds();
+			bCombatTransitionHadMoveInput = false;
+		}
+	}
+	else if (ThreadSafeData.Input.bHasMoveInput)
+	{
+		bPendingCombatTransitionStop = false;
+	}
+	if (ThreadSafeData.Combat.bIsAttacking || ThreadSafeData.Combat.bIsDodging ||
+		ThreadSafeData.Combat.bIsHitReacting)
+	{
+		// A later action owns its exit. Never carry a Tab stop across it.
+		bPendingCombatTransitionStop = false;
+	}
 
 	// Full-body action montages (attacks, skills, dodges) also own the character pose.
 	// Discard any held ground one-shots and suppress new Start/Stop one-shots while active.
@@ -338,6 +368,12 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const bool bFullBodyActionMontageEnded =
 		!bFullBodyActionMontageActive && bWasPlayingFullBodyMontageForStateController;
 	bWasPlayingFullBodyMontageForStateController = bFullBodyActionMontageActive;
+	if (bFullBodyActionMontageStarted && !bCombatPresentationTransitionActive)
+	{
+		// An attack may have montage weight before its combat action flags update.
+		// Do not replay a queued Tab Stop after that action finishes.
+		bPendingCombatTransitionStop = false;
+	}
 
 	if (bFullBodyActionMontageStarted)
 	{
@@ -680,6 +716,33 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bHasStateControllerOneShotMoveInputYaw = false;
 		bHasStateControllerRemoteStartReference = false;
 		bHasStateControllerRemoteStartMoveYaw = false;
+	}
+	// The FullBody draw/sheathe montage owns the pose at the physical stop edge.
+	// Present one authored Stop after it ends instead of discarding that release
+	// and jumping straight from the montage to Idle.
+	if (IsPrimaryMeshAnimInstance() && bPendingCombatTransitionStop && !bCombatPresentationTransitionActive &&
+		!bFullBodyActionMontageActive && !ThreadSafeData.Air.bIsInAir &&
+		!ThreadSafeData.Landing.bIsLanding && !ThreadSafeData.Input.bHasMoveInput &&
+		!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
+		FPlatformTime::Seconds() - LastFullBodyMontageEndedAtSeconds >= 0.25 &&
+		FPlatformTime::Seconds() - CombatTransitionStopQueuedAtSeconds < 3.0 &&
+		ThreadSafeData.OneShotPresentation.bEnabled)
+	{
+		CurrentStateControllerPresentationState = EProject_JStateControllerPresentationState::TransitionToIdle;
+		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+		ThreadSafeData.OneShotPresentation.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+		ThreadSafeData.OneShotPresentation.bRequested = true;
+		ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+		StateControllerPlaybackHoldState = CurrentStateControllerPresentationState;
+		StateControllerPlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		++StateControllerChooserSelectionRevision;
+		bPendingCombatTransitionStop = false;
+	}
+	else if (!bCombatPresentationTransitionActive &&
+		FPlatformTime::Seconds() - CombatTransitionStopQueuedAtSeconds >= 3.0)
+	{
+		bPendingCombatTransitionStop = false;
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the
