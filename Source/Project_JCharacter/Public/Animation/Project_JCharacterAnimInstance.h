@@ -1370,6 +1370,8 @@ public:
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
 	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	/** One authored Stop per movement episode, even when combat stance changes during playback. */
+	mutable bool bStateControllerGroundStopConsumed = false;
 	/** Bounded game-thread diagnostic window around draw/sheathe and input release. */
 	bool bCombatStopTraceWasInputHeld = false;
 	bool bCombatStopTraceWasTransitionActive = false;

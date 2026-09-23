@@ -134,6 +134,56 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	FullBodyAnim->ResolveStateControllerPresentationStateWithPlaybackHold(FullBodyData, FullBodyOneShot);
 	TestEqual(TEXT("Full-body combat draw defers the Stop transition"),
 		FullBodyOneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
+
+	UProject_JCharacterAnimInstance* StopAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
+	StopAnim->StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	FProject_JAnimThreadSafeData StopData;
+	StopData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	FProject_JAnimOneShotPresentationThreadSafeData StopOneShot;
+	StopOneShot.bEnabled = true;
+	StopOneShot.bRequested = true;
+	StopOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
+	TestEqual(TEXT("First release starts one authored Stop"),
+		StopOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
+	TestTrue(TEXT("First Stop consumes its movement release"), StopAnim->bStateControllerGroundStopConsumed);
+	StopData.Combat.bIsCombatMode = true;
+	StopData.LocomotionContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
+	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
+	TestEqual(TEXT("OTM to Strafe during the same release does not request a second Stop"),
+		StopOneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
+	StopData.Input.bHasMoveInput = true;
+	StopData.LocomotionContext.bIsMotionMatchingMoving = true;
+	StopData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+	StopData.Ground.GroundMotionMode = EProject_JGroundMotionMode::Locomotion;
+	StopOneShot.bRequested = false;
+	StopOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
+	TestFalse(TEXT("Fresh movement rearms Stop"), StopAnim->bStateControllerGroundStopConsumed);
+	StopData.Input.bHasMoveInput = false;
+	StopData.LocomotionContext.bIsMotionMatchingMoving = false;
+	StopData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	StopOneShot.bRequested = true;
+	StopOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
+	TestEqual(TEXT("A later movement release can start a new Stop"),
+		StopOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
+
+	UProject_JCharacterAnimInstance* ActionAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
+	ActionAnim->StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	FProject_JAnimThreadSafeData ActionData;
+	ActionData.Combat.bIsAttacking = true;
+	ActionData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	FProject_JAnimOneShotPresentationThreadSafeData ActionOneShot;
+	ActionOneShot.bEnabled = true;
+	ActionOneShot.bRequested = true;
+	ActionOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	ActionAnim->ResolveStateControllerPresentationStateWithPlaybackHold(ActionData, ActionOneShot);
+	TestTrue(TEXT("A full-body action consumes its hidden Stop"), ActionAnim->bStateControllerGroundStopConsumed);
+	ActionData.Combat.bIsAttacking = false;
+	ActionAnim->ResolveStateControllerPresentationStateWithPlaybackHold(ActionData, ActionOneShot);
+	TestEqual(TEXT("An attack exit does not replay its hidden Stop"),
+		ActionOneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
 	return true;
 }
 #endif

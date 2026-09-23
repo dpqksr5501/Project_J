@@ -1838,6 +1838,20 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const double NowSeconds = FPlatformTime::Seconds();
 	bStateControllerForceTurnInPlaceReselect = false;
 	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
+	// Stop is a movement event, not a stance. A Tab transition may change OTM to
+	// Strafe while the same release is still in the physical Stop phase.
+	if (Data.Input.bHasMoveInput ||
+		(!bIsLocallyControlled && Data.LocomotionContext.bIsMotionMatchingMoving &&
+			(Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Start ||
+				Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion)))
+	{
+		bStateControllerGroundStopConsumed = false;
+	}
+	if (bStateControllerGroundStopConsumed &&
+		DesiredState == EProject_JStateControllerPresentationState::TransitionToIdle)
+	{
+		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
+	}
 	const int32 LastHandledTurnSequence = bIsLocallyControlled
 		? LastHandledLocalTurnInPlaceSequence
 		: LastHandledRemoteTurnInPlaceSequence;
@@ -1857,6 +1871,16 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		Data.Combat.bIsDodging ||
 		Data.Combat.bIsHitReacting ||
 		(NowSeconds - LastFullBodyMontageEndedAtSeconds < 0.25);
+	if (bInFullBodyActionMontageOrRecentExit && !Data.Input.bHasMoveInput)
+	{
+		// A full-body action hides its stop edge. Do not resurrect that Stop
+		// after the action's root motion and pose ownership have ended.
+		bStateControllerGroundStopConsumed = true;
+		if (DesiredState == EProject_JStateControllerPresentationState::TransitionToIdle)
+		{
+			DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
+		}
+	}
 
 	// GASP leaves Locomotion Loop as soon as its trajectory based IsMoving
 	// predicate becomes false.  Do the same even while the physical Character
@@ -1866,6 +1890,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Suppress this stop transition during and immediately following full-body
 	// action montages so root-motion attacks/skills do not trigger an unwanted Stop.
 	const bool bStoppedFromPresentedLocomotion =
+		!bStateControllerGroundStopConsumed &&
 		!bInFullBodyActionMontageOrRecentExit &&
 		!Data.Air.bIsInAir &&
 		!Data.LocomotionContext.bIsMotionMatchingMoving &&
@@ -1908,6 +1933,10 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	{
 		StateControllerPlaybackHoldState = DesiredState;
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
+		if (DesiredState == EProject_JStateControllerPresentationState::TransitionToIdle)
+		{
+			bStateControllerGroundStopConsumed = true;
+		}
 		if (DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
 			Data.LocomotionContext.TurnInPlaceSequence > 0)
 		{
@@ -2256,16 +2285,14 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		ActiveStateControllerPivotPlaybackRequestRevision != 0 &&
 		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 		ActiveStateControllerPivotPlaybackRequestRevision == Data.LocomotionContext.PivotRequestRevision;
-	// Stop is also a committed one-shot. A Tab rotation-mode change may select
-	// the appropriate Stop once, but braking trajectory/direction fluctuations
-	// must not keep replacing its asset while movement input remains released.
+	// A Stop already selected for this movement release keeps its asset through
+	// a Tab OTM/Strafe and combat-mode change. The next movement episode selects
+	// the new stance's Stop when its own input release occurs.
 	const bool bLockCommittedStopChooser =
 		OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
 		CachedStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
 		bCachedStateControllerHasSelectedAnimation &&
-		!Data.Input.bHasMoveInput &&
-		CachedStateControllerRotationMode == Data.LocomotionContext.RotationMode &&
-		bCachedStateControllerCombatMode == Data.Combat.bIsCombatMode;
+		!Data.Input.bHasMoveInput;
 	const bool bContextChanged = !bLockCommittedPivotChooser && !bLockCommittedStopChooser &&
 		(bIsJumpAirReselecting ||
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
