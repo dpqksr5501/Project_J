@@ -352,11 +352,12 @@ void UProject_JLocomotionAnimStateComponent::UpdateStopGroundMotionMode()
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
 	}
-	else if (!KinematicContext.bIsDecelerating)
+	else if (!bUsingLocalInputState && !KinematicContext.bIsDecelerating)
 	{
 		// Do not keep a Stop PSD solely because a non-input source (knockback,
-		// moving platform or replicated correction) keeps velocity above the exit
-		// threshold. It is not a player stop any more.
+		// moving platform or replicated correction) keeps a remote proxy above
+		// the exit threshold. Locally, a noisy deceleration sample must not turn
+		// a released-input Stop back into a moving Cycle.
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else

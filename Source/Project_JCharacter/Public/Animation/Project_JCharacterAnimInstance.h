@@ -1642,6 +1642,7 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJTurnInPlaceAndCombatStopTest;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	FProjectJAnimationUpdateSchedule MotionMatchingSelectionSchedule;
 

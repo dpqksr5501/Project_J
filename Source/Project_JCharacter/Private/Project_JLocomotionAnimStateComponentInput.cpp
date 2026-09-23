@@ -29,16 +29,6 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
 	bRemoteTurnInPlaceActive = true;
 }
 
-void UProject_JLocomotionAnimStateComponent::NotifyTurnInPlaceReentered(uint8 DirectionBucket)
-{
-	if (ShouldUseLocalInputState() && DirectionBucket >= 1 && DirectionBucket <= 4)
-	{
-		bTurnInPlaceReplicationRequestPending = true;
-		PendingTurnInPlaceBucket = DirectionBucket;
-		LastLocalTurnInPlaceBucket = DirectionBucket;
-	}
-}
-
 bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw)
 {
 	OutDirectionBucket = 0;

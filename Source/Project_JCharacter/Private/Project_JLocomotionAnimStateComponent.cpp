@@ -920,6 +920,13 @@ bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
 	{
 		return false;
 	}
+	// The owning player's released input is the authoritative Stop intent. A
+	// trajectory sample can still contain the last moving prediction on the
+	// release frame, especially when combat rotation resets its history.
+	if (bUsingLocalInputState && !InKinematicContext.bHasMoveInput)
+	{
+		return false;
+	}
 
 	const float FutureSpeed = InKinematicContext.bHasFutureTrajectoryVelocity
 		? InKinematicContext.FutureTrajectorySpeed

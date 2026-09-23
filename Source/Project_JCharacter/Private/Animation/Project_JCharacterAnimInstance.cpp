@@ -1759,6 +1759,19 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		ResolveStateControllerPresentationState(Data, InOutOneShot);
 	const double NowSeconds = FPlatformTime::Seconds();
 	bStateControllerForceTurnInPlaceReselect = false;
+	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
+	const int32 LastHandledTurnSequence = bIsLocallyControlled
+		? LastHandledLocalTurnInPlaceSequence
+		: LastHandledRemoteTurnInPlaceSequence;
+	// A TIP sequence owns exactly one authored playback. Residual yaw after its
+	// exit cannot request the same asset again; only a new component sequence can.
+	if (DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
+		StateControllerPlaybackHoldState != EProject_JStateControllerPresentationState::TurnInPlace &&
+		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
+		Data.LocomotionContext.TurnInPlaceSequence <= LastHandledTurnSequence)
+	{
+		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
+	}
 
 	const bool bInFullBodyActionMontageOrRecentExit =
 		Data.ProceduralIK.FullBodyMontageWeight > 0.05f ||
@@ -1819,6 +1832,14 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	{
 		StateControllerPlaybackHoldState = DesiredState;
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
+		if (DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
+			Data.LocomotionContext.TurnInPlaceSequence > 0)
+		{
+			int32& LastHandledSequence = bIsLocallyControlled
+				? LastHandledLocalTurnInPlaceSequence
+				: LastHandledRemoteTurnInPlaceSequence;
+			LastHandledSequence = FMath::Max(LastHandledSequence, Data.LocomotionContext.TurnInPlaceSequence);
+		}
 		if (bNewLandingPresentation)
 		{
 			StateControllerHeldLandingPresentationRevision = Data.Landing.PresentationRevision;
@@ -1946,37 +1967,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
 	const bool bStillRequestingHeldTransition = DesiredState == StateControllerPlaybackHoldState;
-	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
-
-	// Calculate current desired turn bucket directly from latest thread-safe locomotion context
-	int32 CurrentTurnInPlaceBucket = 0;
-	if (Data.LocomotionContext.TurnInPlaceDirectionBucket >= 1 && Data.LocomotionContext.TurnInPlaceDirectionBucket <= 4)
-	{
-		CurrentTurnInPlaceBucket = Data.LocomotionContext.TurnInPlaceDirectionBucket;
-	}
-	else if (bIsLocallyControlled)
-	{
-		const float DeltaYawForTurn = Data.LocomotionContext.DesiredFacingDeltaYaw;
-		if (DeltaYawForTurn >= -135.0f && DeltaYawForTurn <= -30.0f)
-		{
-			CurrentTurnInPlaceBucket = 1; // Left 090
-		}
-		else if (DeltaYawForTurn < -135.0f)
-		{
-			CurrentTurnInPlaceBucket = 2; // Left 180
-		}
-		else if (DeltaYawForTurn >= 30.0f && DeltaYawForTurn < 135.0f)
-		{
-			CurrentTurnInPlaceBucket = 3; // Right 090
-		}
-		else if (DeltaYawForTurn >= 135.0f)
-		{
-			CurrentTurnInPlaceBucket = 4; // Right 180
-		}
-	}
-
-	const int32 ActiveTurnInPlaceIndex = FMath::RoundToInt(CachedStateControllerTurnInPlaceIndex);
-
 	// Local and remote paths both expose a monotonic TIP edge. The local edge
 	// is advanced only when the live camera has moved beyond the fixed target;
 	// it is what safely restarts an identical 90/180 Blend Stack asset.
@@ -2000,53 +1990,6 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 			LastHandledRemoteTurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
 		}
 		StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::TurnInPlace;
-		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
-		bStateControllerForceTurnInPlaceReselect = true;
-		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
-		InOutOneShot.TransitionElapsedTime = 0.0f;
-		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
-		InOutOneShot.bTransitionAnimationAlmostComplete = false;
-		return;
-	}
-
-	// Reason 1: Direction bucket changed (e.g. left -> right reversal, or 90 -> 180 extension)
-	const bool bTurnInPlaceDirectionBucketChanged =
-		CurrentTurnInPlaceBucket > 0 &&
-		ActiveTurnInPlaceIndex > 0 &&
-		CurrentTurnInPlaceBucket != ActiveTurnInPlaceIndex &&
-		(!bIsLocallyControlled || FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f);
-
-	// The locomotion component locks a local 90/180 target until it is reached.
-	// Re-entering mid-clip merely because that fixed target still has residual yaw
-	// would restart the same asset and reintroduce the foot-slide/repeat loop.
-
-	// Reason 2: The current clip has finished its authored playback, but residual facing delta remains.
-	// (Only applicable to locally controlled player whose camera is still facing away)
-	const bool bTurnInPlaceClipFinishedWithResidual =
-		bIsLocallyControlled &&
-		CurrentTurnInPlaceBucket > 0 &&
-		InOutOneShot.bTransitionAnimationAlmostComplete &&
-		FMath::Abs(Data.LocomotionContext.DesiredFacingDeltaYaw) >= 30.0f;
-
-	const bool bIsHoldingTurnInPlace =
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
-		(DesiredState == EProject_JStateControllerPresentationState::TurnInPlace || (bIsLocallyControlled && CurrentTurnInPlaceBucket > 0));
-
-	const bool bShouldReenterTurnInPlace =
-		bIsHoldingTurnInPlace &&
-		(bTurnInPlaceDirectionBucketChanged ||
-		 bTurnInPlaceClipFinishedWithResidual);
-
-	if (bShouldReenterTurnInPlace)
-	{
-		if (bIsLocallyControlled && OwningPlayerCharacter)
-		{
-			if (UProject_JLocomotionAnimStateComponent* AnimState = OwningPlayerCharacter->GetLocomotionAnimStateComponent())
-			{
-				AnimState->NotifyTurnInPlaceReentered(static_cast<uint8>(CurrentTurnInPlaceBucket));
-			}
-		}
-
 		StateControllerPlaybackHoldStartedAtSeconds = NowSeconds;
 		bStateControllerForceTurnInPlaceReselect = true;
 		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
@@ -2162,10 +2105,9 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		return;
 	}
 
-	// Remote simulated proxies play exactly one authored TIP per sequence edge.
-	// Once that sequence completes, exit back to IdleLoop to prevent looping on the spot.
-	if (!bIsLocallyControlled &&
-		StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
+	// Every proxy plays one authored TIP per sequence edge. Remaining camera yaw
+	// is handled by a new sequence, never by restarting the completed asset.
+	if (StateControllerPlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
 		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace)
 	{
 		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
@@ -2222,22 +2164,9 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		return;
 	}
 
-	// TIP is selected by a float chooser index rather than the generic Strafe
-	// direction columns.  GASP permits a tagged TIP to re-enter after 0.75 s;
-	// this lets a continuing mouse turn upgrade the next direct asset (for
-	// example 90 -> 180) without waiting for a full two-second clip to end.
-	// We only change the chooser result when its direction bucket changes.  A
-	// same-asset restart additionally needs the AnimGraph's Force Blend path,
-	// because a Blend Stack does not restart an identical asset by itself.
-	// Index zero means the remaining yaw is below the selection threshold; keep
-	// the already selected one-shot alive until its authored completion.
-	const bool bTurnInPlaceIndexChanged =
-		OneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace &&
-		(bStateControllerForceTurnInPlaceReselect || OneShot.TransitionElapsedTime >= 0.75f) &&
-		StateControllerTurnInPlaceIndexForChooser > 0.0f &&
-		!FMath::IsNearlyEqual(
-			CachedStateControllerTurnInPlaceIndex,
-			StateControllerTurnInPlaceIndexForChooser);
+	// A new TIP sequence forces a chooser evaluation, including a same-asset
+	// Blend Stack restart. A bucket change inside the current fixed-target turn
+	// must not replace the committed one-shot.
 	const bool bLandingContextChanged =
 		OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
 		(CachedStateControllerLandingPresentationRevision != Data.Landing.PresentationRevision ||
@@ -2251,7 +2180,17 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		ActiveStateControllerPivotPlaybackRequestRevision != 0 &&
 		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 		ActiveStateControllerPivotPlaybackRequestRevision == Data.LocomotionContext.PivotRequestRevision;
-	const bool bContextChanged = !bLockCommittedPivotChooser &&
+	// Stop is also a committed one-shot. A Tab rotation-mode change may select
+	// the appropriate Stop once, but braking trajectory/direction fluctuations
+	// must not keep replacing its asset while movement input remains released.
+	const bool bLockCommittedStopChooser =
+		OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
+		CachedStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
+		bCachedStateControllerHasSelectedAnimation &&
+		!Data.Input.bHasMoveInput &&
+		CachedStateControllerRotationMode == Data.LocomotionContext.RotationMode &&
+		bCachedStateControllerCombatMode == Data.Combat.bIsCombatMode;
+	const bool bContextChanged = !bLockCommittedPivotChooser && !bLockCommittedStopChooser &&
 		(bIsJumpAirReselecting ||
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
@@ -2264,7 +2203,6 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			CachedStateControllerPreviousStrafeDirection != OneShot.PreviousStrafeDirection) ||
 		CachedStateControllerOneShotFoot != OneShot.Foot ||
 		bStateControllerForceTurnInPlaceReselect ||
-		bTurnInPlaceIndexChanged ||
 		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
 		bCachedStateControllerFallOff != bStateControllerFallOffForChooser ||
 		bLandingContextChanged);

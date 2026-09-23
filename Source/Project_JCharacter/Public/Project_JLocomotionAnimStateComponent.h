@@ -243,7 +243,6 @@ public:
 	/** True only while a locally controlled character may apply authored TIP root yaw to its capsule. */
 	bool IsLocalTurnInPlaceTargetActive() const { return bLocalTurnInPlaceTargetActive; }
 
-	void NotifyTurnInPlaceReentered(uint8 DirectionBucket);
 	void HandleLanded(const FHitResult& Hit);
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
@@ -277,6 +276,7 @@ private:
 	bool ShouldSkipUpdateForCurrentContext(float& DeltaTime);
 	void AdvanceStateClocks(float DeltaTime);
 	friend class FProjectJLocomotionCadenceTest;
+	friend class FProjectJTurnInPlaceAndCombatStopTest;
 	void UpdateAirAndMovementRequests(float DeltaTime, bool bMovementReportsInAir);
 	void UpdateLocomotionContexts(float DeltaTime, const FProject_JLocomotionRuntimeSnapshot& Snapshot);
 	void UpdateMotionMatchingSelectionState(const AProject_JPlayerCharacter& PlayerOwner);
