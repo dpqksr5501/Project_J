@@ -384,13 +384,29 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 		}
 		const bool bDatabaseChanged =
 			MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase;
+		const bool bRecoverGroundIdle =
+			bMotionMatchingEnabled && CurrentActiveDatabase && bDatabaseChanged &&
+			!ThreadSafeData.Air.bIsInAir &&
+			!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
+			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle;
 		SetMotionMatchingSearchThrottleTime(
 			*const_cast<FAnimNode_MotionMatching*>(MotionMatchingNode),
-			ThreadSafeData.MotionMatchingSearchPolicy.ResolveSearchThrottleTime(
+			bRecoverGroundIdle ? 0.0f : ThreadSafeData.MotionMatchingSearchPolicy.ResolveSearchThrottleTime(
 				ThreadSafeData.LocomotionContext.PhaseFamily,
 				ThreadSafeData.Air.bIsFallOffStart,
 				*DefaultSearchThrottleTime,
-			bDatabaseChanged));
+				bDatabaseChanged));
+		if (bRecoverGroundIdle)
+		{
+			// An Idle edge can be hidden by a draw/sheathe montage. If the node
+			// still owns a run pose after the selected PSD changed, a one-frame
+			// interrupt was not enough: bypass search throttling and retire that
+			// continuing pose until the requested Idle PSD actually wins.
+			FAnimNode_MotionMatching* MutableNode = const_cast<FAnimNode_MotionMatching*>(MotionMatchingNode);
+			MutableNode->SetDatabaseToSearch(
+				CurrentActiveDatabase.Get(),
+				EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose);
+		}
 	}
 
 	CacheMotionMatchingPolicyState();
