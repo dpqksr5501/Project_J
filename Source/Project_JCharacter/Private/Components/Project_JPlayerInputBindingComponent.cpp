@@ -221,6 +221,16 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 	}
 
 	const FVector2D MoveInput = Value.Get<FVector2D>();
+	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop() &&
+		bPendingMoveStopReconciliation && MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MMCombatStop Input=MoveResumed Actor=%s Frame=%llu Axis=(%.2f,%.2f) Speed=%.1f Intro=%d Outro=%d"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, MoveInput.X, MoveInput.Y,
+			BoundPlayerCharacter->GetVelocity().Size2D(),
+			BoundPlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
+			BoundPlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
+	}
 	if (MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
 	{
 		CancelPendingMoveStopReconciliation();
@@ -277,6 +287,16 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 	if (!BoundPlayerCharacter)
 	{
 		return;
+	}
+	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MMCombatStop Input=MoveCompleted Actor=%s Frame=%llu Speed=%.1f Intro=%d Outro=%d PendingStop=%d"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter,
+			BoundPlayerCharacter->GetVelocity().Size2D(),
+			BoundPlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
+			BoundPlayerCharacter->IsCombatOutroPlaying() ? 1 : 0,
+			bPendingMoveStopReconciliation ? 1 : 0);
 	}
 
 	// Do not translate an individual mapping's Completed/Canceled callback into
@@ -455,6 +475,18 @@ void UProject_JPlayerInputBindingComponent::FinalizeMoveStopped()
 	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
 	{
 		BoundPlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
+	}
+	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MMCombatStop Input=StopApplied Actor=%s Frame=%llu Speed=%.1f HadMove=%d Sprint=%d StateInput=%d CachedAxis=%.2f"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter,
+			BoundPlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
+			bWasSprintingAtStop ? 1 : 0,
+			BoundPlayerCharacter->LocomotionAnimStateComponent &&
+				BoundPlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
+			BoundPlayerCharacter->LocomotionAnimStateComponent
+				? BoundPlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
 	}
 
 	BoundPlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);

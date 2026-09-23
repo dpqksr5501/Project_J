@@ -1370,6 +1370,11 @@ public:
 	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
 	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
+	/** Bounded game-thread diagnostic window around draw/sheathe and input release. */
+	bool bCombatStopTraceWasInputHeld = false;
+	bool bCombatStopTraceWasTransitionActive = false;
+	double CombatStopTraceUntilSeconds = 0.0;
+	double CombatStopTraceNextSampleSeconds = 0.0;
 	/** Landing epoch currently owned by the logical one-shot hold. */
 	mutable int32 StateControllerHeldLandingPresentationRevision = INDEX_NONE;
 	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */

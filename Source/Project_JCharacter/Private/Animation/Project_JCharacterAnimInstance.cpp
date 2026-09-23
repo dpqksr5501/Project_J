@@ -997,6 +997,82 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		ResetTrajectoryHistoryOnAccelerationStop(ThreadSafeData);
 	}
 	PublishThreadSafeDataToProxy(ThreadSafeData);
+	if (IsPrimaryMeshAnimInstance() && IsLocallyControlledCharacter())
+	{
+		if (!Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
+		{
+			bCombatStopTraceWasInputHeld = false;
+			bCombatStopTraceWasTransitionActive = false;
+			CombatStopTraceUntilSeconds = 0.0;
+		}
+		else
+		{
+			const double NowSeconds = FPlatformTime::Seconds();
+			const bool bTransitionActive = ThreadSafeData.Combat.bIsPlayingCombatIntro ||
+				ThreadSafeData.Combat.bIsPlayingCombatOutro;
+			const bool bTransitionStarted = bTransitionActive && !bCombatStopTraceWasTransitionActive;
+			const bool bTransitionEnded = !bTransitionActive && bCombatStopTraceWasTransitionActive;
+			const bool bInputReleased = bCombatStopTraceWasInputHeld && !ThreadSafeData.Input.bHasMoveInput;
+			if (bTransitionStarted)
+			{
+				CombatStopTraceUntilSeconds = NowSeconds + 8.0;
+			}
+			if (bInputReleased && (bTransitionActive || bCombatStopTraceWasTransitionActive ||
+				NowSeconds < CombatStopTraceUntilSeconds))
+			{
+				CombatStopTraceUntilSeconds = FMath::Max(CombatStopTraceUntilSeconds, NowSeconds + 6.0);
+			}
+			if (bTransitionEnded)
+			{
+				CombatStopTraceUntilSeconds = FMath::Max(CombatStopTraceUntilSeconds, NowSeconds + 4.0);
+			}
+			bCombatStopTraceWasInputHeld = ThreadSafeData.Input.bHasMoveInput;
+			bCombatStopTraceWasTransitionActive = bTransitionActive;
+			if (bTransitionStarted || bTransitionEnded || bInputReleased ||
+				(NowSeconds < CombatStopTraceUntilSeconds && NowSeconds >= CombatStopTraceNextSampleSeconds))
+			{
+				CombatStopTraceNextSampleSeconds = NowSeconds + 0.25;
+				const TCHAR* Event = bInputReleased ? TEXT("InputReleased")
+					: (bTransitionStarted ? TEXT("TransitionStarted")
+						: (bTransitionEnded ? TEXT("TransitionEnded") : TEXT("Sample")));
+				const UProject_JLocomotionAnimStateComponent* State = LocomotionAnimStateComponent.Get();
+				const FProject_JAnimMotionMatchingPostSelectionData& Played = ThreadSafeData.MotionMatching.PostSelection;
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("MMCombatStop State Event=%s Actor=%s Frame=%llu Intro=%d Outro=%d MontageWeight=%.2f Input=%d StateInput=%d AxisSize=%.2f Speed=%.1f FutureSpeed=%.1f Accel=%d GroundMode=%d RawPhase=%d PresentedPhase=%d MMMoving=%d OneShot=%d Held=%d Request=%d"),
+					Event, *GetNameSafe(OwningCharacter), GFrameCounter,
+					ThreadSafeData.Combat.bIsPlayingCombatIntro ? 1 : 0,
+					ThreadSafeData.Combat.bIsPlayingCombatOutro ? 1 : 0,
+					ThreadSafeData.ProceduralIK.FullBodyMontageWeight,
+					ThreadSafeData.Input.bHasMoveInput ? 1 : 0,
+					State && State->bHasMoveInput ? 1 : 0,
+					State ? State->MoveInputSize : -1.0f,
+					ThreadSafeData.Movement.GroundSpeed,
+					ThreadSafeData.Movement.bHasFutureTrajectoryVelocity
+						? ThreadSafeData.Movement.FutureTrajectoryVelocity.Size2D() : -1.0f,
+					ThreadSafeData.Movement.bIsAccelerating ? 1 : 0,
+					static_cast<int32>(ThreadSafeData.Ground.GroundMotionMode),
+					State ? static_cast<int32>(State->DerivedLocomotionContext.PhaseFamily) : -1,
+					static_cast<int32>(ThreadSafeData.LocomotionContext.PhaseFamily),
+					ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving ? 1 : 0,
+					static_cast<int32>(ThreadSafeData.OneShotPresentation.PresentationState),
+					static_cast<int32>(StateControllerPlaybackHoldState),
+					ThreadSafeData.OneShotPresentation.bRequested ? 1 : 0);
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("MMCombatStop Pose Actor=%s Frame=%llu RequestedPSD=%s PlayedPSD=%s PlayedAnim=%s Time=%.2f/%.2f Rate=%.2f Continuing=%d DirectAnim=%s DirectOverride=%d DirectLoop=%d ForceSearch=%d SelectionRev=%d TrajectoryResetRev=%d"),
+					*GetNameSafe(OwningCharacter), GFrameCounter,
+					*GetNameSafe(CurrentActivePoseSearchDatabase.Get()),
+					*Played.SelectedDatabase.ToString(), *Played.SelectedAnimation.ToString(),
+					Played.SelectedAnimationTime, Played.SelectedAnimationLength, Played.WantedPlayRate,
+					Played.bIsContinuingPoseSearch ? 1 : 0,
+					*GetNameSafe(ThreadSafeData.OneShotPresentation.SelectedAnimation.Get()),
+					ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0,
+					ThreadSafeData.OneShotPresentation.bSelectedAnimationShouldLoop ? 1 : 0,
+					ThreadSafeData.MotionMatching.bForceReselect ? 1 : 0,
+					ThreadSafeData.MotionMatching.SelectionRevision,
+					ThreadSafeData.Movement.TrajectoryResetRevision);
+			}
+		}
+	}
 }
 
 void UProject_JCharacterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
