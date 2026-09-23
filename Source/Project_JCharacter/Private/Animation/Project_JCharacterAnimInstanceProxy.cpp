@@ -153,6 +153,40 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	{
 		LatestPostSelection.DatabaseTags = Result.SelectedDatabase->Tags;
 	}
+
+	// The summary above picks one result. When Idle is requested but a run pose
+	// persists, show every node so a retained result in an inactive graph cannot
+	// be mistaken for the pose actually selected by the active graph.
+	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop() &&
+		CurrentActiveDatabase && Result.SelectedDatabase != CurrentActiveDatabase &&
+		!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle &&
+		GFrameCounter % 30 == 0)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MMCombatStop Nodes AnimInstance=%s Frame=%llu RequestedPSD=%s GeneratedCount=%d UpdateThisFrame=%d ForceReselect=%d NativePSD=%s NativeAnim=%s"),
+			*GetNameSafe(GetAnimInstanceObject()), GFrameCounter,
+			*GetNameSafe(CurrentActiveDatabase.Get()), GetGeneratedMotionMatchingNodeIndices().Num(),
+			bUpdateMotionMatchingThisFrame ? 1 : 0, bForceMotionMatchingReselect ? 1 : 0,
+			*GetNameSafe(NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase.Get()),
+			*GetNameSafe(NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedAnim.Get()));
+		for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
+		{
+			const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
+			if (!Candidate)
+			{
+				continue;
+			}
+			const FPoseSearchBlueprintResult& CandidateResult = Candidate->GetMotionMatchingState().SearchResult;
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("MMCombatStop Node AnimInstance=%s Frame=%llu Index=%d AppliedPSD=%s SelectedPSD=%s SelectedAnim=%s Time=%.2f Continuing=%d"),
+				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, NodeIndex,
+				*GetNameSafe(AppliedGeneratedDatabases.FindRef(NodeIndex).Get()),
+				*GetNameSafe(CandidateResult.SelectedDatabase.Get()),
+				*GetNameSafe(CandidateResult.SelectedAnim.Get()), CandidateResult.SelectedTime,
+				CandidateResult.bIsContinuingPoseSearch ? 1 : 0);
+		}
+	}
 }
 
 FFloatProperty* FindMotionMatchingFloatProperty(const TCHAR* PropertyName)
