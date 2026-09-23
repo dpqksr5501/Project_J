@@ -20,6 +20,7 @@ class UInputAction;
 class UAnimMontage;
 class UAnimInstance;
 class UProject_JCharacterAnimProfile;
+struct FStreamableHandle;
 class UProject_JLocomotionAnimStateComponent;
 class UProject_JMotionMatchingAssetSet;
 class UProject_JMotionMatchingTrajectoryComponent;
@@ -155,6 +156,8 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 	/** The one world mount currently summoned from this player's mount item. */
 	UPROPERTY(ReplicatedUsing = OnRep_SummonedMount, Transient, VisibleAnywhere, BlueprintReadOnly, Category="Mount", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class AProject_JMountCharacter> SummonedMount = nullptr;
+	TSharedPtr<FStreamableHandle> PendingMountClassLoadHandle;
+	FGuid PendingMountItemId;
 
 	/** Compatibility default for legacy/test mount presentation. New mounts use RiderAnimationProfile. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Layers", meta = (AllowPrivateAccess = "true", DisplayName = "Fallback Mounted Animation Layer Class"))
@@ -381,6 +384,7 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE UProject_JWeaponPresentationComponent* GetWeaponPresentationComponent() const { return WeaponPresentationComponent; }
+	FORCEINLINE const UProject_JCharacterAnimProfile* GetCharacterAnimProfile() const { return CharacterAnimProfile; }
 	FORCEINLINE UProject_JCombatPresentationComponent* GetCombatPresentationComponent() const { return CombatPresentationComponent; }
 	FORCEINLINE UProject_JCombatHitValidationComponent* GetCombatHitValidationComponent() const { return CombatHitValidationComponent; }
 

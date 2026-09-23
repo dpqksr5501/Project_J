@@ -165,6 +165,7 @@ private:
 	friend class FProjectJCrowdPresentationTest;
 	friend class FProjectJStableGripTargetsTest;
 	friend class FProjectJTwoHandIKTransitionAndCurveTest;
+	friend class FProjectJCanonicalMeleeTraceTest;
 	bool ShouldBudgetPresentation() const;
 	void CancelBudgetedPresentation();
 	uint64 PresentationRevision = 0;
@@ -179,6 +180,7 @@ private:
 	void UpdateIndependentMotion(float DeltaTime);
 	void UpdateGripTargets();
 	bool FindWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
+	USceneComponent* FindWeaponSocketComponent(FName SocketName) const;
 	bool TryGetGroundCorrection(float DeltaTime, FVector& OutComponentSpaceCorrection);
 	bool AttachWeaponToSocket(FName SocketName, const TCHAR* Context);
 	void DestroyWeaponPresentation();
@@ -188,10 +190,11 @@ private:
 	void UpdateSocketComponentCache();
 	void InvalidateSocketComponentCache();
 
-	TWeakObjectPtr<USceneComponent> CachedPrimaryGripComponent;
-	TWeakObjectPtr<USceneComponent> CachedSecondaryGripComponent;
 	FName CachedPrimaryGripSocket = NAME_None;
 	FName CachedSecondaryGripSocket = NAME_None;
+	/** Also caches ground probes and cosmetic VFX sockets, including absent names. */
+	mutable TMap<FName, TWeakObjectPtr<USceneComponent>> CachedSocketComponents;
+	mutable TSet<FName> MissingSocketNames;
 
 	TArray<TWeakObjectPtr<class UProject_JRetargetAnimInstance>> RegisteredRetargetAnimInstances;
 

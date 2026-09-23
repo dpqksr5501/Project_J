@@ -51,6 +51,20 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	FVector LeftGripLocation = FVector::ZeroVector;
 
+	/** Component-space palm orientations from the weapon grips and character calibration. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FRotator RightGripRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FRotator LeftGripRotation = FRotator::ZeroRotator;
+
+	/** Optional component-space joint targets. AnimGraphs may opt into these when authored for the follower skeleton. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FVector RightElbowTarget = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FVector LeftElbowTarget = FVector::ZeroVector;
+
 	/**
 	 * Dynamic blending weight for Right Hand IK.
 	 * Automatically interpolates between 1.0 (sheathed on back) and target combat grip alpha.
@@ -143,4 +157,6 @@ protected:
 	bool bHasValidLeftSnapshot = false;
 	float TargetRightAlphaSnapshot = 1.0f;
 	float TargetLeftAlphaSnapshot = 0.0f;
+	FVector SnapshotRightElbowTarget = FVector::ZeroVector;
+	FVector SnapshotLeftElbowTarget = FVector::ZeroVector;
 };

@@ -9,11 +9,33 @@
 class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
 
+/** Character-specific alignment after a weapon defines its grip sockets. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JHandGripCalibration
+{
+	GENERATED_BODY()
+
+	/** Local to the primary weapon grip socket; identity preserves existing IK. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	FTransform PrimaryHandOffset = FTransform::Identity;
+
+	/** Local to the secondary weapon grip socket; identity preserves existing IK. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	FTransform SecondaryHandOffset = FTransform::Identity;
+
+	/** Optional component-space joint targets for a follower AnimGraph Two Bone IK node. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	FVector PrimaryElbowTarget = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	FVector SecondaryElbowTarget = FVector::ZeroVector;
+};
+
 /**
  * Top-level animation profile for a playable character archetype.
  *
- * This intentionally starts with locomotion only. Combat, weapon, and class-specific animation
- * profiles can be added here later without forcing the stable locomotion profile to own them.
+ * Owns the archetype's locomotion and combat profiles plus body-specific visual
+ * calibration. Weapon socket placement remains on the weapon presentation asset.
  */
 UCLASS(BlueprintType)
 class PROJECT_JCHARACTER_API UProject_JCharacterAnimProfile : public UPrimaryDataAsset
@@ -26,4 +48,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UProject_JCombatAnimProfile> CombatAnimProfile = nullptr;
+
+	/** Per-body proportions and palm orientation; weapon assets only define grip sockets. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	FProject_JHandGripCalibration HandGripCalibration;
 };

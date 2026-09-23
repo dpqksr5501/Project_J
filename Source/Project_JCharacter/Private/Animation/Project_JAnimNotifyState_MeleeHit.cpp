@@ -5,7 +5,6 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
-#include "Components/Project_JWeaponPresentationComponent.h"
 #include "Combat/Project_JAttackDefinition.h"
 
 UProject_JAnimNotifyState_MeleeHit::UProject_JAnimNotifyState_MeleeHit()
@@ -100,21 +99,9 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 
 FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const
 {
-	if (bUseWeaponPresentationSocket)
-	{
-		if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
-		{
-			if (const UProject_JWeaponPresentationComponent* Presentation = OwnerActor->FindComponentByClass<UProject_JWeaponPresentationComponent>())
-			{
-				FTransform WeaponSocketTransform;
-				if (Presentation->GetWeaponSocketTransform(WeaponSocketName, WeaponSocketTransform))
-				{
-					return WeaponSocketTransform.GetLocation();
-				}
-			}
-		}
-	}
-
+	// Gameplay traces and the server's rewind history must use the same Leader
+	// pose on every net role. The presentation weapon exists only on clients and
+	// may be moved independently by cosmetic montage notifies.
 	return MeshComp ? MeshComp->GetSocketLocation(SocketName) : FVector::ZeroVector;
 }
 

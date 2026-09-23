@@ -20,18 +20,20 @@ public:
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
 protected:
+	friend class FProjectJCanonicalMeleeTraceTest;
+	friend class FProjectJCanonicalMeleeTraceTest;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")
 	FName SocketName = FName("WeaponSocket_R");
 
 	/**
-	 * Optional socket on the spawned weapon actor (for example WeaponHit_Tip).
-	 * When present, hit sweeps follow an independently moved weapon visual;
-	 * the character socket above remains the backwards-compatible fallback.
+	 * Deprecated asset field retained for existing montage notifies. Gameplay
+	 * hit traces always use SocketName on the Leader mesh. Cosmetic effects can
+	 * still attach to the presentation weapon through WeaponPresentationComponent.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation", meta = (DeprecatedProperty, DeprecationMessage = "Gameplay hit traces always use the Leader mesh socket"))
 	bool bUseWeaponPresentationSocket = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation", meta = (EditCondition = "bUseWeaponPresentationSocket"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hit Trace|Weapon Presentation", meta = (DeprecatedProperty, DeprecationMessage = "Use cosmetic weapon presentation sockets for effects only"))
 	FName WeaponSocketName = TEXT("WeaponHit_Tip");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hit Trace")

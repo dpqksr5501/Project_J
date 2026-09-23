@@ -87,7 +87,11 @@ AProject_JPlayerController::AProject_JPlayerController()
 #if WITH_EDITOR
 	EquipmentClientTestComponent = CreateDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"));
 #endif
+#if !UE_BUILD_SHIPPING
+#if !UE_BUILD_SHIPPING
 	ProfilingCrowdComponent = CreateDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"));
+#endif
+#endif
 }
 
 void AProject_JPlayerController::BeginPlay()

@@ -20,6 +20,8 @@
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -228,6 +230,12 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	PendingMountItemId.Invalidate();
+	if (PendingMountClassLoadHandle)
+	{
+		PendingMountClassLoadHandle->CancelHandle();
+		PendingMountClassLoadHandle.Reset();
+	}
 	// Sprint is an InstancedPerActor ability. Explicitly end it before the ASC
 	// starts removing specs during PIE shutdown or pawn destruction.
 	bSprintInputHeld = false;
@@ -425,17 +433,80 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 	}
 
 	const UProject_JMountItemDefinition* MountItem = Cast<UProject_JMountItemDefinition>(ItemInstance.ItemDef);
-	const TSubclassOf<AProject_JMountCharacter> MountClass = MountItem ? MountItem->MountClass.LoadSynchronous() : nullptr;
-	if (!MountClass || !GetWorld())
+	if (!MountItem || !GetWorld())
 	{
 		return;
+	}
+	if (PendingMountClassLoadHandle && PendingMountItemId != ItemInstanceId)
+	{
+		PendingMountItemId.Invalidate();
+		PendingMountClassLoadHandle->CancelHandle();
+		PendingMountClassLoadHandle.Reset();
 	}
 
 	if (SummonedMount)
 	{
+		if (PendingMountClassLoadHandle)
+		{
+			PendingMountItemId.Invalidate();
+			PendingMountClassLoadHandle->CancelHandle();
+			PendingMountClassLoadHandle.Reset();
+		}
 		if (MountItem->bAutoMountAfterSpawn)
 		{
 			SummonedMount->TryMountRider(this);
+		}
+		return;
+	}
+
+	const TSubclassOf<AProject_JMountCharacter> MountClass = MountItem->MountClass.Get();
+	if (MountClass && PendingMountClassLoadHandle)
+	{
+		PendingMountItemId.Invalidate();
+		PendingMountClassLoadHandle->CancelHandle();
+		PendingMountClassLoadHandle.Reset();
+	}
+	if (!MountClass)
+	{
+		const FSoftObjectPath MountClassPath = MountItem->MountClass.ToSoftObjectPath();
+		if (MountClassPath.IsNull() || (PendingMountClassLoadHandle && PendingMountItemId == ItemInstanceId))
+		{
+			return;
+		}
+		if (PendingMountClassLoadHandle)
+		{
+			PendingMountClassLoadHandle->CancelHandle();
+			PendingMountClassLoadHandle.Reset();
+		}
+		PendingMountItemId = ItemInstanceId;
+		const TWeakObjectPtr<AProject_JPlayerCharacter> WeakThis(this);
+		const TSoftClassPtr<AProject_JMountCharacter> MountClassRef = MountItem->MountClass;
+		PendingMountClassLoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+			MountClassPath,
+			FStreamableDelegate::CreateLambda([WeakThis, ItemInstanceId, MountClassRef]()
+			{
+				AProject_JPlayerCharacter* Character = WeakThis.Get();
+				if (!Character || Character->PendingMountItemId != ItemInstanceId)
+				{
+					return;
+				}
+				TSharedPtr<FStreamableHandle> CompletedHandle = MoveTemp(Character->PendingMountClassLoadHandle);
+				Character->PendingMountItemId.Invalidate();
+				if (Character->HasAuthority() && MountClassRef.Get())
+				{
+					// Recheck the inventory, lock state, and current mount after loading.
+					Character->ServerRequestUseMountItem_Implementation(ItemInstanceId);
+				}
+				else if (Character->HasAuthority())
+				{
+					UE_LOG(LogProjectJPlayer, Warning, TEXT("Mount class failed to load: %s"), *MountClassRef.ToSoftObjectPath().ToString());
+				}
+				CompletedHandle.Reset();
+			}));
+		if (!PendingMountClassLoadHandle)
+		{
+			PendingMountItemId.Invalidate();
+			UE_LOG(LogProjectJPlayer, Warning, TEXT("Mount class load could not start: %s"), *MountClassPath.ToString());
 		}
 		return;
 	}

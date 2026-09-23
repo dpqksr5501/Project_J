@@ -2,6 +2,7 @@
 
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JCharacterAnimProfile.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -102,6 +103,8 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bHasValidLeftSnapshot = false;
 	TargetRightAlphaSnapshot = 0.0f;
 	TargetLeftAlphaSnapshot = 0.0f;
+	SnapshotRightElbowTarget = FVector::ZeroVector;
+	SnapshotLeftElbowTarget = FVector::ZeroVector;
 
 	// Dedicated server early-out: visual IK and retargeting evaluation are client-only concerns.
 	if (const UWorld* World = GetWorld())
@@ -295,6 +298,27 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			TargetLeftAlphaSnapshot = 0.0f;
 		}
 	}
+
+	// The weapon owns socket placement; the body profile owns how this
+	// character's palms meet those sockets. Apply only value data on the game
+	// thread so the worker never reads an asset or a component.
+	if (const AProject_JPlayerCharacter* PlayerChar = Cast<AProject_JPlayerCharacter>(OwnerPawn))
+	{
+		if (const UProject_JCharacterAnimProfile* Profile = PlayerChar->GetCharacterAnimProfile())
+		{
+			const FProject_JHandGripCalibration& Calibration = Profile->HandGripCalibration;
+			if (bHasValidRightSnapshot)
+			{
+				SnapshotRightGripWorldTransform = Calibration.PrimaryHandOffset * SnapshotRightGripWorldTransform;
+			}
+			if (bHasValidLeftSnapshot)
+			{
+				SnapshotLeftGripWorldTransform = Calibration.SecondaryHandOffset * SnapshotLeftGripWorldTransform;
+			}
+			SnapshotRightElbowTarget = Calibration.PrimaryElbowTarget;
+			SnapshotLeftElbowTarget = Calibration.SecondaryElbowTarget;
+		}
+	}
 }
 
 void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -304,13 +328,19 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 	// Worker-thread evaluation: purely math on captured snapshots
 	if (bHasValidRightSnapshot)
 	{
-		RightGripLocation = SnapshotOwningCompWorldTransform.InverseTransformPosition(SnapshotRightGripWorldTransform.GetLocation());
+		const FTransform LocalGrip = SnapshotRightGripWorldTransform.GetRelativeTransform(SnapshotOwningCompWorldTransform);
+		RightGripLocation = LocalGrip.GetLocation();
+		RightGripRotation = LocalGrip.Rotator();
 	}
 
 	if (bHasValidLeftSnapshot)
 	{
-		LeftGripLocation = SnapshotOwningCompWorldTransform.InverseTransformPosition(SnapshotLeftGripWorldTransform.GetLocation());
+		const FTransform LocalGrip = SnapshotLeftGripWorldTransform.GetRelativeTransform(SnapshotOwningCompWorldTransform);
+		LeftGripLocation = LocalGrip.GetLocation();
+		LeftGripRotation = LocalGrip.Rotator();
 	}
+	RightElbowTarget = SnapshotRightElbowTarget;
+	LeftElbowTarget = SnapshotLeftElbowTarget;
 
 	// Smoothly interpolate IK alphas to eliminate snapping between states
 	RightGripAlpha = FMath::FInterpTo(RightGripAlpha, TargetRightAlphaSnapshot, DeltaSeconds, GripInterpSpeed);

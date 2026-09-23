@@ -126,7 +126,7 @@ void UProject_JWeaponPresentationComponent::EndPlay(const EEndPlayReason::Type E
 void UProject_JWeaponPresentationComponent::EnterCombatPresentation()
 {
 	bCombatPresentationActive = true;
-	UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] EnterCombatPresentation: Owner=%s"), *GetNameSafe(GetOwner()));
+	UE_LOG(LogProjectJWeaponPresentation, Verbose, TEXT("EnterCombatPresentation: Owner=%s"), *GetNameSafe(GetOwner()));
 	// The draw notify owns the exact hand-transfer frame.  Entering combat only
 	// guarantees that an equipped weapon exists at its stable sheathed socket.
 	if (!SpawnedWeapon)
@@ -546,8 +546,8 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 
 void UProject_JWeaponPresentationComponent::InvalidateSocketComponentCache()
 {
-	CachedPrimaryGripComponent.Reset();
-	CachedSecondaryGripComponent.Reset();
+	CachedSocketComponents.Reset();
+	MissingSocketNames.Reset();
 	CachedPrimaryGripSocket = NAME_None;
 	CachedSecondaryGripSocket = NAME_None;
 }
@@ -571,26 +571,8 @@ void UProject_JWeaponPresentationComponent::UpdateSocketComponentCache()
 	CachedPrimaryGripSocket = Motion.PrimaryGripSocketName.IsNone() ? TEXT("WeaponGrip_R") : Motion.PrimaryGripSocketName;
 	CachedSecondaryGripSocket = Motion.SecondaryGripSocketName.IsNone() ? TEXT("WeaponGrip_L") : Motion.SecondaryGripSocketName;
 
-	TInlineComponentArray<USceneComponent*> SceneComponents(SpawnedWeapon);
-	SpawnedWeapon->GetComponents(SceneComponents);
-	for (USceneComponent* Component : SceneComponents)
-	{
-		if (Component)
-		{
-			if (!CachedPrimaryGripComponent.IsValid() && Component->DoesSocketExist(CachedPrimaryGripSocket))
-			{
-				CachedPrimaryGripComponent = Component;
-			}
-			if (!CachedSecondaryGripComponent.IsValid() && Component->DoesSocketExist(CachedSecondaryGripSocket))
-			{
-				CachedSecondaryGripComponent = Component;
-			}
-			if (CachedPrimaryGripComponent.IsValid() && CachedSecondaryGripComponent.IsValid())
-			{
-				break;
-			}
-		}
-	}
+	FindWeaponSocketComponent(CachedPrimaryGripSocket);
+	FindWeaponSocketComponent(CachedSecondaryGripSocket);
 }
 
 void UProject_JWeaponPresentationComponent::UpdateGripTargets()
@@ -598,11 +580,6 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	if (!SpawnedWeapon)
 	{
 		return;
-	}
-
-	if (CachedPrimaryGripSocket.IsNone())
-	{
-		UpdateSocketComponentCache();
 	}
 
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
@@ -614,6 +591,10 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	const FProject_JWeaponMotionPresentation& Motion = PresentationProfile->MotionPresentation;
 	const FName PrimarySocket = Motion.PrimaryGripSocketName.IsNone() ? TEXT("WeaponGrip_R") : Motion.PrimaryGripSocketName;
 	const FName SecondarySocket = Motion.SecondaryGripSocketName.IsNone() ? TEXT("WeaponGrip_L") : Motion.SecondaryGripSocketName;
+	if (CachedPrimaryGripSocket != PrimarySocket || CachedSecondaryGripSocket != SecondarySocket)
+	{
+		UpdateSocketComponentCache();
+	}
 
 	GripTargets.bHasPrimaryGrip = FindWeaponSocketTransform(PrimarySocket, GripTargets.PrimaryGripWorldTransform);
 	GripTargets.bHasSecondaryGrip = FindWeaponSocketTransform(SecondarySocket, GripTargets.SecondaryGripWorldTransform);
@@ -655,39 +636,41 @@ bool UProject_JWeaponPresentationComponent::FindWeaponSocketTransform(FName Sock
 		return false;
 	}
 
-	// 1. Fast path: check cached grip components
-	if (SocketName == CachedPrimaryGripSocket && CachedPrimaryGripComponent.IsValid())
+	if (USceneComponent* Component = FindWeaponSocketComponent(SocketName))
 	{
-		OutWorldTransform = CachedPrimaryGripComponent->GetSocketTransform(SocketName, RTS_World);
+		OutWorldTransform = Component->GetSocketTransform(SocketName, RTS_World);
 		return true;
 	}
-	if (SocketName == CachedSecondaryGripSocket && CachedSecondaryGripComponent.IsValid())
+	return false;
+}
+
+USceneComponent* UProject_JWeaponPresentationComponent::FindWeaponSocketComponent(FName SocketName) const
+{
+	if (!SpawnedWeapon || SocketName.IsNone() || MissingSocketNames.Contains(SocketName))
 	{
-		OutWorldTransform = CachedSecondaryGripComponent->GetSocketTransform(SocketName, RTS_World);
-		return true;
+		return nullptr;
+	}
+	if (const TWeakObjectPtr<USceneComponent>* Cached = CachedSocketComponents.Find(SocketName))
+	{
+		if (USceneComponent* Component = Cached->Get())
+		{
+			return Component;
+		}
+		CachedSocketComponents.Remove(SocketName);
 	}
 
-	// 2. Fallback path: query components and update cache on hit
 	TInlineComponentArray<USceneComponent*> SceneComponents(SpawnedWeapon);
 	SpawnedWeapon->GetComponents(SceneComponents);
 	for (USceneComponent* Component : SceneComponents)
 	{
 		if (Component && Component->DoesSocketExist(SocketName))
 		{
-			OutWorldTransform = Component->GetSocketTransform(SocketName, RTS_World);
-			if (SocketName == CachedPrimaryGripSocket)
-			{
-				const_cast<UProject_JWeaponPresentationComponent*>(this)->CachedPrimaryGripComponent = Component;
-			}
-			else if (SocketName == CachedSecondaryGripSocket)
-			{
-				const_cast<UProject_JWeaponPresentationComponent*>(this)->CachedSecondaryGripComponent = Component;
-			}
-			return true;
+			CachedSocketComponents.Add(SocketName, Component);
+			return Component;
 		}
 	}
-
-	return false;
+	MissingSocketNames.Add(SocketName);
+	return nullptr;
 }
 
 bool UProject_JWeaponPresentationComponent::GetWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const
@@ -702,14 +685,9 @@ USceneComponent* UProject_JWeaponPresentationComponent::GetWeaponVFXAttachmentCo
 		return nullptr;
 	}
 
-	TInlineComponentArray<USceneComponent*> SceneComponents(SpawnedWeapon);
-	SpawnedWeapon->GetComponents(SceneComponents);
-	for (USceneComponent* Component : SceneComponents)
+	if (USceneComponent* Component = FindWeaponSocketComponent(SocketName))
 	{
-		if (Component && !SocketName.IsNone() && Component->DoesSocketExist(SocketName))
-		{
-			return Component;
-		}
+		return Component;
 	}
 
 	return SpawnedWeapon->GetRootComponent();

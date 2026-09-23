@@ -4,8 +4,10 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JAnimNotifyState_MeleeHit.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "GameFramework/Character.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshSocket.h"
@@ -21,6 +23,48 @@ class FGameStateTestAccessor : public AGameStateBase
 public:
 	using AGameStateBase::ServerWorldTimeSecondsDelta;
 };
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCanonicalMeleeTraceTest, "ProjectJ.Combat.CanonicalMeleeTrace",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJCanonicalMeleeTraceTest::RunTest(const FString&)
+{
+	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
+	USkeletalMeshComponent* LeaderMesh = Character->GetMesh();
+	LeaderMesh->SetWorldLocation(FVector(100.0, 0.0, 0.0));
+
+	AActor* VisualWeapon = World->SpawnActor<AActor>(Params);
+	UStaticMesh* StaticMesh = NewObject<UStaticMesh>(VisualWeapon);
+	UStaticMeshSocket* VisualTip = NewObject<UStaticMeshSocket>(StaticMesh);
+	VisualTip->SocketName = TEXT("WeaponHit_Tip");
+	StaticMesh->AddSocket(VisualTip);
+	UStaticMeshComponent* VisualMesh = NewObject<UStaticMeshComponent>(VisualWeapon);
+	VisualMesh->SetStaticMesh(StaticMesh);
+	VisualWeapon->SetRootComponent(VisualMesh);
+	VisualMesh->RegisterComponent();
+	VisualMesh->SetWorldLocation(FVector(1000.0, 0.0, 0.0));
+
+	UProject_JWeaponPresentationComponent* Presentation = NewObject<UProject_JWeaponPresentationComponent>(Character);
+	Character->AddInstanceComponent(Presentation);
+	Presentation->RegisterComponent();
+	Presentation->SpawnedWeapon = VisualWeapon;
+	FTransform VisualTransform;
+	TestTrue(TEXT("Visual weapon has a tip socket"), Presentation->GetWeaponSocketTransform(TEXT("WeaponHit_Tip"), VisualTransform));
+
+	UProject_JAnimNotifyState_MeleeHit* Notify = NewObject<UProject_JAnimNotifyState_MeleeHit>();
+	Notify->bUseWeaponPresentationSocket = true; // serialized legacy option must no longer control gameplay
+	Notify->SocketName = NAME_None; // component origin needs no skeletal asset in this isolated test
+	const FVector TraceLocation = Notify->ResolveTraceLocation(LeaderMesh);
+	TestTrue(TEXT("Gameplay trace uses the Leader socket"), TraceLocation.Equals(LeaderMesh->GetSocketLocation(Notify->SocketName)));
+	TestTrue(TEXT("Gameplay trace ignores the cosmetic weapon"), FVector::DistSquared(TraceLocation, VisualTransform.GetLocation()) > FMath::Square(100.0));
+
+	Presentation->SpawnedWeapon = nullptr;
+	World->DestroyWorld(false);
+	return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSSRHistoricalSweepTest, "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -148,6 +192,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStableGripTargetsTest, "ProjectJ.Prese
 bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	ACharacter* Character = World->SpawnActor<ACharacter>(Params);
@@ -183,14 +228,17 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.85f;
 	Profile->MotionPresentation.DefaultSheathedPrimaryIKAlpha = 0.5f;
 	Profile->MotionPresentation.DefaultSheathedSecondaryIKAlpha = 0.0f;
+	Profile->DrawnSocketName = NAME_None; // No character skeletal asset in this isolated value test.
 
 	Presentation->AppliedProfile = Profile;
 	Presentation->SpawnedWeapon = MockWeapon;
 	Presentation->UpdateSocketComponentCache();
 
 	// Verify cached components
-	TestTrue(TEXT("Cached primary grip component is valid"), Presentation->CachedPrimaryGripComponent.IsValid());
-	TestTrue(TEXT("Cached secondary grip component is valid"), Presentation->CachedSecondaryGripComponent.IsValid());
+	TestEqual(TEXT("Cached primary grip component"), Presentation->FindWeaponSocketComponent(TEXT("WeaponGrip_R")), static_cast<USceneComponent*>(MeshComp));
+	TestEqual(TEXT("Cached secondary grip component"), Presentation->FindWeaponSocketComponent(TEXT("WeaponGrip_L")), static_cast<USceneComponent*>(MeshComp));
+	TestNull(TEXT("Absent probe socket"), Presentation->FindWeaponSocketComponent(TEXT("MissingProbe")));
+	TestTrue(TEXT("Absent socket cached"), Presentation->MissingSocketNames.Contains(TEXT("MissingProbe")));
 
 	// 3. Test Drawn State
 	Presentation->CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
@@ -230,6 +278,17 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	TestEqual(TEXT("End Motion: Primary IK Alpha restored to drawn (1.0)"), Targets.PrimaryIKAlpha, 1.0f);
 	TestEqual(TEXT("End Motion: Secondary IK Alpha restored to drawn (0.85)"), Targets.SecondaryIKAlpha, 0.85f);
 
+	// A profile socket edit invalidates both positive and negative lookups.
+	UStaticMeshSocket* Replacement = NewObject<UStaticMeshSocket>(StaticMesh);
+	Replacement->SocketName = TEXT("WeaponGrip_R_Alternate");
+	Replacement->RelativeLocation = FVector(42.0, 0.0, 0.0);
+	StaticMesh->AddSocket(Replacement);
+	Profile->MotionPresentation.PrimaryGripSocketName = Replacement->SocketName;
+	Presentation->UpdateGripTargets();
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Profile socket change refreshes primary grip"), Targets.PrimaryGripWorldTransform.GetLocation().X, 42.0);
+	TestEqual(TEXT("VFX socket shares the component cache"), Presentation->GetWeaponVFXAttachmentComponent(Replacement->SocketName), static_cast<USceneComponent*>(MeshComp));
+
 	// 7. Test Weapon Destroy / Teardown
 	Presentation->DestroyWeaponPresentation();
 	Targets = Presentation->GetWeaponGripTargets();
@@ -238,9 +297,10 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	TestFalse(TEXT("Teardown: no secondary grip"), Targets.bHasSecondaryGrip);
 	TestEqual(TEXT("Teardown: Primary Alpha reset to 0.0"), Targets.PrimaryIKAlpha, 0.0f);
 	TestEqual(TEXT("Teardown: Secondary Alpha reset to 0.0"), Targets.SecondaryIKAlpha, 0.0f);
-	TestFalse(TEXT("Teardown: cached primary component invalidated"), Presentation->CachedPrimaryGripComponent.IsValid());
-	TestFalse(TEXT("Teardown: cached secondary component invalidated"), Presentation->CachedSecondaryGripComponent.IsValid());
+	TestTrue(TEXT("Teardown: socket component cache invalidated"), Presentation->CachedSocketComponents.IsEmpty());
+	TestTrue(TEXT("Teardown: missing socket cache invalidated"), Presentation->MissingSocketNames.IsEmpty());
 
+	GEngine->DestroyWorldContext(World);
 	World->DestroyWorld(false);
 	return true;
 }
@@ -624,6 +684,7 @@ bool FProjectJTwoHandIKTransitionAndCurveTest::RunTest(const FString&)
 	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.0f; // Greatsword default: right hand only
 	Profile->MotionPresentation.DefaultSheathedPrimaryIKAlpha = 0.0f;
 	Profile->MotionPresentation.DefaultSheathedSecondaryIKAlpha = 0.0f;
+	Profile->SheathedSocketName = NAME_None; // Isolated test has no character skeletal sockets.
 
 	Presentation->AppliedProfile = Profile;
 	Presentation->SpawnedWeapon = MockWeapon;
