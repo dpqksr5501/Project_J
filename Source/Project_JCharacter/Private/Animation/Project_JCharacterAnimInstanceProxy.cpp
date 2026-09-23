@@ -56,11 +56,22 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	bool bInUpdateMotionMatchingThisFrame,
 	bool bInForceMotionMatchingReselect)
 {
+	// A draw/sheathe montage can hide the moment input is released. If Cycle and
+	// Idle resolve to the same PSD, changing its search context alone does not
+	// retire the continuing walk pose. Interrupt it once at the Idle edge even
+	// when the database pointer remains unchanged.
+	const bool bEnteredGroundIdle =
+		bMotionMatchingEnabled && bInMotionMatchingEnabled &&
+		!InData.Air.bIsInAir &&
+		!InData.LocomotionContext.bIsMotionMatchingMoving &&
+		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle &&
+		(PendingGameThreadData.LocomotionContext.bIsMotionMatchingMoving ||
+			PendingGameThreadData.LocomotionContext.PhaseFamily != EProject_JLocomotionPhaseFamily::Idle);
 	PendingGameThreadData = InData;
 	CurrentActiveDatabase = InSelectedDatabase;
 	bMotionMatchingEnabled = bInMotionMatchingEnabled;
 	bUpdateMotionMatchingThisFrame = bInUpdateMotionMatchingThisFrame;
-	bForceMotionMatchingReselect = bInForceMotionMatchingReselect;
+	bForceMotionMatchingReselect = bInForceMotionMatchingReselect || bEnteredGroundIdle;
 }
 
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)

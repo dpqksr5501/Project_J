@@ -33,6 +33,26 @@ bool FProjectJStopIdleInterruptTest::RunTest(const FString&)
 	Proxy.ThreadSafeData.Air.bIsInAir = true;
 	Proxy.CacheMotionMatchingPolicyState();
 	TestEqual(TEXT("Sustained air playback remains uninterrupted"), Proxy.ResolveDatabaseChangeInterruptMode(), EPoseSearchInterruptMode::DoNotInterrupt);
+	for (bool Combat : {false, true})
+	{
+		FProject_JCharacterAnimInstanceProxy MontageProxy;
+		FProject_JAnimThreadSafeData MovingData;
+		MovingData.Combat.bIsCombatMode = Combat;
+		MovingData.Combat.bIsPlayingCombatIntro = Combat;
+		MovingData.Combat.bIsPlayingCombatOutro = !Combat;
+		MovingData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+		MovingData.LocomotionContext.bIsMotionMatchingMoving = true;
+		MontageProxy.QueueGameThreadData(MovingData, nullptr, true, true, false);
+		FProject_JAnimThreadSafeData IdleData = MovingData;
+		IdleData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
+		IdleData.LocomotionContext.bIsMotionMatchingMoving = false;
+		MontageProxy.QueueGameThreadData(IdleData, nullptr, true, true, false);
+		TestTrue(TEXT("Releasing movement under a combat transition invalidates the continuing walk pose"),
+			MontageProxy.bForceMotionMatchingReselect);
+		MontageProxy.QueueGameThreadData(IdleData, nullptr, true, true, false);
+		TestFalse(TEXT("Settled Idle does not force a new search every frame"),
+			MontageProxy.bForceMotionMatchingReselect);
+	}
 	return true;
 }
 
