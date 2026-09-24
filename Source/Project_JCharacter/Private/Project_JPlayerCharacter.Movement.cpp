@@ -85,10 +85,14 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
 				{
 					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
-					const bool bNewSelection = TurnInPlacePresentationRuntime.BeginSelection(
-						AnimSeq, SelectionRevision, GetActorRotation().Yaw);
-
 					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
+					const FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate SelectionUpdate =
+						TurnInPlacePresentationRuntime.UpdateSelection(
+							AnimSeq, SelectionRevision, GetActorRotation().Yaw, Elapsed);
+					const bool bNewSelection = SelectionUpdate ==
+						FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate::NewSelection;
+					const bool bAwaitingFreshSelection = SelectionUpdate ==
+						FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate::AwaitingFreshSelection;
 					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
 					const float StartTime = FMath::Clamp(
 						AnimInst->GetThreadSafeStateControllerSelectedAnimationStartTime(),
@@ -122,19 +126,23 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 					// A reversed TIP spends a short release window unwinding Blend Stack /
 					// Offset Root Bone. Do not continue applying the old authored root yaw
 					// to the capsule during that visual hand-off.
-					const bool bCanApplyActorRotation = IsLocallyControlled() &&
-						(!LocomotionAnimStateComponent || LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive());
+					const bool bLocalTargetActive = !LocomotionAnimStateComponent ||
+						LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive();
+					const bool bCanApplyActorRotation = IsLocallyControlled() && bLocalTargetActive &&
+						!bAwaitingFreshSelection;
 					const float ActorYawBefore = GetActorRotation().Yaw;
 					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
 					{
 						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
 					}
-					bApplyingLocalTurnInPlaceRootYaw = bCanApplyActorRotation;
+					// Keep the active replication state while the new chooser revision
+					// catches up; only the stale root yaw is suppressed for this frame.
+					bApplyingLocalTurnInPlaceRootYaw = IsLocallyControlled() && bLocalTargetActive;
 					const bool bFacingOpposesAuthoredTurn =
 						FMath::Abs(FacingDelta) > 1.0f && FMath::Abs(RootYawDelta) > 1.0f &&
 						FMath::Sign(FacingDelta) != FMath::Sign(RootYawDelta);
 					if (TipTraceMode >= 2 ||
-						(TipTraceMode == 1 && (bNewSelection || CurrTime <= 0.35f ||
+						(TipTraceMode == 1 && (bNewSelection || bAwaitingFreshSelection || CurrTime <= 0.35f ||
 							bFacingOpposesAuthoredTurn || FMath::Abs(ClampedRootYawDelta) >= 6.0f)))
 					{
 						const UWorld* TraceWorld = GetWorld();
@@ -143,9 +151,9 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						const uint8 SemanticBucket = LocomotionAnimStateComponent
 							? LocomotionAnimStateComponent->DerivedLocomotionContext.TurnInPlaceDirectionBucket : 0;
 						UE_LOG(LogProjectJPlayer, Display,
-							TEXT("TIPTrace Stage=Root T=%.3f Actor=%s Local=%d NewSelection=%d Seq=%d Bucket=%d Rev=%d Asset=%s Hold=%.3f Start=%.3f Playhead=%.3f RootCum=%.2f Anchor=%.2f ActorBefore=%.2f ActorAfter=%.2f AuthoredDelta=%.2f FacingDelta=%.2f Applied=%.2f TargetActive=%d TargetYaw=%.2f Opposite=%d"),
+							TEXT("TIPTrace Stage=Root T=%.3f Actor=%s Local=%d NewSelection=%d Deferred=%d Seq=%d Bucket=%d Rev=%d Asset=%s Hold=%.3f Start=%.3f Playhead=%.3f RootCum=%.2f Anchor=%.2f ActorBefore=%.2f ActorAfter=%.2f AuthoredDelta=%.2f FacingDelta=%.2f Applied=%.2f TargetActive=%d TargetYaw=%.2f Opposite=%d"),
 							TraceWorld ? TraceWorld->GetTimeSeconds() : 0.0f, *GetName(),
-							IsLocallyControlled() ? 1 : 0, bNewSelection ? 1 : 0,
+							IsLocallyControlled() ? 1 : 0, bNewSelection ? 1 : 0, bAwaitingFreshSelection ? 1 : 0,
 							SemanticSequence, static_cast<int32>(SemanticBucket), SelectionRevision,
 							*GetNameSafe(AnimSeq), Elapsed, StartTime, CumulativeCurrentTime,
 							CurrentCumulativeYaw, TurnInPlacePresentationRuntime.GetSelectionStartActorYaw(),

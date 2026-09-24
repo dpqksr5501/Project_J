@@ -251,11 +251,20 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTurnInPlacePresentationRuntimeTest,
 bool FProjectJTurnInPlacePresentationRuntimeTest::RunTest(const FString&)
 {
 	FProject_JTurnInPlacePresentationRuntime Runtime;
-	TestTrue(TEXT("첫 선택은 새 회전 기준을 만든다"), Runtime.BeginSelection(nullptr, 1, 30.0f));
+	using ESelectionUpdate = FProject_JTurnInPlacePresentationRuntime::ESelectionUpdate;
+	TestEqual(TEXT("첫 선택은 새 회전 기준을 만든다"),
+		Runtime.UpdateSelection(nullptr, 1, 30.0f, 0.01f), ESelectionUpdate::NewSelection);
 	TestEqual(TEXT("선택 시 액터의 바라보는 방향을 고정한다"), Runtime.GetSelectionStartActorYaw(), 30.0f);
-	TestFalse(TEXT("동일한 선택은 회전 기준을 다시 만들지 않는다"), Runtime.BeginSelection(nullptr, 1, 45.0f));
+	TestEqual(TEXT("동일한 선택은 회전 기준을 다시 만들지 않는다"),
+		Runtime.UpdateSelection(nullptr, 1, 45.0f, 0.66f), ESelectionUpdate::Continuing);
 	TestEqual(TEXT("같은 선택에서는 저작된 루트 기준을 옮기지 않는다"), Runtime.GetSelectionStartActorYaw(), 30.0f);
-	TestTrue(TEXT("새 선택 리비전은 회전 기준을 다시 만든다"), Runtime.BeginSelection(nullptr, 2, 45.0f));
+	TestEqual(TEXT("유지 시간만 되감긴 프레임은 이전 루트 회전을 보류한다"),
+		Runtime.UpdateSelection(nullptr, 1, 45.0f, 0.0f), ESelectionUpdate::AwaitingFreshSelection);
+	TestEqual(TEXT("이전 선택의 유지 시간이 다시 증가해도 보류를 유지한다"),
+		Runtime.UpdateSelection(nullptr, 1, 45.0f, 0.01f), ESelectionUpdate::AwaitingFreshSelection);
+	TestEqual(TEXT("보류 중에는 이전 회전 기준을 유지한다"), Runtime.GetSelectionStartActorYaw(), 30.0f);
+	TestEqual(TEXT("새 선택 리비전은 현재 yaw에서 회전 기준을 다시 만든다"),
+		Runtime.UpdateSelection(nullptr, 2, 45.0f, 0.01f), ESelectionUpdate::NewSelection);
 	TestEqual(TEXT("같은 에셋을 재선택하면 새 루트 기준을 설정한다"), Runtime.GetSelectionStartActorYaw(), 45.0f);
 	TestEqual(TEXT("루트 yaw는 고정된 목표 방향에서 멈춘다"),
 		FProject_JTurnInPlacePresentationRuntime::ClampAuthoredYaw(90.0f, 35.0f), 35.0f);

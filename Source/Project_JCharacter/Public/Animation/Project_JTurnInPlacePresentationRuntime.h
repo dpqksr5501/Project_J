@@ -7,18 +7,37 @@
 class FProject_JTurnInPlacePresentationRuntime
 {
 public:
+	enum class ESelectionUpdate : uint8
+	{
+		NewSelection,
+		Continuing,
+		AwaitingFreshSelection
+	};
+
 	void Reset() { *this = FProject_JTurnInPlacePresentationRuntime(); }
 
-	bool BeginSelection(const UAnimSequence* Sequence, int32 SelectionRevision, float ActorYaw)
+	ESelectionUpdate UpdateSelection(const UAnimSequence* Sequence, int32 SelectionRevision,
+		float ActorYaw, float HoldElapsed)
 	{
 		if (SelectedSequence.Get() != Sequence || SelectedRevision != SelectionRevision)
 		{
 			SelectedSequence = const_cast<UAnimSequence*>(Sequence);
 			SelectedRevision = SelectionRevision;
 			SelectionStartActorYaw = ActorYaw;
-			return true;
+			LastObservedHoldElapsed = HoldElapsed;
+			bAwaitingFreshSelection = false;
+			return ESelectionUpdate::NewSelection;
 		}
-		return false;
+		// The hold clock can restart one frame before the thread-safe chooser
+		// publishes its new asset/revision. Applying the old cumulative root yaw
+		// against the reset clock would snap the capsule back toward its old anchor.
+		if (bAwaitingFreshSelection || HoldElapsed + 0.02f < LastObservedHoldElapsed)
+		{
+			bAwaitingFreshSelection = true;
+			return ESelectionUpdate::AwaitingFreshSelection;
+		}
+		LastObservedHoldElapsed = FMath::Max(LastObservedHoldElapsed, HoldElapsed);
+		return ESelectionUpdate::Continuing;
 	}
 
 	float GetSelectionStartActorYaw() const { return SelectionStartActorYaw; }
@@ -63,6 +82,8 @@ public:
 		{
 			SelectedSequence.Reset();
 			SelectedRevision = INDEX_NONE;
+			LastObservedHoldElapsed = -1.0f;
+			bAwaitingFreshSelection = false;
 		}
 		return bSendInactive;
 	}
@@ -71,6 +92,8 @@ private:
 	TWeakObjectPtr<UAnimSequence> SelectedSequence;
 	int32 SelectedRevision = INDEX_NONE;
 	float SelectionStartActorYaw = 0.0f;
+	float LastObservedHoldElapsed = -1.0f;
+	bool bAwaitingFreshSelection = false;
 	bool bLastSentActive = false;
 	float LastSentActorYaw = 0.0f;
 	double LastSendTimeSeconds = 0.0;
