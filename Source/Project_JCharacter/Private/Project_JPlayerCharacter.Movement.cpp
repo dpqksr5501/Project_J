@@ -83,12 +83,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
 				{
 					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
-					if (CachedTurnInPlaceSequence.Get() != AnimSeq || CachedTurnInPlaceSelectionRevision != SelectionRevision)
-					{
-						CachedTurnInPlaceSequence = const_cast<UAnimSequence*>(AnimSeq);
-						CachedTurnInPlaceSelectionRevision = SelectionRevision;
-						TurnInPlaceSelectionStartActorYaw = GetActorRotation().Yaw;
-					}
+					TurnInPlacePresentationRuntime.BeginSelection(AnimSeq, SelectionRevision, GetActorRotation().Yaw);
 
 					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
 					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
@@ -103,7 +98,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						static_cast<double>(StartTime), static_cast<double>(CumulativeCurrentTime), CurrentCumulativeContext).Rotator().Yaw;
 
 					const float AuthoredTargetActorYaw = FRotator::NormalizeAxis(
-						TurnInPlaceSelectionStartActorYaw + CurrentCumulativeYaw);
+						TurnInPlacePresentationRuntime.GetSelectionStartActorYaw() + CurrentCumulativeYaw);
 					const float RootYawDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, AuthoredTargetActorYaw);
 
 					// TIP owns one fixed authored target. Prefer the locomotion context so
@@ -118,15 +113,8 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						FacingDelta = FMath::FindDeltaAngleDegrees(GetActorRotation().Yaw, GetController()->GetControlRotation().Yaw);
 					}
 
-					float ClampedRootYawDelta = RootYawDelta;
-					if (RootYawDelta > 0.0f)
-					{
-						ClampedRootYawDelta = FMath::Min(RootYawDelta, FMath::Max(FacingDelta, 0.0f));
-					}
-					else if (RootYawDelta < 0.0f)
-					{
-						ClampedRootYawDelta = FMath::Max(RootYawDelta, FMath::Min(FacingDelta, 0.0f));
-					}
+					const float ClampedRootYawDelta = FProject_JTurnInPlacePresentationRuntime::ClampAuthoredYaw(
+						RootYawDelta, FacingDelta);
 
 					// A reversed TIP spends a short release window unwinding Blend Stack /
 					// Offset Root Bone. Do not continue applying the old authored root yaw
@@ -144,15 +132,9 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 						const UWorld* World = GetWorld();
 						const double Now = World ? World->GetTimeSeconds() : 0.0;
 						const float CurrentActorYaw = GetActorRotation().Yaw;
-						const bool bYawChangedSignificantly = FMath::Abs(FRotator::NormalizeAxis(CurrentActorYaw - LastSentTurnInPlaceActorYaw)) >= 2.0f;
-						const bool bTimeElapsed = (Now - LastTurnInPlaceSendTime) >= 0.05;
-
-						if (!bLastSentTurnInPlaceActive || (bYawChangedSignificantly && bTimeElapsed))
+						if (TurnInPlacePresentationRuntime.ShouldSendActiveYaw(CurrentActorYaw, Now))
 						{
 							ServerSetTurnInPlaceRotation(true, CurrentActorYaw);
-							bLastSentTurnInPlaceActive = true;
-							LastSentTurnInPlaceActorYaw = CurrentActorYaw;
-							LastTurnInPlaceSendTime = Now;
 						}
 					}
 				}
@@ -160,20 +142,11 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 		}
 	}
 
-	if (!HasAuthority() && IsLocallyControlled())
+	if (TurnInPlacePresentationRuntime.FinishFrame(
+		bCurrentlyInTurnInPlace, bApplyingLocalTurnInPlaceRootYaw, GetActorRotation().Yaw,
+		!HasAuthority() && IsLocallyControlled()))
 	{
-		if (bLastSentTurnInPlaceActive && !bApplyingLocalTurnInPlaceRootYaw)
-		{
-			ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
-			bLastSentTurnInPlaceActive = false;
-			LastSentTurnInPlaceActorYaw = GetActorRotation().Yaw;
-		}
-	}
-
-	if (!bCurrentlyInTurnInPlace && CachedTurnInPlaceSequence.IsValid())
-	{
-		CachedTurnInPlaceSequence.Reset();
-		CachedTurnInPlaceSelectionRevision = INDEX_NONE;
+		ServerSetTurnInPlaceRotation(false, GetActorRotation().Yaw);
 	}
 
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)

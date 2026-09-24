@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/Project_JPlayerInputBindingComponent.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
+#include "Animation/Project_JTurnInPlacePresentationRuntime.h"
 #include "Animation/Project_JReplicatedAnimEventTypes.h"
 #include "Project_JBaseCharacter.h"
 #include "Combat/Project_JCombatConfiguration.h"
@@ -612,12 +613,7 @@ private:
 	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
 
-	TWeakObjectPtr<UAnimSequence> CachedTurnInPlaceSequence = nullptr;
-	int32 CachedTurnInPlaceSelectionRevision = INDEX_NONE;
-	float TurnInPlaceSelectionStartActorYaw = 0.0f;
-	bool bLastSentTurnInPlaceActive = false;
-	float LastSentTurnInPlaceActorYaw = 0.0f;
-	double LastTurnInPlaceSendTime = 0.0;
+	FProject_JTurnInPlacePresentationRuntime TurnInPlacePresentationRuntime;
 
 	// Server-side acceptance state for client-sampled cosmetic TIP yaw.  These
 	// bounds prevent the RPC from being used as an unrestricted actor-rotation

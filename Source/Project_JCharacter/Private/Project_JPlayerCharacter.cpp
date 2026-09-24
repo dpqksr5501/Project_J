@@ -230,6 +230,7 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	TurnInPlacePresentationRuntime.Reset();
 	PendingMountItemId.Invalidate();
 	if (PendingMountClassLoadHandle)
 	{
@@ -263,6 +264,7 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	TurnInPlacePresentationRuntime.Reset();
 
 	if (LocomotionAnimStateComponent)
 	{
@@ -275,6 +277,7 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 
 void AProject_JPlayerCharacter::UnPossessed()
 {
+	TurnInPlacePresentationRuntime.Reset();
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
 	Super::UnPossessed();
 }

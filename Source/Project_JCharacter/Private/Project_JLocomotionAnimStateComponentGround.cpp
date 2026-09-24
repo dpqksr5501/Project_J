@@ -385,7 +385,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 
 	const bool bDelayRemoteStopUntilVelocitySettles =
 		!bAllowSharpTurn &&
-		bRemoteStopVisualIntentActive &&
+		RemoteRuntime.IsStopVisualIntentActive() &&
 		bPendingStopRequest &&
 		GroundSpeed > RemoteStopEntryMaxSpeed;
 	if (bDelayRemoteStopUntilVelocitySettles)

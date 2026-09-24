@@ -8,7 +8,8 @@
 #include "Animation/TrajectoryTypes.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
-#include "Animation/Project_JAnimationUpdateSchedule.h"
+#include "Animation/Project_JMotionMatchingRuntime.h"
+#include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
@@ -741,6 +742,7 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstance : public UProject_J
 public:
 	UProject_JCharacterAnimInstance();
 
+	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativePostEvaluateAnimation() override;
@@ -1357,33 +1359,16 @@ public:
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;
 	int32 StateControllerChooserSelectionRevision = 0;
-	/** Direct Blend Stack ownership for one committed local Combat-Strafe Pivot. */
-	mutable int32 ActiveStateControllerPivotPlaybackRequestRevision = 0;
-	mutable int32 ActiveStateControllerPivotMoveIntentRevision = 0;
 	/** Debug-only edge guard for a linked instance that observes a Pivot request. */
 	int32 LastLoggedNonPrimaryPivotRequestRevision = 0;
-	/** Candidate revision consumed by a redirect; it may not re-enter from a stale snapshot. */
-	mutable int32 SuppressedStateControllerPivotRequestRevision = 0;
-	mutable FVector ActiveStateControllerPivotPreviousMovementDirection = FVector::ZeroVector;
-	mutable FVector ActiveStateControllerPivotMoveIntentDirection = FVector::ZeroVector;
 
-	/** Game-thread presentation clock; it never drives CharacterMovement or replication. */
-	mutable EProject_JStateControllerPresentationState StateControllerPlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
-	mutable double StateControllerPlaybackHoldStartedAtSeconds = 0.0;
-	/** One authored Stop per movement episode, even when combat stance changes during playback. */
-	mutable bool bStateControllerGroundStopConsumed = false;
+	/** 게임 스레드에서 일회성 동작의 수명을 관리한다. 이동 의미 상태는 컴포넌트에 남는다. */
+	mutable FProject_JStateControllerRuntime StateControllerRuntime;
 	/** Bounded game-thread diagnostic window around draw/sheathe and input release. */
 	bool bCombatStopTraceWasInputHeld = false;
 	bool bCombatStopTraceWasTransitionActive = false;
 	double CombatStopTraceUntilSeconds = 0.0;
 	double CombatStopTraceNextSampleSeconds = 0.0;
-	/** Landing epoch currently owned by the logical one-shot hold. */
-	mutable int32 StateControllerHeldLandingPresentationRevision = INDEX_NONE;
-	/** Set for one game-thread update when GASP-style TIP re-entry must restart even the same asset. */
-	mutable bool bStateControllerForceTurnInPlaceReselect = false;
-	/** Monotonic local edge for a same-bucket 90/180 extension. */
-	mutable int32 LastHandledLocalTurnInPlaceSequence = 0;
-	mutable int32 LastHandledRemoteTurnInPlaceSequence = 0;
 
 	/** 공중 점프 재선택 상태 변수 */
 	mutable float LastJumpAirReselectElapsed = 0.0f;
@@ -1651,17 +1636,7 @@ private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
 	friend class FProjectJTurnInPlaceAndCombatStopTest;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
-	FProjectJAnimationUpdateSchedule MotionMatchingSelectionSchedule;
-
-	EProject_JGroundMotionMode LastEvaluatedGroundMotionMode = EProject_JGroundMotionMode::Idle;
-	EProject_JLocomotionGaitIntent LastEvaluatedGaitIntent = EProject_JLocomotionGaitIntent::Run;
-	EProject_JLocomotionRotationMode LastEvaluatedRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-	EProject_JLocomotionPhaseFamily LastEvaluatedPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
-	bool bLastEvaluatedStartRequested = false;
-	bool bLastEvaluatedStartWasSprinting = false;
-	int32 LastEvaluatedMotionMatchingSelectionRevision = 0;
+	FProject_JMotionMatchingRuntime MotionMatchingRuntime;
 	TArray<FProject_JMotionMatchingTraceEntry> MotionMatchingTrace;
 	int32 MaxMotionMatchingTraceEntries = 96;
-
-	bool bHasEvaluatedMotionMatchingContext = false;
 };

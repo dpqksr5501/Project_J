@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
+#include "Animation/Project_JMotionMatchingSelectionPolicy.h"
+#include "Animation/Project_JRemoteLocomotionRuntime.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
 #include "Project_JLocomotionAnimTypes.h"
@@ -232,13 +234,13 @@ public:
 	bool ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw);
 
 	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
-	uint8 GetRemoteTurnInPlaceDirectionBucket() const { return RemoteTurnInPlaceDirectionBucket; }
+	uint8 GetRemoteTurnInPlaceDirectionBucket() const { return RemoteRuntime.GetTurnDirectionBucket(); }
 
 	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
-	bool IsRemoteTurnInPlaceActive() const { return bRemoteTurnInPlaceActive; }
+	bool IsRemoteTurnInPlaceActive() const { return RemoteRuntime.IsTurnActive(); }
 
 	UFUNCTION(BlueprintPure, Category = "Locomotion|Animation State")
-	int32 GetRemoteTurnInPlaceSequence() const { return RemoteTurnInPlaceSequence; }
+	int32 GetRemoteTurnInPlaceSequence() const { return RemoteRuntime.GetTurnSequence(); }
 
 	/** True only while a locally controlled character may apply authored TIP root yaw to its capsule. */
 	bool IsLocalTurnInPlaceTargetActive() const { return bLocalTurnInPlaceTargetActive; }
@@ -864,14 +866,12 @@ private:
 	float RemoteAirborneTime = 0.0f;
 	int32 LastConfirmedRemoteJumpSequence = 0;
 	bool bPredictedRemoteJumpStart = false;
-	float RemoteStopStartSuppressTimeRemaining = 0.0f;
 	FVector RemoteStartPreviousMoveWorldDirection = FVector::ZeroVector;
 	float RemoteStartPreviousActorYaw = 0.0f;
 	float StartPreviousControlYaw = 0.0f;
 	float LandingElapsedTime = 0.0f;
 	float LandingPostTouchdownMoveInputTime = 0.0f;
 	float SprintStopMemoryTimeRemaining = 0.0f;
-	double LastCombatStrafeReselectTimeSeconds = -DBL_MAX;
 	bool bLandingFinishPendingExit = false;
 	bool bForceLandingFinishToLocomotion = false;
 	/** Latched only when movement genuinely continued after touchdown then released during a moving landing. */
@@ -879,15 +879,9 @@ private:
 	bool bForceLandingFinishToStop = false;
 	bool bLandingExitStopWasSprinting = false;
 	bool bRemoteMoveReleasedWhileAirborne = false;
-	/** A replicated MoveStop owns remote visual intent until a later MoveStart; residual network velocity must not restart locomotion. */
-	bool bRemoteStopVisualIntentActive = false;
+	/** 로컬 입력이나 직접적인 월드 조회 없이 원격 이동·회전 이벤트를 재구성한다. */
+	FProject_JRemoteLocomotionRuntime RemoteRuntime;
 	bool bHasRemoteStartTurnReference = false;
-	/** Remote TIP is an event-driven presentation override; it never uses proxy control rotation. */
-	bool bRemoteTurnInPlaceActive = false;
-	float RemoteTurnInPlaceTimeRemaining = 0.0f;
-	uint8 RemoteTurnInPlaceDirectionBucket = 0;
-	float RemoteTurnInPlaceTargetFacingYaw = 0.0f;
-	int32 RemoteTurnInPlaceSequence = 0;
 	/** Local TIP shares one fixed authored target across capsule, AnimGraph and replication. */
 	bool bLocalTurnInPlaceTargetActive = false;
 	uint8 LocalTurnInPlaceDirectionBucket = 0;
@@ -914,12 +908,7 @@ private:
 	bool bLandingCancelEventDispatched = false;
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;
-	bool bHasPublishedMotionMatchingSelection = false;
-	EProject_JLocomotionGaitIntent LastPublishedMotionMatchingGait = EProject_JLocomotionGaitIntent::Run;
-	EProject_JLocomotionRotationMode LastPublishedMotionMatchingRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-	EProject_JLocomotionPhaseFamily LastPublishedMotionMatchingPhase = EProject_JLocomotionPhaseFamily::Idle;
-	bool bLastPublishedMotionMatchingUseSettledCycle = false;
-	EProject_JGroundMotionMode LastPublishedGroundMotionMode = EProject_JGroundMotionMode::Idle;
+	FProject_JMotionMatchingSelectionPolicy MotionMatchingSelectionPolicy;
 	bool bHasCombatStrafeControlYawSample = false;
 	float LastCombatStrafeControlYaw = 0.0f;
 	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;

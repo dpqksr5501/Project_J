@@ -72,6 +72,8 @@ This folder tracks Project J architecture notes, animation decisions, and deferr
 
 - [GASP ↔ Project_J Locomotion / State Controller 대응표](GASP_ProjectJ_Locomotion_Parity.md)
   - 검토한 GASP ABP/Chooser/함수와 Project_J native·ABP 경로의 구현 상태, 의도적 보류 항목, OTM Reface Start에 필요한 추가 확인 자료를 정리한 기준표.
+- [캐릭터 런타임 책임 분리 결과 (2026-09-24)](Review/Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md)
+  - 캐릭터·이동·애니메이션 인스턴스의 상태 소유권, 게임 스레드와 작업 스레드의 경계, 터미널 빌드 및 자동화 검증 결과.
 
 - [Project Context](ProjectContext.md)
   - Current project context: module boundaries, runtime ownership, data flows, configuration entry points, and a new-task checklist.

@@ -85,7 +85,7 @@ FString UProject_JLocomotionAnimStateComponent::GetDebugSummary() const
 		MotionMatchingSelectionRevision,
 		bMotionMatchingSelectionChanged ? TEXT("true") : TEXT("false"),
 		bForceMotionMatchingReselect ? TEXT("true") : TEXT("false"),
-		bHasPublishedMotionMatchingSelection ? TEXT("true") : TEXT("false"),
+		MotionMatchingSelectionPolicy.HasPublished() ? TEXT("true") : TEXT("false"),
 		bIsInAir ? TEXT("true") : TEXT("false"),
 		bIsPhysicallyInAir ? TEXT("true") : TEXT("false"),
 		bIsJumping ? TEXT("true") : TEXT("false"),
@@ -286,7 +286,7 @@ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 	bStartRequested = false;
 	bPendingStartRequest = false;
 	bPendingStopRequest = false;
-	bRemoteStopVisualIntentActive = false;
+	RemoteRuntime.ClearStopVisualIntent();
 	ResetGroundMotionTransitionRequests();
 	bResolvedMoveInputLastUpdate = false;
 	MoveInputHeldTime = 0.0f;

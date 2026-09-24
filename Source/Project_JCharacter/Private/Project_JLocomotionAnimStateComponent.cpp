@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Animation/Project_JLocomotionContextBuilder.h"
 
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -91,6 +92,7 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	ClearOwnedMovementGameplayTags();
+	RemoteRuntime.Reset();
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -102,13 +104,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
 	}
 
 	SprintStopMemoryTimeRemaining = FMath::Max(0.0f, SprintStopMemoryTimeRemaining - DeltaTime);
-	RemoteTurnInPlaceTimeRemaining = FMath::Max(0.0f, RemoteTurnInPlaceTimeRemaining - DeltaTime);
-	if (RemoteTurnInPlaceTimeRemaining <= 0.0f)
-	{
-		bRemoteTurnInPlaceActive = false;
-		RemoteTurnInPlaceDirectionBucket = 0;
-		RemoteTurnInPlaceTargetFacingYaw = 0.0f;
-	}
+	RemoteRuntime.AdvanceTurn(DeltaTime);
 
 	AProject_JPlayerCharacter* PlayerOwner = nullptr;
 	if (!RefreshOwnerReferencesForUpdate(PlayerOwner))
@@ -208,12 +204,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		CombatStrafeSettledCycleElapsedTime = 0.0f;
 		bHasCombatStrafeControlYawSample = false;
 		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
-		bHasPublishedMotionMatchingSelection = false;
-		++MotionMatchingSelectionRevision;
-		if (MotionMatchingSelectionRevision == 0)
-		{
-			MotionMatchingSelectionRevision = 1;
-		}
+		MotionMatchingSelectionPolicy.Reset();
+		MotionMatchingSelectionRevision = MotionMatchingSelectionPolicy.GetRevision();
 		return;
 	}
 
@@ -315,33 +307,29 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 			KinematicContext.DesiredFacingYaw = LocalTurnInPlaceTargetFacingYaw;
 		}
 	}
-	if (!bUsingLocalInputState && bRemoteTurnInPlaceActive)
+	if (!bUsingLocalInputState && RemoteRuntime.IsTurnActive())
 	{
 		// Remote proxies face the replicated cosmetic target while TIP presentation is active.
 		// Abort immediately if the remote character starts moving or becomes airborne.
 		if (KinematicContext.bHasMoveInput || KinematicContext.GroundSpeed > IdleSpeedThreshold || bIsInAir || IsLandingStateActive())
 		{
-			bRemoteTurnInPlaceActive = false;
-			RemoteTurnInPlaceTimeRemaining = 0.0f;
-			RemoteTurnInPlaceDirectionBucket = 0;
+			RemoteRuntime.CancelTurn();
 		}
 		else
 		{
 			const float RemainingFacingDelta = FMath::FindDeltaAngleDegrees(
 				PlayerOwner->GetActorRotation().Yaw,
-				RemoteTurnInPlaceTargetFacingYaw);
+				RemoteRuntime.GetTurnTargetFacingYaw());
 			if (FMath::Abs(RemainingFacingDelta) <= 5.0f)
 			{
-				bRemoteTurnInPlaceActive = false;
-				RemoteTurnInPlaceTimeRemaining = 0.0f;
-				RemoteTurnInPlaceDirectionBucket = 0;
+				RemoteRuntime.CancelTurn();
 				KinematicContext.DesiredFacingDeltaYaw = 0.0f;
 				KinematicContext.DesiredFacingYaw = PlayerOwner->GetActorRotation().Yaw;
 			}
 			else
 			{
 				KinematicContext.DesiredFacingDeltaYaw = RemainingFacingDelta;
-				KinematicContext.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
+				KinematicContext.DesiredFacingYaw = RemoteRuntime.GetTurnTargetFacingYaw();
 			}
 		}
 	}
@@ -509,29 +497,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 	MotionMatchingSelectionContext.bUseSettledCycle = bUseCombatStrafeSettledCycle;
 
-	const bool bSelectionChanged =
-		!bHasPublishedMotionMatchingSelection ||
-		LastPublishedMotionMatchingGait != AuthoritativeContext.GaitIntent ||
-		LastPublishedMotionMatchingRotationMode != AuthoritativeContext.RotationMode ||
-		LastPublishedMotionMatchingPhase != DerivedLocomotionContext.PhaseFamily ||
-		bLastPublishedMotionMatchingUseSettledCycle != bUseCombatStrafeSettledCycle ||
-		LastPublishedGroundMotionMode != GroundMotionMode;
-
-	bMotionMatchingSelectionChanged = bSelectionChanged;
-	if (bSelectionChanged)
-	{
-		LastPublishedMotionMatchingGait = AuthoritativeContext.GaitIntent;
-		LastPublishedMotionMatchingRotationMode = AuthoritativeContext.RotationMode;
-		LastPublishedMotionMatchingPhase = DerivedLocomotionContext.PhaseFamily;
-		bLastPublishedMotionMatchingUseSettledCycle = bUseCombatStrafeSettledCycle;
-		LastPublishedGroundMotionMode = GroundMotionMode;
-		bHasPublishedMotionMatchingSelection = true;
-		++MotionMatchingSelectionRevision;
-		if (MotionMatchingSelectionRevision == 0)
-		{
-			MotionMatchingSelectionRevision = 1;
-		}
-	}
+	FProject_JMotionMatchingSelectionPolicy::FKey SelectionKey;
+	SelectionKey.Gait = AuthoritativeContext.GaitIntent;
+	SelectionKey.Rotation = AuthoritativeContext.RotationMode;
+	SelectionKey.Phase = DerivedLocomotionContext.PhaseFamily;
+	SelectionKey.GroundMode = GroundMotionMode;
+	SelectionKey.bUseSettledCycle = bUseCombatStrafeSettledCycle;
+	bMotionMatchingSelectionChanged = MotionMatchingSelectionPolicy.Publish(SelectionKey);
+	MotionMatchingSelectionRevision = MotionMatchingSelectionPolicy.GetRevision();
 
 	// Do not force an interrupt for Start, Stop, Jump, Fall, or Landing. Those
 	// PSDs intentionally hold their initial result. The only same-database
@@ -562,12 +535,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	const float ReselectCooldown = bUsesCombatStrafeReselectPolicy && CombatProfile
 		? CombatProfile->StrafeInputTurnReselectCooldown
 		: TurnRedirectReselectCooldown;
-	bForceMotionMatchingReselect = bRequestsInputTurnReselect &&
-		(WorldTimeSeconds - LastCombatStrafeReselectTimeSeconds >= ReselectCooldown);
-	if (bForceMotionMatchingReselect)
-	{
-		LastCombatStrafeReselectTimeSeconds = WorldTimeSeconds;
-	}
+	bForceMotionMatchingReselect = MotionMatchingSelectionPolicy.RequestRedirectReselect(
+		bRequestsInputTurnReselect, WorldTimeSeconds, ReselectCooldown);
 }
 
 void UProject_JLocomotionAnimStateComponent::LogMotionMatchingNetworkDebugIfEnabled(const AProject_JPlayerCharacter& PlayerOwner) const
@@ -723,9 +692,9 @@ FProject_JLocomotionKinematicContext UProject_JLocomotionAnimStateComponent::Bui
 	{
 		Context.DesiredFacingYaw = PlayerOwner.GetControlRotation().Yaw;
 	}
-	else if (bRemoteTurnInPlaceActive)
+	else if (RemoteRuntime.IsTurnActive())
 	{
-		Context.DesiredFacingYaw = RemoteTurnInPlaceTargetFacingYaw;
+		Context.DesiredFacingYaw = RemoteRuntime.GetTurnTargetFacingYaw();
 	}
 	else
 	{
@@ -755,12 +724,12 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	Context.bShouldTurnInPlace = ShouldTurnInPlaceForContext(AuthContext, InKinematicContext);
 	Context.TurnInPlaceDirectionBucket = bUsingLocalInputState && bLocalTurnInPlaceTargetActive
 		? LocalTurnInPlaceDirectionBucket
-		: (!bUsingLocalInputState && bRemoteTurnInPlaceActive
-			? RemoteTurnInPlaceDirectionBucket
+		: (!bUsingLocalInputState && RemoteRuntime.IsTurnActive()
+			? RemoteRuntime.GetTurnDirectionBucket()
 			: 0);
 	Context.TurnInPlaceSequence = bUsingLocalInputState
 		? LocalTurnInPlaceSequence
-		: RemoteTurnInPlaceSequence;
+		: RemoteRuntime.GetTurnSequence();
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
 	Context.PhaseFamily = ResolvePhaseFamily(Context);
 	return Context;
@@ -782,7 +751,7 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		// A short redirect hold is meaningful only inside the same rotation mode.
 		// Never carry an OTM Turn/Pivot into Combat Strafe (or the reverse) while
 		// a draw/sheathe presentation changes the locomotion owner.
-		LastPublishedMotionMatchingRotationMode == AuthoritativeContext.RotationMode &&
+		MotionMatchingSelectionPolicy.GetLastPublishedRotationMode() == AuthoritativeContext.RotationMode &&
 		InOutContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		DerivedPhaseFamilyElapsedTime < DerivedTurnMinHoldTime &&
 		KinematicContext.bHasMoveInput &&
@@ -799,7 +768,7 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 
 	const bool bFacingDeltaSufficient = bUsingLocalInputState
 		? FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold
-		: (bRemoteTurnInPlaceActive && FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold);
+		: (RemoteRuntime.IsTurnActive() && FMath::Abs(KinematicContext.DesiredFacingDeltaYaw) >= DerivedTurnInPlaceAngleThreshold);
 
 	const bool bKeepTurnInPlace =
 		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::TurnInPlace &&
@@ -849,56 +818,23 @@ EProject_JLocomotionRotationMode UProject_JLocomotionAnimStateComponent::Resolve
 EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolvePhaseFamily(
 	const FProject_JDerivedLocomotionContext& Context) const
 {
-	if (IsLandingStateActive())
-	{
-		return EProject_JLocomotionPhaseFamily::Landing;
-	}
-	if (bIsJumping)
-	{
-		return EProject_JLocomotionPhaseFamily::JumpStart;
-	}
-	if (bIsFallOffStart || bIsInAir)
-	{
-		return EProject_JLocomotionPhaseFamily::Fall;
-	}
-	if (GroundMotionMode == EProject_JGroundMotionMode::Stop)
-	{
-		return EProject_JLocomotionPhaseFamily::Stop;
-	}
-	if (Context.bShouldTurnInPlace)
-	{
-		return EProject_JLocomotionPhaseFamily::TurnInPlace;
-	}
-	if (Context.bIsPivoting)
-	{
-		return EProject_JLocomotionPhaseFamily::Pivot;
-	}
-	if (Context.bIsStarting)
-	{
-		return EProject_JLocomotionPhaseFamily::Start;
-	}
-	// Combat Strafe keeps all ordinary direction changes in its continuous Cycle
-	// PSD. Moving TurnRedirect assets are an OTM-only family; cardinal reversals
-	// remain eligible for the explicit Pivot path above.
-	if (AuthoritativeContext.bCombatMode &&
-		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe)
-	{
-		return Context.bIsMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
-	}
-	const bool bHasMovingTurnIntent =
-		Context.bIsMoving &&
-		KinematicContext.bHasMoveInput &&
-		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed;
-	// Mouse camera rotation does not change MoveInputTurnAngle, so it remains in
-	// Cycle where Arc/Box/Diamond can be selected as continuous movement variants.
-	const bool bShouldUseTurnRedirect = bHasMovingTurnIntent &&
-		FMath::Abs(KinematicContext.MoveInputTurnAngle) >= DerivedTurnAngleThreshold;
-	if (bShouldUseTurnRedirect)
-	{
-		return EProject_JLocomotionPhaseFamily::Turn;
-	}
-
-	return Context.bIsMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+	FProject_JLocomotionContextBuilder::FPhaseInput Input;
+	Input.bLanding = IsLandingStateActive();
+	Input.bJumping = bIsJumping;
+	Input.bFallOffOrInAir = bIsFallOffStart || bIsInAir;
+	Input.GroundMode = GroundMotionMode;
+	Input.bShouldTurnInPlace = Context.bShouldTurnInPlace;
+	Input.bPivoting = Context.bIsPivoting;
+	Input.bStarting = Context.bIsStarting;
+	Input.bMoving = Context.bIsMoving;
+	Input.bCombatStrafe = AuthoritativeContext.bCombatMode &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	Input.bHasMoveInput = KinematicContext.bHasMoveInput;
+	Input.GroundSpeed = KinematicContext.GroundSpeed;
+	Input.MoveInputTurnAngle = KinematicContext.MoveInputTurnAngle;
+	Input.TurnMinSpeed = DerivedTurnMinSpeed;
+	Input.TurnAngleThreshold = DerivedTurnAngleThreshold;
+	return FProject_JLocomotionContextBuilder::ResolvePhaseFamily(Input);
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
@@ -911,37 +847,18 @@ bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_J
 bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
-	// This deliberately differs from gameplay "is moving".  The State Controller
-	// needs GASP-style *locomotion intent*: current velocity, future trajectory,
-	// and acceleration/input must all still agree that the character wants to move.
-	// Consequently a released input enters Stop while the capsule is still braking,
-	// instead of waiting for GroundMotionMode to eventually become Stop.
-	if (bIsInAir || IsLandingStateActive())
-	{
-		return false;
-	}
-	// The owning player's released input is the authoritative Stop intent. A
-	// trajectory sample can still contain the last moving prediction on the
-	// release frame, especially when combat rotation resets its history.
-	if (bUsingLocalInputState && !InKinematicContext.bHasMoveInput)
-	{
-		return false;
-	}
-
-	const float FutureSpeed = InKinematicContext.bHasFutureTrajectoryVelocity
-		? InKinematicContext.FutureTrajectorySpeed
-		: FMath::Max(InKinematicContext.GroundSpeed + InKinematicContext.PredictedSpeedGain, 0.0f);
-	const bool bCurrentVelocityMoving = InKinematicContext.GroundSpeed > DerivedMovingSpeedThreshold;
-	const bool bFutureVelocityMoving = FutureSpeed > DerivedMovingSpeedThreshold;
-	const bool bSustainedLocomotion = bCurrentVelocityMoving &&
-		(InKinematicContext.bHasMoveInput || bFutureVelocityMoving);
-	// The initial Start frame commonly has near-zero physical velocity.  Preserve
-	// that valid start request as long as the input/trajectory predicts movement.
-	const bool bStartingFromRest = InKinematicContext.bHasMoveInput &&
-		bFutureVelocityMoving &&
-		(InKinematicContext.bIsAccelerating || InKinematicContext.bHasPredictedMovement);
-
-	return bSustainedLocomotion || bStartingFromRest;
+	FProject_JLocomotionContextBuilder::FMotionMatchingMovement Input;
+	Input.bInAirOrLanding = bIsInAir || IsLandingStateActive();
+	Input.bUsingLocalInput = bUsingLocalInputState;
+	Input.bHasMoveInput = InKinematicContext.bHasMoveInput;
+	Input.bIsAccelerating = InKinematicContext.bIsAccelerating;
+	Input.bHasPredictedMovement = InKinematicContext.bHasPredictedMovement;
+	Input.bHasFutureTrajectoryVelocity = InKinematicContext.bHasFutureTrajectoryVelocity;
+	Input.GroundSpeed = InKinematicContext.GroundSpeed;
+	Input.FutureTrajectorySpeed = InKinematicContext.FutureTrajectorySpeed;
+	Input.PredictedSpeedGain = InKinematicContext.PredictedSpeedGain;
+	Input.MovingSpeedThreshold = DerivedMovingSpeedThreshold;
+	return FProject_JLocomotionContextBuilder::IsMotionMatchingMoving(Input);
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsStartingForContext(
@@ -1178,7 +1095,7 @@ bool UProject_JLocomotionAnimStateComponent::ShouldTurnInPlaceForContext(
 	// the kinematic context before this method is evaluated.
 	if (!ShouldUseLocalInputState())
 	{
-		return bRemoteTurnInPlaceActive &&
+		return RemoteRuntime.IsTurnActive() &&
 			(InKinematicContext.GroundSpeed <= IdleSpeedThreshold) &&
 			!InKinematicContext.bHasMoveInput &&
 			!bIsInAir &&
@@ -1383,10 +1300,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(fl
 	// frames after the owner releases input. A confirmed MoveStop is more
 	// authoritative for visual intent than that residual velocity; otherwise a
 	// remote Stop enters for one frame and is immediately overwritten by Start.
-	const FVector2D VisualMoveInput = bRemoteStopVisualIntentActive
+	const FVector2D VisualMoveInput = RemoteRuntime.IsStopVisualIntentActive()
 		? FVector2D::ZeroVector
 		: MoveInput;
-	if (bRemoteStopVisualIntentActive)
+	if (RemoteRuntime.IsStopVisualIntentActive())
 	{
 		bHasMoveInput = false;
 		MoveInputSize = 0.0f;
@@ -1399,9 +1316,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateRemoteMovementRequestState(fl
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeRemoteStopStartSuppress(float DeltaTime)
 {
-	const bool bSuppressStartFromResidualVelocity = RemoteStopStartSuppressTimeRemaining > 0.0f;
-	RemoteStopStartSuppressTimeRemaining = FMath::Max(0.0f, RemoteStopStartSuppressTimeRemaining - DeltaTime);
-	return bSuppressStartFromResidualVelocity;
+	return RemoteRuntime.ConsumeStopStartSuppress(DeltaTime);
 }
 
 void UProject_JLocomotionAnimStateComponent::ApplyRemoteStopStartSuppress()

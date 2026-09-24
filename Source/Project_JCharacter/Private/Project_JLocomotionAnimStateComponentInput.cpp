@@ -15,18 +15,8 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
 		return;
 	}
 
-	// The state-controller owns actual authored completion. This is only the
-	// remote eligibility window, deliberately long enough to absorb normal RTT
-	// while still releasing budgeted proxies promptly.
-	constexpr float RemoteTurnInPlacePresentationDuration = 2.5f;
-	constexpr float MinimumRemoteTurnInPlacePresentationDuration = 0.20f;
-	RemoteTurnInPlaceSequence = Sequence;
-	RemoteTurnInPlaceDirectionBucket = DirectionBucket;
-	RemoteTurnInPlaceTargetFacingYaw = FRotator::NormalizeAxis(TargetFacingYaw);
-	RemoteTurnInPlaceTimeRemaining = FMath::Max(
-		MinimumRemoteTurnInPlacePresentationDuration,
-		RemoteTurnInPlacePresentationDuration - FMath::Max(ServerStartAgeSeconds, 0.0f));
-	bRemoteTurnInPlaceActive = true;
+	// 저작된 동작의 완료는 State Controller가 관리하며, 이 값은 네트워크 이벤트 유효 기간이다.
+	RemoteRuntime.OnTurnStarted(Sequence, ServerStartAgeSeconds, DirectionBucket, TargetFacingYaw);
 }
 
 bool UProject_JLocomotionAnimStateComponent::ConsumeTurnInPlaceReplicationRequest(uint8& OutDirectionBucket, float& OutTargetFacingYaw)
@@ -132,9 +122,8 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedMoveStopped(bool bW
 
 void UProject_JLocomotionAnimStateComponent::ClearRemoteMoveStartTransientState()
 {
-	RemoteStopStartSuppressTimeRemaining = 0.0f;
+	RemoteRuntime.OnMoveStarted();
 	bRemoteMoveReleasedWhileAirborne = false;
-	bRemoteStopVisualIntentActive = false;
 	bLandingIgnoresRemoteGroundSpeed = false;
 }
 
@@ -193,8 +182,7 @@ void UProject_JLocomotionAnimStateComponent::QueueReplicatedMoveStop(bool bWasSp
 	bHasReplicatedStartGait = false;
 	bHasReplicatedStopGait = true;
 	bReplicatedStopWasSprinting = bWasSprintingAtStop;
-	bRemoteStopVisualIntentActive = true;
-	RemoteStopStartSuppressTimeRemaining = FMath::Max(RemoteStopStartSuppressTimeRemaining, RemoteStopStartSuppressDuration);
+	RemoteRuntime.OnMoveStopped(RemoteStopStartSuppressDuration);
 }
 
 void UProject_JLocomotionAnimStateComponent::MarkRemoteMoveReleasedIfAirborne()
