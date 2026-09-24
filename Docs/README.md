@@ -6,16 +6,16 @@
 
 | 폴더 | 내용 |
 | --- | --- |
-| [Overview](Overview/README.md) | 프로젝트 개요, 모듈과 소유권의 현재 문맥 |
-| [Architecture](Architecture/README.md) | 런타임 책임, 확장 기반, 네트워크, 성능, 애니메이션 설계와 검증 |
-| [Animation](Animation/README.md) | Locomotion, Motion Matching, State Controller, TIP, 리타기팅 |
-| [Combat](Combat/README.md) | 전투 애니메이션·이동, Greatsword 작성, VFX |
-| [Gameplay](Gameplay/README.md) | 직업·전직·장비 데이터, 탈것, 스킬, 콘텐츠 확장 |
-| [Performance](Performance/README.md) | 성능 최적화의 기반과 보류된 설계 |
-| [Benchmarks](Benchmarks/SystemsModernization.md) | 측정 방법·원시 데이터·재계산과 E/F 실행 실험 |
-| [Review](Review/README.md) | 감사, 리팩터링 요청·결과, 부족한 부분의 후속 보완, TIP 진단 |
-| [Handoffs](Handoffs/SystemsModernization_2026-09-09/인수인계.md) | 과거 작업 인계와 당시 브랜치·검증 상태 |
-| [Reference](Reference/README.md) | 감사 후보를 정리한 원본 참고 메모 |
+| [프로젝트 개요](Overview/README.md) | 게임 소개, 모듈과 소유권의 현재 문맥 |
+| [아키텍처](Architecture/README.md) | 런타임 책임, 확장 기반, 네트워크, 성능, 애니메이션 설계와 검증 |
+| [애니메이션](Animation/README.md) | 이동 애니메이션, 모션 매칭, State Controller, TIP, 리타기팅 |
+| [전투](Combat/README.md) | 전투 애니메이션·이동, Greatsword 작성, VFX |
+| [게임플레이](Gameplay/README.md) | 직업·전직·장비 데이터, 탈것, 스킬, 콘텐츠 확장 |
+| [성능 설계](Performance/README.md) | 성능 최적화의 기반과 보류된 설계 |
+| [성능 측정](Benchmarks/SystemsModernization.md) | 측정 방법·원시 데이터·재계산과 E/F 실행 실험 |
+| [감사와 후속 보완](Review/README.md) | 감사, 리팩터링 요청·결과, 부족한 부분의 후속 보완, TIP 진단 |
+| [작업 인계](Handoffs/SystemsModernization_2026-09-09/인수인계.md) | 과거 작업 인계와 당시 브랜치·검증 상태 |
+| [참고 메모](Reference/README.md) | 감사 후보를 정리한 원본 참고 자료 |
 
 ## 최근 변경을 읽는 순서
 
