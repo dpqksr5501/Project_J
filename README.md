@@ -6,15 +6,15 @@
 
 멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Internal_Polish_2026-09-19.md) · [직업 제작 도구](Docs/Architecture/Content_Bundle_Authoring_2026-09-19.md) · [문서 목록](Docs/README.md)
+[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Runtime/Internal_Polish_2026-09-19.md) · [직업 제작 도구](Docs/Architecture/Extensions/Content_Bundle_Authoring_2026-09-19.md) · [문서 목록](Docs/README.md)
 
-**MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/MMO_Foundation_2026-09-12.md)
+**MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md)
 
-**직업·전직 확장:** 지속 진행 상태와 능력 소유권을 PlayerState에 모으고, 직업·전직·장비의 전투/애니메이션 구성을 영역별로 선택합니다. 스타일 내부에 능력을 직접 작성하거나 콤보에서 공격 목록을 생성할 수 있어 중복 DA 연결을 줄입니다. [구현 범위·작성법·검증](Docs/Architecture/Extension_Foundation_2026-09-19.md)
+**직업·전직 확장:** 지속 진행 상태와 능력 소유권을 PlayerState에 모으고, 직업·전직·장비의 전투/애니메이션 구성을 영역별로 선택합니다. 스타일 내부에 능력을 직접 작성하거나 콤보에서 공격 목록을 생성할 수 있어 중복 DA 연결을 줄입니다. [구현 범위·작성법·검증](Docs/Architecture/Extensions/Extension_Foundation_2026-09-19.md)
 
 ## 측정으로 확인한 변화
 
-**최신 구조 검증 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Internal_Polish_Validation_2026-09-19.json)
+**최신 구조 검증 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Internal_Polish_Validation_2026-09-19.json)
 
 아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이번 내부 정리의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최신 자동화는 NullRHI 검사이며, 제작 메뉴 조작·저장과 실제 멀티플레이 확인은 별도입니다.
 
@@ -55,13 +55,13 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 
 ### 바로 활용할 수 있는 기반
 
-- **직업·전직 제작 도구:** 에디터 Tools 메뉴에서 기존 직업을 참고해 새 루트·전투 스타일·콤보를 검증하고 연결해 생성합니다. 공격·애니메이션은 공유하고, 저장·게임 등록은 명시적으로 진행합니다. [사용법](Docs/Architecture/Content_Bundle_Authoring_2026-09-19.md)
+- **직업·전직 제작 도구:** 에디터 Tools 메뉴에서 기존 직업을 참고해 새 루트·전투 스타일·콤보를 검증하고 연결해 생성합니다. 공격·애니메이션은 공유하고, 저장·게임 등록은 명시적으로 진행합니다. [사용법](Docs/Architecture/Extensions/Content_Bundle_Authoring_2026-09-19.md)
 - **입력 조합과 콤보:** 좌·우클릭, 동시 입력, Shift/Ctrl/Alt 같은 modifier를 입력 태그로 해석하고, 콤보 그래프에서 공격 정의를 선택합니다. 조합별 실제 동작은 데이터로 구성합니다.
 - **무기별 액션과 외형:** 장착한 장비의 메시·표현 프로필과 전투 스타일을 연결해 무기 외형, 대기·공격 애니메이션 구성을 바꿀 수 있습니다.
 - **같은 공격의 다른 연출:** 기본 전투 스타일의 VFX를 전직 또는 스킨별 cue로 덮어쓸 수 있습니다. 동일한 공격 정의에 서로 다른 Trail·방출 효과를 붙이는 방식입니다.
 - **데이터 기반 이동 확장:** 이동 문맥과 콘텐츠 프로필을 나누고, Motion Matching·Chooser·Linked Anim Layer를 통해 애니메이션을 구성합니다. 실제 품질은 사용할 애니메이션과 리타게팅·프로필 튜닝을 함께 확인합니다.
 
-작성 가이드: [콘텐츠 확장](Docs/ContentExpansionGuide.md) · [장비·직업 데이터 빠른 참조](Docs/DataAssetQuickReference.md) · [공격·콤보 작성](Docs/GreatswordCombatAuthoringGuide.md) · [전투 VFX 연결](Docs/CombatVFXArchitecture.md#authoring) · [이동 프로필 확장](Docs/DataDrivenLocomotionExtensionGuide.md)
+작성 가이드: [콘텐츠 확장](Docs/Gameplay/ContentExpansionGuide.md) · [장비·직업 데이터 빠른 참조](Docs/Gameplay/DataAssetQuickReference.md) · [공격·콤보 작성](Docs/Combat/GreatswordCombatAuthoringGuide.md) · [전투 VFX 연결](Docs/Combat/CombatVFXArchitecture.md#authoring) · [이동 프로필 확장](Docs/Animation/Locomotion/DataDrivenLocomotionExtensionGuide.md)
 
 ## 멀티스레드 구조
 
@@ -207,4 +207,4 @@ $projectFile = (Resolve-Path './Project_J.uproject').Path
 - **F 구현·실험:** Tasks/TaskGraph/ThreadPool, Tick 의존성, 전용 consumer 경합, Chaos snapshot, RDG readback, Audio·PCG의 8개 fixture를 기본 비활성 Editor 플러그인으로 구현했습니다. [실측·구조·적용 판단](Docs/Benchmarks/ExecutionExperiments_2026-09-12/README.md)에서 병렬화의 이득과 순서/수명 비용을 함께 공개합니다.
 - **MMORPG 확장 기반:** Core-only 모듈, 205개 확장 계약, 통신 요청 수명·상한, 소유 단위 조정과 저장 계약을 추가했습니다. 신규 테스트 8개와 기존 회귀 16개를 검증했으며, Handover 정리 경고는 후속 3개 검사에서 오류·경고 0으로 해결했습니다. 실제 콘텐츠·운영 DB 연결, 전투 서버 tick과 더 많은 접속·패킷 조건, 운영 Mass 표현 전환 검증은 후속 범위입니다.
 
-[벤치마크와 데이터](Docs/Benchmarks/SystemsModernization.md) · [설계·검증 이력](Docs/Architecture/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) · [초기 프로파일링 기준선](Docs/Architecture/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [전체 문서](Docs/README.md)
+[벤치마크와 데이터](Docs/Benchmarks/SystemsModernization.md) · [설계·검증 이력](Docs/Architecture/Performance/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md) · [초기 프로파일링 기준선](Docs/Architecture/Performance/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) · [전체 문서](Docs/README.md)

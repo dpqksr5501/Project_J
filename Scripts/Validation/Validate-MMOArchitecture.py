@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
 parser.add_argument('--write', action='store_true')
 args = parser.parse_args()
-data = json.loads((ROOT / 'Docs/Architecture/MMO_Content_Catalog.json').read_text(encoding='utf-8'))
+data = json.loads((ROOT / 'Docs/Architecture/Extensions/MMO_Content_Catalog.json').read_text(encoding='utf-8'))
 assert data['schemaVersion'] == 1
 features = data['features']
 by_id = {f['id']: f for f in features}
@@ -53,7 +53,7 @@ for module, forbidden in {
 }.items():
     assert not forbidden.intersection(module_graph[module]), f'Reverse module dependency: {module}'
 
-inl = '// Extension catalog; generated/maintained with Docs/Architecture/MMO_Content_Catalog.json.\n'
+inl = '// Extension catalog; generated/maintained with Docs/Architecture/Extensions/MMO_Content_Catalog.json.\n'
 for f in features:
     fields = [f['id'], f['label'], f['domain'], f['stateOwner'], ','.join(f['dependencies'])]
     inl += 'PROJECTJ_FEATURE(' + ', '.join(json.dumps(v, ensure_ascii=False) for v in fields) + ')\n'
@@ -70,7 +70,7 @@ for domain in dict.fromkeys(f['domain'] for f in features):
     md += '\n'
 for relative, expected in {
     'Source/Project_JMMO/Private/FeatureCatalog.inl': inl,
-    'Docs/Architecture/MMO_Content_Catalog.md': md,
+    'Docs/Architecture/Extensions/MMO_Content_Catalog.md': md,
 }.items():
     path = ROOT / relative
     if args.write:

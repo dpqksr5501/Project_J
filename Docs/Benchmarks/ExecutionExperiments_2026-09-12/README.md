@@ -6,7 +6,7 @@
 
 ## 구조와 적용 판단
 
-실험은 기본 비활성인 [ProjectJExperiments](../../../../Plugins/ProjectJExperiments) Editor 플러그인에 있다. 일반 게임의 Tick·CMC·GAS·오디오·렌더러에 새 스케줄러를 설치하지 않는다. PCG 의존성도 실험 플러그인의 Editor 타깃으로 제한했다.
+실험은 기본 비활성인 [ProjectJExperiments](../../../Plugins/ProjectJExperiments) Editor 플러그인에 있다. 일반 게임의 Tick·CMC·GAS·오디오·렌더러에 새 스케줄러를 설치하지 않는다. PCG 의존성도 실험 플러그인의 Editor 타깃으로 제한했다.
 
 ```mermaid
 flowchart LR
@@ -131,6 +131,6 @@ python ./Scripts/Validation/Summarize-Experiments.py `
 
 빌드는 direct UBT의 `-Plugin=...uplugin`을 사용한다. UBT의 `-EnablePlugins`만으로는 해당 plugin이 빌드되지 않는 것을 확인했다. 실행 시에는 `-EnablePlugins=ProjectJExperiments`를 사용한다. 에셋 저장은 이 재현 명령에 포함되지 않는다.
 
-[원본 CSV/검증 JSON](Data) · [재계산 결과](summary.json) · [재계산 스크립트](../../../../Scripts/Validation/Summarize-Experiments.py)
+[원본 CSV/검증 JSON](Data) · [재계산 결과](summary.json) · [재계산 스크립트](../../../Scripts/Validation/Summarize-Experiments.py)
 
 실패 기록은 `Saved/Validation/EF_20260912`에 보존했다. 초기 Tick 측정은 엔진 프레임당 1회 실행 규칙을 반영하지 않아 무효 처리했다. Audio handle의 월드 불일치 assertion, PCG invalid bounds도 fixture에서 수정해 재검증했다. UAT stage 디렉터리 정리 실패는 새 경로와 `-nocleanstage`로 해결했고 기존 증거는 삭제하지 않았다. Shader/engine startup의 기존 로그 오류를 테스트 10개의 오류 수와 혼동하지 않는다.

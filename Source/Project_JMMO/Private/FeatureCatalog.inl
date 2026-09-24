@@ -1,4 +1,4 @@
-// Extension catalog; generated/maintained with Docs/Architecture/MMO_Content_Catalog.json.
+// Extension catalog; generated/maintained with Docs/Architecture/Extensions/MMO_Content_Catalog.json.
 PROJECTJ_FEATURE("Foundation.Identity", "안정 식별자", "Foundation", "Service", "")
 PROJECTJ_FEATURE("Foundation.Access", "권한·소유권 검증 계약", "Foundation", "Service", "Foundation.Identity")
 PROJECTJ_FEATURE("Foundation.Persistence", "버전·저장 계약", "Foundation", "Service", "Foundation.Identity")
