@@ -214,24 +214,6 @@ namespace
 			State == EProject_JStateControllerPresentationState::TurnInPlace;
 	};
 
-	auto IsNaturalLoopContinuation = [](const EProject_JStateControllerPresentationState TransitionState,
-		const EProject_JStateControllerPresentationState CandidateState)
-	{
-		return (TransitionState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
-				CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-				CandidateState == EProject_JStateControllerPresentationState::IdleLoop) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TransitionToInAir &&
-				CandidateState == EProject_JStateControllerPresentationState::InAirLoop) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TransitionToLand &&
-				(CandidateState == EProject_JStateControllerPresentationState::LocomotionLoop ||
-				 CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
-				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace)) ||
-			(TransitionState == EProject_JStateControllerPresentationState::TurnInPlace &&
-				(CandidateState == EProject_JStateControllerPresentationState::IdleLoop ||
-				 CandidateState == EProject_JStateControllerPresentationState::TurnInPlace));
-	};
-
 	bool ShouldStateControllerPresentationLoop(const EProject_JStateControllerPresentationState PresentationState)
 	{
 		switch (PresentationState)
@@ -276,8 +258,25 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 	MotionMatchingRuntime.Reset();
-	StateControllerRuntime.Reset();
+	ResetStateControllerOwnerPresentation();
 	CurrentActivePoseSearchDatabase = nullptr;
+}
+
+void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
+{
+	StateControllerRuntime.Reset();
+	CachedStateControllerChooserTable.Reset();
+	CachedStateControllerSelectedAnimation = nullptr;
+	CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
+	bCachedStateControllerHasSelectedAnimation = false;
+	CachedStateControllerPresentationState = EProject_JStateControllerPresentationState::Disabled;
+	CachedStateControllerPivotRequestRevision = 0;
+	++StateControllerChooserSelectionRevision;
+	bWasMountedForStateController = false;
+	bWasPlayingFullBodyMontageForStateController = false;
+	bWasPlayingCombatPresentationTransitionForStateController = false;
+	bSuppressPreTransitionLandingPresentationUntilLandingEnds = false;
+	LastFullBodyMontageEndedAtSeconds = -100.0;
 }
 
 void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -289,7 +288,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		CacheOwnerReferences();
 		MotionMatchingRuntime.Reset();
-		StateControllerRuntime.Reset();
+		ResetStateControllerOwnerPresentation();
 		CurrentActivePoseSearchDatabase = nullptr;
 	}
 
@@ -299,21 +298,46 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	ThreadSafeData = BuildThreadSafeData(DeltaSeconds);
+	if (ThreadSafeData.Mount.bIsMounted != bWasMountedForStateController)
+	{
+		bWasMountedForStateController = ThreadSafeData.Mount.bIsMounted;
+		FProject_JStateControllerRuntime::FMountBoundary Boundary;
+		Boundary.PivotRequestRevision = ThreadSafeData.LocomotionContext.PivotRequestRevision;
+		Boundary.LandingRevision = ThreadSafeData.Landing.PresentationRevision;
+		Boundary.TurnSequence = ThreadSafeData.LocomotionContext.TurnInPlaceSequence;
+		Boundary.bLanding = ThreadSafeData.Landing.bIsLanding;
+		Boundary.bLocalTurn = IsLocallyControlledCharacter();
+		Boundary.bHasMoveInput = ThreadSafeData.Input.bHasMoveInput;
+		StateControllerRuntime.OnMountBoundary(Boundary);
+		CachedStateControllerChooserTable.Reset();
+		CachedStateControllerSelectedAnimation = nullptr;
+		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
+		bCachedStateControllerHasSelectedAnimation = false;
+		++StateControllerChooserSelectionRevision;
+		ThreadSafeData.OneShotPresentation.PresentationState = EProject_JStateControllerPresentationState::Disabled;
+		ThreadSafeData.OneShotPresentation.bRequested = false;
+		if (ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot)
+		{
+			ThreadSafeData.LocomotionContext.bIsPivoting = false;
+			ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+			ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+		}
+		ThreadSafeData.MotionMatching.bForceReselect = true;
+	}
 	// A full-body montage owns the final pose and must not leave a committed Pivot
 	// cached beneath it for later resurrection. Upper-body overlays have zero
 	// weight here and intentionally do not interrupt locomotion presentation.
-	if (StateControllerRuntime.Pivot.RequestRevision != 0 &&
+	if (StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		ThreadSafeData.ProceduralIK.FullBodyMontageWeight > KINDA_SMALL_NUMBER)
 	{
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=FullBodyMontage Weight=%.2f"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
+				*GetNameSafe(OwningCharacter), StateControllerRuntime.GetPivot().RequestRevision,
 				ThreadSafeData.ProceduralIK.FullBodyMontageWeight);
 		}
-		StateControllerRuntime.Pivot.Cancel();
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
+		StateControllerRuntime.CancelPivotAndHold(FPlatformTime::Seconds());
 		ThreadSafeData.OneShotPresentation.PresentationState = EProject_JStateControllerPresentationState::Disabled;
 		ThreadSafeData.OneShotPresentation.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 		ThreadSafeData.OneShotPresentation.bRequested = false;
@@ -350,13 +374,12 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (bFullBodyActionMontageStarted)
 	{
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		StateControllerRuntime.OnFullBodyActionStart(FPlatformTime::Seconds());
 		CachedStateControllerChooserTable.Reset();
 		CachedStateControllerSelectedAnimation = nullptr;
 		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
 		bCachedStateControllerHasSelectedAnimation = false;
-		StateControllerRuntime.bForceTurnInPlaceReselect = false;
+		StateControllerRuntime.ClearTurnReselect();
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
 		bHasStateControllerRemoteStartReference = false;
@@ -367,7 +390,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (bFullBodyActionMontageEnded)
 	{
 		LastFullBodyMontageEndedAtSeconds = FPlatformTime::Seconds();
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
+		StateControllerRuntime.OnFullBodyActionEnd(FPlatformTime::Seconds());
 		CachedStateControllerChooserTable.Reset();
 		CachedStateControllerSelectedAnimation = nullptr;
 		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
@@ -382,7 +405,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		const bool bDiscardingPhysicalLanding = ThreadSafeData.Landing.bIsLanding;
 		const bool bDiscardingHeldLand =
-			StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand ||
+			StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToLand ||
 			ThreadSafeData.OneShotPresentation.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
 		bSuppressPreTransitionLandingPresentationUntilLandingEnds =
 			bDiscardingPhysicalLanding || bDiscardingHeldLand;
@@ -390,13 +413,14 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// Invalidate both the logical hold and its immutable asset cache.  Merely
 		// disabling the Blend Stack branch would leave the old asset eligible to
 		// revive on the first post-montage update.
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		StateControllerRuntime.OnCombatPresentationBoundary(
+			FPlatformTime::Seconds(), ThreadSafeData.Landing.PresentationRevision,
+			bDiscardingPhysicalLanding || bDiscardingHeldLand);
 		CachedStateControllerChooserTable.Reset();
 		CachedStateControllerSelectedAnimation = nullptr;
 		CachedStateControllerSelectedAnimationOutput = FProject_JStateControllerChooserOutput();
 		bCachedStateControllerHasSelectedAnimation = false;
-		StateControllerRuntime.bForceTurnInPlaceReselect = false;
+		StateControllerRuntime.ClearTurnReselect();
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
 		bHasStateControllerRemoteStartReference = false;
@@ -456,8 +480,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// a montage is active would be needless per-frame work.
 		ThreadSafeData.MotionMatching.bForceReselect =
 			ThreadSafeData.MotionMatching.bForceReselect || bCombatPresentationTransitionStarted;
-		StateControllerRuntime.PlaybackHoldState = FallbackPresentationState;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		StateControllerRuntime.SetFallbackHold(FallbackPresentationState, FPlatformTime::Seconds());
 	}
 	const EProject_JStateControllerPresentationState PreviousStateControllerPresentationState =
 		StateControllerPresentationStateForChooser;
@@ -528,7 +551,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// The generic Start/Turn cancellation path is intentionally not allowed to
 	// reinterpret the new movement intent as a request to replace that Pivot.
 	const bool bIsCommittedPivotOneShot =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
+		StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		ThreadSafeData.OneShotPresentation.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
 	const bool bIsTurnCancellableOneShot = !bIsCommittedPivotOneShot &&
 		(CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
@@ -646,13 +669,13 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		LastHandledStartResponsiveExitRevision = ThreadSafeData.Ground.StartResponsiveExitRevision;
 		bShouldCancelOneShot = bShouldCancelOneShot ||
-			StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion;
+			StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToLocomotion;
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerResponsiveStartExit Revision=%d Held=%d Cancel=%s"),
 				LastHandledStartResponsiveExitRevision,
-				static_cast<int32>(StateControllerRuntime.PlaybackHoldState),
+				static_cast<int32>(StateControllerRuntime.GetHeldState()),
 				bShouldCancelOneShot ? TEXT("true") : TEXT("false"));
 		}
 	}
@@ -677,8 +700,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		ThreadSafeData.LocomotionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
 		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
 		ThreadSafeData.MotionMatching.bForceReselect = true;
-		StateControllerRuntime.PlaybackHoldState = CurrentStateControllerPresentationState;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+		StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, FPlatformTime::Seconds());
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
 		bHasStateControllerRemoteStartReference = false;
@@ -790,8 +812,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 			ThreadSafeData.MotionMatching.bForceReselect = true;
 			StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
-			StateControllerRuntime.PlaybackHoldState = CurrentStateControllerPresentationState;
-			StateControllerRuntime.PlaybackHoldStartedAtSeconds = FPlatformTime::Seconds();
+			StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, FPlatformTime::Seconds());
 			bHasStateControllerStartGaitForChooser = false;
 			bStateControllerStartGaitCommitted = false;
 			GaitIntentForChooser = CurrentStartGait;
@@ -1065,7 +1086,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					static_cast<int32>(ThreadSafeData.LocomotionContext.PhaseFamily),
 					ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving ? 1 : 0,
 					static_cast<int32>(ThreadSafeData.OneShotPresentation.PresentationState),
-					static_cast<int32>(StateControllerRuntime.PlaybackHoldState),
+					static_cast<int32>(StateControllerRuntime.GetHeldState()),
 					ThreadSafeData.OneShotPresentation.bRequested ? 1 : 0);
 				UE_LOG(LogProjectJPlayer, Display,
 					TEXT("MMCombatStop Pose Actor=%s Frame=%llu RequestedPSD=%s PlayedPSD=%s PlayedAnim=%s Time=%.2f/%.2f Rate=%.2f Continuing=%d DirectAnim=%s DirectOverride=%d DirectLoop=%d ForceSearch=%d SelectionRev=%d TrajectoryResetRev=%d"),
@@ -1504,98 +1525,41 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.LocomotionContext.PivotRequestRevision = AnimState->DerivedLocomotionContext.PivotRequestRevision;
 	Data.LocomotionContext.PivotPreviousMovementDirection = AnimState->DerivedLocomotionContext.PivotPreviousMovementDirection;
 	Data.LocomotionContext.PivotMoveIntentDirection = AnimState->DerivedLocomotionContext.PivotMoveIntentDirection;
-	// MoveAction Completed/Canceled reaches the locomotion component as the
-	// explicit bStopRequested semantic. Stop has higher presentation priority
-	// than an active Pivot, so it releases the Pivot immediately and lets the
-	// normal TransitionToIdle chooser select its authored Stop asset this frame.
-	// This does not alter CharacterMovement or defer gameplay input.
-	const bool bCancelActivePivotForStop =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
-		Data.Ground.bStopRequested;
-	// A fresh, independently accepted reversal may replace the active direct
-	// Pivot. This makes repeated left/right or forward/back reversals responsive
-	// without allowing ordinary direction changes to restart a Pivot.
-	const bool bSupersedeActivePivotWithNewPivot =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
-		Data.LocomotionContext.bIsPivoting &&
-		Data.LocomotionContext.PivotRequestRevision != 0 &&
-		Data.LocomotionContext.PivotRequestRevision != StateControllerRuntime.Pivot.RequestRevision;
-	// Any other meaningful local action direction during a Pivot yields to Cycle
-	// MM. This keeps ordinary turns owned by Cycle rather than chaining them as
-	// authored Pivots.
-	const bool bCancelActivePivotForRedirect =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
-		Data.Input.bHasMoveInput &&
-		StateControllerRuntime.Pivot.MoveIntentRevision != 0 &&
-		Data.LocomotionContext.MoveIntentRevision != StateControllerRuntime.Pivot.MoveIntentRevision &&
-		!bSupersedeActivePivotWithNewPivot;
-	const bool bSuppressPendingPivotRequest =
-		StateControllerRuntime.Pivot.RequestRevision == 0 &&
-		Data.LocomotionContext.PivotRequestRevision != 0 &&
-		Data.LocomotionContext.PivotRequestRevision == StateControllerRuntime.Pivot.SuppressedRequestRevision &&
-		Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
-	const bool bForceCycleAfterPivotRedirect = bCancelActivePivotForRedirect;
-	if (bCancelActivePivotForStop)
+	FProject_JStateControllerRuntime::FPivotIntent PivotIntent;
+	PivotIntent.bStopRequested = Data.Ground.bStopRequested;
+	PivotIntent.bHasMoveInput = Data.Input.bHasMoveInput;
+	PivotIntent.bIsPivoting = Data.LocomotionContext.bIsPivoting;
+	PivotIntent.bInAir = Data.Air.bIsInAir;
+	PivotIntent.bLanding = Data.Landing.bIsLanding;
+	PivotIntent.RequestRevision = Data.LocomotionContext.PivotRequestRevision;
+	PivotIntent.MoveIntentRevision = Data.LocomotionContext.MoveIntentRevision;
+	PivotIntent.PhaseFamily = Data.LocomotionContext.PhaseFamily;
+	const FProject_JStateControllerRuntime::FPivotUpdate PivotUpdate =
+		StateControllerRuntime.ReconcilePivot(PivotIntent, FPlatformTime::Seconds());
+	if (PivotUpdate.Interruption != FProject_JStateControllerRuntime::EPivotInterruption::None &&
+		Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=ExplicitStopIntent"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision);
-		}
-		StateControllerRuntime.Pivot.Cancel();
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=%d NewPivotRev=%d NewIntentRev=%d"),
+			*GetNameSafe(OwningCharacter), PivotUpdate.PreviousRequestRevision,
+			static_cast<int32>(PivotUpdate.Interruption), PivotIntent.RequestRevision, PivotIntent.MoveIntentRevision);
 	}
-	else if (bSupersedeActivePivotWithNewPivot)
+	const bool bForceCycleAfterPivotRedirect =
+		PivotUpdate.Interruption == FProject_JStateControllerRuntime::EPivotInterruption::Redirect;
+	if (PivotUpdate.bForceCycle)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=SupersededByPivot NewPivotRev=%d NewIntentRev=%d"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
-				Data.LocomotionContext.PivotRequestRevision, Data.LocomotionContext.MoveIntentRevision);
-		}
-		StateControllerRuntime.Pivot.Cancel();
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
-	}
-	else if (bCancelActivePivotForRedirect)
-	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
-		{
-			UE_LOG(LogProjectJPlayer, Display,
-				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=RedirectIntent ActiveIntentRev=%d NewIntentRev=%d"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
-				StateControllerRuntime.Pivot.MoveIntentRevision, Data.LocomotionContext.MoveIntentRevision);
-		}
-		StateControllerRuntime.Pivot.Cancel();
-		// The derived component may have produced a new Pivot candidate in this
-		// same input snapshot. This redirect consumes it as Cycle intent, so a
-		// delayed AnimGraph snapshot cannot chain it as another direct Pivot.
-		StateControllerRuntime.Pivot.SuppressedRequestRevision = Data.LocomotionContext.PivotRequestRevision;
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 		Data.LocomotionContext.bIsPivoting = false;
 		Data.LocomotionContext.bIsStarting = false;
 		Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 	}
-	if (bSuppressPendingPivotRequest)
-	{
-		// This is the delayed thread-safe snapshot of a candidate already consumed
-		// by RedirectIntent. It must stay on Cycle and never fall through to Start.
-		Data.LocomotionContext.bIsPivoting = false;
-		Data.LocomotionContext.bIsStarting = false;
-		Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
-	}
-	const bool bKeepActivePivotPresentation =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
-		!Data.Air.bIsInAir && !Data.Landing.bIsLanding;
-	if (bKeepActivePivotPresentation)
+	if (PivotUpdate.bKeepCommittedPivot)
 	{
 		Data.LocomotionContext.bIsPivoting = true;
 		Data.LocomotionContext.bIsStarting = false;
 		Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
-		Data.LocomotionContext.PivotRequestRevision = StateControllerRuntime.Pivot.RequestRevision;
-		Data.LocomotionContext.PivotPreviousMovementDirection = StateControllerRuntime.Pivot.PreviousMovementDirection;
-		Data.LocomotionContext.PivotMoveIntentDirection = StateControllerRuntime.Pivot.MoveIntentDirection;
+		Data.LocomotionContext.PivotRequestRevision = StateControllerRuntime.GetPivot().RequestRevision;
+		Data.LocomotionContext.PivotPreviousMovementDirection = StateControllerRuntime.GetPivot().PreviousMovementDirection;
+		Data.LocomotionContext.PivotMoveIntentDirection = StateControllerRuntime.GetPivot().MoveIntentDirection;
 	}
 	Data.LocomotionContext.bShouldTurnInPlace = AnimState->DerivedLocomotionContext.bShouldTurnInPlace;
 	Data.LocomotionContext.TurnInPlaceDirectionBucket = AnimState->DerivedLocomotionContext.TurnInPlaceDirectionBucket;
@@ -1614,7 +1578,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.MotionMatching.bSelectionChanged = AnimState->bMotionMatchingSelectionChanged;
 	Data.MotionMatching.bForceReselect = AnimState->bForceMotionMatchingReselect;
 	Data.MotionMatching.SelectionContext = AnimState->GetMotionMatchingSelectionContext();
-	if (bForceCycleAfterPivotRedirect || bSuppressPendingPivotRequest)
+	if (PivotUpdate.bForceCycle)
 	{
 		Data.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 		Data.MotionMatching.bForceReselect =
@@ -1817,22 +1781,22 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const FProject_JAnimThreadSafeData& Data,
 	FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const
 {
-	if (StateControllerRuntime.Pivot.RequestRevision != 0 &&
+	if (StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		(Data.Air.bIsInAir || Data.Landing.bIsLanding))
 	{
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=%s"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
+				*GetNameSafe(OwningCharacter), StateControllerRuntime.GetPivot().RequestRevision,
 				Data.Air.bIsInAir ? TEXT("Air") : TEXT("Land"));
 		}
-		StateControllerRuntime.Pivot.Cancel();
+		StateControllerRuntime.CancelPivot();
 	}
 	EProject_JStateControllerPresentationState DesiredState =
 		ResolveStateControllerPresentationState(Data, InOutOneShot);
 	const double NowSeconds = FPlatformTime::Seconds();
-	StateControllerRuntime.bForceTurnInPlaceReselect = false;
+	StateControllerRuntime.ClearTurnReselect();
 	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
 	const bool bInFullBodyActionMontageOrRecentExit =
 		Data.ProceduralIK.FullBodyMontageWeight > 0.05f ||
@@ -1849,48 +1813,20 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	Intent.GroundMotionMode = Data.Ground.GroundMotionMode;
 	Intent.TurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
 	Intent.LandingPresentationRevision = Data.Landing.PresentationRevision;
-	DesiredState = StateControllerRuntime.PrepareDesiredState(DesiredState, Intent);
-
+	const FProject_JStateControllerRuntime::FHoldUpdate HoldUpdate =
+		StateControllerRuntime.BeginDesiredHold(DesiredState, Intent, NowSeconds);
+	DesiredState = HoldUpdate.DesiredState;
 	const EProject_JStateControllerPresentationState RequestedState = DesiredState;
-	const EProject_JStateControllerPresentationState PreviousHeldState = StateControllerRuntime.PlaybackHoldState;
-	const bool bHeldTransition = IsTransitionState(StateControllerRuntime.PlaybackHoldState);
-	const bool bNaturalContinuation = bHeldTransition &&
-		IsNaturalLoopContinuation(StateControllerRuntime.PlaybackHoldState, DesiredState);
-	const bool bNewLandingPresentation =
-		DesiredState == EProject_JStateControllerPresentationState::TransitionToLand &&
-		Data.Landing.PresentationRevision != StateControllerRuntime.HeldLandingPresentationRevision;
-
-	// Gameplay intent changes must replace a transition immediately.  In
-	// particular, releasing movement during Start must enter Stop on that frame;
-	// BP_NotifyState_EarlyTransition only controls Transition -> Loop/Re-enter,
-	// never Start -> Stop or Stop -> Start intent replacement.
-	bool bStartedNewPlaybackHold = bNewLandingPresentation || !bHeldTransition ||
-		(!bNaturalContinuation && DesiredState != StateControllerRuntime.PlaybackHoldState);
-	if (bStartedNewPlaybackHold)
-	{
-		StateControllerRuntime.PlaybackHoldState = DesiredState;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = NowSeconds;
-		if (DesiredState == EProject_JStateControllerPresentationState::TransitionToIdle)
-		{
-			StateControllerRuntime.bGroundStopConsumed = true;
-		}
-		if (DesiredState == EProject_JStateControllerPresentationState::TurnInPlace &&
-			Data.LocomotionContext.TurnInPlaceSequence > 0)
-		{
-			StateControllerRuntime.ConsumeTurnSequence(bIsLocallyControlled, Data.LocomotionContext.TurnInPlaceSequence);
-		}
-		if (bNewLandingPresentation)
-		{
-			StateControllerRuntime.HeldLandingPresentationRevision = Data.Landing.PresentationRevision;
-		}
-		bStartedNewPlaybackHold = IsTransitionState(DesiredState);
-	}
+	const EProject_JStateControllerPresentationState PreviousHeldState = HoldUpdate.PreviousState;
+	const bool bNaturalContinuation = HoldUpdate.bNaturalContinuation;
+	const bool bNewLandingPresentation = HoldUpdate.bNewLanding;
+	const bool bStartedNewPlaybackHold = HoldUpdate.bStartedTransition;
 
 	InOutOneShot.TransitionElapsedTime = 0.0f;
 	InOutOneShot.TransitionTimeRemaining = 0.0f;
 	InOutOneShot.bTransitionAnimationAlmostComplete = false;
 
-	if (!IsTransitionState(StateControllerRuntime.PlaybackHoldState))
+	if (!IsTransitionState(StateControllerRuntime.GetHeldState()))
 	{
 		InOutOneShot.PresentationState = DesiredState;
 		return;
@@ -1903,7 +1839,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// select its authored one-shot on this frame.
 	if (bStartedNewPlaybackHold)
 	{
-		InOutOneShot.PresentationState = StateControllerRuntime.PlaybackHoldState;
+		InOutOneShot.PresentationState = StateControllerRuntime.GetHeldState();
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
@@ -1911,7 +1847,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 				*GetNameSafe(OwningCharacter),
 				static_cast<int32>(RequestedState),
 				static_cast<int32>(PreviousHeldState),
-				static_cast<int32>(StateControllerRuntime.PlaybackHoldState),
+				static_cast<int32>(StateControllerRuntime.GetHeldState()),
 				Data.Landing.PresentationRevision,
 				bNewLandingPresentation ? TEXT("true") : TEXT("false"));
 		}
@@ -1923,7 +1859,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	const float StartTime = FMath::Clamp(CachedStateControllerSelectedAnimationOutput.StartTime, 0.0f, AssetLength);
 	const float AuthoredPlayableLength = FMath::Max(AssetLength - StartTime, 0.0f);
 	const bool bHeldFallOff =
-		StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+		StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToInAir &&
 		(Data.Air.bIsFallOffStart || InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Fall);
 	const float FallOffMaxHoldTime = FMath::Max(
 		Data.MotionMatchingSearchPolicy.ExperimentalFallOffMaxHoldTime,
@@ -1938,7 +1874,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// duration: the Blend Stack must retain it until its own completion (or an
 	// authored early-transition window) so the root turn and planted feet finish
 	// on the same animation timeline.
-	const float Elapsed = FMath::Max(static_cast<float>(NowSeconds - StateControllerRuntime.PlaybackHoldStartedAtSeconds), 0.0f);
+	const float Elapsed = StateControllerRuntime.GetHoldElapsed(NowSeconds);
 	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
 	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
 	const bool bHasPlayableTransitionAsset = HeldAsset &&
@@ -1951,7 +1887,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		InOutOneShot.bEarlyTransitionWindowOpen || bReachedCompletion;
 
 	const bool bHoldingCommittedPivot =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
+		StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
 	if (bHoldingCommittedPivot && InOutOneShot.bTransitionAnimationAlmostComplete)
 	{
@@ -1959,10 +1895,10 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotReleased Actor=%s PivotRev=%d Reason=AuthoredExit Asset=%s Elapsed=%.3f Remaining=%.3f"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
+				*GetNameSafe(OwningCharacter), StateControllerRuntime.GetPivot().RequestRevision,
 				HeldAsset ? *HeldAsset->GetName() : TEXT("None"), Elapsed, Remaining);
 		}
-		StateControllerRuntime.Pivot.Cancel();
+		StateControllerRuntime.CancelPivot();
 		// A Pivot that reaches its authored exit returns to the normal Stop/Cycle
 		// policy. Explicit Stop input is handled earlier and preempts immediately.
 		const bool bQueueStopAfterPivot =
@@ -1973,8 +1909,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 			: (Data.LocomotionContext.bIsMotionMatchingMoving
 				? EProject_JStateControllerPresentationState::LocomotionLoop
 				: EProject_JStateControllerPresentationState::IdleLoop);
-		StateControllerRuntime.PlaybackHoldState = ExitState;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = NowSeconds;
+		StateControllerRuntime.BeginHold(ExitState, NowSeconds);
 		InOutOneShot.PresentationState = ExitState;
 		InOutOneShot.bRequested = false;
 		return;
@@ -2002,25 +1937,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// A missing/looping entry must use the GASP "No Valid Anim" escape route.
 	// Otherwise keep the actual Start/Stop/air asset until its authored end (or
 	// an authored early-transition notify), never until a locomotion phase flips.
-	const bool bStillRequestingHeldTransition = DesiredState == StateControllerRuntime.PlaybackHoldState;
+	const bool bStillRequestingHeldTransition = DesiredState == StateControllerRuntime.GetHeldState();
 	// Local and remote paths both expose a monotonic TIP edge. The local edge
 	// is advanced only when the live camera has moved beyond the fixed target;
 	// it is what safely restarts an identical 90/180 Blend Stack asset.
-	const bool bLocalTurnInPlaceNewSequence =
-		bIsLocallyControlled &&
-		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
-		Data.LocomotionContext.TurnInPlaceSequence > StateControllerRuntime.LastHandledLocalTurnSequence;
-	const bool bRemoteTurnInPlaceNewSequence =
-		!bIsLocallyControlled &&
-		Data.LocomotionContext.TurnInPlaceSequence > 0 &&
-		Data.LocomotionContext.TurnInPlaceSequence > StateControllerRuntime.LastHandledRemoteTurnSequence;
-
-	if (bLocalTurnInPlaceNewSequence || bRemoteTurnInPlaceNewSequence)
+	if (StateControllerRuntime.HasNewTurnSequence(
+		bIsLocallyControlled, Data.LocomotionContext.TurnInPlaceSequence))
 	{
-		StateControllerRuntime.ConsumeTurnSequence(bIsLocallyControlled, Data.LocomotionContext.TurnInPlaceSequence);
-		StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::TurnInPlace;
-		StateControllerRuntime.PlaybackHoldStartedAtSeconds = NowSeconds;
-		StateControllerRuntime.bForceTurnInPlaceReselect = true;
+		StateControllerRuntime.RestartTurnSequence(
+			bIsLocallyControlled, Data.LocomotionContext.TurnInPlaceSequence, NowSeconds);
 		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TurnInPlace;
 		InOutOneShot.TransitionElapsedTime = 0.0f;
 		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
@@ -2036,7 +1961,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		: FProject_JMotionMatchingSearchPolicy();
 
 	if (SearchPolicy.bEnableAirJumpReselection &&
-		StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToInAir &&
+		StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToInAir &&
 		DesiredState == EProject_JStateControllerPresentationState::TransitionToInAir &&
 		!Data.Air.bIsFallOffStart &&
 		EffectivePlayableLength > 0.05f)
@@ -2118,7 +2043,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// or if the user released sprint input (!bWantsSprint), interrupt the land one-shot
 	// early so Motion Matching (PSD_Run / PSD_Sprint_Cycle / PSD_Idle) takes over immediately.
 	bool bInterruptLandForMotionMatching = false;
-	if (StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLand &&
+	if (StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToLand &&
 		DesiredState == EProject_JStateControllerPresentationState::LocomotionLoop)
 	{
 		if (!Data.Landing.bIsLanding || (Data.Landing.bLandWasSprinting && !Data.Ground.bWantsSprint))
@@ -2130,13 +2055,13 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (!bInterruptLandForMotionMatching && (bNaturalContinuation || bStillRequestingHeldTransition) && bHasPlayableTransitionAsset &&
 		!InOutOneShot.bTransitionAnimationAlmostComplete)
 	{
-		InOutOneShot.PresentationState = StateControllerRuntime.PlaybackHoldState;
+		InOutOneShot.PresentationState = StateControllerRuntime.GetHeldState();
 		return;
 	}
 
 	// Every proxy plays one authored TIP per sequence edge. Remaining camera yaw
 	// is handled by a new sequence, never by restarting the completed asset.
-	if (StateControllerRuntime.PlaybackHoldState == EProject_JStateControllerPresentationState::TurnInPlace &&
+	if (StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TurnInPlace &&
 		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace)
 	{
 		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
@@ -2147,7 +2072,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("StateControllerExitHold Actor=%s Exiting State=%d to State=%d LandEpoch=%d (Elapsed=%.3f Remaining=%.3f AlmostComp=%s)"),
 			*GetNameSafe(OwningCharacter),
-			static_cast<int32>(StateControllerRuntime.PlaybackHoldState),
+			static_cast<int32>(StateControllerRuntime.GetHeldState()),
 			static_cast<int32>(DesiredState),
 			Data.Landing.PresentationRevision,
 			Elapsed,
@@ -2163,8 +2088,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		SavedJumpAirElapsed = 0.0f;
 	}
 
-	StateControllerRuntime.PlaybackHoldState = DesiredState;
-	StateControllerRuntime.PlaybackHoldStartedAtSeconds = NowSeconds;
+	StateControllerRuntime.BeginHold(DesiredState, NowSeconds);
 	InOutOneShot.PresentationState = DesiredState;
 }
 
@@ -2206,9 +2130,9 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 	// contact can refresh mid-update; it must not force-blend Lfoot -> Rfoot
 	// during the same physical reversal.
 	const bool bLockCommittedPivotChooser =
-		StateControllerRuntime.Pivot.RequestRevision != 0 &&
+		StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
-		StateControllerRuntime.Pivot.RequestRevision == Data.LocomotionContext.PivotRequestRevision;
+		StateControllerRuntime.GetPivot().RequestRevision == Data.LocomotionContext.PivotRequestRevision;
 	// A Stop already selected for this movement release keeps its asset through
 	// a Tab OTM/Strafe and combat-mode change. The next movement episode selects
 	// the new stance's Stop when its own input release occurs.
@@ -2229,7 +2153,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		(OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 			CachedStateControllerPreviousStrafeDirection != OneShot.PreviousStrafeDirection) ||
 		CachedStateControllerOneShotFoot != OneShot.Foot ||
-		StateControllerRuntime.bForceTurnInPlaceReselect ||
+		StateControllerRuntime.IsTurnReselectRequested() ||
 		bCachedStateControllerCombatMode != Data.Combat.bIsCombatMode ||
 		bCachedStateControllerFallOff != bStateControllerFallOffForChooser ||
 		bLandingContextChanged);
@@ -2311,7 +2235,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		// ownership; otherwise a Start asset could be mislabeled as a Pivot.
 		const bool bPivotRequestSuppressed =
 			Data.LocomotionContext.PivotRequestRevision != 0 &&
-			Data.LocomotionContext.PivotRequestRevision == StateControllerRuntime.Pivot.SuppressedRequestRevision;
+			Data.LocomotionContext.PivotRequestRevision == StateControllerRuntime.GetPivot().SuppressedRequestRevision;
 		const bool bPivotChooserRequest =
 			OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 			Data.LocomotionContext.bIsPivoting &&
@@ -2369,7 +2293,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				ChooserOutput.StartTime = PreservedStartTime;
 
 				const double NowSeconds = FPlatformTime::Seconds();
-				StateControllerRuntime.PlaybackHoldStartedAtSeconds = NowSeconds - PreservedStartTime;
+				StateControllerRuntime.AlignHoldToAssetTime(NowSeconds, PreservedStartTime);
 				OneShot.TransitionElapsedTime = PreservedStartTime;
 				OneShot.TransitionTimeRemaining = FMath::Max(SelectedAsset->GetPlayLength() - PreservedStartTime, 0.0f);
 
@@ -2425,20 +2349,18 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		const bool bIsNewPivotCommit =
 			bCachedStateControllerHasSelectedAnimation &&
 			bPivotChooserRequest &&
-			(StateControllerRuntime.Pivot.RequestRevision != Data.LocomotionContext.PivotRequestRevision ||
-				StateControllerRuntime.Pivot.MoveIntentRevision != Data.LocomotionContext.MoveIntentRevision);
-		if (bIsNewPivotCommit)
-		{
-			StateControllerRuntime.Pivot.Commit(
+			StateControllerRuntime.CommitPivot(
 				Data.LocomotionContext.PivotRequestRevision,
 				Data.LocomotionContext.MoveIntentRevision,
 				Data.LocomotionContext.PivotPreviousMovementDirection,
 				Data.LocomotionContext.PivotMoveIntentDirection);
+		if (bIsNewPivotCommit)
+		{
 			if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 			{
 				UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCommitted Actor=%s PivotRev=%d AnimInstance=%s Primary=%s Asset=%s Start=%.3f Blend=%.3f"),
-				*GetNameSafe(OwningCharacter), StateControllerRuntime.Pivot.RequestRevision,
+				*GetNameSafe(OwningCharacter), StateControllerRuntime.GetPivot().RequestRevision,
 				*GetPathName(), IsPrimaryMeshAnimInstance() ? TEXT("true") : TEXT("false"),
 				*GetNameSafe(SelectedAsset), ChooserOutput.StartTime, ChooserOutput.BlendTime);
 			}

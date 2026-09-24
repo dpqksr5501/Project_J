@@ -396,7 +396,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnima
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPlaybackHoldElapsedTime() const
 {
 	const double NowSeconds = FPlatformTime::Seconds();
-	return FMath::Max(static_cast<float>(NowSeconds - StateControllerRuntime.PlaybackHoldStartedAtSeconds), 0.0f);
+	return StateControllerRuntime.GetHoldElapsed(NowSeconds);
 }
 
 int32 UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectionRevision() const

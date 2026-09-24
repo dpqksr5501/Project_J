@@ -40,17 +40,17 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 	FProject_JStateControllerRuntime Runtime;
 	FProject_JStateControllerRuntime::FIntent Intent;
 	Intent.bIsLocallyControlled = true;
-	Runtime.PlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	Runtime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 0.0);
 	TestEqual(TEXT("표현 중인 이동 루프에서 입력을 놓으면 Stop에 한 번 진입한다"),
 		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::IdleLoop, Intent),
 		EProject_JStateControllerPresentationState::TransitionToIdle);
-	Runtime.bGroundStopConsumed = true;
+	Runtime.BeginHold(EProject_JStateControllerPresentationState::TransitionToIdle, 1.0);
 	TestEqual(TEXT("소비한 Stop은 같은 입력 해제 중 다시 시작하지 않는다"),
 		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TransitionToIdle, Intent),
 		EProject_JStateControllerPresentationState::IdleLoop);
 	Intent.bHasMoveInput = true;
 	Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::LocomotionLoop, Intent);
-	TestFalse(TEXT("새 이동 입력은 Stop을 다시 활성화한다"), Runtime.bGroundStopConsumed);
+	TestFalse(TEXT("새 이동 입력은 Stop을 다시 활성화한다"), Runtime.IsGroundStopConsumed());
 
 	Intent.bHasMoveInput = false;
 	Intent.bFullBodyActionOrRecentExit = true;
@@ -58,7 +58,7 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TransitionToIdle, Intent),
 		EProject_JStateControllerPresentationState::IdleLoop);
 
-	Runtime.PlaybackHoldState = EProject_JStateControllerPresentationState::IdleLoop;
+	Runtime.SetFallbackHold(EProject_JStateControllerPresentationState::IdleLoop, 2.0);
 	Runtime.ConsumeTurnSequence(true, 3);
 	Intent.bFullBodyActionOrRecentExit = false;
 	Intent.TurnInPlaceSequence = 3;
@@ -70,20 +70,82 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TurnInPlace, Intent),
 		EProject_JStateControllerPresentationState::TurnInPlace);
 
-	Runtime.HeldLandingPresentationRevision = 5;
+	Intent.LandingPresentationRevision = 5;
+	Runtime.BeginDesiredHold(EProject_JStateControllerPresentationState::TransitionToLand, Intent, 3.0);
+	Runtime.InvalidateHold(3.1);
 	Intent.LandingPresentationRevision = 5;
 	TestEqual(TEXT("중단된 착지 리비전은 다시 살아나지 않는다"),
 		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TransitionToLand, Intent),
 		EProject_JStateControllerPresentationState::IdleLoop);
-	Runtime.Pivot.Commit(4, 9, FVector::ForwardVector, FVector::RightVector);
-	Runtime.Pivot.SuppressedRequestRevision = 3;
-	Runtime.Pivot.Cancel();
-	TestEqual(TEXT("Pivot 중단은 확정된 요청을 지운다"), Runtime.Pivot.RequestRevision, 0);
-	TestEqual(TEXT("Pivot 중단은 소비한 방향 전환 리비전을 유지한다"), Runtime.Pivot.SuppressedRequestRevision, 3);
+	Runtime.CommitPivot(4, 9, FVector::ForwardVector, FVector::RightVector);
+	FProject_JStateControllerRuntime::FPivotIntent Redirect;
+	Redirect.bHasMoveInput = true;
+	Redirect.RequestRevision = 3;
+	Redirect.MoveIntentRevision = 10;
+	Runtime.ReconcilePivot(Redirect, 4.0);
+	TestEqual(TEXT("Pivot 중단은 확정된 요청을 지운다"), Runtime.GetPivot().RequestRevision, 0);
+	TestEqual(TEXT("Pivot 중단은 소비한 방향 전환 리비전을 유지한다"), Runtime.GetPivot().SuppressedRequestRevision, 3);
+	TestTrue(TEXT("소비된 Pivot 후보는 Cycle에 남는다"),
+		Runtime.IsPivotRequestSuppressed(3));
+	FProject_JStateControllerRuntime::FPivotIntent StalePivot;
+	StalePivot.RequestRevision = 3;
+	StalePivot.bIsPivoting = true;
+	StalePivot.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
+	TestTrue(TEXT("지연된 Pivot 스냅샷은 재진입하지 않는다"), Runtime.ReconcilePivot(StalePivot, 4.1).bForceCycle);
+
+	Runtime.CommitPivot(6, 11, FVector::ForwardVector, FVector::RightVector);
+	FProject_JStateControllerRuntime::FPivotIntent NewPivot;
+	NewPivot.RequestRevision = 7;
+	NewPivot.MoveIntentRevision = 12;
+	NewPivot.bIsPivoting = true;
+	TestEqual(TEXT("새 Pivot은 진행 중인 Pivot을 대체한다"),
+		Runtime.ReconcilePivot(NewPivot, 5.0).Interruption,
+		FProject_JStateControllerRuntime::EPivotInterruption::Superseded);
+	TestTrue(TEXT("대체 후보는 새 Pivot으로 확정할 수 있다"),
+		Runtime.CommitPivot(7, 12, FVector::RightVector, FVector::ForwardVector));
+	Runtime.BeginHold(EProject_JStateControllerPresentationState::TransitionToLocomotion, 5.1);
+	Runtime.OnFullBodyActionStart(5.2);
+	TestEqual(TEXT("전신 동작 시작은 유지 중인 일회성 동작을 지운다"), Runtime.GetHeldState(),
+		EProject_JStateControllerPresentationState::Disabled);
+	TestFalse(TEXT("전신 동작 시작은 Pivot 확정을 지운다"), Runtime.HasCommittedPivot());
+	Runtime.OnFullBodyActionEnd(5.3);
+	Intent.bHasMoveInput = true;
+	Intent.bIsMotionMatchingMoving = true;
+	TestEqual(TEXT("전신 동작 종료 후 현재 이동 상태로 복귀한다"),
+		Runtime.BeginDesiredHold(EProject_JStateControllerPresentationState::LocomotionLoop, Intent, 5.4).DesiredState,
+		EProject_JStateControllerPresentationState::LocomotionLoop);
+
+	Intent.bHasMoveInput = false;
+	Intent.bIsMotionMatchingMoving = false;
+	Intent.LandingPresentationRevision = 8;
+	Runtime.BeginDesiredHold(EProject_JStateControllerPresentationState::TransitionToLand, Intent, 6.0);
+	Runtime.OnCombatPresentationBoundary(6.1, 8, true);
+	TestEqual(TEXT("전투 전환은 유지 중인 착지를 지운다"), Runtime.GetHeldState(),
+		EProject_JStateControllerPresentationState::Disabled);
+	TestEqual(TEXT("전투 전환 뒤 이전 착지는 재진입하지 않는다"),
+		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TransitionToLand, Intent),
+		EProject_JStateControllerPresentationState::IdleLoop);
+	Intent.LandingPresentationRevision = 9;
+	TestTrue(TEXT("새 착지 리비전은 다시 진입할 수 있다"),
+		Runtime.BeginDesiredHold(EProject_JStateControllerPresentationState::TransitionToLand, Intent, 6.2).bNewLanding);
+	Runtime.CommitPivot(10, 20, FVector::ForwardVector, FVector::RightVector);
+	FProject_JStateControllerRuntime::FMountBoundary MountBoundary;
+	MountBoundary.PivotRequestRevision = 10;
+	MountBoundary.LandingRevision = 9;
+	MountBoundary.TurnSequence = 4;
+	MountBoundary.bLanding = true;
+	MountBoundary.bLocalTurn = true;
+	Runtime.OnMountBoundary(MountBoundary);
+	TestEqual(TEXT("탑승 경계는 유지 중인 동작을 지운다"), Runtime.GetHeldState(),
+		EProject_JStateControllerPresentationState::Disabled);
+	TestFalse(TEXT("탑승 경계는 확정된 Pivot을 지운다"), Runtime.HasCommittedPivot());
+	TestTrue(TEXT("탑승 전 Pivot 후보는 재진입하지 않는다"), Runtime.IsPivotRequestSuppressed(10));
+	TestEqual(TEXT("탑승 전 로컬 TIP 순번은 소비한다"), Runtime.GetLastTurnSequence(true), 4);
+	TestEqual(TEXT("탑승 전 착지 리비전은 소비한다"), Runtime.GetHeldLandingRevision(), 9);
 	Runtime.Reset();
-	TestEqual(TEXT("리셋은 로컬 TIP 이벤트 경계를 지운다"), Runtime.LastHandledLocalTurnSequence, 0);
-	TestEqual(TEXT("리셋은 착지 리비전을 지운다"), Runtime.HeldLandingPresentationRevision, INDEX_NONE);
-	TestEqual(TEXT("소유자 리셋은 억제된 Pivot 리비전을 지운다"), Runtime.Pivot.SuppressedRequestRevision, 0);
+	TestEqual(TEXT("리셋은 로컬 TIP 이벤트 경계를 지운다"), Runtime.GetLastTurnSequence(true), 0);
+	TestEqual(TEXT("리셋은 착지 리비전을 지운다"), Runtime.GetHeldLandingRevision(), INDEX_NONE);
+	TestEqual(TEXT("소유자 리셋은 억제된 Pivot 리비전을 지운다"), Runtime.GetPivot().SuppressedRequestRevision, 0);
 	return true;
 }
 

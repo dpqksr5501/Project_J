@@ -102,7 +102,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, OneShot);
 	TestEqual(TEXT("First TIP sequence enters its one-shot"),
 		OneShot.PresentationState, EProject_JStateControllerPresentationState::TurnInPlace);
-	TestEqual(TEXT("Entering TIP consumes its sequence edge"), Anim->StateControllerRuntime.LastHandledRemoteTurnSequence, 1);
+	TestEqual(TEXT("Entering TIP consumes its sequence edge"), Anim->StateControllerRuntime.GetLastTurnSequence(false), 1);
 	Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, OneShot);
 	TestEqual(TEXT("Completed TIP leaves the one-shot"),
 		OneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
@@ -115,7 +115,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 		OneShot.PresentationState, EProject_JStateControllerPresentationState::TurnInPlace);
 
 	UProject_JCharacterAnimInstance* UpperBodyAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
-	UpperBodyAnim->StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	UpperBodyAnim->StateControllerRuntime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 0.0);
 	FProject_JAnimThreadSafeData UpperBodyData;
 	UpperBodyData.Combat.bIsPlayingCombatIntro = true;
 	UpperBodyData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
@@ -127,7 +127,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 		UpperBodyOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
 
 	UProject_JCharacterAnimInstance* FullBodyAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
-	FullBodyAnim->StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	FullBodyAnim->StateControllerRuntime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 0.0);
 	FProject_JAnimThreadSafeData FullBodyData = UpperBodyData;
 	FullBodyData.ProceduralIK.FullBodyMontageWeight = 1.0f;
 	FProject_JAnimOneShotPresentationThreadSafeData FullBodyOneShot = UpperBodyOneShot;
@@ -136,7 +136,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 		FullBodyOneShot.PresentationState, EProject_JStateControllerPresentationState::IdleLoop);
 
 	UProject_JCharacterAnimInstance* StopAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
-	StopAnim->StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	StopAnim->StateControllerRuntime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 0.0);
 	FProject_JAnimThreadSafeData StopData;
 	StopData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
 	FProject_JAnimOneShotPresentationThreadSafeData StopOneShot;
@@ -146,7 +146,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
 	TestEqual(TEXT("First release starts one authored Stop"),
 		StopOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
-	TestTrue(TEXT("First Stop consumes its movement release"), StopAnim->StateControllerRuntime.bGroundStopConsumed);
+	TestTrue(TEXT("First Stop consumes its movement release"), StopAnim->StateControllerRuntime.IsGroundStopConsumed());
 	StopData.Combat.bIsCombatMode = true;
 	StopData.LocomotionContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
 	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
@@ -159,7 +159,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	StopOneShot.bRequested = false;
 	StopOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 	StopAnim->ResolveStateControllerPresentationStateWithPlaybackHold(StopData, StopOneShot);
-	TestFalse(TEXT("Fresh movement rearms Stop"), StopAnim->StateControllerRuntime.bGroundStopConsumed);
+	TestFalse(TEXT("Fresh movement rearms Stop"), StopAnim->StateControllerRuntime.IsGroundStopConsumed());
 	StopData.Input.bHasMoveInput = false;
 	StopData.LocomotionContext.bIsMotionMatchingMoving = false;
 	StopData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
@@ -170,7 +170,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 		StopOneShot.PresentationState, EProject_JStateControllerPresentationState::TransitionToIdle);
 
 	UProject_JCharacterAnimInstance* ActionAnim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
-	ActionAnim->StateControllerRuntime.PlaybackHoldState = EProject_JStateControllerPresentationState::LocomotionLoop;
+	ActionAnim->StateControllerRuntime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 0.0);
 	FProject_JAnimThreadSafeData ActionData;
 	ActionData.Combat.bIsAttacking = true;
 	ActionData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
@@ -179,7 +179,7 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	ActionOneShot.bRequested = true;
 	ActionOneShot.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
 	ActionAnim->ResolveStateControllerPresentationStateWithPlaybackHold(ActionData, ActionOneShot);
-	TestTrue(TEXT("A full-body action consumes its hidden Stop"), ActionAnim->StateControllerRuntime.bGroundStopConsumed);
+	TestTrue(TEXT("A full-body action consumes its hidden Stop"), ActionAnim->StateControllerRuntime.IsGroundStopConsumed());
 	ActionData.Combat.bIsAttacking = false;
 	ActionAnim->ResolveStateControllerPresentationStateWithPlaybackHold(ActionData, ActionOneShot);
 	TestEqual(TEXT("An attack exit does not replay its hidden Stop"),

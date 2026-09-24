@@ -1364,6 +1364,7 @@ public:
 
 	/** 게임 스레드에서 일회성 동작의 수명을 관리한다. 이동 의미 상태는 컴포넌트에 남는다. */
 	mutable FProject_JStateControllerRuntime StateControllerRuntime;
+	void ResetStateControllerOwnerPresentation();
 	/** Bounded game-thread diagnostic window around draw/sheathe and input release. */
 	bool bCombatStopTraceWasInputHeld = false;
 	bool bCombatStopTraceWasTransitionActive = false;
@@ -1394,6 +1395,8 @@ public:
 	/** Rising/falling-edge detector and hold timestamp for full-body action montages (attacks, skills, dodges). */
 	bool bWasPlayingFullBodyMontageForStateController = false;
 	double LastFullBodyMontageEndedAtSeconds = -100.0;
+	/** 탑승 경계에서 이전 지상 일회성 애니메이션이 다시 선택되지 않도록 한다. */
+	bool bWasMountedForStateController = false;
 
 
 
