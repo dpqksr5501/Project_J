@@ -9,14 +9,16 @@ class FProject_JTurnInPlacePresentationRuntime
 public:
 	void Reset() { *this = FProject_JTurnInPlacePresentationRuntime(); }
 
-	void BeginSelection(const UAnimSequence* Sequence, int32 SelectionRevision, float ActorYaw)
+	bool BeginSelection(const UAnimSequence* Sequence, int32 SelectionRevision, float ActorYaw)
 	{
 		if (SelectedSequence.Get() != Sequence || SelectedRevision != SelectionRevision)
 		{
 			SelectedSequence = const_cast<UAnimSequence*>(Sequence);
 			SelectedRevision = SelectionRevision;
 			SelectionStartActorYaw = ActorYaw;
+			return true;
 		}
+		return false;
 	}
 
 	float GetSelectionStartActorYaw() const { return SelectionStartActorYaw; }

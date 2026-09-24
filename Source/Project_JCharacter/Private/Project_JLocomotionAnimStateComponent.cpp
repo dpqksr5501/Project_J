@@ -262,6 +262,16 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 			(LocalNowSeconds - LocalTurnInPlaceTargetStartedAtSeconds) >= 0.75;
 		if (bLocomotionInterrupt || bCameraReversedPastTurnThreshold)
 		{
+			if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0)
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("TIPTrace Stage=Semantic Event=%s T=%.3f Actor=%s Seq=%d Bucket=%d ActorYaw=%.2f TargetYaw=%.2f FacingLive=%.2f Remaining=%.2f Release=%.3f"),
+					bCameraReversedPastTurnThreshold ? TEXT("Reverse") : TEXT("LocomotionInterrupt"),
+					LocalNowSeconds, *GetNameSafe(PlayerOwner), LocalTurnInPlaceSequence,
+					static_cast<int32>(LocalTurnInPlaceDirectionBucket), PlayerOwner->GetActorRotation().Yaw,
+					LocalTurnInPlaceTargetFacingYaw, LiveFacingDelta, RemainingTargetDelta,
+					bCameraReversedPastTurnThreshold ? LocalTurnInPlaceReversalReleaseDuration : 0.0f);
+			}
 			bLocalTurnInPlaceTargetActive = false;
 			LocalTurnInPlaceDirectionBucket = 0;
 			LocalTurnInPlaceTargetFacingYaw = 0.0f;
@@ -287,6 +297,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 			{
 				LocalTurnInPlaceSequence = 1;
 			}
+			if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0)
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("TIPTrace Stage=Semantic Event=Extend T=%.3f Actor=%s Seq=%d Bucket=%d ActorYaw=%.2f TargetYaw=%.2f FacingLive=%.2f RemainingOld=%.2f"),
+					LocalNowSeconds, *GetNameSafe(PlayerOwner), LocalTurnInPlaceSequence,
+					static_cast<int32>(LocalTurnInPlaceDirectionBucket), PlayerOwner->GetActorRotation().Yaw,
+					LocalTurnInPlaceTargetFacingYaw, LiveFacingDelta, RemainingTargetDelta);
+			}
 			bTurnInPlaceReplicationRequestPending = true;
 			PendingTurnInPlaceBucket = LocalTurnInPlaceDirectionBucket;
 			KinematicContext.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(
@@ -296,6 +314,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		}
 		else if (FMath::Abs(RemainingTargetDelta) <= 5.0f)
 		{
+			if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0)
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("TIPTrace Stage=Semantic Event=TargetReached T=%.3f Actor=%s Seq=%d Bucket=%d ActorYaw=%.2f TargetYaw=%.2f Remaining=%.2f"),
+					LocalNowSeconds, *GetNameSafe(PlayerOwner), LocalTurnInPlaceSequence,
+					static_cast<int32>(LocalTurnInPlaceDirectionBucket), PlayerOwner->GetActorRotation().Yaw,
+					LocalTurnInPlaceTargetFacingYaw, RemainingTargetDelta);
+			}
 			bLocalTurnInPlaceTargetActive = false;
 			LocalTurnInPlaceDirectionBucket = 0;
 			LocalTurnInPlaceTargetFacingYaw = 0.0f;
@@ -361,6 +387,14 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 			if (LocalTurnInPlaceSequence <= 0)
 			{
 				LocalTurnInPlaceSequence = 1;
+			}
+			if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0)
+			{
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("TIPTrace Stage=Semantic Event=Begin T=%.3f Actor=%s Seq=%d Bucket=%d ActorYaw=%.2f TargetYaw=%.2f FacingDelta=%.2f"),
+					LocalNowSeconds, *GetNameSafe(PlayerOwner), LocalTurnInPlaceSequence,
+					static_cast<int32>(LocalTurnInPlaceDirectionBucket), PlayerOwner->GetActorRotation().Yaw,
+					LocalTurnInPlaceTargetFacingYaw, KinematicContext.DesiredFacingDeltaYaw);
 			}
 			KinematicContext.DesiredFacingYaw = LocalTurnInPlaceTargetFacingYaw;
 			KinematicContext.DesiredFacingDeltaYaw = FMath::FindDeltaAngleDegrees(

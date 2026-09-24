@@ -5,6 +5,7 @@
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "Animation/AnimSequence.h"
 #include "Combat/Project_JCombatMovementPolicy.h"
 #include "Components/Project_JCombatStateComponent.h"
@@ -70,6 +71,7 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 	bool bCurrentlyInTurnInPlace = false;
 	bool bApplyingLocalTurnInPlaceRootYaw = false;
+	const int32 TipTraceMode = Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode();
 	if (bShouldUseCombatRotation && !bIsMovingInCombat)
 	{
 		if (const UProject_JCharacterAnimInstance* AnimInst = Cast<UProject_JCharacterAnimInstance>(GetMesh() ? GetMesh()->GetAnimInstance() : nullptr))
@@ -83,7 +85,8 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 				if (const UAnimSequence* AnimSeq = Cast<UAnimSequence>(SelectedAnim))
 				{
 					const int32 SelectionRevision = AnimInst->GetThreadSafeStateControllerSelectionRevision();
-					TurnInPlacePresentationRuntime.BeginSelection(AnimSeq, SelectionRevision, GetActorRotation().Yaw);
+					const bool bNewSelection = TurnInPlacePresentationRuntime.BeginSelection(
+						AnimSeq, SelectionRevision, GetActorRotation().Yaw);
 
 					const float Elapsed = AnimInst->GetThreadSafeStateControllerPlaybackHoldElapsedTime();
 					const float CurrTime = FMath::Clamp(Elapsed, 0.0f, AnimSeq->GetPlayLength());
@@ -121,11 +124,37 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 					// to the capsule during that visual hand-off.
 					const bool bCanApplyActorRotation = IsLocallyControlled() &&
 						(!LocomotionAnimStateComponent || LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive());
+					const float ActorYawBefore = GetActorRotation().Yaw;
 					if (bCanApplyActorRotation && !FMath::IsNearlyZero(ClampedRootYawDelta))
 					{
 						AddActorWorldRotation(FRotator(0.0f, ClampedRootYawDelta, 0.0f));
 					}
 					bApplyingLocalTurnInPlaceRootYaw = bCanApplyActorRotation;
+					const bool bFacingOpposesAuthoredTurn =
+						FMath::Abs(FacingDelta) > 1.0f && FMath::Abs(RootYawDelta) > 1.0f &&
+						FMath::Sign(FacingDelta) != FMath::Sign(RootYawDelta);
+					if (TipTraceMode >= 2 ||
+						(TipTraceMode == 1 && (bNewSelection || CurrTime <= 0.35f ||
+							bFacingOpposesAuthoredTurn || FMath::Abs(ClampedRootYawDelta) >= 6.0f)))
+					{
+						const UWorld* TraceWorld = GetWorld();
+						const int32 SemanticSequence = LocomotionAnimStateComponent
+							? LocomotionAnimStateComponent->DerivedLocomotionContext.TurnInPlaceSequence : 0;
+						const uint8 SemanticBucket = LocomotionAnimStateComponent
+							? LocomotionAnimStateComponent->DerivedLocomotionContext.TurnInPlaceDirectionBucket : 0;
+						UE_LOG(LogProjectJPlayer, Display,
+							TEXT("TIPTrace Stage=Root T=%.3f Actor=%s Local=%d NewSelection=%d Seq=%d Bucket=%d Rev=%d Asset=%s Hold=%.3f Start=%.3f Playhead=%.3f RootCum=%.2f Anchor=%.2f ActorBefore=%.2f ActorAfter=%.2f AuthoredDelta=%.2f FacingDelta=%.2f Applied=%.2f TargetActive=%d TargetYaw=%.2f Opposite=%d"),
+							TraceWorld ? TraceWorld->GetTimeSeconds() : 0.0f, *GetName(),
+							IsLocallyControlled() ? 1 : 0, bNewSelection ? 1 : 0,
+							SemanticSequence, static_cast<int32>(SemanticBucket), SelectionRevision,
+							*GetNameSafe(AnimSeq), Elapsed, StartTime, CumulativeCurrentTime,
+							CurrentCumulativeYaw, TurnInPlacePresentationRuntime.GetSelectionStartActorYaw(),
+							ActorYawBefore, GetActorRotation().Yaw, RootYawDelta, FacingDelta,
+							bCanApplyActorRotation ? ClampedRootYawDelta : 0.0f,
+							LocomotionAnimStateComponent && LocomotionAnimStateComponent->IsLocalTurnInPlaceTargetActive() ? 1 : 0,
+							LocomotionAnimStateComponent ? LocomotionAnimStateComponent->KinematicContext.DesiredFacingYaw : 0.0f,
+							bFacingOpposesAuthoredTurn ? 1 : 0);
+					}
 
 					if (!HasAuthority() && bCanApplyActorRotation)
 					{
@@ -137,6 +166,12 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 							ServerSetTurnInPlaceRotation(true, CurrentActorYaw);
 						}
 					}
+				}
+				else if (TipTraceMode > 0)
+				{
+					UE_LOG(LogProjectJPlayer, Display,
+						TEXT("TIPTrace Stage=Root Event=NoSequence Actor=%s Rev=%d Asset=%s"),
+						*GetName(), AnimInst->GetThreadSafeStateControllerSelectionRevision(), *GetNameSafe(SelectedAnim));
 				}
 			}
 		}

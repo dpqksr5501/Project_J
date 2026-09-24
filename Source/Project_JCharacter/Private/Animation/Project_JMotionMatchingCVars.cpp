@@ -53,6 +53,11 @@ TAutoConsoleVariable<int32> CVarProjectJMMCombatStopTrace(
 	TEXT("p.ProjectJ.MMCombatStopTrace"),
 	0,
 	TEXT("Logs input release and the next six seconds of draw/sheathe locomotion and selected poses. 0=off, 1=on."));
+
+TAutoConsoleVariable<int32> CVarProjectJTurnInPlaceTrace(
+	TEXT("p.ProjectJ.TIPTrace"),
+	0,
+	TEXT("TIP semantic/chooser/root-yaw trace. 0=off, 1=selection and sensitive frames, 2=every active frame."));
 }
 
 namespace Project_J::MotionMatchingCVars
@@ -110,5 +115,10 @@ bool ShouldCaptureTransitionDebugTrace()
 bool ShouldTraceCombatStop()
 {
 	return CVarProjectJMMCombatStopTrace.GetValueOnAnyThread() != 0;
+}
+
+int32 GetTurnInPlaceTraceMode()
+{
+	return CVarProjectJTurnInPlaceTrace.GetValueOnAnyThread();
 }
 }

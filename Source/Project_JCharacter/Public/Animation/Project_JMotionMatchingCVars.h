@@ -15,4 +15,5 @@ bool ShouldLogNetworkDebugPeriodically();
 bool ShouldCapturePivotDebugTrace();
 bool ShouldCaptureTransitionDebugTrace();
 bool ShouldTraceCombatStop();
+int32 GetTurnInPlaceTraceMode();
 }

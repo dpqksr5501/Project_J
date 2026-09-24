@@ -1840,6 +1840,16 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (bStartedNewPlaybackHold)
 	{
 		InOutOneShot.PresentationState = StateControllerRuntime.GetHeldState();
+		if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0 &&
+			InOutOneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace)
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPTrace Stage=Hold Event=Begin T=%.3f Actor=%s Seq=%d Bucket=%d Previous=%d Requested=%d"),
+				GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f, *GetNameSafe(OwningCharacter),
+				Data.LocomotionContext.TurnInPlaceSequence,
+				static_cast<int32>(Data.LocomotionContext.TurnInPlaceDirectionBucket),
+				static_cast<int32>(PreviousHeldState), static_cast<int32>(RequestedState));
+		}
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
 			UE_LOG(LogProjectJPlayer, Display,
@@ -1950,6 +1960,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		InOutOneShot.TransitionElapsedTime = 0.0f;
 		InOutOneShot.TransitionTimeRemaining = EffectivePlayableLength;
 		InOutOneShot.bTransitionAnimationAlmostComplete = false;
+		if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0)
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPTrace Stage=Hold Event=Restart T=%.3f Actor=%s Seq=%d Bucket=%d PreviousAsset=%s PreviousElapsed=%.3f"),
+				GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f, *GetNameSafe(OwningCharacter),
+				Data.LocomotionContext.TurnInPlaceSequence,
+				static_cast<int32>(Data.LocomotionContext.TurnInPlaceDirectionBucket),
+				*GetNameSafe(HeldAsset), Elapsed);
+		}
 		return;
 	}
 
@@ -2065,6 +2084,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		DesiredState == EProject_JStateControllerPresentationState::TurnInPlace)
 	{
 		DesiredState = EProject_JStateControllerPresentationState::IdleLoop;
+	}
+	if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0 &&
+		StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TurnInPlace)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("TIPTrace Stage=Hold Event=Exit T=%.3f Actor=%s Seq=%d Asset=%s Elapsed=%.3f Remaining=%.3f Desired=%d"),
+			GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f, *GetNameSafe(OwningCharacter),
+			Data.LocomotionContext.TurnInPlaceSequence, *GetNameSafe(HeldAsset), Elapsed,
+			Remaining, static_cast<int32>(DesiredState));
 	}
 
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
@@ -2315,6 +2343,9 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		}
 
 		const EProject_JStateControllerPresentationState PreviousChooserPresentationState = CachedStateControllerPresentationState;
+		const UAnimationAsset* PreviousChooserAsset = CachedStateControllerSelectedAnimation.Get();
+		const float PreviousTurnIndex = CachedStateControllerTurnInPlaceIndex;
+		const bool bTurnReselectRequested = StateControllerRuntime.IsTurnReselectRequested();
 		const bool bIsFreshLandExit =
 			PreviousChooserPresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
 			OneShot.PresentationState == EProject_JStateControllerPresentationState::LocomotionLoop;
@@ -2383,6 +2414,25 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		// 90-degree TIP must be allowed to restart from time zero.
 		OneShot.bForceBlendNextUpdate = bCachedStateControllerHasSelectedAnimation &&
 			(!bPivotChooserRequest || bIsNewPivotCommit);
+		if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0 &&
+			(PreviousChooserPresentationState == EProject_JStateControllerPresentationState::TurnInPlace ||
+			 OneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace))
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("TIPTrace Stage=Chooser T=%.3f Actor=%s Local=%d PrevState=%d State=%d Seq=%d Bucket=%d Rev=%d PrevAsset=%s Asset=%s PrevTurnIndex=%.0f TurnIndex=%.0f Reselect=%d Hold=%.3f Start=%.3f Blend=%.3f ForceBlend=%d Path=%s"),
+				GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f, *GetNameSafe(OwningCharacter),
+				IsLocallyControlledCharacter() ? 1 : 0,
+				static_cast<int32>(PreviousChooserPresentationState),
+				static_cast<int32>(OneShot.PresentationState),
+				Data.LocomotionContext.TurnInPlaceSequence,
+				static_cast<int32>(Data.LocomotionContext.TurnInPlaceDirectionBucket),
+				StateControllerChooserSelectionRevision,
+				*GetNameSafe(PreviousChooserAsset), *GetNameSafe(SelectedAsset),
+				PreviousTurnIndex, StateControllerTurnInPlaceIndexForChooser,
+				bTurnReselectRequested ? 1 : 0, OneShot.TransitionElapsedTime,
+				ChooserOutput.StartTime, ChooserOutput.BlendTime,
+				OneShot.bForceBlendNextUpdate ? 1 : 0, *EvaluatedChooserPath);
+		}
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{
