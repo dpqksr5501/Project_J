@@ -3,12 +3,16 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Equipment/Project_JWeaponMotionTypes.h"
+#include "GameplayTagContainer.h"
 #include "Project_JWeaponPresentationComponent.generated.h"
 
 class UProject_JWeaponPresentationProfile;
 class USceneComponent;
 class USkeletalMeshComponent;
 class USkeletalMesh;
+class UProject_JAttackDefinition;
+class UProject_JCombatStyleDefinition;
+class UAnimInstance;
 
 /** The stable character socket that currently owns the visual weapon actor. */
 UENUM(BlueprintType)
@@ -16,6 +20,16 @@ enum class EProject_JWeaponPresentationSocket : uint8
 {
 	Sheathed UMETA(DisplayName = "Sheathed / Back"),
 	Drawn UMETA(DisplayName = "Drawn / Hand")
+};
+
+/** Identifies which transform owns the weapon during the current cosmetic pose. */
+UENUM(BlueprintType)
+enum class EProject_JWeaponGripDriveMode : uint8
+{
+	BodySocket,
+	PrimaryHand,
+	AuthoredWeaponMotion,
+	ContactRecovery
 };
 
 /** Runtime IK values exposed to the shared Master ABP. Values are cosmetic and intentionally not replicated. */
@@ -41,6 +55,26 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponGripTargets
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
 	bool bHasSecondaryGrip = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	EProject_JWeaponGripDriveMode DriveMode = EProject_JWeaponGripDriveMode::BodySocket;
+
+	/** Valid when the visible primary hand drives the weapon; this transform is stable across hand animation. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	FTransform SecondaryGripInPrimaryHandSpace = FTransform::Identity;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	FName PrimaryHandBoneName = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	bool bHasPrimaryHandSpaceGrip = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	bool bPrimaryIKSuppressedByAttachment = false;
+
+	/** Recovery owns its alpha envelope and frozen target; montage curves cannot reopen the attachment loop. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Weapon Motion")
+	bool bContactRecovery = false;
 };
 
 /**
@@ -57,6 +91,12 @@ class PROJECT_JCHARACTER_API UProject_JWeaponPresentationComponent : public UAct
 
 public:
 	UProject_JWeaponPresentationComponent();
+
+	/** Non-player presentation adapter. Players continue to use their equipped configuration. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
+	TObjectPtr<UProject_JWeaponPresentationProfile> OwnerPresentationProfile = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Weapon")
+	TObjectPtr<UProject_JCombatStyleDefinition> PresentationCombatStyle = nullptr;
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void BeginPlay() override;
@@ -110,6 +150,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	void EndIndependentMotion();
 
+	/** A notify relinquishes its temporary motion override; the attack default may continue. */
+	void EndNotifyIndependentMotion();
+
+	/** Event-driven cosmetic attack identity, supplied by the replicated combat presentation state. */
+	void SetActiveAttackPresentation(FGameplayTag AttackTag);
+
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
 	bool IsIndependentMotionActive() const { return bIndependentMotionActive; }
 
@@ -146,6 +192,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	FProject_JWeaponGripTargets GetWeaponGripTargets();
 
+	/** The follower pulls the current authored weapon pose before sampling IK; the late cosmetic tick remains a fallback. */
+	FProject_JWeaponGripTargets GetWeaponGripTargetsForAnimation(float DeltaSeconds);
+
 	/** Lets hit-notifies trace the rendered weapon instead of a stale character hand socket. */
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
 	bool GetWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
@@ -164,6 +213,7 @@ private:
 	friend class FProjectJWeaponPresentationIdentityTest;
 	friend class FProjectJCrowdPresentationTest;
 	friend class FProjectJStableGripTargetsTest;
+	friend class FProjectJPresentationMeshResolverTest;
 	friend class FProjectJTwoHandIKTransitionAndCurveTest;
 	friend class FProjectJCanonicalMeleeTraceTest;
 	bool ShouldBudgetPresentation() const;
@@ -178,14 +228,20 @@ private:
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
 	bool ShouldShowWeapon() const;
 	void UpdateIndependentMotion(float DeltaTime);
+	void UpdateContactRecovery(double NowSeconds);
+	void CancelContactRecovery();
+	void RefreshAttackMotion();
+	bool GetAutoAttackMotionSettings(float& OutPrimaryAlpha, float& OutSecondaryAlpha);
 	void UpdateGripTargets();
 	bool FindWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
 	USceneComponent* FindWeaponSocketComponent(FName SocketName) const;
 	bool TryGetGroundCorrection(float DeltaTime, FVector& OutComponentSpaceCorrection);
-	bool AttachWeaponToSocket(FName SocketName, const TCHAR* Context);
+	bool AttachWeaponToSocket(FName SourceSocketName, FName VisualSocketName, const TCHAR* Context);
 	void DestroyWeaponPresentation();
 	void UpdateTickState();
 	void LogWeaponPresentationDebug(const TCHAR* Context) const;
+	void LogGripTraceEvent(const TCHAR* Event) const;
+	void SampleGripTrace();
 	void NotifyWeaponTargetChanged(USceneComponent* InWeaponComponent);
 	void UpdateSocketComponentCache();
 	void InvalidateSocketComponentCache();
@@ -210,6 +266,19 @@ private:
 	FProject_JWeaponGripTargets GripTargets;
 
 	TArray<FProject_JWeaponMotionKey> ActiveMotionKeys;
+	/** Fixed entry pose: never read the IK-driven visual hand while blending to the source arc. */
+	FTransform ActiveMotionEntryWorld = FTransform::Identity;
+	FGameplayTag ActiveAttackPresentationTag;
+	FGameplayTag ResolvedAttackPresentationTag;
+	TWeakObjectPtr<const UProject_JCombatStyleDefinition> ResolvedAttackStyle;
+	TWeakObjectPtr<const UProject_JAttackDefinition> ResolvedAttackDefinition;
+	bool bNotifyOwnsMotion = false;
+	bool bAutoAttackMotionActive = false;
+	TWeakObjectPtr<UAnimInstance> AutoAttackSourceAnim;
+	int32 AutoAttackSourceInstanceID = INDEX_NONE;
+	/** Cosmetic socket to return to after source-space motion keys finish. No replication. */
+	TWeakObjectPtr<USkeletalMeshComponent> ActiveMotionReturnMesh;
+	FName ActiveMotionReturnSocket = NAME_None;
 
 	float ActiveMotionNormalizedTime = 0.0f;
 	float ActiveMotionDurationSeconds = 0.0f;
@@ -217,6 +286,27 @@ private:
 	float ActiveExitBlendSeconds = 0.0f;
 	float ActivePrimaryGripIKAlpha = 0.0f;
 	float ActiveSecondaryGripIKAlpha = 0.0f;
+
+	/** Independent of the solved hand: captured component-space contact and socket offset. */
+	TWeakObjectPtr<USkeletalMeshComponent> ContactRecoveryMesh;
+	FName ContactRecoverySocket = NAME_None;
+	FTransform ContactRecoveryGripComponent = FTransform::Identity;
+	FTransform ContactRecoveryAttachment = FTransform::Identity;
+	/** Source-driven recovery reads an independent source pose, never the solved primary hand. */
+	TWeakObjectPtr<USkeletalMeshComponent> ContactRecoverySourceMesh;
+	TWeakObjectPtr<UAnimInstance> ContactRecoverySourceAnim;
+	FName ContactRecoverySourceSocket = NAME_None;
+	int32 ContactRecoverySourceInstanceID = INDEX_NONE;
+	float ContactRecoverySourceStartWeight = 0.0f;
+	FTransform ContactRecoveryWeaponInSourceSocket = FTransform::Identity;
+	FTransform ContactRecoveryGripInSourceSocket = FTransform::Identity;
+	double ContactRecoveryStartSeconds = 0.0;
+	float ContactRecoveryDurationSeconds = 0.0f;
+	float ContactRecoveryPrimaryAlpha = 0.0f;
+	float ContactRecoverySecondaryAlpha = 0.0f;
+	float ContactRecoveryAlpha = 0.0f;
+	bool bContactRecoveryActive = false;
+	uint64 LastMotionEvaluationFrame = MAX_uint64;
 	int32 GroundContactStateCount = 0;
 	int32 TwoHandGripStateCount = 0;
 	float ActiveTwoHandSecondaryIKAlpha = 1.0f;
@@ -224,6 +314,12 @@ private:
 	bool bActiveTwoHandOverridePrimary = false;
 
 	float WeaponPresentationDebugElapsedSeconds = 0.0f;
+	double GripTraceNextSampleTime = 0.0;
+	double GripTracePreviousSampleTime = 0.0;
+	FVector GripTracePreviousWeapon = FVector::ZeroVector;
+	FVector GripTracePreviousElbow = FVector::ZeroVector;
+	FVector GripTracePreviousElbowPlane = FVector::ZeroVector;
+	bool bGripTraceHasPreviousSample = false;
 	bool bCombatPresentationActive = false;
 	EProject_JWeaponPresentationSocket CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
 	bool bIndependentMotionActive = false;

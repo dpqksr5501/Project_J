@@ -67,6 +67,33 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	bool bSupportsIndependentMotion = false;
 
+	/** Montage attacks use their source-skeleton weapon arc even without Weapon Motion notifies. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	bool bSourceDrivenMontageAttacks = true;
+
+	/** Recover hand contact and attachment offset together. Disable to keep the legacy socket snap/blend. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	bool bUseContactHandoff = true;
+
+	/** Cosmetic recovery after source motion ends. Zero snaps to the normal socket; no per-frame replication. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion && bUseContactHandoff", ClampMin = "0.0", ClampMax = "1.0", Units = "s"))
+	float ContactRecoverySeconds = 0.12f;
+
+	/** For automatic montage attacks, release contact with the actual source blend-out instead of a separate timer. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion && bUseContactHandoff"))
+	bool bFollowMontageBlendOut = true;
+
+	/** Default hand contact while a source-driven attack has no notify override. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultAttackPrimaryIKAlpha = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultAttackSecondaryIKAlpha = 0.0f;
+
+	/** Short, cosmetic hand-to-source blend when an attack has no Weapon Motion notify, or a notify hands control back to the attack. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", Units = "s"))
+	float AttackEntryBlendSeconds = 0.08f;
+
 	/** Weapon-local socket used as the primary (usually right-hand) IK target. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	FName PrimaryGripSocketName = TEXT("WeaponGrip_R");
@@ -78,6 +105,10 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
 	/** Default right-hand IK alpha when weapon is drawn outside of independent motion. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float DefaultDrawnPrimaryIKAlpha = 1.0f;
+
+	/** An attached visual weapon already follows its primary hand. Enable only for a deliberately authored correction. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	bool bAllowPrimaryIKOnVisualAttachment = false;
 
 	/** Default left-hand IK alpha when weapon is drawn outside of independent motion (e.g. 1.0 for two-handed weapons, 0.0 for one-handed). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
@@ -119,9 +150,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName DrawnSocketName = TEXT("WeaponSocket_R");
 
+	/** Visual follower sockets may have different bone names from the animation source. None reuses DrawnSocketName. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	FName VisualDrawnSocketName = NAME_None;
+
 	/** Socket used after the weapon's sheathe montage transfers it to the back. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName SheathedSocketName = TEXT("WeaponSocket_Back");
+
+	/** None reuses SheathedSocketName. Missing follower sockets fall back to the source mesh. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	FName VisualSheathedSocketName = NAME_None;
+
+	/** Cosmetic attachments prefer the visible retarget follower when it owns the requested socket. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	bool bPreferVisualFollowerSockets = true;
 
 	/** Optional data-driven independent weapon motion. Kept separate from combat rules and item stats. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")

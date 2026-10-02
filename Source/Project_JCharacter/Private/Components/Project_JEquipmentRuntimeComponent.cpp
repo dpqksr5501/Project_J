@@ -3,6 +3,7 @@
 #include "Components/Project_JEquipmentRuntimeComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Components/Project_JModularMeshComponent.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
@@ -271,8 +272,26 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 	if (!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed() ||
 		OwnerCharacter->GetNetMode() == NM_DedicatedServer) return;
 
-	USkeletalMeshComponent* MainMesh = OwnerCharacter->GetMesh();
-	if (!MainMesh) return;
+	USkeletalMeshComponent* PoseSource = nullptr;
+	FName AttachmentSocket = ItemDef->AttachSocketName;
+	if (AttachmentSocket.IsNone())
+	{
+		PoseSource = Project_J::Animation::ResolveEquipmentPoseSource(*OwnerCharacter, *LoadedMesh);
+	}
+	else
+	{
+		PoseSource = Project_J::Animation::ResolveWeaponAttachmentMesh(*OwnerCharacter,
+			AttachmentSocket, NAME_None, true, AttachmentSocket);
+	}
+	if (!PoseSource)
+	{
+		UE_LOG(LogProjectJEquipmentRuntime, Warning,
+			TEXT("Equipment visual has no compatible pose source or attachment socket. Owner=%s Mesh=%s Slot=%d"),
+			*GetNameSafe(OwnerCharacter), *GetNameSafe(LoadedMesh), int32(Slot));
+		CancelEquipmentMeshLoad(RuntimeItem);
+		ScheduleVisualRetry();
+		return;
+	}
 
 	UProject_JModularMeshComponent* NewMeshComp = NewObject<UProject_JModularMeshComponent>(OwnerCharacter);
 	NewMeshComp->RegisterComponent();
@@ -282,11 +301,11 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentMeshLoaded(EProject_JEquipm
 
 	if (ItemDef->AttachSocketName.IsNone())
 	{
-		NewMeshComp->AttachAndSetLeader(MainMesh);
+		NewMeshComp->AttachAndSetLeader(PoseSource);
 	}
 	else
 	{
-		NewMeshComp->AttachToComponent(MainMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ItemDef->AttachSocketName);
+		NewMeshComp->AttachToComponent(PoseSource, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachmentSocket);
 		NewMeshComp->SetLeaderPoseComponent(nullptr); 
 	}
 

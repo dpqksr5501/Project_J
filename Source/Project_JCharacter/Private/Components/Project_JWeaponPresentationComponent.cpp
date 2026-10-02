@@ -1,11 +1,17 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
 
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
+#include "Combat/Project_JAttackDefinition.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Engine/World.h"
 #include "Engine/SkeletalMesh.h"
@@ -13,6 +19,7 @@
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
 #include "Project_JPlayerCharacter.h"
+#include "Project_JBaseCharacter.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "System/Project_JPresentationBudgetSubsystem.h"
 
@@ -27,6 +34,31 @@ namespace Project_J::WeaponPresentation
 		0,
 		TEXT("Logs the runtime weapon attachment, socket and visual-mesh transforms every 0.5 seconds while a weapon is drawn. 0: off, 1: on."),
 		ECVF_Default);
+	static TAutoConsoleVariable<int32> CVarGripTrace(TEXT("ProjectJ.Presentation.GripTrace"), 0,
+		TEXT("Record the local character's post-animation sword, grip and right-elbow trajectory in Project_J.log. 0: off, 1: on."));
+	static TAutoConsoleVariable<float> CVarGripTraceHz(TEXT("ProjectJ.Presentation.GripTraceHz"), 30.0f,
+		TEXT("Maximum grip trace samples per second while enabled (1-120)."));
+	static TAutoConsoleVariable<FString> CVarGripTraceActor(TEXT("ProjectJ.Presentation.GripTraceActor"), FString(),
+		TEXT("Optional actor-name substring. Empty traces only locally controlled characters."));
+
+	static bool ShouldTraceGrip(const ACharacter* Character)
+	{
+		if (!Character || CVarGripTrace.GetValueOnGameThread() == 0)
+		{
+			return false;
+		}
+		const FString Filter = CVarGripTraceActor.GetValueOnGameThread();
+		return Filter.IsEmpty() ? Character->IsLocallyControlled()
+			: Character->GetName().Contains(Filter, ESearchCase::IgnoreCase);
+	}
+
+	static const TCHAR* GripTraceMode(bool bIndependent, bool bNotify, bool bAuto,
+		EProject_JWeaponPresentationSocket Socket, bool bRecovery)
+	{
+		if (bIndependent) { return bNotify ? TEXT("NotifySource") : (bAuto ? TEXT("AutoSource") : TEXT("Source")); }
+		if (bRecovery) { return TEXT("ContactRecovery"); }
+		return Socket == EProject_JWeaponPresentationSocket::Drawn ? TEXT("HandAttached") : TEXT("Sheathed");
+	}
 
 	static bool IsDebugEnabled()
 	{
@@ -59,26 +91,38 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 
 	if (!SpawnedWeapon)
 	{
+		CancelContactRecovery();
 		bIndependentMotionActive = false;
+		bNotifyOwnsMotion = false;
+		bAutoAttackMotionActive = false;
 		ActiveMotionKeys.Reset();
 		ActiveMotionDurationSeconds = 0.0f;
 		ActiveEntryBlendSeconds = 0.0f;
 		ActiveExitBlendSeconds = 0.0f;
 		ActivePrimaryGripIKAlpha = 0.0f;
 		ActiveSecondaryGripIKAlpha = 0.0f;
+		LastMotionEvaluationFrame = MAX_uint64;
+		ActiveMotionReturnMesh.Reset();
+		ActiveMotionReturnSocket = NAME_None;
 		GroundContactStateCount = 0;
 		GripTargets = FProject_JWeaponGripTargets();
 		UpdateTickState();
 		if (bRetryBudget) { SetComponentTickEnabled(true); }
 		return;
 	}
+	RefreshAttackMotion();
 
 	if (bIndependentMotionActive)
 	{
-		UpdateIndependentMotion(DeltaTime);
+		if (LastMotionEvaluationFrame != GFrameCounter)
+		{
+			UpdateIndependentMotion(DeltaTime);
+			LastMotionEvaluationFrame = GFrameCounter;
+		}
 	}
 	else
 	{
+		if (bContactRecoveryActive) { UpdateContactRecovery(GetWorld()->GetTimeSeconds()); }
 		UpdateGripTargets();
 	}
 
@@ -91,7 +135,15 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 			LogWeaponPresentationDebug(TEXT("Tick"));
 		}
 	}
-
+	if (Project_J::WeaponPresentation::CVarGripTrace.GetValueOnGameThread() != 0)
+	{
+		SampleGripTrace();
+	}
+	else
+	{
+		bGripTraceHasPreviousSample = false;
+		GripTraceNextSampleTime = 0.0;
+	}
 
 	UpdateTickState();
 }
@@ -168,7 +220,8 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToSheathedSocket()
 
 	if (PresentationProfile)
 	{
-		AttachWeaponToSocket(PresentationProfile->SheathedSocketName, TEXT("Sheathe"));
+		AttachWeaponToSocket(PresentationProfile->SheathedSocketName,
+			PresentationProfile->VisualSheathedSocketName, TEXT("Sheathe"));
 	}
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
 	UpdateGripTargets();
@@ -185,7 +238,8 @@ void UProject_JWeaponPresentationComponent::AttachWeaponToDrawnSocket()
 
 	if (PresentationProfile)
 	{
-		AttachWeaponToSocket(PresentationProfile->DrawnSocketName, TEXT("Draw"));
+		AttachWeaponToSocket(PresentationProfile->DrawnSocketName,
+			PresentationProfile->VisualDrawnSocketName, TEXT("Draw"));
 	}
 	CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
 	UpdateGripTargets();
@@ -225,6 +279,23 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 		&& AppliedCharacterMesh.Get() == Mesh && AppliedSkeletalMesh.Get() == Mesh->GetSkeletalMeshAsset())
 	{
 		// Preserve notify-owned motion and weapon-local VFX on repeated callbacks.
+		// A follower can become available after the weapon actor was spawned.
+		if (!bIndependentMotionActive)
+		{
+			const bool bDrawn = CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn;
+			const FName SourceSocket = bDrawn ? PresentationProfile->DrawnSocketName : PresentationProfile->SheathedSocketName;
+			const FName VisualSocket = bDrawn ? PresentationProfile->VisualDrawnSocketName : PresentationProfile->VisualSheathedSocketName;
+			FName ResolvedSocket;
+			USkeletalMeshComponent* DesiredMesh = Project_J::Animation::ResolveWeaponAttachmentMesh(
+				*OwnerCharacter, SourceSocket, VisualSocket, PresentationProfile->bPreferVisualFollowerSockets, ResolvedSocket);
+			if (DesiredMesh && SpawnedWeapon->GetRootComponent() &&
+				(SpawnedWeapon->GetRootComponent()->GetAttachParent() != DesiredMesh ||
+					SpawnedWeapon->GetRootComponent()->GetAttachSocketName() != ResolvedSocket))
+			{
+				AttachWeaponToSocket(SourceSocket, VisualSocket, TEXT("Refresh"));
+				UpdateGripTargets();
+			}
+		}
 		return;
 	}
 	if (SpawnedWeapon) { DestroyWeaponPresentation(); }
@@ -269,6 +340,11 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 		UpdateSocketComponentCache();
 		UpdateGripTargets();
 		NotifyWeaponTargetChanged(SpawnedWeapon->GetRootComponent());
+		if (const UProject_JCombatPresentationComponent* CombatPresentation =
+			OwnerCharacter->FindComponentByClass<UProject_JCombatPresentationComponent>())
+		{
+			SetActiveAttackPresentation(CombatPresentation->GetActiveAttackTag());
+		}
 		UE_LOG(LogTemp, Log, TEXT("[ProjectJ][WeaponPresentation] Spawn success: Weapon=%s SocketState=%d"),
 			*GetNameSafe(SpawnedWeapon), static_cast<int32>(CurrentPresentationSocket));
 
@@ -286,19 +362,26 @@ void UProject_JWeaponPresentationComponent::RefreshPresentation()
 	}
 }
 
-bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SocketName, const TCHAR* Context)
+bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SourceSocketName, FName VisualSocketName,
+	const TCHAR* Context)
 {
+	CancelContactRecovery();
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	USkeletalMeshComponent* Mesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-	if (!SpawnedWeapon || SocketName.IsNone() || !Mesh)
+	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+	if (SourceSocketName.IsNone() && VisualSocketName.IsNone())
 	{
 		return false;
 	}
-
-	if (!Mesh->DoesSocketExist(SocketName))
+	FName SocketName;
+	USkeletalMeshComponent* Mesh = OwnerCharacter && Profile
+		? Project_J::Animation::ResolveWeaponAttachmentMesh(*OwnerCharacter, SourceSocketName, VisualSocketName,
+			Profile->bPreferVisualFollowerSockets, SocketName)
+		: nullptr;
+	if (!SpawnedWeapon || !Mesh)
 	{
-		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] %s failed: Socket '%s' does not exist on Mesh=%s."),
-			Context, *SocketName.ToString(), *GetNameSafe(Mesh));
+		UE_LOG(LogProjectJWeaponPresentation, Warning,
+			TEXT("[ProjectJ][WeaponPresentation] %s failed: no presentation mesh owns source socket '%s' or visual socket '%s'. Owner=%s"),
+			Context, *SourceSocketName.ToString(), *VisualSocketName.ToString(), *GetNameSafe(OwnerCharacter));
 		return false;
 	}
 
@@ -315,6 +398,7 @@ void UProject_JWeaponPresentationComponent::DestroyWeaponPresentation()
 	AppliedCharacterMesh.Reset();
 	AppliedSkeletalMesh.Reset();
 	EndIndependentMotion();
+	CancelContactRecovery();
 	TwoHandGripStateCount = 0;
 	ActiveTwoHandSecondaryIKAlpha = 1.0f;
 	ActiveTwoHandPrimaryIKAlpha = 1.0f;
@@ -353,12 +437,8 @@ void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Rev
 
 bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
-	if (MotionKeys.IsEmpty())
-	{
-		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion requires at least one transform key."));
-		return false;
-	}
-
+	// No keys mean an identity offset: follow the authored source socket for
+	// this whole state, which preserves the original montage weapon arc.
 	for (int32 Index = 1; Index < MotionKeys.Num(); ++Index)
 	{
 		if (MotionKeys[Index].NormalizedTime <= MotionKeys[Index - 1].NormalizedTime)
@@ -370,6 +450,24 @@ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<
 
 	if (bIndependentMotionActive)
 	{
+		if (bAutoAttackMotionActive && !bNotifyOwnsMotion)
+		{
+			// The montage state overrides the attack default without attaching the
+			// weapon back to a hand between two source-driven segments.
+			ActiveMotionEntryWorld = SpawnedWeapon->GetRootComponent()->GetComponentTransform();
+			ActiveMotionKeys = MotionKeys;
+			ActiveMotionNormalizedTime = 0.0f;
+			ActiveMotionDurationSeconds = FMath::Max(MotionDurationSeconds, 0.0f);
+			ActiveEntryBlendSeconds = FMath::Max(EntryBlendSeconds, 0.0f);
+			ActiveExitBlendSeconds = FMath::Max(ExitBlendSeconds, 0.0f);
+			ActivePrimaryGripIKAlpha = FMath::Clamp(PrimaryGripIKAlpha, 0.0f, 1.0f);
+			ActiveSecondaryGripIKAlpha = FMath::Clamp(SecondaryGripIKAlpha, 0.0f, 1.0f);
+			bAutoAttackMotionActive = false;
+			bNotifyOwnsMotion = true;
+			LastMotionEvaluationFrame = MAX_uint64;
+			UpdateIndependentMotion(0.0f);
+			LogGripTraceEvent(TEXT("NotifyOverridesAuto"));
+		}
 		return true;
 	}
 
@@ -390,12 +488,16 @@ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<
 		return false;
 	}
 
-	// WeaponRoot is already the dedicated visual pivot. Keep it directly attached
-	// to the same socket used by Persona's preview asset, so a Montage key is
-	// represented identically in editor and at runtime: RelativeTransform == Key.
+	ActiveMotionEntryWorld = WeaponRoot->GetComponentTransform();
+	CancelContactRecovery(); // A new attack owns the current pose, including an interrupted recovery.
+	// The authored motion remains relative to the source skeleton's drawn socket.
+	// Capture the normal rendered attachment so the motion can enter and leave
+	// at the visible hand even when its skeleton differs from the source.
+	ActiveMotionReturnMesh = Project_J::Animation::ResolveWeaponAttachmentMesh(*OwnerCharacter,
+		PresentationProfile->DrawnSocketName, PresentationProfile->VisualDrawnSocketName,
+		PresentationProfile->bPreferVisualFollowerSockets, ActiveMotionReturnSocket);
 	WeaponRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	WeaponRoot->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, PresentationProfile->DrawnSocketName);
-	WeaponRoot->SetRelativeTransform(FTransform::Identity, false, nullptr, ETeleportType::TeleportPhysics);
+	WeaponRoot->AttachToComponent(CharacterMesh, FAttachmentTransformRules::KeepWorldTransform, PresentationProfile->DrawnSocketName);
 	SmoothedGroundCorrectionComponentSpace = FVector::ZeroVector;
 	ActiveMotionKeys = MotionKeys;
 	ActiveMotionNormalizedTime = 0.0f;
@@ -405,9 +507,43 @@ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<
 	ActivePrimaryGripIKAlpha = FMath::Clamp(PrimaryGripIKAlpha, 0.0f, 1.0f);
 	ActiveSecondaryGripIKAlpha = FMath::Clamp(SecondaryGripIKAlpha, 0.0f, 1.0f);
 	bIndependentMotionActive = true;
-	UpdateGripTargets();
+	bNotifyOwnsMotion = true;
+	bAutoAttackMotionActive = false;
+	LastMotionEvaluationFrame = MAX_uint64;
+	UpdateIndependentMotion(0.0f);
 	UpdateTickState();
+	LogGripTraceEvent(TEXT("MotionBegin"));
 	return true;
+}
+
+void UProject_JWeaponPresentationComponent::EndNotifyIndependentMotion()
+{
+	if (!bNotifyOwnsMotion)
+	{
+		return;
+	}
+	bNotifyOwnsMotion = false;
+	float PrimaryAlpha = 0.0f;
+	float SecondaryAlpha = 0.0f;
+	if (GetAutoAttackMotionSettings(PrimaryAlpha, SecondaryAlpha))
+	{
+		const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+		const float EntrySeconds = Profile ? FMath::Max(0.0f, Profile->MotionPresentation.AttackEntryBlendSeconds) : 0.0f;
+		ActiveMotionEntryWorld = SpawnedWeapon->GetRootComponent()->GetComponentTransform();
+		ActiveMotionKeys.Reset();
+		ActiveMotionNormalizedTime = 0.0f;
+		ActiveMotionDurationSeconds = EntrySeconds;
+		ActiveEntryBlendSeconds = EntrySeconds;
+		ActiveExitBlendSeconds = 0.0f;
+		ActivePrimaryGripIKAlpha = PrimaryAlpha;
+		ActiveSecondaryGripIKAlpha = SecondaryAlpha;
+		bAutoAttackMotionActive = true;
+		LastMotionEvaluationFrame = MAX_uint64;
+		UpdateIndependentMotion(0.0f);
+		LogGripTraceEvent(TEXT("NotifyResumesAuto"));
+		return;
+	}
+	EndIndependentMotion();
 }
 
 void UProject_JWeaponPresentationComponent::EndIndependentMotion()
@@ -416,8 +552,16 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 	{
 		return;
 	}
+	LogGripTraceEvent(TEXT("MotionEndBeforeHandoff"));
+	UpdateGripTargets();
+	const FProject_JWeaponGripTargets ExitGrip = GripTargets;
+	UAnimInstance* EndingSourceAnim = bAutoAttackMotionActive ? AutoAttackSourceAnim.Get() : nullptr;
+	const FAnimMontageInstance* EndingMontage = EndingSourceAnim
+		? EndingSourceAnim->GetMontageInstanceForID(AutoAttackSourceInstanceID) : nullptr;
 
 	bIndependentMotionActive = false;
+	bNotifyOwnsMotion = false;
+	bAutoAttackMotionActive = false;
 	ActiveMotionKeys.Reset();
 	ActiveMotionNormalizedTime = 0.0f;
 	ActiveMotionDurationSeconds = 0.0f;
@@ -427,15 +571,130 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 	ActiveSecondaryGripIKAlpha = 0.0f;
 	GroundContactStateCount = 0;
 	SmoothedGroundCorrectionComponentSpace = FVector::ZeroVector;
+	LastMotionEvaluationFrame = MAX_uint64;
+	USkeletalMeshComponent* ReturnMesh = ActiveMotionReturnMesh.Get();
+	const FName ReturnSocket = ActiveMotionReturnSocket;
+	ActiveMotionReturnMesh.Reset();
+	ActiveMotionReturnSocket = NAME_None;
 	GripTargets = FProject_JWeaponGripTargets();
 
 	if (USceneComponent* WeaponRoot = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr)
 	{
 		WeaponRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		AttachWeaponToDrawnSocket();
+		const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+		const ACharacter* Character = Cast<ACharacter>(GetOwner());
+		const bool bContactHandoff = !bEndingPlay && GetWorld() && Profile && Profile->MotionPresentation.bUseContactHandoff &&
+			CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn && ReturnMesh &&
+			Character && ReturnMesh != Character->GetMesh() &&
+			!ReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ReturnSocket) &&
+			FMath::IsFinite(Profile->MotionPresentation.ContactRecoverySeconds) &&
+			Profile->MotionPresentation.ContactRecoverySeconds > UE_KINDA_SMALL_NUMBER;
+		if (bContactHandoff && WeaponRoot->AttachToComponent(ReturnMesh, FAttachmentTransformRules::KeepWorldTransform, ReturnSocket))
+		{
+			ContactRecoveryMesh = ReturnMesh;
+			ContactRecoverySocket = ReturnSocket;
+			ContactRecoveryAttachment = WeaponRoot->GetRelativeTransform();
+			ContactRecoveryGripComponent = ExitGrip.PrimaryGripWorldTransform.GetRelativeTransform(ReturnMesh->GetComponentTransform());
+			ContactRecoveryDurationSeconds = FMath::Clamp(Profile->MotionPresentation.ContactRecoverySeconds, 0.0f, 1.0f);
+			ContactRecoveryStartSeconds = GetWorld()->GetTimeSeconds();
+			ContactRecoveryAlpha = 0.0f;
+			// Montage_IsActive becomes false at blend-out START, not when its pose
+			// contribution reaches zero. Use that same instance and weight through
+			// the return to Idle, including pauses and per-attack blend curves.
+			if (Profile->MotionPresentation.bFollowMontageBlendOut && EndingMontage &&
+				EndingMontage->IsStopped() && EndingMontage->GetWeight() > UE_KINDA_SMALL_NUMBER &&
+				Character->GetMesh()->GetAnimInstance() == EndingSourceAnim &&
+				Character->GetMesh()->DoesSocketExist(Profile->DrawnSocketName))
+			{
+				ContactRecoverySourceAnim = EndingSourceAnim;
+				ContactRecoverySourceInstanceID = AutoAttackSourceInstanceID;
+				ContactRecoverySourceStartWeight = EndingMontage->GetWeight();
+				ContactRecoverySourceMesh = Character->GetMesh();
+				ContactRecoverySourceSocket = Profile->DrawnSocketName;
+				const FTransform SourceSocketWorld = Character->GetMesh()->GetSocketTransform(Profile->DrawnSocketName, RTS_World);
+				ContactRecoveryWeaponInSourceSocket = WeaponRoot->GetComponentTransform().GetRelativeTransform(SourceSocketWorld);
+				ContactRecoveryGripInSourceSocket = ExitGrip.PrimaryGripWorldTransform.GetRelativeTransform(SourceSocketWorld);
+			}
+			const UProject_JRetargetAnimInstance* Anim = Cast<UProject_JRetargetAnimInstance>(ReturnMesh->GetAnimInstance());
+			ContactRecoveryPrimaryAlpha = ExitGrip.bHasPrimaryGrip
+				? FMath::Clamp(Anim ? Anim->RightGripAlpha : ExitGrip.PrimaryIKAlpha, 0.0f, 1.0f) : 0.0f;
+			ContactRecoverySecondaryAlpha = ExitGrip.bHasSecondaryGrip
+				? FMath::Clamp(Anim ? Anim->LeftGripAlpha : ExitGrip.SecondaryIKAlpha, 0.0f, 1.0f) : 0.0f;
+			bContactRecoveryActive = true;
+			UpdateGripTargets();
+			LogGripTraceEvent(TEXT("ContactRecoveryBegin"));
+		}
+		else
+		{
+			AttachWeaponToDrawnSocket();
+		}
 	}
-
 	UpdateTickState();
+	LogGripTraceEvent(TEXT("MotionEndAfterHandoff"));
+}
+
+void UProject_JWeaponPresentationComponent::CancelContactRecovery()
+{
+	bContactRecoveryActive = false;
+	ContactRecoveryMesh.Reset();
+	ContactRecoverySocket = NAME_None;
+	ContactRecoveryAlpha = 0.0f;
+	ContactRecoverySourceMesh.Reset();
+	ContactRecoverySourceAnim.Reset();
+	ContactRecoverySourceSocket = NAME_None;
+	ContactRecoverySourceInstanceID = INDEX_NONE;
+	ContactRecoverySourceStartWeight = 0.0f;
+}
+
+void UProject_JWeaponPresentationComponent::UpdateContactRecovery(double NowSeconds)
+{
+	USceneComponent* Root = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
+	USkeletalMeshComponent* Mesh = ContactRecoveryMesh.Get();
+	if (!bContactRecoveryActive) { return; }
+	if (!Root || !Mesh || Root->GetAttachParent() != Mesh ||
+		Root->GetAttachSocketName() != ContactRecoverySocket || !Mesh->DoesSocketExist(ContactRecoverySocket))
+	{
+		CancelContactRecovery();
+		return;
+	}
+	// Use absolute cosmetic time: animation pull and late tick cannot advance twice;
+	// skipped/URO updates still complete at the finite deadline.
+	FTransform Relative;
+	if (ContactRecoverySourceInstanceID != INDEX_NONE)
+	{
+		UAnimInstance* SourceAnim = ContactRecoverySourceAnim.Get();
+		const FAnimMontageInstance* Instance = SourceAnim
+			? SourceAnim->GetMontageInstanceForID(ContactRecoverySourceInstanceID) : nullptr;
+		USkeletalMeshComponent* SourceMesh = ContactRecoverySourceMesh.Get();
+		const bool bSourceValid = Instance && SourceMesh && SourceMesh->GetAnimInstance() == SourceAnim &&
+			SourceMesh->DoesSocketExist(ContactRecoverySourceSocket);
+		ContactRecoveryAlpha = FMath::Max(ContactRecoveryAlpha, bSourceValid
+			? Project_J::WeaponMotion::EvaluateMontageContactRecoveryAlpha(Instance->GetWeight(), ContactRecoverySourceStartWeight)
+			: 1.0f);
+		if (bSourceValid)
+		{
+			const FTransform SourceWorld = ContactRecoveryWeaponInSourceSocket *
+				SourceMesh->GetSocketTransform(ContactRecoverySourceSocket, RTS_World);
+			// Recompute after the follower evaluation in the late tick as well.
+			// The hand goal below only reads SourceMesh, so this introduces no
+			// primary-hand -> weapon -> primary-hand feedback loop.
+			Relative.Blend(SourceWorld.GetRelativeTransform(Mesh->GetSocketTransform(ContactRecoverySocket, RTS_World)),
+				FTransform::Identity, ContactRecoveryAlpha);
+		}
+		else { Relative = FTransform::Identity; }
+	}
+	else
+	{
+		ContactRecoveryAlpha = Project_J::WeaponMotion::EvaluateContactRecoveryAlpha(
+			NowSeconds - ContactRecoveryStartSeconds, ContactRecoveryDurationSeconds);
+		Relative.Blend(ContactRecoveryAttachment, FTransform::Identity, ContactRecoveryAlpha);
+	}
+	Root->SetRelativeTransform(Relative, false, nullptr, ETeleportType::TeleportPhysics);
+	if (ContactRecoveryAlpha >= 1.0f)
+	{
+		CancelContactRecovery();
+		LogGripTraceEvent(TEXT("ContactRecoveryEnd"));
+	}
 }
 
 void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float NormalizedTime)
@@ -443,12 +702,13 @@ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float N
 	if (bIndependentMotionActive)
 	{
 		ActiveMotionNormalizedTime = FMath::Clamp(NormalizedTime, 0.0f, 1.0f);
+		LastMotionEvaluationFrame = MAX_uint64;
 	}
 }
 
 void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
-	if (!bIndependentMotionActive || MotionKeys.IsEmpty())
+	if (!bIndependentMotionActive)
 	{
 		return;
 	}
@@ -474,6 +734,7 @@ void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const T
 		ActiveMotionDurationSeconds = ClampedDuration;
 		ActiveEntryBlendSeconds = ClampedEntryBlend;
 		ActiveExitBlendSeconds = ClampedExitBlend;
+		LastMotionEvaluationFrame = MAX_uint64;
 	}
 }
 
@@ -512,33 +773,50 @@ void UProject_JWeaponPresentationComponent::EndTwoHandGrip()
 
 void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
 {
+	if (bAutoAttackMotionActive && ActiveMotionDurationSeconds > UE_KINDA_SMALL_NUMBER)
+	{
+		ActiveMotionNormalizedTime = FMath::Clamp(ActiveMotionNormalizedTime +
+			FMath::Max(DeltaTime, 0.0f) / ActiveMotionDurationSeconds, 0.0f, 1.0f);
+	}
 	const UProject_JWeaponPresentationProfile* PresentationProfile = GetCurrentPresentationProfile();
 	USceneComponent* WeaponRoot = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
-	if (!PresentationProfile || !PresentationProfile->MotionPresentation.bSupportsIndependentMotion || !WeaponRoot || ActiveMotionKeys.IsEmpty())
+	if (!PresentationProfile || !PresentationProfile->MotionPresentation.bSupportsIndependentMotion || !WeaponRoot)
 	{
 		EndIndependentMotion();
 		return;
 	}
 
-	// Exactly matches Persona's attached StaticMesh preview: the authored key is
-	// the weapon root's transform relative to the drawn socket.
-	const float StateBlendAlpha = Project_J::WeaponMotion::EvaluateStateBlendAlpha(ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds, ActiveExitBlendSeconds);
-	FTransform DesiredRootRelativeTransform = Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionKeys, ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds, ActiveExitBlendSeconds);
-	WeaponRoot->SetRelativeTransform(DesiredRootRelativeTransform, false, nullptr, ETeleportType::TeleportPhysics);
+	const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	if (!CharacterMesh || !CharacterMesh->DoesSocketExist(PresentationProfile->DrawnSocketName))
+	{
+		EndIndependentMotion();
+		return;
+	}
+	const FTransform SourceSocketWorld = CharacterMesh->GetSocketTransform(PresentationProfile->DrawnSocketName, RTS_World);
+	const bool bContactHandoff = PresentationProfile->MotionPresentation.bUseContactHandoff;
+	const USkeletalMeshComponent* ReturnMesh = bContactHandoff ? nullptr : ActiveMotionReturnMesh.Get();
+	const FTransform ReturnSocketWorld = ReturnMesh && !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
+		? ReturnMesh->GetSocketTransform(ActiveMotionReturnSocket, RTS_World) : SourceSocketWorld;
+	auto EvaluateWorld = [&](const FVector& Correction)
+	{
+		return bContactHandoff
+			? Project_J::WeaponMotion::EvaluateContactDrivenWorldTransform(ActiveMotionKeys,
+				ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds,
+				SourceSocketWorld, ActiveMotionEntryWorld, Correction)
+			: Project_J::WeaponMotion::EvaluatePresentationWorldTransform(ActiveMotionKeys,
+				ActiveMotionNormalizedTime, ActiveMotionDurationSeconds, ActiveEntryBlendSeconds, ActiveExitBlendSeconds,
+				SourceSocketWorld, ReturnSocketWorld, Correction);
+	};
+	const FTransform UncorrectedWorld = EvaluateWorld(FVector::ZeroVector);
+	WeaponRoot->SetRelativeTransform(UncorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
 
 	FVector GroundCorrectionComponentSpace = FVector::ZeroVector;
 	if (GroundContactStateCount > 0 && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
 	{
-		// Ground correction is calculated in character-mesh component space; the
-		// root's relative location is socket space, so convert before adding it.
-		const ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-		const USkeletalMeshComponent* CharacterMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
-		const FName DrawnSocketName = WeaponRoot->GetAttachSocketName();
-		const FTransform SocketComponentTransform = CharacterMesh && !DrawnSocketName.IsNone()
-			? CharacterMesh->GetSocketTransform(DrawnSocketName, RTS_Component)
-			: FTransform::Identity;
-		DesiredRootRelativeTransform.AddToTranslation(SocketComponentTransform.InverseTransformVectorNoScale(GroundCorrectionComponentSpace * StateBlendAlpha));
-		WeaponRoot->SetRelativeTransform(DesiredRootRelativeTransform, false, nullptr, ETeleportType::TeleportPhysics);
+		const FVector GroundCorrectionWorld = CharacterMesh->GetComponentTransform().TransformVectorNoScale(GroundCorrectionComponentSpace);
+		const FTransform CorrectedWorld = EvaluateWorld(GroundCorrectionWorld);
+		WeaponRoot->SetRelativeTransform(CorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
 	}
 
 	UpdateGripTargets();
@@ -598,6 +876,32 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 
 	GripTargets.bHasPrimaryGrip = FindWeaponSocketTransform(PrimarySocket, GripTargets.PrimaryGripWorldTransform);
 	GripTargets.bHasSecondaryGrip = FindWeaponSocketTransform(SecondarySocket, GripTargets.SecondaryGripWorldTransform);
+	GripTargets.DriveMode = bIndependentMotionActive ? EProject_JWeaponGripDriveMode::AuthoredWeaponMotion
+		: EProject_JWeaponGripDriveMode::BodySocket;
+	GripTargets.bHasPrimaryHandSpaceGrip = false;
+	GripTargets.bPrimaryIKSuppressedByAttachment = false;
+	GripTargets.bContactRecovery = false;
+	GripTargets.PrimaryHandBoneName = NAME_None;
+	GripTargets.SecondaryGripInPrimaryHandSpace = FTransform::Identity;
+	if (!bIndependentMotionActive && CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
+	{
+		const ACharacter* Character = Cast<ACharacter>(GetOwner());
+		const USceneComponent* WeaponRoot = SpawnedWeapon->GetRootComponent();
+		const USkeletalMeshComponent* AttachMesh = WeaponRoot
+			? Cast<USkeletalMeshComponent>(WeaponRoot->GetAttachParent()) : nullptr;
+		if (Character && AttachMesh && AttachMesh != Character->GetMesh())
+		{
+			GripTargets.DriveMode = EProject_JWeaponGripDriveMode::PrimaryHand;
+			const FName HandBone = AttachMesh->GetSocketBoneName(WeaponRoot->GetAttachSocketName());
+			if (GripTargets.bHasSecondaryGrip && !HandBone.IsNone() && AttachMesh->GetBoneIndex(HandBone) != INDEX_NONE)
+			{
+				GripTargets.PrimaryHandBoneName = HandBone;
+				GripTargets.SecondaryGripInPrimaryHandSpace = GripTargets.SecondaryGripWorldTransform.GetRelativeTransform(
+					AttachMesh->GetBoneTransform(HandBone, RTS_World));
+				GripTargets.bHasPrimaryHandSpaceGrip = true;
+			}
+		}
+	}
 
 	if (bIndependentMotionActive)
 	{
@@ -626,6 +930,139 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 			GripTargets.PrimaryIKAlpha = GripTargets.bHasPrimaryGrip ? Motion.DefaultSheathedPrimaryIKAlpha : 0.0f;
 			GripTargets.SecondaryIKAlpha = GripTargets.bHasSecondaryGrip ? Motion.DefaultSheathedSecondaryIKAlpha : 0.0f;
 		}
+	}
+
+	// When the weapon is attached to the rendered hand, solving that same hand
+	// back toward a socket on the weapon creates a feedback loop. Independent
+	// weapon motion has its own authored target and remains unaffected.
+	if (!bIndependentMotionActive && !Motion.bAllowPrimaryIKOnVisualAttachment &&
+		CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
+	{
+		const ACharacter* Character = Cast<ACharacter>(GetOwner());
+		const USceneComponent* WeaponRoot = SpawnedWeapon->GetRootComponent();
+		const USkeletalMeshComponent* AttachMesh = WeaponRoot
+			? Cast<USkeletalMeshComponent>(WeaponRoot->GetAttachParent()) : nullptr;
+		if (Character && AttachMesh && AttachMesh != Character->GetMesh())
+		{
+			GripTargets.PrimaryIKAlpha = 0.0f;
+			GripTargets.bPrimaryIKSuppressedByAttachment = true;
+		}
+	}
+	if (bContactRecoveryActive && ContactRecoveryMesh.IsValid())
+	{
+		// Never sample the primary target from the weapon that follows this hand.
+		GripTargets.PrimaryGripWorldTransform = ContactRecoveryGripComponent * ContactRecoveryMesh->GetComponentTransform();
+		if (const USkeletalMeshComponent* SourceMesh = ContactRecoverySourceMesh.Get();
+			ContactRecoverySourceInstanceID != INDEX_NONE && SourceMesh && SourceMesh->DoesSocketExist(ContactRecoverySourceSocket))
+		{
+			GripTargets.PrimaryGripWorldTransform = ContactRecoveryGripInSourceSocket *
+				SourceMesh->GetSocketTransform(ContactRecoverySourceSocket, RTS_World);
+		}
+		GripTargets.PrimaryIKAlpha = ContactRecoveryPrimaryAlpha * (1.0f - ContactRecoveryAlpha);
+		GripTargets.SecondaryIKAlpha = FMath::Lerp(ContactRecoverySecondaryAlpha, GripTargets.SecondaryIKAlpha, ContactRecoveryAlpha);
+		GripTargets.bPrimaryIKSuppressedByAttachment = false;
+		GripTargets.bContactRecovery = true;
+		GripTargets.DriveMode = EProject_JWeaponGripDriveMode::ContactRecovery;
+	}
+}
+
+void UProject_JWeaponPresentationComponent::SetActiveAttackPresentation(const FGameplayTag AttackTag)
+{
+	if (ActiveAttackPresentationTag == AttackTag)
+	{
+		return;
+	}
+	ActiveAttackPresentationTag = AttackTag;
+	LogGripTraceEvent(AttackTag.IsValid() ? TEXT("AttackSet") : TEXT("AttackCleared"));
+	ResolvedAttackPresentationTag = FGameplayTag();
+	ResolvedAttackStyle.Reset();
+	ResolvedAttackDefinition.Reset();
+	if (!AttackTag.IsValid() && bIndependentMotionActive)
+	{
+		EndIndependentMotion();
+	}
+	UpdateTickState();
+}
+
+bool UProject_JWeaponPresentationComponent::GetAutoAttackMotionSettings(float& OutPrimaryAlpha, float& OutSecondaryAlpha)
+{
+	if (!bCombatPresentationActive || !ActiveAttackPresentationTag.IsValid() ||
+		CurrentPresentationSocket != EProject_JWeaponPresentationSocket::Drawn || !SpawnedWeapon)
+	{
+		return false;
+	}
+	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
+	const AProject_JBaseCharacter* Base = Cast<AProject_JBaseCharacter>(GetOwner());
+	const UProject_JCombatStyleDefinition* Style = Player ? Player->GetCombatStyleDefinition()
+		: (PresentationCombatStyle ? PresentationCombatStyle.Get() : (Base ? Base->GetClassCombatStyleDefinition() : nullptr));
+	if (!Profile || !Profile->MotionPresentation.bSupportsIndependentMotion || !Style)
+	{
+		return false;
+	}
+	if (ResolvedAttackPresentationTag != ActiveAttackPresentationTag || ResolvedAttackStyle.Get() != Style)
+	{
+		ResolvedAttackPresentationTag = ActiveAttackPresentationTag;
+		ResolvedAttackStyle = Style;
+		const UProject_JAttackSet* AttackSet = Style->GetRuntimeAttackSet();
+		ResolvedAttackDefinition = AttackSet ? AttackSet->FindAttack(ActiveAttackPresentationTag) : nullptr;
+	}
+	const UProject_JAttackDefinition* Attack = ResolvedAttackDefinition.Get();
+	if (!Attack || !Attack->bMontageDriven || !Attack->Montage ||
+		Attack->WeaponDrive == EProject_JAttackWeaponDrive::VisualHand ||
+		(Attack->WeaponDrive == EProject_JAttackWeaponDrive::WeaponDefault && !Profile->MotionPresentation.bSourceDrivenMontageAttacks))
+	{
+		return false;
+	}
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	UAnimInstance* Anim = Character && Character->GetMesh() ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	if (!Anim || !Anim->Montage_IsActive(Attack->Montage))
+	{
+		return false;
+	}
+	if (const FAnimMontageInstance* Instance = Anim->GetActiveInstanceForMontage(Attack->Montage))
+	{
+		AutoAttackSourceAnim = Anim;
+		AutoAttackSourceInstanceID = Instance->GetInstanceID();
+	}
+	OutPrimaryAlpha = Attack->bOverrideGripIK ? FMath::Clamp(Attack->PrimaryGripIKAlpha, 0.0f, 1.0f)
+		: Profile->MotionPresentation.DefaultAttackPrimaryIKAlpha;
+	OutSecondaryAlpha = Attack->bOverrideGripIK ? FMath::Clamp(Attack->SecondaryGripIKAlpha, 0.0f, 1.0f)
+		: Profile->MotionPresentation.DefaultAttackSecondaryIKAlpha;
+	return true;
+}
+
+void UProject_JWeaponPresentationComponent::RefreshAttackMotion()
+{
+	if (bNotifyOwnsMotion)
+	{
+		return;
+	}
+	float PrimaryAlpha = 0.0f;
+	float SecondaryAlpha = 0.0f;
+	if (!GetAutoAttackMotionSettings(PrimaryAlpha, SecondaryAlpha))
+	{
+		if (bAutoAttackMotionActive)
+		{
+			EndIndependentMotion();
+		}
+		return;
+	}
+	if (!bAutoAttackMotionActive)
+	{
+		const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+		const float EntrySeconds = Profile ? FMath::Max(0.0f, Profile->MotionPresentation.AttackEntryBlendSeconds) : 0.0f;
+		if (BeginIndependentMotion({}, PrimaryAlpha, SecondaryAlpha, EntrySeconds, EntrySeconds, 0.0f))
+		{
+			bNotifyOwnsMotion = false;
+			bAutoAttackMotionActive = true;
+			LogGripTraceEvent(TEXT("AutoAttackBegin"));
+		}
+	}
+	else
+	{
+		ActivePrimaryGripIKAlpha = PrimaryAlpha;
+		ActiveSecondaryGripIKAlpha = SecondaryAlpha;
 	}
 }
 
@@ -760,7 +1197,10 @@ bool UProject_JWeaponPresentationComponent::TryGetGroundCorrection(float DeltaTi
 
 void UProject_JWeaponPresentationComponent::UpdateTickState()
 {
-	SetComponentTickEnabled(CanCreatePresentation() && (bIndependentMotionActive || (SpawnedWeapon && Project_J::WeaponPresentation::IsDebugEnabled())));
+	SetComponentTickEnabled(CanCreatePresentation() && (bIndependentMotionActive || bContactRecoveryActive ||
+		(SpawnedWeapon && ActiveAttackPresentationTag.IsValid()) ||
+		(SpawnedWeapon && Project_J::WeaponPresentation::CVarGripTrace.GetValueOnGameThread() != 0) ||
+		(SpawnedWeapon && Project_J::WeaponPresentation::IsDebugEnabled())));
 }
 
 const UProject_JWeaponPresentationProfile* UProject_JWeaponPresentationComponent::GetCurrentPresentationProfile() const
@@ -769,12 +1209,219 @@ const UProject_JWeaponPresentationProfile* UProject_JWeaponPresentationComponent
 	// A player's replicated equipment configuration is the source of truth.
 	// Other owners (including isolated presentation fixtures) may keep their
 	// explicitly applied profile until a replacement is supplied.
-	return PlayerCharacter ? PlayerCharacter->GetCurrentWeaponPresentationProfile() : AppliedProfile.Get();
+	return PlayerCharacter ? PlayerCharacter->GetCurrentWeaponPresentationProfile()
+		: (OwnerPresentationProfile ? OwnerPresentationProfile.Get() : AppliedProfile.Get());
 }
 
 bool UProject_JWeaponPresentationComponent::ShouldShowWeapon() const
 {
 	return GetCurrentPresentationProfile() != nullptr;
+}
+
+void UProject_JWeaponPresentationComponent::LogGripTraceEvent(const TCHAR* Event) const
+{
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	if (!Project_J::WeaponPresentation::ShouldTraceGrip(Character)) { return; }
+	const USceneComponent* Root = SpawnedWeapon ? SpawnedWeapon->GetRootComponent() : nullptr;
+	const USkeletalMeshComponent* Source = Character ? Character->GetMesh() : nullptr;
+	const UAnimInstance* SourceAnim = Source ? Source->GetAnimInstance() : nullptr;
+	const UAnimMontage* Montage = SourceAnim ? SourceAnim->GetCurrentActiveMontage() : nullptr;
+	const float MontageTime = SourceAnim && Montage ? SourceAnim->Montage_GetPosition(Montage) : -1.0f;
+	const FVector World = Root ? Root->GetComponentLocation() : FVector::ZeroVector;
+	const FVector Relative = Root ? Root->GetRelativeLocation() : FVector::ZeroVector;
+	UE_LOG(LogProjectJWeaponPresentation, Display,
+		TEXT("[GripTrace][Event] t=%.3f f=%llu actor=%s event=%s mode=%s attack=%s montage=%s mt=%.3f parent=%s socket=%s weapon=(%.1f,%.1f,%.1f) rel=(%.1f,%.1f,%.1f)"),
+		GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0,
+		static_cast<unsigned long long>(GFrameCounter), *GetNameSafe(Character), Event,
+		Project_J::WeaponPresentation::GripTraceMode(bIndependentMotionActive, bNotifyOwnsMotion,
+			bAutoAttackMotionActive, CurrentPresentationSocket, bContactRecoveryActive),
+		*ActiveAttackPresentationTag.ToString(), *GetNameSafe(Montage), MontageTime,
+		Root ? *GetNameSafe(Root->GetAttachParent()) : TEXT("None"),
+		Root ? *Root->GetAttachSocketName().ToString() : TEXT("None"),
+		World.X, World.Y, World.Z, Relative.X, Relative.Y, Relative.Z);
+}
+
+void UProject_JWeaponPresentationComponent::SampleGripTrace()
+{
+	const ACharacter* Character = Cast<ACharacter>(GetOwner());
+	if (!Project_J::WeaponPresentation::ShouldTraceGrip(Character) || !SpawnedWeapon || !GetWorld())
+	{
+		bGripTraceHasPreviousSample = false;
+		return;
+	}
+	const double Now = GetWorld()->GetTimeSeconds();
+	if (Now < GripTraceNextSampleTime) { return; }
+	GripTraceNextSampleTime = Now + 1.0 / FMath::Clamp(Project_J::WeaponPresentation::CVarGripTraceHz.GetValueOnGameThread(), 1.0f, 120.0f);
+
+	const USceneComponent* Root = SpawnedWeapon->GetRootComponent();
+	const USkeletalMeshComponent* Source = Character->GetMesh();
+	const USkeletalMeshComponent* Visible = Project_J::Animation::FindVisualFollower(*Character);
+	const UProject_JRetargetAnimInstance* FollowerAnim = Visible
+		? Cast<UProject_JRetargetAnimInstance>(Visible->GetAnimInstance()) : nullptr;
+	if (!Root || !Source || !Visible || !FollowerAnim) { return; }
+	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
+	const FProject_JHandGripCalibration Calibration = FollowerAnim->GetHandGripCalibration();
+	const FName PalmSocket = Calibration.PrimaryPalmSocketName;
+	const FName HandBone = !Calibration.PrimaryArm.Hand.IsNone() ? Calibration.PrimaryArm.Hand
+		: (Visible->DoesSocketExist(PalmSocket) ? Visible->GetSocketBoneName(PalmSocket) : NAME_None);
+	const FName ElbowBone = !Calibration.PrimaryArm.Elbow.IsNone() ? Calibration.PrimaryArm.Elbow
+		: (!HandBone.IsNone() ? Visible->GetParentBone(HandBone) : NAME_None);
+	const FName ShoulderBone = !Calibration.PrimaryArm.Shoulder.IsNone() ? Calibration.PrimaryArm.Shoulder
+		: (!ElbowBone.IsNone() ? Visible->GetParentBone(ElbowBone) : NAME_None);
+	const bool bHasArm = !ShoulderBone.IsNone() && Visible->GetBoneIndex(ShoulderBone) != INDEX_NONE &&
+		Visible->GetBoneIndex(ElbowBone) != INDEX_NONE && Visible->GetBoneIndex(HandBone) != INDEX_NONE;
+	const FVector Shoulder = bHasArm ? Visible->GetBoneTransform(ShoulderBone, RTS_World).GetLocation() : FVector::ZeroVector;
+	const FVector Elbow = bHasArm ? Visible->GetBoneTransform(ElbowBone, RTS_World).GetLocation() : FVector::ZeroVector;
+	const FVector Wrist = bHasArm ? Visible->GetBoneTransform(HandBone, RTS_World).GetLocation() : FVector::ZeroVector;
+	const float ElbowAngle = bHasArm ? FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(
+		FVector::DotProduct((Shoulder - Elbow).GetSafeNormal(), (Wrist - Elbow).GetSafeNormal()), -1.0f, 1.0f))) : -1.0f;
+	const FVector ArmLine = Wrist - Shoulder;
+	const float AlongArm = bHasArm && ArmLine.SizeSquared() > UE_KINDA_SMALL_NUMBER
+		? FMath::Clamp(FVector::DotProduct(Elbow - Shoulder, ArmLine) / ArmLine.SizeSquared(), 0.0f, 1.0f) : 0.0f;
+	const float ElbowOffset = bHasArm ? FVector::Distance(Elbow, Shoulder + AlongArm * ArmLine) : -1.0f;
+	// Actor rotation is not an elbow flip; straight-arm normals are ill-conditioned.
+	const FVector Plane = bHasArm && ElbowOffset > 0.5f
+		? Visible->GetComponentTransform().InverseTransformVectorNoScale(
+			FVector::CrossProduct(Elbow - Shoulder, Wrist - Elbow)).GetSafeNormal() : FVector::ZeroVector;
+	const float PlaneDot = bGripTraceHasPreviousSample && !Plane.IsNearlyZero() && !GripTracePreviousElbowPlane.IsNearlyZero()
+		? FVector::DotProduct(Plane, GripTracePreviousElbowPlane) : 1.0f;
+	const FVector Sword = Root->GetComponentLocation();
+	const double SampleDt = bGripTraceHasPreviousSample ? Now - GripTracePreviousSampleTime : 0.0;
+	const float SwordSpeed = SampleDt > UE_KINDA_SMALL_NUMBER ? FVector::Distance(Sword, GripTracePreviousWeapon) / SampleDt : 0.0f;
+	const float ElbowSpeed = bHasArm && SampleDt > UE_KINDA_SMALL_NUMBER
+		? FVector::Distance(Elbow, GripTracePreviousElbow) / SampleDt : 0.0f;
+	const float PalmError = GripTargets.bHasPrimaryGrip && Visible->DoesSocketExist(PalmSocket)
+		? FVector::Distance(Visible->GetSocketLocation(PalmSocket), GripTargets.PrimaryGripWorldTransform.GetLocation()) : -1.0f;
+	const FVector WristTarget = Visible->GetComponentTransform().TransformPosition(FollowerAnim->RightGripLocation);
+	const bool bHasTargetSnapshot = FollowerAnim->GetGripTargetSnapshotFrame() != MAX_uint64;
+	const float WristError = bHasArm && bHasTargetSnapshot && GripTargets.bHasPrimaryGrip && FollowerAnim->RightGripAlpha > UE_KINDA_SMALL_NUMBER
+		? FVector::Distance(Wrist, WristTarget) : -1.0f;
+	// During recovery the independent animation target intentionally differs from
+	// the displayed weapon. Measure physical contact independently of that target.
+	// This is observational only: never feed the hand-attached weapon back to IK.
+	const auto LogWeaponContact = [&](const TCHAR* Side, FName WeaponSocket, FName BodyPalm,
+		const FTransform& ContactOffset, bool bHasGoal, const FTransform& IndependentGoal, float Alpha)
+	{
+		FTransform PhysicalGrip;
+		const bool bValid = Visible->DoesSocketExist(BodyPalm) && FindWeaponSocketTransform(WeaponSocket, PhysicalGrip);
+		float RawError = -1.0f, CalibratedError = -1.0f, RotationError = -1.0f, GoalGap = -1.0f;
+		if (bValid)
+		{
+			const FTransform PalmWorld = Visible->GetSocketTransform(BodyPalm, RTS_World);
+			const FTransform CalibratedGrip = ContactOffset * PhysicalGrip;
+			RawError = FVector::Distance(PalmWorld.GetLocation(), PhysicalGrip.GetLocation());
+			CalibratedError = FVector::Distance(PalmWorld.GetLocation(), CalibratedGrip.GetLocation());
+			RotationError = FMath::RadiansToDegrees(PalmWorld.GetRotation().AngularDistance(CalibratedGrip.GetRotation()));
+			if (bHasGoal)
+			{
+				GoalGap = FVector::Distance(CalibratedGrip.GetLocation(), (ContactOffset * IndependentGoal).GetLocation());
+			}
+		}
+		UE_LOG(LogProjectJWeaponPresentation, Display,
+			TEXT("[GripTrace][WeaponContact] t=%.3f f=%llu actor=%s mesh=%s world=%s side=%s mode=%s alpha=%.4f weaponSocket=%s palmSocket=%s valid=%d socketErr=%.3f calibratedErr=%.3f rotationErr=%.3f goalGap=%.3f"),
+			Now, static_cast<unsigned long long>(GFrameCounter), *GetNameSafe(Character), *Visible->GetName(), *GetWorld()->GetName(),
+			Side, Project_J::WeaponPresentation::GripTraceMode(bIndependentMotionActive, bNotifyOwnsMotion,
+				bAutoAttackMotionActive, CurrentPresentationSocket, bContactRecoveryActive), Alpha,
+			*WeaponSocket.ToString(), *BodyPalm.ToString(), bValid, RawError, CalibratedError, RotationError, GoalGap);
+	};
+	LogWeaponContact(TEXT("Primary"), CachedPrimaryGripSocket, Calibration.PrimaryPalmSocketName,
+		Calibration.PrimaryHandOffset, GripTargets.bHasPrimaryGrip, GripTargets.PrimaryGripWorldTransform, FollowerAnim->RightGripAlpha);
+	if (GripTargets.bHasSecondaryGrip || FollowerAnim->LeftGripAlpha > UE_KINDA_SMALL_NUMBER)
+	{
+		LogWeaponContact(TEXT("Secondary"), CachedSecondaryGripSocket, Calibration.SecondaryPalmSocketName,
+			Calibration.SecondaryHandOffset, GripTargets.bHasSecondaryGrip, GripTargets.SecondaryGripWorldTransform, FollowerAnim->LeftGripAlpha);
+	}
+	const FName SourceSocket = Profile ? Profile->DrawnSocketName : NAME_None;
+	const float SourceGap = !SourceSocket.IsNone() && Source->DoesSocketExist(SourceSocket)
+		? FVector::Distance(Sword, Source->GetSocketLocation(SourceSocket)) : -1.0f;
+	const FName VisualSocket = Profile ? Profile->VisualDrawnSocketName : NAME_None;
+	const float VisualGap = !VisualSocket.IsNone() && Visible->DoesSocketExist(VisualSocket)
+		? FVector::Distance(Sword, Visible->GetSocketLocation(VisualSocket)) : -1.0f;
+	const UAnimInstance* SourceAnim = Source->GetAnimInstance();
+	const UAnimMontage* Montage = SourceAnim ? SourceAnim->GetCurrentActiveMontage() : nullptr;
+	const float MontageTime = SourceAnim && Montage ? SourceAnim->Montage_GetPosition(Montage) : -1.0f;
+	const FVector Relative = Root->GetRelativeLocation();
+	UE_LOG(LogProjectJWeaponPresentation, Display,
+		TEXT("[GripTrace][Sample] t=%.3f f=%llu actor=%s mode=%s attack=%s montage=%s mt=%.3f alpha=%.2f suppressed=%d palm=%s hand=%s elbow=%s shoulder=%s angle=%.1f elbowLine=%.1f planeDot=%.2f elbowSpeed=%.1f palmErr=%.1f wristErr=%.1f swordSpeed=%.1f sourceGap=%.1f visualGap=%.1f sword=(%.1f,%.1f,%.1f) elbowPos=(%.1f,%.1f,%.1f) rel=(%.1f,%.1f,%.1f) parent=%s socket=%s"),
+		Now, static_cast<unsigned long long>(GFrameCounter), *GetNameSafe(Character),
+		Project_J::WeaponPresentation::GripTraceMode(bIndependentMotionActive, bNotifyOwnsMotion,
+			bAutoAttackMotionActive, CurrentPresentationSocket, bContactRecoveryActive),
+		*ActiveAttackPresentationTag.ToString(), *GetNameSafe(Montage), MontageTime,
+		FollowerAnim->RightGripAlpha, GripTargets.bPrimaryIKSuppressedByAttachment ? 1 : 0,
+		*PalmSocket.ToString(), *HandBone.ToString(), *ElbowBone.ToString(), *ShoulderBone.ToString(),
+		ElbowAngle, ElbowOffset, PlaneDot, ElbowSpeed, PalmError, WristError,
+		SwordSpeed, SourceGap, VisualGap, Sword.X, Sword.Y, Sword.Z,
+		Elbow.X, Elbow.Y, Elbow.Z, Relative.X, Relative.Y, Relative.Z,
+		*GetNameSafe(Root->GetAttachParent()), *Root->GetAttachSocketName().ToString());
+
+	const FVector SourceSocketComponent = !SourceSocket.IsNone() && Source->DoesSocketExist(SourceSocket)
+		? Source->GetSocketTransform(SourceSocket, RTS_Component).GetLocation() : FVector::ZeroVector;
+	UAnimInstance* TrackedAnim = ContactRecoverySourceInstanceID != INDEX_NONE
+		? ContactRecoverySourceAnim.Get() : AutoAttackSourceAnim.Get();
+	const int32 TrackedInstanceID = ContactRecoverySourceInstanceID != INDEX_NONE
+		? ContactRecoverySourceInstanceID : AutoAttackSourceInstanceID;
+	const FAnimMontageInstance* TrackedMontage = TrackedAnim ? TrackedAnim->GetMontageInstanceForID(TrackedInstanceID) : nullptr;
+	UE_LOG(LogProjectJWeaponPresentation, Display,
+		TEXT("[GripTrace][Timing] f=%llu sourceBones=%u visibleBones=%u targetFrame=%llu poseFrame=%llu motionFrame=%llu recovery=%.3f actor=%s sourceMesh=%s visibleMesh=%s sourceSocketCS=%s swordRotation=%s relativeRotation=%s planeValid=%d recoveryClock=%s sourceInstance=%d sourceMontage=%s sourcePosition=%.3f sourceWeight=%.3f sourceStopped=%d"),
+		static_cast<unsigned long long>(GFrameCounter), Source->GetCurrentBoneTransformFrame(), Visible->GetCurrentBoneTransformFrame(),
+		static_cast<unsigned long long>(FollowerAnim->GetGripTargetSnapshotFrame()),
+		static_cast<unsigned long long>(FollowerAnim->GetGripPoseEvaluationFrame()),
+		static_cast<unsigned long long>(LastMotionEvaluationFrame), ContactRecoveryAlpha,
+		*Character->GetActorLocation().ToCompactString(), *Source->GetComponentLocation().ToCompactString(),
+		*Visible->GetComponentLocation().ToCompactString(), *SourceSocketComponent.ToCompactString(),
+		*Root->GetComponentRotation().ToCompactString(), *Root->GetRelativeRotation().ToCompactString(), !Plane.IsNearlyZero(),
+		bContactRecoveryActive ? (ContactRecoverySourceInstanceID != INDEX_NONE ? TEXT("MontageWeight") : TEXT("Timer")) : TEXT("None"),
+		TrackedInstanceID, *GetNameSafe(TrackedMontage ? TrackedMontage->Montage : nullptr),
+		TrackedMontage ? TrackedMontage->GetPosition() : -1.0f, TrackedMontage ? TrackedMontage->GetWeight() : -1.0f,
+		TrackedMontage ? static_cast<int32>(TrackedMontage->IsStopped()) : -1);
+	const auto LogArm = [&](const TCHAR* Side, const FProject_JGripArmBones& Bones, FName ContactSocket,
+		const FVector& TargetLocation, const FRotator& TargetRotation, float Alpha)
+	{
+		const FName Hand = Bones.Hand.IsNone() ? Visible->GetSocketBoneName(ContactSocket) : Bones.Hand;
+		const FName Forearm = Bones.Elbow.IsNone() ? Visible->GetParentBone(Hand) : Bones.Elbow;
+		const FName UpperArm = Bones.Shoulder.IsNone() ? Visible->GetParentBone(Forearm) : Bones.Shoulder;
+		if (Visible->GetBoneIndex(Hand) == INDEX_NONE || Visible->GetBoneIndex(Forearm) == INDEX_NONE ||
+			Visible->GetBoneIndex(UpperArm) == INDEX_NONE) { return; }
+		const FTransform HandWorld = Visible->GetBoneTransform(Hand, RTS_World);
+		const FVector ElbowWorld = Visible->GetBoneTransform(Forearm, RTS_World).GetLocation();
+		const FVector ShoulderWorld = Visible->GetBoneTransform(UpperArm, RTS_World).GetLocation();
+		const float ArmLength = FVector::Distance(ShoulderWorld, ElbowWorld) + FVector::Distance(ElbowWorld, HandWorld.GetLocation());
+		const FVector TargetWorld = Visible->GetComponentTransform().TransformPosition(TargetLocation);
+		const bool bTargetActive = bHasTargetSnapshot && Alpha > UE_KINDA_SMALL_NUMBER;
+		const float Reach = bTargetActive ? FVector::Distance(ShoulderWorld, TargetWorld) : -1.0f;
+		const FQuat TargetWorldRotation = Visible->GetComponentQuat() * TargetRotation.Quaternion();
+		const float RotationError = bTargetActive
+			? FMath::RadiansToDegrees(HandWorld.GetRotation().AngularDistance(TargetWorldRotation)) : -1.0f;
+		UE_LOG(LogProjectJWeaponPresentation, Display,
+			TEXT("[GripTrace][Arm] f=%llu side=%s hand=%s elbow=%s shoulder=%s alpha=%.3f armLength=%.2f reach=%.2f reachRatio=%.3f excess=%.2f wristRotErr=%.1f shoulderPos=%s wristPos=%s targetPos=%s wristRotation=%s targetRotation=%s"),
+			static_cast<unsigned long long>(GFrameCounter), Side, *Hand.ToString(), *Forearm.ToString(), *UpperArm.ToString(),
+			Alpha, ArmLength, Reach, Reach >= 0.0f && ArmLength > UE_KINDA_SMALL_NUMBER ? Reach / ArmLength : -1.0f,
+			Reach >= 0.0f ? FMath::Max(Reach - ArmLength, 0.0f) : -1.0f, RotationError,
+			*ShoulderWorld.ToCompactString(), *HandWorld.GetLocation().ToCompactString(), *TargetWorld.ToCompactString(),
+			*HandWorld.Rotator().ToCompactString(), *TargetWorldRotation.Rotator().ToCompactString());
+		const FTransform FinalHand = Visible->GetBoneTransform(Hand, RTS_Component);
+		const FTransform FinalForearm = Visible->GetBoneTransform(Forearm, RTS_Component);
+		const FTransform FinalUpperArm = Visible->GetBoneTransform(UpperArm, RTS_Component);
+		UE_LOG(LogProjectJWeaponPresentation, Display,
+			TEXT("[GripTrace][FinalCS] f=%llu targetFrame=%llu poseFrame=%llu actor=%s mesh=%s world=%s side=%s hand=%s elbow=%s shoulder=%s alpha=%.4f shoulderCS=%s elbowCS=%s wristCS=%s wristRotCS=%s targetCS=%s"),
+			static_cast<unsigned long long>(GFrameCounter), static_cast<unsigned long long>(FollowerAnim->GetGripTargetSnapshotFrame()),
+			static_cast<unsigned long long>(FollowerAnim->GetGripPoseEvaluationFrame()), *GetNameSafe(Character),
+			*Visible->GetName(), *GetWorld()->GetName(), Side, *Hand.ToString(), *Forearm.ToString(), *UpperArm.ToString(),
+			Alpha, *FinalUpperArm.GetLocation().ToCompactString(), *FinalForearm.GetLocation().ToCompactString(),
+			*FinalHand.GetLocation().ToCompactString(), *FinalHand.Rotator().ToCompactString(), *TargetLocation.ToCompactString());
+	};
+	LogArm(TEXT("Primary"), Calibration.PrimaryArm, Calibration.PrimaryPalmSocketName,
+		FollowerAnim->RightGripLocation, FollowerAnim->RightGripRotation, FollowerAnim->RightGripAlpha);
+	if (FollowerAnim->LeftGripAlpha > UE_KINDA_SMALL_NUMBER)
+	{
+		LogArm(TEXT("Secondary"), Calibration.SecondaryArm, Calibration.SecondaryPalmSocketName,
+			FollowerAnim->LeftGripLocation, FollowerAnim->LeftGripRotation, FollowerAnim->LeftGripAlpha);
+	}
+	GripTracePreviousSampleTime = Now;
+	GripTracePreviousWeapon = Sword;
+	GripTracePreviousElbow = Elbow;
+	GripTracePreviousElbowPlane = Plane;
+	bGripTraceHasPreviousSample = true;
 }
 
 void UProject_JWeaponPresentationComponent::LogWeaponPresentationDebug(const TCHAR* Context) const
@@ -858,6 +1505,23 @@ FProject_JWeaponGripTargets UProject_JWeaponPresentationComponent::GetWeaponGrip
 {
 	if (!bIndependentMotionActive && SpawnedWeapon)
 	{
+		UpdateGripTargets();
+	}
+	return GripTargets;
+}
+
+FProject_JWeaponGripTargets UProject_JWeaponPresentationComponent::GetWeaponGripTargetsForAnimation(float DeltaSeconds)
+{
+	check(IsInGameThread());
+	RefreshAttackMotion();
+	if (bIndependentMotionActive && LastMotionEvaluationFrame != GFrameCounter)
+	{
+		UpdateIndependentMotion(DeltaSeconds);
+		LastMotionEvaluationFrame = GFrameCounter;
+	}
+	else if (!bIndependentMotionActive && SpawnedWeapon)
+	{
+		if (bContactRecoveryActive && GetWorld()) { UpdateContactRecovery(GetWorld()->GetTimeSeconds()); }
 		UpdateGripTargets();
 	}
 	return GripTargets;

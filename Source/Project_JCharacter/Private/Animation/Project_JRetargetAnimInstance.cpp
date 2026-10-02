@@ -3,6 +3,7 @@
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JHandContact.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -28,6 +29,7 @@ UProject_JRetargetAnimInstance::UProject_JRetargetAnimInstance()
 	bAutoDetectWeaponIfNull = false; // Production default: event-driven via UpdateWeaponTarget
 
 	bHasValidRightSnapshot = false;
+	bPrimaryIKSuppressedSnapshot = false;
 	bHasValidLeftSnapshot = false;
 	TargetRightAlphaSnapshot = 1.0f;
 	TargetLeftAlphaSnapshot = 0.0f;
@@ -65,6 +67,8 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 	}
 
 	// Clear transient snapshots
+	RightWristTarget = LeftWristTarget = FTransform::Identity;
+	bRightContactTargetValid = bLeftContactTargetValid = false;
 	bHasValidRightSnapshot = false;
 	bHasValidLeftSnapshot = false;
 	CachedWeaponComponent.Reset();
@@ -94,17 +98,36 @@ void UProject_JRetargetAnimInstance::SetCombatMode(bool bInCombatMode)
 	bIsCombatMode = bInCombatMode;
 }
 
+FProject_JHandGripCalibration UProject_JRetargetAnimInstance::GetHandGripCalibration() const
+{
+	check(IsInGameThread());
+	if (HandGripProfile) { return HandGripProfile->Calibration; }
+	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
+	const UProject_JCharacterAnimProfile* Profile = Player ? Player->GetCharacterAnimProfile() : nullptr;
+	if (Profile)
+	{
+		return Profile->HandGripProfile ? Profile->HandGripProfile->Calibration : Profile->HandGripCalibration;
+	}
+	return FProject_JHandGripCalibration();
+}
+
 void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
+	GripTargetSnapshotFrame = MAX_uint64;
 
 	// Per-frame snapshot initialization to eliminate stale transforms
 	bHasValidRightSnapshot = false;
+	bPrimaryIKSuppressedSnapshot = false;
+	bContactRecoverySnapshot = false;
 	bHasValidLeftSnapshot = false;
 	TargetRightAlphaSnapshot = 0.0f;
 	TargetLeftAlphaSnapshot = 0.0f;
 	SnapshotRightElbowTarget = FVector::ZeroVector;
 	SnapshotLeftElbowTarget = FVector::ZeroVector;
+	SnapshotLeftGripInPrimaryHandSpace = FTransform::Identity;
+	SnapshotPrimaryHandBoneName = NAME_None;
+	bHasPrimaryHandSpaceGripSnapshot = false;
 
 	// Dedicated server early-out: visual IK and retargeting evaluation are client-only concerns.
 	if (const UWorld* World = GetWorld())
@@ -162,6 +185,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 	SnapshotOwningCompWorldTransform = OwningComp->GetComponentTransform();
+	GripTargetSnapshotFrame = GFrameCounter;
 
 	// 3. Check Leader AnimInstance curves (supports authored high-precision Float Curves on attack montages)
 	float LeaderLeftCurveValue = -1.0f;
@@ -174,16 +198,16 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			{
 				if (!LeftHandIKCurveName.IsNone())
 				{
-					const float Val = LeaderAnim->GetCurveValue(LeftHandIKCurveName);
-					if (Val > UE_KINDA_SMALL_NUMBER)
+					float Val = 0.0f;
+					if (LeaderAnim->GetCurveValue(LeftHandIKCurveName, Val))
 					{
 						LeaderLeftCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
 					}
 				}
 				if (!RightHandIKCurveName.IsNone())
 				{
-					const float Val = LeaderAnim->GetCurveValue(RightHandIKCurveName);
-					if (Val > UE_KINDA_SMALL_NUMBER)
+					float Val = 0.0f;
+					if (LeaderAnim->GetCurveValue(RightHandIKCurveName, Val))
 					{
 						LeaderRightCurveValue = FMath::Clamp(Val, 0.0f, 1.0f);
 					}
@@ -201,12 +225,17 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bool bResolvedFromPresentation = false;
 	if (CachedPresentationComp.IsValid())
 	{
-		const FProject_JWeaponGripTargets GripTargets = CachedPresentationComp->GetWeaponGripTargets();
+		const FProject_JWeaponGripTargets GripTargets = CachedPresentationComp->GetWeaponGripTargetsForAnimation(DeltaSeconds);
+		bContactRecoverySnapshot = GripTargets.bContactRecovery;
 		if (GripTargets.bHasPrimaryGrip)
 		{
 			SnapshotRightGripWorldTransform = GripTargets.PrimaryGripWorldTransform;
 			bHasValidRightSnapshot = true;
-			const float PrimaryBaseAlpha = (LeaderRightCurveValue >= 0.0f) ? LeaderRightCurveValue : GripTargets.PrimaryIKAlpha;
+			bPrimaryIKSuppressedSnapshot = GripTargets.bPrimaryIKSuppressedByAttachment;
+			// The visible hand already drives an attached weapon. An authored curve
+			// cannot reintroduce a self-following primary-hand IK loop in this mode.
+			const float PrimaryBaseAlpha = GripTargets.bPrimaryIKSuppressedByAttachment
+				? 0.0f : ((!GripTargets.bContactRecovery && LeaderRightCurveValue >= 0.0f) ? LeaderRightCurveValue : GripTargets.PrimaryIKAlpha);
 			TargetRightAlphaSnapshot = bIsCombatMode
 				? (bEnableCombatGripIK ? PrimaryBaseAlpha : 0.0f)
 				: PrimaryBaseAlpha;
@@ -216,10 +245,17 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			SnapshotLeftGripWorldTransform = GripTargets.SecondaryGripWorldTransform;
 			bHasValidLeftSnapshot = true;
-			const float SecondaryBaseAlpha = (LeaderLeftCurveValue >= 0.0f) ? LeaderLeftCurveValue : GripTargets.SecondaryIKAlpha;
+			const float SecondaryBaseAlpha = (!GripTargets.bContactRecovery && LeaderLeftCurveValue >= 0.0f)
+				? LeaderLeftCurveValue : GripTargets.SecondaryIKAlpha;
 			TargetLeftAlphaSnapshot = bIsCombatMode
 				? (bEnableCombatGripIK ? SecondaryBaseAlpha : 0.0f)
 				: SecondaryBaseAlpha;
+			if (GripTargets.bHasPrimaryHandSpaceGrip)
+			{
+				SnapshotLeftGripInPrimaryHandSpace = GripTargets.SecondaryGripInPrimaryHandSpace;
+				SnapshotPrimaryHandBoneName = GripTargets.PrimaryHandBoneName;
+				bHasPrimaryHandSpaceGripSnapshot = true;
+			}
 			bResolvedFromPresentation = true;
 		}
 	}
@@ -299,25 +335,41 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 
-	// The weapon owns socket placement; the body profile owns how this
-	// character's palms meet those sockets. Apply only value data on the game
-	// thread so the worker never reads an asset or a component.
-	if (const AProject_JPlayerCharacter* PlayerChar = Cast<AProject_JPlayerCharacter>(OwnerPawn))
+	// Resolve authored body anchors once per animation update, on the game thread.
+	// The shared value conversion has exactly one owner. Solver inputs are WRIST
+	// targets; neither a graph node nor a downstream rig should convert them again.
 	{
-		if (const UProject_JCharacterAnimProfile* Profile = PlayerChar->GetCharacterAnimProfile())
+		const FProject_JHandGripCalibration Calibration = GetHandGripCalibration();
+		const bool bLegacy = Calibration.MissingPalmPolicy == EProject_JMissingPalmPolicy::LegacyWristOrigin;
+		auto ResolveWristTarget = [OwningComp, bLegacy](FName PalmSocketName, FName HandName,
+			const FTransform& BodyOffset, FTransform& InOutGripWorld, FTransform* InOutHandSpace)
 		{
-			const FProject_JHandGripCalibration& Calibration = Profile->HandGripCalibration;
-			if (bHasValidRightSnapshot)
+			const Project_J::Animation::FResolvedHandContact Contact =
+				Project_J::Animation::ResolveHandContact(*OwningComp, PalmSocketName, HandName, bLegacy);
+			if (!Contact.IsValid()) { return false; }
+			FTransform Wrist;
+			if (!Project_J::Animation::MakeWristContactTarget(InOutGripWorld, Contact.PalmInHand, BodyOffset, Wrist)) { return false; }
+			InOutGripWorld = Wrist;
+			if (InOutHandSpace)
 			{
-				SnapshotRightGripWorldTransform = Calibration.PrimaryHandOffset * SnapshotRightGripWorldTransform;
+				if (!Project_J::Animation::MakeWristContactTarget(*InOutHandSpace, Contact.PalmInHand, BodyOffset, Wrist)) { return false; }
+				*InOutHandSpace = Wrist;
 			}
-			if (bHasValidLeftSnapshot)
-			{
-				SnapshotLeftGripWorldTransform = Calibration.SecondaryHandOffset * SnapshotLeftGripWorldTransform;
-			}
-			SnapshotRightElbowTarget = Calibration.PrimaryElbowTarget;
-			SnapshotLeftElbowTarget = Calibration.SecondaryElbowTarget;
+			return true;
+		};
+		if (bHasValidRightSnapshot)
+		{
+			bHasValidRightSnapshot = ResolveWristTarget(Calibration.PrimaryPalmSocketName, Calibration.PrimaryArm.Hand,
+				Calibration.PrimaryHandOffset, SnapshotRightGripWorldTransform, nullptr);
 		}
+		if (bHasValidLeftSnapshot)
+		{
+			bHasValidLeftSnapshot = ResolveWristTarget(Calibration.SecondaryPalmSocketName, Calibration.SecondaryArm.Hand,
+				Calibration.SecondaryHandOffset, SnapshotLeftGripWorldTransform,
+				bHasPrimaryHandSpaceGripSnapshot ? &SnapshotLeftGripInPrimaryHandSpace : nullptr);
+		}
+		SnapshotRightElbowTarget = Calibration.PrimaryElbowTarget;
+		SnapshotLeftElbowTarget = Calibration.SecondaryElbowTarget;
 	}
 }
 
@@ -332,6 +384,13 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 		RightGripLocation = LocalGrip.GetLocation();
 		RightGripRotation = LocalGrip.Rotator();
 	}
+	else
+	{
+		RightGripLocation = FVector::ZeroVector;
+		RightGripRotation = FRotator::ZeroRotator;
+	}
+	RightWristTarget = FTransform(RightGripRotation, RightGripLocation);
+	bRightContactTargetValid = bHasValidRightSnapshot;
 
 	if (bHasValidLeftSnapshot)
 	{
@@ -339,11 +398,31 @@ void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float Delta
 		LeftGripLocation = LocalGrip.GetLocation();
 		LeftGripRotation = LocalGrip.Rotator();
 	}
+	else
+	{
+		LeftGripLocation = FVector::ZeroVector;
+		LeftGripRotation = FRotator::ZeroRotator;
+	}
+	LeftWristTarget = FTransform(LeftGripRotation, LeftGripLocation);
+	bLeftContactTargetValid = bHasValidLeftSnapshot;
+	bUsePrimaryHandSpaceGrip = bHasValidLeftSnapshot && bHasPrimaryHandSpaceGripSnapshot;
+	LeftGripInPrimaryHandSpace = bUsePrimaryHandSpaceGrip ? SnapshotLeftGripInPrimaryHandSpace : FTransform::Identity;
+	PrimaryHandBoneName = bUsePrimaryHandSpaceGrip ? SnapshotPrimaryHandBoneName : NAME_None;
 	RightElbowTarget = SnapshotRightElbowTarget;
 	LeftElbowTarget = SnapshotLeftElbowTarget;
 
 	// Smoothly interpolate IK alphas to eliminate snapping between states
-	RightGripAlpha = FMath::FInterpTo(RightGripAlpha, TargetRightAlphaSnapshot, DeltaSeconds, GripInterpSpeed);
-	LeftGripAlpha = FMath::FInterpTo(LeftGripAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed);
+	RightGripAlpha = bHasValidRightSnapshot && !bPrimaryIKSuppressedSnapshot
+		? (bContactRecoverySnapshot ? TargetRightAlphaSnapshot
+			: FMath::FInterpTo(RightGripAlpha, TargetRightAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
+	LeftGripAlpha = bHasValidLeftSnapshot
+		? (bContactRecoverySnapshot ? TargetLeftAlphaSnapshot
+			: FMath::FInterpTo(LeftGripAlpha, TargetLeftAlphaSnapshot, DeltaSeconds, GripInterpSpeed)) : 0.0f;
 	GripIKAlpha = RightGripAlpha;
+}
+
+void UProject_JRetargetAnimInstance::NativePostEvaluateAnimation()
+{
+	Super::NativePostEvaluateAnimation();
+	GripPoseEvaluationFrame = GFrameCounter;
 }

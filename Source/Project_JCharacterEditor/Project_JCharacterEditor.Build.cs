@@ -15,6 +15,7 @@ public class Project_JCharacterEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"AssetRegistry",
+			"KismetCompiler",
 			"ApplicationCore",
 			"PropertyEditor",
 			"ToolMenus",

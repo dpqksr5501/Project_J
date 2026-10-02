@@ -27,6 +27,15 @@ enum class EProject_JRootMotionEndMovementPolicy : uint8
 	KeepFlying UMETA(DisplayName = "Keep Flying")
 };
 
+/** Cosmetic weapon owner while this attack montage plays. The server hit sweep is unaffected. */
+UENUM(BlueprintType)
+enum class EProject_JAttackWeaponDrive : uint8
+{
+	WeaponDefault,
+	VisualHand,
+	SourceAnimation
+};
+
 /**
  * One reusable, server-resolved attack. Combo graphs, direct skills and AI may
  * all reference the same definition without duplicating damage or movement data.
@@ -54,6 +63,20 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float PlayRate = 1.0f;
+
+	/** A montage notify can temporarily override this policy for an authored weapon segment. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Weapon Presentation")
+	EProject_JAttackWeaponDrive WeaponDrive = EProject_JAttackWeaponDrive::WeaponDefault;
+
+	/** Without an override, the equipped weapon profile supplies the attack hand weights. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Weapon Presentation")
+	bool bOverrideGripIK = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Weapon Presentation", meta = (EditCondition = "bOverrideGripIK", ClampMin = "0.0", ClampMax = "1.0"))
+	float PrimaryGripIKAlpha = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation|Weapon Presentation", meta = (EditCondition = "bOverrideGripIK", ClampMin = "0.0", ClampMax = "1.0"))
+	float SecondaryGripIKAlpha = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	EProject_JAttackMovementPolicy MovementPolicy = EProject_JAttackMovementPolicy::InPlace;

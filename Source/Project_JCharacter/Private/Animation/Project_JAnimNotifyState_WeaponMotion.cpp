@@ -50,7 +50,7 @@ void UProject_JAnimNotifyState_WeaponMotion::NotifyEnd(USkeletalMeshComponent* M
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
-			Presentation->EndIndependentMotion();
+			Presentation->EndNotifyIndependentMotion();
 		}
 	}
 	RuntimeStates.Remove(MeshComp);

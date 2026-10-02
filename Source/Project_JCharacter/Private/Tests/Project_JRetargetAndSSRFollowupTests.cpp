@@ -307,6 +307,26 @@ bool FProjectJStableGripTargetsTest::RunTest(const FString&)
 	TestEqual(TEXT("Drawn: Primary grip X location matches socket (10.0)"), Targets.PrimaryGripWorldTransform.GetLocation().X, 10.0);
 	TestEqual(TEXT("Drawn: Secondary grip X location matches socket (-10.0)"), Targets.SecondaryGripWorldTransform.GetLocation().X, -10.0);
 
+	// A weapon attached to the rendered hand must not pull that same hand back
+	// toward its own socket. Secondary grip authoring remains independent.
+	USkeletalMeshComponent* VisualFollower = NewObject<USkeletalMeshComponent>(Character);
+	VisualFollower->SetupAttachment(Character->GetMesh());
+	VisualFollower->RegisterComponent();
+	MockWeapon->AttachToComponent(VisualFollower, FAttachmentTransformRules::KeepWorldTransform);
+	Presentation->UpdateGripTargets();
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Visual hand attachment suppresses primary feedback"), Targets.PrimaryIKAlpha, 0.0f);
+	TestEqual(TEXT("Visual hand attachment identifies primary-hand drive"), Targets.DriveMode, EProject_JWeaponGripDriveMode::PrimaryHand);
+	TestTrue(TEXT("Visual hand attachment blocks primary IK curves"), Targets.bPrimaryIKSuppressedByAttachment);
+	TestEqual(TEXT("Visual hand attachment preserves secondary grip"), Targets.SecondaryIKAlpha, 0.85f);
+	Profile->MotionPresentation.bAllowPrimaryIKOnVisualAttachment = true;
+	Presentation->UpdateGripTargets();
+	Targets = Presentation->GetWeaponGripTargets();
+	TestEqual(TEXT("Authored primary IK exception remains available"), Targets.PrimaryIKAlpha, 1.0f);
+	TestFalse(TEXT("Authored exception permits primary IK curves"), Targets.bPrimaryIKSuppressedByAttachment);
+	Profile->MotionPresentation.bAllowPrimaryIKOnVisualAttachment = false;
+	MockWeapon->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::KeepWorldTransform);
+
 	// 4. Test Sheathed State
 	Presentation->CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Sheathed;
 	Presentation->UpdateGripTargets();

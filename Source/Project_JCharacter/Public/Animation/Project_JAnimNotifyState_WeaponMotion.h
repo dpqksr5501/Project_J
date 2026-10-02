@@ -21,7 +21,7 @@ public:
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 
-	/** One transform timeline instead of independent Float Curves for every axis. */
+	/** Empty means follow the source montage's drawn weapon socket without an extra offset. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion", meta = (TitleProperty = "NormalizedTime"))
 	TArray<FProject_JWeaponMotionKey> MotionKeys;
 
@@ -29,7 +29,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion|Transition", meta = (ClampMin = "0.0", Units = "s"))
 	float EntryBlendSeconds = 0.08f;
 
-	/** Fades the authored key timeline back to the normal drawn-socket pose before this state ends. */
+	/** Legacy socket-blend exit only. Contact handoff ignores this to avoid feeding the IK-driven hand back into the weapon path. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion|Transition", meta = (ClampMin = "0.0", Units = "s"))
 	float ExitBlendSeconds = 0.08f;
 

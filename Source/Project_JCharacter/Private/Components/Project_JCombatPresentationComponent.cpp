@@ -91,6 +91,10 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 		StopAllCues();
 		ActiveAttackTag = AttackTag;
 		++ActiveAttackInstance;
+		if (UProject_JWeaponPresentationComponent* Weapon = GetOwner()->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+		{
+			Weapon->SetActiveAttackPresentation(AttackTag);
+		}
 		if (ProjectJCombatPresentationDebug::IsEnabled())
 		{
 			UE_LOG(LogProjectJCombatPresentation, Log, TEXT("[CombatVFX] BeginAttack Owner=%s Attack=%s Authority=%d"),
@@ -117,6 +121,13 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 	}
 	StopAllCues();
 	ActiveAttackTag = FGameplayTag();
+	if (AActor* Owner = GetOwner())
+	{
+		if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+		{
+			Weapon->SetActiveAttackPresentation(FGameplayTag());
+		}
+	}
 	if (bHadAttack && GetOwner() && GetOwner()->HasAuthority())
 	{
 		ReplicatedPresentationState.ActiveAttackTag = FGameplayTag();
@@ -409,6 +420,13 @@ void UProject_JCombatPresentationComponent::ApplyReplicatedState()
 	}
 	ActiveAttackInstance = ReplicatedPresentationState.AttackInstance;
 	ActiveAttackTag = ReplicatedPresentationState.ActiveAttackTag;
+	if (AActor* Owner = GetOwner())
+	{
+		if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+		{
+			Weapon->SetActiveAttackPresentation(ActiveAttackTag);
+		}
+	}
 	for (const FGameplayTag& CueTag : ReplicatedPresentationState.ActiveLoopingCueTags)
 	{
 		PlayCueLocal(CueTag);
@@ -438,6 +456,13 @@ void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Impleme
 		}
 		ActiveAttackTag = AttackTag;
 		ActiveAttackInstance = AttackInstance;
+		if (AActor* Owner = GetOwner())
+		{
+			if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+			{
+				Weapon->SetActiveAttackPresentation(AttackTag);
+			}
+		}
 		if (const auto* Cue = ResolveCue(CueTag); Cue && Cue->bLooping) { LastAppliedRecoveryEventOrder = EventOrder; }
 		PlayCueLocal(CueTag);
 	}

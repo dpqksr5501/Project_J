@@ -30,9 +30,25 @@ EDataValidationResult UProject_JWeaponPresentationProfile::IsDataValid(FDataVali
 
 	if (MotionPresentation.bSupportsIndependentMotion)
 	{
+		if (!FMath::IsFinite(MotionPresentation.DefaultAttackPrimaryIKAlpha) ||
+			MotionPresentation.DefaultAttackPrimaryIKAlpha < 0.0f || MotionPresentation.DefaultAttackPrimaryIKAlpha > 1.0f ||
+			!FMath::IsFinite(MotionPresentation.DefaultAttackSecondaryIKAlpha) ||
+			MotionPresentation.DefaultAttackSecondaryIKAlpha < 0.0f || MotionPresentation.DefaultAttackSecondaryIKAlpha > 1.0f)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "InvalidAttackGripAlpha", "Default attack grip IK alphas must be between zero and one."));
+		}
 		if (MotionPresentation.PrimaryGripSocketName.IsNone())
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "MissingPrimaryGrip", "Independent-motion weapons require PrimaryGripSocketName."));
+		}
+		if (!FMath::IsFinite(MotionPresentation.AttackEntryBlendSeconds) || MotionPresentation.AttackEntryBlendSeconds < 0.0f)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "InvalidAttackEntryBlend", "AttackEntryBlendSeconds must be finite and non-negative."));
+		}
+		if (!FMath::IsFinite(MotionPresentation.ContactRecoverySeconds) ||
+			MotionPresentation.ContactRecoverySeconds < 0.0f || MotionPresentation.ContactRecoverySeconds > 1.0f)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "InvalidContactRecovery", "ContactRecoverySeconds must be finite and between zero and one."));
 		}
 
 		const FProject_JWeaponGroundContactSettings& Ground = MotionPresentation.GroundContact;

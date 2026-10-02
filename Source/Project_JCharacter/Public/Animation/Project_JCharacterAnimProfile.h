@@ -4,32 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Animation/Project_JHandGripProfile.h"
 #include "Project_JCharacterAnimProfile.generated.h"
 
 class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
-
-/** Character-specific alignment after a weapon defines its grip sockets. */
-USTRUCT(BlueprintType)
-struct PROJECT_JCHARACTER_API FProject_JHandGripCalibration
-{
-	GENERATED_BODY()
-
-	/** Local to the primary weapon grip socket; identity preserves existing IK. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
-	FTransform PrimaryHandOffset = FTransform::Identity;
-
-	/** Local to the secondary weapon grip socket; identity preserves existing IK. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
-	FTransform SecondaryHandOffset = FTransform::Identity;
-
-	/** Optional component-space joint targets for a follower AnimGraph Two Bone IK node. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
-	FVector PrimaryElbowTarget = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
-	FVector SecondaryElbowTarget = FVector::ZeroVector;
-};
 
 /**
  * Top-level animation profile for a playable character archetype.
@@ -52,4 +31,8 @@ public:
 	/** Per-body proportions and palm orientation; weapon assets only define grip sockets. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
 	FProject_JHandGripCalibration HandGripCalibration;
+
+	/** Optional shared body profile. Existing inline calibration remains the fallback. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
+	TObjectPtr<UProject_JHandGripProfile> HandGripProfile = nullptr;
 };

@@ -39,6 +39,11 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidPlayRate", "PlayRate must be greater than zero."));
 	}
+	if (bOverrideGripIK && (!FMath::IsFinite(PrimaryGripIKAlpha) || PrimaryGripIKAlpha < 0.0f || PrimaryGripIKAlpha > 1.0f ||
+		!FMath::IsFinite(SecondaryGripIKAlpha) || SecondaryGripIKAlpha < 0.0f || SecondaryGripIKAlpha > 1.0f))
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidGripAlpha", "Attack grip IK alphas must be between zero and one."));
+	}
 	if (!FMath::IsFinite(HitSpec.TraceDistance) || HitSpec.TraceDistance <= 0.0f ||
 		!FMath::IsFinite(HitSpec.TraceRadius) || HitSpec.TraceRadius < 0.0f)
 	{

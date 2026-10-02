@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
+#include "Animation/Project_JHandGripProfile.h"
 #include "Project_JRetargetAnimInstance.generated.h"
 
 class USceneComponent;
@@ -24,12 +25,23 @@ class PROJECT_JCHARACTER_API UProject_JRetargetAnimInstance : public UAnimInstan
 	GENERATED_BODY()
 
 public:
+	/** Optional body profile on the visual ABP, shared across jobs using this body. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project_J|IK|Config")
+	TObjectPtr<UProject_JHandGripProfile> HandGripProfile = nullptr;
+
+	/** Game-thread only: visual body override, character shared profile, then legacy inline calibration. */
+	FProject_JHandGripCalibration GetHandGripCalibration() const;
+
 	UProject_JRetargetAnimInstance();
 
 	virtual void BeginDestroy() override;
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+	virtual void NativePostEvaluateAnimation() override;
+
+	uint64 GetGripTargetSnapshotFrame() const { return GripTargetSnapshotFrame; }
+	uint64 GetGripPoseEvaluationFrame() const { return GripPoseEvaluationFrame; }
 
 	/**
 	 * Explicitly registers or clears the weapon visual component to track.
@@ -51,12 +63,32 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	FVector LeftGripLocation = FVector::ZeroVector;
 
-	/** Component-space palm orientations from the weapon grips and character calibration. */
+	/** Calibrated component-space WRIST orientations. Palm conversion has already been applied. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	FRotator RightGripRotation = FRotator::ZeroRotator;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
 	FRotator LeftGripRotation = FRotator::ZeroRotator;
+
+	/** Solver-independent wrist targets. Existing location/rotation pins remain compatible. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FTransform RightWristTarget = FTransform::Identity;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FTransform LeftWristTarget = FTransform::Identity;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	bool bRightContactTargetValid = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	bool bLeftContactTargetValid = false;
+
+	/** Same-frame target for a weapon driven by the visible primary hand. The final rig evaluates it in PrimaryHandBoneName space. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FTransform LeftGripInPrimaryHandSpace = FTransform::Identity;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	FName PrimaryHandBoneName = NAME_None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
+	bool bUsePrimaryHandSpaceGrip = false;
 
 	/** Optional component-space joint targets. AnimGraphs may opt into these when authored for the follower skeleton. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Project_J|IK|Grip")
@@ -153,7 +185,15 @@ protected:
 	FTransform SnapshotRightGripWorldTransform = FTransform::Identity;
 	FTransform SnapshotLeftGripWorldTransform = FTransform::Identity;
 	FTransform SnapshotOwningCompWorldTransform = FTransform::Identity;
+	FTransform SnapshotLeftGripInPrimaryHandSpace = FTransform::Identity;
+	FName SnapshotPrimaryHandBoneName = NAME_None;
+	bool bHasPrimaryHandSpaceGripSnapshot = false;
 	bool bHasValidRightSnapshot = false;
+	/** A hand-driven weapon cannot be an IK target for that same hand, even for one fading frame. */
+	bool bPrimaryIKSuppressedSnapshot = false;
+	bool bContactRecoverySnapshot = false;
+	uint64 GripTargetSnapshotFrame = MAX_uint64;
+	uint64 GripPoseEvaluationFrame = MAX_uint64;
 	bool bHasValidLeftSnapshot = false;
 	float TargetRightAlphaSnapshot = 1.0f;
 	float TargetLeftAlphaSnapshot = 0.0f;
