@@ -101,14 +101,7 @@ void UProject_JRetargetAnimInstance::SetCombatMode(bool bInCombatMode)
 FProject_JHandGripCalibration UProject_JRetargetAnimInstance::GetHandGripCalibration() const
 {
 	check(IsInGameThread());
-	if (HandGripProfile) { return HandGripProfile->Calibration; }
-	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
-	const UProject_JCharacterAnimProfile* Profile = Player ? Player->GetCharacterAnimProfile() : nullptr;
-	if (Profile)
-	{
-		return Profile->HandGripProfile ? Profile->HandGripProfile->Calibration : Profile->HandGripCalibration;
-	}
-	return FProject_JHandGripCalibration();
+	return Project_J::Animation::ResolveHandGripCalibration(Cast<ACharacter>(TryGetPawnOwner()), HandGripProfile);
 }
 
 void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -226,6 +219,9 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (CachedPresentationComp.IsValid())
 	{
 		const FProject_JWeaponGripTargets GripTargets = CachedPresentationComp->GetWeaponGripTargetsForAnimation(DeltaSeconds);
+		// Presentation owns availability, including an explicitly disabled secondary
+		// contact or missing equipment. Legacy component tracking must not resurrect it.
+		bResolvedFromPresentation = true;
 		bContactRecoverySnapshot = GripTargets.bContactRecovery;
 		if (GripTargets.bHasPrimaryGrip)
 		{
@@ -341,18 +337,23 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		const FProject_JHandGripCalibration Calibration = GetHandGripCalibration();
 		const bool bLegacy = Calibration.MissingPalmPolicy == EProject_JMissingPalmPolicy::LegacyWristOrigin;
-		auto ResolveWristTarget = [OwningComp, bLegacy](FName PalmSocketName, FName HandName,
+		auto ResolveWristTarget = [OwningComp, bLegacy, PrimaryHand = SnapshotPrimaryHandBoneName](FName PalmSocketName, FName HandName,
 			const FTransform& BodyOffset, FTransform& InOutGripWorld, FTransform* InOutHandSpace)
 		{
 			const Project_J::Animation::FResolvedHandContact Contact =
 				Project_J::Animation::ResolveHandContact(*OwningComp, PalmSocketName, HandName, bLegacy);
 			if (!Contact.IsValid()) { return false; }
+			const FVector WristScale = Contact.Hand.IsNone() ? OwningComp->GetComponentScale()
+				: OwningComp->GetBoneTransform(Contact.Hand, RTS_World).GetScale3D();
 			FTransform Wrist;
-			if (!Project_J::Animation::MakeWristContactTarget(InOutGripWorld, Contact.PalmInHand, BodyOffset, Wrist)) { return false; }
+			if (!Project_J::Animation::MakeWristContactTarget(InOutGripWorld, Contact.PalmInHand, BodyOffset, Wrist, WristScale)) { return false; }
 			InOutGripWorld = Wrist;
 			if (InOutHandSpace)
 			{
-				if (!Project_J::Animation::MakeWristContactTarget(*InOutHandSpace, Contact.PalmInHand, BodyOffset, Wrist)) { return false; }
+				const FVector PrimaryScale = PrimaryHand.IsNone() ? OwningComp->GetComponentScale()
+					: OwningComp->GetBoneTransform(PrimaryHand, RTS_World).GetScale3D();
+				if (PrimaryScale.ContainsNaN() || PrimaryScale.GetAbs().GetMin() <= UE_KINDA_SMALL_NUMBER ||
+					!Project_J::Animation::MakeWristContactTarget(*InOutHandSpace, Contact.PalmInHand, BodyOffset, Wrist, WristScale / PrimaryScale)) { return false; }
 				*InOutHandSpace = Wrist;
 			}
 			return true;

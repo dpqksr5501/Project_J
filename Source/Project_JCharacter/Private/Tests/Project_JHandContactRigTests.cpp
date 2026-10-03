@@ -44,6 +44,33 @@ bool FProjectJHandContactMathTest::RunTest(const FString&)
 	Singular.SetScale3D(FVector(0.0, 1.0, 1.0));
 	TestFalse(TEXT("A singular palm anchor cannot fabricate an inverse"), MakeWristContactTarget(Goal, Singular, Offset, Wrist));
 	TestTrue(TEXT("Failed conversion clears its output"), Wrist.Equals(FTransform::Identity));
+	const FTransform Palm(FRotator(15, 27, -35), FVector(8, -3, 2));
+	const FTransform Child(FRotator(-12, 42, 18), FVector(10, 4, -6), FVector(2));
+	const FTransform Grip(FRotator(8, -21, 11), FVector(3, 6, 9));
+	FTransform Mount;
+	TestTrue(TEXT("A rotated/scaled child mesh produces a fixed root-in-hand mount"),
+		MakePrimaryGripAttachment(Grip * Child, Palm, Offset, Mount));
+	TestTrue(TEXT("Mounting preserves child mesh size instead of shrinking the weapon"), Mount.GetScale3D().Equals(FVector::OneVector));
+	const FTransform Hand(FRotator(16, -34, 42), FVector(400, 300, -20), FVector(1.75));
+	const FTransform WeaponGoal = Grip * Child * (Mount * Hand);
+	const FTransform ActualPalm = Palm * Hand;
+	const FTransform CalibratedGoal = Offset * WeaponGoal;
+	TestTrue(TEXT("Idle contact matches Palm position/orientation with body AND weapon scaling"),
+		ActualPalm.GetLocation().Equals(CalibratedGoal.GetLocation(), 0.0001) &&
+		ActualPalm.GetRotation().Equals(CalibratedGoal.GetRotation(), 0.0001));
+	TestTrue(TEXT("Attack contact reconstructs the same wrist without weapon scale leaking into anatomy"),
+		MakeWristContactTarget(WeaponGoal, Palm, Offset, Wrist, Hand.GetScale3D()) && Wrist.Equals(Hand, 0.0001));
+	FTransform Unsupported = Child;
+	Unsupported.SetScale3D(FVector(2, 2.000004, 1.999998));
+	TestTrue(TEXT("Evaluated float scale roundoff is accepted by contact calibration"),
+		MakePrimaryGripAttachment(Unsupported, Palm, Offset, Mount));
+	TestFalse(TEXT("Material anisotropy remains unsupported"), IsPositiveUniformContactScale(FVector(1, 1.001, 1)));
+	TestFalse(TEXT("Zero scale remains unsupported"), IsPositiveUniformContactScale(FVector::ZeroVector));
+	Unsupported.SetScale3D(FVector(1, 2, 1));
+	TestFalse(TEXT("A shear-producing mount is rejected instead of silently misaligning contact"),
+		MakePrimaryGripAttachment(Unsupported, Palm, Offset, Mount));
+	Unsupported.SetScale3D(FVector(-1));
+	TestFalse(TEXT("Mirrored mount requires explicit custom ownership"), MakePrimaryGripAttachment(Unsupported, Palm, Offset, Mount));
 	return true;
 }
 

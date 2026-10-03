@@ -7,7 +7,7 @@
 - 오른팔은 FABRIK 대신 `Project J Guided Hand IK`로 입력 포즈 기반 팔꿈치 안정화와 손목 접촉을 수행한다. 왼팔 Two Bone IK는 미연결이며 RigidBody 3개는 유지한다.
 - Palm→손목 공통 변환, 몸체 프로필, 중간 보조 뼈와 누락/LOD 정책을 구현했다. `DA_HGP_Greatsword`는 런타임 ABP 클래스 디폴트의 `Hand Grip Profile`에 할당한다.
 - 자동 공격 복귀는 outgoing 몽타주의 실제 가중치와 현재 독립 소스 접촉을 따른다. 단순 KeepWorld 부착으로 전환을 끝내는 이전 설명은 대체됐다.
-- Idle의 Visual 부착 오프셋과 공격의 Palm 접촉은 아직 각각 작성한다. 공통 기준의 Idle 자동 정렬은 후속 작업이다.
+- 무기 DA의 `Primary Grip to Body Palm` 모드로 Idle·공격 접촉을 같은 기준에서 계산한다. Socket 기본값과 Visual 소켓은 호환/특수 부착을 유지한다. [설정 절차](Primary_Grip_Attachment.md)를 따른다.
 - 아래 Control Rig/FBIK 상체 Reach, 양손 동시 제약과 손가락 보정은 목표 설계다. 현재 구현된 그래프로 오인하지 않는다. 팔 길이 밖 목표와 원격·군중 성능 검증이 남아 있다.
 
 ## 목표와 적용 범위

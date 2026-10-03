@@ -40,6 +40,18 @@ struct PROJECT_JCHARACTER_API FProject_JAnimNode_GuidedHandIK : public FAnimNode
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Contact", meta = (PinShownByDefault))
 	FTransform EffectorTransform = FTransform::Identity;
 
+	/** Use the current INPUT pose's reference bone for hand-driven contact. False retains the component-space target. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Contact|Target Space", meta = (PinHiddenByDefault))
+	bool bUseBoneSpaceEffector = false;
+
+	/** Already calibrated wrist target relative to EffectorSpaceBoneName. No Palm conversion is repeated here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Contact|Target Space", meta = (PinHiddenByDefault))
+	FTransform EffectorBoneSpaceTransform = FTransform::Identity;
+
+	/** An independent pose bone, normally the weapon's primary hand; never a bone in this solved arm's subtree. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Contact|Target Space", meta = (PinHiddenByDefault))
+	FName EffectorSpaceBoneName = NAME_None;
+
 	UPROPERTY(EditAnywhere, Category = "Contact")
 	bool bMatchWristRotation = true;
 
@@ -92,6 +104,11 @@ private:
 	bool bProfileArmValid = false;
 	FProject_JGripArmBones CachedArmNames;
 	EProject_JGuidedArmDefinitionSource CachedArmSource = EProject_JGuidedArmDefinitionSource::NodeSettings;
+	FName CachedEffectorSpaceBoneName = NAME_None;
+	bool bCachedUseBoneSpaceEffector = false;
+	bool bEffectorSpaceValid = false;
+	FCompactPoseBoneIndex EffectorSpaceIndex = FCompactPoseBoneIndex(INDEX_NONE);
+	bool ResolveComponentSpaceEffector(FComponentSpacePoseContext& Output, FTransform& OutTarget) const;
 	FProject_JGripArmBones GetRequestedArm() const;
 	Project_J::Animation::FGuidedArmBendState BendState;
 	FGraphTraversalCounter LastActiveUpdate;

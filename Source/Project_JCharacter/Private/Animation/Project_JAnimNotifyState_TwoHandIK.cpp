@@ -12,7 +12,7 @@ void UProject_JAnimNotifyState_TwoHandIK::NotifyBegin(USkeletalMeshComponent* Me
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
-			Presentation->BeginTwoHandGrip(SecondaryIKAlpha, PrimaryIKAlpha, bOverridePrimaryIK);
+			Presentation->BeginTwoHandGripNotify(EventReference.GetNotifyInstanceID(), SecondaryIKAlpha, PrimaryIKAlpha, bOverridePrimaryIK);
 		}
 	}
 }
@@ -23,7 +23,7 @@ void UProject_JAnimNotifyState_TwoHandIK::NotifyEnd(USkeletalMeshComponent* Mesh
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
-			Presentation->EndTwoHandGrip();
+			Presentation->EndTwoHandGripNotify(EventReference.GetNotifyInstanceID());
 		}
 	}
 	Super::NotifyEnd(MeshComp, Animation, EventReference);

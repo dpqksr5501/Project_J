@@ -19,9 +19,13 @@ EDataValidationResult UProject_JWeaponPresentationProfile::IsDataValid(FDataVali
 		// while new assets are guided to the common root/mesh contract.
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJWeaponPresentationProfile", "LegacyActorClass", "WeaponActorClass should derive from AProject_JWeaponPresentationActor so it supplies the common WeaponRoot and WeaponMesh contract."));
 	}
-	if (DrawnSocketName.IsNone())
+	if (DrawnSocketName.IsNone() && (DrawnAttachmentMode == EProject_JDrawnAttachmentMode::Socket || MotionPresentation.bSupportsIndependentMotion))
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "MissingSocket", "DrawnSocketName is required."));
+	}
+	if (DrawnAttachmentMode == EProject_JDrawnAttachmentMode::PrimaryGripContact && MotionPresentation.PrimaryGripSocketName.IsNone())
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "MissingMountGrip", "Primary Grip attachment requires PrimaryGripSocketName, including weapons without attack IK."));
 	}
 	if (SheathedSocketName.IsNone())
 	{

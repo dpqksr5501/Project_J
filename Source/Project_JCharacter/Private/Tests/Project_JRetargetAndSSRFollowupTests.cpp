@@ -821,12 +821,40 @@ bool FProjectJTwoHandIKTransitionAndCurveTest::RunTest(const FString&)
 	TestFalse(TEXT("NotifyEnd deactivated TwoHandGrip"), Presentation->IsTwoHandGripActive());
 	Targets = Presentation->GetWeaponGripTargets();
 	TestEqual(TEXT("NotifyEnd restored Secondary Alpha to 0.0"), Targets.SecondaryIKAlpha, 0.0f);
+	// The shared notify UObject carries authoring data, not per-character state.
+	// Engine playback IDs pair each window even when endings arrive out of order.
+	FAnimNotifyEventReference OuterRef, InnerRef;
+	OuterRef.SetNotifyInstanceID(11001); InnerRef.SetNotifyInstanceID(11002);
+	NotifyState->SecondaryIKAlpha = 0.6f;
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, OuterRef);
+	NotifyState->SecondaryIKAlpha = 0.9f;
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, InnerRef);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, InnerRef);
+	TestEqual(TEXT("Ending a nested window restores the surviving outer alpha"), Presentation->GetWeaponGripTargets().SecondaryIKAlpha, 0.6f);
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, InnerRef);
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, InnerRef);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, OuterRef);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, OuterRef);
+	TestEqual(TEXT("Duplicate and out-of-order ends cannot consume the remaining playback"), Presentation->GetWeaponGripTargets().SecondaryIKAlpha, 0.9f);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, InnerRef);
+	TestFalse(TEXT("Duplicate begin does not leak a second keyed request"), Presentation->IsTwoHandGripActive());
+	NotifyState->SecondaryIKAlpha = 0.6f;
+	Presentation->BeginTwoHandGrip(0.3f);
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, OuterRef);
+	Presentation->EndTwoHandGrip();
+	TestEqual(TEXT("A legacy caller cannot consume a keyed animation window"), Presentation->GetWeaponGripTargets().SecondaryIKAlpha, 0.6f);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, OuterRef);
 
 	// Test F: ExitCombatPresentation clears TwoHandGrip count
 	Presentation->BeginTwoHandGrip(1.0f);
 	TestTrue(TEXT("Active before ExitCombat"), Presentation->IsTwoHandGripActive());
 	Presentation->ExitCombatPresentation();
 	TestFalse(TEXT("ExitCombatPresentation reset TwoHandGrip state count"), Presentation->IsTwoHandGripActive());
+	Presentation->CurrentPresentationSocket = EProject_JWeaponPresentationSocket::Drawn;
+	NotifyState->NotifyBegin(Character->GetMesh(), nullptr, 1.0f, InnerRef);
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, OuterRef);
+	TestTrue(TEXT("A stale end after reset cannot close a new attack's keyed window"), Presentation->IsTwoHandGripActive());
+	NotifyState->NotifyEnd(Character->GetMesh(), nullptr, InnerRef);
 
 	World->DestroyWorld(false);
 	return true;

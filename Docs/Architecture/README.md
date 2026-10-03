@@ -12,14 +12,16 @@
 
 검증 JSON은 대응하는 보고서와 같은 폴더에 둔다. 실제 성능 실측 원본은 [Benchmarks](../Benchmarks/SystemsModernization.md)에 둔다.
 
-## 손 접촉·무기 모션 — 2026-10-02
+## 손 접촉·무기 모션 — 2026-10-03
 
 | 문서 | 내용 |
 | --- | --- |
 | [Guided 손 접촉](Animation/Guided_Hand_Contact.md) | 현재 구현, 몸체 DA 할당, 소켓 역할, 팔꿈치 튜닝, 보조 뼈·LOD와 검증 |
 | [무기 접촉 복귀](Animation/Weapon_Contact_Recovery.md) | 몽타주 가중치 복귀, 타이머 대체, 수명·네트워크 소유권 |
 | [무기 궤적·파지 정책](Animation/Weapon_Grip_Drive_Policy.md) | 노티파이 없는 공격, 손 주도/소스 주도 정책 |
+| [Palm 정상 부착](Animation/Primary_Grip_Attachment.md) | Idle·공격 접촉 기준 통일, 기존 소켓 호환, 장비/몸체 보정 갱신 |
+| [보조 손 접촉](Animation/Secondary_Hand_Contact.md) | 공격만 양손·항상 양손·한손 정책, 왼팔 Guided 핀 연결, 현재 포즈의 기준 뼈 공간 |
 | [측정 기록](Animation/Weapon_Grip_Trace_2026-10-02.md) | FABRIK 비교, 팔꿈치 안정화 전후 실측과 해석 한계 |
 | [외형 메시 소유권](Animation/Visual_Presentation_Mesh_Ownership.md) | 무기·의상 리더 선택과 상체 Reach 후속 계획 |
 
-Idle의 Visual 부착과 공격의 Palm 접촉은 현재 별도 작성한다. 공통 접촉 기준으로 Idle 부착도 자동 계산하는 기능, 상체 Reach와 손가락 보정은 후속 작업이다.
+Palm·WeaponGrip 공통 기준의 Idle 자동 부착은 무기 DA에서 선택해 사용한다. 기존 Socket 모드는 호환을 유지한다. 상체 Reach와 손가락 보정은 후속 작업이다.

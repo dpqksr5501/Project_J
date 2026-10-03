@@ -1,6 +1,6 @@
 # 손바닥 접촉 기준과 Guided Hand IK
 
-갱신일: 2026-10-02. 현재 구현과 에디터 설정의 기준 문서다. 초기 FABRIK 비교와 이후 개선 이력은 [측정 기록](Weapon_Grip_Trace_2026-10-02.md)을 함께 읽는다.
+갱신일: 2026-10-03. 현재 구현과 에디터 설정의 기준 문서다. 초기 FABRIK 비교와 이후 개선 이력은 [측정 기록](Weapon_Grip_Trace_2026-10-02.md)을 함께 읽는다.
 
 ## 1. 적용 범위와 현재 그래프
 
@@ -11,33 +11,34 @@
   → 보이는 몸체: Retarget Pose From Mesh
   → Local To Component
   → Project J Guided Hand IK (오른팔)
+  → Project J Guided Hand IK (왼팔, Secondary Body Profile)
   → 기존 RigidBody 3개
   → Component To Local → 출력
 ```
 
-현재 왼팔 Two Bone IK는 연결되지 않은 상태다. 양손 정책을 검증하기 전 일괄 활성화하지 않는다. 상체 Reach, 추가 손가락 파지, 관절 제한과 자동 비틀림 분배는 구현되지 않았다.
+왼팔 연결은 에디터에서 추가한다. 기존 왼팔 Two Bone IK를 새 Guided 왼팔 노드와 동시에 직렬 적용하지 않는다. [보조 손 접촉 설정](Secondary_Hand_Contact.md)의 파지 표와 핀 연결을 따른다. 상체 Reach, 추가 손가락 파지, 관절 제한과 자동 비틀림 분배는 구현되지 않았다.
 
 ## 2. 소켓의 역할과 Idle 조정
 
 | 기준점 | 소유 데이터 | 현재 역할 |
 | --- | --- | --- |
-| `WeaponSocket_Visual_R` | 보이는 몸체의 손 부착 소켓 | Idle과 손 주도 구간에서 무기 액터를 배치한다. |
+| `WeaponSocket_Visual_R` | 보이는 몸체의 손 부착 소켓 | Socket 모드의 Idle 부착과 Palm 모드의 호환 대체 경로. |
 | `PalmGrip_R` / `PalmGrip_L` | 몸체의 실제 손 뼈에 붙인 접촉 소켓 | 손바닥의 접촉 위치와 방향을 정의한다. |
 | `WeaponGrip_R` / `WeaponGrip_L` | 무기 메시의 접촉 소켓 | 손이 잡아야 하는 손잡이 위치와 방향을 정의한다. |
 | `WeaponSocket_Greatsword_Combat` | 소스 스켈레톤의 발도 소켓 | 소스 주도 공격의 무기 궤적 기준이다. |
 | `WeaponSocket_Back` 또는 별도 Visual 등 소켓 | 소스 또는 보이는 몸체 | 납도 부착 기준이다. |
 
-Idle에서는 무기가 보이는 손을 따르므로 오른손 IK를 기본적으로 0으로 만든다. 공격에서는 독립 무기 목표에 손을 맞춘다. 공격 복귀는 몽타주의 남은 가중치에 맞춰 접촉을 해제하고 Visual 부착으로 돌아간다. 붙인 무기를 같은 오른손이 다시 추적하는 순환을 막는다.
+Idle에서는 무기가 보이는 손을 따르므로 오른손 IK를 억제한다. 공격에서는 독립 무기 목표에 손을 맞춘다. 공격 복귀는 몽타주의 남은 가중치에 맞춰 접촉을 해제하고 선택한 정상 부착으로 돌아간다. 붙인 무기를 같은 오른손이 다시 추적하는 순환을 막는다.
 
-**Idle에서 검이 손바닥 위에 뜬다면** 보이는 스켈레탈 메시에서 `WeaponSocket_Visual_R`에 `SM_Sword`를 프리뷰로 추가하고 해당 소켓의 위치·회전을 조절한다. 실제 플레이의 Idle과 공격 복귀까지 확인한다. 프리뷰는 무기 원점을 소켓에 붙이며 무기 액터의 추가 메시 상대 변환까지 자동 재현한다고 보장하지 않는다.
+**Idle에서 검이 손바닥 위에 뜬다면** 먼저 무기 DA의 Drawn Attachment Mode를 확인한다. `Primary Grip to Body Palm`에서는 Palm 또는 몸체 Hand Offset을 조정하며 Idle·공격에 같은 기준이 적용된다. 기존 Socket 모드에서는 `WeaponSocket_Visual_R`에 메시를 프리뷰로 붙여 해당 소켓을 조정한다. 프리뷰는 무기 원점을 소켓에 붙이며 무기 액터의 추가 메시 상대 변환까지 자동 재현한다고 보장하지 않는다.
 
 공격 중에만 접촉이 어긋나면 Palm 접촉 축과 위치, 몸체 프로필의 Hand Offset, 무기의 Grip을 확인한다. Palm에 검을 프리뷰로 붙이면 검의 원점이 맞춰지므로 실제 WeaponGrip 정렬과 같다고 해석하지 않는다. 손목이 맞아도 손가락이 열려 있으면 손가락 포즈를 별도로 작성해야 한다.
 
-### 현재 남은 수동 설정 중복
+### 정상 부착의 공통 접촉 기준
 
-실행 소유권은 분리되어 있지만 Idle의 Visual 부착과 공격의 Palm 접촉은 현재 따로 작성한다. 한쪽만 바꾸면 두 상태의 파지가 달라질 수 있다.
+무기 DA의 새 선택 모드 `Primary Grip to Body Palm`은 Palm·WeaponGrip·Body Offset과 무기 자식 메시 변환으로 정상 부착도 계산한다. 공격 진입·복귀가 같은 목적지를 사용한다. 기존 에셋 기본값은 Socket이므로 설정을 바꾸기 전에는 기존 작성 방식으로 동작한다.
 
-후속 개선 후보는 Palm과 WeaponGrip의 공통 접촉 기준으로 **Idle 무기 부착 오프셋도 계산**하는 것이다. 무기 액터 루트와 메시의 상대 변환, Body Offset, 납도와 특수 부착, 기존 소켓 호환을 고려해야 한다. 이 자동 부착은 아직 구현하지 않았다. 현재 Idle·복귀가 Visual 소켓을 사용하므로 소켓을 먼저 삭제하지 않는다.
+별도 DA 종류를 추가하지 않았다. Visual 소켓은 호환·특수 부착과 누락 대체용으로 유지한다. 설정 순서, 스케일·움직이는 무기 뼈의 제한, 런타임 갱신은 [Palm 정상 부착](Primary_Grip_Attachment.md)을 따른다.
 
 ## 3. 솔버와 접촉 변환의 분리
 
@@ -46,7 +47,7 @@ Idle에서는 무기가 보이는 손을 따르므로 오른손 IK를 기본적�
   → 보이는 메시 컴포넌트 공간의 손목 목표 → 팔 솔버
 ```
 
-언리얼 변환 곱셈 순서에서:
+스케일 1인 접촉의 언리얼 변환 곱셈 순서는 다음과 같다:
 
 ```cpp
 Wrist = PalmInHand.Inverse() * (BodyOffset * Goal);
@@ -58,6 +59,8 @@ PalmInHand * Wrist = BodyOffset * Goal;
 `ResolveHandContact`는 게임 스레드에서 소켓의 작성된 로컬 변환을 읽는다. 이전 프레임의 최종 IK 손 월드 포즈를 보정 기준으로 읽지 않는다. 지정한 손 뼈와 소켓 부모가 다르거나 손 뼈가 없으면 접촉을 무효화한다. 이름을 생략한 Hand는 소켓 부모에서 추론한다. 프로필에 실제 손 역할을 명시해 손가락·보조 뼈를 손목으로 오인하지 않도록 한다.
 
 `MakeWristContactTarget`은 UObject 없는 값 변환이며 월드 공간과 오른손 뼈 공간에서 같은 수식을 사용한다. Guided IK, FABRIK, Two Bone IK, Control Rig에 같은 손목 목표를 공급할 수 있다. 오프셋은 한 번만 적용한다.
+
+스케일이 다른 무기는 접촉 위치·회전을 맞추되 실제 몸체 손뼈의 스케일을 유지한다. 무기 마커 스케일로 손바닥 오프셋이나 손 크기를 늘리지 않는다. 정상 부착과 공격 변환의 왕복은 회전된 자식 메시·균일 스케일을 포함해 검증한다.
 
 기존 `RightGripLocation/Rotation`, `LeftGripLocation/Rotation`도 이미 **손목** 목표다. 새 `RightWristTarget` / `LeftWristTarget`은 동일 위치·회전과 스케일 1을 묶은 컴포넌트 공간 Transform이다. 노드에서 Palm 역변환을 다시 적용하지 않는다. 유효성 핀은 목표 스냅샷 상태이며 실제 평가 여부는 Alpha와 품질 정책으로 결정한다.
 
@@ -92,7 +95,7 @@ Shoulder는 이 솔버에서 상완 루트다. 쇄골을 입력하는 항목이 
 5. 오른팔 Guided 노드의 `Arm Definition Source = Primary Body Profile`을 선택한다. Effector에 `RightWristTarget` 또는 기존 Make Transform을 연결하고 Alpha는 `RightGripAlpha`를 유지한다. `Match Wrist Rotation`은 켜고 `Use Explicit Elbow Guide`는 기본적으로 끈다.
 6. 컴파일·저장 후 Idle, 평타, 연계, 복귀를 확인한다. 기존 수동 노드는 `Node Settings` 기본값으로 계속 동작한다. 자동 에셋 마이그레이션은 하지 않는다.
 
-왼팔 노드는 별도 양손 검증 후 `Secondary Body Profile`을 쓸 수 있다. Guided 노드 Effector는 컴포넌트 공간이다. 오른손 주도 구간의 왼손 뼈 공간 목표를 쓰려면 `bUsePrimaryHandSpaceGrip`에 따라 현재 오른손 포즈에서 컴포넌트 공간으로 합성하는 경로를 작성한다.
+왼팔 노드는 `Secondary Body Profile`을 쓴다. 기본 Effector는 컴포넌트 공간이다. `Use Bone Space Effector`, `Effector Bone Space Transform`, `Effector Space Bone Name`을 핀으로 노출해 각각 `Use Primary Hand Space Grip`, `Left Grip In Primary Hand Space`, `Primary Hand Bone Name`에 연결한다. 노드가 현재 입력 포즈의 기준 뼈에서 합성하므로 게임 스레드에서 이전 프레임의 최종 오른손 포즈를 읽어 변환할 필요가 없다. 독립 무기 공격은 bool이 false가 되어 `Left Wrist Target`을 쓴다. 이전 그래프는 새 bool 기본값 false로 동작을 유지한다.
 
 ## 5. 팔꿈치 안정화 수치
 
@@ -169,7 +172,7 @@ WeaponContact의 `socketErr`는 원시 Palm–실제 무기 소켓 거리, `cali
 
 ## 8. 검증 이력과 한계
 
-2026-10-02 직접 `UnrealBuildTool.exe`로 `Project_JEditor Win64 Development` 빌드 성공. 최신 범위 자동화 6개가 모두 Success, 프로세스 종료 코드 0:
+2026-10-02 최신 직접 UBT 빌드와 자동화 12개, 저장된 런타임 ABP 범위 컴파일이 성공했다. [Palm 정상 부착 검증](Primary_Grip_Attachment.md#검증-결과)에 로그와 범위를 둔다. 아래는 그 이전 몸체 프로필 단계의 검증 이력 6개이며 모두 Success, 프로세스 종료 코드 0:
 
 - `ProjectJ.Animation.HandContactConversion`
 - `ProjectJ.Animation.HandContactRig`
@@ -188,4 +191,4 @@ WeaponContact의 `socketErr`는 원시 Palm–실제 무기 소켓 거리, `cali
 
 추가 숨은 그래프 메시지는 에디터 전용 `ProjectJ.Animation.ValidateBlueprintGraph /Game/Path/Asset.Asset`로 조회할 수 있다. 노드/그래프 이름과 메시지를 기록하며 저장하지 않는다. 연결되지 않은 노드도 포함하므로 실제 컴파일의 정리된 그래프와 동일한 검사는 아니다.
 
-19:31 인게임 캡처에서 두 연계의 늦은 LMB2 팔꿈치 최대 이동이 20.107/23.428 → 5.213/5.216cm로 감소했다. 닿을 수 있는 목표의 접촉도 유지됐다. 도달 불가능한 목표, 수동 Idle 부착 보정, 추가 몸체·무기·원격 군중 검증은 남아 있다. 자세한 수치와 프레임 비교 제한은 [측정 기록](Weapon_Grip_Trace_2026-10-02.md)에 둔다.
+19:31 인게임 캡처에서 두 연계의 늦은 LMB2 팔꿈치 최대 이동이 20.107/23.428 → 5.213/5.216cm로 감소했다. 닿을 수 있는 목표의 접촉도 유지됐다. 이 캡처는 새 Palm 정상 부착 활성화 이전이다. 도달 불가능한 목표와 추가 몸체·무기·원격 군중 검증은 남아 있다. 자세한 수치와 프레임 비교 제한은 [측정 기록](Weapon_Grip_Trace_2026-10-02.md)에 둔다.

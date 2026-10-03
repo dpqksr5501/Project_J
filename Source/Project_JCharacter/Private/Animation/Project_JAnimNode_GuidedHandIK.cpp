@@ -89,9 +89,11 @@ void FProject_JAnimNode_GuidedHandIK::EvaluateComponentPose_AnyThread(FComponent
 	if (!ShouldCaptureGuidedIKTrace(TraceState)) { return; }
 	const FBoneContainer& Bones = Output.Pose.GetPose().GetBoneContainer();
 	const bool bChainValid = IsValidToEvaluate(nullptr, Bones);
+	FTransform TraceTarget;
+	ResolveComponentSpaceEffector(Output, TraceTarget);
 	if (!bChainValid)
 	{
-		LogGuidedIKTrace(*TraceState, Output, nullptr, nullptr, EffectorTransform, Alpha, ActualAlpha, TEXT("InvalidChain"));
+		LogGuidedIKTrace(*TraceState, Output, nullptr, nullptr, TraceTarget, Alpha, ActualAlpha, TEXT("InvalidChainOrTargetSpace"));
 	}
 	else if (!FAnimWeight::IsRelevant(ActualAlpha))
 	{
@@ -99,7 +101,7 @@ void FProject_JAnimNode_GuidedHandIK::EvaluateComponentPose_AnyThread(FComponent
 			Output.Pose.GetComponentSpaceTransform(Chain.Upper),
 			Output.Pose.GetComponentSpaceTransform(Chain.Forearm),
 			Output.Pose.GetComponentSpaceTransform(Chain.Hand) };
-		LogGuidedIKTrace(*TraceState, Output, Input, Input, EffectorTransform, Alpha, ActualAlpha,
+		LogGuidedIKTrace(*TraceState, Output, Input, Input, TraceTarget, Alpha, ActualAlpha,
 			IsLODEnabled(Output.AnimInstanceProxy) ? TEXT("AlphaBypass") : TEXT("LODBypass"));
 	}
 #endif
@@ -112,22 +114,56 @@ void FProject_JAnimNode_GuidedHandIK::InitializeBoneReferences(const FBoneContai
 	CachedArmSource = ArmDefinitionSource;
 	Project_J::Animation::ResolveGuidedArmChain(RequiredBones, CachedArmNames.Hand,
 		CachedArmNames.Elbow, CachedArmNames.Shoulder, Chain);
+	CachedEffectorSpaceBoneName = EffectorSpaceBoneName;
+	bCachedUseBoneSpaceEffector = bUseBoneSpaceEffector;
+	EffectorSpaceIndex = FCompactPoseBoneIndex(INDEX_NONE);
+	bEffectorSpaceValid = false;
+	if (bUseBoneSpaceEffector && Chain.IsValid() && !EffectorSpaceBoneName.IsNone())
+	{
+		FBoneReference Reference;
+		Reference.BoneName = EffectorSpaceBoneName;
+		Reference.Initialize(RequiredBones);
+		if (Reference.IsValidToEvaluate(RequiredBones))
+		{
+			EffectorSpaceIndex = Reference.GetCompactPoseIndex(RequiredBones);
+			bEffectorSpaceValid = true;
+			for (FCompactPoseBoneIndex Index = EffectorSpaceIndex; Index != INDEX_NONE; Index = RequiredBones.GetParentBoneIndex(Index))
+			{
+				if (Index == Chain.Upper) { bEffectorSpaceValid = false; break; }
+			}
+		}
+	}
 }
 
 bool FProject_JAnimNode_GuidedHandIK::IsValidToEvaluate(const USkeleton*, const FBoneContainer& RequiredBones)
 {
 	const FProject_JGripArmBones Requested = GetRequestedArm();
 	if (Requested.Hand != CachedArmNames.Hand || Requested.Elbow != CachedArmNames.Elbow ||
-		Requested.Shoulder != CachedArmNames.Shoulder || CachedArmSource != ArmDefinitionSource)
+		Requested.Shoulder != CachedArmNames.Shoulder || CachedArmSource != ArmDefinitionSource ||
+		bCachedUseBoneSpaceEffector != bUseBoneSpaceEffector || CachedEffectorSpaceBoneName != EffectorSpaceBoneName)
 	{
 		InitializeBoneReferences(RequiredBones);
 	}
-	return Chain.IsValid();
+	return Chain.IsValid() && (!bUseBoneSpaceEffector || bEffectorSpaceValid);
+}
+
+bool FProject_JAnimNode_GuidedHandIK::ResolveComponentSpaceEffector(FComponentSpacePoseContext& Output, FTransform& OutTarget) const
+{
+	OutTarget = FTransform::Identity;
+	if (bUseBoneSpaceEffector)
+	{
+		if (!bEffectorSpaceValid) { return false; }
+		OutTarget = EffectorBoneSpaceTransform * Output.Pose.GetComponentSpaceTransform(EffectorSpaceIndex);
+	}
+	else { OutTarget = EffectorTransform; }
+	return !OutTarget.ContainsNaN();
 }
 
 void FProject_JAnimNode_GuidedHandIK::EvaluateSkeletalControl_AnyThread(FComponentSpacePoseContext& Output,
 	TArray<FBoneTransform>& OutBoneTransforms)
 {
+	FTransform Target;
+	if (!ResolveComponentSpaceEffector(Output, Target)) { ResetDynamics(ETeleportType::ResetPhysics); return; }
 	const FTransform& UpperArm = Output.Pose.GetComponentSpaceTransform(Chain.Upper);
 	const FTransform& Forearm = Output.Pose.GetComponentSpaceTransform(Chain.Forearm);
 	const FTransform& Hand = Output.Pose.GetComponentSpaceTransform(Chain.Hand);
@@ -154,7 +190,7 @@ void FProject_JAnimNode_GuidedHandIK::EvaluateSkeletalControl_AnyThread(FCompone
 	Project_J::Animation::FGuidedArmSolveDiagnostics TraceDiagnostics;
 	if (ShouldCaptureGuidedIKTrace(TraceState)) { Diagnostics = &TraceDiagnostics; }
 #endif
-	const bool bSolved = Project_J::Animation::SolveGuidedArm(UpperArm, Forearm, Hand, EffectorTransform,
+	const bool bSolved = Project_J::Animation::SolveGuidedArm(UpperArm, Forearm, Hand, Target,
 		UpperArm.GetRotation().RotateVector(PoleAxis), bUseExplicitElbowGuide ? &ElbowGuideLocation : nullptr,
 		bMatchWristRotation, SolvedUpperArm, SolvedForearm, SolvedHand, Diagnostics,
 		bStabilize ? &BendState : nullptr, &Settings, PendingGuideDeltaTime);
@@ -165,7 +201,7 @@ void FProject_JAnimNode_GuidedHandIK::EvaluateSkeletalControl_AnyThread(FCompone
 	if (!bSolved && ShouldCaptureGuidedIKTrace(TraceState))
 	{
 		const FTransform Input[] = { UpperArm, Forearm, Hand };
-		LogGuidedIKTrace(*TraceState, Output, Input, Input, EffectorTransform, Alpha, ActualAlpha, TEXT("SolveFailed"));
+		LogGuidedIKTrace(*TraceState, Output, Input, Input, Target, Alpha, ActualAlpha, TEXT("SolveFailed"));
 	}
 #endif
 	if (!bSolved) { BendState.Reset(); return; }
@@ -183,7 +219,7 @@ void FProject_JAnimNode_GuidedHandIK::EvaluateSkeletalControl_AnyThread(FCompone
 	if (ShouldCaptureGuidedIKTrace(TraceState))
 	{
 		const FCompactPoseBoneIndex ArmIndices[] = { Chain.Upper, Chain.Forearm, Chain.Hand };
-		LogGuidedIKTrace(*TraceState, Output, Input, Solved, EffectorTransform, Alpha, ActualAlpha,
+		LogGuidedIKTrace(*TraceState, Output, Input, Solved, Target, Alpha, ActualAlpha,
 			TEXT("Solved"), &OutBoneTransforms, Diagnostics, ArmIndices);
 	}
 #endif

@@ -336,6 +336,63 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	const FProject_JWeaponGripTargets MovedHandGrip = Presentation->GetWeaponGripTargets();
 	TestTrue(TEXT("Hand-space grip does not drift when the whole follower moves"),
 		MovedHandGrip.SecondaryGripInPrimaryHandSpace.Equals(HandSpaceGrip, 0.1f));
+	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 0.0f;
+	TestTrue(TEXT("Attack-only secondary policy leaves Idle contact disabled"), FMath::IsNearlyZero(Presentation->GetWeaponGripTargets().SecondaryIKAlpha));
+	Presentation->BeginIndependentMotion(NoMotionKeys, 0.7f, 0.0f, 1.0f, 0.0f, 0.0f);
+	const FTransform BeforeGripWindow = WeaponRoot->GetComponentTransform();
+	const USceneComponent* ParentBeforeGripWindow = WeaponRoot->GetAttachParent();
+	Presentation->BeginTwoHandGripNotify(22001, 0.8f, 0.1f, false);
+	const FProject_JWeaponGripTargets WindowGrip = Presentation->GetWeaponGripTargets();
+	TestTrue(TEXT("Two-hand window controls contact during independent source motion"),
+		FMath::IsNearlyEqual(WindowGrip.SecondaryIKAlpha, 0.8f) && FMath::IsNearlyEqual(WindowGrip.PrimaryIKAlpha, 0.7f));
+	TestTrue(TEXT("Hand window does not change source trajectory, attachment, or motion owner"),
+		WindowGrip.DriveMode == EProject_JWeaponGripDriveMode::AuthoredWeaponMotion && Presentation->bIndependentMotionActive &&
+		WeaponRoot->GetAttachParent() == ParentBeforeGripWindow && WeaponRoot->GetComponentTransform().Equals(BeforeGripWindow, 0.001f));
+	Presentation->BeginTwoHandGripNotify(22002, 1.0f, 0.25f, true);
+	TestTrue(TEXT("An explicit primary override applies without replacing weapon motion"),
+		FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().PrimaryIKAlpha, 0.25f));
+	Presentation->EndTwoHandGripNotify(22002);
+	TestTrue(TEXT("Ending a primary override restores the underlying source alpha"),
+		FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().PrimaryIKAlpha, 0.7f));
+	Presentation->EndTwoHandGripNotify(22001);
+	TestTrue(TEXT("Ending support contact restores the source base and keeps motion active"),
+		FMath::IsNearlyZero(Presentation->GetWeaponGripTargets().SecondaryIKAlpha) && Presentation->bIndependentMotionActive);
+	Presentation->bAutoAttackMotionActive = true;
+	Presentation->bNotifyOwnsMotion = false;
+	Presentation->BeginTwoHandGripNotify(22003, 1.0f, 1.0f, false);
+	TestTrue(TEXT("The same contact window works during automatic notify-free source attacks"),
+		FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().SecondaryIKAlpha, 1.0f));
+	Presentation->EndTwoHandGripNotify(22003);
+	Presentation->EndIndependentMotion();
+	Presentation->UpdateContactRecovery(World->GetTimeSeconds() + 1.0);
+	Presentation->BeginIndependentMotion(NoMotionKeys, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
+	TestTrue(TEXT("Two-handed attack enables support contact on the independent weapon"),
+		Presentation->GetWeaponGripTargets().bHasSecondaryGrip && FMath::IsNearlyEqual(Presentation->GetWeaponGripTargets().SecondaryIKAlpha, 1.0f));
+	FollowerAnim->LeftGripAlpha = 1.0f;
+	Presentation->EndIndependentMotion();
+	TestTrue(TEXT("Secondary contact participates in outgoing recovery"), Presentation->bContactRecoveryActive);
+	Profile->MotionPresentation.bEnableSecondaryGripContact = false;
+	const FProject_JWeaponGripTargets DisabledSupport = Presentation->GetWeaponGripTargets();
+	TestTrue(TEXT("Disabling support mid-recovery clears goal, reference and captured alpha"),
+		!DisabledSupport.bHasSecondaryGrip && !DisabledSupport.bHasPrimaryHandSpaceGrip && FMath::IsNearlyZero(DisabledSupport.SecondaryIKAlpha));
+	Presentation->BeginTwoHandGrip(1.0f, 1.0f, false);
+	Presentation->BeginIndependentMotion(NoMotionKeys, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f);
+	TestTrue(TEXT("A one-handed profile cannot be enabled by a two-hand notify or motion override"),
+		!Presentation->GetWeaponGripTargets().bHasSecondaryGrip && FMath::IsNearlyZero(Presentation->GetWeaponGripTargets().SecondaryIKAlpha));
+	// Even explicit legacy component tracking cannot resurrect a missing/disabled
+	// contact when the authoritative presentation component exists.
+	FollowerAnim->UpdateWeaponTarget(WeaponRoot, PrimarySocket->SocketName);
+	Profile->MotionPresentation.PrimaryGripSocketName = TEXT("MissingPrimaryForAvailabilityTest");
+	FollowerAnim->NativeUpdateAnimation(1.0f / 60.0f);
+	FollowerAnim->NativeThreadSafeUpdateAnimation(1.0f / 60.0f);
+	TestTrue(TEXT("Presentation availability beats stale legacy tracking on both hands"),
+		!FollowerAnim->bLeftContactTargetValid && !FollowerAnim->bRightContactTargetValid && FMath::IsNearlyZero(FollowerAnim->LeftGripAlpha));
+	Profile->MotionPresentation.PrimaryGripSocketName = PrimarySocket->SocketName;
+	Presentation->EndTwoHandGrip(); Presentation->EndIndependentMotion();
+	Presentation->UpdateContactRecovery(World->GetTimeSeconds() + 1.0);
+	Profile->MotionPresentation.bEnableSecondaryGripContact = true;
+	Profile->MotionPresentation.DefaultDrawnSecondaryIKAlpha = 1.0f;
+	TestTrue(TEXT("Re-equipping an enabled two-handed policy recovers secondary availability"), Presentation->GetWeaponGripTargets().bHasSecondaryGrip);
 	TraceEnabled->Set(PreviousTraceEnabled, ECVF_SetByCode);
 	TraceActor->Set(*PreviousTraceActor, ECVF_SetByCode);
 

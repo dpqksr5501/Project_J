@@ -11,6 +11,14 @@
 class AActor;
 class UProject_JCombatPresentationSet;
 
+/** Normal drawn pose only. Source attack arcs and sheath mounts have separate ownership. */
+UENUM(BlueprintType)
+enum class EProject_JDrawnAttachmentMode : uint8
+{
+	Socket UMETA(DisplayName = "Socket (Compatibility / Custom Mount)"),
+	PrimaryGripContact UMETA(DisplayName = "Primary Grip to Body Palm")
+};
+
 /** Data-only contact configuration. Probe sockets live on the weapon visual, never on the shared character skeleton. */
 USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JWeaponGroundContactSettings
@@ -98,8 +106,12 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
 	FName PrimaryGripSocketName = TEXT("WeaponGrip_R");
 
-	/** Weapon-local socket used as the secondary (usually left-hand) IK target. */
+	/** Disable for one-handed weapons: curves/notifies cannot activate a secondary contact on this presentation. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	bool bEnableSecondaryGripContact = true;
+
+	/** Weapon-local socket used as the secondary (usually left-hand) IK target. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bEnableSecondaryGripContact"))
 	FName SecondaryGripSocketName = TEXT("WeaponGrip_L");
 
 	/** Default right-hand IK alpha when weapon is drawn outside of independent motion. */
@@ -145,6 +157,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<AActor> WeaponActorClass;
+
+	/** Opt-in palm calibration. Invalid/missing rigid anchors fall back to the configured sockets. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Attachment")
+	EProject_JDrawnAttachmentMode DrawnAttachmentMode = EProject_JDrawnAttachmentMode::Socket;
 
 	/** Socket used while the weapon is drawn and combat presentation is active. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")

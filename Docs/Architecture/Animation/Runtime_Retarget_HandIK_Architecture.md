@@ -1,4 +1,6 @@
-# MMORPG Runtime Retargeting & Weapon Hand IK Architecture
+# MMORPG 런타임 리타깃과 무기 손 접촉 구조
+
+> **2026-10-02 정정:** 아래 본문은 이전 설계와 최적화 기록을 포함한다. 현재 플레이어는 이동 Motion Matching → 전투 상체 합성/몽타주 → 임포트 몸체 런타임 리타깃 → Guided Hand IK → 의상 물리를 사용한다. 현재 노드·복귀·부착은 [Guided 손 접촉](Guided_Hand_Contact.md), [무기 정책](Weapon_Grip_Drive_Policy.md), [Palm 정상 부착](Primary_Grip_Attachment.md)을 우선한다. 오프라인 리타깃도 가능하며 추가 의상 뼈만으로 런타임 리타깃이 필수인 것은 아니다. 군중 성능 우위와 임의 궤적의 완전 파지를 보장하지 않는다.
 
 > **문서 버전:** 1.1.0  
 > **최종 수정일:** 2026-09-22  
@@ -21,16 +23,13 @@ Project J는 대규모 동시 접속 액션 MMORPG를 지향하며, 플레이어
    - MMORPG 특성상 다양한 종족, 성별, 직업, 외부 마켓플레이스 캐릭터 에셋이 지속적으로 추가됩니다.
    - 외부 에셋 중 다수는 언리얼 표준 마네킹(`SK_Mannequin`)이 아닌 3ds Max `Bip01` 등의 이종 골격 계층 구조와 바인드 포즈(T-Pose vs A-Pose)를 가집니다.
    - **호환 스켈레톤(Compatible Skeleton) 적용 불가 사유**:
-     - 언리얼의 호환 스켈레톤 기능은 본 이름(`pelvis`, `spine_01`, `hand_r` 등)과 부모-자식 트리 구조가 완전히 동일해야만 작동합니다.
-     - `Bip01 Pelvis`, `Bip01 R Hand` 등 접두사가 붙거나 본 개수가 다른 골격은 호환 스켈레톤으로 묶을 수 없으며, 반드시 **IK Rig 및 IK Retargeter(`RTG`)**를 거쳐야 합니다.
+     - 공통 애니메이션 뼈의 이름과 계층 호환성을 실제 에셋에서 확인해야 합니다. 추가 의상 뼈가 있다는 사실만으로 호환 여부를 판단하지 않습니다.
+     - 마네킹과 이름·비율·계층이 다른 Bip01 몸체는 리타깃 매핑이 필요합니다. 이 프로젝트는 기존 이동 DB/전투 애니메이션을 공유하기 위해 IK Rig/IK Retargeter의 런타임 경로를 사용합니다.
 
 2. **애니메이션 및 PSD 복제(Duplicate & Retarget)를 하지 않는 이유**:
    - 질문: *"수많은 캐릭터 에셋마다 애니메이션 시퀀스를 오프라인으로 각각 리타깃해서 별도 ABP를 만들면 안 되는가?"*
-   - **답변: 모션 매칭 환경에서는 심각한 기술 부채와 메모리 폭증을 유발하여 불가능합니다.**
-     - **VRAM / RAM 메모리 폭증**: 일반 시퀀스뿐만 아니라 수백 개의 애니메이션 프레임별 궤적/포즈 특성을 인덱싱한 **Pose Search Database (PSD)**까지 에셋 개수(N개)만큼 중복 로드되어 기가바이트 단위의 메모리 낭비가 발생합니다.
-     - **에셋 및 패키징 용량(Storage/Git LFS) 폭발**: 캐릭터가 10개만 추가되어도 수천 개의 `.uasset` 시퀀스가 중복 생성되어 빌드/패키징 시간이 기하급수적으로 증가합니다.
-     - **유지보수 분산 (Maintenance Hell)**: 이동 가속도, 정지 관성, 턴인플레이스(Turn-In-Place) 임계값, Chooser 분기 로직 등을 튜닝할 때 모든 캐릭터의 개별 ABP와 PSD를 재빌드/재검증해야 하는 운영상 파편화가 발생합니다.
-   - 따라서 **단 1개의 골든 마스터 마네킹에서만 모션 매칭을 실행하고, 외형은 런타임에 동적으로 포즈만 빌려오는 '런타임 리타기팅(Runtime Retargeting)' 구조가 필수적**입니다.
+   - **답변: 오프라인 리타깃은 가능합니다.** 몸체별 시퀀스/DB 제작·보관 비용과 런타임 리타깃의 CPU 비용을 비교해야 합니다. 추가 데이터는 공유·로딩 정책에 따라 달라지며 이 프로젝트에서 기가바이트 증가나 기하급수적 빌드 비용을 실측한 근거는 없습니다.
+   - 현재 요구인 이동 애니메이션 공유, 상체 오버라이딩, 에셋별 전체 리타깃 회피와 임포트 골격 보존에 맞춰 공용 소스 포즈와 런타임 외형 리타깃을 유지합니다. 이는 합리적인 선택이며 모든 게임·모든 거리에서 유일한 최선이라고 단정하지 않습니다.
 
 3. **신체 비율 차이로 인한 무기 파지(Weapon Grip) 뒤틀림 현상**:
    - 리타기팅을 통해 포즈를 동적으로 전송하더라도, 캐릭터마다 어깨 너비, 팔 길이, 척추 곡률이 완전히 다릅니다.
@@ -38,7 +37,7 @@ Project J는 대규모 동시 접속 액션 MMORPG를 지향하며, 플레이어
    - **왜 마스터 마네킹에서 IK를 풀지 않고 팔로워에서 푸는가? (Post-Retarget IK)**:
      - 마스터 마네킹은 팔로워 캐릭터 고유의 팔 길이(체형)를 알지 못합니다.
      - 마스터 마네킹이 자신의 팔 길이에 맞춰 손을 배치한 뒤 리타깃을 거치면, 팔 길이가 다른 팔로워 골격에서는 다시 위치 오차가 누적됩니다.
-     - 따라서 **최종 렌더링 직전, 팔로워 자신의 고유 골격과 로컬 무기 위치를 기준으로 2차 Two-Bone IK를 적용(Post-Retarget)**해야만 완벽한 파지가 보장됩니다.
+     - 현재 보이는 몸체에서 Palm 접촉을 실제 손목 목표로 변환하고 Guided Hand IK로 입력 팔꿈치 방향을 보존·안정화합니다. 도달 가능한 목표의 접촉을 맞추며, 고정 어깨와 팔 길이로 닿지 않는 목표는 제한합니다. Two Bone IK/FABRIK만으로 임의 궤적의 완전 파지를 보장할 수 없습니다.
 
 ---
 
@@ -171,14 +170,16 @@ flowchart TD
 
 ### 3.6 대검 양손 파지(Two-Handed Grip) 및 공격 IK 하이브리드 연동 아키텍처
 
-대검(Greatsword) 등 양손 무기는 **전투 대기(Combat Idle) 및 이동 중에는 오른손만 무기 손잡이를 쥐고(`RightGripAlpha = 1.0`, `LeftGripAlpha = 0.0`), 공격 몽타주가 재생되는 스윙 구간에서만 왼손이 보조 손잡이(`WeaponGrip_L`)를 잡도록** 하는 하이브리드 파이프라인이 구축되어 있습니다:
+현재 대검은 **전투 Idle 및 일반 이동에서는 오른손이 무기를 부착 상태로 구동하고 왼손 Alpha는 0, 소스 주도 공격에서는 두 손이 각 Grip 접촉을 추적**한다. 오른손은 Idle의 Palm 부착에서 자기 추적 방지를 위해 실제 IK Alpha가 0이다. 다른 장비의 항상 양손 Idle은 Drawn Secondary Alpha 1, 한손 무기는 Enable Secondary Grip Contact false로 설정한다. 직업 이름에 의한 노드 분기는 없다. 최신 설정은 [보조 손 접촉](Secondary_Hand_Contact.md)을 따른다.
+
+아래는 초기 노티파이/커브 연동 설명이다. 현재 소스 주도 기본 공격은 Default Attack Secondary IKAlpha로 동작하므로 공격 전체 양손 설정에서는 모든 몽타주에 Two-Hand 상태를 추가할 필요가 없다. 지정 구간만 파지하려면 Attack 기본값 0과 기존 Two-Hand 스테이트를 함께 사용한다. 스테이트는 손 주도·소스 주도·독립 Motion의 접촉 기본값을 덮어쓰며 검의 움직임을 바꾸지 않는다. UE 재생별 NotifyInstanceID로 겹친 요청과 종료를 분리하며 가장 최근에 시작한 생존 구간의 값을 사용한다. Guided 왼팔은 오른팔 뒤에서 현재 포즈의 기준 뼈 공간을 지원한다. 복귀는 기존 몽타주 가중치 정책을 따른다.
 
 1. **역할 분리 및 데이터 에셋 디커플링 (Data Asset Decoupling)**:
    - 무기 프로필(`UProject_JWeaponPresentationProfile`, 예: `DA_Greatsword_Presentation`)은 특정 몽타주나 커브 에셋에 종속되지 않습니다.
    - DA는 무기 고유의 기본 상태만을 정의합니다:
      - `PrimaryGripSocketName`: `WeaponGrip_R` (주 손잡이)
      - `SecondaryGripSocketName`: `WeaponGrip_L` (보조 손잡이)
-     - `DefaultDrawnPrimaryIKAlpha`: `1.0f` (발도 대기 시 오른손 밀착)
+     - `DefaultDrawnPrimaryIKAlpha`: `1.0f` (기존 기본값이며 Palm 정상 부착에서는 실제 Primary IK를 억제)
      - `DefaultDrawnSecondaryIKAlpha`: `0.0f` (발도 대기 시 왼손 자유)
      - `DefaultSheathed...`: `0.0f` (등 납도 시 양손 0.0)
 
@@ -187,10 +188,10 @@ flowchart TD
    - 키프레임을 일일이 찍지 않고 바의 시작/끝 지점만 조절하면 되므로 기획자 및 애니메이터의 작업 편의성이 극대화됩니다.
    - `SecondaryIKAlpha` (기본값 `1.0f`), `PrimaryIKAlpha` (기본값 `1.0f`), `bOverridePrimaryIK` 지원.
 
-3. **콤보 오버랩 및 선입력 캔슬 방어 (Ref-Counting Architecture)**:
-   - `UProject_JWeaponPresentationComponent` 내부에서 `TwoHandGripStateCount` 참조 카운터로 활성 노티파이를 추적합니다.
-   - 선입력 콤보나 연속 공격으로 인해 이전 몽타주의 `NotifyEnd`보다 다음 몽타주의 `NotifyBegin`이 먼저 호출되는 오버랩 상황에서도, 카운터가 유지되어 왼손이 순간적으로 떨어졌다가 다시 붙는 플리커(Flicker) 현상이 원천 방지됩니다.
-   - 회피/피격 캔슬이나 전투 해제(`ExitCombatPresentation`), 무기 파괴 시 카운터가 안전하게 0으로 리셋됩니다.
+3. **콤보 오버랩 및 종료 수명**:
+   - `UProject_JWeaponPresentationComponent`는 UE의 NotifyInstanceID를 키로 활성 파지 요청을 보관한다. 가장 최근에 시작해 아직 살아 있는 요청을 적용하며, 종료는 자신의 요청만 제거한다.
+   - 중첩 구간이 끝나면 이전 요청의 가중치와 Primary Override 여부가 복원된다. 중복 시작·종료와 늦은 종료가 다른 활성 구간을 소비하지 않는다. 기존 Blueprint 호출은 별도의 LIFO 요청으로 호환한다.
+   - 몽타주 취소의 NotifyEnd, 전투 해제(`ExitCombatPresentation`), 외형 파괴와 EndPlay의 정리 경계를 사용한다. 파지 요청을 Notify UObject의 실행 변수나 네트워크 본 좌표로 보관하지 않는다.
 
 4. **하이브리드 커브 연동 및 스무딩 (`UProject_JRetargetAnimInstance`)**:
    - Leader-Follower 분리 구조상 리타깃 노드는 Leader 몽타주의 커브를 자동 복사하지 못하므로, C++ Game Thread(`NativeUpdateAnimation`)에서 Leader AnimInstance의 `GetCurveValue()`를 질의합니다.
@@ -329,4 +330,3 @@ Leader ABA, Follower 런타임 리타기팅, Retarget IK, Hand IK, Foot IK가 �
 4. **런타임 리타깃 애님 인스턴스 할당**:
    - 팔로워 애님 블루프린트(`ABP_Greatsword_Woman_RunTIme`) 생성 후 부모 클래스를 `UProject_JRetargetAnimInstance`로 설정.
    - `Retarget Pose From Mesh` 노드와 C++ 컴포넌트 공간 `Two-Bone IK` 노드를 연결하여 파이프라인 완성.
-

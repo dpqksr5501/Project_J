@@ -14,6 +14,18 @@ class UProject_JAttackDefinition;
 class UProject_JCombatStyleDefinition;
 class UAnimInstance;
 
+/** Resolved cosmetic mount. The same endpoint is used for draw, motion return and recovery. */
+struct FProject_JResolvedWeaponAttachment
+{
+	TWeakObjectPtr<USkeletalMeshComponent> Mesh;
+	FName Socket = NAME_None;
+	FTransform Relative = FTransform::Identity;
+	bool bPrimaryContact = false;
+	/** Value-only diagnosis of the selected path; never used to drive animation. */
+	FName Reason = TEXT("Unresolved");
+	bool IsValid() const { return Mesh.IsValid() && !Socket.IsNone(); }
+};
+
 /** The stable character socket that currently owns the visual weapon actor. */
 UENUM(BlueprintType)
 enum class EProject_JWeaponPresentationSocket : uint8
@@ -133,6 +145,10 @@ public:
 	/** Reconciles the visible weapon; unchanged identity preserves its actor and motion. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
 	void RefreshPresentation();
+
+	/** Call after a runtime body/profile or weapon child-transform change. Active attacks finish before remounting. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon")
+	void RefreshAttachmentCalibration();
 	/** Budget subsystem applies only the current request; no stale weapon profile is captured. */
 	void ApplyBudgetedPresentation(uint64 Revision);
 
@@ -174,19 +190,23 @@ public:
 
 	/**
 	 * Activates two-handed weapon grip during an attack swing or skill.
-	 * Overlapping calls (e.g. combo cancels) increment a reference count so the secondary grip does not flicker.
+	 * Legacy Blueprint calls use a balanced LIFO stack. Authored notifies use their engine instance ID.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	void BeginTwoHandGrip(float SecondaryIKAlpha = 1.0f, float PrimaryIKAlpha = 1.0f, bool bOverridePrimaryIK = false);
 
 	/**
-	 * Deactivates two-handed weapon grip or decrements reference count.
+	 * Ends the most recent legacy Blueprint request without consuming a keyed montage notify.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	void EndTwoHandGrip();
 
 	UFUNCTION(BlueprintPure, Category = "Combat|Weapon Motion")
-	bool IsTwoHandGripActive() const { return TwoHandGripStateCount > 0; }
+	bool IsTwoHandGripActive() const { return !TwoHandGripRequests.IsEmpty(); }
+
+	/** Per-playback identity prevents a late/duplicate end from removing another attack's grip window. */
+	void BeginTwoHandGripNotify(int32 NotifyInstanceID, float SecondaryIKAlpha, float PrimaryIKAlpha, bool bOverridePrimaryIK);
+	void EndTwoHandGripNotify(int32 NotifyInstanceID);
 
 	/** Master ABPs read this once per animation update and feed the transforms to their generic hand IK nodes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
@@ -216,6 +236,7 @@ private:
 	friend class FProjectJPresentationMeshResolverTest;
 	friend class FProjectJTwoHandIKTransitionAndCurveTest;
 	friend class FProjectJCanonicalMeleeTraceTest;
+	friend class FProjectJPrimaryGripAttachmentTest;
 	bool ShouldBudgetPresentation() const;
 	void CancelBudgetedPresentation();
 	uint64 PresentationRevision = 0;
@@ -236,11 +257,13 @@ private:
 	bool FindWeaponSocketTransform(FName SocketName, FTransform& OutWorldTransform) const;
 	USceneComponent* FindWeaponSocketComponent(FName SocketName) const;
 	bool TryGetGroundCorrection(float DeltaTime, FVector& OutComponentSpaceCorrection);
-	bool AttachWeaponToSocket(FName SourceSocketName, FName VisualSocketName, const TCHAR* Context);
+	FProject_JResolvedWeaponAttachment ResolveAttachment(bool bDrawn) const;
+	bool AttachWeaponToSocket(FName SourceSocketName, FName VisualSocketName, const TCHAR* Context, bool bDrawn = false);
 	void DestroyWeaponPresentation();
 	void UpdateTickState();
 	void LogWeaponPresentationDebug(const TCHAR* Context) const;
 	void LogGripTraceEvent(const TCHAR* Event) const;
+	void LogAttachmentTrace(const TCHAR* Context, bool bForce = false, int32 RequestedSocket = INDEX_NONE) const;
 	void SampleGripTrace();
 	void NotifyWeaponTargetChanged(USceneComponent* InWeaponComponent);
 	void UpdateSocketComponentCache();
@@ -279,6 +302,7 @@ private:
 	/** Cosmetic socket to return to after source-space motion keys finish. No replication. */
 	TWeakObjectPtr<USkeletalMeshComponent> ActiveMotionReturnMesh;
 	FName ActiveMotionReturnSocket = NAME_None;
+	FTransform ActiveMotionReturnRelative = FTransform::Identity;
 
 	float ActiveMotionNormalizedTime = 0.0f;
 	float ActiveMotionDurationSeconds = 0.0f;
@@ -292,6 +316,9 @@ private:
 	FName ContactRecoverySocket = NAME_None;
 	FTransform ContactRecoveryGripComponent = FTransform::Identity;
 	FTransform ContactRecoveryAttachment = FTransform::Identity;
+	FTransform ContactRecoveryDestination = FTransform::Identity;
+	bool bPrimaryContactAttachment = false;
+	bool bAttachmentRefreshRequested = false;
 	/** Source-driven recovery reads an independent source pose, never the solved primary hand. */
 	TWeakObjectPtr<USkeletalMeshComponent> ContactRecoverySourceMesh;
 	TWeakObjectPtr<UAnimInstance> ContactRecoverySourceAnim;
@@ -308,13 +335,19 @@ private:
 	bool bContactRecoveryActive = false;
 	uint64 LastMotionEvaluationFrame = MAX_uint64;
 	int32 GroundContactStateCount = 0;
-	int32 TwoHandGripStateCount = 0;
-	float ActiveTwoHandSecondaryIKAlpha = 1.0f;
-	float ActiveTwoHandPrimaryIKAlpha = 1.0f;
-	bool bActiveTwoHandOverridePrimary = false;
+	struct FTwoHandGripRequest
+	{
+		int32 NotifyInstanceID = INDEX_NONE;
+		float SecondaryAlpha = 1.0f;
+		float PrimaryAlpha = 1.0f;
+		bool bOverridePrimary = false;
+	};
+	/** Latest surviving window wins; endings remove only their own request. No state is stored on shared notify assets. */
+	TArray<FTwoHandGripRequest, TInlineAllocator<4>> TwoHandGripRequests;
 
 	float WeaponPresentationDebugElapsedSeconds = 0.0f;
 	double GripTraceNextSampleTime = 0.0;
+	mutable double AttachmentTraceNextSampleTime = 0.0;
 	double GripTracePreviousSampleTime = 0.0;
 	FVector GripTracePreviousWeapon = FVector::ZeroVector;
 	FVector GripTracePreviousElbow = FVector::ZeroVector;
