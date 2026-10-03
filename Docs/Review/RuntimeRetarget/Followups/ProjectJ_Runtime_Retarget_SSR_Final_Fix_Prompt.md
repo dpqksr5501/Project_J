@@ -888,7 +888,7 @@ SSR
 다음 문서를 실제 코드와 맞게 업데이트하세요.
 
 ```text
-Docs/Architecture/Animation/Runtime_Retarget_HandIK_Architecture.md
+Docs/Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md
 ```
 
 ---

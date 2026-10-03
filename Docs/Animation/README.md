@@ -1,8 +1,23 @@
 # 애니메이션
 
-- [Locomotion 기준과 구현](Locomotion/GASP_ProjectJ_Locomotion_Parity.md): GASP 대응표, Motion Matching, State Controller, OTM, TIP 및 원격 원샷.
-- [Combat Strafe TIP 구현](../Combat/CombatStrafe_TurnInPlace_Implementation_2026-08-12.md)과 [최근 순간 튐 후속 분석](../Review/Animation/TIP/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md): 기존 설계와 실제 로그 기반 수정 구분.
-- [리타기팅 표준](Retargeting/HumanoidSkeletonRetargetingStandards.md) 및 [Runtime Retarget/Hand IK 구조](../Architecture/Animation/Runtime_Retarget_HandIK_Architecture.md).
-- [Motion Matching 후속 계획](Planning/MotionMatchingNextSteps.md): 계획과 현 구현을 구분해 확인.
+## 현재 플레이어 파이프라인
 
-애니메이션 실행·스레딩 분석은 [감사 계획](../Architecture/Animation/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md)을 참조한다.
+공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.
+
+| 목적 | 기준 문서 |
+| --- | --- |
+| 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |
+| Motion Matching 실행·원격·예산 정책 | [Motion Matching 구조와 후속 항목](Architecture/MotionMatchingNextSteps.md) |
+| 리타깃 파이프라인과 배경 | [런타임 리타깃 구조](Architecture/Runtime_Retarget_HandIK_Architecture.md) |
+| 무기 부착·파지·궤적·공격 종료 복귀 | [무기 파지와 손 접촉 통합 가이드](Authoring/Weapon_Hand_Contact_System.md) |
+| 외형·의상 리더 선택 | [외형 메시 소유권](Architecture/Visual_Presentation_Mesh_Ownership.md) |
+
+## 에디터 제작과 디버깅
+
+1. [제작 가이드](Authoring/README.md): 몸체 DA, Palm·WeaponGrip 소켓, ABP의 오른팔·왼팔 연결.
+2. [진단 기록](Diagnostics/README.md): 파지·팔꿈치·TIP의 로그와 수정 근거.
+3. [계획](Planning/README.md): 파이프라인 제안과 스레딩 감사의 후속 범위.
+
+현재 대검의 확인된 구성은 Idle 오른손 파지 → Two-Hand Grip IK 구간 양손 파지 → 왼손 해제다. 다른 무기는 보조 접촉 기능과 기본 가중치로 한손·항상 양손을 선택한다. 세부 설정은 [통합 가이드의 보조 손 절](Authoring/Weapon_Hand_Contact_System.md#secondary)에 모은다.
+
+상체 전투 합성은 [전투](../Combat/README.md), 원격 복제 검증은 [네트워크](../Networking/README.md), 다수 플레이어 비용은 [성능](../Performance/README.md)에서 확인한다.

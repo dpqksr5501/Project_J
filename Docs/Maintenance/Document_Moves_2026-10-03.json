@@ -1,0 +1,494 @@
+{
+  "date": "2026-10-03",
+  "originalFiles": 137,
+  "preservation": "모든 기존 파일을 보존한다. 본문은 경로·링크만 수정하며 CSV·JSON·스크립트 원본은 바이트 단위로 유지한다.",
+  "moves": [
+    {
+      "from": "Docs/Animation/Locomotion/DataDrivenLocomotionExtensionGuide.md",
+      "to": "Docs/Animation/Authoring/DataDrivenLocomotionExtensionGuide.md",
+      "originalSha256": "ded946716583be85287c9a770f448ac7469d4b65ed7aa7d2c2a09b2760e1cd84",
+      "relocatedSha256": "c8447b146598f6a8efd500f6b7fa9a50c5501becd45f414270636df7c2f2acd4"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/GASP_BranchIn_TIP_Handoff_2026-08-04.md",
+      "to": "Docs/Animation/Locomotion/Reports/GASP_BranchIn_TIP_Handoff_2026-08-04.md",
+      "originalSha256": "af17f890531c32d428fd6777ed3d3a093c1a5dc7e3615d7bc1d9119a35f0aa19",
+      "relocatedSha256": "d9d6c7097921884419efd1aad88cc2e648a0e3a7d66135d5a95a7bc19a7bfcc3"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/GASP_Pivot_Architecture_Correction_2026-08-24.md",
+      "to": "Docs/Animation/Locomotion/Reports/GASP_Pivot_Architecture_Correction_2026-08-24.md",
+      "originalSha256": "9757e7216cb86b495199344020ad2b8aa2da0cee736c7d9cf174a42868d091fb",
+      "relocatedSha256": "9757e7216cb86b495199344020ad2b8aa2da0cee736c7d9cf174a42868d091fb"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md",
+      "to": "Docs/Animation/Locomotion/Reports/Locomotion_OTM_OffsetRootBone_BugReport_2026-08-06.md",
+      "originalSha256": "e10858a35d7ac74c32161b1cdd501731c7455b810dfecf6be5f5493d1bf4c00b",
+      "relocatedSha256": "e10858a35d7ac74c32161b1cdd501731c7455b810dfecf6be5f5493d1bf4c00b"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/Locomotion_Refinement_2026-09-19.md",
+      "to": "Docs/Animation/Locomotion/Reports/Locomotion_Refinement_2026-09-19.md",
+      "originalSha256": "57de98ad9daaf41a60fb619a3ed875f1cae9dcb908f9a796442d0fece97b7541",
+      "relocatedSha256": "57de98ad9daaf41a60fb619a3ed875f1cae9dcb908f9a796442d0fece97b7541"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/MotionMatching_Locomotion_Implementation_Summary_20260801.md",
+      "to": "Docs/Animation/Locomotion/Reports/MotionMatching_Locomotion_Implementation_Summary_20260801.md",
+      "originalSha256": "35306f81e4fc3c075c32aacc5ad04a81cc49524145417c3e7a8b85d7c5d2ef3f",
+      "relocatedSha256": "35306f81e4fc3c075c32aacc5ad04a81cc49524145417c3e7a8b85d7c5d2ef3f"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/MotionMatching_Locomotion_Refactor.md",
+      "to": "Docs/Animation/Locomotion/Reports/MotionMatching_Locomotion_Refactor.md",
+      "originalSha256": "8d34ac9e9d6ac057df397073e0ac83f6b2b6a32cb14fdbc2377eff4d7db380a5",
+      "relocatedSha256": "8d34ac9e9d6ac057df397073e0ac83f6b2b6a32cb14fdbc2377eff4d7db380a5"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/MotionMatching_StateController_Handoff_2026-08-01.md",
+      "to": "Docs/Animation/Locomotion/Reports/MotionMatching_StateController_Handoff_2026-08-01.md",
+      "originalSha256": "a12ccd6e804e28eb55f9b83a97f4a3d9c0a9c2805f04b77536a4edc0beafc9e3",
+      "relocatedSha256": "97a910bd12543c7b443babdea73402afe8a136532954d9da22a62a00e6243cb6"
+    },
+    {
+      "from": "Docs/Animation/Locomotion/MovingReorientation_TIP_WorkLog_2026-08-05.md",
+      "to": "Docs/Animation/Locomotion/Reports/MovingReorientation_TIP_WorkLog_2026-08-05.md",
+      "originalSha256": "123305013524d421b62d0d3dcb4ab479da2a2eaabd207a910a38a87d4b124f9f",
+      "relocatedSha256": "123305013524d421b62d0d3dcb4ab479da2a2eaabd207a910a38a87d4b124f9f"
+    },
+    {
+      "from": "Docs/Animation/Planning/MotionMatchingNextSteps.md",
+      "to": "Docs/Animation/Architecture/MotionMatchingNextSteps.md",
+      "originalSha256": "47bc87be127bacc3c8d020786defb38cec3c37c2765d09d47954024601033cbb",
+      "relocatedSha256": "47bc87be127bacc3c8d020786defb38cec3c37c2765d09d47954024601033cbb"
+    },
+    {
+      "from": "Docs/Animation/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Animation/README.md",
+      "originalSha256": "7cc97d7e45e30c3929e44db7ed98e9fc7e13914f2d136dbe5a597e50acef0a4a",
+      "relocatedSha256": "a4313dcbd0247464787f5234b864f6fb49a670f15d7f33664e5f6427d6edd37e"
+    },
+    {
+      "from": "Docs/Animation/Retargeting/HumanoidSkeletonRetargetingStandards.md",
+      "to": "Docs/Animation/Authoring/HumanoidSkeletonRetargetingStandards.md",
+      "originalSha256": "49dc5fad35554db73900466a9e97c15819f2a8a2433d3087a80b0bb23d607367",
+      "relocatedSha256": "49dc5fad35554db73900466a9e97c15819f2a8a2433d3087a80b0bb23d607367"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Guided_Hand_Contact.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Authoring/Guided_Hand_Contact.md",
+      "originalSha256": "e2b1b9b34c4f7977554953053cb96ebfccdee51a951436a6d0e1f7cd722596b4",
+      "relocatedSha256": "f336f609bc3f7f442eb9717a16ab8cdc6bd6ba3dcb5a6aa71705f1dd710fa25d"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Humanoid_Animation_Pipeline_Redesign_Proposal.md",
+      "to": "Docs/Animation/Planning/Humanoid_Animation_Pipeline_Redesign_Proposal.md",
+      "originalSha256": "c79f21f693f313adcc3d2d8f1e8068ae791bc06df0598515e57961f9cb124b6a",
+      "relocatedSha256": "15e6f5156f114c0337ef772395993659aff166b1c7bfb3da54321fd21db55101"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Primary_Grip_Attachment.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Primary_Grip_Attachment.md",
+      "originalSha256": "c8b1a69ef26454d17e31bd79793f6211888a978aa8d21f5f5f9d754638dfe8f3",
+      "relocatedSha256": "2e7bc9bffd862d844cc03e59bee10ffae19470bcd3a87e499e87150cbc80857f"
+    },
+    {
+      "from": "Docs/Architecture/Animation/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md",
+      "to": "Docs/Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md",
+      "originalSha256": "90a6366eeac8ff6aab486dc096a85b62ccc789f44e9df7d8da38901df15a4d3c",
+      "relocatedSha256": "90a6366eeac8ff6aab486dc096a85b62ccc789f44e9df7d8da38901df15a4d3c"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Runtime_Retarget_HandIK_Architecture.md",
+      "to": "Docs/Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md",
+      "originalSha256": "559bec2bb9383ec1f66631c153c2ef23ffba36151971ac2c5c7d30be687b08fa",
+      "relocatedSha256": "0320a1d9416a0daa855be57207edafa7e9776964f078742e5c92f0b82eb1e18c"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Secondary_Hand_Contact.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Authoring/Secondary_Hand_Contact.md",
+      "originalSha256": "b75edb4e403d1cd4ec5fcd6798877390af0bfee643567e80da4f98c776db9a33",
+      "relocatedSha256": "b75edb4e403d1cd4ec5fcd6798877390af0bfee643567e80da4f98c776db9a33"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Visual_Presentation_Mesh_Ownership.md",
+      "to": "Docs/Animation/Architecture/Visual_Presentation_Mesh_Ownership.md",
+      "originalSha256": "0d5dc3c878b15f5d06645494f60fd76bfd4a1ce810bb65b26b6bf033248515b9",
+      "relocatedSha256": "5295fb2d8236a74e3fed8a21d8c57e7315566659c8c6998455fb4399f861cd48"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Weapon_Contact_Recovery.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Weapon_Contact_Recovery.md",
+      "originalSha256": "b246aa23b91ec68cb6c17bb44445a4f217d12d753937eeed118193d9928a5b2f",
+      "relocatedSha256": "f52d3e03b3fdb421cc4efde3b60dccb25a4bf3246b8a471ac7624afa2272c75c"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Weapon_Grip_Drive_Policy.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Weapon_Grip_Drive_Policy.md",
+      "originalSha256": "d615653150040de1c855e58021e79ea05765c208e531660e36e4db709d6f989d",
+      "relocatedSha256": "c1c16afe7ad6ec4cfda42a786d1751838c1f772c8e40f54d0e01b8e1788a5e98"
+    },
+    {
+      "from": "Docs/Architecture/Animation/Weapon_Grip_Trace_2026-10-02.md",
+      "to": "Docs/Animation/Diagnostics/Weapon_Grip_Trace_2026-10-02.md",
+      "originalSha256": "88aadb3dbc9d0b0644066884bc34c7b66ef1d7048fcdd5babd3e13197f7c61c6",
+      "relocatedSha256": "738e1f145b76992af04199e1d66698886d5e2ccd2fd9a587c7a538dfbdc12dd5"
+    },
+    {
+      "from": "Docs/Architecture/Extensions/Content_Bundle_Authoring_2026-09-19.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/Content_Bundle_Authoring_2026-09-19.md",
+      "originalSha256": "4c98464b9d5b5ff6753635502a9ed9f4913ddee632eff366f6c5ec3840a70be7",
+      "relocatedSha256": "7b1f1b37af2b3ab3bbfbcd238dd0d80718270471f4ee80f35f9d5a8c56dfa1a2"
+    },
+    {
+      "from": "Docs/Architecture/Extensions/Extension_Architecture_Review_2026-09-13.md",
+      "to": "Docs/Review/Architecture/Extensions/Extension_Architecture_Review_2026-09-13.md",
+      "originalSha256": "8fd4429741ada7f764ea70a88f4df288a1965c5d2087a24af827309758294a61",
+      "relocatedSha256": "c844057e26dfeaca64de9cc1344ef352672ff7b8911c42b1b12446224b25f5bd"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Iris_AOI_Scale_Gates_2026-09-05.md",
+      "to": "Docs/Networking/Planning/ProjectJ_Iris_AOI_Scale_Gates_2026-09-05.md",
+      "originalSha256": "95f33809915283598bf3cc47ead0e05724abf3c2cee18b40d7ec492d20d10199",
+      "relocatedSha256": "95f33809915283598bf3cc47ead0e05724abf3c2cee18b40d7ec492d20d10199"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Iris_FastArray_Validation_2026-09-05.md",
+      "to": "Docs/Networking/Validation/ProjectJ_Iris_FastArray_Validation_2026-09-05.md",
+      "originalSha256": "ca08b2f7fe56e62499c7a38c97da77d0751097046e155047e4eb42d007507946",
+      "relocatedSha256": "ca08b2f7fe56e62499c7a38c97da77d0751097046e155047e4eb42d007507946"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Network_Baseline_Capture_Guide_2026-09-04.md",
+      "to": "Docs/Networking/CaptureGuides/ProjectJ_Network_Baseline_Capture_Guide_2026-09-04.md",
+      "originalSha256": "f2364dc630174a66c345791f5a6641b40868ec0e7f5fdda33c4127d07bdb220f",
+      "relocatedSha256": "f2364dc630174a66c345791f5a6641b40868ec0e7f5fdda33c4127d07bdb220f"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Network_Baseline_Results_2026-09-04.md",
+      "to": "Docs/Networking/Baselines/ProjectJ_Network_Baseline_Results_2026-09-04.md",
+      "originalSha256": "43e41372a10de6cfca689881c95fb96616d1eef6801fe2696286487b1872aec1",
+      "relocatedSha256": "43e41372a10de6cfca689881c95fb96616d1eef6801fe2696286487b1872aec1"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Remote_TIP_Replication_2026-09-05.md",
+      "to": "Docs/Networking/Architecture/ProjectJ_Remote_TIP_Replication_2026-09-05.md",
+      "originalSha256": "29a8ebea5300959adc8980ec7cc7c77e14500b857b8e54425c07a9b7611ddb86",
+      "relocatedSha256": "29a8ebea5300959adc8980ec7cc7c77e14500b857b8e54425c07a9b7611ddb86"
+    },
+    {
+      "from": "Docs/Architecture/Networking/ProjectJ_Remote_TIP_Replication_Plan_2026-09-05.md",
+      "to": "Docs/Networking/Planning/ProjectJ_Remote_TIP_Replication_Plan_2026-09-05.md",
+      "originalSha256": "27f7387824c727f0b9639dbadd5aaeaae17c74fc99bd4889323ac1a5c55d7d90",
+      "relocatedSha256": "27f7387824c727f0b9639dbadd5aaeaae17c74fc99bd4889323ac1a5c55d7d90"
+    },
+    {
+      "from": "Docs/Architecture/Performance/ProjectJ_Baseline_Capture_Guide_2026-09-03.md",
+      "to": "Docs/Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md",
+      "originalSha256": "9622d0e1ed7696db9fd42d7f18c49884930870e8f03901530a6aa5c5918a076a",
+      "relocatedSha256": "9622d0e1ed7696db9fd42d7f18c49884930870e8f03901530a6aa5c5918a076a"
+    },
+    {
+      "from": "Docs/Architecture/Performance/ProjectJ_Profiling_Baseline_Results_2026-09-03.md",
+      "to": "Docs/Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md",
+      "originalSha256": "94117c7eaace8bf1fcbeeed751541c30420a4ab0ae0cf8ad8dbdfd328e3612f5",
+      "relocatedSha256": "94117c7eaace8bf1fcbeeed751541c30420a4ab0ae0cf8ad8dbdfd328e3612f5"
+    },
+    {
+      "from": "Docs/Architecture/Performance/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md",
+      "to": "Docs/Performance/Reports/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md",
+      "originalSha256": "21886833e69f535ba5969036843bd0ebbc3ee4dce41eabc377897dbaec95c947",
+      "relocatedSha256": "925a9d4611b2545f1d3c27d0b176b4813a5e3bbcab76fce778472ad33b55e6ba"
+    },
+    {
+      "from": "Docs/Architecture/Performance/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md",
+      "to": "Docs/Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md",
+      "originalSha256": "f9609b0bb7bb2d50c2f31ff36c4ccd39b2bfe7a229a4f147c78cc09a261aaa20",
+      "relocatedSha256": "f9609b0bb7bb2d50c2f31ff36c4ccd39b2bfe7a229a4f147c78cc09a261aaa20"
+    },
+    {
+      "from": "Docs/Architecture/Performance/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md",
+      "to": "Docs/Performance/Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md",
+      "originalSha256": "9ed0128624b28ae521aa4a543d2daee276510aa1ac49d34b625e11bcfef32bea",
+      "relocatedSha256": "015917c31b0fc40b91b70fdfaf3cb6a812ab8dbf06239af54c7fdb68ace80d8c"
+    },
+    {
+      "from": "Docs/Architecture/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Architecture/README.md",
+      "originalSha256": "554f8606c290af08c2ad27baf0419e1ee6c93a0dea58e2fcb60f902efff10851",
+      "relocatedSha256": "e779d73b2e630820ca706b904cb5ac56ca7ed4143b0ce5bccad852af661568d0"
+    },
+    {
+      "from": "Docs/Architecture/Reviews/Architecture_Audit_20260607.md",
+      "to": "Docs/Review/Architecture/Architecture_Audit_20260607.md",
+      "originalSha256": "1373f8ecbf310f15ad6e57dc3aac7f9437707dfbaddbef9113109c120e48bd23",
+      "relocatedSha256": "1373f8ecbf310f15ad6e57dc3aac7f9437707dfbaddbef9113109c120e48bd23"
+    },
+    {
+      "from": "Docs/Architecture/Reviews/MMORPGArchitectureReview.md",
+      "to": "Docs/Review/Architecture/MMORPGArchitectureReview.md",
+      "originalSha256": "64c2d8f5e21b46fb68a00563f91329ae7af5ae54834112b2f538467abd76d096",
+      "relocatedSha256": "64c2d8f5e21b46fb68a00563f91329ae7af5ae54834112b2f538467abd76d096"
+    },
+    {
+      "from": "Docs/Architecture/Reviews/ProjectJ_Architecture_Audit.md",
+      "to": "Docs/Review/Architecture/ProjectJ_Architecture_Audit.md",
+      "originalSha256": "e2eed94844a07744548fd02f80cf8045c9b7600ab3a0538025954818b0d425c9",
+      "relocatedSha256": "c52b656fdc62eade6b005e8c0b516328db1d237fc046c8d28ca3475e35be83b6"
+    },
+    {
+      "from": "Docs/Architecture/Reviews/ProjectJ_Architecture_Audit_2026-09-03.md",
+      "to": "Docs/Review/Architecture/ProjectJ_Architecture_Audit_2026-09-03.md",
+      "originalSha256": "8e45701df35d9303da93bbfca3b5464622f725dda159c0701893a8ad69a117f1",
+      "relocatedSha256": "8e45701df35d9303da93bbfca3b5464622f725dda159c0701893a8ad69a117f1"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/ArchitectureRefactor_20260619.md",
+      "to": "Docs/Architecture/Runtime/Reports/ArchitectureRefactor_20260619.md",
+      "originalSha256": "710cce61d4a7c2fcbc9f3ea823c5eeafd3bd1f8824d65194d1ec37d6cec5d62c",
+      "relocatedSha256": "710cce61d4a7c2fcbc9f3ea823c5eeafd3bd1f8824d65194d1ec37d6cec5d62c"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Character_Component_Ownership_2026-09-20.md",
+      "to": "Docs/Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md",
+      "originalSha256": "eeb36a55da154b4bac8e8eea8733b2ff4036258f47e6886532a5d185e1f9e785",
+      "relocatedSha256": "eeb36a55da154b4bac8e8eea8733b2ff4036258f47e6886532a5d185e1f9e785"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Character_Component_Ownership_Validation_2026-09-20.json",
+      "to": "Docs/Architecture/Runtime/Reports/Character_Component_Ownership_Validation_2026-09-20.json",
+      "originalSha256": "d0574773e15077a6a5b4aaf4685e1fc5978b774cc564d4d2d3b62adebd42842b",
+      "relocatedSha256": "d0574773e15077a6a5b4aaf4685e1fc5978b774cc564d4d2d3b62adebd42842b"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Internal_Polish_2026-09-19.md",
+      "to": "Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md",
+      "originalSha256": "2d54018891d77e9b073b5bff1a103a16166e27bc8b5d816d31332df29e0293c5",
+      "relocatedSha256": "768a7b25e6692bb3f4261cbbf7459318d6677ef273ea3bb9ab82148a7f27a36f"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Internal_Polish_Validation_2026-09-19.json",
+      "to": "Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json",
+      "originalSha256": "b46ffdc3f72ace6fd896232c5c28622df0b9b5693c361d2aefa94140f8ee3f43",
+      "relocatedSha256": "b46ffdc3f72ace6fd896232c5c28622df0b9b5693c361d2aefa94140f8ee3f43"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Internal_Refinement_2026-09-13.md",
+      "to": "Docs/Architecture/Runtime/Reports/Internal_Refinement_2026-09-13.md",
+      "originalSha256": "ab0a171cc56d9c4fc0cb9fbb875ac17aaef176350797d7c4dc0cefffeda81ea0",
+      "relocatedSha256": "ab0a171cc56d9c4fc0cb9fbb875ac17aaef176350797d7c4dc0cefffeda81ea0"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Internal_Refinement_Validation_2026-09-13.json",
+      "to": "Docs/Architecture/Runtime/Reports/Internal_Refinement_Validation_2026-09-13.json",
+      "originalSha256": "9c9ae0d06408164873defccbf78c4eb1187002074dfc9afd5072df17acb89479",
+      "relocatedSha256": "9c9ae0d06408164873defccbf78c4eb1187002074dfc9afd5072df17acb89479"
+    },
+    {
+      "from": "Docs/Architecture/Runtime/Service_Internal_Audit_2026-09-19.md",
+      "to": "Docs/Architecture/Runtime/Reports/Service_Internal_Audit_2026-09-19.md",
+      "originalSha256": "4a6e95af9147312e67e919c7bb58280406c5e255d2c7effcb89eabbf3ab5acff",
+      "relocatedSha256": "4a6e95af9147312e67e919c7bb58280406c5e255d2c7effcb89eabbf3ab5acff"
+    },
+    {
+      "from": "Docs/Combat/CombatAnimationArchitectureNotes.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatAnimationArchitectureNotes.md",
+      "originalSha256": "a2be933548cd8589390c82e3edb4148516de2d2e00c39510e1501c5d13b8d635",
+      "relocatedSha256": "a2be933548cd8589390c82e3edb4148516de2d2e00c39510e1501c5d13b8d635"
+    },
+    {
+      "from": "Docs/Combat/CombatAnimationComposition.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatAnimationComposition.md",
+      "originalSha256": "170126b7e1e1803e0343ef9178aaa520c1b061fb146e7a4b03d440d7b5763d05",
+      "relocatedSha256": "4cda592d6b1472c5b0fb6b51e8ca6d230cc8dc297184ad83439dfb1456148a69"
+    },
+    {
+      "from": "Docs/Combat/CombatIntro_StaleOneShot_Resolution_2026-08-12.md",
+      "to": "Docs/Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md",
+      "originalSha256": "85ce71758dc354941e7a512d08731aa09271a5870725b8f5431fd18799e69359",
+      "relocatedSha256": "85ce71758dc354941e7a512d08731aa09271a5870725b8f5431fd18799e69359"
+    },
+    {
+      "from": "Docs/Combat/CombatLocomotionArchitecture.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatLocomotionArchitecture.md",
+      "originalSha256": "2c81436b3447faa54eb94c500b1e3cfdc98a46a12597da7a30e151be3350097b",
+      "relocatedSha256": "2c81436b3447faa54eb94c500b1e3cfdc98a46a12597da7a30e151be3350097b"
+    },
+    {
+      "from": "Docs/Combat/CombatStrafe_Handoff_2026-08-03.md",
+      "to": "Docs/Handoffs/CombatStrafe_2026-08-03/CombatStrafe_Handoff_2026-08-03.md",
+      "originalSha256": "ba40d047ed561910b9a068ffb8821cbd134478eb0cafd43432efef5fcbb3ef45",
+      "relocatedSha256": "9660fe1e14fb4ede5fcdcec542aa840e7e986a3be6d47194078e354921ba549d"
+    },
+    {
+      "from": "Docs/Combat/CombatStrafe_Implementation_2026-08-04.md",
+      "to": "Docs/Combat/Reports/CombatStrafe_Implementation_2026-08-04.md",
+      "originalSha256": "dceb8988f5b8360dac05561158b4bd5118c23d0ee167b835a1a147aa81f2e49b",
+      "relocatedSha256": "57bb16f8a1e3149d604ceb3ea2ef91bcf3d5e0e1acfca445e27f4681790b0e27"
+    },
+    {
+      "from": "Docs/Combat/CombatStrafe_TurnInPlace_Implementation_2026-08-12.md",
+      "to": "Docs/Combat/Reports/CombatStrafe_TurnInPlace_Implementation_2026-08-12.md",
+      "originalSha256": "b09731cd13eac20c37342dd18fde63bf9ab46639af4d217512a9c71dc2245b79",
+      "relocatedSha256": "b09731cd13eac20c37342dd18fde63bf9ab46639af4d217512a9c71dc2245b79"
+    },
+    {
+      "from": "Docs/Combat/CombatVFXArchitecture.md",
+      "to": "Docs/Combat/Architecture/CombatVFXArchitecture.md",
+      "originalSha256": "7245f1ae0de993f4c6bdcf7c39694b718eb67fa8aefbc2392596e2732e134e82",
+      "relocatedSha256": "7245f1ae0de993f4c6bdcf7c39694b718eb67fa8aefbc2392596e2732e134e82"
+    },
+    {
+      "from": "Docs/Combat/GreatswordCombatAuthoringGuide.md",
+      "to": "Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md",
+      "originalSha256": "faebddbab87ad60f958210bf33702650f71b99180dbcd87e0f45c0d7266e269b",
+      "relocatedSha256": "faebddbab87ad60f958210bf33702650f71b99180dbcd87e0f45c0d7266e269b"
+    },
+    {
+      "from": "Docs/Combat/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Combat/README.md",
+      "originalSha256": "15f58128ae1acfed85b35332e0f2695461746b557c9adbd905f69aa024ed85f4",
+      "relocatedSha256": "24eaf3f1cdffd849dbf9946de5b1b9910f7eb5bb0ef3c7cb4f5e250f3bea6e67"
+    },
+    {
+      "from": "Docs/Combat/ScalableCombatFoundation.md",
+      "to": "Docs/Combat/Architecture/ScalableCombatFoundation.md",
+      "originalSha256": "463ccbbf96359b0249c06ba30250267b1429133f3de1d70b79da007f508ae5dd",
+      "relocatedSha256": "463ccbbf96359b0249c06ba30250267b1429133f3de1d70b79da007f508ae5dd"
+    },
+    {
+      "from": "Docs/Gameplay/ContentExpansionGuide.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/ContentExpansionGuide.md",
+      "originalSha256": "388484e5d197400bf54b935b159c7fe2e5478cf17c54a986843dc774948f5b3f",
+      "relocatedSha256": "e96cb971b92a6c0bcddb30da8d840e7737d8b6c81127a802501ddb206ec87ac8"
+    },
+    {
+      "from": "Docs/Gameplay/DataAssetQuickReference.md",
+      "to": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/DataAssetQuickReference.md",
+      "originalSha256": "fad5e58adb68023267c60d2114270ddd9807d54144d1dad8de92de6b8ff2f276",
+      "relocatedSha256": "9b14cf25754cee5bbcea594a0a437a1434827dd17ad8fef40b8ee89f412f6ab4"
+    },
+    {
+      "from": "Docs/Gameplay/ModularCharacterEquipmentGuide.md",
+      "to": "Docs/Gameplay/Authoring/ModularCharacterEquipmentGuide.md",
+      "originalSha256": "0d91bedc89eaacb6fbd285768924f48af183a9109170a399f3522aace16fdbda",
+      "relocatedSha256": "0d91bedc89eaacb6fbd285768924f48af183a9109170a399f3522aace16fdbda"
+    },
+    {
+      "from": "Docs/Gameplay/MountSystemArchitecture.md",
+      "to": "Docs/Gameplay/Architecture/MountSystemArchitecture.md",
+      "originalSha256": "f58e2613ed5bd89aa4af9012b52f2182e06cc318a60cd63f916a903e57bb371c",
+      "relocatedSha256": "9a40a81f02e844a2c0a5397eed9308befa039a93acbbcb73b3ad3b00f16737a6"
+    },
+    {
+      "from": "Docs/Gameplay/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Gameplay/README.md",
+      "originalSha256": "0a4753c5dbdc97fa9d265f6a7c436a0a56648d2478e8319e9525d758b5e90844",
+      "relocatedSha256": "76a2ccbd86a9f1a3a5c4791e6714008457ad7d63285933060d6f8953f2b5c93c"
+    },
+    {
+      "from": "Docs/Gameplay/SkillSystemArchitecture.md",
+      "to": "Docs/Gameplay/Architecture/SkillSystemArchitecture.md",
+      "originalSha256": "ac76f1c7e8ac4e19733f57d8fecf05d6e13f575e72ace4c6c4dc83751c0d0cb6",
+      "relocatedSha256": "0bb9e10de587fe4304467e4ed129c9120f3c0febbfe27e919a41c128f2797dbc"
+    },
+    {
+      "from": "Docs/Performance/DeferredOptimizationArchitecture.md",
+      "to": "Docs/Performance/Planning/DeferredOptimizationArchitecture.md",
+      "originalSha256": "0669c74ddae3cc0fac6142732de0a881bd97eceb10957ead711dae0662dc4ba5",
+      "relocatedSha256": "0669c74ddae3cc0fac6142732de0a881bd97eceb10957ead711dae0662dc4ba5"
+    },
+    {
+      "from": "Docs/Performance/PerformanceOptimizationFoundation.md",
+      "to": "Docs/Performance/Architecture/PerformanceOptimizationFoundation.md",
+      "originalSha256": "882b037ff10399aeef8e29e25ee5d06a54de6486deacaba5ee441e1a2412b0bd",
+      "relocatedSha256": "45a7c261d8e7ed3ce305bcc960e36e606b2d754338079d439b87b22655d05c4e"
+    },
+    {
+      "from": "Docs/Performance/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Performance/README.md",
+      "originalSha256": "df132097add3aa8564d02f8b085d24cc5d1d96df09d2ab35340065c76599f9be",
+      "relocatedSha256": "e2dbfa2bf1e4d4a4049950c179dd26569c4925909e983173a4baa7e54d345c11"
+    },
+    {
+      "from": "Docs/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/README.md",
+      "originalSha256": "d63a9ce7e0608ff5e91893ad015365321511c00cb1f4749d3317f99bec667594",
+      "relocatedSha256": "8616f56e1154e46c36232005cf5e1c2cd2e42e04d8a3296a33de0de0040c769d"
+    },
+    {
+      "from": "Docs/Review/Animation/TIP/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md",
+      "to": "Docs/Animation/Diagnostics/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md",
+      "originalSha256": "2bd6e1fd150952ebb1a69abd9d2c5c10ddf27d581136740c84497f79c62ebb9e",
+      "relocatedSha256": "2bd6e1fd150952ebb1a69abd9d2c5c10ddf27d581136740c84497f79c62ebb9e"
+    },
+    {
+      "from": "Docs/Review/README.md",
+      "to": "Docs/Archive/Navigation/2026-10-03/Review/README.md",
+      "originalSha256": "5cc751fe377ecc624ce301c31b932ea3ba04c2405efae76623c1245479ef4c89",
+      "relocatedSha256": "cfcf77d0374bb6bedefa0173f500acba8e3541d56d64c4a22ecbcb0c495e6222"
+    }
+  ],
+  "integrations": [
+    {
+      "document": "Docs/Animation/Authoring/Weapon_Hand_Contact_System.md",
+      "sources": [
+        {
+          "entry": "Docs/Animation/Authoring/Guided_Hand_Contact.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Authoring/Guided_Hand_Contact.md"
+        },
+        {
+          "entry": "Docs/Animation/Architecture/Primary_Grip_Attachment.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Primary_Grip_Attachment.md"
+        },
+        {
+          "entry": "Docs/Animation/Architecture/Weapon_Grip_Drive_Policy.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Weapon_Grip_Drive_Policy.md"
+        },
+        {
+          "entry": "Docs/Animation/Authoring/Secondary_Hand_Contact.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Authoring/Secondary_Hand_Contact.md"
+        },
+        {
+          "entry": "Docs/Animation/Architecture/Weapon_Contact_Recovery.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Animation/Architecture/Weapon_Contact_Recovery.md"
+        }
+      ]
+    },
+    {
+      "document": "Docs/Combat/Architecture/Combat_Animation_System.md",
+      "sources": [
+        {
+          "entry": "Docs/Combat/Architecture/CombatAnimationComposition.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatAnimationComposition.md"
+        },
+        {
+          "entry": "Docs/Combat/Architecture/CombatAnimationArchitectureNotes.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatAnimationArchitectureNotes.md"
+        },
+        {
+          "entry": "Docs/Combat/Architecture/CombatLocomotionArchitecture.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Combat/Architecture/CombatLocomotionArchitecture.md"
+        }
+      ]
+    },
+    {
+      "document": "Docs/Gameplay/Authoring/Content_Authoring_System.md",
+      "sources": [
+        {
+          "entry": "Docs/Gameplay/Authoring/DataAssetQuickReference.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/DataAssetQuickReference.md"
+        },
+        {
+          "entry": "Docs/Gameplay/Authoring/ContentExpansionGuide.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/ContentExpansionGuide.md"
+        },
+        {
+          "entry": "Docs/Gameplay/Authoring/Content_Bundle_Authoring_2026-09-19.md",
+          "preservedOriginal": "Docs/Archive/SourceDocuments/2026-10-03/Gameplay/Authoring/Content_Bundle_Authoring_2026-09-19.md"
+        }
+      ]
+    }
+  ]
+}

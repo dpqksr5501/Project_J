@@ -1,13 +1,13 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
-> **2026-09-22 Skeleton Retargeting Standard:** GASP(`SK_UEFN_Mannequin`) 애니메이션의 Project_J 표준 스켈레톤(`SK_Mannequin`) 호환 및 본 트랜슬레이션 리타기팅 규칙은 [`HumanoidSkeletonRetargetingStandards.md`](../Retargeting/HumanoidSkeletonRetargetingStandards.md)를 따른다.
+> **2026-09-22 Skeleton Retargeting Standard:** GASP(`SK_UEFN_Mannequin`) 애니메이션의 Project_J 표준 스켈레톤(`SK_Mannequin`) 호환 및 본 트랜슬레이션 리타기팅 규칙은 [`HumanoidSkeletonRetargetingStandards.md`](../Authoring/HumanoidSkeletonRetargetingStandards.md)를 따른다.
 
 > **2026-08-24 Pivot architecture correction (takes precedence):** GASP에는
 > regular Motion Matching PSD 경로와 Experimental State Machine/Blend Stack 경로가
 > 공존한다. `IsPivoting`은 `Use Experimental State Machine`으로 둘 중 하나를
 > 선택한다. 이 문서의 과거 direct Pivot/`UseMM=false` 또는 BranchIn 관련 서술은
 > 당시 Project_J 계획이며, 현재 GASP 사실이나 Project_J의 확정 Pivot 설계로 읽으면 안 된다.
-> 상세는 [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](GASP_Pivot_Architecture_Correction_2026-08-24.md)를
+> 상세는 [`GASP_Pivot_Architecture_Correction_2026-08-24.md`](Reports/GASP_Pivot_Architecture_Correction_2026-08-24.md)를
 > 우선한다.
 
 > **2026-08-06 OTM & Offset Root Bone addendum:** 
@@ -598,8 +598,8 @@ Reface Start asset의 Notify Track도 현재 작업의 필수 정보가 아니�
 - `Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp`
 - `Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentGround.cpp`
 - `Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h`
-- `Docs/Animation/Locomotion/MotionMatching_StateController_Handoff_2026-08-01.md`
-- `Docs/Animation/Locomotion/MotionMatching_Locomotion_Refactor.md`
+- `Docs/Animation/Locomotion/Reports/MotionMatching_StateController_Handoff_2026-08-01.md`
+- `Docs/Animation/Locomotion/Reports/MotionMatching_Locomotion_Refactor.md`
 
 ### Native Strafe bias implementation
 

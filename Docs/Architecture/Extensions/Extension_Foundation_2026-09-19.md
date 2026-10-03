@@ -1,8 +1,8 @@
 # 직업·전직·전투 콘텐츠 확장 기반 — 2026-09-19
 
-후속 변경: [내부 갱신·수명 정리](../Runtime/Internal_Polish_2026-09-19.md) 및 [직업·전직 제작 도구](Content_Bundle_Authoring_2026-09-19.md). 아래 빌드·61개 테스트 결과는 확장 기반을 처음 적용한 당시의 기록이다.
+후속 변경: [내부 갱신·수명 정리](../Runtime/Reports/Internal_Polish_2026-09-19.md) 및 [직업·전직 제작 도구](../../Gameplay/Authoring/Content_Authoring_System.md#tool). 아래 빌드·61개 테스트 결과는 확장 기반을 처음 적용한 당시의 기록이다.
 
-9월 13일의 [설계 검토](Extension_Architecture_Review_2026-09-13.md)를 기반으로 런타임 소유권, 구성 선택, DA 작성 방식과 검증 경로를 구현했다. 기존 Master ABP/Linked Layer와 공개 캐릭터 API를 연결점으로 사용한다. 에셋 이동·일괄 변환은 필요하지 않다.
+9월 13일의 [설계 검토](../../Review/Architecture/Extensions/Extension_Architecture_Review_2026-09-13.md)를 기반으로 런타임 소유권, 구성 선택, DA 작성 방식과 검증 경로를 구현했다. 기존 Master ABP/Linked Layer와 공개 캐릭터 API를 연결점으로 사용한다. 에셋 이동·일괄 변환은 필요하지 않다.
 
 ## 소유권과 데이터 흐름
 

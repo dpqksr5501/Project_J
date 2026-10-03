@@ -1,27 +1,19 @@
-# 아키텍처 문서
+# 아키텍처
 
-| 주제 | 읽을 내용 |
-| --- | --- |
-| [런타임](Runtime/Character_Component_Ownership_2026-09-20.md) | 캐릭터 소유권, 내부 수명·갱신, 리팩터링 기록과 검증 JSON |
-| [콘텐츠 확장](Extensions/Extension_Foundation_2026-09-19.md) | 직업·전직·콘텐츠 확장 기반, 제작 도구, MMO 카탈로그 |
-| [네트워크](Networking/ProjectJ_Network_Baseline_Results_2026-09-04.md) | 네트워크 기준선, Iris/AOI, 원격 TIP 복제 |
-| [성능](Performance/ProjectJ_Profiling_Consolidated_Summary_2026-09-06.md) | 프로파일링 기준선, 확장성 계획, 시스템 현대화 기록 |
-| [애니메이션](Animation/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md) | 애니메이션 스레딩 감사 계획과 Runtime Retarget/Hand IK 구조 |
-| [계획](Planning/ProjectJ_Mmorpg_Execution_Roadmap_2026-09-03.md) | 실행 로드맵과 보류된 시스템 |
-| [구조 검토](Reviews/ProjectJ_Architecture_Audit_2026-09-03.md) | 시점별 전체 구조 감사·제안. 구현 여부는 후속 문서 확인 |
+## 책임과 확장 기반
 
-검증 JSON은 대응하는 보고서와 같은 폴더에 둔다. 실제 성능 실측 원본은 [Benchmarks](../Benchmarks/SystemsModernization.md)에 둔다.
+| 주제 | 시작점 | 내용 |
+| --- | --- | --- |
+| 런타임 | [런타임 책임](Runtime/README.md) | 캐릭터·컴포넌트·서비스의 실행·수명과 후속 결과 |
+| 콘텐츠·MMO 기반 | [확장 기반](Extensions/README.md) | 모듈·능력·저장 계약, 콘텐츠 카탈로그와 검증 범위 |
+| 전체 계획 | [계획](Planning/README.md) | 실행 로드맵과 보류된 MMORPG 시스템 |
 
-## 손 접촉·무기 모션 — 2026-10-03
+## 다른 주제의 구조
 
-| 문서 | 내용 |
-| --- | --- |
-| [Guided 손 접촉](Animation/Guided_Hand_Contact.md) | 현재 구현, 몸체 DA 할당, 소켓 역할, 팔꿈치 튜닝, 보조 뼈·LOD와 검증 |
-| [무기 접촉 복귀](Animation/Weapon_Contact_Recovery.md) | 몽타주 가중치 복귀, 타이머 대체, 수명·네트워크 소유권 |
-| [무기 궤적·파지 정책](Animation/Weapon_Grip_Drive_Policy.md) | 노티파이 없는 공격, 손 주도/소스 주도 정책 |
-| [Palm 정상 부착](Animation/Primary_Grip_Attachment.md) | Idle·공격 접촉 기준 통일, 기존 소켓 호환, 장비/몸체 보정 갱신 |
-| [보조 손 접촉](Animation/Secondary_Hand_Contact.md) | 공격만 양손·항상 양손·한손 정책, 왼팔 Guided 핀 연결, 현재 포즈의 기준 뼈 공간 |
-| [측정 기록](Animation/Weapon_Grip_Trace_2026-10-02.md) | FABRIK 비교, 팔꿈치 안정화 전후 실측과 해석 한계 |
-| [외형 메시 소유권](Animation/Visual_Presentation_Mesh_Ownership.md) | 무기·의상 리더 선택과 상체 Reach 후속 계획 |
+- [애니메이션](../Animation/README.md): Motion Matching, 상체 합성, 런타임 리타깃과 손 접촉.
+- [전투](../Combat/README.md): 이동 정책, 공격 합성, 서버 판정과 VFX.
+- [네트워크](../Networking/README.md): 복제 구조, 기준선, Iris/AOI 도입 게이트.
+- [성능](../Performance/README.md): 실행 비용, 수집 절차, 기준선과 확장성 검증.
+- [전체 구조 검토](../Review/Architecture/README.md): 시점별 감사·제안과 후속 문서.
 
-Palm·WeaponGrip 공통 기준의 Idle 자동 부착은 무기 DA에서 선택해 사용한다. 기존 Socket 모드는 호환을 유지한다. 상체 Reach와 손가락 보정은 후속 작업이다.
+각 구조 설명의 기준 위치를 해당 주제로 통일한다. 변경 보고서·측정 데이터는 해당 기준 문서에서 연결한다.

@@ -909,7 +909,7 @@ Gameplay hit trace는 visual actor 없이 정상 동작하는가?
 수정 완료 후 반드시 다음 문서를 실제 코드와 맞게 업데이트하세요.
 
 ```text
-Docs/Architecture/Animation/Runtime_Retarget_HandIK_Architecture.md
+Docs/Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md
 ```
 
 문서에서는 다음 과장 표현을 피하세요.

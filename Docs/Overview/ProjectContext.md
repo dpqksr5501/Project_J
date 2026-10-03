@@ -4,9 +4,9 @@
 
 > 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
 
-최근 내부 변경은 [갱신·수명 정리](../Architecture/Runtime/Internal_Polish_2026-09-19.md)를 따른다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Architecture/Extensions/Content_Bundle_Authoring_2026-09-19.md)를 함께 사용한다.
+최근 내부 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)를 따른다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
 
-이전 통합 검증은 [2026-09-19 기록](../Architecture/Runtime/Internal_Polish_Validation_2026-09-19.json)이다. 후속 캐릭터 변경과 검증 범위는 [2026-09-20 컴포넌트 실행·수명 정리](../Architecture/Runtime/Character_Component_Ownership_2026-09-20.md)를 따른다. UI는 소비 수명에 따라 구독하고, 임시 애니메이션 요구는 메시에서 합성하며, 발도·납도 실행 상태는 기존 CombatIntroComponent가 소유한다. 궤적은 현재 생성 경계를 유지한다. 자동화 기록은 실제 멀티플레이·제작 메뉴·에셋 저장의 수동 확인을 대신하지 않는다.
+이전 통합 검증은 [2026-09-19 기록](../Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)이다. 후속 캐릭터 변경과 검증 범위는 [2026-09-20 컴포넌트 실행·수명 정리](../Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md)를 따른다. UI는 소비 수명에 따라 구독하고, 임시 애니메이션 요구는 메시에서 합성하며, 발도·납도 실행 상태는 기존 CombatIntroComponent가 소유한다. 궤적은 현재 생성 경계를 유지한다. 자동화 기록은 실제 멀티플레이·제작 메뉴·에셋 저장의 수동 확인을 대신하지 않는다.
 
 ## 1. 프로젝트 성격과 현재 범위
 
@@ -109,7 +109,7 @@ EquipmentItemDefinition
 - `WeaponAnimProfile`은 전투 이동/발도/납도/링크 레이어다.
 - `WeaponPresentationProfile`은 무기 Actor와 손·등 소켓 같은 시각 연결만 가진다.
 - `AttackDefinition`은 한 공격의 몽타주, 이동 정책, 타격 사양, 피해 Effect다.
-- 각 책임을 하나의 DA에 몰아넣지 않는다. 자세한 분리는 [DataAssetQuickReference](../Gameplay/DataAssetQuickReference.md)를 따른다.
+- 각 책임을 하나의 DA에 몰아넣지 않는다. 자세한 분리는 [DataAssetQuickReference](../Gameplay/Authoring/Content_Authoring_System.md#data)를 따른다.
 
 ### 이동 → 애니메이션
 
@@ -168,7 +168,7 @@ ABP_Humanoid_Master
 | 플레이어/GameMode/PlayerState | `Source/Project_J/Game/` |
 | 캐릭터·이동·애니 | `Source/Project_JCharacter/Public/` 및 `Private/Animation/` |
 | 장비·인벤토리 | `Source/Project_JCharacter/Public/Equipment`, `Inventory`, `Components` |
-| 탈것 | `Source/Project_JMount` 및 `Docs/Gameplay/MountSystemArchitecture.md` |
+| 탈것 | `Source/Project_JMount` 및 `Docs/Gameplay/Architecture/MountSystemArchitecture.md` |
 | 데이터 검증 | `Source/Project_JCharacter/Public/Validation`, `Private/Tests` |
 
 ## 7. 새 작업 시작 전 점검 순서
@@ -204,16 +204,16 @@ DumpCombatState
 DumpMMOProfilingSnapshot [MaxDetailedCharacters]
 ```
 
-Motion Matching 관련 CVar는 [README](../README.md)와 [MotionMatchingNextSteps](../Animation/Planning/MotionMatchingNextSteps.md)를 참고한다. 에셋 Validation 오류는 폴더 이름 변경 뒤 Redirector 또는 Soft Reference가 남은 경우도 있으므로, Content Browser의 Redirector 정리와 재저장을 우선 확인한다.
+Motion Matching 관련 CVar는 [README](../README.md)와 [MotionMatchingNextSteps](../Animation/Architecture/MotionMatchingNextSteps.md)를 참고한다. 에셋 Validation 오류는 폴더 이름 변경 뒤 Redirector 또는 Soft Reference가 남은 경우도 있으므로, Content Browser의 Redirector 정리와 재저장을 우선 확인한다.
 
 ## 10. 이 문서 다음에 읽을 전문 문서
 
-- 전체 방향/보류 범위: [ProjectOverview](ProjectOverview.md), [MMORPGArchitectureReview](../Architecture/Reviews/MMORPGArchitectureReview.md), [DeferredMMORPGSystems](../Architecture/Planning/DeferredMMORPGSystems.md)
-- GAS·AbilitySet·Input: [SkillSystemArchitecture](../Gameplay/SkillSystemArchitecture.md)
-- 장비·직업·DA: [DataAssetQuickReference](../Gameplay/DataAssetQuickReference.md), [ContentExpansionGuide](../Gameplay/ContentExpansionGuide.md)
-- 전투·콤보·무기·애니메이션: [CombatLocomotionArchitecture](../Combat/CombatLocomotionArchitecture.md), [CombatAnimationComposition](../Combat/CombatAnimationComposition.md)
-- Motion Matching·원격 프록시·예산: [MotionMatchingNextSteps](../Animation/Planning/MotionMatchingNextSteps.md)
-- 탈것: [MountSystemArchitecture](../Gameplay/MountSystemArchitecture.md)
+- 전체 방향/보류 범위: [ProjectOverview](ProjectOverview.md), [MMORPGArchitectureReview](../Review/Architecture/MMORPGArchitectureReview.md), [DeferredMMORPGSystems](../Architecture/Planning/DeferredMMORPGSystems.md)
+- GAS·AbilitySet·Input: [SkillSystemArchitecture](../Gameplay/Architecture/SkillSystemArchitecture.md)
+- 장비·직업·DA: [DataAssetQuickReference](../Gameplay/Authoring/Content_Authoring_System.md#data), [ContentExpansionGuide](../Gameplay/Authoring/Content_Authoring_System.md#expansion)
+- 전투·콤보·무기·애니메이션: [CombatLocomotionArchitecture](../Combat/Architecture/Combat_Animation_System.md#layers), [CombatAnimationComposition](../Combat/Architecture/Combat_Animation_System.md#composition)
+- Motion Matching·원격 프록시·예산: [MotionMatchingNextSteps](../Animation/Architecture/MotionMatchingNextSteps.md)
+- 탈것: [MountSystemArchitecture](../Gameplay/Architecture/MountSystemArchitecture.md)
 
 ## 새 Codex 채팅에 붙여 넣을 최소 컨텍스트
 

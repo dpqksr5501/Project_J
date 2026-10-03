@@ -28,7 +28,7 @@ NPC는 player-grade Motion Matching을 사용하지 않는 것을 기본으로 �
 
 `AProject_JNPCCharacter`는 초기 저비용 정책으로 actor tick 비활성화, 낮은 net update frequency, 낮은 cull distance, skeletal mesh URO, hidden mesh visibility tick policy를 적용합니다. Significance는 현재 budget tier를 측정하고 권장 AI update interval을 반환할 뿐, 이를 소비하는 AI scheduler나 representation tier 전환은 아직 구현하지 않습니다.
 
-NPC, boss, monster는 Motion Matching을 사용하지 않는다. AI tick cadence, perception/path refresh, pooling, Mass representation의 상세 계약과 Unreal Insights 측정 기준은 [Performance Optimization Foundation](../../Performance/PerformanceOptimizationFoundation.md)를 따른다.
+NPC, boss, monster는 Motion Matching을 사용하지 않는다. AI tick cadence, perception/path refresh, pooling, Mass representation의 상세 계약과 Unreal Insights 측정 기준은 [Performance Optimization Foundation](../../Performance/Architecture/PerformanceOptimizationFoundation.md)를 따른다.
 
 ## Replication Policy Settings
 

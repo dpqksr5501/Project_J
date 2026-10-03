@@ -214,11 +214,11 @@ Project J의 리팩터링은 다음 기준을 따른다.
 
 ## 관련 문서
 
-- [Architecture Audit](../Architecture/Reviews/Architecture_Audit_20260607.md)
-- [MMORPG Architecture Review](../Architecture/Reviews/MMORPGArchitectureReview.md)
-- [Skill System Architecture](../Gameplay/SkillSystemArchitecture.md)
-- [Combat Animation Architecture Notes](../Combat/CombatAnimationArchitectureNotes.md)
-- [Motion Matching Notes](../Animation/Planning/MotionMatchingNextSteps.md)
+- [Architecture Audit](../Review/Architecture/Architecture_Audit_20260607.md)
+- [MMORPG Architecture Review](../Review/Architecture/MMORPGArchitectureReview.md)
+- [Skill System Architecture](../Gameplay/Architecture/SkillSystemArchitecture.md)
+- [Combat Animation Architecture Notes](../Combat/Architecture/Combat_Animation_System.md#boundary)
+- [Motion Matching Notes](../Animation/Architecture/MotionMatchingNextSteps.md)
 - [Deferred MMORPG Systems](../Architecture/Planning/DeferredMMORPGSystems.md)
-- [Performance Optimization Foundation](../Performance/PerformanceOptimizationFoundation.md)
-- [Deferred Optimization Architecture](../Performance/DeferredOptimizationArchitecture.md)
+- [Performance Optimization Foundation](../Performance/Architecture/PerformanceOptimizationFoundation.md)
+- [Deferred Optimization Architecture](../Performance/Planning/DeferredOptimizationArchitecture.md)

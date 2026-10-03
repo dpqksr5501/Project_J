@@ -17,7 +17,7 @@
 
 검토 기준은 현재 `Character_Test` HEAD인 **`5a8552d3fe203b138a76d570eb367a375cdc455c`**입니다.  
 [Character_Test 브랜치](https://github.com/dpqksr5501/Project_J/tree/Character_Test?utm_source=chatgpt.com)  
-[Runtime Retarget / Hand IK 설계 문서](https://github.com/dpqksr5501/Project_J/blob/Character_Test/Docs/Architecture/Animation/Runtime_Retarget_HandIK_Architecture.md?utm_source=chatgpt.com)
+[Runtime Retarget / Hand IK 설계 문서](https://github.com/dpqksr5501/Project_J/blob/Character_Test/Docs/Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md?utm_source=chatgpt.com)
 
 ---
 

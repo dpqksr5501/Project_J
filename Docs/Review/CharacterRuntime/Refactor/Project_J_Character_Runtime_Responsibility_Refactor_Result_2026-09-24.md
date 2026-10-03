@@ -4,7 +4,7 @@
 
 ## 1. 구조 결정
 
-현재 코드와 `Docs/Combat/CombatLocomotionArchitecture.md`, `Docs/Animation/Locomotion/MotionMatching_StateController_Handoff_2026-08-01.md`, `Docs/Review/Audits/Project_J_Code_Audit_Result_2026-09-23.md`, `Docs/Review/Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md`를 기준으로 판단했다. 오래된 문서의 자산 저작 지침보다 현재 C++ 호출 경계를 우선했다. 새 UObject, ActorComponent, Tick, worker는 만들지 않았다. 기존 `UFUNCTION`, `UPROPERTY`, Chooser 열, 데이터 에셋, GameplayTag 계약은 유지했다.
+현재 코드와 `Docs/Combat/Architecture/CombatLocomotionArchitecture.md`, `Docs/Animation/Locomotion/Reports/MotionMatching_StateController_Handoff_2026-08-01.md`, `Docs/Review/Audits/Project_J_Code_Audit_Result_2026-09-23.md`, `Docs/Review/Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md`를 기준으로 판단했다. 오래된 문서의 자산 저작 지침보다 현재 C++ 호출 경계를 우선했다. 새 UObject, ActorComponent, Tick, worker는 만들지 않았다. 기존 `UFUNCTION`, `UPROPERTY`, Chooser 열, 데이터 에셋, GameplayTag 계약은 유지했다.
 
 | 구분 | 소유자 | 데이터 성격 |
 | --- | --- | --- |
