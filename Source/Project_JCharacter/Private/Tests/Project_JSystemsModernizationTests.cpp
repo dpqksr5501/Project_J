@@ -19,6 +19,7 @@
 #include "UObject/UnrealType.h"
 #include "Engine/Engine.h"
 #include "TimerManager.h"
+#include "Components/SkeletalMeshComponent.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCombatInputBoundaryTest,
 	"ProjectJ.Modernization.CombatInputBoundary",
@@ -100,7 +101,14 @@ bool FProjectJEquipmentLoadLifecycleTest::RunTest(const FString& Parameters)
  Runtime->BindToEquipmentManager(nullptr);
  TestEqual(TEXT("Unbind releases leases even without a manager"), Service->GetLeaseCount(), 0);
  auto* Mesh = LoadObject<USkeletalMesh>(nullptr, *MeshPath.ToString()); // fixture only
- TestNotNull(TEXT("Engine fixture"), Mesh);
+ if (!TestNotNull(TEXT("Engine fixture"), Mesh)) { World->DestroyWorld(false); return false; }
+ // Modular equipment follows a compatible body; a bare Character has no pose source.
+ AddExpectedError(TEXT("Equipment visual has no compatible pose source or attachment socket"), EAutomationExpectedErrorFlags::Contains, 1);
+ Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
+ Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
+ TestNull(TEXT("Missing pose source is still rejected"), Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh);
+ Runtime->OnEquipmentUnequipped(Item->EquipmentSlot, Item);
+ Owner->GetMesh()->SetSkeletalMesh(Mesh);
  Runtime->OnEquipmentEquipped(Item->EquipmentSlot, Item);
  Runtime->OnEquipmentMeshLoaded(Item->EquipmentSlot, Item);
  auto* Visual = Runtime->RuntimeItems[Item->EquipmentSlot].SpawnedMesh;

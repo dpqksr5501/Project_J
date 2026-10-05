@@ -10,6 +10,7 @@
 #include "Misc/PackageName.h"
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
+#include "UObject/UObjectIterator.h"
 
 namespace ProjectJ::ContentAuthoring
 {
@@ -160,8 +161,26 @@ static bool CheckExisting(const UProject_JContentBundleRequest& Request, const F
 	UClass* DefinitionClass = Request.Kind == EProject_JContentBundleKind::CharacterClass
 		? UProject_JCharacterClassDefinition::StaticClass() : UProject_JCharacterAdvancementDefinition::StaticClass();
 	Registry.GetAssetsByClass(DefinitionClass->GetClassPathName(), Definitions, true);
+	// Newly constructed, unsaved definitions can precede AssetCreated registration.
+	for (TObjectIterator<UPrimaryDataAsset> It; It; ++It)
+	{
+		if (!It->IsAsset() || !It->IsA(DefinitionClass) || It->IsTemplate()) { continue; }
+		const auto* Class = Cast<UProject_JCharacterClassDefinition>(*It);
+		const auto* Advancement = Cast<UProject_JCharacterAdvancementDefinition>(*It);
+		const FName Id = Class ? Class->ClassId : Advancement->AdvancementId;
+		if (Id == FName(*Request.Identifier)) { Errors.Add(FText::FromString(TEXT("Loaded runtime ID is already in use: ") + It->GetPathName())); }
+	}
 	for (const FAssetData& Definition : Definitions)
 	{
+		FName MetadataId;
+		const FName IdTag = Request.Kind == EProject_JContentBundleKind::CharacterClass ? TEXT("ClassId") : TEXT("AdvancementId");
+		// Loaded objects include unsaved ID edits. Older assets without the tag use a narrow fallback.
+		if (!Definition.IsAssetLoaded() && Definition.GetTagValue(IdTag, MetadataId))
+		{
+			if (MetadataId == FName(*Request.Identifier))
+				Errors.Add(FText::FromString(TEXT("Runtime ID is already in use: ") + Definition.GetObjectPathString()));
+			continue;
+		}
 		UObject* Asset = Definition.GetAsset();
 		if (!Asset)
 		{

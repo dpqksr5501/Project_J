@@ -168,6 +168,11 @@ public:
 
 	/** A notify relinquishes its temporary motion override; the attack default may continue. */
 	void EndNotifyIndependentMotion();
+	/** Native notify leases prevent an outgoing montage from ending a newer override. */
+	uint64 BeginNotifyIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryAlpha,
+		float SecondaryAlpha, float Duration, float EntryBlend, float ExitBlend);
+	bool IsNotifyIndependentMotionCurrent(uint64 Token) const;
+	void EndNotifyIndependentMotion(uint64 Token);
 
 	/** Event-driven cosmetic attack identity, supplied by the replicated combat presentation state. */
 	void SetActiveAttackPresentation(FGameplayTag AttackTag);
@@ -296,6 +301,8 @@ private:
 	TWeakObjectPtr<const UProject_JCombatStyleDefinition> ResolvedAttackStyle;
 	TWeakObjectPtr<const UProject_JAttackDefinition> ResolvedAttackDefinition;
 	bool bNotifyOwnsMotion = false;
+	uint64 NextNotifyMotionToken = 0;
+	uint64 ActiveNotifyMotionToken = 0;
 	bool bAutoAttackMotionActive = false;
 	TWeakObjectPtr<UAnimInstance> AutoAttackSourceAnim;
 	int32 AutoAttackSourceInstanceID = INDEX_NONE;

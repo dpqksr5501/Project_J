@@ -1,0 +1,120 @@
+{
+  "dateKST": "2026-10-05",
+  "status": "Editor and Game builds succeeded; regression passed",
+  "scope": "Restore mount-owned native input on retained client InputComponent after controller replication and client restart",
+  "editorBuild": {
+    "exitCode": 0,
+    "durationSeconds": 19.97,
+    "result": "Succeeded",
+    "log": "Saved/Validation/MountRemount_20261005/BuildEditor.log"
+  },
+  "gameBuild": {
+    "exitCode": 0,
+    "durationSeconds": 20.13,
+    "result": "Succeeded",
+    "log": "Saved/Validation/MountRemount_20261005/BuildGame.log"
+  },
+  "regression": {
+    "newTests": 1,
+    "warningsUnchangedFromBaseline": true,
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ],
+    "succeededWithWarnings": 4,
+    "notCompleted": 0,
+    "log": "Saved/Validation/MountRemount_20261005/Regression.log",
+    "report": "Saved/Automation/MountRemount_20261005/index.json",
+    "warningEvents": 8,
+    "tests": 111,
+    "exitCode": 0,
+    "priorTests": 110,
+    "succeeded": 107,
+    "failed": 0
+  },
+  "changedSources": [
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "beforeSha256": "c9df18679ea53f03ef485f49344895704bd8a79b8e06ca2bab6ad020de928158",
+      "sha256": "e92bcb8ac51a8fd97c7bd93b1c90d534a86e457803edbdc31a18857d4fd834be"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "beforeSha256": "254d6ef98200d258f84a84aecf49767e70cb358dc847f88230ff7e3530ed06ee",
+      "sha256": "50e4726c9e356a55e94cef8aca0a990f7114b281587474ae510cf54653d4f90f"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementFixtures.h",
+      "beforeSha256": "fc0723356f3cc3f8ef34c1f7a578deb02f06eaae0de3450d6399fe592cbd1c4f",
+      "sha256": "2b12f75ae3820fa07b34b811c4f4950b03aac1da93d9e9b3e533af5e000d82a7"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "beforeSha256": "382122851a19542e8cc3f20d40b809afb4f24100d939aba2c23368706334cf92",
+      "sha256": "6fbbad535531da52f89131486c7ddeecde5887ffd1a946a9b878c56c406f0fca"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JFlyingMountCharacter.h",
+      "beforeSha256": "a478481050921648041bdf892d3f58a7f2378068a06f5d7f430630e773cc1666",
+      "sha256": "1b824f41086d843e96410d88d46c4d7009028f8d08626d0ba4f89ffb4e465ac1"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountCharacter.h",
+      "beforeSha256": "9a5756b6bff31ed4947b023418821c0edd3215113fd765f83c49999abcdd509b",
+      "sha256": "69a1f0eaa7d58c023ba0c568583cb33040c1c55063d2642a73bf4662972fdda4"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Tests/Project_JMountLifecycleFixture.h",
+      "beforeSha256": "efcaa024001a2a7207581c14b80fc317791f520a9ec5293fa0599f35bdff6573",
+      "sha256": "6f1160f3eb732f14d5a425514c05f0db041b91e1232aea0701991ead915b1486"
+    }
+  ],
+  "evidence": {
+    "runtimeRestoreHooks": [
+      "PawnClientRestart",
+      "OnRep_Controller"
+    ],
+    "engineFunctions": [
+      "APawn::PawnClientRestart",
+      "APawn::OnRep_Controller",
+      "APawn::UnPossessed"
+    ],
+    "userPIELog": "Saved/Validation/MountRemount_20261005/UserPIE_Before.log",
+    "enginePawnSource": "C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Private/Pawn.cpp"
+  },
+  "limitations": [
+    "Native fixture models replicated controller loss and restart ordering; actual network PIE still needs validation.",
+    "No Blueprint, IMC, level or animation assets were modified.",
+    "Existing logs also contain pose-history errors outside this remount input scope."
+  ]
+}

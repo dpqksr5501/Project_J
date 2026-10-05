@@ -27,6 +27,9 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	// Health Attribute
@@ -76,4 +79,7 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_Defense(const FGameplayAttributeData& OldDefense);
+
+private:
+	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
 };

@@ -69,6 +69,7 @@ FProject_JBackendResponseEnvelope BuildResponseEnvelope(
 		? EProject_JBackendFailureKind::None
 		: ClassifyFailure(Envelope.HttpStatusCode, bConnectedSuccessfully, bDispatchFailed);
 	Envelope.bRetryable = !Envelope.bSucceeded && IsRetryableBackendFailure(Envelope.FailureKind, Envelope.HttpStatusCode);
+	ApplyProjectJBackendOutcomePolicy(Envelope, !bDispatchFailed);
 	return Envelope;
 }
 
@@ -85,6 +86,7 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->SetHeader(TEXT("X-ProjectJ-Request-Id"), RequestContext.RequestId.ToString());
+	Request->SetHeader(TEXT("X-ProjectJ-Request-Intent"), RequestContext.Intent == EProject_JBackendRequestIntent::Mutation ? TEXT("mutation") : TEXT("query"));
 	if (RequestContext.HasIdempotencyKey())
 	{
 		Request->SetHeader(TEXT("X-ProjectJ-Idempotency-Key"), RequestContext.IdempotencyKey.ToString());
@@ -111,6 +113,14 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 {
 	check(IsInGameThread());
 	const auto Context = NormalizeRequestContext(InContext);
+	if (!Context.IsValidForDispatch())
+	{
+		FProject_JBackendResponseEnvelope Response;
+		Response.RequestContext = Context;
+		Response.FailureKind = EProject_JBackendFailureKind::InvalidRequest;
+		Response.ResponseData = TEXT("Mutation requires a stable idempotency key");
+		Completion(Response); return;
+	}
 	const auto Tracker = RequestTracker;
 	FGuid Ticket;
 	const auto Admission = Tracker ? Tracker->Begin(Ticket) : ProjectJ::MMO::EAdmission::Closed;

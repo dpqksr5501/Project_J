@@ -31,6 +31,7 @@ public:
 	void RefreshCachedReferences();
 
 protected:
+	friend class FProjectJPlayerVisibilityTest;
 	void CacheOwnerReferences();
 	AProject_JPlayerCharacter* GetPlayerOwner() const;
 	UCharacterMovementComponent* GetCachedMovementComponent() const;

@@ -2,6 +2,7 @@
 
 #include "Project_JPlayerCharacter.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
+#include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Interaction/Project_JInteractionQuery.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -719,6 +720,13 @@ void AProject_JPlayerCharacter::OnProgressionChanged()
 void AProject_JPlayerCharacter::OnRep_CurrentCombatStyle()
 {
 	GetCombatConfiguration();
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		if (auto* Combo = Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility())) { Combo->ReconcileCombatConfiguration(); }
+		TArray<FText> Conflicts;
+		FProject_JCombatConfiguration::FindInputGrantConflicts(*ASC, Conflicts);
+		for (const FText& Conflict : Conflicts) { UE_LOG(LogProjectJPlayer, Verbose, TEXT("%s"), *Conflict.ToString()); }
+	}
 	if (SkillInputExecutionComponent)
 	{
 		SkillInputExecutionComponent->ClearCommandInputHistory();
@@ -1579,12 +1587,23 @@ void AProject_JPlayerCharacter::SerializeForHandover(TArray<uint8>& OutData)
 
 void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InData)
 {
-	if (InData.Num() == 0)
+	TryApplyHandoverSnapshot(InData);
+}
+
+bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& InData)
+{
+	if (!HasAuthority() || IsActorBeingDestroyed() || !GetRootComponent())
 	{
-		return;
+		return false;
 	}
 
 	FProject_JPlayerHandoverSnapshot Snapshot;
+	// Version 1 uses fixed-width archive operators. Check the complete size before
+	// reading: FMemoryReader can assert on a truncated primitive read.
+	TArray<uint8> Layout;
+	FMemoryWriter LayoutWriter(Layout, true);
+	LayoutWriter << Snapshot.Version << Snapshot.Level << Snapshot.Location << Snapshot.Rotation;
+	if (InData.Num() != Layout.Num()) { return false; }
 	TArray<uint8> LocalData = InData;
 	FMemoryReader Reader(LocalData, true);
 
@@ -1593,16 +1612,15 @@ void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InD
 	Reader << Snapshot.Location;
 	Reader << Snapshot.Rotation;
 
-	if (Reader.IsError())
+	if (Reader.IsError() || !Reader.AtEnd() || Snapshot.Version != 1 || Snapshot.Level < 1 ||
+		Snapshot.Location.ContainsNaN() || Snapshot.Rotation.ContainsNaN())
 	{
-		UE_LOG(LogProjectJPlayer, Warning, TEXT("Failed to deserialize player handover snapshot."));
-		return;
+		return false;
 	}
 
-	if (Snapshot.Version != 1)
+	if (!SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics))
 	{
-		UE_LOG(LogProjectJPlayer, Warning, TEXT("Unsupported handover snapshot version: %d"), Snapshot.Version);
-		return;
+		return false;
 	}
 
 	SetCharacterLevel(Snapshot.Level);
@@ -1613,10 +1631,10 @@ void AProject_JPlayerCharacter::DeserializeFromHandover(const TArray<uint8>& InD
 		MoveComp->StopMovementImmediately();
 	}
 
-	SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics);
 	if (MotionMatchingTrajectoryComponent) MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
 	if (UProject_JServerSideRewindComponent* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) Rewind->ResetHistory();
 	ForceNetUpdate();
+	return !IsActorBeingDestroyed();
 }
 
 void AProject_JPlayerCharacter::SetCharacterLevel(int32 NewLevel)

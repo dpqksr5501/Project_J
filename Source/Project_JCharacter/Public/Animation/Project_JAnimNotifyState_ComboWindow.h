@@ -20,4 +20,11 @@ protected:
 	/** The gameplay event tag to send to the owner when the window opens */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combo")
 	FGameplayTag ComboWindowTag;
+
+	struct FWindowLease
+	{
+		TWeakObjectPtr<class UProject_JGameplayAbility_Melee> Ability;
+		uint64 Token = 0;
+	};
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FWindowLease>> Windows;
 };

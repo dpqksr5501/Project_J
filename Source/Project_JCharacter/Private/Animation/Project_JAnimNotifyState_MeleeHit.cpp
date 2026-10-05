@@ -22,11 +22,21 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyBegin(USkeletalMeshComponent* Mes
 	}
 	if (AActor* OwnerActor = MeshComp->GetOwner())
 	{
-		PreviousTraceLocations.Add(MeshComp, ResolveTraceLocation(MeshComp));
-		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		for (auto It = TraceStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) { It.RemoveCurrent(); } }
+		if (auto* ExistingStates = TraceStates.Find(MeshComp))
 		{
-			HitValidation->SetHitWindowOpen(true);
+			// Duplicate Begin for the same execution must not leak another window.
+			if (ExistingStates->Contains(EventReference.GetNotifyInstanceID())) { return; }
+			for (auto It = ExistingStates->CreateIterator(); It; ++It)
+			{
+				if (It.Value().WindowToken && (!It.Value().Validation.IsValid() || !It.Value().Validation->IsHitWindowCurrent(It.Value().WindowToken))) { It.RemoveCurrent(); }
+			}
 		}
+		auto* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>();
+		const uint64 Token = HitValidation ? HitValidation->BeginHitWindow() : 0;
+		if (HitValidation && !Token) { return; }
+		TraceStates.FindOrAdd(MeshComp).Add(EventReference.GetNotifyInstanceID(),
+			{ResolveTraceLocation(MeshComp), HitValidation, Token});
 	}
 }
 
@@ -38,8 +48,9 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	{
 		return;
 	}
-	const FVector* PreviousLocation = PreviousTraceLocations.Find(MeshComp);
-	if (!PreviousLocation)
+	auto* MeshStates = TraceStates.Find(MeshComp);
+	auto* State = MeshStates ? MeshStates->Find(EventReference.GetNotifyInstanceID()) : nullptr;
+	if (!State || (State->WindowToken && (!State->Validation.IsValid() || !State->Validation->IsHitWindowCurrent(State->WindowToken))))
 	{
 		return;
 	}
@@ -56,8 +67,8 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 	}
 
 	const FVector TraceLocation = ResolveTraceLocation(MeshComp);
-	const FVector TraceStart = *PreviousLocation;
-	PreviousTraceLocations.Add(MeshComp, TraceLocation);
+	const FVector TraceStart = State->PreviousLocation;
+	State->PreviousLocation = TraceLocation;
 	float EffectiveTraceRadius = TraceRadius;
 	if (const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
 	{
@@ -132,13 +143,14 @@ FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshCo
 
 void UProject_JAnimNotifyState_MeleeHit::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+	if (auto* MeshStates = TraceStates.Find(MeshComp))
 	{
-		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
+		FTraceState State;
+		if (MeshStates->RemoveAndCopyValue(EventReference.GetNotifyInstanceID(), State))
 		{
-			HitValidation->SetHitWindowOpen(false);
+			if (auto* HitValidation = State.Validation.Get()) { HitValidation->EndHitWindow(State.WindowToken); }
 		}
+		if (MeshStates->IsEmpty()) { TraceStates.Remove(MeshComp); }
 	}
-	PreviousTraceLocations.Remove(MeshComp);
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

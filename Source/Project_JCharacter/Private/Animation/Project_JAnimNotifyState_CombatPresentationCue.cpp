@@ -14,7 +14,18 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyBegin(USkeletalMeshC
 		{
 			UE_LOG(LogProjectJCombatPresentationNotify, Verbose, TEXT("[CombatVFX] Notify begin. Owner=%s Animation=%s Cue=%s Duration=%.3f"),
 				*GetNameSafe(OwnerActor), *GetNameSafe(Animation), *CueTag.ToString(), TotalDuration);
-			Presentation->PlayCue(CueTag);
+			for (auto It = Leases.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) { It.RemoveCurrent(); } }
+			auto& MeshLeases = Leases.FindOrAdd(MeshComp);
+			for (auto It = MeshLeases.CreateIterator(); It; ++It)
+			{
+				if (!It.Value().Presentation.IsValid() || !It.Value().Presentation->IsCueLeaseCurrent(It.Value().Token)) { It.RemoveCurrent(); }
+			}
+			const int32 ID = EventReference.GetNotifyInstanceID();
+			if (!MeshLeases.Contains(ID))
+			{
+				const uint64 Token = Presentation->BeginCueLease(CueTag);
+				if (Token) { MeshLeases.Add(ID, {Presentation, Token}); }
+			}
 			return;
 		}
 		UE_LOG(LogProjectJCombatPresentationNotify, Warning, TEXT("[CombatVFX] Notify begin ignored: presentation component missing. Owner=%s Animation=%s Cue=%s"),
@@ -27,20 +38,12 @@ void UProject_JAnimNotifyState_CombatPresentationCue::NotifyBegin(USkeletalMeshC
 
 void UProject_JAnimNotifyState_CombatPresentationCue::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	if (AActor* OwnerActor = MeshComp ? MeshComp->GetOwner() : nullptr)
+	if (auto* MeshLeases = Leases.Find(MeshComp))
 	{
-		if (UProject_JCombatPresentationComponent* Presentation = OwnerActor->FindComponentByClass<UProject_JCombatPresentationComponent>())
-		{
-			UE_LOG(LogProjectJCombatPresentationNotify, Verbose, TEXT("[CombatVFX] Notify end. Owner=%s Animation=%s Cue=%s"),
-				*GetNameSafe(OwnerActor), *GetNameSafe(Animation), *CueTag.ToString());
-			Presentation->StopCue(CueTag);
-			return;
-		}
-		UE_LOG(LogProjectJCombatPresentationNotify, Warning, TEXT("[CombatVFX] Notify end ignored: presentation component missing. Owner=%s Animation=%s Cue=%s"),
-			*GetNameSafe(OwnerActor), *GetNameSafe(Animation), *CueTag.ToString());
-		return;
+		FCueLease Lease;
+		const bool bFound = MeshLeases->RemoveAndCopyValue(EventReference.GetNotifyInstanceID(), Lease);
+		if (MeshLeases->IsEmpty()) { Leases.Remove(MeshComp); }
+		if (bFound && Lease.Presentation.IsValid()) { Lease.Presentation->EndCueLease(Lease.Token); }
 	}
-	UE_LOG(LogProjectJCombatPresentationNotify, Warning, TEXT("[CombatVFX] Notify end ignored: mesh or owner missing. Animation=%s Cue=%s"),
-		*GetNameSafe(Animation), *CueTag.ToString());
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 }

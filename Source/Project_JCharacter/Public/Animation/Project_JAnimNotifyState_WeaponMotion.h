@@ -47,10 +47,10 @@ public:
 private:
 	struct FRuntimeState
 	{
-		// Presence marks that this mesh successfully entered independent motion.
-		// Timing is read directly from the notify event, never accumulated here.
+		TWeakObjectPtr<class UProject_JWeaponPresentationComponent> Presentation;
+		uint64 Token = 0;
 	};
 
 	/** Notify objects are shared by animation assets, so state must be per preview/runtime mesh. */
-	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FRuntimeState> RuntimeStates;
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FRuntimeState>> RuntimeStates;
 };

@@ -5,6 +5,7 @@
 #include "Combat/Project_JCombatCommandSet.h"
 #include "Combat/Project_JComboDefinition.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
+#include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -141,7 +142,10 @@ FGameplayTag UProject_JSkillInputExecutionComponent::ResolveDispatchInputTag(
 	bool& bOutConsumeRawInput)
 {
 	bOutConsumeRawInput = false;
-	const UProject_JCombatStyleDefinition* CombatStyle = BoundPlayerCharacter ? BoundPlayerCharacter->GetCombatStyleDefinition() : nullptr;
+	const auto* ASC = BoundPlayerCharacter ? BoundPlayerCharacter->GetAbilitySystemComponent() : nullptr;
+	const auto* Combo = ASC ? Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility()) : nullptr;
+	const UProject_JCombatStyleDefinition* CombatStyle = Combo && Combo->IsActive()
+		? Combo->GetExecutingCombatStyle() : (BoundPlayerCharacter ? BoundPlayerCharacter->GetCombatStyleDefinition() : nullptr);
 	const UProject_JCombatCommandSet* CommandSet = CombatStyle ? CombatStyle->CommandSet.Get() : nullptr;
 	if (LastCommandSet.Get() != CommandSet)
 	{
@@ -206,6 +210,10 @@ bool UProject_JSkillInputExecutionComponent::ShouldRouteInputToActiveComboOnly(c
 	{
 		return false;
 	}
+	if (const auto* Combo = Cast<UProject_JGameplayAbility_Melee>(ASC->GetAnimatingAbility()))
+	{
+		return Combo->AcceptsComboInput(InputTag);
+	}
 
 	const UProject_JCombatStyleDefinition* CombatStyle = BoundPlayerCharacter->GetCombatStyleDefinition();
 	const UProject_JComboDefinition* ComboDefinition = CombatStyle && CombatStyle->bUsesCombo ? CombatStyle->ComboDefinition.Get() : nullptr;
@@ -256,7 +264,7 @@ void UProject_JSkillInputExecutionComponent::RecordRawInput(
 	Entry.InputTag = RawInputTag;
 	Entry.TimestampSeconds = TimestampSeconds;
 
-	const int32 HistoryLimit = FMath::Clamp(FMath::Max(MaximumCommandHistoryEntries, CommandSet->GetMaximumInputCount()), 1, 16);
+	const int32 HistoryLimit = FMath::Clamp(FMath::Max(MaximumCommandHistoryEntries, CommandSet->GetMaximumInputCount()), 1, UProject_JCombatCommandSet::MaxSupportedInputCount);
 	if (CommandInputHistory.Num() > HistoryLimit)
 	{
 		CommandInputHistory.RemoveAt(0, CommandInputHistory.Num() - HistoryLimit, EAllowShrinking::No);

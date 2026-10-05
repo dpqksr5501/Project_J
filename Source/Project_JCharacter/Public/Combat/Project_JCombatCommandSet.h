@@ -80,6 +80,7 @@ class PROJECT_JCHARACTER_API UProject_JCombatCommandSet : public UPrimaryDataAss
 	GENERATED_BODY()
 
 public:
+	static constexpr int32 MaxSupportedInputCount = 16;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Commands", meta = (TitleProperty = "CommandTag"))
 	TArray<FProject_JCombatCommandDefinition> Commands;
 

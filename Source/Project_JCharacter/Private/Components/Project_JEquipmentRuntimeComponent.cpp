@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "GameplayEffect.h"
 #include "Project_JAttributeSet.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "System/Project_JAssetManager.h"
@@ -148,6 +149,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	}
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
+	RuntimeItem.GrantedAbilitySystem = ASC;
 	if (ASC && ItemDef.AbilitySet)
 	{
 		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetName()));
@@ -168,10 +170,9 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	if (ASC)
 	{
 		ApplyEquipmentEffects(*ASC, ItemDef, RuntimeItem);
-	}
-	else
-	{
-		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+		TArray<FText> Conflicts;
+		FProject_JCombatConfiguration::FindInputGrantConflicts(*ASC, Conflicts);
+		for (const FText& Conflict : Conflicts) { UE_LOG(LogProjectJEquipmentRuntime, Verbose, TEXT("%s"), *Conflict.ToString()); }
 	}
 }
 
@@ -182,7 +183,7 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& Ow
 		return;
 	}
 
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(&OwnerCharacter);
+	UAbilitySystemComponent* ASC = RuntimeItem.GrantedAbilitySystem.Get();
 	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
 	{
 		for (const FName GrantSourceId : RuntimeItem.GrantedHandles.GrantSourceIds)
@@ -196,12 +197,21 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& Ow
 
 	if (ASC)
 	{
+		// Generic ASCs have no source registry; retire their individually owned handles.
+		for (const FGameplayAbilitySpecHandle Handle : RuntimeItem.GrantedHandles.AbilitySpecHandles)
+		{
+			ASC->ClearAbility(Handle);
+		}
+		for (const FActiveGameplayEffectHandle Handle : RuntimeItem.GrantedHandles.GameplayEffectHandles)
+		{
+			ASC->RemoveActiveGameplayEffect(Handle);
+		}
 		RemoveEquipmentEffects(*ASC, RuntimeItem);
 	}
-	else
-	{
-		ApplyEquipmentStatModifiers(&ItemDef, -1.0f);
-	}
+	RuntimeItem.GrantedHandles = FProject_JAbilitySet_GrantedHandles();
+	RuntimeItem.GrantedEffectHandles.Reset();
+	RuntimeItem.bAppliedStatModifierFallback = false;
+	RuntimeItem.GrantedAbilitySystem.Reset();
 }
 
 void UProject_JEquipmentRuntimeComponent::StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
@@ -400,7 +410,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 {
 	if (ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly)
 	{
-		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
 		RuntimeItem.bAppliedStatModifierFallback = true;
 		return;
 	}
@@ -409,7 +419,9 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 	{
 		for (const TSubclassOf<UGameplayEffect>& EffectClass : ItemDef.EquipmentEffects)
 		{
-			if (!EffectClass)
+			// Equipment buffs must have a removable lifetime. Instant base writes
+			// cannot be undone on unequip and must not trigger a second stat fallback.
+			if (!EffectClass || EffectClass->GetDefaultObject<UGameplayEffect>()->DurationPolicy == EGameplayEffectDurationType::Instant)
 			{
 				continue;
 			}
@@ -431,7 +443,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 	if (RuntimeItem.GrantedEffectHandles.IsEmpty() &&
 		ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers)
 	{
-		ApplyEquipmentStatModifiers(&ItemDef, 1.0f);
+		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
 		RuntimeItem.bAppliedStatModifierFallback = true;
 	}
 }
@@ -440,7 +452,7 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemC
 {
 	if (RuntimeItem.bAppliedStatModifierFallback)
 	{
-		ApplyEquipmentStatModifiers(RuntimeItem.ItemDef, -1.0f);
+		ApplyEquipmentStatModifiers(ASC, RuntimeItem.ItemDef, -1.0f);
 		RuntimeItem.bAppliedStatModifierFallback = false;
 	}
 
@@ -455,15 +467,15 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemC
 	RuntimeItem.GrantedEffectHandles.Reset();
 }
 
-void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const
+void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(UAbilitySystemComponent& AbilitySystem, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const
 {
 	AActor* OwnerActor = GetOwner();
-	UAbilitySystemComponent* ASC = OwnerActor ? UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwnerActor) : nullptr;
-	if (!ASC || !ItemDef || !OwnerActor || !OwnerActor->HasAuthority()) return;
+	UAbilitySystemComponent* ASC = &AbilitySystem;
+	if (!ItemDef || !OwnerActor || !OwnerActor->HasAuthority()) return;
 
 	for (const FProject_JEquipmentStatModifier& Modifier : ItemDef->StatModifiers)
 	{
-		if (FMath::IsNearlyZero(Modifier.Value)) continue;
+		if (!FMath::IsFinite(Modifier.Value) || FMath::IsNearlyZero(Modifier.Value)) continue;
 
 		const float SignedValue = Modifier.Value * Sign;
 		switch (Modifier.Stat)

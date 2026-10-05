@@ -28,18 +28,32 @@ TAutoConsoleVariable<int32> ParallelMode(TEXT("ProjectJ.Mass.Parallel"), -1,
 	TEXT("-1: use parallel crowd chunks for 1024+ moving agents; 0: serial; 1: force parallel. Includes snapshot/join cost in profiling."));
 TAutoConsoleVariable<int32> CrowdSpacing(TEXT("ProjectJ.Mass.CrowdSpacing"), 1,
 	TEXT("Bounded neighbor snapshot and corridor-preserving spacing for opt-in Mass NPCs. Dense/blocked routes return to Character."));
+
+bool ResolveActiveAction(const AProject_JNPCCharacter& NPC, UProject_JNPCActionComponent*& OutAction)
+{
+	OutAction = nullptr;
+	TInlineComponentArray<UProject_JNPCActionComponent*> Actions; NPC.GetComponents(Actions);
+	for (auto* Action : Actions)
+	{
+		if (Action->HasPendingResume()) { return false; }
+		if (Action->GetActionState() == EProjectJNPCActionState::Disabled) { continue; }
+		if (OutAction) { return false; }
+		OutAction = Action;
+	}
+	return true;
+}
 }
 
 struct FProjectJMassRepresentationEntry
 {
 	TWeakObjectPtr<AProject_JNPCCharacter> NPC;
 	TWeakObjectPtr<UProject_JNPCActionComponent> Action;
-	TWeakObjectPtr<UProject_JTargetScoringComponent> Scoring;
-	FGameplayAbilitySpecHandle Attack;
+	FProjectJNPCActionSuspension Suspension;
 	FMassEntityHandle Entity;
 	FNavPathSharedPtr Path; // GT only; worker receives copied points, never this shared pointer.
 	uint64 Id = 0, Generation = 1;
-	bool bMass = false, bActionWasEnabled = false;
+	bool bMass = false;
+	double TransitionWaitingSince = 0;
 	bool bMovementTick = false, bMeshTick = false, bHidden = false, bCollision = false, bDamage = false;
 	FVector CapsuleOffset = FVector::ZeroVector;
 };
@@ -135,10 +149,9 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 	if (!E.bMass && FVector::DistSquared(NPC->GetNavAgentLocation(), E.Path->GetPathPoints()[0].Location) > FMath::Square(100.0)) { return false; }
 	if (E.bMass && NPC->GetCharacterMovement()->IsComponentTickEnabled()) { return false; }
 	for (const auto& Spec : ASC->GetActivatableAbilities()) { if (Spec.IsActive()) { return false; } }
-	if (const auto* Action = NPC->FindComponentByClass<UProject_JNPCActionComponent>())
-	{
-		if (Action->GetActionState() != EProjectJNPCActionState::Disabled) { return !E.bMass && Action->CanSuspendMovement(); }
-	}
+	UProject_JNPCActionComponent* Action = nullptr;
+	if (!ResolveActiveAction(*NPC, Action)) { return false; }
+	if (Action) { return !E.bMass && Action->CanSuspendMovement(); }
 	const auto* AI = Cast<AAIController>(NPC->GetController());
 	return !AI || !AI->GetPathFollowingComponent() || AI->GetPathFollowingComponent()->GetStatus() == EPathFollowingStatus::Idle;
 }
@@ -146,16 +159,23 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 void UProject_JMassRepresentationSubsystem::Demote(FProjectJMassRepresentationEntry& E)
 {
 	auto* NPC = E.NPC.Get(); auto* Movement = NPC->GetCharacterMovement();
-	E.Action = NPC->FindComponentByClass<UProject_JNPCActionComponent>();
-	E.bActionWasEnabled = E.Action.IsValid() && E.Action->GetActionState() != EProjectJNPCActionState::Disabled;
-	if (E.bActionWasEnabled)
+	UProject_JNPCActionComponent* ActiveAction = nullptr;
+	if (!ResolveActiveAction(*NPC, ActiveAction)) { return; }
+	E.Action = ActiveAction;
+	if (E.Action.IsValid() && E.Action->GetActionState() != EProjectJNPCActionState::Disabled)
 	{
-		E.Scoring = E.Action->GetScoringSource(); E.Attack = E.Action->GetAttackAbilityHandle();
-		E.Action->StopActions(); // Cancels only owned move/intent/path; physical engine slots stay reserved.
+		if (!E.Action->SuspendActions(E.Suspension)) { return; }
 	}
 	// StopActions can invoke callbacks. Recheck ownership and combat pins before taking movement.
 	if (!bAccepting || !E.NPC.IsValid() || NPC->IsActorBeingDestroyed() || !CanDemote(E)
-		|| (E.Action.IsValid() && E.Action->GetActionState() != EProjectJNPCActionState::Disabled)) { return; }
+		|| (E.Action.IsValid() && E.Action->GetActionState() != EProjectJNPCActionState::Disabled))
+	{
+		if (bAccepting && E.NPC.IsValid() && !NPC->IsActorBeingDestroyed() && E.Action.IsValid())
+		{ E.Action->ResumeSuspendedActions(E.Suspension); }
+		E.Suspension = {};
+		++Stats.DemoteRollbacks;
+		return;
+	}
 	E.bMovementTick = Movement->IsComponentTickEnabled(); E.bHidden = NPC->IsHidden();
 	const auto* BudgetMesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(NPC->GetMesh());
 	E.bMeshTick = BudgetMesh ? BudgetMesh->GetRequestedTickEnabled() : NPC->GetMesh()->IsComponentTickEnabled();
@@ -183,10 +203,10 @@ void UProject_JMassRepresentationSubsystem::Promote(FProjectJMassRepresentationE
 		NPC->GetMesh()->SetComponentTickEnabled(E.bMeshTick);
 		NPC->SetActorEnableCollision(E.bCollision); NPC->SetCanBeDamaged(E.bDamage); NPC->SetActorHiddenInGame(E.bHidden);
 		NPC->ForceNetUpdate();
-		if (bResumeActions && E.bActionWasEnabled && E.Action.IsValid() && E.Scoring.IsValid()
-			&& E.Action->GetActionState() == EProjectJNPCActionState::Disabled)
-		{ E.Action->StartActions(E.Scoring.Get(), E.Attack); }
+		if (bResumeActions && E.Action.IsValid() && E.Suspension.IsValid())
+		{ E.Action->ResumeSuspendedActions(E.Suspension); }
 	}
+	E.Suspension = {};
 	++Stats.Promoted; ++Stats.LastTransitions;
 }
 
@@ -216,6 +236,9 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 	ON_SCOPE_EXIT { bStepping = false; if (!bAccepting) { Stop(); } };
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_MassRepresentation_GT);
 	const double Start = FPlatformTime::Seconds(); Stats.LastTransitions = 0;
+	ON_SCOPE_EXIT { Stats.LastStepMilliseconds = (FPlatformTime::Seconds() - Start) * 1000; };
+	Stats.LastEligibilityChecks = Stats.LastEligible = 0;
+	Stats.LastEligibilityMilliseconds = Stats.LastWorkerJoinMilliseconds = Stats.OldestTransitionWaitMilliseconds = 0;
 	TArray<FVector> Observers;
 #if WITH_DEV_AUTOMATION_TESTS
 	if (bTestObservers) { Observers = TestObservers; }
@@ -240,15 +263,24 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 		F.bRouteValid = E->Path && E->Path->IsValid() && E->Path->IsUpToDate();
 		double Distance = Observers.IsEmpty() ? 0 : TNumericLimits<double>::Max();
 		for (const auto& P : Observers) { Distance = FMath::Min(Distance, FVector::Distance(P, NPC->GetActorLocation())); }
-		const bool bWantCharacter = Distance < PromoteDistance || !F.bRouteValid || !CanDemote(*E);
+		const double EligibilityStarted = FPlatformTime::Seconds();
+		const bool bCheckEligibility = Distance >= PromoteDistance && F.bRouteValid;
+		const bool bEligible = bCheckEligibility && CanDemote(*E);
+		Stats.LastEligibilityMilliseconds += (FPlatformTime::Seconds() - EligibilityStarted) * 1000;
+		Stats.LastEligibilityChecks += bCheckEligibility; Stats.LastEligible += bEligible;
+		const bool bWantCharacter = Distance < PromoteDistance || !F.bRouteValid || !bEligible;
 		const bool bWantMass = !E->bMass && Distance > DemoteDistance && !bWantCharacter;
 		if (E->bMass && bWantCharacter) { F.bRouteValid = false; } // Freeze while waiting for a transition slot.
 		if ((E->bMass && bWantCharacter) || bWantMass)
 		{
+			if (!E->TransitionWaitingSince) { E->TransitionWaitingSince = Start; }
+			Stats.OldestTransitionWaitMilliseconds = FMath::Max(Stats.OldestTransitionWaitMilliseconds, (Start - E->TransitionWaitingSince) * 1000);
 			if (Stats.LastTransitions >= MaxTransitionsPerTick) { ++Stats.Deferred; continue; }
 			if (E->bMass) { Promote(*E, true); } else { Demote(*E); }
+			if (E->bMass == bWantMass) { E->TransitionWaitingSince = 0; }
 			if (!bAccepting) { return; }
 		}
+		else { E->TransitionWaitingSince = 0; }
 		if (E->bMass && F.bRouteValid && !F.bNeedsCharacterTraversal && F.NextPoint < F.RouteCount) { ++MovingCount; }
 	}
 	Cursor = Count ? (Cursor + MaxTransitionsPerTick) % Count : 0;
@@ -256,7 +288,9 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 	const int32 Mode = ParallelMode.GetValueOnGameThread();
 	Processor->bParallel = Mode > 0 || (Mode < 0 && Processor->bUseCrowdSpacing && MovingCount >= 1024);
 	UE::Mass::FProcessingContext Context(Entities, DeltaSeconds);
+	const double WorkerStarted = FPlatformTime::Seconds();
 	UE::Mass::Executor::Run(*Processor, Context); // Joins chunk tasks before reading results or changing ownership.
+	Stats.LastWorkerJoinMilliseconds = (FPlatformTime::Seconds() - WorkerStarted) * 1000;
 	Stats.MassOwned = 0;
 	for (int32 I = Entries.Num() - 1; I >= 0; --I)
 	{

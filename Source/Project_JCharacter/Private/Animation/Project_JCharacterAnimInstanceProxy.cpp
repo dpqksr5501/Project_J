@@ -109,8 +109,12 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 {
 	// The visible Motion Matching node can live in the generated AnimBP graph or a
 	// linked layer. NativeMotionMatchingNode is only the fallback graph, so prefer
-	// a generated node which actually produced a Pose Search result this frame.
+	// a generated node with a cached result. This is a representative result;
+	// its presence alone does not establish this frame's final pose contribution.
 	const FAnimNode_MotionMatching* ResultNode = nullptr;
+	int32 ResultNodeIndex = INDEX_NONE;
+	int32 CandidateCount = 0;
+	bool bFoundRequestedDatabase = false;
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
 		const FAnimNode_MotionMatching* Candidate = GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex);
@@ -125,12 +129,15 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 			continue;
 		}
 
-		ResultNode = Candidate;
-		// Every generated node receives the same requested database. Prefer an
-		// exact match in case an inactive graph still retains an older result.
-		if (CandidateResult.SelectedDatabase == CurrentActiveDatabase)
+		++CandidateCount;
+		// Preserve the existing representative selection policy. A cached blend
+		// weight is observable through UE's public API, but does not prove that
+		// this node contributed to this frame's final blended pose.
+		if (!bFoundRequestedDatabase)
 		{
-			break;
+			ResultNode = Candidate;
+			ResultNodeIndex = NodeIndex;
+			bFoundRequestedDatabase = CandidateResult.SelectedDatabase == CurrentActiveDatabase;
 		}
 	}
 
@@ -141,6 +148,16 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 
 	const FMotionMatchingState& State = ResultNode->GetMotionMatchingState();
 	const FPoseSearchBlueprintResult& Result = State.SearchResult;
+	const FName DatabaseName = Result.SelectedDatabase ? Result.SelectedDatabase->GetFName() : NAME_None;
+	const FName AnimationName = Result.SelectedAnim ? Result.SelectedAnim->GetFName() : NAME_None;
+	LatestPostSelection.bResultChangedSincePreviousCapture = LatestPostSelection.ProducerNodeIndex != ResultNodeIndex
+		|| LatestPostSelection.SelectedDatabase != DatabaseName || LatestPostSelection.SelectedAnimation != AnimationName
+		|| LatestPostSelection.SelectedAnimationTime != Result.SelectedTime;
+	if (LatestPostSelection.bResultChangedSincePreviousCapture) { LatestPostSelection.ResultLastChangedFrame = GFrameCounter; }
+	LatestPostSelection.ProducerNodeIndex = ResultNodeIndex;
+	LatestPostSelection.ResultCandidateCount = CandidateCount;
+	LatestPostSelection.CaptureFrame = GFrameCounter;
+	LatestPostSelection.CachedNodeWeight = ResultNode->GetCachedBlendWeight();
 	LatestPostSelection.SelectedDatabase = Result.SelectedDatabase ? Result.SelectedDatabase->GetFName() : NAME_None;
 	LatestPostSelection.SelectedAnimation = Result.SelectedAnim ? Result.SelectedAnim->GetFName() : NAME_None;
 	LatestPostSelection.SelectedAnimationTime = Result.SelectedTime;
@@ -272,13 +289,19 @@ EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseCh
 		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle != bLastPolicyUsedSettledCycle;
+	const bool bCombatFacingFamilyChanged =
+		ThreadSafeData.Combat.bIsCombatMode &&
+		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		bIsMoving && ThreadSafeData.LocomotionContext.PhaseFamily != LastPolicyPhaseFamily &&
+		(ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
+			LastPolicyPhaseFamily == EProject_JLocomotionPhaseFamily::Turn);
 
 	// GASP Get_MMInterruptMode: default to DoNotInterrupt and only interrupt on
 	// a core locomotion change. Project_J has no separate stance enum yet, so
 	// combat stance and rotation family are its safe equivalent.
 	const bool bInterrupt = bMovementModeChanged ||
 		(!bIsInAir && (bMovementStateChanged || (!bIsMoving && bGaitChanged) ||
-			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged));
+			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged || bCombatFacingFamilyChanged));
 	return bInterrupt
 		? EPoseSearchInterruptMode::InterruptOnDatabaseChange
 		: EPoseSearchInterruptMode::DoNotInterrupt;
@@ -293,6 +316,7 @@ void FProject_JCharacterAnimInstanceProxy::CacheMotionMatchingPolicyState()
 	bLastPolicyUsedSettledCycle = ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle;
 	LastPolicyGaitIntent = ThreadSafeData.LocomotionContext.GaitIntent;
 	LastPolicyRotationMode = ThreadSafeData.LocomotionContext.RotationMode;
+	LastPolicyPhaseFamily = ThreadSafeData.LocomotionContext.PhaseFamily;
 }
 
 FString FProject_JCharacterAnimInstanceProxy::GetPivotTraceSummary() const

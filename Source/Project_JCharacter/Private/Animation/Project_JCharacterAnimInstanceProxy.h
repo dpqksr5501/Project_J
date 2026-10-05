@@ -66,7 +66,9 @@ protected:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJAnimationClockTest;
 	friend class FProjectJStopIdleInterruptTest;
+	friend class FProjectJStrafeFacingSearchTest;
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
@@ -106,6 +108,7 @@ private:
 	bool bLastPolicyUsedSettledCycle = false;
 	EProject_JLocomotionGaitIntent LastPolicyGaitIntent = EProject_JLocomotionGaitIntent::Run;
 	EProject_JLocomotionRotationMode LastPolicyRotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionPhaseFamily LastPolicyPhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	EPoseSearchInterruptMode LastResolvedDatabaseChangeInterruptMode = EPoseSearchInterruptMode::DoNotInterrupt;
 	FProject_JAnimMotionMatchingPostSelectionData LatestPostSelection;
 	TArray<FProject_JMotionMatchingPivotTraceEntry> PivotDebugTrace;

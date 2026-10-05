@@ -7,6 +7,21 @@
 class AProject_JPlayerState;
 
 UENUM(BlueprintType)
+enum class EProject_JSocialGroupKind : uint8 { Party, Guild };
+
+USTRUCT(BlueprintType)
+struct FProject_JSocialGroupSnapshot
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 Version = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FName GroupId;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FGuid LeaderCharacterId;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FGuid> Members;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) int64 Revision = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bDeleted = false;
+};
+
+UENUM(BlueprintType)
 enum class EProject_JSocialOperationFailure : uint8
 {
 	None,
@@ -15,7 +30,8 @@ enum class EProject_JSocialOperationFailure : uint8
 	AlreadyMember,
 	NotMember,
 	GroupNotFound,
-	GroupFull
+	GroupFull,
+	RevisionExhausted
 };
 
 USTRUCT(BlueprintType)
@@ -86,9 +102,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Social|Guild")
 	FProject_JSocialOperationResult LeaveGuild(AProject_JPlayerState* Player);
 
-	/** Trusted server/backend restore path. Creates missing groups when necessary. */
+	/** Compatibility membership path. Restore the complete group first for an unknown ID. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "MMO|Social")
 	bool RestoreMembership(AProject_JPlayerState* Player, FName PartyId, FName GuildId);
+
+	/** Trusted backend projection, including explicit leader, revision and deletion tombstone. */
+	bool RestoreGroupSnapshot(EProject_JSocialGroupKind Kind, const FProject_JSocialGroupSnapshot& Snapshot);
+	bool GetGroupSnapshot(EProject_JSocialGroupKind Kind, FName GroupId, FProject_JSocialGroupSnapshot& OutSnapshot) const;
 
 	UFUNCTION(BlueprintPure, Category = "MMO|Social")
 	FName GetPartyIdForCharacter(const FGuid& CharacterId) const;
@@ -97,12 +117,7 @@ public:
 	FName GetGuildIdForCharacter(const FGuid& CharacterId) const;
 
 private:
-	struct FRuntimeGroup
-	{
-		FName GroupId = NAME_None;
-		FGuid LeaderCharacterId;
-		TArray<FGuid> Members;
-	};
+	using FRuntimeGroup = FProject_JSocialGroupSnapshot;
 
 	using FGroupMap = TMap<FName, FRuntimeGroup>;
 	using FMembershipMap = TMap<FGuid, FName>;

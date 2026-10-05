@@ -3,11 +3,15 @@
 #include "CoreMinimal.h"
 #include "Containers/Ticker.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Misc/SecureHash.h"
 #include "Project_JHandoverManager.generated.h"
 
 class AActor;
 class IProject_JHandoverTransport;
 struct FProject_JHandoverTransportResponse;
+
+enum class EProject_JHandoverApplyResult : uint8 { Applied, AlreadyApplied, Rejected, InProgress, Overloaded };
+enum class EProject_JHandoverAdmission : uint8 { Accepted, Invalid, Duplicate, Overloaded, Closed };
 
 UENUM(BlueprintType)
 enum class EProject_JHandoverState : uint8
@@ -132,6 +136,7 @@ public:
 
 	/** Starts transport for an already serialized envelope. Useful for server infrastructure adapters. */
 	bool StartEnvelopeTransfer(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor = nullptr);
+	EProject_JHandoverAdmission StartEnvelopeTransferChecked(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor = nullptr);
 
 	UFUNCTION(BlueprintPure, Category = "Handover")
 	bool IsHandoverInProgress(AActor* Actor) const;
@@ -151,6 +156,7 @@ public:
 	bool BuildEnvelope(AActor* ActorToHandover, const FString& TargetServerNodeId, FProject_JHandoverEnvelope& OutEnvelope) const;
 	EProject_JHandoverValidationFailure ValidateEnvelope(const FProject_JHandoverEnvelope& Envelope) const;
 	bool ApplyEnvelope(AActor* DestinationActor, const FProject_JHandoverEnvelope& Envelope);
+	EProject_JHandoverApplyResult ApplyEnvelopeChecked(AActor* DestinationActor, const FProject_JHandoverEnvelope& Envelope);
 	int32 CalculatePayloadChecksum(const TArray<uint8>& Payload) const;
 
 	void SetTransport(TSharedPtr<IProject_JHandoverTransport> InTransport);
@@ -174,7 +180,15 @@ private:
 	void PruneReplayWindow();
 
 	TMap<FGuid, FProject_JHandoverRecord> HandoverStates;
-	TMap<FGuid, FDateTime> AppliedTransferIds;
+	struct FApplyReceipt
+	{
+		FDateTime AppliedAt;
+		FSHAHash Digest;
+		TWeakObjectPtr<AActor> Destination;
+		FString SourceNodeId;
+	};
+	TMap<FGuid, FApplyReceipt> AppliedTransferIds;
+	TSet<FGuid> ApplyingTransferIds;
 	TSharedPtr<IProject_JHandoverTransport> Transport;
 	FTSTicker::FDelegateHandle TickHandle;
 	bool bShuttingDown = false;
@@ -185,6 +199,15 @@ private:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
 	int32 MaxPayloadBytes = 1048576;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
+	int32 MaxActiveTransfers = 128;
+	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
+	int32 MaxTrackedRecords = 1024;
+	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
+	int64 MaxPendingPayloadBytes = 16777216;
+	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
+	int32 MaxApplyReceipts = 4096;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "0.0", Units = "s"))
 	float MaxEnvelopeAgeSeconds = 30.0f;

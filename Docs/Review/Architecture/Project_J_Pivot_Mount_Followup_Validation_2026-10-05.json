@@ -1,0 +1,105 @@
+{
+  "dateKST": "2026-10-05",
+  "status": "Editor and Game builds succeeded; 110 regression tests passed",
+  "scope": "Pivot input redirect lifetime and grounded mount exit geometry; event diagnostics",
+  "editorBuild": {
+    "target": "Project_JEditor Win64 Development",
+    "durationSeconds": 4.66,
+    "result": "Succeeded",
+    "exitCode": 0,
+    "log": "Saved/Validation/PivotMountFollowup_20261005/BuildEditor_Final2.log"
+  },
+  "gameBuild": {
+    "target": "Project_J Win64 Development",
+    "durationSeconds": 33.29,
+    "result": "Succeeded",
+    "exitCode": 0,
+    "log": "Saved/Validation/PivotMountFollowup_20261005/BuildGame.log"
+  },
+  "regression": {
+    "failed": 0,
+    "warningsUnchangedFromBaseline": true,
+    "log": "Saved/Validation/PivotMountFollowup_20261005/Regression_Final.log",
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ],
+    "report": "Saved/Automation/PivotMountFollowup_20261005_Final/index.json",
+    "succeededWithWarnings": 4,
+    "exitCode": 0,
+    "priorTests": 108,
+    "succeeded": 106,
+    "newTests": 2,
+    "warningEvents": 8.0,
+    "tests": 110,
+    "notCompleted": 0
+  },
+  "changedSources": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "beforeSha256": "e33f741f42bb820dd031e683483a321646ea719a54d22f6b7ff0f1fe6905fe26",
+      "sha256": "8613b6dca4376cc3b4ecc0740e0cac1f4252402dd0286cf7631d3ea8a58f63fb"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JCharacterRuntimeTests.cpp",
+      "beforeSha256": "3855d2aa83101a3eb6136be434c7f4da17a78fa305b0650ce5b3c901fe79d726",
+      "sha256": "cb70cce8057db7fa1e0de41d31a254992b6ac79c6cae98132adb39c8f8ef1d23"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h",
+      "beforeSha256": "573244d2f132c976456cdc75e32dc1f9ae30745e8ae71182ccd07d1306ceb5fd",
+      "sha256": "95aa35ad9e3ff0e67760a3861f133e40afce25fafbd24ed486cc8139e8a96d72"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "beforeSha256": "eb3382319459b49f423e1ec79798b2ca5bff7aa3f4bf6ece9826b5d93eb3e305",
+      "sha256": "c9df18679ea53f03ef485f49344895704bd8a79b8e06ca2bab6ad020de928158"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "beforeSha256": "303241c6c6554d4cee37adb4d8ddd5bcdab864b36a8c739924efa17b6379720e",
+      "sha256": "254d6ef98200d258f84a84aecf49767e70cb358dc847f88230ff7e3530ed06ee"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "beforeSha256": "69e2da35d49bb6f4345c9a95f2ec552e77df807a079cf4123eca8127629b2726",
+      "sha256": "382122851a19542e8cc3f20d40b809afb4f24100d939aba2c23368706334cf92"
+    }
+  ],
+  "limitations": [
+    "Actual Blueprint and active Input Mapping Context connections were not inspected or saved.",
+    "Authored animation visual quality and multiplayer PIE still require validation.",
+    "Air dismount permission and flight transition input locks remain enforced."
+  ],
+  "intermediateFailure": "First mount test used a non-local fixture PlayerController; SetAsLocalPlayerController corrected test setup while production ownership guard remained unchanged."
+}

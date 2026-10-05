@@ -124,6 +124,8 @@ bool UProject_JSocialSubsystem::CanRestoreGroupMembership(
 	const FName ExistingGroupId = Memberships.FindRef(CharacterId);
 	if (GroupId.IsNone())
 	{
+		const auto* Existing = Groups.Find(ExistingGroupId);
+		if (Existing && Existing->Revision == MAX_int64) { return false; }
 		return true;
 	}
 	if (!ExistingGroupId.IsNone() && ExistingGroupId != GroupId)
@@ -132,10 +134,10 @@ bool UProject_JSocialSubsystem::CanRestoreGroupMembership(
 	}
 	if (const FRuntimeGroup* Group = Groups.Find(GroupId))
 	{
-		return Group->Members.Contains(CharacterId) ||
-			Group->Members.Num() < FMath::Max(2, MaxMembers);
+		return !Group->bDeleted && (Group->Members.Contains(CharacterId) ||
+			(Group->Revision < MAX_int64 && Group->Members.Num() < FMath::Max(2, MaxMembers)));
 	}
-	return true;
+	return false;
 }
 
 FName UProject_JSocialSubsystem::GetPartyIdForCharacter(const FGuid& CharacterId) const
@@ -229,7 +231,7 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::JoinGroup(
 	}
 
 	FRuntimeGroup* Group = Groups.Find(GroupId);
-	if (!Group)
+	if (!Group || Group->bDeleted)
 	{
 		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::GroupNotFound, GroupId);
 	}
@@ -237,8 +239,10 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::JoinGroup(
 	{
 		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::GroupFull, GroupId);
 	}
+	if (Group->Revision == MAX_int64) { return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::RevisionExhausted, GroupId); }
 
 	Group->Members.Add(CharacterId);
+	++Group->Revision;
 	Memberships.Add(CharacterId, GroupId);
 	OnlinePlayers.Add(CharacterId, Player);
 	SynchronizePlayerSnapshot(Player);
@@ -267,13 +271,16 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::LeaveGroup(
 	}
 
 	FRuntimeGroup* Group = Groups.Find(GroupId);
+	if (Group && Group->Revision == MAX_int64) { return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::RevisionExhausted, GroupId); }
 	Memberships.Remove(CharacterId);
 	if (Group)
 	{
 		Group->Members.Remove(CharacterId);
+		++Group->Revision;
 		if (Group->Members.IsEmpty())
 		{
-			Groups.Remove(GroupId);
+			Group->bDeleted = true;
+			Group->LeaderCharacterId.Invalidate();
 		}
 		else if (Group->LeaderCharacterId == CharacterId)
 		{
@@ -301,9 +308,11 @@ bool UProject_JSocialSubsystem::RestoreGroupMembership(
 			if (FRuntimeGroup* ExistingGroup = Groups.Find(ExistingGroupId))
 			{
 				ExistingGroup->Members.Remove(CharacterId);
+				++ExistingGroup->Revision;
 				if (ExistingGroup->Members.IsEmpty())
 				{
-					Groups.Remove(ExistingGroupId);
+					ExistingGroup->bDeleted = true;
+					ExistingGroup->LeaderCharacterId.Invalidate();
 				}
 				else if (ExistingGroup->LeaderCharacterId == CharacterId)
 				{
@@ -321,8 +330,9 @@ bool UProject_JSocialSubsystem::RestoreGroupMembership(
 		return false;
 	}
 
-	FRuntimeGroup& Group = Groups.FindOrAdd(GroupId);
-	Group.GroupId = GroupId;
+	FRuntimeGroup* Existing = Groups.Find(GroupId);
+	if (!Existing || Existing->bDeleted) { return false; }
+	FRuntimeGroup& Group = *Existing;
 	if (!Group.Members.Contains(CharacterId))
 	{
 		if (Group.Members.Num() >= FMath::Max(2, MaxMembers))
@@ -330,6 +340,7 @@ bool UProject_JSocialSubsystem::RestoreGroupMembership(
 			return false;
 		}
 		Group.Members.Add(CharacterId);
+		++Group.Revision;
 	}
 	if (!Group.LeaderCharacterId.IsValid())
 	{
@@ -377,4 +388,45 @@ FGuid UProject_JSocialSubsystem::ResolveGroupLeader(FName GroupId, const FGroupM
 		return Group->LeaderCharacterId;
 	}
 	return FGuid();
+}
+
+bool UProject_JSocialSubsystem::GetGroupSnapshot(EProject_JSocialGroupKind Kind, FName GroupId, FProject_JSocialGroupSnapshot& OutSnapshot) const
+{
+	const auto& Groups = Kind == EProject_JSocialGroupKind::Party ? Parties : Guilds;
+	if (const auto* Group = Groups.Find(GroupId)) { OutSnapshot = *Group; return true; }
+	return false;
+}
+
+bool UProject_JSocialSubsystem::RestoreGroupSnapshot(EProject_JSocialGroupKind Kind, const FProject_JSocialGroupSnapshot& Snapshot)
+{
+	check(IsInGameThread());
+	auto& Groups = Kind == EProject_JSocialGroupKind::Party ? Parties : Guilds;
+	auto& Memberships = Kind == EProject_JSocialGroupKind::Party ? CharacterParties : CharacterGuilds;
+	const int32 Capacity = FMath::Max(2, Kind == EProject_JSocialGroupKind::Party ? MaxPartyMembers : MaxGuildMembers);
+	if (Snapshot.Version != 1 || Snapshot.GroupId.IsNone() || Snapshot.Revision < 1 || Snapshot.Revision == MAX_int64 || Snapshot.Members.Num() > Capacity) { return false; }
+	if (Snapshot.bDeleted ? (!Snapshot.Members.IsEmpty() || Snapshot.LeaderCharacterId.IsValid()) :
+		(Snapshot.Members.IsEmpty() || !Snapshot.LeaderCharacterId.IsValid() || !Snapshot.Members.Contains(Snapshot.LeaderCharacterId))) { return false; }
+	TSet<FGuid> Members;
+	for (const auto& Member : Snapshot.Members)
+	{
+		const FName ExistingGroup = Memberships.FindRef(Member);
+		if (!Member.IsValid() || Members.Contains(Member) || (!ExistingGroup.IsNone() && ExistingGroup != Snapshot.GroupId)) { return false; }
+		Members.Add(Member);
+	}
+	const auto* Existing = Groups.Find(Snapshot.GroupId);
+	if (Existing && Snapshot.Revision <= Existing->Revision)
+	{
+		return Snapshot.Revision == Existing->Revision && Snapshot.bDeleted == Existing->bDeleted &&
+			Snapshot.LeaderCharacterId == Existing->LeaderCharacterId && Snapshot.Members == Existing->Members;
+	}
+	TArray<FGuid> Affected = Snapshot.Members;
+	if (Existing)
+	{
+		for (const auto& Member : Existing->Members) { Memberships.Remove(Member); Affected.AddUnique(Member); }
+	}
+	// Publish all maps before notifying online PlayerStates (callbacks may reenter).
+	Groups.Add(Snapshot.GroupId, Snapshot);
+	for (const auto& Member : Snapshot.Members) { Memberships.Add(Member, Snapshot.GroupId); }
+	for (const auto& Member : Affected) { SynchronizeOnlineMember(Member); }
+	return true;
 }

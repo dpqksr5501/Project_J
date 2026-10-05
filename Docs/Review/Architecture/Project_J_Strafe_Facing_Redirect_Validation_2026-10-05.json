@@ -1,0 +1,167 @@
+{
+  "dateKST": "2026-10-05",
+  "status": "Editor and Game builds succeeded; full regression passed",
+  "scope": "Moving Strafe facing prediction, preserved entry history, semantic redirect and continuous pose search",
+  "editorBuild": {
+    "target": "Project_JEditor Win64 Development",
+    "result": "Succeeded",
+    "exitCode": 0,
+    "durationSeconds": 4.29,
+    "log": "Saved/Validation/StrafeFacingRedirect_20261005/BuildEditor_Final2.log"
+  },
+  "gameBuild": {
+    "target": "Project_J Win64 Development",
+    "result": "Succeeded",
+    "exitCode": 0,
+    "durationSeconds": 36.29,
+    "log": "Saved/Validation/StrafeFacingRedirect_20261005/BuildGame.log",
+    "binary": "Binaries/Win64/Project_J.exe"
+  },
+  "regression": {
+    "report": "Saved/Automation/StrafeFacingRedirect_20261005_Final2/index.json",
+    "exitCode": 0,
+    "reportStateValidated": true,
+    "tests": 108,
+    "succeeded": 104,
+    "succeededWithWarnings": 4,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "priorTestCount": 105,
+    "newTestCount": 3,
+    "warningEvents": 8.0,
+    "warningsUnchangedFromBaseline": true,
+    "baseline": "Saved/Automation/MountStrafeFix_20261005_Regression/index.json",
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ],
+    "log": "Saved/Validation/StrafeFacingRedirect_20261005/Regression_Final2.log"
+  },
+  "changedFiles": [
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCombatAnimProfile.h",
+      "beforeSha256": "6c3027d9d200e24479dcd7a1d6414c81f9d059da7939759ddb9b25fc65210e6a",
+      "sha256": "8f110789287ac9e1819e6ee11c30efc7aa8caab0577f1774c348ef63898caff8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+      "beforeSha256": "e07cf9f486838969092c140cf11731fee15696e94040b2e20bbce1e3879282ff",
+      "sha256": "fade1742fcc13d018913f1e444942535d2dc7cf46160af612a59aaf33d0015c3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h",
+      "beforeSha256": "d8fe7017d3bd83122634139c69ee0287fd00cbfda0b57c85cebc92a8ad77b4c4",
+      "sha256": "4c7db2b183378974dc322bacb7454f9eea2644879407aa5be9d9302e69656425"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "beforeSha256": "2d1dfcd9eb0985e71c0ea47d923caf7d970c02f8b23ba46b7579c29bcadecb72",
+      "sha256": "6e5d118b0a7c04167dcb291b3934786cde4e1037c40b91e5706b6c46932270d2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp",
+      "beforeSha256": "cb92bcc0c4a3413e5b0e3cab8d7277d965f17ddfade2bebf14a33205588aaed8",
+      "sha256": "78ebf75a6fb94af9c636c696d78c13e0288b77772e13e91c888a2e3c9d56ee50"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "beforeSha256": "747c2df51bf6eaa5622ba8eb00c9a9e45e25506b8275057b640e2f08f7584243",
+      "sha256": "abee5701093a959889ec41b927d787ff2367a3b3a6d625076be52134c7454cad"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "beforeSha256": "ec17e957374e7dcb9aedb17b32e249df9479a6833f48d1844336649a714e8ace",
+      "sha256": "59e9ad42d5f4003bdf4a52350bed30d2c515d282bb6988d4874834c346de8c47"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "beforeSha256": "d26826d10da854927ed10a579a2eed6e7802ca2890d89bd6ff84de119d024a6d",
+      "sha256": "c6712820ab6f51f2bd80b9220bc0bc1bb7d7b78ab0a44c46fc7a27aef3fa8671"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+      "beforeSha256": "25afd335abfc2240c02fac491a8bbaa662db82b1ad7ed4815b5046948e995b81",
+      "sha256": "a7a85abc13f407b975b4b405363333a8059f715b0d97b49b4f68e49fbe7f70ff"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "beforeSha256": "72f0c35535ff09b3c08edd461780911a59af24f6a8bd2d49262c69a326c217bf",
+      "sha256": "32254f7d5014a5a0b9114fcf3b114e17c558540c114fb9998e4fa38dc14203c2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafeFacingRedirectTests.cpp",
+      "beforeSha256": null,
+      "sha256": "95fc778bac0cbdea747f81be56923b08838a62f36c0772ccf91906bac2402d11"
+    }
+  ],
+  "comparison": {
+    "project": "C:/Users/I/Documents/GitHub/ArtisticSW2026",
+    "readOnly": true,
+    "assetsInspected": false,
+    "files": [
+      "Source/ClassFeature/Private/BasePlayer.cpp",
+      "Source/ClassFeature/Private/GAS/Ability/GA_PlayerRoll.cpp",
+      "Source/ClassFeature/Private/Animation/SWTrajectoryComponent.cpp",
+      "Source/ClassFeature/Private/Animation/LocomotionAnimStateComponent.cpp",
+      "Source/ClassFeature/Private/Animation/MotionMatchingAnimInstance.cpp"
+    ]
+  },
+  "assetChangesByAgent": false,
+  "unrealMCPUsed": false,
+  "remainingAutomatedChecks": [],
+  "manualChecks": [
+    "PIE: held S and fixed camera, TAB enter/exit/re-toggle; camera turns, input changes and stopping.",
+    "Check the assigned Dynamic Cycle and optional combat TurnRedirect PSD candidates in Motion Matching debugger.",
+    "Start, Stop, stationary TIP, diagonal jump, attack, dodge and hit-reaction ownership.",
+    "Two-player PIE authored pose, foot sliding and latency quality; simulated proxies use existing replicated facing without a new controller-target RPC."
+  ],
+  "evidenceSha256": [
+    {
+      "path": "Saved/Validation/StrafeFacingRedirect_20261005/BuildEditor_Final2.log",
+      "sha256": "60dc0f45d0d683eda7eb723a6412332d014b6f7464e65723d0e5bf97e6d6db64"
+    },
+    {
+      "path": "Saved/Validation/StrafeFacingRedirect_20261005/BuildGame.log",
+      "sha256": "a32fa13b83d64cd564fa2a9b7ad049022600ac06b2de421271d725365d3ee314"
+    },
+    {
+      "path": "Saved/Automation/StrafeFacingRedirect_20261005_Final2/index.json",
+      "sha256": "a442979940175e10c6f5070003d5d328aaa16df43d74ae2d4e1623afc2ae8e7e"
+    },
+    {
+      "path": "Saved/Validation/StrafeFacingRedirect_20261005/Regression_Final2.log",
+      "sha256": "1e917f4f41bff1630029cdd324eac16d2fa77079ae279316c100bc55e1119763"
+    }
+  ]
+}

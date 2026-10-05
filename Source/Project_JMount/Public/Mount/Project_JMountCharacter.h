@@ -9,6 +9,8 @@
 
 class ACharacter;
 class UProject_JRiderAnimationProfile;
+class UEnhancedInputComponent;
+class UInputAction;
 
 /**
  * Base class for controllable mounts. Create Blueprint children (for example
@@ -24,6 +26,7 @@ public:
 	AProject_JMountCharacter();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual bool CanInteract_Implementation(ACharacter* Interactor) const override;
 	virtual void Interact_Implementation(ACharacter* Interactor) override;
@@ -67,7 +70,7 @@ public:
 
 	/** Usable by forced-dismount gameplay such as death or despawn. Authority only. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Mount")
-	bool DismountRider(bool bForce = false);
+	bool DismountRider(bool bForce = false, bool bRestorePossession = true);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestDismount();
@@ -79,6 +82,14 @@ public:
 	void K2_OnRiderDismounted(ACharacter* PreviousRider);
 
 protected:
+	virtual void PawnClientRestart() override;
+	virtual void UnPossessed() override;
+	virtual void OnRep_Controller() override;
+	virtual void HandleDismount();
+	void RestoreDismountInputBindings(UInputComponent* PlayerInputComponent);
+	/** Optional authored action, in addition to the rider's existing interaction action. */
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction = nullptr;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -149,14 +160,26 @@ protected:
 	float Health = 1000.0f;
 
 private:
+	void ClearDismountInputBindings();
+	void RefreshDismountInputBindings();
+	TWeakObjectPtr<UEnhancedInputComponent> BoundDismountInputComponent;
+	TArray<uint32> DismountInputBindingHandles;
+	friend class UProject_JMountComponent;
 	void OnHealthAttributeChanged(const struct FOnAttributeChangeData& Data);
 	void OnMaxHealthAttributeChanged(const struct FOnAttributeChangeData& Data);
 	FDelegateHandle HealthChangedHandle;
 	FDelegateHandle MaxHealthChangedHandle;
 	bool bHandlingHealthDepletion = false;
+	bool bEndingPlay = false;
+	bool bRestoreRiderOnEndPlay = false;
+	TWeakObjectPtr<AController> SessionController;
+	ECollisionEnabled::Type RiderCollisionBeforeMount = ECollisionEnabled::QueryAndPhysics;
+	EMovementMode RiderMovementBeforeMount = MOVE_Walking;
+	uint8 RiderCustomMovementBeforeMount = 0;
+	bool bHasRiderRestoreState = false;
 	bool CanMountRider(const ACharacter* NewRider) const;
 	bool FindDismountLocation(FVector& OutLocation) const;
-	void AttachRider(ACharacter* NewRider) const;
+	void AttachRider(ACharacter* NewRider);
 	void DetachRider(ACharacter* PreviousRider, const FVector& DismountLocation) const;
 	void NotifyRiderMountChanged(ACharacter* ChangedRider, bool bMounted);
 };

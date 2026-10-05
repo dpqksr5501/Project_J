@@ -620,11 +620,33 @@ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<
 	UpdateIndependentMotion(0.0f);
 	UpdateTickState();
 	LogGripTraceEvent(TEXT("MotionBegin"));
+	ActiveNotifyMotionToken = 0;
 	return true;
+}
+
+uint64 UProject_JWeaponPresentationComponent::BeginNotifyIndependentMotion(
+	const TArray<FProject_JWeaponMotionKey>& Keys, float PrimaryAlpha, float SecondaryAlpha,
+	float Duration, float EntryBlend, float ExitBlend)
+{
+	if (!BeginIndependentMotion(Keys, PrimaryAlpha, SecondaryAlpha, Duration, EntryBlend, ExitBlend)) { return 0; }
+	RefreshIndependentMotionKeys(Keys, PrimaryAlpha, SecondaryAlpha, Duration, EntryBlend, ExitBlend);
+	ActiveNotifyMotionToken = ++NextNotifyMotionToken;
+	return ActiveNotifyMotionToken;
+}
+
+bool UProject_JWeaponPresentationComponent::IsNotifyIndependentMotionCurrent(uint64 Token) const
+{
+	return Token != 0 && Token == ActiveNotifyMotionToken && bIndependentMotionActive && bNotifyOwnsMotion;
+}
+
+void UProject_JWeaponPresentationComponent::EndNotifyIndependentMotion(uint64 Token)
+{
+	if (IsNotifyIndependentMotionCurrent(Token)) { EndNotifyIndependentMotion(); }
 }
 
 void UProject_JWeaponPresentationComponent::EndNotifyIndependentMotion()
 {
+	ActiveNotifyMotionToken = 0;
 	if (!bNotifyOwnsMotion)
 	{
 		return;
@@ -655,6 +677,7 @@ void UProject_JWeaponPresentationComponent::EndNotifyIndependentMotion()
 
 void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 {
+	ActiveNotifyMotionToken = 0;
 	if (!bIndependentMotionActive)
 	{
 		return;

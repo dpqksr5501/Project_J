@@ -35,6 +35,10 @@ struct FProject_JEquipmentRuntimeItem
 	UPROPERTY(Transient)
 	TArray<FActiveGameplayEffectHandle> GrantedEffectHandles;
 
+	/** Grants belong to this ASC even after the avatar loses its PlayerState. */
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UAbilitySystemComponent> GrantedAbilitySystem;
+
 	UPROPERTY(Transient)
 	bool bAppliedStatModifierFallback = false;
 
@@ -85,6 +89,7 @@ protected:
 private:
 	friend class FProjectJEquipmentLoadLifecycleTest;
 	friend class FProjectJEquipmentRetryTest;
+	friend class FProjectJEquipmentGrantOwnershipTest;
 	static constexpr uint32 MaxVisualAttempts = 4;
 	void ScheduleVisualRetry();
 	FTimerHandle VisualRetryTimer;
@@ -99,7 +104,7 @@ private:
 	UProject_JWeaponPresentationProfile* ResolveCurrentWeaponPresentationProfile() const;
 	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
-	void ApplyEquipmentStatModifiers(const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
+	void ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
 	void RefreshCurrentWeaponConfiguration();
 
 private:

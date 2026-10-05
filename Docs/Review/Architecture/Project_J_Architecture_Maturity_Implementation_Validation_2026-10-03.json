@@ -1,0 +1,1125 @@
+{
+  "implementationDate": "2026-10-03",
+  "recordedAtUtc": "2026-10-03T09:27:24.3410231Z",
+  "baselineHead": "33b574a1d6775306a26357f67bc3d79311e7189b",
+  "workspace": "C:/Users/I/Documents/GitHub/Project_J",
+  "scope": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14"
+  ],
+  "earlierA01ToA10CompletionClaimed": false,
+  "sourceChanges": true,
+  "realAssetsSaved": false,
+  "unrealMcpUsed": false,
+  "migrationApplyInvoked": false,
+  "migrationRestoreInvokedOnRealAssets": false,
+  "configOrProjectDefinitionChanges": false,
+  "environment": "UE 5.8 Win64 Editor Development; NullRHI automation, opt-in ProjectJExperiments",
+  "builds": [
+    {
+      "log": "Saved/Logs/MaturityImplementation_20261003_VerifiedEditorBuild.log",
+      "result": "Succeeded",
+      "sha256": "b038d7c585577dffd388b4848e45da03102d612436a5e35a4652822b1b22c9c0"
+    },
+    {
+      "log": "Saved/Logs/MaturityImplementation_20261003_PluginBuild.log",
+      "result": "Succeeded",
+      "sha256": "715ee0160c554770a843b6bc830738cca8e7e44ac04bdf2139fb2069215873c0"
+    },
+    {
+      "log": "Saved/Validation/Experiments/Build/MaturityImplementation_20261003_MassOwnership/Build.log",
+      "result": "Succeeded",
+      "sha256": "6ea0712f58d3fb383eb1b306d49f71060ca09fdec3421c31b466312678743a14"
+    },
+    {
+      "log": "Saved/Validation/Experiments/Build/MaturityImplementation_20261003_MassFixture/Build.log",
+      "result": "Succeeded",
+      "sha256": "77d96381250eeaabab32ed759ead41f2105d30c4cbe9792022d3962ea4fc9f97"
+    },
+    {
+      "log": "Saved/Validation/Experiments/Build/MaturityImplementation_20261003_EditorSelection/Build.log",
+      "result": "Succeeded",
+      "sha256": "a7bef20e65eacbb2fcb685b9585fe5a03c9ba9e8786abdcc560359127c67c7b7"
+    }
+  ],
+  "finalSuite": {
+    "report": "Saved/Validation/Maturity/Implementation_20261003_Complete/Automation/index.json",
+    "reportSha256": "3ef146d3169f16b89627d46edc1de5b5525b8cda19d53a8e818d77e47a67bb72",
+    "log": "Saved/Validation/Maturity/Implementation_20261003_Complete/Run.log",
+    "processExitCode": 0,
+    "testCount": 89,
+    "succeeded": 86,
+    "succeededWithWarnings": 3,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "testDurationSeconds": 3.8101062774658203,
+    "requiredCleanTests": [
+      "ProjectJ.Maturity.Backend.MutationOutcome",
+      "ProjectJ.Maturity.Combat.HitWindowOwnership",
+      "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+      "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+      "ProjectJ.Maturity.GAS.ResourceInvariants",
+      "ProjectJ.Maturity.Handover.ApplyAndAdmission",
+      "ProjectJ.Maturity.Input.SharedMappingLease",
+      "ProjectJ.Maturity.Mount.LandingRecovery",
+      "ProjectJ.Maturity.NPC.ActionSuspension",
+      "ProjectJ.Maturity.Social.GroupSnapshot",
+      "ProjectJ.Maturity.Tools.MigrationReceipt",
+      "ProjectJ.Modernization.EquipmentLoadLifecycle"
+    ],
+    "warningsInterpretation": "Three successful fixture tests emitted seven unset Draw/Sheathe source/visual socket warnings. Runtime validation was retained.",
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.GuidedArmContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.GuidedBendStability",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.GuidedIKTraceIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HandContactConversion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HandContactRig",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HiddenLeaderVisibleFollower",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.LocomotionContextBuilder",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.ModularMeshIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.MotionMatchingRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.MotionMatchingSelectionPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.QualityTierPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.RemoteLocomotionRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.SecondaryHandContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.StateControllerRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.27"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Combat.CommandResolution",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Equipment.OperationResult",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.TransportReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Replication.OwnerRelevance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Social.Membership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Authoring.Bundle.AdvancementSafety",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Authoring.Bundle.DraftIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Authoring.Bundle.PlanValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.CanonicalBladeTrajectory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.CanonicalMeleeTrace",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHitWindowProductionTransition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 5,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.28"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.28"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.28"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.28"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.28"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.GroupB.CombatPosePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassActionHandoff",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassHandoff",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassNativeNavigation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassValues",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupE.AnimationMigrationPreflight",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.HealthSingleSource",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.InputBindingOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Backend.MutationOutcome",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Combat.HitWindowOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.GAS.ResourceInvariants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Handover.ApplyAndAdmission",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Input.SharedMappingLease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Mount.LandingRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.NPC.ActionSuspension",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Social.GroupSnapshot",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Tools.MigrationReceipt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Catalog",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.ContextSeparation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.IntentLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.LatePathCompletion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.PathAdmission",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.Experiment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.NativeBatch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.Revalidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.SpatialImportance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Presentation.PrimaryGripAttachment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-09.20.32"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      }
+    ]
+  },
+  "focusedOwnershipRegression": {
+    "report": "Saved/Automation/MaturityImplementation_20261003_MassOwnership/index.json",
+    "testCount": 9,
+    "succeeded": 9,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "relationToFinalSuite": "Subset; not added to the unique final test count."
+  },
+  "earlierImplementationFixtureFailures": {
+    "report": "Saved/Automation/MaturityImplementation_20261003_Final/index.json",
+    "failed": 2,
+    "failedTests": [
+      "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+      "ProjectJ.Maturity.Input.SharedMappingLease"
+    ],
+    "resolution": "Correct LocalPlayer world/controller/EnhancedPlayerInput fixture and declare expected IK compiler errors; focused and final suite reruns succeeded.",
+    "originalReportPreserved": true
+  },
+  "staticValidation": {
+    "moduleAndCatalogValidator": {
+      "passed": true,
+      "features": 205,
+      "domains": 20,
+      "projectModuleDependencies": {
+        "Project_J": [
+          "Project_JCharacter",
+          "Project_JCore",
+          "Project_JGAS",
+          "Project_JMMO"
+        ],
+        "Project_JAnimationNodes": [
+          "Project_JCharacter"
+        ],
+        "Project_JCharacter": [
+          "Project_JCore",
+          "Project_JGAS",
+          "Project_JMount"
+        ],
+        "Project_JCharacterEditor": [
+          "Project_JCharacter",
+          "Project_JGAS"
+        ],
+        "Project_JCore": [],
+        "Project_JGAS": [
+          "Project_JCore"
+        ],
+        "Project_JMMO": [],
+        "Project_JMount": [
+          "Project_JCore",
+          "Project_JGAS"
+        ]
+      }
+    },
+    "interpretation": "Catalog/DAG consistency, not 205 implemented gameplay features.",
+    "whitespaceDiffCheck": "passed (Windows CR at EOL allowed)"
+  },
+  "buildEnvironmentNotes": [
+    "Initial restricted UBT run failed on AppData access before compilation; first error and Application/.NET events checked, no exception dialog observed.",
+    "UE 5.8 foreign -Plugin makefile masked stale source objects; one exact makefile preserved under Saved/Validation/MaturityImplementation_20261003/PluginMakefile.bin and full target rebuilt.",
+    "Build-Experiments.ps1 now invokes direct UnrealBuildTool.exe with -AdditionalPlugins=ProjectJExperiments for the complete target.",
+    "Build/editor processes were allowed to finish; no overlapping build or aborted build."
+  ],
+  "auditProvenance": [
+    {
+      "path": "Docs/Review/Architecture/Project_J_Remaining_Source_Maturity_Audit_2026-10-03.md",
+      "sha256": "766a0bcb9127d6de82b3d2f9c4a8b0706627d6432ea1d9477b6b6de96e9e172c",
+      "role": "unchanged audit-time provenance"
+    },
+    {
+      "path": "Docs/Review/Architecture/Project_J_Character_Architecture_Maturity_Audit_2026-10-03.md",
+      "sha256": "56a8b31fb42f96524e4c533e6ffbe68430ad4acc8f238dead97c86f4d8f1d2a3",
+      "role": "unchanged audit-time provenance"
+    },
+    {
+      "path": "Docs/Review/Architecture/Project_J_Remaining_Source_Coverage_2026-10-03.csv",
+      "sha256": "471558b4a77bf2318bc819478d6ab4c974122d37a9d2222ff732b96015e225f1",
+      "role": "unchanged audit-time provenance"
+    },
+    {
+      "path": "Docs/Review/Architecture/Project_J_Remaining_Source_Validation_2026-10-03.json",
+      "sha256": "657be3a1eecb8641f7fd20f9a896e8f207a0a832fcc7b0c31a64af6a680c58ff",
+      "role": "unchanged audit-time provenance"
+    }
+  ],
+  "changedCodeFileCount": 59,
+  "changedCodeFiles": [
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/AnimationMigrationTests.cpp",
+      "sha256": "bb02f2c76ebf4edccafe3e6fc10dfa949d123c5b3b97c9a7f5ce958417d34376"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationMigrationJournal.h",
+      "sha256": "504009a20c48c32b1f4b0b5a4d75a4feddb03aae88949dc8bf30fa6f0467f2df"
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationMigrationJournalTests.cpp",
+      "sha256": "9a5c7e710f4f88834e85240f570ccde3906fcd9e074a7844cbb4998c7fcf107c"
+    },
+    {
+      "path": "Scripts/Validation/Build-Experiments.ps1",
+      "sha256": "d5c9e8850e6a969c571bb0614671d9ea9f99d0beea60932a0e0d382972599148"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Maturity.ps1",
+      "sha256": "4b37c7ce62e16803e8644cdbea287b6f7274fadd69ba069d21c3343b4bd3d998"
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JBackendConnection.h",
+      "sha256": "d1a09a590057a0a4940a913ab86c51288cf5700b4b5978e684e4d0ed5b80167c"
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JGatewaySubsystem.cpp",
+      "sha256": "e0fab6e10a33ba9dbfdc98fc082c4d404ca444d92f65d31920c91184fb1770ab"
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JHandoverManager.cpp",
+      "sha256": "a2635c43bed96357bea6b81e32f822ba6452dfdc2d6e701859e3502672ab5461"
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JHandoverManager.h",
+      "sha256": "be6fd9b91ba8dc40ceef78a45c12ab51ce8a292e75c342cfde9ebb43f094e582"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp",
+      "sha256": "a9a842779e39217b177aef539d62057ef9cc91e1b42d186263edf5ae803e11ad"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JInputLeaseSubsystem.h",
+      "sha256": "b9ffaa6f487fb2c33ad7d53ead2a1309367350937cf0d90a530938a79ffa2328"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "sha256": "2183b020a407797382217985f580fc857aa137fde18e1beeacf441e7421d1747"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerController.h",
+      "sha256": "30325423ad6c480213241558961a876a697a3dc9a675549140aae55c54821b96"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JMaturityContractTests.cpp",
+      "sha256": "7da0767624bb2ee82fc925b1e1a294dcd0a2d6eccd9a9ab49b6aacb5dd515b0c"
+    },
+    {
+      "path": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "sha256": "12e2b72ec562bacea2dc6eabcbe304a4dc0f0a0b3fd719d71f3064a111a517af"
+    },
+    {
+      "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+      "sha256": "95edfd21dd4fb9e5e3be8b088a953730de0179ff954c1f774911ad132b48adf1"
+    },
+    {
+      "path": "Source/Project_JAnimationNodes/Private/Animation/Project_JAnimGraphNode_GuidedHandIK.cpp",
+      "sha256": "9a36bfaac0e968f706f99337070c1ffdfc804d55e45579bc687375fedbb4a9af"
+    },
+    {
+      "path": "Source/Project_JAnimationNodes/Private/Tests/Project_JGuidedIKAuthoringTests.cpp",
+      "sha256": "93a3b1b425b0f518d1d4ead14022f2e747b13ca723da5db892a30eaccfae999a"
+    },
+    {
+      "path": "Source/Project_JAnimationNodes/Public/Animation/Project_JAnimGraphNode_GuidedHandIK.h",
+      "sha256": "53e2aeb9c28ba7357f10ab7c7674ecd4189ec8e0528558ed617e3f32ce58810a"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_MeleeHit.cpp",
+      "sha256": "b7a294fb0c7d5560a5bedbb0f388ab2f994df3424923e5f772a9815c37ef7249"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp",
+      "sha256": "440866b989ec489f1dc4a9a7b35f20b2129199f90b48b988e3d0191f81463203"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatHitValidationComponent.cpp",
+      "sha256": "4f5da620e4752fcaf1f630a221a0b5d0f6a839d7589d6074e5db8a6ba7630a2a"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JNPCActionComponent.cpp",
+      "sha256": "4a7ad25394361ffa0d7b83a85a0b2d397f2c34530b8f11fd8650d6d87edb1286"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JNPCActivationComponent.cpp",
+      "sha256": "fcefc2dd1fb95777323660e175012ca543ee59833fce1628778d0630bdd2b228"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JTargetScoringComponent.cpp",
+      "sha256": "94426c9f24416858d2072dd36bf435706bc987ad201481cf2315ac073d277710"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "sha256": "9981d5f06f7be6f36e3037190d182be163dc1457d340175e008f054b1ba057a3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp",
+      "sha256": "08d4759b3db01b32e8b1736bf75843f3eda536bf1cc1d2822653e66d7014db0a"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Optimization/Project_JNPCDecisionExperiment.cpp",
+      "sha256": "7be739a6fcfc12286846c36ce62dd798641daf47a6d11eed6b94973063f18a64"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "4db93e93b0aaad5c9db6f9a1c6c61fea5c25533749af74a635b21fd9a7814565"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JNPCDecisionSubsystem.cpp",
+      "sha256": "d58875c906fcce8d9e9f6f8732c6ecd0cb752a404f227c53db1d50ce0c8d1cef"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JActionSuspensionTests.cpp",
+      "sha256": "460d1391c8e7eee805e71774cca4e9f7cc1c0a964733cccafed4a5c34433cf0f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNotifyOwnershipTests.cpp",
+      "sha256": "75d610e8a3b4f919ec0d076660ede7f8900854443f1625b135f52e0fb1b13a6f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPrimaryGripAttachmentTests.cpp",
+      "sha256": "2977b809d1d50f4368df3b01acc8e6e83373a61ede1fbcff0e2df55d3213d24d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JSystemsModernizationTests.cpp",
+      "sha256": "a45a2a07d9e59e00c36c9504be60bd03105e3c3093c797eb02a21e03974e6564"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_MeleeHit.h",
+      "sha256": "a7226063bfb5ec56e1132c42dc3789b5cda42a1bb7f1753035c413a26f1794bf"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h",
+      "sha256": "34af78692fc444c8c0214e01859f6691363f3a642c807193cab1005513052134"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterClassDefinition.h",
+      "sha256": "7a26ba7d25f3c2aa665881600bb88cedd6af675e61a31608fd4270bd5ed8b741"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatHitValidationComponent.h",
+      "sha256": "2125b3725b16d5bc359ab62c408214ec8b89437c04488ef638bc4d0fec778706"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActionComponent.h",
+      "sha256": "34342185ebffc5e7fd8c2c3bb0b69d05c4f1c4f13f1d34c2d89d16e19bde0192"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActivationComponent.h",
+      "sha256": "e42477105a59d9ec844c368ec1e84c7a928cc374af77c07a03e1b0a8ac74f240"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JTargetScoringComponent.h",
+      "sha256": "1e68c35807f74412568f8951e9b22e020eff7bffbd6671be13e499e9caa58aa9"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+      "sha256": "83159848faeefdc1c85df453279eefdfc20e67a044c7e0ea1e8bd01b1eb0c925"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Mass/Project_JMassRepresentationSubsystem.h",
+      "sha256": "7b497517054830d8cc76fe77b07abeea9f3ea1184b757f49fb8ddcb0c5be69a6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Network/Project_JHandoverSerializable.h",
+      "sha256": "d4b5458cef05f28888731d976d1bdda99b1495ebc3a2e47a7732df519e239623"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+      "sha256": "6e9562a9a0214a97a55d6f67b773b9e18fb9d7d24cbb08acf8ba5dfc66c4460d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JNPCDecisionSubsystem.h",
+      "sha256": "c8f597de3832b50e8a6a2d089bceafae0ec6067a74c80bbf96c5219cbaec2511"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Authoring/Project_JContentBundleAuthoring.cpp",
+      "sha256": "5a3e6eb3665d04840ab7de6f645a97ae7642ad61dcf3495d26f10badb2897416"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "sha256": "6954300c5bb1db9e33ada32089499e2bfdb0a833bb8d2ec73f162d97222b0157"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JNPCNavigationIntegrationTests.cpp",
+      "sha256": "839ae7dbf570336a826fbda1165ce3434407057cd6db185b141ce97bd5b32973"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp",
+      "sha256": "4e291916defd38506b1479f8a33d2e6f1c00f852e5ebf646a6e01784a6e8c4f4"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h",
+      "sha256": "f2a74150305b5afaaa32bfc9ba4ada08a311967b93fcb48013d31aeb01da4d89"
+    },
+    {
+      "path": "Source/Project_JGAS/Private/Project_JAttributeSet.cpp",
+      "sha256": "1ca209c3c34c5f8be78358c572fd957df1aae34b8175d28e5482c7a52e3f04dc"
+    },
+    {
+      "path": "Source/Project_JGAS/Private/Tests/Project_JResourceInvariantTests.cpp",
+      "sha256": "990a5572f28ca2bd74500dc09b218af9b4e0438020fcfcd5c6e4ecabecfb384a"
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JAttributeSet.h",
+      "sha256": "b06259efa07d3e698f42af427e717d330c04961c1ac690ff72576c8d077639de"
+    },
+    {
+      "path": "Source/Project_JMMO/Public/MMO/ServicePort.h",
+      "sha256": "b827ca64ff023b475876d451c8095f37a360cb110542f8fbba0d973523ecf890"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "sha256": "f29bdc1767a84cc6b73653a76d54fdf125fb42fe7bf77817f5cf758dcc93948f"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementFixtures.h",
+      "sha256": "32f13c0104ad5f36746fc3c820aca55630a5786e95f188efea9818cff2bc52ff"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "sha256": "e11818a060c42132912f756d974d4167110dd486f6ce1e17e36ee07fa563b6b5"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JFlyingMountCharacter.h",
+      "sha256": "39f97f6d263190f67f67f726f632a36e8d7e7a56c01640f1fca7e7dd945301c6"
+    }
+  ],
+  "limitations": [
+    "R12 adds observability; no new workload P95/P99 or FPS improvement claim.",
+    "No cooked/package, live multi-node handover, persistent backend restart/replay validation.",
+    "Handover receipts are in memory; snapshot currently contains level/location/rotation only.",
+    "Backend typed adapter still must validate domain success and durable idempotency.",
+    "Social persistent account identity and durable distributed revision/CAS require backend integration.",
+    "Actual asset wiring and Slate multi-window/docked-tab/Undo/Escape workflows require manual editor QA.",
+    "Input shared owners must use the lease protocol; later unmanaged additions cannot be distinguished.",
+    "Migration recovery was tested on Saved fixture files; real assets were not saved or restored.",
+    "Multi-file migration is recoverable within its receipt contract, not globally atomic.",
+    "Full earlier character audit A01-A10 implementation is outside this change."
+  ]
+}

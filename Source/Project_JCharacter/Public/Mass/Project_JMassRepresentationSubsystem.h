@@ -24,6 +24,9 @@ struct FProjectJMassRepresentationStats
 	uint64 Promoted = 0, Demoted = 0, RejectedStale = 0, Deferred = 0;
 	int32 Registered = 0, MassOwned = 0, LastTransitions = 0;
 	double LastStepMilliseconds = 0;
+	double LastEligibilityMilliseconds = 0, LastWorkerJoinMilliseconds = 0, OldestTransitionWaitMilliseconds = 0;
+	int32 LastEligibilityChecks = 0, LastEligible = 0;
+	uint64 DemoteRollbacks = 0;
 };
 
 /**

@@ -20,6 +20,13 @@ class PROJECT_JCHARACTER_API UProject_JGameplayAbility_Melee : public UGameplayA
 
 public:
 	UProject_JGameplayAbility_Melee();
+	/** Notify leases survive overlap but are invalidated by node/activation boundaries. */
+	uint64 BeginComboWindow();
+	bool EndComboWindow(uint64 Token);
+	bool IsComboWindowCurrent(uint64 Token) const { return ComboWindows.Contains(Token); }
+	const class UProject_JCombatStyleDefinition* GetExecutingCombatStyle() const { return ActiveGameplayStyle; }
+	bool AcceptsComboInput(FGameplayTag InputTag) const;
+	void ReconcileCombatConfiguration();
 	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
 		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -62,6 +69,14 @@ protected:
 	FGameplayTag MeleeHitEventTag;
 
 private:
+	friend class FProjectJComboWindowOwnershipTest;
+	void ResetComboWindows();
+	uint64 NextComboWindowToken = 0;
+	TSet<uint64> ComboWindows;
+	UPROPERTY(Transient)
+	TObjectPtr<const class UProject_JCombatStyleDefinition> ActiveGameplayStyle;
+	int32 ActivationConfigurationRevision = 0;
+	bool bCancelOnGameplayStyleChange = false;
 	bool HasActiveWeapon() const;
 	void OnWeaponRevoked();
 	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;

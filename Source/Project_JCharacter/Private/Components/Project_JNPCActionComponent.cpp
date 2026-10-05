@@ -28,15 +28,21 @@ UProject_JNPCActionComponent::UProject_JNPCActionComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
+bool UProject_JNPCActionComponent::SupportsAttackAbility(const UGameplayAbility* Ability)
+{
+	if (!Ability) { return false; }
+	const auto Policy = Ability->GetNetExecutionPolicy();
+	return Ability->GetInstancingPolicy() == EGameplayAbilityInstancingPolicy::InstancedPerActor
+		&& (Policy == EGameplayAbilityNetExecutionPolicy::ServerOnly || Policy == EGameplayAbilityNetExecutionPolicy::ServerInitiated);
+}
+
 bool UProject_JNPCActionComponent::IsAttackSupported() const
 {
 	if (!AttackHandle.IsValid()) { return true; }
 	const auto* ASC = AbilitySystem.Get();
 	const auto* Spec = ASC ? ASC->FindAbilitySpecFromHandle(AttackHandle) : nullptr;
 	if (!Spec || !Spec->Ability || Spec->PendingRemove || Spec->RemoveAfterActivation) { return false; }
-	const auto Policy = Spec->Ability->GetNetExecutionPolicy();
-	return Spec->Ability->GetInstancingPolicy() == EGameplayAbilityInstancingPolicy::InstancedPerActor
-		&& (Policy == EGameplayAbilityNetExecutionPolicy::ServerOnly || Policy == EGameplayAbilityNetExecutionPolicy::ServerInitiated);
+	return SupportsAttackAbility(Spec->Ability);
 }
 
 bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent* Scoring, FGameplayAbilitySpecHandle AttackAbility)
@@ -58,7 +64,7 @@ bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent
 	if (!Scoring->IsBatchedNPCDecisionRegistered()) { return false; }
 	TArray<UProject_JNPCActionComponent*> Peers;
 	NPC->GetComponents(Peers);
-	for (const auto* Peer : Peers) { if (Peer != this && Peer->bEnabled) { return false; } }
+	for (const auto* Peer : Peers) { if (Peer != this && (Peer->bEnabled || Peer->OwnershipToken || Peer->HasPendingResume())) { return false; } }
 	AbilitySystem = NPC->GetAbilitySystemComponent(); AttackHandle = AttackAbility;
 	if (!AbilitySystem.IsValid() || AbilitySystem->GetAvatarActor() != NPC || !IsAttackSupported())
 	{
@@ -74,6 +80,9 @@ bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent
 	MoveHandle = AI->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &ThisClass::OnMoveFinished);
 	AbilityEndedHandle = AbilitySystem->OnAbilityEnded.AddUObject(this, &ThisClass::OnAbilityEnded);
 	TearDownHandle = FWorldDelegates::OnWorldBeginTearDown.AddUObject(this, &ThisClass::OnTearDown);
+	++ActionRevision;
+	OwnershipToken = ++NextOwnershipToken;
+	ClearPendingResume();
 	bEnabled = true; State = EProjectJNPCActionState::Idle;
 	NextPathTime = NextAttackTime = 0;
 	return true;
@@ -358,6 +367,9 @@ void UProject_JNPCActionComponent::StopActions()
 	check(IsInGameThread());
 	if (bStopping) { return; }
 	TGuardValue<bool> Guard(bStopping, true);
+	++ActionRevision;
+	OwnershipToken = 0;
+	ClearPendingResume();
 	bEnabled = false; SetComponentTickEnabled(false);
 	if (auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr)
 	{
@@ -377,6 +389,68 @@ void UProject_JNPCActionComponent::StopActions()
 	FWorldDelegates::OnWorldBeginTearDown.Remove(TearDownHandle);
 	bOwnsAttack = false;
 	ScoringComponent.Reset(); Paths.Reset(); Controller.Reset(); AbilitySystem.Reset(); AttackHandle = {};
+}
+
+void UProject_JNPCActionComponent::ClearPendingResume()
+{
+	if (GetWorld()) { GetWorld()->GetTimerManager().ClearTimer(ResumeTimer); }
+	PendingResume = {};
+	ResumeAttempts = 0;
+}
+
+bool UProject_JNPCActionComponent::StopActionsIfOwned(uint64 Token)
+{
+	if (!Token || Token != OwnershipToken) { return false; }
+	StopActions();
+	return true;
+}
+
+bool UProject_JNPCActionComponent::SuspendActions(FProjectJNPCActionSuspension& OutSuspension)
+{
+	OutSuspension = {};
+	if (!CanSuspendMovement() || bEndingPlay || HasPendingResume()) { return false; }
+	const FProjectJNPCActionSuspension Before {ScoringComponent, AttackHandle, ActionRevision + 1, OwnershipToken};
+	StopActions();
+	if (ActionRevision != Before.Revision || bEnabled || bEndingPlay) { return false; }
+	OutSuspension = Before;
+	OwnershipToken = Before.OwnershipToken;
+	return true;
+}
+
+EProjectJNPCActionResume UProject_JNPCActionComponent::ResumeSuspendedActions(const FProjectJNPCActionSuspension& Suspension)
+{
+	check(IsInGameThread());
+	if (!Suspension.IsValid() || Suspension.Revision != ActionRevision || bEnabled || bEndingPlay || IsBeingDestroyed()
+		|| !GetWorld() || GetWorld()->bIsTearingDown || !Suspension.Scoring.IsValid()
+		|| !Suspension.Scoring->IsBatchedNPCDecisionRegistered()) { return EProjectJNPCActionResume::Superseded; }
+	if (StartActions(Suspension.Scoring.Get(), Suspension.Attack))
+	{
+		OwnershipToken = Suspension.OwnershipToken;
+		return EProjectJNPCActionResume::Resumed;
+	}
+	// Keep the original revision: an explicit Start/Stop from another owner supersedes this recovery.
+	if (!PendingResume.IsValid())
+	{
+		PendingResume = Suspension;
+		ResumeAttempts = 0;
+		++Stats.ResumeDeferred;
+		GetWorld()->GetTimerManager().SetTimer(ResumeTimer, this, &ThisClass::RetrySuspendedActions, 0.25f, true);
+	}
+	return EProjectJNPCActionResume::Deferred;
+}
+
+void UProject_JNPCActionComponent::RetrySuspendedActions()
+{
+	const FProjectJNPCActionSuspension Suspension = PendingResume;
+	++ResumeAttempts;
+	const auto Result = ResumeSuspendedActions(Suspension);
+	if (Result != EProjectJNPCActionResume::Deferred) { ClearPendingResume(); }
+	else if (ResumeAttempts >= 8)
+	{
+		++Stats.ResumeExhausted;
+		UE_LOG(LogProjectJNPCAction, Warning, TEXT("Suspended NPC actions could not resume after bounded retries. Owner=%s"), *GetNameSafe(GetOwner()));
+		ClearPendingResume();
+	}
 }
 void UProject_JNPCActionComponent::OnTearDown(UWorld* World) { if (World == GetWorld()) { StopActions(); } }
 void UProject_JNPCActionComponent::EndPlay(const EEndPlayReason::Type Reason)

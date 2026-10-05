@@ -395,8 +395,7 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnima
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPlaybackHoldElapsedTime() const
 {
-	const double NowSeconds = FPlatformTime::Seconds();
-	return StateControllerRuntime.GetHoldElapsed(NowSeconds);
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.TransitionElapsedTime;
 }
 
 int32 UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectionRevision() const

@@ -88,6 +88,11 @@ namespace
 				auto* Scoring = NewObject<UProject_JTargetScoringComponent>(NPC); NPC->AddInstanceComponent(Scoring); Scoring->RegisterComponent();
 				Scoring->Range = 4000; Scoring->bUseUrgentNPCDecisionInterval = true;
 				Scoring->StartBatchedNPCDecisions(1);
+				if (bMassRoute)
+				{
+					// A disabled optional component must not hide the actual movement owner.
+					auto* DisabledPeer = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(DisabledPeer); DisabledPeer->RegisterComponent();
+				}
 				Actions = NewObject<UProject_JNPCActionComponent>(NPC); NPC->AddInstanceComponent(Actions); Actions->RegisterComponent();
 				Actions->RetryInterval = 0.1;
 				Test->TestTrue(TEXT("Real moving-target consumer starts"), Actions->StartActions(Scoring, {}));

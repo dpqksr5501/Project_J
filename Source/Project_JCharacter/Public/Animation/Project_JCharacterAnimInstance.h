@@ -10,6 +10,7 @@
 #include "Animation/Project_JCharacterAnimInstanceBase.h"
 #include "Animation/Project_JMotionMatchingRuntime.h"
 #include "Animation/Project_JStateControllerRuntime.h"
+#include "Animation/Project_JAnimationClock.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
@@ -133,6 +134,14 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMovementThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bTrajectoryGenerationEligible = false;
+
+	/** Source snapshot consumed by this search, before any post-selection reset. */
+	uint64 TrajectoryGenerationFrame = TNumericLimits<uint64>::Max();
+	uint64 SnapshotFrame = 0;
+	int32 TrajectoryResetRevisionAfterConsumption = 0;
+	uint8 TrajectoryResetReason = 0;
+	uint8 TrajectoryResetReasonAfterConsumption = 0;
+	bool bTrajectoryPredictionUsable = false;
 
 };
 
@@ -386,6 +395,14 @@ USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingPostSelectionData
 {
 	GENERATED_BODY()
+
+	/** Representative diagnostic result; source identity does not prove final blended pose contribution. */
+	int32 ProducerNodeIndex = INDEX_NONE;
+	int32 ResultCandidateCount = 0;
+	uint64 CaptureFrame = 0;
+	float CachedNodeWeight = 0.0f;
+	uint64 ResultLastChangedFrame = 0;
+	bool bResultChangedSincePreviousCapture = false;
 
 	/** Previous-frame native result copied on the game thread; no live asset references are exposed to worker threads. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
@@ -1637,6 +1654,9 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJStrafeFacingSelectionTest;
+	friend class FProjectJAnimationClockTest;
+	FProject_JAnimationClock AnimationClock;
 	friend class FProjectJTurnInPlaceAndCombatStopTest;
 	float HiddenRemoteUpdateAccumulator = 0.0f;
 	FProject_JMotionMatchingRuntime MotionMatchingRuntime;

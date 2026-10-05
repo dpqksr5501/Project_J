@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 
 UProject_JLocomotionAnimStateComponentBase::UProject_JLocomotionAnimStateComponentBase()
 {
@@ -73,6 +74,6 @@ bool UProject_JLocomotionAnimStateComponentBase::IsDedicatedServerContext() cons
 
 bool UProject_JLocomotionAnimStateComponentBase::WasRecentlyRendered(float RecentlyRenderedTolerance) const
 {
-	const USkeletalMeshComponent* MeshComponent = GetCachedMeshComponent();
-	return !MeshComponent || MeshComponent->WasRecentlyRendered(RecentlyRenderedTolerance);
+	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
+	return Player && Project_J::Animation::WasCharacterVisualRecentlyRendered(*Player, RecentlyRenderedTolerance);
 }

@@ -14,6 +14,8 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
+#include "Animation/Project_JAnimNotifyState_WeaponMotion.h"
+#include "Animation/AnimNotifyQueue.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPrimaryGripAttachmentTest,
 	"ProjectJ.Presentation.PrimaryGripAttachment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -184,6 +186,29 @@ bool FProjectJPrimaryGripAttachmentTest::RunTest(const FString&)
 	Presentation->EndIndependentMotion();
 	TestTrue(TEXT("A disabled handoff returns to exact contact without a second recovery"), !Presentation->bContactRecoveryActive && CheckContact());
 	// Contact mounting is independent of whether this job uses attack hand IK.
+	const uint64 NotifyA = Presentation->BeginNotifyIndependentMotion(NoKeys, 1, 0, 1, 0, 0);
+	const uint64 NotifyB = Presentation->BeginNotifyIndependentMotion(NoKeys, 1, 0, 1, 0, 0);
+	TestTrue(TEXT("A newer notify has a distinct motion lease"), NotifyA != 0 && NotifyB != NotifyA);
+	Presentation->EndNotifyIndependentMotion(NotifyA);
+	TestTrue(TEXT("Outgoing notify cannot end its successor"), Presentation->IsNotifyIndependentMotionCurrent(NotifyB));
+	Presentation->EndNotifyIndependentMotion(0);
+	TestTrue(TEXT("Rejected notify has no release authority"), Presentation->IsNotifyIndependentMotionCurrent(NotifyB));
+	Presentation->EndNotifyIndependentMotion(NotifyB);
+	TestFalse(TEXT("Current notify releases its own motion lease"), Presentation->IsNotifyIndependentMotionCurrent(NotifyB));
+	auto* MotionNotify = NewObject<UProject_JAnimNotifyState_WeaponMotion>();
+	FAnimNotifyEventReference EventA, EventB, Rejected;
+	EventA.SetNotifyInstanceID(100); EventB.SetNotifyInstanceID(101); Rejected.SetNotifyInstanceID(102);
+	MotionNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, EventA);
+	MotionNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, EventB);
+	const uint64 CurrentExecution = Presentation->ActiveNotifyMotionToken;
+	MotionNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, EventB);
+	TestEqual(TEXT("Duplicate engine notify Begin preserves its existing lease"), Presentation->ActiveNotifyMotionToken, CurrentExecution);
+	MotionNotify->NotifyEnd(Character->GetMesh(), nullptr, EventA);
+	MotionNotify->NotifyBegin(nullptr, nullptr, 1, Rejected);
+	MotionNotify->NotifyEnd(Character->GetMesh(), nullptr, Rejected);
+	TestTrue(TEXT("Late/rejected engine NotifyEnd preserves the current execution"), Presentation->IsNotifyIndependentMotionCurrent(CurrentExecution));
+	MotionNotify->NotifyEnd(Character->GetMesh(), nullptr, EventB);
+	TestFalse(TEXT("Engine notify End releases only its own motion"), Presentation->bIndependentMotionActive);
 	Profile->MotionPresentation.bSupportsIndependentMotion = false;
 	Profile->MotionPresentation.DefaultDrawnPrimaryIKAlpha = 0;
 	Presentation->RefreshAttachmentCalibration();

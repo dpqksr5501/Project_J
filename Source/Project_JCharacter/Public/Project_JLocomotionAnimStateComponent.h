@@ -207,6 +207,8 @@ UCLASS(BlueprintType, Blueprintable, ClassGroup=(Character), meta=(BlueprintSpaw
 class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UProject_JLocomotionAnimStateComponentBase
 {
 	GENERATED_BODY()
+	friend class FProjectJCombatFacingSettledCycleTest;
+	friend class FProjectJStrafeFacingSelectionTest;
 
 public:
 	UProject_JLocomotionAnimStateComponent();

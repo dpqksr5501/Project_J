@@ -42,14 +42,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Combat|Animation")
 	EProject_JCombatAnimationLayerState GetPresentationState() const { return PresentationState; }
 
+	/** Explicit retry after a failed path; normal Refresh never retries a failure. */
+	UFUNCTION(BlueprintCallable, Category = "Animation|Layers")
+	void RetryLayerLoad();
+
 private:
 	EProject_JCombatAnimationLayerState CalculatePresentationState(const class AProject_JPlayerCharacter& Player) const;
 	FSoftObjectPath ResolveLayerPath(const class UProject_JWeaponAnimProfile* WeaponProfile) const;
-	void HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath);
+	void HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath, uint64 RequestGeneration);
 	void UnlinkLayer();
 	void ResetPreload();
 
 	/** Hard reference held only while the weapon layer is actively linked. */
+	UPROPERTY(Transient)
 	TSubclassOf<class UAnimInstance> LinkedAnimationLayerClass;
 
 	/** Cached preloaded class for the equipped weapon profile. */
@@ -58,6 +63,12 @@ private:
 
 	FSoftObjectPath PreloadedAnimationLayerPath;
 	TSharedPtr<FStreamableHandle> LayerPreloadHandle;
+	uint64 LoadGeneration = 0;
+	bool bLoadFailed = false;
+	bool bEndingPlay = false;
+	TWeakObjectPtr<class USkeletalMeshComponent> LinkedMesh;
+	TWeakObjectPtr<class UAnimInstance> LinkedMaster;
+	friend class FProjectJLayerLoadLifecycleTest;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation", meta = (AllowPrivateAccess = "true"))
 	EProject_JCombatAnimationLayerState PresentationState = EProject_JCombatAnimationLayerState::Inactive;

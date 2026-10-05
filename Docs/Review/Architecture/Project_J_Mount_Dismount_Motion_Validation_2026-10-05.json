@@ -1,0 +1,87 @@
+{
+  "dateKST": "2026-10-05",
+  "status": "Editor and Game builds succeeded; regression passed",
+  "scope": "Retire rider motion only when authoritative dismount succeeds",
+  "editorBuild": {
+    "result": "Succeeded",
+    "log": "Saved/Validation/MountDismountMotion_20261005/BuildEditor_Final.log",
+    "durationSeconds": 4.55,
+    "exitCode": 0
+  },
+  "gameBuild": {
+    "result": "Succeeded",
+    "log": "Saved/Validation/MountDismountMotion_20261005/BuildGame.log",
+    "durationSeconds": 20.29,
+    "exitCode": 0
+  },
+  "regression": {
+    "succeededWithWarnings": 4,
+    "log": "Saved/Validation/MountDismountMotion_20261005/Regression.log",
+    "report": "Saved/Automation/MountDismountMotion_20261005/index.json",
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ],
+    "priorTests": 111,
+    "failed": 0,
+    "newTests": 1,
+    "warningEvents": 8,
+    "exitCode": 0,
+    "tests": 112,
+    "succeeded": 108,
+    "warningsUnchangedFromBaseline": true,
+    "notCompleted": 0
+  },
+  "changedSources": [
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "beforeSha256": "50e4726c9e356a55e94cef8aca0a990f7114b281587474ae510cf54653d4f90f",
+      "sha256": "9ce0639183c2aad2f0d63ced3546c0f5432d0c5b6d23a4a6ff081d3dd942eedf"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementFixtures.h",
+      "beforeSha256": "2b12f75ae3820fa07b34b811c4f4950b03aac1da93d9e9b3e533af5e000d82a7",
+      "sha256": "e2d1b1bc6883c67e4ee9c8ae9d33e7bd36f40ec78ce2eee1e078febfbc75ba49"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "beforeSha256": "6fbbad535531da52f89131486c7ddeecde5887ffd1a946a9b878c56c406f0fca",
+      "sha256": "ab03ac8418c93f240f28a785efa4f71870c012c261b82aee8f1b5e8820ba3c92"
+    }
+  ],
+  "limitations": [
+    "Actual network PIE and Blueprint motion still require visual validation.",
+    "Existing flight state machine, external forces and root motion remain unchanged.",
+    "No Blueprint, IMC or level assets were edited."
+  ]
+}

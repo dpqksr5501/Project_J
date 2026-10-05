@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JTrajectoryQuery.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -132,6 +134,7 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReas
 	LastResetReason = Reason;
 	++ResetRevision;
 	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
+	LastHistoryFrameCounter = TNumericLimits<uint64>::Max();
 	LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
@@ -164,6 +167,17 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReas
 	PreviousFilteredTrajectory = Trajectory;
 }
 
+void UProject_JMotionMatchingTrajectoryComponent::NotifyRotationModeChanged()
+{
+	// A Tab toggle changes future facing, not the path already travelled. Flattening
+	// history here removes the entry features needed to match a moving turn.
+	LastGeneratedWorldTimeSeconds = -1.0;
+	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
+	LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
+	LastResetReason = EProject_JTrajectoryResetReason::RotationModeChanged;
+	++ResetRevision;
+}
+
 void UProject_JMotionMatchingTrajectoryComponent::EnsureTrajectoryBuffers()
 {
 	SamplingData.Init();
@@ -178,6 +192,7 @@ void UProject_JMotionMatchingTrajectoryComponent::UpdateTrajectoryState(float De
 	ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (!CharacterOwner || !FMath::IsFinite(DeltaTime) || DeltaTime <= 0.0f)
 	{
+		bWasTrajectoryGenerationEligible = false;
 		return;
 	}
 
@@ -234,8 +249,7 @@ bool UProject_JMotionMatchingTrajectoryComponent::ShouldGenerateTrajectory(const
 		return true;
 	}
 
-	const USkeletalMeshComponent* MeshComponent = CharacterOwner.GetMesh();
-	return MeshComponent && MeshComponent->WasRecentlyRendered(RemoteRecentlyRenderedTolerance);
+	return Project_J::Animation::WasCharacterVisualRecentlyRendered(CharacterOwner, RemoteRecentlyRenderedTolerance);
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter& CharacterOwner, float DeltaTime)
@@ -250,16 +264,19 @@ void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter&
 	}
 
 	CharacterTrajectoryData.UpdateDataFromCharacter(DeltaTime, &CharacterOwner);
-	FMotionTrajectoryLibrary::UpdateHistory_TransformHistory(
-		Trajectory,
-		TranslationHistory,
-		CharacterTrajectoryData,
-		SamplingData,
-		DeltaTime);
+	// A same-frame rotation-policy notification may rebuild the prediction. The
+	// past path must still advance only once, rather than aging by DeltaTime twice.
+	if (LastHistoryFrameCounter != GFrameCounter)
+	{
+		FMotionTrajectoryLibrary::UpdateHistory_TransformHistory(
+			Trajectory, TranslationHistory, CharacterTrajectoryData, SamplingData, DeltaTime);
+		LastHistoryFrameCounter = GFrameCounter;
+	}
 	FMotionTrajectoryLibrary::UpdatePrediction_SimulateCharacterMovement(
 		Trajectory,
 		CharacterTrajectoryData,
 		SamplingData);
+	PredictCombatStrafeFacing(CharacterOwner);
 
 	LastGenerationFrameCounter = GFrameCounter;
 	LastUpdateFrameNumber = GFrameNumber;
@@ -268,6 +285,53 @@ void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter&
 		: -1.0;
 	bHasGeneratedTrajectory = true;
 	++GenerationRevision;
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::PredictCombatStrafeFacing(const ACharacter& CharacterOwner)
+{
+	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(&CharacterOwner);
+	const UCharacterMovementComponent* Movement = CharacterOwner.GetCharacterMovement();
+	const AController* Controller = CharacterOwner.GetController();
+	const UProject_JCombatAnimProfile* Profile = Player ? Player->GetCombatAnimProfile() : nullptr;
+	if (!Player || !Player->IsLocallyControlled() || !Controller || !Movement ||
+		!Profile || !Profile->bEnableStrafeFacingRedirect || !Profile->bUseCombatRotationMode ||
+		!Player->IsCombatModeActive() || !Movement->IsMovingOnGround() ||
+		!Movement->bUseControllerDesiredRotation || Player->IsAttacking() ||
+		Player->IsDodging() || Player->IsHitReacting() || Movement->HasAnimRootMotion() ||
+		Movement->CurrentRootMotion.HasActiveRootMotionSources())
+	{
+		return;
+	}
+
+	// The engine predicts Strafe facing from camera angular velocity alone. A
+	// fixed camera therefore predicts no turn even while CMC catches up by 180 deg.
+	// Predict that same bounded CMC yaw without bending translation or past poses.
+	float PredictedActorYaw = CharacterOwner.GetActorRotation().Yaw;
+	const float TargetYaw = Controller->GetDesiredRotation().Yaw;
+	const float YawRate = Movement->RotationRate.Yaw;
+	const float CameraYawRate = CharacterTrajectoryData.ControllerYawRateClamped;
+	const FQuat PresentFacing = CharacterTrajectoryData.Facing;
+	if (!FMath::IsFinite(PredictedActorYaw) || !FMath::IsFinite(TargetYaw) ||
+		!FMath::IsFinite(YawRate) || YawRate <= 0.0f || !FMath::IsFinite(CameraYawRate) ||
+		PresentFacing.ContainsNaN())
+	{
+		return;
+	}
+	const float InitialActorYaw = PredictedActorYaw;
+	float PreviousTime = 0.0f;
+	for (FTransformTrajectorySample& Sample : Trajectory.Samples)
+	{
+		const float Time = Sample.TimeInSeconds;
+		if (!FMath::IsFinite(Time) || Time <= PreviousTime)
+		{
+			continue;
+		}
+		PredictedActorYaw = FMath::FixedTurn(PredictedActorYaw,
+			FRotator::NormalizeAxis(TargetYaw + CameraYawRate * Time), YawRate * (Time - PreviousTime));
+		const float YawDelta = FMath::FindDeltaAngleDegrees(InitialActorYaw, PredictedActorYaw);
+		Sample.Facing = (FRotator(0.0f, YawDelta, 0.0f).Quaternion() * PresentFacing).GetNormalized();
+		PreviousTime = Time;
+	}
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::PostProcessTrajectory(ACharacter& CharacterOwner, float DeltaTime)
@@ -307,8 +371,20 @@ bool UProject_JMotionMatchingTrajectoryComponent::TryGetFuturePlanarVelocity(
 	FVector& OutVelocity,
 	float& OutTurnAngleDegrees) const
 {
+	OutVelocity = FVector::ZeroVector;
+	OutTurnAngleDegrees = 0.0f;
+	if (!IsTrajectoryPredictionUsable()) { return false; }
 	return Project_J::Animation::TryGetFuturePlanarVelocity(
 		Trajectory, PredictionHorizon, CurrentPlanarVelocity, OutVelocity, OutTurnAngleDegrees);
+}
+
+bool UProject_JMotionMatchingTrajectoryComponent::IsTrajectoryPredictionUsable() const
+{
+	const ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
+	const float Age = GetTrajectoryAgeSeconds();
+	return CharacterOwner && bWasTrajectoryGenerationEligible && bHasGeneratedTrajectory
+		&& ShouldGenerateTrajectory(*CharacterOwner) && FMath::IsFinite(Age) && Age >= 0.0f
+		&& FMath::IsFinite(MaxPredictionAgeSeconds) && Age <= FMath::Max(0.01f, MaxPredictionAgeSeconds);
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::ApplyTrajectorySmoothing(float DeltaTime)

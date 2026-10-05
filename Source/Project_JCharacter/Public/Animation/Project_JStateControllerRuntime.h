@@ -275,12 +275,14 @@ public:
 		const bool bSuperseded = bActive && Intent.bIsPivoting && Intent.RequestRevision != 0 &&
 			Intent.RequestRevision != Pivot.RequestRevision;
 		if (bActive && Intent.bStopRequested) { Result.Interruption = EPivotInterruption::Stop; }
-		else if (bSuperseded) { Result.Interruption = EPivotInterruption::Superseded; }
 		else if (bActive && Intent.bHasMoveInput && Pivot.MoveIntentRevision != 0 &&
 			Intent.MoveIntentRevision != Pivot.MoveIntentRevision)
 		{
+			// A fresh input during playback requests responsive MM, even if it
+			// also produced a new Pivot candidate in the state component.
 			Result.Interruption = EPivotInterruption::Redirect;
 		}
+		else if (bSuperseded) { Result.Interruption = EPivotInterruption::Superseded; }
 		const bool bAlreadySuppressed = !bActive && Intent.RequestRevision != 0 &&
 			Intent.RequestRevision == Pivot.SuppressedRequestRevision &&
 			Intent.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
@@ -300,8 +302,16 @@ public:
 
 	void CancelPivot() { Pivot.Cancel(); }
 	void CancelPivotAndHold(double NowSeconds) { Pivot.Cancel(); InvalidateHold(NowSeconds); }
+	void CancelPivotForInputRedirect(double NowSeconds)
+	{
+		// Preserve the consumed command across a delayed animation-state snapshot.
+		if (Pivot.RequestRevision != 0) { Pivot.SuppressedRequestRevision = Pivot.RequestRevision; }
+		Pivot.Cancel();
+		InvalidateHold(NowSeconds, false);
+	}
 	bool CommitPivot(int32 RequestRevision, int32 MoveIntentRevision, const FVector& PreviousDirection, const FVector& IntentDirection)
 	{
+		if (RequestRevision == 0 || IsPivotRequestSuppressed(RequestRevision)) { return false; }
 		if (Pivot.RequestRevision == RequestRevision && Pivot.MoveIntentRevision == MoveIntentRevision) { return false; }
 		Pivot.Commit(RequestRevision, MoveIntentRevision, PreviousDirection, IntentDirection);
 		return true;

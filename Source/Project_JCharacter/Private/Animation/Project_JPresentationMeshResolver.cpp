@@ -6,6 +6,22 @@
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
 
+bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance)
+{
+	const USkeletalMeshComponent* Leader = Character.GetMesh();
+	TInlineComponentArray<USkeletalMeshComponent*> Meshes;
+	Character.GetComponents(Meshes);
+	for (const USkeletalMeshComponent* Mesh : Meshes)
+	{
+		if (!IsValid(Mesh) || !Mesh->IsRegistered()) { continue; }
+		// A hidden leader's shadow timestamp is not presentation demand. Its
+		// visible follower/equipment independently keeps the source pose awake.
+		if (Mesh == Leader && (Mesh->bHiddenInGame || !Mesh->GetVisibleFlag())) { continue; }
+		if (Mesh->WasRecentlyRendered(Tolerance)) { return true; }
+	}
+	return false;
+}
+
 USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character)
 {
 	const USkeletalMeshComponent* SourceMesh = Character.GetMesh();

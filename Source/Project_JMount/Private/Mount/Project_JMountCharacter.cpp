@@ -14,6 +14,8 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Interaction/Project_JInteractionTargetComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "EnhancedInputComponent.h"
+#include "InputAction.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJMountCharacter, Log, All);
 
@@ -95,6 +97,15 @@ void AProject_JMountCharacter::BeginPlay()
 
 void AProject_JMountCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	ClearDismountInputBindings();
+	if (HasAuthority() && Rider)
+	{
+		// Destroying a mount restores a live rider. World teardown only clears
+		// the relationship; it must not start a new possession during travel.
+		bEndingPlay = true;
+		bRestoreRiderOnEndPlay = EndPlayReason == EEndPlayReason::Destroyed;
+		DismountRider(true);
+	}
 	if (MountAbilitySystemComponent)
 	{
 		MountAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UProject_JMountAttributeSet::GetHealthAttribute()).Remove(HealthChangedHandle);
@@ -134,6 +145,86 @@ void AProject_JMountCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	MountAbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void AProject_JMountCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	RestoreDismountInputBindings(PlayerInputComponent);
+}
+
+void AProject_JMountCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	// Owning clients can retain InputComponent after Controller replication
+	// clears native bindings. APawn skips Setup in that case on repossession.
+	if (IsLocallyControlled() && InputComponent) { RestoreDismountInputBindings(InputComponent); }
+}
+
+void AProject_JMountCharacter::RestoreDismountInputBindings(UInputComponent* PlayerInputComponent)
+{
+	ClearDismountInputBindings();
+	BoundDismountInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!BoundDismountInputComponent.IsValid())
+	{
+		UE_LOG(LogProjectJMountCharacter, Display, TEXT("DismountInput Mount=%s Result=NotEnhancedInput Component=%s"), *GetNameSafe(this), *GetNameSafe(PlayerInputComponent));
+	}
+	RefreshDismountInputBindings();
+}
+
+void AProject_JMountCharacter::ClearDismountInputBindings()
+{
+	if (UEnhancedInputComponent* Input = BoundDismountInputComponent.Get())
+	{
+		for (const uint32 Handle : DismountInputBindingHandles) { Input->RemoveBindingByHandle(Handle); }
+	}
+	DismountInputBindingHandles.Reset();
+	BoundDismountInputComponent.Reset();
+}
+
+void AProject_JMountCharacter::RefreshDismountInputBindings()
+{
+	UEnhancedInputComponent* Input = BoundDismountInputComponent.Get();
+	if (!Input) { return; }
+	for (const uint32 Handle : DismountInputBindingHandles) { Input->RemoveBindingByHandle(Handle); }
+	DismountInputBindingHandles.Reset();
+	const UProject_JMountComponent* RiderMount = Rider ? Rider->FindComponentByClass<UProject_JMountComponent>() : nullptr;
+	const UInputAction* RiderAction = RiderMount ? RiderMount->GetRiderInteractAction() : nullptr;
+	const UInputAction* Actions[] = { RiderAction, InteractAction.Get() };
+	TSet<const UInputAction*> BoundActions;
+	for (const UInputAction* Action : Actions)
+	{
+		if (Action && !BoundActions.Contains(Action))
+		{
+			BoundActions.Add(Action);
+			DismountInputBindingHandles.Add(Input->BindAction(Action, ETriggerEvent::Started, this, &ThisClass::HandleDismount).GetHandle());
+		}
+	}
+	UE_LOG(LogProjectJMountCharacter, Display,
+		TEXT("DismountInput Mount=%s RiderAction=%s MountAction=%s Bindings=%d Local=%d"),
+		*GetNameSafe(this), *GetPathNameSafe(RiderAction), *GetPathNameSafe(InteractAction.Get()), DismountInputBindingHandles.Num(), IsLocallyControlled());
+}
+
+void AProject_JMountCharacter::HandleDismount()
+{
+	// A queued second callback must not send an RPC after possession is restored.
+	if (!Rider || !GetController() || !IsLocallyControlled()) { return; }
+	UE_LOG(LogProjectJMountCharacter, Display, TEXT("DismountInputReceived Mount=%s Authority=%d"), *GetNameSafe(this), HasAuthority());
+	if (HasAuthority()) { DismountRider(false); }
+	else { ServerRequestDismount(); }
+}
+
+void AProject_JMountCharacter::UnPossessed()
+{
+	ClearDismountInputBindings();
+	Super::UnPossessed();
+}
+
+void AProject_JMountCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	if (!IsLocallyControlled()) { ClearDismountInputBindings(); }
+	else if (InputComponent) { RestoreDismountInputBindings(InputComponent); }
 }
 
 void AProject_JMountCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -230,10 +321,17 @@ bool AProject_JMountCharacter::TryMountRider(ACharacter* NewRider)
 	}
 
 	MountState = EProject_JMountState::Mounting;
+	SessionController = RiderController;
 	Rider = NewRider;
 	AttachRider(NewRider);
 	NotifyRiderMountChanged(NewRider, true);
+	if (Rider != NewRider || MountState != EProject_JMountState::Mounting) { return false; }
 	RiderController->Possess(this);
+	if (Rider != NewRider || MountState != EProject_JMountState::Mounting || RiderController->GetPawn() != this)
+	{
+		DismountRider(true);
+		return false;
+	}
 	MountState = EProject_JMountState::Mounted;
 	ForceNetUpdate();
 	K2_OnRiderMounted(NewRider);
@@ -245,7 +343,7 @@ void AProject_JMountCharacter::ServerRequestDismount_Implementation()
 	DismountRider(false);
 }
 
-bool AProject_JMountCharacter::DismountRider(bool bForce)
+bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossession)
 {
 	if (!HasAuthority() || !Rider)
 	{
@@ -254,28 +352,52 @@ bool AProject_JMountCharacter::DismountRider(bool bForce)
 
 	if (!bForce && !bAllowAirDismount && GetCharacterMovement()->IsFlying())
 	{
+		UE_LOG(LogProjectJMountCharacter, Display, TEXT("DismountRejected Mount=%s Reason=AirDismountDisabled"), *GetNameSafe(this));
 		return false;
 	}
 
 	ACharacter* PreviousRider = Rider;
 	AController* RiderController = GetController();
+	if (!RiderController && SessionController.IsValid() && !SessionController->GetPawn()) { RiderController = SessionController.Get(); }
 	FVector DismountLocation;
 	if (!FindDismountLocation(DismountLocation))
 	{
-		return false;
+		if (!bForce)
+		{
+			UE_LOG(LogProjectJMountCharacter, Display, TEXT("DismountRejected Mount=%s Reason=AllExitsBlocked"), *GetNameSafe(this));
+			return false;
+		}
+		// Forced lifecycle cleanup cannot depend on finding a collision-free
+		// optional exit. Preserve the rider position if every candidate is blocked.
+		DismountLocation = PreviousRider->GetActorLocation();
 	}
 
 	MountState = EProject_JMountState::Dismounting;
-	DetachRider(PreviousRider, DismountLocation);
+	// Commit only after the exit checks succeed. Rejected dismount requests
+	// must not interrupt the rider's movement. Retire velocity/acceleration and
+	// queued input before handing possession back, including no-controller physics.
+	ConsumeMovementInputVector();
+	GetCharacterMovement()->StopMovementImmediately();
 	Rider = nullptr;
+	DetachRider(PreviousRider, DismountLocation);
 	NotifyRiderMountChanged(PreviousRider, false);
-	if (RiderController)
+	if (bRestorePossession && IsValid(RiderController) && IsValid(PreviousRider) && !PreviousRider->IsActorBeingDestroyed()
+		&& GetWorld() && !GetWorld()->bIsTearingDown && (!bEndingPlay || bRestoreRiderOnEndPlay))
 	{
 		RiderController->Possess(PreviousRider);
 	}
+	// Character::Restart during possession reinstates its default movement
+	// mode. Commit the captured rider mode after that lifecycle hook completes.
+	if (bHasRiderRestoreState && IsValid(PreviousRider) && !PreviousRider->IsActorBeingDestroyed())
+	{
+		PreviousRider->GetCharacterMovement()->SetMovementMode(RiderMovementBeforeMount, RiderCustomMovementBeforeMount);
+	}
 	MountState = EProject_JMountState::Unmounted;
+	SessionController.Reset();
+	bHasRiderRestoreState = false;
 	ForceNetUpdate();
-	K2_OnRiderDismounted(PreviousRider);
+	if (!bEndingPlay && GetWorld() && !GetWorld()->bIsTearingDown) { K2_OnRiderDismounted(PreviousRider); }
+	UE_LOG(LogProjectJMountCharacter, Display, TEXT("DismountSucceeded Mount=%s Rider=%s Forced=%d"), *GetNameSafe(this), *GetNameSafe(PreviousRider), bForce);
 	return true;
 }
 
@@ -290,13 +412,16 @@ void AProject_JMountCharacter::OnRep_Rider(ACharacter* PreviousRider)
 		PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		if (UCapsuleComponent* Capsule = PreviousRider->GetCapsuleComponent())
 		{
-			Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			Capsule->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
 		}
 		if (UCharacterMovementComponent* MoveComp = PreviousRider->GetCharacterMovement())
 		{
-			MoveComp->SetMovementMode(MOVE_Walking);
+			MoveComp->SetMovementMode(bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
 		}
+		bHasRiderRestoreState = false;
 	}
+	// Input setup can precede Rider replication on the owning client.
+	RefreshDismountInputBindings();
 }
 
 void AProject_JMountCharacter::OnRep_MountState(EProject_JMountState PreviousState)
@@ -306,9 +431,8 @@ void AProject_JMountCharacter::OnRep_MountState(EProject_JMountState PreviousSta
 bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 {
 	const FVector Right = GetActorRightVector();
-	const FVector Candidate = GetActorLocation() + Right * (GetCapsuleComponent()->GetScaledCapsuleRadius() + 120.0f);
 	const UCapsuleComponent* RiderCapsule = Rider ? Rider->GetCapsuleComponent() : nullptr;
-	if (!RiderCapsule)
+	if (!RiderCapsule || !GetWorld())
 	{
 		return false;
 	}
@@ -316,20 +440,55 @@ bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(MountDismount), false, this);
 	QueryParams.AddIgnoredActor(Rider);
 	const FCollisionShape Shape = FCollisionShape::MakeCapsule(RiderCapsule->GetScaledCapsuleRadius(), RiderCapsule->GetScaledCapsuleHalfHeight());
-	if (GetWorld()->OverlapBlockingTestByChannel(Candidate, FQuat::Identity, RiderCapsule->GetCollisionObjectType(), Shape, QueryParams))
+	const FCollisionResponseParams Responses(RiderCapsule->GetCollisionResponseToChannels());
+	const float RiderHalfHeight = RiderCapsule->GetScaledCapsuleHalfHeight();
+	const float MountHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const bool bGrounded = GetCharacterMovement()->IsMovingOnGround();
+	const float Distance = GetCapsuleComponent()->GetScaledCapsuleRadius() + RiderCapsule->GetScaledCapsuleRadius() + 120.0f;
+	const FVector Directions[] = { Right, -Right, -GetActorForwardVector(), GetActorForwardVector() };
+	for (const FVector& Direction : Directions)
 	{
-		return false;
+		FVector Candidate = GetActorLocation() + Direction * Distance;
+		if (bGrounded)
+		{
+			// Mount and rider capsule centers need not have the same height.
+			// Search the nearby floor, then validate the full rider capsule.
+			const float MountBottom = GetActorLocation().Z - MountHalfHeight;
+			const float StepHeight = Rider->GetCharacterMovement()->MaxStepHeight;
+			const FVector TraceStart(Candidate.X, Candidate.Y, MountBottom + FMath::Max(MountHalfHeight, RiderHalfHeight) * 2.0f + StepHeight);
+			const FVector TraceEnd(Candidate.X, Candidate.Y, MountBottom - StepHeight - 2.0f);
+			FHitResult Floor;
+			if (GetWorld()->LineTraceSingleByChannel(Floor, TraceStart, TraceEnd, RiderCapsule->GetCollisionObjectType(), QueryParams, Responses))
+			{
+				if (!Rider->GetCharacterMovement()->IsWalkable(Floor)) { continue; }
+				Candidate.Z = Floor.ImpactPoint.Z + RiderHalfHeight + 2.0f;
+			}
+			else
+			{
+				Candidate.Z = MountBottom + RiderHalfHeight + 2.0f;
+			}
+		}
+		if (!GetWorld()->OverlapBlockingTestByChannel(Candidate, FQuat::Identity, RiderCapsule->GetCollisionObjectType(), Shape, QueryParams, Responses))
+		{
+			OutLocation = Candidate;
+			return true;
+		}
 	}
-
-	OutLocation = Candidate;
-	return true;
+	return false;
 }
 
-void AProject_JMountCharacter::AttachRider(ACharacter* NewRider) const
+void AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
 {
 	if (!NewRider)
 	{
 		return;
+	}
+	if (!bHasRiderRestoreState)
+	{
+		RiderCollisionBeforeMount = NewRider->GetCapsuleComponent()->GetCollisionEnabled();
+		RiderMovementBeforeMount = NewRider->GetCharacterMovement()->MovementMode;
+		RiderCustomMovementBeforeMount = NewRider->GetCharacterMovement()->CustomMovementMode;
+		bHasRiderRestoreState = true;
 	}
 
 	USceneComponent* AttachTarget = GetMesh() ? static_cast<USceneComponent*>(GetMesh()) : GetRootComponent();
@@ -347,9 +506,9 @@ void AProject_JMountCharacter::DetachRider(ACharacter* PreviousRider, const FVec
 	}
 
 	PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	PreviousRider->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	PreviousRider->GetCapsuleComponent()->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
 	PreviousRider->TeleportTo(DismountLocation, GetActorRotation(), false, true);
-	PreviousRider->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	PreviousRider->GetCharacterMovement()->SetMovementMode(bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
 }
 
 void AProject_JMountCharacter::NotifyRiderMountChanged(ACharacter* ChangedRider, bool bMounted)

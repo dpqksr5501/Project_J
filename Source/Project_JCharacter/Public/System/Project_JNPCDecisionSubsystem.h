@@ -33,6 +33,9 @@ struct FProjectJNPCDecisionStats
 	int32 LastTickPromotions = 0;
 	bool bObserverCoverageIncomplete = false;
 	double LastTickGameThreadMilliseconds = 0.0;
+	/** Full Tick includes action work; collection budget remains a separate existing contract. */
+	double LastFullTickMilliseconds = 0, MaxFullTickMilliseconds = 0;
+	double LastSharedSnapshotMilliseconds = 0, OldestReadyResultMilliseconds = 0;
 	int32 LastTickActionVisits = 0, LastTickActionUpdates = 0;
 	double LastTickActionMilliseconds = 0.0;
 	double MaxActionLatenessMilliseconds = 0.0;

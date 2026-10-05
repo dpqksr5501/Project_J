@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "AbilitySystem/Project_JAbilitySet.h"
+#include "Combat/Project_JCombatConfiguration.h"
 #include "GameplayTagContainer.h"
 #include "Project_JCombatStyleDefinition.generated.h"
 
@@ -24,6 +25,9 @@ class PROJECT_JCHARACTER_API UProject_JCombatStyleDefinition : public UPrimaryDa
 	GENERATED_BODY()
 
 public:
+	/** Freeze the running combo/commands by default; equipment revocation always cancels. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|Execution")
+	EProject_JCombatExecutionChangePolicy ExecutionChangePolicy = EProject_JCombatExecutionChangePolicy::CompleteCurrentExecution;
 	/** Legacy melee defaults remain enabled. GAS-only styles can opt out of each requirement. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Capabilities")
 	bool bUsesCombo = true;

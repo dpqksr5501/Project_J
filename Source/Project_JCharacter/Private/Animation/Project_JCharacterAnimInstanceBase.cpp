@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Project_JPlayerCharacter.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 
 void UProject_JCharacterAnimInstanceBase::NativeInitializeAnimation()
 {
@@ -135,47 +136,7 @@ USkeletalMeshComponent* UProject_JCharacterAnimInstanceBase::GetRuntimeRetargetF
 
 bool UProject_JCharacterAnimInstanceBase::WasOwnerVisualRecentlyRendered(float RecentlyRenderedTolerance) const
 {
-	if (!OwningCharacter)
-	{
-		return false;
-	}
-
-	// 1. Follower Mesh precedence
-	if (const USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
-	{
-		if (FollowerMesh->IsRegistered() && FollowerMesh->WasRecentlyRendered(RecentlyRenderedTolerance))
-		{
-			return true;
-		}
-	}
-
-	// 2. Any other non-leader skeletal visual component (e.g. modular equipment)
-	const USkeletalMeshComponent* LeaderMesh = OwningCharacter->GetMesh();
-	TInlineComponentArray<USkeletalMeshComponent*> SkeletalMeshes;
-	OwningCharacter->GetComponents(SkeletalMeshes);
-	for (const USkeletalMeshComponent* Mesh : SkeletalMeshes)
-	{
-		if (!Mesh || !Mesh->IsRegistered() || Mesh == LeaderMesh)
-		{
-			continue;
-		}
-
-		if (Mesh->WasRecentlyRendered(RecentlyRenderedTolerance))
-		{
-			return true;
-		}
-	}
-
-	// 3. Leader mesh itself only if it is an active visible renderer (not hidden in game)
-	if (LeaderMesh && LeaderMesh->IsRegistered() && !LeaderMesh->bHiddenInGame && LeaderMesh->GetVisibleFlag())
-	{
-		if (LeaderMesh->WasRecentlyRendered(RecentlyRenderedTolerance))
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return OwningCharacter && Project_J::Animation::WasCharacterVisualRecentlyRendered(*OwningCharacter, RecentlyRenderedTolerance);
 }
 
 bool UProject_JCharacterAnimInstanceBase::WasOwnerRecentlyRendered(float RecentlyRenderedTolerance) const

@@ -45,7 +45,13 @@ protected:
 
 	/** Per-mesh state: notify objects are shared by animation assets, so a single
 	 * previous-position field would leak traces between characters. */
-	TMap<TWeakObjectPtr<USkeletalMeshComponent>, FVector> PreviousTraceLocations;
+	struct FTraceState
+	{
+		FVector PreviousLocation = FVector::ZeroVector;
+		TWeakObjectPtr<class UProject_JCombatHitValidationComponent> Validation;
+		uint64 WindowToken = 0;
+	};
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FTraceState>> TraceStates;
 
 	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const;
 };

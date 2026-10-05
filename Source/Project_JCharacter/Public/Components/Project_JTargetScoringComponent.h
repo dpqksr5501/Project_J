@@ -45,6 +45,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Target Scoring|NPC")
 	void StopBatchedNPCDecisions();
 	bool IsBatchedNPCDecisionRegistered() const { return bNPCBatchRegistered; }
+	uint64 GetBatchRegistrationRevision() const { return BatchRegistrationRevision; }
 	/** Call when class, skill, possession, or query eligibility changes. Equipment changes bind automatically. */
 	UFUNCTION(BlueprintCallable, Category="Target Scoring")
 	void InvalidateQueryContext();
@@ -81,4 +82,5 @@ private:
 	bool bSharedBatchRequest = false;
 	bool bNPCBatchRegistered = false;
 	int32 NPCDecisionTeam = INDEX_NONE;
+	uint64 BatchRegistrationRevision = 0;
 };

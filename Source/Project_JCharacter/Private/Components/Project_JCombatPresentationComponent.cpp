@@ -207,7 +207,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 		}
 		return;
 	}
-	if (StartedCueTags.HasTagExact(CueTag))
+	if (StartedCueTags.HasTagExact(CueTag) || ActiveLoopingCues.Contains(CueTag))
 	{
 		if (ProjectJCombatPresentationDebug::IsEnabled())
 		{
@@ -303,7 +303,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 			ImmediateDestroyCueTags.AddTag(CueTag);
 		}
 	}
-	if (NiagaraComponent)
+	if (NiagaraComponent && !Cue->bLooping)
 	{
 		StartedCueTags.AddTag(CueTag);
 	}
@@ -311,6 +311,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 
 void UProject_JCombatPresentationComponent::StopCue(const FGameplayTag CueTag)
 {
+	for (auto It = CueLeases.CreateIterator(); It; ++It) { if (It.Value() == CueTag) { It.RemoveCurrent(); } }
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		const bool bWasActiveLoop = ReplicatedPresentationState.ActiveLoopingCueTags.HasTagExact(CueTag);
@@ -488,6 +489,7 @@ void UProject_JCombatPresentationComponent::MulticastEndAttackPresentation_Imple
 
 void UProject_JCombatPresentationComponent::StopAllCues()
 {
+	CueLeases.Reset();
 	for (TPair<FGameplayTag, TObjectPtr<UNiagaraComponent>>& Pair : ActiveLoopingCues)
 	{
 		ProjectJCombatPresentationDebug::StopComponent(Pair.Value, ImmediateDestroyCueTags.HasTagExact(Pair.Key));
@@ -495,4 +497,22 @@ void UProject_JCombatPresentationComponent::StopAllCues()
 	ActiveLoopingCues.Reset();
 	ImmediateDestroyCueTags.Reset();
 	StartedCueTags.Reset();
+}
+
+uint64 UProject_JCombatPresentationComponent::BeginCueLease(FGameplayTag CueTag)
+{
+	const auto* Cue = ResolveCue(CueTag);
+	if (!ActiveAttackTag.IsValid() || !Cue || !Cue->NiagaraSystem) { return 0; }
+	const uint64 Token = ++NextCueLeaseToken;
+	CueLeases.Add(Token, CueTag);
+	PlayCue(CueTag);
+	return Token;
+}
+
+void UProject_JCombatPresentationComponent::EndCueLease(uint64 Token)
+{
+	FGameplayTag CueTag;
+	if (!Token || !CueLeases.RemoveAndCopyValue(Token, CueTag)) { return; }
+	for (const auto& Lease : CueLeases) { if (Lease.Value == CueTag) { return; } }
+	StopCue(CueTag);
 }

@@ -23,7 +23,7 @@ class PROJECT_JCHARACTER_API UProject_JCharacterClassDefinition : public UPrimar
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, AssetRegistrySearchable, Category = "Class")
 	FName ClassId = NAME_None;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Class", meta = (ClampMin = "1"))
@@ -48,7 +48,7 @@ class PROJECT_JCHARACTER_API UProject_JCharacterAdvancementDefinition : public U
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, AssetRegistrySearchable, Category = "Advancement")
 	FName AdvancementId = NAME_None;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Advancement", meta = (ClampMin = "1"))

@@ -5,6 +5,7 @@
 #include "Network/Project_JHandoverSerializable.h"
 #include "Project_J.h"
 #include "Async/Async.h"
+#include "Misc/ScopeExit.h"
 
 void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -26,6 +27,7 @@ void UProject_JHandoverManager::Deinitialize()
 		for (const auto& Pair : OldStates) { OldTransport->Cancel(Pair.Key); }
 	}
 	AppliedTransferIds.Reset();
+	ApplyingTransferIds.Reset();
 	Super::Deinitialize();
 }
 
@@ -60,31 +62,56 @@ void UProject_JHandoverManager::InitiateHandover(AActor* ActorToHandover, const 
 
 bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor)
 {
+	return StartEnvelopeTransferChecked(Envelope, SourceActor) == EProject_JHandoverAdmission::Accepted;
+}
+
+EProject_JHandoverAdmission UProject_JHandoverManager::StartEnvelopeTransferChecked(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor)
+{
+	check(IsInGameThread());
 	if (bShuttingDown || !Envelope.TransferId.IsValid())
 	{
-		return false;
+		return bShuttingDown ? EProject_JHandoverAdmission::Closed : EProject_JHandoverAdmission::Invalid;
 	}
 	if (HandoverStates.Contains(Envelope.TransferId))
 	{
-		return false;
+		return EProject_JHandoverAdmission::Duplicate;
 	}
 	if (SourceActor && HasActiveTransferForActor(SourceActor))
 	{
-		return false;
+		return EProject_JHandoverAdmission::Duplicate;
 	}
+	int32 ActiveCount = 0;
+	int64 PendingBytes = 0;
+	for (const auto& Pair : HandoverStates)
+	{
+		const auto State = Pair.Value.State;
+		if (State != EProject_JHandoverState::Completed && State != EProject_JHandoverState::Failed && State != EProject_JHandoverState::Cancelled)
+		{
+			++ActiveCount;
+			PendingBytes += Pair.Value.Envelope.Payload.Num();
+		}
+	}
+	if (HandoverStates.Num() >= FMath::Max(1, MaxTrackedRecords) || ActiveCount >= FMath::Max(1, MaxActiveTransfers) ||
+		PendingBytes + Envelope.Payload.Num() > FMath::Max<int64>(1, MaxPendingPayloadBytes))
+	{
+		return EProject_JHandoverAdmission::Overloaded;
+	}
+	const bool bValid = ValidateEnvelope(Envelope) == EProject_JHandoverValidationFailure::None;
 
 	FProject_JHandoverRecord& Record = HandoverStates.Add(Envelope.TransferId);
 	Record.Actor = SourceActor;
 	Record.bHasTrackedActor = (SourceActor != nullptr);
-	Record.Envelope = Envelope;
+	// Invalid input remains diagnosable without retaining an arbitrary payload.
+	if (bValid) { Record.Envelope = Envelope; }
+	else { Record.Envelope.TransferId = Envelope.TransferId; }
 	Record.State = EProject_JHandoverState::None;
-	if (ValidateEnvelope(Envelope) != EProject_JHandoverValidationFailure::None)
+	if (!bValid)
 	{
 		SetRecordState(
 			Record,
 			EProject_JHandoverState::Failed,
 			EProject_JHandoverFailureReason::InvalidEnvelope);
-		return false;
+		return EProject_JHandoverAdmission::Invalid;
 	}
 	const FGuid TransferId = Envelope.TransferId;
 	SetRecordState(Record, EProject_JHandoverState::Preparing);
@@ -93,7 +120,7 @@ bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEn
 	{
 		DispatchTransfer(TransferId);
 	}
-	return true;
+	return EProject_JHandoverAdmission::Accepted;
 }
 
 bool UProject_JHandoverManager::IsHandoverInProgress(AActor* Actor) const
@@ -200,11 +227,11 @@ EProject_JHandoverValidationFailure UProject_JHandoverManager::ValidateEnvelope(
 	{
 		return EProject_JHandoverValidationFailure::InvalidTransferId;
 	}
-	if (Envelope.ActorClassPath.IsEmpty())
+	if (Envelope.ActorClassPath.IsEmpty() || Envelope.ActorClassPath.Len() > 512)
 	{
 		return EProject_JHandoverValidationFailure::InvalidActorClass;
 	}
-	if (Envelope.SourceNodeId.IsEmpty() || Envelope.TargetNodeId.IsEmpty())
+	if (Envelope.SourceNodeId.IsEmpty() || Envelope.TargetNodeId.IsEmpty() || Envelope.SourceNodeId.Len() > 256 || Envelope.TargetNodeId.Len() > 256)
 	{
 		return EProject_JHandoverValidationFailure::InvalidNode;
 	}
@@ -235,32 +262,57 @@ bool UProject_JHandoverManager::ApplyEnvelope(
 	AActor* DestinationActor,
 	const FProject_JHandoverEnvelope& Envelope)
 {
-	if (bShuttingDown || !DestinationActor || !DestinationActor->HasAuthority())
+	const auto Result = ApplyEnvelopeChecked(DestinationActor, Envelope);
+	return Result == EProject_JHandoverApplyResult::Applied || Result == EProject_JHandoverApplyResult::AlreadyApplied;
+}
+
+EProject_JHandoverApplyResult UProject_JHandoverManager::ApplyEnvelopeChecked(
+	AActor* DestinationActor, const FProject_JHandoverEnvelope& Envelope)
+{
+	check(IsInGameThread());
+	if (bShuttingDown || !IsValid(DestinationActor) || DestinationActor->IsActorBeingDestroyed() || !DestinationActor->HasAuthority())
 	{
-		return false;
+		return EProject_JHandoverApplyResult::Rejected;
 	}
 	if (ValidateEnvelope(Envelope) != EProject_JHandoverValidationFailure::None)
 	{
-		return false;
+		return EProject_JHandoverApplyResult::Rejected;
 	}
 
 	PruneReplayWindow();
-	if (AppliedTransferIds.Contains(Envelope.TransferId) ||
-		Envelope.TargetNodeId != LocalNodeId ||
+	if (Envelope.TargetNodeId != LocalNodeId ||
 		Envelope.ActorClassPath != DestinationActor->GetClass()->GetPathName())
 	{
-		return false;
+		return EProject_JHandoverApplyResult::Rejected;
+	}
+	const FSHAHash Digest = FSHA1::HashBuffer(Envelope.Payload.GetData(), Envelope.Payload.Num());
+	if (const FApplyReceipt* Receipt = AppliedTransferIds.Find(Envelope.TransferId))
+	{
+		return Receipt->Destination.Get() == DestinationActor && Receipt->Digest == Digest && Receipt->SourceNodeId == Envelope.SourceNodeId
+			? EProject_JHandoverApplyResult::AlreadyApplied : EProject_JHandoverApplyResult::Rejected;
+	}
+	if (ApplyingTransferIds.Contains(Envelope.TransferId)) { return EProject_JHandoverApplyResult::InProgress; }
+	if (AppliedTransferIds.Num() + ApplyingTransferIds.Num() >= FMath::Max(1, MaxApplyReceipts))
+	{
+		return EProject_JHandoverApplyResult::Overloaded;
 	}
 
 	IProject_JHandoverSerializable* SerializableActor = Cast<IProject_JHandoverSerializable>(DestinationActor);
 	if (!SerializableActor)
 	{
-		return false;
+		return EProject_JHandoverApplyResult::Rejected;
 	}
 
-	SerializableActor->DeserializeFromHandover(Envelope.Payload);
-	AppliedTransferIds.Add(Envelope.TransferId, FDateTime::UtcNow());
-	return true;
+	const FGuid TransferId = Envelope.TransferId;
+	ApplyingTransferIds.Add(TransferId);
+	const FString SourceNodeId = Envelope.SourceNodeId;
+	ON_SCOPE_EXIT { ApplyingTransferIds.Remove(TransferId); };
+	if (!SerializableActor->TryApplyHandoverSnapshot(Envelope.Payload) || bShuttingDown)
+	{
+		return EProject_JHandoverApplyResult::Rejected;
+	}
+	AppliedTransferIds.Add(TransferId, { FDateTime::UtcNow(), Digest, DestinationActor, SourceNodeId });
+	return EProject_JHandoverApplyResult::Applied;
 }
 
 int32 UProject_JHandoverManager::CalculatePayloadChecksum(const TArray<uint8>& Payload) const
@@ -547,7 +599,7 @@ void UProject_JHandoverManager::PruneReplayWindow()
 		FMath::Max(60.0, static_cast<double>(MaxEnvelopeAgeSeconds)));
 	for (auto It = AppliedTransferIds.CreateIterator(); It; ++It)
 	{
-		if (It.Value() < ReplayCutoff)
+		if (It.Value().AppliedAt < ReplayCutoff)
 		{
 			It.RemoveCurrent();
 		}

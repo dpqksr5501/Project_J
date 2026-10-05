@@ -10,6 +10,15 @@ class AProject_JMountRefinementFixture : public AProject_JFlyingMountCharacter
 {
 	GENERATED_BODY()
 public:
+	virtual void SetupPlayerInputComponent(UInputComponent* Input) override { ++InputSetupCount; Super::SetupPlayerInputComponent(Input); }
+	void SetTestInputComponent(UInputComponent* Input) { InputComponent = Input; }
+	void NotifyTestClientRestart() { PawnClientRestart(); }
+	void SetTestFlightActions(UInputAction* Move, UInputAction* Look, UInputAction* Ascend, UInputAction* Descend)
+	{
+		MoveAction = Move; LookAction = Look; AscendAction = Ascend; DescendAction = Descend;
+	}
+	int32 InputSetupCount = 0;
+	void SetTestAllowAirDismount(bool bAllow) { bAllowAirDismount = bAllow; }
 	void SetTestFlightState(EProject_JMountFlightState State) { SetFlightState(State); }
 	void SetTestRole(ENetRole InRole) { SetRole(InRole); RefreshFlightTickEnabled(); }
 	void ReceiveTestFlightState(EProject_JMountFlightState State)
@@ -27,10 +36,13 @@ public:
 	void SetTestKeepTick(bool bEnabled) { bKeepActorTickEnabled = bEnabled; RefreshFlightTickEnabled(); }
 	void SetTestBlueprintTick(bool bImplemented) { bHasBlueprintTick = bImplemented; RefreshFlightTickEnabled(); }
 	void SetTestMoveAction(UInputAction* Action) { MoveAction = Action; }
+	void SetTestInteractAction(UInputAction* Action) { InteractAction = Action; }
 	void NotifyTestControllerChanged() { OnRep_Controller(); }
 	void NotifyTestUnPossessed() { UnPossessed(); }
 	void UnrelatedInput() {}
 	void SetTestInitialHealth(float InitialHealth, float InitialMaximum) { Health = InitialHealth; MaxHealth = InitialMaximum; }
+	void StepTestLanding(float Delta) { UpdateLanding(Delta); }
+	void SetTestLandingLimits(float Stall, float Duration) { LandingStallTimeout = Stall; MaxLandingDuration = Duration; }
 	int32 HealthDepletionCount = 0;
 	bool bRejectedReentrantDamage = false;
 protected:

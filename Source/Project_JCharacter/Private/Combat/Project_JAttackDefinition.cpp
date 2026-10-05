@@ -1,5 +1,6 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameplayEffect.h"
+#include "Animation/AnimMontage.h"
 
 #if WITH_EDITOR
 #include "Validation/Project_JDataValidation.h"
@@ -38,6 +39,18 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	if (!FMath::IsFinite(PlayRate) || PlayRate <= 0.0f)
 	{
 		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "InvalidPlayRate", "PlayRate must be greater than zero."));
+	}
+	if (!MontageSectionName.IsNone())
+	{
+		const UAnimMontage* LoadedMontage = Montage.Get();
+		if (!LoadedMontage || LoadedMontage->GetSectionIndex(MontageSectionName) == INDEX_NONE)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "MissingSection", "MontageSectionName does not exist in the referenced montage."));
+		}
+	}
+	if (MovementPolicy == EProject_JAttackMovementPolicy::RootMotionWarped)
+	{
+		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "WarpExecutor", "RootMotionWarped requires an executor that configures Motion Warping targets; native Melee does not supply targets."));
 	}
 	if (bOverrideGripIK && (!FMath::IsFinite(PrimaryGripIKAlpha) || PrimaryGripIKAlpha < 0.0f || PrimaryGripIKAlpha > 1.0f ||
 		!FMath::IsFinite(SecondaryGripIKAlpha) || SecondaryGripIKAlpha < 0.0f || SecondaryGripIKAlpha > 1.0f))

@@ -92,9 +92,16 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
+	ActiveGameplayStyle = nullptr;
+	ActivationConfigurationRevision = 0;
+	bCancelOnGameplayStyleChange = false;
 	if (AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		PlayerCharacter->FinishLanding(true);
+		ActiveGameplayStyle = PlayerCharacter->GetCombatConfiguration().GameplayStyle;
+		ActivationConfigurationRevision = PlayerCharacter->GetCombatConfiguration().Revision;
+		bCancelOnGameplayStyleChange = ActiveGameplayStyle &&
+			ActiveGameplayStyle->ExecutionChangePolicy == EProject_JCombatExecutionChangePolicy::CancelOnGameplayStyleChange;
 		if (const UProject_JCombatStyleDefinition* CombatStyle = PlayerCharacter->GetCombatStyleDefinition(); CombatStyle && CombatStyle->bUsesCombo && CombatStyle->ComboDefinition)
 		{
 			ActiveComboDefinition = CombatStyle->ComboDefinition;
@@ -117,7 +124,7 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 
 	CurrentComboNodeTag = FGameplayTag();
 	QueuedInputTag = FGameplayTag();
-	bIsComboWindowOpen = false;
+	ResetComboWindows();
 	bHasNextComboQueued = false;
 	HitActorsThisSwing.Reset();
 	ComboEventTasks.Reset();
@@ -145,6 +152,7 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	// base class guard runs too late to protect our shared hit/presentation cleanup.
 	if (!IsActive() || bEndingAttack) { return; }
 	TGuardValue<bool> EndingGuard(bEndingAttack, true);
+	ResetComboWindows();
 	if (AttackEquipment.IsValid()) { AttackEquipment->OnWeaponRevoked().Remove(WeaponRevokedHandle); }
 	WeaponRevokedHandle.Reset();
 	AttackEquipment.Reset();
@@ -176,6 +184,8 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	ActiveComboDefinition = nullptr;
 	ActiveAttackDefinition = nullptr;
 	ActiveComboMontage = nullptr;
+	ActiveGameplayStyle = nullptr;
+	ActivationConfigurationRevision = 0;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 	MontageTask = nullptr;
 }
@@ -278,6 +288,8 @@ void UProject_JGameplayAbility_Melee::RestoreAttackMovementMode(const bool bWasC
 
 void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Payload)
 {
+	ReconcileCombatConfiguration();
+	if (!IsActive() || bEndingAttack || !ActiveComboDefinition) { return; }
 	if (IsComboDebugEnabled())
 	{
 		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Input Received CurrentNode=%s Input=%s WindowOpen=%d"),
@@ -308,6 +320,16 @@ void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Pa
 
 void UProject_JGameplayAbility_Melee::OnComboWindowOpened(FGameplayEventData Payload)
 {
+	// Native notifies identify the exact ability whose lease they own. Preserve
+	// the legacy event path for explicitly authored external gameplay events.
+	if (Payload.OptionalObject)
+	{
+		if (Payload.OptionalObject != this) { return; }
+		bIsComboWindowOpen = !ComboWindows.IsEmpty();
+		if (!bIsComboWindowOpen) { return; }
+	}
+	else
+	{
 	if (Payload.EventMagnitude <= 0.0f)
 	{
 		bIsComboWindowOpen = false;
@@ -315,6 +337,7 @@ void UProject_JGameplayAbility_Melee::OnComboWindowOpened(FGameplayEventData Pay
 	}
 
 	bIsComboWindowOpen = true;
+	}
 	if (IsComboDebugEnabled())
 	{
 		UE_LOG(LogProjectJCombatCombo, Log, TEXT("Combo Window Opened Node=%s Queued=%s"), *CurrentComboNodeTag.ToString(), *QueuedInputTag.ToString());
@@ -474,6 +497,7 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	}
 
 	ApplyCameraDirectionRotation();
+	ResetComboWindows();
 	HitActorsThisSwing.Reset();
 	CurrentComboNodeTag = Node.NodeTag;
 	ActiveAttackDefinition = AttackDefinition;
@@ -519,6 +543,48 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 		MontageTask->OnInterrupted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
 		MontageTask->OnCancelled.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageInterrupted);
 		MontageTask->ReadyForActivation();
+	}
+}
+
+uint64 UProject_JGameplayAbility_Melee::BeginComboWindow()
+{
+	if (!IsActive() || bEndingAttack || !ActiveAttackDefinition || !HasActiveWeapon()) { return 0; }
+	const uint64 Token = ++NextComboWindowToken;
+	ComboWindows.Add(Token);
+	return Token;
+}
+
+bool UProject_JGameplayAbility_Melee::EndComboWindow(uint64 Token)
+{
+	const bool bRemoved = Token && ComboWindows.Remove(Token) != 0;
+	if (bRemoved) { bIsComboWindowOpen = !ComboWindows.IsEmpty(); }
+	return bRemoved;
+}
+
+void UProject_JGameplayAbility_Melee::ResetComboWindows()
+{
+	ComboWindows.Reset();
+	bIsComboWindowOpen = false;
+}
+
+bool UProject_JGameplayAbility_Melee::AcceptsComboInput(FGameplayTag InputTag) const
+{
+	if (!ActiveComboDefinition || !IsActive() || bEndingAttack) { return false; }
+	FGameplayTagContainer Inputs;
+	ActiveComboDefinition->GetReferencedInputTags(Inputs);
+	return Inputs.HasTagExact(InputTag);
+}
+
+void UProject_JGameplayAbility_Melee::ReconcileCombatConfiguration()
+{
+	const auto* Player = Cast<AProject_JPlayerCharacter>(GetAvatarActorFromActorInfo());
+	if (!IsActive() || bEndingAttack || !Player || !ActiveGameplayStyle) { return; }
+	const auto& Current = Player->GetCombatConfiguration();
+	if (Current.Revision != ActivationConfigurationRevision && bCancelOnGameplayStyleChange
+		&& FProject_JCombatConfiguration::ShouldCancelExecution(EProject_JCombatExecutionChangePolicy::CancelOnGameplayStyleChange,
+			ActiveGameplayStyle, Current.GameplayStyle))
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 	}
 }
 

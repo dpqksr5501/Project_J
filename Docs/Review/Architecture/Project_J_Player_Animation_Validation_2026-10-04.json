@@ -1,0 +1,834 @@
+{
+  "auditDate": "2026-10-04",
+  "recordedAtUtc": "2026-10-03T15:04:31.1973791Z",
+  "baselineHead": "33b574a1d6775306a26357f67bc3d79311e7189b",
+  "sourceChangesThisAudit": false,
+  "newCppBuildThisAudit": false,
+  "unrealMcpUsed": false,
+  "realAssetSaves": false,
+  "existingUncommittedImplementationPreserved": true,
+  "previousImplementationChangedFilesHashMatched": 59,
+  "scope": {
+    "priorDetailedFiles": 144,
+    "unchangedPriorFiles": 137,
+    "changedPriorFiles": 7,
+    "currentTargetedFiles": 65,
+    "unionFiles": 159,
+    "coverage": "Docs/Review/Architecture/Project_J_Player_Animation_Coverage_2026-10-04.csv",
+    "coverageSha256": "a1cbf4b304f2759f6f80b1e31bc4651c125e17880ac3195d8c36aebd92f1f727",
+    "interpretation": "Hash-verified reuse of prior audit plus current targeted call-chain review. This is not a claim of rereading every source line or validating all assets."
+  },
+  "suite": {
+    "report": "Saved/Automation/PlayerAnimationAudit_20261003/index.json",
+    "reportSha256": "4b2241ed9a16f6cb0a96ac8faf19216b600a5949996e772964f1d78330597391",
+    "log": "Saved/Automation/PlayerAnimationAudit_20261003/Run.log",
+    "processExitCode": 0,
+    "testCount": 87,
+    "succeeded": 84,
+    "succeededWithWarnings": 3,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "durationSeconds": 0.9747873544692993,
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.GuidedArmContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.GuidedBendStability",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.GuidedIKTraceIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HandContactConversion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HandContactRig",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HiddenLeaderVisibleFollower",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.LocomotionContextBuilder",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.ModularMeshIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.MotionMatchingRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.MotionMatchingSelectionPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.QualityTierPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.RemoteLocomotionRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.SecondaryHandContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.StateControllerRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Combat.CommandResolution",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Equipment.OperationResult",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.TransportReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Replication.OwnerRelevance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Architecture.Social.Membership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.CanonicalBladeTrajectory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.CanonicalMeleeTrace",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHitWindowProductionTransition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 5,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.13"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Components.AnimationDemandComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Components.CombatTransitionOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Components.UIDedicatedServer",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Components.UIDemand",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.EquipmentClient.FixtureIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Configuration.DomainComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Grants.SharedOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.BranchesAndGrants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.GraphValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupB.AnimationContractAudit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupB.CombatPosePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Animation.SnapshotBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Camera.Possession",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Combat.RewindHistory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Equipment.ReentrantRemoval",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.GAS.TaskTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Input.CommandAliasRelease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Input.Rebinding",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Interaction.ServerSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Inventory.CallbacksAndBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.HealthSingleSource",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.InputBindingOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Pooling.DefinitionBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Updates.RewindScheduling",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Internal.Updates.UrgentAnimationWindow",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Combat.HitWindowOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.GAS.ResourceInvariants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Input.SharedMappingLease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Maturity.Mount.LandingRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Presentation.PrimaryGripAttachment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-14.52.14"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      }
+    ]
+  },
+  "authoredAssetFixture": {
+    "test": "ProjectJ.GroupB.AnimationContractAudit",
+    "scope": "Read-only Greatsword fixture character CDO, style, master and combat-layer compiled class inventories",
+    "inventory": [
+      "AnimAudit Class=/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C MultiThreadedUpdate=1 RootMotionMode=3 Nodes=93 Handlers=93 BoundFunctions=43 PropertyCopyRecords=3 CopyOnlyHandlers=2 ThreadSafeBlueprintBytes=0",
+      "AnimAudit Class=/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers_C MultiThreadedUpdate=1 RootMotionMode=3 Nodes=5 Handlers=5 BoundFunctions=0 PropertyCopyRecords=2 CopyOnlyHandlers=1 ThreadSafeBlueprintBytes=0"
+    ],
+    "interpretation": "Exposed handler counts are inventory, not measured VM cost, whole-graph FastPath proof or proof of actual worker scheduling."
+  },
+  "findings": [
+    {
+      "id": "P01",
+      "priority": 1,
+      "kind": "Existing A01 revalidated",
+      "topic": "Equipment grant/effect original ASC ownership",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P02",
+      "priority": 1,
+      "kind": "Existing A02/A03 revalidated",
+      "topic": "Mounted tag ASC ownership and forced teardown",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P03",
+      "priority": 2,
+      "kind": "Existing A04 revalidated",
+      "topic": "Trajectory eligibility/freshness on semantic query",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P04",
+      "priority": 2,
+      "kind": "New code-policy mismatch; conditional visual configuration",
+      "topic": "Hidden leader and visible follower use inconsistent visibility policy",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P05",
+      "priority": 2,
+      "kind": "Existing A08 structural improvement",
+      "topic": "Frame provenance and consume/reset ordering",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P06",
+      "priority": 2,
+      "kind": "Existing A05 revalidated; identity reset conditional",
+      "topic": "Layer failure retry bound and mesh/AnimInstance binding identity",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P07",
+      "priority": 2,
+      "kind": "New conditional overlap/generation code path",
+      "topic": "ComboWindow Begin/End lacks attack generation and execution ownership",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P08",
+      "priority": 2,
+      "kind": "New conditional overlap/loop-restart code path",
+      "topic": "VFX Notify lease versus current attack/tag; looping cue restart policy",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P09",
+      "priority": 2,
+      "kind": "Existing A06/A07 revalidated",
+      "topic": "Effective grant/input/DA composition and authoring bounds",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P10",
+      "priority": 2,
+      "kind": "Existing A09 conditional extension",
+      "topic": "Skill/configuration revision during active execution",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P11",
+      "priority": 3,
+      "kind": "New diagnostic attribution improvement",
+      "topic": "MotionMatching selected-node identity and current traversal provenance",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P12",
+      "priority": 3,
+      "kind": "Measured class inventory, performance change conditional",
+      "topic": "Profile remaining master ABP exposed bound-function paths",
+      "runtimeReproducedThisAudit": false
+    },
+    {
+      "id": "P13",
+      "priority": 2,
+      "kind": "New conditional time-domain code-path review",
+      "topic": "StateController/TIP wall-clock hold versus animation time under pause/time dilation",
+      "runtimeReproducedThisAudit": false
+    }
+  ],
+  "limitations": [
+    "No all-asset Blueprint/Chooser/DA wiring audit.",
+    "No real network reorder/lag PIE, cooked/package, or profiler workload.",
+    "New conditional failure paths were established by source review, not newly reproduced in an authored gameplay session.",
+    "Passing existing tests does not cover stale trajectory, missing layer, overlapping combo/cue generation, or time-dilation integration cases.",
+    "87 tests overlap prior suites and are not added as unique coverage to prior totals."
+  ]
+}

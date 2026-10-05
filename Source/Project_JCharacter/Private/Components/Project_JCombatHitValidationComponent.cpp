@@ -31,6 +31,8 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 	ActivePredictionKey = PredictionKey;
 	ActiveAttackNodeTag = AttackNodeTag;
 	ActiveAttackDefinition = AttackDefinition;
+	HitWindowTokens.Reset();
+	bManualHitWindowOpen = false;
 	bHitWindowOpen = false;
 	bHasAuthoritativeTrace = false;
 	ServerHitActors.Reset();
@@ -38,6 +40,7 @@ void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag 
 
 void UProject_JCombatHitValidationComponent::EndAttack()
 {
+	HitWindowTokens.Reset();
 	SetHitWindowOpen(false);
 	AttackEquipment.Reset();
 	AttackWeaponRevision = 0;
@@ -356,6 +359,29 @@ bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(float 
 }
 
 void UProject_JCombatHitValidationComponent::SetHitWindowOpen(const bool bOpen)
+{
+	bManualHitWindowOpen = bOpen && ActiveAttackNodeTag.IsValid();
+	ApplyHitWindowState(bManualHitWindowOpen || !HitWindowTokens.IsEmpty());
+}
+
+uint64 UProject_JCombatHitValidationComponent::BeginHitWindow()
+{
+	if (!ActiveAttackNodeTag.IsValid() || HitWindowTokens.Num() >= 64) { return 0; }
+	const uint64 Token = ++NextHitWindowToken;
+	HitWindowTokens.Add(Token);
+	ApplyHitWindowState(true);
+	return Token;
+}
+
+void UProject_JCombatHitValidationComponent::EndHitWindow(uint64 Token)
+{
+	if (Token != 0 && HitWindowTokens.Remove(Token))
+	{
+		ApplyHitWindowState(bManualHitWindowOpen || !HitWindowTokens.IsEmpty());
+	}
+}
+
+void UProject_JCombatHitValidationComponent::ApplyHitWindowState(const bool bOpen)
 {
 	const bool bNewState = bOpen && ActiveAttackNodeTag.IsValid();
 	if (bHitWindowOpen == bNewState)

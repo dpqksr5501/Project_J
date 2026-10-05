@@ -36,17 +36,27 @@ FProject_JCombatMovementPolicy BuildCombatMovementPolicy(const AProject_JPlayerC
 
 void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotation)
 {
-	const bool bIsInAir = GetCharacterMovement() && GetCharacterMovement()->IsFalling();
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	const bool bIsInAir = MoveComp && MoveComp->IsFalling();
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
 	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
 		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
 
-	bool bRotationModeChanged = false;
+	const bool bDesiredControllerRotation = bIsMovingInCombat && !bIsInAir;
+	const bool bRotationModeChanged = bUseControllerRotationYaw || (MoveComp &&
+		(MoveComp->bUseControllerDesiredRotation != bDesiredControllerRotation ||
+		 MoveComp->bOrientRotationToMovement != !bShouldUseCombatRotation));
+	// FaceRotation would copy control yaw in one frame, bypassing rotation rate.
+	// CMC owns gradual moving yaw; idle TIP keeps its authored root-yaw owner.
+	bUseControllerRotationYaw = false;
+	if (MoveComp)
+	{
+		MoveComp->bUseControllerDesiredRotation = bDesiredControllerRotation;
+		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
+	}
+
 	if (bShouldUseCombatRotation && bIsInAir)
 	{
-		bRotationModeChanged = bUseControllerRotationYaw != false;
-		bUseControllerRotationYaw = false;
-
 		const float TargetYaw = GetController() ? GetController()->GetControlRotation().Yaw : GetActorRotation().Yaw;
 		const FRotator CurrentRot = GetActorRotation();
 		const FRotator TargetRot(0.0f, TargetYaw, 0.0f);
@@ -56,17 +66,6 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 			: 12.0f;
 		const FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, CatchUpSpeed);
 		SetActorRotation(NewRot);
-	}
-	else
-	{
-		const bool bDesiredUseControllerRotationYaw = bIsMovingInCombat;
-		bRotationModeChanged = bUseControllerRotationYaw != bDesiredUseControllerRotationYaw;
-		bUseControllerRotationYaw = bDesiredUseControllerRotationYaw;
-	}
-
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->bOrientRotationToMovement = !bShouldUseCombatRotation;
 	}
 
 	bool bCurrentlyInTurnInPlace = false;
@@ -194,18 +193,17 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 
 	if (bRotationModeChanged && MotionMatchingTrajectoryComponent)
 	{
-		MotionMatchingTrajectoryComponent->ResetTrajectoryHistoryWithReason(
-			EProject_JTrajectoryResetReason::RotationModeChanged);
+		MotionMatchingTrajectoryComponent->NotifyRotationModeChanged();
 	}
 }
 
 bool AProject_JPlayerCharacter::AllowsStraightRunningTrajectoryRepair() const
 {
-	// Combat currently owns yaw through the controller and therefore permits
+	// Combat owns its facing target through the controller and therefore permits
 	// movement that intentionally differs from facing. Future lock-on or forced
 	// facing modes should return false here as well, rather than changing the
 	// global simulated-proxy repair CVar.
-	return !bUseControllerRotationYaw;
+	return !(IsCombatModeActive() && ShouldUseCombatRotationMode());
 }
 
 bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
@@ -284,9 +282,15 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 	const float DesiredMaxWalkSpeed =
 		(bCanSprint ? EffectiveSprintSpeed : EffectiveWalkSpeed) * DirectionalSpeedMultiplier;
-	const float DesiredRotationRateYaw = bCanSprint
+	float DesiredRotationRateYaw = bCanSprint
 		? EffectiveSprintRotationRateYaw
 		: EffectiveWalkRotationRateYaw;
+	if (IsCombatModeActive() && ShouldUseCombatRotationMode())
+	{
+		const UProject_JCombatAnimProfile* CombatProfile = GetCombatAnimProfile();
+		const float Rate = CombatProfile ? CombatProfile->CombatFacingRotationRateYaw : 360.0f;
+		DesiredRotationRateYaw = FMath::IsFinite(Rate) ? FMath::Clamp(Rate, 1.0f, 1080.0f) : 360.0f;
+	}
 	if (!FMath::IsNearlyEqual(MoveComp->MaxWalkSpeed, DesiredMaxWalkSpeed))
 	{
 		MoveComp->MaxWalkSpeed = DesiredMaxWalkSpeed;

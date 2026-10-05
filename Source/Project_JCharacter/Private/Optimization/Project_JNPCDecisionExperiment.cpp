@@ -86,11 +86,12 @@ FString AProject_JNPCDecisionExperiment::GetSummary() const
 	const auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr;
 	if (!Scheduler) { return TEXT("NPC decision scheduler unavailable"); }
 	const auto& Stats = Scheduler->GetStats();
-	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f target_reads=%d cells=%d fallback=%d observers=%d incomplete_observers=%d promotions=%d"),
+	return FString::Printf(TEXT("NPCDecision agents=%d targets=%d outstanding=%d batches=%llu decisions=%llu applied=%llu discarded=%llu rejected=%llu last_gt_ms=%.3f target_reads=%d cells=%d fallback=%d observers=%d incomplete_observers=%d promotions=%d full_tick_ms=%.3f max_full_tick_ms=%.3f shared_snapshot_ms=%.3f oldest_ready_ms=%.3f"),
 		Scheduler->GetAgentCount(), Scheduler->GetTargetCount(), Scheduler->GetOutstandingCount(), Stats.SubmittedBatches,
 		Stats.SubmittedDecisions, Stats.AppliedDecisions, Stats.DiscardedDecisions, Stats.RejectedBatches, Stats.LastTickGameThreadMilliseconds,
 		Stats.LastTickTargetPositionReads, Stats.LastTickSpatialCells, Stats.LastTickLinearFallbacks, Stats.LastTickObservers,
-		Stats.bObserverCoverageIncomplete ? 1 : 0, Stats.LastTickPromotions);
+		Stats.bObserverCoverageIncomplete ? 1 : 0, Stats.LastTickPromotions, Stats.LastFullTickMilliseconds, Stats.MaxFullTickMilliseconds,
+		Stats.LastSharedSnapshotMilliseconds, Stats.OldestReadyResultMilliseconds);
 }
 
 void AProject_JNPCDecisionExperiment::Tick(float DeltaSeconds)

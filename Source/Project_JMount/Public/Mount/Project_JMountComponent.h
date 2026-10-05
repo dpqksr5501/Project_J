@@ -6,6 +6,8 @@
 #include "Project_JMountComponent.generated.h"
 
 class AProject_JMountCharacter;
+class UProject_JAbilitySystemComponent;
+class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JMountChangedSignature, AProject_JMountCharacter*, PreviousMount, AProject_JMountCharacter*, NewMount);
 
@@ -35,10 +37,20 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Mount")
 	bool IsMounted() const { return MountedMount != nullptr; }
 
+	/** Keep the rider's effective interaction action across the possession hand-off. */
+	void SetRiderInteractAction(UInputAction* Action);
+	const UInputAction* GetRiderInteractAction() const { return RiderInteractAction; }
+
 	UPROPERTY(BlueprintAssignable, Category = "Mount")
 	FProject_JMountChangedSignature OnMountChanged;
 
 private:
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	void ReleaseMountedTag();
+	TWeakObjectPtr<UProject_JAbilitySystemComponent> MountedTagAbilitySystem;
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> RiderInteractAction = nullptr;
 	UFUNCTION(Server, Reliable)
 	void ServerRequestMount(AProject_JMountCharacter* Mount);
 
@@ -51,4 +63,5 @@ private:
 	TObjectPtr<AProject_JMountCharacter> MountedMount = nullptr;
 
 	friend class AProject_JMountCharacter;
+	friend class FProjectJMountedTagOwnershipTest;
 };

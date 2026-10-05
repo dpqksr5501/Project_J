@@ -8,5 +8,7 @@ if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBu
 $out="$root/Saved/Validation/Experiments/Build/$RunName"
 if(Test-Path -LiteralPath $out){throw 'Use a new RunName to preserve evidence.'}
 New-Item -ItemType Directory $out|Out-Null
-& "$EngineRoot/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" Project_JEditor Win64 Development "-Project=$root/Project_J.uproject" "-Plugin=$root/Plugins/ProjectJExperiments/ProjectJExperiments.uplugin" -WaitMutex -NoHotReloadFromIDE -NoUBA "-Log=$out/Build.log"
+# Build the complete project target with the opt-in plugin. A foreign -Plugin
+# build narrows the target makefile and can hide stale project objects on UE 5.8.
+& "$EngineRoot/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" Project_JEditor Win64 Development "-Project=$root/Project_J.uproject" -AdditionalPlugins=ProjectJExperiments -WaitMutex -NoHotReloadFromIDE -NoUBA "-Log=$out/Build.log"
 if($LASTEXITCODE -ne 0){throw "Build failed: $out/Build.log"}

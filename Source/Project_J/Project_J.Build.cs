@@ -39,6 +39,7 @@ public class Project_J : ModuleRules
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
+			PrivateDependencyModuleNames.Add("Project_JMount");
 		}
 
 		PublicIncludePaths.AddRange(new string[] {

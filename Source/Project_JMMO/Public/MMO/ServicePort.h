@@ -4,6 +4,7 @@
 namespace ProjectJ::MMO
 {
 enum class EServiceStatus : uint8 { Success, Unavailable, Rejected, Conflict, Overloaded, Cancelled, UnknownOutcome };
+enum class EServiceRequestIntent : uint8 { Query, Mutation };
 struct FServiceRequest
 {
     FGuid RequestId;
@@ -11,7 +12,9 @@ struct FServiceRequest
     FName Service;
     FName Operation;
     int32 SchemaVersion = 1;
+    EServiceRequestIntent Intent = EServiceRequestIntent::Query;
     TArray<uint8> Payload;
+    bool IsValidForDispatch() const { return RequestId.IsValid() && (Intent != EServiceRequestIntent::Mutation || IdempotencyKey.IsValid()); }
 };
 struct FServiceResponse
 {

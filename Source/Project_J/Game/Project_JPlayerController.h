@@ -10,6 +10,7 @@ class UInputMappingContext;
 class UUserWidget;
 class UProject_JProfilingCrowdComponent;
 class UProject_JEquipmentClientTestComponent;
+class UProject_JInputLeaseSubsystem;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -45,6 +46,8 @@ protected:
 
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	TWeakObjectPtr<UProject_JInputLeaseSubsystem> InputLeaseSubsystem;
 
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;

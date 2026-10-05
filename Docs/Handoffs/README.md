@@ -1,5 +1,6 @@
 # 작업 인계
 
+- [모션 매칭 복귀와 MMORPG 군중 최적화 — 2026-10-05](MotionMatchingCrowd_2026-10-05/MotionMatching_Crowd_Handoff_2026-10-05.md): 조사 결과·미착수 구현 방향·ABP 설정·검증·기존 수정 보호 사항.
 - [Combat Strafe 초기 인계 — 2026-08-03](CombatStrafe_2026-08-03/CombatStrafe_Handoff_2026-08-03.md).
 - 시스템 현대화 — 2026-09-09: [인수인계](SystemsModernization_2026-09-09/인수인계.md) · [작업 이력](SystemsModernization_2026-09-09/작업이력.md) · [병합 결과](SystemsModernization_2026-09-09/병합결과.md) · [당시 새 채팅 요청](SystemsModernization_2026-09-09/새채팅프롬프트.md).
 

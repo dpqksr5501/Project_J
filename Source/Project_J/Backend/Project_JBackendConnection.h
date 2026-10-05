@@ -19,8 +19,13 @@ enum class EProject_JBackendFailureKind : uint8
 	ServerError,
 	Unknown,
 	Overloaded,
-	Unavailable
+	Unavailable,
+	InvalidRequest,
+	UnknownOutcome
 };
+
+UENUM(BlueprintType)
+enum class EProject_JBackendRequestIntent : uint8 { Query, Mutation };
 
 USTRUCT(BlueprintType)
 struct PROJECT_J_API FProject_JBackendRequestContext
@@ -36,9 +41,13 @@ struct PROJECT_J_API FProject_JBackendRequestContext
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Backend")
 	FProject_JTransactionId TransactionId;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Backend")
+	EProject_JBackendRequestIntent Intent = EProject_JBackendRequestIntent::Query;
+
 	bool HasRequestId() const { return RequestId.IsValid(); }
 	bool HasIdempotencyKey() const { return IdempotencyKey.IsValid(); }
 	bool HasTransactionId() const { return TransactionId.IsValid(); }
+	bool IsValidForDispatch() const { return Intent != EProject_JBackendRequestIntent::Mutation || HasIdempotencyKey(); }
 };
 
 USTRUCT(BlueprintType)
@@ -52,6 +61,10 @@ struct PROJECT_J_API FProject_JBackendResponseEnvelope
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Backend")
 	bool bRetryable = false;
 
+	/** A dispatched mutation may have committed. Reconcile or replay the SAME key. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Backend")
+	bool bRequiresReconciliation = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Backend")
 	int32 HttpStatusCode = 0;
 
@@ -64,6 +77,18 @@ struct PROJECT_J_API FProject_JBackendResponseEnvelope
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Backend")
 	FProject_JBackendRequestContext RequestContext;
 };
+
+/** HTTP success is transport success; domain adapters must validate their business result. */
+inline void ApplyProjectJBackendOutcomePolicy(FProject_JBackendResponseEnvelope& Response, bool bDispatched)
+{
+	if (!Response.bSucceeded && bDispatched && Response.RequestContext.Intent == EProject_JBackendRequestIntent::Mutation &&
+		(Response.FailureKind == EProject_JBackendFailureKind::ConnectionFailed || Response.HttpStatusCode == 408 || Response.HttpStatusCode >= 500))
+	{
+		Response.FailureKind = EProject_JBackendFailureKind::UnknownOutcome;
+		Response.bRequiresReconciliation = true;
+		Response.bRetryable = Response.RequestContext.HasIdempotencyKey();
+	}
+}
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnBackendEnvelopeResponse, const FProject_JBackendResponseEnvelope&, Response);
 
@@ -96,6 +121,11 @@ public:
 		const FProject_JBackendRequestContext& RequestContext,
 		FOnBackendResponse OnResponse)
 	{
+		if (RequestContext.Intent == EProject_JBackendRequestIntent::Mutation)
+		{
+			OnResponse.ExecuteIfBound(false, TEXT("Legacy backend adapter does not support mutation context"));
+			return;
+		}
 		SendAsyncRequest(Endpoint, Payload, OnResponse);
 	}
 

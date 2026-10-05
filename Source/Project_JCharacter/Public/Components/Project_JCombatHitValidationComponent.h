@@ -46,6 +46,10 @@ public:
 	void BeginAttackNode(FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition, int32 PredictionKey = 0);
 	void EndAttack();
 	void SetHitWindowOpen(bool bOpen);
+	/** A window token belongs to the current attack node; node replacement invalidates every old token. */
+	uint64 BeginHitWindow();
+	void EndHitWindow(uint64 Token);
+	bool IsHitWindowCurrent(uint64 Token) const { return Token != 0 && HitWindowTokens.Contains(Token); }
 
 	/**
 	 * Records the server's authored weapon sweep for the active notify window.
@@ -107,6 +111,10 @@ private:
 	FGameplayTag ActiveAttackNodeTag;
 	TSet<TWeakObjectPtr<const AActor>> ServerHitActors;
 	bool bHitWindowOpen = false;
+	bool bManualHitWindowOpen = false;
+	uint64 NextHitWindowToken = 0;
+	TSet<uint64> HitWindowTokens;
+	void ApplyHitWindowState(bool bOpen);
 	FVector LastAuthoritativeTraceStart = FVector::ZeroVector;
 	FVector LastAuthoritativeTraceEnd = FVector::ZeroVector;
 	bool bHasAuthoritativeTrace = false;

@@ -515,6 +515,7 @@ public:
 	// IProject_JHandoverSerializable Interface
 	virtual void SerializeForHandover(TArray<uint8>& OutData) override;
 	virtual void DeserializeFromHandover(const TArray<uint8>& InData) override;
+	virtual bool TryApplyHandoverSnapshot(const TArray<uint8>& InData) override;
 
 	virtual void SetCharacterLevel(int32 NewLevel) override;
 

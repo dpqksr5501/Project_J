@@ -508,8 +508,15 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 		FMath::Max(CombatProfile->StrafeDynamicFacingYawRate, 0.0f);
 	const bool bVelocityNotAligned = KinematicContext.VelocityToMoveInputAngle >=
 		FMath::Max(CombatProfile->StrafeDynamicVelocityToInputAngle, 0.0f);
+	// Stable input/control yaw is not sufficient after OTM -> Strafe: the
+	// capsule can still be rotating toward that unchanged control target.
+	const float AuthoredFacingTolerance = CombatProfile->StrafeSettledFacingToleranceDegrees;
+	const float FacingTolerance = FMath::IsFinite(AuthoredFacingTolerance)
+		? FMath::Clamp(AuthoredFacingTolerance, 0.0f, 45.0f) : 5.0f;
+	const bool bActorFacingNotAligned = FMath::Abs(FMath::FindDeltaAngleDegrees(
+		PlayerOwner.GetActorRotation().Yaw, PlayerOwner.GetControlRotation().Yaw)) > FacingTolerance;
 	const bool bKeepDynamic = !bCycleCanSettle || bInputDirectionChanging ||
-		bControlYawChanging || bVelocityNotAligned;
+		bControlYawChanging || bVelocityNotAligned || bActorFacingNotAligned;
 
 	if (bKeepDynamic)
 	{
@@ -565,11 +572,17 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 		bCanForceTurnRedirectReselect &&
 		bInputReselectPolicyEnabled &&
 		FMath::Abs(MoveInputTurnAngle) >= ReselectAngle;
+	// Holding S through Tab has no input edge. The semantic facing-redirect edge
+	// must still compare the continuing walk against turn candidates, even when
+	// the optional TurnRedirect slot falls back to the same Dynamic Cycle PSD.
+	const bool bFacingRedirectStarted = bCanForceTurnRedirectReselect &&
+		bUsesCombatStrafeReselectPolicy && bMotionMatchingSelectionChanged &&
+		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn;
 	const double WorldTimeSeconds = PlayerOwner.GetWorld() ? PlayerOwner.GetWorld()->GetTimeSeconds() : 0.0;
 	const float ReselectCooldown = bUsesCombatStrafeReselectPolicy && CombatProfile
 		? CombatProfile->StrafeInputTurnReselectCooldown
 		: TurnRedirectReselectCooldown;
-	bForceMotionMatchingReselect = MotionMatchingSelectionPolicy.RequestRedirectReselect(
+	bForceMotionMatchingReselect = bFacingRedirectStarted || MotionMatchingSelectionPolicy.RequestRedirectReselect(
 		bRequestsInputTurnReselect, WorldTimeSeconds, ReselectCooldown);
 }
 
@@ -779,7 +792,18 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 		return;
 	}
 
-	const bool bKeepMovingRedirect =
+	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
+	const UProject_JCombatAnimProfile* Profile = Player ? Player->GetCombatAnimProfile() : nullptr;
+	const UCharacterMovementComponent* Movement = Player ? Player->GetCharacterMovement() : nullptr;
+	const bool bCombatFacingInterrupted =
+		AuthoritativeContext.bCombatMode &&
+		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
+		(!Player || !Profile || !Profile->bEnableStrafeFacingRedirect || !Movement ||
+			!Movement->bUseControllerDesiredRotation || Player->IsAttacking() ||
+			Player->IsDodging() || Player->IsHitReacting() || Movement->HasAnimRootMotion() ||
+			Movement->CurrentRootMotion.HasActiveRootMotionSources());
+	const bool bKeepMovingRedirect = !bCombatFacingInterrupted &&
 		(PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
 			PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
 		// A short redirect hold is meaningful only inside the same rotation mode.
@@ -863,6 +887,30 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	Input.bMoving = Context.bIsMoving;
 	Input.bCombatStrafe = AuthoritativeContext.bCombatMode &&
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
+	const UProject_JCombatAnimProfile* Profile = Player ? Player->GetCombatAnimProfile() : nullptr;
+	const UCharacterMovementComponent* Movement = Player ? Player->GetCharacterMovement() : nullptr;
+	const AController* Controller = Player ? Player->GetController() : nullptr;
+	if (Input.bCombatStrafe && Player && Player->IsLocallyControlled() && Controller && Profile &&
+		Profile->bEnableStrafeFacingRedirect && Profile->bUseCombatRotationMode && Movement && Movement->IsMovingOnGround() &&
+		Movement->bUseControllerDesiredRotation && !Player->IsAttacking() &&
+		!Player->IsDodging() && !Player->IsHitReacting() && !Movement->HasAnimRootMotion() &&
+		!Movement->CurrentRootMotion.HasActiveRootMotionSources())
+	{
+		const float EntryAngle = FMath::IsFinite(Profile->StrafeFacingRedirectEntryAngle)
+			? FMath::Clamp(Profile->StrafeFacingRedirectEntryAngle, 1.0f, 180.0f) : 30.0f;
+		const float ExitAngle = FMath::IsFinite(Profile->StrafeFacingRedirectExitAngle)
+			? FMath::Clamp(Profile->StrafeFacingRedirectExitAngle, 0.0f, EntryAngle) : FMath::Min(5.0f, EntryAngle);
+		const bool bWasFacingRedirect = PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
+			MotionMatchingSelectionPolicy.HasPublished() &&
+			MotionMatchingSelectionPolicy.GetLastPublishedRotationMode() == EProject_JLocomotionRotationMode::Strafe;
+		// DesiredFacingDeltaYaw also serves authored movement one-shots and may
+		// point along S's movement vector. Facing catch-up needs CMC's camera target.
+		const float DeltaYaw = FMath::FindDeltaAngleDegrees(
+			Player->GetActorRotation().Yaw, Controller->GetDesiredRotation().Yaw);
+		Input.bCombatFacingRedirect = FMath::IsFinite(DeltaYaw) &&
+			FMath::Abs(DeltaYaw) > (bWasFacingRedirect ? ExitAngle : EntryAngle);
+	}
 	Input.bHasMoveInput = KinematicContext.bHasMoveInput;
 	Input.GroundSpeed = KinematicContext.GroundSpeed;
 	Input.MoveInputTurnAngle = KinematicContext.MoveInputTurnAngle;

@@ -37,10 +37,22 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
 				NSLOCTEXT("ProjectJEquipmentItemDefinition", "MissingEquipmentEffect", "EquipmentEffects[{0}] has no GameplayEffect class."),
 				FText::AsNumber(EffectIndex)));
 		}
+		else if (EquipmentEffects[EffectIndex]->GetDefaultObject<UGameplayEffect>()->DurationPolicy == EGameplayEffectDurationType::Instant)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJEquipmentItemDefinition", "EffectLifetime", "EquipmentEffects must have a removable lifetime. Prefer Infinite equipment buffs; Instant equip actions require a separate execution path."));
+		}
+		else if (EquipmentEffects[EffectIndex]->GetDefaultObject<UGameplayEffect>()->DurationPolicy == EGameplayEffectDurationType::HasDuration)
+		{
+			Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJEquipmentItemDefinition", "TimedEquipment", "Timed equipment effects can expire while still equipped. Prefer Infinite unless expiry is intentional."));
+		}
 	}
 
 	for (int32 ModifierIndex = 0; ModifierIndex < StatModifiers.Num(); ++ModifierIndex)
 	{
+		if (!FMath::IsFinite(StatModifiers[ModifierIndex].Value))
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJEquipmentItemDefinition", "StatFinite", "Equipment stat modifiers must be finite."));
+		}
 		if (FMath::IsNearlyZero(StatModifiers[ModifierIndex].Value))
 		{
 			Project_J::DataValidation::AddWarning(Context, FText::Format(

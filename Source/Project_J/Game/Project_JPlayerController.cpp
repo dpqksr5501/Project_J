@@ -2,6 +2,7 @@
 
 
 #include "Project_JPlayerController.h"
+#include "Game/Project_JInputLeaseSubsystem.h"
 #include "Testing/Project_JEquipmentClientTestComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/Engine.h"
@@ -116,6 +117,14 @@ void AProject_JPlayerController::BeginPlay()
 	}
 }
 
+void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (InputLeaseSubsystem.IsValid()) { InputLeaseSubsystem->Release(this); }
+	InputLeaseSubsystem.Reset();
+	if (MobileControlsWidget) { MobileControlsWidget->RemoveFromParent(); MobileControlsWidget = nullptr; }
+	Super::EndPlay(EndPlayReason);
+}
+
 void AProject_JPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -124,11 +133,13 @@ void AProject_JPlayerController::SetupInputComponent()
 	if (IsLocalPlayerController())
 	{
 		// Add Input Mapping Contexts
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		if (UProject_JInputLeaseSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UProject_JInputLeaseSubsystem>(GetLocalPlayer()))
 		{
+			if (InputLeaseSubsystem.IsValid() && InputLeaseSubsystem.Get() != Subsystem) { InputLeaseSubsystem->Release(this); }
+			InputLeaseSubsystem = Subsystem;
 			for (UInputMappingContext* CurrentContext : DefaultMappingContexts)
 			{
-				Subsystem->AddMappingContext(CurrentContext, 0);
+				Subsystem->Acquire(this, CurrentContext);
 			}
 
 			// only add these IMCs if we're not using mobile touch input
@@ -136,7 +147,7 @@ void AProject_JPlayerController::SetupInputComponent()
 			{
 				for (UInputMappingContext* CurrentContext : MobileExcludedMappingContexts)
 				{
-					Subsystem->AddMappingContext(CurrentContext, 0);
+					Subsystem->Acquire(this, CurrentContext);
 				}
 			}
 		}

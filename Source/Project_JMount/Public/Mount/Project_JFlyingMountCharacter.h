@@ -5,6 +5,9 @@
 #include "InputAction.h"
 #include "Project_JFlyingMountCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class EProject_JMountLandingFailure : uint8 { None, Blocked, TimedOut, Cancelled };
+
 /** Shared aerial movement rules for wyverns, griffins, and dragons. */
 UCLASS(Abstract, Blueprintable)
 class PROJECT_JMOUNT_API AProject_JFlyingMountCharacter : public AProject_JMountCharacter
@@ -20,6 +23,9 @@ public:
 
 	/** Requests the protected landing phase. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Mount|Flight") bool EndFlight();
+	/** Cancels an uncompleted landing without forcing the capsule into walking/terrain. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Mount|Flight") bool CancelLanding();
+	UFUNCTION(BlueprintPure, Category="Mount|Flight") EProject_JMountLandingFailure GetLastLandingFailure() const { return LastLandingFailure; }
 
 	/** Server-side cue used by the takeoff timer and optionally an animation event. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Mount|Flight") bool CommitTakeOffImpulse();
@@ -37,6 +43,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void UnPossessed() override;
+	virtual void PawnClientRestart() override;
+	void RestoreFlightInputBindings(UInputComponent* PlayerInputComponent);
 	virtual void OnRep_Controller() override;
 	/** Keeps inherited Blueprint Event Tick alive; native subclasses can opt in below. */
 	void RefreshFlightTickEnabled();
@@ -53,7 +61,7 @@ protected:
 	void HandleAscend(const struct FInputActionValue& Value);
 	void HandleDescend(const struct FInputActionValue& Value);
 	void HandleTakeOff();
-	void HandleDismount();
+	virtual void HandleDismount() override;
 	UFUNCTION(Server, Reliable) void ServerRequestBeginFlight();
 	UFUNCTION()
 	void OnRep_FlightState(EProject_JMountFlightState PreviousState);
@@ -69,6 +77,9 @@ protected:
 	void FinishLanding();
 	void UpdateAutoAscent(float DeltaSeconds);
 	void UpdateLanding(float DeltaSeconds);
+	bool AbortLanding(EProject_JMountLandingFailure Reason);
+	UFUNCTION(BlueprintImplementableEvent, Category="Mount|Flight")
+	void K2_OnLandingFailed(EProject_JMountLandingFailure Reason, int32 AttemptId);
 	void ApplyFlightBraking(bool bGliding);
 	void ApplyFlightStateTags(EProject_JMountFlightState PreviousState, EProject_JMountFlightState NewState);
 	float ResolveTakeOffImpulseTime() const;
@@ -77,7 +88,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input") TObjectPtr<class UInputAction> LookAction = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Input") TObjectPtr<class UInputAction> AscendAction = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category="Input") TObjectPtr<class UInputAction> DescendAction = nullptr;
-	UPROPERTY(EditDefaultsOnly, Category="Input") TObjectPtr<class UInputAction> InteractAction = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight") float FlightSpeed = 1200.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight") float GlideSpeed = 900.0f;
 	/** Source sequence used to derive the authoritative takeoff cue time from its notify track. */
@@ -88,6 +98,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing", meta=(ClampMin="1.0")) float LandingDescentSpeed = 450.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing", meta=(ClampMin="0.0")) float LandingCompletionTolerance = 30.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing", meta=(ClampMin="0.0", ClampMax="89.0")) float MaxLandingSlopeDegrees = 35.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing", meta=(ClampMin="0.1", Units="s")) float LandingStallTimeout = 1.5f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing", meta=(ClampMin="1.0", Units="s")) float MaxLandingDuration = 60.0f;
 	/** Source sequence used to derive the authoritative touchdown cue time from its notify track. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Landing") TObjectPtr<class UAnimSequenceBase> LandingCueAnimation = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mount|Flight|Braking", meta=(ClampMin="0.0")) float FlyingBrakingDeceleration = 2200.0f;
@@ -97,6 +109,11 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") bool bIsGliding = false;
 	UPROPERTY(ReplicatedUsing=OnRep_FlightState, BlueprintReadOnly, Category="Mount|Flight") EProject_JMountFlightState FlightState = EProject_JMountFlightState::Grounded;
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") float FlightPhaseStartServerTime = 0.0f;
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") EProject_JMountLandingFailure LastLandingFailure = EProject_JMountLandingFailure::None;
+	UPROPERTY(Replicated, BlueprintReadOnly, Category="Mount|Flight") int32 LandingAttemptId = 0;
+	float LandingElapsed = 0.0f;
+	float LandingStalledSeconds = 0.0f;
+	double LastLandingProgressZ = 0.0;
 	float AutoAscentTargetZ = 0.0f;
 	float ActiveTakeOffImpulseTime = 0.45f;
 	float ActiveLandingTouchdownTime = 0.0f;

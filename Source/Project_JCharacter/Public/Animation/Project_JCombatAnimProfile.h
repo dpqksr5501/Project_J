@@ -36,16 +36,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
 	bool bAllowSprintInCombat = false;
 
+	/** Grounded moving Strafe follows camera yaw through CharacterMovement's
+	 * bounded rotation, rather than Pawn::FaceRotation snapping the capsule. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement", meta = (ClampMin = "1.0", ClampMax = "1080.0", UIMin = "90.0", UIMax = "720.0", Units = "deg/s"))
+	float CombatFacingRotationRateYaw = 360.0f;
+
+	/** Expose grounded moving facing catch-up to Pose Search, including OTM -> Strafe. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect")
+	bool bEnableStrafeFacingRedirect = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "1.0", ClampMax = "180.0", Units = "deg"))
+	float StrafeFacingRedirectEntryAngle = 30.0f;
+
+	/** Hysteresis: retain the redirect until facing is within this angle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "0.0", ClampMax = "45.0", Units = "deg"))
+	float StrafeFacingRedirectExitAngle = 5.0f;
+
 	/**
 	 * Optional combat loop Motion Matching asset set used while this profile owns
 	 * camera-facing combat rotation. Assign Default/Idle and Run/Sprint Dynamic
 	 * Cycle PSDs; an optional SettledCycle is a Loop-only PSD for stable local Strafe.
-	 * Combat Strafe deliberately leaves Run/Sprint TurnRedirect empty; moving turn
-	 * assets belong to OTM only.
-	 * authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
+	 * Optional Run/Sprint TurnRedirect PSDs may contain combat-facing moving turns.
+	 * With those slots empty, facing redirects search the existing Dynamic Cycle.
+	 * Authored Start, Stop, Pivot, Jump, Fall Off and Landing clips stay owned by
 	 * the State Controller Chooser / direct Blend Stack path.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle and Run/Sprint Dynamic Cycle PSDs. Optionally assign Loop-only SettledCycle PSDs for stable local Strafe. Leave TurnRedirect empty for Combat Strafe. One-shot Start, Stop, Pivot, Jump, Fall Off and Landing assets belong in the State Controller Choosers."))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching", meta = (ToolTip = "Assign combat Idle and Run/Sprint Dynamic Cycle PSDs. Optional TurnRedirect PSDs serve moving facing changes; empty slots retain Dynamic Cycle. Optional Loop-only SettledCycle PSDs serve stable local Strafe. One-shot clips belong in the State Controller Choosers."))
 	TObjectPtr<UProject_JMotionMatchingAssetSet> CombatStrafeMotionMatchingAssetSet = nullptr;
 
 	/**
@@ -59,6 +75,10 @@ public:
 	/** Continuous stable duration required before selecting the optional SettledCycle PSD. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float StrafeSettledCycleDelay = 0.25f;
+
+	/** Keep turn-capable Dynamic Cycle while the capsule catches up to camera yaw. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "45.0", Units = "deg"))
+	float StrafeSettledFacingToleranceDegrees = 5.0f;
 
 	/** Input-direction turn at or above this angle keeps the Dynamic Cycle PSD active. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "45.0", Units = "deg"))

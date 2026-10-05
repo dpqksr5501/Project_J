@@ -4,15 +4,27 @@
 #include "Components/ActorComponent.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "AITypes.h"
+#include "TimerManager.h"
 #include "Project_JNPCActionComponent.generated.h"
 
 class AAIController;
 class UAbilitySystemComponent;
+class UGameplayAbility;
 class UProject_JTargetScoringComponent;
 class UProject_JNPCPathSubsystem;
 struct FProjectJNPCPathCompletion;
 struct FPathFollowingResult;
 struct FAbilityEndedData;
+
+struct FProjectJNPCActionSuspension
+{
+	TWeakObjectPtr<UProject_JTargetScoringComponent> Scoring;
+	FGameplayAbilitySpecHandle Attack;
+	uint64 Revision = 0;
+	uint64 OwnershipToken = 0;
+	bool IsValid() const { return Revision != 0; }
+};
+enum class EProjectJNPCActionResume : uint8 { Resumed, Deferred, Superseded };
 
 UENUM(BlueprintType)
 enum class EProjectJNPCActionState : uint8 { Disabled, Idle, AwaitingPath, FollowingPath, InRange, Attacking, Backoff };
@@ -22,6 +34,7 @@ struct FProjectJNPCActionStats
 {
 	uint64 PathRequests = 0, PathRejected = 0, PathFailed = 0, PathStale = 0, RetryScheduled = 0, Arrivals = 0;
 	uint64 ReplacedMoves = 0;
+	uint64 ResumeDeferred = 0, ResumeExhausted = 0;
 };
 
 /** Explicit server-only consumer. Existing controller, faction registry, grants and abilities remain authoritative. */
@@ -36,8 +49,12 @@ public:
 	 * Its targeting code can read GetIntentTarget(), and must validate hits/cancellation itself. */
 	UFUNCTION(BlueprintCallable, Category="NPC|Action")
 	bool StartActions(UProject_JTargetScoringComponent* Scoring, FGameplayAbilitySpecHandle AttackAbility);
+	static bool SupportsAttackAbility(const UGameplayAbility* Ability);
 	UFUNCTION(BlueprintCallable, Category="NPC|Action")
 	void StopActions();
+	/** Activation ownership survives a Mass suspension; an explicit stop/new start supersedes it. */
+	uint64 GetOwnershipToken() const { return OwnershipToken; }
+	bool StopActionsIfOwned(uint64 Token);
 	UFUNCTION(BlueprintPure, Category="NPC|Action")
 	AActor* GetIntentTarget() const { return IntentTarget.Get(); }
 	/** Current registry, authority, life, range and decision age, rechecked at ability/hit commit. */
@@ -51,7 +68,10 @@ public:
 	/** GT representation handoff reads the start contract before StopActions releases it. */
 	UProject_JTargetScoringComponent* GetScoringSource() const { return ScoringComponent.Get(); }
 	FGameplayAbilitySpecHandle GetAttackAbilityHandle() const { return AttackHandle; }
-	bool CanSuspendMovement() const { return bEnabled && !HasForeignMovement(); }
+	bool CanSuspendMovement() const { return IsContextValid() && !HasForeignMovement(); }
+	bool SuspendActions(FProjectJNPCActionSuspension& OutSuspension);
+	EProjectJNPCActionResume ResumeSuspendedActions(const FProjectJNPCActionSuspension& Suspension);
+	bool HasPendingResume() const { return PendingResume.IsValid(); }
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="50", ClampMax="2000"))
 	double AttackRange = 200;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="25", ClampMax="1000"))
@@ -77,6 +97,8 @@ private:
 	void OnMoveFinished(FAIRequestID RequestId, const FPathFollowingResult& Result);
 	void OnAbilityEnded(const FAbilityEndedData& Data);
 	void OnTearDown(UWorld* World);
+	void RetrySuspendedActions();
+	void ClearPendingResume();
 	bool IsContextValid() const;
 	bool IsTargetValid() const;
 	bool HasForeignMovement() const;
@@ -97,4 +119,9 @@ private:
 	EProjectJNPCActionState State = EProjectJNPCActionState::Disabled;
 	bool bEnabled = false, bEndingPlay = false, bOwnsAttack = false, bStopping = false;
 	FProjectJNPCActionStats Stats;
+	uint64 ActionRevision = 0;
+	uint64 NextOwnershipToken = 0, OwnershipToken = 0;
+	FProjectJNPCActionSuspension PendingResume;
+	FTimerHandle ResumeTimer;
+	int32 ResumeAttempts = 0;
 };

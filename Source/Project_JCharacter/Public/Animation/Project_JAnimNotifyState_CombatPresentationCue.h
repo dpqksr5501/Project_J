@@ -18,4 +18,10 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Presentation")
 	FGameplayTag CueTag;
+	struct FCueLease
+	{
+		TWeakObjectPtr<class UProject_JCombatPresentationComponent> Presentation;
+		uint64 Token = 0;
+	};
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FCueLease>> Leases;
 };

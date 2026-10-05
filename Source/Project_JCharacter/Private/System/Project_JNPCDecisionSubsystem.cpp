@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformTime.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "Misc/ScopeExit.h"
 
 struct FProjectJNPCDecisionAgent
 {
@@ -330,6 +331,14 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 	check(IsInGameThread());
 	if (!IsActiveServer() || !Scoring.IsValid() || bTicking) { return; }
 	TGuardValue<bool> TickGuard(bTicking, true);
+	const double FullStarted = FPlatformTime::Seconds();
+	ON_SCOPE_EXIT
+	{
+		Stats.LastFullTickMilliseconds = (FPlatformTime::Seconds() - FullStarted) * 1000;
+		Stats.MaxFullTickMilliseconds = FMath::Max(Stats.MaxFullTickMilliseconds, Stats.LastFullTickMilliseconds);
+	};
+	Stats.LastSharedSnapshotMilliseconds = Stats.OldestReadyResultMilliseconds = 0;
+	for (const auto& Entry : Ready) { Stats.OldestReadyResultMilliseconds = FMath::Max(Stats.OldestReadyResultMilliseconds, (FullStarted - Entry->Submitted) * 1000); }
 	UpdateActions();
 	if (!IsActiveServer()) { return; }
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_CollectAndApply);
@@ -383,6 +392,8 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 	uint64 CapturedRegistryRevision = 0;
 	const auto CaptureTargets = [&]()
 	{
+		const double SnapshotStarted = FPlatformTime::Seconds();
+		ON_SCOPE_EXIT { Stats.LastSharedSnapshotMilliseconds += (FPlatformTime::Seconds() - SnapshotStarted) * 1000; };
 		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCDecision_SharedSnapshot);
 		CapturedRegistryRevision = TargetRegistryRevision;
 		const auto Registry = Targets; // IsDead is a GT interface call; do not hold registry references across it.

@@ -12,6 +12,8 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogProjectJFlyingMount, Log, All);
+
 AProject_JFlyingMountCharacter::AProject_JFlyingMountCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -51,6 +53,7 @@ void AProject_JFlyingMountCharacter::OnRep_Controller()
 		ClearFlightInputBindings();
 		ClearPendingTakeOffRequest();
 	}
+	else if (InputComponent) { RestoreFlightInputBindings(InputComponent); }
 	RefreshFlightTickEnabled();
 }
 
@@ -88,6 +91,8 @@ void AProject_JFlyingMountCharacter::GetLifetimeReplicatedProps(TArray<FLifetime
 	DOREPLIFETIME(AProject_JFlyingMountCharacter, bIsGliding);
 	DOREPLIFETIME(AProject_JFlyingMountCharacter, FlightState);
 	DOREPLIFETIME(AProject_JFlyingMountCharacter, FlightPhaseStartServerTime);
+	DOREPLIFETIME(AProject_JFlyingMountCharacter, LastLandingFailure);
+	DOREPLIFETIME(AProject_JFlyingMountCharacter, LandingAttemptId);
 }
 
 bool AProject_JFlyingMountCharacter::BeginFlight()
@@ -133,6 +138,27 @@ bool AProject_JFlyingMountCharacter::CommitTakeOffImpulse()
 bool AProject_JFlyingMountCharacter::EndFlight()
 {
 	return BeginLanding();
+}
+
+bool AProject_JFlyingMountCharacter::CancelLanding()
+{
+	return AbortLanding(EProject_JMountLandingFailure::Cancelled);
+}
+
+bool AProject_JFlyingMountCharacter::AbortLanding(EProject_JMountLandingFailure Reason)
+{
+	if (!HasAuthority() || FlightState != EProject_JMountFlightState::Landing || bLandingTouchdownConfirmed) { return false; }
+	const int32 Attempt = LandingAttemptId;
+	LastLandingFailure = Reason;
+	bLandingTouchdownCueReached = false;
+	bIsGliding = false;
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	GetCharacterMovement()->MaxFlySpeed = FlightSpeed;
+	ApplyFlightBraking(false);
+	SetFlightState(EProject_JMountFlightState::Flying);
+	K2_OnLandingFailed(Reason, Attempt);
+	return true;
 }
 
 void AProject_JFlyingMountCharacter::SetGliding(bool bNewGliding)
@@ -268,10 +294,14 @@ bool AProject_JFlyingMountCharacter::BeginLanding()
 	bIsGliding = false;
 	bLandingTouchdownConfirmed = false;
 	bLandingTouchdownCueReached = false;
+	LastLandingFailure = EProject_JMountLandingFailure::None;
+	LandingAttemptId = LandingAttemptId == MAX_int32 ? 1 : LandingAttemptId + 1;
+	LandingElapsed = LandingStalledSeconds = 0.0f;
+	LastLandingProgressZ = GetActorLocation().Z;
 	GetCharacterMovement()->StopMovementImmediately();
 	ApplyFlightBraking(false);
-	SetFlightState(EProject_JMountFlightState::Landing);
 	ActiveLandingTouchdownTime = ResolveFlightCueTime(LandingCueAnimation, EProject_JMountFlightAnimationCue::LandingTouchdown, 0.0f);
+	SetFlightState(EProject_JMountFlightState::Landing);
 	return true;
 }
 
@@ -334,6 +364,18 @@ void AProject_JFlyingMountCharacter::UpdateLanding(float DeltaSeconds)
 		return;
 	}
 
+	const float Step = FMath::IsFinite(DeltaSeconds) ? FMath::Max(0.0f, DeltaSeconds) : 0.0f;
+	LandingElapsed += Step;
+	if (GetActorLocation().Z < LastLandingProgressZ - 5.0)
+	{
+		LastLandingProgressZ = GetActorLocation().Z;
+		LandingStalledSeconds = 0.0f;
+	}
+	else { LandingStalledSeconds += Step; }
+	const float StallLimit = FMath::IsFinite(LandingStallTimeout) ? FMath::Max(0.1f, LandingStallTimeout) : 1.5f;
+	const float DurationLimit = FMath::IsFinite(MaxLandingDuration) ? FMath::Max(1.0f, MaxLandingDuration) : 60.0f;
+	if (LandingStalledSeconds >= StallLimit) { AbortLanding(EProject_JMountLandingFailure::Blocked); return; }
+	if (LandingElapsed >= DurationLimit) { AbortLanding(EProject_JMountLandingFailure::TimedOut); return; }
 	GetCharacterMovement()->Velocity = FVector::DownVector * LandingDescentSpeed;
 }
 
@@ -438,8 +480,19 @@ float AProject_JFlyingMountCharacter::ResolveFlightCueTime(const UAnimSequenceBa
 
 void AProject_JFlyingMountCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	ClearFlightInputBindings();
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	RestoreFlightInputBindings(PlayerInputComponent);
+}
+
+void AProject_JFlyingMountCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	if (IsLocallyControlled() && InputComponent) { RestoreFlightInputBindings(InputComponent); }
+}
+
+void AProject_JFlyingMountCharacter::RestoreFlightInputBindings(UInputComponent* PlayerInputComponent)
+{
+	ClearFlightInputBindings();
 	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		BoundFlightInputComponent = Input;
@@ -451,7 +504,6 @@ void AProject_JFlyingMountCharacter::SetupPlayerInputComponent(UInputComponent* 
 			FlightInputBindingHandles.Add(Input->BindAction(AscendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleAscend).GetHandle());
 		}
 		if (DescendAction) FlightInputBindingHandles.Add(Input->BindAction(DescendAction, ETriggerEvent::Triggered, this, &AProject_JFlyingMountCharacter::HandleDescend).GetHandle());
-		if (InteractAction) FlightInputBindingHandles.Add(Input->BindAction(InteractAction, ETriggerEvent::Started, this, &AProject_JFlyingMountCharacter::HandleDismount).GetHandle());
 	}
 }
 
@@ -509,8 +561,13 @@ void AProject_JFlyingMountCharacter::ServerRequestBeginFlight_Implementation()
 
 void AProject_JFlyingMountCharacter::HandleDismount()
 {
+	if (IsFlightInputLocked())
+	{
+		UE_LOG(LogProjectJFlyingMount, Display, TEXT("DismountRejected Mount=%s Reason=FlightInputLocked State=%d PendingTakeOff=%d"),
+			*GetNameSafe(this), static_cast<int32>(FlightState), bTakeOffRequestPending);
+	}
 	if (!IsFlightInputLocked())
 	{
-		ServerRequestDismount();
+		Super::HandleDismount();
 	}
 }

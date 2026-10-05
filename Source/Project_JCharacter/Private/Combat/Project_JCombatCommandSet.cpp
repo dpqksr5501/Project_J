@@ -16,7 +16,9 @@ bool MatchesOwnerTags(const FGameplayTagContainer& OwnerTags, const FGameplayTag
 bool DoesCommandMatchHistory(const FProject_JCombatCommandDefinition& Command, const TArray<FProject_JCombatCommandInputEntry>& InputHistory)
 {
 	const int32 SequenceLength = Command.OrderedInputSequence.Num();
-	if (SequenceLength == 0 || InputHistory.Num() < SequenceLength)
+	if (SequenceLength == 0 || SequenceLength > UProject_JCombatCommandSet::MaxSupportedInputCount
+		|| !FMath::IsFinite(Command.MaxTimeBetweenInputs) || Command.MaxTimeBetweenInputs <= 0.0f
+		|| InputHistory.Num() < SequenceLength)
 	{
 		return false;
 	}
@@ -24,6 +26,7 @@ bool DoesCommandMatchHistory(const FProject_JCombatCommandDefinition& Command, c
 	const int32 StartIndex = InputHistory.Num() - SequenceLength;
 	for (int32 SequenceIndex = 0; SequenceIndex < SequenceLength; ++SequenceIndex)
 	{
+		if (!FMath::IsFinite(InputHistory[StartIndex + SequenceIndex].TimestampSeconds)) { return false; }
 		if (!InputHistory[StartIndex + SequenceIndex].InputTag.MatchesTagExact(Command.OrderedInputSequence[SequenceIndex]))
 		{
 			return false;
@@ -114,7 +117,11 @@ EDataValidationResult UProject_JCombatCommandSet::IsDataValid(FDataValidationCon
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJCombatCommandSet", "MissingResult", "Command '{0}' has no ResultInputTag."), FText::FromString(Command.CommandTag.ToString())));
 		}
-		if (Command.MaxTimeBetweenInputs <= 0.0f)
+		if (Command.OrderedInputSequence.Num() > MaxSupportedInputCount)
+		{
+			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJCombatCommandSet", "SequenceLimit", "Command sequences exceed the runtime history limit of 16 inputs."));
+		}
+		if (!FMath::IsFinite(Command.MaxTimeBetweenInputs) || Command.MaxTimeBetweenInputs <= 0.0f)
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(NSLOCTEXT("ProjectJCombatCommandSet", "InvalidInterval", "Command '{0}' has a non-positive MaxTimeBetweenInputs."), FText::FromString(Command.CommandTag.ToString())));
 		}

@@ -63,6 +63,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
 	void StopCue(FGameplayTag CueTag);
 
+	/** End only the state notify's original lease, never infer the current attack. */
+	uint64 BeginCueLease(FGameplayTag CueTag);
+	void EndCueLease(uint64 Token);
+	bool IsCueLeaseCurrent(uint64 Token) const { return CueLeases.Contains(Token); }
+
 	/** Call after combat style, advancement, or visual weapon data changes. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
 	void RefreshPresentation();
@@ -73,6 +78,9 @@ public:
 private:
 	friend class FProjectJPresentationRecoveryTest;
 	friend class FProjectJCrowdEffectsTest;
+	friend class FProjectJCueLeaseOwnershipTest;
+	uint64 NextCueLeaseToken = 0;
+	TMap<uint64, FGameplayTag> CueLeases;
 	const FProject_JCombatVFXCueDefinition* ResolveCue(FGameplayTag CueTag) const;
 	void PlayCueLocal(FGameplayTag CueTag);
 	void StopCueLocal(FGameplayTag CueTag);

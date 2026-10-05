@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 174개, Markdown 135개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 212개, Markdown 146개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -140,6 +140,16 @@
 | [Project J Architecture Audit - 2026-06-07](../Review/Architecture/Architecture_Audit_20260607.md) | 검토 기록 | Review/Architecture/Architecture_Audit_20260607.md |
 | [콘텐츠 확장 구조 검토 — 2026-09-13](../Review/Architecture/Extensions/Extension_Architecture_Review_2026-09-13.md) | 검토 기록 | Review/Architecture/Extensions/Extension_Architecture_Review_2026-09-13.md |
 | [MMORPG Architecture Review](../Review/Architecture/MMORPGArchitectureReview.md) | 검토 기록 | Review/Architecture/MMORPGArchitectureReview.md |
+| [잔여 소스 아키텍처 고도화 적용 기록](../Review/Architecture/Project_J_Architecture_Maturity_Implementation_2026-10-03.md) | 검토 기록 | Review/Architecture/Project_J_Architecture_Maturity_Implementation_2026-10-03.md |
+| [캐릭터 컴포넌트·DA·아키텍처 고도화 점검](../Review/Architecture/Project_J_Character_Architecture_Maturity_Audit_2026-10-03.md) | 검토 기록 | Review/Architecture/Project_J_Character_Architecture_Maturity_Audit_2026-10-03.md |
+| [이동 중 하차 후 탈것 이동 정리 — 2026-10-05](../Review/Architecture/Project_J_Mount_Dismount_Motion_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Dismount_Motion_2026-10-05.md |
+| [재탑승 후 F·이동 입력 복구 — 2026-10-05](../Review/Architecture/Project_J_Mount_Remount_Input_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Remount_Input_2026-10-05.md |
+| [F 하차·TAB Strafe 방향 전환 수정](../Review/Architecture/Project_J_Mount_Strafe_Fix_2026-10-04.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Strafe_Fix_2026-10-04.md |
+| [Pivot 입력 반응과 F 하차 후속 수정 — 2026-10-05](../Review/Architecture/Project_J_Pivot_Mount_Followup_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Pivot_Mount_Followup_2026-10-05.md |
+| [플레이어·궤적·애니메이션 구조 재점검](../Review/Architecture/Project_J_Player_Animation_Audit_2026-10-04.md) | 검토 기록 | Review/Architecture/Project_J_Player_Animation_Audit_2026-10-04.md |
+| [플레이어·궤적·애니메이션 고도화 적용](../Review/Architecture/Project_J_Player_Animation_Implementation_2026-10-04.md) | 검토 기록 | Review/Architecture/Project_J_Player_Animation_Implementation_2026-10-04.md |
+| [잔여 전체 소스 아키텍처 고도화 감사](../Review/Architecture/Project_J_Remaining_Source_Maturity_Audit_2026-10-03.md) | 검토 기록 | Review/Architecture/Project_J_Remaining_Source_Maturity_Audit_2026-10-03.md |
+| [이동 중 Strafe 회전의 모션 매칭 연결](../Review/Architecture/Project_J_Strafe_Facing_Redirect_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Strafe_Facing_Redirect_2026-10-05.md |
 | [Project_J MMORPG Architecture & Performance Audit](../Review/Architecture/ProjectJ_Architecture_Audit_2026-09-03.md) | 검토 기록 | Review/Architecture/ProjectJ_Architecture_Audit_2026-09-03.md |
 | [Phase 1 — Audit Only](../Review/Architecture/ProjectJ_Architecture_Audit.md) | 검토 기록 | Review/Architecture/ProjectJ_Architecture_Audit.md |
 | [아키텍처 검토 기록](../Review/Architecture/README.md) | 목차·문서 관리 | Review/Architecture/README.md |
@@ -163,6 +173,7 @@
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
 | [Combat Strafe handoff (2026-08-03)](../Handoffs/CombatStrafe_2026-08-03/CombatStrafe_Handoff_2026-08-03.md) | 작업 인계 | Handoffs/CombatStrafe_2026-08-03/CombatStrafe_Handoff_2026-08-03.md |
+| [Project J 모션 매칭 전환과 군중 최적화 작업 인계](../Handoffs/MotionMatchingCrowd_2026-10-05/MotionMatching_Crowd_Handoff_2026-10-05.md) | 작업 인계 | Handoffs/MotionMatchingCrowd_2026-10-05/MotionMatching_Crowd_Handoff_2026-10-05.md |
 | [작업 인계](../Handoffs/README.md) | 목차·문서 관리 | Handoffs/README.md |
 | [main 병합 결과 — 2026-09-10](../Handoffs/SystemsModernization_2026-09-09/병합결과.md) | 작업 인계 | Handoffs/SystemsModernization_2026-09-09/병합결과.md |
 | [새 작업에 붙여넣을 프롬프트 — main 병합 후](../Handoffs/SystemsModernization_2026-09-09/새채팅프롬프트.md) | 작업 인계 | Handoffs/SystemsModernization_2026-09-09/새채팅프롬프트.md |
@@ -217,5 +228,8 @@
 | [Benchmarks/Data](../Benchmarks/Data) | 10 | CSV·JSON·재계산 원본 |
 | [Benchmarks/ExecutionExperiments_2026-09-12](../Benchmarks/ExecutionExperiments_2026-09-12) | 1 | CSV·JSON·재계산 원본 |
 | [Benchmarks/ExecutionExperiments_2026-09-12/Data](../Benchmarks/ExecutionExperiments_2026-09-12/Data) | 18 | CSV·JSON·재계산 원본 |
+| [Handoffs/MotionMatchingCrowd_2026-10-05](../Handoffs/MotionMatchingCrowd_2026-10-05) | 1 | 문서 이동·보존 기록 |
+| [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Maintenance]() | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
+| [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |

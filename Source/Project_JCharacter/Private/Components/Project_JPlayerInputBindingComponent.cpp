@@ -6,6 +6,7 @@
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
+#include "Mount/Project_JMountComponent.h"
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 {
@@ -28,6 +29,10 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	}
 
 	BoundEnhancedInputComponent = EnhancedInputComponent;
+	if (UProject_JMountComponent* Mount = BoundPlayerCharacter->GetMountComponent())
+	{
+		Mount->SetRiderInteractAction(ActionSet.InteractAction);
+	}
 	const auto BindOwnedAction = [this, EnhancedInputComponent](auto Action, ETriggerEvent Event, auto* Object, auto Method, auto... Args)
 	{
 		const UInputAction* InputAction = Action;

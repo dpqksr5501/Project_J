@@ -96,9 +96,9 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 	Runtime.CommitPivot(6, 11, FVector::ForwardVector, FVector::RightVector);
 	FProject_JStateControllerRuntime::FPivotIntent NewPivot;
 	NewPivot.RequestRevision = 7;
-	NewPivot.MoveIntentRevision = 12;
+	NewPivot.MoveIntentRevision = 11;
 	NewPivot.bIsPivoting = true;
-	TestEqual(TEXT("새 Pivot은 진행 중인 Pivot을 대체한다"),
+	TestEqual(TEXT("입력 변경 없는 새 Pivot 요청은 진행 중인 Pivot을 대체한다"),
 		Runtime.ReconcilePivot(NewPivot, 5.0).Interruption,
 		FProject_JStateControllerRuntime::EPivotInterruption::Superseded);
 	TestTrue(TEXT("대체 후보는 새 Pivot으로 확정할 수 있다"),
@@ -146,6 +146,39 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 	TestEqual(TEXT("리셋은 로컬 TIP 이벤트 경계를 지운다"), Runtime.GetLastTurnSequence(true), 0);
 	TestEqual(TEXT("리셋은 착지 리비전을 지운다"), Runtime.GetHeldLandingRevision(), INDEX_NONE);
 	TestEqual(TEXT("소유자 리셋은 억제된 Pivot 리비전을 지운다"), Runtime.GetPivot().SuppressedRequestRevision, 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPivotInputRedirectTest,
+	"ProjectJ.PivotMountFollowup.Pivot.InputRedirectLifetime",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FProjectJPivotInputRedirectTest::RunTest(const FString&)
+{
+	FProject_JStateControllerRuntime Runtime;
+	Runtime.CommitPivot(12, 30, FVector::ForwardVector, FVector::RightVector);
+	Runtime.BeginHold(EProject_JStateControllerPresentationState::TransitionToLocomotion, 1.0);
+	Runtime.CancelPivotForInputRedirect(1.1);
+	TestFalse(TEXT("Camera redirect releases the committed Pivot"), Runtime.HasCommittedPivot());
+	TestEqual(TEXT("Camera redirect releases Blend Stack hold"), Runtime.GetHeldState(), EProject_JStateControllerPresentationState::Disabled);
+	FProject_JStateControllerRuntime::FPivotIntent Stale;
+	Stale.RequestRevision = 12; Stale.MoveIntentRevision = 30;
+	Stale.bIsPivoting = true; Stale.bHasMoveInput = true;
+	Stale.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
+	TestTrue(TEXT("Same held WASD plus a delayed Pivot snapshot stays in Cycle"), Runtime.ReconcilePivot(Stale, 1.2).bForceCycle);
+	TestFalse(TEXT("Same request cannot recommit even if its intent changes"), Runtime.CommitPivot(12, 31, FVector::RightVector, FVector::ForwardVector));
+	TestTrue(TEXT("A new deliberate Pivot remains available"), Runtime.CommitPivot(13, 32, FVector::RightVector, FVector::ForwardVector));
+	Stale.RequestRevision = 13; Stale.MoveIntentRevision = 32;
+	TestTrue(TEXT("Unchanged input preserves authored Pivot playback"), Runtime.ReconcilePivot(Stale, 1.3).bKeepCommittedPivot);
+	Stale.MoveIntentRevision = 33;
+	Stale.RequestRevision = 14;
+	TestTrue(TEXT("WASD redirect still returns to Cycle"), Runtime.ReconcilePivot(Stale, 1.4).bForceCycle);
+	TestFalse(TEXT("Input-generated replacement Pivot cannot override responsive MM"), Runtime.CommitPivot(14, 33, FVector::RightVector, FVector::ForwardVector));
+	Runtime.CommitPivot(15, 34, FVector::ForwardVector, FVector::RightVector);
+	Stale.RequestRevision = 15; Stale.MoveIntentRevision = 35; Stale.bStopRequested = true;
+	TestEqual(TEXT("Input release retains Stop priority over redirect"), Runtime.ReconcilePivot(Stale, 1.5).Interruption, FProject_JStateControllerRuntime::EPivotInterruption::Stop);
+	Runtime.Reset();
+	TestTrue(TEXT("Owner reset clears request suppression"), Runtime.CommitPivot(13, 33, FVector::ForwardVector, FVector::RightVector));
 	return true;
 }
 

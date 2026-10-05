@@ -45,6 +45,7 @@ struct FProject_JLocomotionContextBuilder
 		bool bStarting = false;
 		bool bMoving = false;
 		bool bCombatStrafe = false;
+		bool bCombatFacingRedirect = false;
 		bool bHasMoveInput = false;
 		EProject_JGroundMotionMode GroundMode = EProject_JGroundMotionMode::Idle;
 		float GroundSpeed = 0.0f;
@@ -62,7 +63,15 @@ struct FProject_JLocomotionContextBuilder
 		if (Input.bShouldTurnInPlace) return EProject_JLocomotionPhaseFamily::TurnInPlace;
 		if (Input.bPivoting) return EProject_JLocomotionPhaseFamily::Pivot;
 		if (Input.bStarting) return EProject_JLocomotionPhaseFamily::Start;
-		if (Input.bCombatStrafe) return Input.bMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+		if (Input.bCombatStrafe)
+		{
+			if (Input.bCombatFacingRedirect && Input.bMoving && Input.bHasMoveInput &&
+				Input.GroundSpeed >= Input.TurnMinSpeed)
+			{
+				return EProject_JLocomotionPhaseFamily::Turn;
+			}
+			return Input.bMoving ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+		}
 		if (Input.bMoving && Input.bHasMoveInput && Input.GroundSpeed >= Input.TurnMinSpeed &&
 			FMath::Abs(Input.MoveInputTurnAngle) >= Input.TurnAngleThreshold)
 		{

@@ -55,6 +55,8 @@ public:
 	/** Age of the last generated snapshot, or -1 after reset until the next generation. */
 	UFUNCTION(BlueprintPure, Category = "Motion Matching|Trajectory")
 	float GetTrajectoryAgeSeconds() const;
+	bool IsTrajectoryPredictionUsable() const;
+	uint64 GetGenerationFrame() const { return LastGenerationFrameCounter; }
 
 	/**
 	 * Reconstructs planar velocity between the sample nearest the present and the
@@ -69,6 +71,8 @@ public:
 
 	void UpdateTrajectoryState(float DeltaTime);
 	void ResetTrajectoryHistoryWithReason(EProject_JTrajectoryResetReason Reason);
+	/** Rebuild prediction for a new rotation policy without discarding the entry movement history. */
+	void NotifyRotationModeChanged();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Motion Matching|Trajectory|Smoothing")
@@ -82,10 +86,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Motion Matching|Trajectory|Budget", meta = (ClampMin = "0.0", UIMin = "0.0", Units = "s"))
 	float RemoteRecentlyRenderedTolerance = 0.25f;
 
+	/** Seconds, not frames: sparse remote updates may retain a valid prediction. */
+	UPROPERTY(EditAnywhere, Category = "Motion Matching|Trajectory|Budget", meta = (ClampMin = "0.01", Units = "s"))
+	float MaxPredictionAgeSeconds = 0.25f;
+
 private:
+	friend class FProjectJTrajectoryFreshnessTest;
+	friend class FProjectJPlayerVisibilityTest;
+	friend class FProjectJStrafeFacingTrajectoryTest;
 	void EnsureTrajectoryBuffers();
 	bool ShouldGenerateTrajectory(const ACharacter& CharacterOwner) const;
 	void GenerateTrajectory(ACharacter& CharacterOwner, float DeltaTime);
+	void PredictCombatStrafeFacing(const ACharacter& CharacterOwner);
 	void PostProcessTrajectory(ACharacter& CharacterOwner, float DeltaTime);
 	void ApplyTrajectorySmoothing(float DeltaTime);
 	void RepairRemoteTrajectoryFacing(const ACharacter& CharacterOwner);
@@ -94,6 +106,7 @@ private:
 	FTransformTrajectory PreviousFilteredTrajectory;
 
 	uint64 LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
+	uint64 LastHistoryFrameCounter = TNumericLimits<uint64>::Max();
 	uint64 LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 	bool bWasTrajectoryGenerationEligible = false;
 	bool bHasGeneratedTrajectory = false;

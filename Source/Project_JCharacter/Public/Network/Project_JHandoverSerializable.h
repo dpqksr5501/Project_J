@@ -31,4 +31,7 @@ public:
 	 * @param InData The binary payload received from the previous server.
 	 */
 	virtual void DeserializeFromHandover(const TArray<uint8>& InData) = 0;
+
+	/** Checked authority-side commit. Legacy void implementations cannot acknowledge an apply. */
+	virtual bool TryApplyHandoverSnapshot(const TArray<uint8>& InData) { return false; }
 };

@@ -1,0 +1,609 @@
+{
+  "auditDate": "2026-10-03",
+  "head": "33b574a1d6775306a26357f67bc3d79311e7189b",
+  "sourceChanges": false,
+  "newCppBuild": false,
+  "environment": "UE 5.8 Editor, NullRHI, no sound",
+  "scopeFiles": 431,
+  "scopeLines": 61782.0,
+  "initialAttempt": "Failed before tests: no writable DDC nodes. Successful launch with local DDC access followed.",
+  "suite": {
+    "directory": "Saved/Automation/RemainingArchitectureAudit_20261003",
+    "processExitCode": 0,
+    "succeeded": 39,
+    "succeededWithWarnings": 6,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "testDurationSeconds": 10.451199531555176,
+    "tests": [
+      {
+        "name": "ProjectJ.AsyncTargeting.Benchmark.16384",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.Benchmark.256",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.Benchmark.4096",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.BatchDispatchComparison",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.BatchMath",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.ComponentContext",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_6.Untitled:PersistentLevel.Actor_1",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.23"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.ComponentDefaultParallel",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.Lifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_8.Untitled:PersistentLevel.Actor_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.23"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.Math",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.SpatialEdgeCases",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.AsyncTargeting.SpatialEquivalence",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.EquipmentClient.FixtureIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupA.DynamicNavRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 2,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.24"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.25"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.GroupA.EquipmentRetry",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupA.PathPressure",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupA.VisualPressure",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassActionHandoff",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassHandoff",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassNativeNavigation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.GroupD.MassValues",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Integrated.ActionBudget",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Integrated.MovingTargetPursuit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 2,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.28"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.29"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Integrated.NativeNavMovement",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 2,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.29"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.30"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.Integrated.NPCAttackContract",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Integrated.PresentationRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Integrated.VisualAssetSharing",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.MMO.Catalog",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Fail",
+        "errors": 2,
+        "warnings": 3,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.30"
+          },
+          {
+            "event": {
+              "type": "Error",
+              "message": "Expected 'Completed asset creates visual' to be not null.",
+              "context": "",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JSystemsModernizationTests.cpp",
+            "lineNumber": 107,
+            "timestamp": "2026.10.03-07.29.30"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.30"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.30"
+          },
+          {
+            "event": {
+              "type": "Error",
+              "message": "Expected 'Visual before BeginPlay' to be not null.",
+              "context": "",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JSystemsModernizationTests.cpp",
+            "lineNumber": 120,
+            "timestamp": "2026.10.03-07.29.30"
+          }
+        ]
+      },
+      {
+        "name": "ProjectJ.NPCAction.ContextSeparation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.IntentLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.LatePathCompletion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCAction.PathAdmission",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.Experiment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.NativeBatch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.Revalidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCDecision.SpatialImportance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCGameplay.GroundRootMotion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0,
+        "diagnostics": []
+      },
+      {
+        "name": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 2,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_36.Untitled:PersistentLevel.Actor_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.31"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_36.Untitled:PersistentLevel.Actor_1",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.29.31"
+          }
+        ]
+      }
+    ]
+  },
+  "isolated": {
+    "directory": "Saved/Automation/RemainingArchitectureAudit_20261003_Isolated",
+    "processExitCode": 0,
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "testDurationSeconds": 0.058615200221538544,
+    "tests": [
+      {
+        "name": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Fail",
+        "errors": 2,
+        "warnings": 3,
+        "diagnostics": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.35.42"
+          },
+          {
+            "event": {
+              "type": "Error",
+              "message": "Expected 'Completed asset creates visual' to be not null.",
+              "context": "",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JSystemsModernizationTests.cpp",
+            "lineNumber": 107,
+            "timestamp": "2026.10.03-07.35.42"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.35.42"
+          },
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJEquipmentRuntime: Equipment visual has no compatible pose source or attachment socket. Owner=Character_0 Mesh=SkeletalCube Slot=2",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.03-07.35.42"
+          },
+          {
+            "event": {
+              "type": "Error",
+              "message": "Expected 'Visual before BeginPlay' to be not null.",
+              "context": "",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JSystemsModernizationTests.cpp",
+            "lineNumber": 120,
+            "timestamp": "2026.10.03-07.35.42"
+          }
+        ]
+      }
+    ]
+  },
+  "staticValidators": [
+    {
+      "path": "Scripts/Validation/Validate-MMOArchitecture.py",
+      "exitCode": 0,
+      "passed": true,
+      "features": 205,
+      "domains": 20,
+      "checks": "module DAG, forbidden reverse dependencies, generated catalog parity"
+    },
+    {
+      "path": "Docs/Benchmarks/recompute.py",
+      "exitCode": 0,
+      "checksums": "matched",
+      "checks": "archived benchmark input hashes and published statistics recomputation; no new performance run"
+    }
+  ],
+  "interpreter": "UE_5.8/Engine/Binaries/ThirdParty/Python3/Win64/python.exe",
+  "interpretation": "EquipmentLoadLifecycle fails in suite and isolated run; source points to missing compatible pose-source/socket fixture. Other new audit findings were not all executed as regression tests."
+}

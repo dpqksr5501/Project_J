@@ -1,0 +1,188 @@
+{
+  "dateKST": "2026-10-04",
+  "status": "Editor and Game builds succeeded; full regression passed",
+  "editorBuild": {
+    "target": "Project_JEditor Win64 Development",
+    "result": "Succeeded",
+    "exitCode": 0,
+    "log": "Saved/Validation/MountStrafeFix_20261004/BuildEditor_Retry1.log"
+  },
+  "focused": {
+    "report": "Saved/Automation/MountStrafeFix_20261004_Focused/index.json",
+    "exitCode": 0,
+    "tests": 5,
+    "succeeded": 5,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "fullRegression": {
+    "report": "Saved/Automation/MountStrafeFix_20261005_Regression/index.json",
+    "exitCode": 0,
+    "tests": 105,
+    "succeeded": 101,
+    "succeededWithWarnings": 4,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "log": "Saved/Validation/MountStrafeFix_20261004/Regression_20261005.log",
+    "warningEvents": 8.0,
+    "warningsUnchangedFromBaseline": true,
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ]
+  },
+  "gameBuild": {
+    "target": "Project_J Win64 Development",
+    "result": "Succeeded",
+    "exitCode": 0,
+    "durationSeconds": 43.63,
+    "log": "Saved/Validation/MountStrafeFix_20261004/BuildGame_20261005.log",
+    "binary": "Binaries/Win64/Project_J.exe"
+  },
+  "changedFiles": [
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "beforeSha256": "d0c4e984a8fdfd11b697f7438da3a7d7149af2c857f686e625ac1f84ab095768",
+      "sha256": "747c2df51bf6eaa5622ba8eb00c9a9e45e25506b8275057b640e2f08f7584243"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp",
+      "beforeSha256": "3b3ead8135e8efa0267f5c5ee7e729c0908d793aa808651b2b32f7b68533bccc",
+      "sha256": "cb92bcc0c4a3413e5b0e3cab8d7277d965f17ddfade2bebf14a33205588aaed8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp",
+      "beforeSha256": "499939e3d6a62606247ce09b1bf2c516d059acfd2c302dbcf4c87314159d6aac",
+      "sha256": "616467d37f8e44737211e92f63b2b4c4548226c2937c60ff868e8f4578cab37b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityFixtures.h",
+      "beforeSha256": "86db7a93f1026acb5bba2631898ae0b16773d464c358492191ffc41a96586203",
+      "sha256": "4e6b6863a31fd18b861621e7758b2f1cef229b373cbdc170fb7d6f292dfe7395"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "beforeSha256": "5ac164765a0a3e3ff60c505c172ec891b5fe8d3092bcfb8e27c7aa14f04a9976",
+      "sha256": "ec17e957374e7dcb9aedb17b32e249df9479a6833f48d1844336649a714e8ace"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCombatAnimProfile.h",
+      "beforeSha256": "e1b7c9928551c2c0123c3e0141805a436d70623f50b1f1110a590a3e638f5298",
+      "sha256": "6c3027d9d200e24479dcd7a1d6414c81f9d059da7939759ddb9b25fc65210e6a"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "beforeSha256": "f29bdc1767a84cc6b73653a76d54fdf125fb42fe7bf77817f5cf758dcc93948f",
+      "sha256": "eb3382319459b49f423e1ec79798b2ca5bff7aa3f4bf6ece9826b5d93eb3e305"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "beforeSha256": "d87b5192e87750ef1a11bddcf43a346a5ba5fb09eb6873c03999d8531c12406b",
+      "sha256": "303241c6c6554d4cee37adb4d8ddd5bcdab864b36a8c739924efa17b6379720e"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountComponent.cpp",
+      "beforeSha256": "ea289342ecbae3dd1a58202afc33b94d3ce6057e8f10a3a219b82857eccc5d0a",
+      "sha256": "fcdb833883025cafa50012df5497e4e0b5160eeb8c9bba8a98676fd5e993a183"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementFixtures.h",
+      "beforeSha256": "32f13c0104ad5f36746fc3c820aca55630a5786e95f188efea9818cff2bc52ff",
+      "sha256": "fc0723356f3cc3f8ef34c1f7a578deb02f06eaae0de3450d6399fe592cbd1c4f"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Tests/Project_JMountRefinementTests.cpp",
+      "beforeSha256": "e11818a060c42132912f756d974d4167110dd486f6ce1e17e36ee07fa563b6b5",
+      "sha256": "69e2da35d49bb6f4345c9a95f2ec552e77df807a079cf4123eca8127629b2726"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JFlyingMountCharacter.h",
+      "beforeSha256": "39f97f6d263190f67f67f726f632a36e8d7e7a56c01640f1fca7e7dd945301c6",
+      "sha256": "a478481050921648041bdf892d3f58a7f2378068a06f5d7f430630e773cc1666"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountCharacter.h",
+      "beforeSha256": "11c32f52addeec4bc2648cb6600f3f96d2128f9ccde7e5c50efc59c9b23d5f39",
+      "sha256": "9a5756b6bff31ed4947b023418821c0edd3215113fd765f83c49999abcdd509b"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountComponent.h",
+      "beforeSha256": "dd8e6d16790c4300a94ba8f82df6d8705187ee09baa62434cc12a9b85d80ba96",
+      "sha256": "fc41f378fab769568f753bd0e1b91f1887b2a45db422e8ba63e5fece515ac83b"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Tests/Project_JMountLifecycleFixture.h",
+      "beforeSha256": "bdc4b525f4c540db188ab3f0a7891e81f1cc0ae293c0735caaf2d64f6e4c66ea",
+      "sha256": "efcaa024001a2a7207581c14b80fc317791f520a9ec5293fa0599f35bdff6573"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMountStrafeFixTests.cpp",
+      "beforeSha256": null,
+      "sha256": "3fe26a527b51c2d2430cb5d411edef249908aac93d7c733ec5abe239c8f013ae"
+    }
+  ],
+  "remaining": [],
+  "assetChangesByAgent": false,
+  "unrealMCPUsed": false,
+  "verificationCompletedDateKST": "2026-10-05",
+  "manualChecks": [
+    "PIE: repeated ground mount/F dismount, flight lock and airborne restrictions.",
+    "PIE: S movement with TAB combat toggles, camera changes, stopping, turn-in-place, diagonal jump and attack root motion.",
+    "Two-player PIE: replicated facing and authored animation quality under network latency."
+  ],
+  "evidenceSha256": [
+    {
+      "path": "Saved/Validation/MountStrafeFix_20261004/BuildEditor_Retry1.log",
+      "sha256": "8537d023a7fc15d04334dfff75aa914397e8a316a4d0c738382763713a7bb81d"
+    },
+    {
+      "path": "Saved/Automation/MountStrafeFix_20261004_Focused/index.json",
+      "sha256": "0bcac7c8217a096dd0a9f33e291b8468119cd89c5cbfc049d5af05a66ac14d86"
+    },
+    {
+      "path": "Saved/Automation/MountStrafeFix_20261005_Regression/index.json",
+      "sha256": "8bc85f3118aa5ceddd8904ec11d8ac400c310400191f736135292db713946f35"
+    },
+    {
+      "path": "Saved/Validation/MountStrafeFix_20261004/Regression_20261005.log",
+      "sha256": "25769bfd25429fe8700634bc970cd1647a24068b6f5f130889eea458e7c60560"
+    },
+    {
+      "path": "Saved/Validation/MountStrafeFix_20261004/BuildGame_20261005.log",
+      "sha256": "a56996427ff7d621bae144ae7671be755b31a092517d1c0bc35cbc88b4c58552"
+    }
+  ]
+}

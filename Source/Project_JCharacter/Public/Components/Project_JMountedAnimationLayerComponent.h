@@ -39,18 +39,23 @@ public:
 	void PreloadLayerForMount(const AProject_JMountCharacter* Mount);
 
 	UFUNCTION(BlueprintPure, Category = "Mount|Animation")
-	bool IsMountedLayerLinked() const { return LinkedAnimationLayerClass != nullptr; }
+	bool IsMountedLayerLinked() const;
+
+	/** Explicit retry after a failed path; normal Refresh never retries a failure. */
+	UFUNCTION(BlueprintCallable, Category = "Animation|Layers")
+	void RetryLayerLoad();
 
 private:
 	UFUNCTION()
 	void HandleMountChanged(AProject_JMountCharacter* PreviousMount, AProject_JMountCharacter* NewMount);
 
 	FSoftObjectPath ResolveLayerPath(const AProject_JMountCharacter* Mount) const;
-	void HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath);
+	void HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath, uint64 RequestGeneration);
 	void UnlinkLayer();
 	void ResetPreload();
 
 	/** Hard reference held only while the matching linked instance is active. */
+	UPROPERTY(Transient)
 	TSubclassOf<class UAnimInstance> LinkedAnimationLayerClass;
 
 	/** Single-entry cache: a player can have only one active/summoned mount. */
@@ -59,4 +64,10 @@ private:
 
 	FSoftObjectPath PreloadedAnimationLayerPath;
 	TSharedPtr<FStreamableHandle> LayerPreloadHandle;
+	uint64 LoadGeneration = 0;
+	bool bLoadFailed = false;
+	bool bEndingPlay = false;
+	TWeakObjectPtr<class USkeletalMeshComponent> LinkedMesh;
+	TWeakObjectPtr<class UAnimInstance> LinkedMaster;
+	friend class FProjectJLayerLoadLifecycleTest;
 };

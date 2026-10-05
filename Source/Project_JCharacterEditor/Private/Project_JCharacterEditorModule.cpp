@@ -13,10 +13,13 @@
 #include "Editor.h"
 #include "EditorModeRegistry.h"
 #include "EditorModeManager.h"
+#include "Framework/Application/SlateApplication.h"
 #include "PersonaModule.h"
 #include "Rendering/DrawElements.h"
 #include "SAnimNotifyNode.h"
+#include "SEditorViewport.h"
 #include "ScopedTransaction.h"
+#include "WeaponMotionEditing.h"
 #include "Styling/AppStyle.h"
 #include "UObject/UObjectIterator.h"
 
@@ -146,42 +149,48 @@ namespace Project_J::WeaponMotionEditor
 		return nullptr;
 	}
 
-	static void SelectMotionKey(UProject_JAnimNotifyState_WeaponMotion* MotionNotify, int32 KeyIndex)
+	static void SelectMotionKey(UProject_JAnimNotifyState_WeaponMotion* MotionNotify, int32 KeyIndex, const TSharedRef<SWidget>& SelectionWidget)
 	{
-		if (!MotionNotify || !MotionNotify->MotionKeys.IsValidIndex(KeyIndex))
+		if (!MotionNotify || !MotionNotify->MotionKeys.IsValidIndex(KeyIndex) || !FSlateApplication::IsInitialized())
 		{
 			return;
 		}
+		const TSharedPtr<SWindow> SelectionWindow = FSlateApplication::Get().FindWidgetWindow(SelectionWidget);
+		if (!SelectionWindow.IsValid()) { return; }
 
+		UDebugSkelMeshComponent* ChosenMesh = nullptr;
+		int32 CandidateCount = 0;
+		for (TObjectIterator<UDebugSkelMeshComponent> It; It; ++It)
+		{
+			auto* Mesh = *It;
+			if (Mesh->IsTemplate() || !IsMotionNotifyActiveOnPreviewMesh(Mesh, MotionNotify) || !FindPreviewWeaponComponent(Mesh)) { continue; }
+			auto* Viewport = FindPersonaViewport(Mesh);
+			if (!Viewport) { continue; }
+			const TSharedPtr<SEditorViewport> ViewportWidget = Viewport->GetEditorViewportWidget();
+			if (!ViewportWidget.IsValid() || FSlateApplication::Get().FindWidgetWindow(ViewportWidget.ToSharedRef()) != SelectionWindow) { continue; }
+			++CandidateCount; ChosenMesh = Mesh;
+		}
+		// A previously focused viewport may belong to another editor. Select only
+		// the unique preview in the window that received this marker click.
+		if (CandidateCount != 1) { return; }
+		if (auto* Previous = FindPersonaViewport(SelectedMotionKey.PreviewMesh.Get()))
+		{
+			Previous->GetModeTools()->DeactivateMode(WeaponMotionEditModeId);
+		}
 		SelectedMotionKey.Clear();
 		SelectedMotionKey.MotionNotify = MotionNotify;
 		SelectedMotionKey.KeyIndex = KeyIndex;
-
-		for (TObjectIterator<UDebugSkelMeshComponent> It; It; ++It)
+		SelectedMotionKey.PreviewMesh = ChosenMesh;
+		SelectedMotionKey.WeaponComponent = FindPreviewWeaponComponent(ChosenMesh);
+		if (auto* Montage = Cast<UAnimMontage>(ChosenMesh->PreviewInstance->GetAnimationAsset()))
 		{
-			UDebugSkelMeshComponent* PreviewMesh = *It;
-			if (!PreviewMesh || PreviewMesh->IsTemplate() || !IsMotionNotifyActiveOnPreviewMesh(PreviewMesh, MotionNotify))
+			for (const auto& Event : Montage->Notifies)
 			{
-				continue;
-			}
-
-			if (USceneComponent* WeaponComponent = FindPreviewWeaponComponent(PreviewMesh))
-			{
-				SelectedMotionKey.PreviewMesh = PreviewMesh;
-				SelectedMotionKey.WeaponComponent = WeaponComponent;
-				if (UAnimMontage* Montage = Cast<UAnimMontage>(PreviewMesh->PreviewInstance->GetAnimationAsset()))
+				if (Event.NotifyStateClass == MotionNotify)
 				{
-					for (const FAnimNotifyEvent& Event : Montage->Notifies)
-					{
-						if (Event.NotifyStateClass == MotionNotify)
-						{
-							const float KeyTime = Event.GetTriggerTime() + Event.GetDuration() * MotionNotify->MotionKeys[KeyIndex].NormalizedTime;
-							PreviewMesh->PreviewInstance->MontagePreview_JumpToPosition(KeyTime);
-							break;
-						}
-					}
+					ChosenMesh->PreviewInstance->MontagePreview_JumpToPosition(Event.GetTriggerTime() + Event.GetDuration() * MotionNotify->MotionKeys[KeyIndex].NormalizedTime);
+					break;
 				}
-				break;
 			}
 		}
 
@@ -248,7 +257,7 @@ namespace Project_J::WeaponMotionEditor
 					}
 					if (ClosestKeyIndex != INDEX_NONE && ClosestDistance <= 7.0f)
 					{
-						SelectMotionKey(MotionNotify, ClosestKeyIndex);
+						SelectMotionKey(MotionNotify, ClosestKeyIndex, SharedThis(this));
 						return FReply::Handled();
 					}
 				}
@@ -261,19 +270,19 @@ namespace Project_J::WeaponMotionEditor
 	class FWeaponMotionEditMode final : public FEdMode
 	{
 	public:
-		virtual bool UsesTransformWidget() const override { return SelectedMotionKey.IsValid(); }
+		virtual bool UsesTransformWidget() const override { return OwnsSelection(); }
 		virtual bool UsesTransformWidget(UE::Widget::EWidgetMode CheckMode) const override
 		{
-			return SelectedMotionKey.IsValid() && (CheckMode == UE::Widget::WM_Translate || CheckMode == UE::Widget::WM_Rotate || CheckMode == UE::Widget::WM_TranslateRotateZ);
+			return OwnsSelection() && (CheckMode == UE::Widget::WM_Translate || CheckMode == UE::Widget::WM_Rotate || CheckMode == UE::Widget::WM_TranslateRotateZ);
 		}
-		virtual bool ShouldDrawWidget() const override { return SelectedMotionKey.IsValid(); }
+		virtual bool ShouldDrawWidget() const override { return OwnsSelection(); }
 		virtual FVector GetWidgetLocation() const override
 		{
-			return SelectedMotionKey.IsValid() ? SelectedMotionKey.WeaponComponent->GetComponentLocation() : FVector::ZeroVector;
+			return OwnsSelection() ? SelectedMotionKey.WeaponComponent->GetComponentLocation() : FVector::ZeroVector;
 		}
 		virtual bool GetCustomDrawingCoordinateSystem(FMatrix& OutMatrix, void* InData) override
 		{
-			if (!SelectedMotionKey.IsValid()) return false;
+			if (!OwnsSelection()) return false;
 			OutMatrix = SelectedMotionKey.WeaponComponent->GetComponentTransform().ToMatrixNoScale().RemoveTranslation();
 			return true;
 		}
@@ -284,10 +293,10 @@ namespace Project_J::WeaponMotionEditor
 
 		virtual bool StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override
 		{
-			if (!SelectedMotionKey.IsValid() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
+			if (!OwnsSelection() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
 			if (!bInTransaction)
 			{
-				GEditor->BeginTransaction(LOCTEXT("EditWeaponMotionKey", "Edit Weapon Motion Key"));
+				TransactionIndex = GEditor->BeginTransaction(LOCTEXT("EditWeaponMotionKey", "Edit Weapon Motion Key"));
 				SelectedMotionKey.MotionNotify->SetFlags(RF_Transactional);
 				SelectedMotionKey.MotionNotify->Modify();
 				bInTransaction = true;
@@ -310,7 +319,7 @@ namespace Project_J::WeaponMotionEditor
 
 		virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override
 		{
-			if (!bManipulating || !SelectedMotionKey.IsValid() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
+			if (!bManipulating || !OwnsSelection() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
 			const UE::Widget::EWidgetMode WidgetMode = InViewportClient->GetWidgetMode();
 			const bool bTranslate = WidgetMode == UE::Widget::WM_Translate || WidgetMode == UE::Widget::WM_TranslateRotateZ;
 			const bool bRotate = WidgetMode == UE::Widget::WM_Rotate || WidgetMode == UE::Widget::WM_TranslateRotateZ;
@@ -321,24 +330,10 @@ namespace Project_J::WeaponMotionEditor
 			if (!WeaponComponent || !MotionNotify || !MotionNotify->MotionKeys.IsValidIndex(SelectedMotionKey.KeyIndex)) return false;
 
 			FProject_JWeaponMotionKey& Key = MotionNotify->MotionKeys[SelectedMotionKey.KeyIndex];
-			const FTransform ParentWorldTransform = WeaponComponent->GetAttachParent() ? WeaponComponent->GetAttachParent()->GetComponentTransform() : FTransform::Identity;
-			if (bTranslate && !InDrag.IsNearlyZero())
-			{
-				// Widget deltas are world-space; stored transforms are relative to the attachment socket.
-				Key.RelativeTransform.AddToTranslation(ParentWorldTransform.InverseTransformVectorNoScale(InDrag));
-			}
-			if (bRotate && !InRot.IsNearlyZero())
-			{
-				FVector WorldAxis;
-				float AngleRadians = 0.0f;
-				InRot.Quaternion().ToAxisAndAngle(WorldAxis, AngleRadians);
-				if (!WorldAxis.IsNearlyZero() && !FMath::IsNearlyZero(AngleRadians))
-				{
-					const FVector LocalAxis = ParentWorldTransform.InverseTransformVectorNoScale(WorldAxis).GetSafeNormal();
-					Key.RelativeTransform.ConcatenateRotation(FQuat(LocalAxis, AngleRadians));
-					Key.RelativeTransform.NormalizeRotation();
-				}
-			}
+			auto* Parent = WeaponComponent->GetAttachParent();
+			const FTransform SocketWorld = Parent ? Parent->GetSocketTransform(WeaponComponent->GetAttachSocketName(), RTS_World) : FTransform::Identity;
+			if (!ApplyWorldDelta(Key.RelativeTransform, SocketWorld, bTranslate ? InDrag : FVector::ZeroVector, bRotate ? InRot : FRotator::ZeroRotator)) { return false; }
+
 			MotionNotify->MarkPackageDirty();
 			InViewport->Invalidate();
 			return true;
@@ -348,6 +343,7 @@ namespace Project_J::WeaponMotionEditor
 		{
 			if (Key == EKeys::Escape && Event == IE_Pressed)
 			{
+				FinishTransaction(true);
 				SelectedMotionKey.Clear();
 				GetModeManager()->DeactivateMode(WeaponMotionEditModeId);
 				return true;
@@ -355,7 +351,28 @@ namespace Project_J::WeaponMotionEditor
 			return FEdMode::InputKey(InViewportClient, InViewport, Key, Event);
 		}
 
+		virtual void Exit() override { FinishTransaction(false); FEdMode::Exit(); }
+		virtual void Tick(FEditorViewportClient* Client, float DeltaTime) override
+		{
+			FEdMode::Tick(Client, DeltaTime);
+			if (bManipulating && !OwnsSelection()) { FinishTransaction(false); }
+		}
 	private:
+		bool OwnsSelection() const
+		{
+			auto* Viewport = FindPersonaViewport(SelectedMotionKey.PreviewMesh.Get());
+			return SelectedMotionKey.IsValid() && Viewport && Viewport->GetModeTools() == GetModeManager();
+		}
+		void FinishTransaction(bool bCancel)
+		{
+			if (bInTransaction && GEditor)
+			{
+				if (bCancel) { GEditor->CancelTransaction(TransactionIndex); }
+				else { GEditor->EndTransaction(); }
+			}
+			bInTransaction = false; bManipulating = false;
+		}
+		int32 TransactionIndex = INDEX_NONE;
 		bool bManipulating = false;
 		bool bInTransaction = false;
 	};
@@ -391,6 +408,8 @@ public:
 			if (USceneComponent* WeaponComponent = Pair.Value.WeaponComponent.Get()) WeaponComponent->SetRelativeTransform(Pair.Value.BaseRelativeTransform);
 		}
 		PreviewBindings.Empty();
+		if (auto* Viewport = Project_J::WeaponMotionEditor::FindPersonaViewport(Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh.Get()))
+		{ Viewport->GetModeTools()->DeactivateMode(Project_J::WeaponMotionEditor::WeaponMotionEditModeId); }
 		Project_J::WeaponMotionEditor::SelectedMotionKey.Clear();
 		FEditorModeRegistry::Get().UnregisterMode(Project_J::WeaponMotionEditor::WeaponMotionEditModeId);
 	}
@@ -444,7 +463,8 @@ private:
 				const float Duration = FMath::Max(ActiveEvent->GetDuration(), UE_KINDA_SMALL_NUMBER);
 				const float NormalizedTime = FMath::Clamp((MontageTime - ActiveEvent->GetTriggerTime()) / Duration, 0.0f, 1.0f);
 				WeaponComponent->SetRelativeTransform(Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds));
-				if (Project_J::WeaponMotionEditor::SelectedMotionKey.MotionNotify.Get() == ActiveMotionNotify)
+				if (Project_J::WeaponMotionEditor::SelectedMotionKey.MotionNotify.Get() == ActiveMotionNotify &&
+					Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh.Get() == PreviewMesh)
 				{
 					Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh = PreviewMesh;
 					Project_J::WeaponMotionEditor::SelectedMotionKey.WeaponComponent = WeaponComponent;

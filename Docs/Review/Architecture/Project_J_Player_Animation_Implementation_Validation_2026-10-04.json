@@ -1,0 +1,341 @@
+{
+  "dateKST": "2026-10-04",
+  "engine": "UE 5.8",
+  "baseCommit": "33b574a1d6775306a26357f67bc3d79311e7189b",
+  "baseline": "Pre-existing uncommitted implementation retained in Saved/Validation/PlayerMaturity_20261004/Before",
+  "scope": "Player/trajectory/animation audit P01-P13 follow-up implementation; P12 profiling remains conditional",
+  "builds": [
+    {
+      "target": "Project_JEditor Win64 Development",
+      "result": "Succeeded",
+      "exitCode": 0,
+      "tool": "UnrealBuildTool.exe",
+      "path": "Saved/Validation/PlayerMaturity_20261004/BuildEditor_Retry4.log",
+      "sha256": "f446256d298acd3ca361b29d63478b996b166b9dbe0fb80e06d230db15af6e89"
+    },
+    {
+      "target": "Project_J Win64 Development",
+      "result": "Succeeded",
+      "exitCode": 0,
+      "tool": "UnrealBuildTool.exe",
+      "path": "Saved/Validation/PlayerMaturity_20261004/BuildGame.log",
+      "sha256": "dbee34775ea38d39073521d02cbd8b45c8edbe46ba75511c4236951e1d585188"
+    }
+  ],
+  "focused": {
+    "path": "Saved/Automation/PlayerMaturity_20261004_Focused3/index.json",
+    "sha256": "fad3a1c9a23a2cd20a554e6a5472ea3756266310686442278224ca7d3d15fec6",
+    "tests": 13,
+    "succeeded": 12,
+    "succeededWithWarnings": 1,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "regression": {
+    "path": "Saved/Automation/PlayerMaturity_20261004_Regression/index.json",
+    "sha256": "9e2cf7237388a477f7fe50ec24223af4de481a8c6336e802c2c677e8b642d6b1",
+    "tests": 101,
+    "succeeded": 97,
+    "succeededWithWarnings": 4,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "priorAuditReport": {
+    "path": "Saved/Automation/PlayerAnimationAudit_20261003/index.json",
+    "sha256": "4b2241ed9a16f6cb0a96ac8faf19216b600a5949996e772964f1d78330597391",
+    "tests": 87,
+    "succeeded": 84,
+    "succeededWithWarnings": 3,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0
+  },
+  "newRegressionNames": [
+    "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
+    "ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle",
+    "ProjectJ.PlayerMaturity.Animation.SharedVisibility",
+    "ProjectJ.PlayerMaturity.Authoring.CommandBounds",
+    "ProjectJ.PlayerMaturity.Authoring.EffectiveInputComposition",
+    "ProjectJ.PlayerMaturity.Authoring.EquipmentAndMontage",
+    "ProjectJ.PlayerMaturity.Combat.ComboWindowOwnership",
+    "ProjectJ.PlayerMaturity.Combat.ConfigurationPolicy",
+    "ProjectJ.PlayerMaturity.Combat.CueLeaseOwnership",
+    "ProjectJ.PlayerMaturity.Equipment.OriginalASC",
+    "ProjectJ.PlayerMaturity.Mount.OriginalASC",
+    "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+    "ProjectJ.PlayerMaturity.Trajectory.Freshness"
+  ],
+  "warnings": [
+    {
+      "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+      "count": 1,
+      "messages": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+      ]
+    },
+    {
+      "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+      "count": 5,
+      "messages": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+      ]
+    },
+    {
+      "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+      "count": 1,
+      "messages": [
+        "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+      ]
+    },
+    {
+      "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+      "count": 1,
+      "messages": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+      ]
+    }
+  ],
+  "changedFiles": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_CombatPresentationCue.cpp",
+      "beforeSha256": "73cd897e32b0aba789aef3bfe6a0362df7a09cbed5dad413276ccb7e7307739c",
+      "sha256": "b959e4a2756438ea086d9a3f4492a844f7eb3ba70203e909aab187b972239c88"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_ComboWindow.cpp",
+      "beforeSha256": "0c9a9260e4c6c3e8858f2b30cfe566aba58d81fd9c4ff76ce6b3f55b345e0f8a",
+      "sha256": "d59d5f98125a909fabc6767c95722607e359bb7d0e0d3672d4ad8a5fae58dac2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "beforeSha256": "66617e30ce83987db5c7ce7f2a1b8ca87838db749664962928d8c7e70bf02806",
+      "sha256": "795069e25122f81a9c69c3ede268489c0126e19e6da1b14a636b118e8ed2c90a"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "beforeSha256": "9df6fa96d0da4badbecb7fd0baa6bbe01b9b053214427af3739640e7e835c0fd",
+      "sha256": "e33f741f42bb820dd031e683483a321646ea719a54d22f6b7ff0f1fe6905fe26"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceBase.cpp",
+      "beforeSha256": "681f258d94a6acec614391ab847f7f901fe0b65b09e61c8ea6d7d015aa82e880",
+      "sha256": "1533881f303bcbb12cccbe0189b928bddf4fa2f38976c395daa3c8935ef4f766"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "beforeSha256": "7c0d2cd3a222bed5db1cce16ce932be9978481e63c561988ac69ade914b3db07",
+      "sha256": "d26826d10da854927ed10a579a2eed6e7802ca2890d89bd6ff84de119d024a6d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+      "beforeSha256": "8ec8374b9f464fa8f0310171e4fca1235266966c389cb8415d980cce4c02302e",
+      "sha256": "25afd335abfc2240c02fac491a8bbaa662db82b1ad7ed4815b5046948e995b81"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "beforeSha256": "7f7c97774ca514aa306e70a2397fb1833f856e5f5e16185bcd874f8b4315b899",
+      "sha256": "2d1dfcd9eb0985e71c0ea47d923caf7d970c02f8b23ba46b7579c29bcadecb72"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp",
+      "beforeSha256": "67b74dcd7bf739850e328fce70be47217013ec44600a35a9df347deb1403b7da",
+      "sha256": "0cd359468508e038ea754f1025cc2428b55da0f035df0fdd059e946a6ae0b08d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.h",
+      "beforeSha256": "07d31a70a55ee6fddcfc2ac7b65b7994a95dc84c40a671c4cbf052e8798900d4",
+      "sha256": "c99305a99d8eb0a811d2ff902b4b93e7d6d9527b90f1f00cfdb091950d4d6696"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp",
+      "beforeSha256": "fda5b82d1e404bd7db52a62bba54df79f0b8706e0e905c99fadb1accc9a25468",
+      "sha256": "8825e6e69f86df391f14021e3812e99f4854295850e029310c9b6e4083283725"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JCombatCommandSet.cpp",
+      "beforeSha256": "a8fe8244f12acf5640744e333d43df1df6f401c8a87bbbfb1902232eb355f60f",
+      "sha256": "258ce90aa5450ff2a5562f8658e7c09f3ed8e6e43ee9973d77e198667712dbc3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JCombatConfiguration.cpp",
+      "beforeSha256": "e6551b9d39a9d93e8317a727b2185b237bbd27ec3dfd1a644aaca251888a86c9",
+      "sha256": "a20530f19313d41dd3baeab6cff47a9d8f2656b1703160813cb7e176130439cc"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+      "beforeSha256": "88c26d88e97bc4c34f45837920d8d162797ef458185b4758ca6f70c5820d0a31",
+      "sha256": "4f86fda3ee1d96f4052356875f32e9e16c4cc9e590dc5dacd5987d79655c1abe"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatAnimationLayerComponent.cpp",
+      "beforeSha256": "8bd8154e3071aec21cd3d92698266ae6872d10fa15135ddc68cfeff27583d44c",
+      "sha256": "f5e9ab793767917000e8a45bff807f5ca247e166b4f3eba25b52c4d605cae1b3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp",
+      "beforeSha256": "25e0a8dd39482a63c8aa0d39603f595f82dbf8d5c8dba56da08b559c0b6bcca7",
+      "sha256": "4dd09e71fee9531d5fd64603e28e1d6ae604e44b4b716b7ecddf5dccf961d4cd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp",
+      "beforeSha256": "177f16567b25c1f0f0c6f6f39f2c6ab156ab037dd56a5dcf5dcef511cc477c9b",
+      "sha256": "1cb9861112199e359637ca387d62cf598f4d759b7317d885c876a73600dfddf1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JMountedAnimationLayerComponent.cpp",
+      "beforeSha256": "b4d5421f33513acb2e46edddb0a603e30ddf31d22cdd5961c509e8c77b09d5f1",
+      "sha256": "ae5c7005e60f71625648bfd45ffad98cb567358eab28a9cc98bac8acd338bcfb"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp",
+      "beforeSha256": "270d33f184b845b07e295fef50f3cf68a2f3dc81ea8c3452f16d3f2ea51221bb",
+      "sha256": "b1ca7231424a4fd6bdf38c7dcd37ae3ed182c8aa766f5eef72966137a1733a44"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp",
+      "beforeSha256": "69774065b2b1c0b555d2c26b588bc3846d95dcdace85aba2ca67e1304143685c",
+      "sha256": "f221ecea1cf160de578f70bb05cc3c17cc12cd8f80df67f5fa6001e418d5e683"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp",
+      "beforeSha256": "a77b7f8f0ecac5231cce8282a88657716b5f8b14f50451546a05efe8fc5e543a",
+      "sha256": "e316e374196192a48407d7cc366ec98c146d9f3c201b10b0e0d4c5103287dbe3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "beforeSha256": "4db93e93b0aaad5c9db6f9a1c6c61fea5c25533749af74a635b21fd9a7814565",
+      "sha256": "62653e8cdba2179869364e89982620dbda9d3db6daa1c8234f06968a5376b9a6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityFixtures.h",
+      "beforeSha256": null,
+      "sha256": "86db7a93f1026acb5bba2631898ae0b16773d464c358492191ffc41a96586203"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp",
+      "beforeSha256": null,
+      "sha256": "01fd8cdac54eb9291372d87d029101616412ed9ef8ec41f7b80b166defe1831e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_CombatPresentationCue.h",
+      "beforeSha256": "a5b53a723cc338f03eb789cedb0e25281316d29c578df964e903d7940544b053",
+      "sha256": "a914c17ab1d5fc617a4ececff283169d2d04e436d3ff6b7d1860723ca2a9a1aa"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_ComboWindow.h",
+      "beforeSha256": "fb0a69e843ad2015ff0e8df8f2b009637f0903e17db80305cb441c303357f057",
+      "sha256": "0b3975c31b07af49884a5542e8c82d7758624f3aeb82da559fcd1d1bc5d8b35d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationClock.h",
+      "beforeSha256": null,
+      "sha256": "78d5651f62e7ed33c0343b5621db62d1f934548e55b9f48049290f418694c30b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "beforeSha256": "bd9f99fbd0e1339b09d6dac1bf11665a2d33c53c1dc923d995eab8f563080a0c",
+      "sha256": "72f0c35535ff09b3c08edd461780911a59af24f6a8bd2d49262c69a326c217bf"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h",
+      "beforeSha256": "7038fdc990ba7a7fa38b45b05586dd20c638a057dcd86b18dcac52c594d876f3",
+      "sha256": "d8fe7017d3bd83122634139c69ee0287fd00cbfda0b57c85cebc92a8ad77b4c4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatCommandSet.h",
+      "beforeSha256": "971dbca4b69400c80ec6f66c298595fd97933f4090f57b1e813f25a63cf014e3",
+      "sha256": "fdffd1b87773f9a54838817c7e7e1894ce1602aa84e84a96dc1e1a8afe96aa20"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatConfiguration.h",
+      "beforeSha256": "ba55d0e32a71f46c68dd6f273e92ce0b79745528c6dd2cfbf7489aeadf97e000",
+      "sha256": "b4f5326af8ce88cf399e0e2fb61724df38949d59ed008273caa243269c72c6c0"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatStyleDefinition.h",
+      "beforeSha256": "8890419ac0bfae630e72edf5c0dc9622acd9768561e85d0f5183d88366fc694c",
+      "sha256": "a9d81831ae35e734dac0007c5584faa010a74bb73654947c3ae09658cb945476"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+      "beforeSha256": "5d3f32e3ac6584667dc511a4ef8f5140e101c84bb1801b9e86e349a7dc342a33",
+      "sha256": "369d555cc79695f24301bd28f8c9da83f80621db7d3ffcdfebfb1b3fa4dcd5fa"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatAnimationLayerComponent.h",
+      "beforeSha256": "8e5743889245b1eb1bf6781c914f51532e719d0cb79531c7a356576e9bfb5837",
+      "sha256": "8c336b51a311dc44f694ba6ca2d6a37dd62d54c0a16f2559818450f8cce4a0b9"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatPresentationComponent.h",
+      "beforeSha256": "fd0e476138d8ddbb8a1a90ded9367808a5ad6e148e44995a59fe3b123451c251",
+      "sha256": "6cb8d974208c8e5f048b0dabfa18ef82ddcd0fba787a556e126f23235336d1c6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h",
+      "beforeSha256": "af9b66744102e65d938595360fbc9f78dabef2c8b90d09dc210f21ab70cf8985",
+      "sha256": "5307293093fad71363ef4bf2e21160c4080e924e9f32da3b3d758dea1809a3b4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h",
+      "beforeSha256": "486091fcfa8c8791b40ffd48413d792e300cce0c7a802dba58ac6cca54b7ee8f",
+      "sha256": "c62e152f1a449a4abfc6ffac9f941e72fefdab11d17bc98e66a4c5ee5dc619d8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h",
+      "beforeSha256": "0fa4ed9c9e5ff0cdcc9b83060d1bfb4173b411cc512dd0e9a683d939908af743",
+      "sha256": "c1b20dcf51e4e543fe353769d0f79dc6e289e03cb64bb3fcea81beb826156ad2"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "beforeSha256": "174ea8b73d241e5bc2aeb51620e8e9ae186440613d86867113af07f9c3467476",
+      "sha256": "d87b5192e87750ef1a11bddcf43a346a5ba5fb09eb6873c03999d8531c12406b"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountComponent.cpp",
+      "beforeSha256": "a961eebd6f8da70b1c63211feccd00a786102b6b41459158e3d70b7df96c5480",
+      "sha256": "ea289342ecbae3dd1a58202afc33b94d3ce6057e8f10a3a219b82857eccc5d0a"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountCharacter.h",
+      "beforeSha256": "74549ec5d47a143b3883ff36ffa3911d1a5d45535023ccc3e7898ed77ebe0410",
+      "sha256": "11c32f52addeec4bc2648cb6600f3f96d2128f9ccde7e5c50efc59c9b23d5f39"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountComponent.h",
+      "beforeSha256": "58a4cd1e1bd96caca7b2b22545bf065ee2b28c0a8382daf7469125d00eff50f6",
+      "sha256": "dd8e6d16790c4300a94ba8f82df6d8705187ee09baa62434cc12a9b85d80ba96"
+    },
+    {
+      "path": "Source/Project_JMount/Public/Tests/Project_JMountLifecycleFixture.h",
+      "beforeSha256": null,
+      "sha256": "bdc4b525f4c540db188ab3f0a7891e81f1cc0ae293c0735caaf2d64f6e4c66ea"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JPlayerMountLifecycleTests.cpp",
+      "beforeSha256": null,
+      "sha256": "f8c9dfc8beb7c4b2c0101e5a61271ab5dfee7912c57bb00b1ba3aa5b3c78ff3f"
+    },
+    {
+      "path": "Source/Project_J/Project_J.Build.cs",
+      "beforeSha256": "6650f95dc97b268748676da5dddbe55af7d01887f209cb7a8bc3b1fd360cf99b",
+      "sha256": "e1fe9242ad923342c62ad373707b2fac5f4b9200b7b4b5105d4ac5727e581895"
+    }
+  ],
+  "changedFileCount": 45,
+  "unchangedBaselineFileCount": 404,
+  "deletedBaselineFiles": [],
+  "limitations": [
+    "NullRHI tests do not validate GPU appearance, every Blueprint/Chooser connection, latency PIE, or crowd frame costs.",
+    "Combo/VFX ownership tests exercise owned token/lease state; VFX spawning is not a GPU rendering test.",
+    "Configuration change policy test verifies decisions, not a full active-GA animation graph.",
+    "P11 public cached node diagnostics do not prove current traversal/final blend contribution.",
+    "No Unreal MCP used and no assets intentionally modified or saved."
+  ]
+}

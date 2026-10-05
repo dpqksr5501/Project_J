@@ -8,6 +8,8 @@ class USkeletalMeshComponent;
 
 namespace Project_J::Animation
 {
+	/** Visual demand only. Gameplay pose/authority demand is evaluated separately. */
+	bool WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance);
 	/** The visible retarget follower, if this character uses a separate animation source mesh. */
 	USkeletalMeshComponent* FindVisualFollower(const ACharacter& Character);
 

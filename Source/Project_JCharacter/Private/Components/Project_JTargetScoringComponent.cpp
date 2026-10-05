@@ -93,12 +93,15 @@ bool UProject_JTargetScoringComponent::StartBatchedNPCDecisions(int32 TeamId)
 	check(IsInGameThread());
 	if (!GetWorld() || bEndingPlay || IsBeingDestroyed()) { return false; }
 	auto* Scheduler = GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>();
-	return Scheduler && Scheduler->RegisterAgent(this, TeamId);
+	const bool bStarted = Scheduler && Scheduler->RegisterAgent(this, TeamId);
+	if (bStarted) { ++BatchRegistrationRevision; }
+	return bStarted;
 }
 
 void UProject_JTargetScoringComponent::StopBatchedNPCDecisions()
 {
 	check(IsInGameThread());
+	++BatchRegistrationRevision;
 	if (auto* Scheduler = NPCDecisionSubsystem.Get()) { Scheduler->UnregisterAgent(this); }
 	bNPCBatchRegistered = false;
 	NPCDecisionTeam = INDEX_NONE;
