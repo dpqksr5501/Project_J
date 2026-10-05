@@ -8,6 +8,9 @@
 | --- | --- |
 | 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |
 | Motion Matching 실행·원격·예산 정책 | [Motion Matching 구조와 후속 항목](Architecture/MotionMatchingNextSteps.md) |
+| 외부 Blend Stack 복귀·worker 검색 예산 | [복귀 검색과 군중 예산 보완](Architecture/MotionMatching_Return_Crowd_2026-10-05.md) |
+| Strafe 네 방향 Pivot·입력 취소 | [Pivot 이동 입력 기준 통일](Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) |
+| 연속 Pivot·OTM/Strafe 중복 Start/Land 방지 | [일회성 동작의 요청 수명](Architecture/OneShot_Command_Lifetime_2026-10-05.md) |
 | 리타깃 파이프라인과 배경 | [런타임 리타깃 구조](Architecture/Runtime_Retarget_HandIK_Architecture.md) |
 | 무기 부착·파지·궤적·공격 종료 복귀 | [무기 파지와 손 접촉 통합 가이드](Authoring/Weapon_Hand_Contact_System.md) |
 | 외형·의상 리더 선택 | [외형 메시 소유권](Architecture/Visual_Presentation_Mesh_Ownership.md) |

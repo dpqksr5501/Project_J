@@ -1,0 +1,113 @@
+{
+  "dateKST": "2026-10-05",
+  "scope": "Combat Strafe four cardinal reversal Pivot input-basis cancellation",
+  "status": "Editor/Game builds succeeded; 118 regression tests passed",
+  "editorBuild": {
+    "target": "Project_JEditor Win64 Development",
+    "log": "Saved/Validation/StrafePivot_20261005/BuildEditor_Final.log",
+    "exitCode": 0,
+    "durationSeconds": 5.36
+  },
+  "gameBuild": {
+    "target": "Project_J Win64 Development",
+    "log": "Saved/Validation/StrafePivot_20261005/BuildGame.log",
+    "exitCode": 0,
+    "durationSeconds": 113.17
+  },
+  "baselineReproduction": {
+    "report": "Saved/Automation/StrafePivot_Baseline_20261005/index.json",
+    "log": "Saved/Validation/StrafePivot_20261005/Baseline.log",
+    "test": "ProjectJ.StrafePivot.RedirectBasis",
+    "result": "Fail",
+    "failedAssertions": 4,
+    "exitCode": 255,
+    "note": "Original raw movement cancellation block extracted without a behavior change; all four conflicting-input cases failed."
+  },
+  "intermediateFixtureCorrection": {
+    "report": "Saved/Automation/StrafePivot_20261005/index.json",
+    "result": "117 tests passed; CardinalSelection failed 12 reversal predicates",
+    "reason": "Fixture speed 300 was below unchanged Pivot minimum 350",
+    "correction": "Changed fixture speed to 500; production speed policy unchanged"
+  },
+  "regression": {
+    "report": "Saved/Automation/StrafePivot_Final_20261005/index.json",
+    "log": "Saved/Validation/StrafePivot_20261005/Regression_Final.log",
+    "selection": "Saved/Validation/StrafePivot_20261005/RegressionTests.txt",
+    "exitCode": 0,
+    "total": 118,
+    "succeeded": 114,
+    "succeededWithWarnings": 4,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "newTests": [
+      "ProjectJ.StrafePivot.CardinalSelection",
+      "ProjectJ.StrafePivot.RedirectBasis"
+    ],
+    "authoredChooserCases": 24,
+    "warningEvents": 8,
+    "previousWarningEvents": 8,
+    "warningDifferences": 0
+  },
+  "assets": {
+    "loadedRoot": "/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations",
+    "modified": 0,
+    "saved": 0,
+    "unrealMCPUsed": false
+  },
+  "sourceHashes": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "beforeSha256": "0E81852CB82F957DA8C82488B17B5D7ACB09DBEA489D0E8BE26F7C9F542CA80B",
+      "afterSha256": "97B4B7A0526B6BD0EC79A217538CF7AA683F6750F662ACE050FC2B0B216ECBD1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "beforeSha256": "E9D267C0F81B7FE1B774E5DC34FA3B9D7EBCEF7A7F06E0FA362D54FBBADE0957",
+      "afterSha256": "23E9299040A6280253CEC388DE62E1AAD8C3729F25C30946CF6147BB44592AA7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "beforeSha256": "59E9AD42D5F4003BDF4A52350BED30D2C515D282BB6988D4874834C346DE8C47",
+      "afterSha256": "A24338EFC5D96638095BE7F63B704F1972BA648061FE445B53B1A80642EC9572"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafePivotTests.cpp",
+      "beforeSha256": null,
+      "afterSha256": "160A28BC8EDBB37DCC2A1D4B1419CC453754D4973A0EC3B47D57C39A38F19B30"
+    }
+  ],
+  "limits": [
+    "No user PIE input sequence or rendered ABP blend quality captured",
+    "Minimum speed and cardinal-only policy unchanged",
+    "Crowd search budget and return reselect work retained"
+  ],
+  "followupPIE": {
+    "status": "User PIE identified suppressed qualified Pivot replacements and same-epoch Land replay; command-lifetime fix passed 121 regression tests and user confirmed it works.",
+    "diagnosticCvar": "p.ProjectJ.StrafePivotDebug",
+    "editorDefault": 1,
+    "gameDefault": 0,
+    "sessionMarker": "20261005_Diag1",
+    "evidenceRequired": "Saved/Logs/Project_J.log from four cardinal reversal attempts",
+    "scope": "Read-only input/state/chooser/actual graph-node diagnostics; no further behavior changes",
+    "diagnosticBuild": {
+      "target": "Project_JEditor Win64 Development",
+      "directUBT": true,
+      "log": "Saved/Validation/StrafePivotDiag_20261005/BuildEditor.log",
+      "exitCode": 0,
+      "durationSeconds": 143.25
+    },
+    "diagnosticSmoke": {
+      "report": "Saved/Automation/StrafePivotDiag_20261005/index.json",
+      "log": "Saved/Validation/StrafePivotDiag_20261005/DiagnosticsSmoke.log",
+      "exitCode": 0,
+      "succeeded": 6,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "note": "Related Pivot/MM regression; user PIE trace and generated ABP observations remain pending"
+    },
+    "sourcePIELog": "Saved/Validation/PivotLandingLifetime_20261005/UserPIE.log",
+    "successorValidation": "OneShot_Command_Lifetime_Validation_2026-10-05.json"
+  }
+}

@@ -98,6 +98,8 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 	NewPivot.RequestRevision = 7;
 	NewPivot.MoveIntentRevision = 11;
 	NewPivot.bIsPivoting = true;
+	NewPivot.bHasMoveInput = true;
+	NewPivot.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
 	TestEqual(TEXT("입력 변경 없는 새 Pivot 요청은 진행 중인 Pivot을 대체한다"),
 		Runtime.ReconcilePivot(NewPivot, 5.0).Interruption,
 		FProject_JStateControllerRuntime::EPivotInterruption::Superseded);
@@ -172,13 +174,51 @@ bool FProjectJPivotInputRedirectTest::RunTest(const FString&)
 	TestTrue(TEXT("Unchanged input preserves authored Pivot playback"), Runtime.ReconcilePivot(Stale, 1.3).bKeepCommittedPivot);
 	Stale.MoveIntentRevision = 33;
 	Stale.RequestRevision = 14;
+	Stale.bIsPivoting = false;
+	Stale.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 	TestTrue(TEXT("WASD redirect still returns to Cycle"), Runtime.ReconcilePivot(Stale, 1.4).bForceCycle);
-	TestFalse(TEXT("Input-generated replacement Pivot cannot override responsive MM"), Runtime.CommitPivot(14, 33, FVector::RightVector, FVector::ForwardVector));
+	TestFalse(TEXT("A consumed non-Pivot redirect cannot revive through a stale snapshot"), Runtime.CommitPivot(14, 33, FVector::RightVector, FVector::ForwardVector));
 	Runtime.CommitPivot(15, 34, FVector::ForwardVector, FVector::RightVector);
+	Stale.RequestRevision = 16; Stale.MoveIntentRevision = 35;
+	Stale.bIsPivoting = true; Stale.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
+	const auto Replacement = Runtime.ReconcilePivot(Stale, 1.45);
+	TestEqual(TEXT("A qualified reversal supersedes the old Pivot despite a new input revision"), Replacement.Interruption, FProject_JStateControllerRuntime::EPivotInterruption::Superseded);
+	TestFalse(TEXT("A qualified reversal is not forced into Cycle"), Replacement.bForceCycle);
+	TestTrue(TEXT("The replacement reversal can commit"), Runtime.CommitPivot(16, 35, FVector::RightVector, -FVector::RightVector));
 	Stale.RequestRevision = 15; Stale.MoveIntentRevision = 35; Stale.bStopRequested = true;
 	TestEqual(TEXT("Input release retains Stop priority over redirect"), Runtime.ReconcilePivot(Stale, 1.5).Interruption, FProject_JStateControllerRuntime::EPivotInterruption::Stop);
 	Runtime.Reset();
 	TestTrue(TEXT("Owner reset clears request suppression"), Runtime.CommitPivot(13, 33, FVector::ForwardVector, FVector::RightVector));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStartEpisodeLifetimeTest,
+	"ProjectJ.Animation.StartEpisodeLifetime",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJStartEpisodeLifetimeTest::RunTest(const FString&)
+{
+	FProject_JStateControllerRuntime Runtime;
+	FProject_JStateControllerRuntime::FIntent Intent;
+	Intent.bIsLocallyControlled = true; Intent.bHasMoveInput = true; Intent.bIsMotionMatchingMoving = true;
+	Intent.PhaseFamily = EProject_JLocomotionPhaseFamily::Start;
+	const auto Start = EProject_JStateControllerPresentationState::TransitionToLocomotion;
+	TestTrue(TEXT("First movement starts once"), Runtime.BeginDesiredHold(Start, Intent, 1).bStartedTransition);
+	TestFalse(TEXT("Same request retains its clock"), Runtime.BeginDesiredHold(Start, Intent, 1.2).bStartedTransition);
+	TestEqual(TEXT("Hold time progresses"), Runtime.GetHoldElapsed(1.2), 0.2f);
+	Runtime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 1.3);
+	TestEqual(TEXT("After cancel/exit a stale Start under another mode stays in Cycle"), Runtime.BeginDesiredHold(Start, Intent, 1.4).DesiredState, EProject_JStateControllerPresentationState::LocomotionLoop);
+	Intent.PhaseFamily = EProject_JLocomotionPhaseFamily::Pivot;
+	TestEqual(TEXT("A fresh Pivot is independent of the consumed Start"), Runtime.BeginDesiredHold(Start, Intent, 1.5).DesiredState, Start);
+	Intent.bHasMoveInput = false; Intent.bIsMotionMatchingMoving = false;
+	Intent.PhaseFamily = EProject_JLocomotionPhaseFamily::Stop;
+	Runtime.BeginDesiredHold(EProject_JStateControllerPresentationState::TransitionToIdle, Intent, 1.6);
+	Intent.bHasMoveInput = true; Intent.bIsMotionMatchingMoving = true;
+	Intent.PhaseFamily = EProject_JLocomotionPhaseFamily::Start;
+	TestTrue(TEXT("A release then new movement rearms Start"), Runtime.BeginDesiredHold(Start, Intent, 1.7).bStartedTransition);
+	Runtime.OnFullBodyActionStart(1.8); Runtime.OnFullBodyActionEnd(1.9);
+	TestEqual(TEXT("Montage exit cannot replay the consumed Start"), Runtime.BeginDesiredHold(Start, Intent, 2).DesiredState, EProject_JStateControllerPresentationState::LocomotionLoop);
+	Runtime.Reset();
+	TestTrue(TEXT("Owner reset clears Start episode"), Runtime.BeginDesiredHold(Start, Intent, 2.1).bStartedTransition);
 	return true;
 }
 

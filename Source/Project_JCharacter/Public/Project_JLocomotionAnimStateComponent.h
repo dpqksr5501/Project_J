@@ -209,6 +209,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UPr
 	GENERATED_BODY()
 	friend class FProjectJCombatFacingSettledCycleTest;
 	friend class FProjectJStrafeFacingSelectionTest;
+	friend class FProjectJStrafePivotCardinalTest;
+	friend class FProjectJStrafePivotConsecutiveTest;
 
 public:
 	UProject_JLocomotionAnimStateComponent();
@@ -847,6 +849,7 @@ private:
 	int32 MoveIntentRevision = 0;
 	int32 LastConsumedPivotMoveIntentRevision = INDEX_NONE;
 	int32 LastLoggedPivotRejectionMoveIntentRevision = INDEX_NONE;
+	FName LastLoggedPivotRejectionReason;
 	int32 PivotRequestRevision = 0;
 	FVector LatchedPivotPreviousMovementDirection = FVector::ZeroVector;
 	FVector LatchedPivotMoveIntentDirection = FVector::ZeroVector;

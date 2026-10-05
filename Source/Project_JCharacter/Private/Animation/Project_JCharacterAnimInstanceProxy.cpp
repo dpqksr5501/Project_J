@@ -4,9 +4,11 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "BlendStack/AnimNode_BlendStack.h"
 #include "Project_JPlayerCharacter.h"
 #include "UObject/UnrealType.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include <limits>
 
 namespace
 {
@@ -36,6 +38,15 @@ float GetMotionMatchingSearchThrottleTime(const FAnimNode_MotionMatching& Node)
 	return 0.0f;
 }
 
+FMotionMatchingState* GetMutableMotionMatchingState(FAnimNode_MotionMatching& Node)
+{
+	// UE 5.8 exposes the state for reading but no search-completion counter. Use
+	// its reflected transient struct, without depending on private C++ offsets.
+	static FStructProperty* Property = FindFProperty<FStructProperty>(
+		FAnimNode_MotionMatching::StaticStruct(), TEXT("MotionMatchingState"));
+	return Property ? Property->ContainerPtrToValuePtr<FMotionMatchingState>(&Node) : nullptr;
+}
+
 }
 
 FProject_JCharacterAnimInstanceProxy::FProject_JCharacterAnimInstanceProxy()
@@ -54,7 +65,8 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	UPoseSearchDatabase* InSelectedDatabase,
 	bool bInMotionMatchingEnabled,
 	bool bInUpdateMotionMatchingThisFrame,
-	bool bInForceMotionMatchingReselect)
+	bool bInForceMotionMatchingReselect,
+	bool bInFreshSnapshot)
 {
 	// A draw/sheathe montage can hide the moment input is released. If Cycle and
 	// Idle resolve to the same PSD, changing its search context alone does not
@@ -67,11 +79,67 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle &&
 		(PendingGameThreadData.LocomotionContext.bIsMotionMatchingMoving ||
 			PendingGameThreadData.LocomotionContext.PhaseFamily != EProject_JLocomotionPhaseFamily::Idle);
+	const bool bReturnedFromOneShot = bMotionMatchingEnabled && bInMotionMatchingEnabled &&
+		PendingGameThreadData.OneShotPresentation.bShouldOverrideMotionMatching &&
+		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
+	const bool bNewForceRequest = bInFreshSnapshot && bInForceMotionMatchingReselect &&
+		(!bLastPublishedForceReselect ||
+			InData.MotionMatching.SelectionRevision != PendingGameThreadData.MotionMatching.SelectionRevision);
+	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame &&
+		InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase;
+	if (!bInMotionMatchingEnabled || InData.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot)
+	{
+		ClearMotionMatchingReselects();
+	}
+	else if (bNewForceRequest || bEnteredGroundIdle || bReturnedFromOneShot || bSelectedDatabaseChanged)
+	{
+		// Coalesce against the newest context. A later GT frame must not discard
+		// an unconsumed return's pose-history query requirement.
+		bReselectFromPoseHistory = bReturnedFromOneShot ||
+			(bForceMotionMatchingReselect && bReselectFromPoseHistory);
+		PendingReselectRevision = ++ReselectSerial;
+		bForceMotionMatchingReselect = true;
+	}
 	PendingGameThreadData = InData;
 	CurrentActiveDatabase = InSelectedDatabase;
 	bMotionMatchingEnabled = bInMotionMatchingEnabled;
 	bUpdateMotionMatchingThisFrame = bInUpdateMotionMatchingThisFrame;
-	bForceMotionMatchingReselect = bInForceMotionMatchingReselect || bEnteredGroundIdle;
+	// Skipped hidden samples are not new producer events. Retain the last pulse
+	// identity so an old snapshot cannot re-arm the same request after a skip.
+	if (bInFreshSnapshot)
+	{
+		bLastPublishedForceReselect = bInForceMotionMatchingReselect;
+	}
+}
+
+void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInstance)
+{
+	if (bHasNativeDefaultSearchThrottleTime)
+	{
+		SetMotionMatchingSearchThrottleTime(NativeMotionMatchingNode, NativeDefaultSearchThrottleTime);
+	}
+	FAnimInstanceProxy::Initialize(InAnimInstance);
+	PendingGameThreadData = FProject_JAnimThreadSafeData();
+	ThreadSafeData = FProject_JAnimThreadSafeData();
+	ClearMotionMatchingReselects();
+	bLastPublishedForceReselect = false;
+	CachedGeneratedMotionMatchingAnimClass = nullptr;
+	CachedGeneratedMotionMatchingNodeIndices.Reset();
+	AppliedGeneratedDatabases.Reset();
+	DefaultSearchThrottleTimes.Reset();
+	bHasNativeDefaultSearchThrottleTime = false;
+	AppliedDatabase = nullptr;
+	CurrentActiveDatabase = nullptr;
+	bHasMotionMatchingPolicyState = false;
+	bMotionMatchingEnabled = true;
+	bUpdateMotionMatchingThisFrame = true;
+	bLastPolicyWasInAir = false;
+	bLastPolicyWasMoving = false;
+	bLastPolicyWasCombat = false;
+	bLastPolicyUsedSettledCycle = false;
+	bWasPivotPhaseForDebug = false;
+	PivotDebugTrace.Reset();
+	LatestPostSelection = FProject_JAnimMotionMatchingPostSelectionData();
 }
 
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)
@@ -94,15 +162,18 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	{
 		ApplySelectedDatabaseToNativeNode();
 	}
-	if (bForceMotionMatchingReselect && bMotionMatchingEnabled && CurrentActiveDatabase)
+	ApplyMotionMatchingSearchPolicy();
+	if (PendingReselectRevision && bMotionMatchingEnabled && CurrentActiveDatabase &&
+		!ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching)
 	{
 		ForceReselectMotionMatchingNodes();
 	}
 
-	ApplyMotionMatchingSearchPolicy();
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
+	CompleteMotionMatchingReselects();
 	CapturePostSelection();
 	CapturePivotDebugTrace();
+	CaptureStrafePivotDiagnosticNodes();
 }
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
@@ -382,7 +453,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 			ThreadSafeData.LocomotionContext.PhaseFamily,
 			ThreadSafeData.Air.bIsFallOffStart,
 			NativeDefaultSearchThrottleTime,
-			bNativeDatabaseChanged));
+			bNativeDatabaseChanged,
+			ThreadSafeData.MotionMatching.MinimumSearchInterval));
 
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
@@ -410,6 +482,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 			MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase;
 		const bool bRecoverGroundIdle =
 			bMotionMatchingEnabled && CurrentActiveDatabase && bDatabaseChanged &&
+			!ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching &&
 			!ThreadSafeData.Air.bIsInAir &&
 			!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
 			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle;
@@ -419,7 +492,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 				ThreadSafeData.LocomotionContext.PhaseFamily,
 				ThreadSafeData.Air.bIsFallOffStart,
 				*DefaultSearchThrottleTime,
-				bDatabaseChanged));
+				bDatabaseChanged,
+				ThreadSafeData.MotionMatching.MinimumSearchInterval));
 		if (bRecoverGroundIdle)
 		{
 			// An Idle edge can be hidden by a draw/sheathe montage. If the node
@@ -438,18 +512,162 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 
 void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
 {
-	const EPoseSearchInterruptMode InterruptMode =
-		ResolveDatabaseChangeInterruptMode() == EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose
-			? EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose
-			: EPoseSearchInterruptMode::ForceInterrupt;
-	NativeMotionMatchingNode.SetInterruptMode(InterruptMode);
+	const TArray<int32>& GeneratedIndices = GetGeneratedMotionMatchingNodeIndices();
+	if (GeneratedIndices.IsEmpty())
+	{
+		ArmMotionMatchingReselect(NativeMotionMatchingNode, NativeReselectState);
+	}
 
-	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
+	for (const int32 NodeIndex : GeneratedIndices)
 	{
 		if (FAnimNode_MotionMatching* MotionMatchingNode =
 			const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex)))
 		{
-			MotionMatchingNode->SetInterruptMode(InterruptMode);
+			ArmMotionMatchingReselect(*MotionMatchingNode, GeneratedReselectStates.FindOrAdd(NodeIndex));
+		}
+	}
+}
+
+EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveReselectInterruptMode() const
+{
+	return bReselectFromPoseHistory ||
+		ResolveDatabaseChangeInterruptMode() == EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose
+		? EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose
+		: EPoseSearchInterruptMode::ForceInterrupt;
+}
+
+void FProject_JCharacterAnimInstanceProxy::ArmMotionMatchingReselect(
+	FAnimNode_MotionMatching& Node, FNodeReselectState& State)
+{
+	if (!PendingReselectRevision || State.HandledRevision == PendingReselectRevision || State.ArmedRevision)
+	{
+		return;
+	}
+	if (FMotionMatchingState* MotionState = GetMutableMotionMatchingState(Node))
+	{
+		// Interaction owns this node's selection until it releases the result.
+		if (MotionState->SearchResult.bIsInteraction) { return; }
+		State.ArmedRevision = PendingReselectRevision;
+		State.SavedElapsedSearchTime = MotionState->ElapsedPoseSearchTime;
+		State.SavedSearchThrottleTime = GetMotionMatchingSearchThrottleTime(Node);
+		// Mark this search due using the engine's own reset value. UE 5.8 resets
+		// this timer to exactly zero only on the regular MotionMatch search path.
+		// Missing history, an inactive branch, and an interaction do not acknowledge
+		// the request. This also works when the search selects the same pose.
+		MotionState->ElapsedPoseSearchTime = std::numeric_limits<float>::infinity();
+		SetMotionMatchingSearchThrottleTime(Node, 0.0f);
+		Node.SetInterruptMode(ResolveReselectInterruptMode());
+	}
+}
+
+bool FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselect(
+	FAnimNode_MotionMatching& Node, FNodeReselectState& State)
+{
+	if (!State.ArmedRevision) { return false; }
+	FMotionMatchingState* MotionState = GetMutableMotionMatchingState(Node);
+	const bool bSearched = MotionState && !MotionState->SearchResult.bIsInteraction &&
+		MotionState->ElapsedPoseSearchTime == 0.0f;
+	if (bSearched)
+	{
+		State.HandledRevision = State.ArmedRevision;
+	}
+	else if (MotionState && MotionState->ElapsedPoseSearchTime == std::numeric_limits<float>::infinity())
+	{
+		// Do not leave a due-time marker in an inactive node's playback state.
+		MotionState->ElapsedPoseSearchTime = State.SavedElapsedSearchTime;
+	}
+	if (!bSearched)
+	{
+		// Do not leave a force interrupt waiting inside an inactive node after a
+		// later mount/disable cancels the request. The proxy re-arms when needed.
+		Node.SetInterruptMode(EPoseSearchInterruptMode::DoNotInterrupt);
+	}
+	SetMotionMatchingSearchThrottleTime(Node, State.SavedSearchThrottleTime);
+	State.ArmedRevision = 0;
+	return bSearched;
+}
+
+void FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselects()
+{
+	bool bAnySearchExecuted = CompleteMotionMatchingReselect(NativeMotionMatchingNode, NativeReselectState);
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
+	{
+		if (FNodeReselectState* State = GeneratedReselectStates.Find(NodeIndex))
+		{
+			if (auto* Node = const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex)))
+			{
+				bAnySearchExecuted |= CompleteMotionMatchingReselect(*Node, *State);
+			}
+		}
+	}
+	if (bAnySearchExecuted)
+	{
+		bForceMotionMatchingReselect = false;
+		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		{
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("MMReselectSearch AnimInstance=%s Frame=%llu Request=%llu PoseHistory=%d BudgetInterval=%.3f"),
+				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, PendingReselectRevision,
+				bReselectFromPoseHistory ? 1 : 0, ThreadSafeData.MotionMatching.MinimumSearchInterval);
+		}
+		// Keep the revision: other inactive nodes consume it once when they next
+		// update. Already handled nodes never repeat a forced search for it.
+	}
+}
+
+void FProject_JCharacterAnimInstanceProxy::ClearMotionMatchingReselects()
+{
+	PendingReselectRevision = 0;
+	bForceMotionMatchingReselect = false;
+	bReselectFromPoseHistory = false;
+	NativeReselectState = FNodeReselectState();
+	GeneratedReselectStates.Reset();
+}
+
+void FProject_JCharacterAnimInstanceProxy::CaptureStrafePivotDiagnosticNodes()
+{
+	if (!ThreadSafeData.MotionMatching.bCaptureStrafePivotDiagnosticFrame || !Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic()) { return; }
+	UE_LOG(LogProjectJPlayer, Display,
+		TEXT("StrafePivotDiag Stage=Worker AnimInstance=%s Frame=%llu IntentRev=%d PivotRev=%d ChooserRev=%d Override=%d RequestedAsset=%s ForceBlend=%d MMEnabled=%d MMChooserUpdate=%d PendingSearch=%llu ForceSearch=%d GeneratedMM=%d"),
+		*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, ThreadSafeData.LocomotionContext.MoveIntentRevision,
+		ThreadSafeData.LocomotionContext.PivotRequestRevision, ThreadSafeData.OneShotPresentation.SelectionRevision,
+		ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0,
+		*GetNameSafe(ThreadSafeData.OneShotPresentation.SelectedAnimation.Get()), ThreadSafeData.OneShotPresentation.bForceBlendNextUpdate ? 1 : 0,
+		bMotionMatchingEnabled ? 1 : 0, bUpdateMotionMatchingThisFrame ? 1 : 0, PendingReselectRevision,
+		bForceMotionMatchingReselect ? 1 : 0, GetGeneratedMotionMatchingNodeIndices().Num());
+	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
+	if (!AnimClass) { return; }
+	int32 ExternalStacks = 0;
+	for (int32 Index = 0; Index < AnimClass->GetAnimNodeProperties().Num(); ++Index)
+	{
+		// Inspection only; never force a blend, advance time, or change node state.
+		if (const FAnimNode_BlendStack* Stack = GetNodeFromIndex<FAnimNode_BlendStack>(Index))
+		{
+			++ExternalStacks;
+			UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=ExternalStack AnimInstance=%s Frame=%llu Index=%d CachedWeight=%.3f Players=%d NewBlend=%d"),
+				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, Stack->GetCachedBlendWeight(), Stack->AnimPlayers.Num(), Stack->AnyNewBlendToThisFrame() ? 1 : 0);
+			for (int32 PlayerIndex = 0; PlayerIndex < FMath::Min(Stack->AnimPlayers.Num(), 4); ++PlayerIndex)
+			{
+				const FBlendStackAnimPlayer& Player = Stack->AnimPlayers[PlayerIndex];
+				UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=StackPlayer AnimInstance=%s Frame=%llu Index=%d Player=%d Asset=%s Time=%.3f Length=%.3f BlendWeight=%.3f Active=%d Loop=%d"),
+					*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, PlayerIndex, *GetNameSafe(Player.GetAnimationAsset()),
+					Player.GetCurrentAssetTime(), Player.GetCurrentAssetLength(), Player.GetBlendInWeight(), Player.IsActive() ? 1 : 0, Player.IsLooping() ? 1 : 0);
+			}
+		}
+	}
+	if (ExternalStacks == 0)
+	{
+		UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=ExternalStack AnimInstance=%s Frame=%llu Count=0"), *GetNameSafe(GetAnimInstanceObject()), GFrameCounter);
+	}
+	for (int32 Index : GetGeneratedMotionMatchingNodeIndices())
+	{
+		if (const FAnimNode_MotionMatching* Node = GetNodeFromIndex<FAnimNode_MotionMatching>(Index))
+		{
+			const auto& State = Node->GetMotionMatchingState();
+			UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=MMNode AnimInstance=%s Frame=%llu Index=%d CachedWeight=%.3f PSD=%s Asset=%s Time=%.3f SearchElapsed=%.3f Continuing=%d"),
+				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, Node->GetCachedBlendWeight(),
+				*GetNameSafe(State.SearchResult.SelectedDatabase.Get()), *GetNameSafe(State.SearchResult.SelectedAnim.Get()),
+				State.SearchResult.SelectedTime, State.ElapsedPoseSearchTime, State.SearchResult.bIsContinuingPoseSearch ? 1 : 0);
 		}
 	}
 }
@@ -587,10 +805,19 @@ const TArray<int32>& FProject_JCharacterAnimInstanceProxy::GetGeneratedMotionMat
 		return CachedGeneratedMotionMatchingNodeIndices;
 	}
 
+	if (CachedGeneratedMotionMatchingAnimClass && !bForceMotionMatchingReselect)
+	{
+		// A fulfilled request retained only for dormant old-class nodes must not
+		// become a new return event when the AnimBP is replaced.
+		ClearMotionMatchingReselects();
+	}
 	CachedGeneratedMotionMatchingAnimClass = AnimClass;
 	CachedGeneratedMotionMatchingNodeIndices.Reset();
 	AppliedGeneratedDatabases.Reset();
 	DefaultSearchThrottleTimes.Reset();
+	// Reinstanced nodes must not inherit acknowledgements belonging to old
+	// node memory. A still-pending request is applied to the replacement nodes.
+	GeneratedReselectStates.Reset();
 
 	if (!AnimClass)
 	{

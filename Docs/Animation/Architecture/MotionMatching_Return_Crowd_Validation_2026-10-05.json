@@ -1,0 +1,151 @@
+{
+  "dateKST": "2026-10-05",
+  "status": "Editor and Game builds succeeded; selected regression passed",
+  "scope": "External Blend Stack return query, deferred per-node actual search consumption and worker crowd search floor",
+  "editorBuild": {
+    "log": "Saved/Validation/MMCrowd_20261005/BuildEditor_Final2.log",
+    "exitCode": 0,
+    "result": "Succeeded",
+    "durationSeconds": 26.08
+  },
+  "gameBuild": {
+    "log": "Saved/Validation/MMCrowd_20261005/BuildGame.log",
+    "exitCode": 0,
+    "result": "Succeeded",
+    "durationSeconds": 105.51
+  },
+  "regression": {
+    "log": "Saved/Validation/MMCrowd_20261005/Regression.log",
+    "newTests": 3,
+    "existingCrowdScheduleTestsAdded": 1,
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "count": 5,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+        ]
+      },
+      {
+        "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "count": 1,
+        "messages": [
+          "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "count": 1,
+        "messages": [
+          "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+        ]
+      }
+    ],
+    "report": "Saved/Automation/MMCrowd_20261005/index.json",
+    "tests": 116,
+    "notCompleted": 0,
+    "exitCode": 0,
+    "warningEvents": 8,
+    "priorTests": 112,
+    "inProcess": 0,
+    "selection": "Saved/Validation/MMCrowd_20261005/RegressionTests.txt",
+    "succeeded": 112,
+    "warningsUnchangedFromBaseline": true,
+    "succeededWithWarnings": 4,
+    "failed": 0
+  },
+  "changedSources": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "beforeSha256": "C6712820AB6F51F2BD80B9220BC0BC1BB7D7B78AB0A44C46FC7A27AEF3FA8671",
+      "sha256": "8263955ACA645A9EA8D7A8149D3DA4D791CF8495F49C6F118043D87FDF295354"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+      "beforeSha256": "A7A85ABC13F407B975B4B405363333A8059F715B0D97B49B4F68E49FBE7F70FF",
+      "sha256": "EBA4AB1BDF511F197479060A5B032842EC3C6C4D3E3E2FB05E519BB51A863AD8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "beforeSha256": "8613B6DCA4376CC3B4ECC0740E0CAC1F4252402DD0286CF7631D3EA8A58F63FB",
+      "sha256": "0E81852CB82F957DA8C82488B17B5D7ACB09DBEA489D0E8BE26F7C9F542CA80B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "beforeSha256": "32254F7D5014A5A0B9114FCF3B114E17C558540C114FB9998E4FA38DC14203C2",
+      "sha256": "E9D267C0F81B7FE1B774E5DC34FA3B9D7EBCEF7A7F06E0FA362D54FBBADE0957"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h",
+      "beforeSha256": "85DA59882678920CCD2D40B6D2FC012C0DF3562AD041A0FBDBD3A858BBE99EFA",
+      "sha256": "F7A04D646EDA21CDEFBF6A34109AA34A84731C186DA378C3659EB29DC003D90F"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+      "beforeSha256": "6E7A777FDB5AEE2A5BDEC0F12E5D6E0C069CF3F993228C06216461881DDBCE9C",
+      "sha256": "7E86D179D30FE3B4D680212A1021C4770263559308E61A34DC7CF0FD16B47751"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStopIdleTests.cpp",
+      "beforeSha256": "6AED0438CAD85A4AB307F23E329D1CD3BC8979FD2E15920AEB611751A6A9756C",
+      "sha256": "0C2FE24D6D3C3C2DA619BC67846FB581AA043CF53C41355C78BC838E64BD5F03"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMotionMatchingCrowdTests.cpp",
+      "beforeSha256": null,
+      "sha256": "49A720D14E9E3360FB78E52DDC5BDCCB6F6A57C6CF8E929EF026221399BC2222"
+    }
+  ],
+  "evidenceHashes": [
+    {
+      "path": "Saved/Validation/MMCrowd_20261005/BuildEditor_Final2.log",
+      "sha256": "28BAE9DC9A40D81A32CB0A437EF65D1E121F38B3F715DE310BDC4C743777A8DE"
+    },
+    {
+      "path": "Saved/Validation/MMCrowd_20261005/BuildGame.log",
+      "sha256": "6FB4EC552062593A6B2CB72122874E3420E631DAFBA4E25B3DAFCB4E095A8AEE"
+    },
+    {
+      "path": "Saved/Validation/MMCrowd_20261005/Regression.log",
+      "sha256": "F4C1D3C30CE4B38BEE5388BEC54D674A5F8DA02DCECB3FB2DCEC69AB03A98BBE"
+    },
+    {
+      "path": "Saved/Automation/MMCrowd_20261005/index.json",
+      "sha256": "2D471DE374A10F882A7F7B38744238D3831A45875A20E37EDCB2366FA0036243"
+    }
+  ],
+  "backup": "Saved/Validation/MMCrowd_20261005/Before",
+  "handoffSixSourceHashesMatched": true,
+  "intermediateFailures": [
+    "Sandbox denied UBT user log directory before compilation; recent Application event log had no matching .NET/Application Error; reran direct UBT with elevated permissions without changing paths.",
+    "First actual Editor build failed only on nonexistent FindFPropertyChecked in the new test helper; corrected to FindFProperty plus check."
+  ],
+  "limitations": [
+    "No Unreal MCP or asset/level edits.",
+    "Actual authored pose, first return query continuity, current Blueprint callback and network PIE still require visual validation.",
+    "Actual-engine test uses empty candidate lists and native history/MM nodes; it does not verify the complete generated ABP with authored databases.",
+    "Per-node request adapter relies on the verified UE 5.8 ElapsedPoseSearchTime semantics and must be rechecked when upgrading the engine.",
+    "No measured crowd CPU/FPS improvement; Mid 0.033 floor leaves a node default of 0.05 unchanged.",
+    "Montage/root motion and existing Presentation/GameplayPose demand eligibility remain unchanged."
+  ],
+  "documentChecks": {
+    "catalog": "node Scripts/Documentation/Update-DocumentCatalog.mjs",
+    "links": "node Scripts/Validation/Validate-DocLinks.mjs",
+    "markdownFiles": 148,
+    "localLinks": 1008,
+    "brokenLinks": 0,
+    "preExistingAbsentLocalArchives": 12,
+    "scopedDiffCheck": "Passed"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "status": "Editor/Game Development builds and all 121 regression tests passed; user reports the fix works in PIE",
+  "sourcePIELog": "Saved/Validation/PivotLandingLifetime_20261005/UserPIE.log",
+  "sourcePIESha256": "84D8A551EDCB335C34A7B5253AF53EDF2B1EC89E18D98A4732B7D692BDEBE9D1",
+  "confirmedDefects": [
+    "Qualified second Pivot suppressed by generic redirect before supersession",
+    "Same landing epoch restarted twice by separate combat and rotation changes"
+  ],
+  "assetsModifiedByThisChange": 0,
+  "unrealMCPUsed": false,
+  "regression": {
+    "report": "Saved/Automation/PivotLandingLifetime_Final_20261005/index.json",
+    "log": "Saved/Validation/PivotLandingLifetime_20261005/Regression.log",
+    "exitCode": 0,
+    "succeeded": 117,
+    "succeededWithWarnings": 4,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "warningCount": 8,
+    "warningDifferencesFromPrior": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.StartEpisodeLifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "sourceHashes": [
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h",
+      "beforeSha256": "95AA35AD9E3FF0E67760A3861F133E40AFCE25FAFBD24ED486CC8139E8A96D72",
+      "afterSha256": "78FBE6798E4CAB90221F40D377F1833415973CD2BA1E1224BAA22A0587331CC7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "beforeSha256": "4AFA30449C1C6181388FCE67FEAF1611BE7751FB80495396E9279E825E4D3A9F",
+      "afterSha256": "1D12CA7DDA6D459E615C2EAD11A29B0D82EAC4E1B7F4C3CA4CD2E3923A3CDDE4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "beforeSha256": "5FF0824670353EEC787C7DB63694B5665207636C3108D400FCAC5BE52D5EFAE7",
+      "afterSha256": "07D12F51CC22B01C3C08DA929E52D048BD5810EF703C7C5AA0C08464CB26465C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "beforeSha256": "30EE64740353927A6C10B5847071F81629FF0162BA363F75A74669C9ED606A7C",
+      "afterSha256": "78D653793DA5CA9D35A17B7B047B940633F596B796C00BCDFCE19C8E5E6A50D1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JCharacterRuntimeTests.cpp",
+      "beforeSha256": "CB70CCE8057DB7FA1E0DE41D31A254992B6AC79C6CAE98132ADB39C8F8EF1D23",
+      "afterSha256": "12A988BD10910C92254A4609035EF9E9CEAD1A4178818FCB4476DC9A5DA0934C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafePivotTests.cpp",
+      "beforeSha256": "160A28BC8EDBB37DCC2A1D4B1419CC453754D4973A0EC3B47D57C39A38F19B30",
+      "afterSha256": "9E06385F007130755F3C891DBE30590D31CFFDA7EFFC66CEE4C7CD2D39B26EDA"
+    }
+  ],
+  "intermediateFailures": [
+    "Initial Editor compile: new consecutive test required a friend declaration on locomotion state; declaration added",
+    "Initial smoke: consecutive fixture cached IA_Move but did not publish component bHasMoveInput before snapshot fill. Fixture now represents the resolved movement update; production policy unchanged for this fixture repair. Smoke report preserved at Saved/Automation/PivotLandingLifetime_Smoke_20261005/index.json"
+  ],
+  "builds": [
+    {
+      "target": "Project_JEditor Win64 Development",
+      "directUBT": true,
+      "log": "Saved/Validation/PivotLandingLifetime_20261005/BuildEditor_Final.log",
+      "exitCode": 0,
+      "durationSeconds": 87.97
+    },
+    {
+      "target": "Project_JEditor Win64 Development (final test fixture)",
+      "directUBT": true,
+      "log": "Saved/Validation/PivotLandingLifetime_20261005/BuildEditor_Tests.log",
+      "exitCode": 0,
+      "durationSeconds": 5.36
+    },
+    {
+      "target": "Project_J Win64 Development",
+      "directUBT": true,
+      "log": "Saved/Validation/PivotLandingLifetime_20261005/BuildGame.log",
+      "exitCode": 0,
+      "durationSeconds": 121.1
+    }
+  ],
+  "documentation": {
+    "markdownFiles": 150,
+    "localLinks": 1019,
+    "brokenLinks": 0,
+    "preexistingAbsentArchiveLinks": 12,
+    "whitespaceDiffCheck": "passed"
+  },
+  "limits": [
+    "Post-fix behavior confirmed by user; rendered blending not independently reviewed from a new log or video",
+    "One-shot cache guards for non-Land states use seeded assets; real authored chooser and hold path exercised for Land and consecutive Pivot",
+    "Existing crowd search budgets and hidden-animation demand policy retained",
+    "Minimum Pivot speed, cardinal-only detection and authored assets unchanged"
+  ],
+  "userConfirmation": {
+    "date": "2026-10-05",
+    "message": "잘된다. 한글 내용으로 커밋해줘.",
+    "evidence": "User report; no additional post-fix log or video independently reviewed"
+  }
+}

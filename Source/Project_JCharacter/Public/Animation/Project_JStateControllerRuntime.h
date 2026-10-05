@@ -42,6 +42,7 @@ public:
 		EProject_JGroundMotionMode GroundMotionMode = EProject_JGroundMotionMode::Idle;
 		int32 TurnInPlaceSequence = 0;
 		int32 LandingPresentationRevision = INDEX_NONE;
+		EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 	};
 
 	struct FHoldUpdate
@@ -101,11 +102,26 @@ public:
 		if (Boundary.bLanding) { HeldLandingPresentationRevision = Boundary.LandingRevision; }
 		ConsumeTurnSequence(Boundary.bLocalTurn, Boundary.TurnSequence);
 		bGroundStopConsumed = !Boundary.bHasMoveInput;
+		bGroundStartConsumed = Boundary.bHasMoveInput;
 	}
 
 	EProject_JStateControllerPresentationState PrepareDesiredState(
 		EProject_JStateControllerPresentationState DesiredState, const FIntent& Intent)
 	{
+		// A Start belongs to a movement episode, not to a rotation/combat mode.
+		// Releasing grounded movement rearms it; direction changes while moving do not.
+		if (!Intent.bHasMoveInput && !Intent.bIsMotionMatchingMoving && !Intent.bIsInAir)
+		{
+			bGroundStartConsumed = false;
+		}
+		if (bGroundStartConsumed && Intent.PhaseFamily == EProject_JLocomotionPhaseFamily::Start &&
+			DesiredState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+			PlaybackHoldState != EProject_JStateControllerPresentationState::TransitionToLocomotion)
+		{
+			DesiredState = Intent.bIsMotionMatchingMoving
+				? EProject_JStateControllerPresentationState::LocomotionLoop
+				: EProject_JStateControllerPresentationState::IdleLoop;
+		}
 		if (Intent.bHasMoveInput ||
 			(!Intent.bIsLocallyControlled && Intent.bIsMotionMatchingMoving &&
 				(Intent.GroundMotionMode == EProject_JGroundMotionMode::Start ||
@@ -198,6 +214,11 @@ public:
 		if (bStart)
 		{
 			BeginHold(Result.DesiredState, NowSeconds);
+			if (Result.DesiredState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+				Intent.PhaseFamily == EProject_JLocomotionPhaseFamily::Start)
+			{
+				bGroundStartConsumed = true;
+			}
 			if (Result.DesiredState == EProject_JStateControllerPresentationState::TurnInPlace && Intent.TurnInPlaceSequence > 0)
 			{
 				ConsumeTurnSequence(Intent.bIsLocallyControlled, Intent.TurnInPlaceSequence);
@@ -272,17 +293,19 @@ public:
 		Result.PreviousRequestRevision = Pivot.RequestRevision;
 		Result.PreviousMoveIntentRevision = Pivot.MoveIntentRevision;
 		const bool bActive = Pivot.RequestRevision != 0;
-		const bool bSuperseded = bActive && Intent.bIsPivoting && Intent.RequestRevision != 0 &&
-			Intent.RequestRevision != Pivot.RequestRevision;
+		const bool bSuperseded = bActive && Intent.bIsPivoting && Intent.bHasMoveInput &&
+			!Intent.bInAir && !Intent.bLanding && Intent.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
+			Intent.RequestRevision != 0 && Intent.RequestRevision != Pivot.RequestRevision &&
+			!IsPivotRequestSuppressed(Intent.RequestRevision);
 		if (bActive && Intent.bStopRequested) { Result.Interruption = EPivotInterruption::Stop; }
+		else if (bSuperseded) { Result.Interruption = EPivotInterruption::Superseded; }
 		else if (bActive && Intent.bHasMoveInput && Pivot.MoveIntentRevision != 0 &&
 			Intent.MoveIntentRevision != Pivot.MoveIntentRevision)
 		{
-			// A fresh input during playback requests responsive MM, even if it
-			// also produced a new Pivot candidate in the state component.
+			// A qualified new reversal replaces the old Pivot above. Only an input
+			// redirect without a new valid Pivot returns directly to responsive MM.
 			Result.Interruption = EPivotInterruption::Redirect;
 		}
-		else if (bSuperseded) { Result.Interruption = EPivotInterruption::Superseded; }
 		const bool bAlreadySuppressed = !bActive && Intent.RequestRevision != 0 &&
 			Intent.RequestRevision == Pivot.SuppressedRequestRevision &&
 			Intent.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
@@ -332,6 +355,7 @@ private:
 	EProject_JStateControllerPresentationState PlaybackHoldState = EProject_JStateControllerPresentationState::Disabled;
 	double PlaybackHoldStartedAtSeconds = 0.0;
 	bool bGroundStopConsumed = false;
+	bool bGroundStartConsumed = false;
 	int32 HeldLandingPresentationRevision = INDEX_NONE;
 	int32 LastHandledLocalTurnSequence = 0;
 	int32 LastHandledRemoteTurnSequence = 0;

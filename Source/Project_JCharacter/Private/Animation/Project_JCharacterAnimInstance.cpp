@@ -265,6 +265,9 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 
 void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
 {
+	bStrafePivotDiagnosticStarted = false;
+	StrafePivotDiagnosticUntilSeconds = 0.0;
+	StrafePivotDiagnosticNextSampleSeconds = 0.0;
 	StateControllerRuntime.Reset();
 	CachedStateControllerChooserTable.Reset();
 	CachedStateControllerSelectedAnimation = nullptr;
@@ -332,7 +335,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		ThreadSafeData.ProceduralIK.FullBodyMontageWeight > KINDA_SMALL_NUMBER)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=FullBodyMontage Weight=%.2f"),
@@ -429,7 +432,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bHasStateControllerRemoteStartMoveYaw = false;
 		++StateControllerChooserSelectionRevision;
 
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerCombatPresentationReset: Intro=%s Outro=%s HeldLand=%s PhysicalLanding=%s PreviousAssetDiscarded=true"),
@@ -549,8 +552,8 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 
-	// Pivot accepts the same local input redirect as Start. Wait for its asset
-	// commit so the gesture selecting the Pivot cannot also cancel it.
+	// A committed Pivot uses ReconcilePivot's resolved move-intent revision for
+	// movement redirects. Only camera yaw shares Start's local cancel path.
 	const bool bIsCommittedPivotOneShot =
 		StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		ThreadSafeData.OneShotPresentation.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
@@ -569,43 +572,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		? LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle
 		: 30.0f;
 
-	bool bShouldCancelOneShot = false;
-	if (bIsTurnCancellableOneShot && OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled())
-	{
-		if (bHasStateControllerOneShotControlYaw)
-		{
-			const float ControlYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
-				StateControllerOneShotControlYaw,
-				OwningPlayerCharacter->GetControlRotation().Yaw));
-			if (ControlYawDelta >= EffectiveMouseTurnCancelAngle)
-			{
-				bShouldCancelOneShot = true;
-			}
-		}
-
-		if (!bShouldCancelOneShot)
-		{
-			const FVector CurrentInput = OwningPlayerCharacter->GetLastMovementInputVector();
-			const bool bHasCurrentInput = CurrentInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
-
-			if (bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
-			{
-				const float CurrentMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
-				const float MoveInputYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
-					StateControllerOneShotMoveInputYaw,
-					CurrentMoveInputYaw));
-				if (MoveInputYawDelta >= EffectiveMoveInputCancelAngle)
-				{
-					bShouldCancelOneShot = true;
-				}
-			}
-			else if (!bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
-			{
-				StateControllerOneShotMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
-				bHasStateControllerOneShotMoveInputYaw = true;
-			}
-		}
-	}
+	bool bShouldCancelOneShot = bIsTurnCancellableOneShot &&
+		OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled() &&
+		ShouldCancelLocalOneShotForInput(bIsCommittedPivotOneShot, EffectiveMouseTurnCancelAngle, EffectiveMoveInputCancelAngle);
 
 	float RemoteStartActorYawDelta = 0.0f;
 	float RemoteStartMoveYawDelta = 0.0f;
@@ -654,7 +623,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			}
 		}
 
-		if (bShouldCancelOneShot && Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if (bShouldCancelOneShot && (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerRemoteStartTurnExit Actor=%s ActorDelta=%.1f MoveDelta=%.1f Threshold=%.1f"),
@@ -673,7 +642,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		LastHandledStartResponsiveExitRevision = ThreadSafeData.Ground.StartResponsiveExitRevision;
 		bShouldCancelOneShot = bShouldCancelOneShot ||
 			StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToLocomotion;
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerResponsiveStartExit Revision=%d Held=%d Cancel=%s"),
@@ -917,7 +886,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		StateControllerOneShotFootForChooser = ResolveStateControllerFootFromContactCurves(
 			bAllowPhaseHistoryFallback,
 			StateControllerOneShotFootSelectionReasonForChooser);
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerFootLatch State=%d Foot=%d Reason=%d HasCurveL=%s HasCurveR=%s ContactL=%.3f ContactR=%.3f Delta=%.3f Threshold=%.3f PhaseCache=%d AllowPhaseCache=%s DefaultFoot=%d StopGait=%d FallOff=%s"),
@@ -955,7 +924,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			true,
 			StateControllerOneShotFootSelectionReasonForChooser);
 		StateControllerPivotFootLatchRequestRevision = PivotRequestRevision;
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotFootLatch Actor=%s PivotRev=%d Foot=%d Reason=%d ContactL=%.3f ContactR=%.3f HasContactCurves=%s PhaseCache=%d"),
@@ -1009,7 +978,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	else
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() &&
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())) &&
 			ThreadSafeData.OneShotPresentation.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
 			ThreadSafeData.LocomotionContext.PivotRequestRevision != 0 &&
 			ThreadSafeData.LocomotionContext.PivotRequestRevision != LastLoggedNonPrimaryPivotRequestRevision)
@@ -1042,6 +1011,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		ThreadSafeData.Movement.TrajectoryResetRevisionAfterConsumption = CachedTrajectoryComponent->GetResetRevision();
 		ThreadSafeData.Movement.TrajectoryResetReasonAfterConsumption = uint8(CachedTrajectoryComponent->GetLastResetReason());
 	}
+	TraceStrafePivotDiagnostic();
 	PublishThreadSafeDataToProxy(ThreadSafeData);
 	if (IsPrimaryMeshAnimInstance() && IsLocallyControlledCharacter())
 	{
@@ -1447,6 +1417,7 @@ FProject_JAnimThreadSafeData UProject_JCharacterAnimInstance::BuildThreadSafeDat
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimBuildThreadSafeData);
 	FProject_JAnimThreadSafeData Data;
 	Data.DeltaTime = DeltaSeconds;
+	Data.MotionMatching.MinimumSearchInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
 	if (const UProject_JLocomotionProfile* Profile = GetLocomotionProfile())
 	{
 		Data.MotionMatchingSearchPolicy = Profile->MotionMatchingSearchPolicy;
@@ -1569,7 +1540,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	const FProject_JStateControllerRuntime::FPivotUpdate PivotUpdate =
 		StateControllerRuntime.ReconcilePivot(PivotIntent, AnimationClock.Seconds);
 	if (PivotUpdate.Interruption != FProject_JStateControllerRuntime::EPivotInterruption::None &&
-		Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		(Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=%d NewPivotRev=%d NewIntentRev=%d"),
@@ -1816,7 +1787,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (StateControllerRuntime.GetPivot().RequestRevision != 0 &&
 		(Data.Air.bIsInAir || Data.Landing.bIsLanding))
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCancelled Actor=%s PivotRev=%d Reason=%s"),
@@ -1845,6 +1816,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	Intent.GroundMotionMode = Data.Ground.GroundMotionMode;
 	Intent.TurnInPlaceSequence = Data.LocomotionContext.TurnInPlaceSequence;
 	Intent.LandingPresentationRevision = Data.Landing.PresentationRevision;
+	Intent.PhaseFamily = InOutOneShot.PhaseFamily;
 	const FProject_JStateControllerRuntime::FHoldUpdate HoldUpdate =
 		StateControllerRuntime.BeginDesiredHold(DesiredState, Intent, NowSeconds);
 	DesiredState = HoldUpdate.DesiredState;
@@ -1882,7 +1854,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 				static_cast<int32>(Data.LocomotionContext.TurnInPlaceDirectionBucket),
 				static_cast<int32>(PreviousHeldState), static_cast<int32>(RequestedState));
 		}
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("StateControllerTransition Actor=%s Requested=%d PreviousHeld=%d NewHeld=%d LandEpoch=%d NewLand=%s Reason=GameplayIntentReplacement"),
@@ -1933,7 +1905,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		InOutOneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot;
 	if (bHoldingCommittedPivot && InOutOneShot.bTransitionAnimationAlmostComplete)
 	{
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotReleased Actor=%s PivotRev=%d Reason=AuthoredExit Asset=%s Elapsed=%.3f Remaining=%.3f"),
@@ -1957,7 +1929,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		return;
 	}
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && bStartedNewPlaybackHold)
+	if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())) && bStartedNewPlaybackHold)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("StateControllerHold: RequestedState=%d PreviousHeld=%d DesiredState=%d Elapsed=%.3f Remaining=%.3f PlayableLen=%.3f EffectiveLen=%.3f FallOff=%s LeadTime=%.3f ReachedComp=%s EarlyOpen=%s AlmostComp=%s Asset=%s"),
@@ -2127,7 +2099,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 			Remaining, static_cast<int32>(DesiredState));
 	}
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("StateControllerExitHold Actor=%s Exiting State=%d to State=%d LandEpoch=%d (Elapsed=%.3f Remaining=%.3f AlmostComp=%s)"),
@@ -2186,22 +2158,52 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		 bCachedStateControllerLandWasMoving != Data.Landing.bLandWasMoving ||
 		 bCachedStateControllerLandWasSprinting != Data.Landing.bLandWasSprinting ||
 		 bCachedStateControllerUseHeavyLand != Data.Landing.bUseHeavyLand);
-	// A committed Pivot retains the exact asset and foot chosen at entry. Foot
-	// contact can refresh mid-update; it must not force-blend Lfoot -> Rfoot
-	// during the same physical reversal.
-	const bool bLockCommittedPivotChooser =
-		StateControllerRuntime.GetPivot().RequestRevision != 0 &&
-		OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
-		StateControllerRuntime.GetPivot().RequestRevision == Data.LocomotionContext.PivotRequestRevision;
-	// A Stop already selected for this movement release keeps its asset through
-	// a Tab OTM/Strafe and combat-mode change. The next movement episode selects
-	// the new stance's Stop when its own input release occurs.
-	const bool bLockCommittedStopChooser =
-		OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-		CachedStateControllerPresentationState == EProject_JStateControllerPresentationState::TransitionToIdle &&
-		bCachedStateControllerHasSelectedAnimation &&
-		!Data.Input.bHasMoveInput;
-	const bool bContextChanged = !bLockCommittedPivotChooser && !bLockCommittedStopChooser &&
+	// Selection is owned by the active one-shot command. A live combat/rotation,
+	// foot or direction column change is not another playback command. Keep both
+	// the asset and chooser output (especially StartTime) until a real event or
+	// the existing hold/cancel policy releases it. MM still receives live context.
+	bool bLockCommittedOneShotChooser = false;
+	if (bCachedStateControllerHasSelectedAnimation &&
+		CachedStateControllerPresentationState == OneShot.PresentationState)
+	{
+		switch (OneShot.PresentationState)
+		{
+		case EProject_JStateControllerPresentationState::TransitionToLocomotion:
+			if (OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot)
+			{
+				bLockCommittedOneShotChooser = StateControllerRuntime.HasCommittedPivot() &&
+					StateControllerRuntime.GetPivot().RequestRevision == Data.LocomotionContext.PivotRequestRevision;
+			}
+			else
+			{
+				// Preserve the existing provisional Start gait correction window.
+				// A qualified Pivot in this same presentation state must select anew.
+				bLockCommittedOneShotChooser = !StateControllerRuntime.HasCommittedPivot() &&
+					CachedStateControllerPivotRequestRevision == Data.LocomotionContext.PivotRequestRevision &&
+					(bStateControllerStartGaitCommitted || CachedStateControllerGaitIntent == GaitIntentForChooser);
+			}
+			break;
+		case EProject_JStateControllerPresentationState::TransitionToIdle:
+			bLockCommittedOneShotChooser = !Data.Input.bHasMoveInput;
+			break;
+		case EProject_JStateControllerPresentationState::TransitionToLand:
+			bLockCommittedOneShotChooser =
+				CachedStateControllerLandingPresentationRevision == Data.Landing.PresentationRevision;
+			break;
+		case EProject_JStateControllerPresentationState::TransitionToInAir:
+			// Explicit air-direction reselection preserves progress in its existing
+			// path below; a mode toggle alone must not restart Jump/FallOff.
+			bLockCommittedOneShotChooser = !bIsJumpAirReselecting &&
+				bCachedStateControllerFallOff == bStateControllerFallOffForChooser;
+			break;
+		case EProject_JStateControllerPresentationState::TurnInPlace:
+			bLockCommittedOneShotChooser = !StateControllerRuntime.IsTurnReselectRequested();
+			break;
+		default:
+			break;
+		}
+	}
+	const bool bContextChanged = !bLockCommittedOneShotChooser &&
 		(bIsJumpAirReselecting ||
 		CachedStateControllerChooserTable.Get() != ChooserTable ||
 		CachedStateControllerPresentationState != OneShot.PresentationState ||
@@ -2263,7 +2265,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		UAnimationAsset* SelectedAsset = Cast<UAnimationAsset>(ResultObject);
 		if (!SelectedAsset &&
 			OneShot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
-			Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+			(Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			const FProject_JRemoteVisualLocomotionPolicy RemotePolicy = GetEffectiveRemoteVisualPolicy();
 			UE_LOG(LogProjectJPlayer, Display,
@@ -2420,17 +2422,15 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		if (bIsNewPivotCommit)
 		{
 			// A Pivot can replace another one-shot without changing presentation
-			// state. Capture its own input baseline rather than inheriting Start's.
+			// state. Capture its own camera baseline; movement uses the committed
+			// semantic revision rather than aggregate IA_Move / previous CMC input.
 			bHasStateControllerOneShotControlYaw = OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled();
 			bHasStateControllerOneShotMoveInputYaw = false;
 			if (bHasStateControllerOneShotControlYaw)
 			{
 				StateControllerOneShotControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
-				const FVector Input = OwningPlayerCharacter->GetLastMovementInputVector();
-				bHasStateControllerOneShotMoveInputYaw = Input.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
-				if (bHasStateControllerOneShotMoveInputYaw) { StateControllerOneShotMoveInputYaw = Input.ToOrientationRotator().Yaw; }
 			}
-			if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+			if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 			{
 				UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotCommitted Actor=%s PivotRev=%d AnimInstance=%s Primary=%s Asset=%s Start=%.3f Blend=%.3f"),
@@ -2440,7 +2440,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			}
 		}
 		else if (OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot &&
-			Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+			(Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 				TEXT("CombatStrafeRunPivotNotCommitted Actor=%s PivotRev=%d Reason=%s Phase=%d DerivedPivot=%s ChooserPivot=%s Asset=%s"),
@@ -2477,7 +2477,7 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				OneShot.bForceBlendNextUpdate ? 1 : 0, *EvaluatedChooserPath);
 		}
 
-		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+		if ((Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && IsLocallyControlledCharacter())))
 		{
 			UE_LOG(LogProjectJPlayer, Display,
 			TEXT("StateControllerChooser Actor=%s Rev=%d State=%d LandEpoch=%d LandMoving=%s LandSprint=%s LandHeavy=%s Rotation=%d Gait=%d StartGait=%d StartCommitted=%s PivotPhase=%s DerivedPivot=%s ChooserPivot=%s Stance=%d StrafeDir=%d PrevStrafeDir=%d StrafeAngle=%.1f HasStrafeAngle=%s OneShotFoot=%d FallOff=%s ContactL=%.2f ContactR=%.2f HasContactCurves=%s Combat=%s MMMoving=%s Input=%s InputFacingDelta=%.1f StopVelocityDelta=%.1f FutureSpeed=%.1f Accelerating=%s Asset=%s Length=%.3f Start=%.3f Loop=%s Blend=%.3f UseMM=%s Tags=%d HoldElapsed=%.3f HoldRemaining=%.3f AlmostComplete=%s ForceBlend=%s"),
@@ -2540,6 +2540,95 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		OneShot.bHasStrafeDirectionAngle;
 	OneShot.SelectionRevision = StateControllerChooserSelectionRevision;
+}
+
+void UProject_JCharacterAnimInstance::TraceStrafePivotDiagnostic()
+{
+	ThreadSafeData.MotionMatching.bCaptureStrafePivotDiagnosticFrame = false;
+	if (!Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() || !IsPrimaryMeshAnimInstance() || !IsLocallyControlledCharacter())
+	{
+		bStrafePivotDiagnosticStarted = false;
+		return;
+	}
+	const auto& Context = ThreadSafeData.LocomotionContext;
+	const auto& OneShot = ThreadSafeData.OneShotPresentation;
+	const auto& Pivot = StateControllerRuntime.GetPivot();
+	const double Now = FPlatformTime::Seconds();
+	const bool bIntentEdge = !bStrafePivotDiagnosticStarted || StrafePivotDiagnosticIntentRevision != Context.MoveIntentRevision;
+	const bool bRequestEdge = StrafePivotDiagnosticRequestRevision != Context.PivotRequestRevision;
+	const bool bChooserEdge = StrafePivotDiagnosticChooserRevision != OneShot.SelectionRevision;
+	if (!bStrafePivotDiagnosticStarted)
+	{
+		UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=Session Version=20261005_Diag1 Actor=%s AnimInstance=%s Frame=%llu CVar=p.ProjectJ.StrafePivotDebug"),
+			*GetPathNameSafe(OwningCharacter), *GetPathName(), GFrameCounter);
+	}
+	if (bIntentEdge || bRequestEdge) { StrafePivotDiagnosticUntilSeconds = Now + 1.5; }
+	const bool bSample = bIntentEdge || bRequestEdge || bChooserEdge ||
+		(Now < StrafePivotDiagnosticUntilSeconds && Now >= StrafePivotDiagnosticNextSampleSeconds);
+	bStrafePivotDiagnosticStarted = true;
+	StrafePivotDiagnosticIntentRevision = Context.MoveIntentRevision;
+	StrafePivotDiagnosticRequestRevision = Context.PivotRequestRevision;
+	StrafePivotDiagnosticChooserRevision = OneShot.SelectionRevision;
+	if (!bSample) { return; }
+	StrafePivotDiagnosticNextSampleSeconds = Now + 0.10;
+	ThreadSafeData.MotionMatching.bCaptureStrafePivotDiagnosticFrame = true;
+	const UProject_JLocomotionProfile* Profile = GetLocomotionProfile();
+	const UProject_JLocomotionAnimStateComponent* State = LocomotionAnimStateComponent.Get();
+	UE_LOG(LogProjectJPlayer, Display,
+		TEXT("StrafePivotDiag Stage=Snapshot Actor=%s Frame=%llu IntentRev=%d PivotRev=%d ChooserRev=%d RawPhase=%d Phase=%d State=%d Held=%d Rotation=%d Gait=%d Combat=%d Input=%d Stop=%d Speed=%.1f ProfileMin=%.1f Profile=%s ActorYaw=%.1f ControlYaw=%.1f RawPivot=%d DerivedPivot=%d ChooserPivot=%d Committed=%d Suppressed=%d PrevDir=%d Dir=%d Foot=%d Asset=%s Loop=%d Override=%d ForceBlend=%d Elapsed=%.3f Remaining=%.3f EarlyExit=%d ForceSearch=%d SearchFloor=%.3f PSD=%s"),
+		*GetNameSafe(OwningCharacter), GFrameCounter, Context.MoveIntentRevision, Context.PivotRequestRevision, OneShot.SelectionRevision,
+		State ? int32(State->DerivedLocomotionContext.PhaseFamily) : -1, int32(Context.PhaseFamily), int32(OneShot.PresentationState),
+		int32(StateControllerRuntime.GetHeldState()), int32(Context.RotationMode), int32(Context.GaitIntent), ThreadSafeData.Combat.bIsCombatMode ? 1 : 0,
+		ThreadSafeData.Input.bHasMoveInput ? 1 : 0, ThreadSafeData.Ground.bStopRequested ? 1 : 0, ThreadSafeData.Movement.GroundSpeed,
+		Profile ? Profile->TransitionPolicy.PivotMinSpeed : -1.0f, *GetPathNameSafe(Profile),
+		OwningCharacter->GetActorRotation().Yaw, OwningPlayerCharacter->GetControlRotation().Yaw,
+		State && State->DerivedLocomotionContext.bIsPivoting ? 1 : 0, Context.bIsPivoting ? 1 : 0, bChooserIsPivoting ? 1 : 0,
+		Pivot.RequestRevision, Pivot.SuppressedRequestRevision, int32(OneShot.PreviousStrafeDirection), int32(OneShot.StrafeDirection), int32(OneShot.Foot),
+		*GetNameSafe(OneShot.SelectedAnimation.Get()), OneShot.bSelectedAnimationShouldLoop ? 1 : 0,
+		OneShot.bShouldOverrideMotionMatching ? 1 : 0, OneShot.bForceBlendNextUpdate ? 1 : 0,
+		OneShot.TransitionElapsedTime, OneShot.TransitionTimeRemaining, OneShot.bEarlyTransitionWindowOpen ? 1 : 0,
+		ThreadSafeData.MotionMatching.bForceReselect ? 1 : 0, ThreadSafeData.MotionMatching.MinimumSearchInterval, *GetNameSafe(CurrentActivePoseSearchDatabase.Get()));
+}
+
+bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle)
+{
+	bool bShouldCancelOneShot = false;
+	if (bHasStateControllerOneShotControlYaw)
+	{
+		const float ControlYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+			StateControllerOneShotControlYaw,
+			OwningPlayerCharacter->GetControlRotation().Yaw));
+		if (ControlYawDelta >= MouseCancelAngle)
+		{
+			bShouldCancelOneShot = true;
+		}
+	}
+
+	// Pivot movement was already reconciled from the same resolved intent used
+	// for selection. Raw input can disagree during opposed-key overlap.
+	if (!bShouldCancelOneShot && !bCommittedPivot)
+	{
+		const FVector CurrentInput = OwningPlayerCharacter->GetLastMovementInputVector();
+		const bool bHasCurrentInput = CurrentInput.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
+
+		if (bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
+		{
+			const float CurrentMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
+			const float MoveInputYawDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(
+				StateControllerOneShotMoveInputYaw,
+				CurrentMoveInputYaw));
+			if (MoveInputYawDelta >= MoveCancelAngle)
+			{
+				bShouldCancelOneShot = true;
+			}
+		}
+		else if (!bHasStateControllerOneShotMoveInputYaw && bHasCurrentInput)
+		{
+			StateControllerOneShotMoveInputYaw = CurrentInput.ToOrientationRotator().Yaw;
+			bHasStateControllerOneShotMoveInputYaw = true;
+		}
+	}
+	return bShouldCancelOneShot;
 }
 
 void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const
@@ -3329,7 +3418,8 @@ bool UProject_JCharacterAnimInstance::ShouldEvaluateMotionMatchingThisFrame(floa
 	ApplyOptimizationPolicy(BuildOptimizationPolicy());
 	const float UpdateInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
 	// Stagger periodic GT Chooser/database selection. State changes and full-rate policies stay immediate.
-	// PoseSearch's actual worker search cadence remains owned by its separate search policy in the proxy.
+	// The same budget interval is also published as a worker search floor. Phase
+	// suppression and sparse transition searches remain owned by the proxy.
 	return MotionMatchingRuntime.ShouldEvaluate(DeltaSeconds, UpdateInterval, OwningCharacter->GetUniqueID(), bForceRefresh);
 }
 
@@ -3555,7 +3645,13 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
-	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, true, false, false);
+	// Movement sampling remains throttled while hidden, but a changed budget must
+	// reach the worker immediately. Do not replay the last sampled force pulse or
+	// request an urgent mesh update merely to deliver a policy/reselect request.
+	ThreadSafeData.MotionMatching.MinimumSearchInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
+	const bool bMotionMatchingEnabled = IsPrimaryMeshAnimInstance() &&
+		ThreadSafeData.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
+	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, false, false, false);
 	return true;
 }
 

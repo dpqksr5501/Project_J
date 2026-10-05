@@ -444,6 +444,12 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
 	bool bForceReselect = false;
+	/** Diagnostic only: requests read-only node observations after this snapshot is updated. */
+	bool bCaptureStrafePivotDiagnosticFrame = false;
+
+	/** GT budget floor for worker PoseSearch; zero preserves the node/phase policy. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
+	float MinimumSearchInterval = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
 	int32 TrajectorySampleCount = 0;
@@ -1265,6 +1271,7 @@ protected:
 		FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const;
 	void FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	bool ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle);
 	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
 	bool FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
@@ -1387,6 +1394,13 @@ public:
 	bool bCombatStopTraceWasTransitionActive = false;
 	double CombatStopTraceUntilSeconds = 0.0;
 	double CombatStopTraceNextSampleSeconds = 0.0;
+	void TraceStrafePivotDiagnostic();
+	bool bStrafePivotDiagnosticStarted = false;
+	int32 StrafePivotDiagnosticIntentRevision = INDEX_NONE;
+	int32 StrafePivotDiagnosticRequestRevision = INDEX_NONE;
+	int32 StrafePivotDiagnosticChooserRevision = INDEX_NONE;
+	double StrafePivotDiagnosticUntilSeconds = 0.0;
+	double StrafePivotDiagnosticNextSampleSeconds = 0.0;
 
 	/** 공중 점프 재선택 상태 변수 */
 	mutable float LastJumpAirReselectElapsed = 0.0f;
@@ -1655,6 +1669,10 @@ public:
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
 	friend class FProjectJStrafeFacingSelectionTest;
+	friend class FProjectJStrafePivotCardinalTest;
+	friend class FProjectJStrafePivotRedirectBasisTest;
+	friend class FProjectJStrafePivotConsecutiveTest;
+	friend class FProjectJOneShotModeContinuityTest;
 	friend class FProjectJAnimationClockTest;
 	FProject_JAnimationClock AnimationClock;
 	friend class FProjectJTurnInPlaceAndCombatStopTest;

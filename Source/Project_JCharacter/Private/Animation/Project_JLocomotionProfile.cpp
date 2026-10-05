@@ -148,11 +148,15 @@ float FProject_JMotionMatchingSearchPolicy::ResolveSearchThrottleTime(
 	EProject_JLocomotionPhaseFamily PhaseFamily,
 	bool bIsFallOffStart,
 	float DefaultSearchThrottleTime,
-	bool bDatabaseChanged) const
+	bool bDatabaseChanged,
+	float MinimumSearchInterval) const
 {
-	return ShouldSearchEveryUpdate(PhaseFamily, bIsFallOffStart) || bDatabaseChanged
+	const float PhaseInterval = ShouldSearchEveryUpdate(PhaseFamily, bIsFallOffStart) || bDatabaseChanged
 		? FMath::Max(0.0f, DefaultSearchThrottleTime)
 		: FMath::Max(0.0f, SuppressedSearchThrottleTime);
+	const float BudgetInterval = FMath::IsFinite(MinimumSearchInterval)
+		? FMath::Max(0.0f, MinimumSearchInterval) : 0.0f;
+	return FMath::Max(PhaseInterval, BudgetInterval);
 }
 
 float FProject_JMotionMatchingSearchPolicy::ResolveBlendTime(

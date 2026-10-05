@@ -4,6 +4,7 @@
 
 namespace Project_J::MotionMatchingCVars
 {
+bool ShouldTraceStrafePivotDiagnostic();
 bool ShouldRepairRemoteTrajectoryFacing();
 float GetRepairRemoteTrajectoryFacingMinSpeed();
 float GetRepairRemoteTrajectoryFacingMaxYawDelta();

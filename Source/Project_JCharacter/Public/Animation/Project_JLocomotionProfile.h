@@ -225,7 +225,8 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 		EProject_JLocomotionPhaseFamily PhaseFamily,
 		bool bIsFallOffStart,
 		float DefaultSearchThrottleTime,
-		bool bDatabaseChanged) const;
+		bool bDatabaseChanged,
+		float MinimumSearchInterval = 0.0f) const;
 	float ResolveBlendTime(bool bIsInAir, bool bWasInAir, float VerticalSpeed) const;
 };
 

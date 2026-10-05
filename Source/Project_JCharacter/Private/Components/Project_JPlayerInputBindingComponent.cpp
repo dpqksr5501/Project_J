@@ -3,6 +3,7 @@
 #include "EnhancedInputComponent.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "InputActionValue.h"
+#include "InputAction.h"
 #include "Project_JPlayerCharacter.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
@@ -53,6 +54,15 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		ActionSet.MoveIntentLeftAction &&
 		ActionSet.MoveIntentRightAction;
 	bSemanticMoveIntentActionsBound = bHasCompleteSemanticMoveIntentActionSet;
+	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && BoundPlayerCharacter->IsLocallyControlled())
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("StrafePivotDiag Stage=Bindings Actor=%s Frame=%llu FullSemantic=%d Move=%s Forward=%s Backward=%s Left=%s Right=%s"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, bSemanticMoveIntentActionsBound ? 1 : 0,
+			*GetPathNameSafe(ActionSet.MoveAction.Get()), *GetPathNameSafe(ActionSet.MoveIntentForwardAction.Get()),
+			*GetPathNameSafe(ActionSet.MoveIntentBackwardAction.Get()), *GetPathNameSafe(ActionSet.MoveIntentLeftAction.Get()),
+			*GetPathNameSafe(ActionSet.MoveIntentRightAction.Get()));
+	}
 	bPendingSemanticMoveIntentRefresh = false;
 	bMoveIntentForwardHeld = false;
 	bMoveIntentBackwardHeld = false;
@@ -349,6 +359,11 @@ void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted(con
 		MoveIntentPressSequence = 1;
 	}
 	*PressSequence = MoveIntentPressSequence;
+	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && BoundPlayerCharacter && BoundPlayerCharacter->IsLocallyControlled())
+	{
+		UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=Key Actor=%s Frame=%llu Direction=%d Held=1 PressSeq=%d"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, int32(Direction), MoveIntentPressSequence);
+	}
 	QueueSemanticMoveIntentRefresh();
 }
 
@@ -379,6 +394,11 @@ void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped(con
 	}
 
 	*HeldState = false;
+	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && BoundPlayerCharacter && BoundPlayerCharacter->IsLocallyControlled())
+	{
+		UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=Key Actor=%s Frame=%llu Direction=%d Held=0 PressSeq=%d"),
+			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, int32(Direction), MoveIntentPressSequence);
+	}
 	QueueSemanticMoveIntentRefresh();
 }
 
@@ -442,7 +462,7 @@ void UProject_JPlayerInputBindingComponent::RefreshSemanticMoveIntent()
 	BoundPlayerCharacter->LocomotionAnimStateComponent->SetSemanticMoveIntentInput(
 		FVector2D(Horizontal, Vertical).GetSafeNormal(), bHasActiveIntent);
 
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && BoundPlayerCharacter->IsLocallyControlled()))
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("CombatStrafeSemanticIntent Actor=%s Held[F=%s B=%s L=%s R=%s] PressSeq[F=%d B=%d L=%d R=%d] Final=(%.2f,%.2f) Active=%s"),

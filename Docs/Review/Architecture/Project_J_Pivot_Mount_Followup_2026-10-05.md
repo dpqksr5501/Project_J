@@ -2,6 +2,8 @@
 
 ## Pivot 문제와 변경
 
+> **아래 Pivot 정책은 후속 수정으로 대체됐다.** 사용자 PIE에서 새로 승인된 반전까지 일반 redirect로 소비하는 정책이 연속 Pivot을 누락시켰다. 최신 정책은 [일회성 동작의 요청 수명](../../Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md)을 따른다. 승인된 새 Pivot은 이전 Pivot을 대체하고, 일반 redirect만 MM으로 복귀한다. [입력 기준 통일](../../Animation/Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md), 마우스 취소와 아래 하차 수정은 유지한다.
+
 Start/Land의 마우스·이동 입력 방향 중단 경로에서 확정된 Pivot을 명시적으로 제외하고 있었다. 또한 Pivot 재생 중 새 이동 의도가 다른 Pivot 후보를 만들면, 입력에 따른 모션 매칭 복귀보다 새 Pivot 재생이 우선했다.
 
 확정된 Pivot도 기존 Start의 입력 방향 임계값을 사용해 Cycle/Idle 모션 매칭으로 복귀한다. 새 Pivot asset을 확정하는 게임 스레드 시점에 카메라·이동 입력 기준을 저장하므로, Start나 이전 Pivot의 입력을 물려받아 새 Pivot이 즉시 취소되지 않는다. 선택을 유발한 최초 입력은 그대로 재생하며, 재생 중 추가 입력은 MM 복귀를 우선한다. 중단한 요청 revision을 소비하고 확정 단계에서도 재확정을 차단해 지연된 상태 스냅샷이 같은 Pivot을 되살리지 않는다.

@@ -980,6 +980,9 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& InKinematicContext)
 {
+	const AProject_JPlayerCharacter* DiagnosticOwner = GetPlayerOwner();
+	const bool bPivotDiagnostic = Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() &&
+		DiagnosticOwner && DiagnosticOwner->IsLocallyControlled();
 	const UProject_JCombatAnimProfile* CombatProfile = GetPlayerOwner()
 		? GetPlayerOwner()->GetCombatAnimProfile()
 		: nullptr;
@@ -1012,18 +1015,20 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	const float PhysicalReversalAngle = !PreviousDirection.IsNearlyZero() && !IntentDirection.IsNearlyZero()
 		? FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(FVector::DotProduct(PreviousDirection, IntentDirection), -1.0f, 1.0f)))
 		: -1.0f;
-	const auto LogRejectedPivot = [this, &AuthContext, &InKinematicContext, CombatProfile, PreviousDirection, IntentDirection, PhysicalReversalAngle, PivotGroundSpeed, bUsingSemanticPivotKinematicCapture](const TCHAR* Reason)
+	const auto LogRejectedPivot = [this, &AuthContext, &InKinematicContext, CombatProfile, PreviousDirection, IntentDirection, PhysicalReversalAngle, PivotGroundSpeed, bUsingSemanticPivotKinematicCapture, bPivotDiagnostic](const TCHAR* Reason)
 	{
 		// One line per input-intent revision: useful for a real key/analog edge,
 		// without turning the locomotion update into a per-frame trace.
-		if (!Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() ||
-			!InKinematicContext.bHasMoveInput ||
-			LastLoggedPivotRejectionMoveIntentRevision == MoveIntentRevision)
+		if ((!Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() && !bPivotDiagnostic) ||
+			(!bPivotDiagnostic && !InKinematicContext.bHasMoveInput) ||
+			(LastLoggedPivotRejectionMoveIntentRevision == MoveIntentRevision &&
+				(!bPivotDiagnostic || LastLoggedPivotRejectionReason == FName(Reason))))
 		{
 			return;
 		}
 
 		LastLoggedPivotRejectionMoveIntentRevision = MoveIntentRevision;
+		LastLoggedPivotRejectionReason = FName(Reason);
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("CombatStrafeRunPivotRejected Actor=%s Reason=%s IntentRev=%d Profile=%s Enabled=%s Local=%s Combat=%s Rotation=%d Gait=%d Input=%s Speed=%.1f/%.1f ActualSpeed=%.1f SemanticCapture=%s Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) Angle=%.1f/%.1f RawInput=(%.2f,%.2f) SemanticInput=(%.2f,%.2f) SemanticPending=%s StableInput=(%.2f,%.2f) Velocity=%s IntentValid=%s Air=%s Jump=%s Landing=%s Consumed=%s"),
 			*GetNameSafe(GetOwner()), Reason, MoveIntentRevision, *GetNameSafe(CombatProfile),
@@ -1085,12 +1090,14 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	}
 	if (bSemanticMoveIntentUpdatePending)
 	{
+		LogRejectedPivot(TEXT("SemanticPending"));
 		// A Boolean direction edge is being coalesced in the input component's
 		// post-update tick. Evaluate only the completed chord.
 		return false;
 	}
 	if (!InKinematicContext.bHasMoveInput)
 	{
+		LogRejectedPivot(TEXT("NoResolvedMoveInput"));
 		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
@@ -1131,6 +1138,7 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	}
 	if (MoveIntentRevision == LastConsumedPivotMoveIntentRevision)
 	{
+		LogRejectedPivot(TEXT("AlreadyConsumed"));
 		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
@@ -1151,7 +1159,7 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 	{
 		PivotRequestRevision = 1;
 	}
-	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace() || bPivotDiagnostic)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("CombatStrafeRunPivotAccepted Actor=%s IntentRev=%d PivotRev=%d Speed=%.1f Min=%.1f Angle=%.1f Threshold=%.1f Previous=(%.2f,%.2f) Intent=(%.2f,%.2f) RawInput=(%.2f,%.2f) SemanticInput=(%.2f,%.2f) StableInput=(%.2f,%.2f)"),

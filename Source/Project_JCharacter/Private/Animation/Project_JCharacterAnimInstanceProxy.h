@@ -48,7 +48,8 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 		UPoseSearchDatabase* InSelectedDatabase,
 		bool bInMotionMatchingEnabled,
 		bool bInUpdateMotionMatchingThisFrame,
-		bool bInForceMotionMatchingReselect);
+		bool bInForceMotionMatchingReselect,
+		bool bInFreshSnapshot = true);
 
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
@@ -56,6 +57,7 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	FString GetPivotTraceSummary() const;
 
 protected:
+	virtual void Initialize(UAnimInstance* InAnimInstance) override;
 	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
 	virtual void UpdateAnimationNode_WithRoot(
 		const FAnimationUpdateContext& InContext,
@@ -69,12 +71,28 @@ private:
 	friend class FProjectJAnimationClockTest;
 	friend class FProjectJStopIdleInterruptTest;
 	friend class FProjectJStrafeFacingSearchTest;
+	friend class FProjectJMotionMatchingReturnRequestTest;
+	friend class FProjectJMotionMatchingSearchExecutionTest;
+	friend class FProjectJMotionMatchingCrowdPolicyTest;
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
 	void ForceReselectMotionMatchingNodes();
+	void CompleteMotionMatchingReselects();
+	void ClearMotionMatchingReselects();
+	EPoseSearchInterruptMode ResolveReselectInterruptMode() const;
+	struct FNodeReselectState
+	{
+		uint64 HandledRevision = 0;
+		uint64 ArmedRevision = 0;
+		float SavedElapsedSearchTime = 0.0f;
+		float SavedSearchThrottleTime = 0.0f;
+	};
+	void ArmMotionMatchingReselect(FAnimNode_MotionMatching& Node, FNodeReselectState& State);
+	bool CompleteMotionMatchingReselect(FAnimNode_MotionMatching& Node, FNodeReselectState& State);
 	void CapturePostSelection();
 	void CapturePivotDebugTrace();
+	void CaptureStrafePivotDiagnosticNodes();
 	/**
 	 * Generated AnimBP graphs commonly contain far more nodes than Motion Matching
 	 * nodes. Cache only the latter's indices and rebuild when the generated class
@@ -89,6 +107,13 @@ private:
 	bool bMotionMatchingEnabled = true;
 	bool bUpdateMotionMatchingThisFrame = true;
 	bool bForceMotionMatchingReselect = false;
+	// Only request lifetime is latched; PendingGameThreadData is always replaced.
+	uint64 ReselectSerial = 0;
+	uint64 PendingReselectRevision = 0;
+	bool bReselectFromPoseHistory = false;
+	bool bLastPublishedForceReselect = false;
+	FNodeReselectState NativeReselectState;
+	TMap<int32, FNodeReselectState> GeneratedReselectStates;
 
 	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
 	TObjectPtr<UPoseSearchDatabase> AppliedDatabase = nullptr;

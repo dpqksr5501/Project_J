@@ -50,7 +50,7 @@ bool FProjectJStopIdleInterruptTest::RunTest(const FString&)
 		TestTrue(TEXT("Releasing movement under a combat transition invalidates the continuing walk pose"),
 			MontageProxy.bForceMotionMatchingReselect);
 		MontageProxy.QueueGameThreadData(IdleData, nullptr, true, true, false);
-		TestFalse(TEXT("Settled Idle does not force a new search every frame"),
+		TestTrue(TEXT("Settled Idle retains the request until an actual node search"),
 			MontageProxy.bForceMotionMatchingReselect);
 	}
 	return true;
