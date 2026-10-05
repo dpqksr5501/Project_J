@@ -22,6 +22,12 @@
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonSerializer.h"
 #include "ProfilingDebugging/MiscTrace.h"
+#include "Testing/Project_JAuthoredAnimationFixture.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Components/Project_JReplicatedAnimEventComponent.h"
+#include "Project_JLocomotionAnimStateComponent.h"
+#include "UObject/UnrealType.h"
+#include "Components/BoxComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJDNetwork, Log, All);
 namespace
@@ -35,6 +41,30 @@ bool Enabled()
 #endif
 }
 int32 FixtureClients() { int32 N = 2; FParse::Value(FCommandLine::Get(), TEXT("ProjectJFixtureClients="), N); return FMath::Clamp(N, 2, 8); }
+bool AnimationEnabled() { return Enabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAnimationFixture")); }
+void EnsureAnimationFloor(UWorld* World)
+{
+	if (!AnimationEnabled() || !World || !World->IsGameWorld()) { return; }
+	for (TActorIterator<AActor> It(World); It; ++It) { if (It->ActorHasTag(TEXT("ProjectJAnimationFixtureFloor"))) { return; } }
+	// Entry has no ground. A real collision floor on each process prevents the
+	// autonomous pawn from legitimately generating FallOff RPCs during setup.
+	FActorSpawnParameters Params; Params.ObjectFlags |= RF_Transient;
+	auto* Floor = World->SpawnActor<AActor>(Params);
+	if (!Floor) { return; }
+	Floor->Tags.Add(TEXT("ProjectJAnimationFixtureFloor"));
+	auto* Box = NewObject<UBoxComponent>(Floor);
+	Floor->SetRootComponent(Box); Floor->AddInstanceComponent(Box);
+	Box->SetBoxExtent(FVector(50000, 50000, 100));
+	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Box->SetCollisionObjectType(ECC_WorldStatic); Box->SetCollisionResponseToAllChannels(ECR_Block);
+	Box->RegisterComponent(); Floor->SetActorLocation(FVector(0, 0, -100));
+}
+FProject_JReplicatedAnimEventState ReadAnimationEvents(AProject_JPlayerCharacter* Player)
+{
+	auto* Events = Player ? Player->FindComponentByClass<UProject_JReplicatedAnimEventComponent>() : nullptr;
+	auto* Property = Events ? FindFProperty<FStructProperty>(Events->GetClass(), TEXT("ReplicatedAnimEvents")) : nullptr;
+	return Property ? *Property->ContainerPtrToValuePtr<FProject_JReplicatedAnimEventState>(Events) : FProject_JReplicatedAnimEventState();
+}
 int32 FixtureNPCs() { int32 N = 100; FParse::Value(FCommandLine::Get(), TEXT("ProjectJFixtureNPCs="), N); return FMath::Clamp(N / 2 * 2, 100, 2048); }
 FString OutputRoot()
 {
@@ -55,6 +85,24 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 {
 	Super::Initialize(Collection);
 	if (!Enabled()) { return; }
+	if (AnimationEnabled())
+	{
+		FloorWorldInit = FWorldDelegates::OnPostWorldInitialization.AddLambda([](UWorld* World, const UWorld::InitializationValues)
+		{ EnsureAnimationFloor(World); });
+		EnsureAnimationFloor(GetWorld());
+		// Run after net dispatch and before actor/component ticks: the first
+		// autonomous CMC tick must also use the controlled fixture kinematics.
+		AnimationKinematicsTick = FWorldDelegates::OnWorldPreActorTick.AddLambda([](UWorld* World, ELevelTick, float)
+		{
+			if (!World || !World->IsGameWorld()) { return; }
+			for (TActorIterator<AProject_JPlayerCharacter> It(World); It; ++It)
+			{
+				auto* Movement = It->GetCharacterMovement();
+				Movement->SetComponentTickEnabled(false);
+				Movement->SetMovementMode(MOVE_Walking);
+			}
+		});
+	}
 	const double Started = FPlatformTime::Seconds();
 	Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Started](float)
 	{
@@ -64,7 +112,12 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 	}));
 }
 void UProject_JNetworkFixtureLifetime::Deinitialize()
-{ FTSTicker::GetCoreTicker().RemoveTicker(Timeout); Super::Deinitialize(); }
+{
+	FWorldDelegates::OnPostWorldInitialization.Remove(FloorWorldInit);
+	FWorldDelegates::OnWorldPreActorTick.Remove(AnimationKinematicsTick);
+	FTSTicker::GetCoreTicker().RemoveTicker(Timeout);
+	Super::Deinitialize();
+}
 
 AProject_JNetworkViewPawn::AProject_JNetworkViewPawn()
 {
@@ -103,21 +156,89 @@ void AProject_JNetworkLoadController::PlayerTick(float DeltaSeconds)
 		else { bForeignEmpty &= Inventory.Contains(TEXT("Items=0")); }
 		bEquipment &= It->GetEquipmentManagerComponent()->GetAllEquippedItems().Num() == (bItemsExpected ? 1 : 0);
 	}
-	ServerObserve(CurrentStage, Seen, bOwn, bForeignEmpty && States == FixtureClients(), bEquipment && States == FixtureClients(), MinPulse);
+	ServerObserve(CurrentStage, Seen, bOwn, bForeignEmpty && States == FixtureClients(), bEquipment && States == FixtureClients(), MinPulse, ObserveAnimation());
 }
-void AProject_JNetworkLoadController::ServerObserve_Implementation(int32 InStage, const TArray<int32>& Seen, bool bOwnInventory, bool bForeignInventoryEmpty, bool bEquipment, int32 MinPulse)
+void AProject_JNetworkLoadController::ClientAnimationExpect_Implementation(int32 InStage, const TArray<AProject_JPlayerCharacter*>& Players, const TArray<FProject_JReplicatedAnimEventState>& States)
+{
+	if (!AnimationEnabled()) { return; }
+	AnimationStage = InStage; AnimationPlayers.Reset(); AnimationStates = States;
+	for (auto* ObservedCharacter : Players) { AnimationPlayers.Add(ObservedCharacter); }
+}
+bool AProject_JNetworkLoadController::ObserveAnimation()
+{
+	if (!AnimationEnabled()) { return true; }
+	if (AnimationStage != CurrentStage || AnimationPlayers.Num() != FixtureClients() || AnimationStates.Num() != AnimationPlayers.Num())
+	{
+		AnimationRows += FString::Printf(TEXT("%d,NotReady_ExpectedStage%d_Players%d_States%d\n"), CurrentStage, AnimationStage, AnimationPlayers.Num(), AnimationStates.Num()); return false;
+	}
+	int32 RemoteCount = 0; bool bReady = !bAnimationViolation;
+	for (int32 I = 0; I < AnimationPlayers.Num(); ++I)
+	{
+		auto* ObservedCharacter = AnimationPlayers[I].Get();
+		if (!ObservedCharacter)
+		{
+			// The reliable controller RPC can arrive before a separate actor channel
+			// resolves its reference. Re-resolve by stable PlayerState identity instead
+			// of retaining that initial null as a permanent failed observation.
+			const FName ClassId(*FString::Printf(TEXT("DClient%d"), I));
+			for (TActorIterator<AProject_JPlayerCharacter> It(GetWorld()); It; ++It)
+			{
+				const auto* PS = It->GetPlayerState<AProject_JPlayerState>();
+				if (PS && PS->GetPublicClassId() == ClassId) { ObservedCharacter = *It; AnimationPlayers[I] = *It; break; }
+			}
+		}
+		if (!ObservedCharacter) { AnimationRows += FString::Printf(TEXT("%d,NotReady_NullActor%d\n"), CurrentStage, I); bReady = false; continue; }
+		// Only this opt-in fixture supplies kinematics/visibility. No asset is saved.
+		ObservedCharacter->GetCharacterMovement()->SetComponentTickEnabled(false);
+		TInlineComponentArray<USkeletalMeshComponent*> Visuals(ObservedCharacter);
+		for (auto* Mesh : Visuals) { Mesh->SetLastRenderTime(CurrentStage == 4 ? -1000.0f : GetWorld()->GetTimeSeconds()); }
+		if (ObservedCharacter->IsLocallyControlled()) { continue; } // SkipOwner is a production contract.
+		++RemoteCount;
+		auto* Anim = Cast<UProject_JCharacterAnimInstance>(ObservedCharacter->GetMesh()->GetAnimInstance());
+		auto* Locomotion = ObservedCharacter->GetLocomotionAnimStateComponent();
+		if (!Anim || !Locomotion || ObservedCharacter->GetLocalRole() != ROLE_SimulatedProxy)
+		{
+			AnimationRows += FString::Printf(TEXT("%d,NotReady_%s_Role%d_Anim%s_Class%s_State%s\n"), CurrentStage, *ObservedCharacter->GetName(), int32(ObservedCharacter->GetLocalRole()),
+				*GetNameSafe(ObservedCharacter->GetMesh()->GetAnimInstance()), *GetNameSafe(ObservedCharacter->GetMesh()->GetAnimClass()), *GetNameSafe(Locomotion)); bReady = false; continue;
+		}
+		const auto State = ReadAnimationEvents(ObservedCharacter); const auto& Expected = AnimationStates[I];
+		bReady &= State.MoveSequence == Expected.MoveSequence && State.LandingRevision == Expected.LandingRevision
+			&& State.FallOffStartCounter == Expected.FallOffStartCounter && State.bLandingActive == Expected.bLandingActive;
+		const bool bHasPose = Anim->GetThreadSafeStateControllerHasSelectedAnimation() || !Anim->GetThreadSafeMotionMatchingSelectedAnimation().IsNone();
+		if (bHasPose) { ObservedPose.Add(ObservedCharacter); }
+		if (CurrentStage == 3 && State.LandingRevision == Expected.LandingRevision && Locomotion->bIsLanding
+			&& Anim->GetThreadSafeStateControllerHasSelectedAnimation() && Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching()
+			&& Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToLand)
+		{ ObservedLandingPose.Add(ObservedCharacter); }
+		if (CurrentStage == 3) { bReady &= ObservedLandingPose.Contains(ObservedCharacter); }
+		// Reliable RPC + unreliable multicast + replicated fallback must not manufacture
+		// multiple physical landing epochs for one authoritative landing identity.
+		if (State.LandingRevision == Expected.LandingRevision && Locomotion->LandingPresentationRevision > Expected.LandingSequence)
+		{ bAnimationViolation = true; bReady = false; }
+		if (CurrentStage >= 4) { bReady &= !Locomotion->bIsLanding && ObservedPose.Contains(ObservedCharacter); }
+		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
+		bReady &= FMath::IsFinite(MM.PostSelection.SelectedAnimationTime);
+		AnimationRows += FString::Printf(TEXT("%d,%s,%d,%d,%d,%d,%d,%d,%s,%s,ExpectedMove%d_Land%d_Fall%d_ActualFall%d_Ready%d\n"), CurrentStage, *ObservedCharacter->GetName(), int32(ObservedCharacter->GetLocalRole()),
+			State.MoveSequence, State.LandingSequence, State.LandingRevision, Locomotion->LandingPresentationRevision,
+			Anim->GetThreadSafeStateControllerSelectionRevision(), *GetNameSafe(Anim->GetThreadSafeStateControllerSelectedAnimation()), *Anim->GetThreadSafeMotionMatchingSelectedAnimation().ToString(),
+			Expected.MoveSequence, Expected.LandingRevision, Expected.FallOffStartCounter, State.FallOffStartCounter, bReady);
+	}
+	return bReady && RemoteCount == FixtureClients() - 1;
+}
+void AProject_JNetworkLoadController::ServerObserve_Implementation(int32 InStage, const TArray<int32>& Seen, bool bOwnInventory, bool bForeignInventoryEmpty, bool bEquipment, int32 MinPulse, bool bAnimation)
 {
 	if (!Enabled() || Seen.Num() > FixtureNPCs()) { return; }
 	if (auto* Mode = GetWorld()->GetAuthGameMode<AProject_JNetworkLoadGameMode>())
 	{
-		LastObservation = FString::Printf(TEXT("stage=%d seen=%d own=%d foreignEmpty=%d equipment=%d pulse=%d"), InStage, Seen.Num(), bOwnInventory, bForeignInventoryEmpty, bEquipment, MinPulse);
-		if (Mode->ValidateObservation(this, InStage, Seen, bOwnInventory, bForeignInventoryEmpty, bEquipment, MinPulse)) { ConfirmedStage = InStage; }
+		LastObservation = FString::Printf(TEXT("stage=%d seen=%d own=%d foreignEmpty=%d equipment=%d pulse=%d animation=%d"), InStage, Seen.Num(), bOwnInventory, bForeignInventoryEmpty, bEquipment, MinPulse, bAnimation);
+		if (Mode->ValidateObservation(this, InStage, Seen, bOwnInventory, bForeignInventoryEmpty, bEquipment, MinPulse, bAnimation)) { ConfirmedStage = InStage; }
 	}
 }
 void AProject_JNetworkLoadController::ClientFinish_Implementation(bool bSuccess)
 {
 	if (!Enabled()) { return; }
 	WriteResult(TEXT("client.json"), bSuccess, TEXT("Server completed connection/AOI/FastArray assertions"), LocalSlot);
+	if (AnimationEnabled()) { FFileHelper::SaveStringToFile(AnimationRows, *(OutputRoot() / TEXT("animation-observations.csv"))); }
 	FPlatformMisc::RequestExit(false);
 }
 
@@ -203,12 +324,28 @@ void AProject_JNetworkLoadGameMode::StartStage(int32 NewStage)
 		PC->ConfirmedStage = INDEX_NONE;
 		PC->ClientConfigure(Stage, Slot, ExpectedIds(Slot), Items[Slot], Stage < 5, RequiredPulse);
 	}
+	if (AnimationEnabled())
+	{
+		TArray<AProject_JPlayerCharacter*> Players; TArray<FProject_JReplicatedAnimEventState> States;
+		for (AProject_JNetworkLoadController* PC : Clients)
+		{
+			auto* Player = CastChecked<AProject_JPlayerCharacter>(PC->GetPawn());
+			auto* Events = Player->FindComponentByClass<UProject_JReplicatedAnimEventComponent>();
+			if (Stage == 1) { Player->GetCharacterMovement()->Velocity = FVector(200, 0, 0); Events->DispatchMoveStarted(false); }
+			if (Stage == 2) { Player->GetCharacterMovement()->Velocity = FVector::ZeroVector; Events->DispatchMoveStopped(false); }
+			if (Stage == 3) { Events->DispatchLandingStarted(650, false, false, false); }
+			if (Stage == 4) { Events->DispatchLandingCancelled(); }
+			if (Stage == 5) { Events->DispatchMoveStarted(false); Events->DispatchLandingStarted(650, false, false, false); Events->DispatchLandingCancelled(); Events->DispatchMoveStopped(false); }
+			Player->ForceNetUpdate(); Players.Add(Player); States.Add(ReadAnimationEvents(Player));
+		}
+		for (AProject_JNetworkLoadController* PC : Clients) { PC->ClientAnimationExpect(Stage, Players, States); }
+	}
 	TRACE_BOOKMARK(TEXT("ProjectJ.Network Stage=%d AllRelevant=%d Connections=%d"), Stage, bAllRelevant, Clients.Num());
 }
-bool AProject_JNetworkLoadGameMode::ValidateObservation(AProject_JNetworkLoadController* PC, int32 InStage, const TArray<int32>& Seen, bool bOwn, bool bForeignEmpty, bool bEquipment, int32 MinPulse)
+bool AProject_JNetworkLoadGameMode::ValidateObservation(AProject_JNetworkLoadController* PC, int32 InStage, const TArray<int32>& Seen, bool bOwn, bool bForeignEmpty, bool bEquipment, int32 MinPulse, bool bAnimation)
 {
 	return bFixture && !bFinished && Clients.Contains(PC) && InStage == Stage && Stage > 0
-		&& Seen == ExpectedIds(PC->FixtureSlot) && bOwn && bForeignEmpty && bEquipment && MinPulse >= RequiredPulse;
+		&& Seen == ExpectedIds(PC->FixtureSlot) && bOwn && bForeignEmpty && bEquipment && MinPulse >= RequiredPulse && bAnimation;
 }
 void AProject_JNetworkLoadGameMode::Logout(AController* Exiting)
 {
@@ -229,7 +366,21 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
 		NextPulse = Now + 0.1; ++Pulse;
 		for (AProject_JNetworkProbeNPC* NPC : NPCs) { if (IsValid(NPC)) { NPC->Pulse = Pulse; } }
 	}
-	if (Stage == 0 && Clients.Num() == FixtureClients() && !Clients.ContainsByPredicate([](const auto& PC) { return !IsValid(PC) || !PC->GetPawn(); })) { StartStage(1); return; }
+	if (Stage == 0 && Clients.Num() == FixtureClients() && !Clients.ContainsByPredicate([](const auto& PC) { return !IsValid(PC) || !PC->GetPawn(); }))
+	{
+		if (AnimationEnabled())
+		{
+			for (AProject_JNetworkLoadController* PC : Clients)
+			{
+				APawn* OldPawn = PC->GetPawn(); auto* PS = PC->GetPlayerState<AProject_JPlayerState>();
+				auto* Player = ProjectJAuthoredAnimationFixture::Spawn(GetWorld(), PC, PS, OldPawn->GetActorLocation());
+				if (!Player) { Finish(false, TEXT("Authored animation fixture spawn failed")); return; }
+				OldPawn->Destroy();
+				PS->SetPublicCharacterSnapshot(FName(*FString::Printf(TEXT("DClient%d"), PC->FixtureSlot)), 1);
+			}
+		}
+		StartStage(1); return;
+	}
 	if (Stage >= 1 && Stage <= 5 && Now - StageStarted >= 3
 		&& !Clients.ContainsByPredicate([this](const auto& PC) { return !IsValid(PC) || PC->ConfirmedStage != Stage; }))
 	{

@@ -1,0 +1,3491 @@
+{
+  "format_version": 1,
+  "date": "2026-10-05",
+  "head": "dfeb5f1e881e4a840400118b71f27bf2447bf4aa",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+  "scope": "NullRHI controlled authored animation world CPU, actual Editor-Cmd socket clients, measured task allocation reduction. No rendered quality/FPS or packaged Server claim.",
+  "cpu_reports": [
+    {
+      "count": 1,
+      "report": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count1/Automation/index.json",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "count": 50,
+      "report": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count50/Automation/index.json",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "count": 100,
+      "report": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count100/Automation/index.json",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "count": 200,
+      "report": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count200/Automation/index.json",
+      "state": "Success",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "cpu_summary": [
+    {
+      "count": 1,
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6612115539610386,
+      "mean_p95_world_tick_ms": 0.7943511009216309,
+      "peak_ability_tasks": 3.0
+    },
+    {
+      "count": 1,
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6334475086381037,
+      "mean_p95_world_tick_ms": 0.7221493870019913,
+      "peak_ability_tasks": 3.0
+    },
+    {
+      "count": 1,
+      "scenario": "Far",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6726216369618973,
+      "mean_p95_world_tick_ms": 0.7812492549419403,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 1,
+      "scenario": "Far",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6625403650105,
+      "mean_p95_world_tick_ms": 0.7572509348392487,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 1,
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.38697269434730214,
+      "mean_p95_world_tick_ms": 0.4583001136779785,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 1,
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.38843833220501744,
+      "mean_p95_world_tick_ms": 0.460650771856308,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 1,
+      "scenario": "Near",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6647574870536725,
+      "mean_p95_world_tick_ms": 0.745849683880806,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 1,
+      "scenario": "Near",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 0.6769902848949034,
+      "mean_p95_world_tick_ms": 0.7723476737737656,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 4.379952776556214,
+      "mean_p95_world_tick_ms": 5.291648209095001,
+      "peak_ability_tasks": 150.0
+    },
+    {
+      "count": 50,
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 4.47932326545318,
+      "mean_p95_world_tick_ms": 5.787849426269531,
+      "peak_ability_tasks": 150.0
+    },
+    {
+      "count": 50,
+      "scenario": "Far",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 3.7621717900037766,
+      "mean_p95_world_tick_ms": 4.020398482680321,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "Far",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 4.178782397260268,
+      "mean_p95_world_tick_ms": 5.348199978470802,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 3.372079972177744,
+      "mean_p95_world_tick_ms": 4.317250102758408,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 1.7205300896118085,
+      "mean_p95_world_tick_ms": 1.8654987215995789,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "Near",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 3.9383457818379006,
+      "mean_p95_world_tick_ms": 4.38074953854084,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 50,
+      "scenario": "Near",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 4.007689732437332,
+      "mean_p95_world_tick_ms": 4.485700279474258,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 9.152178714672726,
+      "mean_p95_world_tick_ms": 10.434450581669807,
+      "peak_ability_tasks": 300.0
+    },
+    {
+      "count": 100,
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 9.06120512324075,
+      "mean_p95_world_tick_ms": 11.307600885629654,
+      "peak_ability_tasks": 300.0
+    },
+    {
+      "count": 100,
+      "scenario": "Far",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 8.336535096168518,
+      "mean_p95_world_tick_ms": 9.670199826359749,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "Far",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 8.036861770475904,
+      "mean_p95_world_tick_ms": 9.338902309536934,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 5.827169477318725,
+      "mean_p95_world_tick_ms": 6.9000981748104095,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 3.5813375376164913,
+      "mean_p95_world_tick_ms": 4.013651981949806,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "Near",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 8.392381078253191,
+      "mean_p95_world_tick_ms": 9.149549528956413,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 100,
+      "scenario": "Near",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 7.482351254050931,
+      "mean_p95_world_tick_ms": 8.394550532102585,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 24.995808256790042,
+      "mean_p95_world_tick_ms": 29.467500746250153,
+      "peak_ability_tasks": 600.0
+    },
+    {
+      "count": 200,
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 24.604607031991083,
+      "mean_p95_world_tick_ms": 30.887899920344353,
+      "peak_ability_tasks": 600.0
+    },
+    {
+      "count": 200,
+      "scenario": "Far",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 22.448059186960258,
+      "mean_p95_world_tick_ms": 26.813797652721405,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "Far",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 16.819304662446182,
+      "mean_p95_world_tick_ms": 19.00009997189045,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 16.276737612982593,
+      "mean_p95_world_tick_ms": 20.00020071864128,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 8.11566535073022,
+      "mean_p95_world_tick_ms": 9.951649233698845,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "Near",
+      "aba": false,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 21.668974248071514,
+      "mean_p95_world_tick_ms": 25.825249031186104,
+      "peak_ability_tasks": 0.0
+    },
+    {
+      "count": 200,
+      "scenario": "Near",
+      "aba": true,
+      "repeat_count": 2,
+      "mean_world_tick_ms": 16.735265854125224,
+      "mean_p95_world_tick_ms": 19.031750038266182,
+      "peak_ability_tasks": 0.0
+    }
+  ],
+  "cpu_rows": [
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.68235257640481,
+      "p50_world_tick_ms": 0.6726011633872986,
+      "p95_world_tick_ms": 0.7796995341777802,
+      "max_world_tick_ms": 1.3558007776737213,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.6971250288188457,
+      "p50_world_tick_ms": 0.6824992597103119,
+      "p95_world_tick_ms": 0.8018985390663147,
+      "max_world_tick_ms": 0.9307004511356354,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.6879873884220918,
+      "p50_world_tick_ms": 0.6748028099536896,
+      "p95_world_tick_ms": 0.7843002676963806,
+      "max_world_tick_ms": 0.9442009031772614,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        120,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.6797318036357561,
+      "p50_world_tick_ms": 0.6690993905067444,
+      "p95_world_tick_ms": 0.7776021957397461,
+      "max_world_tick_ms": 0.9099990129470825,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        120,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.37954092646638554,
+      "p50_world_tick_ms": 0.3697015345096588,
+      "p95_world_tick_ms": 0.4489012062549591,
+      "max_world_tick_ms": 0.471603125333786,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        120
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.3784358501434326,
+      "p50_world_tick_ms": 0.36999955773353577,
+      "p95_world_tick_ms": 0.4342012107372284,
+      "max_world_tick_ms": 0.4955008625984192,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        120
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.6612098775804043,
+      "p50_world_tick_ms": 0.6491988897323608,
+      "p95_world_tick_ms": 0.7774010300636292,
+      "max_world_tick_ms": 1.1177994310855865,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 79,
+      "active_ability_tasks_at_burst": 3,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 0.6586259851853052,
+      "p50_world_tick_ms": 0.6539002060890198,
+      "p95_world_tick_ms": 0.7525980472564697,
+      "max_world_tick_ms": 0.9520016610622406,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 41,
+      "combat_protected_ticks": 79,
+      "active_ability_tasks_at_burst": 3,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.647162397702535,
+      "p50_world_tick_ms": 0.6420984864234924,
+      "p95_world_tick_ms": 0.7119998335838318,
+      "max_world_tick_ms": 0.8460022509098053,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.6568555409709612,
+      "p50_world_tick_ms": 0.6414987146854401,
+      "p95_world_tick_ms": 0.7427968084812164,
+      "max_world_tick_ms": 0.8982978761196136,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.6572558855017027,
+      "p50_world_tick_ms": 0.6357990205287933,
+      "p95_world_tick_ms": 0.7781982421875,
+      "max_world_tick_ms": 0.8506998419761658,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        120,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.6453489263852438,
+      "p50_world_tick_ms": 0.6268993020057678,
+      "p95_world_tick_ms": 0.7368996739387512,
+      "max_world_tick_ms": 0.9300000965595245,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        120,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.39440446222821873,
+      "p50_world_tick_ms": 0.384598970413208,
+      "p95_world_tick_ms": 0.4676990211009979,
+      "max_world_tick_ms": 0.6646998226642609,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        120
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.3984408142666022,
+      "p50_world_tick_ms": 0.38789957761764526,
+      "p95_world_tick_ms": 0.4871003329753876,
+      "max_world_tick_ms": 0.5149021744728088,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 120,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        120
+      ]
+    },
+    {
+      "count": 1,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.6612132303416729,
+      "p50_world_tick_ms": 0.64140185713768,
+      "p95_world_tick_ms": 0.8113011717796326,
+      "max_world_tick_ms": 1.2282989919185638,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 79,
+      "active_ability_tasks_at_burst": 3,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 1,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 0.6082690320909023,
+      "p50_world_tick_ms": 0.6075985729694366,
+      "p95_world_tick_ms": 0.6917007267475128,
+      "max_world_tick_ms": 0.8467994630336761,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 120,
+      "mm_result_observations": 120,
+      "managed_mesh_ticks": 41,
+      "combat_protected_ticks": 79,
+      "active_ability_tasks_at_burst": 3,
+      "authored_follower_components": 9,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        120,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 4.025778981546561,
+      "p50_world_tick_ms": 3.982599824666977,
+      "p95_world_tick_ms": 4.464399069547653,
+      "max_world_tick_ms": 4.95930016040802,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 4.034593515098095,
+      "p50_world_tick_ms": 4.008300602436066,
+      "p95_world_tick_ms": 4.3512992560863495,
+      "max_world_tick_ms": 4.902198910713196,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 3.8477426394820213,
+      "p50_world_tick_ms": 3.839101642370224,
+      "p95_world_tick_ms": 4.032596945762634,
+      "max_world_tick_ms": 4.508398473262787,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        6000,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 4.432815685868263,
+      "p50_world_tick_ms": 4.2481012642383575,
+      "p95_world_tick_ms": 5.597900599241257,
+      "max_world_tick_ms": 6.809499114751816,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        6000,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 3.8009782321751118,
+      "p50_world_tick_ms": 3.643698990345001,
+      "p95_world_tick_ms": 5.379199981689453,
+      "max_world_tick_ms": 6.865102797746658,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        6000
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 1.7350627730290096,
+      "p50_world_tick_ms": 1.7101988196372986,
+      "p95_world_tick_ms": 1.8864981830120087,
+      "max_world_tick_ms": 2.1971985697746277,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        6000
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 4.240873145560424,
+      "p50_world_tick_ms": 4.203200340270996,
+      "p95_world_tick_ms": 4.774697124958038,
+      "max_world_tick_ms": 5.8582983911037445,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 3950,
+      "active_ability_tasks_at_burst": 150,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 4.7395906411111355,
+      "p50_world_tick_ms": 4.468198865652084,
+      "p95_world_tick_ms": 6.457898765802383,
+      "max_world_tick_ms": 8.5642971098423,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 5989,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 2050,
+      "combat_protected_ticks": 3950,
+      "active_ability_tasks_at_burst": 150,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 3.85091258212924,
+      "p50_world_tick_ms": 3.806397318840027,
+      "p95_world_tick_ms": 4.297100007534027,
+      "max_world_tick_ms": 4.475399851799011,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 3.98078594977657,
+      "p50_world_tick_ms": 3.907598555088043,
+      "p95_world_tick_ms": 4.620101302862167,
+      "max_world_tick_ms": 6.490603089332581,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 3.6766009405255318,
+      "p50_world_tick_ms": 3.6346986889839172,
+      "p95_world_tick_ms": 4.008200019598007,
+      "max_world_tick_ms": 4.91739809513092,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        6000,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 3.9247491086522737,
+      "p50_world_tick_ms": 3.7435032427310944,
+      "p95_world_tick_ms": 5.098499357700348,
+      "max_world_tick_ms": 6.393000483512878,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        6000,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 2.943181712180376,
+      "p50_world_tick_ms": 2.8916001319885254,
+      "p95_world_tick_ms": 3.255300223827362,
+      "max_world_tick_ms": 4.043698310852051,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        6000
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 1.7059974061946075,
+      "p50_world_tick_ms": 1.6903989017009735,
+      "p95_world_tick_ms": 1.844499260187149,
+      "max_world_tick_ms": 2.1187029778957367,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 6000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        6000
+      ]
+    },
+    {
+      "count": 50,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 4.519032407552004,
+      "p50_world_tick_ms": 4.326898604631424,
+      "p95_world_tick_ms": 5.808599293231964,
+      "max_world_tick_ms": 8.646998554468155,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 3950,
+      "active_ability_tasks_at_burst": 150,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 50,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 4.219055889795224,
+      "p50_world_tick_ms": 4.140600562095642,
+      "p95_world_tick_ms": 5.117800086736679,
+      "max_world_tick_ms": 5.868099629878998,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6000,
+      "mm_result_observations": 6000,
+      "managed_mesh_ticks": 2050,
+      "combat_protected_ticks": 3950,
+      "active_ability_tasks_at_burst": 150,
+      "authored_follower_components": 450,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        6000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 7.944145053625107,
+      "p50_world_tick_ms": 7.934000343084335,
+      "p95_world_tick_ms": 8.472699671983719,
+      "max_world_tick_ms": 8.917000144720078,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 7.067299323777358,
+      "p50_world_tick_ms": 7.030598819255829,
+      "p95_world_tick_ms": 7.48709961771965,
+      "max_world_tick_ms": 8.189201354980469,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 6872,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 8.591703480730454,
+      "p50_world_tick_ms": 8.199099451303482,
+      "p95_world_tick_ms": 10.511897504329681,
+      "max_world_tick_ms": 13.387598097324371,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        12000,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 8.95226588472724,
+      "p50_world_tick_ms": 8.73899832367897,
+      "p95_world_tick_ms": 10.734602808952332,
+      "max_world_tick_ms": 14.017999172210693,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4992,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        12000,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 5.845874082297087,
+      "p50_world_tick_ms": 5.751300603151321,
+      "p95_world_tick_ms": 6.716698408126831,
+      "max_world_tick_ms": 7.037997245788574,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        12000
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 3.6312933079898357,
+      "p50_world_tick_ms": 3.5967007279396057,
+      "p95_world_tick_ms": 4.075702279806137,
+      "max_world_tick_ms": 4.485398530960083,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        12000
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 9.468330753346285,
+      "p50_world_tick_ms": 9.31210070848465,
+      "p95_world_tick_ms": 10.805603116750717,
+      "max_world_tick_ms": 13.49719986319542,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 7900,
+      "active_ability_tasks_at_burst": 300,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 8.827861677855253,
+      "p50_world_tick_ms": 8.878897875547409,
+      "p95_world_tick_ms": 10.558102279901505,
+      "max_world_tick_ms": 15.364199876785278,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 11601,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 4100,
+      "combat_protected_ticks": 7900,
+      "active_ability_tasks_at_burst": 300,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 8.840617102881273,
+      "p50_world_tick_ms": 8.746899664402008,
+      "p95_world_tick_ms": 9.826399385929108,
+      "max_world_tick_ms": 10.616600513458252,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 7.897403184324503,
+      "p50_world_tick_ms": 7.843002676963806,
+      "p95_world_tick_ms": 9.30200144648552,
+      "max_world_tick_ms": 10.08399948477745,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 5389,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 8.081366711606583,
+      "p50_world_tick_ms": 7.99180194735527,
+      "p95_world_tick_ms": 8.828502148389816,
+      "max_world_tick_ms": 9.974099695682526,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        12000,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 7.121457656224568,
+      "p50_world_tick_ms": 6.96919858455658,
+      "p95_world_tick_ms": 7.943201810121536,
+      "max_world_tick_ms": 9.10329818725586,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 7027,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        12000,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 5.808464872340362,
+      "p50_world_tick_ms": 5.559798330068588,
+      "p95_world_tick_ms": 7.083497941493988,
+      "max_world_tick_ms": 9.091697633266449,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        12000
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 3.531381767243147,
+      "p50_world_tick_ms": 3.483898937702179,
+      "p95_world_tick_ms": 3.9516016840934753,
+      "max_world_tick_ms": 4.427298903465271,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 12000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        12000
+      ]
+    },
+    {
+      "count": 100,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 8.836026675999165,
+      "p50_world_tick_ms": 8.758600801229477,
+      "p95_world_tick_ms": 10.063298046588898,
+      "max_world_tick_ms": 12.746799737215042,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 12000,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 7900,
+      "active_ability_tasks_at_burst": 300,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 100,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 9.294548568626245,
+      "p50_world_tick_ms": 9.20259952545166,
+      "p95_world_tick_ms": 12.057099491357803,
+      "max_world_tick_ms": 15.06979763507843,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 11589,
+      "mm_result_observations": 12000,
+      "managed_mesh_ticks": 4100,
+      "combat_protected_ticks": 7900,
+      "active_ability_tasks_at_burst": 300,
+      "authored_follower_components": 900,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        12000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 20.116406741241615,
+      "p50_world_tick_ms": 19.870702177286148,
+      "p95_world_tick_ms": 22.016797214746475,
+      "max_world_tick_ms": 26.271600276231766,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 16.379504340390366,
+      "p50_world_tick_ms": 15.832599252462387,
+      "p95_world_tick_ms": 19.482899457216263,
+      "max_world_tick_ms": 25.75170248746872,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4912,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 20.014747449507315,
+      "p50_world_tick_ms": 19.51730251312256,
+      "p95_world_tick_ms": 23.599296808242798,
+      "max_world_tick_ms": 28.633199632167816,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 15.690422399590412,
+      "p50_world_tick_ms": 15.243999660015106,
+      "p95_world_tick_ms": 18.45800131559372,
+      "max_world_tick_ms": 21.196398884058,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4910,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 17.245688444624346,
+      "p50_world_tick_ms": 16.821198165416718,
+      "p95_world_tick_ms": 23.02670106291771,
+      "max_world_tick_ms": 25.1724012196064,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 7.425739926596482,
+      "p50_world_tick_ms": 7.258102297782898,
+      "p95_world_tick_ms": 8.867498487234116,
+      "max_world_tick_ms": 13.892501592636108,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 23.983353345344465,
+      "p50_world_tick_ms": 23.524999618530273,
+      "p95_world_tick_ms": 28.949599713087082,
+      "max_world_tick_ms": 30.08909896016121,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 23.848475826283295,
+      "p50_world_tick_ms": 23.7405002117157,
+      "p95_world_tick_ms": 30.14950081706047,
+      "max_world_tick_ms": 44.2391000688076,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 22591,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 8200,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 23.22154175490141,
+      "p50_world_tick_ms": 22.017300128936768,
+      "p95_world_tick_ms": 29.633700847625732,
+      "max_world_tick_ms": 31.925402581691742,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 1,
+      "mean_world_tick_ms": 17.09102736786008,
+      "p50_world_tick_ms": 16.850300133228302,
+      "p95_world_tick_ms": 18.5806006193161,
+      "max_world_tick_ms": 22.745799273252487,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4909,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 24.881370924413204,
+      "p50_world_tick_ms": 24.849101901054382,
+      "p95_world_tick_ms": 30.028298497200012,
+      "max_world_tick_ms": 37.76540234684944,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 1,
+      "mean_world_tick_ms": 17.94818692530195,
+      "p50_world_tick_ms": 17.799999564886093,
+      "p95_world_tick_ms": 19.54219862818718,
+      "max_world_tick_ms": 23.506801575422287,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4912,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 15.307786781340837,
+      "p50_world_tick_ms": 15.139199793338776,
+      "p95_world_tick_ms": 16.973700374364853,
+      "max_world_tick_ms": 21.000299602746964,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 1,
+      "mean_world_tick_ms": 8.805590774863958,
+      "p50_world_tick_ms": 8.299700915813446,
+      "p95_world_tick_ms": 11.035799980163574,
+      "max_world_tick_ms": 13.502202928066254,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 26.00826316823562,
+      "p50_world_tick_ms": 25.57460218667984,
+      "p95_world_tick_ms": 29.985401779413223,
+      "max_world_tick_ms": 31.856197863817215,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 1,
+      "mean_world_tick_ms": 25.36073823769887,
+      "p50_world_tick_ms": 24.85870197415352,
+      "p95_world_tick_ms": 31.626299023628235,
+      "max_world_tick_ms": 35.49959883093834,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 22569,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 8200,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "profile_rows": [
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 24.593690255035956,
+      "p50_world_tick_ms": 24.540502578020096,
+      "p95_world_tick_ms": 26.132401078939438,
+      "max_world_tick_ms": 28.614003211259842,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Near",
+      "repeat": 0,
+      "mean_world_tick_ms": 18.86589117348194,
+      "p50_world_tick_ms": 18.863700330257416,
+      "p95_world_tick_ms": 20.910300314426422,
+      "max_world_tick_ms": 22.163700312376022,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4912,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 25.272393909593422,
+      "p50_world_tick_ms": 25.14519914984703,
+      "p95_world_tick_ms": 28.302498161792755,
+      "max_world_tick_ms": 31.75010159611702,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Far",
+      "repeat": 0,
+      "mean_world_tick_ms": 18.454300022373598,
+      "p50_world_tick_ms": 18.352899700403214,
+      "p95_world_tick_ms": 19.821401685476303,
+      "max_world_tick_ms": 23.939598351716995,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 4910,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        24000,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 15.838999208062887,
+      "p50_world_tick_ms": 15.72829857468605,
+      "p95_world_tick_ms": 17.388898879289627,
+      "max_world_tick_ms": 21.97439968585968,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "Hidden",
+      "repeat": 0,
+      "mean_world_tick_ms": 8.13890996699532,
+      "p50_world_tick_ms": 8.076999336481094,
+      "p95_world_tick_ms": 8.59919935464859,
+      "max_world_tick_ms": 10.429996997117996,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 480,
+      "mm_result_observations": 480,
+      "managed_mesh_ticks": 24000,
+      "combat_protected_ticks": 0,
+      "active_ability_tasks_at_burst": 0,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        0,
+        0,
+        0,
+        24000
+      ]
+    },
+    {
+      "count": 200,
+      "aba": false,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 27.268589194864035,
+      "p50_world_tick_ms": 26.788700371980667,
+      "p95_world_tick_ms": 29.95619922876358,
+      "max_world_tick_ms": 39.12870213389397,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 24000,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 0,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "count": 200,
+      "aba": true,
+      "scenario": "AttackBurst",
+      "repeat": 0,
+      "mean_world_tick_ms": 27.789486727366846,
+      "p50_world_tick_ms": 28.155598789453506,
+      "p95_world_tick_ms": 32.991401851177216,
+      "max_world_tick_ms": 36.80719807744026,
+      "measured_ticks": 120,
+      "warmup_ticks": 120,
+      "bone_finalizations": 22570,
+      "mm_result_observations": 24000,
+      "managed_mesh_ticks": 8200,
+      "combat_protected_ticks": 15800,
+      "active_ability_tasks_at_burst": 600,
+      "authored_follower_components": 1800,
+      "policy_tier_mesh_ticks_local_near_mid_far_hidden": [
+        0,
+        24000,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "profile_near_aba1_timers": [
+    {
+      "name": "Project_J_AnimBuildOptimizationPolicy",
+      "count": 14736,
+      "inclusive_seconds": 0.017214,
+      "exclusive_seconds": 0.017214
+    },
+    {
+      "name": "Project_J_AnimBuildThreadSafeData",
+      "count": 4912,
+      "inclusive_seconds": 0.027896,
+      "exclusive_seconds": 0.027896
+    },
+    {
+      "name": "Project_J_PlayerCharacterTick_Trajectory",
+      "count": 24000,
+      "inclusive_seconds": 0.059719,
+      "exclusive_seconds": 0.059719
+    },
+    {
+      "name": "Project_J_PlayerCharacterTick_LocomotionState",
+      "count": 24000,
+      "inclusive_seconds": 0.045315,
+      "exclusive_seconds": 0.045315
+    },
+    {
+      "name": "IK Retarget",
+      "count": 24000,
+      "inclusive_seconds": 3.118035,
+      "exclusive_seconds": 0.594691
+    },
+    {
+      "name": "IK Retarget Processor Run",
+      "count": 24000,
+      "inclusive_seconds": 2.523345,
+      "exclusive_seconds": 2.523345
+    },
+    {
+      "name": "FAnimNode_RigidBody::EvaluateSkeletalControl_AnyThread",
+      "count": 72000,
+      "inclusive_seconds": 4.464109,
+      "exclusive_seconds": 0.668583
+    },
+    {
+      "name": "ProjectJ_AnimProxy_Update_Worker",
+      "count": 9824,
+      "inclusive_seconds": 0.721175,
+      "exclusive_seconds": 0.160817
+    },
+    {
+      "name": "STAT_PoseSearch_UpdateAssetPlayer",
+      "count": 4912,
+      "inclusive_seconds": 0.31555,
+      "exclusive_seconds": 0.0869
+    },
+    {
+      "name": "STAT_PoseSearch_BuildQuery",
+      "count": 2444,
+      "inclusive_seconds": 0.021279,
+      "exclusive_seconds": 0.021279
+    },
+    {
+      "name": "PoseSearch PCA/KNN",
+      "count": 2444,
+      "inclusive_seconds": 0.148892,
+      "exclusive_seconds": 0.103913
+    }
+  ],
+  "socket_runs": [
+    {
+      "run": "Saved/Validation/GroupD_20260910/Animation_Final_20261005",
+      "verification": {
+        "passed": true,
+        "results": [
+          {
+            "file": "Server/server.json",
+            "success": true,
+            "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+          },
+          {
+            "file": "Client1/client.json",
+            "success": true,
+            "reason": "Server completed connection/AOI/FastArray assertions"
+          },
+          {
+            "file": "Client2/client.json",
+            "success": true,
+            "reason": "Server completed connection/AOI/FastArray assertions"
+          }
+        ],
+        "exitCodes": [
+          0,
+          0,
+          0
+        ],
+        "timeouts": 0,
+        "startupPythonErrors": [
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.53:141][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.38.53:183][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.53:183][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.38.53:183][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.38.53:183][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.53:183][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.52:001][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.38.52:072][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.52:072][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.38.52:072][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.38.52:072][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.52:072][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.46:700][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.38.46:749][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.38.46:750][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.38.46:750][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.38.46:750][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.38.46:750][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'"
+        ],
+        "note": "Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean."
+      },
+      "manifest": {
+        "run": "Animation_Final_20261005",
+        "allRelevant": false,
+        "parallelNet": false,
+        "animation": true,
+        "packetLag": 0,
+        "packetLoss": 0,
+        "port": 17871,
+        "head": "dfeb5f1e881e4a840400118b71f27bf2447bf4aa",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "clientCount": 2,
+        "npcCount": 100,
+        "scenario": "Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.",
+        "sourceFiles": [
+          {
+            "path": "Scripts/Validation/Export-DTrace.ps1",
+            "sha256": "81A4C33C1B4C0D08078073B651B143F7CF06C5CDEF19A9AB5D627FA4B9B92534"
+          },
+          {
+            "path": "Scripts/Validation/Measure-AuthoredAnimation.ps1",
+            "sha256": "5378706A9A5A14FBD16E7C80F05FCBA50D561D1F6DAF19FE289F6B7B50D59B64"
+          },
+          {
+            "path": "Scripts/Validation/Measure-Network.ps1",
+            "sha256": "768D3ED8ACA1EB132E89914932EAF632BDE0B25DEE6BD6C94C3609BF04319727"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+            "sha256": "803D718AC2BA36E9327C389657346CB79C8E681834481F73E4F5663C5806C8AA"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JAuthoredAnimationPerformance.cpp",
+            "sha256": "D746898626746FE3BAEA0DFF79A7E003B6473C7CB1B9C58BE16C636924594ECB"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JComboInputSubscriptionTest.cpp",
+            "sha256": "685C087D56E10BAA67C105E64A4904A96A33AAF48A167517F6B84FC258006BA4"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp",
+            "sha256": "7603A737C21A89964C137C762A4D706F3D06F9568A58EEC0C44AA31BDFA1FA21"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.h",
+            "sha256": "675EE7285F30C3670033015ED126195F3D34A708F040C4ABAD49A572223EB1E5"
+          },
+          {
+            "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+            "sha256": "DFC32E3E901F3A894191474315B0A6CD4D20B9BBB3E89F97187EA2ED76546DDC"
+          },
+          {
+            "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+            "sha256": "94288F20A3E7F3C973BD1F1EEA4B366AD1604850E5FAE40328AF4C944C1F9C55"
+          }
+        ]
+      }
+    },
+    {
+      "run": "Saved/Validation/GroupD_20260910/Animation_FinalLag_20261005",
+      "verification": {
+        "passed": true,
+        "results": [
+          {
+            "file": "Server/server.json",
+            "success": true,
+            "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+          },
+          {
+            "file": "Client1/client.json",
+            "success": true,
+            "reason": "Server completed connection/AOI/FastArray assertions"
+          },
+          {
+            "file": "Client2/client.json",
+            "success": true,
+            "reason": "Server completed connection/AOI/FastArray assertions"
+          }
+        ],
+        "exitCodes": [
+          0,
+          0,
+          0
+        ],
+        "timeouts": 0,
+        "startupPythonErrors": [
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.01:837][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.40.01:909][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.40.01:909][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.40.01:909][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.40.01:909][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.01:909][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.02:922][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.40.02:977][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.40.02:977][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.40.02:977][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.40.02:977][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.40.02:977][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.39.56:538][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+          "[2026.10.05-10.39.56:587][  0]LogPython: Error: Traceback (most recent call last):",
+          "[2026.10.05-10.39.56:587][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+          "[2026.10.05-10.39.56:587][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+          "[2026.10.05-10.39.56:587][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+          "[2026.10.05-10.39.56:587][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'"
+        ],
+        "note": "Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean."
+      },
+      "manifest": {
+        "run": "Animation_FinalLag_20261005",
+        "allRelevant": false,
+        "parallelNet": false,
+        "animation": true,
+        "packetLag": 50,
+        "packetLoss": 3,
+        "port": 17871,
+        "head": "dfeb5f1e881e4a840400118b71f27bf2447bf4aa",
+        "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+        "clientCount": 2,
+        "npcCount": 100,
+        "scenario": "Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.",
+        "sourceFiles": [
+          {
+            "path": "Scripts/Validation/Export-DTrace.ps1",
+            "sha256": "81A4C33C1B4C0D08078073B651B143F7CF06C5CDEF19A9AB5D627FA4B9B92534"
+          },
+          {
+            "path": "Scripts/Validation/Measure-AuthoredAnimation.ps1",
+            "sha256": "5378706A9A5A14FBD16E7C80F05FCBA50D561D1F6DAF19FE289F6B7B50D59B64"
+          },
+          {
+            "path": "Scripts/Validation/Measure-Network.ps1",
+            "sha256": "768D3ED8ACA1EB132E89914932EAF632BDE0B25DEE6BD6C94C3609BF04319727"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+            "sha256": "803D718AC2BA36E9327C389657346CB79C8E681834481F73E4F5663C5806C8AA"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JAuthoredAnimationPerformance.cpp",
+            "sha256": "D746898626746FE3BAEA0DFF79A7E003B6473C7CB1B9C58BE16C636924594ECB"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JComboInputSubscriptionTest.cpp",
+            "sha256": "685C087D56E10BAA67C105E64A4904A96A33AAF48A167517F6B84FC258006BA4"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp",
+            "sha256": "7603A737C21A89964C137C762A4D706F3D06F9568A58EEC0C44AA31BDFA1FA21"
+          },
+          {
+            "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.h",
+            "sha256": "675EE7285F30C3670033015ED126195F3D34A708F040C4ABAD49A572223EB1E5"
+          },
+          {
+            "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+            "sha256": "DFC32E3E901F3A894191474315B0A6CD4D20B9BBB3E89F97187EA2ED76546DDC"
+          },
+          {
+            "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+            "sha256": "94288F20A3E7F3C973BD1F1EEA4B366AD1604850E5FAE40328AF4C944C1F9C55"
+          }
+        ]
+      }
+    }
+  ],
+  "regression": {
+    "total": 131,
+    "succeeded": 122,
+    "succeeded_with_warnings": 9,
+    "failed": 0,
+    "not_run": 0,
+    "in_process": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.GuidedArmContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.GuidedBendStability",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.GuidedIKTraceIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.HandContactConversion",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.HandContactRig",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.HiddenLeaderVisibleFollower",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.LocomotionContextBuilder",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.ModularMeshIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.MotionMatchingRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.MotionMatchingSelectionPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.QualityTierPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.RemoteLocomotionRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.SecondaryHandContact",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.StartEpisodeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.StateControllerRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.CombatStrafeRunPivotPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteJumpPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Animation.RemoteOneShotSemantics",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.CommandResolution",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Combat.HitValidationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Equipment.OperationResult",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Handover.TransportReentrancy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.MotionMatching.SearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.OwnerRelevance",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Replication.PolicySettingsSanitization",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Architecture.Social.Membership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.AuthorityHitWorldOrigin",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.CanonicalBladeTrajectory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.CanonicalMeleeTrace",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.ComboInputSubscription",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.SSRHitWindowProductionTransition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Combat.WeaponPresentationIdentity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 5
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.AnimationDemandComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.CombatTransitionOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.UIDedicatedServer",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Components.UIDemand",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Crowd.AnimationPhases",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.EquipmentClient.FixtureIsolation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Configuration.DomainComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Grants.SharedOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.BranchesAndGrants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.GraphValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.Budgeted",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.FullRate",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationProbe.WorldCleanup",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 4
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 4
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 4
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 4
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 4
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.AnimationContractAudit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CharacterBudgetLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.GroupB.CombatPosePolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Integrated.PresentationRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Animation.SnapshotBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Camera.Possession",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Combat.RewindHistory",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Equipment.ReentrantRemoval",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.GAS.TaskTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.CommandAliasRelease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Input.Rebinding",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Interaction.ServerSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Inventory.CallbacksAndBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.HealthSingleSource",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Mount.InputBindingOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Pooling.DefinitionBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Trajectory.TimeLayoutAndInvalidInput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Updates.RewindScheduling",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Internal.Updates.UrgentAnimationWindow",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.Combat.HitWindowOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.GAS.ResourceInvariants",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.Input.SharedMappingLease",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Maturity.Mount.LandingRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.ActualEngineSearch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.CombatInputBoundary",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Modernization.EquipmentLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountDismountMotion.SuccessAndRejection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountRemount.RetainedInputRecovery",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountStrafeFix.Combat.GradualFacing",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PivotMountFollowup.Mount.UnequalCapsuleFloorExit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PivotMountFollowup.Pivot.InputRedirectLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Animation.SharedVisibility",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Authoring.CommandBounds",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Authoring.EffectiveInputComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Authoring.EquipmentAndMontage",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Combat.ComboWindowOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Combat.ConfigurationPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Combat.CueLeaseOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Equipment.OriginalASC",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Mount.OriginalASC",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1
+      },
+      {
+        "fullTestPath": "ProjectJ.PlayerMaturity.Trajectory.Freshness",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Presentation.PrimaryGripAttachment",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 1
+      },
+      {
+        "fullTestPath": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.SearchContinuity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.SelectionAndLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.TrajectoryPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "prior_comparison": {
+      "previousSelected": 121,
+      "covered": 121,
+      "previousWarnings": 8,
+      "currentWarnings": 8,
+      "warningDifferences": []
+    }
+  },
+  "baseline_200": {
+    "report": "Saved/Validation/AuthoredAnimation_20261005/Baseline_Full/Count200/Automation/index.json",
+    "state": "Fail",
+    "errors": 32,
+    "warnings": 3205,
+    "reason": "Default AbilityTask limit exceeded; performance rows are not a passing baseline.",
+    "observed_peak_tasks": 1800,
+    "final_peak_tasks": 600,
+    "limit_unchanged": 1000
+  },
+  "builds": [
+    {
+      "target": "Project_JEditor",
+      "result": "Succeeded",
+      "exit_code": 0,
+      "seconds": 29.64
+    },
+    {
+      "target": "Project_JEditor with regression plugin",
+      "result": "Succeeded (up to date)",
+      "exit_code": 0,
+      "seconds": 2.2
+    },
+    {
+      "target": "Project_J",
+      "result": "Succeeded",
+      "exit_code": 0,
+      "seconds": 85.56
+    }
+  ],
+  "sources": [
+    {
+      "path": "Scripts/Validation/Export-DTrace.ps1",
+      "before_head_git_blob": "d14b4e54d65d9800097eaeff3ff4b9cccbbff307",
+      "after_sha256": "81A4C33C1B4C0D08078073B651B143F7CF06C5CDEF19A9AB5D627FA4B9B92534"
+    },
+    {
+      "path": "Scripts/Validation/Measure-AuthoredAnimation.ps1",
+      "before_head_git_blob": null,
+      "after_sha256": "5378706A9A5A14FBD16E7C80F05FCBA50D561D1F6DAF19FE289F6B7B50D59B64"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Network.ps1",
+      "before_head_git_blob": "1f880006597cc778784515d736a6cfb3a76aa1c8",
+      "after_sha256": "768D3ED8ACA1EB132E89914932EAF632BDE0B25DEE6BD6C94C3609BF04319727"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+      "before_head_git_blob": null,
+      "after_sha256": "803D718AC2BA36E9327C389657346CB79C8E681834481F73E4F5663C5806C8AA"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JAuthoredAnimationPerformance.cpp",
+      "before_head_git_blob": null,
+      "after_sha256": "D746898626746FE3BAEA0DFF79A7E003B6473C7CB1B9C58BE16C636924594ECB"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JComboInputSubscriptionTest.cpp",
+      "before_head_git_blob": null,
+      "after_sha256": "685C087D56E10BAA67C105E64A4904A96A33AAF48A167517F6B84FC258006BA4"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp",
+      "before_head_git_blob": "c861377bb54549170249a558c11160f578f40581",
+      "after_sha256": "7603A737C21A89964C137C762A4D706F3D06F9568A58EEC0C44AA31BDFA1FA21"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.h",
+      "before_head_git_blob": "17cd803c555bf0fb48145ff380120bbf97711b6d",
+      "after_sha256": "675EE7285F30C3670033015ED126195F3D34A708F040C4ABAD49A572223EB1E5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+      "before_head_git_blob": "aadbcc795b581ca884b636a0c13dff9cb07fa4ab",
+      "after_sha256": "DFC32E3E901F3A894191474315B0A6CD4D20B9BBB3E89F97187EA2ED76546DDC"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+      "before_head_git_blob": "e88bb501dac3b4e5b250f5b4a801b437c8b3e89b",
+      "after_sha256": "94288F20A3E7F3C973BD1F1EEA4B366AD1604850E5FAE40328AF4C944C1F9C55"
+    }
+  ],
+  "final_source_snapshots_match": true,
+  "artifacts": [
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/BuildEditor_Final.log",
+      "sha256": "7835948D896EB1D07D9561F12DE9407B2E09CD374589CF83D78117DA2A74D7CD"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/BuildEditor_RegressionPlugins.log",
+      "sha256": "39B68B1B4AFE8E07545A689C5D7AF90E01CC6F2D9A2D066140CB7BA18D233447"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/BuildGame_Final.log",
+      "sha256": "6188175C59C2C6FC9CC6D7EA25010F44B0E56732228D178E218D58B7497851AF"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count1/Automation/index.json",
+      "sha256": "65B996C89C57CDF37DE94FA730333ABF83EFFF75FE554878EF7590732B7844E6"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count1/cpu.json",
+      "sha256": "EEA4CCBA15FDCEA7DAC20D80C1BA861C53DEE2576A1A7A6BB915DC22FD4D8451"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count100/Automation/index.json",
+      "sha256": "7E98EA4B96F67321145E28087280760590755BB66A57A4BA55DB45DE63D8901C"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count100/cpu.json",
+      "sha256": "46740FE6C7B7C7141AC2439EB0CCAFB457CB0F52EAD5A29D7ED2177943E92D21"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count200/Automation/index.json",
+      "sha256": "813747E9F3811CA912D7789BD813F1640D3B57050F7EBCF77549A061923B6579"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count200/cpu.json",
+      "sha256": "9AC0AF4FE946F1D4E0618387A8C8B3B40D653470D349588C7B67DF802BA74908"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count50/Automation/index.json",
+      "sha256": "7BE88507A77A0D9B17BA22D29F2A255F5BD1FEFE063CDCD36CBDD47BF1F8E87D"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/Count50/cpu.json",
+      "sha256": "C9CD5C28ED9564F2E7B10F10FB4449739BDF48AF17C21711FD627873C317A663"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Final_Full/manifest.json",
+      "sha256": "CA15015301B02FA8C12F0FC0D4507D0DA4F47FDBB82BED4D48569F425781F8DF"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/Automation/index.json",
+      "sha256": "6FEE6084B8F331C16E3AC7552DAE41EA908E6A729956B27DBD7BD200EED35DA2"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/cpu.json",
+      "sha256": "AB94F46A2F24E7711AAD43ADCC871CC398A29071DFC81FB4E6EE59E1A69587D8"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/CPU.utrace",
+      "sha256": "C4743C64DF7FD731EE96916B257963AFE498EA223143E19C967EF6D2191F63E7"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0.csv",
+      "sha256": "44D8EF79328294A1999C4C653D8C9D5FD2B527114C3996085D4932E4FF49F2E6"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0.csv",
+      "sha256": "88628BC03E0288A8BECC633BA6293C54F88CE7ADE21FFBA7EEB119028E5CCB06"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Far_ABA0_R0.csv",
+      "sha256": "F4899B695DAF5D25E3A819A658BECADAA964C481E41CB86DBE114AB5095EC7E2"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Far_ABA1_R0.csv",
+      "sha256": "F219A2779987D697F865A6FE70464BFA7AB33014A94E97E458879D78907F3A66"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0.csv",
+      "sha256": "CE4376C40888D25DF39951F552FA7C18F1F260BF9A32E4ABB9A7D70B33300F11"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0.csv",
+      "sha256": "9FEB2012EE997966F4402804A9B7827DCC47229AD0F48AB22C504DCA15E62503"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Near_ABA0_R0.csv",
+      "sha256": "07720FC9FD2CA4595FAD314E2C63A3719EBCF0AA5256930EA2F0ABD9A57011DA"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/Count200/TraceExport/Timers-ProjectJ.AuthoredCPU_200_Near_ABA1_R0.csv",
+      "sha256": "81656106F15BA52051B468F990E2B0514756029AD79858539BBA7DB5AA6BC9EF"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Profile_Final_200/manifest.json",
+      "sha256": "5F38515B775B745B3AC583BD8ECBFBAD950E4E974067EA703C483BBABBECAD9C"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Regression/Automation/index.json",
+      "sha256": "10F94A6D08D7E3BF17EFC54C0141A00F4507DA8D1CB061EA96C00F1B106E0823"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/Regression/prior-comparison.json",
+      "sha256": "F9DCC3886D40AE56D7A68302E42C60E3A9E0C2245035133CFD3E5E77B40CB7EC"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_Final_20261005/Client1/animation-observations.csv",
+      "sha256": "6610F5DB62A76F6FE5F45347F8EE8B9C8390CFC8227D3EB7C6E3C6EE26624CDA"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_Final_20261005/Client2/animation-observations.csv",
+      "sha256": "B46BA011378A50947DCAF72314240F853F9A23DDD0B8AA735BD7D1FF6BEB6AF4"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_Final_20261005/manifest.json",
+      "sha256": "A3C02E01DC1B035D6707679A5BE3786CB2810A3F2922520462757BF6342E4305"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_Final_20261005/verification.json",
+      "sha256": "3DEA3156E74E077BFF6A75875AA633DBA5780CA65F95B36DDB593C54BC5E468C"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_FinalLag_20261005/Client1/animation-observations.csv",
+      "sha256": "B46BA011378A50947DCAF72314240F853F9A23DDD0B8AA735BD7D1FF6BEB6AF4"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_FinalLag_20261005/Client2/animation-observations.csv",
+      "sha256": "B7AACD13A3F0310C74AA9CD791AE8E182C6B34C56C50A979D41AE9D0CBF43F13"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_FinalLag_20261005/manifest.json",
+      "sha256": "103418D6CE5709E76F66E81712A71FF71488D5ECCD5408A92191A6DDA402BEE5"
+    },
+    {
+      "path": "Saved/Validation/GroupD_20260910/Animation_FinalLag_20261005/verification.json",
+      "sha256": "D5DF252077D89B80C7096D03A88E5E3059561D98661F8E062254811D5DFAC920"
+    }
+  ]
+}

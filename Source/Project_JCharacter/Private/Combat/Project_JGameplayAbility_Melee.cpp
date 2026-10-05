@@ -127,6 +127,7 @@ void UProject_JGameplayAbility_Melee::ActivateAbility(const FGameplayAbilitySpec
 	ResetComboWindows();
 	bHasNextComboQueued = false;
 	HitActorsThisSwing.Reset();
+	UnbindComboInputEvents();
 	ComboEventTasks.Reset();
 
 	BindComboInputEvents();
@@ -152,6 +153,7 @@ void UProject_JGameplayAbility_Melee::EndAbility(const FGameplayAbilitySpecHandl
 	// base class guard runs too late to protect our shared hit/presentation cleanup.
 	if (!IsActive() || bEndingAttack) { return; }
 	TGuardValue<bool> EndingGuard(bEndingAttack, true);
+	UnbindComboInputEvents();
 	ResetComboWindows();
 	if (AttackEquipment.IsValid()) { AttackEquipment->OnWeaponRevoked().Remove(WeaponRevokedHandle); }
 	WeaponRevokedHandle.Reset();
@@ -366,23 +368,37 @@ void UProject_JGameplayAbility_Melee::BindComboInputEvents()
 		ComboEventTasks.Add(ComboWindowTask);
 	}
 
-	FGameplayTagContainer InputTags;
-	ActiveComboDefinition->GetReferencedInputTags(InputTags);
-	for (const FGameplayTag& InputTag : InputTags)
+	ActiveComboDefinition->GetReferencedInputTags(ComboInputTags);
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (ASC && !ComboInputTags.IsEmpty())
 	{
-		if (!InputTag.IsValid())
-		{
-			continue;
-		}
-
-		UAbilityTask_WaitGameplayEvent* InputTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, InputTag);
-		if (InputTask)
-		{
-			InputTask->EventReceived.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnComboInputReceived);
-			InputTask->ReadyForActivation();
-			ComboEventTasks.Add(InputTask);
-		}
+		ComboInputASC = ASC;
+		const uint64 BindingRevision = ComboInputBindingRevision;
+		// One subscription for the authored input set, rather than one UObject
+		// AbilityTask per input. Keep the previous exact-tag and payload contract.
+		ComboInputHandle = ASC->AddGameplayEventTagContainerDelegate(ComboInputTags,
+			FGameplayEventTagMulticastDelegate::FDelegate::CreateWeakLambda(this,
+			[this, BindingRevision](FGameplayTag EventTag, const FGameplayEventData* Payload)
+			{
+				// ASC broadcasts a copy. End/re-activation during an earlier callback
+				// must not deliver an old subscription to the new activation.
+				if (BindingRevision != ComboInputBindingRevision || !IsActive() || bEndingAttack
+					|| !ComboInputTags.HasTagExact(EventTag)) { return; }
+				FGameplayEventData Event = Payload ? *Payload : FGameplayEventData{};
+				Event.EventTag = EventTag;
+				OnComboInputReceived(Event);
+			}));
 	}
+}
+
+void UProject_JGameplayAbility_Melee::UnbindComboInputEvents()
+{
+	++ComboInputBindingRevision;
+	if (UAbilitySystemComponent* ASC = ComboInputASC.Get(); ASC && ComboInputHandle.IsValid())
+	{ ASC->RemoveGameplayEventTagContainerDelegate(ComboInputTags, ComboInputHandle); }
+	ComboInputHandle.Reset();
+	ComboInputASC.Reset();
+	ComboInputTags.Reset();
 }
 
 const FProject_JComboNode* UProject_JGameplayAbility_Melee::GetCurrentComboNode() const
@@ -570,9 +586,7 @@ void UProject_JGameplayAbility_Melee::ResetComboWindows()
 bool UProject_JGameplayAbility_Melee::AcceptsComboInput(FGameplayTag InputTag) const
 {
 	if (!ActiveComboDefinition || !IsActive() || bEndingAttack) { return false; }
-	FGameplayTagContainer Inputs;
-	ActiveComboDefinition->GetReferencedInputTags(Inputs);
-	return Inputs.HasTagExact(InputTag);
+	return ComboInputTags.HasTagExact(InputTag);
 }
 
 void UProject_JGameplayAbility_Melee::ReconcileCombatConfiguration()

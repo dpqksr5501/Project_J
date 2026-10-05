@@ -70,6 +70,12 @@ protected:
 
 private:
 	friend class FProjectJComboWindowOwnershipTest;
+	friend class FProjectJComboInputSubscriptionTest;
+	void UnbindComboInputEvents();
+	FGameplayTagContainer ComboInputTags;
+	TWeakObjectPtr<class UAbilitySystemComponent> ComboInputASC;
+	FDelegateHandle ComboInputHandle;
+	uint64 ComboInputBindingRevision = 0;
 	void ResetComboWindows();
 	uint64 NextComboWindowToken = 0;
 	TSet<uint64> ComboWindows;

@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 220개, Markdown 151개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 222개, Markdown 152개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -39,6 +39,7 @@
 
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
+| [실제 캐릭터 애니메이션 CPU·소켓 검증 — 2026-10-05](../Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) | 구조·계약 | Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md |
 | [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
 | [Motion Matching Notes](../Animation/Architecture/MotionMatchingNextSteps.md) | 구조·계약 | Animation/Architecture/MotionMatchingNextSteps.md |
@@ -227,7 +228,7 @@
 
 | 위치 | 파일 수 | 내용 |
 | --- | --- | --- |
-| [Animation/Architecture](../Animation/Architecture) | 3 | 문서 이동·보존 기록 |
+| [Animation/Architecture](../Animation/Architecture) | 4 | 문서 이동·보존 기록 |
 | [Architecture/Extensions](../Architecture/Extensions) | 3 | 카탈로그·대응 검증 JSON |
 | [Architecture/Runtime/Reports](../Architecture/Runtime/Reports) | 3 | 카탈로그·대응 검증 JSON |
 | [Benchmarks](../Benchmarks) | 1 | CSV·JSON·재계산 원본 |

@@ -4,6 +4,9 @@ param(
     [ValidateRange(100,2048)][int]$NPCCount = 100,
     [switch]$AllRelevant,
     [switch]$ParallelNet,
+    [switch]$Animation,
+    [ValidateRange(0,200)][int]$PacketLag = 0,
+    [ValidateRange(0,20)][int]$PacketLoss = 0,
     [int]$Port = 17871,
     [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
 )
@@ -26,10 +29,12 @@ $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
         [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash}
     }
 })
-[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
+[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
     ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
 $common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
+if ($Animation) { $common += '-ProjectJAnimationFixture' }
+$common += @("-PktLag=$PacketLag","-PktLoss=$PacketLoss")
 # Start-Process needs quotes retained around arguments containing spaces.
 function Start-Fixture($arguments) {
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '

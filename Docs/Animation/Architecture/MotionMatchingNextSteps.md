@@ -6,6 +6,8 @@ Project J uses a C++ locomotion state component, a thread-safe animation snapsho
 
 2026-10-05의 [외부 Blend Stack 복귀와 worker 검색 예산 보완](MotionMatching_Return_Crowd_2026-10-05.md)은 아래 기존 소유권을 유지하면서 미처리 reselect의 수명과 실제 검색을 구분하고, GT 거리 간격을 worker search floor에도 전달한다. 과거 절의 node throttle 설명은 당시 기록이며, 현재 합성 규칙과 검증 범위는 해당 후속 문서를 따른다.
 
+같은 날짜의 [실제 캐릭터 CPU·소켓 후속 검증](Authored_Animation_Crowd_Network_2026-10-05.md)은 실제 BP·ABP·장비와 constructed follower의 인원별 비용, 실제 SimulatedProxy의 착지 선택·취소·중첩 이벤트 수렴, 동시 공격의 입력 대기 task 절감을 다룬다. NullRHI 결과를 렌더 FPS나 화면의 연결 품질로 해석하지 않는다.
+
 Remote player Start/Stop/Land boundaries now follow the semantic snapshot contract in
 [RemoteOneShotReplication.md](../Locomotion/RemoteOneShotReplication.md). Keep trajectory and continuous
 cycle selection locally derived; add replicated fields only for sparse authored one-shot

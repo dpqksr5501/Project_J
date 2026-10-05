@@ -13,6 +13,7 @@
 | 연속 Pivot·OTM/Strafe 중복 Start/Land 방지 | [일회성 동작의 요청 수명](Architecture/OneShot_Command_Lifetime_2026-10-05.md) |
 | Start·착지 중 입력 변경·MM 복귀의 실행 흐름 | [기본 비활성 흐름 진단](Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) |
 | 이동 착지 취소의 Idle 경유·연결 레이어 검색 완료 수정 | [착지 복귀와 연결 레이어 검색](Architecture/Landing_Return_Linked_Search_2026-10-05.md) |
+| 실제 BP 군중 CPU·소켓 검증과 동시 공격 비용 | [실제 캐릭터 애니메이션 검증](Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) |
 | 리타깃 파이프라인과 배경 | [런타임 리타깃 구조](Architecture/Runtime_Retarget_HandIK_Architecture.md) |
 | 무기 부착·파지·궤적·공격 종료 복귀 | [무기 파지와 손 접촉 통합 가이드](Authoring/Weapon_Hand_Contact_System.md) |
 | 외형·의상 리더 선택 | [외형 메시 소유권](Architecture/Visual_Presentation_Mesh_Ownership.md) |
