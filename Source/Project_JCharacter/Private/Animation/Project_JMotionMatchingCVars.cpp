@@ -4,14 +4,6 @@
 
 namespace
 {
-TAutoConsoleVariable<int32> CVarProjectJStrafePivotDebug(
-	TEXT("p.ProjectJ.StrafePivotDebug"),
-#if WITH_EDITOR
-	1,
-#else
-	0,
-#endif
-	TEXT("Temporary local Strafe Pivot diagnosis. Editor default=1; 0=off. Input, rejection, chooser and actual Blend Stack samples."));
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
 	TEXT("p.ProjectJ.MM.RepairRemoteTrajectoryFacing"),
 	1,
@@ -70,11 +62,6 @@ TAutoConsoleVariable<int32> CVarProjectJTurnInPlaceTrace(
 
 namespace Project_J::MotionMatchingCVars
 {
-bool ShouldTraceStrafePivotDiagnostic()
-{
-	return CVarProjectJStrafePivotDebug.GetValueOnAnyThread() != 0;
-}
-
 bool ShouldRepairRemoteTrajectoryFacing()
 {
 	return CVarProjectJRepairRemoteTrajectoryFacing.GetValueOnAnyThread() != 0;

@@ -92,7 +92,6 @@ private:
 	bool CompleteMotionMatchingReselect(FAnimNode_MotionMatching& Node, FNodeReselectState& State);
 	void CapturePostSelection();
 	void CapturePivotDebugTrace();
-	void CaptureStrafePivotDiagnosticNodes();
 	/**
 	 * Generated AnimBP graphs commonly contain far more nodes than Motion Matching
 	 * nodes. Cache only the latter's indices and rebuild when the generated class

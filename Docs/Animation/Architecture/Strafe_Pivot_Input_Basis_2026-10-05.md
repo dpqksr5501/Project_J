@@ -41,7 +41,9 @@ ABP·Chooser·PSS·입력 에셋을 수정하거나 저장하지 않았다. 대�
 
 계속 특정 방향이 누락되면 `p.ProjectJ.MMTransitionDebug 1`로 `CombatStrafeRunPivotAccepted/Rejected`, `Committed/Cancelled`, `StateControllerChooser`를 함께 기록해 감지·최소 속도·선택·취소 중 어느 단계인지 구분한다. 확인한 취소 충돌만으로 모든 PIE 원인을 단정하지 않는다.
 
-## 후속 재현 로그 — StrafePivotDiag
+## 후속 재현 로그 — StrafePivotDiag (제거된 임시 진단)
+
+사용자 정상 동작 확인 후 임시 진단 CVar·입력/상태 sample·worker node 조회를 제거했다. 아래 실행 방법과 기본값은 당시 재현 기록이며 현재 코드에서 사용할 수 없다. 수정 로직과 회귀 테스트는 유지한다.
 
 `p.ProjectJ.StrafePivotDebug`를 추가했다. 진단 중 Editor 기본값은 1, Game 기본값은 0이다. Editor에서 `p.ProjectJ.StrafePivotDebug 0`으로 끌 수 있다. 새 기능·상태 판정·애니메이션/에셋 변경 없이 기록만 추가했다.
 

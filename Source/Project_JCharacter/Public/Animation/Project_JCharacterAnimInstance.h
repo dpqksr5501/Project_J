@@ -444,8 +444,6 @@ struct PROJECT_JCHARACTER_API FProject_JAnimMotionMatchingThreadSafeData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
 	bool bForceReselect = false;
-	/** Diagnostic only: requests read-only node observations after this snapshot is updated. */
-	bool bCaptureStrafePivotDiagnosticFrame = false;
 
 	/** GT budget floor for worker PoseSearch; zero preserves the node/phase policy. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe|Motion Matching")
@@ -1394,13 +1392,6 @@ public:
 	bool bCombatStopTraceWasTransitionActive = false;
 	double CombatStopTraceUntilSeconds = 0.0;
 	double CombatStopTraceNextSampleSeconds = 0.0;
-	void TraceStrafePivotDiagnostic();
-	bool bStrafePivotDiagnosticStarted = false;
-	int32 StrafePivotDiagnosticIntentRevision = INDEX_NONE;
-	int32 StrafePivotDiagnosticRequestRevision = INDEX_NONE;
-	int32 StrafePivotDiagnosticChooserRevision = INDEX_NONE;
-	double StrafePivotDiagnosticUntilSeconds = 0.0;
-	double StrafePivotDiagnosticNextSampleSeconds = 0.0;
 
 	/** 공중 점프 재선택 상태 변수 */
 	mutable float LastJumpAirReselectElapsed = 0.0f;

@@ -3,7 +3,6 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 
 #include "Project_JPlayerCharacter.h"
-#include "Animation/Project_JMotionMatchingCVars.h"
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedTurnInPlaceStarted(
 	int32 Sequence,
@@ -217,15 +216,6 @@ void UProject_JLocomotionAnimStateComponent::TryFinishLandingForReplicatedMoveSt
 void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMoveInput)
 {
 	const bool bHadMoveInput = HasAnyMoveInputState();
-	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() &&
-		GetPlayerOwner() && GetPlayerOwner()->IsLocallyControlled() && !CachedMoveInput.Equals(InMoveInput, 0.05f))
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StrafePivotDiag Stage=RawInput Actor=%s Frame=%llu Old=(%.2f,%.2f) New=(%.2f,%.2f) Semantic=(%.2f,%.2f) Active=%d Pending=%d IntentRev=%d"),
-			*GetNameSafe(GetOwner()), GFrameCounter, CachedMoveInput.X, CachedMoveInput.Y, InMoveInput.X, InMoveInput.Y,
-			CachedSemanticMoveIntentInput.X, CachedSemanticMoveIntentInput.Y, bHasSemanticMoveIntentInput ? 1 : 0,
-			bSemanticMoveIntentUpdatePending ? 1 : 0, MoveIntentRevision);
-	}
 	CachedMoveInput = InMoveInput.GetClampedToMaxSize(1.0f);
 	// A non-zero final Move Action value wins over a stale Completed/Canceled
 	// callback from another mapping of that same action.  This is local-input
@@ -253,13 +243,6 @@ void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
 
 void UProject_JLocomotionAnimStateComponent::BeginSemanticMoveIntentUpdate()
 {
-	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && GetPlayerOwner() && GetPlayerOwner()->IsLocallyControlled())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StrafePivotDiag Stage=BeginChord Actor=%s Frame=%llu AlreadyPending=%d IntentRev=%d OldCaptureValid=%d OldCaptureSpeed=%.1f NewVelocity=%s"),
-			*GetNameSafe(GetOwner()), GFrameCounter, bSemanticMoveIntentUpdatePending ? 1 : 0, MoveIntentRevision,
-			bHasSemanticPivotKinematicCapture ? 1 : 0, SemanticPivotKinematicCaptureGroundSpeed, *GetPlayerOwner()->GetVelocity().ToCompactString());
-	}
 	bSemanticMoveIntentUpdatePending = true;
 	bHasSemanticPivotKinematicCapture = false;
 	SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
@@ -302,16 +285,6 @@ void UProject_JLocomotionAnimStateComponent::SetSemanticMoveIntentInput(const FV
 	{
 		bHasSemanticPivotKinematicCapture = false;
 		SemanticPivotKinematicCaptureIntentRevision = INDEX_NONE;
-	}
-	if (Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic() && GetPlayerOwner() && GetPlayerOwner()->IsLocallyControlled())
-	{
-		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("StrafePivotDiag Stage=ResolvedIntent Actor=%s Frame=%llu OldRev=%d IntentRev=%d Semantic=(%.2f,%.2f) Raw=(%.2f,%.2f) Active=%d PreviousStable=(%.2f,%.2f) Stable=(%.2f,%.2f) CaptureValid=%d CaptureRev=%d CaptureSpeed=%.1f CaptureDirection=%s"),
-			*GetNameSafe(GetOwner()), GFrameCounter, PreviousMoveIntentRevision, MoveIntentRevision,
-			CachedSemanticMoveIntentInput.X, CachedSemanticMoveIntentInput.Y, CachedMoveInput.X, CachedMoveInput.Y,
-			bHasSemanticMoveIntentInput ? 1 : 0, PreviousStableMoveInputDirection.X, PreviousStableMoveInputDirection.Y,
-			LastStableMoveInputDirection.X, LastStableMoveInputDirection.Y, bHasSemanticPivotKinematicCapture ? 1 : 0,
-			SemanticPivotKinematicCaptureIntentRevision, SemanticPivotKinematicCaptureGroundSpeed, *SemanticPivotKinematicCapturePreviousDirection.ToCompactString());
 	}
 }
 

@@ -116,5 +116,46 @@
     "date": "2026-10-05",
     "message": "잘된다. 한글 내용으로 커밋해줘.",
     "evidence": "User report; no additional post-fix log or video independently reviewed"
+  },
+  "diagnosticCleanup": {
+    "date": "2026-10-05",
+    "status": "Temporary diagnostics removed; Editor/Game builds and all 121 regression tests passed",
+    "removedCvar": "p.ProjectJ.StrafePivotDebug",
+    "removed": [
+      "Temporary input action/raw input/chord logs",
+      "Temporary GT snapshot window and fields",
+      "Temporary worker Blend Stack/MM node inspection",
+      "Extra automatic transition-log gate and Pivot rejection diagnostic fields"
+    ],
+    "retained": "Functional fixes, regression tests and preexisting default-off debug options",
+    "regression": {
+      "report": "Saved/Automation/MotionDiagCleanup_20261005/index.json",
+      "log": "Saved/Validation/MotionDiagCleanup_20261005/Regression.log",
+      "exitCode": 0,
+      "succeeded": 117,
+      "succeededWithWarnings": 4,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "warningCount": 8,
+      "warningDifferencesFromPrior": 0,
+      "temporaryDiagnosticLogEntries": 0
+    },
+    "builds": [
+      {
+        "target": "Project_JEditor Win64 Development",
+        "directUBT": true,
+        "log": "Saved/Validation/MotionDiagCleanup_20261005/BuildEditor.log",
+        "exitCode": 0,
+        "durationSeconds": 129.94
+      },
+      {
+        "target": "Project_J Win64 Development",
+        "directUBT": true,
+        "log": "Saved/Validation/MotionDiagCleanup_20261005/BuildGame.log",
+        "exitCode": 0,
+        "durationSeconds": 110.53
+      }
+    ]
   }
 }

@@ -4,7 +4,6 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "PoseSearch/PoseSearchDatabase.h"
-#include "BlendStack/AnimNode_BlendStack.h"
 #include "Project_JPlayerCharacter.h"
 #include "UObject/UnrealType.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -173,7 +172,6 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	CompleteMotionMatchingReselects();
 	CapturePostSelection();
 	CapturePivotDebugTrace();
-	CaptureStrafePivotDiagnosticNodes();
 }
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
@@ -622,54 +620,6 @@ void FProject_JCharacterAnimInstanceProxy::ClearMotionMatchingReselects()
 	bReselectFromPoseHistory = false;
 	NativeReselectState = FNodeReselectState();
 	GeneratedReselectStates.Reset();
-}
-
-void FProject_JCharacterAnimInstanceProxy::CaptureStrafePivotDiagnosticNodes()
-{
-	if (!ThreadSafeData.MotionMatching.bCaptureStrafePivotDiagnosticFrame || !Project_J::MotionMatchingCVars::ShouldTraceStrafePivotDiagnostic()) { return; }
-	UE_LOG(LogProjectJPlayer, Display,
-		TEXT("StrafePivotDiag Stage=Worker AnimInstance=%s Frame=%llu IntentRev=%d PivotRev=%d ChooserRev=%d Override=%d RequestedAsset=%s ForceBlend=%d MMEnabled=%d MMChooserUpdate=%d PendingSearch=%llu ForceSearch=%d GeneratedMM=%d"),
-		*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, ThreadSafeData.LocomotionContext.MoveIntentRevision,
-		ThreadSafeData.LocomotionContext.PivotRequestRevision, ThreadSafeData.OneShotPresentation.SelectionRevision,
-		ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0,
-		*GetNameSafe(ThreadSafeData.OneShotPresentation.SelectedAnimation.Get()), ThreadSafeData.OneShotPresentation.bForceBlendNextUpdate ? 1 : 0,
-		bMotionMatchingEnabled ? 1 : 0, bUpdateMotionMatchingThisFrame ? 1 : 0, PendingReselectRevision,
-		bForceMotionMatchingReselect ? 1 : 0, GetGeneratedMotionMatchingNodeIndices().Num());
-	const IAnimClassInterface* AnimClass = GetAnimClassInterface();
-	if (!AnimClass) { return; }
-	int32 ExternalStacks = 0;
-	for (int32 Index = 0; Index < AnimClass->GetAnimNodeProperties().Num(); ++Index)
-	{
-		// Inspection only; never force a blend, advance time, or change node state.
-		if (const FAnimNode_BlendStack* Stack = GetNodeFromIndex<FAnimNode_BlendStack>(Index))
-		{
-			++ExternalStacks;
-			UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=ExternalStack AnimInstance=%s Frame=%llu Index=%d CachedWeight=%.3f Players=%d NewBlend=%d"),
-				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, Stack->GetCachedBlendWeight(), Stack->AnimPlayers.Num(), Stack->AnyNewBlendToThisFrame() ? 1 : 0);
-			for (int32 PlayerIndex = 0; PlayerIndex < FMath::Min(Stack->AnimPlayers.Num(), 4); ++PlayerIndex)
-			{
-				const FBlendStackAnimPlayer& Player = Stack->AnimPlayers[PlayerIndex];
-				UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=StackPlayer AnimInstance=%s Frame=%llu Index=%d Player=%d Asset=%s Time=%.3f Length=%.3f BlendWeight=%.3f Active=%d Loop=%d"),
-					*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, PlayerIndex, *GetNameSafe(Player.GetAnimationAsset()),
-					Player.GetCurrentAssetTime(), Player.GetCurrentAssetLength(), Player.GetBlendInWeight(), Player.IsActive() ? 1 : 0, Player.IsLooping() ? 1 : 0);
-			}
-		}
-	}
-	if (ExternalStacks == 0)
-	{
-		UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=ExternalStack AnimInstance=%s Frame=%llu Count=0"), *GetNameSafe(GetAnimInstanceObject()), GFrameCounter);
-	}
-	for (int32 Index : GetGeneratedMotionMatchingNodeIndices())
-	{
-		if (const FAnimNode_MotionMatching* Node = GetNodeFromIndex<FAnimNode_MotionMatching>(Index))
-		{
-			const auto& State = Node->GetMotionMatchingState();
-			UE_LOG(LogProjectJPlayer, Display, TEXT("StrafePivotDiag Stage=MMNode AnimInstance=%s Frame=%llu Index=%d CachedWeight=%.3f PSD=%s Asset=%s Time=%.3f SearchElapsed=%.3f Continuing=%d"),
-				*GetNameSafe(GetAnimInstanceObject()), GFrameCounter, Index, Node->GetCachedBlendWeight(),
-				*GetNameSafe(State.SearchResult.SelectedDatabase.Get()), *GetNameSafe(State.SearchResult.SelectedAnim.Get()),
-				State.SearchResult.SelectedTime, State.ElapsedPoseSearchTime, State.SearchResult.bIsContinuingPoseSearch ? 1 : 0);
-		}
-	}
 }
 
 void FProject_JCharacterAnimInstanceProxy::CapturePivotDebugTrace()

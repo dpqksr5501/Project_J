@@ -41,4 +41,4 @@ Chooser lock은 유효한 선택이 있는 같은 presentation에만 적용한�
 
 2026-10-05 후속 사용자 확인: 수정 후 "잘된다"고 보고했다. 이는 사용자 PIE 확인이며, 수정 후 별도의 영상이나 로그 분석 결과는 아니다.
 
-진단은 그대로 유지한다. `p.ProjectJ.StrafePivotDebug`의 Editor 기본값은 1, Game 기본값은 0이다. 같은 요청 중 `SelectionRevision`이 유지되고 `ForceBlend`가 반복되지 않는지, 새 Pivot마다 새 commit이 생기는지 실제 `ExternalStack/StackPlayer`와 함께 확인한다. 확인 후 `p.ProjectJ.StrafePivotDebug 0`으로 끌 수 있다.
+사용자 정상 동작 확인 후 임시 `p.ProjectJ.StrafePivotDebug` 진단을 제거했다. 입력 이벤트·감지 사유 확장·snapshot sample·worker의 `ExternalStack/StackPlayer/MMNode` 조회, 진단 CVar 및 전용 상태 필드가 제거 대상이다. 기존 기본값 0의 MM/TIP 디버그 옵션은 유지한다. 실제 요청/선택/hold 수명 수정과 회귀 테스트는 유지하며, 위 진단 로그는 당시 원인 분석의 역사적 증거다.

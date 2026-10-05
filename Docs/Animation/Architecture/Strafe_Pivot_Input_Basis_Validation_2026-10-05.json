@@ -108,6 +108,8 @@
       "note": "Related Pivot/MM regression; user PIE trace and generated ABP observations remain pending"
     },
     "sourcePIELog": "Saved/Validation/PivotLandingLifetime_20261005/UserPIE.log",
-    "successorValidation": "OneShot_Command_Lifetime_Validation_2026-10-05.json"
+    "successorValidation": "OneShot_Command_Lifetime_Validation_2026-10-05.json",
+    "diagnosticRetired": true,
+    "retirementNote": "Temporary diagnostic code and CVar removed after user confirmed the fix; earlier diagnostic settings and reports are historical evidence."
   }
 }
