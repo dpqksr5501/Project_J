@@ -55,6 +55,11 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
 	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
 	FString GetPivotTraceSummary() const;
+	void SetFlowTraceEnabled(bool bEnabled);
+	const FProject_JAnimationFlowWork& GetFlowTraceWork() const { return FlowTraceWork; }
+	uint64 GetReselectRequestForTrace() const { return PendingReselectRevision; }
+	bool IsReselectPendingForTrace() const { return bForceMotionMatchingReselect; }
+	bool IsReturnQueryForTrace() const { return bReselectFromPoseHistory; }
 
 protected:
 	virtual void Initialize(UAnimInstance* InAnimInstance) override;
@@ -74,6 +79,7 @@ private:
 	friend class FProjectJMotionMatchingReturnRequestTest;
 	friend class FProjectJMotionMatchingSearchExecutionTest;
 	friend class FProjectJMotionMatchingCrowdPolicyTest;
+	friend class FProjectJMotionMatchingNestedGraphTest;
 	void LinkNativeGraph();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
@@ -103,6 +109,10 @@ private:
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
+	bool bFlowTraceEnabled = false;
+	/** A linked layer may re-enter this proxy while its outer graph is still updating. */
+	bool bUpdatingMotionMatchingGraph = false;
+	FProject_JAnimationFlowWork FlowTraceWork;
 	bool bMotionMatchingEnabled = true;
 	bool bUpdateMotionMatchingThisFrame = true;
 	bool bForceMotionMatchingReselect = false;

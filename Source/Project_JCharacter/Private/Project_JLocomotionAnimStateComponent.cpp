@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JLocomotionContextBuilder.h"
 
 #include "Components/CapsuleComponent.h"
@@ -760,7 +761,8 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 {
 	FProject_JDerivedLocomotionContext Context;
 	Context.bIsMoving = IsMovingForContext(InKinematicContext);
-	Context.bIsMotionMatchingMoving = IsMotionMatchingMovingForContext(InKinematicContext);
+	Context.bHasGroundMovementIntent = HasGroundMovementIntentForContext(InKinematicContext);
+	Context.bIsMotionMatchingMoving = Context.bHasGroundMovementIntent && !IsLandingStateActive();
 	Context.bIsPivoting = IsPivotingForContext(AuthContext, InKinematicContext);
 	// Pivot and Start share the same locomotion edge. A committed Pivot owns it.
 	Context.bIsStarting = !Context.bIsPivoting && IsStartingForContext(AuthContext, InKinematicContext);
@@ -926,11 +928,15 @@ bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_J
 			(InKinematicContext.bIsAccelerating || InKinematicContext.bHasPredictedMovement));
 }
 
-bool UProject_JLocomotionAnimStateComponent::IsMotionMatchingMovingForContext(
+bool UProject_JLocomotionAnimStateComponent::HasGroundMovementIntentForContext(
 	const FProject_JLocomotionKinematicContext& InKinematicContext) const
 {
 	FProject_JLocomotionContextBuilder::FMotionMatchingMovement Input;
-	Input.bInAirOrLanding = bIsInAir || IsLandingStateActive();
+	// BeginLandingState retains bIsInAir for presentation until Land completes.
+	// Ground intent must survive that hold, while physical air still wins even
+	// if an old landing request has not been cleared yet. Non-landing air also
+	// preserves the JumpStart grace period before movement reports airborne.
+	Input.bInAirOrLanding = bIsPhysicallyInAir || (bIsInAir && !IsLandingStateActive());
 	Input.bUsingLocalInput = bUsingLocalInputState;
 	Input.bHasMoveInput = InKinematicContext.bHasMoveInput;
 	Input.bIsAccelerating = InKinematicContext.bIsAccelerating;
@@ -1508,6 +1514,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 
 	if (!bLandWasMoving && bHasMoveInput)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("NewMoveInput"));
 		bLandWasMoving = true;
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
@@ -1518,6 +1525,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 		!bHasMoveInput &&
 		bLandingReceivedPostTouchdownMoveInput)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("PostTouchdownInputRelease"));
 		// Input release after a genuine moving touchdown is a directional stop,
 		// not an abrupt transition to Idle. The current Strafe sector remains
 		// cached by the AnimInstance while velocity falls to zero.
@@ -1550,6 +1558,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingRedirectCancel(cons
 	if (HasLandingDirectionTurnCancel(MoveInput, LandingRedirectCancelAngle) ||
 		HasLandingActorTurnCancel(LandingRedirectCancelAngle))
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("DirectionOrActorYawThreshold"));
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;
@@ -1572,6 +1581,7 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingTurnCancel(co
 	if (HasLandingDirectionTurnCancel(MoveInput, SprintLandingTurnCancelAngle) ||
 		HasLandingActorTurnCancel(SprintLandingTurnCancelAngle))
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("SprintDirectionOrActorYawThreshold"));
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;

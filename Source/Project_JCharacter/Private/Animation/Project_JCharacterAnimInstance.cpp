@@ -257,6 +257,8 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 {
 	AnimationClock = FProject_JAnimationClock();
+	AnimationFlowSampler = {};
+	bAnimationFlowEvaluationPending = false;
 	Super::NativeInitializeAnimation();
 	MotionMatchingRuntime.Reset();
 	ResetStateControllerOwnerPresentation();
@@ -460,6 +462,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const bool bSuppressDirectGroundOneShotsForCombatPresentation =
 		bSuppressPreTransitionLandingPresentationUntilLandingEnds ||
 		bFullBodyActionMontageActive;
+	UpdateReleasedLandingMotionContext(ThreadSafeData);
 	if (bSuppressDirectGroundOneShotsForCombatPresentation && !ThreadSafeData.Air.bIsInAir)
 	{
 		// Keep regular MM current beneath a full-body montage. On blend-out it therefore
@@ -651,6 +654,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (bShouldCancelOneShot)
 	{
+		Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("Presentation"),
+			bRemoteHeldStart ? TEXT("RemoteStartRedirect") :
+			(bRemoteResponsiveStartExit ? TEXT("RemoteStartExitRevision") : TEXT("LocalInputRedirectRelease")));
 		if (bIsCommittedPivotOneShot)
 		{
 			StateControllerRuntime.CancelPivotForInputRedirect(AnimationClock.Seconds);
@@ -662,6 +668,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		// not route this through a Turn asset: Project_J has not yet authored a
 		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
 		// already trajectory-aware and stable for Run and Sprint.
+		if (bIsLandOneShot) { UpdateReleasedLandingMotionContext(ThreadSafeData, true); }
 		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
 			? EProject_JStateControllerPresentationState::LocomotionLoop
 			: EProject_JStateControllerPresentationState::IdleLoop;
@@ -1153,6 +1160,7 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 		CachedStateControllerLeftFootContact = 0.0f;
 		CachedStateControllerRightFootContact = 0.0f;
 	}
+	RecordAnimationFlowEvaluation();
 }
 
 EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateControllerFootFromContactCurves(
@@ -1518,6 +1526,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.LocomotionContext.DesiredFacingYaw = AnimState->KinematicContext.DesiredFacingYaw;
 	Data.LocomotionContext.bIsMoving = AnimState->DerivedLocomotionContext.bIsMoving;
 	Data.LocomotionContext.bIsMotionMatchingMoving = AnimState->DerivedLocomotionContext.bIsMotionMatchingMoving;
+	Data.LocomotionContext.bHasGroundMovementIntent = AnimState->DerivedLocomotionContext.bHasGroundMovementIntent;
 	Data.LocomotionContext.bIsStarting = AnimState->DerivedLocomotionContext.bIsStarting;
 	Data.LocomotionContext.bIsPivoting = AnimState->DerivedLocomotionContext.bIsPivoting;
 	Data.LocomotionContext.MoveIntentRevision = AnimState->DerivedLocomotionContext.MoveIntentRevision;
@@ -1584,6 +1593,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 			Data.MotionMatching.bForceReselect || bForceCycleAfterPivotRedirect;
 	}
 	Data.MotionMatching.PostSelection = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();
+	UpdateReleasedLandingMotionContext(Data);
 
 	FProject_JAnimOneShotPresentationThreadSafeData& OneShot = Data.OneShotPresentation;
 	OneShot.bEnabled = Data.MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation;
@@ -1776,6 +1786,25 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	}
 }
 
+void UProject_JCharacterAnimInstance::UpdateReleasedLandingMotionContext(
+	FProject_JAnimThreadSafeData& Data, bool bReleasingNow) const
+{
+	if (Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot || Data.Air.bIsInAir || !Data.Landing.bIsLanding)
+	{
+		return;
+	}
+	const bool bConsumedLanding = Data.Landing.PresentationRevision != INDEX_NONE &&
+		Data.Landing.PresentationRevision == StateControllerRuntime.GetHeldLandingRevision() &&
+		StateControllerRuntime.GetHeldState() != EProject_JStateControllerPresentationState::TransitionToLand;
+	if (!bReleasingNow && !bConsumedLanding) { return; }
+	// Keep the physical landing event and its revision intact. Only its released
+	// presentation returns to the current ground intent, including subsequent snapshots.
+	Data.LocomotionContext.bIsMotionMatchingMoving = Data.LocomotionContext.bHasGroundMovementIntent;
+	Data.LocomotionContext.PhaseFamily = Data.LocomotionContext.bIsMotionMatchingMoving
+		? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+	Data.MotionMatching.SelectionContext.PhaseFamily = Data.LocomotionContext.PhaseFamily;
+}
+
 void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWithPlaybackHold(
 	const FProject_JAnimThreadSafeData& Data,
 	FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const
@@ -1839,6 +1868,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// select its authored one-shot on this frame.
 	if (bStartedNewPlaybackHold)
 	{
+		Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("Presentation"), TEXT("BeginHold"));
 		InOutOneShot.PresentationState = StateControllerRuntime.GetHeldState();
 		if (Project_J::MotionMatchingCVars::GetTurnInPlaceTraceMode() > 0 &&
 			InOutOneShot.PresentationState == EProject_JStateControllerPresentationState::TurnInPlace)
@@ -2108,6 +2138,11 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 			InOutOneShot.bTransitionAnimationAlmostComplete ? TEXT("true") : TEXT("false"));
 	}
 
+	Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("Presentation"),
+		bInterruptLandForMotionMatching ? TEXT("LandingReleasedToMM") :
+		(InOutOneShot.bEarlyTransitionWindowOpen ? TEXT("AuthoredEarlyExit") :
+		(bReachedCompletion ? TEXT("AssetCompletion") :
+		(!bHasPlayableTransitionAsset ? TEXT("NoPlayableAsset") : TEXT("IntentReplacement")))));
 	if (DesiredState != EProject_JStateControllerPresentationState::TransitionToInAir)
 	{
 		bIsJumpAirReselecting = false;
@@ -2548,6 +2583,7 @@ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCom
 			OwningPlayerCharacter->GetControlRotation().Yaw));
 		if (ControlYawDelta >= MouseCancelAngle)
 		{
+			Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), TEXT("ControlYawThreshold"));
 			bShouldCancelOneShot = true;
 		}
 	}
@@ -2567,6 +2603,7 @@ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCom
 				CurrentMoveInputYaw));
 			if (MoveInputYawDelta >= MoveCancelAngle)
 			{
+				Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), TEXT("MoveYawThreshold"));
 				bShouldCancelOneShot = true;
 			}
 		}
@@ -2595,6 +2632,7 @@ void UProject_JCharacterAnimInstance::ApplyGenericMovementFallback(FProject_JAni
 		: EProject_JLocomotionPhaseFamily::Idle;
 	Data.LocomotionContext.bIsMoving = Data.Ground.GroundMotionMode == EProject_JGroundMotionMode::Locomotion;
 	Data.LocomotionContext.bIsMotionMatchingMoving = Data.LocomotionContext.bIsMoving;
+	Data.LocomotionContext.bHasGroundMovementIntent = Data.LocomotionContext.bIsMoving && !Data.Air.bIsInAir;
 	Data.MotionMatching.SelectionContext.GaitIntent = Data.LocomotionContext.GaitIntent;
 	Data.MotionMatching.SelectionContext.RotationMode = Data.LocomotionContext.RotationMode;
 	Data.MotionMatching.SelectionContext.PhaseFamily = Data.LocomotionContext.PhaseFamily;
@@ -2919,12 +2957,14 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 	}
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	ProjectProxy.SetFlowTraceEnabled(Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter) && IsPrimaryMeshAnimInstance());
 	ProjectProxy.QueueGameThreadData(
 		Data,
 		CurrentActivePoseSearchDatabase,
 		bMotionMatchingEnabled,
 		bUpdateMotionMatchingThisFrame,
 		bForceMotionMatchingReselect);
+	RecordAnimationFlowPublication(Data, bUpdateMotionMatchingThisFrame, true);
 }
 
 bool UProject_JCharacterAnimInstance::IsPrimaryMeshAnimInstance() const
@@ -3599,7 +3639,9 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 	ThreadSafeData.MotionMatching.MinimumSearchInterval = CurrentOptimizationPolicy.MotionMatchingUpdateInterval;
 	const bool bMotionMatchingEnabled = IsPrimaryMeshAnimInstance() &&
 		ThreadSafeData.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
+	ProjectProxy.SetFlowTraceEnabled(Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter) && IsPrimaryMeshAnimInstance());
 	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, false, false, false);
+	RecordAnimationFlowPublication(ThreadSafeData, false, false);
 	return true;
 }
 

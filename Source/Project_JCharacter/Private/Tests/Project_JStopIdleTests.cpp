@@ -67,14 +67,14 @@ bool FProjectJTurnInPlaceAndCombatStopTest::RunTest(const FString&)
 	Kinematics.FutureTrajectorySpeed = 180.0f;
 	Locomotion->bUsingLocalInputState = true;
 	TestFalse(TEXT("Released local input wins over a stale moving trajectory"),
-		Locomotion->IsMotionMatchingMovingForContext(Kinematics));
+		Locomotion->HasGroundMovementIntentForContext(Kinematics));
 	Kinematics.bHasMoveInput = true;
 	TestTrue(TEXT("Held local movement continues to locomote"),
-		Locomotion->IsMotionMatchingMovingForContext(Kinematics));
+		Locomotion->HasGroundMovementIntentForContext(Kinematics));
 	Kinematics.bHasMoveInput = false;
 	Locomotion->bUsingLocalInputState = false;
 	TestTrue(TEXT("Remote proxy may follow its still moving trajectory"),
-		Locomotion->IsMotionMatchingMovingForContext(Kinematics));
+		Locomotion->HasGroundMovementIntentForContext(Kinematics));
 
 	Locomotion->bUsingLocalInputState = true;
 	Locomotion->GroundMotionMode = EProject_JGroundMotionMode::Stop;

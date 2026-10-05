@@ -59,6 +59,12 @@ FProject_JCharacterAnimInstanceProxy::FProject_JCharacterAnimInstanceProxy(UAnim
 	LinkNativeGraph();
 }
 
+void FProject_JCharacterAnimInstanceProxy::SetFlowTraceEnabled(bool bEnabled)
+{
+	if (bFlowTraceEnabled != bEnabled) { FlowTraceWork = {}; }
+	bFlowTraceEnabled = bEnabled;
+}
+
 void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const FProject_JAnimThreadSafeData& InData,
 	UPoseSearchDatabase* InSelectedDatabase,
@@ -100,6 +106,7 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		bForceMotionMatchingReselect = true;
 	}
 	PendingGameThreadData = InData;
+	if (bFlowTraceEnabled) { ++FlowTraceWork.QueuedSnapshot; }
 	CurrentActiveDatabase = InSelectedDatabase;
 	bMotionMatchingEnabled = bInMotionMatchingEnabled;
 	bUpdateMotionMatchingThisFrame = bInUpdateMotionMatchingThisFrame;
@@ -139,6 +146,9 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 	bWasPivotPhaseForDebug = false;
 	PivotDebugTrace.Reset();
 	LatestPostSelection = FProject_JAnimMotionMatchingPostSelectionData();
+	FlowTraceWork = {};
+	bFlowTraceEnabled = false;
+	bUpdatingMotionMatchingGraph = false;
 }
 
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)
@@ -146,6 +156,7 @@ void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstan
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_PreUpdate_GameThread);
 	FAnimInstanceProxy::PreUpdate(InAnimInstance, DeltaSeconds);
 	ThreadSafeData = PendingGameThreadData;
+	if (bFlowTraceEnabled) { FlowTraceWork.ConsumedSnapshot = FlowTraceWork.QueuedSnapshot; }
 	ThreadSafeData.DeltaTime = DeltaSeconds;
 }
 
@@ -155,6 +166,15 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	FName InLayerName)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(IsInGameThread() ? TEXT("ProjectJ_AnimProxy_Update_GameThread") : TEXT("ProjectJ_AnimProxy_Update_Worker"));
+	if (bUpdatingMotionMatchingGraph)
+	{
+		// The outer traversal owns the temporary search timer/throttle. Completing
+		// from a linked layer can disarm a MM node before its saved pose updates.
+		FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
+		if (bFlowTraceEnabled) { ++FlowTraceWork.NestedTraversals; }
+		return;
+	}
+	TGuardValue<bool> GraphScope(bUpdatingMotionMatchingGraph, true);
 	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
 
 	if (bUpdateMotionMatchingThisFrame || !bMotionMatchingEnabled)
@@ -169,6 +189,7 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	}
 
 	FAnimInstanceProxy::UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
+	if (bFlowTraceEnabled) { ++FlowTraceWork.Traversals; }
 	CompleteMotionMatchingReselects();
 	CapturePostSelection();
 	CapturePivotDebugTrace();
@@ -600,6 +621,13 @@ void FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselects()
 	}
 	if (bAnySearchExecuted)
 	{
+		if (bFlowTraceEnabled)
+		{
+			++FlowTraceWork.ReselectSearches;
+			FlowTraceWork.LastSearchRequest = PendingReselectRevision;
+			FlowTraceWork.LastSearchSnapshot = FlowTraceWork.ConsumedSnapshot;
+			FlowTraceWork.bLastSearchFromHistory = bReselectFromPoseHistory;
+		}
 		bForceMotionMatchingReselect = false;
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 		{

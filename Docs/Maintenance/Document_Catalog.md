@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 218개, Markdown 149개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 220개, Markdown 151개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -39,11 +39,13 @@
 
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
+| [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
 | [Motion Matching Notes](../Animation/Architecture/MotionMatchingNextSteps.md) | 구조·계약 | Animation/Architecture/MotionMatchingNextSteps.md |
 | [일회성 이동 동작의 요청 수명 — 2026-10-05](../Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md) | 구조·계약 | Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md |
 | [Palm과 WeaponGrip을 공유하는 정상 부착](../Animation/Architecture/Primary_Grip_Attachment.md) | 통합 문서 안내 | Animation/Architecture/Primary_Grip_Attachment.md |
 | [MMORPG 런타임 리타깃과 무기 손 접촉 구조](../Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md) | 구조·계약 | Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md |
+| [Start·착지 입력 변경의 실행 흐름 진단 — 2026-10-05](../Animation/Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) | 구조·계약 | Animation/Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md |
 | [Strafe Pivot의 이동 입력 기준 통일 — 2026-10-05](../Animation/Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) | 구조·계약 | Animation/Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md |
 | [보이는 메시 기준의 애니메이션·장비 파이프라인](../Animation/Architecture/Visual_Presentation_Mesh_Ownership.md) | 구조·계약 | Animation/Architecture/Visual_Presentation_Mesh_Ownership.md |
 | [무기 접촉 복귀와 몸체 프로필](../Animation/Architecture/Weapon_Contact_Recovery.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Contact_Recovery.md |

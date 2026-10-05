@@ -162,6 +162,10 @@ struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsMotionMatchingMoving = false;
 
+	/** Ground movement intent before the landing presentation suppresses Cycle. Air and local release still exclude movement. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bHasGroundMovementIntent = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsStarting = false;
 
@@ -211,6 +215,7 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UPr
 	friend class FProjectJStrafeFacingSelectionTest;
 	friend class FProjectJStrafePivotCardinalTest;
 	friend class FProjectJStrafePivotConsecutiveTest;
+	friend class FProjectJLandingReturnContextTest;
 
 public:
 	UProject_JLocomotionAnimStateComponent();
@@ -296,7 +301,7 @@ private:
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
-	bool IsMotionMatchingMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
+	bool HasGroundMovementIntentForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsStartingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsPivotingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext);
 	bool ShouldTurnInPlaceForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;

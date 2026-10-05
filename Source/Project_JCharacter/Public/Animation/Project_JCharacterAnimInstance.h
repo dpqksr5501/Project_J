@@ -11,6 +11,7 @@
 #include "Animation/Project_JMotionMatchingRuntime.h"
 #include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationClock.h"
+#include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
@@ -354,6 +355,10 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	/** MM presentation movement state; use only for MM diagnostics/policy, not gameplay. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsMotionMatchingMoving = false;
+
+	/** Current ground intent for returning from a consumed Land, independent of its physical landing lifetime. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
+	bool bHasGroundMovementIntent = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsStarting = false;
@@ -1269,6 +1274,7 @@ protected:
 		FProject_JAnimOneShotPresentationThreadSafeData& InOutOneShot) const;
 	void FillMovementThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FillLocomotionStateThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
+	void UpdateReleasedLandingMotionContext(FProject_JAnimThreadSafeData& Data, bool bReleasingNow = false) const;
 	bool ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle);
 	void ApplyGenericMovementFallback(FProject_JAnimThreadSafeData& Data) const;
 	bool FillPlayerThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
@@ -1276,6 +1282,8 @@ protected:
 	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
 	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
+	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
+	void RecordAnimationFlowEvaluation();
 	EProject_JStateControllerFoot ResolveStateControllerFootFromContactCurves(
 		bool bAllowPhaseHistoryFallback,
 		EProject_JStateControllerFootSelectionReason& OutReason) const;
@@ -1325,6 +1333,8 @@ public:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimThreadSafeData ThreadSafeData;
+	FProject_JAnimationFlowSampler AnimationFlowSampler;
+	bool bAnimationFlowEvaluationPending = false;
 
 	/** Game-thread NotifyState depth. A depth avoids prematurely closing overlapping blend windows. */
 	int32 OneShotEarlyTransitionWindowDepth = 0;
@@ -1659,6 +1669,7 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJLandingReturnContextTest;
 	friend class FProjectJStrafeFacingSelectionTest;
 	friend class FProjectJStrafePivotCardinalTest;
 	friend class FProjectJStrafePivotRedirectBasisTest;

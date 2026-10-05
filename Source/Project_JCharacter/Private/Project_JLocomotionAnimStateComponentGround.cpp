@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Project_JLocomotionAnimStateComponent.h"
+#include "Animation/Project_JAnimationFlowTrace.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
@@ -280,6 +281,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 
 	if (!bHasMoveInput)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionStart"), TEXT("InputRelease"));
 		// Autonomous input release must select a Stop database immediately. A
 		// simulated proxy often has a full-speed replicated sample after a local
 		// Start request, however; keep its velocity-driven locomotion alive until
@@ -297,6 +299,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	}
 	else if (bResponsiveTurnExitRequested)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionStart"), TEXT("ResponsiveTurn"));
 		if (!bUsingLocalInputState)
 		{
 			++StartResponsiveExitRevision;
@@ -305,11 +308,13 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 	}
 	else if (!bAllowSharpTurn && bStartTurnExitRequested)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionStart"), TEXT("RemoteDirectionThreshold"));
 		++StartResponsiveExitRevision;
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else if (bStartTurnExitRequested)
 	{
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionStart"), TEXT("DirectionThreshold"));
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 	}
 	else if (const AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner())
@@ -321,6 +326,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateStartGroundMotionMode(const F
 		if (GroundSpeed >= CompletionSpeed ||
 			(!KinematicContext.bIsAccelerating && KinematicContext.PredictedSpeedGain < DerivedStartSpeedGainThreshold))
 		{
+			Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionStart"), TEXT("SpeedOrAccelerationCompletion"));
 			EnterGroundMotionMode(EProject_JGroundMotionMode::Locomotion);
 		}
 		else

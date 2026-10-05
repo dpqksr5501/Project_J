@@ -27,6 +27,12 @@ void SetThrottle(FAnimNode_MotionMatching& Node, float Value)
 	check(Property);
 	Property->SetPropertyValue_InContainer(&Node, Value);
 }
+
+struct FReentrantAnimationTestNode : FAnimNode_Base
+{
+	TFunction<void(const FAnimationUpdateContext&)> Update;
+	virtual void Update_AnyThread(const FAnimationUpdateContext& Context) override { Update(Context); }
+};
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMotionMatchingReturnRequestTest,
@@ -129,6 +135,77 @@ bool FProjectJMotionMatchingSearchExecutionTest::RunTest(const FString&)
 	Proxy.ClearMotionMatchingReselects();
 	Proxy.ArmMotionMatchingReselect(OtherNode, OtherState);
 	TestEqual(TEXT("Cancelled request cannot arm an inactive node later"), OtherState.ArmedRevision, uint64(0));
+	// Trace only real forced-search acknowledgements, including unchanged results.
+	Proxy.SetFlowTraceEnabled(true);
+	Proxy.PendingReselectRevision = 2;
+	Proxy.bForceMotionMatchingReselect = true;
+	Proxy.NativePoseHistoryNode.Initialize_AnyThread(FAnimationInitializeContext(&EngineProxy));
+	Proxy.ArmMotionMatchingReselect(Proxy.NativeMotionMatchingNode, Proxy.NativeReselectState);
+	Proxy.CompleteMotionMatchingReselects();
+	TestEqual(TEXT("Diagnostics do not count an inactive node as a search"), Proxy.GetFlowTraceWork().ReselectSearches, uint64(0));
+	Proxy.ArmMotionMatchingReselect(Proxy.NativeMotionMatchingNode, Proxy.NativeReselectState);
+	Proxy.NativePoseHistoryNode.Update_AnyThread(Context);
+	Proxy.CompleteMotionMatchingReselects();
+	TestEqual(TEXT("Diagnostics count an actual unchanged-result search"), Proxy.GetFlowTraceWork().ReselectSearches, uint64(1));
+	TestEqual(TEXT("Diagnostics retain the searched request identity"), Proxy.GetFlowTraceWork().LastSearchRequest, uint64(2));
+	Proxy.SetFlowTraceEnabled(false);
+	TestEqual(TEXT("Disabling diagnostics resets session counters"), Proxy.GetFlowTraceWork().ReselectSearches, uint64(0));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMotionMatchingNestedGraphTest,
+	"ProjectJ.MMCrowd.NestedGraphSearch", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJMotionMatchingNestedGraphTest::RunTest(const FString&)
+{
+	auto* Mesh = NewObject<USkeletalMeshComponent>();
+	auto* Anim = NewObject<UAnimInstance>(Mesh);
+	FAnimInstanceProxy EngineProxy(Anim);
+	FAnimationUpdateSharedContext SharedContext;
+	FAnimationUpdateContext Context(&EngineProxy, 1.0f / 60.0f, &SharedContext);
+	FProject_JCharacterAnimInstanceProxy Proxy;
+	Proxy.CurrentActiveDatabase = NewObject<UPoseSearchDatabase>();
+	Proxy.bUpdateMotionMatchingThisFrame = false;
+	Proxy.PendingReselectRevision = 1;
+	Proxy.bForceMotionMatchingReselect = true;
+	Proxy.bReselectFromPoseHistory = true;
+	Proxy.SetFlowTraceEnabled(true);
+	SetThrottle(Proxy.NativeMotionMatchingNode, 0.083f);
+	Proxy.ThreadSafeData.MotionMatching.MinimumSearchInterval = 0.083f;
+	Proxy.NativePoseHistoryNode.Initialize_AnyThread(FAnimationInitializeContext(&EngineProxy));
+	FReentrantAnimationTestNode Nested;
+	Nested.Update = [&](const FAnimationUpdateContext&)
+	{
+		TestEqual(TEXT("Linked layer runs inside the still-armed outer search"), Proxy.NativeReselectState.ArmedRevision, Proxy.PendingReselectRevision);
+	};
+	FReentrantAnimationTestNode Outer;
+	Outer.Update = [&](const FAnimationUpdateContext& UpdateContext)
+	{
+		Proxy.UpdateAnimationNode_WithRoot(UpdateContext, &Nested, TEXT("LinkedLayer"));
+		TestEqual(TEXT("Linked layer cannot disarm before the outer saved pose updates"), Proxy.NativeReselectState.ArmedRevision, uint64(1));
+		TestEqual(TEXT("Temporary search bypass survives linked-layer completion"), Throttle(Proxy.NativeMotionMatchingNode), 0.0f);
+		Proxy.NativePoseHistoryNode.Update_AnyThread(UpdateContext);
+	};
+	Proxy.UpdateAnimationNode_WithRoot(Context, &Outer, TEXT("AnimGraph"));
+	TestEqual(TEXT("Actual engine search is acknowledged after the complete graph"), Proxy.NativeReselectState.HandledRevision, uint64(1));
+	TestFalse(TEXT("Fulfilled request releases force policy"), Proxy.bForceMotionMatchingReselect);
+	TestEqual(TEXT("Crowd throttle is restored after the outer traversal"), Throttle(Proxy.NativeMotionMatchingNode), 0.083f);
+	TestEqual(TEXT("One graph traversal owns search completion"), Proxy.GetFlowTraceWork().Traversals, uint64(1));
+	TestEqual(TEXT("Nested graph execution remains observable"), Proxy.GetFlowTraceWork().NestedTraversals, uint64(1));
+	TestEqual(TEXT("Same empty result is still counted once as a real search"), Proxy.GetFlowTraceWork().ReselectSearches, uint64(1));
+	TestTrue(TEXT("Outer return search preserves its history query identity"), Proxy.GetFlowTraceWork().bLastSearchFromHistory);
+	TestFalse(TEXT("Reentry guard is released after graph execution"), Proxy.bUpdatingMotionMatchingGraph);
+	Proxy.PendingReselectRevision = 2;
+	Proxy.bForceMotionMatchingReselect = true;
+	Outer.Update = [&](const FAnimationUpdateContext& UpdateContext)
+	{
+		Proxy.UpdateAnimationNode_WithRoot(UpdateContext, &Nested, TEXT("LinkedLayer"));
+		// The MM branch stays inactive in this traversal.
+	};
+	Proxy.UpdateAnimationNode_WithRoot(Context, &Outer, TEXT("AnimGraph"));
+	TestTrue(TEXT("An inactive outer traversal keeps the pending request"), Proxy.bForceMotionMatchingReselect);
+	TestEqual(TEXT("Inactive traversal does not invent a search completion"), Proxy.NativeReselectState.HandledRevision, uint64(1));
+	TestEqual(TEXT("Inactive traversal leaves the search count unchanged"), Proxy.GetFlowTraceWork().ReselectSearches, uint64(1));
+	TestEqual(TEXT("Inactive traversal restores its normal budget"), Throttle(Proxy.NativeMotionMatchingNode), 0.083f);
 	return true;
 }
 
