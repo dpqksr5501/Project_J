@@ -150,21 +150,48 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	S->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
 	S->SetMoveInput(FVector2D(0.0f, -1.0f)); S->bHasMoveInput = true; S->GroundSpeed = 300.0f;
 	S->KinematicContext.bHasMoveInput = true; S->KinematicContext.GroundSpeed = 300.0f;
+	S->GroundMotionMode = EProject_JGroundMotionMode::Locomotion;
+	S->KinematicContext.HorizontalVelocity = FVector(-300, 0, 0);
+	S->KinematicContext.MoveWorldDirection = FVector(-1, 0, 0);
 	// Movement faces the actor already, while the unchanged camera is opposite.
 	S->KinematicContext.DesiredFacingDeltaYaw = 0.0f;
 	FProject_JDerivedLocomotionContext D; D.bIsMoving = true; D.bIsMotionMatchingMoving = true;
 	S->DerivedLocomotionContext = D; S->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 	S->UpdateMotionMatchingSelectionState(*W.Player);
-	TestEqual(TEXT("Held S / fixed camera selects a moving facing redirect"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
+	const auto RefreshTurn = [&]()
+	{
+		D.bIsMovingTurn180 = S->UpdateMovingTurnPolicy(S->AuthoritativeContext, S->KinematicContext, D);
+	};
+	RefreshTurn();
+	TestEqual(TEXT("Held S / fixed camera catch-up cannot open a forward Turn PSD"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle);
+	W.Controller->SetControlRotation(FRotator(0, 180, 0)); RefreshTurn(); // Coherent forward run primes the owner.
+	W.Controller->SetControlRotation(FRotator::ZeroRotator);
+	S->KinematicContext.MoveWorldDirection = FVector(1, 0, 0); RefreshTurn();
+	TestEqual(TEXT("Camera and forward path reversal selects a moving Turn"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
 	S->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+	S->DerivedLocomotionContext.bIsMovingTurn180 = D.bIsMovingTurn180;
 	S->UpdateMotionMatchingSelectionState(*W.Player);
 	TestTrue(TEXT("Facing semantic edge forces one search without an input edge"), S->bForceMotionMatchingReselect);
 	S->UpdateMotionMatchingSelectionState(*W.Player);
 	TestFalse(TEXT("Sustained redirect does not force a search every frame"), S->bForceMotionMatchingReselect);
 	S->PreviousDerivedPhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
 	W.Player->SetActorRotation(FRotator(0.0f, 15.0f, 0.0f));
+	RefreshTurn();
 	TestEqual(TEXT("Exit hysteresis holds the turn below the entry threshold"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
+	for (float Speed : {179.0f, 80.0f, 0.0f, 100.0f})
+	{
+		S->KinematicContext.GroundSpeed = Speed;
+		S->KinematicContext.HorizontalVelocity = FVector(Speed, 0, 0);
+		D.bIsMoving = Speed > 10;
+		RefreshTurn();
+		TestTrue(TEXT("Real producer keeps the same Turn during reversal braking"), D.bIsMovingTurn180);
+		TestEqual(TEXT("Real phase resolver retains its Turn PSD at low speed"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
+	}
+	S->KinematicContext.GroundSpeed = 300;
+	S->KinematicContext.HorizontalVelocity = FVector(-300, 0, 0);
+	D.bIsMoving = true;
 	W.Player->SetActorRotation(FRotator(0.0f, 4.0f, 0.0f));
+	RefreshTurn();
 	TestEqual(TEXT("Facing alignment returns to Cycle"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle);
 	W.Player->SetActorRotation(FRotator(0.0f, 180.0f, 0.0f));
 	D.bIsStarting = true; TestEqual(TEXT("Start retains its direct owner"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Start); D.bIsStarting = false;
@@ -174,12 +201,19 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	S->GroundMotionMode = EProject_JGroundMotionMode::Locomotion;
 	S->bIsInAir = true; TestEqual(TEXT("Air preempts a facing redirect"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Fall); S->bIsInAir = false;
 	W.Combat->bEnableStrafeFacingRedirect = false;
+	RefreshTurn();
 	TestEqual(TEXT("Authored opt-out keeps ordinary combat Cycle"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle);
 	W.Combat->bEnableStrafeFacingRedirect = true;
 	W.Player->bIsAttacking = true;
+	RefreshTurn();
 	TestEqual(TEXT("Attacks do not request a moving facing redirect"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle); W.Player->bIsAttacking = false;
 	W.Combat->StrafeFacingRedirectEntryAngle = std::numeric_limits<float>::quiet_NaN();
 	W.Combat->StrafeFacingRedirectExitAngle = std::numeric_limits<float>::quiet_NaN();
+	S->MovingTurnPolicy.Reset();
+	W.Controller->SetControlRotation(FRotator(0, 180, 0));
+	S->KinematicContext.MoveWorldDirection = FVector(-1, 0, 0); RefreshTurn();
+	W.Controller->SetControlRotation(FRotator::ZeroRotator);
+	S->KinematicContext.MoveWorldDirection = FVector(1, 0, 0); RefreshTurn();
 	TestEqual(TEXT("Invalid tuning uses finite default thresholds"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
 
 	auto* Anim = NewObject<UProject_JCharacterAnimInstance>(W.Player->GetMesh());
@@ -187,14 +221,58 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	FProject_JAnimThreadSafeData Data; Data.Combat.bIsCombatMode = true;
 	Data.LocomotionContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
 	Data.MotionMatching.SelectionContext = S->MotionMatchingSelectionContext;
+	Data.MotionMatching.SelectionContext.bMovingTurn180 = true;
+	Data.MotionMatching.SelectionContext.bUseSettledCycle = true; // Deliberately stale; Turn fallback must stay Dynamic.
 	TestTrue(TEXT("Empty optional TurnRedirect falls back to Dynamic Cycle, never Idle or Settled"),
 		Anim->EvaluatePoseSearchDatabaseOnGameThread(Data) == Set->RunDatabases.Cycle);
 	Set->RunDatabases.TurnRedirect = NewObject<UPoseSearchDatabase>();
 	TestTrue(TEXT("An authored combat TurnRedirect becomes searchable"), Anim->EvaluatePoseSearchDatabaseOnGameThread(Data) == Set->RunDatabases.TurnRedirect);
+	Data.MotionMatching.SelectionContext.bMovingTurn180 = false;
+	TestTrue(TEXT("An unqualified Turn cannot open the restricted Strafe PSD"), Anim->EvaluatePoseSearchDatabaseOnGameThread(Data) == Set->RunDatabases.Cycle);
+	Data.MotionMatching.SelectionContext.bUseSettledCycle = false;
 	Data.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 	TestTrue(TEXT("Turn completion restores Dynamic Cycle"), Anim->EvaluatePoseSearchDatabaseOnGameThread(Data) == Set->RunDatabases.Cycle);
 	Data.MotionMatching.SelectionContext.bUseSettledCycle = true;
 	TestTrue(TEXT("Settled Cycle remains an explicit later selection"), Anim->EvaluatePoseSearchDatabaseOnGameThread(Data) == Set->RunDatabases.SettledCycle);
+
+	// Exercise the real component's OTM world-input path, not just a Boolean
+	// phase request: a camera turn has zero keyboard MoveInputTurnAngle.
+	S->AuthoritativeContext.bCombatMode = false;
+	S->AuthoritativeContext.RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	const auto PrimeOTMTurn = [&]()
+	{
+		S->MovingTurnPolicy.Reset();
+		S->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
+		W.Player->SetActorRotation(FRotator::ZeroRotator);
+		S->KinematicContext.HorizontalVelocity = FVector(300, 0, 0);
+		S->KinematicContext.MoveInputTurnAngle = 0;
+		S->KinematicContext.MoveWorldDirection = FVector(1, 0, 0); RefreshTurn();
+		S->KinematicContext.MoveWorldDirection = FVector(-1, 0, 0); RefreshTurn();
+	};
+	PrimeOTMTurn();
+	TestTrue(TEXT("Real OTM component recognizes a world-heading reversal without a key edge"), D.bIsMovingTurn180);
+	S->DerivedLocomotionContext = D;
+	S->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+	S->DerivedLocomotionContext.bIsMovingTurn180 = false; S->UpdateMotionMatchingSelectionState(*W.Player);
+	S->DerivedLocomotionContext.bIsMovingTurn180 = true; S->UpdateMotionMatchingSelectionState(*W.Player);
+	TestTrue(TEXT("OTM large reversal inside an existing Turn still forces one search"), S->bForceMotionMatchingReselect);
+	S->UpdateMotionMatchingSelectionState(*W.Player);
+	TestFalse(TEXT("OTM held Turn does not force every update"), S->bForceMotionMatchingReselect);
+	S->PreviousDerivedPhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+	S->DerivedPhaseFamilyElapsedTime = 0;
+	W.Player->bIsDodging = true; RefreshTurn();
+	D.PhaseFamily = S->ResolvePhaseFamily(D); S->ApplyLocomotionPhaseStability(0.01f, D);
+	TestEqual(TEXT("OTM's old minimum hold cannot resurrect a cancelled large Turn"), D.PhaseFamily, EProject_JLocomotionPhaseFamily::Cycle);
+	W.Player->bIsDodging = false; RefreshTurn();
+	TestFalse(TEXT("Action return cannot revive the previous Turn request"), D.bIsMovingTurn180);
+	PrimeOTMTurn();
+	S->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Sprint; RefreshTurn();
+	TestFalse(TEXT("Run window does not leak into Sprint"), D.bIsMovingTurn180);
+	PrimeOTMTurn();
+	S->bUsingLocalInputState = false; RefreshTurn();
+	TestFalse(TEXT("A simulated owner cannot infer a local camera-turn request"), D.bIsMovingTurn180);
+	S->bUsingLocalInputState = true; RefreshTurn();
+	TestFalse(TEXT("Ownership handoff does not revive a stale request"), D.bIsMovingTurn180);
 	return true;
 }
 
@@ -218,6 +296,13 @@ bool FProjectJStrafeFacingSearchTest::RunTest(const FString&)
 	TestEqual(TEXT("Completion can restore the Cycle PSD without invalidating continuing pose"), P.ResolveDatabaseChangeInterruptMode(), EPoseSearchInterruptMode::InterruptOnDatabaseChange);
 	P.CacheMotionMatchingPolicyState();
 	TestEqual(TEXT("Stable Cycle resumes normal continuous search"), P.ResolveDatabaseChangeInterruptMode(), EPoseSearchInterruptMode::DoNotInterrupt);
+	P.ThreadSafeData.Combat.bIsCombatMode = false;
+	P.ThreadSafeData.LocomotionContext.RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	P.CacheMotionMatchingPolicyState();
+	P.ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+	TestEqual(TEXT("OTM camera-driven Turn also interrupts on its database boundary"), P.ResolveDatabaseChangeInterruptMode(), EPoseSearchInterruptMode::InterruptOnDatabaseChange);
+	P.CacheMotionMatchingPolicyState();
+	TestEqual(TEXT("OTM sustained Turn resumes normal budgeted search"), P.ResolveDatabaseChangeInterruptMode(), EPoseSearchInterruptMode::DoNotInterrupt);
 	return true;
 }
 #endif

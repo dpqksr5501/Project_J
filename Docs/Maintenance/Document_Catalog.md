@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 222개, Markdown 152개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 241개, Markdown 161개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -43,6 +43,7 @@
 | [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
 | [Motion Matching Notes](../Animation/Architecture/MotionMatchingNextSteps.md) | 구조·계약 | Animation/Architecture/MotionMatchingNextSteps.md |
+| [이동 중 180도 Turn 선택과 요청 수명](../Animation/Architecture/Moving_Turn_180_2026-10-06.md) | 구조·계약 | Animation/Architecture/Moving_Turn_180_2026-10-06.md |
 | [일회성 이동 동작의 요청 수명 — 2026-10-05](../Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md) | 구조·계약 | Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md |
 | [Palm과 WeaponGrip을 공유하는 정상 부착](../Animation/Architecture/Primary_Grip_Attachment.md) | 통합 문서 안내 | Animation/Architecture/Primary_Grip_Attachment.md |
 | [MMORPG 런타임 리타깃과 무기 손 접촉 구조](../Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md) | 구조·계약 | Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md |
@@ -71,6 +72,14 @@
 | [Project_J Locomotion / Motion Matching Refactor](../Animation/Locomotion/Reports/MotionMatching_Locomotion_Refactor.md) | 시점별 보고·검증 | Animation/Locomotion/Reports/MotionMatching_Locomotion_Refactor.md |
 | [Project_J locomotion handoff — 2026-08-01](../Animation/Locomotion/Reports/MotionMatching_StateController_Handoff_2026-08-01.md) | 시점별 보고·검증 | Animation/Locomotion/Reports/MotionMatching_StateController_Handoff_2026-08-01.md |
 | [Moving Reorientation (Rotation Break) & TIP 작업 기록 및 인수인계 문서 (2026-08-05)](../Animation/Locomotion/Reports/MovingReorientation_TIP_WorkLog_2026-08-05.md) | 시점별 보고·검증 | Animation/Locomotion/Reports/MovingReorientation_TIP_WorkLog_2026-08-05.md |
+| [01. 조사 범위와 증거 장부](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/01_EVIDENCE.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/01_EVIDENCE.md |
+| [02. GASP CMC: 자연스러움을 만드는 연결](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/02_GASP.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/02_GASP.md |
+| [03. Project_J 운영 연결 상세](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/03_PROJECT_J.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/03_PROJECT_J.md |
+| [04. 비교와 고도화 로드맵](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/04_ROADMAP.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/04_ROADMAP.md |
+| [05. 검증과 읽기 전용 에디터 확인](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/05_VALIDATION.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/05_VALIDATION.md |
+| [원본 근거 추출물](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence/README.md) | 목차·문서 관리 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence/README.md |
+| [후속 작업 프롬프트](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md |
+| [GASP / Project_J 움직임 자연스러움 분석과 고도화 인계](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) | 목차·문서 관리 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md |
 | [[Project J] 차세대 휴머노이드 스켈레톤 표준 & 애니메이션 파이프라인 구조 개선 제안서](../Animation/Planning/Humanoid_Animation_Pipeline_Redesign_Proposal.md) | 계획·제안 | Animation/Planning/Humanoid_Animation_Pipeline_Redesign_Proposal.md |
 | [Project_J Animation Execution & Threading Audit Plan](../Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md) | 계획·제안 | Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md |
 | [애니메이션 계획과 제안](../Animation/Planning/README.md) | 목차·문서 관리 | Animation/Planning/README.md |
@@ -228,7 +237,10 @@
 
 | 위치 | 파일 수 | 내용 |
 | --- | --- | --- |
-| [Animation/Architecture](../Animation/Architecture) | 4 | 문서 이동·보존 기록 |
+| [Animation/Architecture](../Animation/Architecture) | 5 | 문서 이동·보존 기록 |
+| [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence) | 5 | 문서 이동·보존 기록 |
+| [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/output/pdf](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/output/pdf) | 1 | 문서 이동·보존 기록 |
+| [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools) | 3 | 문서 이동·보존 기록 |
 | [Architecture/Extensions](../Architecture/Extensions) | 3 | 카탈로그·대응 검증 JSON |
 | [Architecture/Runtime/Reports](../Architecture/Runtime/Reports) | 3 | 카탈로그·대응 검증 JSON |
 | [Benchmarks](../Benchmarks) | 1 | CSV·JSON·재계산 원본 |

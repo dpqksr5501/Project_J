@@ -758,6 +758,15 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 
+	// Value-only visual rotation contract, produced on GT after one-shot ownership.
+	bool bLocomotionSteeringEnabled = false;
+	EProject_JLocomotionSteeringGate LocomotionSteeringGate = EProject_JLocomotionSteeringGate::Unknown;
+	float LocomotionSteeringLookAhead = 0.5f;
+	FQuat LocomotionSteeringTarget = FQuat::Identity;
+	float LocomotionSteeringProceduralTime = 0.4f;
+	float LocomotionSteeringAnimatedTime = 2.0f;
+	float LocomotionSteeringMaxYawError = 45.0f;
+
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -1047,6 +1056,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	FRotator GetThreadSafeStateControllerDesiredFacingRotator() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Steering", meta = (BlueprintThreadSafe))
+	float GetThreadSafeLocomotionSteeringAlpha() const;
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Steering", meta = (BlueprintThreadSafe))
+	FQuat GetThreadSafeLocomotionSteeringTarget() const;
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Steering", meta = (BlueprintThreadSafe))
+	float GetThreadSafeLocomotionSteeringProceduralTime() const;
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Steering", meta = (BlueprintThreadSafe))
+	float GetThreadSafeLocomotionSteeringAnimatedTime() const;
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Steering", meta = (BlueprintThreadSafe))
+	float GetThreadSafeLocomotionSteeringMaxYawError() const;
+
 	/** Offset Root Bone Rotation Mode consumed by AnimGraph Offset Root Bone node. */
 	UFUNCTION(BlueprintPure, Category = "Animation|Offset Root", meta = (BlueprintThreadSafe))
 	EOffsetRootBoneMode GetThreadSafeOffsetRootRotationMode() const;
@@ -1248,6 +1268,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	UPoseSearchDatabase* GetCurrentActivePoseSearchDatabaseThreadSafe() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe|Motion Matching", meta = (BlueprintThreadSafe))
+	int32 GetThreadSafeMotionMatchingCandidateCount() const;
+
 	UFUNCTION(BlueprintPure, Category = "Animation|Motion Matching", meta = (BlueprintThreadSafe))
 	FName GetThreadSafeMotionMatchingSelectedAnimation() const;
 
@@ -1281,13 +1304,16 @@ protected:
 	void FillMountThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void FinalizeThreadSafeData(FProject_JAnimThreadSafeData& Data, bool bHasAimData) const;
 	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
-	void PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data);
+	void PublishThreadSafeDataToProxy(FProject_JAnimThreadSafeData& Data);
+	void UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const;
 	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
 	void RecordAnimationFlowEvaluation();
+	void RecordLocomotionContinuityEvaluation();
 	EProject_JStateControllerFoot ResolveStateControllerFootFromContactCurves(
 		bool bAllowPhaseHistoryFallback,
 		EProject_JStateControllerFootSelectionReason& OutReason) const;
 	UPoseSearchDatabase* EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data);
+	UPoseSearchDatabase* EvaluateTurnCycleCompanionOnGameThread(const FProject_JAnimThreadSafeData& Data) const;
 	void EvaluateStateControllerAnimationChooserOnGameThread(FProject_JAnimThreadSafeData& Data);
 	void PublishChooserProperties(const FProject_JAnimThreadSafeData& Data);
 	void PublishChooserMovementProperties(const FProject_JAnimThreadSafeData& Data);
@@ -1331,9 +1357,13 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|Motion Matching")
 	TObjectPtr<UPoseSearchDatabase> CurrentActivePoseSearchDatabase = nullptr;
 
+	UPROPERTY(Transient)
+	TObjectPtr<UPoseSearchDatabase> CurrentTurnCycleCompanion = nullptr;
+
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimThreadSafeData ThreadSafeData;
 	FProject_JAnimationFlowSampler AnimationFlowSampler;
+	FProject_JLocomotionContinuityTraceSampler LocomotionContinuityTraceSampler;
 	bool bAnimationFlowEvaluationPending = false;
 
 	/** Game-thread NotifyState depth. A depth avoids prematurely closing overlapping blend windows. */
@@ -1675,6 +1705,8 @@ private:
 	friend class FProjectJStrafePivotRedirectBasisTest;
 	friend class FProjectJStrafePivotConsecutiveTest;
 	friend class FProjectJOneShotModeContinuityTest;
+	friend class FProjectJAirLoopOutputTest;
+	friend class FProjectJLocomotionSteeringOwnershipTest;
 	friend class FProjectJAnimationClockTest;
 	FProject_JAnimationClock AnimationClock;
 	friend class FProjectJTurnInPlaceAndCombatStopTest;

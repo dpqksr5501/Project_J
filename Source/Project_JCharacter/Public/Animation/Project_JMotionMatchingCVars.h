@@ -16,4 +16,6 @@ bool ShouldCapturePivotDebugTrace();
 bool ShouldCaptureTransitionDebugTrace();
 bool ShouldTraceCombatStop();
 int32 GetTurnInPlaceTraceMode();
+int32 GetMovingTurnTraceMode();
+bool ShouldUseTurnCycleCandidates();
 }

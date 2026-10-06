@@ -284,6 +284,9 @@ void UProject_JPlayerInputBindingComponent::HandleLook(const FInputActionValue& 
 	{
 		BoundPlayerCharacter->AddControllerYawInput(LookAxisVector.X);
 		BoundPlayerCharacter->AddControllerPitchInput(LookAxisVector.Y);
+#if !UE_BUILD_SHIPPING
+		BoundPlayerCharacter->RecordMouseTurnLookInput(LookAxisVector);
+#endif
 	}
 }
 

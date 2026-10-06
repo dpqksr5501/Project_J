@@ -41,6 +41,14 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSelectionContext
 	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bUseSettledCycle = false;
+
+	/** Forward-running 180-degree body/path reversal, authored by the local component. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bMovingTurn180 = false;
+
+	/** Aligned completion of the same local turn; retired by a new target or owner. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bAllowTurnContinuation = false;
 };
 
 USTRUCT(BlueprintType)
@@ -72,6 +80,12 @@ class PROJECT_JCHARACTER_API UProject_JMotionMatchingAssetSet : public UPrimaryD
 
 public:
 	UPoseSearchDatabase* FindDatabaseForContext(const FProject_JMotionMatchingSelectionContext& Context) const;
+	/** Returns only this family's dynamic Cycle beside an approved Turn, with a compatible schema. */
+	UPoseSearchDatabase* FindTurnCycleCompanion(const FProject_JMotionMatchingSelectionContext& Context,
+		const UPoseSearchDatabase* Primary) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
+	bool bEnableTurnCycleCandidates = true;
 
 	bool ValidateForProjectJLocomotion(const UObject* ValidationContext, TArray<FString>& OutWarnings) const;
 

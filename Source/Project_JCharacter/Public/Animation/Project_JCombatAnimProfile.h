@@ -45,8 +45,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect")
 	bool bEnableStrafeFacingRedirect = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "1.0", ClampMax = "180.0", Units = "deg"))
-	float StrafeFacingRedirectEntryAngle = 30.0f;
+	/** Forward-running body/path reversal only. Legacy values below 150 are clamped at runtime. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "150.0", ClampMax = "180.0", Units = "deg"))
+	float StrafeFacingRedirectEntryAngle = 150.0f;
 
 	/** Hysteresis: retain the redirect until facing is within this angle. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Facing Redirect", meta = (EditCondition = "bEnableStrafeFacingRedirect", ClampMin = "0.0", ClampMax = "45.0", Units = "deg"))

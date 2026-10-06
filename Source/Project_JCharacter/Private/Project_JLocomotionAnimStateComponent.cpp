@@ -2,6 +2,7 @@
 
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
+#include "Animation/AnimInstance.h"
 #include "Animation/Project_JLocomotionContextBuilder.h"
 
 #include "Components/CapsuleComponent.h"
@@ -14,6 +15,8 @@
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "PoseSearch/PoseSearchDatabase.h"
+#include "PoseSearch/PoseSearchSchema.h"
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
 
@@ -94,6 +97,7 @@ void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type 
 {
 	ClearOwnedMovementGameplayTags();
 	RemoteRuntime.Reset();
+	MovingTurnPolicy.Reset();
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -206,6 +210,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		bHasCombatStrafeControlYawSample = false;
 		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
 		MotionMatchingSelectionPolicy.Reset();
+		MovingTurnPolicy.Reset();
 		MotionMatchingSelectionRevision = MotionMatchingSelectionPolicy.GetRevision();
 		return;
 	}
@@ -538,6 +543,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 	MotionMatchingSelectionContext.bUseSettledCycle = bUseCombatStrafeSettledCycle;
+	MotionMatchingSelectionContext.bMovingTurn180 = DerivedLocomotionContext.bIsMovingTurn180;
+	MotionMatchingSelectionContext.bAllowTurnContinuation = MovingTurnPolicy.AllowsCompletedTurnContinuation();
 
 	FProject_JMotionMatchingSelectionPolicy::FKey SelectionKey;
 	SelectionKey.Gait = AuthoritativeContext.GaitIntent;
@@ -545,6 +552,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	SelectionKey.Phase = DerivedLocomotionContext.PhaseFamily;
 	SelectionKey.GroundMode = GroundMotionMode;
 	SelectionKey.bUseSettledCycle = bUseCombatStrafeSettledCycle;
+	SelectionKey.bMovingTurn180 = DerivedLocomotionContext.bIsMovingTurn180;
 	bMotionMatchingSelectionChanged = MotionMatchingSelectionPolicy.Publish(SelectionKey);
 	MotionMatchingSelectionRevision = MotionMatchingSelectionPolicy.GetRevision();
 
@@ -573,11 +581,11 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 		bCanForceTurnRedirectReselect &&
 		bInputReselectPolicyEnabled &&
 		FMath::Abs(MoveInputTurnAngle) >= ReselectAngle;
-	// Holding S through Tab has no input edge. The semantic facing-redirect edge
-	// must still compare the continuing walk against turn candidates, even when
-	// the optional TurnRedirect slot falls back to the same Dynamic Cycle PSD.
+	// Camera-driven world-direction reversal has no local WASD edge. Publish
+	// one semantic search request in either mode, even inside an existing OTM
+	// Turn or when the optional combat Turn PSD falls back to Dynamic Cycle.
 	const bool bFacingRedirectStarted = bCanForceTurnRedirectReselect &&
-		bUsesCombatStrafeReselectPolicy && bMotionMatchingSelectionChanged &&
+		DerivedLocomotionContext.bIsMovingTurn180 && bMotionMatchingSelectionChanged &&
 		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn;
 	const double WorldTimeSeconds = PlayerOwner.GetWorld() ? PlayerOwner.GetWorld()->GetTimeSeconds() : 0.0;
 	const float ReselectCooldown = bUsesCombatStrafeReselectPolicy && CombatProfile
@@ -780,6 +788,7 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 		? LocalTurnInPlaceSequence
 		: RemoteRuntime.GetTurnSequence();
 	Context.bShouldSpinTransition = ShouldSpinTransitionForContext(AuthContext, InKinematicContext);
+	Context.bIsMovingTurn180 = UpdateMovingTurnPolicy(AuthContext, InKinematicContext, Context);
 	Context.PhaseFamily = ResolvePhaseFamily(Context);
 	return Context;
 }
@@ -805,7 +814,8 @@ void UProject_JLocomotionAnimStateComponent::ApplyLocomotionPhaseStability(
 			!Movement->bUseControllerDesiredRotation || Player->IsAttacking() ||
 			Player->IsDodging() || Player->IsHitReacting() || Movement->HasAnimRootMotion() ||
 			Movement->CurrentRootMotion.HasActiveRootMotionSources());
-	const bool bKeepMovingRedirect = !bCombatFacingInterrupted &&
+	const bool bMovingTurnEnded = DerivedLocomotionContext.bIsMovingTurn180 && !InOutContext.bIsMovingTurn180;
+	const bool bKeepMovingRedirect = !bCombatFacingInterrupted && !bMovingTurnEnded &&
 		(PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
 			PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) &&
 		// A short redirect hold is meaningful only inside the same rotation mode.
@@ -889,36 +899,119 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	Input.bMoving = Context.bIsMoving;
 	Input.bCombatStrafe = AuthoritativeContext.bCombatMode &&
 		AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
-	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
-	const UProject_JCombatAnimProfile* Profile = Player ? Player->GetCombatAnimProfile() : nullptr;
-	const UCharacterMovementComponent* Movement = Player ? Player->GetCharacterMovement() : nullptr;
-	const AController* Controller = Player ? Player->GetController() : nullptr;
-	if (Input.bCombatStrafe && Player && Player->IsLocallyControlled() && Controller && Profile &&
-		Profile->bEnableStrafeFacingRedirect && Profile->bUseCombatRotationMode && Movement && Movement->IsMovingOnGround() &&
-		Movement->bUseControllerDesiredRotation && !Player->IsAttacking() &&
-		!Player->IsDodging() && !Player->IsHitReacting() && !Movement->HasAnimRootMotion() &&
-		!Movement->CurrentRootMotion.HasActiveRootMotionSources())
-	{
-		const float EntryAngle = FMath::IsFinite(Profile->StrafeFacingRedirectEntryAngle)
-			? FMath::Clamp(Profile->StrafeFacingRedirectEntryAngle, 1.0f, 180.0f) : 30.0f;
-		const float ExitAngle = FMath::IsFinite(Profile->StrafeFacingRedirectExitAngle)
-			? FMath::Clamp(Profile->StrafeFacingRedirectExitAngle, 0.0f, EntryAngle) : FMath::Min(5.0f, EntryAngle);
-		const bool bWasFacingRedirect = PreviousDerivedPhaseFamily == EProject_JLocomotionPhaseFamily::Turn &&
-			MotionMatchingSelectionPolicy.HasPublished() &&
-			MotionMatchingSelectionPolicy.GetLastPublishedRotationMode() == EProject_JLocomotionRotationMode::Strafe;
-		// DesiredFacingDeltaYaw also serves authored movement one-shots and may
-		// point along S's movement vector. Facing catch-up needs CMC's camera target.
-		const float DeltaYaw = FMath::FindDeltaAngleDegrees(
-			Player->GetActorRotation().Yaw, Controller->GetDesiredRotation().Yaw);
-		Input.bCombatFacingRedirect = FMath::IsFinite(DeltaYaw) &&
-			FMath::Abs(DeltaYaw) > (bWasFacingRedirect ? ExitAngle : EntryAngle);
-	}
+	Input.bCombatFacingRedirect = Context.bIsMovingTurn180;
+	Input.bMovingTurn180 = Context.bIsMovingTurn180;
 	Input.bHasMoveInput = KinematicContext.bHasMoveInput;
 	Input.GroundSpeed = KinematicContext.GroundSpeed;
 	Input.MoveInputTurnAngle = KinematicContext.MoveInputTurnAngle;
 	Input.TurnMinSpeed = DerivedTurnMinSpeed;
 	Input.TurnAngleThreshold = DerivedTurnAngleThreshold;
 	return FProject_JLocomotionContextBuilder::ResolvePhaseFamily(Input);
+}
+
+bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& Motion,
+	const FProject_JDerivedLocomotionContext& Derived)
+{
+	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
+	const UCharacterMovementComponent* Movement = Player ? Player->GetCharacterMovement() : nullptr;
+	const AController* Controller = Player ? Player->GetController() : nullptr;
+	const UAnimInstance* Anim = Player && Player->GetMesh() ? Player->GetMesh()->GetAnimInstance() : nullptr;
+	FProject_JMovingTurnPolicy::FInput Input;
+	Input.RotationMode = AuthContext.RotationMode;
+	Input.NowSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	Input.bEligible = Player && bUsingLocalInputState && Player->IsLocallyControlled() && Movement &&
+		Player->GetAnimationLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot &&
+		Movement->IsMovingOnGround() && !bIsInAir && !bIsPhysicallyInAir && !IsLandingStateActive() &&
+		!bIsJumping && !bIsFallOffStart && !Derived.bIsStarting && !Derived.bIsPivoting && !Derived.bShouldTurnInPlace &&
+		GroundMotionMode == EProject_JGroundMotionMode::Locomotion && AuthContext.GaitIntent == EProject_JLocomotionGaitIntent::Run &&
+		Motion.bHasMoveInput && FMath::IsFinite(Motion.GroundSpeed) && Motion.GroundSpeed >= 0.0f &&
+		!Motion.MoveWorldDirection.IsNearlyZero() &&
+		!Player->IsAttacking() && !Player->IsDodging() && !Player->IsHitReacting() &&
+		!Movement->HasAnimRootMotion() && !Movement->CurrentRootMotion.HasActiveRootMotionSources() &&
+		(!Anim || !Anim->IsAnyMontagePlaying());
+	Input.bEntryQualified = Motion.GroundSpeed >= DerivedTurnMinSpeed &&
+		!Motion.HorizontalVelocity.IsNearlyZero();
+	if (Player)
+	{
+		Input.ActorYaw = Player->GetActorRotation().Yaw;
+		Input.VelocityYaw = Motion.HorizontalVelocity.Rotation().Yaw;
+		Input.MoveYaw = Motion.MoveWorldDirection.Rotation().Yaw;
+		Input.TargetFacingYaw = Input.MoveYaw;
+	}
+	if (AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe)
+	{
+		const UProject_JCombatAnimProfile* Profile = Player ? Player->GetCombatAnimProfile() : nullptr;
+		Input.bEligible &= AuthContext.bCombatMode && Controller && Profile && Profile->bEnableStrafeFacingRedirect &&
+			Profile->bUseCombatRotationMode && Movement && Movement->bUseControllerDesiredRotation;
+		if (Controller && Profile)
+		{
+			// Never reuse movement-one-shot DesiredFacingYaw for S/backpedal.
+			Input.TargetFacingYaw = Controller->GetDesiredRotation().Yaw;
+			Input.EntryAngle = Profile->StrafeFacingRedirectEntryAngle;
+			Input.ExitAngle = Profile->StrafeFacingRedirectExitAngle;
+		}
+	}
+#if !UE_BUILD_SHIPPING
+	const int32 TraceMode = Project_J::MotionMatchingCVars::GetMovingTurnTraceMode();
+	const bool bTrace = TraceMode > 0 && Player && Player->IsPlayerControlled() && Player->IsLocallyControlled();
+	const TCHAR* Reason = bTrace ? MovingTurnPolicy.DescribeNextUpdate(Input) : nullptr;
+#endif
+	const bool bActive = MovingTurnPolicy.Update(Input);
+#if !UE_BUILD_SHIPPING
+	if (bTrace)
+	{
+		const UProject_JCombatAnimProfile* Combat = Player->GetCombatAnimProfile();
+		const TCHAR* Guard = !bUsingLocalInputState ? TEXT("NotLocalInput") :
+			Player->GetAnimationLocomotionMode() != EProject_JAnimationLocomotionMode::OnFoot ? TEXT("NotOnFoot") :
+			!Movement || !Movement->IsMovingOnGround() ? TEXT("NotGrounded") :
+			bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart ? TEXT("Air") :
+			IsLandingStateActive() ? TEXT("Landing") :
+			Derived.bIsStarting ? TEXT("Start") : Derived.bIsPivoting ? TEXT("Pivot") :
+			Derived.bShouldTurnInPlace ? TEXT("TIP") :
+			GroundMotionMode != EProject_JGroundMotionMode::Locomotion ? TEXT("GroundMode") :
+			AuthContext.GaitIntent != EProject_JLocomotionGaitIntent::Run ? TEXT("NotRun") :
+			!Motion.bHasMoveInput ? TEXT("NoInput") :
+			!FMath::IsFinite(Motion.GroundSpeed) || Motion.GroundSpeed < 0.0f ? TEXT("InvalidSpeed") :
+			Motion.MoveWorldDirection.IsNearlyZero() ? TEXT("NoDirection") :
+			Player->IsAttacking() ? TEXT("Attack") : Player->IsDodging() ? TEXT("Dodge") : Player->IsHitReacting() ? TEXT("HitReact") :
+			Movement->HasAnimRootMotion() || Movement->CurrentRootMotion.HasActiveRootMotionSources() ? TEXT("RootMotion") :
+			Anim && Anim->IsAnyMontagePlaying() ? TEXT("Montage") :
+			AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+			(!AuthContext.bCombatMode || !Controller || !Combat || !Combat->bEnableStrafeFacingRedirect ||
+			 !Combat->bUseCombatRotationMode || !Movement->bUseControllerDesiredRotation) ? TEXT("CombatFacingPolicy") : TEXT("Pass");
+		if (TraceMode >= 2 || Reason != LastMovingTurnTraceReason || Guard != LastMovingTurnTraceGuard ||
+			Input.NowSeconds - LastMovingTurnTraceTime >= 0.10 || Input.NowSeconds < LastMovingTurnTraceTime)
+		{
+			const UProject_JMotionMatchingAssetSet* Set = AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+				? Player->GetCombatStrafeMotionMatchingAssetSet() : Player->GetMotionMatchingAssetSet();
+			const UPoseSearchDatabase* Turn = Set ? (AuthContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint
+				? Set->SprintDatabases.TurnRedirect.Get() : Set->RunDatabases.TurnRedirect.Get()) : nullptr;
+			UE_LOG(LogProjectJPlayer, Display,
+				TEXT("MovingTurnTrace Stage=Eligibility Frame=%llu T=%.3f Actor=%s Mode=%s Gait=%d Ground=%d PrevPhase=%d Eligible=%d EntryQualified=%d Guard=%s Reason=%s Armed=%d Active=%d Speed=%.1f MinSpeed=%.1f ActorYaw=%.1f TargetYaw=%.1f VelocityYaw=%.1f MoveYaw=%.1f Facing=%.1f Entry=%.1f Path=%.1f OldForward=%.1f NewForward=%.1f KeyTurn=%.1f AssetSet=%s TurnPSD=%s Schema=%s Assets=%d"),
+				GFrameCounter, Input.NowSeconds, *GetNameSafe(Player),
+				AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? TEXT("Strafe") : TEXT("OTM"),
+				static_cast<int32>(AuthContext.GaitIntent), static_cast<int32>(GroundMotionMode), static_cast<int32>(PreviousDerivedPhaseFamily),
+				Input.bEligible ? 1 : 0, Input.bEntryQualified ? 1 : 0, Guard, Reason, MovingTurnPolicy.IsArmed() ? 1 : 0, bActive ? 1 : 0,
+				Motion.GroundSpeed, DerivedTurnMinSpeed, Input.ActorYaw, Input.TargetFacingYaw, Input.VelocityYaw, Input.MoveYaw,
+				FMath::Abs(FMath::FindDeltaAngleDegrees(Input.ActorYaw, Input.TargetFacingYaw)),
+				FMath::IsFinite(Input.EntryAngle) ? FMath::Clamp(Input.EntryAngle, 150.0f, 180.0f) : 150.0f,
+				FMath::Abs(FMath::FindDeltaAngleDegrees(Input.VelocityYaw, Input.MoveYaw)),
+				FMath::Abs(FMath::FindDeltaAngleDegrees(Input.VelocityYaw, Input.ActorYaw)),
+				FMath::Abs(FMath::FindDeltaAngleDegrees(Input.MoveYaw, Input.TargetFacingYaw)), Motion.MoveInputTurnAngle,
+				*GetNameSafe(Set), *GetNameSafe(Turn), *GetNameSafe(Turn ? Turn->Schema.Get() : nullptr), Turn ? Turn->GetNumAnimationAssets() : 0);
+			LastMovingTurnTraceTime = Input.NowSeconds;
+			LastMovingTurnTraceReason = Reason;
+			LastMovingTurnTraceGuard = Guard;
+		}
+	}
+	else
+	{
+		LastMovingTurnTraceTime = -1.0; LastMovingTurnTraceReason = nullptr; LastMovingTurnTraceGuard = nullptr;
+	}
+#endif
+	return bActive;
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const

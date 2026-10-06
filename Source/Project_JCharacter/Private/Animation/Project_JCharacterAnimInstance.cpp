@@ -1161,6 +1161,7 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 		CachedStateControllerRightFootContact = 0.0f;
 	}
 	RecordAnimationFlowEvaluation();
+	RecordLocomotionContinuityEvaluation();
 }
 
 EProject_JStateControllerFoot UProject_JCharacterAnimInstance::ResolveStateControllerFootFromContactCurves(
@@ -1823,6 +1824,15 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	}
 	EProject_JStateControllerPresentationState DesiredState =
 		ResolveStateControllerPresentationState(Data, InOutOneShot);
+	// The semantic FallOff timer can outlive the authored entry. Once this
+	// airborne episode reached its loop, that legacy flag is not a new command.
+	// A genuine new JumpStart still retains TransitionToInAir ownership.
+	if (Data.Air.bIsInAir && !Data.Air.bIsJumping &&
+		StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::InAirLoop &&
+		DesiredState == EProject_JStateControllerPresentationState::TransitionToInAir)
+	{
+		DesiredState = EProject_JStateControllerPresentationState::InAirLoop;
+	}
 	const double NowSeconds = AnimationClock.Seconds;
 	StateControllerRuntime.ClearTurnReselect();
 	const bool bIsLocallyControlled = IsLocallyControlledCharacter();
@@ -2087,6 +2097,14 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		InOutOneShot.bTransitionAnimationAlmostComplete = false;
 		return;
 	}
+	if (bHeldFallOff && !Data.Air.bIsJumping && Data.Air.bIsInAir &&
+		InOutOneShot.bTransitionAnimationAlmostComplete)
+	{
+		// Release at the existing completion/early-window/maximum-hold contract,
+		// even while the component retains its broader FallOff presentation flag.
+		// Do not restart that same non-loop entry or park on its final frame.
+		DesiredState = EProject_JStateControllerPresentationState::InAirLoop;
+	}
 
 	// When sprint_land is held, if the landing component phase has finished (!bIsLanding)
 	// or if the user released sprint input (!bWantsSprint), interrupt the land one-shot
@@ -2226,6 +2244,13 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 			// path below; a mode toggle alone must not restart Jump/FallOff.
 			bLockCommittedOneShotChooser = !bIsJumpAirReselecting &&
 				bCachedStateControllerFallOff == bStateControllerFallOffForChooser;
+			break;
+		case EProject_JStateControllerPresentationState::InAirLoop:
+			// FallLoop has no direction/foot variants to reselect during this fall.
+			// Keep its playback command while movement/trajectory snapshots stay live.
+			bLockCommittedOneShotChooser = Data.Air.bIsInAir &&
+				Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot &&
+				CachedStateControllerChooserTable.Get() == ChooserTable;
 			break;
 		case EProject_JStateControllerPresentationState::TurnInPlace:
 			bLockCommittedOneShotChooser = !StateControllerRuntime.IsTurnReselectRequested();
@@ -2560,10 +2585,15 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 	OneShot.SelectedAnimation = CachedStateControllerSelectedAnimation;
 	OneShot.SelectedAnimationOutput = CachedStateControllerSelectedAnimationOutput;
 	OneShot.bHasSelectedAnimation = bCachedStateControllerHasSelectedAnimation;
-	OneShot.bShouldOverrideMotionMatching =
-		OneShot.bHasSelectedAnimation &&
-		IsTransitionState(OneShot.PresentationState) &&
-		!OneShot.bSelectedAnimationShouldLoop;
+	// The logical air state has no output pose. Its selected FallLoop therefore
+	// uses the same external stack as Jump/FallOff, until physical air ends.
+	// Idle/Cycle loops keep the regular MM owner; landing's legacy air flag is
+	// not physical air (Data.Air was collected from CMC::IsFalling on the GT).
+	const bool bExternalAirLoop =
+		OneShot.PresentationState == EProject_JStateControllerPresentationState::InAirLoop &&
+		Data.Air.bIsInAir && Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
+	OneShot.bShouldOverrideMotionMatching = OneShot.bHasSelectedAnimation &&
+		((IsTransitionState(OneShot.PresentationState) && !OneShot.bSelectedAnimationShouldLoop) || bExternalAirLoop);
 	OneShot.bShouldEnableCombatStrafeOrientationWarping =
 		IsTransitionState(OneShot.PresentationState) &&
 		!OneShot.bSelectedAnimationShouldLoop &&
@@ -2901,9 +2931,10 @@ void UProject_JCharacterAnimInstance::FillProceduralIKThreadSafeData(FProject_JA
 		: MontageLegIKAlpha;
 }
 
-void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProject_JAnimThreadSafeData& Data)
+void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(FProject_JAnimThreadSafeData& Data)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishProxy);
+	UpdateLocomotionSteeringData(Data);
 	const bool bMotionMatchingEnabled =
 		IsPrimaryMeshAnimInstance() &&
 		OwningCharacter &&
@@ -2929,11 +2960,13 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 		// proportionally to how aggressively the Motion Matching update interval is throttled.
 		PublishChooserProperties(Data);
 		CurrentActivePoseSearchDatabase = EvaluatePoseSearchDatabaseOnGameThread(Data);
+		CurrentTurnCycleCompanion = EvaluateTurnCycleCompanionOnGameThread(Data);
 		CacheEvaluatedMotionMatchingContext(Data);
 	}
 	if (!bMotionMatchingEnabled)
 	{
 		CurrentActivePoseSearchDatabase = nullptr;
+		CurrentTurnCycleCompanion = nullptr;
 		MotionMatchingRuntime.InvalidateContext();
 	}
 	const bool bForceMotionMatchingReselect = ShouldForceMotionMatchingReselect(Data) || bForceRemoteCombatStopReselect;
@@ -2958,12 +2991,31 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(const FProjec
 
 	FProject_JCharacterAnimInstanceProxy& ProjectProxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 	ProjectProxy.SetFlowTraceEnabled(Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter) && IsPrimaryMeshAnimInstance());
+	const int32 TurnTraceMode = Project_J::MotionMatchingCVars::GetMovingTurnTraceMode();
+	const bool bLocalTurnTrace = TurnTraceMode > 0 && OwningPlayerCharacter &&
+		OwningPlayerCharacter->IsPlayerControlled() && OwningPlayerCharacter->IsLocallyControlled();
+	ProjectProxy.SetMovingTurnTraceEnabled(bLocalTurnTrace);
+#if !UE_BUILD_SHIPPING
+	if (bLocalTurnTrace && IsPrimaryMeshAnimInstance() &&
+		(TurnTraceMode >= 2 || bDatabaseChanged || bForceMotionMatchingReselect || GFrameCounter % 12 == 0))
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MovingTurnTrace Stage=Selection Frame=%llu Actor=%s Instance=%s Rev=%d Mode=%d Gait=%d Phase=%d Turn180=%d PSD=%s Enabled=%d Update=%d Refresh=%d Changed=%d Force=%d Override=%d Presentation=%d Budget=%.3f"),
+			GFrameCounter, *GetNameSafe(OwningPlayerCharacter), *GetName(), Data.MotionMatching.SelectionRevision,
+			static_cast<int32>(Data.MotionMatching.SelectionContext.RotationMode), static_cast<int32>(Data.MotionMatching.SelectionContext.GaitIntent),
+			static_cast<int32>(Data.MotionMatching.SelectionContext.PhaseFamily), Data.MotionMatching.SelectionContext.bMovingTurn180 ? 1 : 0,
+			*GetNameSafe(CurrentActivePoseSearchDatabase.Get()), bMotionMatchingEnabled ? 1 : 0, bUpdateMotionMatchingThisFrame ? 1 : 0,
+			bForceMotionMatchingRefresh ? 1 : 0, bDatabaseChanged ? 1 : 0, bForceMotionMatchingReselect ? 1 : 0,
+			Data.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0,
+			static_cast<int32>(Data.OneShotPresentation.PresentationState), Data.MotionMatching.MinimumSearchInterval);
+	}
+#endif
 	ProjectProxy.QueueGameThreadData(
 		Data,
 		CurrentActivePoseSearchDatabase,
 		bMotionMatchingEnabled,
 		bUpdateMotionMatchingThisFrame,
-		bForceMotionMatchingReselect);
+		bForceMotionMatchingReselect, true, CurrentTurnCycleCompanion);
 	RecordAnimationFlowPublication(Data, bUpdateMotionMatchingThisFrame, true);
 }
 
@@ -3020,6 +3072,25 @@ void UProject_JCharacterAnimInstance::RecordMotionMatchingTrace(
 	}
 }
 
+UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluateTurnCycleCompanionOnGameThread(const FProject_JAnimThreadSafeData& Data) const
+{
+	// This broadens only a locally qualified running reversal. One-shots, proxies,
+	// mounted/full-body action owners and crowd tiers keep their existing search set.
+	if (!Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() || !OwningPlayerCharacter || !OwningPlayerCharacter->IsPlayerControlled() ||
+		!OwningPlayerCharacter->IsLocallyControlled() || Data.Air.bIsInAir ||
+		Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot ||
+		Data.OneShotPresentation.bShouldOverrideMotionMatching ||
+		!Data.MotionMatching.SelectionContext.bMovingTurn180) return nullptr;
+	const bool bCombat = Data.Combat.bIsCombatMode &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+	const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() :
+		OwningPlayerCharacter->GetMotionMatchingAssetSet();
+	if (!Set) return nullptr;
+	auto Context = Data.MotionMatching.SelectionContext;
+	Context.bUseGenericFamiliesForNonOrientToMovement = bCombat;
+	return Set->FindTurnCycleCompanion(Context, CurrentActivePoseSearchDatabase);
+}
+
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabaseOnGameThread(const FProject_JAnimThreadSafeData& Data)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPoseSearchDatabaseChooser);
@@ -3066,6 +3137,20 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		break;
 	}
 	CombatSelectionContext.bUseGenericFamiliesForNonOrientToMovement = true;
+	if (CombatStrafeAssetSet && SelectionContext.bAllowTurnContinuation &&
+		CombatStrafeAssetSet->RunDatabases.TurnRedirect &&
+		Data.MotionMatching.PostSelection.SelectedDatabase == CombatStrafeAssetSet->RunDatabases.TurnRedirect->GetFName())
+	{
+		// A loop-only optimization must not retire an aligned Turn that is still
+		// the actual continuing pose. Resume settled routing once Cycle wins.
+		CombatSelectionContext.bUseSettledCycle = false;
+	}
+	if (CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn)
+	{
+		// A missing or ineligible Turn must return through the Dynamic Cycle,
+		// never a stale Loop-only settled selection from the previous snapshot.
+		CombatSelectionContext.bUseSettledCycle = false;
+	}
 	UPoseSearchDatabase* SelectedDatabase = CombatStrafeAssetSet
 		? CombatStrafeAssetSet->FindDatabaseForContext(CombatSelectionContext)
 		: nullptr;
@@ -3140,7 +3225,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
 	}
-	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase
+	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase || SelectionContext.bMovingTurn180
 		? nullptr
 		: MotionMatchingChooserTable.Get();
 
@@ -3640,7 +3725,7 @@ bool UProject_JCharacterAnimInstance::ShouldSkipNativeUpdate(float DeltaSeconds)
 	const bool bMotionMatchingEnabled = IsPrimaryMeshAnimInstance() &&
 		ThreadSafeData.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
 	ProjectProxy.SetFlowTraceEnabled(Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter) && IsPrimaryMeshAnimInstance());
-	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, false, false, false);
+	ProjectProxy.QueueGameThreadData(ThreadSafeData, CurrentActivePoseSearchDatabase, bMotionMatchingEnabled, false, false, false, CurrentTurnCycleCompanion);
 	RecordAnimationFlowPublication(ThreadSafeData, false, false);
 	return true;
 }

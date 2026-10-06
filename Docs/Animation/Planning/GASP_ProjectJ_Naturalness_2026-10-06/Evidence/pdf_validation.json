@@ -1,0 +1,222 @@
+{
+  "date": "2026-10-06",
+  "pdf": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Docs\\Animation\\Planning\\GASP_ProjectJ_Naturalness_2026-10-06\\output\\pdf\\GASP_ProjectJ_Naturalness_2026-10-06.pdf",
+  "pages": 42,
+  "sha256": "5d73ebfc19600c96feb101518a14a39256fe3ac87306a631db4a43888ceda419",
+  "all_pages_rendered": true,
+  "outside_page_bounds": [],
+  "page_text_summary": [
+    {
+      "page": 1,
+      "characters": 313,
+      "text_start": "GASP / Project_J\n움직임 자연스러움\n분석과 고도화 인계\n실제 그래프 · 데이터 · 선택 · 보정 · 업데이트 · 원격/군중 예산\n기준일 2026-10-06\nGASP CMC 5.7.4 / Project_J 5.8.2\n확인된 구현과 개선 제안을 구분한 조사 snapshot이다. 코드·Config·에셋 변경, 새 "
+    },
+    {
+      "page": 2,
+      "characters": 4624,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n목차\nGASP / Project_J 움직임 자연스러움 분석과 고도화 인계 5\n먼저 읽을 결론 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ."
+    },
+    {
+      "page": 3,
+      "characters": 5066,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n6. 두 Blend Stack과 History 설정 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19\n7. Chooser 계층과 실제 행 . . . . ."
+    },
+    {
+      "page": 4,
+      "characters": 431,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n원본 근거 추출물 42\n자료 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 42\n읽는 주의 . . . . "
+    },
+    {
+      "page": 5,
+      "characters": 1555,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nGASP / Project_J 움직임 자연스러움 분석과 고도화\n인계\n기준일: 2026-10-06. 상태: 조사 결과 보존 및 후속 설계 제안. 구현 완료 문서가 아니다.\n먼저 읽을 결론\n이 조사의 목표는 Project_J의 전체 애니메이션 자연스러움 개선이다."
+    },
+    {
+      "page": 6,
+      "characters": 1674,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n• Idle↔Start↔이동↔Stop, Walk/Run/Sprint 가감속, 작은 곡선 이동, 점프↔낙하↔착지, 동작 중 입력·카메라 변경을\n함께 평가한다.\n• 일반 이동·이동 Turn은 PSD/MM으로, Start·Stop·Land·Strafe Pivot·T"
+    },
+    {
+      "page": 7,
+      "characters": 1451,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n01. 조사 범위와 증거 장부\n1. 환경과 판정 범위\n항목 확인 내용 수준\nGASP 루트 C:/Users/I/Documents/Unreal Projects/GameAnimationSampl S\ne\nProject_J 루트 C:/Users/I/Documents/G"
+    },
+    {
+      "page": 8,
+      "characters": 1411,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n3. 근거 ID\nID 근거 범위/주의\nG01 GASP Content/Blueprints/SandboxCharacter_CMC_ABP.uasset CMC 기본/실험 경로, 실제 내\n부 그래프·함수·기본값 확인\nG02 GASP CHT_CMCCharacterAnim"
+    },
+    {
+      "page": 9,
+      "characters": 1841,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nID 근거 범위/주의\nS07 Project_JCharacterAnimInstanceProxy.cpp PSD·runtime 노드 정책·검색 요\n청·예산·중첩 traversal\nS08 Project_JLocomotionProfile.cpp/.h, AssetSet/"
+    },
+    {
+      "page": 10,
+      "characters": 1386,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n• /Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle, PSD_Run_Turn\n• /Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat"
+    },
+    {
+      "page": 11,
+      "characters": 1633,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n6. 오래된 문서와 실제 연결의 차이\nGASP_ProjectJ_Locomotion_Parity.md의 일부 표/추가 기록은 Offset Root Bone disconnected/없음 또는 다른 mode\n설명을 포함한다. 현재 Master에는 노드가 연결되어 있"
+    },
+    {
+      "page": 12,
+      "characters": 1160,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n02. GASP CMC: 자연스러움을 만드는 연결\n이 문서는 로컬 5.7.4의 확인한 CMC 경로를 설명한다. 근거 G01-G05. 기본 활성 MM과 비활성 실험적 State Machine\n을 구분한다. 그래프에서 추론한 효과는 I이며 새 영상 검증은 U다.\n"
+    },
+    {
+      "page": 13,
+      "characters": 1899,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nG/A: 확인한 CMC 이동 설정은 지상 yaw 회전 -1, 공중 200, Run 가속 800, Sprint 가속 구간 800→300, 속도 범위\n300-700, 입력 중 감속 500/해제 감속 2000, ground friction 5 및 Sprint 구간 "
+    },
+    {
+      "page": 14,
+      "characters": 2274,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nPose 계열에는 발 사이 상대 위치 가중치 1, 발 속도 0.3, 골반 Heading Y/Strip Z 0.1 등의 확인한 특징이 있다.\ncontinuing pose 사용도 포함한다. 전체 특징 차원은 확인한 Loops에서 30이다.\nG/A: PSS_Jump"
+    },
+    {
+      "page": 15,
+      "characters": 2339,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n→ Reset Root\n→ 일반 Steering\n→ TIP Steering\n→ Component to Local\n→ Result\nG/A: 현재 Blend Stack 플레이어의 asset/time을 각 보정에서 사용한다. 플레이어를 식별하는 tag가 있고 새/기"
+    },
+    {
+      "page": 16,
+      "characters": 1004,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n03. Project_J 운영 연결 상세\n근거 J01-J07, S01-S08, E01-E03, H01-H04. G/A/S는 조사 시점의 확인이며 새로운 실행 결과가 아니다.\n1. 운영 Pawn과 프로필\nG/A: Config 기본 GameMode는 BP_Proj"
+    },
+    {
+      "page": 17,
+      "characters": 1610,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n2. 전체 선택·출력 흐름\n입력 의도 → CMC → Trajectory\n실제 이동 + Strafe 미래 Facing, 최신 snapshot\nLocomotion Component → AnimInstance\n상태·요청·수명·선택 revision\n일반 이동: 단일 "
+    },
+    {
+      "page": 18,
+      "characters": 3157,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nS02: bUseControllerRotationYaw=false, moving Combat ground에서 bUseControllerDesiredRotation=true,\nnoncombat에서 bOrientRotationToMovement=true를 사용하는"
+    },
+    {
+      "page": 19,
+      "characters": 2099,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n별도다.\n5. 실제 Master 주 그래프\nG: 논리 StateController→TwoWayBlend A, MM→B, Alpha=1, AlwaysUpdateChildren=true. 상태 Result pose는 미연\n결이며 논리 갱신 목적이다.\nG: Bool"
+    },
+    {
+      "page": 20,
+      "characters": 2489,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n외부 스택\nG/A: Asset/StartTime/Loop/BlendTime/BlendProfile은 native 값에 연결된다. DesiredPlayRate=1.0, Mirror=false,\nMirrorTable=None, UseInertialBlend=fal"
+    },
+    {
+      "page": 21,
+      "characters": 1752,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nLeaf 조건·후보 확인한 출력\nStrafe Start 8 directions×2 feet, 16행 time .2, UseMM=false, blend .\n3\nStrafe Run Pivot previous/current direction×foot 대각8행 Dis"
+    },
+    {
+      "page": 22,
+      "characters": 2176,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n동작 같은 episode에서 유지 명시적으로 재선택/종료하는 경\n계\nStop 해제 episode, 정지 전 Run/Sprint 재입력, 다음 해제 episode\nLand landing epoch, 착지 당시 moving/sprint 의미 새 epoch, 완료/"
+    },
+    {
+      "page": 23,
+      "characters": 2571,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n10. MovingTurn180과 TIP\nS05/A: MovingTurn은 매 update local ground Run, speed>=180, onfoot, input 유효,\nStart/Pivot/TIP/Land/air/action/montage/rootmo"
+    },
+    {
+      "page": 24,
+      "characters": 3007,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\nA/E02: 대표 Turn은 30fps107frames108keys, rate1, 비loop, length3.566이다. exclude0-.672, BranchIn.676\nlength.379 DatabaseNone, override continuing-.1 ."
+    },
+    {
+      "page": 25,
+      "characters": 283,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n해석: Cycle의 작은 회전을 유지하면서 큰 반전 수명/보정을 보완할 가치가 높다. airLoop는 출력owner 확인이 먼저다.\n후보 확대/root accumulate는 실험 게이트 뒤 검토한다.\n미확인: 현재 binary/source 일치, 새 PIE의 "
+    },
+    {
+      "page": 26,
+      "characters": 775,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n04. 비교와 고도화 로드맵\n이 문서는 제안(I)이다. 확인된 근거와 가설을 구분하며 제안 자체를 구현 완료로 표현하지 않는다. 자세한 구현 증거\n는 01-03, 합격 기준은 05를 따른다.\n최상위 목표는 전체 애니메이션 자연스러움 개선이다. 큰 반전은 그중 "
+    },
+    {
+      "page": 27,
+      "characters": 1605,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n2. 역할 비교표\n역할 GASP 확인 경로 Project_J 확인 경로 결론\n물리 이동 CMC 빠른 회전, 별도 시각 root 처 CMC 제한 회전, TIP authored yaw 게임플레이 계약 차이, 상수\n리 별도 복사 금지\n미래 이동 CMC 예측+coll"
+    },
+    {
+      "page": 28,
+      "characters": 2034,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n3.2 후보와 발걸음 지속성\n효과: 작은 회전은 자연스러운 Cycle 구간에서 해결하고 불필요한 전환을 줄인다(I).\n근거: Project_J CombatCycle76seq, single PSD, pose features/continuing; GASP cond"
+    },
+    {
+      "page": 29,
+      "characters": 1594,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n비용·검증: foot trace·plant alpha·root offset·capsule speed·play rate·retarget를 같이 기록한다. drift를 더 많은 IK로\n가리는 대신 예측/데이터/루트 원인을 먼저 분리한다.\n4. 변경 분류와 우선순위"
+    },
+    {
+      "page": 30,
+      "characters": 2206,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n순위 분류 작업 기대효과 비용/통과 게이트\n낮음 전면교체 GASP 전체 root/state/search 이 불확실 기존 전투·remote·crowd 계\n식 약 재설계\n5. 단계별 도입 게이트\nGate A: baseline 확인\n운영 Pawn/Master/pro"
+    },
+    {
+      "page": 31,
+      "characters": 2049,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n• Angular continuity: 179→-179는 숫자 경계인지 새 반전인지, camera 동일방향 누적/반대입력과 경로 반전을 구\n분. Quaternion interpolation과 FindDelta의 정확한 endpoint 동률도 확인한다.\n• Sp"
+    },
+    {
+      "page": 32,
+      "characters": 1865,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n05. 검증과 읽기 전용 에디터 확인\n1. 권한과 실행 전 체크\n이 문서는 앞으로 수행할 절차다. 이번 문서 작성에서 새 PIE/빌드/에셋 저장을 수행했다는 뜻이 아니다.\n1. 프로젝트 AGENTS.md와 사용자 최신 권한을 읽는다. 분석-only면 에셋/Co"
+    },
+    {
+      "page": 33,
+      "characters": 1027,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n3. 최소 기능 시나리오\n전체 움직임 baseline: N1-N6\n기존에 잘되는 동작과 부족한 동작을 같은 조건으로 남긴다. 관련 출력·데이터·보정이 확인되었다는 사실과 실제 화면\n에서 문제가 재현되었다는 사실을 구분한다. 아래 기준은 후속 실험의 비교 목표이"
+    },
+    {
+      "page": 34,
+      "characters": 1896,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n입력 변화와 예외: S1-S15\nID 입력/상황 기록 합격 기준\nS1 OTM Run W→S/S→W, 좌우 entry/eligible/speed/active/exit/PSD 정상 reversal decel만으로 즉\ncamera고정 /time 시 종료되지 않음; "
+    },
+    {
+      "page": 35,
+      "characters": 1838,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n다.\n4. 공통 진단 필드\n한 frame에 최소 다음을 묶는다. 기존 diagnostic이 없으면 추가 구현 권한을 먼저 확인하고 기본off·target제한으로\n설계한다.\n영역 필드\n시점 worldtime/frame, snapshot generation/rev"
+    },
+    {
+      "page": 36,
+      "characters": 2101,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n카메라 follow/고정 view를 모두 사용한다. 저속재생만으로 입력반응을 평가하지 않으며 정상1X과 동일FPS도 남긴다.\nFrame rate30/60/120, 같은지형·같은입력·같은data에서 비교한다. 그래프의 연결만으로 영상효과를 입증하지 않는다.\n6."
+    },
+    {
+      "page": 37,
+      "characters": 1054,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n측정: game/worker animation update/evaluation, PoseSearch, perplayer steering/OW/root, foottrace/IK,\nretarget/follower, allocation/copy/indexmemory"
+    },
+    {
+      "page": 38,
+      "characters": 336,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n후속 작업 프롬프트\n새 채팅에서는 공통 인계 프롬프트를 먼저 전달한다. 특정 단계로 범위를 좁히려는 경우에만 단계 프롬프트를 추가한\n다. 목표는 전체 애니메이션 자연스러움이며, 큰 반전은 그 안의 검증 항목이다. 단계 A-E는 문제별 작업 구분이며 모\n든 작업"
+    },
+    {
+      "page": 39,
+      "characters": 2394,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n1. 공통 인계 프롬프트\nProject_J의 전체 애니메이션 자연스러움을 고도화하는 작업을 이어가줘.\n목표를 180도 전환이나 Turn 개선만으로 좁히지 마.\n입력과 실제 이동/trajectory, Idle↔Start↔이동↔Stop, Walk/Run/Sprin"
+    },
+    {
+      "page": 40,
+      "characters": 2150,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n2. 단계 A: 전체 자연스러움 baseline과 활성 경로 확인\n이번엔 분석만 해. 기존 조사 전체를 재사용하고 현재 변경된 근거만 재확인해.\n05의 N1-N6을 중심으로 일반 이동·가감속·동작 연결·자세·발 접지 baseline을\n정리하고 S1-S15 입력"
+    },
+    {
+      "page": 41,
+      "characters": 1938,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n5. 단계 D: 후보/데이터 비교 프롬프트\nbaseline에서 실제 선택·데이터 문제로 확인된 상황을 대상으로 분석해.\nCycle 방향·속도·곡선·발 위상, 가감속과 전환 구간의 데이터 coverage,\nPSS 특징·가중치·trajectory, continui"
+    },
+    {
+      "page": 42,
+      "characters": 1427,
+      "text_start": "GASP / Project_J | 구조·자연스러움·고도화 인계\n원본 근거 추출물\n이 폴더는 조사에서 확보한 데이터의 읽기 전용 복사본을 보존한다. 원본 .uasset를 수정/저장/컴파일한 것이 아니다.\n자료\n• ABP_Humanoid_Master.AnimGraph.clipboard.txt: 분석 중 clipboard로 확"
+    }
+  ],
+  "visual_review": "passed: all 42 pages reviewed through 5 contact sheets; pages 29, 33, 39 additionally reviewed at full size",
+  "limitations": "Rendering and text bounds do not validate gameplay or visual animation quality."
+}

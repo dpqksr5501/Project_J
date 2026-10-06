@@ -58,10 +58,18 @@ TAutoConsoleVariable<int32> CVarProjectJTurnInPlaceTrace(
 	TEXT("p.ProjectJ.TIPTrace"),
 	0,
 	TEXT("TIP semantic/chooser/root-yaw trace. 0=off, 1=selection and sensitive frames, 2=every active frame."));
+
+TAutoConsoleVariable<int32> CVarProjectJMovingTurnTrace(
+	TEXT("p.ProjectJ.MovingTurnTrace"),
+	0,
+	TEXT("Local moving Turn diagnostics. 0=off, 1=edges and sampled eligibility/PSD/results, 2=every update. Prefix MovingTurnTrace. No selection or search policy changes."));
+TAutoConsoleVariable<int32> CVarTurnCycleCandidates(TEXT("p.ProjectJ.TurnCycleCandidates"), 1,
+	TEXT("Qualified local Run Turn plus same-family dynamic Cycle candidates. 0=legacy single PSD, 1=asset-set controlled."));
 }
 
 namespace Project_J::MotionMatchingCVars
 {
+bool ShouldUseTurnCycleCandidates() { return CVarTurnCycleCandidates.GetValueOnAnyThread() != 0; }
 bool ShouldRepairRemoteTrajectoryFacing()
 {
 	return CVarProjectJRepairRemoteTrajectoryFacing.GetValueOnAnyThread() != 0;
@@ -120,5 +128,14 @@ bool ShouldTraceCombatStop()
 int32 GetTurnInPlaceTraceMode()
 {
 	return CVarProjectJTurnInPlaceTrace.GetValueOnAnyThread();
+}
+
+int32 GetMovingTurnTraceMode()
+{
+#if UE_BUILD_SHIPPING
+	return 0;
+#else
+	return CVarProjectJMovingTurnTrace.GetValueOnAnyThread();
+#endif
 }
 }

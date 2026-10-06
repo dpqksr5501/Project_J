@@ -71,7 +71,8 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	bool bInMotionMatchingEnabled,
 	bool bInUpdateMotionMatchingThisFrame,
 	bool bInForceMotionMatchingReselect,
-	bool bInFreshSnapshot)
+	bool bInFreshSnapshot,
+	UPoseSearchDatabase* InTurnCycleCompanion)
 {
 	// A draw/sheathe montage can hide the moment input is released. If Cycle and
 	// Idle resolve to the same PSD, changing its search context alone does not
@@ -90,24 +91,39 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const bool bNewForceRequest = bInFreshSnapshot && bInForceMotionMatchingReselect &&
 		(!bLastPublishedForceReselect ||
 			InData.MotionMatching.SelectionRevision != PendingGameThreadData.MotionMatching.SelectionRevision);
-	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame &&
-		InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase;
+	const bool bCompletedTurnReturn = PendingGameThreadData.MotionMatching.SelectionContext.bMovingTurn180 &&
+		InData.MotionMatching.SelectionContext.bAllowTurnContinuation &&
+		CurrentTurnCycleCompanion && InSelectedDatabase == CurrentTurnCycleCompanion &&
+		PendingGameThreadData.LocomotionContext.RotationMode == InData.LocomotionContext.RotationMode &&
+		PendingGameThreadData.LocomotionContext.GaitIntent == InData.LocomotionContext.GaitIntent &&
+		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		InData.LocomotionContext.bIsMotionMatchingMoving && !InData.Air.bIsInAir &&
+		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
+	const bool bContinuationCancelled = PendingGameThreadData.MotionMatching.SelectionContext.bAllowTurnContinuation &&
+		!InData.MotionMatching.SelectionContext.bAllowTurnContinuation;
+	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame && !bCompletedTurnReturn &&
+		((InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase) ||
+			(InTurnCycleCompanion && InTurnCycleCompanion != CurrentTurnCycleCompanion));
 	if (!bInMotionMatchingEnabled || InData.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot)
 	{
 		ClearMotionMatchingReselects();
 	}
-	else if (bNewForceRequest || bEnteredGroundIdle || bReturnedFromOneShot || bSelectedDatabaseChanged)
+	else if (bNewForceRequest || bEnteredGroundIdle || bReturnedFromOneShot || bSelectedDatabaseChanged || bContinuationCancelled)
 	{
+		if (!bForceMotionMatchingReselect) bRetireTurnContinuingPose = false;
 		// Coalesce against the newest context. A later GT frame must not discard
 		// an unconsumed return's pose-history query requirement.
 		bReselectFromPoseHistory = bReturnedFromOneShot ||
 			(bForceMotionMatchingReselect && bReselectFromPoseHistory);
 		PendingReselectRevision = ++ReselectSerial;
 		bForceMotionMatchingReselect = true;
+		bRetireTurnContinuingPose |= bContinuationCancelled;
 	}
 	PendingGameThreadData = InData;
+	++PublishedSnapshotRevision;
 	if (bFlowTraceEnabled) { ++FlowTraceWork.QueuedSnapshot; }
 	CurrentActiveDatabase = InSelectedDatabase;
+	CurrentTurnCycleCompanion = InTurnCycleCompanion != InSelectedDatabase ? InTurnCycleCompanion : nullptr;
 	bMotionMatchingEnabled = bInMotionMatchingEnabled;
 	bUpdateMotionMatchingThisFrame = bInUpdateMotionMatchingThisFrame;
 	// Skipped hidden samples are not new producer events. Retain the last pulse
@@ -127,15 +143,20 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 	FAnimInstanceProxy::Initialize(InAnimInstance);
 	PendingGameThreadData = FProject_JAnimThreadSafeData();
 	ThreadSafeData = FProject_JAnimThreadSafeData();
+	PublishedSnapshotRevision = ConsumedSnapshotRevision = 0;
+	ThreadSafeCandidateCount = 0;
 	ClearMotionMatchingReselects();
 	bLastPublishedForceReselect = false;
 	CachedGeneratedMotionMatchingAnimClass = nullptr;
 	CachedGeneratedMotionMatchingNodeIndices.Reset();
 	AppliedGeneratedDatabases.Reset();
+	AppliedGeneratedCompanions.Reset();
 	DefaultSearchThrottleTimes.Reset();
 	bHasNativeDefaultSearchThrottleTime = false;
 	AppliedDatabase = nullptr;
 	CurrentActiveDatabase = nullptr;
+	CurrentTurnCycleCompanion = nullptr;
+	AppliedTurnCycleCompanion = nullptr;
 	bHasMotionMatchingPolicyState = false;
 	bMotionMatchingEnabled = true;
 	bUpdateMotionMatchingThisFrame = true;
@@ -151,12 +172,20 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 	bUpdatingMotionMatchingGraph = false;
 }
 
+void FProject_JCharacterAnimInstanceProxy::ConsumeQueuedGameThreadData()
+{
+	if (ConsumedSnapshotRevision == PublishedSnapshotRevision) return;
+	ThreadSafeData = PendingGameThreadData;
+	ThreadSafeCandidateCount = bMotionMatchingEnabled && CurrentActiveDatabase ? (CurrentTurnCycleCompanion ? 2 : 1) : 0;
+	ConsumedSnapshotRevision = PublishedSnapshotRevision;
+	if (bFlowTraceEnabled) { FlowTraceWork.ConsumedSnapshot = FlowTraceWork.QueuedSnapshot; }
+}
+
 void FProject_JCharacterAnimInstanceProxy::PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_PreUpdate_GameThread);
 	FAnimInstanceProxy::PreUpdate(InAnimInstance, DeltaSeconds);
-	ThreadSafeData = PendingGameThreadData;
-	if (bFlowTraceEnabled) { FlowTraceWork.ConsumedSnapshot = FlowTraceWork.QueuedSnapshot; }
+	ConsumeQueuedGameThreadData();
 	ThreadSafeData.DeltaTime = DeltaSeconds;
 }
 
@@ -175,6 +204,11 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 		return;
 	}
 	TGuardValue<bool> GraphScope(bUpdatingMotionMatchingGraph, true);
+	// NativeUpdateAnimation can publish after PreUpdate. Consume that final GT
+	// publication before traversing any graph, so candidate lists, ownership and
+	// Steering inputs describe the same frame. Nested layers retain this snapshot.
+	ConsumeQueuedGameThreadData();
+	ThreadSafeData.DeltaTime = InContext.GetDeltaTime();
 	NativePoseHistoryNode.TransformTrajectory = ThreadSafeData.Movement.Trajectory;
 
 	if (bUpdateMotionMatchingThisFrame || !bMotionMatchingEnabled)
@@ -260,6 +294,37 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	{
 		LatestPostSelection.DatabaseTags = Result.SelectedDatabase->Tags;
 	}
+
+#if !UE_BUILD_SHIPPING
+	const int32 TurnTraceMode = Project_J::MotionMatchingCVars::GetMovingTurnTraceMode();
+	if (bMovingTurnTraceEnabled && TurnTraceMode > 0 &&
+		(TurnTraceMode >= 2 || GFrameCounter % 12 == 0 || DatabaseName != LastMovingTurnTraceDatabase || AnimationName != LastMovingTurnTraceAnimation))
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MovingTurnTrace Stage=Result Frame=%llu Instance=%s Node=%d Candidates=%d RequestedPSD=%s SelectedPSD=%s Anim=%s Time=%.3f Weight=%.3f Continuing=%d Interaction=%d SearchElapsed=%.3f Pending=%llu Force=%d Enabled=%d Update=%d Override=%d"),
+			GFrameCounter, *GetNameSafe(GetAnimInstanceObject()), ResultNodeIndex, CandidateCount, *GetNameSafe(CurrentActiveDatabase.Get()),
+			*DatabaseName.ToString(), *AnimationName.ToString(), Result.SelectedTime, ResultNode->GetCachedBlendWeight(),
+			Result.bIsContinuingPoseSearch ? 1 : 0, Result.bIsInteraction ? 1 : 0, State.ElapsedPoseSearchTime, PendingReselectRevision,
+			bForceMotionMatchingReselect ? 1 : 0, bMotionMatchingEnabled ? 1 : 0, bUpdateMotionMatchingThisFrame ? 1 : 0,
+			ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching ? 1 : 0);
+		// Show inactive cached nodes separately; the representative result above
+		// is not proof that it contributes to the final blended output.
+		for (const int32 Index : GetGeneratedMotionMatchingNodeIndices())
+		{
+			if (const auto* Node = GetNodeFromIndex<FAnimNode_MotionMatching>(Index))
+			{
+				const auto& NodeState = Node->GetMotionMatchingState();
+				const auto& NodeResult = NodeState.SearchResult;
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("MovingTurnTrace Stage=Node Frame=%llu Instance=%s Index=%d AppliedPSD=%s SelectedPSD=%s Anim=%s Time=%.3f Weight=%.3f SearchElapsed=%.3f"),
+					GFrameCounter, *GetNameSafe(GetAnimInstanceObject()), Index, *GetNameSafe(AppliedGeneratedDatabases.FindRef(Index).Get()),
+					*GetNameSafe(NodeResult.SelectedDatabase.Get()), *GetNameSafe(NodeResult.SelectedAnim.Get()),
+					NodeResult.SelectedTime, Node->GetCachedBlendWeight(), NodeState.ElapsedPoseSearchTime);
+			}
+		}
+		LastMovingTurnTraceDatabase = DatabaseName; LastMovingTurnTraceAnimation = AnimationName;
+	}
+#endif
 
 	// The summary above picks one result. When Idle is requested but a run pose
 	// persists, show every node so a retained result in an inactive graph cannot
@@ -379,19 +444,18 @@ EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseCh
 		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle != bLastPolicyUsedSettledCycle;
-	const bool bCombatFacingFamilyChanged =
-		ThreadSafeData.Combat.bIsCombatMode &&
-		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+	const bool bMovingTurnFamilyChanged =
 		bIsMoving && ThreadSafeData.LocomotionContext.PhaseFamily != LastPolicyPhaseFamily &&
 		(ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
-			LastPolicyPhaseFamily == EProject_JLocomotionPhaseFamily::Turn);
+			LastPolicyPhaseFamily == EProject_JLocomotionPhaseFamily::Turn) &&
+		!ThreadSafeData.MotionMatching.SelectionContext.bAllowTurnContinuation;
 
 	// GASP Get_MMInterruptMode: default to DoNotInterrupt and only interrupt on
 	// a core locomotion change. Project_J has no separate stance enum yet, so
 	// combat stance and rotation family are its safe equivalent.
 	const bool bInterrupt = bMovementModeChanged ||
 		(!bIsInAir && (bMovementStateChanged || (!bIsMoving && bGaitChanged) ||
-			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged || bCombatFacingFamilyChanged));
+			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged || bMovingTurnFamilyChanged));
 	return bInterrupt
 		? EPoseSearchInterruptMode::InterruptOnDatabaseChange
 		: EPoseSearchInterruptMode::DoNotInterrupt;
@@ -465,7 +529,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 		bHasNativeDefaultSearchThrottleTime = true;
 	}
 	const bool bNativeDatabaseChanged =
-		NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase;
+		NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase &&
+		(!CurrentTurnCycleCompanion || NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentTurnCycleCompanion);
 	SetMotionMatchingSearchThrottleTime(
 		NativeMotionMatchingNode,
 		ThreadSafeData.MotionMatchingSearchPolicy.ResolveSearchThrottleTime(
@@ -498,7 +563,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 				GetMotionMatchingSearchThrottleTime(*MotionMatchingNode));
 		}
 		const bool bDatabaseChanged =
-			MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase;
+			MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase &&
+			(!CurrentTurnCycleCompanion || MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentTurnCycleCompanion);
 		const bool bRecoverGroundIdle =
 			bMotionMatchingEnabled && CurrentActiveDatabase && bDatabaseChanged &&
 			!ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching &&
@@ -549,7 +615,7 @@ void FProject_JCharacterAnimInstanceProxy::ForceReselectMotionMatchingNodes()
 
 EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveReselectInterruptMode() const
 {
-	return bReselectFromPoseHistory ||
+	return bReselectFromPoseHistory || bRetireTurnContinuingPose ||
 		ResolveDatabaseChangeInterruptMode() == EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose
 		? EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose
 		: EPoseSearchInterruptMode::ForceInterrupt;
@@ -586,6 +652,17 @@ bool FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselect(
 	FMotionMatchingState* MotionState = GetMutableMotionMatchingState(Node);
 	const bool bSearched = MotionState && !MotionState->SearchResult.bIsInteraction &&
 		MotionState->ElapsedPoseSearchTime == 0.0f;
+#if !UE_BUILD_SHIPPING
+	if (bMovingTurnTraceEnabled && Project_J::MotionMatchingCVars::GetMovingTurnTraceMode() > 0)
+	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("MovingTurnTrace Stage=Reselect Frame=%llu Instance=%s Kind=%s Request=%llu Executed=%d RequestedPSD=%s SelectedPSD=%s Anim=%s Weight=%.3f PoseHistory=%d"),
+			GFrameCounter, *GetNameSafe(GetAnimInstanceObject()), &Node == &NativeMotionMatchingNode ? TEXT("Native") : TEXT("Generated"),
+			State.ArmedRevision, bSearched ? 1 : 0, *GetNameSafe(CurrentActiveDatabase.Get()),
+			*GetNameSafe(MotionState ? MotionState->SearchResult.SelectedDatabase.Get() : nullptr),
+			*GetNameSafe(MotionState ? MotionState->SearchResult.SelectedAnim.Get() : nullptr), Node.GetCachedBlendWeight(), bReselectFromPoseHistory ? 1 : 0);
+	}
+#endif
 	if (bSearched)
 	{
 		State.HandledRevision = State.ArmedRevision;
@@ -646,6 +723,7 @@ void FProject_JCharacterAnimInstanceProxy::ClearMotionMatchingReselects()
 	PendingReselectRevision = 0;
 	bForceMotionMatchingReselect = false;
 	bReselectFromPoseHistory = false;
+	bRetireTurnContinuingPose = false;
 	NativeReselectState = FNodeReselectState();
 	GeneratedReselectStates.Reset();
 }
@@ -792,6 +870,7 @@ const TArray<int32>& FProject_JCharacterAnimInstanceProxy::GetGeneratedMotionMat
 	CachedGeneratedMotionMatchingAnimClass = AnimClass;
 	CachedGeneratedMotionMatchingNodeIndices.Reset();
 	AppliedGeneratedDatabases.Reset();
+	AppliedGeneratedCompanions.Reset();
 	DefaultSearchThrottleTimes.Reset();
 	// Reinstanced nodes must not inherit acknowledgements belonging to old
 	// node memory. A still-pending request is applied to the replacement nodes.
@@ -825,6 +904,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 			NativeMotionMatchingNode.ResetDatabasesToSearch(
 				EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
 			AppliedDatabase = nullptr;
+			AppliedTurnCycleCompanion = nullptr;
 		}
 
 		const IAnimClassInterface* AnimClass = GetAnimClassInterface();
@@ -841,6 +921,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 						MotionMatchingNode->ResetDatabasesToSearch(
 							EPoseSearchInterruptMode::InterruptOnDatabaseChangeAndInvalidateContinuingPose);
 						AppliedGeneratedDatabases.Remove(NodeIndex);
+						AppliedGeneratedCompanions.Remove(NodeIndex);
 					}
 				}
 			}
@@ -848,12 +929,15 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 		return;
 	}
 
-	if (AppliedDatabase != CurrentActiveDatabase)
+	UPoseSearchDatabase* Candidates[] = {CurrentActiveDatabase.Get(), CurrentTurnCycleCompanion.Get()};
+	const TConstArrayView<UPoseSearchDatabase*> CandidateView(Candidates, CurrentTurnCycleCompanion ? 2 : 1);
+	if (AppliedDatabase != CurrentActiveDatabase || AppliedTurnCycleCompanion != CurrentTurnCycleCompanion)
 	{
-		NativeMotionMatchingNode.SetDatabaseToSearch(
-			CurrentActiveDatabase.Get(),
+		NativeMotionMatchingNode.SetDatabasesToSearch(
+			CandidateView,
 			DatabaseChangeInterruptMode);
 		AppliedDatabase = CurrentActiveDatabase;
+		AppliedTurnCycleCompanion = CurrentTurnCycleCompanion;
 	}
 
 	// The visible AnimBP Motion Matching node may be the active graph in a linked
@@ -871,14 +955,16 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 	{
 		FAnimNode_MotionMatching* MotionMatchingNode =
 			const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex));
-		if (!MotionMatchingNode || AppliedGeneratedDatabases.FindRef(NodeIndex) == CurrentActiveDatabase)
+		if (!MotionMatchingNode || (AppliedGeneratedDatabases.FindRef(NodeIndex) == CurrentActiveDatabase &&
+			AppliedGeneratedCompanions.FindRef(NodeIndex) == CurrentTurnCycleCompanion))
 		{
 			continue;
 		}
 
-		MotionMatchingNode->SetDatabaseToSearch(
-			CurrentActiveDatabase.Get(),
+		MotionMatchingNode->SetDatabasesToSearch(
+			CandidateView,
 			DatabaseChangeInterruptMode);
 		AppliedGeneratedDatabases.Add(NodeIndex, CurrentActiveDatabase);
+		AppliedGeneratedCompanions.Add(NodeIndex, CurrentTurnCycleCompanion);
 	}
 }

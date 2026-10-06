@@ -13,6 +13,7 @@ public:
 		EProject_JLocomotionPhaseFamily Phase = EProject_JLocomotionPhaseFamily::Idle;
 		EProject_JGroundMotionMode GroundMode = EProject_JGroundMotionMode::Idle;
 		bool bUseSettledCycle = false;
+		bool bMovingTurn180 = false;
 	};
 
 	void Reset()
@@ -30,7 +31,8 @@ public:
 			LastPublished.Rotation != Key.Rotation ||
 			LastPublished.Phase != Key.Phase ||
 			LastPublished.GroundMode != Key.GroundMode ||
-			LastPublished.bUseSettledCycle != Key.bUseSettledCycle;
+			LastPublished.bUseSettledCycle != Key.bUseSettledCycle ||
+			LastPublished.bMovingTurn180 != Key.bMovingTurn180;
 		if (bChanged)
 		{
 			LastPublished = Key;

@@ -1,0 +1,564 @@
+{
+  "date": "2026-10-06",
+  "branch": "codex/locomotion-facing-transitions",
+  "base_head": "94eac862f97e5d210d082f2e6cb1590a833a0419",
+  "scope": "Local Run 180-degree forward body/path reversal selection, existing OTM Turn preserved. Code-only; no PSD, DA, ABP or level saved. NullRHI is not a visual quality or network parity claim.",
+  "builds": [
+    {
+      "target": "Project_JEditor",
+      "result": "Succeeded",
+      "exit_code": 0,
+      "seconds": 65.4
+    },
+    {
+      "target": "Project_JEditor final test compilation",
+      "result": "Succeeded",
+      "exit_code": 0,
+      "seconds": 6.06
+    },
+    {
+      "target": "Project_J",
+      "result": "Succeeded",
+      "exit_code": 0,
+      "seconds": 73.95
+    }
+  ],
+  "automation": {
+    "succeeded": 28,
+    "succeeded_with_warnings": 0,
+    "failed": 0,
+    "not_run": 0,
+    "in_process": 0,
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.FlowTrace.Sampling",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.LocomotionContextBuilder",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.MotionMatchingSelectionPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StartEpisodeLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StateControllerRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MMCrowd.ActualEngineSearch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MMCrowd.NestedGraphSearch",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Combat.GradualFacing",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MovingTurn.Geometry",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MovingTurn.Lifetime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.MovingTurn.PhaseAndSearchEdge",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.PlayerMaturity.Trajectory.Freshness",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafeFacingRedirect.SearchContinuity",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafeFacingRedirect.SelectionAndLifecycle",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafeFacingRedirect.TrajectoryPrediction",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "sha256": "31C5CA4FA5FB5369A9E65654761C0A511406F62991171EF775B3D953DE087880"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "sha256": "F3AA90AE2BF7471DCECCB312E8AA8150A618B483E96367D38F5A90E9F8AFD6DF"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp",
+      "sha256": "D0D8ACCB51E5A15B48A265A6AFF88BAC061E894AFD18FA07590B48B11308682E"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "sha256": "8B41B4F5F1C0E6F7102FFDCFE77B7B68C139E1D19BEBBAA3A1B7E5162E20716A"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMovingTurnTests.cpp",
+      "sha256": "766353CC55E3B7A1291465B174842E14CFC60C2D5DB280FD446CD938490F0769"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafeFacingRedirectTests.cpp",
+      "sha256": "FEE2D9E86B62ABF554764A3E0609977CB0E93EAAE6D35037EFD58F18802A8EDA"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCombatAnimProfile.h",
+      "sha256": "8BD6EB1AF9165BBBC9A53B11A581234258972A8033D691744550E961A882E726"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+      "sha256": "AD3474B97E13A6FB010124BB351409BCBA329273879A921AB150908FFC065201"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingAssetSet.h",
+      "sha256": "80BE0A3A8368D28DC7ABF7C435F1406BC8499D829D253077F3B98C7DA872D705"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingSelectionPolicy.h",
+      "sha256": "A2EB97E818FDA837BD478D141025E49F6D83532549CCF4988295D64D66AC8CDF"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMovingTurnPolicy.h",
+      "sha256": "5E2114C38AA3F431EA981C9C373EAB1B060E648686A4365D431F0BDBD57ABFB6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "sha256": "8421B08B6B7D3DBD67A8999080373D6A8E118287656C1595A8034EACB95D2F47"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "Saved/Validation/MovingTurn_20261006/BuildEditor.log",
+      "sha256": "E7B1391AAC7A2022FC7992BEB21E91E97D38B6EC8A4B26398AC6B204A3033E82"
+    },
+    {
+      "path": "Saved/Validation/MovingTurn_20261006/BuildEditor_Final.log",
+      "sha256": "102159033FA3A9C6A1F2D7D688F14AB603C6E93825E1144C4E851B30DAE73498"
+    },
+    {
+      "path": "Saved/Validation/MovingTurn_20261006/BuildGame.log",
+      "sha256": "4C2CD84859B976E06EDFD0AFC8E5CF633F5240D03068C98413E4E15BB283D016"
+    },
+    {
+      "path": "Saved/Validation/MovingTurn_20261006/Automation_Final/index.json",
+      "sha256": "C8B3C8A720645FFA497A7CD668DF85D8836D46443DBA1B9B3C327C44163ADAF1"
+    },
+    {
+      "path": "Saved/Validation/MovingTurn_20261006/Automation_Final.log",
+      "sha256": "9A1F7B39E68889E3FE4A1CF874284A3CB101BC2EC6DD78A856133125D7F4250E"
+    }
+  ],
+  "remaining": [
+    "Assign four-clip Combat Run Turn180 PSD with PSS_Combat to RunDatabases.TurnRedirect.",
+    "Validate selected asset/time, root rotation policy, retargeted foot contact and capsule/root double rotation in PIE.",
+    "Verify remote visual behavior in two-client PIE; no new replicated facing target."
+  ],
+  "diagnostic_validation": {
+    "scope": "Read-only local-player MovingTurnTrace diagnostics. Editor auto-enabled at mode 2; runtime default 0. Existing top-level hashes and results refer to implementation before diagnostics. No gameplay policy or asset changes in diagnostic addition; PIE failure cause still awaiting user reproduction.",
+    "builds": [
+      {
+        "target": "Project_JEditor",
+        "result": "Succeeded",
+        "exit_code": 0,
+        "seconds": 32.82
+      },
+      {
+        "target": "Project_J",
+        "result": "Succeeded",
+        "exit_code": 0,
+        "seconds": 30.8
+      }
+    ],
+    "automation": {
+      "succeeded": 29,
+      "succeeded_with_warnings": 0,
+      "failed": 0,
+      "not_run": 0,
+      "in_process": 0,
+      "tests": [
+        {
+          "name": "ProjectJ.Animation.FlowTrace.Sampling",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.LandingReturnContext",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.LocomotionContextBuilder",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.MotionMatchingSelectionPolicy",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.OneShotModeContinuity",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.StartEpisodeLifetime",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.StateControllerRuntime",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.StopIdleInterrupt",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MMCrowd.ActualEngineSearch",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MMCrowd.NestedGraphSearch",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MountStrafeFix.Combat.GradualFacing",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MovingTurn.Geometry",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MovingTurn.Lifetime",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MovingTurn.PhaseAndSearchEdge",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.MovingTurn.TraceReadOnly",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.PlayerMaturity.Trajectory.Freshness",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafeFacingRedirect.SearchContinuity",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafeFacingRedirect.SelectionAndLifecycle",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafeFacingRedirect.TrajectoryPrediction",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafePivot.CardinalSelection",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafePivot.ConsecutiveReversals",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        },
+        {
+          "name": "ProjectJ.StrafePivot.RedirectBasis",
+          "state": "Success",
+          "errors": 0,
+          "warnings": 0
+        }
+      ]
+    },
+    "sources": [
+      {
+        "path": "Config/DefaultEngine.ini",
+        "sha256": "C75FA68924864A1D61A4723509A72A7762C6E2E760CA2E363B4E77CB99608E11"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+        "sha256": "80FB81496F0931BD24093FB629CA28D2A8E5C94BB9AA09F79A5636FB422D76E5"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+        "sha256": "3E0CD3822829F25827997F2708B72F53AF2E1741678168378A2A5AA0675DC30D"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+        "sha256": "F90D3F70D0700738ED160BA978606400688B0E2D92792072909CABA8BA23F125"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp",
+        "sha256": "D0D8ACCB51E5A15B48A265A6AFF88BAC061E894AFD18FA07590B48B11308682E"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingCVars.cpp",
+        "sha256": "7810A98E61ECC7D4DCBE7FABA4C6C46DB8420DE3E39897DA85AC800217A630A4"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+        "sha256": "03D47B90EC02B33B2F48B9B99F26EC99DE26B04F32B81158950E5BE5993A4C72"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Tests/Project_JMovingTurnTests.cpp",
+        "sha256": "9EE3349EE97596337ED88353BB4F699BBC4E2FC8A8F0963CFB3C3D729A485069"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafeFacingRedirectTests.cpp",
+        "sha256": "FEE2D9E86B62ABF554764A3E0609977CB0E93EAAE6D35037EFD58F18802A8EDA"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JCombatAnimProfile.h",
+        "sha256": "8BD6EB1AF9165BBBC9A53B11A581234258972A8033D691744550E961A882E726"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+        "sha256": "AD3474B97E13A6FB010124BB351409BCBA329273879A921AB150908FFC065201"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingAssetSet.h",
+        "sha256": "80BE0A3A8368D28DC7ABF7C435F1406BC8499D829D253077F3B98C7DA872D705"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingCVars.h",
+        "sha256": "CB66AE2FE3B980872027265804404AB2F5952620A84BD3F2E1C2084FEE7DA9C1"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingSelectionPolicy.h",
+        "sha256": "A2EB97E818FDA837BD478D141025E49F6D83532549CCF4988295D64D66AC8CDF"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JMovingTurnPolicy.h",
+        "sha256": "158303BCFA341405B392A5E872276710295E3C423C944B3217D1699C9B47510E"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+        "sha256": "6396C7B6000FDCB36A4B1D2CC5FCC3BF39AE4A657310AA12AA215D645B1E8CA8"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "Saved/Validation/MovingTurnTrace_20261006/BuildEditor.log",
+        "sha256": "EC49624E794160B7EDEC8E15D6D5C3F745FA42621451AD970E458E2BA1F09E85"
+      },
+      {
+        "path": "Saved/Validation/MovingTurnTrace_20261006/BuildGame.log",
+        "sha256": "CFE0F7ECE6F5ABFB6C137F7E56B2DE2981809ACB53B5FCF408E143EEA6D8BEFE"
+      },
+      {
+        "path": "Saved/Validation/MovingTurnTrace_20261006/Automation/index.json",
+        "sha256": "21C82664A2E3441430CA09602FB91E70F7C569A342914765B13F5B09280BC362"
+      },
+      {
+        "path": "Saved/Validation/MovingTurnTrace_20261006/Automation.log",
+        "sha256": "737807F8D4426D58589E7FEA2E2C9EE8D7DD1CD110C77705F8D6E30A9D761378"
+      }
+    ]
+  }
+}

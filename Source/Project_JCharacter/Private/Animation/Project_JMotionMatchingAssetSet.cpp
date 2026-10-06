@@ -3,6 +3,8 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "PoseSearch/PoseSearchSchema.h"
+#include "PoseSearch/PoseSearchNormalizationSet.h"
 
 namespace
 {
@@ -60,6 +62,13 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 	const EProject_JLocomotionGaitIntent GaitIntent = Context.GaitIntent;
 	const EProject_JLocomotionRotationMode RotationMode = Context.RotationMode;
 	const EProject_JLocomotionPhaseFamily PhaseFamily = Context.PhaseFamily;
+	if (RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		PhaseFamily == EProject_JLocomotionPhaseFamily::Turn && !Context.bMovingTurn180)
+	{
+		// A semantic Turn from an old/remote owner must not open the restricted
+		// forward 180-degree PSD without the current local geometry/lifetime gate.
+		return nullptr;
+	}
 	if (PhaseFamily == EProject_JLocomotionPhaseFamily::Idle)
 	{
 		if (IdlePoseSearchDatabase)
@@ -80,6 +89,28 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 	}
 
 	return nullptr;
+}
+
+UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindTurnCycleCompanion(
+	const FProject_JMotionMatchingSelectionContext& Context, const UPoseSearchDatabase* Primary) const
+{
+	if (!bEnableTurnCycleCandidates || !Primary || !Context.bMovingTurn180 ||
+		Context.PhaseFamily != EProject_JLocomotionPhaseFamily::Turn ||
+		(Context.RotationMode != EProject_JLocomotionRotationMode::OrientToMovement &&
+			!Context.bUseGenericFamiliesForNonOrientToMovement)) return nullptr;
+	const auto& Family = Context.GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
+	UPoseSearchDatabase* Cycle = Family.Cycle.Get();
+	// Exact shared schema preserves dimensions, skeleton and feature units. Never
+	// combine the loop-only settled set or borrow another gait/combat family.
+	if (Primary != Family.TurnRedirect || !Cycle || Cycle == Primary || !Primary->Schema ||
+		Primary->Schema != Cycle->Schema) return nullptr;
+	if (Primary->Schema->DataPreprocessor != EPoseSearchDataPreprocessor::None)
+	{
+		const auto* Normalization = Primary->NormalizationSet.Get();
+		if (!Normalization || Normalization != Cycle->NormalizationSet ||
+			!Normalization->Databases.Contains(Primary) || !Normalization->Databases.Contains(Cycle)) return nullptr;
+	}
+	return Cycle;
 }
 
 bool UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion(

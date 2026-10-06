@@ -458,6 +458,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 
+	/** Local visual rotation uses the same future-facing snapshot as PoseSearch. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering")
+	bool bEnableLocomotionSteering = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	float SteeringFacingLookAhead = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.1", ClampMax = "2.0"))
+	float SteeringProceduralTime = 0.4f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.0", ClampMax = "3.0"))
+	float SteeringAnimatedTime = 2.0f;
+
+	/** Bounds visual mesh/capsule separation; gameplay yaw remains with CMC. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.0", ClampMax = "90.0"))
+	float SteeringMaxVisualYawError = 45.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkSpeed = 500.0f;
 

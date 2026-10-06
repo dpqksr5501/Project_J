@@ -248,6 +248,11 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnJumped_Implementation() override;
 
+#if !UE_BUILD_SHIPPING
+	/** Read-only, opt-in look callback observation after controller input is queued. */
+	void RecordMouseTurnLookInput(const FVector2D& EnhancedLookAxis);
+#endif
+
 protected:
 
 	void StopMoveInput();
@@ -608,6 +613,39 @@ protected:
 
 private:
 	void RefreshCombatTransitionViews();
+#if !UE_BUILD_SHIPPING
+	void RecordMouseTurnFrame(float DeltaTime);
+	void RecordMouseTurnPostCamera(UWorld* World, ELevelTick TickType, float DeltaTime);
+	void UnregisterMouseTurnCameraTrace();
+	FDelegateHandle MouseTurnCameraTraceHandle;
+	// Per-local-pawn diagnostic values only: no UObject/array, tick or replication owner.
+	struct FMouseTurnTraceState
+	{
+		uint64 InputFrame = MAX_uint64;
+		int32 LookCalls = 0;
+		FVector2D EnhancedLook = FVector2D::ZeroVector;
+		FRotator QueuedRotation = FRotator::ZeroRotator;
+		int32 Mode = 0;
+		bool bHasPrevious = false;
+		double LastWallSeconds = 0.0;
+		double LastEmitSeconds = -1.0;
+		float ControlYaw = 0.0f;
+		float ActorYaw = 0.0f;
+		float CameraYaw = 0.0f;
+		float CameraTime = 0.0f;
+		uint64 LastEmittedFrame = MAX_uint64;
+		bool bHasPostCamera = false;
+		float PostCameraYaw = 0.0f;
+		int32 WindowFrames = 0;
+		uint64 PeakWallFrame = 0;
+		float PeakWallMs = 0.0f;
+		float PeakWorldDtMs = 0.0f;
+		float PeakControlStep = 0.0f;
+		float PeakActorStep = 0.0f;
+		float PeakCameraStep = 0.0f;
+	};
+	FMouseTurnTraceState MouseTurnTrace;
+#endif
 	bool bHadMoveInputForReplication = false;
 	bool bSprintInputHeld = false;
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;

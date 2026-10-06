@@ -1,5 +1,6 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/AnimClassInterface.h"
 #include "Animation/AnimationAsset.h"
 #include "PoseSearch/PoseSearchDatabase.h"
@@ -107,7 +108,7 @@ void UProject_JCharacterAnimInstance::RecordAnimationFlowEvaluation()
 #if !UE_BUILD_SHIPPING
 	if (!bAnimationFlowEvaluationPending || !Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter)) { return; }
 	bAnimationFlowEvaluationPending = false;
-	const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 	const auto& Work = Proxy.GetFlowTraceWork();
 	const auto& Data = Proxy.GetThreadSafeData();
 	const auto& Result = Proxy.GetLatestPostSelection();
@@ -128,7 +129,7 @@ void UProject_JCharacterAnimInstance::RecordAnimationFlowEvaluation()
 			if (!Property || !Property->Struct->IsChildOf(FAnimNode_BlendStack::StaticStruct())) { continue; }
 			if (++StackCount > 8) { break; }
 			const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack>(this);
-			for (int32 Index = 0; Index < FMath::Min(2, Stack->AnimPlayers.Num()); ++Index)
+			for (int32 Index = 0; Index < FMath::Min(4, Stack->AnimPlayers.Num()); ++Index)
 			{
 				const auto& Player = Stack->AnimPlayers[Index];
 				UE_LOG(LogProjectJPlayer, Display,
@@ -138,6 +139,37 @@ void UProject_JCharacterAnimInstance::RecordAnimationFlowEvaluation()
 					Player.GetBlendInWeight(), Stack->AnyNewBlendToThisFrame());
 			}
 		}
+	}
+	// A cached MM result is not proof that the MM branch owns the evaluated
+	// pose. Read the actual debug traversal only in the existing sampled trace.
+	FNodeDebugData Debug(this);
+	Proxy.GatherDebugData(Debug);
+	int32 Branches = 0;
+	for (const auto& Row : Debug.GetFlattenedDebugData())
+	{
+		if (!Row.bPoseSource && !Row.DebugLine.Contains(TEXT("Blend")) &&
+			!Row.DebugLine.Contains(TEXT("MotionMatching"))) continue;
+		if (++Branches > 32) break;
+		UE_LOG(LogProjectJPlayer, Display, TEXT("AnimFlow OutputBranch Frame=%llu Actor=%s Weight=%.3f PoseSource=%d Node=%s"),
+			GFrameCounter, *OwningCharacter->GetPathName(), Row.AbsoluteWeight, Row.bPoseSource, *Row.DebugLine);
+	}
+	// Followers can finalize after their source. Never wait for/wake one for a
+	// diagnostic; mark pending evaluation rather than mixing its bone times.
+	for (USkeletalMeshComponent* Mesh : {OwningCharacter->GetMesh(), Project_J::Animation::FindVisualFollower(*OwningCharacter)})
+	{
+		if (!Mesh) continue;
+		const bool bPending = Mesh->IsRunningParallelEvaluation();
+		// The authored Greatsword follower uses Bip01 feet, unlike Quinn.
+		// Report the actual bone chosen; an absent bone must not become a root sample.
+		const FName LeftFoot = Mesh->GetBoneIndex(TEXT("foot_l")) != INDEX_NONE ? FName(TEXT("foot_l")) : FName(TEXT("Bip01-L-Foot"));
+		const FName RightFoot = Mesh->GetBoneIndex(TEXT("foot_r")) != INDEX_NONE ? FName(TEXT("foot_r")) : FName(TEXT("Bip01-R-Foot"));
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("AnimFlow OutputMesh Frame=%llu Actor=%s Mesh=%s AnimClass=%s Visible=%d PendingEvaluation=%d ComponentYaw=%.3f ComponentWorld=%s Root=%s FootBoneL=%s FootL=%s FootBoneR=%s FootR=%s"),
+			GFrameCounter, *OwningCharacter->GetPathName(), *Mesh->GetPathName(), *GetPathNameSafe(Mesh->GetAnimClass()),
+			Mesh->IsVisible(), bPending, Mesh->GetComponentRotation().Yaw, *Mesh->GetComponentLocation().ToString(),
+			bPending ? TEXT("Pending") : Mesh->GetBoneIndex(TEXT("root")) == INDEX_NONE ? TEXT("MissingBone") : *Mesh->GetSocketLocation(TEXT("root")).ToString(),
+			*LeftFoot.ToString(), bPending ? TEXT("Pending") : Mesh->GetBoneIndex(LeftFoot) == INDEX_NONE ? TEXT("MissingBone") : *Mesh->GetSocketLocation(LeftFoot).ToString(),
+			*RightFoot.ToString(), bPending ? TEXT("Pending") : Mesh->GetBoneIndex(RightFoot) == INDEX_NONE ? TEXT("MissingBone") : *Mesh->GetSocketLocation(RightFoot).ToString());
 	}
 #endif
 }

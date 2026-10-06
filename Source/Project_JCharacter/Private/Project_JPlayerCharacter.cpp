@@ -231,6 +231,9 @@ void AProject_JPlayerCharacter::BeginPlay()
 
 void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if !UE_BUILD_SHIPPING
+	UnregisterMouseTurnCameraTrace();
+#endif
 	TurnInPlacePresentationRuntime.Reset();
 	PendingMountItemId.Invalidate();
 	if (PendingMountClassLoadHandle)
@@ -356,6 +359,9 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 			ReplicatedAnimEventComponent->DispatchTurnInPlaceStarted(TurnInPlaceDirectionBucket, TurnInPlaceTargetFacingYaw);
 		}
 	}
+#if !UE_BUILD_SHIPPING
+	RecordMouseTurnFrame(DeltaTime);
+#endif
 }
 
 AActor* AProject_JPlayerCharacter::GetAbilitySystemOwnerActor() const

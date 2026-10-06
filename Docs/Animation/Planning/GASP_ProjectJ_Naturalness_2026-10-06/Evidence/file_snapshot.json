@@ -1,0 +1,267 @@
+{
+  "packaged_at_utc": "2026-10-06T05:05:46.570792+00:00",
+  "repository": "C:\\Users\\I\\Documents\\GitHub\\Project_J",
+  "scope": "Packaging-time fingerprints; not original graph inspection timestamps or build verification.",
+  "git_status": [
+    " M Config/DefaultEngine.ini",
+    " M Content/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.uasset",
+    " M Docs/Animation/Planning/README.md",
+    " M Docs/Animation/README.md",
+    " M Docs/Maintenance/Document_Catalog.md",
+    " M Docs/Review/Architecture/Project_J_Strafe_Facing_Redirect_2026-10-05.md",
+    " M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+    " M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+    " M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+    " M Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp",
+    " M Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingCVars.cpp",
+    " M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+    " M Source/Project_JCharacter/Private/Tests/Project_JStrafeFacingRedirectTests.cpp",
+    " M Source/Project_JCharacter/Public/Animation/Project_JCombatAnimProfile.h",
+    " M Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+    " M Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingAssetSet.h",
+    " M Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingCVars.h",
+    " M Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingSelectionPolicy.h",
+    " M Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+    "?? Content/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.uasset",
+    "?? Docs/Animation/Architecture/Moving_Turn_180_2026-10-06.md",
+    "?? Docs/Animation/Architecture/Moving_Turn_180_Validation_2026-10-06.json",
+    "?? Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/",
+    "?? Source/Project_JCharacter/Private/Tests/Project_JMovingTurnTests.cpp",
+    "?? Source/Project_JCharacter/Public/Animation/Project_JMovingTurnPolicy.h"
+  ],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "exists": true,
+      "size": 2220,
+      "mtime_utc": "2026-06-19T13:04:41.036493+00:00",
+      "sha256": "34b6ad0e112cb3678b89f0a44f691f40eb73767d1a552c67056879a3b1ecdfc3"
+    },
+    {
+      "path": "Config/DefaultEngine.ini",
+      "exists": true,
+      "size": 4573,
+      "mtime_utc": "2026-10-06T01:39:00.024583+00:00",
+      "sha256": "c75fa68924864a1d61a4723509a72a7762c6e2e760ca2e363b4e77cb99608e11"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMovingTurnPolicy.h",
+      "exists": true,
+      "size": 4731,
+      "mtime_utc": "2026-10-06T01:37:30.766889+00:00",
+      "sha256": "158303bcfa341405b392a5e872276710295e3c423c944b3217d1699c9b47510e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+      "exists": true,
+      "size": 3089,
+      "mtime_utc": "2026-10-05T16:19:56.637725+00:00",
+      "sha256": "ad3474b97e13a6fb010124bb351409bcba329273879a921ab150908ffc065201"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingSelectionPolicy.h",
+      "exists": true,
+      "size": 1944,
+      "mtime_utc": "2026-10-05T16:19:57.014745+00:00",
+      "sha256": "a2eb97e818fda837bd478d141025e49f6d83532549ccf4988295d64d66ac8cdf"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp",
+      "exists": true,
+      "size": 23594,
+      "mtime_utc": "2026-10-04T01:43:43.421839+00:00",
+      "sha256": "616467d37f8e44737211e92f63b2b4c4548226c2937c60ff868e8f4578cab37b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "exists": true,
+      "size": 57318,
+      "mtime_utc": "2026-10-03T15:41:24.806456+00:00",
+      "sha256": "62653e8cdba2179869364e89982620dbda9d3db6daa1c8234f06968a5376b9a6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp",
+      "exists": true,
+      "size": 17330,
+      "mtime_utc": "2026-10-04T16:29:13.731905+00:00",
+      "sha256": "78ebf75a6fb94af9c636c696d78c13e0288b77772e13e91c888a2e3c9d56ee50"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "exists": true,
+      "size": 76249,
+      "mtime_utc": "2026-10-06T01:39:00.476658+00:00",
+      "sha256": "03d47b90ec02b33b2f48b9b99f26ec99de26b04f32b81158950e5be5993a4c72"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "exists": true,
+      "size": 19343,
+      "mtime_utc": "2026-10-04T16:43:54.747108+00:00",
+      "sha256": "6e5d118b0a7c04167dcb291b3934786cde4e1037c40b91e5706b6c46932270d2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "exists": true,
+      "size": 183543,
+      "mtime_utc": "2026-10-06T01:39:01.391023+00:00",
+      "sha256": "80fb81496f0931bd24093fb629ca28d2a8e5c94bb9aa09f79a5636fb422d76e5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "exists": true,
+      "size": 40885,
+      "mtime_utc": "2026-10-06T01:39:01.847113+00:00",
+      "sha256": "3e0cd3822829f25827997f2708b72f53af2e1741678168378a2a5aa0675dc30d"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingAssetSet.cpp",
+      "exists": true,
+      "size": 4515,
+      "mtime_utc": "2026-10-05T16:23:48.717155+00:00",
+      "sha256": "d0d8accb51e5a15b48a265a6aff88bac061e894afd18fa07590b48b11308682e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+      "exists": true,
+      "size": 7410,
+      "mtime_utc": "2026-10-05T05:52:22.837193+00:00",
+      "sha256": "7e86d179d30fe3b4d680212a1021c4770263559308e61a34dc7cf0fd16b47751"
+    },
+    {
+      "path": "Docs/Animation/Locomotion/GASP_ProjectJ_Locomotion_Parity.md",
+      "exists": true,
+      "size": 52297,
+      "mtime_utc": "2026-10-03T06:38:07.178018+00:00",
+      "sha256": "14a9ac51b9c1feac435a149baaea89022af400b728d5e3e8b02f002adf3107ae"
+    },
+    {
+      "path": "Docs/Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md",
+      "exists": true,
+      "size": 6373,
+      "mtime_utc": "2026-10-05T08:46:54.858260+00:00",
+      "sha256": "8282c9924d5fac65c8eaf22a6aafefad2a7f28ea6a20e224c18ccd470ab272cc"
+    },
+    {
+      "path": "Docs/Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md",
+      "exists": true,
+      "size": 11364,
+      "mtime_utc": "2026-10-05T14:30:37.492256+00:00",
+      "sha256": "732d5aee409129ddb404beaa5c612fbc7dca8ffe44c511e9ed1d831423090959"
+    },
+    {
+      "path": "Docs/Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md",
+      "exists": true,
+      "size": 9843,
+      "mtime_utc": "2026-10-05T06:11:07.945319+00:00",
+      "sha256": "a5e74602b9f7186240d5a99f7b108dadbf0f061ea63c124ff629cf131abcbac2"
+    },
+    {
+      "path": "Docs/Animation/Architecture/Moving_Turn_180_2026-10-06.md",
+      "exists": true,
+      "size": 19740,
+      "mtime_utc": "2026-10-06T02:09:58.031885+00:00",
+      "sha256": "41d81b4eb35b3e193285331bf7689ffc50bf2ea3044a7a1a069a8edb2e4da033"
+    },
+    {
+      "path": "Saved/Validation/MovingTurnTrace_20261006/PIE_1053/Analysis.json",
+      "exists": true,
+      "size": 3961,
+      "mtime_utc": "2026-10-06T01:55:16.593441+00:00",
+      "sha256": "2a55b1b22eddc6b8ae7638dd920be589c1cec83786c05430308ff9335956699f"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "exists": true,
+      "size": 960129,
+      "mtime_utc": "2026-09-21T16:53:04.749739+00:00",
+      "sha256": "3126f64f1227447b42d09f3c06bd060934652814469304e3a440988afd4a7893"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Player.uasset",
+      "exists": true,
+      "size": 294749,
+      "mtime_utc": "2026-07-19T14:32:00.345041+00:00",
+      "sha256": "6b8f26ec75657895d833ba8ab2917a2433566ef11f2ad101dffdf81520a63904"
+    },
+    {
+      "path": "Content/Animation_Logic/PSS/PSS_Player.uasset",
+      "exists": true,
+      "size": 4012,
+      "mtime_utc": "2026-09-05T15:48:01.134034+00:00",
+      "sha256": "3bfffa6833f1b59af04ad3e70f6f3664fc007af62a827a7cd558e364aa929bc9"
+    },
+    {
+      "path": "Content/Animation_Logic/PSS/PSS_Combat.uasset",
+      "exists": true,
+      "size": 4012,
+      "mtime_utc": "2026-08-22T11:11:18.903752+00:00",
+      "sha256": "0d983b750cc4d5cad5607bd1d751a40bd6540fef25b7242488631be5fb720224"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.uasset",
+      "exists": true,
+      "size": 12218,
+      "mtime_utc": "2026-07-24T10:01:51.877279+00:00",
+      "sha256": "19642602a8eba09b3f6cc0f4aacd9db28997d3f4e4d42560a6bff175742d7fb5"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.uasset",
+      "exists": true,
+      "size": 13028,
+      "mtime_utc": "2026-10-06T01:32:37.382588+00:00",
+      "sha256": "9ddd37c7fe923c8bab367f9aa53c9033a8f3bb7394b0376ff318961916cdb1bb"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.uasset",
+      "exists": true,
+      "size": 5007,
+      "mtime_utc": "2026-10-06T01:56:56.961957+00:00",
+      "sha256": "acada60b70b620cd28db7de30fc6ae8cd9db11034102b11eda71cdeaba88fda5"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.uasset",
+      "exists": true,
+      "size": 53471,
+      "mtime_utc": "2026-09-07T15:52:22.614525+00:00",
+      "sha256": "cd4f436a2073e79f3474768c7e52f713234424f4accd0e574727b19c4225de45"
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.uasset",
+      "exists": true,
+      "size": 3059,
+      "mtime_utc": "2026-10-06T01:33:18.291052+00:00",
+      "sha256": "a1eeee709926371d2e0a60de83340190c6a757b0758398335a063ea0c28caff2"
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "exists": true,
+      "size": 2537,
+      "mtime_utc": "2026-09-19T08:18:59.640541+00:00",
+      "sha256": "aa4e2e350a679a328c6e3d291577d07406f8e9ea3f03b4d4f1a03e1b559a59bf"
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Turn_L_180_Rfoot.uasset",
+      "exists": true,
+      "size": 1454339,
+      "mtime_utc": "2026-06-05T08:58:51.815397+00:00",
+      "sha256": "67d1007e975196017e30cb94f44c75a39eb52b88556901303919f382444e7b27"
+    },
+    {
+      "path": "C:\\Users\\I\\Documents\\Unreal Projects\\GameAnimationSample\\Content\\Blueprints\\SandboxCharacter_CMC_ABP.uasset",
+      "exists": true,
+      "project": "GASP",
+      "size": 4036711,
+      "mtime_utc": "2026-08-15T11:56:24.853522+00:00",
+      "sha256": "376f2f12d7340c158dbc13151c99731d71554e8a323dab09262c6b49999db81d"
+    },
+    {
+      "path": "C:\\Users\\I\\Documents\\Unreal Projects\\GameAnimationSample\\Content\\Characters\\UEFN_Mannequin\\Animations\\ExperimentalStateMachineData\\CHT_CMCCharacterAnimations.uasset",
+      "exists": true,
+      "project": "GASP",
+      "size": 470436,
+      "mtime_utc": "2026-07-30T19:31:49.619683+00:00",
+      "sha256": "9b953983f327c4e89f7f32ee9f0ccd23c5466c324c050c89a26e0fb62b894bda"
+    }
+  ]
+}

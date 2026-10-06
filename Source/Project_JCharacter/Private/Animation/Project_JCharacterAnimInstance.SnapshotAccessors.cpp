@@ -318,6 +318,12 @@ FRotator UProject_JCharacterAnimInstance::GetThreadSafeStateControllerDesiredFac
 EOffsetRootBoneMode UProject_JCharacterAnimInstance::GetThreadSafeOffsetRootRotationMode() const
 {
 	const FProject_JAnimThreadSafeData& Data = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData();
+	if (Data.bLocomotionSteeringEnabled)
+	{
+		// Consume authored/steered visual rotation and decay its residual. No
+		// translation accumulation and no second application to capsule yaw.
+		return EOffsetRootBoneMode::Interpolate;
+	}
 	if (!Data.OneShotPresentation.bEnabled || Data.Air.bIsInAir)
 	{
 		return EOffsetRootBoneMode::Release;

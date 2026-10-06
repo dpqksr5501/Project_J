@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingSelectionPolicy.h"
+#include "Animation/Project_JMovingTurnPolicy.h"
 #include "Animation/Project_JRemoteLocomotionRuntime.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
@@ -172,6 +173,10 @@ struct PROJECT_JCHARACTER_API FProject_JDerivedLocomotionContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	bool bIsPivoting = false;
 
+	/** Eligible forward-running body/path reversal. Never a State Controller one-shot. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
+	bool bIsMovingTurn180 = false;
+
 	/** Monotonic local action-intent edge, kept separate from a consumed Pivot request. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Locomotion|Context")
 	int32 MoveIntentRevision = 0;
@@ -300,6 +305,8 @@ private:
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
+	bool UpdateMovingTurnPolicy(const FProject_JLocomotionAuthoritativeContext& AuthContext,
+		const FProject_JLocomotionKinematicContext& KinematicContext, const FProject_JDerivedLocomotionContext& DerivedContext);
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool HasGroundMovementIntentForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsStartingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
@@ -918,6 +925,12 @@ private:
 	bool bAppliedInAirGameplayTag = false;
 	bool bAppliedLandingGameplayTag = false;
 	FProject_JMotionMatchingSelectionPolicy MotionMatchingSelectionPolicy;
+	FProject_JMovingTurnPolicy MovingTurnPolicy;
+#if !UE_BUILD_SHIPPING
+	double LastMovingTurnTraceTime = -1.0;
+	const TCHAR* LastMovingTurnTraceReason = nullptr;
+	const TCHAR* LastMovingTurnTraceGuard = nullptr;
+#endif
 	bool bHasCombatStrafeControlYawSample = false;
 	float LastCombatStrafeControlYaw = 0.0f;
 	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;

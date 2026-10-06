@@ -2,6 +2,8 @@
 
 2026-10-05, UE 5.8. [이전 F 하차·TAB 수정](Project_J_Mount_Strafe_Fix_2026-10-04.md)의 후속이다. 이전 수정은 capsule의 급회전을 제한했지만, OTM에서 S를 유지하다 TAB으로 Strafe에 진입할 때 회전 모션을 찾을 정보까지 충분히 전달하지 않았다. 이번 변경은 회전 예측·이동 의미·검색 정책을 연결한다.
 
+2026-10-06 후속: [이동 중 180도 Turn](../../Animation/Architecture/Moving_Turn_180_2026-10-06.md)은 아래의 30도 facing-only Turn 진입을 큰 전진 경로/몸 방향 반전으로 제한한다. TAB 자체의 catch-up은 Turn 진입 사유가 아니며, 미래 facing 예측·history 보존·기존 CMC 정책은 유지한다. 아래 내용은 당시 구현·검증 기록이다.
+
 ## 확인한 원인과 비교 범위
 
 ArtisticSW2026의 `BasePlayer.cpp`, `GA_PlayerRoll.cpp`, `SWTrajectoryComponent.cpp`, `LocomotionAnimStateComponent.cpp`, `MotionMatchingAnimInstance.cpp`를 읽었다. 구르기는 montage/root motion으로 실행되고, 이후 이동 중 capsule은 별도 catch-up으로 Strafe 방향에 접근한다. 방향 전환 감지 시 전환용 PSD를 열고 재검색하는 경로도 있다. 실제 구르기 에셋·PSD·ABP 연결을 조회하지 않았으므로 특정 복귀 모션이 선택되는 이유 전체를 확정한 것은 아니다. ArtisticSW2026은 수정하지 않았다.

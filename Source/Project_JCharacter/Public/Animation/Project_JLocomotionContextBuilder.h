@@ -46,6 +46,7 @@ struct FProject_JLocomotionContextBuilder
 		bool bMoving = false;
 		bool bCombatStrafe = false;
 		bool bCombatFacingRedirect = false;
+		bool bMovingTurn180 = false;
 		bool bHasMoveInput = false;
 		EProject_JGroundMotionMode GroundMode = EProject_JGroundMotionMode::Idle;
 		float GroundSpeed = 0.0f;
@@ -63,6 +64,14 @@ struct FProject_JLocomotionContextBuilder
 		if (Input.bShouldTurnInPlace) return EProject_JLocomotionPhaseFamily::TurnInPlace;
 		if (Input.bPivoting) return EProject_JLocomotionPhaseFamily::Pivot;
 		if (Input.bStarting) return EProject_JLocomotionPhaseFamily::Start;
+		// This value is an active request from the state component, already
+		// qualified at entry. Re-checking speed here closes its PSD at the brake
+		// minimum even if the lifetime owner still holds the same input/target.
+		if (Input.bMovingTurn180 && Input.bHasMoveInput &&
+			Input.GroundMode == EProject_JGroundMotionMode::Locomotion)
+		{
+			return EProject_JLocomotionPhaseFamily::Turn;
+		}
 		if (Input.bCombatStrafe)
 		{
 			if (Input.bCombatFacingRedirect && Input.bMoving && Input.bHasMoveInput &&

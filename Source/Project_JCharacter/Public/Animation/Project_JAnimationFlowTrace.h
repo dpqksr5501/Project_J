@@ -4,6 +4,56 @@
 
 class AActor;
 
+/** Captured at the native gate; tracing never re-evaluates animation ownership. */
+enum class EProject_JLocomotionSteeringGate : uint8
+{
+	Unknown, Enabled, MissingProfile, ProfileDisabled, ConsoleDisabled, Ownership,
+	NotGroundedOnFoot, NoInput, PhaseOwner, Action, Montage, RootMotion,
+	MissingTrajectory, PredictionUnusable, StaleTrajectory, IncompletePrediction
+};
+
+struct FProject_JLocomotionContinuityTraceKey
+{
+	int32 Phase = 0;
+	int32 Presentation = 0;
+	int32 Rotation = 0;
+	int32 Candidates = 0;
+	int32 SelectionRevision = 0;
+	EProject_JLocomotionSteeringGate Gate = EProject_JLocomotionSteeringGate::Unknown;
+	FName SelectedDatabase;
+	FName SelectedAnimation;
+	FName ExternalAnimation;
+	bool bInput = false;
+	bool bOverride = false;
+	bool bContinuation = false;
+	bool operator==(const FProject_JLocomotionContinuityTraceKey& Other) const
+	{
+		return Phase == Other.Phase && Presentation == Other.Presentation && Rotation == Other.Rotation &&
+			Candidates == Other.Candidates && SelectionRevision == Other.SelectionRevision && Gate == Other.Gate &&
+			SelectedDatabase == Other.SelectedDatabase && SelectedAnimation == Other.SelectedAnimation &&
+			ExternalAnimation == Other.ExternalAnimation && bInput == Other.bInput &&
+			bOverride == Other.bOverride && bContinuation == Other.bContinuation;
+	}
+};
+
+/** State edges plus bounded periodic sampling. No yaw edge that could spam while rotating. */
+struct FProject_JLocomotionContinuityTraceSampler
+{
+	bool bInitialized = false;
+	double LastSampleTime = -1.0;
+	FProject_JLocomotionContinuityTraceKey LastKey;
+	bool ShouldRecord(const FProject_JLocomotionContinuityTraceKey& Key, double Now, int32 Mode, bool& OutEdge)
+	{
+		OutEdge = false;
+		if (Mode <= 0 || !FMath::IsFinite(Now)) { *this = {}; return false; }
+		if (bInitialized && Now < LastSampleTime) { *this = {}; }
+		OutEdge = !bInitialized || !(Key == LastKey);
+		if (!OutEdge && Now - LastSampleTime < (Mode >= 2 ? 0.1 : 0.2)) return false;
+		LastKey = Key; LastSampleTime = Now; bInitialized = true;
+		return true;
+	}
+};
+
 /** Diagnostic identities, independent of gameplay state and animation clocks. */
 struct FProject_JAnimationFlowKey
 {

@@ -49,13 +49,17 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 		bool bInMotionMatchingEnabled,
 		bool bInUpdateMotionMatchingThisFrame,
 		bool bInForceMotionMatchingReselect,
-		bool bInFreshSnapshot = true);
+		bool bInFreshSnapshot = true,
+		UPoseSearchDatabase* InTurnCycleCompanion = nullptr);
 
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
+	UPoseSearchDatabase* GetTurnCycleCompanion() const { return CurrentTurnCycleCompanion.Get(); }
+	int32 GetThreadSafeCandidateCount() const { return ThreadSafeCandidateCount; }
 	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
 	FString GetPivotTraceSummary() const;
 	void SetFlowTraceEnabled(bool bEnabled);
+	void SetMovingTurnTraceEnabled(bool bEnabled) { bMovingTurnTraceEnabled = bEnabled; }
 	const FProject_JAnimationFlowWork& GetFlowTraceWork() const { return FlowTraceWork; }
 	uint64 GetReselectRequestForTrace() const { return PendingReselectRevision; }
 	bool IsReselectPendingForTrace() const { return bForceMotionMatchingReselect; }
@@ -80,7 +84,9 @@ private:
 	friend class FProjectJMotionMatchingSearchExecutionTest;
 	friend class FProjectJMotionMatchingCrowdPolicyTest;
 	friend class FProjectJMotionMatchingNestedGraphTest;
+	friend class FProjectJLocomotionCandidateContinuityTest;
 	void LinkNativeGraph();
+	void ConsumeQueuedGameThreadData();
 	void ApplySelectedDatabaseToNativeNode();
 	void ApplyMotionMatchingSearchPolicy();
 	void ForceReselectMotionMatchingNodes();
@@ -109,7 +115,15 @@ private:
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
+	uint64 PublishedSnapshotRevision = 0;
+	uint64 ConsumedSnapshotRevision = 0;
+	int32 ThreadSafeCandidateCount = 0;
 	bool bFlowTraceEnabled = false;
+	bool bMovingTurnTraceEnabled = false;
+#if !UE_BUILD_SHIPPING
+	FName LastMovingTurnTraceDatabase;
+	FName LastMovingTurnTraceAnimation;
+#endif
 	/** A linked layer may re-enter this proxy while its outer graph is still updating. */
 	bool bUpdatingMotionMatchingGraph = false;
 	FProject_JAnimationFlowWork FlowTraceWork;
@@ -120,14 +134,18 @@ private:
 	uint64 ReselectSerial = 0;
 	uint64 PendingReselectRevision = 0;
 	bool bReselectFromPoseHistory = false;
+	bool bRetireTurnContinuingPose = false;
 	bool bLastPublishedForceReselect = false;
 	FNodeReselectState NativeReselectState;
 	TMap<int32, FNodeReselectState> GeneratedReselectStates;
 
 	TObjectPtr<UPoseSearchDatabase> CurrentActiveDatabase = nullptr;
 	TObjectPtr<UPoseSearchDatabase> AppliedDatabase = nullptr;
+	TObjectPtr<UPoseSearchDatabase> CurrentTurnCycleCompanion = nullptr;
+	TObjectPtr<UPoseSearchDatabase> AppliedTurnCycleCompanion = nullptr;
 	/** Database last pushed directly into each generated AnimBP Motion Matching node. */
 	TMap<int32, TObjectPtr<UPoseSearchDatabase>> AppliedGeneratedDatabases;
+	TMap<int32, TObjectPtr<UPoseSearchDatabase>> AppliedGeneratedCompanions;
 	const IAnimClassInterface* CachedGeneratedMotionMatchingAnimClass = nullptr;
 	TArray<int32> CachedGeneratedMotionMatchingNodeIndices;
 	TMap<int32, float> DefaultSearchThrottleTimes;
