@@ -51,6 +51,13 @@ bool FProjectJStateControllerRuntimeTest::RunTest(const FString&)
 	Intent.bHasMoveInput = true;
 	Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::LocomotionLoop, Intent);
 	TestFalse(TEXT("새 이동 입력은 Stop을 다시 활성화한다"), Runtime.IsGroundStopConsumed());
+	Runtime.SetFallbackHold(EProject_JStateControllerPresentationState::LocomotionLoop, 1.1);
+	TestEqual(TEXT("Held input at a reversal minimum does not synthesize Stop"),
+		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::IdleLoop, Intent),
+		EProject_JStateControllerPresentationState::IdleLoop);
+	TestEqual(TEXT("An explicit Stop owner still preempts held input"),
+		Runtime.PrepareDesiredState(EProject_JStateControllerPresentationState::TransitionToIdle, Intent),
+		EProject_JStateControllerPresentationState::TransitionToIdle);
 
 	Intent.bHasMoveInput = false;
 	Intent.bFullBodyActionOrRecentExit = true;

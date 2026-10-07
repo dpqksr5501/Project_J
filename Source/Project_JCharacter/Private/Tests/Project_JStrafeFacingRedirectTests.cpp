@@ -136,6 +136,55 @@ bool FProjectJStrafeFacingTrajectoryTest::RunTest(const FString&)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeConsumedInputTest, "ProjectJ.StrafeFacingRedirect.ConsumedInputAtBrakingMinimum",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJStrafeConsumedInputTest::RunTest(const FString&)
+{
+	FFacingWorld W;
+	auto* State = W.Player->GetLocomotionAnimStateComponent();
+	auto* Movement = W.Player->GetCharacterMovement();
+	State->RefreshCachedReferences();
+	for (const float Speed : {8.f, 0.f, 9.99f})
+	{
+		State->SetMoveInput(FVector2D(0, 1));
+		W.Player->AddMovementInput(FVector::ForwardVector);
+		W.Player->ConsumeMovementInputVector();
+		Movement->Velocity = FVector(Speed, 0, 0);
+		TestTrue(TEXT("Repro uses consumed pending input"), W.Player->GetPendingMovementInputVector().IsNearlyZero());
+		TestTrue(TEXT("Raw local input remains held after consumption"), State->HasHeldLocalMoveInput());
+		W.Player->ApplyTestRotationMode(true);
+		TestTrue(TEXT("CMC facing owner survives the sub-10 braking minimum"), Movement->bUseControllerDesiredRotation);
+		for (const float Yaw : {-170.f, 170.f})
+		{
+			W.Player->SetActorRotation(FRotator(0, Yaw, 0));
+			Movement->PhysicsRotation(1.f / 120);
+			const float Delta = FMath::FindDeltaAngleDegrees(Yaw, W.Player->GetActorRotation().Yaw);
+			TestTrue(TEXT("Physical yaw still catches up at the configured CMC rate"),
+				FMath::IsNearlyEqual(FMath::Abs(Delta), 3.f, .01f) && Delta * Yaw < 0);
+		}
+		State->ClearMoveInput();
+		W.Player->ApplyTestRotationMode(true);
+		TestFalse(TEXT("Release clears raw input without waiting for animation update"), State->HasHeldLocalMoveInput());
+		TestFalse(TEXT("Released low-speed character gives facing back to idle TIP"), Movement->bUseControllerDesiredRotation);
+	}
+	State->SetMoveInput(FVector2D(0, .01f)); W.Player->ApplyTestRotationMode(true);
+	TestFalse(TEXT("Input below the dead zone cannot claim idle rotation"), Movement->bUseControllerDesiredRotation);
+	State->SetMoveInput(FVector2D(0, 1));
+	W.Combat->bUseCombatRotationMode = false; W.Player->ApplyTestRotationMode(true);
+	TestFalse(TEXT("Profile opt-out still preempts held input"), Movement->bUseControllerDesiredRotation);
+	W.Combat->bUseCombatRotationMode = true;
+	Movement->SetMovementMode(MOVE_Falling); W.Player->ApplyTestRotationMode(true);
+	TestFalse(TEXT("Air retains its separate rotation owner"), Movement->bUseControllerDesiredRotation);
+	Movement->SetMovementMode(MOVE_Walking);
+	W.Player->ApplyTestRotationMode(false);
+	TestFalse(TEXT("OTM does not claim controller facing"), Movement->bUseControllerDesiredRotation);
+	TestTrue(TEXT("OTM retains orient-to-movement"), Movement->bOrientRotationToMovement);
+	W.Controller->UnPossess(); W.Player->ApplyTestRotationMode(true);
+	TestFalse(TEXT("An unpossessed character cannot use cached local input"), State->HasHeldLocalMoveInput());
+	TestFalse(TEXT("No local input is applied to the non-local rotation owner"), Movement->bUseControllerDesiredRotation);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeFacingSelectionTest, "ProjectJ.StrafeFacingRedirect.SelectionAndLifecycle",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
@@ -178,8 +227,12 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	W.Player->SetActorRotation(FRotator(0.0f, 15.0f, 0.0f));
 	RefreshTurn();
 	TestEqual(TEXT("Exit hysteresis holds the turn below the entry threshold"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
+	S->SetMoveInput(FVector2D(0, 1));
 	for (float Speed : {179.0f, 80.0f, 0.0f, 100.0f})
 	{
+		W.Player->ConsumeMovementInputVector();
+		W.Player->GetCharacterMovement()->Velocity = FVector(Speed, 0, 0);
+		W.Player->ApplyTestRotationMode(true);
 		S->KinematicContext.GroundSpeed = Speed;
 		S->KinematicContext.HorizontalVelocity = FVector(Speed, 0, 0);
 		D.bIsMoving = Speed > 10;
@@ -192,7 +245,10 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	D.bIsMoving = true;
 	W.Player->SetActorRotation(FRotator(0.0f, 4.0f, 0.0f));
 	RefreshTurn();
-	TestEqual(TEXT("Facing alignment returns to Cycle"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle);
+	TestEqual(TEXT("Facing alone cannot end a still-reversing travel correction"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Turn);
+	S->KinematicContext.HorizontalVelocity = FVector(300, 0, 0);
+	RefreshTurn();
+	TestEqual(TEXT("Facing and travel alignment return to Cycle"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Cycle);
 	W.Player->SetActorRotation(FRotator(0.0f, 180.0f, 0.0f));
 	D.bIsStarting = true; TestEqual(TEXT("Start retains its direct owner"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Start); D.bIsStarting = false;
 	D.bIsPivoting = true; TestEqual(TEXT("Pivot retains its direct owner"), S->ResolvePhaseFamily(D), EProject_JLocomotionPhaseFamily::Pivot); D.bIsPivoting = false;
@@ -211,6 +267,7 @@ bool FProjectJStrafeFacingSelectionTest::RunTest(const FString&)
 	W.Combat->StrafeFacingRedirectExitAngle = std::numeric_limits<float>::quiet_NaN();
 	S->MovingTurnPolicy.Reset();
 	W.Controller->SetControlRotation(FRotator(0, 180, 0));
+	S->KinematicContext.HorizontalVelocity = FVector(-300, 0, 0);
 	S->KinematicContext.MoveWorldDirection = FVector(-1, 0, 0); RefreshTurn();
 	W.Controller->SetControlRotation(FRotator::ZeroRotator);
 	S->KinematicContext.MoveWorldDirection = FVector(1, 0, 0); RefreshTurn();

@@ -12,6 +12,7 @@
 #include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationClock.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
+#include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
@@ -762,6 +763,7 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 
 	// Value-only visual rotation contract, produced on GT after one-shot ownership.
+	FProject_JTurnRequestSample TurnRequest;
 	float GeneralTurnRecentHeading = 0;
 	float GeneralTurnWindowElapsed = 0;
 	float GeneralTurnMoveYawRate = 0, GeneralTurnFacingYawRate = 0;
@@ -936,6 +938,8 @@ public:
 
 	/** Small native-only snapshot used by the MMO animation profiling command. */
 	FProject_JAnimMotionMatchingThreadSafeData GetMotionMatchingDebugSnapshot() const;
+	/** GT-only completed evaluation; never forces synchronization with parallel evaluation. */
+	const FProject_JTurnSelectionFeedback& GetCompletedTurnFeedback() const { check(IsInGameThread()); return CompletedTurnFeedback; }
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	FTransformTrajectory GetThreadSafeTrajectory() const;
@@ -1319,6 +1323,7 @@ protected:
 	void UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const;
 	void UpdateGeneralTurnData(FProject_JAnimThreadSafeData& Data);
 	FProject_JGeneralTurnPolicy GeneralTurnPolicy;
+	FProject_JTurnSelectionFeedback CompletedTurnFeedback;
 	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
 	void RecordAnimationFlowEvaluation();
 	void RecordLocomotionContinuityEvaluation();

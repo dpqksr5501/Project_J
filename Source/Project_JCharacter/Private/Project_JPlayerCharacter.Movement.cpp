@@ -39,8 +39,13 @@ void AProject_JPlayerCharacter::ApplyCombatRotationMode(bool bEnableCombatRotati
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	const bool bIsInAir = MoveComp && MoveComp->IsFalling();
 	const bool bShouldUseCombatRotation = bEnableCombatRotation && ShouldUseCombatRotationMode();
+	// Pending input is a consumable CMC accumulator, not a held-key state.
+	// Keep the same physical facing owner through the braking minimum while
+	// raw local input is held; Completed/Canceled clears this state immediately.
+	const bool bHeldLocalMoveInput = LocomotionAnimStateComponent &&
+		LocomotionAnimStateComponent->HasHeldLocalMoveInput();
 	const bool bIsMovingInCombat = bShouldUseCombatRotation &&
-		(GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
+		(bHeldLocalMoveInput || GetPendingMovementInputVector().SizeSquared() > 0.001f || GetVelocity().SizeSquared2D() > 100.0f);
 
 	const bool bDesiredControllerRotation = bIsMovingInCombat && !bIsInAir;
 	const bool bRotationModeChanged = bUseControllerRotationYaw || (MoveComp &&

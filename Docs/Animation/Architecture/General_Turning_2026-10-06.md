@@ -176,3 +176,7 @@ PSS/PSD/normalization/Asset Set 총 13개 관련 파일과 사용자 로그는 �
 사용자가 Combat Run TurnRedirect를 원래 `PSD_Player_Locomotion/PSD_Combat_Run_Turn`으로 직접 연결하고 플레이 확인 후 한글 커밋을 요청했다. 앞서 실패한 AuthoredPlayback/ProductionData/ProductionCandidates/ProductionSchema와 읽기 전용 CombatTurnLink를 같은 저장 데이터로 재실행해 **5/5 성공**했다. 기존 180도 후보와 continuing 재생, 두 후보의 schema/normalization 호환성, 실제 Combat Run 전용 PSS 연결을 확인했다. 이 재검증에서는 코드·에셋을 수정하거나 저장하지 않았다. 이전 누락 상태의 보고서는 `CombatTurnLinkBeforeUserRestore.txt`에 보존했다.
 
 근거: `Saved/Validation/CommitCheckpoint_20261007/Tests/index.json`, `AuthoredPlayback.txt`, `CombatTurnLink.txt`, `ProductionSchema.txt`. 새 사용자 로그는 `UserBefore.log`에 보존했다. Strafe 빠른 180도 근처 회전에서 Diamond 등의 선택이 남는 사용자 관측은 이 커밋 이후 별도 구조 토의 대상으로 남긴다.
+
+## 2026-10-07: 큰 회전으로의 연결과 감속 수명
+
+후속 구현과 검증은 [일반 회전과 180도 회전의 전환](Turn_Handoff_2026-10-07.md)에 기록했다. 두 회전 판정은 같은 물리 표본을 사용한다. 최종 구조는 OTM/Strafe별 프로필과 Tracking/Preparing/Active 상태로 큰 회전의 진입·유지·종료를 판단하며, 이미 활성화된 일반 회전의 연결도 상태로 제한한다. 준비 중에는 Cycle을 유지하고 승인된 큰 회전의 감속 중에는 이동 의도를 보존한다. 실제 입력 해제와 중단 조건은 계속 우선한다. Editor/Game 빌드, 자동화 36개, 실제 CMC 57개 장면 검증이 통과했으며 화면 테스트의 범위와 남은 확인 사항은 연결 문서에 구분한다.

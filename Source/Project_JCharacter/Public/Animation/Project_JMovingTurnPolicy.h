@@ -1,134 +1,216 @@
 #pragma once
 
 #include "Project_JLocomotionAnimTypes.h"
+#include "Animation/Project_JTurnEventSettings.h"
 
-/** Value-only lifetime for a forward-running 180-degree Turn search window.
- * Does not own movement, animation time, a frozen snapshot, or a new tick. */
+/** A forward-running correction event, shared by OTM and Strafe.
+ * Keeps a qualified running origin through braking. Never owns CMC yaw or clip time. */
 class FProject_JMovingTurnPolicy
 {
 public:
 	struct FInput
 	{
-		bool bEligible = false;
-		// Speed/old velocity qualify a new event, never the same event's braking.
-		bool bEntryQualified = true;
+		bool bEligible = false, bEntryQualified = true;
 		EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-		float ActorYaw = 0.0f;
-		float TargetFacingYaw = 0.0f;
-		float VelocityYaw = 0.0f;
-		float MoveYaw = 0.0f;
-		float EntryAngle = 150.0f;
-		float ExitAngle = 15.0f;
-		double NowSeconds = 0.0;
+		float ActorYaw = 0, TargetFacingYaw = 0, VelocityYaw = 0, MoveYaw = 0;
+		float EntryAngle = 150, ExitAngle = 15;
+		double NowSeconds = 0;
+		bool bHasVisualFacing = false;
+		float VisualFacingYaw = 0;
+		uint64 SelectionFrame = 0;
+		bool bSelectedTurn = false, bSelectedCycle = false;
 	};
-
+	enum class EStage : uint8 { Observing, Tracking, Preparing, Active };
+	enum class EDemand : uint8 { None, TravelRedirect, FacingRecovery };
 	void Reset() { *this = FProject_JMovingTurnPolicy(); }
 
-	bool Update(const FInput& Input)
+	bool Update(const FInput& I, const FProject_JTurnEventSettings& Settings = {})
 	{
-		const bool bModeChanged = bHasMode && RotationMode != Input.RotationMode;
-		RotationMode = Input.RotationMode;
-		bHasMode = true;
-		if (bModeChanged || !Input.bEligible || !FMath::IsFinite(Input.NowSeconds) ||
-			!FMath::IsFinite(Input.ActorYaw) || !FMath::IsFinite(Input.TargetFacingYaw) ||
-			!FMath::IsFinite(Input.VelocityYaw) || !FMath::IsFinite(Input.MoveYaw))
+		const auto S = Settings.Resolved();
+		const bool bModeChanged = bHasMode && Mode != I.RotationMode;
+		Mode = I.RotationMode; bHasMode = true;
+		if (bModeChanged) return Cancel(TEXT("ModeChanged"));
+		if (!I.bEligible) return Cancel(TEXT("Ineligible"));
+		if (!FMath::IsFinite(I.NowSeconds) || !FMath::IsFinite(I.ActorYaw) || !FMath::IsFinite(I.TargetFacingYaw) ||
+			!FMath::IsFinite(I.VelocityYaw) || !FMath::IsFinite(I.MoveYaw) ||
+			(I.bHasVisualFacing && !FMath::IsFinite(I.VisualFacingYaw))) return Cancel(TEXT("InvalidSample"));
+		if (bHasTime && I.NowSeconds < LastNow)
 		{
-			// A mode/one-shot handoff is not a fresh running turn. Re-arm only
-			// after observing a coherent aligned running context in that owner.
-			bActive = false;
-			bArmed = false;
-			bAllowContinuation = false;
-			return false;
+			bHasTime = false; LastSelectionFrame = 0;
+			return Cancel(TEXT("ClockReversed"));
+		}
+		LastNow = I.NowSeconds; bHasTime = true;
+		const float Facing = Angle(I.ActorYaw, I.TargetFacingYaw);
+		RemainingFacing = I.bHasVisualFacing ? Angle(I.VisualFacingYaw, I.TargetFacingYaw) : Facing;
+		PathError = Angle(I.VelocityYaw, I.MoveYaw);
+		const float Entry = SafeEntry(I.EntryAngle);
+		const float Exit = FMath::Clamp(FMath::IsFinite(I.ExitAngle) ? I.ExitAngle : S.CompletionFacingAngle,
+			0.f, FMath::Min(S.ForwardConeAngle, S.MinimumRemainingFacingAngle - 1.f));
+		const bool bForwardRequest = Angle(I.MoveYaw, I.TargetFacingYaw) <= S.ForwardConeAngle;
+		const bool bForwardTravel = Angle(I.VelocityYaw, I.ActorYaw) <= S.ForwardConeAngle;
+		// Small residual visual offsets are steering's normal recovery range.
+		// Do not retain a restricted turn pool until root yaw is exactly zero.
+		const bool bCorrectionResolved = PathError <= S.SettledPathAngle &&
+			(RemainingFacing <= Exit || (Facing <= Exit && RemainingFacing < S.MinimumRemainingFacingAngle));
+		const bool bFreshSelection = I.SelectionFrame > LastSelectionFrame;
+		if (bFreshSelection) LastSelectionFrame = I.SelectionFrame;
+		if (bAllowContinuation && (Facing > S.RearmFacingAngle || !bForwardRequest ||
+			Angle(CompletedTargetYaw, I.TargetFacingYaw) > S.ContinuationTargetAngle ||
+			(bFreshSelection && I.bSelectedCycle))) bAllowContinuation = false;
+		if (!bForwardRequest) return Cancel(TEXT("NewTravelNotForward"));
+
+		if (Stage != EStage::Observing)
+		{
+			// An unwrapped request records the same correction across +/-180.
+			// Small mouse jitter is allowed; a meaningful retreat starts another event.
+			RequestedSweep += FMath::FindDeltaAngleDegrees(LastMoveYaw, I.MoveYaw);
+			LastMoveYaw = I.MoveYaw;
+			if (Direction == 0 && FMath::Abs(RequestedSweep) > UE_SMALL_NUMBER) Direction = FMath::Sign(RequestedSweep);
+			const float Progress = RequestedSweep * Direction;
+			PeakProgress = FMath::Max(PeakProgress, Progress);
+			if (Progress < -S.DirectionRetreatAngle || PeakProgress - Progress > S.DirectionRetreatAngle)
+				return Cancel(TEXT("DirectionReversed"));
+			if (PeakProgress > S.MaximumRequestedSweep) return Cancel(TEXT("OverRotation"));
+			if (Stage == EStage::Active)
+			{
+				if (I.NowSeconds - StartedAt >= S.ActiveWatchdogSeconds) return Cancel(TEXT("Timeout"));
+				if (bFreshSelection && I.bSelectedTurn) bTurnUsed = true;
+				if (bTurnUsed && bFreshSelection && I.bSelectedCycle) return Complete(I, false, TEXT("CycleHandoff"));
+				if (bCorrectionResolved) return Complete(I, true, TEXT("Aligned"));
+				Reason = TEXT("Active"); return true;
+			}
+			if (I.NowSeconds - PreparedAt >= S.PreparationWatchdogSeconds) return Cancel(TEXT("PreparationTimeout"));
+			if (Stage == EStage::Tracking)
+			{
+				if (PathError >= S.PreparationPathAngle || RemainingFacing >= S.PreparationFacingAngle)
+				{
+					Stage = EStage::Preparing; PreparedAt = I.NowSeconds; bAllowContinuation = false;
+					Demand = PathError >= S.PreparationPathAngle ? EDemand::TravelRedirect : EDemand::FacingRecovery;
+				}
+				else
+				{
+					if (!I.bEntryQualified) return Cancel(TEXT("EntryUnqualified"));
+					if (PathError <= S.SettledPathAngle && RemainingFacing <= Exit)
+						return Complete(I, false, TEXT("CorrectionResolved"));
+					Reason = TEXT("Tracking"); return false;
+				}
+			}
+			if (bCorrectionResolved) return Complete(I, false, TEXT("CorrectionResolved"));
+			if (Progress >= Entry && RemainingFacing >= S.MinimumRemainingFacingAngle)
+				return Enter(I, TEXT("PreparedEnter"));
+			Reason = TEXT("Preparing"); return false;
 		}
 
-		const float FacingAngle = Angle(Input.ActorYaw, Input.TargetFacingYaw);
-		const float ExitAngle = FMath::IsFinite(Input.ExitAngle) ? FMath::Clamp(Input.ExitAngle, 0.0f, 45.0f) : 15.0f;
-		if (bAllowContinuation && (FacingAngle > RearmAngle ||
-			Angle(EntryTargetYaw, Input.TargetFacingYaw) > 60.0f ||
-			Angle(Input.MoveYaw, Input.TargetFacingYaw) > 45.0f)) bAllowContinuation = false;
-		if (bActive)
-		{
-			if (Input.NowSeconds < StartedAt || Input.NowSeconds - StartedAt >= MaxDurationSeconds ||
-				FacingAngle <= ExitAngle || Angle(EntryTargetYaw, Input.TargetFacingYaw) > 60.0f ||
-				Angle(Input.MoveYaw, Input.TargetFacingYaw) > 45.0f)
-			{
-				bAllowContinuation = Input.NowSeconds >= StartedAt && Input.NowSeconds - StartedAt < MaxDurationSeconds &&
-					FacingAngle <= ExitAngle && Angle(EntryTargetYaw, Input.TargetFacingYaw) <= 60.0f &&
-					Angle(Input.MoveYaw, Input.TargetFacingYaw) <= 45.0f;
-				bActive = false;
-				bArmed = false;
-				NextEntryTime = Input.NowSeconds + CooldownSeconds;
-			}
-			else
-			{
-				// Reversal of velocity is an entry fact, not a condition that must
-				// stay true while the character finishes the same moving turn.
-				return true;
-			}
-		}
-
-		if (Input.bEntryQualified && FacingAngle <= RearmAngle)
+		// Re-arm only from a coherent physical run. Side/backward Strafe never
+		// lends its origin to a forward authored turn or a facing recovery.
+		if (I.bEntryQualified && Facing <= S.RearmFacingAngle && bForwardTravel && bForwardRequest)
 		{
 			bArmed = true;
+			// A transient velocity excursion opposite to the new request must not
+			// move the origin backward and inflate an ordinary 135 into a 180 event.
+			const bool bOriginFollowingRequest = !bHasOrigin ||
+				FMath::FindDeltaAngleDegrees(OriginTravelYaw, I.MoveYaw) *
+				FMath::FindDeltaAngleDegrees(OriginTravelYaw, I.VelocityYaw) >= 0;
+			if (bOriginFollowingRequest && (!bHasOrigin || (PathError <= S.SettledPathAngle && RemainingFacing <= Exit)))
+			{
+				bHasOrigin = true; OriginTravelYaw = I.VelocityYaw;
+			}
 		}
-		const float EntryAngle = FMath::IsFinite(Input.EntryAngle) ? FMath::Clamp(Input.EntryAngle, 150.0f, 180.0f) : 150.0f;
-		if (!Input.bEntryQualified || !bArmed || Input.NowSeconds < NextEntryTime || FacingAngle < EntryAngle ||
-			Angle(Input.VelocityYaw, Input.MoveYaw) < 135.0f ||
-			Angle(Input.VelocityYaw, Input.ActorYaw) > 45.0f ||
-			Angle(Input.MoveYaw, Input.TargetFacingYaw) > 45.0f)
+		// Retain the proven immediate-reversal path; preparation adds admission
+		// after its original speed and instantaneous angular conditions diverge.
+		if (I.bEntryQualified && bArmed && Facing >= Entry && PathError >= S.ImmediatePathAngle &&
+			bForwardTravel && bForwardRequest)
 		{
-			return false;
+			OriginTravelYaw = I.VelocityYaw; bHasOrigin = true;
+			BeginEvent(I, EDemand::TravelRedirect);
+			return Enter(I, TEXT("Enter"));
 		}
-		bActive = true;
-		bAllowContinuation = false;
-		bArmed = false;
-		StartedAt = Input.NowSeconds;
-		EntryTargetYaw = Input.TargetFacingYaw;
-		return true;
+		if (bArmed && bHasOrigin && bForwardRequest && (PathError > S.SettledPathAngle || RemainingFacing > Exit))
+		{
+			const bool bStrongDemand = PathError >= S.PreparationPathAngle || RemainingFacing >= S.PreparationFacingAngle;
+			BeginEvent(I, PathError >= S.PreparationPathAngle ? EDemand::TravelRedirect : EDemand::FacingRecovery, !bStrongDemand);
+			if (!bStrongDemand)
+			{
+				if (!I.bEntryQualified) return Cancel(TEXT("EntryUnqualified"));
+				Reason = TEXT("Tracking"); return false;
+			}
+			if (PeakProgress >= Entry && RemainingFacing >= S.MinimumRemainingFacingAngle) return Enter(I, TEXT("PreparedEnter"));
+			Reason = TEXT("Preparing"); return false;
+		}
+		// Braking can carry an event already being prepared, but an ordinary
+		// low-speed/blocked run cannot retain a stale running origin indefinitely.
+		if (!I.bEntryQualified) return Cancel(TEXT("EntryUnqualified"));
+		else if (!bArmed && Facing > S.RearmFacingAngle) Reason = TEXT("NotArmed");
+		else if (Facing < Entry) Reason = TEXT("FacingBelowEntry");
+		else if (PathError < S.ImmediatePathAngle) Reason = TEXT("PathBelowEntry");
+		else if (!bForwardTravel) Reason = TEXT("OldTravelNotForward");
+		else Reason = TEXT("NewTravelNotForward");
+		return false;
 	}
 
-	bool IsActive() const { return bActive; }
+	bool IsActive() const { return Stage == EStage::Active; }
 	bool IsArmed() const { return bArmed; }
+	bool IsPreparing() const { return Stage == EStage::Preparing; }
+	EStage GetStage() const { return Stage; }
+	EDemand GetDemand() const { return Demand; }
+	float GetRequestedSweep() const { return RequestedSweep; }
+	float GetRemainingFacing() const { return RemainingFacing; }
+	const TCHAR* GetLastUpdateReason() const { return Reason; }
 	bool AllowsCompletedTurnContinuation() const { return bAllowContinuation; }
 
-	/** Read-only explanation, evaluated before Update only while tracing. */
-	const TCHAR* DescribeNextUpdate(const FInput& I) const
+	/** Existing general data can hand over while this physical event is preparing.
+	 * No fixed grace interval and no permission for fresh general admission. */
+	bool AllowsGeneralTurnHandoff(const FInput& I, const FProject_JTurnEventSettings& Settings = {}) const
 	{
-		if (bHasMode && RotationMode != I.RotationMode) return TEXT("ModeChanged");
-		if (!I.bEligible) return TEXT("Ineligible");
-		if (!FMath::IsFinite(I.NowSeconds) || !FMath::IsFinite(I.ActorYaw) || !FMath::IsFinite(I.TargetFacingYaw) ||
-			!FMath::IsFinite(I.VelocityYaw) || !FMath::IsFinite(I.MoveYaw)) return TEXT("InvalidSample");
-		const float Facing = Angle(I.ActorYaw, I.TargetFacingYaw);
-		if (bActive)
-		{
-			if (I.NowSeconds < StartedAt) return TEXT("ClockReversed");
-			if (I.NowSeconds - StartedAt >= MaxDurationSeconds) return TEXT("Timeout");
-			if (Facing <= (FMath::IsFinite(I.ExitAngle) ? FMath::Clamp(I.ExitAngle, 0.0f, 45.0f) : 15.0f)) return TEXT("Aligned");
-			if (Angle(EntryTargetYaw, I.TargetFacingYaw) > 60.0f) return TEXT("TargetChanged");
-			if (Angle(I.MoveYaw, I.TargetFacingYaw) > 45.0f) return TEXT("MoveFacingChanged");
-			return TEXT("Active");
-		}
-		if (!I.bEntryQualified) return TEXT("EntryUnqualified");
-		if (!bArmed && Facing > RearmAngle) return TEXT("NotArmed");
-		if (I.NowSeconds < NextEntryTime) return TEXT("Cooldown");
-		if (Facing < (FMath::IsFinite(I.EntryAngle) ? FMath::Clamp(I.EntryAngle, 150.0f, 180.0f) : 150.0f)) return TEXT("FacingBelowEntry");
-		if (Angle(I.VelocityYaw, I.MoveYaw) < 135.0f) return TEXT("PathBelow135");
-		if (Angle(I.VelocityYaw, I.ActorYaw) > 45.0f) return TEXT("OldTravelNotForward");
-		if (Angle(I.MoveYaw, I.TargetFacingYaw) > 45.0f) return TEXT("NewTravelNotForward");
-		return TEXT("Enter");
+		const auto S = Settings.Resolved();
+		return Stage == EStage::Preparing && I.bEligible && bHasOrigin &&
+			Mode == I.RotationMode && FMath::IsFinite(I.MoveYaw) && FMath::IsFinite(I.TargetFacingYaw) &&
+			Angle(I.MoveYaw, I.TargetFacingYaw) <= S.ForwardConeAngle &&
+			RemainingFacing >= S.MinimumRemainingFacingAngle &&
+			PeakProgress >= SafeEntry(I.EntryAngle) - S.SettledPathAngle;
 	}
-
+	/** Simulate on a value copy: diagnostics and the producer use identical rules. */
+	const TCHAR* DescribeNextUpdate(const FInput& I, const FProject_JTurnEventSettings& S = {}) const
+	{
+		auto Copy = *this; Copy.Update(I, S); return Copy.Reason;
+	}
 private:
-	static float Angle(float From, float To) { return FMath::Abs(FMath::FindDeltaAngleDegrees(From, To)); }
-	static constexpr float RearmAngle = 90.0f;
-	static constexpr double MaxDurationSeconds = 0.75;
-	static constexpr double CooldownSeconds = 0.10;
-	EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
-	double StartedAt = 0.0;
-	double NextEntryTime = 0.0;
-	float EntryTargetYaw = 0.0f;
-	bool bHasMode = false;
-	bool bArmed = false;
-	bool bActive = false;
-	bool bAllowContinuation = false;
+	static float Angle(float A, float B) { return FMath::Abs(FMath::FindDeltaAngleDegrees(A, B)); }
+	static float SafeEntry(float A) { return FMath::IsFinite(A) ? FMath::Clamp(A, 90.f, 180.f) : 150.f; }
+	void BeginEvent(const FInput& I, EDemand InDemand, bool bTracking = false)
+	{
+		Stage = bTracking ? EStage::Tracking : EStage::Preparing;
+		Demand = bTracking ? EDemand::None : InDemand; PreparedAt = I.NowSeconds;
+		RequestedSweep = FMath::FindDeltaAngleDegrees(OriginTravelYaw, I.MoveYaw);
+		Direction = FMath::Sign(RequestedSweep); LastMoveYaw = I.MoveYaw;
+		PeakProgress = FMath::Abs(RequestedSweep);
+		if (!bTracking) bAllowContinuation = false;
+	}
+	bool Enter(const FInput& I, const TCHAR* InReason)
+	{
+		Stage = EStage::Active; StartedAt = I.NowSeconds;
+		bArmed = false; bTurnUsed = false; Reason = InReason; return true;
+	}
+	bool Cancel(const TCHAR* InReason)
+	{
+		Stage = EStage::Observing; Demand = EDemand::None;
+		bArmed = bHasOrigin = bAllowContinuation = bTurnUsed = false;
+		RequestedSweep = PeakProgress = 0; Reason = InReason; return false;
+	}
+	bool Complete(const FInput& I, bool bContinue, const TCHAR* InReason)
+	{
+		Cancel(InReason); bAllowContinuation = bContinue;
+		CompletedTargetYaw = I.TargetFacingYaw;
+		return false;
+	}
+	EStage Stage = EStage::Observing;
+	EDemand Demand = EDemand::None;
+	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
+	bool bHasMode = false, bHasTime = false, bArmed = false, bHasOrigin = false;
+	bool bAllowContinuation = false, bTurnUsed = false;
+	double LastNow = 0, PreparedAt = 0, StartedAt = 0;
+	uint64 LastSelectionFrame = 0;
+	float OriginTravelYaw = 0, LastMoveYaw = 0, RequestedSweep = 0, Direction = 0, PeakProgress = 0;
+	float RemainingFacing = 0, PathError = 0, CompletedTargetYaw = 0;
+	const TCHAR* Reason = TEXT("NoSample");
 };

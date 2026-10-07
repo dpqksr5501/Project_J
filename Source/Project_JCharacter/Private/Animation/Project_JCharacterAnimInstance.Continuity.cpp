@@ -5,6 +5,7 @@
 #include "Animation/Project_JMotionMatchingCVars.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Engine/World.h"
 
 namespace
 {
@@ -100,15 +101,17 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 		bCandidateDataUnavailable = !Set || !Set->FindTurnCycleCompanion(CandidateContext, Set->RunDatabases.Cycle);
 		Input.bEligible = !bCandidateDataUnavailable;
 	}
-	Input.Mode = Data.LocomotionContext.RotationMode;
-	Input.Now = AnimationClock.Seconds;
-	Input.MoveYaw = Move.Rotation().Yaw;
-	// Strafe DesiredFacingYaw is a one-shot travel target, not camera-facing.
-	Input.FacingYaw = Input.Mode == EProject_JLocomotionRotationMode::Strafe && OwningCharacter ?
-		OwningCharacter->GetControlRotation().Yaw : Input.MoveYaw;
-	Input.ActorYaw = OwningCharacter ? OwningCharacter->GetActorRotation().Yaw : 0;
-	Input.VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;
-	Input.Speed = Data.Movement.GroundSpeed;
+	const auto& Request = Data.TurnRequest;
+	Input.bEligible &= Request.IsUsable(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0,
+		Data.LocomotionContext.RotationMode) && !Request.bAcuteActive;
+	Input.Mode = Request.Mode;
+	Input.Now = Request.Seconds;
+	Input.MoveYaw = Request.MoveYaw;
+	Input.FacingYaw = Request.FacingYaw;
+	Input.ActorYaw = Request.ActorYaw;
+	Input.VelocityYaw = Request.VelocityYaw;
+	Input.Speed = Request.Speed;
+	Input.bAcuteApproach = Request.bAcuteApproach;
 	// During braking there is no meaningful zero-velocity heading to reject.
 	if (Input.Speed <= 50) Input.VelocityYaw = Input.MoveYaw;
 	const auto& Result = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();

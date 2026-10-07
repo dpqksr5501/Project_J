@@ -165,10 +165,13 @@ bool FProjectJMovingTurnTraceTest::RunTest(const FString&)
 	{
 		TestEqual(TEXT("Diagnosis reports the actual upcoming gate"), FString(Observed.DescribeNextUpdate(I)), FString(Expected));
 		TestEqual(TEXT("Reading diagnostics does not change the next decision"), Observed.Update(I), Baseline.Update(I));
+		TestEqual(TEXT("Published diagnosis uses the completed update"), FString(Observed.GetLastUpdateReason()), FString(Expected));
 		TestEqual(TEXT("Reading diagnostics does not change arming"), Observed.IsArmed(), Baseline.IsArmed());
 	};
 	Step(TEXT("FacingBelowEntry"));
-	I.TargetFacingYaw = 180; Step(TEXT("PathBelow135"));
+	I.TargetFacingYaw = 180; Step(TEXT("NewTravelNotForward"));
+	I.TargetFacingYaw = 0; Observed.Update(I); Baseline.Update(I); // Observe the new aligned owner before another event.
+	I.TargetFacingYaw = 180;
 	I.MoveYaw = 180; Step(TEXT("Enter"));
 	I.NowSeconds = 0.1; Step(TEXT("Active"));
 	I.NowSeconds = 0.8; Step(TEXT("Timeout"));

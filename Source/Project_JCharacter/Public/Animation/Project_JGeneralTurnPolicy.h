@@ -27,6 +27,7 @@ public:
 		// competition must not close a window until GeneralTurn actually won.
 		uint64 SelectionFrame = 0;
 		bool bSelectedGeneralTurn = false, bSelectedCycle = false;
+		bool bAcuteApproach = false;
 	};
 	void Reset() { *this = FProject_JGeneralTurnPolicy(); }
 	bool Update(const FInput& I, FSettings S)
@@ -88,8 +89,12 @@ public:
 		bDynamicCycle = I.Now < DynamicUntil;
 		// The general data contains forward turns only; retain directional Cycles
 		// for lateral/backward Strafe, including while the camera rotates.
+		// Only a previously confirmed ordinary correction may bridge into the
+		// acute owner's approach. Never open a fresh forward pool for backpedal,
+		// and never keep 135-degree data searching an indefinite reversal.
+		const bool bBridge = bActive && I.bAcuteApproach;
 		if ((bStrafe && (Angle(I.MoveYaw, I.FacingYaw) > 45 ||
-			(I.Speed > 50 && Angle(I.VelocityYaw, I.ActorYaw) > 75))) || PathError >= 135)
+			(I.Speed > 50 && Angle(I.VelocityYaw, I.ActorYaw) > 75))) || (PathError >= 135 && !bBridge))
 		{
 			if (bActive) Close(I.Now, false);
 			DemandSince = -1; bContinuation = false; Reason = TEXT("TravelNotForward"); return false;
@@ -137,7 +142,7 @@ public:
 				ContinueUntil = I.Now + S.CompletionGrace;
 				Close(I.Now, true); LatchCycleHandoff(I); Reason = TEXT("Settled"); return false;
 			}
-			Reason = bQuiet ? TEXT("QuietGrace") : TEXT("Active"); return true;
+			Reason = bBridge ? TEXT("AcuteHandoff") : bQuiet ? TEXT("QuietGrace") : TEXT("Active"); return true;
 		}
 		if (I.Now < NextEntry) { DemandSince = -1; Reason = TEXT("Cooldown"); return false; }
 		if (I.Speed < S.EntrySpeed) { DemandSince = -1; Reason = TEXT("EntrySpeed"); return false; }

@@ -26,13 +26,16 @@ struct FProject_JLocomotionContinuityTraceKey
 	bool bInput = false;
 	bool bOverride = false;
 	bool bContinuation = false;
+	bool bAcuteApproach = false;
+	FName AcuteReason;
 	bool operator==(const FProject_JLocomotionContinuityTraceKey& Other) const
 	{
 		return Phase == Other.Phase && Presentation == Other.Presentation && Rotation == Other.Rotation &&
 			Candidates == Other.Candidates && SelectionRevision == Other.SelectionRevision && Gate == Other.Gate &&
 			SelectedDatabase == Other.SelectedDatabase && SelectedAnimation == Other.SelectedAnimation &&
 			ExternalAnimation == Other.ExternalAnimation && bInput == Other.bInput &&
-			bOverride == Other.bOverride && bContinuation == Other.bContinuation;
+			bOverride == Other.bOverride && bContinuation == Other.bContinuation &&
+			bAcuteApproach == Other.bAcuteApproach && AcuteReason == Other.AcuteReason;
 	}
 };
 

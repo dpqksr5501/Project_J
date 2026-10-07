@@ -7,6 +7,7 @@
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Engine/DataAsset.h"
 #include "Project_JLocomotionAnimTypes.h"
+#include "Animation/Project_JTurnEventSettings.h"
 #include "Project_JLocomotionProfile.generated.h"
 
 class UProject_JMotionMatchingAssetSet;
@@ -457,6 +458,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching")
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
+
+	/** Separate OTM/Strafe forward-turn coverage and event recovery, without a mouse-speed admission timer. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Turn Event")
+	FProject_JTurnEventSettings OTMForwardTurn;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Turn Event")
+	FProject_JTurnEventSettings StrafeForwardTurn;
 
 	/** Local visual rotation uses the same future-facing snapshot as PoseSearch. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering")

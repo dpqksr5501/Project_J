@@ -234,6 +234,12 @@ void UProject_JLocomotionAnimStateComponent::SetMoveInput(const FVector2D& InMov
 	QueueLocalMoveStartIfNeeded(bHadMoveInput, HasCachedMoveInput());
 }
 
+bool UProject_JLocomotionAnimStateComponent::HasHeldLocalMoveInput() const
+{
+	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
+	return Player && Player->IsLocallyControlled() && HasCachedMoveInput();
+}
+
 void UProject_JLocomotionAnimStateComponent::ClearMoveInput()
 {
 	const bool bHadMoveInput = HasAnyMoveInputState();

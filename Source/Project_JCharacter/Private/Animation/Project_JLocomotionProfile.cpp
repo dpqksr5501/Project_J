@@ -7,6 +7,7 @@
 #include "FloatRangeColumn.h"
 #include "ObjectChooser_Asset.h"
 #include "Validation/Project_JDataValidation.h"
+#include "UObject/UnrealType.h"
 #endif
 
 #if WITH_EDITOR
@@ -202,6 +203,22 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	const auto ValidateTurnSettings = [&](const FProject_JTurnEventSettings& Settings, const TCHAR* Mode)
+	{
+		const auto Resolved = Settings.Resolved();
+		for (TFieldIterator<FFloatProperty> It(FProject_JTurnEventSettings::StaticStruct()); It; ++It)
+		{
+			const float Value = It->GetPropertyValue_InContainer(&Settings);
+			const float Safe = It->GetPropertyValue_InContainer(&Resolved);
+			if (!FMath::IsFinite(Value) || Value != Safe)
+			{
+				Context.AddError(FText::FromString(FString::Printf(TEXT("%s ForwardTurn.%s is outside its supported range or conflicts with admission/recovery hysteresis."), Mode, *It->GetName())));
+				bHasError = true;
+			}
+		}
+	};
+	ValidateTurnSettings(OTMForwardTurn, TEXT("OTM"));
+	ValidateTurnSettings(StrafeForwardTurn, TEXT("Strafe"));
 	ValidateStateControllerLandingChoosers(
 		MotionMatchingSearchPolicy.StateControllerAnimationChooserTable,
 		Context,

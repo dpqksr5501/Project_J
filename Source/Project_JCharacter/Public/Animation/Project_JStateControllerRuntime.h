@@ -152,7 +152,7 @@ public:
 			}
 		}
 
-		if (!bGroundStopConsumed && !Intent.bFullBodyActionOrRecentExit &&
+		if (!bGroundStopConsumed && !Intent.bHasMoveInput && !Intent.bFullBodyActionOrRecentExit &&
 			!Intent.bIsInAir && !Intent.bIsMotionMatchingMoving &&
 			DesiredState == EProject_JStateControllerPresentationState::IdleLoop &&
 			(PlaybackHoldState == EProject_JStateControllerPresentationState::TransitionToLocomotion ||

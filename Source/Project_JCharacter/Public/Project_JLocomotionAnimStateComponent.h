@@ -6,6 +6,7 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingSelectionPolicy.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
+#include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JRemoteLocomotionRuntime.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
@@ -263,6 +264,8 @@ public:
 	void FinishLanding(bool bForceFinish = false);
 	void SetMoveInput(const FVector2D& InMoveInput);
 	void ClearMoveInput();
+	/** Current raw local input, including after CMC has consumed its pending vector. */
+	bool HasHeldLocalMoveInput() const;
 	/**
 	 * Records a completed Enhanced Input semantic-direction snapshot for cosmetic
 	 * Pivot selection. It never changes CharacterMovement or replication.
@@ -277,6 +280,7 @@ public:
 
 	/** Complete value-only database-selection contract authored on the game thread. */
 	const FProject_JMotionMatchingSelectionContext& GetMotionMatchingSelectionContext() const { return MotionMatchingSelectionContext; }
+	const FProject_JTurnRequestSample& GetTurnRequestSample() const { return TurnRequestSample; }
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
@@ -926,6 +930,7 @@ private:
 	bool bAppliedLandingGameplayTag = false;
 	FProject_JMotionMatchingSelectionPolicy MotionMatchingSelectionPolicy;
 	FProject_JMovingTurnPolicy MovingTurnPolicy;
+	FProject_JTurnRequestSample TurnRequestSample;
 #if !UE_BUILD_SHIPPING
 	double LastMovingTurnTraceTime = -1.0;
 	const TCHAR* LastMovingTurnTraceReason = nullptr;

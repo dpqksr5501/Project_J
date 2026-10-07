@@ -47,6 +47,7 @@ struct FProject_JLocomotionContextBuilder
 		bool bCombatStrafe = false;
 		bool bCombatFacingRedirect = false;
 		bool bMovingTurn180 = false;
+		bool bPreparingForwardTurn = false;
 		bool bHasMoveInput = false;
 		EProject_JGroundMotionMode GroundMode = EProject_JGroundMotionMode::Idle;
 		float GroundSpeed = 0.0f;
@@ -71,6 +72,11 @@ struct FProject_JLocomotionContextBuilder
 			Input.GroundMode == EProject_JGroundMotionMode::Locomotion)
 		{
 			return EProject_JLocomotionPhaseFamily::Turn;
+		}
+		if (Input.bPreparingForwardTurn && Input.bHasMoveInput &&
+			Input.GroundMode == EProject_JGroundMotionMode::Locomotion)
+		{
+			return EProject_JLocomotionPhaseFamily::Cycle;
 		}
 		if (Input.bCombatStrafe)
 		{

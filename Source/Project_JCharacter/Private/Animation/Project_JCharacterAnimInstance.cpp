@@ -261,6 +261,7 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 	bAnimationFlowEvaluationPending = false;
 	Super::NativeInitializeAnimation();
 	GeneralTurnPolicy.Reset();
+	CompletedTurnFeedback = {};
 	MotionMatchingRuntime.Reset();
 	ResetStateControllerOwnerPresentation();
 	CurrentActivePoseSearchDatabase = nullptr;
@@ -1136,6 +1137,33 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 	{
 		return;
 	}
+	CompletedTurnFeedback = {};
+	if (OwningCharacter && OwningCharacter->IsLocallyControlled())
+	{
+		const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+		const auto& Data = Proxy.GetThreadSafeData();
+		const auto& Result = Proxy.GetLatestPostSelection();
+		CompletedTurnFeedback.Frame = Result.CaptureFrame;
+		CompletedTurnFeedback.Seconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0;
+		CompletedTurnFeedback.Mode = Data.LocomotionContext.RotationMode;
+		CompletedTurnFeedback.SelectedDatabase = Result.SelectedDatabase;
+		CompletedTurnFeedback.bRelevant = Result.CachedNodeWeight > UE_SMALL_NUMBER &&
+			!Data.OneShotPresentation.bShouldOverrideMotionMatching;
+		if (const auto* Node = Proxy.GetCapturedMotionMatchingNode())
+			CompletedTurnFeedback.bRelevant &= !Node->GetMotionMatchingState().SearchResult.bIsInteraction;
+		const auto* Mesh = GetSkelMeshComponent();
+		const int32 Root = Mesh ? Mesh->GetBoneIndex(TEXT("root")) : INDEX_NONE;
+		if (Mesh && Root != INDEX_NONE && Mesh->GetEditableComponentSpaceTransforms().IsValidIndex(Root))
+		{
+			const float RootYaw = (Mesh->GetEditableComponentSpaceTransforms()[Root] * Mesh->GetComponentTransform()).Rotator().Yaw;
+			// Remove the mesh's reference-facing axis, not just the retarget/root
+			// world yaw. Selection reads this pose; gameplay rotation never does.
+			CompletedTurnFeedback.VisualFacingYaw = FRotator::NormalizeAxis(OwningCharacter->GetActorRotation().Yaw +
+				FMath::FindDeltaAngleDegrees(Mesh->GetComponentRotation().Yaw, RootYaw));
+			CompletedTurnFeedback.bVisualFacingValid = CompletedTurnFeedback.bRelevant &&
+				FMath::IsFinite(CompletedTurnFeedback.VisualFacingYaw);
+		}
+	}
 
 	float LeftContact = 0.0f;
 	float RightContact = 0.0f;
@@ -1523,6 +1551,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.Landing.LastFallSpeed = AnimState->LastFallSpeed;
 	Data.Landing.LandStartFallSpeed = AnimState->LandStartFallSpeed;
 	Data.LocomotionContext.GaitIntent = AnimState->AuthoritativeContext.GaitIntent;
+	Data.TurnRequest = AnimState->GetTurnRequestSample();
 	Data.LocomotionContext.RotationMode = AnimState->AuthoritativeContext.RotationMode;
 	Data.LocomotionContext.PhaseFamily = AnimState->DerivedLocomotionContext.PhaseFamily;
 	Data.LocomotionContext.DesiredFacingDeltaYaw = AnimState->KinematicContext.DesiredFacingDeltaYaw;

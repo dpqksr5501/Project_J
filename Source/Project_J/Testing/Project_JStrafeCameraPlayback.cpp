@@ -44,6 +44,10 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 	bool bValidateInstalled = false;
 	bool bVerifyForwardCurve = false;
 	bool bVerifyCorrection = false;
+	bool bVerifyRapidTurn = false;
+	int32 AcuteFrames = 0, AcuteSelectedFrames = 0, FalseStopFrames = 0, BrakingTurnFrames = 0;
+	int32 PreparedFrames = 0, PreparedEnterFrames = 0;
+	float MinimumTurnSpeed = TNumericLimits<float>::Max();
 	int32 Case = 0, Frame = 0, GroundFrames = 0, MovingFrames = 0, ArcFrames = 0;
 	int32 GeneralFrames = 0, SelectedGeneralFrames = 0, LateGeneralFrames = 0;
 	float AccumulatedCameraYaw = 0;
@@ -144,7 +148,7 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		Player->SetActorEnableCollision(true);
 		Player->GetCharacterMovement()->SetComponentTickEnabled(true);
 		Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		const bool bOTM = Case >= 15 && Case <= 17 || Case == 22;
+		const bool bOTM = Case >= 15 && Case <= 17 || Case == 22 || Case == 31 || Case == 32 || Case == 39 || Case == 40 || Case >= 49;
 		if (!bOTM) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		const auto* Set = bOTM ? Player->GetMotionMatchingAssetSet() : Player->GetCombatStrafeMotionMatchingAssetSet();
 		if (!Set || !Set->RunDatabases.Cycle) return false;
@@ -201,13 +205,14 @@ public:
 		bValidateInstalled = FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectStrafeDirectionSchema"));
 		bVerifyForwardCurve = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyStrafeForwardCurve"));
 		bVerifyCorrection = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyCorrectionTurns"));
+		bVerifyRapidTurn = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyRapidTurns"));
 	}
 	virtual ~FStrafeCameraPlayback() override { Cleanup(); }
 	virtual bool Update() override
 	{
 		if (!World && !Setup()) { Test->AddError(TEXT("CMC camera fixture setup failed")); Cleanup(); return true; }
 		constexpr float Dt = 1.f / 120;
-		const int32 Direction = Case >= 9 ? 3 : Case % 3;
+		const int32 Direction = Case >= 33 && Case <= 35 ? Case - 33 : Case >= 9 ? 3 : Case % 3;
 		const int32 RateIndex = Case >= 9 ? Case - 9 : Case / 3;
 		float Rate = RateIndex == 0 ? 90 : RateIndex == 1 ? 240 : 480;
 		if (Case == 12) Rate = 180;
@@ -218,14 +223,41 @@ public:
 		if (Case == 17 || Case == 20) Rate = 320;
 		if (Case == 19) Rate = 268;
 		if (Case == 21 || Case == 22) Rate = Frame < 139 ? 900 : 0;
+		float RapidTarget = 180;
+		if (Case >= 23 && Case <= 30)
+		{
+			const float Angles[] = {170, 180, 200, 211};
+			RapidTarget = Angles[(Case - 23) / 2] * ((Case - 23) % 2 ? 1.f : -1.f);
+		}
+		if (Case == 31) RapidTarget = -180;
+		if (Case == 39 || Case == 40) RapidTarget = Case == 39 ? -211 : 211;
+		if (Case >= 23) Rate = FMath::Sign(RapidTarget) * 3000;
+		if (Case >= 41)
+		{
+			const int32 Trial = (Case - 41) % 8;
+			const float Rates[] = {450, 600, 900, 1200};
+			RapidTarget = Trial % 2 ? 180 : -180;
+			Rate = FMath::Sign(RapidTarget) * Rates[Trial / 2];
+		}
 		const float MoveOffset = Direction == 0 ? -90 : Direction == 1 ? 180 : Direction == 2 ? 90 : 0;
-		if (Case >= 12 && Frame > 120) AccumulatedCameraYaw += Dt * Rate;
+		const int32 RotationStartFrame = Case >= 41 ? 180 : 120;
+		if (Case >= 12 && Frame > RotationStartFrame) AccumulatedCameraYaw += Dt * Rate;
+		if (Case >= 23) AccumulatedCameraYaw = FMath::Clamp(AccumulatedCameraYaw,
+			FMath::Min(0.f, RapidTarget), FMath::Max(0.f, RapidTarget));
 		const float CameraYaw = Case >= 12 ? AccumulatedCameraYaw : Frame < 120 ? 0 : (Frame - 120) * Dt * Rate;
 		Controller->SetControlRotation(FRotator(0, CameraYaw, 0));
 		const FVector Move = FRotator(0, CameraYaw + MoveOffset, 0).Vector();
 		const float Radians = FMath::DegreesToRadians(MoveOffset);
-		Player->GetLocomotionAnimStateComponent()->SetMoveInput(FVector2D(FMath::Sin(Radians), FMath::Cos(Radians)));
-		Player->AddMovementInput(Move);
+		const bool bRelease = Case == 36 && Frame >= 133;
+		if (bRelease) Player->GetLocomotionAnimStateComponent()->ClearMoveInput();
+		else
+		{
+			Player->GetLocomotionAnimStateComponent()->SetMoveInput(FVector2D(FMath::Sin(Radians), FMath::Cos(Radians)));
+			Player->AddMovementInput(Move);
+		}
+		if (Case == 37) Player->bIsDodging = Frame >= 133 && Frame < 145;
+		if (Case == 38 && Frame == 133)
+			Player->GetAbilitySystemComponent()->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
 		World->Tick(LEVELTICK_All, Dt);
@@ -242,7 +274,42 @@ public:
 			const bool bSelectedGeneral = MM.PostSelection.SelectedDatabase.ToString().Contains(TEXT("GeneralTurn"));
 			SelectedGeneralFrames += bSelectedGeneral;
 			if (Frame >= 300) LateGeneralFrames += MM.SelectionContext.bGeneralTurnCandidates || bSelectedGeneral;
+			AcuteFrames += MM.SelectionContext.bMovingTurn180;
 			if (Direction < 3) Test->TestFalse(TEXT("Side/backward strafe does not open forward GeneralTurn"), MM.SelectionContext.bGeneralTurnCandidates);
+			if (Case >= 23)
+			{
+				const bool bAcute = MM.SelectionContext.bMovingTurn180;
+				const auto& Request = Player->GetLocomotionAnimStateComponent()->GetTurnRequestSample();
+				PreparedFrames += Request.bPreparing;
+				PreparedEnterFrames += FCString::Strcmp(Request.AcuteReason, TEXT("PreparedEnter")) == 0;
+				const auto* Set = MM.SelectionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+					? Player->GetCombatStrafeMotionMatchingAssetSet() : Player->GetMotionMatchingAssetSet();
+				AcuteSelectedFrames += bAcute && Set && Set->RunDatabases.TurnRedirect &&
+					MM.PostSelection.SelectedDatabase == Set->RunDatabases.TurnRedirect->GetFName();
+				FalseStopFrames += !bRelease && Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching() &&
+					Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToIdle;
+				if (bAcute)
+				{
+					MinimumTurnSpeed = FMath::Min(MinimumTurnSpeed, Movement->Velocity.Size2D());
+					BrakingTurnFrames += Movement->Velocity.Size2D() < 80;
+				}
+				if (Direction < 3) Test->TestFalse(TEXT("Rapid A/S/D never borrows forward 180 data"), bAcute);
+				if (bRelease || Case == 37 && Frame >= 133 && Frame < 145)
+				{
+					Test->TestFalse(TEXT("Release/action cancels the GT request immediately"),
+						Player->GetLocomotionAnimStateComponent()->GetTurnRequestSample().bAcuteActive);
+					if (Frame >= 135) Test->TestFalse(TEXT("Animation consumes cancellation across its snapshot boundary"), bAcute);
+				}
+			}
+		}
+		if (Case >= 23 && Frame >= 120 && Frame <= (Case >= 41 ? 300 : 180))
+		{
+			const auto& Request = Player->GetLocomotionAnimStateComponent()->GetTurnRequestSample();
+			Report += FString::Printf(TEXT("RapidFrame Case=%d Frame=%d Speed=%.2f Acute=%d Approach=%d Preparing=%d Demand=%d Sweep=%.1f Remaining=%.1f VisualValid=%d VisualYaw=%.1f Reason=%s General=%d Override=%d Present=%d PSD=%s Clip=%s\n"),
+				Case, Frame, Movement->Velocity.Size2D(), Request.bAcuteActive, Request.bAcuteApproach, Request.bPreparing, Request.Demand, Request.RequestedSweep, Request.RemainingFacing, Request.bVisualFacingValid, Request.VisualFacingYaw, Request.AcuteReason,
+				MM.SelectionContext.bGeneralTurnCandidates, Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching(),
+				int32(Anim->GetThreadSafeStateControllerPresentationState()), *MM.PostSelection.SelectedDatabase.ToString(),
+				*MM.PostSelection.SelectedAnimation.ToString());
 		}
 		if (Frame % 12 == 0)
 		{
@@ -269,7 +336,38 @@ public:
 		Report += FString::Printf(TEXT("GeneralSummary Case=%d CandidateFrames=%d SelectedFrames=%d LateFrames=%d\n"),
 			Case, GeneralFrames, SelectedGeneralFrames, LateGeneralFrames);
 		Test->TestTrue(TEXT("Measured CMC actually remained grounded"), GroundFrames >= 235);
-		Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235);
+		if (Case < 23) Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235);
+		if (Case >= 23)
+		{
+			Report += FString::Printf(TEXT("RapidSummary Case=%d Target=%.0f AcuteFrames=%d PreparedFrames=%d PreparedEnterFrames=%d SelectedAcuteFrames=%d FalseStopFrames=%d BrakingTurnFrames=%d MinimumTurnSpeed=%.2f\n"),
+				Case, RapidTarget, AcuteFrames, PreparedFrames, PreparedEnterFrames, AcuteSelectedFrames, FalseStopFrames, BrakingTurnFrames, MinimumTurnSpeed);
+			Test->TestEqual(TEXT("Held steering cannot synthesize an external Stop"), FalseStopFrames, 0);
+			if (Case >= 25 && Case <= 30 || Case == 39 || Case == 40)
+				Test->TestTrue(TEXT("Qualified rapid reversal opens acute candidates"), AcuteFrames > 0);
+			if (Case == 31 || Case == 32)
+				Test->TestTrue(TEXT("A prepared OTM reversal admits real remaining correction"), AcuteFrames > 0);
+			if (Case >= 41)
+			{
+				if (Case == 49 || Case == 50)
+				{
+					Test->TestEqual(TEXT("Already followed OTM 450 deg/s rotation requires no acute correction"), AcuteFrames, 0);
+					Test->TestEqual(TEXT("Already followed OTM rotation records no preparation debt"), PreparedFrames, 0);
+				}
+				else
+				{
+					Test->TestTrue(TEXT("Delayed correction exercises preparation"), PreparedFrames > 0);
+					Test->TestTrue(TEXT("Delayed correction can select authored Turn poses"), AcuteSelectedFrames > 0);
+				}
+				// Lower-rate curves can be fully followed by CMC. A camera angle
+				// alone must not require Turn; inspect the recorded residual too.
+				if ((Case - 41) % 8 >= 4)
+					Test->TestTrue(TEXT("Delayed 900/1200 deg/s reversal reaches prepared commitment"), PreparedEnterFrames > 0);
+			}
+			if (Case >= 25 && Case <= 30) Test->TestTrue(TEXT("Qualified Strafe reversal can select authored 180 data"), AcuteSelectedFrames > 0);
+			if (Case == 36) Test->TestFalse(TEXT("Released input eventually stops"), Player->GetLocomotionAnimStateComponent()->bHasMoveInput);
+			else Test->TestTrue(TEXT("Steering recovers travel after the braking minimum"), Movement->Velocity.Size2D() > 250);
+			Test->TestFalse(TEXT("An old acute event cannot remain latched"), MM.SelectionContext.bMovingTurn180);
+		}
 		if ((SchemaTrialSet.IsValid() || bValidateInstalled) && Case < 6)
 			Test->TestEqual(TEXT("Camera-aligned side/backward strafe avoids forward Arc dominance"), ArcFrames, 0);
 		if (bVerifyForwardCurve && (Case == 9 || Case == 12 || Case == 13))
@@ -285,6 +383,7 @@ public:
 		}
 		if (bVerifyCorrection && (Case == 10 || Case >= 14 && Case <= 20))
 		{
+			Test->TestEqual(TEXT("Already followed OTM/Strafe curves never manufacture acute Turn"), AcuteFrames, 0);
 			Test->TestEqual(TEXT("Aligned OTM/Strafe curves stay in Cycle irrespective of angular-rate boundaries"), GeneralFrames, 0);
 			Test->TestEqual(TEXT("Aligned curves select no GeneralTurn"), SelectedGeneralFrames, 0);
 		}
@@ -296,7 +395,9 @@ public:
 		}
 		Cleanup(); Frame = GroundFrames = MovingFrames = ArcFrames = 0;
 		GeneralFrames = SelectedGeneralFrames = LateGeneralFrames = 0; AccumulatedCameraYaw = 0;
-		if (++Case < (bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
+		AcuteFrames = AcuteSelectedFrames = FalseStopFrames = BrakingTurnFrames = PreparedFrames = PreparedEnterFrames = 0;
+		MinimumTurnSpeed = TNumericLimits<float>::Max();
+		if (++Case < (bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
 		IFileManager::Get().MakeDirectory(*Directory, true);
 		Test->TestTrue(TEXT("Save CMC direction/prediction evidence"), FFileHelper::SaveStringToFile(Report,

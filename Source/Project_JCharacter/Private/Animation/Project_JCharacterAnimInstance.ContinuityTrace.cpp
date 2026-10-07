@@ -75,6 +75,8 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 	Key.bInput = Data.Input.bHasMoveInput;
 	Key.bOverride = Shot.bShouldOverrideMotionMatching;
 	Key.bContinuation = Data.MotionMatching.SelectionContext.bAllowTurnContinuation || Data.MotionMatching.SelectionContext.bAllowGeneralTurnContinuation;
+	Key.bAcuteApproach = Data.TurnRequest.bAcuteApproach;
+	Key.AcuteReason = FName(Data.TurnRequest.AcuteReason);
 	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
 	bool bEdge = false;
 	if (!LocomotionContinuityTraceSampler.ShouldRecord(Key, Now, Mode, bEdge)) return;
@@ -120,6 +122,15 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 		CachedStateControllerLeftFootContact, CachedStateControllerRightFootContact);
 	if (Mode >= 2)
 	{
+		const auto& Request = Data.TurnRequest;
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("LocomotionContinuityTrace Stage=TurnRequest Frame=%llu Actor=%s SampleFrame=%llu Age=%.3f Valid=%d Usable=%d Acute=%d Approach=%d AcuteReason=%s Guard=%s ActorYaw=%.1f FacingYaw=%.1f MoveYaw=%.1f VelocityYaw=%.1f Speed=%.1f Preparing=%d Demand=%d Sweep=%.1f RemainingFacing=%.1f VisualValid=%d VisualYaw=%.1f"),
+			GFrameCounter, *OwningCharacter->GetPathName(), Request.Frame, Now - Request.Seconds,
+			Request.bValid, Request.IsUsable(GFrameCounter, Now, Data.LocomotionContext.RotationMode),
+			Request.bAcuteActive, Request.bAcuteApproach, Request.AcuteReason, Request.EligibilityGuard,
+			Request.ActorYaw, Request.FacingYaw, Request.MoveYaw, Request.VelocityYaw, Request.Speed,
+			Request.bPreparing, Request.Demand, Request.RequestedSweep, Request.RemainingFacing,
+			Request.bVisualFacingValid, Request.VisualFacingYaw);
 		const auto* Movement = OwningCharacter->GetCharacterMovement();
 		const auto* Trajectory = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent();
 		const FVector Move = Data.LocomotionContext.RequestedMoveWorldDirection;
