@@ -260,6 +260,7 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 	AnimationFlowSampler = {};
 	bAnimationFlowEvaluationPending = false;
 	Super::NativeInitializeAnimation();
+	GeneralTurnPolicy.Reset();
 	MotionMatchingRuntime.Reset();
 	ResetStateControllerOwnerPresentation();
 	CurrentActivePoseSearchDatabase = nullptr;
@@ -291,6 +292,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (NeedsOwnerReferenceRefresh())
 	{
 		CacheOwnerReferences();
+		GeneralTurnPolicy.Reset();
 		MotionMatchingRuntime.Reset();
 		ResetStateControllerOwnerPresentation();
 		CurrentActivePoseSearchDatabase = nullptr;
@@ -1525,6 +1527,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.LocomotionContext.PhaseFamily = AnimState->DerivedLocomotionContext.PhaseFamily;
 	Data.LocomotionContext.DesiredFacingDeltaYaw = AnimState->KinematicContext.DesiredFacingDeltaYaw;
 	Data.LocomotionContext.DesiredFacingYaw = AnimState->KinematicContext.DesiredFacingYaw;
+	Data.LocomotionContext.RequestedMoveWorldDirection = AnimState->KinematicContext.MoveWorldDirection;
 	Data.LocomotionContext.bIsMoving = AnimState->DerivedLocomotionContext.bIsMoving;
 	Data.LocomotionContext.bIsMotionMatchingMoving = AnimState->DerivedLocomotionContext.bIsMotionMatchingMoving;
 	Data.LocomotionContext.bHasGroundMovementIntent = AnimState->DerivedLocomotionContext.bHasGroundMovementIntent;
@@ -2935,6 +2938,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(FProject_JAni
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishProxy);
 	UpdateLocomotionSteeringData(Data);
+	UpdateGeneralTurnData(Data);
 	const bool bMotionMatchingEnabled =
 		IsPrimaryMeshAnimInstance() &&
 		OwningCharacter &&
@@ -3074,13 +3078,13 @@ void UProject_JCharacterAnimInstance::RecordMotionMatchingTrace(
 
 UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluateTurnCycleCompanionOnGameThread(const FProject_JAnimThreadSafeData& Data) const
 {
-	// This broadens only a locally qualified running reversal. One-shots, proxies,
+	// This broadens only qualified local running turn windows. One-shots, proxies,
 	// mounted/full-body action owners and crowd tiers keep their existing search set.
 	if (!Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() || !OwningPlayerCharacter || !OwningPlayerCharacter->IsPlayerControlled() ||
 		!OwningPlayerCharacter->IsLocallyControlled() || Data.Air.bIsInAir ||
 		Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot ||
 		Data.OneShotPresentation.bShouldOverrideMotionMatching ||
-		!Data.MotionMatching.SelectionContext.bMovingTurn180) return nullptr;
+		(!Data.MotionMatching.SelectionContext.bMovingTurn180 && !Data.MotionMatching.SelectionContext.bGeneralTurnCandidates)) return nullptr;
 	const bool bCombat = Data.Combat.bIsCombatMode &&
 		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
 	const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() :
@@ -3145,7 +3149,11 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		// the actual continuing pose. Resume settled routing once Cycle wins.
 		CombatSelectionContext.bUseSettledCycle = false;
 	}
-	if (CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn)
+	if (CombatSelectionContext.bGeneralTurnCandidates ||
+		(CombatSelectionContext.bAllowGeneralTurnContinuation && CombatStrafeAssetSet &&
+			CombatStrafeAssetSet->RunDatabases.GeneralTurn && Data.MotionMatching.PostSelection.SelectedDatabase ==
+			CombatStrafeAssetSet->RunDatabases.GeneralTurn->GetFName()) ||
+		CombatSelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn)
 	{
 		// A missing or ineligible Turn must return through the Dynamic Cycle,
 		// never a stale Loop-only settled selection from the previous snapshot.
@@ -3225,7 +3233,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
 	}
-	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase || SelectionContext.bMovingTurn180
+	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase || SelectionContext.bMovingTurn180 || SelectionContext.bGeneralTurnCandidates || SelectionContext.bAllowGeneralTurnContinuation
 		? nullptr
 		: MotionMatchingChooserTable.Get();
 
@@ -3511,7 +3519,10 @@ static FProject_JMotionMatchingRuntime::FContext MakeMotionMatchingRuntimeContex
 
 bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingContextRefresh(const FProject_JAnimThreadSafeData& Data) const
 {
-	return MotionMatchingRuntime.HasContextChanged(MakeMotionMatchingRuntimeContext(Data));
+	auto Context = MakeMotionMatchingRuntimeContext(Data);
+	Context.bGeneralTurnCandidates = Data.MotionMatching.SelectionContext.bGeneralTurnCandidates;
+	Context.bGeneralTurnContinuation = Data.MotionMatching.SelectionContext.bAllowGeneralTurnContinuation;
+	return MotionMatchingRuntime.HasContextChanged(Context);
 }
 
 bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingReselect(const FProject_JAnimThreadSafeData& Data) const
@@ -3521,7 +3532,10 @@ bool UProject_JCharacterAnimInstance::ShouldForceMotionMatchingReselect(const FP
 
 void UProject_JCharacterAnimInstance::CacheEvaluatedMotionMatchingContext(const FProject_JAnimThreadSafeData& Data)
 {
-	MotionMatchingRuntime.CacheEvaluatedContext(MakeMotionMatchingRuntimeContext(Data));
+	auto Context = MakeMotionMatchingRuntimeContext(Data);
+	Context.bGeneralTurnCandidates = Data.MotionMatching.SelectionContext.bGeneralTurnCandidates;
+	Context.bGeneralTurnContinuation = Data.MotionMatching.SelectionContext.bAllowGeneralTurnContinuation;
+	MotionMatchingRuntime.CacheEvaluatedContext(Context);
 }
 
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const

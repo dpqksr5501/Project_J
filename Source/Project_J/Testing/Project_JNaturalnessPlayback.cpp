@@ -20,6 +20,8 @@
 #include "Misc/Parse.h"
 #include "UObject/UnrealType.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
+#include "HAL/PlatformTime.h"
 
 namespace ProjectJNaturalnessPlayback
 {
@@ -32,14 +34,20 @@ class FPlayback : public IAutomationLatentCommand
 	int32 Scenario = 0, Frame = 0, AirLoopFrames = 0, AirStackFrames = 0, Finalized = 0;
 	int32 Searches = 0;
 	int32 SteeringFrames = 0;
-	int32 PairedCandidateFrames = 0, ContinuedTurnFrames = 0;
+	int32 PairedCandidateFrames = 0, ContinuedTurnFrames = 0, SelectedGeneralFrames = 0, SelectedCurveFrames = 0;
+	int32 GeneralReentries = 0;
+	bool bGeneralWasUsed = false, bGeneralCycleReturned = false;
+	double MeasuredTickSeconds = 0; int32 MeasuredTicks = 0;
 	float MaxVisualYawError = 0.0f;
 	FDelegateHandle BoneHandle;
 	FString Report;
 	static const TCHAR* Label(int32 Case)
 	{
 		const TCHAR* Names[] = {TEXT("N1_IdleStartStop"), TEXT("N2_SpeedChanges"), TEXT("N3_SmallCurves"),
-			TEXT("N4_StrafeFacing"), TEXT("N5_LongFallLand"), TEXT("N6_SourceVisualOutput"), TEXT("C1_CombatRunReversal")};
+			TEXT("N4_StrafeFacing"), TEXT("N5_LongFallLand"), TEXT("N6_SourceVisualOutput"), TEXT("C1_CombatRunReversal"), TEXT("G1_GradualOTM"), TEXT("G2_GradualCombatForward"), TEXT("G3_CombatBackward"),
+			TEXT("G4_RapidOTM90"), TEXT("G5_RapidCombat90"), TEXT("G6_RapidOTM135"), TEXT("G7_RapidCombat135"),
+			TEXT("G8_RapidOTM45"), TEXT("G9_RapidCombat45"), TEXT("G10_CombatCameraOnly"), TEXT("G11_CombatLateral"),
+			TEXT("G12_SmallOTM20"), TEXT("G13_SmallCombat20"), TEXT("G14_RepeatOTM30"), TEXT("G15_RepeatCombat30")};
 		return Names[Case];
 	}
 	void Cleanup()
@@ -64,7 +72,8 @@ class FPlayback : public IAutomationLatentCommand
 		State->SetOwner(Controller); Controller->SetPlayerState(State);
 		Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector(0, 0, 1000));
 		if (!Player || !Cast<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance())) return false;
-		if (Scenario == 3 || Scenario == 6)
+		if (Scenario == 3 || Scenario == 6 || Scenario == 8 || Scenario == 9 || Scenario == 11 || Scenario == 13 ||
+			(Scenario >= 15 && Scenario <= 17) || Scenario == 19 || Scenario == 21)
 		{
 			Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		}
@@ -107,6 +116,28 @@ public:
 			bInput = Frame < 140;
 			Speed = Frame >= 140 ? 0 : Frame >= 63 && Frame < 70 ? 80 : 350;
 		}
+		if (Scenario >= 7)
+		{
+			const float Angle = Scenario == 18 || Scenario == 19 ? 20 : Scenario == 12 || Scenario == 13 ? 135 : Scenario == 14 || Scenario == 15 ? 45 : 90;
+			// Rapid correction fixtures include actual path/body lag; angle alone
+			// is intentionally insufficient for GeneralTurn admission.
+			const float YawPerFrame = Scenario == 11 || Scenario == 13 ? 4.f : Scenario >= 10 ? 3.f : 1.5f;
+			float FacingYaw = Frame < 60 ? 0 : FMath::Min((Frame - 60) * YawPerFrame, Angle);
+			if (Scenario >= 20 && Frame >= 60)
+			{
+				const int32 Segment = (Frame - 60) % 60;
+				FacingYaw = Segment < 30 ? FMath::Min(Segment * 4.f, 30.f) : FMath::Max(30.f - (Segment - 30) * 4.f, 0.f);
+			}
+			Yaw = Scenario == 9 ? FacingYaw + 180 : Scenario == 16 ? 0 : Scenario == 17 ? FacingYaw + 90 : FacingYaw;
+			Controller->SetControlRotation(FRotator(0, FacingYaw, 0));
+			Player->SetActorRotation(FRotator(0, FacingYaw, 0));
+			if (Scenario >= 10 && Scenario <= 13 && Frame >= 60)
+			{
+				const float Lag = FMath::Min(float(Frame - 60) * 10, 55.f) *
+					FMath::Clamp(float(115 - Frame) / 15, 0.f, 1.f);
+				Player->SetActorRotation(FRotator(0, FacingYaw - Lag, 0));
+			}
+		}
 		if (Scenario == 4)
 		{
 			if (Frame == 0) Movement->SetMovementMode(MOVE_Falling);
@@ -118,16 +149,26 @@ public:
 			}
 		}
 		const FVector Direction = FRotator(0, Yaw, 0).Vector();
-		Locomotion->SetMoveInput(bInput ? (Scenario == 6 ? FVector2D(0, 1) : FVector2D(Direction.Y, Direction.X)) : FVector2D::ZeroVector);
+		// Camera-only/lateral fixtures must prescribe the same world travel in
+		// camera-relative intent and velocity; forward input rotates with camera.
+		const float RelativeYaw = FMath::DegreesToRadians(FMath::FindDeltaAngleDegrees(Controller->GetControlRotation().Yaw, Yaw));
+		Locomotion->SetMoveInput(bInput ? (Scenario == 6 || Scenario >= 7 ? FVector2D(FMath::Sin(RelativeYaw), FMath::Cos(RelativeYaw)) : FVector2D(Direction.Y, Direction.X)) : FVector2D::ZeroVector);
 		Player->AddMovementInput(Direction, bInput ? 1.0f : 0.0f);
 		Movement->Velocity = Direction * Speed;
+		if (Scenario >= 10 && Scenario <= 13 && Frame >= 60)
+		{
+			const float Lag = FMath::Min(float(Frame - 60) * 10, 55.f) * FMath::Clamp(float(115 - Frame) / 15, 0.f, 1.f);
+			Movement->Velocity = FRotator(0, Yaw - Lag, 0).Vector() * Speed;
+		}
 		if (Scenario == 6 && Frame >= 60 && Frame <= 62) Movement->Velocity = FVector(350, 0, 0);
 		if (Scenario == 4 && Frame < 240) Movement->Velocity.Z = -700;
-		if (Scenario != 3 && Scenario != 6) Player->SetActorRotation(FRotator(0, Yaw, 0));
+		if (Scenario != 3 && Scenario != 6 && Scenario < 7) Player->SetActorRotation(FRotator(0, Yaw, 0));
 		Player->AddActorWorldOffset(Movement->Velocity / 60.0f, false);
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
+		const double TickStarted = FPlatformTime::Seconds();
 		World->Tick(LEVELTICK_All, 1.0f / 60.0f);
+		if (Frame >= 60) { MeasuredTickSeconds += FPlatformTime::Seconds() - TickStarted; ++MeasuredTicks; }
 		auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance());
 		const float SteeringAlpha = Anim->GetThreadSafeLocomotionSteeringAlpha();
 		if (Scenario == 6)
@@ -138,6 +179,24 @@ public:
 			if (Anim->GetThreadSafeMotionMatchingCandidateCount() == 2)
 				Test->TestTrue(TEXT("Paired frame is an approved local moving turn"), MM.SelectionContext.bMovingTurn180);
 			if (Frame == 170) Test->TestEqual(TEXT("Input release closes extra candidates"), Anim->GetThreadSafeMotionMatchingCandidateCount(), 1);
+		}
+		if (Scenario >= 7)
+		{
+			const auto MM = Anim->GetMotionMatchingDebugSnapshot();
+			PairedCandidateFrames += Anim->GetThreadSafeMotionMatchingCandidateCount() == 2;
+			ContinuedTurnFrames += MM.SelectionContext.bAllowGeneralTurnContinuation;
+			const FString Database = MM.PostSelection.SelectedDatabase.ToString();
+			const bool bGeneral = Database.Contains(TEXT("GeneralTurn"));
+			SelectedGeneralFrames += bGeneral;
+			if (bGeneral && bGeneralCycleReturned) { ++GeneralReentries; bGeneralCycleReturned = false; }
+			bGeneralWasUsed |= bGeneral;
+			if (bGeneralWasUsed && !bGeneral && (Database.Contains(TEXT("Cycle")) || Database.Contains(TEXT("Loop")))) bGeneralCycleReturned = true;
+			const FString Clip = MM.PostSelection.SelectedAnimation.ToString();
+			SelectedCurveFrames += Clip.Contains(TEXT("Arc")) || Clip.Contains(TEXT("Diamond")) || Clip.Contains(TEXT("Hourglass")) || Clip.Contains(TEXT("Box"));
+			Test->TestFalse(TEXT("General turn does not require the 180-degree event"), MM.SelectionContext.bMovingTurn180);
+			const auto* GeneralCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("p.ProjectJ.GeneralTurnCandidates"));
+			if (Scenario == 8 && Frame >= 80 && Frame <= 110 && GeneralCVar && GeneralCVar->GetInt() != 0 && Player->IsLocallyControlled())
+				Test->TestFalse(TEXT("Gentle Combat curve searches Dynamic Cycle without Turn candidates"), MM.SelectionContext.bUseSettledCycle);
 		}
 		if (SteeringAlpha > 0 && !Player->GetMesh()->IsRunningParallelEvaluation())
 		{
@@ -175,9 +234,9 @@ public:
 		if (Frame % 15 == 0)
 		{
 			const auto MM = Anim->GetMotionMatchingDebugSnapshot();
-			Report += FString::Printf(TEXT("Steering Scenario=%s Frame=%d Alpha=%.1f Target=%s OffsetMode=%d MaxVisualYawError=%.3f ContinueTurn=%d Candidates=%d\n"),
+			Report += FString::Printf(TEXT("Steering Scenario=%s Frame=%d Alpha=%.1f Target=%s OffsetMode=%d MaxVisualYawError=%.3f ContinueTurn=%d Candidates=%d GeneralTurn=%d GeneralContinue=%d\n"),
 				Label(Scenario), Frame, SteeringAlpha, *Anim->GetThreadSafeLocomotionSteeringTarget().Rotator().ToString(),
-				int32(Anim->GetThreadSafeOffsetRootRotationMode()), MaxVisualYawError, MM.SelectionContext.bAllowTurnContinuation, Anim->GetThreadSafeMotionMatchingCandidateCount());
+				int32(Anim->GetThreadSafeOffsetRootRotationMode()), MaxVisualYawError, MM.SelectionContext.bAllowTurnContinuation, Anim->GetThreadSafeMotionMatchingCandidateCount(), MM.SelectionContext.bGeneralTurnCandidates, MM.SelectionContext.bAllowGeneralTurnContinuation);
 			Report += FString::Printf(TEXT("Pose Scenario=%s Frame=%d Speed=%.1f Phase=%d Presentation=%d Override=%d PSD=%s Clip=%s Time=%.4f SearchDueResultObservations=%d\n"),
 				Label(Scenario), Frame, Speed, int32(MM.SelectionContext.PhaseFamily), int32(Anim->GetThreadSafeStateControllerPresentationState()),
 				Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching(), *MM.PostSelection.SelectedDatabase.ToString(),
@@ -217,6 +276,27 @@ public:
 			Test->TestTrue(TEXT("Actual aligned return grants continuing permission"), ContinuedTurnFrames >= 1);
 			Report += FString::Printf(TEXT("ContinuitySummary PairedCandidateFrames=%d ContinuedTurnFrames=%d\n"), PairedCandidateFrames, ContinuedTurnFrames);
 		}
+		if (Scenario >= 7)
+		{
+			const auto* GeneralCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("p.ProjectJ.GeneralTurnCandidates"));
+			const bool bExpected = GeneralCVar && GeneralCVar->GetInt() != 0 && Scenario >= 10 && Scenario <= 13 && !FParse::Param(FCommandLine::Get(), TEXT("ProjectJNaturalnessNonLocal"));
+			if (bExpected)
+			{
+				Test->TestTrue(TEXT("Authored rapid forward turn opens general candidates"), PairedCandidateFrames >= 5);
+				// Cycle may win before the timed quiet finish. That handoff should
+				// close the pool immediately without granting an old Turn privilege.
+				Test->TestTrue(TEXT("General turn respects visual yaw bound"), MaxVisualYawError <= 45.1f);
+				if (Scenario <= 13) Test->TestTrue(TEXT("Rapid 90/135 turn still selects authored GeneralTurn poses"), SelectedGeneralFrames > 0);
+				Test->TestFalse(TEXT("Straight tail has released GeneralTurn completion privilege"), Anim->GetMotionMatchingDebugSnapshot().SelectionContext.bAllowGeneralTurnContinuation);
+				Test->TestEqual(TEXT("The same authored turn does not re-enter GeneralTurn after its Cycle has won"), GeneralReentries, 0);
+			}
+			else
+			{
+				Test->TestEqual(TEXT("Gentle/camera-only/lateral/backward/disabled/nonlocal motion cannot open general candidates"), PairedCandidateFrames, 0);
+				Test->TestEqual(TEXT("Those cases cannot select a GeneralTurn database"), SelectedGeneralFrames, 0);
+			}
+			Report += FString::Printf(TEXT("GeneralTurningSummary Scenario=%s PairedFrames=%d ContinuedFrames=%d SelectedGeneralFrames=%d SelectedCurveFrames=%d GeneralReentries=%d\n"), Label(Scenario), PairedCandidateFrames, ContinuedTurnFrames, SelectedGeneralFrames, SelectedCurveFrames, GeneralReentries);
+		}
 		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectLocomotionContinuity")) &&
 			!FParse::Param(FCommandLine::Get(), TEXT("ProjectJNaturalnessNonLocal")) && (Scenario == 2 || Scenario == 3))
 		{
@@ -231,10 +311,14 @@ public:
 		Report += FString::Printf(TEXT("Summary Scenario=%s Finalizations=%d SearchDueResultObservations=%d AirLoopFrames=%d AirStackFrames=%d\n"),
 			Label(Scenario), Finalized, Searches, AirLoopFrames, AirStackFrames);
 		Report += FString::Printf(TEXT("SteeringSummary Scenario=%s Frames=%d MaxVisualYawError=%.3f\n"), Label(Scenario), SteeringFrames, MaxVisualYawError);
+		Report += FString::Printf(TEXT("TickTiming Scenario=%s WarmupFrames=60 Samples=%d MeanWorldTickMs=%.4f\n"),
+			Label(Scenario), MeasuredTicks, MeasuredTicks ? MeasuredTickSeconds * 1000 / MeasuredTicks : 0);
 		Cleanup(); Frame = Finalized = Searches = AirLoopFrames = AirStackFrames = 0;
 		SteeringFrames = 0; MaxVisualYawError = 0;
-		PairedCandidateFrames = ContinuedTurnFrames = 0;
-		if (++Scenario < (FParse::Param(FCommandLine::Get(), TEXT("ProjectJContinuityPlayback")) ? 7 : 6)) return false;
+		PairedCandidateFrames = ContinuedTurnFrames = SelectedGeneralFrames = SelectedCurveFrames = 0;
+		GeneralReentries = 0; bGeneralWasUsed = bGeneralCycleReturned = false;
+		MeasuredTickSeconds = 0; MeasuredTicks = 0;
+		if (++Scenario < (FParse::Param(FCommandLine::Get(), TEXT("ProjectJGeneralTurningPlayback")) ? 22 : FParse::Param(FCommandLine::Get(), TEXT("ProjectJContinuityPlayback")) ? 7 : 6)) return false;
 		FString Output; FParse::Value(FCommandLine::Get(), TEXT("ProjectJNaturalnessPlaybackOutput="), Output);
 		if (Output.IsEmpty()) Output = FPaths::ProjectSavedDir() / TEXT("Validation/Naturalness_20261006/Playback.txt");
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Output), true);

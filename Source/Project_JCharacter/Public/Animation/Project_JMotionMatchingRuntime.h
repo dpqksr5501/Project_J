@@ -15,6 +15,8 @@ public:
 		EProject_JLocomotionPhaseFamily PhaseFamily = EProject_JLocomotionPhaseFamily::Idle;
 		bool bStartRequested = false;
 		bool bStartWasSprinting = false;
+		bool bGeneralTurnCandidates = false;
+		bool bGeneralTurnContinuation = false;
 		int32 SelectionRevision = 0;
 	};
 
@@ -35,6 +37,8 @@ public:
 	bool HasContextChanged(const FContext& Context) const
 	{
 		return !bHasEvaluatedContext ||
+			LastEvaluatedContext.bGeneralTurnCandidates != Context.bGeneralTurnCandidates ||
+			LastEvaluatedContext.bGeneralTurnContinuation != Context.bGeneralTurnContinuation ||
 			LastEvaluatedContext.SelectionRevision != Context.SelectionRevision ||
 			LastEvaluatedContext.GroundMotionMode != Context.GroundMotionMode ||
 			LastEvaluatedContext.GaitIntent != Context.GaitIntent ||

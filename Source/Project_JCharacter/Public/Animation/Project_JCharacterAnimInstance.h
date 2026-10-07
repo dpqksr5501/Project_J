@@ -11,6 +11,7 @@
 #include "Animation/Project_JMotionMatchingRuntime.h"
 #include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationClock.h"
+#include "Animation/Project_JGeneralTurnPolicy.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
 #include "Animation/Project_JLocomotionProfile.h"
@@ -348,6 +349,8 @@ struct PROJECT_JCHARACTER_API FProject_JAnimLocomotionContextThreadSafeData
 	/** Absolute world-space facing yaw. Keep this distinct from DesiredFacingDeltaYaw for Steering. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	float DesiredFacingYaw = 0.0f;
+
+	FVector RequestedMoveWorldDirection = FVector::ZeroVector;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	bool bIsMoving = false;
@@ -759,6 +762,14 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	FProject_JMotionMatchingSearchPolicy MotionMatchingSearchPolicy;
 
 	// Value-only visual rotation contract, produced on GT after one-shot ownership.
+	float GeneralTurnRecentHeading = 0;
+	float GeneralTurnWindowElapsed = 0;
+	float GeneralTurnMoveYawRate = 0, GeneralTurnFacingYawRate = 0;
+	float GeneralTurnPathError = 0, GeneralTurnFacingError = 0;
+	bool bGeneralTurnDynamicCycle = false;
+	bool bGeneralTurnCycleHandoff = false;
+	FName GeneralTurnDemand = NAME_None;
+	FName GeneralTurnReason = NAME_None;
 	bool bLocomotionSteeringEnabled = false;
 	EProject_JLocomotionSteeringGate LocomotionSteeringGate = EProject_JLocomotionSteeringGate::Unknown;
 	float LocomotionSteeringLookAhead = 0.5f;
@@ -1306,6 +1317,8 @@ protected:
 	void FillProceduralIKThreadSafeData(FProject_JAnimThreadSafeData& Data) const;
 	void PublishThreadSafeDataToProxy(FProject_JAnimThreadSafeData& Data);
 	void UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const;
+	void UpdateGeneralTurnData(FProject_JAnimThreadSafeData& Data);
+	FProject_JGeneralTurnPolicy GeneralTurnPolicy;
 	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
 	void RecordAnimationFlowEvaluation();
 	void RecordLocomotionContinuityEvaluation();

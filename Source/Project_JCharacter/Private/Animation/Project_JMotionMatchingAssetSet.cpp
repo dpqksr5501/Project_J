@@ -5,6 +5,9 @@
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchSchema.h"
 #include "PoseSearch/PoseSearchNormalizationSet.h"
+#if WITH_EDITOR
+#include "UObject/ObjectSaveContext.h"
+#endif
 
 namespace
 {
@@ -94,24 +97,50 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindTurnCycleCompanion(
 	const FProject_JMotionMatchingSelectionContext& Context, const UPoseSearchDatabase* Primary) const
 {
-	if (!bEnableTurnCycleCandidates || !Primary || !Context.bMovingTurn180 ||
-		Context.PhaseFamily != EProject_JLocomotionPhaseFamily::Turn ||
+	if (!bEnableTurnCycleCandidates || !Primary ||
 		(Context.RotationMode != EProject_JLocomotionRotationMode::OrientToMovement &&
 			!Context.bUseGenericFamiliesForNonOrientToMovement)) return nullptr;
 	const auto& Family = Context.GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
-	UPoseSearchDatabase* Cycle = Family.Cycle.Get();
-	// Exact shared schema preserves dimensions, skeleton and feature units. Never
-	// combine the loop-only settled set or borrow another gait/combat family.
-	if (Primary != Family.TurnRedirect || !Cycle || Cycle == Primary || !Primary->Schema ||
-		Primary->Schema != Cycle->Schema) return nullptr;
+	UPoseSearchDatabase* Companion = nullptr;
+	if (Context.bMovingTurn180 && Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn && Primary == Family.TurnRedirect)
+		Companion = Family.Cycle.Get();
+	else if (!Context.bMovingTurn180 && Context.bGeneralTurnCandidates &&
+		Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && Primary == Family.Cycle)
+		Companion = Family.GeneralTurn.Get();
+	if (!Companion || Companion == Primary || !Primary->Schema || Primary->Schema != Companion->Schema) return nullptr;
+#if WITH_EDITORONLY_DATA
 	if (Primary->Schema->DataPreprocessor != EPoseSearchDataPreprocessor::None)
 	{
 		const auto* Normalization = Primary->NormalizationSet.Get();
-		if (!Normalization || Normalization != Cycle->NormalizationSet ||
-			!Normalization->Databases.Contains(Primary) || !Normalization->Databases.Contains(Cycle)) return nullptr;
+		if (!Normalization || Normalization != Companion->NormalizationSet ||
+			!Normalization->Databases.Contains(Primary) || !Normalization->Databases.Contains(Companion)) return nullptr;
 	}
-	return Cycle;
+#else
+	// Both DataPreprocessor and NormalizationSet are editor-only. PreSave
+	// certifies either no preprocessing or shared statistics baked into indexes.
+	if (!(Primary == Family.TurnRedirect ? Family.bCookedTurnCycleCompatible : Family.bCookedGeneralTurnCompatible)) return nullptr;
+#endif
+	return Companion;
 }
+
+#if WITH_EDITOR
+void UProject_JMotionMatchingAssetSet::PreSave(FObjectPreSaveContext SaveContext)
+{
+	const auto Compatible = [](const UPoseSearchDatabase* Cycle, const UPoseSearchDatabase* Turn)
+	{
+		if (!Cycle || !Turn || Cycle == Turn || !Cycle->Schema || Cycle->Schema != Turn->Schema) return false;
+		if (Cycle->Schema->DataPreprocessor == EPoseSearchDataPreprocessor::None) return true;
+		const auto* Norm = Cycle->NormalizationSet.Get();
+		return Norm && Norm == Turn->NormalizationSet && Norm->Databases.Contains(Cycle) && Norm->Databases.Contains(Turn);
+	};
+	for (auto* Family : {&RunDatabases, &SprintDatabases})
+	{
+		Family->bCookedTurnCycleCompatible = Compatible(Family->Cycle, Family->TurnRedirect);
+		Family->bCookedGeneralTurnCompatible = Compatible(Family->Cycle, Family->GeneralTurn);
+	}
+	Super::PreSave(SaveContext);
+}
+#endif
 
 bool UProject_JMotionMatchingAssetSet::ValidateForProjectJLocomotion(
 	const UObject* ValidationContext,

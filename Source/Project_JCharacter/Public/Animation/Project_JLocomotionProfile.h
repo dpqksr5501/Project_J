@@ -475,6 +475,38 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.0", ClampMax = "90.0"))
 	float SteeringMaxVisualYawError = 45.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn")
+	bool bEnableGeneralTurnCandidates = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "50", ClampMax = "500"))
+	float GeneralTurnEntrySpeed = 120.0f;
+	/** Serialized compatibility for the previous heading-only admission policy. */
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use physical alignment admission."))
+	float GeneralTurnRecentHeadingAngle = 20.0f;
+	/** Substantial reversed target required to re-arm an unfinished correction event. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "45", ClampMax = "90"))
+	float GeneralTurnCommittedHeadingAngle = 60.0f;
+	/** Serialized compatibility; OTM no longer opens Turn from angular speed alone. */
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use physical alignment admission."))
+	float GeneralTurnOTMEntryYawRate = 120.0f;
+	/** Strafe requires travel and camera to turn together, inside the forward cone. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "60", ClampMax = "360", Units = "DegreesPerSecond"))
+	float GeneralTurnStrafeEntryYawRate = 120.0f;
+	/** Serialized compatibility only. Physical alignment now determines curve routing. */
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Turn eligibility now requires physical alignment error."))
+	float GeneralTurnStrafeContinuousCurveYawRate = 210.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "30", ClampMax = "75"))
+	float GeneralTurnAlignmentEntryAngle = 45.0f;
+	/** Sustained physical correction required before adding Turn candidates. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "0.02", ClampMax = "0.15", Units = "Seconds"))
+	float GeneralTurnAlignmentConfirmation = 0.04f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "0.1", ClampMax = "0.5"))
+	float GeneralTurnMinimumWindow = 0.20f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "0.1", ClampMax = "0.4"))
+	float GeneralTurnQuietGrace = 0.18f;
+	/** Bounded completion handoff; never force replay of the whole Turn clip. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "0.1", ClampMax = "0.5"))
+	float GeneralTurnCompletionGrace = 0.25f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Movement", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float WalkSpeed = 500.0f;
 

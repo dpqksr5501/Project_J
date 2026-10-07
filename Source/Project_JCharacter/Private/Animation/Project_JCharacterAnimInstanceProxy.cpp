@@ -99,8 +99,21 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		InData.LocomotionContext.bIsMotionMatchingMoving && !InData.Air.bIsInAir &&
 		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
-	const bool bContinuationCancelled = PendingGameThreadData.MotionMatching.SelectionContext.bAllowTurnContinuation &&
-		!InData.MotionMatching.SelectionContext.bAllowTurnContinuation;
+	const auto& OldContext = PendingGameThreadData.MotionMatching.SelectionContext;
+	const auto& NewContext = InData.MotionMatching.SelectionContext;
+	const bool bGeneralCancelled =
+		(OldContext.bAllowGeneralTurnContinuation && !NewContext.bAllowGeneralTurnContinuation) ||
+		(OldContext.bGeneralTurnCandidates && !NewContext.bGeneralTurnCandidates && !NewContext.bAllowGeneralTurnContinuation);
+	// A Cycle that has already won is the desired handoff. Do not invalidate it
+	// merely because its old GeneralTurn companion/permission is being removed.
+	const auto* CapturedNode = GetCapturedMotionMatchingNode();
+	const bool bFreshCycleResult = NewContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		InSelectedDatabase && LatestPostSelection.SelectedDatabase == InSelectedDatabase->GetFName() &&
+		LatestPostSelection.CaptureFrame > 0 && LatestPostSelection.CaptureFrame <= GFrameCounter &&
+		GFrameCounter - LatestPostSelection.CaptureFrame <= 2 && LatestPostSelection.CachedNodeWeight > UE_SMALL_NUMBER &&
+		CapturedNode && !CapturedNode->GetMotionMatchingState().SearchResult.bIsInteraction;
+	const bool bContinuationCancelled =
+		(OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) || (bGeneralCancelled && !bFreshCycleResult);
 	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame && !bCompletedTurnReturn &&
 		((InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase) ||
 			(InTurnCycleCompanion && InTurnCycleCompanion != CurrentTurnCycleCompanion));
@@ -227,6 +240,12 @@ void FProject_JCharacterAnimInstanceProxy::UpdateAnimationNode_WithRoot(
 	CompleteMotionMatchingReselects();
 	CapturePostSelection();
 	CapturePivotDebugTrace();
+}
+
+const FAnimNode_MotionMatching* FProject_JCharacterAnimInstanceProxy::GetCapturedMotionMatchingNode() const
+{
+	return LatestPostSelection.ProducerNodeIndex != INDEX_NONE ?
+		GetNodeFromIndex<FAnimNode_MotionMatching>(LatestPostSelection.ProducerNodeIndex) : &NativeMotionMatchingNode;
 }
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()

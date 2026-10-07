@@ -1,6 +1,8 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Project_JPlayerCharacter.h"
+#include "PoseSearch/PoseSearchDatabase.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAL/IConsoleManager.h"
 
@@ -8,6 +10,8 @@ namespace
 {
 TAutoConsoleVariable<int32> CVarLocomotionSteering(TEXT("p.ProjectJ.LocomotionSteering"), 1,
 	TEXT("Local grounded locomotion visual Steering. 0=legacy release, 1=profile-controlled. No movement/RPC changes."));
+TAutoConsoleVariable<int32> CVarGeneralTurnCandidates(TEXT("p.ProjectJ.GeneralTurnCandidates"), 1,
+	TEXT("Local forward Run Cycle/general-turn candidates. 0=disable the new candidate window, 1=profile-controlled."));
 float SafeSetting(float Value, float Fallback, float Min, float Max)
 {
 	return FMath::IsFinite(Value) ? FMath::Clamp(Value, Min, Max) : Fallback;
@@ -66,6 +70,88 @@ void UProject_JCharacterAnimInstance::UpdateLocomotionSteeringData(FProject_JAni
 	Data.LocomotionSteeringMaxYawError = SafeSetting(Profile->SteeringMaxVisualYawError, 45.0f, 0.0f, 90.0f);
 	Data.bLocomotionSteeringEnabled = true;
 	Data.LocomotionSteeringGate = Gate::Enabled;
+}
+
+void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThreadSafeData& Data)
+{
+	const auto* Profile = GetLocomotionProfile();
+	auto& Context = Data.MotionMatching.SelectionContext;
+	FProject_JGeneralTurnPolicy::FInput Input;
+	FProject_JGeneralTurnPolicy::FSettings Settings;
+	const FVector Move = Data.LocomotionContext.RequestedMoveWorldDirection;
+	const bool bSupportedMode = Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement ||
+		(Data.Combat.bIsCombatMode && Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe);
+	Input.bEligible = Profile && Profile->bEnableGeneralTurnCandidates && CVarGeneralTurnCandidates.GetValueOnGameThread() != 0 &&
+		Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() &&
+		Data.bLocomotionSteeringEnabled && bSupportedMode && !Context.bMovingTurn180 &&
+		Data.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Run &&
+		Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		!Data.OneShotPresentation.bShouldOverrideMotionMatching && !Move.ContainsNaN() && !Move.IsNearlyZero();
+	bool bCandidateDataUnavailable = false;
+	const UProject_JMotionMatchingAssetSet* CandidateSet = nullptr;
+	if (Input.bEligible)
+	{
+		const bool bCombat = Data.Combat.bIsCombatMode && Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
+		const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() : OwningPlayerCharacter->GetMotionMatchingAssetSet();
+		CandidateSet = Set;
+		auto CandidateContext = Context;
+		CandidateContext.bGeneralTurnCandidates = true;
+		CandidateContext.bUseGenericFamiliesForNonOrientToMovement = bCombat;
+		bCandidateDataUnavailable = !Set || !Set->FindTurnCycleCompanion(CandidateContext, Set->RunDatabases.Cycle);
+		Input.bEligible = !bCandidateDataUnavailable;
+	}
+	Input.Mode = Data.LocomotionContext.RotationMode;
+	Input.Now = AnimationClock.Seconds;
+	Input.MoveYaw = Move.Rotation().Yaw;
+	// Strafe DesiredFacingYaw is a one-shot travel target, not camera-facing.
+	Input.FacingYaw = Input.Mode == EProject_JLocomotionRotationMode::Strafe && OwningCharacter ?
+		OwningCharacter->GetControlRotation().Yaw : Input.MoveYaw;
+	Input.ActorYaw = OwningCharacter ? OwningCharacter->GetActorRotation().Yaw : 0;
+	Input.VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;
+	Input.Speed = Data.Movement.GroundSpeed;
+	// During braking there is no meaningful zero-velocity heading to reject.
+	if (Input.Speed <= 50) Input.VelocityYaw = Input.MoveYaw;
+	const auto& Result = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetLatestPostSelection();
+	const auto* ResultNode = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetCapturedMotionMatchingNode();
+	if (Input.bEligible && CandidateSet && Result.CaptureFrame > 0 && Result.CaptureFrame <= GFrameCounter &&
+		GFrameCounter - Result.CaptureFrame <= 2 && Result.CachedNodeWeight > UE_SMALL_NUMBER &&
+		ResultNode && !ResultNode->GetMotionMatchingState().SearchResult.bIsInteraction)
+	{
+		Input.SelectionFrame = Result.CaptureFrame;
+		Input.bSelectedGeneralTurn = CandidateSet->RunDatabases.GeneralTurn &&
+			Result.SelectedDatabase == CandidateSet->RunDatabases.GeneralTurn->GetFName();
+		Input.bSelectedCycle = (CandidateSet->RunDatabases.Cycle && Result.SelectedDatabase == CandidateSet->RunDatabases.Cycle->GetFName()) ||
+			(CandidateSet->RunDatabases.SettledCycle && Result.SelectedDatabase == CandidateSet->RunDatabases.SettledCycle->GetFName());
+	}
+	if (Profile)
+	{
+		Settings.EntrySpeed = Profile->GeneralTurnEntrySpeed;
+		Settings.CommittedHeadingAngle = Profile->GeneralTurnCommittedHeadingAngle;
+		Settings.StrafeEntryYawRate = Profile->GeneralTurnStrafeEntryYawRate;
+		Settings.AlignmentEntryAngle = Profile->GeneralTurnAlignmentEntryAngle;
+		Settings.AlignmentConfirmation = Profile->GeneralTurnAlignmentConfirmation;
+		Settings.MinimumWindow = Profile->GeneralTurnMinimumWindow;
+		Settings.QuietGrace = Profile->GeneralTurnQuietGrace;
+		Settings.CompletionGrace = Profile->GeneralTurnCompletionGrace;
+	}
+	Context.bGeneralTurnCandidates = GeneralTurnPolicy.Update(Input, Settings);
+	Context.bAllowGeneralTurnContinuation = GeneralTurnPolicy.AllowsContinuation();
+	if (Context.bGeneralTurnCandidates) Context.bAllowTurnContinuation = false;
+	const auto* CombatSet = OwningPlayerCharacter ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() : nullptr;
+	if (Input.Mode == EProject_JLocomotionRotationMode::Strafe &&
+		(GeneralTurnPolicy.RequiresDynamicCycle() || Context.bGeneralTurnCandidates || (Context.bAllowGeneralTurnContinuation && CombatSet &&
+			CombatSet->RunDatabases.GeneralTurn && Data.MotionMatching.PostSelection.SelectedDatabase ==
+			CombatSet->RunDatabases.GeneralTurn->GetFName()))) Context.bUseSettledCycle = false;
+	Data.GeneralTurnRecentHeading = GeneralTurnPolicy.GetRecentHeading();
+	Data.GeneralTurnWindowElapsed = GeneralTurnPolicy.GetElapsed();
+	Data.GeneralTurnMoveYawRate = GeneralTurnPolicy.GetMoveYawRate();
+	Data.GeneralTurnFacingYawRate = GeneralTurnPolicy.GetFacingYawRate();
+	Data.GeneralTurnPathError = GeneralTurnPolicy.GetPathError();
+	Data.GeneralTurnFacingError = GeneralTurnPolicy.GetFacingError();
+	Data.bGeneralTurnDynamicCycle = GeneralTurnPolicy.RequiresDynamicCycle();
+	Data.bGeneralTurnCycleHandoff = GeneralTurnPolicy.IsCycleHandoffHeld();
+	Data.GeneralTurnDemand = FName(GeneralTurnPolicy.GetDemand());
+	Data.GeneralTurnReason = FName(bCandidateDataUnavailable ? TEXT("CandidateDataUnavailable") : GeneralTurnPolicy.GetReason());
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeLocomotionSteeringAlpha() const

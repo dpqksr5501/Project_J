@@ -8,6 +8,7 @@
 #include "Project_JMotionMatchingAssetSet.generated.h"
 
 class UPoseSearchDatabase;
+class FObjectPreSaveContext;
 
 /**
  * Complete, value-only input to a Motion Matching database family lookup.
@@ -49,6 +50,12 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSelectionContext
 	/** Aligned completion of the same local turn; retired by a new target or owner. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bAllowTurnContinuation = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bGeneralTurnCandidates = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bAllowGeneralTurnContinuation = false;
 };
 
 USTRUCT(BlueprintType)
@@ -65,6 +72,16 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Turn Redirect")
 	TObjectPtr<UPoseSearchDatabase> TurnRedirect = nullptr;
+
+	/** Forward 45/90/135 degree turns, competing alongside dynamic Cycle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
+	TObjectPtr<UPoseSearchDatabase> GeneralTurn = nullptr;
+
+	/** Computed at save/cook from the actual editor normalization references. */
+	UPROPERTY(VisibleAnywhere, Category = "Motion Matching|Continuity")
+	bool bCookedTurnCycleCompatible = false;
+	UPROPERTY(VisibleAnywhere, Category = "Motion Matching|Continuity")
+	bool bCookedGeneralTurnCompatible = false;
 };
 
 /**
@@ -80,12 +97,16 @@ class PROJECT_JCHARACTER_API UProject_JMotionMatchingAssetSet : public UPrimaryD
 
 public:
 	UPoseSearchDatabase* FindDatabaseForContext(const FProject_JMotionMatchingSelectionContext& Context) const;
-	/** Returns only this family's dynamic Cycle beside an approved Turn, with a compatible schema. */
+	/** Compatible second candidate for an approved Turn/Cycle or Cycle/GeneralTurn pair. */
 	UPoseSearchDatabase* FindTurnCycleCompanion(const FProject_JMotionMatchingSelectionContext& Context,
 		const UPoseSearchDatabase* Primary) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
 	bool bEnableTurnCycleCandidates = true;
+
+#if WITH_EDITOR
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
+#endif
 
 	bool ValidateForProjectJLocomotion(const UObject* ValidationContext, TArray<FString>& OutWarnings) const;
 

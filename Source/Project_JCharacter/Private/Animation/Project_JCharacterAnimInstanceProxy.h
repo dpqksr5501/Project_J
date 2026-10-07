@@ -64,6 +64,8 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	uint64 GetReselectRequestForTrace() const { return PendingReselectRevision; }
 	bool IsReselectPendingForTrace() const { return bForceMotionMatchingReselect; }
 	bool IsReturnQueryForTrace() const { return bReselectFromPoseHistory; }
+	/** Read a captured representative only after its graph update has completed. */
+	const FAnimNode_MotionMatching* GetCapturedMotionMatchingNode() const;
 
 protected:
 	virtual void Initialize(UAnimInstance* InAnimInstance) override;
