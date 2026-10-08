@@ -11,6 +11,7 @@
 | 공격·콤보·전투 VFX 제작 | [전투](Combat/README.md) |
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
 | 런타임 책임과 MMO 확장 기반 확인 | [아키텍처](Architecture/README.md) |
+| 최근 런타임 결함 재현과 전체 회귀 결과 확인 | [2026-10-08 수명·소유권 감사](Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) |
 | 복제 구조와 원격 동작 검증 | [네트워크](Networking/README.md) |
 | 성능 수집·측정·최적화 판단 | [성능](Performance/README.md) → [벤치마크](Benchmarks/README.md) |
 | 감사 요청과 후속 결과 확인 | [검토 기록](Review/README.md) |

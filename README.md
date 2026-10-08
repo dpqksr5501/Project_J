@@ -6,7 +6,7 @@
 
 멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [내부 리팩터링](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [문서 목록](Docs/README.md)
+[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [문서 목록](Docs/README.md)
 
 **MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md)
 
@@ -14,9 +14,9 @@
 
 ## 측정으로 확인한 변화
 
-**최신 구조 검증 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
+**구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
 
-아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이번 내부 정리의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최신 자동화는 NullRHI 검사이며, 제작 메뉴 조작·저장과 실제 멀티플레이 확인은 별도입니다.
+아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이후 구조 변경의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최근 빌드·자동화·실제 소켓 연결 결과는 [검증 현황](#검증-현황)에서 실행 조건과 함께 구분합니다.
 
 | 영역 | 비교 조건 | Before → After | 결과 |
 |---|---|---|---|
@@ -40,6 +40,7 @@ Project J는 **캐릭터·애니메이션·무기·의상·이펙트를 실제 �
 | **의상·방어구·무기** | 장비 정의와 표현 프로필로 메시·부착 위치 구성, 호환되는 파츠는 Leader Pose 사용 | 본 구조, 소켓·그립, 클리핑과 LOD |
 | **이동·전투 애니메이션** | Motion Matching/Chooser용 이동 데이터와 무기별 프로필, 공격 몽타주 조합 | 이동·회전 전환, root motion, 공격·복귀 타이밍 |
 | **Niagara 이펙트** | 공격 태그별 presentation profile과 몽타주 Notify 구간에 연결 | Trail 시작·끝, 무기 소켓, 잔상·중단 시 정리와 가독성 |
+| **캐릭터 사운드** | 이벤트·접촉 위치·Physical Surface별 오디오 프로필에 음원 연결 | 움직임과의 타이밍, 기본음 대체, 가까운 원격 캐릭터 청취와 군중 비용 |
 | **직업·스킬·콤보 기획** | 입력 태그, AbilitySet, 콤보 그래프와 AttackDefinition 조합 | 입력 분기, 연계 구간, 판정·이동·연출의 일치 |
 
 캐릭터 호환성은 특정한 “표준 규격” 하나로 보장하지 않습니다. 사용할 skeleton과 애니메이션을 먼저 맞추고 리타게팅·소켓·IK를 검증합니다. 기존 구조로 표현할 수 있는 콘텐츠는 데이터와 프로필로 연결하고, 새로운 동작 규칙이 필요하면 C++ 기능을 함께 확장합니다.
@@ -149,6 +150,21 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 
 ## 검증 현황
 
+### 최근 기능·수명 검증 — 2026-10-08
+
+8개 모듈의 소스 위험 패턴과 핵심 런타임 경계를 검토하고 **실제 엔진에서 재현한 결함 5개**를 수정했습니다. 영속 ASC의 Avatar 교체, Destroy와 GC 사이의 탈것 참조, 네이티브 애니메이션 프록시의 GC 추적, 겹치는 무기 노티파이, 화면 밖 몽타주의 종료 처리를 다룹니다. 모든 파일의 모든 실행 경로를 전수 실행한 범위는 아닙니다. [런타임 감사와 재현 근거](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) · [검증 요약](Docs/Review/Audits/Project_J_Runtime_Ownership_Validation_2026-10-08.json)
+
+| 검증 | 결과 | 실행 조건 |
+|---|---|---|
+| 직접 UBT Editor / Game 빌드 | 모두 성공 | UE 5.8, Win64 Development |
+| ProjectJ 전체 자동화 | **244개 통과 / 실패0 / 미실행0** | NullRHI, 225개 성공·19개 경고 포함 성공, `a.Budget.BudgetMs 0.1` |
+| 장비 장착·공격·해제 반복 | **100캐릭터 × 3회 = 300 actor-cycle 완료 / failures=0** | 위 자동화와 같은 실행, 네트워크 클라이언트 수와 구분 |
+| 실제 소켓 연결·복제·애니메이션 | 전용 서버1 + clients2, NPC100, 모두 정상 종료 | Iris AOI·FastArray·애니메이션 관측, `PktLag=80`·`PktLoss=2` 설정 |
+
+이 결과는 커밋 `8a897335`에 반영된 소스·콘텐츠의 기능 검증입니다. 로그의 경고와 기존 에셋 참조 누락도 감사 보고서에 남겼습니다. 이번 실행의 packaged/cook·RHI 품질이나 MMO 대규모 처리량을 입증하는 수치로 사용하지 않습니다.
+
+### 보존된 packaged·RHI·부하 검증 — 2026-09-10
+
 | 검증 | 결과 | 해석 범위 |
 |---|---|---|
 | main 직접 UBT Editor / Game 빌드 | 모두 성공 | Win64 Development |
@@ -157,7 +173,7 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 | 별도 socket 다중 접속 | 서버1 + clients4, NPC512 검증·정상 종료 | AOI 재입장, owner-only inventory, 공개 장비, 삭제·접속 종료 |
 | packaged 스킬 통합 | 신규/재사용 application cache 각각3회 성공 | 장착 → GAS → 몽타주 → hit window → Trail → 해제/정리 |
 
-수치는 **2026-09-10의 보존된 실행 결과**입니다. main 회귀는 코드 `f2c31fb`, 전투 에셋 `89f94b4` 기준이며, 이후 테스트 목적으로 캐릭터 BP 이벤트 그래프를 비운 로컬 변경까지 재검증한 결과는 아닙니다. [검증 근거와 재현 조건](Docs/Benchmarks/SystemsModernization.md)을 함께 확인할 수 있습니다.
+수치는 **2026-09-10의 보존된 실행 결과**입니다. main 회귀는 코드 `f2c31fb`, 전투 에셋 `89f94b4` 기준이며, 이후 변경된 소스·콘텐츠 전체의 packaged/RHI 재검증 결과를 의미하지 않습니다. [검증 근거와 재현 조건](Docs/Benchmarks/SystemsModernization.md)을 함께 확인할 수 있습니다.
 
 ## 게임플레이와 콘텐츠 확장 기반
 
@@ -170,9 +186,10 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 | **FastArray 기반 복제** | 인벤토리·장비 변경분을 전달하고 owner-only 데이터와 공개 표현을 구분 |
 | **원격 이동 궤적 보정** | 복제된 이동과 visual smoothing을 사용해 원격 캐릭터의 Motion Matching 입력 방향 보정 |
 | **데이터 유효성 검사** | 장비·프로필의 필수 참조와 설정을 `IsDataValid` 등으로 검사. 실제 애니메이션·연출 품질은 플레이 검증과 병행 |
+| **클라이언트 캐릭터 오디오** | 가까운 플레이어·NPC 접촉음을 로컬에서 구성. 이벤트별 음원·Physical Surface 매핑, 비동기 준비와 후보·voice 예산 지원. 현재 마네킹 기본음 연결, 실제 눈·물·진흙 환경은 후속 제작 범위 |
 | **서버 간 상태 전달 준비** | Handover envelope, 검증·취소·실패 상태와 transport 경계를 마련. 운영 분산 서버와 영속 저장 완성을 의미하지 않음 |
 
-→ [모듈러 메시](Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp) · [원격 궤적](Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h) · [장비 데이터 검사](Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp) · [Handover](Source/Project_J/Backend/Project_JHandoverManager.h)
+→ [모듈러 메시](Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp) · [원격 궤적](Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingTrajectoryComponent.h) · [장비 데이터 검사](Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp) · [캐릭터 오디오](Docs/Animation/Architecture/Foley_Audio_System.md) · [Handover](Source/Project_J/Backend/Project_JHandoverManager.h)
 
 ## 프로젝트 구성
 
@@ -180,9 +197,11 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 |---|---|
 | [Project_JCore](Source/Project_JCore) | 값 타입, 비동기 scoring, 공간 스냅샷, 공유 시각 에셋 서비스 |
 | [Project_JGAS](Source/Project_JGAS) | Ability System Component와 Attribute 기반 |
-| [Project_JCharacter](Source/Project_JCharacter) | 캐릭터·장비·전투·애니메이션·NPC 판단/이동·Mass 인계 |
+| [Project_JMMO](Source/Project_JMMO) | Core-only 확장 계약, 조정·요청 수명과 저장 계약 |
+| [Project_JCharacter](Source/Project_JCharacter) | 캐릭터·장비·전투·애니메이션·오디오·NPC 판단/이동·Mass 인계 |
 | [Project_J](Source/Project_J) | PlayerState/Controller, 게임 연결, 통합 진단 fixture |
-| [Project_JCharacterEditor](Source/Project_JCharacterEditor) | Editor 전용 Navigation 통합·부하 시험 |
+| [Project_JCharacterEditor](Source/Project_JCharacterEditor) | 콘텐츠 제작·검증·이관 도구, Editor 전용 Navigation 통합·부하 시험 |
+| [Project_JAnimationNodes](Source/Project_JAnimationNodes) | Guided Hand IK AnimGraph 제작 노드·컴파일 검사, UncookedOnly |
 | [Project_JMount](Source/Project_JMount) | 탈것과 탑승 캐릭터 연결 |
 
 플레이어의 ASC·인벤토리·장비 소유권은 PlayerState에 두고 Character의 표현 수명과 분리합니다. GAS 전투 정의, 장비별 animation/presentation profile, Motion Matching/Chooser, Niagara 에셋을 조합하는 방식으로 기능을 확장합니다. 일반 NPC는 플레이어와 다른 소유 경로를 사용합니다.
@@ -203,6 +222,7 @@ $projectFile = (Resolve-Path './Project_J.uproject').Path
 
 ## 실행 경계 실험과 다음 작업
 
+- **콘텐츠·런타임 후속:** 최근 수명 회귀를 유지하면서 packaged/RHI·더 많은 접속 조건으로 검증을 확장합니다. 실제 콘텐츠의 전환·접촉 타이밍, 지형 연결과 군중 표현 비용, 남아 있는 에셋 의존성을 점검합니다. [최근 감사의 잔여 항목과 검증 범위](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md)
 - **E 후속:** 기본 LightFunction PSO 누락을 해결했습니다. 승인 후 운영 ABP의 snapshot getter 5개 변환과 Trail 거리 컬링·고정 bounds를 저장했습니다. VFX instance 예산과 driver cold 검증은 남아 있습니다.
 - **F 구현·실험:** Tasks/TaskGraph/ThreadPool, Tick 의존성, 전용 consumer 경합, Chaos snapshot, RDG readback, Audio·PCG의 8개 fixture를 기본 비활성 Editor 플러그인으로 구현했습니다. [실측·구조·적용 판단](Docs/Benchmarks/ExecutionExperiments_2026-09-12/README.md)에서 병렬화의 이득과 순서/수명 비용을 함께 공개합니다.
 - **MMORPG 확장 기반:** Core-only 모듈, 205개 확장 계약, 통신 요청 수명·상한, 소유 단위 조정과 저장 계약을 추가했습니다. 신규 테스트 8개와 기존 회귀 16개를 검증했으며, Handover 정리 경고는 후속 3개 검사에서 오류·경고 0으로 해결했습니다. 실제 콘텐츠·운영 DB 연결, 전투 서버 tick과 더 많은 접속·패킷 조건, 운영 Mass 표현 전환 검증은 후속 범위입니다.
