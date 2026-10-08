@@ -252,7 +252,11 @@ bool AProject_JMountCharacter::CanMountRider(const ACharacter* NewRider) const
 
 EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityFailure(const ACharacter* NewRider) const
 {
-	if (!NewRider)
+	if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay)
+	{
+		return EProject_JMountEligibilityFailure::MountUnavailable;
+	}
+	if (!IsValid(NewRider) || NewRider->IsActorBeingDestroyed())
 	{
 		return EProject_JMountEligibilityFailure::InvalidRider;
 	}

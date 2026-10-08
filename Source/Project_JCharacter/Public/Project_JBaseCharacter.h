@@ -17,6 +17,7 @@ class UProject_JEquipmentRuntimeComponent;
 class UProject_JCharacterClassDefinition;
 class UProject_JCharacterAdvancementDefinition;
 class UProject_JCombatStyleDefinition;
+class UProject_JFoleyComponent;
 
 UENUM(BlueprintType)
 enum class EProject_JRuntimeStateOwnership : uint8
@@ -43,6 +44,9 @@ public:
 	virtual bool IsDead_Implementation() const override;
 
 	virtual UProject_JAttributeSet* GetAttributeSet() const;
+
+	UFUNCTION(BlueprintPure, Category = "Foley")
+	UProject_JFoleyComponent* GetFoleyComponent() const { return FoleyComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
 	FName GetCharacterClassId() const;
@@ -71,6 +75,9 @@ public:
 	EProject_JRuntimeStateOwnership GetRuntimeStateOwnership() const { return RuntimeStateOwnership; }
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Foley")
+	TObjectPtr<UProject_JFoleyComponent> FoleyComponent;
+
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;

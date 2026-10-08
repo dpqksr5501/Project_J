@@ -238,6 +238,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void PawnClientRestart() override;
 	virtual void UnPossessed() override;
 	virtual void OnRep_PlayerState() override;
 	virtual AActor* GetAbilitySystemOwnerActor() const override;
@@ -276,6 +277,8 @@ protected:
 
 	UFUNCTION()
 	void OnRep_SummonedMount();
+	UFUNCTION()
+	void OnSummonedMountDestroyed(AActor* DestroyedActor);
 
 	UFUNCTION()
 	void OnCombatIntroMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -419,7 +422,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "Animation|Locomotion")
 	EProject_JAnimationLocomotionMode GetAnimationLocomotionMode() const;
 
-	FORCEINLINE class AProject_JMountCharacter* GetSummonedMount() const { return SummonedMount; }
+	class AProject_JMountCharacter* GetSummonedMount() const;
 
 	class UProject_JInventoryComponent* GetInventoryComponent() const;
 

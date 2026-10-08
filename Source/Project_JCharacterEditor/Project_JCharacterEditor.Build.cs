@@ -14,6 +14,7 @@ public class Project_JCharacterEditor : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Json",
 			"AssetRegistry",
 			"KismetCompiler",
 			"ApplicationCore",

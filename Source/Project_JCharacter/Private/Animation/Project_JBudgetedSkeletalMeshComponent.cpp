@@ -55,9 +55,28 @@ void UProject_JBudgetedSkeletalMeshComponent::BindAnimationEvents()
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.RemoveDynamic(this, &ThisClass::OnMontageStarted); }
 	BoundAnimation = GetAnimInstance();
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.AddUniqueDynamic(this, &ThisClass::OnMontageStarted); }
+	RefreshMontageUpdateRequirement();
 }
 
-void UProject_JBudgetedSkeletalMeshComponent::OnMontageStarted(UAnimMontage*) { LeaveBudget(); }
+void UProject_JBudgetedSkeletalMeshComponent::OnMontageStarted(UAnimMontage*)
+{
+	LeaveBudget();
+	RefreshMontageUpdateRequirement();
+}
+
+void UProject_JBudgetedSkeletalMeshComponent::RefreshMontageUpdateRequirement()
+{
+	if (bEnding) { return; }
+	const auto* Anim = GetAnimInstance();
+	const bool bNeedsUpdate = Anim && Anim->IsAnyMontagePlaying();
+	if (bNeedsUpdate == bMontageUpdateRequirement) { return; }
+	bMontageUpdateRequirement = bNeedsUpdate;
+	// Attack ownership may end before its montage blend-out. This independent
+	// demand preserves offscreen evaluation and end notifies until all instances
+	// drain, then composes with (rather than releasing) other callers' demands.
+	if (bNeedsUpdate) { RequestAnimationUpdate(this, EProject_JAnimationUpdateRequirement::GameplayPose); }
+	else { ReleaseAnimationUpdate(this); }
+}
 
 bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
 {
@@ -69,7 +88,10 @@ bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
 		&& World && World->IsGameWorld() && !World->bIsTearingDown && World->GetNetMode() != NM_DedicatedServer
 		&& GetOwner() && !GetOwner()->IsActorBeingDestroyed() && !bLocalPlayer && !IsSimulatingPhysics()
 		&& !LeaderPoseComponent.IsValid() && Anim && Anim->RootMotionMode != ERootMotionMode::RootMotionFromEverything
-		&& !Anim->Montage_IsPlaying(nullptr);
+		// Stopped/blending-out instances still need animation ticks to dispatch
+		// their end callbacks and release montage ownership. ABA can completely
+		// skip an offscreen mesh, so rejoin only after those instances are drained.
+		&& !Anim->IsAnyMontagePlaying();
 }
 
 void UProject_JBudgetedSkeletalMeshComponent::EnterBudget()
@@ -171,6 +193,7 @@ void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 	bEnding = true;
 	LeaveBudget();
 	UpdateRequirements.Reset();
+	bMontageUpdateRequirement = false;
 	RefreshAnimationUpdateRequirements();
 	if (Service.IsValid()) { Service->UnregisterMesh(this); }
 	Service.Reset();

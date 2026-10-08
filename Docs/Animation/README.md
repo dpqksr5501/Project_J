@@ -19,6 +19,11 @@
 | 리타깃 파이프라인과 배경 | [런타임 리타깃 구조](Architecture/Runtime_Retarget_HandIK_Architecture.md) |
 | 무기 부착·파지·궤적·공격 종료 복귀 | [무기 파지와 손 접촉 통합 가이드](Authoring/Weapon_Hand_Contact_System.md) |
 | 외형·의상 리더 선택 | [외형 메시 소유권](Architecture/Visual_Presentation_Mesh_Ownership.md) |
+| 발소리·지형 매핑·클라이언트 군중 오디오 기반 | [캐릭터 Foley 시스템](Architecture/Foley_Audio_System.md) |
+| 실제 GASP 노티파이·오디오 뱅크·재생 경로 조사 | [GASP Foley 조사](Diagnostics/GASP_Foley_Investigation_2026-10-08.md) |
+| GASP BP 노티파이의 native 교체·설정 보존·검증 | [Foley 노티파이 교체](Diagnostics/Foley_Notify_Migration_2026-10-08.md) |
+| 이벤트 대체·발/손/소켓 정책·초기 마네킹 음원 연결 | [Foley 확장과 연결](Diagnostics/Foley_Extension_2026-10-08.md) |
+| 정면 달리기의 객체 없는 노티파이 복구·실제 MM 재생 검증 | [정면 달리기 Foley 복구](Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md) |
 
 ## 에디터 제작과 디버깅
 

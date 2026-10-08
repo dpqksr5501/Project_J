@@ -68,6 +68,7 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	const FAnimNode_MotionMatching* GetCapturedMotionMatchingNode() const;
 
 protected:
+	virtual void AddReferencedObjects(UAnimInstance* InAnimInstance, FReferenceCollector& Collector) override;
 	virtual void Initialize(UAnimInstance* InAnimInstance) override;
 	virtual void PreUpdate(UAnimInstance* InAnimInstance, float DeltaSeconds) override;
 	virtual void UpdateAnimationNode_WithRoot(

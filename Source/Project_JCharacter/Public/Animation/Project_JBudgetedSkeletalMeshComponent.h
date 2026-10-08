@@ -47,8 +47,10 @@ private:
 	void LeaveBudget();
 	void DetachService();
 	void RefreshAnimationUpdateRequirements();
+	void RefreshMontageUpdateRequirement();
 	TMap<TWeakObjectPtr<UObject>, EProject_JAnimationUpdateRequirement> UpdateRequirements;
 	bool bUpdateOverride = false, bGameplayPoseOverride = false;
+	bool bMontageUpdateRequirement = false;
 	bool bOverrideSavedURO = false, bOverrideSavedSuppressNotifies = false;
 	EVisibilityBasedAnimTickOption OverrideSavedVisibility = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	UFUNCTION() void BindAnimationEvents();

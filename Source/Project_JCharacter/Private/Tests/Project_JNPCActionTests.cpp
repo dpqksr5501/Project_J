@@ -19,6 +19,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/SkeletalMesh.h"
@@ -253,6 +254,10 @@ bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
 	if (!TestNotNull(TEXT("Existing NPC mesh fixture"), MeshAsset) || !TestNotNull(TEXT("Existing greatsword montage fixture"), Montage)) { return false; }
 	auto* Mesh = F.NPC->GetMesh(); Mesh->SetSkeletalMesh(MeshAsset); Mesh->SetAnimInstanceClass(UAnimInstance::StaticClass());
 	if (!TestNotNull(TEXT("Native animation instance"), Mesh->GetAnimInstance())) { return false; }
+	// This movement-policy fixture requires actual animation ticks in NullRHI.
+	// ABA ownership/drain is covered by the dedicated runtime ownership test.
+	F.World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>()->SetEnabledOverride(false);
+	Mesh->SetComponentTickEnabled(true);
 	auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(F.NPC); F.NPC->AddInstanceComponent(Hit); Hit->RegisterComponent();
 	auto* Definition = NewObject<UProject_JAttackDefinition>(F.NPC);
 	Definition->AttackTag = NPCTestHitTag; Definition->Montage = Montage; Definition->DamageEffect = UGameplayEffect::StaticClass();
@@ -279,9 +284,19 @@ bool FProjectJNPCAttackMovementPolicyTest::RunTest(const FString& Parameters)
 	F.NPC->GetAttributeSet()->InitHealth(0); F.Actions->UpdateAction();
 	TestFalse(TEXT("Death stops the owned ability"), Ability->IsActive());
 	TestNull(TEXT("Death closes the hit definition"), Hit->GetActiveAttackDefinition());
+	TestFalse(TEXT("Death immediately stops the owned montage"), Mesh->GetAnimInstance()->Montage_IsPlaying(Montage));
+	// A stopped instance must receive its final animation tick before the
+	// montage's independent pose demand can restore the pre-attack policy.
+	for (int32 Tick = 0; Tick < 20 && Mesh->GetAnimInstance()->IsAnyMontagePlaying(); ++Tick)
+	{
+		F.World->Tick(LEVELTICK_All, 0.05f);
+	}
+	TestFalse(TEXT("Death's stopped montage drains within one second"), Mesh->GetAnimInstance()->IsAnyMontagePlaying());
 	TestEqual(TEXT("Animation visibility policy restored"), Mesh->VisibilityBasedAnimTickOption, Visibility);
 	TestEqual(TEXT("URO restored"), Mesh->bEnableUpdateRateOptimizations != 0, bURO);
 	F.NPC->GetAttributeSet()->InitHealth(100);
+	// The transient fixture has no floor; reset ground state for the next case.
+	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	F.Actions->StartActions(F.Scoring, Handle); F.Scoring->OnQueryCompleted.Broadcast(F.Target(100), 1);
 	TestTrue(TEXT("Ability reusable after cancellation"), ASC->TryActivateAbility(Handle, false));
 	F.NPC->GetCharacterMovement()->SetMovementMode(MOVE_Falling);

@@ -2,6 +2,8 @@
 #if WITH_EDITOR
 #include "AIController.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Project_JCombatHitValidationComponent.h"
 #include "Components/Project_JCombatPresentationComponent.h"
@@ -178,6 +180,10 @@ struct FRun
    Property->SetObjectPropertyValue_InContainer(Pawn, Property->GetObjectPropertyValue_InContainer(Template));
   }
   Pawn->GetMesh()->SetSkeletalMesh(Template->GetMesh()->GetSkeletalMeshAsset());
+  // In NullRHI, OnRegister can disable an OnlyTickPoseWhenRendered mesh before
+  // these fixture defaults are copied. Changing visibility policy later alone
+  // does not restore tick; this fixture explicitly demands offscreen evaluation.
+  Pawn->GetMesh()->SetComponentTickEnabled(true);
   Pawn->GetMesh()->SetRelativeTransform(Template->GetMesh()->GetRelativeTransform());
   Pawn->GetMesh()->SetAnimInstanceClass(Template->GetMesh()->GetAnimClass());
   // Equal visibility-independent animation work in both visible PIE and NullRHI smoke runs.
@@ -266,7 +272,41 @@ struct FRun
       && ASC->GetActivatableAbilities().Num() == Bot.BaselineAbilityCount;
    }
    TRACE_COUNTER_SET(SoakEquipped, Equipped); TRACE_COUNTER_SET(SoakAttacking, Attacking);
-   if (Ready != Population && Now - PhaseStarted > 10) { Fail(TEXT("Phase timeout: equipment/attack/cleanup did not reach expected state")); return; }
+   if (Ready != Population && Now - PhaseStarted > 10)
+   {
+    // Report the unsatisfied invariants rather than a generic population timeout.
+    for (int32 Index = 0; Index < Bots.Num(); ++Index)
+    {
+     const FBot& Bot = Bots[Index];
+     auto* Pawn = Bot.Pawn.Get(); auto* ASC = Pawn->GetAbilitySystemComponent();
+     auto* Weapon = Pawn->FindComponentByClass<UProject_JWeaponPresentationComponent>();
+     auto* Presentation = Pawn->FindComponentByClass<UProject_JCombatPresentationComponent>();
+     const bool bEquipped = Bot.State->GetEquipmentManagerComponent()->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) != nullptr;
+     const bool bTag = ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_Attacking);
+     const bool bMontage = Pawn->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
+     if (Phase != EPhase::Unequip || bEquipped || IsValid(Weapon->GetSpawnedWeapon()) || bTag || bMontage
+      || Presentation->GetActiveAttackTag().IsValid() || ASC->GetActivatableAbilities().Num() != Bot.BaselineAbilityCount)
+     {
+      UE_LOG(LogProjectJEquipmentSoak, Error, TEXT("Timeout detail: bot=%d equipped=%d weapon=%d attackTag=%d montage=%d presentation=%s abilities=%d baseline=%d"),
+       Index, bEquipped, IsValid(Weapon->GetSpawnedWeapon()), bTag, bMontage, *Presentation->GetActiveAttackTag().ToString(),
+       ASC->GetActivatableAbilities().Num(), Bot.BaselineAbilityCount);
+      if (auto* Budgeted = Cast<UProject_JBudgetedSkeletalMeshComponent>(Pawn->GetMesh()))
+       UE_LOG(LogProjectJEquipmentSoak, Error, TEXT("Mesh policy: managed=%d requested=%d visibility=%d tickHidden=%d animClass=%s"),
+        Budgeted->IsManagedByBudget(), Budgeted->GetRequestedTickEnabled(), int32(Budgeted->VisibilityBasedAnimTickOption),
+        Budgeted->bBudgetTickWhenNotRendered, *GetNameSafe(Budgeted->GetAnimClass()));
+      for (const FAnimMontageInstance* Instance : Pawn->GetMesh()->GetAnimInstance()->MontageInstances)
+      {
+       if (Instance)
+        UE_LOG(LogProjectJEquipmentSoak, Error, TEXT("Retained montage: %s position=%.3f length=%.3f active=%d playing=%d valid=%d weight=%.3f suppressNotifies=%d tick=%d"),
+         *GetNameSafe(Instance->Montage), Instance->GetPosition(), Instance->Montage ? Instance->Montage->GetPlayLength() : 0.0f,
+         Instance->IsActive(), Instance->IsPlaying(), Instance->IsValid(), Instance->GetWeight(),
+         Pawn->GetMesh()->bSuppressNotifyEventDispatch, Pawn->GetMesh()->IsComponentTickEnabled());
+      }
+      break;
+     }
+    }
+    Fail(TEXT("Phase timeout: equipment/attack/cleanup did not reach expected state")); return;
+   }
    if (Ready == Population && Phase == EPhase::Equip)
    {
     Enter(EPhase::Attack);

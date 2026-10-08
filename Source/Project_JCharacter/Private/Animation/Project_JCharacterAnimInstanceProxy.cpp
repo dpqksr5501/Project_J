@@ -185,6 +185,23 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 	bUpdatingMotionMatchingGraph = false;
 }
 
+void FProject_JCharacterAnimInstanceProxy::AddReferencedObjects(UAnimInstance* InAnimInstance, FReferenceCollector& Collector)
+{
+	FAnimInstanceProxy::AddReferencedObjects(InAnimInstance, Collector);
+	// This native proxy is not reflected. TObjectPtr alone does not retain a
+	// queued/previous asset when the producer changes profiles before evaluation.
+	Collector.AddReferencedObject(CurrentActiveDatabase, InAnimInstance);
+	Collector.AddReferencedObject(AppliedDatabase, InAnimInstance);
+	Collector.AddReferencedObject(CurrentTurnCycleCompanion, InAnimInstance);
+	Collector.AddReferencedObject(AppliedTurnCycleCompanion, InAnimInstance);
+	Collector.AddReferencedObjects(AppliedGeneratedDatabases, InAnimInstance);
+	Collector.AddReferencedObjects(AppliedGeneratedCompanions, InAnimInstance);
+	Collector.AddPropertyReferencesWithStructARO(FProject_JAnimThreadSafeData::StaticStruct(), &PendingGameThreadData, InAnimInstance);
+	Collector.AddPropertyReferencesWithStructARO(FProject_JAnimThreadSafeData::StaticStruct(), &ThreadSafeData, InAnimInstance);
+	Collector.AddPropertyReferencesWithStructARO(FAnimNode_MotionMatching::StaticStruct(), &NativeMotionMatchingNode, InAnimInstance);
+	Collector.AddPropertyReferencesWithStructARO(FAnimNode_PoseSearchHistoryCollector::StaticStruct(), &NativePoseHistoryNode, InAnimInstance);
+}
+
 void FProject_JCharacterAnimInstanceProxy::ConsumeQueuedGameThreadData()
 {
 	if (ConsumedSnapshotRevision == PublishedSnapshotRevision) return;

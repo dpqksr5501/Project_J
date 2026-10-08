@@ -2,6 +2,7 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JPlayerCharacter.h"
+#include "Components/Project_JFoleyComponent.h"
 
 void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 {
@@ -35,6 +36,10 @@ void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 	}
 
 	LastConfirmedRemoteJumpSequence = Sequence;
+	if (UProject_JFoleyComponent* Foley = PlayerOwner->GetFoleyComponent())
+	{
+		Foley->PlayJump(LaunchVelocity.Size2D(), ServerStartAgeSeconds);
+	}
 	const float ConfirmedElapsedTime = FMath::Max(0.0f, ServerStartAgeSeconds);
 	if (bPredictedRemoteJumpStart && bIsJumping)
 	{
@@ -122,7 +127,7 @@ void UProject_JLocomotionAnimStateComponent::HandleReplicatedLandingStarted(
 
 	if (!IsLandingStateActive())
 	{
-		StartLanding(ImpactFallSpeed, false, false);
+		StartLanding(ImpactFallSpeed, false, false, ServerStartAgeSeconds);
 	}
 	ApplyReplicatedLandingSemantics(
 		ServerStartAgeSeconds,
@@ -502,7 +507,7 @@ void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 	PreviousLandingActorYaw = 0.0f;
 }
 
-void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags)
+void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags, float FoleyEventAgeSeconds)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
 	if (!PlayerOwner)
@@ -511,8 +516,16 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 	}
 
 	const bool bHadInAirState = bIsInAir || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart;
+	const bool bWasAlreadyLanding = IsLandingStateActive();
 
 	BeginLandingState(*PlayerOwner, ImpactFallSpeed);
+	if (!bWasAlreadyLanding)
+	{
+		if (UProject_JFoleyComponent* Foley = PlayerOwner->GetFoleyComponent())
+		{
+			Foley->PlayLanding(ImpactFallSpeed, FoleyEventAgeSeconds);
+		}
+	}
 
 	if (bUpdateGameplayTags)
 	{

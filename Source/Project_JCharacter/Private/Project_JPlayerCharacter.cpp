@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Components/Project_JFoleyComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Interaction/Project_JInteractionQuery.h"
@@ -236,6 +237,10 @@ void AProject_JPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 #endif
 	TurnInPlacePresentationRuntime.Reset();
 	PendingMountItemId.Invalidate();
+	if (IsValid(SummonedMount))
+	{
+		SummonedMount->OnDestroyed.RemoveDynamic(this, &AProject_JPlayerCharacter::OnSummonedMountDestroyed);
+	}
 	if (PendingMountClassLoadHandle)
 	{
 		PendingMountClassLoadHandle->CancelHandle();
@@ -277,11 +282,20 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 
 	RefreshAbilitySystemDependentComponents();
 	ApplyPrototypeStartingEquipment();
+	if (FoleyComponent) { FoleyComponent->PrepareLocalAudio(); }
+}
+
+void AProject_JPlayerCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	if (FoleyComponent) { FoleyComponent->PrepareLocalAudio(); }
 }
 
 void AProject_JPlayerCharacter::UnPossessed()
 {
 	TurnInPlacePresentationRuntime.Reset();
+	StopSprint();
+	SprintMoveInput = FVector2D::ZeroVector;
 	if (PlayerInputBindingComponent) PlayerInputBindingComponent->UnbindInput();
 	Super::UnPossessed();
 }
@@ -400,8 +414,21 @@ void AProject_JPlayerCharacter::OnRep_SummonedMount()
 	// mount event; the local owner gets the latency-hiding early preload.
 	if (IsLocallyControlled() && MountedAnimationLayerComponent)
 	{
-		MountedAnimationLayerComponent->PreloadLayerForMount(SummonedMount);
+		MountedAnimationLayerComponent->PreloadLayerForMount(GetSummonedMount());
 	}
+}
+
+AProject_JMountCharacter* AProject_JPlayerCharacter::GetSummonedMount() const
+{
+	return IsValid(SummonedMount) && !SummonedMount->IsActorBeingDestroyed() ? SummonedMount.Get() : nullptr;
+}
+
+void AProject_JPlayerCharacter::OnSummonedMountDestroyed(AActor* DestroyedActor)
+{
+	if (SummonedMount != DestroyedActor) return;
+	SummonedMount = nullptr;
+	OnRep_SummonedMount();
+	ForceNetUpdate();
 }
 
 EProject_JAnimationLocomotionMode AProject_JPlayerCharacter::GetAnimationLocomotionMode_Implementation() const
@@ -430,6 +457,7 @@ void AProject_JPlayerCharacter::RequestUseMountItem(FGuid ItemInstanceId)
 
 void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid ItemInstanceId)
 {
+	if (IsActorBeingDestroyed() || !HasAuthority()) return;
 	if (GetMountComponent() && GetMountComponent()->IsMounted())
 	{
 		return;
@@ -454,7 +482,7 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 		PendingMountClassLoadHandle.Reset();
 	}
 
-	if (SummonedMount)
+	if (GetSummonedMount())
 	{
 		if (PendingMountClassLoadHandle)
 		{
@@ -468,6 +496,9 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 		}
 		return;
 	}
+	// Destroy() precedes garbage collection; a non-null UObject pointer is not
+	// sufficient evidence that the previous summoned actor is still usable.
+	SummonedMount = nullptr;
 
 	const TSubclassOf<AProject_JMountCharacter> MountClass = MountItem->MountClass.Get();
 	if (MountClass && PendingMountClassLoadHandle)
@@ -527,9 +558,13 @@ void AProject_JPlayerCharacter::ServerRequestUseMountItem_Implementation(FGuid I
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	const FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * MountItem->SpawnDistance;
 	AProject_JMountCharacter* Mount = GetWorld()->SpawnActor<AProject_JMountCharacter>(MountClass, SpawnLocation, GetActorRotation(), SpawnParameters);
-	SummonedMount = Mount;
+	SummonedMount = IsValid(Mount) && !Mount->IsActorBeingDestroyed() ? Mount : nullptr;
+	if (SummonedMount)
+	{
+		SummonedMount->OnDestroyed.AddUniqueDynamic(this, &AProject_JPlayerCharacter::OnSummonedMountDestroyed);
+	}
 	OnRep_SummonedMount();
-	if (Mount && MountItem->bAutoMountAfterSpawn)
+	if (SummonedMount && MountItem->bAutoMountAfterSpawn)
 	{
 		Mount->TryMountRider(this);
 	}
@@ -603,9 +638,13 @@ bool AProject_JPlayerCharacter::TryActivateAbilityByTag(const FGameplayTag& Abil
 
 void AProject_JPlayerCharacter::CancelAbilitiesByTag(const FGameplayTag& AbilityTag)
 {
-	if (CombatStateComponent)
+	// PlayerState owns the ASC across pawn replacement. An old input callback or
+	// old pawn EndPlay must never cancel an ability running on its new avatar.
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (ASC && ASC->GetAvatarActor() == this && AbilityTag.IsValid())
 	{
-		CombatStateComponent->CancelAbilitiesByTag(AbilityTag);
+		FGameplayTagContainer AbilityTags(AbilityTag);
+		ASC->CancelAbilities(&AbilityTags);
 	}
 }
 
@@ -1118,6 +1157,10 @@ void AProject_JPlayerCharacter::SetCurrentEquipmentConfiguration(
 void AProject_JPlayerCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
+	if (UProject_JFoleyComponent* Foley = GetFoleyComponent())
+	{
+		Foley->PlayJump(GetVelocity().Size2D());
+	}
 
 	if (HasAuthority() && ReplicatedJumpStateComponent)
 	{

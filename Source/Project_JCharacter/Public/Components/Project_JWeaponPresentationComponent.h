@@ -192,6 +192,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Weapon Motion")
 	void EndGroundContact();
+	uint64 BeginGroundContactNotify();
+	void EndGroundContactNotify(uint64 Token);
+	bool IsGroundContactNotifyCurrent(uint64 Token) const { return GroundContactNotifyTokens.Contains(Token); }
 
 	/**
 	 * Activates two-handed weapon grip during an attack swing or skill.
@@ -342,6 +345,8 @@ private:
 	bool bContactRecoveryActive = false;
 	uint64 LastMotionEvaluationFrame = MAX_uint64;
 	int32 GroundContactStateCount = 0;
+	uint64 NextGroundContactNotifyToken = 0;
+	TSet<uint64> GroundContactNotifyTokens;
 	struct FTwoHandGripRequest
 	{
 		int32 NotifyInstanceID = INDEX_NONE;

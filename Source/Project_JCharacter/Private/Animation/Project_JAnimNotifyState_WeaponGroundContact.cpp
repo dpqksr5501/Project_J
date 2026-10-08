@@ -12,19 +12,30 @@ void UProject_JAnimNotifyState_WeaponGroundContact::NotifyBegin(USkeletalMeshCom
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
-			Presentation->BeginGroundContact();
+			for (auto It = RuntimeStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) It.RemoveCurrent(); }
+			auto& MeshStates = RuntimeStates.FindOrAdd(MeshComp);
+			for (auto It = MeshStates.CreateIterator(); It; ++It)
+			{
+				if (!It.Value().Presentation.IsValid() || !It.Value().Presentation->IsGroundContactNotifyCurrent(It.Value().Token))
+					It.RemoveCurrent();
+			}
+			const int32 InstanceID = EventReference.GetNotifyInstanceID();
+			if (!MeshStates.Contains(InstanceID))
+			{
+				if (const uint64 Token = Presentation->BeginGroundContactNotify()) MeshStates.Add(InstanceID, {Presentation, Token});
+			}
 		}
 	}
 }
 
 void UProject_JAnimNotifyState_WeaponGroundContact::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+	if (auto* MeshStates = RuntimeStates.Find(MeshComp))
 	{
-		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
-		{
-			Presentation->EndGroundContact();
-		}
+		FRuntimeState State;
+		const bool bRemoved = MeshStates->RemoveAndCopyValue(EventReference.GetNotifyInstanceID(), State);
+		if (MeshStates->IsEmpty()) RuntimeStates.Remove(MeshComp);
+		if (bRemoved) { if (auto* Presentation = State.Presentation.Get()) Presentation->EndGroundContactNotify(State.Token); }
 	}
 
 	Super::NotifyEnd(MeshComp, Animation, EventReference);

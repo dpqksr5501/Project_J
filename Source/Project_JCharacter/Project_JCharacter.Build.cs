@@ -38,6 +38,7 @@ public class Project_JCharacter : ModuleRules
 			"ModelViewViewModel"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"PhysicsCore",
 			"InputCore",
 			"EnhancedInput",
 			"MassCommon"

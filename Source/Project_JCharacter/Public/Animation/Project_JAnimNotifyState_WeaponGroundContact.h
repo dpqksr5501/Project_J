@@ -4,6 +4,8 @@
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "Project_JAnimNotifyState_WeaponGroundContact.generated.h"
 
+class UProject_JWeaponPresentationComponent;
+
 /**
  * Enables terrain correction only for the authored dragging part of a weapon
  * motion window. It may overlap Weapon Motion and contains no per-frame data.
@@ -16,4 +18,11 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_WeaponGroundContact : pub
 public:
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+private:
+	struct FRuntimeState
+	{
+		TWeakObjectPtr<UProject_JWeaponPresentationComponent> Presentation;
+		uint64 Token = 0;
+	};
+	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FRuntimeState>> RuntimeStates;
 };

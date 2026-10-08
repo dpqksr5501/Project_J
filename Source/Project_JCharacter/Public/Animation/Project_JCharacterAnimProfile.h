@@ -9,6 +9,7 @@
 
 class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
+class UProject_JFoleyAudioProfile;
 
 /**
  * Top-level animation profile for a playable character archetype.
@@ -27,6 +28,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Combat")
 	TObjectPtr<UProject_JCombatAnimProfile> CombatAnimProfile = nullptr;
+
+	/** Optional client-only Foley data; unassigned profiles intentionally remain silent. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Foley")
+	TSoftObjectPtr<UProject_JFoleyAudioProfile> FoleyAudioProfile;
 
 	/** Per-body proportions and palm orientation; weapon assets only define grip sockets. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")

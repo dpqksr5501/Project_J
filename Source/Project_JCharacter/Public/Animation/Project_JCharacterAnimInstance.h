@@ -1717,6 +1717,7 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJAnimationProxyLifetimeTest;
 	friend class FProjectJLandingReturnContextTest;
 	friend class FProjectJStrafeFacingSelectionTest;
 	friend class FProjectJStrafePivotCardinalTest;

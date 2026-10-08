@@ -373,7 +373,7 @@ private:
 		bool bWasHeavy);
 	void ScheduleLandingTimeout();
 	void ClearActiveLandingState();
-	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags);
+	void StartLanding(float ImpactFallSpeed, bool bBroadcastRealLandingEvent, bool bUpdateGameplayTags, float FoleyEventAgeSeconds = 0.0f);
 	void StartFallOffStart(bool bReplicateEvent = true);
 	void StopFallOffStart();
 	bool IsLandingStateActive() const;

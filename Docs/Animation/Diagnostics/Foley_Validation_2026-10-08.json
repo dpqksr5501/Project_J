@@ -1,0 +1,289 @@
+{
+  "date": "2026-10-08",
+  "branch": "codex/locomotion-facing-transitions",
+  "base_head": "3a94ecc5a80cc5208708354905470d5053ca31e6",
+  "scope": "C++ client Foley foundation; no audio, animation, Blueprint, Data Asset or level binaries saved. No per-contact RPC. No audible-content, multiplayer latency or production crowd performance claim.",
+  "engine": "UE_5.8",
+  "builds": [
+    {
+      "configuration": "Win64 Development",
+      "seconds": 4.16,
+      "target": "Project_JEditor",
+      "result": "Succeeded",
+      "exit_code": 0
+    },
+    {
+      "configuration": "Win64 Development",
+      "seconds": 12.56,
+      "target": "Project_J",
+      "result": "Succeeded",
+      "exit_code": 0
+    }
+  ],
+  "automation": {
+    "mode": "UnrealEditor-Cmd -NullRHI -nosound",
+    "succeeded": 12,
+    "succeeded_with_warnings": 0,
+    "failed": 0,
+    "not_run": 0,
+    "in_process": 0,
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.Naturalness.AirLoopOutput",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Components.AnimationDemandComposition",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Components.CombatTransitionOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Components.UIDedicatedServer",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Components.UIDemand",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Foley.CrowdAdmission",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Foley.DedicatedServer",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Foley.LifetimeAndMissingContent",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Foley.SurfaceFallback",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "name": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ]
+  },
+  "editor_verification": {
+    "method": "Local Unreal MCP read-only ObjectTools; OpenEditorForAsset and CaptureEditorImage",
+    "asset": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+    "properties": [
+      {
+        "path": "/Script/Project_JCharacter.Default__Project_JFoleyComponent",
+        "properties": {
+          "ProfileOverride": "None",
+          "bEnabled": true,
+          "bUseMovementEventsForJumpAndLand": true,
+          "bAutoActivate": true,
+          "bReplicates": false
+        }
+      },
+      {
+        "path": "/Script/Project_JCharacter.Default__Project_JAnimNotify_FoleyEvent",
+        "properties": {
+          "FoleyEvent": {
+            "event": {
+              "tagName": "Foley.Event.Walk"
+            },
+            "side": "None",
+            "volumeMultiplier": 1,
+            "pitchMultiplier": 1,
+            "ageSeconds": 0
+          }
+        }
+      },
+      {
+        "path": "/Script/Project_JCharacter.Default__Project_JFoleyAudioProfile",
+        "properties": {
+          "Events": {},
+          "SourceLeftFoot": "foot_l",
+          "SourceRightFoot": "foot_r",
+          "VisualLeftFoot": "None",
+          "VisualRightFoot": "None",
+          "AudibleDistance": 1800,
+          "OtherCharacterVolume": 0.6000000238418579
+        }
+      },
+      {
+        "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_GreatSword_C",
+        "properties": {
+          "FoleyComponent": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:Foley"
+          }
+        }
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.DA_GreatSword_AnimProfile",
+        "properties": {
+          "FoleyAudioProfile": "None"
+        }
+      },
+      {
+        "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:Foley",
+        "properties": {
+          "ProfileOverride": "None",
+          "bEnabled": true,
+          "bUseMovementEventsForJumpAndLand": true,
+          "bAutoActivate": true,
+          "bReplicates": false
+        }
+      }
+    ],
+    "computer_use": "Windows helper did not expose the running editor window; no Windows UI input was issued. Used Unreal MCP for the actual editor verification."
+  },
+  "resolved_during_validation": [
+    "Original sandbox UBA access-denied loop stopped only after user authorized the requested stalled-process exception. Subsequent direct UBT builds used escalated execution and -NoUBA.",
+    "Fixed TObjectPtr auto pointer inference in subsystem.",
+    "Guarded editor-only dedicated-server test API for Game builds.",
+    "Fixed real component activation default; matched existing project local-player test fixture with PlayerState, local-controller marker and ground movement. All final tests passed."
+  ],
+  "limits": [
+    "No Foley audio profile assigned to DA_GreatSword_AnimProfile yet.",
+    "Existing missing GASP Blueprint Notify dependencies remain; native addition does not restore sequence timing or content references.",
+    "NullRHI tests validate contracts, not audible voices, terrain material behavior, remote synchronization or large-crowd performance.",
+    "Known unrelated asset-load and SDK warnings remain in engine startup logs.",
+    "Builds were serial and completed before the GUI editor was launched."
+  ],
+  "artifacts": [
+    {
+      "path": "Saved/Validation/Foley_20261008/BuildEditor_Ready.log",
+      "sha256": "8bf203ce0f2c7c55c610cc5608f1bd3d1943d5c92dac704642b6611601ce4b2c"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/BuildGame_Ready.log",
+      "sha256": "1a0c9b7c4a32ffcc9115a84fe293a8a8fcd7d005d6ec4739a95fb2051307cb25"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/Automation_Ready.log",
+      "sha256": "f628960c16e2e15486d8524aa4dbb27dfd6216a845a2bdeb21cb71feaa1ee470"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/Automation_Ready/index.json",
+      "sha256": "df2515c4169d2218df55f47ebe09b5186025ae7cd0f42775bb76bcc3262ceb97"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/EditorVerification.json",
+      "sha256": "f10feb41afd779e002ed30cc595af089648d8629848b8edc57eb3f4cea2ffb32"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/BlueprintFoleyVerification.json",
+      "sha256": "89b74f6a558b456b682a30561f09ec2b25f4067396b9a0aa729507e4f7bb39dd"
+    },
+    {
+      "path": "Saved/Validation/Foley_20261008/EditorVerification.png",
+      "sha256": "c72a010f4a1eaddc19ee3d97701fac02d6540c0f21c711a6cec698daccb1755f"
+    }
+  ],
+  "source_sha256": [
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotify_FoleyEvent.cpp",
+      "sha256": "f081aec26d6fa6d2fa83fbcee6e5d1b01b9fd48254a56500c4e123ca1379c962"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Audio/Project_JFoleyAudioProfile.cpp",
+      "sha256": "8cafe609a8a144d38fcff4923c175dda6d8d3b2cde680d0fed5992dac8790047"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Audio/Project_JFoleyTypes.cpp",
+      "sha256": "2df9c2ea9b0a55c88247ac16fabb40d4a661dabb131254655dc34c285d0675c2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JFoleyComponent.cpp",
+      "sha256": "4aa185385a76bcaf8b6afedb9bcfb25759c540d267957a684c75b554467e8777"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "sha256": "8f0efccde930159a8dbbec76d7ae9149a6f941211cd7b5c42e4714897d61a43c"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentTransitions.cpp",
+      "sha256": "52909bc8a3ba439b1b2638f4fe70975a3b6ec9184a96e128168a25c82e965b51"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "a6ed996f861137d23fd000c0a9f8dd3f249bf730fa19e587f0ac41754fbd19d1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JFoleySubsystem.cpp",
+      "sha256": "6d31e3220cef4266af44dce01f9e1b422783450282f078a95f14dd7a88c11b33"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp",
+      "sha256": "af244dcd5e1b32683e4ca80aea0c6c5b8920c5147867ffb9e666f39729de2c84"
+    },
+    {
+      "path": "Source/Project_JCharacter/Project_JCharacter.Build.cs",
+      "sha256": "2f4d33abac151424e4337fcd625a9702aedb9ecd0fd62fff3fcb0d410ec40ea0"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotify_FoleyEvent.h",
+      "sha256": "e61d9d3753f68c82311b21bcbb4ca86035c2d175ebd06415c97c4683964342cd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimProfile.h",
+      "sha256": "5a01fd34fa518be0e0eb2e276973f2fdbee4f16414ba26e109e2b4b9530b61b4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Audio/Project_JFoleyAudioProfile.h",
+      "sha256": "62ea0e02e5dd35281ec2bab5864ea83247525a9f9caf0f8695c6fc78cdbd791f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Audio/Project_JFoleyTypes.h",
+      "sha256": "27ed7910aee17982bce6349f36c014759a9fb8afab9c626e31143b2b9e77c515"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JFoleyComponent.h",
+      "sha256": "db0f7c0762a3a7118306c1c0bfa70992c7eab25e7afd36fb3997f3dd662bb01f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+      "sha256": "b3e543aa4e4a6475b45727e209ce054e26e04a03caab0bcd3f56107d3556bb36"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "sha256": "053d3792ab99b75bf27a21855fc2eea850204e689a44158dc1a85f0a5f570fc7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JFoleySubsystem.h",
+      "sha256": "10b350d76e30dc64e8a5a95f149a466128f2eb560100e82e0276d05a40d63b23"
+    }
+  ]
+}

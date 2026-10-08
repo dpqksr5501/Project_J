@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 241개, Markdown 161개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 257개, Markdown 172개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -40,6 +40,8 @@
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
 | [실제 캐릭터 애니메이션 CPU·소켓 검증 — 2026-10-05](../Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) | 구조·계약 | Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md |
+| [캐릭터 Foley 기반과 군중 재생 정책](../Animation/Architecture/Foley_Audio_System.md) | 통합 상세 가이드 | Animation/Architecture/Foley_Audio_System.md |
+| [일반 이동 회전 후보와 수명](../Animation/Architecture/General_Turning_2026-10-06.md) | 구조·계약 | Animation/Architecture/General_Turning_2026-10-06.md |
 | [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
 | [Motion Matching Notes](../Animation/Architecture/MotionMatchingNextSteps.md) | 구조·계약 | Animation/Architecture/MotionMatchingNextSteps.md |
@@ -49,6 +51,7 @@
 | [MMORPG 런타임 리타깃과 무기 손 접촉 구조](../Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md) | 구조·계약 | Animation/Architecture/Runtime_Retarget_HandIK_Architecture.md |
 | [Start·착지 입력 변경의 실행 흐름 진단 — 2026-10-05](../Animation/Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) | 구조·계약 | Animation/Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md |
 | [Strafe Pivot의 이동 입력 기준 통일 — 2026-10-05](../Animation/Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) | 구조·계약 | Animation/Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md |
+| [일반 회전과 180도 회전의 전환](../Animation/Architecture/Turn_Handoff_2026-10-07.md) | 구조·계약 | Animation/Architecture/Turn_Handoff_2026-10-07.md |
 | [보이는 메시 기준의 애니메이션·장비 파이프라인](../Animation/Architecture/Visual_Presentation_Mesh_Ownership.md) | 구조·계약 | Animation/Architecture/Visual_Presentation_Mesh_Ownership.md |
 | [무기 접촉 복귀와 몸체 프로필](../Animation/Architecture/Weapon_Contact_Recovery.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Contact_Recovery.md |
 | [무기 궤적과 손 파지의 소유권](../Animation/Architecture/Weapon_Grip_Drive_Policy.md) | 통합 문서 안내 | Animation/Architecture/Weapon_Grip_Drive_Policy.md |
@@ -58,6 +61,11 @@
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
+| [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
+| [마네킹 Foley 확장과 초기 오디오 연결](../Animation/Diagnostics/Foley_Extension_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Extension_2026-10-08.md |
+| [정면 달리기 Foley 누락 복구 — 2026-10-08](../Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md |
+| [GASP Foley 노티파이 교체 — 2026-10-08](../Animation/Diagnostics/Foley_Notify_Migration_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Notify_Migration_2026-10-08.md |
+| [GASP Foley 재생 구조 조사 — 2026-10-08](../Animation/Diagnostics/GASP_Foley_Investigation_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/GASP_Foley_Investigation_2026-10-08.md |
 | [제자리 회전(TIP) 순간 튐 진단](../Animation/Diagnostics/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md) | 진단·수정 기록 | Animation/Diagnostics/Project_J_TIP_Visual_Pop_Trace_2026-09-24.md |
 | [애니메이션 진단 기록](../Animation/Diagnostics/README.md) | 목차·문서 관리 | Animation/Diagnostics/README.md |
 | [무기 파지 재현·측정 기록 — 2026-10-02](../Animation/Diagnostics/Weapon_Grip_Trace_2026-10-02.md) | 진단·수정 기록 | Animation/Diagnostics/Weapon_Grip_Trace_2026-10-02.md |
@@ -77,6 +85,8 @@
 | [03. Project_J 운영 연결 상세](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/03_PROJECT_J.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/03_PROJECT_J.md |
 | [04. 비교와 고도화 로드맵](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/04_ROADMAP.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/04_ROADMAP.md |
 | [05. 검증과 읽기 전용 에디터 확인](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/05_VALIDATION.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/05_VALIDATION.md |
+| [Project_J 전체 애니메이션 자연스러움: 구현과 검증](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/06_IMPLEMENTATION.md |
+| [이동 회전과 단발 동작의 연속성](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/07_LOCOMOTION_CONTINUITY.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/07_LOCOMOTION_CONTINUITY.md |
 | [원본 근거 추출물](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence/README.md) | 목차·문서 관리 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence/README.md |
 | [후속 작업 프롬프트](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md |
 | [GASP / Project_J 움직임 자연스러움 분석과 고도화 인계](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) | 목차·문서 관리 | Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md |
@@ -172,6 +182,7 @@
 | [Project_J 최종 후속 감사 결과](../Review/Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md) | 시점별 결과 | Review/Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md |
 | [Project_J 코드 감사 결과](../Review/Audits/Project_J_Code_Audit_Result_2026-09-23.md) | 시점별 결과 | Review/Audits/Project_J_Code_Audit_Result_2026-09-23.md |
 | [전체 코드 감사와 개선 요청](../Review/Audits/Project_J_Codex_Full_Audit_Refinement_Prompt.md) | 당시 작업 요청 | Review/Audits/Project_J_Codex_Full_Audit_Refinement_Prompt.md |
+| [런타임 소유권·객체 수명 감사 — 2026-10-08](../Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) | 검토 기록 | Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md |
 | [State Controller 런타임 마무리 요청](../Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Prompt.md) | 당시 작업 요청 | Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Prompt.md |
 | [StateController Runtime Finalization Result](../Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Result_2026-09-24.md) | 시점별 결과 | Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Result_2026-09-24.md |
 | [캐릭터 런타임 리팩터링 흐름](../Review/CharacterRuntime/README.md) | 목차·문서 관리 | Review/CharacterRuntime/README.md |
@@ -238,6 +249,7 @@
 | 위치 | 파일 수 | 내용 |
 | --- | --- | --- |
 | [Animation/Architecture](../Animation/Architecture) | 5 | 문서 이동·보존 기록 |
+| [Animation/Diagnostics](../Animation/Diagnostics) | 4 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence) | 5 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/output/pdf](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/output/pdf) | 1 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools) | 3 | 문서 이동·보존 기록 |
@@ -252,3 +264,4 @@
 | [Maintenance]() | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |
+| [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |

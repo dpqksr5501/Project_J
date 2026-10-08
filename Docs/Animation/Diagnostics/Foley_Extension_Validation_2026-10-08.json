@@ -1,0 +1,333 @@
+{
+  "date": "2026-10-08",
+  "scope": "Human mannequin Foley routing/contact policy, local async warmup and initial imported audio assignment",
+  "runtime_contract": {
+    "new_rpcs": 0,
+    "new_component_ticks": 0,
+    "synchronous_audio_loads": 0,
+    "max_fallback_definitions": 16,
+    "environment_layers_implemented": false
+  },
+  "builds": {
+    "editor": {
+      "result": "Succeeded",
+      "seconds": 101.51,
+      "artifact": "BuildEditor_Warmup.log",
+      "sha256": "b97822a73620327e692342c26c8ee1750069d92ed0040db605a096130b97db4a"
+    },
+    "game": {
+      "result": "Succeeded",
+      "seconds": 61.02,
+      "artifact": "BuildGame_Warmup.log",
+      "sha256": "5fd499fbd690ce857d532559497a470ced47357cca9110abce3cbcb618badc30"
+    }
+  },
+  "automation": {
+    "succeeded": 15,
+    "succeeded_with_warnings": 0,
+    "failed": 0,
+    "not_run": 0,
+    "artifact": "Automation_Warmup/index.json",
+    "sha256": "bee4d6043265476d8cb9729163ab740f4acc8a71dc4a9a9f65857c707632d630",
+    "tests": [
+      {
+        "path": "ProjectJ.Animation.Naturalness.AirLoopOutput",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Components.AnimationDemandComposition",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Components.CombatTransitionOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Components.UIDedicatedServer",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Components.UIDemand",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.ContactPolicies",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.CrowdAdmission",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.DedicatedServer",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.EventFallbackRouting",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.LifetimeAndMissingContent",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.ProfileValidation",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Foley.SurfaceFallback",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "path": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "audio_asset_validation": {
+    "profile": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley.DA_Mannequin_Foley",
+    "validation": "<DataValidationResult.VALID: 1>",
+    "errors": [],
+    "warnings": [],
+    "events": 12,
+    "fallbacks": 5,
+    "assigned": true,
+    "dirty": []
+  },
+  "pie": {
+    "artifacts": {
+      "PIE_BeforeWarmup.log": {
+        "sha256": "6e67bc77a0cb601762a69936102b183240e4cccfa1689ae1fe8c89b71102a97c",
+        "snapshots": [
+          {
+            "Pending": 0,
+            "Submitted": 0,
+            "Played": 0,
+            "Distance": 0,
+            "NotReady": 0,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 0,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.0
+          },
+          {
+            "Pending": 0,
+            "Submitted": 41,
+            "Played": 41,
+            "Distance": 0,
+            "NotReady": 10,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 41,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.234
+          },
+          {
+            "Pending": 0,
+            "Submitted": 303,
+            "Played": 303,
+            "Distance": 0,
+            "NotReady": 10,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 302,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.066
+          },
+          {
+            "Pending": 0,
+            "Submitted": 305,
+            "Played": 305,
+            "Distance": 0,
+            "NotReady": 10,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 303,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.074
+          },
+          {
+            "Pending": 0,
+            "Submitted": 305,
+            "Played": 305,
+            "Distance": 0,
+            "NotReady": 10,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 303,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.074
+          }
+        ]
+      },
+      "PIE_AfterWarmup.log": {
+        "sha256": "cbfd7fbdbfd6ed5b2d646c1b3fff3d76eeb3e5eb33c7b2b31e25eff851ebf4e9",
+        "snapshots": [
+          {
+            "Pending": 0,
+            "Submitted": 0,
+            "Played": 0,
+            "Distance": 0,
+            "NotReady": 0,
+            "Duplicate": 0,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 0,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.0
+          },
+          {
+            "Pending": 0,
+            "Submitted": 138,
+            "Played": 138,
+            "Distance": 0,
+            "NotReady": 0,
+            "Duplicate": 1,
+            "Capacity": 0,
+            "Expired": 0,
+            "Budget": 0,
+            "Traces": 138,
+            "Unmapped": 0,
+            "Fallbacks": 0,
+            "Loops": 0,
+            "LastMs": 0.068
+          }
+        ]
+      }
+    },
+    "actual_source_mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+    "temporary_spawn_workaround": "Existing PlayerStart/spawn collision; GameMode.RestartPlayerAtTransform in PIE only",
+    "notify_probe": "Imported native-notify Run clip played via client source single-node animation",
+    "jump_land_isolation_before_warmup": {
+      "played_delta": 2,
+      "surface_trace_delta": 1
+    },
+    "audio_device": "WASAPI 48000 Hz stereo",
+    "played_means_submission_not_audible_voices": true,
+    "perceptual_listening_verified": false,
+    "crowd_cpu_benchmark_verified": false
+  },
+  "mcp_final": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"returnValue\":\"{\\\"SourceLeftFoot\\\":\\\"foot_l\\\",\\\"SourceRightFoot\\\":\\\"foot_r\\\",\\\"SourceLeftHand\\\":\\\"hand_l\\\",\\\"SourceRightHand\\\":\\\"hand_r\\\",\\\"AudibleDistance\\\":1800,\\\"OtherCharacterVolume\\\":0.60000002384185791}\"}"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"returnValue\":\"{\\\"FoleyAudioProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Audio/DA_Mannequin_Foley.DA_Mannequin_Foley\\\"}}\"}"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"returnValue\":true}"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"returnValue\":\"{\\\"bRemoteExecution\\\":false,\\\"RemoteExecutionMulticastBindAddress\\\":\\\"127.0.0.1\\\"}\"}"
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "Source/Project_JCharacter/Public/Audio/Project_JFoleyTypes.h": "199eb58a64b6492b1d17c330f6b7257737874a7edbed5367197cf836982c8022",
+    "Source/Project_JCharacter/Public/Audio/Project_JFoleyAudioProfile.h": "abe846746ffd7d9a8dd6f4448b6e3a9007a600282dd6448da83b2034200aed65",
+    "Source/Project_JCharacter/Private/Audio/Project_JFoleyAudioProfile.cpp": "bafff2f32f4fdab24fef431630f853e2219f319185fc2cb54d898ae83899703c",
+    "Source/Project_JCharacter/Public/Components/Project_JFoleyComponent.h": "06648f2456dffe27cd89d18fae50989115ed937b7f553f0e917d561ff2a068b6",
+    "Source/Project_JCharacter/Private/Components/Project_JFoleyComponent.cpp": "f24f325d2b2cd02b01efb09339f702d68fd4dc09a13a50daeef1a14d9f8807db",
+    "Source/Project_JCharacter/Public/System/Project_JFoleySubsystem.h": "4bc21838bf9d1e77382cb98a301cbaa99507bcf67d3f2065842762aa3da0b549",
+    "Source/Project_JCharacter/Private/System/Project_JFoleySubsystem.cpp": "b7dc81a57f869604b6f1fa448e21beaf1208320e4f6fa696db09d9772443e94f",
+    "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h": "3c4f85d0aadebe416b6c4e9b867b19fc6982a53919f74943a4c51fa5cfe5efaa",
+    "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp": "e52bfd099091088deb41ec4217ac37d26cceae5158f02b51f4f2364e763b7565",
+    "Source/Project_JCharacter/Private/Tests/Project_JFoleyTests.cpp": "48f58a1ed413d1774ef23df3d947eeb308d1dc12096247942bb8ed56d4795008",
+    "Scripts/Editor/Configure-MannequinFoley.py": "4c4c503b11b230a6092d0b32ac2fa1eec055c852eebb443b07d61f1f44f3b59c"
+  },
+  "assets_sha256": {
+    "Content/DataAssetSets/Audio/DA_Mannequin_Foley.uasset": "d18d8be789dde360ce3a00f733f39f478e2c0271559f87c00fe5b32e7af5ec13",
+    "Content/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.uasset": "0e24242ef753d61110e264283af5d8411e13784cd0e7fc5afc1b0e8584e29df7"
+  },
+  "character_profile_before_sha256": "2d8707b5ca0756139865fda633f6299ef9caf3cd02cb8217be94fb1255a77119",
+  "limitations": [
+    "No new terrain/material/level authored",
+    "Water depth, persistent wetness and layers are future extensions",
+    "Single-node smoke does not validate the full Motion Matching input/transition pipeline",
+    "Existing map spawn collision remains outside this audio scope",
+    "Existing EarlyTransition BP dependency/startup warnings are not fixed by this work",
+    "Offscreen notify delivery when animation evaluation stops needs a future cohort/cadence policy",
+    "Async warmup reduces cold-event drops; it does not guarantee load completion on slow hardware"
+  ]
+}

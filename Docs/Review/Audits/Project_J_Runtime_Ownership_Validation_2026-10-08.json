@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-08",
+  "engine": "UE 5.8",
+  "head": "3a94ecc5a80cc5208708354905470d5053ca31e6",
+  "workingTree": "Existing uncommitted Foley/content work preserved; audit fixes uncommitted",
+  "coverage": {
+    "baselineCppFiles": 443,
+    "finalCppFiles": 445,
+    "modules": 8,
+    "method": "Whole Source risk-pattern scan plus targeted deep inspection of runtime ownership, authority and async boundaries; not exhaustive line-by-line or asset execution"
+  },
+  "findings": [
+    {
+      "id": "RO-01",
+      "priority": "P1",
+      "test": "ProjectJ.RuntimeOwnership.RetiredAvatarCannotCancelSprint",
+      "status": "fixed"
+    },
+    {
+      "id": "RO-02",
+      "priority": "P2",
+      "test": "ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC",
+      "status": "fixed"
+    },
+    {
+      "id": "RO-03",
+      "priority": "P1",
+      "test": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+      "status": "fixed"
+    },
+    {
+      "id": "RO-04",
+      "priority": "P2",
+      "test": "ProjectJ.Presentation.VisualMeshOwnership",
+      "status": "fixed"
+    },
+    {
+      "id": "RO-05",
+      "priority": "P1",
+      "test": "ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget",
+      "status": "fixed"
+    }
+  ],
+  "automation": {
+    "report": "Saved/Validation/RuntimeAudit_20261008/FinalVerified/index.json",
+    "total": 244,
+    "succeeded": 225,
+    "succeededWithWarnings": 19,
+    "failed": 0,
+    "notRun": 0,
+    "budgetMs": 0.1,
+    "nullRHI": true,
+    "warningTests": [
+      "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+      "ProjectJ.AsyncTargeting.ComponentContext",
+      "ProjectJ.AsyncTargeting.Lifecycle",
+      "ProjectJ.Combat.WeaponPresentationIdentity",
+      "ProjectJ.Crowd.RemoteEquipmentBurst",
+      "ProjectJ.EquipmentSoak.HundredCharacters",
+      "ProjectJ.EquipmentSoak.StopDuringAttack",
+      "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+      "ProjectJ.GroupA.DynamicNavRecovery",
+      "ProjectJ.GroupB.CombatContinuity.Cancel",
+      "ProjectJ.GroupB.CombatContinuity.Complete",
+      "ProjectJ.GroupB.CombatContinuity.Destroy",
+      "ProjectJ.GroupB.CombatContinuity.Unequip",
+      "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+      "ProjectJ.Integrated.MovingTargetPursuit",
+      "ProjectJ.Integrated.NativeNavMovement",
+      "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+      "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+      "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha"
+    ]
+  },
+  "equipment": {
+    "population": 100,
+    "repetitions": 3,
+    "completedActorCycles": 300,
+    "failures": 0,
+    "sameRunAsAutomation": true
+  },
+  "builds": [
+    {
+      "target": "Project_JEditor",
+      "platform": "Win64",
+      "configuration": "Development",
+      "result": "Succeeded",
+      "log": "Saved/Validation/RuntimeAudit_20261008/Build_FinalFixtureGround.log"
+    },
+    {
+      "target": "Project_J",
+      "platform": "Win64",
+      "configuration": "Development",
+      "result": "Succeeded",
+      "log": "Saved/Validation/RuntimeAudit_20261008/Build_FinalGame.log"
+    }
+  ],
+  "network": {
+    "root": "Saved/Validation/GroupD_20260910/RuntimeAudit_20261008_Final_P80_L2",
+    "passed": true,
+    "dedicatedServers": 1,
+    "clients": 2,
+    "npcs": 100,
+    "animation": true,
+    "packetLagSettingMs": 80,
+    "packetLossSettingPercent": 2,
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "startupPythonErrorLines": 45,
+    "missingEarlyTransitionServerPackages": 6
+  },
+  "remaining": [
+    {
+      "id": "CR-01",
+      "status": "existing content follow-up",
+      "detail": "Six loaded run/pivot sequences reference absent BP_NotifyState_EarlyTransition; retained pending per-asset transition-policy review"
+    },
+    {
+      "id": "ENV-01",
+      "status": "engine startup environment",
+      "detail": "Experimental EditorToolset/ToolsetRegistry Python editor APIs unavailable in game mode; not a project C++ compiler or fixture assertion failure"
+    }
+  ],
+  "limitations": [
+    "NullRHI functional validation; no visual/audio quality assertion",
+    "No packaged cook or full content validation",
+    "Local two-client fixture is not MMO-scale performance validation",
+    "Backend foundation tests are not live-service integration"
+  ],
+  "sourceHashes": [
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "392FE1A9DB94BDA3A50A4F72CDA1504C1E9DC1916925279CD2130E7DF5A93CB6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+      "sha256": "AC135146E5BCB7702A47579D2A1162B51B512FEBF3A38F7D2E9C400CE714485F"
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "sha256": "658B4C4923EA5F2FF57B259B1962EDFE9B7B5BEDFFF66AB01B5C152196B485E7"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "sha256": "57786661E1B848462C748DF38A96DBB0C4A76B26A80F2B8803DC467153F78940"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+      "sha256": "19CD3CC9F5927C8FB5F248EBE3139809044F8A62FB6778065CD53F394BFCE320"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "sha256": "7A8697EC6D97C311D5ED6C14B7307CC2E556DBED71C5972808439AF1E5F1C850"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp",
+      "sha256": "2B0E81D69DF00FD41FF4C7E81EE5211DA1CCAD4E47C54EAD011080C4DEB114F5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponGroundContact.h",
+      "sha256": "CD89CA330D7DD27075FF71C71B51797725B9E8CEC550BE5411F80DDAD951EF6C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "sha256": "162AC0F0F87CD68A9FB23000D0A7B1AB8ACBC522E53CA18C9F778C851E5DCA5C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+      "sha256": "6F3B0D499631FB507D5288BD6B7172A0DA38E3C2A80042D738A8CA069936AA71"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp",
+      "sha256": "15FD3562B1C95E7C90CB0E8D73C01C196E3772B2E533277CC7C4F3E6324A954D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JBudgetedSkeletalMeshComponent.h",
+      "sha256": "30DFC2FC0A55D5CFC7CD4D6896AD0652EE6CEAE1604431F8C9C645B02D616DDA"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JCharacterAnimationBudgetSubsystem.cpp",
+      "sha256": "90D5E03C83EA834A03F1DC9DE3943E32AFDB4B5BFF61D8DB05B367A7E88DF67F"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "sha256": "E8603988AE14C63140C195665F4DBCFE5998759BB06CE09975B1E27867E43EE2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAnimationProxyLifetimeTests.cpp",
+      "sha256": "171A9E2BD1DDF1F8138A37B2D494FA9FB0AB7000B2744DCB67A6EBF0AC348D75"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JComponentOwnershipTests.cpp",
+      "sha256": "7E26FC7F33E6172A99E04D631F233B93920696D5644E3627EDE8337019078CFA"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPresentationMeshResolverTests.cpp",
+      "sha256": "434E429C5C181D8E54028857F278A920D13A5271CCC950D8E21A0BFEAF71E38C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JNPCActionTests.cpp",
+      "sha256": "E27E024C30F8817A9B04ED98FDA8394313496CDE36CAFF77B964F0ECD9FC2DE1"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JEquipmentSoak.cpp",
+      "sha256": "E2D3EBDE7C135542E361693569868A0856E248D499B7B25A00067F8BE44B9335"
+    }
+  ]
+}

@@ -116,6 +116,45 @@ bool FProjectJAnimationDemandCompositionTest::RunTest(const FString&)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMontageBudgetDrainTest, "ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget", ComponentFlags)
+bool FProjectJMontageBudgetDrainTest::RunTest(const FString&)
+{
+	FComponentOwnershipWorld Scope;
+	auto* Owner = Scope.World->SpawnActor<AProject_JNPCCharacter>();
+	auto* Mesh = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Owner->GetMesh());
+	auto* MeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
+	auto* Montage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip.AM_Greatsword_UnEquip"));
+	if (!TestNotNull(TEXT("Fixture mesh"), MeshAsset) || !TestNotNull(TEXT("Fixture montage"), Montage)) { return false; }
+	Mesh->SetSkeletalMesh(MeshAsset);
+	Mesh->SetAnimInstanceClass(UAnimInstance::StaticClass());
+	Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+	Mesh->SetComponentTickEnabled(true);
+	Scope.BeginPlay();
+	auto* Budget = Scope.World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>();
+	Budget->SetEnabledOverride(true);
+	TestTrue(TEXT("Idle mesh starts under ABA"), Mesh->IsManagedByBudget());
+	auto* Anim = Mesh->GetAnimInstance();
+	TestTrue(TEXT("Real montage starts"), Anim->Montage_Play(Montage) > 0.0f);
+	TestFalse(TEXT("Montage start exits ABA"), Mesh->IsManagedByBudget());
+	Anim->Montage_Stop(0.2f, Montage);
+	TestFalse(TEXT("Stopped montage is no longer active"), Anim->Montage_IsPlaying(nullptr));
+	TestTrue(TEXT("Blend-out instance remains pending"), Anim->IsAnyMontagePlaying());
+	Budget->Refresh();
+	TestFalse(TEXT("Pending blend-out cannot reenter ABA"), Mesh->IsManagedByBudget());
+	TestTrue(TEXT("Pending end callbacks retain normal ticking"), Mesh->IsComponentTickEnabled());
+	TestTrue(TEXT("Pending end callbacks retain offscreen pose updates"),
+		Mesh->VisibilityBasedAnimTickOption == EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
+	for (int32 Tick = 0; Tick < 20 && Anim->IsAnyMontagePlaying(); ++Tick)
+	{
+		Scope.World->Tick(LEVELTICK_All, 0.05f);
+	}
+	TestFalse(TEXT("Animation ticks drain the stopped instance"), Anim->IsAnyMontagePlaying());
+	Budget->Refresh();
+	TestTrue(TEXT("Drained mesh returns to ABA"), Mesh->IsManagedByBudget());
+	Budget->SetEnabledOverride(false);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIDemandTest, "ProjectJ.Components.UIDemand", ComponentFlags)
 bool FProjectJUIDemandTest::RunTest(const FString&)
 {

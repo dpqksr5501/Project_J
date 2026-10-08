@@ -4,6 +4,7 @@
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JHandGripProfile.h"
+#include "Animation/Project_JAnimNotifyState_WeaponGroundContact.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
@@ -395,6 +396,22 @@ bool FProjectJPresentationMeshResolverTest::RunTest(const FString&)
 	TestTrue(TEXT("Re-equipping an enabled two-handed policy recovers secondary availability"), Presentation->GetWeaponGripTargets().bHasSecondaryGrip);
 	TraceEnabled->Set(PreviousTraceEnabled, ECVF_SetByCode);
 	TraceActor->Set(*PreviousTraceActor, ECVF_SetByCode);
+
+	// Ground windows cross montage cancellation/replacement just like motion windows.
+	auto* GroundNotify = NewObject<UProject_JAnimNotifyState_WeaponGroundContact>();
+	FAnimNotifyEventReference GroundA, GroundB;
+	GroundA.SetNotifyInstanceID(21001); GroundB.SetNotifyInstanceID(21002);
+	TestTrue(TEXT("Outgoing ground-contact motion begins"), Presentation->BeginIndependentMotion(NoMotionKeys, 1, 1, 1, 0, 0));
+	GroundNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, GroundA);
+	Presentation->EndIndependentMotion();
+	TestTrue(TEXT("Replacement ground-contact motion begins"), Presentation->BeginIndependentMotion(NoMotionKeys, 1, 1, 1, 0, 0));
+	GroundNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, GroundB);
+	GroundNotify->NotifyEnd(Character->GetMesh(), nullptr, GroundA);
+	TestEqual(TEXT("Old ground NotifyEnd cannot close the replacement window"), Presentation->GroundContactNotifyTokens.Num(), 1);
+	GroundNotify->NotifyBegin(Character->GetMesh(), nullptr, 1, GroundB);
+	GroundNotify->NotifyEnd(Character->GetMesh(), nullptr, GroundB);
+	TestEqual(TEXT("Duplicate ground Begin does not leak a contact window"), Presentation->GroundContactNotifyTokens.Num(), 0);
+	Presentation->EndIndependentMotion();
 
 	GEngine->DestroyWorldContext(World);
 	World->DestroyWorld(false);

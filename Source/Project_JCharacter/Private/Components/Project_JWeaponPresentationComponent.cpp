@@ -142,6 +142,7 @@ void UProject_JWeaponPresentationComponent::TickComponent(float DeltaTime, ELeve
 		ActiveMotionReturnMesh.Reset();
 		ActiveMotionReturnSocket = NAME_None;
 		GroundContactStateCount = 0;
+		GroundContactNotifyTokens.Reset();
 		GripTargets = FProject_JWeaponGripTargets();
 		UpdateTickState();
 		if (bRetryBudget) { SetComponentTickEnabled(true); }
@@ -678,6 +679,8 @@ void UProject_JWeaponPresentationComponent::EndNotifyIndependentMotion()
 void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 {
 	ActiveNotifyMotionToken = 0;
+	GroundContactStateCount = 0;
+	GroundContactNotifyTokens.Reset();
 	if (!bIndependentMotionActive)
 	{
 		return;
@@ -699,7 +702,6 @@ void UProject_JWeaponPresentationComponent::EndIndependentMotion()
 	ActiveExitBlendSeconds = 0.0f;
 	ActivePrimaryGripIKAlpha = 0.0f;
 	ActiveSecondaryGripIKAlpha = 0.0f;
-	GroundContactStateCount = 0;
 	SmoothedGroundCorrectionComponentSpace = FVector::ZeroVector;
 	LastMotionEvaluationFrame = MAX_uint64;
 	USkeletalMeshComponent* ReturnMesh = ActiveMotionReturnMesh.Get();
@@ -895,6 +897,19 @@ void UProject_JWeaponPresentationComponent::EndGroundContact()
 	GroundContactStateCount = FMath::Max(0, GroundContactStateCount - 1);
 }
 
+uint64 UProject_JWeaponPresentationComponent::BeginGroundContactNotify()
+{
+	if (bEndingPlay || IsBeingDestroyed()) return 0;
+	const uint64 Token = ++NextGroundContactNotifyToken;
+	GroundContactNotifyTokens.Add(Token);
+	return Token;
+}
+
+void UProject_JWeaponPresentationComponent::EndGroundContactNotify(uint64 Token)
+{
+	GroundContactNotifyTokens.Remove(Token);
+}
+
 void UProject_JWeaponPresentationComponent::BeginTwoHandGrip(float SecondaryIKAlpha, float PrimaryIKAlpha, bool bOverridePrimaryIK)
 {
 	BeginTwoHandGripNotify(INDEX_NONE, SecondaryIKAlpha, PrimaryIKAlpha, bOverridePrimaryIK);
@@ -975,7 +990,7 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 	WeaponRoot->SetRelativeTransform(UncorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
 
 	FVector GroundCorrectionComponentSpace = FVector::ZeroVector;
-	if (GroundContactStateCount > 0 && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
+	if ((GroundContactStateCount > 0 || !GroundContactNotifyTokens.IsEmpty()) && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
 	{
 		const FVector GroundCorrectionWorld = CharacterMesh->GetComponentTransform().TransformVectorNoScale(GroundCorrectionComponentSpace);
 		const FTransform CorrectedWorld = EvaluateWorld(GroundCorrectionWorld);

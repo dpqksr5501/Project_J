@@ -18,6 +18,7 @@
 #include "Engine/World.h"
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "Components/Project_JFoleyComponent.h"
 
 
 AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer)
@@ -34,6 +35,7 @@ AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& Objec
 	EquipmentManager = nullptr;
 
 	EquipmentRuntime = CreateDefaultSubobject<UProject_JEquipmentRuntimeComponent>(TEXT("EquipmentRuntime"));
+	FoleyComponent = CreateDefaultSubobject<UProject_JFoleyComponent>(TEXT("Foley"));
 }
 
 UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() const
