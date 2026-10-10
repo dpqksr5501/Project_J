@@ -129,6 +129,8 @@ public:
 
 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
 	void ResetInputState();
+	/** Cancel held/pending mouse attacks without synthesizing a quick tap or clearing keyboard modifiers. */
+	void CancelMouseInput();
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Input|Skills")

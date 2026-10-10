@@ -1,5 +1,7 @@
 # 네트워크
 
+Shift 달리기 SavedMove와 테스트 지연 설정의 최신 수정은 [달리기 이동 예측·커서 검증](../UI/Cursor_And_Sprint_Prediction_2026-10-10.md)을 읽는다.
+
 | 종류 | 문서 |
 | --- | --- |
 | 수집 절차 | [네트워크 기준선 수집](CaptureGuides/ProjectJ_Network_Baseline_Capture_Guide_2026-09-04.md) |

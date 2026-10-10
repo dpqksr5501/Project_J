@@ -229,7 +229,7 @@ protected:
 public:
 
 	/** Constructor */
-	AProject_JPlayerCharacter();	
+	AProject_JPlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -317,6 +317,8 @@ protected:
 	void ApplyLocomotionProfile();
 	void LogAnimationProfileConfiguration() const;
 	void UpdateMaxWalkSpeed();
+	friend class UProject_JCharacterMovementComponent;
+	void ApplyMovementPolicy(bool bCanSprint, const FVector& MovementDirection);
 	void ApplySprintAnimationState();
 	UAnimMontage* GetEffectiveCombatIntroMontage() const;
 	float GetEffectiveCombatIntroMontagePlayRate() const;

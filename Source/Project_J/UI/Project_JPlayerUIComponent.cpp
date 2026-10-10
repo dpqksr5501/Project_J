@@ -8,6 +8,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Game/Project_JPlayerState.h"
 #include "Project_JPlayerCharacter.h"
+#include "Components/Project_JSkillInputRouterComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Project_JGameplayTags.h"
@@ -24,10 +25,54 @@
 #include "UI/Project_JStatusEffects.h"
 #include "AbilitySystemInterface.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Framework/Application/IInputProcessor.h"
+#include "Framework/Application/SlateUser.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
+#include "Widgets/SViewport.h"
+#include "UI/Project_JCursorInput.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 CSV_DEFINE_CATEGORY(ProjectJUI, true);
+
+namespace
+{
+class FProject_JCursorInputProcessor final : public IInputProcessor
+{
+public:
+	explicit FProject_JCursorInputProcessor(UProject_JPlayerUIComponent* InOwner) : Owner(InOwner) {}
+	void Tick(float, FSlateApplication&, TSharedRef<ICursor>) override {}
+	bool IsOurViewport(FSlateApplication& App, int32 UserIndex) const
+	{
+		auto* UI = Owner.Get();
+		auto* PC = UI ? Cast<APlayerController>(UI->GetOwner()) : nullptr;
+		auto* Local = PC ? PC->GetLocalPlayer() : nullptr;
+		if (!Local || !Local->ViewportClient || !Local->GetSlateUser() ||
+			Local->GetSlateUser()->GetUserIndex() != UserIndex ||
+			Local->ViewportClient->GetWindow() != App.GetActiveTopLevelWindow()) return false;
+		const auto Viewport = Local->ViewportClient->GetGameViewportWidget();
+		return Viewport && Viewport->HasAnyUserFocusOrFocusedDescendants();
+	}
+	bool HandleKeyDownEvent(FSlateApplication& App, const FKeyEvent& Event) override
+	{
+		if (IsOurViewport(App, Event.GetUserIndex())) Gesture.KeyDown(Event.GetKey(), Event.IsRepeat());
+		else Gesture.Reset();
+		return false; // Enhanced Input and widget modifier shortcuts still receive the event.
+	}
+	bool HandleKeyUpEvent(FSlateApplication& App, const FKeyEvent& Event) override
+	{
+		const bool bOurViewport = IsOurViewport(App, Event.GetUserIndex());
+		if (Gesture.KeyUp(Event.GetKey()) && bOurViewport && Owner.IsValid()) Owner->ToggleCursorMode();
+		return false;
+	}
+	bool HandleMouseButtonDownEvent(FSlateApplication&, const FPointerEvent&) override { Gesture.MouseDown(); return false; }
+	void Reset() { Gesture.Reset(); }
+private:
+	TWeakObjectPtr<UProject_JPlayerUIComponent> Owner;
+	FProject_JCursorGesture Gesture;
+};
+}
 
 UProject_JPlayerUIComponent::UProject_JPlayerUIComponent()
 {
@@ -79,10 +124,23 @@ void UProject_JPlayerUIComponent::RefreshSources()
 			StatusEffects = NewObject<UProject_JStatusEffectModel>(this);
 			StatusEffects->OnChanged.AddUObject(this, &ThisClass::OnStatusEffectsChanged);
 			if (FSlateApplication::IsInitialized())
+			{
+				CursorInputProcessor = MakeShared<FProject_JCursorInputProcessor>(this);
+				FSlateApplication::Get().RegisterInputPreProcessor(CursorInputProcessor);
 				ActivationHandle = FSlateApplication::Get().OnApplicationActivationStateChanged().AddWeakLambda(this, [this](bool bActive)
 				{
-					if (!bActive) { ReleaseAllSkills(); if (auto *Controller = Cast<APlayerController>(GetOwner()); Controller && Controller->PlayerInput) Controller->PlayerInput->FlushPressedKeys(); }
+					if (!bActive)
+					{
+						StaticCastSharedPtr<FProject_JCursorInputProcessor>(CursorInputProcessor)->Reset();
+						ReleaseAllSkills();
+						if (auto *Controller = Cast<APlayerController>(GetOwner()))
+						{
+							if (auto* Pawn = Cast<AProject_JPlayerCharacter>(Controller->GetPawn())) Pawn->StopSprint();
+							if (Controller->PlayerInput) Controller->PlayerInput->FlushPressedKeys();
+						}
+					}
 				});
+			}
 			InventoryModel->OnChanged.AddDynamic(this, &ThisClass::OnInventoryPresentationChanged);
 			Screen = CreateWidget<UProject_JPlayerHUDWidget>(PC, ScreenClass);
 			if (Screen)
@@ -310,6 +368,8 @@ void UProject_JPlayerUIComponent::OnCharacterIdentityChanged()
 }
 void UProject_JPlayerUIComponent::ResetInteraction()
 {
+	if (CursorInputProcessor) StaticCastSharedPtr<FProject_JCursorInputProcessor>(CursorInputProcessor)->Reset();
+	bCursorMode = false;
 	ReleaseAllSkills();
 	SetObservedTarget(nullptr);
 	if (GetWorld())
@@ -320,6 +380,7 @@ void UProject_JPlayerUIComponent::ResetInteraction()
 	SkillsRefreshTimer.Invalidate();
 	if (Screen) Screen->ResetTransientInteraction();
 	SetMenuOpen(false);
+	ApplyInputMode();
 }
 void UProject_JPlayerUIComponent::ClearSources()
 {
@@ -510,35 +571,67 @@ void UProject_JPlayerUIComponent::SetMenuOpen(bool bOpen)
 	if (bOpen)
 	{
 		ReleaseAllSkills();
-		bPreviousCursor = PC->bShowMouseCursor;
-		PC->bShowMouseCursor = true;
-		PC->SetIgnoreMoveInput(true);
-		PC->SetIgnoreLookInput(true);
 		if (auto *Pawn = Cast<AProject_JPlayerCharacter>(PC->GetPawn()))
 			Pawn->StopSprint();
 		RefreshSources();
 		Screen->SetMenuOpen(true);
-		FInputModeUIOnly Mode;
-		Mode.SetWidgetToFocus(Screen->TakeWidget());
-		Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		PC->SetInputMode(Mode);
 	}
 	else
 	{
 		ReleaseAllSkills();
 		Screen->SetMenuOpen(false);
-		PC->bShowMouseCursor = bPreviousCursor;
-		PC->SetIgnoreMoveInput(false);
-		PC->SetIgnoreLookInput(false);
-		PC->SetInputMode(FInputModeGameOnly());
 	}
+	ApplyInputMode();
+}
+void UProject_JPlayerUIComponent::ToggleCursorMode()
+{
+	if (bEnding || bMenuOpen || !Screen) return;
+	bCursorMode = !bCursorMode;
+	ReleaseAllSkills();
+	ApplyInputMode();
+}
+void UProject_JPlayerUIComponent::ApplyInputMode()
+{
+	auto* PC = Cast<APlayerController>(GetOwner());
+	if (!PC || !PC->IsLocalPlayerController()) return;
+	const bool bLookIgnore = bMenuOpen || bCursorMode;
+	if (bLookIgnore && !bOwnsLookIgnore)
+		if (APawn* CurrentPawn = PC->GetPawn())
+			if (auto* Router = CurrentPawn->FindComponentByClass<UProject_JSkillInputRouterComponent>()) Router->CancelMouseInput();
+	// Ignore flags are counters. Release only our own contribution, once per transition.
+	if (bOwnsMoveIgnore != bMenuOpen) { PC->SetIgnoreMoveInput(bMenuOpen); bOwnsMoveIgnore = bMenuOpen; }
+	if (bOwnsLookIgnore != bLookIgnore) { PC->SetIgnoreLookInput(bLookIgnore); bOwnsLookIgnore = bLookIgnore; }
+	PC->bShowMouseCursor = bLookIgnore;
+	if (bMenuOpen && Screen)
+	{
+		FInputModeUIOnly Mode;
+		Mode.SetWidgetToFocus(Screen->TakeWidget());
+		Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PC->SetInputMode(Mode);
+	}
+	else if (bCursorMode && Screen)
+	{
+		FInputModeGameAndUI Mode;
+		Mode.SetWidgetToFocus(Screen->TakeWidget());
+		Mode.SetHideCursorDuringCapture(false);
+		Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PC->SetInputMode(Mode);
+	}
+	else PC->SetInputMode(FInputModeGameOnly());
 }
 void UProject_JPlayerUIComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+	bCursorMode = false;
 	SetMenuOpen(false);
+	ApplyInputMode();
 	ReleaseAllSkills();
 	bEnding = true;
-	if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(ActivationHandle);
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().UnregisterInputPreProcessor(CursorInputProcessor);
+		FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(ActivationHandle);
+	}
+	CursorInputProcessor.Reset();
 	if (MenuInput.IsValid()) MenuInput->KeyBindings.RemoveAll([this](const FInputKeyBinding &Binding) { return Binding.KeyDelegate.IsBoundToObject(this); });
 	MenuInput.Reset();
 	if (auto *PC = Cast<APlayerController>(GetOwner()))

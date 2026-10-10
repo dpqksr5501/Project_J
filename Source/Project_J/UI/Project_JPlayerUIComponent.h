@@ -31,6 +31,9 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	void BindMenuInput(class UInputComponent *Input);
 	UFUNCTION(BlueprintCallable) void ToggleMenu();
 	UFUNCTION(BlueprintCallable) void SetMenuOpen(bool bOpen);
+	/** HUD interaction keeps keyboard movement, but suspends camera look. Menus force a visible cursor. */
+	UFUNCTION(BlueprintCallable) void ToggleCursorMode();
+	UFUNCTION(BlueprintPure) bool IsCursorModeEnabled() const { return bCursorMode; }
 	UFUNCTION(BlueprintPure) bool IsMenuOpen() const
 	{
 		return bMenuOpen;
@@ -127,6 +130,10 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	FTimerHandle SkillsTimer;
 	FTimerHandle SkillsRefreshTimer;
 	bool bMenuOpen = false;
-	bool bPreviousCursor = false;
+	void ApplyInputMode();
+	TSharedPtr<class IInputProcessor> CursorInputProcessor;
+	bool bCursorMode = false;
+	bool bOwnsMoveIgnore = false;
+	bool bOwnsLookIgnore = false;
 	bool bEnding = false;
 };

@@ -112,14 +112,20 @@ void UProject_JSkillInputRouterComponent::Initialize(AProject_JPlayerCharacter* 
 
 void UProject_JSkillInputRouterComponent::ResetInputState()
 {
+	bModifierHeld = false;
+	ActiveModifierTags.Reset();
+	CancelMouseInput();
+}
+
+void UProject_JSkillInputRouterComponent::CancelMouseInput()
+{
 	check(IsInGameThread());
 	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
 	FGameplayTagContainer ReleasedTags;
 	if (ActiveLMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveLMBInputTag);
 	if (ActiveRMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveRMBInputTag);
 	if (ActiveCombinedInputTag.IsValid()) ReleasedTags.AddTag(ActiveCombinedInputTag);
-	bLMBHeld = bRMBHeld = bModifierHeld = bHasPendingChordButton = false;
-	ActiveModifierTags.Reset();
+	bLMBHeld = bRMBHeld = bHasPendingChordButton = false;
 	ActiveLMBInputTag = ActiveRMBInputTag = ActiveCombinedInputTag = FGameplayTag();
 	// Clear before dispatch so a release callback cannot observe stale held state.
 	if (IsValid(BoundPlayerCharacter))

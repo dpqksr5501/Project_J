@@ -1,5 +1,7 @@
 # 플레이어 UI
 
+Shift 이동 예측과 좌측 Ctrl 조작의 최신 수정은 [커서와 달리기](Cursor_And_Sprint_Prediction_2026-10-10.md)를 읽는다.
+
 최신 전환·키보드·연속 갱신 검증은 [UI 수명과 키보드](Continuity_Keyboard_And_Dynamic_Load_2026-10-10.md), 저장·장비 정책은 [UI 저장과 장비 비교](Reliability_Comparison_And_Load_2026-10-10.md), 기본 화면·아트 교체 계약은 [Compact MMORPG HUD](Compact_HUD_And_Gameplay_2026-10-10.md)를 읽는다.
 
 | 문서 | 역할 |

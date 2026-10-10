@@ -16,6 +16,8 @@
 #include "Mount/Project_JMountItemDefinition.h"
 #include "Tests/Project_JMountLifecycleFixture.h"
 #include "UObject/UnrealType.h"
+#include "Components/Project_JCharacterMovementComponent.h"
+#include "Animation/Project_JLocomotionProfile.h"
 
 namespace ProjectJRuntimeOwnershipTests
 {
@@ -118,6 +120,50 @@ bool FProjectJDestroyedSummonedMountTest::RunTest(const FString&)
     auto* Second = Avatar->GetSummonedMount();
     TestTrue(TEXT("A different live mount is spawned immediately"), IsValid(Second) && Second != First);
     TestTrue(TEXT("No possession transfer into destroyed mount"), Controller->GetPawn() == Avatar);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSprintSavedMoveTest, "ProjectJ.RuntimeOwnership.SprintMovePrediction",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJSprintSavedMoveTest::RunTest(const FString&)
+{
+    using namespace ProjectJRuntimeOwnershipTests;
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    Begin(World); ON_SCOPE_EXIT { End(World); };
+    auto* State = World->SpawnActor<AProject_JPlayerState>();
+    auto* Controller = World->SpawnActor<AAIController>();
+    State->SetOwner(Controller); Controller->SetPlayerState(State);
+    auto* Avatar = SpawnAvatar(World, State);
+    if (!TestNotNull(TEXT("Avatar"), Avatar)) return false;
+    Controller->Possess(Avatar);
+    auto* Move = Cast<UProject_JCharacterMovementComponent>(Avatar->GetCharacterMovement());
+    if (!TestNotNull(TEXT("Authored player uses prediction-aware movement"), Move)) return false;
+    auto* ASC = State->GetAbilitySystemComponent();
+    const auto Handle = ASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_Sprint::StaticClass(), 1));
+    const auto* Profile = Avatar->GetLocomotionProfile();
+    if (!TestNotNull(TEXT("Authored movement policy"), Profile)) return false;
+    TestTrue(TEXT("Sprint ability activates"), ASC->TryActivateAbility(Handle));
+    Move->UpdateFromCompressedFlags(FSavedMove_Character::FLAG_Custom_0);
+    Move->MoveAutonomous(0.1f, 0.016f, FSavedMove_Character::FLAG_Custom_0, FVector(1000, 0, 0));
+    TestEqual(TEXT("Server applies sprint speed before the move"), Move->MaxWalkSpeed, Profile->SprintSpeed);
+    TestEqual(TEXT("Sprint acceleration policy is applied"), Move->MaxAcceleration, Profile->MovementPolicy.SprintMaxAcceleration);
+    auto* Data = Move->GetPredictionData_Client_Character();
+    FSavedMovePtr Sprint = Data->AllocateNewMove();
+    Sprint->SetMoveFor(Avatar, 0.016f, FVector(1000, 0, 0), *Data);
+    TestTrue(TEXT("Sprint intent is encoded in this move"), (Sprint->GetCompressedFlags() & FSavedMove_Character::FLAG_Custom_0) != 0);
+    FSavedMovePtr Walk = Data->AllocateNewMove();
+    Walk->Clear();
+    TestFalse(TEXT("Sprint boundary cannot be combined away"), Sprint->CanCombineWith(Walk, Avatar, 0.125f));
+    Move->UpdateFromCompressedFlags(0);
+    Sprint->PrepMoveFor(Avatar);
+    TestTrue(TEXT("Replay restores historical sprint intent"), Move->IsSprintRequestedForMove());
+    Move->MoveAutonomous(0.2f, 0.016f, 0, FVector(1000, 0, 0));
+    TestEqual(TEXT("Released sprint applies walk policy even while GAS end is pending"), Move->MaxWalkSpeed, Profile->WalkSpeed);
+    ASC->CancelAbilityHandle(Handle);
+    Move->MoveAutonomous(0.3f, 0.016f, FSavedMove_Character::FLAG_Custom_0, FVector(1000, 0, 0));
+    TestEqual(TEXT("Client flag cannot grant unauthorised sprint"), Move->MaxWalkSpeed, Profile->WalkSpeed);
+    TestEqual(TEXT("Run acceleration is restored"), Move->MaxAcceleration, Profile->MovementPolicy.RunMaxAcceleration);
+    Sprint->Clear();
+    TestFalse(TEXT("Recycled saved move clears sprint flag"), (Sprint->GetCompressedFlags() & FSavedMove_Character::FLAG_Custom_0) != 0);
     return true;
 }
 #endif

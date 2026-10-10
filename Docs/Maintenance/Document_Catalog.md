@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 266개, Markdown 181개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 267개, Markdown 182개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -133,6 +133,7 @@
 | [캐릭터 UI 프로필과 검은사막 참고 — 2026-10-10](../UI/Character_UI_Profiles_2026-10-10.md) | 구조·계약 | UI/Character_UI_Profiles_2026-10-10.md |
 | [Compact MMORPG HUD와 gameplay 연결 — 2026-10-10](../UI/Compact_HUD_And_Gameplay_2026-10-10.md) | 구조·계약 | UI/Compact_HUD_And_Gameplay_2026-10-10.md |
 | [캐릭터 UI 전환·키보드 조작·연속 갱신 검증](../UI/Continuity_Keyboard_And_Dynamic_Load_2026-10-10.md) | 구조·계약 | UI/Continuity_Keyboard_And_Dynamic_Load_2026-10-10.md |
+| [좌측 Ctrl 커서 전환과 달리기 이동 예측 수정](../UI/Cursor_And_Sprint_Prediction_2026-10-10.md) | 구조·계약 | UI/Cursor_And_Sprint_Prediction_2026-10-10.md |
 | [MMORPG UI 조작 확장과 실행 검증 — 2026-10-10](../UI/Extended_Interaction_And_Validation_2026-10-10.md) | 구조·계약 | UI/Extended_Interaction_And_Validation_2026-10-10.md |
 | [MMORPG 최소 조작 UI — 2026-10-10](../UI/MMORPG_UI_Architecture_2026-10-10.md) | 구조·계약 | UI/MMORPG_UI_Architecture_2026-10-10.md |
 | [플레이어 UI](../UI/README.md) | 목차·문서 관리 | UI/README.md |

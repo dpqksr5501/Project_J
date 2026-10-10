@@ -60,6 +60,15 @@ protected:
 #if WITH_EDITOR
 	/** PIE-only fixture; production rewards and item use still require their normal UI paths. */
 	UFUNCTION(Exec) void UIPrototypeTest(const FString& Action);
+	/** PIE-only held-key regression fixture. Releases every injected key on finish/teardown. */
+	UFUNCTION(Exec) void SprintInputTest();
+	void TickSprintInputTest();
+	void StopSprintInputTest();
+	FTimerHandle SprintInputTestTimer;
+	TWeakObjectPtr<APawn> SprintInputTestPawn;
+	double SprintInputTestStart = 0;
+	int32 SprintInputTestPhase = INDEX_NONE;
+	FKey SprintInputTestDirection;
 	UFUNCTION(Server, Reliable) void ServerUIPrototypeTest(const FString& Action);
 	TArray<FGuid> UIPrototypeItems;
 	double LastUIPrototypeRequest = -100;

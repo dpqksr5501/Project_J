@@ -26,6 +26,8 @@
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 #include "UI/Project_JPlayerUIComponent.h"
+#include "InputKeyEventArgs.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -121,6 +123,9 @@ void AProject_JPlayerController::BeginPlay()
 
 void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_EDITOR
+	StopSprintInputTest();
+#endif
 	if (InputLeaseSubsystem.IsValid()) { InputLeaseSubsystem->Release(this); }
 	InputLeaseSubsystem.Reset();
 	if (MobileControlsWidget) { MobileControlsWidget->RemoveFromParent(); MobileControlsWidget = nullptr; }
@@ -726,6 +731,58 @@ void AProject_JPlayerController::EquipmentClientTest(const FString& Action)
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Project_JAbilitySystemComponent.h"
+void AProject_JPlayerController::SprintInputTest()
+{
+	if (!IsLocalPlayerController() || !GetWorld() || GetWorld()->WorldType != EWorldType::PIE ||
+		IsMoveInputIgnored() || !GetPawn()) return;
+	StopSprintInputTest();
+	SprintInputTestPawn = GetPawn();
+	SprintInputTestStart = GetWorld()->GetTimeSeconds();
+	SprintInputTestPhase = INDEX_NONE;
+	GetWorld()->GetTimerManager().SetTimer(SprintInputTestTimer, this, &ThisClass::TickSprintInputTest, 0.05f, true);
+	UE_LOG(LogProject_J, Display, TEXT("SprintInputTest Begin Pawn=%s LocalRole=%d"), *GetNameSafe(GetPawn()), int32(GetPawn()->GetLocalRole()));
+}
+void AProject_JPlayerController::StopSprintInputTest()
+{
+	const bool bHadInput = SprintInputTestPhase != INDEX_NONE || SprintInputTestPawn.IsValid() || SprintInputTestDirection.IsValid();
+	if (GetWorld()) GetWorld()->GetTimerManager().ClearTimer(SprintInputTestTimer);
+	if (!bHadInput) return;
+	for (const FKey Key : {EKeys::W, EKeys::S, EKeys::LeftShift})
+		InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), Key, IE_Released, 0.f, false, 0));
+	if (auto* TestAvatar = Cast<AProject_JPlayerCharacter>(SprintInputTestPawn.Get())) TestAvatar->StopSprint();
+	SprintInputTestPawn.Reset();
+	SprintInputTestDirection = FKey();
+	SprintInputTestPhase = INDEX_NONE;
+}
+void AProject_JPlayerController::TickSprintInputTest()
+{
+	if (!GetWorld() || GetPawn() != SprintInputTestPawn.Get() || IsMoveInputIgnored()) { StopSprintInputTest(); return; }
+	const float Elapsed = GetWorld()->GetTimeSeconds() - SprintInputTestStart;
+	if (Elapsed >= 8.f)
+	{
+		UE_LOG(LogProject_J, Display, TEXT("SprintInputTest End Pawn=%s"), *GetNameSafe(GetPawn()));
+		StopSprintInputTest(); return;
+	}
+	const int32 Phase = FMath::FloorToInt(Elapsed / 2.f);
+	if (Phase != SprintInputTestPhase)
+	{
+		SprintInputTestPhase = Phase;
+		InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), EKeys::LeftShift,
+			Phase % 2 ? IE_Pressed : IE_Released, Phase % 2 ? 1.f : 0.f, false, 0));
+		UE_LOG(LogProject_J, Display, TEXT("SprintInputTest Phase=%d Time=%.3f"), Phase, GetWorld()->GetTimeSeconds());
+	}
+	const FKey Direction = FMath::FloorToInt(Elapsed) % 2 ? EKeys::S : EKeys::W;
+	if (Direction != SprintInputTestDirection)
+	{
+		if (SprintInputTestDirection.IsValid()) InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), SprintInputTestDirection, IE_Released, 0.f, false, 0));
+		SprintInputTestDirection = Direction;
+		InputKey(FInputKeyEventArgs(nullptr, FInputDeviceId::CreateFromInternalId(0), Direction, IE_Pressed, 1.f, false, 0));
+	}
+	if (const auto* TestAvatar = Cast<AProject_JPlayerCharacter>(GetPawn()))
+		UE_LOG(LogProject_J, Display, TEXT("SprintInputTest Sample T=%.3f Pawn=%s Sprint=%d Speed=%.1f Max=%.1f Location=%s"),
+			GetWorld()->GetTimeSeconds(), *TestAvatar->GetName(), TestAvatar->IsSprintLocomotionAllowed() ? 1 : 0,
+			TestAvatar->GetVelocity().Size2D(), TestAvatar->GetCharacterMovement()->MaxWalkSpeed, *TestAvatar->GetActorLocation().ToCompactString());
+}
 void AProject_JPlayerController::UIPrototypeTest(const FString& Action)
 {
 	if (IsLocalController() && GetWorld() && GetWorld()->WorldType == EWorldType::PIE)

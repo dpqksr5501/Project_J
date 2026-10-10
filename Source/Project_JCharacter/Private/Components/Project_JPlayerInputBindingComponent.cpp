@@ -7,6 +7,7 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Mount/Project_JMountComponent.h"
+#include "GameFramework/PlayerController.h"
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 {
@@ -535,6 +536,8 @@ void UProject_JPlayerInputBindingComponent::HandleJumpStopped()
 
 void UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed()
 {
+	if (BoundPlayerCharacter)
+		if (const auto* PC = Cast<APlayerController>(BoundPlayerCharacter->GetController()); PC && PC->bShowMouseCursor) return;
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
 		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::LMB);
@@ -551,6 +554,8 @@ void UProject_JPlayerInputBindingComponent::HandlePrimarySkillReleased()
 
 void UProject_JPlayerInputBindingComponent::HandleSecondarySkillPressed()
 {
+	if (BoundPlayerCharacter)
+		if (const auto* PC = Cast<APlayerController>(BoundPlayerCharacter->GetController()); PC && PC->bShowMouseCursor) return;
 	if (BoundPlayerCharacter && BoundPlayerCharacter->SkillInputRouterComponent)
 	{
 		BoundPlayerCharacter->SkillInputRouterComponent->HandleButtonPressed(EProject_JSkillInputButton::RMB);

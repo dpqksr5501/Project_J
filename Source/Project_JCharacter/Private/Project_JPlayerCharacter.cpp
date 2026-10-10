@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerCharacter.h"
+#include "Components/Project_JCharacterMovementComponent.h"
 #include "Components/Project_JFoleyComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
@@ -104,7 +105,8 @@ int32 GetCharacterLevelForInterfaceObject(const UObject* Object)
 }
 }
 
-AProject_JPlayerCharacter::AProject_JPlayerCharacter()
+AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	RuntimeStateOwnership = EProject_JRuntimeStateOwnership::PlayerStatePreferred;
 	if (AbilitySystemComponent)
@@ -343,10 +345,6 @@ void AProject_JPlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_MovementPolicy);
-		{
-			TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_UpdateMaxWalkSpeed);
-			UpdateMaxWalkSpeed();
-		}
 		{
 			TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_PlayerCharacterTick_ApplyCombatRotationMode);
 			ApplyCombatRotationMode(IsCombatModeActive());

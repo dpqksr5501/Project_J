@@ -218,13 +218,17 @@ bool AProject_JPlayerCharacter::IsCombatActionBlockingSprint() const
 
 void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 {
+	ApplyMovementPolicy(IsSprintLocomotionAllowed(), GetPendingMovementInputVector());
+}
+
+void AProject_JPlayerCharacter::ApplyMovementPolicy(bool bCanSprint, const FVector& MovementDirection)
+{
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
 	if (!MoveComp || (!IsLocallyControlled() && GetLocalRole() != ROLE_Authority))
 	{
 		return;
 	}
 
-	const bool bCanSprint = IsSprintLocomotionAllowed();
 	const UProject_JLocomotionProfile* EffectiveLocomotionProfile = GetLocomotionProfile();
 	const float EffectiveWalkSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->WalkSpeed : WalkSpeed;
 	const float EffectiveSprintSpeed = EffectiveLocomotionProfile ? EffectiveLocomotionProfile->SprintSpeed : SprintSpeed;
@@ -256,7 +260,7 @@ void AProject_JPlayerCharacter::UpdateMaxWalkSpeed()
 
 		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
 		{
-			FVector Direction = GetPendingMovementInputVector();
+			FVector Direction = MovementDirection;
 			Direction.Z = 0.0f;
 			if (Direction.IsNearlyZero())
 			{
