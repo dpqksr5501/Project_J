@@ -28,6 +28,10 @@ struct FProject_JItemInstanceData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	bool bIsEquipped = false;
 
+	/** Server-owned bag ordering; never an inventory ownership or capacity identifier. */
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory")
+	int32 BagOrder = INDEX_NONE;
+
 	bool IsValid() const
 	{
 		return ItemDef != nullptr && InstanceId.IsValid() && StackCount > 0;

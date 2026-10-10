@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerState.h"
+#include "Game/Project_JQuestComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Net/UnrealNetwork.h"
@@ -13,6 +14,7 @@
 AProject_JPlayerState::AProject_JPlayerState()
 {
 	SetNetUpdateFrequency(100.0f);
+	QuestComponent = CreateDefaultSubobject<UProject_JQuestComponent>(TEXT("Quests"));
 	ProgressionComponent = CreateDefaultSubobject<UProject_JProgressionComponent>(TEXT("Progression"));
 
 	InventoryComponent = CreateDefaultSubobject<UProject_JInventoryComponent>(TEXT("InventoryComponent"));
@@ -124,6 +126,7 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 
 	AccountId = InAccountId;
 	CharacterId = InCharacterId;
+	OnCharacterIdentityChanged.Broadcast();
 	ForceNetUpdate();
 
 	if (SocialSubsystem)
@@ -131,6 +134,8 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 		SocialSubsystem->BindPlayerState(this);
 	}
 }
+
+void AProject_JPlayerState::OnRep_CharacterId() { OnCharacterIdentityChanged.Broadcast(); }
 
 void AProject_JPlayerState::SetSocialState(
 	FName InPartyId,

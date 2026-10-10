@@ -2,6 +2,11 @@
 
 이 문서는 로컬 5.7.4의 확인한 CMC 경로를 설명한다. 근거 G01-G05. 기본 활성 MM과 비활성 실험적 State Machine을 구분한다. 그래프에서 추론한 효과는 I이며 새 영상 검증은 U다.
 
+2026-10-10 보충: Computer Use로 원본 EarlyTransition Tick 그래프를 확인했다.
+누락된 Run 6개 인스턴스는 기본값 Always가 아니라 `Re-Transition / Gait Not Equal Run`이다.
+단순 구간 Begin/End bool과 동일하게 취급하지 않는다.
+Project J 복구와 적용 한계는 [EarlyTransition 복원 기록](../../Diagnostics/EarlyTransition_Recovery_2026-10-10.md)을 따른다.
+
 ## 1. 전체 흐름과 책임
 
 ```mermaid

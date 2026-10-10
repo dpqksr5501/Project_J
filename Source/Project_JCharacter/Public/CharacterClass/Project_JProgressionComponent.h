@@ -14,7 +14,8 @@ USTRUCT(BlueprintType)
 struct PROJECT_JCHARACTER_API FProject_JProgressionSnapshot
 {
 	GENERATED_BODY()
-	UPROPERTY() int32 SchemaVersion = 1;
+	UPROPERTY() int32 SchemaVersion = 2;
+	UPROPERTY() int64 Experience = 0;
 	UPROPERTY() FName ClassId;
 	UPROPERTY() int32 Level = 1;
 	/** Ordered acquisition history; active grants are reconstructed with definition policies. */
@@ -47,6 +48,13 @@ public:
 	bool CanApplyAdvancement(const UProject_JCharacterAdvancementDefinition* Advancement) const;
 	bool ApplyAdvancement(UProject_JCharacterAdvancementDefinition* Advancement);
 	bool SetLevel(int32 Level);
+	/** Trusted reward path; no client RPC accepts an experience amount. */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) bool GrantExperience(int64 Amount);
+	UFUNCTION(BlueprintPure) int64 GetExperience() const { return Experience; }
+	UFUNCTION(BlueprintPure) int64 GetNextLevelExperience() const;
+	UPROPERTY(EditDefaultsOnly, Category="Progression") int32 MaximumLevel = 100;
+	/** XP required for level N -> N+1. Missing entries use 100*N. */
+	UPROPERTY(EditDefaultsOnly, Category="Progression") TArray<int64> ExperienceRequirements;
 	FProject_JProgressionSnapshot CaptureSnapshot() const;
 	/** Trusted server adapter only; resolve IDs first, then restore once on an uninitialized owner. */
 	bool RestoreSnapshot(const FProject_JProgressionSnapshot& Snapshot, UProject_JCharacterClassDefinition* Class,
@@ -54,6 +62,8 @@ public:
 	DECLARE_MULTICAST_DELEGATE(FOnChanged);
 	FOnChanged OnChanged;
 private:
+	UPROPERTY(ReplicatedUsing=OnRep_Experience) int64 Experience = 0;
+	UFUNCTION() void OnRep_Experience();
 	UPROPERTY(ReplicatedUsing=OnRep_State) FProject_JProgressionState State;
 	UPROPERTY(Replicated) TArray<FName> AcquiredAdvancements;
 	UPROPERTY(Transient) FProject_JAbilitySet_GrantedHandles ClassHandles;

@@ -12,6 +12,7 @@ class UProject_JEquipmentManagerComponent;
 class UProject_JInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEquipmentChangedSignature, EProject_JEquipmentSlot, Slot, UProject_JEquipmentItemDefinition*, ItemDef);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JEquipmentRequestCompleted, FGuid, RequestId, const FProject_JEquipmentOperationResult&, Result);
 
 USTRUCT(BlueprintType)
 struct FProject_JEquipmentArrayItem : public FFastArraySerializerItem
@@ -70,6 +71,15 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 public:
 	UProject_JEquipmentManagerComponent();
 
+	UPROPERTY(BlueprintAssignable, Category = "Equipment")
+	FProject_JEquipmentRequestCompleted OnRequestCompleted;
+
+	/** Correlated owner-only replies. UI never supplies item definitions or predicted equipment state. */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip);
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	bool GetEquippedItemInstance(EProject_JEquipmentSlot Slot, FProject_JItemInstanceData& OutItem) const;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Equipment")
@@ -121,6 +131,13 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UFUNCTION(Server, Reliable)
+	void ServerRequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip);
+	UFUNCTION(Client, Reliable)
+	void ClientEquipmentRequestCompleted(FGuid RequestId, FProject_JEquipmentOperationResult Result);
+	FProject_JEquipmentOperationResult ExecuteEquipmentRequest(FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip);
+	double RequestWindowStart = -1.0;
+	int32 RequestsInWindow = 0;
 	UFUNCTION(Server, Reliable)
 	void ServerRequestEquipItemInstanceById(FGuid InstanceId);
 

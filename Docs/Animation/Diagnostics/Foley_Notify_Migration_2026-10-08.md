@@ -1,5 +1,9 @@
 # GASP Foley 노티파이 교체 — 2026-10-08
 
+후속 상태(2026-10-10): 아래에 기록한 EarlyTransition 누락은 별도 작업으로 Run 6개를 복원했다.
+원본 조건과 타이밍, native 적용 한계 및 검증은 [복원 기록](EarlyTransition_Recovery_2026-10-10.md)에 있다.
+이 문서의 10월 8일 Foley 작업 범위와 당시 검증 수치는 그대로 유지한다.
+
 ## 범위와 보존 계약
 
 사용자의 요청에 따라 Project_J 애니메이션에 남은 GASP BP Foley 노티파이를 `UProject_JAnimNotify_FoleyEvent`로 교체한다. 대상은 Asset Registry에서 원본 Foley BP 클래스들의 실제 참조를 가진 `/Game/Characters/UEFN_Mannequin/Animations/` 아래 애니메이션 985개다. 다른 캐릭터·전투·탑승 에셋, 레벨, 소리·재질·음원 프로필을 생성하거나 수정하는 작업은 아니다.

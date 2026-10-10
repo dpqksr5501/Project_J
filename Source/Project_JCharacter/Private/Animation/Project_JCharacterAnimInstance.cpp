@@ -269,6 +269,9 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 
 void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
 {
+	bAuthoredEarlyTransitionPending = false;
+	AuthoredEarlyTransitionAsset.Reset();
+	OneShotEarlyTransitionWindowDepth = 0;
 	StateControllerRuntime.Reset();
 	CachedStateControllerChooserTable.Reset();
 	CachedStateControllerSelectedAnimation = nullptr;
@@ -288,6 +291,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimNativeUpdate);
 	Super::NativeUpdateAnimation(DeltaSeconds);
+	++EarlyTransitionSnapshotRevision;
 	AnimationClock.Advance(DeltaSeconds, GetWorld() && GetWorld()->IsPaused());
 
 	if (NeedsOwnerReferenceRefresh())
@@ -1263,6 +1267,25 @@ void UProject_JCharacterAnimInstance::BeginOneShotEarlyTransitionWindow()
 	++OneShotEarlyTransitionWindowDepth;
 }
 
+void UProject_JCharacterAnimInstance::RequestAuthoredEarlyTransition(UAnimSequenceBase* Animation, bool bRequireGaitChange, EProject_JLocomotionGaitIntent ExcludedGait)
+{
+	check(IsInGameThread());
+	// Notify events from the outgoing Blend Stack or a Motion Matching clip may
+	// coexist with the held one-shot. They cannot authorize this state's exit.
+	if (!Animation || Animation != CachedStateControllerSelectedAnimation || !ThreadSafeData.OneShotPresentation.bEnabled) return;
+	AuthoredEarlyTransitionAsset = Animation; AuthoredEarlyTransitionSnapshotRevision = EarlyTransitionSnapshotRevision;
+	bAuthoredEarlyTransitionPending = true;
+	bAuthoredEarlyTransitionRequiresGaitChange = bRequireGaitChange;
+	AuthoredEarlyTransitionExcludedGait = ExcludedGait;
+}
+bool UProject_JCharacterAnimInstance::IsAuthoredEarlyTransitionAllowed(EProject_JLocomotionGaitIntent CurrentGait) const
+{
+	return bAuthoredEarlyTransitionPending && AuthoredEarlyTransitionAsset.IsValid() &&
+		AuthoredEarlyTransitionAsset.Get() == CachedStateControllerSelectedAnimation &&
+		EarlyTransitionSnapshotRevision <= AuthoredEarlyTransitionSnapshotRevision + 1 &&
+		(!bAuthoredEarlyTransitionRequiresGaitChange || CurrentGait != AuthoredEarlyTransitionExcludedGait);
+}
+
 void UProject_JCharacterAnimInstance::EndOneShotEarlyTransitionWindow()
 {
 	OneShotEarlyTransitionWindowDepth = FMath::Max(OneShotEarlyTransitionWindowDepth - 1, 0);
@@ -1632,7 +1655,8 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	OneShot.bEnabled = Data.MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation;
 	OneShot.bUseMotionMatchOnEntry =
 		OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bUseMotionMatchForExperimentalOneShotEntry;
-	OneShot.bEarlyTransitionWindowOpen = OneShotEarlyTransitionWindowDepth > 0;
+	OneShot.bEarlyTransitionWindowOpen = OneShot.bEnabled &&
+		(OneShotEarlyTransitionWindowDepth > 0 || IsAuthoredEarlyTransitionAllowed(Data.LocomotionContext.GaitIntent));
 	OneShot.FallbackLeadTime = Data.MotionMatchingSearchPolicy.ExperimentalOneShotFallbackLeadTime;
 	OneShot.bIdleBreakEnabled = OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bEnableExperimentalIdleBreak;
 	OneShot.IdleBreakMinimumStateTime = OneShot.bIdleBreakEnabled

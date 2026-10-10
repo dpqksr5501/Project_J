@@ -33,6 +33,7 @@ void UProject_JProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UProject_JProgressionComponent, State);
+	DOREPLIFETIME_CONDITION(UProject_JProgressionComponent, Experience, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UProject_JProgressionComponent, AcquiredAdvancements, COND_OwnerOnly);
 }
 
@@ -140,11 +141,12 @@ bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvance
 
 bool UProject_JProgressionComponent::SetLevel(int32 Level)
 {
-	if (!CanMutate() || State.Revision == 0) return false;
+	if (!CanMutate() || State.Revision == 0 || Level>FMath::Clamp(MaximumLevel,1,10000)) return false;
 	Level = FMath::Max(FMath::Max(1, Level), State.ClassDefinition ? State.ClassDefinition->StartingLevel : 1);
 	if (State.Level == Level) return true;
 	TGuardValue<bool> Guard(bChanging, true);
 	State.Level = Level;
+	Experience=0;
 	Publish();
 	return true;
 }
@@ -155,6 +157,7 @@ FProject_JProgressionSnapshot UProject_JProgressionComponent::CaptureSnapshot() 
 	FProject_JProgressionSnapshot Snapshot;
 	Snapshot.ClassId = State.ClassDefinition ? State.ClassDefinition->ClassId : NAME_None;
 	Snapshot.Level = State.Level;
+	Snapshot.Experience = Experience;
 	Snapshot.AdvancementHistory = AcquiredAdvancements;
 	return Snapshot;
 }
@@ -162,11 +165,14 @@ FProject_JProgressionSnapshot UProject_JProgressionComponent::CaptureSnapshot() 
 bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgressionSnapshot& Snapshot,
 	UProject_JCharacterClassDefinition* Class, const TArray<UProject_JCharacterAdvancementDefinition*>& OrderedHistory)
 {
-	if (!CanMutate() || State.Revision != 0 || Snapshot.SchemaVersion != 1 || Snapshot.Level < 1
+	if (!CanMutate() || State.Revision != 0 || (Snapshot.SchemaVersion != 1 && Snapshot.SchemaVersion != 2) || Snapshot.Level < 1
+		|| Snapshot.Level > FMath::Clamp(MaximumLevel, 1, 10000) || Snapshot.Experience < 0
 		|| Snapshot.AdvancementHistory.Num() > 256 || Snapshot.AdvancementHistory.Num() != OrderedHistory.Num()
 		|| Snapshot.ClassId != (Class ? Class->ClassId : NAME_None)
 		|| (Class && (Snapshot.Level < Class->StartingLevel || !IsStyleReady(Class->DefaultCombatStyle)))) return false;
-	TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
+	const int64 RequiredXP = Snapshot.Level>=FMath::Clamp(MaximumLevel,1,10000) ? 0 : ExperienceRequirements.IsValidIndex(Snapshot.Level-1) ? FMath::Clamp<int64>(ExperienceRequirements[Snapshot.Level-1],1,MAX_int64/10000) : 100LL*Snapshot.Level;
+ if (Snapshot.SchemaVersion>=2 && (RequiredXP==0 ? Snapshot.Experience!=0 : Snapshot.Experience>=RequiredXP)) return false;
+ TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
 	TSet<FName> Seen;
 	for (int32 Index = 0; Index < OrderedHistory.Num(); ++Index)
 	{
@@ -188,6 +194,7 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 	TGuardValue<bool> Guard(bChanging, true);
 	State.ClassDefinition = Class;
 	State.Level = Snapshot.Level;
+	Experience = Snapshot.SchemaVersion >= 2 ? Snapshot.Experience : 0;
 	State.Advancement = OrderedHistory.IsEmpty() ? nullptr : OrderedHistory.Last();
 	AcquiredAdvancements = Snapshot.AdvancementHistory;
 	ActiveAdvancements = MoveTemp(Active);
@@ -200,4 +207,24 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 	}
 	Publish();
 	return true;
+}
+
+void UProject_JProgressionComponent::OnRep_Experience() { OnChanged.Broadcast(); }
+int64 UProject_JProgressionComponent::GetNextLevelExperience() const
+{
+ if (State.Level >= FMath::Clamp(MaximumLevel, 1, 10000)) return 0;
+ const int32 Index = State.Level - 1;
+ return ExperienceRequirements.IsValidIndex(Index) ? FMath::Clamp<int64>(ExperienceRequirements[Index], 1, MAX_int64 / 10000) : 100LL * FMath::Max(1, State.Level);
+}
+bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
+{
+ if (!CanMutate() || State.Revision==0 || Amount <= 0 || Amount > MAX_int64 - Experience || GetNextLevelExperience() <= 0) return false;
+ TGuardValue<bool> Guard(bChanging, true);
+ Experience += Amount;
+ while (GetNextLevelExperience() > 0 && Experience >= GetNextLevelExperience())
+ {
+  Experience -= GetNextLevelExperience(); ++State.Level;
+ }
+ if (GetNextLevelExperience() == 0) Experience = 0;
+ Publish(); return true;
 }

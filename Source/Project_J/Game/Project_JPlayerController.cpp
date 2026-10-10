@@ -25,6 +25,7 @@
 #include "Game/Project_JProfilingCrowdComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "Widgets/Input/SVirtualJoystick.h"
+#include "UI/Project_JPlayerUIComponent.h"
 
 namespace
 {
@@ -85,11 +86,12 @@ int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
 
 AProject_JPlayerController::AProject_JPlayerController()
 {
+	PlayerUI = CreateDefaultSubobject<UProject_JPlayerUIComponent>(TEXT("PlayerUI"));
 #if WITH_EDITOR
-	EquipmentClientTestComponent = CreateDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"));
+	EquipmentClientTestComponent = CreateEditorOnlyDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"), true);
 #endif
 #if WITH_EDITOR
-	ProfilingCrowdComponent = CreateDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"));
+	ProfilingCrowdComponent = CreateEditorOnlyDefaultSubobject<UProject_JProfilingCrowdComponent>(TEXT("ProfilingCrowdComponent"), true);
 #endif
 }
 
@@ -128,6 +130,7 @@ void AProject_JPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReaso
 void AProject_JPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+	if (IsLocalPlayerController() && PlayerUI) PlayerUI->BindMenuInput(InputComponent);
 
 	// only add IMCs for local player controllers
 	if (IsLocalPlayerController())
@@ -152,6 +155,15 @@ void AProject_JPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AProject_JPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState(); if (PlayerUI) PlayerUI->RefreshSources();
+}
+void AProject_JPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer(); if (PlayerUI) PlayerUI->RefreshSources();
 }
 
 bool AProject_JPlayerController::ShouldUseTouchControls() const
@@ -703,5 +715,79 @@ void AProject_JPlayerController::DumpMMOProfilingSnapshot(int32 MaxDetailedChara
 void AProject_JPlayerController::EquipmentClientTest(const FString& Action)
 {
 	if (EquipmentClientTestComponent) { EquipmentClientTestComponent->Execute(Action); }
+}
+#endif
+
+#if WITH_EDITOR
+#include "Inventory/Project_JConsumableDefinition.h"
+#include "Testing/Project_JUIValidationEffect.h"
+#include "Components/Project_JInventoryComponent.h"
+#include "Game/Project_JQuestComponent.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
+#include "Project_JAttributeSet.h"
+#include "Project_JAbilitySystemComponent.h"
+void AProject_JPlayerController::UIPrototypeTest(const FString& Action)
+{
+	if (IsLocalController() && GetWorld() && GetWorld()->WorldType == EWorldType::PIE)
+	{
+		ServerUIPrototypeTest(Action);
+	}
+}
+void AProject_JPlayerController::ServerUIPrototypeTest_Implementation(const FString& Action)
+{
+	if (!GetWorld() || GetWorld()->WorldType != EWorldType::PIE || GetWorld()->bIsTearingDown ||
+		GetWorld()->GetTimeSeconds() - LastUIPrototypeRequest < 1)
+	{
+		return;
+	}
+	LastUIPrototypeRequest = GetWorld()->GetTimeSeconds();
+	auto* PS = GetPlayerState<AProject_JPlayerState>();
+	if (!PS) { return; }
+	auto* Inventory = PS->GetInventoryComponent();
+	auto* ASC = PS->GetProjectJAbilitySystemComponent();
+	auto* Quests = PS->FindComponentByClass<UProject_JQuestComponent>();
+	auto* Progression = PS->FindComponentByClass<UProject_JProgressionComponent>();
+	if (Action == TEXT("prepare") && UIPrototypeItems.IsEmpty())
+	{
+		for (const TCHAR* Path : {TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion"),
+			TEXT("/Game/UI/Gameplay/DA_ProjectJManaPotion.DA_ProjectJManaPotion")})
+		{
+			if (auto* Def = LoadObject<UProject_JConsumableDefinition>(nullptr, Path))
+			{
+				const auto Item = Inventory->AddItemDefinition(Def, 10);
+				if (Item.IsValid()) { UIPrototypeItems.Add(Item.InstanceId); }
+			}
+		}
+		ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 50);
+		ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetManaAttribute(), 30);
+	}
+	// Bounded, owned fixture entries for exercising virtualized scrolling, never durable inventory.
+	if (Action == TEXT("fill") && UIPrototypeItems.Num() < 80)
+	{
+		if (auto* Def = LoadObject<UProject_JConsumableDefinition>(nullptr,
+			TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion")))
+		{
+			for (int32 Index = UIPrototypeItems.Num(); Index < 80; ++Index)
+			{
+				const auto Item = Inventory->AddItemDefinition(Def, Index + 1);
+				if (Item.IsValid()) { UIPrototypeItems.Add(Item.InstanceId); }
+			}
+		}
+	}
+	if (Action == TEXT("finish") && Quests) { Quests->RecordObjective(TEXT("TravelMetres"), 20); }
+	if (Action == TEXT("buff"))
+	{
+		for (int32 Index = 0; Index < 3; ++Index) ASC->ApplyGameplayEffectToSelf(GetDefault<UProject_JUIValidationEffect>(), 1.f, ASC->MakeEffectContext());
+	}
+	if (Action == TEXT("stop"))
+	{
+		for (FGuid Id : UIPrototypeItems) { Inventory->RemoveItemInstance(Id); }
+		UIPrototypeItems.Reset();
+	}
+	UE_LOG(LogTemp, Display, TEXT("PROJECT_J_UI_PROTOTYPE: HP=%.0f MP=%.0f Lv=%d XP=%lld/%lld UseCD=%.1f Items=%d"),
+		PS->GetProjectJAttributeSet()->GetHealth(), PS->GetProjectJAttributeSet()->GetMana(),
+		Progression ? Progression->GetState().Level : 0, Progression ? Progression->GetExperience() : 0,
+		Progression ? Progression->GetNextLevelExperience() : 0, Inventory->GetUseCooldownRemaining(),
+		Inventory->GetItemInstances().Num());
 }
 #endif

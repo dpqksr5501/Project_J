@@ -11,6 +11,7 @@ class UUserWidget;
 class UProject_JProfilingCrowdComponent;
 class UProject_JEquipmentClientTestComponent;
 class UProject_JInputLeaseSubsystem;
+class UProject_JPlayerUIComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -47,12 +48,21 @@ protected:
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnRep_PlayerState() override;
+	virtual void ReceivedPlayer() override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
+	TObjectPtr<UProject_JPlayerUIComponent> PlayerUI;
 	TWeakObjectPtr<UProject_JInputLeaseSubsystem> InputLeaseSubsystem;
 
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
 #if WITH_EDITOR
+	/** PIE-only fixture; production rewards and item use still require their normal UI paths. */
+	UFUNCTION(Exec) void UIPrototypeTest(const FString& Action);
+	UFUNCTION(Server, Reliable) void ServerUIPrototypeTest(const FString& Action);
+	TArray<FGuid> UIPrototypeItems;
+	double LastUIPrototypeRequest = -100;
 	UFUNCTION(Exec)
 	void DumpMMOState();
 

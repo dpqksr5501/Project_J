@@ -10,6 +10,7 @@ const cell = value => value.replaceAll('|', '\\|').replaceAll('\n', ' ');
 const topics = new Map([
   ['Overview', '프로젝트 개요'], ['Architecture', '공통 아키텍처'],
   ['Animation', '애니메이션'], ['Combat', '전투'], ['Gameplay', '게임플레이'],
+  ['UI', '플레이어 UI'],
   ['Networking', '네트워크'], ['Performance', '성능'], ['Benchmarks', '벤치마크'],
   ['Review', '검토·후속 결과'], ['Handoffs', '작업 인계'],
   ['Reference', '참고 원본'], ['Maintenance', '문서 관리'], ['Archive', '보관 자료']

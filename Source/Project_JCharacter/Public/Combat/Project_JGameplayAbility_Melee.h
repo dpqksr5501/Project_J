@@ -71,6 +71,7 @@ protected:
 private:
 	friend class FProjectJComboWindowOwnershipTest;
 	friend class FProjectJComboInputSubscriptionTest;
+	friend class FProjectJComboBlendOutTest;
 	void UnbindComboInputEvents();
 	FGameplayTagContainer ComboInputTags;
 	TWeakObjectPtr<class UAbilitySystemComponent> ComboInputASC;

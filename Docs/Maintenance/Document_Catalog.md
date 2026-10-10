@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 257개, Markdown 172개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 264개, Markdown 179개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -62,6 +62,7 @@
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
 | [마우스 회전 끊김 콘솔 진단](../Animation/Debug/Mouse_Turn_Trace_2026-10-06.md) | 구조·계약 | Animation/Debug/Mouse_Turn_Trace_2026-10-06.md |
+| [EarlyTransition 누락 복원 — 2026-10-10](../Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md) | 진단·수정 기록 | Animation/Diagnostics/EarlyTransition_Recovery_2026-10-10.md |
 | [마네킹 Foley 확장과 초기 오디오 연결](../Animation/Diagnostics/Foley_Extension_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Extension_2026-10-08.md |
 | [정면 달리기 Foley 누락 복구 — 2026-10-08](../Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Forward_Run_Fix_2026-10-08.md |
 | [GASP Foley 노티파이 교체 — 2026-10-08](../Animation/Diagnostics/Foley_Notify_Migration_2026-10-08.md) | 진단·수정 기록 | Animation/Diagnostics/Foley_Notify_Migration_2026-10-08.md |
@@ -110,6 +111,7 @@
 | [Combat Draw/Sheathe 중 stale one-shot 차단 (2026-08-12)](../Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md) | 시점별 보고·검증 | Combat/Reports/CombatIntro_StaleOneShot_Resolution_2026-08-12.md |
 | [Combat Strafe implementation status - 2026-08-04](../Combat/Reports/CombatStrafe_Implementation_2026-08-04.md) | 시점별 보고·검증 | Combat/Reports/CombatStrafe_Implementation_2026-08-04.md |
 | [Combat Strafe Turn In Place 구현 가이드 (2026-08-12)](../Combat/Reports/CombatStrafe_TurnInPlace_Implementation_2026-08-12.md) | 시점별 보고·검증 | Combat/Reports/CombatStrafe_TurnInPlace_Implementation_2026-08-12.md |
+| [대검 콤보 블렌드아웃 구간 복구](../Combat/Reports/Combo_BlendOut_Recovery_2026-10-10.md) | 시점별 보고·검증 | Combat/Reports/Combo_BlendOut_Recovery_2026-10-10.md |
 
 ### 게임플레이
 
@@ -123,6 +125,16 @@
 | [Project J 데이터 에셋 빠른 참조](../Gameplay/Authoring/DataAssetQuickReference.md) | 통합 문서 안내 | Gameplay/Authoring/DataAssetQuickReference.md |
 | [모듈러 캐릭터 및 의상 파이프라인 가이드 (Modular Character & Equipment Guide)](../Gameplay/Authoring/ModularCharacterEquipmentGuide.md) | 제작 가이드 | Gameplay/Authoring/ModularCharacterEquipmentGuide.md |
 | [게임플레이와 콘텐츠 제작](../Gameplay/README.md) | 목차·문서 관리 | Gameplay/README.md |
+
+### 플레이어 UI
+
+| 문서 | 종류 | 경로 |
+| --- | --- | --- |
+| [캐릭터 UI 프로필과 검은사막 참고 — 2026-10-10](../UI/Character_UI_Profiles_2026-10-10.md) | 구조·계약 | UI/Character_UI_Profiles_2026-10-10.md |
+| [Compact MMORPG HUD와 gameplay 연결 — 2026-10-10](../UI/Compact_HUD_And_Gameplay_2026-10-10.md) | 구조·계약 | UI/Compact_HUD_And_Gameplay_2026-10-10.md |
+| [MMORPG UI 조작 확장과 실행 검증 — 2026-10-10](../UI/Extended_Interaction_And_Validation_2026-10-10.md) | 구조·계약 | UI/Extended_Interaction_And_Validation_2026-10-10.md |
+| [MMORPG 최소 조작 UI — 2026-10-10](../UI/MMORPG_UI_Architecture_2026-10-10.md) | 구조·계약 | UI/MMORPG_UI_Architecture_2026-10-10.md |
+| [플레이어 UI](../UI/README.md) | 목차·문서 관리 | UI/README.md |
 
 ### 네트워크
 

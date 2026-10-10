@@ -552,7 +552,11 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	}
 
 	ActiveComboMontage = NodeMontage;
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, NodeMontage, NodePlayRate, NodeSection);
+	// Authored combo windows can begin during the montage's normal blend-out.
+	// Keep GAS montage ownership until completion so those notifies can still
+	// acquire their ability lease and a late transition/cancellation is observed.
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+		this, NAME_None, NodeMontage, NodePlayRate, NodeSection, true, 1.0f, 0.0f, true);
 	if (MontageTask)
 	{
 		MontageTask->OnCompleted.AddDynamic(this, &UProject_JGameplayAbility_Melee::OnMontageCompleted);

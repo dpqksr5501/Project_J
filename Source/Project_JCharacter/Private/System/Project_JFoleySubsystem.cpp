@@ -20,7 +20,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJFoley, Log, All);
 
 namespace
 {
-TAutoConsoleVariable<int32> Enabled(TEXT("ProjectJ.Foley.Enabled"), 1, TEXT("Client Foley admission; 0 drops all events."));
+TAutoConsoleVariable<int32> FoleyEnabled(TEXT("ProjectJ.Foley.Enabled"), 1, TEXT("Client Foley admission; 0 drops all events."));
 TAutoConsoleVariable<int32> OtherCharacters(TEXT("ProjectJ.Foley.OtherCharacters"), 1, TEXT("Include nearby remote players and NPCs."));
 TAutoConsoleVariable<int32> RemotePerFrame(TEXT("ProjectJ.Foley.RemotePerFrame"), 6, TEXT("Remote contact/replay operations per post-actor pass."));
 TAutoConsoleVariable<float> RemotePerSecond(TEXT("ProjectJ.Foley.RemotePerSecond"), 60.f, TEXT("Remote admission token rate, independent of rendering FPS."));
@@ -211,7 +211,7 @@ bool UProject_JFoleySubsystem::PrepareLocalAudio(UProject_JFoleyComponent* Compo
 {
 	check(IsInGameThread());
 	UWorld* World = GetWorld();
-	if (bStopped || !World || World->GetNetMode() == NM_DedicatedServer || !Enabled.GetValueOnGameThread() ||
+	if (bStopped || !World || World->GetNetMode() == NM_DedicatedServer || !FoleyEnabled.GetValueOnGameThread() ||
 		!IsValid(Component) || Component->GetWorld() != World || !Component->CanPresent(EProject_JFoleyGroup::Other)) { return false; }
 	const auto* Character = Cast<ACharacter>(Component->GetOwner());
 	if (!Character || !Character->IsPlayerControlled() || !Character->IsLocallyControlled()) { return false; }
@@ -226,7 +226,7 @@ bool UProject_JFoleySubsystem::Submit(UProject_JFoleyComponent* Component, const
 	check(IsInGameThread());
 	UWorld* World = GetWorld();
 	if (bStopped || !World || World->bIsTearingDown || World->GetNetMode() == NM_DedicatedServer ||
-		!Enabled.GetValueOnGameThread() || !IsValid(Component) || Component->GetWorld() != World ||
+		!FoleyEnabled.GetValueOnGameThread() || !IsValid(Component) || Component->GetWorld() != World ||
 		!ValidateEvent(Event, FMath::Clamp(MaxAge.GetValueOnGameThread(), 0.f, 0.5f))) { return false; }
 	auto* Character = Cast<ACharacter>(Component->GetOwner());
 	if (!Character) { return false; }
@@ -280,7 +280,7 @@ void UProject_JFoleySubsystem::OnPostActorTick(UWorld* World, ELevelTick TickTyp
 	if (World != GetWorld() || TickType == LEVELTICK_ViewportsOnly || bStopped || World->bIsTearingDown || Pending.IsEmpty()) { return; }
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_Foley_Admission);
 	const double Start = FPlatformTime::Seconds();
-	if (World->GetNetMode() == NM_DedicatedServer || !Enabled.GetValueOnGameThread() || !World->GetAudioDevice().IsValid())
+	if (World->GetNetMode() == NM_DedicatedServer || !FoleyEnabled.GetValueOnGameThread() || !World->GetAudioDevice().IsValid())
 	{
 		Pending.Reset(); Stats.Pending = 0; return;
 	}

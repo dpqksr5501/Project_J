@@ -10,6 +10,7 @@
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Project_JPlayerState.generated.h"
 
+class UProject_JQuestComponent;
 class UProject_JProgressionComponent;
 class UProject_JInventoryComponent;
 class UProject_JEquipmentManagerComponent;
@@ -32,6 +33,8 @@ class PROJECT_J_API AProject_JPlayerState
 
 public:
 	AProject_JPlayerState();
+	DECLARE_MULTICAST_DELEGATE(FOnCharacterIdentityChanged);
+	FOnCharacterIdentityChanged OnCharacterIdentityChanged;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginPlay() override;
@@ -87,7 +90,7 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Identity")
 	FProject_JAccountId AccountId;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Identity")
+	UPROPERTY(ReplicatedUsing=OnRep_CharacterId, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Identity")
 	FProject_JCharacterId CharacterId;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "MMO|Character")
@@ -109,6 +112,8 @@ protected:
 	FGuid GuildLeaderCharacterId;
 
 private:
+	UPROPERTY(VisibleAnywhere) TObjectPtr<UProject_JQuestComponent> QuestComponent;
+	UFUNCTION() void OnRep_CharacterId();
 	void RefreshPublicProgressionSnapshot();
 	UPROPERTY(VisibleAnywhere, Category="Character")
 	TObjectPtr<UProject_JProgressionComponent> ProgressionComponent;

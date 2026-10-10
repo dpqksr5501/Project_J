@@ -1222,6 +1222,7 @@ public:
 	/** Game-thread only bridge for UAnimNotifyState_Project_JLocomotionEarlyTransition. */
 	void BeginOneShotEarlyTransitionWindow();
 	void EndOneShotEarlyTransitionWindow();
+	void RequestAuthoredEarlyTransition(UAnimSequenceBase* Animation, bool bRequireGaitChange, EProject_JLocomotionGaitIntent ExcludedGait);
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeIsMounted() const;
@@ -1386,6 +1387,14 @@ public:
 
 	/** Game-thread NotifyState depth. A depth avoids prematurely closing overlapping blend windows. */
 	int32 OneShotEarlyTransitionWindowDepth = 0;
+	friend class FProjectJAuthoredEarlyTransitionTest;
+	bool IsAuthoredEarlyTransitionAllowed(EProject_JLocomotionGaitIntent CurrentGait) const;
+	TWeakObjectPtr<UAnimSequenceBase> AuthoredEarlyTransitionAsset;
+	uint64 EarlyTransitionSnapshotRevision = 0;
+	uint64 AuthoredEarlyTransitionSnapshotRevision = 0;
+	bool bAuthoredEarlyTransitionPending = false;
+	bool bAuthoredEarlyTransitionRequiresGaitChange = true;
+	EProject_JLocomotionGaitIntent AuthoredEarlyTransitionExcludedGait = EProject_JLocomotionGaitIntent::Run;
 
 	/** Game-thread cache backing the immutable proxy selection snapshot. */
 	TWeakObjectPtr<UChooserTable> CachedStateControllerChooserTable;

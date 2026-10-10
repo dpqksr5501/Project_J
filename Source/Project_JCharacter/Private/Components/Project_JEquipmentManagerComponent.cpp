@@ -63,6 +63,62 @@ void UProject_JEquipmentManagerComponent::BeginPlay()
 	EquipmentArray.OwnerComponent = this;
 }
 
+bool UProject_JEquipmentManagerComponent::GetEquippedItemInstance(EProject_JEquipmentSlot Slot, FProject_JItemInstanceData& OutItem) const
+{
+	const int32 Index = FindEquipmentIndexBySlot(Slot);
+	OutItem = Index != INDEX_NONE ? EquipmentArray.Items[Index].ItemInstance : FProject_JItemInstanceData();
+	return Index != INDEX_NONE;
+}
+
+void UProject_JEquipmentManagerComponent::RequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+{
+	if (!RequestId.IsValid() || !GetOwner()) return;
+	if (GetOwner()->HasAuthority())
+	{
+		ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
+	}
+	else ServerRequestEquipmentChange(RequestId, InstanceId, Slot, bUnequip);
+}
+
+FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::ExecuteEquipmentRequest(FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+{
+	using Failure = EProject_JEquipmentOperationFailure;
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
+	const double Now = FPlatformTime::Seconds();
+	if (RequestWindowStart < 0 || Now - RequestWindowStart >= 1.0) { RequestWindowStart = Now; RequestsInWindow = 0; }
+	if (++RequestsInWindow > 20) return FProject_JEquipmentOperationResult::FailureResult(Failure::RateLimited, InstanceId, Slot);
+	if (Slot <= EProject_JEquipmentSlot::None || Slot > EProject_JEquipmentSlot::Mount)
+		return FProject_JEquipmentOperationResult::FailureResult(Failure::InvalidSlot, InstanceId, Slot);
+	if (bEquipmentOperationInProgress) return FProject_JEquipmentOperationResult::FailureResult(Failure::OperationInProgress, InstanceId, Slot);
+	if (!bUnequip)
+	{
+		FProject_JItemInstanceData Item;
+		auto* Inventory = GetOwnerInventoryComponent();
+		if (!Inventory || !Inventory->FindItemInstance(InstanceId, Item)) return FProject_JEquipmentOperationResult::FailureResult(Failure::ItemNotOwned, InstanceId, Slot);
+		const auto* Definition = Cast<UProject_JEquipmentItemDefinition>(Item.ItemDef);
+		if (!Definition || Definition->EquipmentSlot != Slot) return FProject_JEquipmentOperationResult::FailureResult(Failure::InvalidSlot, InstanceId, Slot);
+		return TryEquipItemInstanceById(InstanceId);
+	}
+	const int32 Index = FindEquipmentIndexBySlot(Slot);
+	if (Index == INDEX_NONE) return FProject_JEquipmentOperationResult::FailureResult(Failure::SlotEmpty, InstanceId, Slot);
+	// A stale drag must not unequip an item which replaced the dragged instance.
+	if (!InstanceId.IsValid() || EquipmentArray.Items[Index].ItemInstance.InstanceId != InstanceId)
+		return FProject_JEquipmentOperationResult::FailureResult(Failure::InvalidRequest, InstanceId, Slot);
+	TGuardValue<bool> Guard(bEquipmentOperationInProgress, true);
+	return RemoveEquipmentAt(Index) ? FProject_JEquipmentOperationResult::Success(InstanceId, Slot)
+		: FProject_JEquipmentOperationResult::FailureResult(Failure::InventoryLockFailed, InstanceId, Slot);
+}
+
+void UProject_JEquipmentManagerComponent::ServerRequestEquipmentChange_Implementation(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+{
+	if (RequestId.IsValid()) ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
+}
+
+void UProject_JEquipmentManagerComponent::ClientEquipmentRequestCompleted_Implementation(FGuid RequestId, FProject_JEquipmentOperationResult Result)
+{
+	OnRequestCompleted.Broadcast(RequestId, Result);
+}
+
 void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefinition* ItemDef)
 {
 	FProject_JItemInstanceData ItemInstance;

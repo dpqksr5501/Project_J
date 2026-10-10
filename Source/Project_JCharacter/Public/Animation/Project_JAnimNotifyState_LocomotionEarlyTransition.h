@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Animation/AnimNotifies/AnimNotifyState.h"
+#include "Project_JLocomotionAnimTypes.h"
 #include "Project_JAnimNotifyState_LocomotionEarlyTransition.generated.h"
 
 /**
@@ -16,15 +17,17 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_LocomotionEarlyTransition
 	GENERATED_BODY()
 
 public:
-	virtual void NotifyBegin(
+	/** Original six GASP Run clips use Re-Transition / Gait != Run.
+	 * This bridge permits the current held one-shot to be re-evaluated; it does
+	 * not implement GASP's separate Transition-to-Loop destination. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Transition")
+	bool bRequireGaitChange = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Transition")
+	EProject_JLocomotionGaitIntent ExcludedGait = EProject_JLocomotionGaitIntent::Run;
+	virtual void NotifyTick(
 		USkeletalMeshComponent* MeshComp,
 		UAnimSequenceBase* Animation,
-		float TotalDuration,
-		const FAnimNotifyEventReference& EventReference) override;
-
-	virtual void NotifyEnd(
-		USkeletalMeshComponent* MeshComp,
-		UAnimSequenceBase* Animation,
+		float FrameDeltaTime,
 		const FAnimNotifyEventReference& EventReference) override;
 
 	virtual FString GetNotifyName_Implementation() const override

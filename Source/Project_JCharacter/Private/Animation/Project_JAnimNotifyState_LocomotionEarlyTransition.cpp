@@ -4,36 +4,21 @@
 
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimNotifyLibrary.h"
 
-void UProject_JAnimNotifyState_LocomotionEarlyTransition::NotifyBegin(
+void UProject_JAnimNotifyState_LocomotionEarlyTransition::NotifyTick(
 	USkeletalMeshComponent* MeshComp,
 	UAnimSequenceBase* Animation,
-	float TotalDuration,
+	float FrameDeltaTime,
 	const FAnimNotifyEventReference& EventReference)
 {
-	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
 
-	if (MeshComp)
+	if (MeshComp && !UAnimNotifyLibrary::IsBlendingOut(EventReference))
 	{
 		if (UProject_JCharacterAnimInstance* AnimInstance = Cast<UProject_JCharacterAnimInstance>(MeshComp->GetAnimInstance()))
 		{
-			AnimInstance->BeginOneShotEarlyTransitionWindow();
-		}
-	}
-}
-
-void UProject_JAnimNotifyState_LocomotionEarlyTransition::NotifyEnd(
-	USkeletalMeshComponent* MeshComp,
-	UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference)
-{
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-
-	if (MeshComp)
-	{
-		if (UProject_JCharacterAnimInstance* AnimInstance = Cast<UProject_JCharacterAnimInstance>(MeshComp->GetAnimInstance()))
-		{
-			AnimInstance->EndOneShotEarlyTransitionWindow();
+			AnimInstance->RequestAuthoredEarlyTransition(Animation, bRequireGaitChange, ExcludedGait);
 		}
 	}
 }

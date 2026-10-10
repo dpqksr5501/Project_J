@@ -16,6 +16,7 @@ public class Project_J : ModuleRules
 			"EnhancedInput",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
