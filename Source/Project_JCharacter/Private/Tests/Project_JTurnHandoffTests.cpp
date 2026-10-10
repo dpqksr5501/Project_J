@@ -13,6 +13,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJTurnHandoffTest, "ProjectJ.MovingTurn.
 bool FProjectJTurnHandoffTest::RunTest(const FString&)
 {
 	for (auto Mode : {EProject_JLocomotionRotationMode::OrientToMovement, EProject_JLocomotionRotationMode::Strafe})
+	for (auto Gait : {EProject_JLocomotionGaitIntent::Run, EProject_JLocomotionGaitIntent::Sprint})
 	for (const int32 FPS : {30, 60, 144})
 	for (const float Sign : {-1.f, 1.f})
 	{
@@ -20,6 +21,7 @@ bool FProjectJTurnHandoffTest::RunTest(const FString&)
 		FProject_JGeneralTurnPolicy General;
 		FProject_JMovingTurnPolicy::FInput A; A.bEligible = true; A.RotationMode = Mode;
 		FProject_JGeneralTurnPolicy::FInput G; G.bEligible = true; G.Mode = Mode; G.Speed = 350;
+		A.Gait = G.Gait = Gait;
 		FProject_JGeneralTurnPolicy::FSettings Settings;
 		bool bUsedGeneral = false, bUsedAcute = false, bUsedBridge = false;
 		for (int32 Frame = 0; Frame <= FPS / 2; ++Frame)

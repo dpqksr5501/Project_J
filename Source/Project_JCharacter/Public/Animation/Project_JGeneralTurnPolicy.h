@@ -16,11 +16,13 @@ public:
 		float MinimumWindow = 0.20f;
 		float QuietGrace = 0.18f;
 		float CompletionGrace = 0.25f;
+		float ForwardRequestCone = 45.0f;
 	};
 	struct FInput
 	{
 		bool bEligible = false;
 		EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
+		EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 		double Now = 0;
 		float MoveYaw = 0, FacingYaw = 0, ActorYaw = 0, VelocityYaw = 0, Speed = 0;
 		// A fresh, relevant MM result from this same owner/family. Initial Cycle
@@ -40,10 +42,11 @@ public:
 		S.MinimumWindow = Safe(S.MinimumWindow, .20f, .1f, .5f);
 		S.QuietGrace = Safe(S.QuietGrace, .18f, .1f, .4f);
 		S.CompletionGrace = Safe(S.CompletionGrace, .25f, .1f, .5f);
+		S.ForwardRequestCone = Safe(S.ForwardRequestCone, 45, 0, 75);
 		const bool bValid = I.bEligible && FMath::IsFinite(I.Now) && FMath::IsFinite(I.MoveYaw) &&
 			FMath::IsFinite(I.FacingYaw) && FMath::IsFinite(I.ActorYaw) && FMath::IsFinite(I.VelocityYaw) &&
 			FMath::IsFinite(I.Speed) && I.Speed >= 0;
-		if (!bValid || (bHasSample && (I.Mode != Mode || I.Now < LastNow || I.Now - LastNow > .1)))
+		if (!bValid || (bHasSample && (I.Mode != Mode || I.Gait != Gait || I.Now < LastNow || I.Now - LastNow > .1)))
 		{
 			Reset(); Reason = TEXT("OwnerOrSampleChanged"); return false;
 		}
@@ -51,7 +54,7 @@ public:
 		FacingError = Angle(I.ActorYaw, I.FacingYaw);
 		if (!bHasSample)
 		{
-			bHasSample = true; LastYaw = I.MoveYaw; LastFacingYaw = I.FacingYaw; LastNow = I.Now; Mode = I.Mode;
+			bHasSample = true; LastYaw = I.MoveYaw; LastFacingYaw = I.FacingYaw; LastNow = I.Now; Mode = I.Mode; Gait = I.Gait;
 			Add(I.Now, 0, 0);
 		}
 		const float Step = FMath::FindDeltaAngleDegrees(LastYaw, I.MoveYaw);
@@ -93,7 +96,7 @@ public:
 		// acute owner's approach. Never open a fresh forward pool for backpedal,
 		// and never keep 135-degree data searching an indefinite reversal.
 		const bool bBridge = bActive && I.bAcuteApproach;
-		if ((bStrafe && (Angle(I.MoveYaw, I.FacingYaw) > 45 ||
+		if ((bStrafe && (Angle(I.MoveYaw, I.FacingYaw) > S.ForwardRequestCone ||
 			(I.Speed > 50 && Angle(I.VelocityYaw, I.ActorYaw) > 75))) || (PathError >= 135 && !bBridge))
 		{
 			if (bActive) Close(I.Now, false);
@@ -211,6 +214,7 @@ private:
 	float HandoffYaw = 0, HandoffDirection = 0;
 	float PendingDirection = 0;
 	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 	bool bHasSample = false, bActive = false, bContinuation = false, bDynamicCycle = false;
 	bool bTurnUsed = false, bCycleHandoff = false;
 	const TCHAR* Reason = TEXT("Inactive");

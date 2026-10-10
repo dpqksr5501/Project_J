@@ -177,6 +177,9 @@ float FProject_JMotionMatchingSearchPolicy::ResolveBlendTime(
 
 UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 {
+	OTMSprintForwardTurn.RunningQualificationSpeed = StrafeSprintForwardTurn.RunningQualificationSpeed = 300.f;
+	// Include F+A/F+D on the boundary despite floating point angle rounding.
+	StrafeSprintForwardTurn.ForwardConeAngle = 45.5f;
 	FootPlacementPlantSettingsDefault.DistanceToGround = 10.0f;
 	FootPlacementPlantSettingsDefault.MaxExtensionRatio = 0.95f;
 	FootPlacementPlantSettingsDefault.MinExtensionRatio = 0.1f;
@@ -219,6 +222,8 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
 	};
 	ValidateTurnSettings(OTMForwardTurn, TEXT("OTM"));
 	ValidateTurnSettings(StrafeForwardTurn, TEXT("Strafe"));
+	ValidateTurnSettings(OTMSprintForwardTurn, TEXT("OTM Sprint"));
+	ValidateTurnSettings(StrafeSprintForwardTurn, TEXT("Strafe Sprint"));
 	ValidateStateControllerLandingChoosers(
 		MotionMatchingSearchPolicy.StateControllerAnimationChooserTable,
 		Context,

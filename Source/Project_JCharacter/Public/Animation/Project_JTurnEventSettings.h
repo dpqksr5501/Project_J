@@ -12,7 +12,7 @@ struct PROJECT_JCHARACTER_API FProject_JTurnEventSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Admission", meta = (ClampMin = "0"))
 	float RunningQualificationSpeed = 180.f;
-	/** OTM commitment. Strafe retains the combat profile's authored entry/exit angles. */
+	/** Commitment. Run Strafe retains its combat profile's authored entry/exit angles. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Admission", meta = (ClampMin = "90", ClampMax = "180"))
 	float CommittedTurnAngle = 150.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Admission", meta = (ClampMin = "0", ClampMax = "180"))
@@ -30,7 +30,7 @@ struct PROJECT_JCHARACTER_API FProject_JTurnEventSettings
 	float MaximumRequestedSweep = 225.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recovery", meta = (ClampMin = "0", ClampMax = "90"))
 	float SettledPathAngle = 20.f;
-	/** OTM recovery. Strafe uses the combat profile's existing exit angle. */
+	/** Recovery. Run Strafe uses the combat profile's existing exit angle. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recovery", meta = (ClampMin = "0", ClampMax = "45"))
 	float CompletionFacingAngle = 15.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Recovery", meta = (ClampMin = "0", ClampMax = "90"))

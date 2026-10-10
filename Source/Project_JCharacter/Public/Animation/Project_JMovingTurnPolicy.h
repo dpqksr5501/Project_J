@@ -12,6 +12,7 @@ public:
 	{
 		bool bEligible = false, bEntryQualified = true;
 		EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+		EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 		float ActorYaw = 0, TargetFacingYaw = 0, VelocityYaw = 0, MoveYaw = 0;
 		float EntryAngle = 150, ExitAngle = 15;
 		double NowSeconds = 0;
@@ -28,9 +29,18 @@ public:
 	{
 		const auto S = Settings.Resolved();
 		const bool bModeChanged = bHasMode && Mode != I.RotationMode;
+		const bool bGaitChanged = bHasMode && Gait != I.Gait;
+		Gait = I.Gait;
 		Mode = I.RotationMode; bHasMode = true;
 		if (bModeChanged) return Cancel(TEXT("ModeChanged"));
 		if (!I.bEligible) return Cancel(TEXT("Ineligible"));
+		if (bGaitChanged)
+		{
+			// Preserve physical preparation, never the old family's selected pose.
+			bTurnUsed = bAllowContinuation = false;
+			LastSelectionFrame = I.SelectionFrame;
+			if (Stage == EStage::Active) { Stage = EStage::Preparing; PreparedAt = I.NowSeconds; }
+		}
 		if (!FMath::IsFinite(I.NowSeconds) || !FMath::IsFinite(I.ActorYaw) || !FMath::IsFinite(I.TargetFacingYaw) ||
 			!FMath::IsFinite(I.VelocityYaw) || !FMath::IsFinite(I.MoveYaw) ||
 			(I.bHasVisualFacing && !FMath::IsFinite(I.VisualFacingYaw))) return Cancel(TEXT("InvalidSample"));
@@ -164,7 +174,7 @@ public:
 	{
 		const auto S = Settings.Resolved();
 		return Stage == EStage::Preparing && I.bEligible && bHasOrigin &&
-			Mode == I.RotationMode && FMath::IsFinite(I.MoveYaw) && FMath::IsFinite(I.TargetFacingYaw) &&
+			Mode == I.RotationMode && Gait == I.Gait && FMath::IsFinite(I.MoveYaw) && FMath::IsFinite(I.TargetFacingYaw) &&
 			Angle(I.MoveYaw, I.TargetFacingYaw) <= S.ForwardConeAngle &&
 			RemainingFacing >= S.MinimumRemainingFacingAngle &&
 			PeakProgress >= SafeEntry(I.EntryAngle) - S.SettledPathAngle;
@@ -206,6 +216,7 @@ private:
 	EStage Stage = EStage::Observing;
 	EDemand Demand = EDemand::None;
 	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
+	EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 	bool bHasMode = false, bHasTime = false, bArmed = false, bHasOrigin = false;
 	bool bAllowContinuation = false, bTurnUsed = false;
 	double LastNow = 0, PreparedAt = 0, StartedAt = 0;

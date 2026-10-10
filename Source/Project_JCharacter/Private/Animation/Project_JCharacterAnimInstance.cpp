@@ -1150,6 +1150,7 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 		CompletedTurnFeedback.Frame = Result.CaptureFrame;
 		CompletedTurnFeedback.Seconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0;
 		CompletedTurnFeedback.Mode = Data.LocomotionContext.RotationMode;
+		CompletedTurnFeedback.Gait = Data.LocomotionContext.GaitIntent;
 		CompletedTurnFeedback.SelectedDatabase = Result.SelectedDatabase;
 		CompletedTurnFeedback.bRelevant = Result.CachedNodeWeight > UE_SMALL_NUMBER &&
 			!Data.OneShotPresentation.bShouldOverrideMotionMatching;

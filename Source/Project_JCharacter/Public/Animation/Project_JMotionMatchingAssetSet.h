@@ -96,6 +96,10 @@ class PROJECT_JCHARACTER_API UProject_JMotionMatchingAssetSet : public UPrimaryD
 	GENERATED_BODY()
 
 public:
+	const FProject_JMotionMatchingGaitDatabaseFamily& GetDatabaseFamily(EProject_JLocomotionGaitIntent Gait) const
+	{
+		return Gait == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
+	}
 	UPoseSearchDatabase* FindDatabaseForContext(const FProject_JMotionMatchingSelectionContext& Context) const;
 	/** Compatible second candidate for an approved Turn/Cycle or Cycle/GeneralTurn pair. */
 	UPoseSearchDatabase* FindTurnCycleCompanion(const FProject_JMotionMatchingSelectionContext& Context,

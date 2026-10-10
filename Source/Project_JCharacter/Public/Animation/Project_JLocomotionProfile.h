@@ -464,6 +464,18 @@ public:
 	FProject_JTurnEventSettings OTMForwardTurn;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Turn Event")
 	FProject_JTurnEventSettings StrafeForwardTurn;
+	/** Sprint owns its own speed/coverage; changing these never retunes Run. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Turn Event|Sprint")
+	FProject_JTurnEventSettings OTMSprintForwardTurn;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Turn Event|Sprint")
+	FProject_JTurnEventSettings StrafeSprintForwardTurn;
+	const FProject_JTurnEventSettings& GetForwardTurnSettings(EProject_JLocomotionRotationMode Mode,
+		EProject_JLocomotionGaitIntent Gait) const
+	{
+		if (Gait == EProject_JLocomotionGaitIntent::Sprint)
+			return Mode == EProject_JLocomotionRotationMode::Strafe ? StrafeSprintForwardTurn : OTMSprintForwardTurn;
+		return Mode == EProject_JLocomotionRotationMode::Strafe ? StrafeForwardTurn : OTMForwardTurn;
+	}
 
 	/** Local visual rotation uses the same future-facing snapshot as PoseSearch. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering")
@@ -486,6 +498,8 @@ public:
 	bool bEnableGeneralTurnCandidates = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "50", ClampMax = "500"))
 	float GeneralTurnEntrySpeed = 120.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn|Sprint", meta = (ClampMin = "50", ClampMax = "500"))
+	float SprintGeneralTurnEntrySpeed = 300.0f;
 	/** Serialized compatibility for the previous heading-only admission policy. */
 	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use physical alignment admission."))
 	float GeneralTurnRecentHeadingAngle = 20.0f;
