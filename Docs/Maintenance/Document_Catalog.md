@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 264개, Markdown 179개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 265개, Markdown 180개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -135,6 +135,7 @@
 | [MMORPG UI 조작 확장과 실행 검증 — 2026-10-10](../UI/Extended_Interaction_And_Validation_2026-10-10.md) | 구조·계약 | UI/Extended_Interaction_And_Validation_2026-10-10.md |
 | [MMORPG 최소 조작 UI — 2026-10-10](../UI/MMORPG_UI_Architecture_2026-10-10.md) | 구조·계약 | UI/MMORPG_UI_Architecture_2026-10-10.md |
 | [플레이어 UI](../UI/README.md) | 목차·문서 관리 | UI/README.md |
+| [UI 저장 안정성·장비 비교·부하 검증](../UI/Reliability_Comparison_And_Load_2026-10-10.md) | 구조·계약 | UI/Reliability_Comparison_And_Load_2026-10-10.md |
 
 ### 네트워크
 

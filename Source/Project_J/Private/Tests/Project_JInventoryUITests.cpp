@@ -6,6 +6,7 @@
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
+#include "Inventory/Project_JConsumableDefinition.h"
 
 namespace ProjectJUITests
 {
@@ -80,5 +81,67 @@ bool FProjectJUIProjectionLifetimeTest::RunTest(const FString&)
 	Model->Bind(W.Inventory, W.Equipment);
 	TestTrue(TEXT("Reopen reads final lock state"), Model->InventoryEntries[0]->Item.bIsLocked);
 	Model->Unbind(); OtherModel->Unbind(); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIRequestLifetimeTest, "ProjectJ.UI.Inventory.DelayedReplyTimeoutAndRebind",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUIRequestLifetimeTest::RunTest(const FString &)
+{
+	TGuardValue<uint64> FrameGuard(GFrameCounter, GFrameCounter);
+	ProjectJUITests::FWorld Old; ProjectJUITests::FWorld New;
+	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(Old.Inventory, Old.Equipment);
+	const FGuid OldRequest = FGuid::NewGuid();
+	Model->PendingRequest = OldRequest; Model->bPending = true;
+	Model->ArmRequestTimer(Old.World, UProject_JInventoryViewModel::ERequestKind::Bag);
+	Old.Inventory->OnUseCompleted.Broadcast(OldRequest, EProject_JItemUseResult::Success);
+	TestTrue(TEXT("Wrong operation reply cannot unlock pending bag request"), Model->bPending);
+	Old.Inventory->OnBagCompleted.Broadcast(FGuid::NewGuid(), EProject_JBagResult::Success);
+	TestTrue(TEXT("Unrelated/out-of-order reply ignored"), Model->bPending);
+	Old.World->GetTimerManager().Tick(.1f);
+	++GFrameCounter; // TimerManager intentionally ignores a second tick in the same engine frame.
+	Old.World->GetTimerManager().Tick(5.1f);
+	TestFalse(TEXT("Lost reply releases pending after bounded timeout"), Model->bPending);
+	const FText TimeoutStatus = Model->Status;
+	Old.Inventory->OnBagCompleted.Broadcast(OldRequest, EProject_JBagResult::Success);
+	TestTrue(TEXT("Late ack cannot replace timeout status"), Model->Status.EqualTo(TimeoutStatus));
+	Model->PendingRequest = FGuid::NewGuid(); Model->bPending = true;
+	Model->ArmRequestTimer(Old.World, UProject_JInventoryViewModel::ERequestKind::Equipment);
+	const FTimerHandle OldTimer = Model->RequestTimer;
+	Model->Bind(New.Inventory, New.Equipment);
+	TestFalse(TEXT("Character/source switch clears old-world timer"), Old.World->GetTimerManager().TimerExists(OldTimer));
+	const FGuid NewRequest = FGuid::NewGuid(); Model->PendingRequest = NewRequest; Model->bPending = true;
+	Model->ArmRequestTimer(New.World, UProject_JInventoryViewModel::ERequestKind::Bag);
+	Old.Inventory->OnBagCompleted.Broadcast(NewRequest, EProject_JBagResult::Success);
+	TestTrue(TEXT("Detached source cannot affect current player even with matching ID"), Model->bPending);
+	New.Inventory->OnBagCompleted.Broadcast(NewRequest, EProject_JBagResult::Success);
+	TestFalse(TEXT("Current reply unlocks correctly"), Model->bPending);
+	Model->Unbind(); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIItemAggregateTest, "ProjectJ.UI.Inventory.QuickSlotAggregateProjection",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUIItemAggregateTest::RunTest(const FString &)
+{
+	ProjectJUITests::FWorld W;
+	auto *Potion = NewObject<UProject_JConsumableDefinition>(W.Owner);
+	Potion->ItemId = TEXT("UITestPotion"); Potion->MaxStackCount = 99;
+	const auto Locked = W.Inventory->AddItemDefinition(Potion, 10);
+	W.Inventory->SetItemInstanceLocked(Locked.InstanceId, true, false);
+	const auto Usable = W.Inventory->AddItemDefinition(Potion, 4);
+	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
+	const auto *Summary = Model->FindItemSummary(Potion->ItemId);
+	TestTrue(TEXT("Summary exists"), Summary != nullptr);
+	if (!Summary) { Model->Unbind(); return false; }
+	TestEqual(TEXT("Quantity includes locked owned stacks"), Summary->Quantity, 14);
+	TestEqual(TEXT("Quick slot chooses an unlocked instance"), Summary->UsableInstance, Usable.InstanceId);
+	Model->SetFilter(TEXT("HiddenBySearch"), 1, true);
+	TestTrue(TEXT("Search hides visible rows"), Model->VisibleEntries.IsEmpty());
+	TestEqual(TEXT("Search does not change quick-slot ownership projection"), Model->FindItemSummary(Potion->ItemId)->Quantity, 14);
+	W.Inventory->SetItemStackCount(Usable.InstanceId, 3);
+	W.Inventory->RemoveItemInstance(Usable.InstanceId);
+	W.World->GetTimerManager().Tick(.1f);
+	Summary = Model->FindItemSummary(Potion->ItemId);
+	TestEqual(TEXT("Coalesced delta reads final quantity"), Summary->Quantity, 10);
+	TestFalse(TEXT("Removed item cannot remain actionable in cache"), Summary->UsableInstance.IsValid());
+	Model->Unbind(); TestNull(TEXT("Unbind releases aggregation"), Model->FindItemSummary(Potion->ItemId));
+	return true;
 }
 #endif

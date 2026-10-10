@@ -748,7 +748,7 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	SkillPalette = WidgetTree->ConstructWidget<UWrapBox>();
 	SkillScroll->AddChild(SkillPalette);
 	auto *Settings =
-		AddWindow(TEXT("Settings"), NSLOCTEXT("ProjectJUI", "SettingsTitle", "UI 설정"), FVector2D(270, 390));
+		AddWindow(TEXT("Settings"), NSLOCTEXT("ProjectJUI", "SettingsTitle", "UI 설정"), FVector2D(270, 440));
 	SettingsSummary = Text(FText::GetEmpty(), 11);
 	Settings->BodyBox->AddChildToVerticalBox(SettingsSummary)->SetPadding(FMargin(0, 0, 0, 8));
 	for (const auto &Pair :
@@ -761,6 +761,11 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 		  TPair<FName, FText>(TEXT("Reset"), NSLOCTEXT("ProjectJUI", "ResetHUD", "퀵슬롯·HUD 기본값 복원")),
 		  TPair<FName, FText>(TEXT("Both"), NSLOCTEXT("ProjectJUI", "BothMenus", "가방과 장비 함께 열기"))})
 		Settings->BodyBox->AddChildToVerticalBox(Command(Pair.Key, Pair.Value))->SetPadding(FMargin(0, 0, 0, 8));
+	SaveStatus = Text(FText::GetEmpty(), 10);
+	SaveStatus->SetAutoWrapText(true);
+	Settings->BodyBox->AddChildToVerticalBox(SaveStatus);
+	SaveRetry = Command(TEXT("RetrySave"), NSLOCTEXT("ProjectJUI", "RetrySave", "저장 다시 시도"));
+	Settings->BodyBox->AddChildToVerticalBox(SaveRetry);
 	auto *KeysWindow = AddWindow(TEXT("Keys"), NSLOCTEXT("ProjectJUI", "KeysTitle", "단축키 설정"), FVector2D(310, 410));
 	KeysStatus = Text(NSLOCTEXT("ProjectJUI", "KeysHelp", "변경할 항목 클릭 · 숫자/I/K/O/U/F1~F12"), 11);
 	KeysStatus->SetAutoWrapText(true);
@@ -785,7 +790,14 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 
 void UProject_JPlayerHUDWidget::InitializeScreen(UProject_JPlayerUIComponent *Owner)
 {
+	if (LayoutSettings.IsValid()) LayoutSettings->OnSaveStateChanged.RemoveAll(this);
 	ScreenOwner = Owner;
+	if (auto *LocalPlayer = GetOwningLocalPlayer())
+	{
+		LayoutSettings = LocalPlayer->GetSubsystem<UProject_JUILayoutSettings>();
+		LayoutSettings->OnSaveStateChanged.AddUObject(this, &ThisClass::RefreshSaveStatus);
+	}
+	RefreshSaveStatus();
 	InventoryModel = Owner ? Owner->GetInventoryModel() : nullptr;
 	if (InventoryModel) InventoryModel->OnSplitRequested.AddUObject(this, &ThisClass::OpenSplit);
 	RefreshInventory();
@@ -801,6 +813,7 @@ void UProject_JPlayerHUDWidget::NativeConstruct()
 }
 void UProject_JPlayerHUDWidget::NativeDestruct()
 {
+	if (LayoutSettings.IsValid()) LayoutSettings->OnSaveStateChanged.RemoveAll(this);
 	if (InventoryModel) InventoryModel->OnSplitRequested.RemoveAll(this);
 	if (CloseButton)
 		CloseButton->OnClicked.RemoveAll(this);
@@ -812,6 +825,12 @@ void UProject_JPlayerHUDWidget::NativeDestruct()
 		GetWorld()->GetTimerManager().ClearTimer(NotificationTimer);
 	}
 	Super::NativeDestruct();
+}
+void UProject_JPlayerHUDWidget::RefreshSaveStatus()
+{
+	if (SaveStatus && LayoutSettings.IsValid()) SaveStatus->SetText(LayoutSettings->GetSaveStatus());
+	if (SaveRetry) SaveRetry->SetVisibility(LayoutSettings.IsValid() &&
+		LayoutSettings->GetSaveState() == EProject_JUIPreferenceState::Failed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 void UProject_JPlayerHUDWidget::CloseMenu()
 {
@@ -1309,6 +1328,7 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 		}
 		return;
 	}
+	if (Command == TEXT("RetrySave")) { if (LayoutSettings.IsValid()) LayoutSettings->FlushNow(); return; }
 	if (Command == TEXT("ResetKeys")) { CapturingKey = INDEX_NONE; if (ScreenOwner.IsValid()) ScreenOwner->ResetKeys(); RefreshKeySettings(); return; }
 	if (Command == TEXT("SplitConfirm"))
 	{

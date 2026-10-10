@@ -26,6 +26,8 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+CSV_DEFINE_CATEGORY(ProjectJUI, true);
 
 UProject_JPlayerUIComponent::UProject_JPlayerUIComponent()
 {
@@ -42,7 +44,12 @@ void UProject_JPlayerUIComponent::BeginPlay()
 	RefreshSources();
 #if !UE_BUILD_SHIPPING
 	if (GetWorld() && GetNetMode() == NM_Standalone && FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIRuntimeSmoke")))
+	{
+		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIProfile")))
+			GetWorld()->GetTimerManager().SetTimer(RuntimeSmokeTimer, this, &ThisClass::PrepareRuntimeProfile, 2.f, false);
+		else
 		GetWorld()->GetTimerManager().SetTimer(RuntimeSmokeTimer, this, &ThisClass::RunRuntimeSmoke, 8.f, false);
+	}
 #endif
 }
 void UProject_JPlayerUIComponent::QueueSkillRefresh()
@@ -268,7 +275,7 @@ bool UProject_JPlayerUIComponent::RebindKey(int32 Index, FKey Key, FText &Reason
 	if (auto *PC = Cast<APlayerController>(GetOwner()); PC && PC->GetLocalPlayer())
 		PC->GetLocalPlayer()->GetSubsystem<UProject_JUILayoutSettings>()->WriteKeys(InputKeys);
 	UpdateSkills();
-	Reason = NSLOCTEXT("ProjectJUI", "KeyChanged", "키 설정 저장 완료 · 겹치는 UI 키는 서로 교환됩니다.");
+	Reason = NSLOCTEXT("ProjectJUI", "KeyChanged", "키 설정 적용됨 · 겹치는 UI 키는 서로 교환됩니다.");
 	return true;
 }
 void UProject_JPlayerUIComponent::ResetKeys()
@@ -355,6 +362,7 @@ void UProject_JPlayerUIComponent::UpdateHUD()
 }
 void UProject_JPlayerUIComponent::UpdateSkills()
 {
+	CSV_SCOPED_TIMING_STAT(ProjectJUI, QuickSlotPresentation);
 	if (!Screen || !GetWorld() || bEnding)
 		return;
 	TArray<FProject_JQuickSlotState> States;
@@ -394,22 +402,19 @@ void UProject_JPlayerUIComponent::UpdateSkills()
 		else if (State.Binding.Kind == EProject_JQuickSlotKind::Item && InventoryModel)
 		{
 			const auto *Inventory = BoundState.IsValid() ? BoundState->GetInventoryComponent() : nullptr;
-			for (const UProject_JInventoryEntry *Entry : InventoryModel->InventoryEntries)
-				if (Entry && Entry->Item.ItemDef && Entry->Item.ItemDef->ItemId == State.Binding.ItemId)
+			if (const auto *Summary = InventoryModel->FindItemSummary(State.Binding.ItemId); Summary && Summary->Definition.IsValid())
+			{
+				const auto *Definition = Summary->Definition.Get();
+				State.Name = Definition->ItemName;
+				State.Icon = Definition->Icon;
+				State.Quantity = Summary->Quantity;
+				State.bAvailable = Summary->UsableInstance.IsValid() && !InventoryModel->bPending;
+				if (const auto *Def = Cast<UProject_JConsumableDefinition>(Definition); Def && Inventory)
 				{
-					State.Name = Entry->Item.ItemDef->ItemName;
-					State.Icon = Entry->Item.ItemDef->Icon;
-					State.Quantity = static_cast<int32>(
-						FMath::Min<int64>(MAX_int32, static_cast<int64>(State.Quantity) + Entry->Item.StackCount));
-					State.bAvailable |= !Entry->Item.bIsLocked && !Entry->Item.bIsEquipped && !InventoryModel->bPending;
-					if (const auto *Def = Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef); Def && Inventory)
-					{
-						State.Cooldown = Inventory->GetUseCooldownRemaining();
-						State.CooldownFraction = Def->CooldownSeconds > 0
-													 ? FMath::Clamp(State.Cooldown / Def->CooldownSeconds, 0.f, 1.f)
-													 : 0;
-					}
+					State.Cooldown = Inventory->GetUseCooldownRemaining();
+					State.CooldownFraction = Def->CooldownSeconds > 0 ? FMath::Clamp(State.Cooldown / Def->CooldownSeconds, 0.f, 1.f) : 0;
 				}
+			}
 			State.bAvailable &= State.Cooldown <= 0;
 		}
 		bCountdown |= State.Cooldown > 0;
@@ -433,14 +438,7 @@ void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 	const auto &Binding = HUDPreferences.Slots[Index];
 	if (Binding.Kind == EProject_JQuickSlotKind::Item)
 	{
-		if (InventoryModel && !InventoryModel->bPending)
-			for (const UProject_JInventoryEntry *Entry : InventoryModel->InventoryEntries)
-				if (Entry && Entry->Item.ItemDef && Entry->Item.ItemDef->ItemId == Binding.ItemId &&
-					!Entry->Item.bIsLocked && !Entry->Item.bIsEquipped)
-				{
-					InventoryModel->Use(Entry->Item.InstanceId);
-					break;
-				}
+		if (InventoryModel && !InventoryModel->bPending) InventoryModel->UseByItemId(Binding.ItemId);
 	}
 	else if (Binding.Kind == EProject_JQuickSlotKind::Skill &&
 			 PresentedSkills.ContainsByPredicate([&](const auto &Slot) { return Slot.InputTag == Binding.InputTag; }))

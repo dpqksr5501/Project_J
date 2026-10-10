@@ -86,6 +86,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	FTimerHandle TargetTimer;
 	FDelegateHandle ActivationHandle;
 	void RunRuntimeSmoke();
+	void PrepareRuntimeProfile();
 	FTimerHandle RuntimeSmokeTimer;
 	void OnQuestsChanged();
 	void LoadPreferences();

@@ -233,6 +233,10 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY() TObjectPtr<UScrollBox> QuestJournal;
 	UPROPERTY() TObjectPtr<UTextBlock> BagSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SettingsSummary;
+	UPROPERTY() TObjectPtr<UTextBlock> SaveStatus;
+	UPROPERTY() TObjectPtr<class UProject_JUICommandButton> SaveRetry;
+	TWeakObjectPtr<class UProject_JUILayoutSettings> LayoutSettings;
+	void RefreshSaveStatus();
 	UPROPERTY() TObjectPtr<UWrapBox> SkillPalette;
 	FTimerHandle SearchTimer;
 	UFUNCTION() void SearchChanged(const FText &Text);

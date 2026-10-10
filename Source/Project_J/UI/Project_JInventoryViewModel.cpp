@@ -5,6 +5,8 @@
 #include "Engine/World.h"
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "TimerManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+CSV_DECLARE_CATEGORY_EXTERN(ProjectJUI);
 
 void UProject_JInventoryViewModel::Bind(UProject_JInventoryComponent *InInventory,
 										UProject_JEquipmentManagerComponent *InEquipment)
@@ -33,6 +35,11 @@ void UProject_JInventoryViewModel::Bind(UProject_JInventoryComponent *InInventor
 
 void UProject_JInventoryViewModel::Unbind()
 {
+	++SourceRevision;
+	ClearRequest();
+	if (RefreshWorld.IsValid()) RefreshWorld->GetTimerManager().ClearTimer(RefreshTimer);
+	RefreshTimer.Invalidate();
+	RefreshWorld.Reset();
 	if (Inventory.IsValid())
 	{
 		if (auto *World = Inventory->GetWorld())
@@ -64,6 +71,7 @@ void UProject_JInventoryViewModel::Unbind()
 	VisibleEntries.Reset();
 	InventoryEntries.Reset();
 	EquipmentEntries.Reset();
+	ItemSummaries.Reset();
 	Status = FText::GetEmpty();
 }
 
@@ -75,6 +83,7 @@ void UProject_JInventoryViewModel::BeginDestroy()
 
 void UProject_JInventoryViewModel::Refresh()
 {
+	CSV_SCOPED_TIMING_STAT(ProjectJUI, InventoryProjection);
 	TMap<FGuid, UProject_JInventoryEntry *> Previous;
 	for (UProject_JInventoryEntry *Entry : InventoryEntries)
 		if (Entry)
@@ -94,6 +103,17 @@ void UProject_JInventoryViewModel::Refresh()
 		}
 	InventoryEntries.Sort([](const UProject_JInventoryEntry &A, const UProject_JInventoryEntry &B)
 		{ return A.Item.BagOrder == B.Item.BagOrder ? A.Item.InstanceId < B.Item.InstanceId : A.Item.BagOrder < B.Item.BagOrder; });
+	ItemSummaries.Reset();
+	for (const UProject_JInventoryEntry *Entry : InventoryEntries)
+	{
+		const auto &Item = Entry->Item;
+		if (!Item.IsValid() || Item.ItemDef->ItemId.IsNone()) continue;
+		auto &Summary = ItemSummaries.FindOrAdd(Item.ItemDef->ItemId);
+		if (!Summary.Definition.IsValid()) Summary.Definition = Item.ItemDef.Get();
+		Summary.Quantity = static_cast<int32>(FMath::Min<int64>(MAX_int32, static_cast<int64>(Summary.Quantity) + Item.StackCount));
+		if (!Summary.UsableInstance.IsValid() && !Item.bIsLocked && !Item.bIsEquipped && Cast<UProject_JConsumableDefinition>(Item.ItemDef))
+			Summary.UsableInstance = Item.InstanceId;
+	}
 	if (EquipmentEntries.IsEmpty())
 		for (int32 Slot = 1; Slot <= static_cast<int32>(EProject_JEquipmentSlot::Mount); ++Slot)
 		{
@@ -110,6 +130,7 @@ void UProject_JInventoryViewModel::Refresh()
 			Equipment->GetEquippedItemInstance(Entry->Slot, Entry->Item);
 	}
 	RebuildVisible();
+	CSV_CUSTOM_STAT(ProjectJUI, InventoryRows, InventoryEntries.Num(), ECsvCustomStatOp::Set);
 	OnChanged.Broadcast();
 }
 
@@ -119,15 +140,43 @@ void UProject_JInventoryViewModel::QueueRefresh()
 	// Coalesce a delta batch and read the completed authoritative projection next tick.
 	UWorld *World = Inventory.IsValid() ? Inventory->GetWorld() : Equipment.IsValid() ? Equipment->GetWorld() : nullptr;
 	if (World && !RefreshTimer.IsValid())
+	{
+		RefreshWorld = World;
+		const uint32 Revision = SourceRevision;
 		RefreshTimer = World->GetTimerManager().SetTimerForNextTick(
-			[WeakThis = TWeakObjectPtr<UProject_JInventoryViewModel>(this)]()
+			[WeakThis = TWeakObjectPtr<UProject_JInventoryViewModel>(this), Revision]()
 			{
 				if (auto *Self = WeakThis.Get())
 				{
+					if (Self->SourceRevision != Revision) return;
 					Self->RefreshTimer.Invalidate();
 					Self->Refresh();
 				}
 			});
+	}
+}
+void UProject_JInventoryViewModel::ClearRequest()
+{
+	if (RequestWorld.IsValid()) RequestWorld->GetTimerManager().ClearTimer(RequestTimer);
+	RequestWorld.Reset(); RequestTimer.Invalidate();
+	bPending = false; PendingRequest.Invalidate(); PendingKind = ERequestKind::None;
+}
+void UProject_JInventoryViewModel::ArmRequestTimer(UWorld *World, ERequestKind Kind)
+{
+	PendingKind = Kind;
+	RequestWorld = World;
+	const FGuid Id = PendingRequest;
+	const uint32 Revision = SourceRevision;
+	if (World) World->GetTimerManager().SetTimer(RequestTimer,
+		FTimerDelegate::CreateWeakLambda(this, [this, Id, Revision]()
+		{
+			if (bPending && PendingRequest == Id && SourceRevision == Revision) RequestTimedOut();
+		}), 5.f, false);
+}
+bool UProject_JInventoryViewModel::UseByItemId(FName ItemId)
+{
+	const auto *Summary = FindItemSummary(ItemId);
+	return Summary && Summary->UsableInstance.IsValid() && Use(Summary->UsableInstance);
 }
 void UProject_JInventoryViewModel::OnItemChanged(const FProject_JItemInstanceData &)
 {
@@ -163,8 +212,7 @@ bool UProject_JInventoryViewModel::Submit(FGuid InstanceId, EProject_JEquipmentS
 	const FGuid SubmittedRequest = PendingRequest;
 	const TWeakObjectPtr<UProject_JEquipmentManagerComponent> SubmittedEquipment = Equipment;
 	Status = NSLOCTEXT("ProjectJUI", "Pending", "서버 확인 중…");
-	if (auto *World = Equipment->GetWorld())
-		World->GetTimerManager().SetTimer(RequestTimer, this, &ThisClass::RequestTimedOut, 5.f, false);
+	ArmRequestTimer(Equipment->GetWorld(), ERequestKind::Equipment);
 	OnChanged.Broadcast();
 	// Publish pending before calling: standalone authority can reply synchronously.
 	if (Equipment == SubmittedEquipment && Equipment.IsValid() && bPending && PendingRequest == SubmittedRequest)
@@ -183,12 +231,9 @@ bool UProject_JInventoryViewModel::Unequip(FGuid Id, EProject_JEquipmentSlot Slo
 
 void UProject_JInventoryViewModel::OnCompleted(FGuid Id, const FProject_JEquipmentOperationResult &Result)
 {
-	if (!bPending || Id != PendingRequest)
+	if (!bPending || PendingKind != ERequestKind::Equipment || Id != PendingRequest)
 		return;
-	if (Equipment.IsValid() && Equipment->GetWorld())
-		Equipment->GetWorld()->GetTimerManager().ClearTimer(RequestTimer);
-	bPending = false;
-	PendingRequest.Invalidate();
+	ClearRequest();
 	if (Result.bSucceeded)
 		Status = NSLOCTEXT("ProjectJUI", "Confirmed", "장비 변경 완료");
 	else
@@ -223,14 +268,15 @@ void UProject_JInventoryViewModel::OnCompleted(FGuid Id, const FProject_JEquipme
 
 void UProject_JInventoryViewModel::RequestTimedOut()
 {
-	bPending = false;
-	PendingRequest.Invalidate();
+	if (!bPending) return;
+	ClearRequest();
 	Status = NSLOCTEXT("ProjectJUI", "Timeout", "응답이 지연됩니다. 현재 서버 상태를 확인한 후 다시 시도하세요.");
 	Refresh();
 }
 
 void UProject_JInventoryViewModel::RebuildVisible()
 {
+	CSV_SCOPED_TIMING_STAT(ProjectJUI, InventoryFilter);
 	VisibleEntries.Reset();
 	for (UProject_JInventoryEntry *Entry : InventoryEntries)
 	{
@@ -270,21 +316,18 @@ bool UProject_JInventoryViewModel::Use(FGuid InstanceId)
 	bPending = true;
 	Status = NSLOCTEXT("ProjectJUI", "UsePending", "사용 확인 중…");
 	const auto Request = PendingRequest;
-	if (auto *World = Inventory->GetWorld())
-		World->GetTimerManager().SetTimer(RequestTimer, this, &ThisClass::RequestTimedOut, 5.f, false);
+	const auto SubmittedInventory = Inventory;
+	ArmRequestTimer(Inventory->GetWorld(), ERequestKind::Use);
 	OnChanged.Broadcast();
-	if (Inventory.IsValid() && bPending && PendingRequest == Request)
+	if (Inventory == SubmittedInventory && Inventory.IsValid() && bPending && PendingRequest == Request)
 		Inventory->RequestUseItem(Request, InstanceId);
 	return true;
 }
 void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseResult Result)
 {
-	if (!bPending || Id != PendingRequest)
+	if (!bPending || PendingKind != ERequestKind::Use || Id != PendingRequest)
 		return;
-	if (Inventory.IsValid() && Inventory->GetWorld())
-		Inventory->GetWorld()->GetTimerManager().ClearTimer(RequestTimer);
-	bPending = false;
-	PendingRequest.Invalidate();
+	ClearRequest();
 	switch (Result)
 	{
 	case EProject_JItemUseResult::Success:
@@ -305,6 +348,22 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 	}
 	Refresh();
 }
+FProject_JEquipmentComparison UProject_JInventoryViewModel::BuildEquipmentComparison(const UProject_JInventoryEntry *Entry) const
+{
+	const auto *Candidate = Entry ? Cast<UProject_JEquipmentItemDefinition>(Entry->Item.ItemDef) : nullptr;
+	FProject_JItemInstanceData Current;
+	const UProject_JEquipmentItemDefinition *Equipped = nullptr;
+	if (Candidate && Entry->Model == this && !Entry->bEquipmentEntry && Equipment.IsValid() &&
+		Equipment->GetEquippedItemInstance(Candidate->EquipmentSlot, Current))
+		Equipped = Cast<UProject_JEquipmentItemDefinition>(Current.ItemDef);
+	auto Result = FProject_JEquipmentComparison::Build(Candidate, Equipped);
+	if (!Entry || Entry->Model != this || !Candidate || (!Entry->bEquipmentEntry && !Equipment.IsValid()))
+	{
+		Result.bCanCompare = false;
+		Result.Explanation = NSLOCTEXT("ProjectJUI", "CompareUnavailable", "현재 장비 정보를 확인할 수 없습니다.");
+	}
+	return Result;
+}
 FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry *Entry) const
 {
 	if (!Entry || !Entry->Item.ItemDef)
@@ -323,33 +382,19 @@ FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry 
 								StaticEnum<EProject_JEquipmentSlot>()->GetDisplayNameTextByValue(
 									static_cast<int64>(EquipmentDef->EquipmentSlot))));
 		FProject_JItemInstanceData Current;
-		const UProject_JEquipmentItemDefinition *CurrentDef = nullptr;
-		if (!Entry->bEquipmentEntry && Equipment.IsValid() &&
-			Equipment->GetEquippedItemInstance(EquipmentDef->EquipmentSlot, Current))
-			CurrentDef = Cast<UProject_JEquipmentItemDefinition>(Current.ItemDef);
-		if (EquipmentDef->StatApplicationPolicy != EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly)
+		const auto Comparison = BuildEquipmentComparison(Entry);
+		for (const auto &Row : Comparison.Rows)
 		{
-			for (int32 Index = 0; Index < 4; ++Index)
-			{
-				const auto Stat = static_cast<EProject_JEquipmentStat>(Index);
-				float Candidate = 0, Previous = 0;
-				for (const auto &Modifier : EquipmentDef->StatModifiers)
-					if (Modifier.Stat == Stat)
-						Candidate += Modifier.Value;
-				if (CurrentDef &&
-					CurrentDef->StatApplicationPolicy != EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly)
-					for (const auto &Modifier : CurrentDef->StatModifiers)
-						if (Modifier.Stat == Stat)
-							Previous += Modifier.Value;
-				if (FMath::IsFinite(Candidate) && FMath::IsFinite(Previous) && (Candidate != 0 || Previous != 0))
-					Lines.Add(FText::Format(
-						NSLOCTEXT("ProjectJUI", "FixedStatCompare", "고정 보너스 {0}: {1} (현재 장비 대비 {2})"),
-						StaticEnum<EProject_JEquipmentStat>()->GetDisplayNameTextByValue(Index),
-						FText::AsNumber(Candidate), FText::AsNumber(Candidate - Previous)));
-			}
+			if (Comparison.bCanCompare)
+				Lines.Add(FText::Format(NSLOCTEXT("ProjectJUI", "AdditiveStatCompare", "{0}: {1} (고정 보너스 차이 {2})"),
+					FProject_JEquipmentComparison::StatName(Row.Stat), FText::AsNumber(Row.Candidate), FText::AsNumber(Row.Difference)));
+			else if (Row.Candidate != 0 && Comparison.CandidateMode != EProject_JEquipmentBonusPreview::GameplayEffects)
+				Lines.Add(FText::Format(Comparison.CandidateMode == EProject_JEquipmentBonusPreview::ConditionalFallback
+					? NSLOCTEXT("ProjectJUI", "FallbackStat", "효과 미적용 시 대체 {0}: {1}")
+					: NSLOCTEXT("ProjectJUI", "AuthoredStat", "고정 보너스 {0}: {1}"),
+					FProject_JEquipmentComparison::StatName(Row.Stat), FText::AsNumber(Row.Candidate)));
 		}
-		if (!EquipmentDef->EquipmentEffects.IsEmpty())
-			Lines.Add(NSLOCTEXT("ProjectJUI", "EffectStatsTooltip", "추가 효과는 장착 조건에 따라 적용됩니다."));
+		Lines.Add(Comparison.Explanation);
 		if (!Entry->bEquipmentEntry && Equipment.IsValid() &&
 			Equipment->GetEquippedItemInstance(EquipmentDef->EquipmentSlot, Current) &&
 			Current.InstanceId != Entry->Item.InstanceId)
@@ -357,7 +402,9 @@ FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry 
 									Current.ItemDef->ItemName, FText::AsNumber(Current.ItemLevel)));
 	}
 	if (Entry->Item.bIsLocked)
-		Lines.Add(NSLOCTEXT("ProjectJUI", "LockedTooltip", "잠김"));
+		Lines.Add(NSLOCTEXT("ProjectJUI", "LockedTooltip", "잠김 · 장착·사용·이동 불가"));
+	if (Entry->Item.bIsEquipped) Lines.Add(NSLOCTEXT("ProjectJUI", "EquippedTooltip", "현재 장착 중"));
+	if (bPending) Lines.Add(NSLOCTEXT("ProjectJUI", "PendingTooltip", "서버 확인 중 · 응답 후 조작 가능"));
 	Lines.Add(NSLOCTEXT("ProjectJUI", "ItemControlsTooltip",
 						"우클릭/더블클릭: 장착·해제·사용\nShift+클릭: 수량 분할\n가방 드래그: 위치 교환 · Ctrl+드래그: 합치기\n장비 슬롯 또는 잠금 해제한 퀵슬롯으로 드래그"));
 	return FText::Join(FText::FromString(TEXT("\n")), Lines);
@@ -422,7 +469,7 @@ bool UProject_JInventoryViewModel::SubmitBag(const FProject_JBagRequest &Request
 	Status = NSLOCTEXT("ProjectJUI", "BagPending", "가방 변경 확인 중…");
 	const auto Id = PendingRequest;
 	const auto SubmittedInventory = Inventory;
-	if (auto *World = Inventory->GetWorld()) World->GetTimerManager().SetTimer(RequestTimer, this, &ThisClass::RequestTimedOut, 5.f, false);
+	ArmRequestTimer(Inventory->GetWorld(), ERequestKind::Bag);
 	OnChanged.Broadcast();
 	if (Inventory == SubmittedInventory && Inventory.IsValid() && bPending && Id == PendingRequest)
 		Inventory->RequestBagChange(Id, Request);
@@ -430,10 +477,8 @@ bool UProject_JInventoryViewModel::SubmitBag(const FProject_JBagRequest &Request
 }
 void UProject_JInventoryViewModel::OnBagCompleted(FGuid Id, EProject_JBagResult Result)
 {
-	if (!bPending || Id != PendingRequest) return;
-	if (Inventory.IsValid() && Inventory->GetWorld()) Inventory->GetWorld()->GetTimerManager().ClearTimer(RequestTimer);
-	bPending = false;
-	PendingRequest.Invalidate();
+	if (!bPending || PendingKind != ERequestKind::Bag || Id != PendingRequest) return;
+	ClearRequest();
 	switch (Result)
 	{
 	case EProject_JBagResult::Success: Status = NSLOCTEXT("ProjectJUI", "BagChanged", "가방 변경 완료"); break;

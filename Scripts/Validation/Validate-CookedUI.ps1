@@ -2,10 +2,13 @@ param(
     [Parameter(Mandatory)][string]$Executable,
     [string]$EvidenceName = 'CookedUISmoke',
     [int[]]$Widths = @(1280, 1920),
-    [int[]]$Heights = @(720, 1080)
+    [int[]]$Heights = @(720, 1080),
+    [switch]$Profile,
+    [switch]$HeavyWorkload
 )
 $ErrorActionPreference = 'Stop'
 if ($Widths.Count -ne $Heights.Count -or $Widths.Count -eq 0) { throw 'Resolution pairs required' }
+if ($HeavyWorkload -and !$Profile) { throw 'HeavyWorkload requires Profile' }
 if ($EvidenceName -notmatch '^[A-Za-z0-9_-]+$') { throw 'EvidenceName must be a simple directory name' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $exePath = (Resolve-Path -LiteralPath $Executable).Path
@@ -23,8 +26,10 @@ for ($index = 0; $index -lt $Widths.Count; $index++) {
     $logPath = Join-Path $runDir 'Game.log'
     $arguments = @('-ProjectJUIRuntimeSmoke', '-unattended', '-nosound', '-windowed', '-RenderOffscreen',
         "-ResX=$($Widths[$index])", "-ResY=$($Heights[$index])", '-SaveToUserDir',
-        '-csvCategories=Slate', '-csvCompression=0', '-ExecCmds="t.MaxFPS 60,csvprofile FRAMES=240"',
+        '-csvCategories=Slate,ProjectJUI', '-csvCompression=0',
         ('-UserDir="' + $userDir.Replace('\', '/') + '/"'), ('-ABSLOG="' + $logPath + '"'))
+    $arguments += if ($Profile) { @('-ProjectJUIProfile', '-ExecCmds="t.MaxFPS 60"') } else { @('-ExecCmds="t.MaxFPS 60,csvprofile FRAMES=240"') }
+    if ($HeavyWorkload) { $arguments += '-ProjectJUIWorkload' }
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $game = Start-Process -FilePath $exePath -ArgumentList $arguments -WindowStyle Hidden -PassThru
     $game.WaitForExit()
@@ -32,6 +37,7 @@ for ($index = 0; $index -lt $Widths.Count; $index++) {
     $logErrors = if (Test-Path -LiteralPath $logPath) { @(Select-String -LiteralPath $logPath -Pattern 'Log\w+: Error:|Fatal error:') } else { @() }
     $passed = $game.ExitCode -eq 0 -and $logErrors.Count -eq 0 -and (Test-Path -LiteralPath $logPath) -and
         [bool](Select-String -LiteralPath $logPath -SimpleMatch 'PROJECT_J_UI_RUNTIME_SMOKE success=1 cooked=1' -Quiet)
+    if ($HeavyWorkload) { $passed = $passed -and [bool](Select-String -LiteralPath $logPath -SimpleMatch 'PROJECT_J_UI_WORKLOAD rows=1000 buffs=24 windows=4 slots=10' -Quiet) }
     $result = [pscustomobject]@{ width=$Widths[$index]; height=$Heights[$index]; passed=$passed;
         exitCode=$game.ExitCode; logErrorCount=$logErrors.Count; seconds=$watch.Elapsed.TotalSeconds; log=$logPath; arguments=$arguments }
     $results += $result

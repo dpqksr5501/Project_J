@@ -5,6 +5,7 @@
 #include "Inventory/Project_JItemInstanceTypes.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Equipment/Project_JEquipmentTypes.h"
+#include "UI/Project_JEquipmentComparison.h"
 #include "Project_JInventoryViewModel.generated.h"
 
 class UProject_JInventoryComponent;
@@ -25,6 +26,14 @@ class PROJECT_J_API UProject_JInventoryEntry : public UObject
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FProject_JInventoryPresentationChanged);
 
+/** Rebuilt once per inventory delta batch; quick slots query it without rescanning every row. */
+struct FProject_JInventoryItemSummary
+{
+	TWeakObjectPtr<UProject_JItemDefinition> Definition;
+	int32 Quantity = 0;
+	FGuid UsableInstance;
+};
+
 /** Event-driven owner projection and bounded request lifetime, independent of widget layout. */
 UCLASS(BlueprintType)
 class PROJECT_J_API UProject_JInventoryViewModel : public UObject
@@ -41,7 +50,10 @@ class PROJECT_J_API UProject_JInventoryViewModel : public UObject
 	UFUNCTION(BlueprintCallable) bool Use(FGuid InstanceId);
 	UFUNCTION(BlueprintCallable) void SetFilter(const FString &Query, int32 Kind, bool bSortByName);
 	UFUNCTION(BlueprintPure) FText BuildTooltip(const UProject_JInventoryEntry *Entry) const;
+	UFUNCTION(BlueprintPure) FProject_JEquipmentComparison BuildEquipmentComparison(const UProject_JInventoryEntry *Entry) const;
 	bool Split(const UProject_JInventoryEntry *Entry, int32 Count);
+	const FProject_JInventoryItemSummary *FindItemSummary(FName ItemId) const { return ItemSummaries.Find(ItemId); }
+	bool UseByItemId(FName ItemId);
 	bool DropInBag(const UProject_JInventoryEntry *Source, const UProject_JInventoryEntry *Target, bool bMerge);
 	bool CanDropInBag(const UProject_JInventoryEntry *Source, const UProject_JInventoryEntry *Target, bool bMerge) const;
 	DECLARE_MULTICAST_DELEGATE_OneParam(FSplitRequested, UProject_JInventoryEntry *);
@@ -55,6 +67,15 @@ class PROJECT_J_API UProject_JInventoryViewModel : public UObject
 	virtual void BeginDestroy() override;
 
   private:
+	friend class FProjectJUIRequestLifetimeTest;
+	enum class ERequestKind : uint8 { None, Equipment, Use, Bag };
+	ERequestKind PendingKind = ERequestKind::None;
+	TMap<FName, FProject_JInventoryItemSummary> ItemSummaries;
+	TWeakObjectPtr<UWorld> RequestWorld;
+	TWeakObjectPtr<UWorld> RefreshWorld;
+	uint32 SourceRevision = 0;
+	void ArmRequestTimer(UWorld *World, ERequestKind Kind);
+	void ClearRequest();
 	bool SubmitBag(const FProject_JBagRequest &Request);
 	UFUNCTION() void OnBagCompleted(FGuid RequestId, EProject_JBagResult Result);
 	UFUNCTION() void OnUseCompleted(FGuid RequestId, EProject_JItemUseResult Result);
