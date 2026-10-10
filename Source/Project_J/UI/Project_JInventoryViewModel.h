@@ -22,6 +22,8 @@ class PROJECT_J_API UProject_JInventoryEntry : public UObject
 	UPROPERTY(BlueprintReadOnly) EProject_JEquipmentSlot Slot = EProject_JEquipmentSlot::None;
 	UPROPERTY(BlueprintReadOnly) bool bEquipmentEntry = false;
 	UPROPERTY() TWeakObjectPtr<UProject_JInventoryViewModel> Model;
+	/** Frozen drags must not outlive a character/source binding, even when GUIDs are reused. */
+	UPROPERTY() uint32 SourceRevision = 0;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FProject_JInventoryPresentationChanged);
@@ -42,6 +44,8 @@ class PROJECT_J_API UProject_JInventoryViewModel : public UObject
   public:
 	void Bind(UProject_JInventoryComponent *InInventory, UProject_JEquipmentManagerComponent *InEquipment);
 	void Unbind();
+	bool IsCurrentEntry(const UProject_JInventoryEntry *Entry) const;
+	bool Activate(const UProject_JInventoryEntry *Entry);
 	UFUNCTION(BlueprintCallable) bool Equip(FGuid InstanceId, EProject_JEquipmentSlot TargetSlot);
 	UFUNCTION(BlueprintCallable) bool Unequip(FGuid InstanceId, EProject_JEquipmentSlot Slot);
 	UFUNCTION(BlueprintCallable)

@@ -29,7 +29,8 @@ def summarize(evidence: Path, discard: int):
                     continue  # Footer metadata and repeated header are not frames.
                 if math.isfinite(frame):
                     rows.append(row)
-        if len(rows) != 240 or discard < 0 or discard >= len(rows):
+        expected_frames = 600 if "-ProjectJUIDynamicWorkload" in run["arguments"] else 240
+        if len(rows) != expected_frames or discard < 0 or discard >= len(rows):
             raise ValueError(f"Invalid sample: {len(rows)} frames, discard={discard}")
         metrics = {}
         for key in keys:
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     runs = [run for directory in args.evidence for run in summarize(directory, args.discard)]
     if len({r["executableSha256"] for r in runs}) != 1:
         raise ValueError("Matched measurements must use the same executable")
-    report = {"condition": "Development/D3D12/RenderOffscreen/t.MaxFPS=60; CSV starts after fixture setup; steady-state sample; no pre-change comparison",
+    report = {"condition": "Development/D3D12/RenderOffscreen/t.MaxFPS=60; CSV starts after fixture setup; dynamic flag applies local authority deltas at 5Hz; no pre-change comparison",
               "runs": runs}
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     for run in runs:

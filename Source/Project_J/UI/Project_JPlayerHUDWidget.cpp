@@ -48,14 +48,7 @@ FText ItemName(const UProject_JInventoryEntry *Entry)
 void ActivateItem(UObject *Item)
 {
 	auto *Entry = Cast<UProject_JInventoryEntry>(Item);
-	if (!Entry || !Entry->Model.IsValid())
-		return;
-	if (Entry->bEquipmentEntry)
-		Entry->Model->Unequip(Entry->Item.InstanceId, Entry->Slot);
-	else if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef))
-		Entry->Model->Use(Entry->Item.InstanceId);
-	else if (Entry->Model->CanDrop(Entry, Entry->Slot, false))
-		Entry->Model->Equip(Entry->Item.InstanceId, Entry->Slot);
+	if (Entry && Entry->Model.IsValid()) Entry->Model->Activate(Entry);
 }
 void ConfigureList(UListView *List, TSubclassOf<UProject_JItemWidget> RowClass)
 {
@@ -399,6 +392,8 @@ void UProject_JItemWidget::Render()
 {
 	if (!Entry)
 		return;
+	if (ItemFrame) ItemFrame->SetBrushColor(IsListItemSelected() ? FLinearColor(0.18f, 0.32f, 0.42f) :
+		(bCompactTile ? ItemCellColor : PanelColor));
 	const TArray<FText> SlotNames{FText::GetEmpty(),
 								  NSLOCTEXT("ProjectJUI", "SlotWeapon", "무기"),
 								  NSLOCTEXT("ProjectJUI", "SlotHead", "머리"),
@@ -456,6 +451,11 @@ void UProject_JItemWidget::Render()
 		});
 }
 
+void UProject_JItemWidget::NativeOnItemSelectionChanged(bool bSelected)
+{
+	IUserObjectListEntry::NativeOnItemSelectionChanged(bSelected);
+	Render();
+}
 FReply UProject_JItemWidget::NativeOnMouseButtonDown(const FGeometry &Geometry, const FPointerEvent &Event)
 {
 	if (Entry && Entry->Model.IsValid() && !Entry->bEquipmentEntry && Event.IsShiftDown() && Event.GetEffectingButton() == EKeys::LeftMouseButton)
@@ -467,17 +467,15 @@ FReply UProject_JItemWidget::NativeOnMouseButtonDown(const FGeometry &Geometry, 
 	{
 		// DetectDrag consumes the click, so explicitly keep the owning list's selection in sync.
 		if (auto *List = Cast<UListView>(GetOwningListView()))
+		{
 			List->SetSelectedItem(Entry);
+			List->SetUserFocus(GetOwningPlayer());
+		}
 		return UWidgetBlueprintLibrary::DetectDragIfPressed(Event, this, EKeys::LeftMouseButton).NativeReply;
 	}
 	if (Event.GetEffectingButton() == EKeys::RightMouseButton && Entry && Entry->Model.IsValid())
 	{
-		if (Entry->bEquipmentEntry)
-			Entry->Model->Unequip(Entry->Item.InstanceId, Entry->Slot);
-		else if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef))
-			Entry->Model->Use(Entry->Item.InstanceId);
-		else if (Entry->Model->CanDrop(Entry, Entry->Slot, false))
-			Entry->Model->Equip(Entry->Item.InstanceId, Entry->Slot);
+		Entry->Model->Activate(Entry);
 		return FReply::Handled();
 	}
 	return Super::NativeOnMouseButtonDown(Geometry, Event);
@@ -486,12 +484,7 @@ FReply UProject_JItemWidget::NativeOnMouseButtonDoubleClick(const FGeometry &Geo
 {
 	if (Event.GetEffectingButton() == EKeys::LeftMouseButton && Entry && Entry->Model.IsValid())
 	{
-		if (Entry->bEquipmentEntry)
-			Entry->Model->Unequip(Entry->Item.InstanceId, Entry->Slot);
-		else if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef))
-			Entry->Model->Use(Entry->Item.InstanceId);
-		else if (Entry->Model->CanDrop(Entry, Entry->Slot, false))
-			Entry->Model->Equip(Entry->Item.InstanceId, Entry->Slot);
+		Entry->Model->Activate(Entry);
 		return FReply::Handled();
 	}
 	return Super::NativeOnMouseButtonDoubleClick(Geometry, Event);
@@ -721,6 +714,7 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	BagActions->AddChildToHorizontalBox(Command(TEXT("SplitSelected"), NSLOCTEXT("ProjectJUI", "SplitSelected", "분할")));
 	BagActions->AddChildToHorizontalBox(Command(TEXT("MergeSelected"), NSLOCTEXT("ProjectJUI", "MergeSelected", "합치기")));
 	BagActions->AddChildToHorizontalBox(Command(TEXT("CancelMerge"), NSLOCTEXT("ProjectJUI", "CancelMerge", "선택 취소")));
+	BagActions->SetToolTipText(NSLOCTEXT("ProjectJUI", "BagKeyboard", "방향키: 선택 · Enter: 사용/장착 · Shift+Enter: 분할 · Ctrl+M: 합치기 · Ctrl+F: 검색 · Tab: 버튼 이동"));
 	InventoryList = WidgetTree->ConstructWidget<UProject_JInventoryTileView>(UProject_JInventoryTileView::StaticClass(),
 																			 TEXT("InventoryList"));
 	Bag->BodyBox->AddChildToVerticalBox(InventoryList)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -1021,8 +1015,32 @@ void UProject_JPlayerHUDWidget::SetMenuOpen(bool bOpen)
 	{
 		ApplyMenuLayout();
 		RefreshInventory();
-		SetKeyboardFocus();
+		FocusTopWindow();
 	}
+}
+void UProject_JPlayerHUDWidget::ResetTransientInteraction()
+{
+	// Only cancel this screen's drag; another LocalPlayer may own the active operation.
+	auto *Drag = Cast<UProject_JItemDragOperation>(UWidgetBlueprintLibrary::GetDragDroppingContent());
+	auto *QuickDrag = Cast<UProject_JQuickSlotDrag>(UWidgetBlueprintLibrary::GetDragDroppingContent());
+	if ((Drag && Drag->Entry && Drag->Entry->Model == InventoryModel) ||
+		(QuickDrag && QuickDrag->Owner == ScreenOwner)) UWidgetBlueprintLibrary::CancelDragDrop();
+	CapturingKey = INDEX_NONE;
+	SplitSource = nullptr;
+	MergeSource = nullptr;
+	BagFilter = 0;
+	bSortBag = false;
+	if (SearchBox) SearchBox->SetText(FText::GetEmpty());
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SearchTimer);
+		GetWorld()->GetTimerManager().ClearTimer(NotificationTimer);
+	}
+	if (InventoryModel) InventoryModel->SetFilter(FString(), 0, false);
+	LastInventoryStatus = FText::GetEmpty();
+	if (NotificationLabel) NotificationLabel->SetVisibility(ESlateVisibility::Collapsed);
+	for (auto *List : {InventoryList.Get(), EquipmentList.Get()})
+		if (List) { List->ClearSelection(); List->SetScrollOffset(0); }
 }
 void UProject_JPlayerHUDWidget::RefreshInventory()
 {
@@ -1102,6 +1120,43 @@ FReply UProject_JPlayerHUDWidget::NativeOnPreviewKeyDown(const FGeometry &Geomet
 	if (Event.GetKey() == EKeys::Escape && SearchBox &&
 		(SearchBox->HasKeyboardFocus() || SearchBox->HasFocusedDescendants()))
 		return FReply::Handled().SetUserFocus(TakeWidget(), EFocusCause::SetDirectly);
+	const bool bTextFocus = (SearchBox && SearchBox->HasFocusedDescendants()) ||
+		(SplitCount && (SplitCount->HasKeyboardFocus() || SplitCount->HasFocusedDescendants()));
+	if (!WindowStack.IsEmpty() && WindowStack.Last() == TEXT("Split"))
+	{
+		if (Event.GetKey() == EKeys::Escape) { CloseWindow(TEXT("Split")); return FReply::Handled(); }
+		if (Event.GetKey() == EKeys::Enter && bTextFocus)
+		{
+			if (!Event.IsRepeat()) ExecuteCommand(TEXT("SplitConfirm"));
+			return FReply::Handled();
+		}
+		return Super::NativeOnPreviewKeyDown(Geometry, Event);
+	}
+	if (!bTextFocus && !WindowStack.IsEmpty())
+	{
+		const FName Top = WindowStack.Last();
+		UListView *List = Top == TEXT("Bag") ? InventoryList.Get() : Top == TEXT("Equipment") ? EquipmentList.Get() : nullptr;
+		const bool bListFocus = List && (List->HasUserFocus(GetOwningPlayer()) || List->HasFocusedDescendants() || HasUserFocus(GetOwningPlayer()));
+		if (Top == TEXT("Bag") && Event.IsControlDown() && Event.GetKey() == EKeys::F && SearchBox)
+		{
+			SearchBox->SetUserFocus(GetOwningPlayer()); return FReply::Handled();
+		}
+		if (bListFocus && Event.GetKey() == EKeys::Enter && !Event.IsAltDown() && !Event.IsControlDown())
+		{
+			if (!Event.IsRepeat())
+			{
+				auto *Entry = Cast<UProject_JInventoryEntry>(List->GetSelectedItem());
+				if (Event.IsShiftDown() && Top == TEXT("Bag")) OpenSplit(Entry);
+				else ActivateItem(Entry);
+			}
+			return FReply::Handled();
+		}
+		if (Top == TEXT("Bag") && bListFocus && Event.IsControlDown() && Event.GetKey() == EKeys::M)
+		{
+			if (!Event.IsRepeat()) ExecuteCommand(TEXT("MergeSelected"));
+			return FReply::Handled();
+		}
+	}
 	return Super::NativeOnPreviewKeyDown(Geometry, Event);
 }
 FReply UProject_JPlayerHUDWidget::NativeOnKeyDown(const FGeometry &Geometry, const FKeyEvent &Event)
@@ -1219,7 +1274,7 @@ void UProject_JPlayerHUDWidget::ToggleWindow(FName Id)
 		ScreenOwner->SetMenuOpen(true);
 	ApplyMenuLayout();
 	RefreshQuests();
-	SetKeyboardFocus();
+	FocusTopWindow();
 }
 void UProject_JPlayerHUDWidget::CloseWindow(FName Id)
 {
@@ -1235,7 +1290,8 @@ void UProject_JPlayerHUDWidget::CloseWindow(FName Id)
 			ScreenOwner->SetMenuOpen(false);
 	}
 	else
-		SetKeyboardFocus();
+		FocusTopWindow();
+	UpdateModalInteractivity();
 }
 void UProject_JPlayerHUDWidget::RaiseWindow(FName Id)
 {
@@ -1247,6 +1303,27 @@ void UProject_JPlayerHUDWidget::RaiseWindow(FName Id)
 		if (UProject_JHUDWindow *Window = Windows.FindRef(WindowStack[Index]))
 			if (auto *WindowCanvasSlot = Cast<UCanvasPanelSlot>(Window->Slot))
 				WindowCanvasSlot->SetZOrder(100 + Index);
+	UpdateModalInteractivity();
+}
+void UProject_JPlayerHUDWidget::UpdateModalInteractivity()
+{
+	const bool bSplit = !WindowStack.IsEmpty() && WindowStack.Last() == TEXT("Split");
+	for (const auto &Pair : Windows) Pair.Value->SetIsEnabled(!bSplit || Pair.Key == TEXT("Split"));
+	if (MenuButtons) MenuButtons->SetIsEnabled(!bSplit);
+}
+void UProject_JPlayerHUDWidget::FocusTopWindow()
+{
+	if (!GetOwningPlayer()) return;
+	UpdateModalInteractivity();
+	const FName Top = WindowStack.IsEmpty() ? NAME_None : WindowStack.Last();
+	if (Top == TEXT("Split") && SplitCount) { SplitCount->SetUserFocus(GetOwningPlayer()); return; }
+	UListView *List = Top == TEXT("Bag") ? InventoryList.Get() : Top == TEXT("Equipment") ? EquipmentList.Get() : nullptr;
+	if (List)
+	{
+		if (!List->GetSelectedItem() && List->GetNumItems() > 0) List->SetSelectedIndex(0);
+		List->SetUserFocus(GetOwningPlayer());
+	}
+	else SetUserFocus(GetOwningPlayer());
 }
 void UProject_JPlayerHUDWidget::ApplyPreferences(const FProject_JHUDPreferences &Value)
 {
@@ -1479,7 +1556,7 @@ void UProject_JPlayerHUDWidget::RefreshKeySettings()
 }
 void UProject_JPlayerHUDWidget::OpenSplit(UProject_JInventoryEntry *Entry)
 {
-	if (!Entry || Entry->Model != InventoryModel || InventoryModel->bPending || !Entry->Item.IsValid() ||
+	if (!InventoryModel || !InventoryModel->IsCurrentEntry(Entry) || InventoryModel->bPending || !Entry->Item.IsValid() ||
 		Entry->Item.bIsLocked || Entry->Item.bIsEquipped || Entry->Item.StackCount <= 1)
 	{
 		if (InventoryModel && !InventoryModel->bPending) { InventoryModel->Status = NSLOCTEXT("ProjectJUI", "CannotSplit", "분할할 잠기지 않은 스택을 선택하세요. 수량이 2개 이상이어야 합니다."); InventoryModel->OnChanged.Broadcast(); }

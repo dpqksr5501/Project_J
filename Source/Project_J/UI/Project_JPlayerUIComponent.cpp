@@ -106,16 +106,19 @@ void UProject_JPlayerUIComponent::RefreshSources()
 		return;
 	auto *State = PC->GetPlayerState<AProject_JPlayerState>();
 	auto *ASC = State ? State->GetProjectJAbilitySystemComponent() : nullptr;
-	if (BoundASC.Get() != ASC || BoundState.Get() != State)
+	const FGuid CharacterId = State ? State->GetCharacterId().Value : FGuid();
+	if (BoundASC.Get() != ASC || BoundState.Get() != State || BoundCharacterId != CharacterId)
 	{
-		ReleaseAllSkills();
+		ResetInteraction();
+		if (InventoryModel) InventoryModel->Unbind();
 		ClearSources();
+		BoundCharacterId = CharacterId;
 		BoundASC = ASC;
 		if (StatusEffects) StatusEffects->Bind(ASC);
 		BoundState = State;
 		if (State)
 		{
-			State->OnCharacterIdentityChanged.AddUObject(this, &ThisClass::QueueSkillRefresh);
+			State->OnCharacterIdentityChanged.AddUObject(this, &ThisClass::OnCharacterIdentityChanged);
 			BoundQuests = State->FindComponentByClass<UProject_JQuestComponent>();
 			if (BoundQuests.IsValid())
 				BoundQuests->OnChanged.AddUObject(this, &ThisClass::OnQuestsChanged);
@@ -297,10 +300,26 @@ bool UProject_JPlayerUIComponent::HandleMenuKey(FKey Key)
 }
 void UProject_JPlayerUIComponent::OnPawnChanged(APawn *, APawn *)
 {
-	ReleaseAllSkills();
-	SetObservedTarget(nullptr);
+	ResetInteraction();
 	RebuildKeyBindings();
 	RefreshSources();
+}
+void UProject_JPlayerUIComponent::OnCharacterIdentityChanged()
+{
+	RefreshSources();
+}
+void UProject_JPlayerUIComponent::ResetInteraction()
+{
+	ReleaseAllSkills();
+	SetObservedTarget(nullptr);
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SkillsTimer);
+		GetWorld()->GetTimerManager().ClearTimer(SkillsRefreshTimer);
+	}
+	SkillsRefreshTimer.Invalidate();
+	if (Screen) Screen->ResetTransientInteraction();
+	SetMenuOpen(false);
 }
 void UProject_JPlayerUIComponent::ClearSources()
 {
@@ -326,6 +345,7 @@ void UProject_JPlayerUIComponent::ClearSources()
 	BoundASC.Reset();
 	BoundProgression.Reset();
 	BoundState.Reset();
+	BoundCharacterId.Invalidate();
 	bPresentationInitialized = false;
 }
 void UProject_JPlayerUIComponent::UpdateAttributes(const FOnAttributeChangeData &)
@@ -345,6 +365,7 @@ void UProject_JPlayerUIComponent::UpdateHUD()
 		const FText Connecting = NSLOCTEXT("ProjectJUI", "Connecting", "캐릭터 연결 중…");
 		Screen->UpdateAttributes(Connecting);
 		Screen->UpdateCharacter(UIContext, {}, Connecting);
+		Screen->UpdateExperience(0, 1);
 		return;
 	}
 	const int32 Level =
@@ -532,6 +553,7 @@ void UProject_JPlayerUIComponent::EndPlay(const EEndPlayReason::Type Reason)
 		GetWorld()->GetTimerManager().ClearTimer(SkillsRefreshTimer);
 		GetWorld()->GetTimerManager().ClearTimer(TargetTimer);
 		GetWorld()->GetTimerManager().ClearTimer(RuntimeSmokeTimer);
+		GetWorld()->GetTimerManager().ClearTimer(DynamicProfileTimer);
 	}
 	ClearSources();
 	if (InventoryModel)
@@ -592,7 +614,7 @@ FProject_JQuickSlotBinding UProject_JPlayerUIComponent::GetQuickBinding(int32 In
 bool UProject_JPlayerUIComponent::BindItemSlot(int32 Index, const UProject_JInventoryEntry *Entry)
 {
 	if (HUDPreferences.bLocked || !HUDPreferences.Slots.IsValidIndex(Index) || !Entry ||
-		Entry->Model != InventoryModel || !Entry->Item.ItemDef || Entry->bEquipmentEntry ||
+		!InventoryModel || !InventoryModel->IsCurrentEntry(Entry) || !Entry->Item.ItemDef || Entry->bEquipmentEntry ||
 		!Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef) || Entry->Item.ItemDef->ItemId.IsNone())
 		return false;
 	FProject_JItemInstanceData Current;

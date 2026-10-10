@@ -97,6 +97,7 @@ void UProject_JInventoryViewModel::Refresh()
 				Entry = NewObject<UProject_JInventoryEntry>(this);
 			Entry->Item = Item;
 			Entry->Model = this;
+			Entry->SourceRevision = SourceRevision;
 			const auto *Definition = Cast<UProject_JEquipmentItemDefinition>(Item.ItemDef);
 			Entry->Slot = Definition ? Definition->EquipmentSlot : EProject_JEquipmentSlot::None;
 			InventoryEntries.Add(Entry);
@@ -119,6 +120,7 @@ void UProject_JInventoryViewModel::Refresh()
 		{
 			auto *Entry = NewObject<UProject_JInventoryEntry>(this);
 			Entry->Model = this;
+			Entry->SourceRevision = SourceRevision;
 			Entry->bEquipmentEntry = true;
 			Entry->Slot = static_cast<EProject_JEquipmentSlot>(Slot);
 			EquipmentEntries.Add(Entry);
@@ -161,6 +163,19 @@ void UProject_JInventoryViewModel::ClearRequest()
 	RequestWorld.Reset(); RequestTimer.Invalidate();
 	bPending = false; PendingRequest.Invalidate(); PendingKind = ERequestKind::None;
 }
+bool UProject_JInventoryViewModel::IsCurrentEntry(const UProject_JInventoryEntry *Entry) const
+{
+	return Entry && Entry->Model == this && Entry->SourceRevision == SourceRevision && Inventory.IsValid();
+}
+bool UProject_JInventoryViewModel::Activate(const UProject_JInventoryEntry *Entry)
+{
+	if (!IsCurrentEntry(Entry) || bPending || !Entry->Item.IsValid() ||
+		(Entry->Item.bIsLocked && !Entry->bEquipmentEntry)) return false;
+	if (Entry->bEquipmentEntry)
+		return CanDrop(Entry, EProject_JEquipmentSlot::None, true) && Unequip(Entry->Item.InstanceId, Entry->Slot);
+	if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef)) return Use(Entry->Item.InstanceId);
+	return CanDrop(Entry, Entry->Slot, false) && Equip(Entry->Item.InstanceId, Entry->Slot);
+}
 void UProject_JInventoryViewModel::ArmRequestTimer(UWorld *World, ERequestKind Kind)
 {
 	PendingKind = Kind;
@@ -190,7 +205,7 @@ void UProject_JInventoryViewModel::OnEquipmentChanged(EProject_JEquipmentSlot, U
 bool UProject_JInventoryViewModel::CanDrop(const UProject_JInventoryEntry *Entry, EProject_JEquipmentSlot TargetSlot,
 										   bool bToInventory) const
 {
-	if (bPending || !Entry || Entry->Model.Get() != this || !Inventory.IsValid() || !Equipment.IsValid())
+	if (bPending || !IsCurrentEntry(Entry) || !Equipment.IsValid())
 		return false;
 	FProject_JItemInstanceData Current;
 	if (bToInventory)
@@ -431,7 +446,7 @@ FProject_JBagRequest BagRequest(EProject_JBagOperation Operation, const UProject
 }
 bool UProject_JInventoryViewModel::Split(const UProject_JInventoryEntry *Entry, int32 Count)
 {
-	if (!Entry || Entry->Model != this || Entry->bEquipmentEntry || Count <= 0 || Count >= Entry->Item.StackCount)
+	if (!IsCurrentEntry(Entry) || Entry->bEquipmentEntry || Count <= 0 || Count >= Entry->Item.StackCount)
 		return false;
 	auto Request = BagRequest(EProject_JBagOperation::Split, Entry);
 	Request.Count = Count;
@@ -440,7 +455,7 @@ bool UProject_JInventoryViewModel::Split(const UProject_JInventoryEntry *Entry, 
 bool UProject_JInventoryViewModel::CanDropInBag(const UProject_JInventoryEntry *Source,
 	const UProject_JInventoryEntry *Target, bool bMerge) const
 {
-	if (bPending || !Inventory.IsValid() || !Source || !Target || Source->Model != this || Target->Model != this ||
+	if (bPending || !IsCurrentEntry(Source) || !IsCurrentEntry(Target) ||
 		Source->bEquipmentEntry || Target->bEquipmentEntry || Source->Item.InstanceId == Target->Item.InstanceId ||
 		!Source->Item.IsValid() || !Target->Item.IsValid() || Source->Item.bIsLocked || Target->Item.bIsLocked ||
 		Source->Item.bIsEquipped || Target->Item.bIsEquipped) return false;

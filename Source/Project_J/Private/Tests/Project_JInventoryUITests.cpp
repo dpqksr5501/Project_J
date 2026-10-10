@@ -7,6 +7,8 @@
 #include "Components/Project_JEquipmentManagerComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Inventory/Project_JConsumableDefinition.h"
+#include "UObject/StrongObjectPtr.h"
+#include "UObject/GarbageCollection.h"
 
 namespace ProjectJUITests
 {
@@ -142,6 +144,39 @@ bool FProjectJUIItemAggregateTest::RunTest(const FString &)
 	TestEqual(TEXT("Coalesced delta reads final quantity"), Summary->Quantity, 10);
 	TestFalse(TEXT("Removed item cannot remain actionable in cache"), Summary->UsableInstance.IsValid());
 	Model->Unbind(); TestNull(TEXT("Unbind releases aggregation"), Model->FindItemSummary(Potion->ItemId));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIEntryGenerationTest, "ProjectJ.UI.Inventory.DetachedEntryGeneration",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUIEntryGenerationTest::RunTest(const FString &)
+{
+	ProjectJUITests::FWorld W;
+	auto *Potion = NewObject<UProject_JConsumableDefinition>(W.Owner);
+	Potion->ItemId = TEXT("GenerationPotion"); Potion->MaxStackCount = 99;
+	const auto Item = W.Inventory->AddItemDefinition(Potion, 10);
+	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
+	auto *Snapshot = DuplicateObject<UProject_JInventoryEntry>(Model->InventoryEntries[0], Model);
+	TStrongObjectPtr<UProject_JInventoryViewModel> KeepModel(Model);
+	TWeakObjectPtr<UProject_JInventoryEntry> OldEntry(Snapshot);
+	TestTrue(TEXT("Current frozen entry is actionable"), Model->IsCurrentEntry(Snapshot));
+	Model->Bind(nullptr, nullptr);
+	TestFalse(TEXT("Disconnected entry is unavailable"), Model->IsCurrentEntry(Snapshot));
+	Model->Bind(W.Inventory, W.Equipment);
+	TestFalse(TEXT("Same model and same item GUID cannot revive an old drag"), Model->IsCurrentEntry(Snapshot));
+	TestFalse(TEXT("Old split rejected before sending request"), Model->Split(Snapshot, 2));
+	TestFalse(TEXT("Old keyboard/mouse activation rejected"), Model->Activate(Snapshot));
+	TestFalse(TEXT("Old merge rejected"), Model->CanDropInBag(Snapshot, Model->InventoryEntries[0], true));
+	TestTrue(TEXT("Rebound row is current"), Model->IsCurrentEntry(Model->InventoryEntries[0]));
+	FProject_JItemInstanceData Current; W.Inventory->FindItemInstance(Item.InstanceId, Current);
+	TestEqual(TEXT("Rejected actions preserve authority count"), Current.StackCount, 10);
+	for (int32 Index = 0; Index < 100; ++Index)
+	{
+		Model->Unbind(); Model->Bind(W.Inventory, W.Equipment);
+		TestEqual(TEXT("Repeated binding does not accumulate rows"), Model->InventoryEntries.Num(), 1);
+	}
+	Model->Unbind();
+	CollectGarbage(RF_NoFlags);
+	TestFalse(TEXT("Detached entry is collectible while its model remains alive"), OldEntry.IsValid());
 	return true;
 }
 #endif

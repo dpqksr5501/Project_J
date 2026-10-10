@@ -15,7 +15,7 @@
 
 UProject_JUICommandButton::UProject_JUICommandButton()
 {
-	InitIsFocusable(false);
+	InitIsFocusable(true);
 }
 void UProject_JUICommandButton::InitializeCommand(UProject_JPlayerHUDWidget *InHUD, FName InCommand, const FText &Label)
 {

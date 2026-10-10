@@ -88,6 +88,9 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	void RunRuntimeSmoke();
 	void PrepareRuntimeProfile();
 	FTimerHandle RuntimeSmokeTimer;
+	void RunDynamicProfileStep();
+	FTimerHandle DynamicProfileTimer;
+	int32 DynamicProfileSteps = 0;
 	void OnQuestsChanged();
 	void LoadPreferences();
 	void StorePreferences();
@@ -97,6 +100,9 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	UFUNCTION() void OnPawnChanged(APawn *OldPawn, APawn *NewPawn);
 	UFUNCTION() void OnInventoryPresentationChanged();
 	void ClearSources();
+	void ResetInteraction();
+	void OnCharacterIdentityChanged();
+	FGuid BoundCharacterId;
 	void UpdateAttributes(const FOnAttributeChangeData &Data);
 	void UpdateHUD();
 	void UpdateSkills();

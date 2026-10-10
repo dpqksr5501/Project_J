@@ -93,6 +93,7 @@ class PROJECT_J_API UProject_JItemWidget : public UUserWidget, public IUserObjec
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeOnListItemObjectSet(UObject *ItemObject) override;
 	virtual void NativeOnEntryReleased() override;
+	virtual void NativeOnItemSelectionChanged(bool bSelected) override;
 	virtual void NativeDestruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry &Geometry, const FPointerEvent &Event) override;
 	virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry &Geometry, const FPointerEvent &Event) override;
@@ -168,6 +169,7 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	void ApplyPreferences(const FProject_JHUDPreferences &Value);
 	void RefreshKeySettings();
 	void OpenSplit(UProject_JInventoryEntry *Entry);
+	void ResetTransientInteraction();
 	void PresentStatusEffects(const TArray<FProject_JStatusEffectState> &States);
 	void PresentTarget(const FText &Name, float Current, float Maximum);
 	bool ValidateRuntimeLayout() const;
@@ -258,6 +260,8 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	FVector2D LastCanvasExtent = FVector2D::ZeroVector;
 	FVector2D PreferredMenuSize = FVector2D(900, 540);
 	void ApplyMenuLayout();
+	void FocusTopWindow();
+	void UpdateModalInteractivity();
 	void StoreMenuLayout();
 	void BuildDefaultScreen();
 };

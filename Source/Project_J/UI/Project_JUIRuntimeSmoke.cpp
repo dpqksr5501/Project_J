@@ -51,8 +51,41 @@ void UProject_JPlayerUIComponent::PrepareRuntimeProfile()
 		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_UI_WORKLOAD rows=%d buffs=%d windows=4 slots=10"), InventoryModel->InventoryEntries.Num(), StatusEffects->States.Num());
 	}
 	// Both baseline and heavy cases start at the same point after startup. Capture setup spikes separately in logs.
-	PC->ConsoleCommand(TEXT("csvprofile FRAMES=240"), false);
-	GetWorld()->GetTimerManager().SetTimer(RuntimeSmokeTimer, this, &ThisClass::RunRuntimeSmoke, 8.f, false);
+	const bool bDynamic = bHeavy && FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIDynamicWorkload"));
+	PC->ConsoleCommand(bDynamic ? TEXT("csvprofile FRAMES=600") : TEXT("csvprofile FRAMES=240"), false);
+	if (bDynamic)
+	{
+		DynamicProfileSteps = 0;
+		GetWorld()->GetTimerManager().SetTimer(DynamicProfileTimer, this, &ThisClass::RunDynamicProfileStep, .2f, true);
+	}
+	GetWorld()->GetTimerManager().SetTimer(RuntimeSmokeTimer, this, &ThisClass::RunRuntimeSmoke, bDynamic ? 14.f : 8.f, false);
+#endif
+}
+void UProject_JPlayerUIComponent::RunDynamicProfileStep()
+{
+#if !UE_BUILD_SHIPPING
+	if (bEnding || !BoundState.IsValid() || !InventoryModel || !Screen || GetNetMode() != NM_Standalone) return;
+	auto *Inventory = BoundState->GetInventoryComponent();
+	const auto Items = Inventory->GetItemInstances(); // Freeze identities before removal/addition.
+	if (Items.Num() != 1000) return;
+	++DynamicProfileSteps;
+	for (int32 Index = 0; Index < 8; ++Index)
+		Inventory->SetItemStackCount(Items[Index].InstanceId, 1 + DynamicProfileSteps % 2);
+	if (DynamicProfileSteps % 5 == 0)
+	{
+		auto *Definition = Items.Last().ItemDef.Get();
+		Inventory->RemoveItemInstance(Items.Last().InstanceId);
+		Inventory->AddItemDefinition(Definition, 1);
+	}
+	InventoryModel->SetFilter(DynamicProfileSteps % 3 == 0 ? TEXT("NoMatchingProfileItem") : FString(), 0, DynamicProfileSteps % 2 == 0);
+	if (DynamicProfileSteps % 10 == 0) ToggleWindow(TEXT("Equipment"));
+	CSV_CUSTOM_STAT(ProjectJUI, DynamicSteps, DynamicProfileSteps, ECsvCustomStatOp::Set);
+	if (DynamicProfileSteps == 50)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DynamicProfileTimer);
+		InventoryModel->SetFilter(FString(), 0, false);
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_UI_DYNAMIC steps=50 deltaHz=5 changedPerStep=8 replacements=10 filterChanges=50 windowToggles=5 rows=%d"), Inventory->GetItemInstances().Num());
+	}
 #endif
 }
 
@@ -63,6 +96,8 @@ void UProject_JPlayerUIComponent::RunRuntimeSmoke()
 	if (!PC || !PC->IsLocalPlayerController() || !PC->HasAuthority() || GetNetMode() != NM_Standalone) return;
 	RefreshSources();
 	bool bSuccess = FPlatformProperties::RequiresCookedData() && Screen && Screen->ValidateRuntimeLayout() && BoundState.IsValid();
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIDynamicWorkload")))
+		bSuccess &= DynamicProfileSteps == 50 && InventoryModel && InventoryModel->InventoryEntries.Num() == 1000;
 	auto *Potion = LoadObject<UProject_JConsumableDefinition>(nullptr, TEXT("/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion"));
 	bSuccess &= Potion && LoadClass<UProject_JItemWidget>(nullptr, TEXT("/Game/UI/WBP_ProjectJItemTile.WBP_ProjectJItemTile_C")) &&
 		LoadObject<UProject_JMapDefinition>(nullptr, TEXT("/Game/UI/DA_ProjectJMap.DA_ProjectJMap"));
@@ -103,6 +138,20 @@ void UProject_JPlayerUIComponent::RunRuntimeSmoke()
 		BoundASC->RemoveActiveGameplayEffect(Handle);
 		StatusEffects->Refresh();
 		bSuccess &= !StatusEffects->States.ContainsByPredicate([&](const auto &State) { return State.Handle == Handle; });
+		// Exercise the screen boundary itself; this is not a socket reconnect/backend test.
+		auto *OriginalState = BoundState.Get();
+		auto *Frozen = InventoryModel->InventoryEntries.IsEmpty() ? nullptr :
+			DuplicateObject<UProject_JInventoryEntry>(InventoryModel->InventoryEntries[0], InventoryModel);
+		Screen->ToggleWindow(TEXT("Bag"));
+		if (Frozen) Screen->OpenSplit(Frozen);
+		PC->PlayerState = nullptr;
+		RefreshSources();
+		bSuccess &= !IsMenuOpen() && InventoryModel->InventoryEntries.IsEmpty() && !InventoryModel->bPending &&
+			!InventoryModel->IsCurrentEntry(Frozen) && StatusEffects->States.IsEmpty();
+		PC->PlayerState = OriginalState;
+		RefreshSources();
+		bSuccess &= BoundState == OriginalState && !InventoryModel->InventoryEntries.IsEmpty() && !InventoryModel->IsCurrentEntry(Frozen);
+		UE_LOG(LogTemp, Display, TEXT("PROJECT_J_UI_SOURCE_BOUNDARY success=%d restoredRows=%d"), bSuccess, InventoryModel->InventoryEntries.Num());
 	}
 	UE_LOG(LogTemp, Display, TEXT("PROJECT_J_UI_RUNTIME_SMOKE success=%d cooked=%d"), bSuccess, FPlatformProperties::RequiresCookedData());
 	FPlatformMisc::RequestExitWithStatus(false, bSuccess ? 0 : 1);
