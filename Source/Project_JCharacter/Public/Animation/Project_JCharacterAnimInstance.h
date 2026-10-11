@@ -12,6 +12,7 @@
 #include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationClock.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
+#include "Animation/Project_JBackwardRefacePolicy.h"
 #include "Animation/Project_JOneShotCurvePolicy.h"
 #include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
@@ -778,6 +779,8 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	bool bGeneralTurnCycleHandoff = false;
 	FName GeneralTurnDemand = NAME_None;
 	FName GeneralTurnReason = NAME_None;
+	FName BackwardRefaceReason = NAME_None;
+	float BackwardRefaceFacingError = 0, BackwardRefacePathError = 0;
 	bool bLocomotionSteeringEnabled = false;
 	EProject_JLocomotionSteeringGate LocomotionSteeringGate = EProject_JLocomotionSteeringGate::Unknown;
 	float LocomotionSteeringLookAhead = 0.5f;
@@ -1347,8 +1350,10 @@ protected:
 	void PublishThreadSafeDataToProxy(FProject_JAnimThreadSafeData& Data);
 	void UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const;
 	void UpdateGeneralTurnData(FProject_JAnimThreadSafeData& Data);
+	void UpdateBackwardRefaceData(FProject_JAnimThreadSafeData& Data);
 	bool IsMovingOneShotInputOwner(const FProject_JAnimThreadSafeData& Data) const;
 	FProject_JGeneralTurnPolicy GeneralTurnPolicy;
+	FProject_JBackwardRefacePolicy BackwardRefacePolicy;
 	FProject_JOneShotCurvePolicy OneShotCurvePolicy;
 	bool bOneShotCurveReleasedThisUpdate = false;
 	FProject_JTurnSelectionFeedback CompletedTurnFeedback;

@@ -85,6 +85,9 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 	{
 		const FProject_JMotionMatchingGaitDatabaseFamily& GaitFamily =
 			GaitIntent == EProject_JLocomotionGaitIntent::Sprint ? SprintDatabases : RunDatabases;
+		if (RotationMode == EProject_JLocomotionRotationMode::Strafe && GaitIntent == EProject_JLocomotionGaitIntent::Run &&
+			PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && GaitFamily.BackwardRefaceCycle &&
+			(Context.bBackwardRefaceCandidates || Context.bAllowBackwardRefaceContinuation)) return GaitFamily.BackwardRefaceCycle;
 		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily, Context.bUseSettledCycle))
 		{
 			return GaitDatabase;
@@ -107,6 +110,11 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindTurnCycleCompanion(
 	else if (!Context.bMovingTurn180 && Context.bGeneralTurnCandidates &&
 		Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && Primary == Family.Cycle)
 		Companion = Family.GeneralTurn.Get();
+	else if (!Context.bMovingTurn180 && !Context.bGeneralTurnCandidates && Context.bBackwardRefaceCandidates &&
+		Context.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Context.GaitIntent == EProject_JLocomotionGaitIntent::Run &&
+		Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && Primary == Family.BackwardRefaceCycle)
+		Companion = Family.BackwardReface.Get();
 	if (!Companion || Companion == Primary || !Primary->Schema || Primary->Schema != Companion->Schema) return nullptr;
 #if WITH_EDITORONLY_DATA
 	if (Primary->Schema->DataPreprocessor != EPoseSearchDataPreprocessor::None)
@@ -118,7 +126,8 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindTurnCycleCompanion(
 #else
 	// Both DataPreprocessor and NormalizationSet are editor-only. PreSave
 	// certifies either no preprocessing or shared statistics baked into indexes.
-	if (!(Primary == Family.TurnRedirect ? Family.bCookedTurnCycleCompatible : Family.bCookedGeneralTurnCompatible)) return nullptr;
+	if (!(Companion == Family.BackwardReface ? Family.bCookedBackwardRefaceCompatible :
+		Primary == Family.TurnRedirect ? Family.bCookedTurnCycleCompatible : Family.bCookedGeneralTurnCompatible)) return nullptr;
 #endif
 	return Companion;
 }
@@ -137,6 +146,7 @@ void UProject_JMotionMatchingAssetSet::PreSave(FObjectPreSaveContext SaveContext
 	{
 		Family->bCookedTurnCycleCompatible = Compatible(Family->Cycle, Family->TurnRedirect);
 		Family->bCookedGeneralTurnCompatible = Compatible(Family->Cycle, Family->GeneralTurn);
+		Family->bCookedBackwardRefaceCompatible = Compatible(Family->BackwardRefaceCycle, Family->BackwardReface);
 	}
 	Super::PreSave(SaveContext);
 }

@@ -1,0 +1,9 @@
+{
+  "engine": "5.7.4",
+  "blueprint": "/Game/Blueprints/SandboxCharacter_CMC_ABP",
+  "readOnly": true,
+  "UseExperimentalStateMachine": false,
+  "MMDatabaseLOD": 0,
+  "LocomotionSetup": 0,
+  "RootMotionMode": "<RootMotionMode.ROOT_MOTION_FROM_MONTAGES_ONLY: 3>"
+}

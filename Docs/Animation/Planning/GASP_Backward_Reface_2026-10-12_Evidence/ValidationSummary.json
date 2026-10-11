@@ -1,0 +1,431 @@
+[
+  {
+    "run": "FinalOn",
+    "success": 4,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.BackwardRefaceCMC",
+        "state": "Success",
+        "duration": 53.74715805053711
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.CandidatesAndInterrupt",
+        "state": "Success",
+        "duration": 0.008712299168109894
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.Lifetime",
+        "state": "Success",
+        "duration": 0.008110001683235168
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.ProductionData",
+        "state": "Success",
+        "duration": 0.008863799273967743
+      }
+    ]
+  },
+  {
+    "run": "FinalOff",
+    "success": 1,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.BackwardRefaceCMC",
+        "state": "Success",
+        "duration": 53.733314514160156
+      }
+    ]
+  },
+  {
+    "run": "InstallFinal",
+    "success": 1,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.ProductionData",
+        "state": "Success",
+        "duration": 0.10796640068292618
+      }
+    ]
+  },
+  {
+    "run": "Regression",
+    "success": 57,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.A_Prepare.OneShotReturnGraph",
+        "state": "Success",
+        "duration": 0.008017700165510178
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.ActiveGraphAudit",
+        "state": "Success",
+        "duration": 0.00818689912557602
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.SprintTurnCMC",
+        "state": "Success",
+        "duration": 0.008168298751115799
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.SprintTurnData",
+        "state": "Success",
+        "duration": 0.008049700409173965
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.StrafeCameraCMC",
+        "state": "Success",
+        "duration": 36.08030319213867
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+        "state": "Success",
+        "duration": 120.12947082519531
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.AuthoredPlayback",
+        "state": "Success",
+        "duration": 80.07860565185547
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.Compatibility",
+        "state": "Success",
+        "duration": 0.008267700672149658
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.ContinuousCurve",
+        "state": "Success",
+        "duration": 0.008263498544692993
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.ObservedAcuteTurn",
+        "state": "Success",
+        "duration": 0.008074499666690826
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotInput.ObservedGeneralTurn",
+        "state": "Success",
+        "duration": 0.008112799376249313
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotReturn.AuthoredPlayback",
+        "state": "Success",
+        "duration": 40.05214309692383
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotReturn.CommandOwnership",
+        "state": "Success",
+        "duration": 0.0083358995616436
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success",
+        "duration": 0.010202903300523758
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.CommittedAngles",
+        "state": "Success",
+        "duration": 0.0036274977028369904
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.ContinuousCurves",
+        "state": "Success",
+        "duration": 0.008178602904081345
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.CorrectionAdmission",
+        "state": "Success",
+        "duration": 0.008322399109601974
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.CycleHandoff",
+        "state": "Success",
+        "duration": 0.008232299238443375
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.CycleInventory",
+        "state": "Success",
+        "duration": 0.008246399462223053
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.Lifetime",
+        "state": "Success",
+        "duration": 0.008290298283100128
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.ModeSemantics",
+        "state": "Success",
+        "duration": 0.008252900093793869
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.ProductionData",
+        "state": "Success",
+        "duration": 0.011808402836322784
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.SmallBursts",
+        "state": "Success",
+        "duration": 0.008234798908233643
+      },
+      {
+        "fullTestPath": "ProjectJ.GeneralTurning.StrafeForwardCurve",
+        "state": "Success",
+        "duration": 0.008260499686002731
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.CandidatesAndLifetime",
+        "state": "Success",
+        "duration": 0.007988102734088898
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.ProductionCandidates",
+        "state": "Success",
+        "duration": 0.008282199501991272
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.ProductionGraph",
+        "state": "Success",
+        "duration": 0.008187800645828247
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.SteeringOwnership",
+        "state": "Success",
+        "duration": 0.011355701833963394
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.ActualEngineSearch",
+        "state": "Success",
+        "duration": 0.004567001014947891
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.NestedGraphSearch",
+        "state": "Success",
+        "duration": 0.008338198065757751
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+        "state": "Success",
+        "duration": 0.008067399263381958
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+        "state": "Success",
+        "duration": 0.008492499589920044
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.CoordinatedHandoff",
+        "state": "Success",
+        "duration": 0.00822489708662033
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.CoverageAndInterruption",
+        "state": "Success",
+        "duration": 0.008242998272180557
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.DecelerationLifetime",
+        "state": "Success",
+        "duration": 0.008256800472736359
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.Geometry",
+        "state": "Success",
+        "duration": 0.008260298520326614
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.Lifetime",
+        "state": "Success",
+        "duration": 0.008182398974895477
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.PhaseAndSearchEdge",
+        "state": "Success",
+        "duration": 0.00828460231423378
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.PreparationPhaseOwnership",
+        "state": "Success",
+        "duration": 0.008428998291492462
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.PreparedCorrection",
+        "state": "Success",
+        "duration": 0.00796939805150032
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.ProfileValidation",
+        "state": "Success",
+        "duration": 0.008224498480558395
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.SharedSampleValidity",
+        "state": "Success",
+        "duration": 0.00832889974117279
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.SprintFamilyOwnership",
+        "state": "Success",
+        "duration": 0.008207596838474274
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.TraceReadOnly",
+        "state": "Success",
+        "duration": 0.008303500711917877
+      },
+      {
+        "fullTestPath": "ProjectJ.MovingTurn.VisualRecoveryAndSelection",
+        "state": "Success",
+        "duration": 0.008507903665304184
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeDirection.CombatTurnLink",
+        "state": "Success",
+        "duration": 0.00812239944934845
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeDirection.PlaybackCoverage",
+        "state": "Success",
+        "duration": 0.008172199130058289
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeDirection.ProductionSchema",
+        "state": "Success",
+        "duration": 0.008487697690725327
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.ConsumedInputAtBrakingMinimum",
+        "state": "Success",
+        "duration": 0.009903501719236374
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.SearchContinuity",
+        "state": "Success",
+        "duration": 0.00801210105419159
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.SelectionAndLifecycle",
+        "state": "Success",
+        "duration": 0.010142799466848373
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeFacingRedirect.TrajectoryPrediction",
+        "state": "Success",
+        "duration": 0.010267999023199081
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeLowerBodyFacing.OwnershipAndFeet",
+        "state": "Success",
+        "duration": 0.008167799562215805
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success",
+        "duration": 0.010166998952627182
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success",
+        "duration": 0.010007299482822418
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success",
+        "duration": 0.009863600134849548
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeUpperBodyFacing.Policy",
+        "state": "Success",
+        "duration": 0.008316002786159515
+      }
+    ]
+  },
+  {
+    "run": "SprintActual",
+    "success": 2,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.SprintTurnCMC",
+        "state": "Success",
+        "duration": 101.64546966552734
+      },
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.SprintTurnData",
+        "state": "Success",
+        "duration": 0.007968999445438385
+      }
+    ]
+  },
+  {
+    "run": "PreCommitCleanup",
+    "success": 10,
+    "warnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "fullTestPath": "ProjectJ.Animation.Naturalness.BackwardRefaceCMC",
+        "state": "Success",
+        "duration": 46.70271682739258
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.CandidatesAndInterrupt",
+        "state": "Success",
+        "duration": 0.008268099278211594
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.Lifetime",
+        "state": "Success",
+        "duration": 0.007620897144079208
+      },
+      {
+        "fullTestPath": "ProjectJ.BackwardReface.ProductionData",
+        "state": "Success",
+        "duration": 0.00864499807357788
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.CandidatesAndLifetime",
+        "state": "Success",
+        "duration": 0.007569901645183563
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.ProductionCandidates",
+        "state": "Success",
+        "duration": 0.008251398801803589
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.ProductionGraph",
+        "state": "Success",
+        "duration": 0.008136402815580368
+      },
+      {
+        "fullTestPath": "ProjectJ.LocomotionContinuity.SteeringOwnership",
+        "state": "Success",
+        "duration": 0.01144539937376976
+      },
+      {
+        "fullTestPath": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+        "state": "Success",
+        "duration": 0.0051136016845703125
+      },
+      {
+        "fullTestPath": "ProjectJ.StrafeDirection.ProductionSchema",
+        "state": "Success",
+        "duration": 0.014276698231697083
+      }
+    ]
+  }
+]

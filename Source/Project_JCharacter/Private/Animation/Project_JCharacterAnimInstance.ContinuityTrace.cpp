@@ -127,7 +127,7 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 	Key.ExternalAnimation = Shot.SelectedAnimation ? Shot.SelectedAnimation->GetFName() : NAME_None;
 	Key.bInput = Data.Input.bHasMoveInput;
 	Key.bOverride = Shot.bShouldOverrideMotionMatching;
-	Key.bContinuation = Data.MotionMatching.SelectionContext.bAllowTurnContinuation || Data.MotionMatching.SelectionContext.bAllowGeneralTurnContinuation;
+	Key.bContinuation = Data.MotionMatching.SelectionContext.bAllowTurnContinuation || Data.MotionMatching.SelectionContext.bAllowGeneralTurnContinuation || Data.MotionMatching.SelectionContext.bAllowBackwardRefaceContinuation;
 	Key.bAcuteApproach = Data.TurnRequest.bAcuteApproach;
 	Key.AcuteReason = FName(Data.TurnRequest.AcuteReason);
 	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
@@ -255,6 +255,11 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 		CachedStateControllerLeftFootContact, CachedStateControllerRightFootContact);
 	if (Mode >= 2)
 	{
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("LocomotionContinuityTrace Stage=BackwardReface Frame=%llu T=%.3f Actor=%s Open=%d Continue=%d Reason=%s FacingError=%.1f PathError=%.1f"),
+			GFrameCounter, Now, *OwningCharacter->GetPathName(), Data.MotionMatching.SelectionContext.bBackwardRefaceCandidates,
+			Data.MotionMatching.SelectionContext.bAllowBackwardRefaceContinuation, *Data.BackwardRefaceReason.ToString(),
+			Data.BackwardRefaceFacingError, Data.BackwardRefacePathError);
 		const auto& Request = Data.TurnRequest;
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("LocomotionContinuityTrace Stage=TurnRequest Frame=%llu Actor=%s SampleFrame=%llu Age=%.3f Valid=%d Usable=%d Acute=%d Approach=%d AcuteReason=%s Guard=%s ActorYaw=%.1f FacingYaw=%.1f MoveYaw=%.1f VelocityYaw=%.1f Speed=%.1f Preparing=%d Demand=%d Sweep=%.1f RemainingFacing=%.1f VisualValid=%d VisualYaw=%.1f"),

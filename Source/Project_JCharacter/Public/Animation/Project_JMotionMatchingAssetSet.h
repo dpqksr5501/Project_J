@@ -56,6 +56,12 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSelectionContext
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bAllowGeneralTurnContinuation = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bBackwardRefaceCandidates = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bAllowBackwardRefaceContinuation = false;
 };
 
 USTRUCT(BlueprintType)
@@ -77,11 +83,21 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
 	TObjectPtr<UPoseSearchDatabase> GeneralTurn = nullptr;
 
+	/** Authored backward refacing starts, searched only beside qualified local Run Cycle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
+	TObjectPtr<UPoseSearchDatabase> BackwardReface = nullptr;
+
+	/** Same authored Cycle entries, normalized only with the scoped Reface search family. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Continuity")
+	TObjectPtr<UPoseSearchDatabase> BackwardRefaceCycle = nullptr;
+
 	/** Computed at save/cook from the actual editor normalization references. */
 	UPROPERTY(VisibleAnywhere, Category = "Motion Matching|Continuity")
 	bool bCookedTurnCycleCompatible = false;
 	UPROPERTY(VisibleAnywhere, Category = "Motion Matching|Continuity")
 	bool bCookedGeneralTurnCompatible = false;
+	UPROPERTY(VisibleAnywhere, Category = "Motion Matching|Continuity")
+	bool bCookedBackwardRefaceCompatible = false;
 };
 
 /**

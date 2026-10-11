@@ -528,6 +528,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn")
 	bool bEnableGeneralTurnCandidates = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Backward Reface")
+	bool bEnableBackwardRefaceCandidates = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn", meta = (ClampMin = "50", ClampMax = "500"))
 	float GeneralTurnEntrySpeed = 120.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|General Turn|Sprint", meta = (ClampMin = "50", ClampMax = "500"))

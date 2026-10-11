@@ -1,0 +1,1709 @@
+{
+  "GASP57_ShouldSpinTransition": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "43763DE54E711D994E60AFA5E813B643",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 EEFD468B4A8751ED80E7679828FB84D9,"
+        }
+      ],
+      "member": "ShouldSpinTransition"
+    },
+    {
+      "name": "K2Node_FunctionResult_0",
+      "pins": [
+        {
+          "PinId": "EEFD468B4A8751ED80E7679828FB84D9",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 43763DE54E711D994E60AFA5E813B643,"
+        },
+        {
+          "PinId": "60AA3F244AFBE89453A4A99375328DD4",
+          "PinName": "ReturnValue",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 116B2AC843378C2A1C6C62884A0B573E,"
+        }
+      ],
+      "member": "ShouldSpinTransition"
+    },
+    {
+      "name": "K2Node_VariableGet_1",
+      "pins": [
+        {
+          "PinId": "5E33FE4F41D0AAE2B1104A95D3ECE1CF",
+          "PinName": "CharacterTransform",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "36E88F5E4177CD257C10E48C2D1E7596",
+          "PinName": "CharacterTransform_Location",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0"
+        },
+        {
+          "PinId": "F630C307414820541010259B63C7F6AC",
+          "PinName": "CharacterTransform_Rotation",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0",
+          "LinkedTo": "K2Node_CallFunction_4 2C927FF04BF11CD89D1A1FB28F03F37F,"
+        },
+        {
+          "PinId": "50695F704970F44D4DC510A1F03FEA8F",
+          "PinName": "CharacterTransform_Scale",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0"
+        },
+        {
+          "PinId": "63EB3C154682930FE2678594B90912DF",
+          "PinName": "self"
+        }
+      ],
+      "member": "CharacterTransform"
+    },
+    {
+      "name": "K2Node_VariableGet_2",
+      "pins": [
+        {
+          "PinId": "503673284A637C9A367F70ACEE613FA3",
+          "PinName": "RootTransform",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "B608EC754440BB14D99508B92C4138ED",
+          "PinName": "RootTransform_Location",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0"
+        },
+        {
+          "PinId": "0AB9183D4AFC8AD0F7AB02B777D1EB17",
+          "PinName": "RootTransform_Rotation",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0",
+          "LinkedTo": "K2Node_CallFunction_4 2E97048F45310B10760459B7E1F06B5B,"
+        },
+        {
+          "PinId": "B4257FE04C052E5B811348A24EA4B368",
+          "PinName": "RootTransform_Scale",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0"
+        },
+        {
+          "PinId": "3016178B4CDFC08EC1B72599EE582DA6",
+          "PinName": "self"
+        }
+      ],
+      "member": "RootTransform"
+    },
+    {
+      "name": "K2Node_CallFunction_4",
+      "pins": [
+        {
+          "PinId": "907346BB4D0A46D4BDF7759B22AC216B",
+          "PinName": "self"
+        },
+        {
+          "PinId": "2C927FF04BF11CD89D1A1FB28F03F37F",
+          "PinName": "A",
+          "DefaultValue": "0, 0, 0",
+          "LinkedTo": "K2Node_VariableGet_1 F630C307414820541010259B63C7F6AC,"
+        },
+        {
+          "PinId": "2E97048F45310B10760459B7E1F06B5B",
+          "PinName": "B",
+          "DefaultValue": "0, 0, 0",
+          "LinkedTo": "K2Node_VariableGet_2 0AB9183D4AFC8AD0F7AB02B777D1EB17,"
+        },
+        {
+          "PinId": "FE4D69FA4231A656A012FAA0D5A0B103",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0, 0, 0"
+        },
+        {
+          "PinId": "99DCA11A4DB2CD26B466BCA270E7EC7A",
+          "PinName": "ReturnValue_Roll",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0.0"
+        },
+        {
+          "PinId": "286048944687F0E8213888B861C05BC3",
+          "PinName": "ReturnValue_Pitch",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0.0"
+        },
+        {
+          "PinId": "68839F4C4C2D82B652AA0D898C52EDF4",
+          "PinName": "ReturnValue_Yaw",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0.0",
+          "LinkedTo": "K2Node_CallFunction_6 001F8E8241B402AE67FBDCBAC7D6A932,"
+        }
+      ],
+      "member": "NormalizedDeltaRotator"
+    },
+    {
+      "name": "K2Node_CallFunction_6",
+      "pins": [
+        {
+          "PinId": "D82EF99B47AA723AC60D75906E8C0C61",
+          "PinName": "self"
+        },
+        {
+          "PinId": "001F8E8241B402AE67FBDCBAC7D6A932",
+          "PinName": "A",
+          "DefaultValue": "0.0",
+          "LinkedTo": "K2Node_CallFunction_4 68839F4C4C2D82B652AA0D898C52EDF4,"
+        },
+        {
+          "PinId": "AEC4D5934D451B3EAA6B92BE20B81C78",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0.0",
+          "LinkedTo": "K2Node_PromotableOperator_3 80BC626E426A9BB0D907AF8D34B75FD0,"
+        }
+      ],
+      "member": "Abs"
+    },
+    {
+      "name": "K2Node_PromotableOperator_3",
+      "pins": [
+        {
+          "PinId": "80BC626E426A9BB0D907AF8D34B75FD0",
+          "PinName": "A",
+          "LinkedTo": "K2Node_CallFunction_6 AEC4D5934D451B3EAA6B92BE20B81C78,"
+        },
+        {
+          "PinId": "CCBB4DED4A0614A057C874B7CE80944A",
+          "PinName": "B",
+          "DefaultValue": "130.000000"
+        },
+        {
+          "PinId": "D0C3A95A44FC68638BC4E78CD5AEB61D",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 87217BAE4153E02B3210E7AF86D06CDD,"
+        },
+        {
+          "PinId": "E79038614A855F4A211D6AB240B7E728",
+          "PinName": "ErrorTolerance"
+        }
+      ],
+      "member": "GreaterEqual_DoubleDouble"
+    },
+    {
+      "name": "K2Node_VariableGet_7",
+      "pins": [
+        {
+          "PinId": "5979A0624336C5B84C8EEEBED302049A",
+          "PinName": "CurrentDatabaseTags",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallArrayFunction_2 E1256FB64A2BF522289F6ABF083D4E51,"
+        },
+        {
+          "PinId": "2823EEA84A765E20DA7C4C97B726B3E9",
+          "PinName": "self"
+        }
+      ],
+      "member": "CurrentDatabaseTags"
+    },
+    {
+      "name": "K2Node_CallArrayFunction_2",
+      "pins": [
+        {
+          "PinId": "5EFCBB7E4CDED84F9BC1D592AAF30714",
+          "PinName": "self"
+        },
+        {
+          "PinId": "E1256FB64A2BF522289F6ABF083D4E51",
+          "PinName": "TargetArray",
+          "LinkedTo": "K2Node_VariableGet_7 5979A0624336C5B84C8EEEBED302049A,"
+        },
+        {
+          "PinId": "2264A6604D73F2CE4B03BBA38ED48578",
+          "PinName": "ItemToFind",
+          "DefaultValue": "Pivots"
+        },
+        {
+          "PinId": "B4C2EBED4ECABBCB669D018D2E510672",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CallFunction_2 361F3787441759FD407176B81BD7A992,"
+        }
+      ],
+      "member": "Array_Contains"
+    },
+    {
+      "name": "K2Node_CallFunction_2",
+      "pins": [
+        {
+          "PinId": "E2D91A834F52C12B3CA4ABB0097DA02E",
+          "PinName": "self"
+        },
+        {
+          "PinId": "361F3787441759FD407176B81BD7A992",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CallArrayFunction_2 B4C2EBED4ECABBCB669D018D2E510672,"
+        },
+        {
+          "PinId": "6C9FA65C4F8FE3D24AE1BE9D7E0C0AFA",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 44F530C744CF43AF3AF1FFAE9725C74F,"
+        }
+      ],
+      "member": "Not_PreBool"
+    },
+    {
+      "name": "K2Node_CommutativeAssociativeBinaryOperator_0",
+      "pins": [
+        {
+          "PinId": "0B7DBCA14D22586500C1EF86E9074D98",
+          "PinName": "self"
+        },
+        {
+          "PinId": "87217BAE4153E02B3210E7AF86D06CDD",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_PromotableOperator_3 D0C3A95A44FC68638BC4E78CD5AEB61D,"
+        },
+        {
+          "PinId": "344008E941FA54BA57950DA9440405CA",
+          "PinName": "B",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_PromotableOperator_0 2ECF7E1E44B13406E3129EAE861BFE51,"
+        },
+        {
+          "PinId": "116B2AC843378C2A1C6C62884A0B573E",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_FunctionResult_0 60AA3F244AFBE89453A4A99375328DD4,"
+        },
+        {
+          "PinId": "44F530C744CF43AF3AF1FFAE9725C74F",
+          "PinName": "C",
+          "LinkedTo": "K2Node_CallFunction_2 6C9FA65C4F8FE3D24AE1BE9D7E0C0AFA,"
+        }
+      ],
+      "member": "BooleanAND"
+    },
+    {
+      "name": "K2Node_VariableGet_0",
+      "pins": [
+        {
+          "PinId": "82FAEED04341DC80FB1775890AEE3A26",
+          "PinName": "Speed2D",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "0.0",
+          "LinkedTo": "K2Node_PromotableOperator_0 4E2BB3CD4E85C95EEF5E9984B0821A86,"
+        },
+        {
+          "PinId": "254B44C0416C15A239DBF49EFFF93AB6",
+          "PinName": "self"
+        }
+      ],
+      "member": "Speed2D"
+    },
+    {
+      "name": "K2Node_PromotableOperator_0",
+      "pins": [
+        {
+          "PinId": "4E2BB3CD4E85C95EEF5E9984B0821A86",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_0 82FAEED04341DC80FB1775890AEE3A26,"
+        },
+        {
+          "PinId": "8A0044BF4ACC83B4F9F0DA9308AFF1C1",
+          "PinName": "B",
+          "DefaultValue": "150.000000"
+        },
+        {
+          "PinId": "2ECF7E1E44B13406E3129EAE861BFE51",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 344008E941FA54BA57950DA9440405CA,"
+        },
+        {
+          "PinId": "DB96037F4C491C812E1328A316C55215",
+          "PinName": "ErrorTolerance"
+        }
+      ],
+      "member": "GreaterEqual_DoubleDouble"
+    }
+  ],
+  "GASP57_Get_OffsetRootRotationMode": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "1684F7264705CE65E0CC569DE25FB791",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_IfThenElse_1 9296BC204E0448C8FB533C88C0843B2E,"
+        }
+      ],
+      "member": "Get_OffsetRootRotationMode"
+    },
+    {
+      "name": "K2Node_FunctionResult_2",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_1 9DB75F7A46BF21C245488D8816355DE7,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Release"
+        }
+      ],
+      "member": "Get_OffsetRootRotationMode"
+    },
+    {
+      "name": "K2Node_IfThenElse_1",
+      "pins": [
+        {
+          "PinId": "9296BC204E0448C8FB533C88C0843B2E",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 1684F7264705CE65E0CC569DE25FB791,"
+        },
+        {
+          "PinId": "81B5280F4C9F6725EE60748F6C91B0B1",
+          "PinName": "Condition",
+          "DefaultValue": "true",
+          "LinkedTo": "K2Node_CallFunction_2 5C976FC049959752EFCE93AF075BBE16,"
+        },
+        {
+          "PinId": "9DB75F7A46BF21C245488D8816355DE7",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_2 FA52A0C7469D6918D40B66BFDAB177FB,"
+        },
+        {
+          "PinId": "EEE473A54D8D158178318897E29465AE",
+          "PinName": "else",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_1 FA52A0C7469D6918D40B66BFDAB177FB,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_CallFunction_2",
+      "pins": [
+        {
+          "PinId": "B252BBE44A173AC605C27CB6698FAB6D",
+          "PinName": "self"
+        },
+        {
+          "PinId": "5388F0C14253F4A41F1336AEFF3C63C7",
+          "PinName": "SlotNodeName",
+          "DefaultValue": "DefaultSlot"
+        },
+        {
+          "PinId": "5C976FC049959752EFCE93AF075BBE16",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_IfThenElse_1 81B5280F4C9F6725EE60748F6C91B0B1,"
+        }
+      ],
+      "member": "IsSlotActive"
+    },
+    {
+      "name": "K2Node_FunctionResult_1",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_1 EEE473A54D8D158178318897E29465AE,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Accumulate"
+        }
+      ],
+      "member": "Get_OffsetRootRotationMode"
+    }
+  ],
+  "GASP57_Get_OffsetRootTranslationMode": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "1684F7264705CE65E0CC569DE25FB791",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_IfThenElse_0 9296BC204E0448C8FB533C88C0843B2E,"
+        }
+      ],
+      "member": "Get_OffsetRootTranslationMode"
+    },
+    {
+      "name": "K2Node_FunctionResult_3",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_1 B2D216D34BD027E82ED5479A3154E35C,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Interpolate"
+        }
+      ],
+      "member": "Get_OffsetRootTranslationMode"
+    },
+    {
+      "name": "K2Node_IfThenElse_1",
+      "pins": [
+        {
+          "PinId": "EFDDCC4746B5D3FED14BA08CBAED9314",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_SwitchEnum_1 71DE42ED446832422ED33EB9B2484640,"
+        },
+        {
+          "PinId": "853B09AA40DC16BD7B640FB23CC5D77C",
+          "PinName": "Condition",
+          "DefaultValue": "true",
+          "LinkedTo": "K2Node_CallFunction_0 08BDFF2B4A384AC3F7987C87E0DA2D4A,"
+        },
+        {
+          "PinId": "B2D216D34BD027E82ED5479A3154E35C",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_3 FA52A0C7469D6918D40B66BFDAB177FB,"
+        },
+        {
+          "PinId": "F935836D4EEEAD114DCD22BE8DC95BCC",
+          "PinName": "else",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_2 FA52A0C7469D6918D40B66BFDAB177FB,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_CallFunction_0",
+      "pins": [
+        {
+          "PinId": "2AEBC4284913877DB9330B8B97B1BDE5",
+          "PinName": "self"
+        },
+        {
+          "PinId": "08BDFF2B4A384AC3F7987C87E0DA2D4A",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_IfThenElse_1 853B09AA40DC16BD7B640FB23CC5D77C,"
+        }
+      ],
+      "member": "IsMoving"
+    },
+    {
+      "name": "K2Node_FunctionResult_2",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_1 F935836D4EEEAD114DCD22BE8DC95BCC,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Release"
+        }
+      ],
+      "member": "Get_OffsetRootTranslationMode"
+    },
+    {
+      "name": "K2Node_VariableGet_2",
+      "pins": [
+        {
+          "PinId": "7EB29C2A47445CC2EF470789843C2C34",
+          "PinName": "MovementMode",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_SwitchEnum_1 24CB96A441FAE4EDAC212F8CB10A8AE4,"
+        },
+        {
+          "PinId": "0907FD1745998D09006293A638A27E7E",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementMode"
+    },
+    {
+      "name": "K2Node_SwitchEnum_1",
+      "pins": [
+        {
+          "PinId": "73AD343B4DC85B9B1F5979B35CB99774",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_0 EEE473A54D8D158178318897E29465AE,"
+        },
+        {
+          "PinId": "24CB96A441FAE4EDAC212F8CB10A8AE4",
+          "PinName": "Selection",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_VariableGet_2 7EB29C2A47445CC2EF470789843C2C34,"
+        },
+        {
+          "PinId": "8F8E9AC84BDBFDA193AD219E43124961",
+          "PinName": "NotEqual_ByteByte"
+        },
+        {
+          "PinId": "71DE42ED446832422ED33EB9B2484640",
+          "PinName": "NewEnumerator4",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_IfThenElse_1 EFDDCC4746B5D3FED14BA08CBAED9314,"
+        },
+        {
+          "PinId": "E452F8F449FBB806FBDAD7A77309BD7A",
+          "PinName": "NewEnumerator5",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 FA52A0C7469D6918D40B66BFDAB177FB,"
+        },
+        {
+          "PinId": "61BA7AFC415BAC8099A6EF9FDA31D005",
+          "PinName": "NewEnumerator6",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "4B4B1CEE4744375CDAB8629E00A106EA",
+          "PinName": "NewEnumerator7",
+          "Direction": "EGPD_Output"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_FunctionResult_0",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_SwitchEnum_1 E452F8F449FBB806FBDAD7A77309BD7A,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Release"
+        }
+      ],
+      "member": "Get_OffsetRootTranslationMode"
+    },
+    {
+      "name": "K2Node_IfThenElse_0",
+      "pins": [
+        {
+          "PinId": "9296BC204E0448C8FB533C88C0843B2E",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 1684F7264705CE65E0CC569DE25FB791,"
+        },
+        {
+          "PinId": "81B5280F4C9F6725EE60748F6C91B0B1",
+          "PinName": "Condition",
+          "DefaultValue": "true",
+          "LinkedTo": "K2Node_CallFunction_2 5C976FC049959752EFCE93AF075BBE16,"
+        },
+        {
+          "PinId": "9DB75F7A46BF21C245488D8816355DE7",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_1 FA52A0C7469D6918D40B66BFDAB177FB,"
+        },
+        {
+          "PinId": "EEE473A54D8D158178318897E29465AE",
+          "PinName": "else",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_SwitchEnum_1 73AD343B4DC85B9B1F5979B35CB99774,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_CallFunction_2",
+      "pins": [
+        {
+          "PinId": "B252BBE44A173AC605C27CB6698FAB6D",
+          "PinName": "self"
+        },
+        {
+          "PinId": "5388F0C14253F4A41F1336AEFF3C63C7",
+          "PinName": "SlotNodeName",
+          "DefaultValue": "DefaultSlot"
+        },
+        {
+          "PinId": "5C976FC049959752EFCE93AF075BBE16",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_IfThenElse_0 81B5280F4C9F6725EE60748F6C91B0B1,"
+        }
+      ],
+      "member": "IsSlotActive"
+    },
+    {
+      "name": "K2Node_FunctionResult_1",
+      "pins": [
+        {
+          "PinId": "FA52A0C7469D6918D40B66BFDAB177FB",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_IfThenElse_0 9DB75F7A46BF21C245488D8816355DE7,"
+        },
+        {
+          "PinId": "E8E95EB543486184E6B48CB8CFE41826",
+          "PinName": "ReturnValue",
+          "DefaultValue": "Release"
+        }
+      ],
+      "member": "Get_OffsetRootTranslationMode"
+    }
+  ],
+  "GASP57_Get_MMInterruptMode": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "0548235B43CDB4B07EC155978CF75D7D",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 0B53C9294E29C20226CF84B571171471,"
+        }
+      ],
+      "member": "Get_MMInterruptMode"
+    },
+    {
+      "name": "K2Node_FunctionResult_0",
+      "pins": [
+        {
+          "PinId": "0B53C9294E29C20226CF84B571171471",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 0548235B43CDB4B07EC155978CF75D7D,"
+        },
+        {
+          "PinId": "F7A072C84AF4A5489CFA6FB50D2F83C6",
+          "PinName": "ReturnValue",
+          "DefaultValue": "DoNotInterrupt",
+          "LinkedTo": "K2Node_Select_0 B2F94F90439BAB856EBD96B74A6F9DCA,"
+        }
+      ],
+      "member": "Get_MMInterruptMode"
+    },
+    {
+      "name": "K2Node_Select_0",
+      "pins": [
+        {
+          "PinId": "C59472BB4EB76E03DB4E67B499762658",
+          "PinName": "Option 0",
+          "DefaultValue": "DoNotInterrupt"
+        },
+        {
+          "PinId": "9B8315E947FDFFE4EA64ABA44AA2319A",
+          "PinName": "Option 1",
+          "DefaultValue": "InterruptOnDatabaseChange"
+        },
+        {
+          "PinId": "DA9B5D0540854E087315C5AA95806D53",
+          "PinName": "Index",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 52819C574AE7A6B60227B8ADF64D4CC9,"
+        },
+        {
+          "PinId": "B2F94F90439BAB856EBD96B74A6F9DCA",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 F7A072C84AF4A5489CFA6FB50D2F83C6,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableGet_10",
+      "pins": [
+        {
+          "PinId": "DBDDE40349D06C02377EEB93BE9E65C4",
+          "PinName": "MovementState",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumInequality_0 41F5776F4D95C1CDC821E088CD0B59EF,"
+        },
+        {
+          "PinId": "03FD9E64488321B993320186C79CE2E5",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementState"
+    },
+    {
+      "name": "K2Node_VariableGet_1",
+      "pins": [
+        {
+          "PinId": "919B646B4CA6832AFA96C1A669DB331D",
+          "PinName": "MovementState_LastFrame",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumInequality_0 0C6D760B4F7B6594B7C72991FB94CB46,"
+        },
+        {
+          "PinId": "B0F902084A8A2AC381C060843755190D",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementState_LastFrame"
+    },
+    {
+      "name": "K2Node_EnumInequality_0",
+      "pins": [
+        {
+          "PinId": "D5A4C7E048AC02D3D74171B06E201F11",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_1 C74349A14453315EB53976B0AE7017FB,"
+        },
+        {
+          "PinId": "41F5776F4D95C1CDC821E088CD0B59EF",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_10 DBDDE40349D06C02377EEB93BE9E65C4,"
+        },
+        {
+          "PinId": "0C6D760B4F7B6594B7C72991FB94CB46",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_VariableGet_1 919B646B4CA6832AFA96C1A669DB331D,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_CommutativeAssociativeBinaryOperator_0",
+      "pins": [
+        {
+          "PinId": "42260E254644BB64FF8AB3A595C421E1",
+          "PinName": "self"
+        },
+        {
+          "PinId": "713350474A65A52E42340A9C5E95A1C2",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_EnumInequality_1 9FF02D904F27DC911CA3CFA824BDDABF,"
+        },
+        {
+          "PinId": "C41307D24E290A565897A597EE7A197E",
+          "PinName": "B",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_2 7FA7D3104B33741CE6CCA8AE4A79C4F2,"
+        },
+        {
+          "PinId": "52819C574AE7A6B60227B8ADF64D4CC9",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_Select_0 DA9B5D0540854E087315C5AA95806D53,"
+        }
+      ],
+      "member": "BooleanOR"
+    },
+    {
+      "name": "K2Node_VariableGet_5",
+      "pins": [
+        {
+          "PinId": "B3E5F12541A17B0FAC99159A71C8A482",
+          "PinName": "MovementMode",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumInequality_1 B0FB313E4B7BEAE4D6CBA39C26077E94,"
+        },
+        {
+          "PinId": "A5A0E1FF4B726798FAE2D8AB277DA6E8",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementMode"
+    },
+    {
+      "name": "K2Node_VariableGet_4",
+      "pins": [
+        {
+          "PinId": "686EB24947E6F99D925955B8A050D0A2",
+          "PinName": "MovementMode_LastFrame",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumInequality_1 DBA04E504E212939DD1CF18B2B35B760,"
+        },
+        {
+          "PinId": "8E86F5584359788BC18A2D83E0F27BC7",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementMode_LastFrame"
+    },
+    {
+      "name": "K2Node_EnumInequality_1",
+      "pins": [
+        {
+          "PinId": "9FF02D904F27DC911CA3CFA824BDDABF",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 713350474A65A52E42340A9C5E95A1C2,"
+        },
+        {
+          "PinId": "B0FB313E4B7BEAE4D6CBA39C26077E94",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_5 B3E5F12541A17B0FAC99159A71C8A482,"
+        },
+        {
+          "PinId": "DBA04E504E212939DD1CF18B2B35B760",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_VariableGet_4 686EB24947E6F99D925955B8A050D0A2,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableGet_6",
+      "pins": [
+        {
+          "PinId": "734179F14B13140674490F863FDB3AE4",
+          "PinName": "Gait",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_EnumInequality_3 477E60F7487520549B8189ACD98E335A,"
+        },
+        {
+          "PinId": "CDBDF1D74F3FC2A8F0922FBC13EF2DD0",
+          "PinName": "self"
+        }
+      ],
+      "member": "Gait"
+    },
+    {
+      "name": "K2Node_VariableGet_7",
+      "pins": [
+        {
+          "PinId": "DF73EF6B44596B5FCC64D09823E6A005",
+          "PinName": "Gait_LastFrame",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_EnumInequality_3 624F436445483338480C13A98AEB4B2A,"
+        },
+        {
+          "PinId": "39569F0E4A6A9B1C7098F4A20D107C55",
+          "PinName": "self"
+        }
+      ],
+      "member": "Gait_LastFrame"
+    },
+    {
+      "name": "K2Node_EnumInequality_3",
+      "pins": [
+        {
+          "PinId": "9B0BC8E0402B245CA37F738FEA120C25",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_3 0BE13BDF4EF866914B0734A3A0A768AA,"
+        },
+        {
+          "PinId": "477E60F7487520549B8189ACD98E335A",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_6 734179F14B13140674490F863FDB3AE4,"
+        },
+        {
+          "PinId": "624F436445483338480C13A98AEB4B2A",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_VariableGet_7 DF73EF6B44596B5FCC64D09823E6A005,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableGet_8",
+      "pins": [
+        {
+          "PinId": "4393BAC742E041E9711AC2B8FF0A0C3E",
+          "PinName": "Stance",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_EnumInequality_4 8C7B780D43FCB96149C3778F3A926369,"
+        },
+        {
+          "PinId": "F1CC299246ED577523BE53AFC0551F1B",
+          "PinName": "self"
+        }
+      ],
+      "member": "Stance"
+    },
+    {
+      "name": "K2Node_EnumInequality_4",
+      "pins": [
+        {
+          "PinId": "6B55E631456E1E23E73DD49C625A88BF",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_1 AA32D24A4D5A1995428D3A8C6E77263C,"
+        },
+        {
+          "PinId": "8C7B780D43FCB96149C3778F3A926369",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_8 4393BAC742E041E9711AC2B8FF0A0C3E,"
+        },
+        {
+          "PinId": "823058D7466F97ED2760B09138073E5A",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_VariableGet_9 8480C20343F411CD0380519A9D255759,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableGet_9",
+      "pins": [
+        {
+          "PinId": "8480C20343F411CD0380519A9D255759",
+          "PinName": "Stance_LastFrame",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator0",
+          "LinkedTo": "K2Node_EnumInequality_4 823058D7466F97ED2760B09138073E5A,"
+        },
+        {
+          "PinId": "D26D064C49750F37E7E11C9B9ED7DE7D",
+          "PinName": "self"
+        }
+      ],
+      "member": "Stance_LastFrame"
+    },
+    {
+      "name": "K2Node_CommutativeAssociativeBinaryOperator_1",
+      "pins": [
+        {
+          "PinId": "DC17811C450EEC6AB731C5A52A28F38C",
+          "PinName": "self"
+        },
+        {
+          "PinId": "C74349A14453315EB53976B0AE7017FB",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_EnumInequality_0 D5A4C7E048AC02D3D74171B06E201F11,"
+        },
+        {
+          "PinId": "82C4A5824BFBDB3537965BBAD1190E68",
+          "PinName": "B",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_3 A41A97B644B354FD7329408155A8CEF8,"
+        },
+        {
+          "PinId": "572C5C9D4648B65E704537A2994AF530",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_2 BB433DB641B082FB752204BBC5A4B2E0,"
+        },
+        {
+          "PinId": "AA32D24A4D5A1995428D3A8C6E77263C",
+          "PinName": "C",
+          "LinkedTo": "K2Node_EnumInequality_4 6B55E631456E1E23E73DD49C625A88BF,"
+        }
+      ],
+      "member": "BooleanOR"
+    },
+    {
+      "name": "K2Node_CommutativeAssociativeBinaryOperator_2",
+      "pins": [
+        {
+          "PinId": "64388F2647C24B61DCD30699FC0128A7",
+          "PinName": "self"
+        },
+        {
+          "PinId": "BB433DB641B082FB752204BBC5A4B2E0",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_1 572C5C9D4648B65E704537A2994AF530,"
+        },
+        {
+          "PinId": "26B9243E41B271DAB7DA5A874936F0CF",
+          "PinName": "B",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_EnumEquality_0 1D9FFD7C408FB648B95D8889D2E36CF2,"
+        },
+        {
+          "PinId": "7FA7D3104B33741CE6CCA8AE4A79C4F2",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_0 C41307D24E290A565897A597EE7A197E,"
+        }
+      ],
+      "member": "BooleanAND"
+    },
+    {
+      "name": "K2Node_VariableGet_3",
+      "pins": [
+        {
+          "PinId": "B3E5F12541A17B0FAC99159A71C8A482",
+          "PinName": "MovementMode",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumEquality_0 96A7838B4C7893D15211D495C792F4A6,"
+        },
+        {
+          "PinId": "A5A0E1FF4B726798FAE2D8AB277DA6E8",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementMode"
+    },
+    {
+      "name": "K2Node_EnumEquality_0",
+      "pins": [
+        {
+          "PinId": "1D9FFD7C408FB648B95D8889D2E36CF2",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_2 26B9243E41B271DAB7DA5A874936F0CF,"
+        },
+        {
+          "PinId": "96A7838B4C7893D15211D495C792F4A6",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_3 B3E5F12541A17B0FAC99159A71C8A482,"
+        },
+        {
+          "PinId": "C5878C84430DAFDF6E04268C8D65AF70",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator4"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_CommutativeAssociativeBinaryOperator_3",
+      "pins": [
+        {
+          "PinId": "2C82DA3442E78555530775BFA0FDB050",
+          "PinName": "self"
+        },
+        {
+          "PinId": "0BE13BDF4EF866914B0734A3A0A768AA",
+          "PinName": "A",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_EnumInequality_3 9B0BC8E0402B245CA37F738FEA120C25,"
+        },
+        {
+          "PinId": "616DE3F5445943D764843781A687B52E",
+          "PinName": "B",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_EnumEquality_2 48845E8C4841A05D2422D996DAA5F38E,"
+        },
+        {
+          "PinId": "A41A97B644B354FD7329408155A8CEF8",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_1 82C4A5824BFBDB3537965BBAD1190E68,"
+        }
+      ],
+      "member": "BooleanAND"
+    },
+    {
+      "name": "K2Node_VariableGet_0",
+      "pins": [
+        {
+          "PinId": "DBDDE40349D06C02377EEB93BE9E65C4",
+          "PinName": "MovementState",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "NewEnumerator4",
+          "LinkedTo": "K2Node_EnumEquality_2 4ABE5F6748ADED4BBC4F3BA5EBD31453,"
+        },
+        {
+          "PinId": "03FD9E64488321B993320186C79CE2E5",
+          "PinName": "self"
+        }
+      ],
+      "member": "MovementState"
+    },
+    {
+      "name": "K2Node_EnumEquality_2",
+      "pins": [
+        {
+          "PinId": "48845E8C4841A05D2422D996DAA5F38E",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CommutativeAssociativeBinaryOperator_3 616DE3F5445943D764843781A687B52E,"
+        },
+        {
+          "PinId": "4ABE5F6748ADED4BBC4F3BA5EBD31453",
+          "PinName": "A",
+          "LinkedTo": "K2Node_VariableGet_0 DBDDE40349D06C02377EEB93BE9E65C4,"
+        },
+        {
+          "PinId": "9B2EC4064AAA1933FB6DBFB0B75B437E",
+          "PinName": "B",
+          "DefaultValue": "NewEnumerator0"
+        }
+      ]
+    }
+  ],
+  "GASP57_Update_MotionMatching": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "27633CF14878EC9BCE1D00B49EA43405",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_EvaluateChooser2_1 39E29E5349F736785723F9A8F86D4338,"
+        },
+        {
+          "PinId": "07A282DF41EE451D03365188C6F88F23",
+          "PinName": "Context",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "4A97C488419ABF749F77FF85460E62B2",
+          "PinName": "Node",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_1 CF5F3DBF42F61F496F99859EB0EBDF43,"
+        }
+      ],
+      "member": "Update_MotionMatching"
+    },
+    {
+      "name": "K2Node_FunctionResult_0",
+      "pins": [
+        {
+          "PinId": "187BDB784DDECDAC190EBBA8DFB41B7D",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_CallFunction_2 BB1BC51C4C98CFA5340532AAEB5EC3D1,"
+        }
+      ],
+      "member": "Update_MotionMatching"
+    },
+    {
+      "name": "K2Node_CallFunction_1",
+      "pins": [
+        {
+          "PinId": "2A1578C74DF390DF8537969FD80AA5EC",
+          "PinName": "self"
+        },
+        {
+          "PinId": "CF5F3DBF42F61F496F99859EB0EBDF43",
+          "PinName": "Node",
+          "LinkedTo": "K2Node_FunctionEntry_0 4A97C488419ABF749F77FF85460E62B2,"
+        },
+        {
+          "PinId": "571499C144AD819F6B2A6FBEC65F6832",
+          "PinName": "MotionMatchingNode",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_2 5F7CB9F242F85935CB86E6832F21EB58,"
+        },
+        {
+          "PinId": "402EB4FF48005EF8858851A0A3CCE109",
+          "PinName": "Result",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false"
+        }
+      ],
+      "member": "ConvertToMotionMatchingNodePure"
+    },
+    {
+      "name": "K2Node_CallFunction_2",
+      "pins": [
+        {
+          "PinId": "BF72BCA7497205C46467DEA59C27B557",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_VariableSet_0 0B11D2CF4C6829D18FDB538C4EE7FFA7,"
+        },
+        {
+          "PinId": "BB1BC51C4C98CFA5340532AAEB5EC3D1",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 187BDB784DDECDAC190EBBA8DFB41B7D,"
+        },
+        {
+          "PinId": "C6CE5438443A9C0387B7EFBC7E7BBEB0",
+          "PinName": "self"
+        },
+        {
+          "PinId": "5F7CB9F242F85935CB86E6832F21EB58",
+          "PinName": "MotionMatchingNode",
+          "LinkedTo": "K2Node_CallFunction_1 571499C144AD819F6B2A6FBEC65F6832,"
+        },
+        {
+          "PinId": "8EA6FDF94F4F9DB7E326E3BB0760CD1A",
+          "PinName": "Databases",
+          "LinkedTo": "K2Node_VariableSet_0 657BBE5F43ECE80C7342DAB3E3CE9453,"
+        },
+        {
+          "PinId": "359FB2F945EADF078DDD59B51CF300CF",
+          "PinName": "InterruptMode",
+          "DefaultValue": "DoNotInterrupt",
+          "LinkedTo": "K2Node_CallFunction_0 F347F0C94779AFD4452482B4721B096E,"
+        }
+      ],
+      "member": "SetDatabasesToSearch"
+    },
+    {
+      "name": "K2Node_CallFunction_0",
+      "pins": [
+        {
+          "PinId": "3DADCE6B4714E569D2CD1A88D3A2F685",
+          "PinName": "self"
+        },
+        {
+          "PinId": "F347F0C94779AFD4452482B4721B096E",
+          "PinName": "ReturnValue",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "DoNotInterrupt",
+          "LinkedTo": "K2Node_CallFunction_2 359FB2F945EADF078DDD59B51CF300CF,"
+        }
+      ],
+      "member": "Get_MMInterruptMode"
+    },
+    {
+      "name": "K2Node_EvaluateChooser2_1",
+      "pins": [
+        {
+          "PinId": "39E29E5349F736785723F9A8F86D4338",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 27633CF14878EC9BCE1D00B49EA43405,"
+        },
+        {
+          "PinId": "00E999DC49C8266CFE01598B8E86E978",
+          "PinName": "execute",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_0 9DC3498A4CF7ACBBBB48B798CE740FB8,"
+        },
+        {
+          "PinId": "1DA56FE949BC36D7201A4781A3A2D9EC",
+          "PinName": "SandboxCharacter_CMC_ABP_C",
+          "LinkedTo": "K2Node_Self_0 C91EED9C4B36C65A6A57E2B39160BA1B,"
+        },
+        {
+          "PinId": "644ACEE94CE163E7B612A6A988D4A808",
+          "PinName": "Result",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_0 65D3C1694156FA017D923FA7409590BB,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_Self_0",
+      "pins": [
+        {
+          "PinId": "C91EED9C4B36C65A6A57E2B39160BA1B",
+          "PinName": "self",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_EvaluateChooser2_1 1DA56FE949BC36D7201A4781A3A2D9EC,"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableSet_0",
+      "pins": [
+        {
+          "PinId": "9DC3498A4CF7ACBBBB48B798CE740FB8",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_EvaluateChooser2_1 00E999DC49C8266CFE01598B8E86E978,"
+        },
+        {
+          "PinId": "0B11D2CF4C6829D18FDB538C4EE7FFA7",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_2 BF72BCA7497205C46467DEA59C27B557,"
+        },
+        {
+          "PinId": "65D3C1694156FA017D923FA7409590BB",
+          "PinName": "ValidDatabases",
+          "LinkedTo": "K2Node_EvaluateChooser2_1 644ACEE94CE163E7B612A6A988D4A808,"
+        },
+        {
+          "PinId": "657BBE5F43ECE80C7342DAB3E3CE9453",
+          "PinName": "Output_Get",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_2 8EA6FDF94F4F9DB7E326E3BB0760CD1A,"
+        },
+        {
+          "PinId": "B396D5A6406F51498BCBF2B726752DDA",
+          "PinName": "self"
+        }
+      ],
+      "member": "ValidDatabases"
+    }
+  ],
+  "GASP57_Update_MotionMatching_PostSelection": [
+    {
+      "name": "K2Node_FunctionEntry_0",
+      "pins": [
+        {
+          "PinId": "198B2A1541EF5BA3B6FD6B86D679965A",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_0 C40F4954476792E1CE45269EBCEA1B63,"
+        },
+        {
+          "PinId": "20A1F508459D43E0300C248F88911CEA",
+          "PinName": "Context",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "E38DC7DC4AC7384A40298DB5462D327A",
+          "PinName": "Node",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_3 705FE97345A43333F90CD4A6BA5064AF,"
+        }
+      ],
+      "member": "Update_MotionMatching_PostSelection"
+    },
+    {
+      "name": "K2Node_FunctionResult_0",
+      "pins": [
+        {
+          "PinId": "ABCA23894707D24E074800B59200E044",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_CallFunction_5 67487D414D9918EFAC53B7BB1A63FF93,"
+        }
+      ],
+      "member": "Update_MotionMatching_PostSelection"
+    },
+    {
+      "name": "K2Node_CallFunction_3",
+      "pins": [
+        {
+          "PinId": "7FCFEDA543B192D6241E98A459D62D76",
+          "PinName": "self"
+        },
+        {
+          "PinId": "705FE97345A43333F90CD4A6BA5064AF",
+          "PinName": "Node",
+          "LinkedTo": "K2Node_FunctionEntry_0 E38DC7DC4AC7384A40298DB5462D327A,"
+        },
+        {
+          "PinId": "DDBE69F44B1CF01254630DA9FDAA73F1",
+          "PinName": "MotionMatchingNode",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_1 DF2729A04545D16AE25ADF8A09EE2AE1,"
+        },
+        {
+          "PinId": "DCDBEAAF49C1ED2BB62C25BC97A0EE5C",
+          "PinName": "Result",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false"
+        }
+      ],
+      "member": "ConvertToMotionMatchingNodePure"
+    },
+    {
+      "name": "K2Node_CallFunction_1",
+      "pins": [
+        {
+          "PinId": "9CDCA14D4BBFCC122AA4098970E7BBF3",
+          "PinName": "self"
+        },
+        {
+          "PinId": "DF2729A04545D16AE25ADF8A09EE2AE1",
+          "PinName": "MotionMatchingNode",
+          "LinkedTo": "K2Node_CallFunction_3 DDBE69F44B1CF01254630DA9FDAA73F1,"
+        },
+        {
+          "PinId": "5ABE93FC40C36044CC454AACA2C887A8",
+          "PinName": "Result",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "A66FE65B4A4AE009BD0590AF91AFC0C8",
+          "PinName": "Result_SelectedAnim",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_0 E7E8C15F40C7FB8D17D6E9A7868CA3FF,"
+        },
+        {
+          "PinId": "F8F01CBD45DC3122542CA78BD6CA0CBB",
+          "PinName": "Result_SelectedTime",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "FA1826A848621DF872A246B00D180B1B",
+          "PinName": "Result_bIsContinuingPoseSearch",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "59D5A1B24EC0EC724A43ECB7EA9D4570",
+          "PinName": "Result_WantedPlayRate",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "FC962948499C154A869D8DB92512E83C",
+          "PinName": "Result_bLoop",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "9E9F395F43EEC4F232BA4D96FC261890",
+          "PinName": "Result_bIsMirrored",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "786A60894093C796B7E0DB9321CF9ED7",
+          "PinName": "Result_BlendParameters",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "3EF105D9478BD2B5CCE7FCACFD1E7836",
+          "PinName": "Result_SelectedDatabase",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_3 821AA4D641F8E0B5E199A8B0D22A9DDB,"
+        },
+        {
+          "PinId": "CA7F5E1946FAE5F07016419BF02CF76B",
+          "PinName": "Result_SearchCost",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "DD2A348D4CD91896B1EACF823E7EE311",
+          "PinName": "Result_bIsInteraction",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "3EA34AFB4A14F2606271E9BBFFABF4E6",
+          "PinName": "Result_Role",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "D8B7F86644470626DD1014AA64DB9B5C",
+          "PinName": "Result_ActorRootTransforms",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "E50504804BCF2B77AA446996D7C8770D",
+          "PinName": "Result_ActorRootBoneTransforms",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "8C37E63C481324887EADC8BDBD8A2BBB",
+          "PinName": "bIsResultValid",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false"
+        }
+      ],
+      "member": "GetMotionMatchingSearchResult"
+    },
+    {
+      "name": "K2Node_VariableSet_3",
+      "pins": [
+        {
+          "PinId": "481882874FD2242418C7318F8C0C8186",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_VariableSet_0 7A5457B44783C84C2B46AE87DA44A285,"
+        },
+        {
+          "PinId": "D6E998194FCF1A569C86EEABF2219514",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_2 0C3AA4C6409781B8F94258BF59D47697,"
+        },
+        {
+          "PinId": "821AA4D641F8E0B5E199A8B0D22A9DDB",
+          "PinName": "CurrentSelectedDatabase",
+          "LinkedTo": "K2Node_CallFunction_1 3EF105D9478BD2B5CCE7FCACFD1E7836,"
+        },
+        {
+          "PinId": "E97D9C0F48985780358F0FBDDF204B30",
+          "PinName": "Output_Get",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_2 FD8FAC3D4FD5B7BD4AADB2949D58A035,"
+        },
+        {
+          "PinId": "64F0E9E44ABDBCCC0A7196A4605978FB",
+          "PinName": "self"
+        }
+      ],
+      "member": "CurrentSelectedDatabase"
+    },
+    {
+      "name": "K2Node_CallFunction_2",
+      "pins": [
+        {
+          "PinId": "879335874CE46FEC8758EE8C42DE9EC2",
+          "PinName": "self"
+        },
+        {
+          "PinId": "FD8FAC3D4FD5B7BD4AADB2949D58A035",
+          "PinName": "Database",
+          "LinkedTo": "K2Node_VariableSet_3 E97D9C0F48985780358F0FBDDF204B30,"
+        },
+        {
+          "PinId": "7C89DF6B41080F101F2877B14B3B7D0D",
+          "PinName": "Tags",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_2 4A20A0AB42A8F834E3C4C1AC8D31DE41,"
+        }
+      ],
+      "member": "GetDatabaseTags"
+    },
+    {
+      "name": "K2Node_VariableSet_2",
+      "pins": [
+        {
+          "PinId": "0C3AA4C6409781B8F94258BF59D47697",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_VariableSet_3 D6E998194FCF1A569C86EEABF2219514,"
+        },
+        {
+          "PinId": "5540E88246D9785A86C85CBD049F7803",
+          "PinName": "then",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "4A20A0AB42A8F834E3C4C1AC8D31DE41",
+          "PinName": "CurrentDatabaseTags",
+          "LinkedTo": "K2Node_CallFunction_2 7C89DF6B41080F101F2877B14B3B7D0D,"
+        },
+        {
+          "PinId": "2EAC5897478D65F931A6979966B6452B",
+          "PinName": "Output_Get",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "0F9163CF4CDA99F9FF301DBFF308FF05",
+          "PinName": "self"
+        }
+      ],
+      "member": "CurrentDatabaseTags"
+    },
+    {
+      "name": "K2Node_VariableGet_0",
+      "pins": [
+        {
+          "PinId": "0D7DDE4745BD383A8071958C626DB38F",
+          "PinName": "Node",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_0 705FE97345A43333F90CD4A6BA5064AF,"
+        }
+      ],
+      "member": "Node"
+    },
+    {
+      "name": "K2Node_CallFunction_0",
+      "pins": [
+        {
+          "PinId": "7FCFEDA543B192D6241E98A459D62D76",
+          "PinName": "self"
+        },
+        {
+          "PinId": "705FE97345A43333F90CD4A6BA5064AF",
+          "PinName": "Node",
+          "LinkedTo": "K2Node_VariableGet_0 0D7DDE4745BD383A8071958C626DB38F,"
+        },
+        {
+          "PinId": "DDBE69F44B1CF01254630DA9FDAA73F1",
+          "PinName": "MotionMatchingNode",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_5 C4FBBC5F4D630107DA62119008F6FD40,"
+        },
+        {
+          "PinId": "DCDBEAAF49C1ED2BB62C25BC97A0EE5C",
+          "PinName": "Result",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false"
+        }
+      ],
+      "member": "ConvertToMotionMatchingNodePure"
+    },
+    {
+      "name": "K2Node_CallFunction_5",
+      "pins": [
+        {
+          "PinId": "BC1B02B9448DBD08FFD47D9F5281D5EC",
+          "PinName": "execute"
+        },
+        {
+          "PinId": "67487D414D9918EFAC53B7BB1A63FF93",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_FunctionResult_0 ABCA23894707D24E074800B59200E044,"
+        },
+        {
+          "PinId": "505ABA8B480569689BA717B6BD71773B",
+          "PinName": "self"
+        },
+        {
+          "PinId": "C4FBBC5F4D630107DA62119008F6FD40",
+          "PinName": "MotionMatchingNode",
+          "LinkedTo": "K2Node_CallFunction_0 DDBE69F44B1CF01254630DA9FDAA73F1,"
+        },
+        {
+          "PinId": "882A883B470F260E87ADBEB69BD2F265",
+          "PinName": "BlendSettings",
+          "LinkedTo": "K2Node_MakeStruct_0 E9A7DC424B3F3E05C5449F9F68173B37,"
+        },
+        {
+          "PinId": "0BF07EF64B6751189E2383ABE313C5E2",
+          "PinName": "bIsResultValid",
+          "Direction": "EGPD_Output",
+          "DefaultValue": "false"
+        }
+      ],
+      "member": "OverrideMotionMatchingBlendSettings"
+    },
+    {
+      "name": "K2Node_MakeStruct_0",
+      "pins": [
+        {
+          "PinId": "E9A7DC424B3F3E05C5449F9F68173B37",
+          "PinName": "MotionMatchingBlueprintBlendSettings",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_CallFunction_5 882A883B470F260E87ADBEB69BD2F265,"
+        },
+        {
+          "PinId": "E6C7FD944F82DC2701ECCEBF7DA7F619",
+          "PinName": "BlendTime",
+          "DefaultValue": "0.200000"
+        },
+        {
+          "PinId": "F88EC9E040A4ACAD2AEBA1906C7A1319",
+          "PinName": "BlendProfile"
+        },
+        {
+          "PinId": "5C969CD54240FE17CD5127AEE537884C",
+          "PinName": "BlendOption",
+          "DefaultValue": "HermiteCubic"
+        },
+        {
+          "PinId": "844690FF4AFC8061B45719A0FA51356C",
+          "PinName": "bUseInertialBlend",
+          "DefaultValue": "False"
+        }
+      ]
+    },
+    {
+      "name": "K2Node_VariableSet_0",
+      "pins": [
+        {
+          "PinId": "C40F4954476792E1CE45269EBCEA1B63",
+          "PinName": "execute",
+          "LinkedTo": "K2Node_FunctionEntry_0 198B2A1541EF5BA3B6FD6B86D679965A,"
+        },
+        {
+          "PinId": "7A5457B44783C84C2B46AE87DA44A285",
+          "PinName": "then",
+          "Direction": "EGPD_Output",
+          "LinkedTo": "K2Node_VariableSet_3 481882874FD2242418C7318F8C0C8186,"
+        },
+        {
+          "PinId": "E7E8C15F40C7FB8D17D6E9A7868CA3FF",
+          "PinName": "CurrentSelectedAnim",
+          "LinkedTo": "K2Node_CallFunction_1 A66FE65B4A4AE009BD0590AF91AFC0C8,"
+        },
+        {
+          "PinId": "1FFDA2494EFA5D67CDBC228FE5EF8A87",
+          "PinName": "Output_Get",
+          "Direction": "EGPD_Output"
+        },
+        {
+          "PinId": "57EAF5E745303B6F5EDBD79DD92F58C6",
+          "PinName": "self"
+        }
+      ],
+      "member": "CurrentSelectedAnim"
+    }
+  ]
+}

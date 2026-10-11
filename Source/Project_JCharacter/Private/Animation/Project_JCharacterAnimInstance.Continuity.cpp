@@ -13,6 +13,8 @@ TAutoConsoleVariable<int32> CVarLocomotionSteering(TEXT("p.ProjectJ.LocomotionSt
 	TEXT("Local grounded locomotion visual Steering. 0=legacy release, 1=profile-controlled. No movement/RPC changes."));
 TAutoConsoleVariable<int32> CVarGeneralTurnCandidates(TEXT("p.ProjectJ.GeneralTurnCandidates"), 1,
 	TEXT("Local forward Run/Sprint Cycle/general-turn candidates. 0=disable the candidate window, 1=profile-controlled."));
+TAutoConsoleVariable<int32> CVarBackwardRefaceCandidates(TEXT("p.ProjectJ.BackwardRefaceCandidates"), 1,
+	TEXT("Qualified local Combat Strafe Run backward Reface/Cycle competition. 0=disable, 1=profile-controlled."));
 float SafeSetting(float Value, float Fallback, float Min, float Max)
 {
 	return FMath::IsFinite(Value) ? FMath::Clamp(Value, Min, Max) : Fallback;
@@ -190,6 +192,50 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	// event or the Strafe straight-only settled pool. Later MM samples retain
 	// the existing physical Turn policy and dynamic-Cycle observation.
 	if (bOneShotCurveReleasedThisUpdate) Context.bUseSettledCycle = false;
+}
+
+void UProject_JCharacterAnimInstance::UpdateBackwardRefaceData(FProject_JAnimThreadSafeData& Data)
+{
+	auto& Context = Data.MotionMatching.SelectionContext;
+	const auto* Profile = GetLocomotionProfile();
+	const auto* Set = OwningPlayerCharacter ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() : nullptr;
+	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0;
+	const FVector Move = Data.LocomotionContext.RequestedMoveWorldDirection;
+	FProject_JBackwardRefacePolicy::FInput Input;
+	Input.Now = Now; Input.Speed = Data.Movement.GroundSpeed;
+	Input.FacingYaw = OwningCharacter ? OwningCharacter->GetControlRotation().Yaw : 0;
+	Input.MoveYaw = Move.Rotation().Yaw; Input.VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;
+	const auto& Feedback = GetCompletedTurnFeedback();
+	Input.bVisualFresh = Feedback.IsVisualFresh(GFrameCounter, Now, Context.RotationMode, Context.GaitIntent);
+	Input.VisualYaw = Feedback.VisualFacingYaw;
+	// Steering already checks primary local player, ground, montage, actions, root-motion and trajectory freshness.
+	Input.bEligible = Profile && Profile->bEnableBackwardRefaceCandidates && CVarBackwardRefaceCandidates.GetValueOnGameThread() != 0 &&
+		Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() && Data.bLocomotionSteeringEnabled &&
+		Data.Combat.bIsCombatMode && Context.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Context.GaitIntent == EProject_JLocomotionGaitIntent::Run && Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		!Data.OneShotPresentation.bShouldOverrideMotionMatching && !bOneShotCurveReleasedThisUpdate &&
+		!Context.bMovingTurn180 && !Context.bGeneralTurnCandidates && !Move.ContainsNaN() && !Move.IsNearlyZero() &&
+		FMath::Abs(FMath::FindDeltaAngleDegrees(Input.FacingYaw + 180, Input.MoveYaw)) <= 30;
+	if (Input.bEligible)
+	{
+		auto Candidate = Context; Candidate.bUseGenericFamiliesForNonOrientToMovement = true;
+		Candidate.bBackwardRefaceCandidates = true;
+		Input.bEligible = Set && Set->FindTurnCycleCompanion(Candidate, Set->RunDatabases.BackwardRefaceCycle);
+	}
+	if (Input.bEligible && Feedback.bRelevant && Feedback.IsFresh(GFrameCounter, Now, Context.RotationMode, Context.GaitIntent))
+	{
+		Input.SelectionFrame = Feedback.Frame;
+		Input.bSelectedReface = Set->RunDatabases.BackwardReface && Feedback.SelectedDatabase == Set->RunDatabases.BackwardReface->GetFName();
+		Input.bSelectedCycle = Feedback.SelectedDatabase == Set->RunDatabases.Cycle->GetFName() ||
+			(Set->RunDatabases.BackwardRefaceCycle && Feedback.SelectedDatabase == Set->RunDatabases.BackwardRefaceCycle->GetFName()) ||
+			(Set->RunDatabases.SettledCycle && Feedback.SelectedDatabase == Set->RunDatabases.SettledCycle->GetFName());
+	}
+	Context.bBackwardRefaceCandidates = BackwardRefacePolicy.Update(Input);
+	Context.bAllowBackwardRefaceContinuation = BackwardRefacePolicy.AllowsContinuation();
+	Data.BackwardRefaceReason = FName(BackwardRefacePolicy.GetReason());
+	Data.BackwardRefaceFacingError = BackwardRefacePolicy.GetFacingError();
+	Data.BackwardRefacePathError = BackwardRefacePolicy.GetPathError();
+	if (Context.bBackwardRefaceCandidates || Context.bAllowBackwardRefaceContinuation) Context.bUseSettledCycle = false;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeLocomotionSteeringAlpha() const

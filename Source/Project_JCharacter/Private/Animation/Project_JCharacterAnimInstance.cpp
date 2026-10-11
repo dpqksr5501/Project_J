@@ -262,6 +262,7 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 	bAnimationFlowEvaluationPending = false;
 	Super::NativeInitializeAnimation();
 	GeneralTurnPolicy.Reset();
+	BackwardRefacePolicy.Reset();
 	CompletedTurnFeedback = {};
 	MotionMatchingRuntime.Reset();
 	ResetStateControllerOwnerPresentation();
@@ -299,6 +300,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		CacheOwnerReferences();
 		GeneralTurnPolicy.Reset();
+		BackwardRefacePolicy.Reset();
 		MotionMatchingRuntime.Reset();
 		ResetStateControllerOwnerPresentation();
 		CurrentActivePoseSearchDatabase = nullptr;
@@ -3088,6 +3090,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(FProject_JAni
 	TRACE_CPUPROFILER_EVENT_SCOPE(Project_J_AnimPublishProxy);
 	UpdateLocomotionSteeringData(Data);
 	UpdateGeneralTurnData(Data);
+	UpdateBackwardRefaceData(Data);
 	const bool bMotionMatchingEnabled =
 		IsPrimaryMeshAnimInstance() &&
 		OwningCharacter &&
@@ -3234,7 +3237,8 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluateTurnCycleCompanion
 		!OwningPlayerCharacter->IsLocallyControlled() || Data.Air.bIsInAir ||
 		Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot ||
 		Data.OneShotPresentation.bShouldOverrideMotionMatching ||
-		(!Data.MotionMatching.SelectionContext.bMovingTurn180 && !Data.MotionMatching.SelectionContext.bGeneralTurnCandidates)) return nullptr;
+		(!Data.MotionMatching.SelectionContext.bMovingTurn180 && !Data.MotionMatching.SelectionContext.bGeneralTurnCandidates &&
+			!Data.MotionMatching.SelectionContext.bBackwardRefaceCandidates)) return nullptr;
 	const bool bCombat = Data.Combat.bIsCombatMode &&
 		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe;
 	const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() :
@@ -3299,7 +3303,8 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		// the actual continuing pose. Resume settled routing once Cycle wins.
 		CombatSelectionContext.bUseSettledCycle = false;
 	}
-	if (CombatSelectionContext.bGeneralTurnCandidates ||
+	if (CombatSelectionContext.bBackwardRefaceCandidates || CombatSelectionContext.bAllowBackwardRefaceContinuation ||
+		CombatSelectionContext.bGeneralTurnCandidates ||
 		(CombatSelectionContext.bAllowGeneralTurnContinuation && CombatStrafeAssetSet &&
 			CombatStrafeAssetSet->RunDatabases.GeneralTurn && Data.MotionMatching.PostSelection.SelectedDatabase ==
 			CombatStrafeAssetSet->RunDatabases.GeneralTurn->GetFName()) ||
@@ -3383,7 +3388,7 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 			? IdleDatabase
 			: LocomotionDatabase;
 	}
-	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase || SelectionContext.bMovingTurn180 || SelectionContext.bGeneralTurnCandidates || SelectionContext.bAllowGeneralTurnContinuation
+	const UChooserTable* ChooserTable = bSelectedCombatStrafeDatabase || SelectionContext.bMovingTurn180 || SelectionContext.bGeneralTurnCandidates || SelectionContext.bAllowGeneralTurnContinuation || SelectionContext.bBackwardRefaceCandidates || SelectionContext.bAllowBackwardRefaceContinuation
 		? nullptr
 		: MotionMatchingChooserTable.Get();
 

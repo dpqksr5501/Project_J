@@ -94,6 +94,7 @@ private:
 	friend class FProjectJMotionMatchingCrowdPolicyTest;
 	friend class FProjectJMotionMatchingNestedGraphTest;
 	friend class FProjectJLocomotionCandidateContinuityTest;
+	friend class FProjectJBackwardRefaceCandidates;
 	void LinkNativeGraph();
 	void ConsumeQueuedGameThreadData();
 	void ApplySelectedDatabaseToNativeNode();

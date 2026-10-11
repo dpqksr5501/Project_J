@@ -101,9 +101,15 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
 	const auto& OldContext = PendingGameThreadData.MotionMatching.SelectionContext;
 	const auto& NewContext = InData.MotionMatching.SelectionContext;
+	const bool bRefaceNormalizationChanged =
+		(OldContext.bBackwardRefaceCandidates || OldContext.bAllowBackwardRefaceContinuation) !=
+		(NewContext.bBackwardRefaceCandidates || NewContext.bAllowBackwardRefaceContinuation);
 	const bool bGeneralCancelled =
 		(OldContext.bAllowGeneralTurnContinuation && !NewContext.bAllowGeneralTurnContinuation) ||
 		(OldContext.bGeneralTurnCandidates && !NewContext.bGeneralTurnCandidates && !NewContext.bAllowGeneralTurnContinuation);
+	const bool bRefaceCancelled =
+		(OldContext.bAllowBackwardRefaceContinuation && !NewContext.bAllowBackwardRefaceContinuation) ||
+		(OldContext.bBackwardRefaceCandidates && !NewContext.bBackwardRefaceCandidates && !NewContext.bAllowBackwardRefaceContinuation);
 	// A Cycle that has already won is the desired handoff. Do not invalidate it
 	// merely because its old GeneralTurn companion/permission is being removed.
 	const auto* CapturedNode = GetCapturedMotionMatchingNode();
@@ -113,7 +119,8 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		GFrameCounter - LatestPostSelection.CaptureFrame <= 2 && LatestPostSelection.CachedNodeWeight > UE_SMALL_NUMBER &&
 		CapturedNode && !CapturedNode->GetMotionMatchingState().SearchResult.bIsInteraction;
 	const bool bContinuationCancelled =
-		(OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) || (bGeneralCancelled && !bFreshCycleResult);
+		bRefaceNormalizationChanged || (OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) ||
+		((bGeneralCancelled || bRefaceCancelled) && !bFreshCycleResult);
 	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame && !bCompletedTurnReturn &&
 		((InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase) ||
 			(InTurnCycleCompanion && InTurnCycleCompanion != CurrentTurnCycleCompanion));
