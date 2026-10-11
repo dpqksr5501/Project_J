@@ -4,6 +4,7 @@
 #include "Animation/AnimClassInterface.h"
 #include "Animation/AnimationAsset.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/Character.h"
@@ -126,6 +127,15 @@ void UProject_JCharacterAnimInstance::RecordAnimationFlowEvaluation()
 		int32 StackCount = 0;
 		for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
 		{
+			if (Property && Property->Struct->IsChildOf(FAnimNode_PoseSearchHistoryCollector_Base::StaticStruct()))
+			{
+				const auto* HistoryNode = Property->ContainerPtrToValuePtr<FAnimNode_PoseSearchHistoryCollector_Base>(this);
+				const auto* History = HistoryNode->GetPoseHistoryPtr(); FTransform Root;
+				const bool bRoot = History && History->GetTransformAtTime(0, Root);
+				UE_LOG(LogProjectJPlayer, Display, TEXT("AnimFlow PoseHistory Frame=%llu Actor=%s Node=%s Entries=%d RootValid=%d TrajectorySamples=%d AcuteReturnReady=%d"),
+					GFrameCounter, *OwningCharacter->GetPathName(), *Property->GetName(), History ? History->GetNumEntries() : 0,
+					bRoot, HistoryNode->TransformTrajectory.Samples.Num(), Data.TurnRequest.bAcuteReturnReady);
+			}
 			if (!Property || !Property->Struct->IsChildOf(FAnimNode_BlendStack::StaticStruct())) { continue; }
 			if (++StackCount > 8) { break; }
 			const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack>(this);

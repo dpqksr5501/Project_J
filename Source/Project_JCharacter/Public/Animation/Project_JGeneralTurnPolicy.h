@@ -21,6 +21,7 @@ public:
 	struct FInput
 	{
 		bool bEligible = false;
+		bool bObserveOnly = false;
 		EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
 		EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 		double Now = 0;
@@ -105,6 +106,17 @@ public:
 		// Recovery is physical alignment, not a requirement to stop rotating.
 		// Entry/exit hysteresis and quiet grace keep brief fluctuations stable.
 		const bool bQuiet = PathError <= 15 && FacingError <= 12;
+		if (I.bObserveOnly)
+		{
+			// Sample current geometry throughout the shot without lending it an
+			// active MM candidate pool or consuming stale MM selection feedback.
+			bActive = bContinuation = bCycleHandoff = bTurnUsed = false;
+			const float DirectionNow = FMath::Sign(PathError >= S.AlignmentEntryAngle ?
+				FMath::FindDeltaAngleDegrees(I.VelocityYaw, I.MoveYaw) : FMath::FindDeltaAngleDegrees(I.ActorYaw, I.FacingYaw));
+			if (!bDemand || I.Speed < S.EntrySpeed) DemandSince = -1;
+			else if (DemandSince < 0 || DirectionNow != PendingDirection) { DemandSince = I.Now; PendingDirection = DirectionNow; }
+			Reason = TEXT("OneShotObservation"); return false;
+		}
 		const bool bFreshSelection = I.SelectionFrame > LastSelectionFrame;
 		if (bFreshSelection) LastSelectionFrame = I.SelectionFrame;
 		if (bActive && bFreshSelection && I.bSelectedGeneralTurn) bTurnUsed = true;

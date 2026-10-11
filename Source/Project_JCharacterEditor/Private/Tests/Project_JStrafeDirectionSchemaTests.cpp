@@ -205,4 +205,40 @@ bool FProjectJCombatTurnLinkAudit::RunTest(const FString&)
 	return TestTrue(TEXT("Save read-only link audit"), FFileHelper::SaveStringToFile(Report,
 		*(Directory / TEXT("CombatTurnLink.txt")), FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafePlaybackCoverageAudit, "ProjectJ.StrafeDirection.PlaybackCoverage",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJStrafePlaybackCoverageAudit::RunTest(const FString&)
+{
+	auto* Class = LoadClass<AProject_JPlayerCharacter>(nullptr, TEXT("/Game/Character_BPs/GreatSword/BP_GreatSword.BP_GreatSword_C"));
+	if (!TestNotNull(TEXT("Production pawn for read-only coverage audit"), Class)) return false;
+	const auto* Set = CastChecked<AProject_JPlayerCharacter>(Class->GetDefaultObject())->GetCombatStrafeMotionMatchingAssetSet();
+	auto* Database = Set ? Set->RunDatabases.Cycle.Get() : nullptr;
+	if (!TestNotNull(TEXT("Runtime Strafe Run Cycle"), Database) || !TestNotNull(TEXT("Runtime schema"), Database->Schema.Get())) return false;
+	using namespace UE::PoseSearch;
+	if (!TestTrue(TEXT("Read the completed production index"), FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(Database,
+		ERequestAsyncBuildFlag::ContinueRequest | ERequestAsyncBuildFlag::WaitForCompletion) == EAsyncBuildIndexResult::Success)) return false;
+	const auto& Index = Database->GetSearchIndex();
+	FString Report = FString::Printf(TEXT("Read-only index coverage; no asset writes or search overrides. Database=%s SampleRate=%d EndExclusion=%.3f ContinuingBias=%.3f\n"),
+		*Database->GetPathName(), Database->Schema->SampleRate, Database->ExcludeFromDatabaseParameters.Max, Database->ContinuingPoseCostBias);
+	for (const auto& Asset : Index.Assets)
+	{
+		const auto* Entry = Database->GetDatabaseAnimationAsset(Asset.GetSourceAssetIdx());
+		if (!Entry) { AddError(TEXT("Indexed source entry is missing")); continue; }
+		float LatestEntryTime = -1;
+		int32 BlockedPoses = 0;
+		for (int32 Pose = Asset.GetFirstPoseIdx(); Pose < Asset.GetFirstPoseIdx() + Asset.GetNumPoses(); ++Pose)
+		{
+			if (Index.PoseMetadata[Pose].IsBlockTransition()) ++BlockedPoses;
+			else LatestEntryTime = Database->GetRealAssetTime(Pose);
+		}
+		const float IndexedEnd = Asset.GetLastSampleTime(Database->Schema->SampleRate);
+		Report += FString::Printf(TEXT("Clip=%s Mirror=%d Loop=%d Length=%.3f IndexedStart=%.3f IndexedEnd=%.3f LatestEntry=%.3f IndexedRemaining=%.3f BlockedPoses=%d Poses=%d\n"),
+			*GetNameSafe(Entry->GetAnimationAsset()), Asset.IsMirrored(), Asset.IsLooping(), Entry->GetPlayLength(Asset.GetBlendParameters()),
+			Asset.GetFirstSampleTime(Database->Schema->SampleRate), IndexedEnd, LatestEntryTime, IndexedEnd - LatestEntryTime, BlockedPoses, Asset.GetNumPoses());
+	}
+	const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeRegression_20261011");
+	IFileManager::Get().MakeDirectory(*Directory, true);
+	return TestTrue(TEXT("Save read-only playback coverage evidence"), FFileHelper::SaveStringToFile(Report,
+		*(Directory / TEXT("PlaybackCoverage.txt")), FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
+}
 #endif

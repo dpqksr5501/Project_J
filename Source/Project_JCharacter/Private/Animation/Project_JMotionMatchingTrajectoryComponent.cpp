@@ -2,6 +2,7 @@
 
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JCombatAnimProfile.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JTrajectoryQuery.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 
@@ -12,9 +13,14 @@
 #include "Mount/Project_JMountComponent.h"
 #include "MotionTrajectoryLibrary.h"
 #include "Project_JPlayerCharacter.h"
+#include "Project_JLocomotionAnimStateComponent.h"
+#include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
 
 namespace
 {
+TAutoConsoleVariable<int32> CVarStrafePredictionYawSmoothing(TEXT("p.ProjectJ.StrafePredictionYawSmoothing"), 1,
+	TEXT("Prediction-only local side/backward Strafe camera yaw-rate smoothing before clamping. 0=legacy, 1=profile-controlled."));
 int32 FindPresentTrajectorySampleIndex(const FTransformTrajectory& Trajectory)
 {
 	int32 PresentSampleIndex = INDEX_NONE;
@@ -131,6 +137,7 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReas
 {
 	if (GetNetMode() != NM_DedicatedServer) EnsureTrajectoryBuffers();
 	LastGeneratedWorldTimeSeconds = -1.0;
+	PredictionYawRateFilter.Reset();
 	LastResetReason = Reason;
 	++ResetRevision;
 	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
@@ -264,6 +271,7 @@ void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter&
 	}
 
 	CharacterTrajectoryData.UpdateDataFromCharacter(DeltaTime, &CharacterOwner);
+	StabilizeStrafePredictionYawRate(CharacterOwner);
 	// A same-frame rotation-policy notification may rebuild the prediction. The
 	// past path must still advance only once, rather than aging by DeltaTime twice.
 	if (LastHistoryFrameCounter != GFrameCounter)
@@ -285,6 +293,38 @@ void UProject_JMotionMatchingTrajectoryComponent::GenerateTrajectory(ACharacter&
 		: -1.0;
 	bHasGeneratedTrajectory = true;
 	++GenerationRevision;
+}
+
+void UProject_JMotionMatchingTrajectoryComponent::StabilizeStrafePredictionYawRate(const ACharacter& CharacterOwner)
+{
+	const auto* Player = Cast<AProject_JPlayerCharacter>(&CharacterOwner);
+	const auto* Movement = CharacterOwner.GetCharacterMovement();
+	const auto* Profile = Player ? Player->GetLocomotionProfile() : nullptr;
+	const auto* Combat = Player ? Player->GetCombatAnimProfile() : nullptr;
+	const auto* Anim = CharacterOwner.GetMesh() ? CharacterOwner.GetMesh()->GetAnimInstance() : nullptr;
+	const auto* Locomotion = Player ? Player->GetLocomotionAnimStateComponent() : nullptr;
+	const FVector2D MoveInput = Locomotion ? Locomotion->GetHeldLocalMoveInput() : FVector2D::ZeroVector;
+	const float MoveToCamera = FMath::Abs(FMath::RadiansToDegrees(FMath::Atan2(MoveInput.X, MoveInput.Y)));
+	// Forward Strafe has authored Turn preparation/selection. Keep its existing
+	// query unchanged; this stabilization addresses the side/backward Cycle pool.
+	const bool bSideOrBackward = Profile && Locomotion && Locomotion->HasHeldLocalMoveInput() &&
+		MoveToCamera > Profile->StrafeForwardTurn.Resolved().ForwardConeAngle;
+	const float FacingGap = FMath::Abs(FMath::FindDeltaAngleDegrees(CharacterOwner.GetActorRotation().Yaw,
+		CharacterOwner.GetControlRotation().Yaw));
+	const bool bCanSmooth = CVarStrafePredictionYawSmoothing.GetValueOnGameThread() != 0 && Player && Player->IsLocallyControlled() &&
+		Player->GetAnimationLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot && Player->IsCombatModeActive() &&
+		Profile && Profile->bEnableStrafePredictionYawSmoothing && Combat && Combat->bEnableStrafeFacingRedirect && Combat->bUseCombatRotationMode &&
+		Movement && Movement->IsMovingOnGround() && Movement->bUseControllerDesiredRotation &&
+		bSideOrBackward && !Player->IsAttacking() && !Player->IsDodging() && !Player->IsHitReacting() &&
+		!Movement->HasAnimRootMotion() && !Movement->CurrentRootMotion.HasActiveRootMotionSources() && (!Anim || !Anim->IsAnyMontagePlaying()) &&
+		FMath::IsFinite(FacingGap) && FacingGap <= Profile->SteeringMaxVisualYawError;
+	const float Rate = PredictionYawRateFilter.Update(CharacterTrajectoryData.ControllerYawRate,
+		CharacterOwner.GetWorld() ? CharacterOwner.GetWorld()->GetTimeSeconds() : 0, GFrameCounter,
+		Profile ? Profile->StrafePredictionYawRateHalfLife : 0, bCanSmooth);
+	const float MaxRate = CharacterTrajectoryData.MaxControllerYawRate;
+	// Use one rate for both predicted translation and facing. Filtering an already
+	// clamped packet would underestimate its average turn speed.
+	CharacterTrajectoryData.ControllerYawRateClamped = MaxRate >= 0 ? FMath::Clamp(Rate, -MaxRate, MaxRate) : Rate;
 }
 
 void UProject_JMotionMatchingTrajectoryComponent::PredictCombatStrafeFacing(const ACharacter& CharacterOwner)

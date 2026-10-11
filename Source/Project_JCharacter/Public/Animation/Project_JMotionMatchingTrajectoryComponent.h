@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CharacterTrajectoryComponent.h"
+#include "Animation/Project_JPredictionYawRateFilter.h"
 #include "Project_JMotionMatchingTrajectoryComponent.generated.h"
 
 class ACharacter;
@@ -97,6 +98,7 @@ private:
 	void EnsureTrajectoryBuffers();
 	bool ShouldGenerateTrajectory(const ACharacter& CharacterOwner) const;
 	void GenerateTrajectory(ACharacter& CharacterOwner, float DeltaTime);
+	void StabilizeStrafePredictionYawRate(const ACharacter& CharacterOwner);
 	void PredictCombatStrafeFacing(const ACharacter& CharacterOwner);
 	void PostProcessTrajectory(ACharacter& CharacterOwner, float DeltaTime);
 	void ApplyTrajectorySmoothing(float DeltaTime);
@@ -106,6 +108,7 @@ private:
 	FTransformTrajectory PreviousFilteredTrajectory;
 
 	uint64 LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
+	FProject_JPredictionYawRateFilter PredictionYawRateFilter;
 	uint64 LastHistoryFrameCounter = TNumericLimits<uint64>::Max();
 	uint64 LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 	bool bWasTrajectoryGenerationEligible = false;

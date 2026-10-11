@@ -53,6 +53,11 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 		UPoseSearchDatabase* InTurnCycleCompanion = nullptr);
 
 	const FProject_JAnimThreadSafeData& GetThreadSafeData() const { return ThreadSafeData; }
+	const FProject_JAnimOneShotPresentationThreadSafeData& GetExternalPlaybackData() const
+	{ return ExternalPlaybackOverride ? *ExternalPlaybackOverride : ThreadSafeData.OneShotPresentation; }
+	const FProject_JAnimOneShotPresentationThreadSafeData* SwapExternalPlaybackOverride(const FProject_JAnimOneShotPresentationThreadSafeData* Playback)
+	{ const auto* Previous = ExternalPlaybackOverride; ExternalPlaybackOverride = Playback; return Previous; }
+	bool IsLiveReturnTraversal() const { return ExternalPlaybackOverride != nullptr; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
 	UPoseSearchDatabase* GetTurnCycleCompanion() const { return CurrentTurnCycleCompanion.Get(); }
 	int32 GetThreadSafeCandidateCount() const { return ThreadSafeCandidateCount; }
@@ -84,6 +89,7 @@ private:
 	friend class FProjectJStopIdleInterruptTest;
 	friend class FProjectJStrafeFacingSearchTest;
 	friend class FProjectJMotionMatchingReturnRequestTest;
+	friend class FProjectJOneShotHandoffOwnershipTest;
 	friend class FProjectJMotionMatchingSearchExecutionTest;
 	friend class FProjectJMotionMatchingCrowdPolicyTest;
 	friend class FProjectJMotionMatchingNestedGraphTest;
@@ -118,6 +124,9 @@ private:
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
 	FProject_JAnimThreadSafeData ThreadSafeData;
+	// Scoped to the handoff node's worker update. The generated node retains/GCs
+	// the outgoing command; this pointer is never published to GT or kept across ticks.
+	const FProject_JAnimOneShotPresentationThreadSafeData* ExternalPlaybackOverride = nullptr;
 	uint64 PublishedSnapshotRevision = 0;
 	uint64 ConsumedSnapshotRevision = 0;
 	int32 ThreadSafeCandidateCount = 0;

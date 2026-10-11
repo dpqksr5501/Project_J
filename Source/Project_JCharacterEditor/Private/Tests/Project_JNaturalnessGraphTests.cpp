@@ -11,6 +11,9 @@
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraph/EdGraphSchema.h"
+#include "AnimGraphNode_Base.h"
+#include "K2Node_CallFunction.h"
+#include "UObject/UnrealType.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/CompilerResultsLog.h"
@@ -83,6 +86,33 @@ bool FProjectJNaturalnessActiveGraphAudit::RunTest(const FString&)
 			}
 			// Preserve current connectivity, including internal stack graphs, without compiling/saving.
 			Report += FString::Printf(TEXT("Node=%s Class=%s\n"), *Node->GetPathName(), *Node->GetClass()->GetName());
+			if (const auto* AnimNode = Cast<UAnimGraphNode_Base>(Node))
+			{
+				Report += FString::Printf(TEXT("  Functions Initial=%s Relevant=%s Update=%s\n"),
+					*AnimNode->InitialUpdateFunction.GetMemberName().ToString(),
+					*AnimNode->BecomeRelevantFunction.GetMemberName().ToString(),
+					*AnimNode->UpdateFunction.GetMemberName().ToString());
+				// Only settings relevant to branch handoff; never export/modify the asset.
+				if (const auto* RuntimeProperty = FindFProperty<FStructProperty>(Node->GetClass(), TEXT("Node")))
+				{
+					const void* Runtime = RuntimeProperty->ContainerPtrToValuePtr<void>(Node);
+					for (const TCHAR* Name : {TEXT("bResetOnBecomingRelevant"), TEXT("BlendTime"), TEXT("SearchThrottleTime"),
+						TEXT("bUseInertialBlend"), TEXT("TransitionType"), TEXT("bResetChildOnActivation"),
+						TEXT("PoseCount"), TEXT("SamplingInterval")})
+					{
+						if (const FProperty* Setting = FindFProperty<FProperty>(RuntimeProperty->Struct, Name))
+						{
+							FString Value;
+							Setting->ExportTextItem_Direct(Value, Setting->ContainerPtrToValuePtr<void>(Runtime), nullptr, Node, PPF_None);
+							Report += FString::Printf(TEXT("  Setting %s=%s\n"), Name, *Value);
+						}
+					}
+				}
+			}
+			if (const auto* Call = Cast<UK2Node_CallFunction>(Node))
+			{
+				Report += FString::Printf(TEXT("  Function=%s\n"), *Call->FunctionReference.GetMemberName().ToString());
+			}
 			for (auto* Pin : Node->Pins)
 			{
 				if (!Pin) continue;

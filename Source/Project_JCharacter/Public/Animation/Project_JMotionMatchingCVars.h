@@ -18,4 +18,5 @@ bool ShouldTraceCombatStop();
 int32 GetTurnInPlaceTraceMode();
 int32 GetMovingTurnTraceMode();
 bool ShouldUseTurnCycleCandidates();
+bool ShouldUseOneShotInputResponse();
 }

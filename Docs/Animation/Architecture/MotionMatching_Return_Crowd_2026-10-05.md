@@ -1,5 +1,7 @@
 # Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05
 
+2026-10-11 후속: 첫 검색 계약을 유지하면서 실제 단발 포즈와 MM 포즈를 겹치는 [Live Return 전환](OneShot_Live_Return_2026-10-11.md)을 추가한다. 아래 기록은 당시의 관성 전환과 검증 이력이다.
+
 대상은 외부 State Controller Blend Stack에서 MM으로 돌아오는 경계와 기존 거리 예산의 worker 검색 연결이다. 기존 AnimInstance, immutable snapshot, Proxy, LocomotionProfile과 Animation Budget Allocator를 사용한다. 새 관리자·컴포넌트·Tick·복제 필드는 추가하지 않는다. [작업 인계](../../Handoffs/MotionMatchingCrowd_2026-10-05/MotionMatching_Crowd_Handoff_2026-10-05.md)의 미착수 작업에 대한 후속이며, 당시 기록은 그대로 보존한다.
 
 ## 복귀 요청과 최신 상태

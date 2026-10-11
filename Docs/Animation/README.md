@@ -10,6 +10,9 @@
 | 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |
 | Motion Matching 실행·원격·예산 정책 | [Motion Matching 구조와 후속 항목](Architecture/MotionMatchingNextSteps.md) |
 | 외부 Blend Stack 복귀·worker 검색 예산 | [복귀 검색과 군중 예산 보완](Architecture/MotionMatching_Return_Crowd_2026-10-05.md) |
+| 단발 Blend Stack → MM 실제 포즈 크로스페이드·관성 복귀 비교 | [Live Return 구조와 검증](Architecture/OneShot_Live_Return_2026-10-11.md) |
+| Start·Land 작은 입력 유지·지속 곡선의 Cycle 복귀·첫 MM 후보 전달 | [단발 입력 반응과 첫 검색](Architecture/OneShot_Input_Response_2026-10-11.md) |
+| Strafe A/S/D 카메라 회전의 예측 흔들림·재선택 비교 | [Strafe 예측 안정화](Architecture/Strafe_Prediction_Stability_2026-10-11.md) |
 | Strafe 네 방향 Pivot·입력 취소 | [Pivot 이동 입력 기준 통일](Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) |
 | 연속 Pivot·OTM/Strafe 중복 Start/Land 방지 | [일회성 동작의 요청 수명](Architecture/OneShot_Command_Lifetime_2026-10-05.md) |
 | Start·착지 중 입력 변경·MM 복귀의 실행 흐름 | [기본 비활성 흐름 진단](Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) |

@@ -12,6 +12,7 @@
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
+#include "Animation/Project_JOneShotInputResponse.h"
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -794,7 +795,7 @@ FProject_JDerivedLocomotionContext UProject_JLocomotionAnimStateComponent::Build
 	Context.bIsMovingTurn180 = UpdateMovingTurnPolicy(AuthContext, InKinematicContext, Context);
 	// A qualified reversal remains movement through its braking minimum. Only
 	// the request owner can retain this intent; a held key at a wall cannot.
-	if (Context.bIsMovingTurn180 || MovingTurnPolicy.IsPreparing())
+	if (Context.bIsMovingTurn180 || (MovingTurnPolicy.IsPreparing() && !IsLandingStateActive()))
 	{
 		Context.bHasGroundMovementIntent = Context.bIsMotionMatchingMoving = true;
 	}
@@ -919,10 +920,10 @@ EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::ResolveP
 	return FProject_JLocomotionContextBuilder::ResolvePhaseFamily(Input);
 }
 
-bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
+FProject_JMovingTurnPolicy::FInput UProject_JLocomotionAnimStateComponent::BuildMovingTurnInput(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& Motion,
-	const FProject_JDerivedLocomotionContext& Derived)
+	const FProject_JDerivedLocomotionContext& Derived, FProject_JTurnEventSettings& OutSettings, const TCHAR*& OutGuard) const
 {
 	const AProject_JPlayerCharacter* Player = GetPlayerOwner();
 	const UCharacterMovementComponent* Movement = Player ? Player->GetCharacterMovement() : nullptr;
@@ -939,20 +940,30 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 	const bool bSprintDataReady = !bSprint || (TurnSet && TurnSet->FindTurnCycleCompanion(Capability,
 		TurnSet->GetDatabaseFamily(AuthContext.GaitIntent).TurnRedirect));
 	const bool bSprintDirectionAllowed = !bSprint || !Player || Player->IsSprintInputDirectionAllowed();
-	const FProject_JTurnEventSettings Settings = LocomotionProfile
+	OutSettings = LocomotionProfile
 		? LocomotionProfile->GetForwardTurnSettings(AuthContext.RotationMode, AuthContext.GaitIntent).Resolved()
 		: FProject_JTurnEventSettings();
+	const auto& Settings = OutSettings;
 	FProject_JMovingTurnPolicy::FInput Input;
 	Input.EntryAngle = Settings.CommittedTurnAngle;
 	Input.ExitAngle = Settings.CompletionFacingAngle;
 	Input.RotationMode = AuthContext.RotationMode;
 	Input.Gait = AuthContext.GaitIntent;
 	Input.NowSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	const auto* NativeAnim = Cast<UProject_JCharacterAnimInstance>(Anim);
+	// A committed Start may outlive its short semantic start window. Its actual
+	// direct player still owns the pose, so only physical preparation is allowed.
+	const bool bPresentedGroundOneShot = NativeAnim && NativeAnim->HasMovingOneShotInputOwnerOnGameThread();
+	const bool bObserveGroundOneShot = LocomotionProfile && LocomotionProfile->TransitionPolicy.bEnableOneShotInputResponse &&
+		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() &&
+		(Derived.bIsStarting || IsLandingStateActive() || bPresentedGroundOneShot) && Movement && Movement->IsMovingOnGround() && !bIsPhysicallyInAir;
+	Input.bDeferAdmission = bObserveGroundOneShot;
 	Input.bEligible = Player && bUsingLocalInputState && Player->IsLocallyControlled() && Movement &&
 		Player->GetAnimationLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot &&
-		Movement->IsMovingOnGround() && !bIsInAir && !bIsPhysicallyInAir && !IsLandingStateActive() &&
-		!bIsJumping && !bIsFallOffStart && !Derived.bIsStarting && !Derived.bIsPivoting && !Derived.bShouldTurnInPlace &&
-		GroundMotionMode == EProject_JGroundMotionMode::Locomotion &&
+		Movement->IsMovingOnGround() && !bIsPhysicallyInAir && (bObserveGroundOneShot || (!bIsInAir && !IsLandingStateActive())) &&
+		!bIsJumping && !bIsFallOffStart && (bObserveGroundOneShot || !Derived.bIsStarting) &&
+		(!Derived.bIsPivoting || (bObserveGroundOneShot && IsLandingStateActive())) && !Derived.bShouldTurnInPlace &&
+		(bObserveGroundOneShot || GroundMotionMode == EProject_JGroundMotionMode::Locomotion) &&
 		(AuthContext.GaitIntent == EProject_JLocomotionGaitIntent::Run || bSprint) && bSprintDataReady && bSprintDirectionAllowed &&
 		Motion.bHasMoveInput && FMath::IsFinite(Motion.GroundSpeed) && Motion.GroundSpeed >= 0.0f &&
 		!Motion.MoveWorldDirection.IsNearlyZero() &&
@@ -984,13 +995,15 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 			}
 		}
 	}
-	if (const auto* NativeAnim = Player ? Cast<UProject_JCharacterAnimInstance>(Anim) : nullptr)
+	if (NativeAnim)
 	{
 		const auto& Feedback = NativeAnim->GetCompletedTurnFeedback();
+		if (Feedback.IsVisualFresh(GFrameCounter, Input.NowSeconds, Input.RotationMode, Input.Gait))
+		{
+			Input.bHasVisualFacing = true; Input.VisualFacingYaw = Feedback.VisualFacingYaw;
+		}
 		if (Feedback.IsFresh(GFrameCounter, Input.NowSeconds, Input.RotationMode, Input.Gait))
 		{
-			Input.bHasVisualFacing = Feedback.bVisualFacingValid;
-			Input.VisualFacingYaw = Feedback.VisualFacingYaw;
 			const auto* Set = AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
 				? Player->GetCombatStrafeMotionMatchingAssetSet() : Player->GetMotionMatchingAssetSet();
 			if (Feedback.bRelevant && Set)
@@ -1006,7 +1019,7 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 	// Publish exactly the physical geometry used by acute admission. Ordinary
 	// admission must not mix this pre-movement velocity with a later actor yaw.
 	const UProject_JCombatAnimProfile* Combat = Player ? Player->GetCombatAnimProfile() : nullptr;
-	const TCHAR* Guard = !Player ? TEXT("NoOwner") :
+	OutGuard = Input.bEligible ? (Input.bDeferAdmission ? TEXT("OneShotObservation") : TEXT("Pass")) : !Player ? TEXT("NoOwner") :
 		!Player->IsLocallyControlled() ? TEXT("NotLocalOwner") :
 		!bUsingLocalInputState ? TEXT("NotLocalInput") :
 		Player->GetAnimationLocomotionMode() != EProject_JAnimationLocomotionMode::OnFoot ? TEXT("NotOnFoot") :
@@ -1027,6 +1040,17 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 		AuthContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		(!AuthContext.bCombatMode || !Controller || !Combat || !Combat->bEnableStrafeFacingRedirect ||
 		 !Combat->bUseCombatRotationMode || !Movement->bUseControllerDesiredRotation) ? TEXT("CombatFacingPolicy") : TEXT("Pass");
+	return Input;
+}
+
+bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
+	const FProject_JLocomotionAuthoritativeContext& AuthContext,
+	const FProject_JLocomotionKinematicContext& Motion,
+	const FProject_JDerivedLocomotionContext& Derived){
+	const auto* Player = GetPlayerOwner();
+	FProject_JTurnEventSettings Settings;
+	const TCHAR* Guard = nullptr;
+	const auto Input = BuildMovingTurnInput(AuthContext, Motion, Derived, Settings, Guard);
 	const bool bActive = MovingTurnPolicy.Update(Input, Settings);
 	const TCHAR* SampleReason = MovingTurnPolicy.GetLastUpdateReason();
 	TurnRequestSample = {};
@@ -1049,6 +1073,15 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 	const TCHAR* Reason = bTrace ? SampleReason : nullptr;
 #endif
 	TurnRequestSample.bAcuteActive = bActive;
+	// Probe the same policy on a value copy. Admission remains deferred until
+	// the AnimInstance releases the shot; the live component is not advanced twice.
+	TurnRequestSample.bAcuteReturnReady = false;
+	if (Input.bEligible && Input.bDeferAdmission)
+	{
+		auto ReturnInput = Input; ReturnInput.bDeferAdmission = false;
+		auto ReturnPolicy = MovingTurnPolicy;
+		TurnRequestSample.bAcuteReturnReady = ReturnPolicy.Update(ReturnInput, Settings);
+	}
 	TurnRequestSample.bAcuteApproach = MovingTurnPolicy.AllowsGeneralTurnHandoff(Input, Settings);
 	TurnRequestSample.bPreparing = MovingTurnPolicy.IsPreparing();
 	TurnRequestSample.Demand = uint8(MovingTurnPolicy.GetDemand());
@@ -1090,6 +1123,27 @@ bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 	}
 #endif
 	return bActive;
+}
+
+bool UProject_JLocomotionAnimStateComponent::ProbeOneShotTurnReturn(const FVector& MoveWorldDirection,
+	EProject_JLocomotionRotationMode Mode, EProject_JLocomotionGaitIntent Gait) const
+{
+	check(IsInGameThread());
+	const auto* Player = GetPlayerOwner();
+	const auto* Movement = Player ? Player->GetCharacterMovement() : nullptr;
+	if (!Movement || Mode != AuthoritativeContext.RotationMode || Gait != AuthoritativeContext.GaitIntent ||
+		!TurnRequestSample.IsUsable(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0, Mode, Gait)) return false;
+	auto Motion = KinematicContext;
+	Motion.HorizontalVelocity = FVector(Movement->Velocity.X, Movement->Velocity.Y, 0);
+	Motion.GroundSpeed = Motion.HorizontalVelocity.Size();
+	Motion.MoveWorldDirection = MoveWorldDirection.GetSafeNormal2D();
+	Motion.bHasMoveInput = !Motion.MoveWorldDirection.IsNearlyZero();
+	FProject_JTurnEventSettings Settings;
+	const TCHAR* Guard = nullptr;
+	auto Input = BuildMovingTurnInput(AuthoritativeContext, Motion, DerivedLocomotionContext, Settings, Guard);
+	Input.bDeferAdmission = false;
+	auto PolicyCopy = MovingTurnPolicy;
+	return PolicyCopy.Update(Input, Settings);
 }
 
 bool UProject_JLocomotionAnimStateComponent::IsMovingForContext(const FProject_JLocomotionKinematicContext& InKinematicContext) const
@@ -1716,6 +1770,43 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingFromInputChange()
 	return false;
 }
 
+bool UProject_JLocomotionAnimStateComponent::TryResolveLandingInputResponse(const FVector2D& MoveInput, bool& OutRelease) const
+{
+	const auto* Player = GetPlayerOwner();
+	const auto* Profile = Player ? Player->GetLocomotionProfile() : nullptr;
+	const auto* Movement = Player ? Player->GetCharacterMovement() : nullptr;
+	const auto* Anim = Player && Player->GetMesh() ? Cast<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance()) : nullptr;
+	if (!Player || !bUsingLocalInputState || !Player->IsLocallyControlled() || !Profile ||
+		!Profile->TransitionPolicy.bEnableOneShotInputResponse || !Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() ||
+		!Movement || !Movement->IsMovingOnGround() || bIsPhysicallyInAir || bIsJumping || bIsFallOffStart ||
+		Player->IsAttacking() || Player->IsDodging() || Player->IsHitReacting() ||
+		Movement->HasAnimRootMotion() || Movement->CurrentRootMotion.HasActiveRootMotionSources() ||
+		!Anim || Anim->IsAnyMontagePlaying() || !Anim->CanSteerOneShotInputOnGameThread()) return false;
+
+	FProject_JOneShotInputResponse::FInput Input;
+	const FVector Move = CalculateMoveWorldDirection(MoveInput);
+	Input.bCanSteer = true;
+	Input.bHasMoveReference = !InitialLandingMoveWorldDirection.IsNearlyZero();
+	Input.bHasMoveInput = !Move.IsNearlyZero();
+	Input.EntryControlYaw = InitialLandingControlYaw;
+	Input.EntryMoveYaw = InitialLandingMoveWorldDirection.Rotation().Yaw;
+	Input.ControlYaw = Player->GetControlRotation().Yaw;
+	Input.MoveYaw = Input.bHasMoveInput ? Move.Rotation().Yaw : Input.EntryMoveYaw;
+	Input.MoveCancelAngle = Profile->TransitionPolicy.StartMoveInputCancelAngle;
+	Input.SteeringLimit = Profile->SteeringMaxVisualYawError;
+	const auto& Feedback = Anim->GetCompletedTurnFeedback();
+	const bool bVisualFresh = Feedback.IsVisualFresh(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0,
+		AuthoritativeContext.RotationMode, AuthoritativeContext.GaitIntent);
+	const float VisualYaw = bVisualFresh ? Feedback.VisualFacingYaw : Player->GetActorRotation().Yaw;
+	const float TargetYaw = AuthoritativeContext.RotationMode == EProject_JLocomotionRotationMode::Strafe ? Input.ControlYaw : Input.MoveYaw;
+	Input.FacingError = FMath::FindDeltaAngleDegrees(VisualYaw, TargetYaw);
+	if (Movement->Velocity.SizeSquared2D() > FMath::Square(Profile->TransitionPolicy.MovingSpeedThreshold) && Input.bHasMoveInput)
+		Input.PathError = FMath::FindDeltaAngleDegrees(Movement->Velocity.Rotation().Yaw, Input.MoveYaw);
+	const auto Response = FProject_JOneShotInputResponse::Resolve(Input);
+	OutRelease = Response.bRelease;
+	return true;
+}
+
 bool UProject_JLocomotionAnimStateComponent::TryFinishLandingRedirectCancel(const FVector2D& MoveInput)
 {
 	if (!IsLandingStateActive() ||
@@ -1726,10 +1817,12 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishLandingRedirectCancel(cons
 		return false;
 	}
 
-	if (HasLandingDirectionTurnCancel(MoveInput, LandingRedirectCancelAngle) ||
-		HasLandingActorTurnCancel(LandingRedirectCancelAngle))
+	bool bRelease = false;
+	const bool bResponsive = TryResolveLandingInputResponse(MoveInput, bRelease);
+	if ((bResponsive && bRelease) || (!bResponsive && (HasLandingDirectionTurnCancel(MoveInput, LandingRedirectCancelAngle) ||
+		HasLandingActorTurnCancel(LandingRedirectCancelAngle))))
 	{
-		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("DirectionOrActorYawThreshold"));
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), bResponsive ? TEXT("InputOutsideSteeringRange") : TEXT("DirectionOrActorYawThreshold"));
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;
@@ -1749,10 +1842,12 @@ bool UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingTurnCancel(co
 		return false;
 	}
 
-	if (HasLandingDirectionTurnCancel(MoveInput, SprintLandingTurnCancelAngle) ||
-		HasLandingActorTurnCancel(SprintLandingTurnCancelAngle))
+	bool bRelease = false;
+	const bool bResponsive = TryResolveLandingInputResponse(MoveInput, bRelease);
+	if ((bResponsive && bRelease) || (!bResponsive && (HasLandingDirectionTurnCancel(MoveInput, SprintLandingTurnCancelAngle) ||
+		HasLandingActorTurnCancel(SprintLandingTurnCancelAngle))))
 	{
-		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), TEXT("SprintDirectionOrActorYawThreshold"));
+		Project_J::AnimationFlowDebug::Decision(GetOwner(), TEXT("LocomotionLand"), bResponsive ? TEXT("InputOutsideSteeringRange") : TEXT("SprintDirectionOrActorYawThreshold"));
 		DispatchLandingCancelForAnimation();
 		FinishLandingImmediately();
 		return true;

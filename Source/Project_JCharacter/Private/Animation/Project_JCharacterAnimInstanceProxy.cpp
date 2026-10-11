@@ -337,8 +337,8 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 		(TurnTraceMode >= 2 || GFrameCounter % 12 == 0 || DatabaseName != LastMovingTurnTraceDatabase || AnimationName != LastMovingTurnTraceAnimation))
 	{
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("MovingTurnTrace Stage=Result Frame=%llu Instance=%s Node=%d Candidates=%d RequestedPSD=%s SelectedPSD=%s Anim=%s Time=%.3f Weight=%.3f Continuing=%d Interaction=%d SearchElapsed=%.3f Pending=%llu Force=%d Enabled=%d Update=%d Override=%d"),
-			GFrameCounter, *GetNameSafe(GetAnimInstanceObject()), ResultNodeIndex, CandidateCount, *GetNameSafe(CurrentActiveDatabase.Get()),
+			TEXT("MovingTurnTrace Stage=Result Frame=%llu Instance=%s Node=%d Candidates=%d ResultNodes=%d RequestedPSD=%s SelectedPSD=%s Anim=%s Time=%.3f Weight=%.3f Continuing=%d Interaction=%d SearchElapsed=%.3f Pending=%llu Force=%d Enabled=%d Update=%d Override=%d"),
+			GFrameCounter, *GetNameSafe(GetAnimInstanceObject()), ResultNodeIndex, ThreadSafeCandidateCount, CandidateCount, *GetNameSafe(CurrentActiveDatabase.Get()),
 			*DatabaseName.ToString(), *AnimationName.ToString(), Result.SelectedTime, ResultNode->GetCachedBlendWeight(),
 			Result.bIsContinuingPoseSearch ? 1 : 0, Result.bIsInteraction ? 1 : 0, State.ElapsedPoseSearchTime, PendingReselectRevision,
 			bForceMotionMatchingReselect ? 1 : 0, bMotionMatchingEnabled ? 1 : 0, bUpdateMotionMatchingThisFrame ? 1 : 0,

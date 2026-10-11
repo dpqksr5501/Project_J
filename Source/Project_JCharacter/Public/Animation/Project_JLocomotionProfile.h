@@ -37,6 +37,11 @@ struct PROJECT_JCHARACTER_API FProject_JStateControllerChooserOutput
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|State Controller", meta = (ClampMin = "0.0", Units = "s"))
 	float BlendTime = 0.3f;
 
+	/** External -> MM overlap. Negative uses the profile's TransitionBlendTime;
+	 * zero requests an immediate return. Does not change the authored exit point. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|One Shot Return", meta = (ClampMin = "-1.0", Units = "s"))
+	float ReturnBlendTime = -1.f;
+
 
 	/**
 	 * Keep this as an asset reference rather than an FName so a Chooser output
@@ -117,6 +122,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
 	float TransitionBlendTime = 0.20f;
+
+	/** Requires the One Shot Handoff graph node. No MM background ticking. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|One Shot Return")
+	bool bEnableLiveOneShotReturn = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.2", ClampMax = "3.0"))
 	float MinPlayRate = 0.85f;
@@ -295,6 +304,22 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	/** Mouse/camera yaw delta threshold to cancel Start/Land one-shot and blend to Motion Matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float StartMouseTurnCancelAngle = 15.0f;
+
+	/** Keep compatible Start/Land input on live Steering; observe turn demand for the first MM return search. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response")
+	bool bEnableOneShotInputResponse = true;
+
+	/** Actual curved travel required before a compatible Start/Land may yield to Cycle. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "10.0", ClampMax = "1000.0", Units = "cm"))
+	float OneShotCurveTravelDistance = 100.0f;
+
+	/** Coherent actual travel heading sweep, independent of accumulated camera rotation. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "5.0", ClampMax = "90.0", Units = "deg"))
+	float OneShotCurveHeadingSweep = 20.0f;
+
+	/** Net / absolute heading change; rejects alternating left/right noise. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "0.5", ClampMax = "1.0"))
+	float OneShotCurveDirectionConsistency = 0.85f;
 
 	/** Movement input yaw delta threshold to cancel Start one-shot and blend to Motion Matching (e.g. W -> WA/A/S/D). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Start", meta = (ClampMin = "0.0", UIMin = "0.0"))
@@ -480,6 +505,13 @@ public:
 	/** Local visual rotation uses the same future-facing snapshot as PoseSearch. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering")
 	bool bEnableLocomotionSteering = true;
+
+	/** Smooth packet-delivered camera angular velocity before prediction clamping.
+	 * Only coherent local grounded side/backward Strafe; forward Turn queries are unchanged. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory")
+	bool bEnableStrafePredictionYawSmoothing = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory", meta = (ClampMin = "0", ClampMax = "0.1", Units = "s"))
+	float StrafePredictionYawRateHalfLife = .025f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.1", ClampMax = "1.0"))
 	float SteeringFacingLookAhead = 0.5f;

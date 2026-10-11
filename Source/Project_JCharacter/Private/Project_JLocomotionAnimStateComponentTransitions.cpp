@@ -418,6 +418,7 @@ void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JP
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	InitialLandingActorYaw = PlayerOwner.GetActorRotation().Yaw;
+	InitialLandingControlYaw = PlayerOwner.GetControlRotation().Yaw;
 	PreviousLandingActorYaw = InitialLandingActorYaw;
 	if (bLandWasMoving)
 	{
@@ -504,6 +505,7 @@ void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 	InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	InitialLandingActorYaw = 0.0f;
+	InitialLandingControlYaw = 0.0f;
 	PreviousLandingActorYaw = 0.0f;
 }
 

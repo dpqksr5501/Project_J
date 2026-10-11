@@ -12,6 +12,7 @@
 #include "Animation/Project_JStateControllerRuntime.h"
 #include "Animation/Project_JAnimationClock.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
+#include "Animation/Project_JOneShotCurvePolicy.h"
 #include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
@@ -940,6 +941,18 @@ public:
 	FProject_JAnimMotionMatchingThreadSafeData GetMotionMatchingDebugSnapshot() const;
 	/** GT-only completed evaluation; never forces synchronization with parallel evaluation. */
 	const FProject_JTurnSelectionFeedback& GetCompletedTurnFeedback() const { check(IsInGameThread()); return CompletedTurnFeedback; }
+	bool HasMovingOneShotInputOwnerOnGameThread() const
+	{
+		check(IsInGameThread());
+		return ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching && IsMovingOneShotInputOwner(ThreadSafeData);
+	}
+	bool DidYieldOneShotForCurveOnGameThread() const { check(IsInGameThread()); return bOneShotCurveReleasedThisUpdate; }
+	bool CanSteerOneShotInputOnGameThread() const
+	{
+		check(IsInGameThread());
+		return ThreadSafeData.bLocomotionSteeringEnabled && GFrameCounter >= ThreadSafeData.Movement.SnapshotFrame &&
+			GFrameCounter - ThreadSafeData.Movement.SnapshotFrame <= 2;
+	}
 
 	UFUNCTION(BlueprintPure, Category = "Animation|ThreadSafe", meta = (BlueprintThreadSafe))
 	FTransformTrajectory GetThreadSafeTrajectory() const;
@@ -1200,6 +1213,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	bool GetThreadSafeStateControllerShouldOverrideMotionMatching() const;
 
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafeOneShotReturnBlendTime() const;
+
 	/**
 	 * Returns 1 only for a selected Combat-Strafe direct one-shot with a stable
 	 * movement direction. Multiply this by the selected animation's
@@ -1323,7 +1339,10 @@ protected:
 	void PublishThreadSafeDataToProxy(FProject_JAnimThreadSafeData& Data);
 	void UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const;
 	void UpdateGeneralTurnData(FProject_JAnimThreadSafeData& Data);
+	bool IsMovingOneShotInputOwner(const FProject_JAnimThreadSafeData& Data) const;
 	FProject_JGeneralTurnPolicy GeneralTurnPolicy;
+	FProject_JOneShotCurvePolicy OneShotCurvePolicy;
+	bool bOneShotCurveReleasedThisUpdate = false;
 	FProject_JTurnSelectionFeedback CompletedTurnFeedback;
 	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
 	void RecordAnimationFlowEvaluation();

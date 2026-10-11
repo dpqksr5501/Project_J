@@ -19,26 +19,38 @@ float SafeSetting(float Value, float Fallback, float Min, float Max)
 }
 }
 
+bool UProject_JCharacterAnimInstance::IsMovingOneShotInputOwner(const FProject_JAnimThreadSafeData& Data) const
+{
+	const auto& Shot = Data.OneShotPresentation;
+	if (Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot ||
+		Shot.PhaseFamily == EProject_JLocomotionPhaseFamily::Pivot) return false;
+	// Presentation can retain Start after the producer reaches Cycle. A committed
+	// Pivot uses the same presentation enum but owns its authored root rotation.
+	return (Shot.bShouldOverrideMotionMatching || Shot.bRequested) &&
+		(Shot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand ||
+			(Shot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+				!StateControllerRuntime.HasCommittedPivot() &&
+				!Data.LocomotionContext.bIsPivoting));
+}
+
 void UProject_JCharacterAnimInstance::UpdateLocomotionSteeringData(FProject_JAnimThreadSafeData& Data) const
 {
 	Data.bLocomotionSteeringEnabled = false;
 	const auto* Profile = GetLocomotionProfile();
 	const auto* Movement = OwningCharacter ? OwningCharacter->GetCharacterMovement() : nullptr;
 	const auto Phase = Data.LocomotionContext.PhaseFamily;
-	const auto Presentation = Data.OneShotPresentation.PresentationState;
 	const bool bContinuous = !Data.OneShotPresentation.bShouldOverrideMotionMatching &&
 		(Phase == EProject_JLocomotionPhaseFamily::Cycle || Phase == EProject_JLocomotionPhaseFamily::Turn);
-	const bool bMovingOneShot = Data.OneShotPresentation.bShouldOverrideMotionMatching &&
-		(Phase == EProject_JLocomotionPhaseFamily::Start || Phase == EProject_JLocomotionPhaseFamily::Landing) &&
-		(Presentation == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
-			Presentation == EProject_JStateControllerPresentationState::TransitionToLand);
+	const bool bMovingOneShot = IsMovingOneShotInputOwner(Data);
 	using Gate = EProject_JLocomotionSteeringGate;
+	const bool bGroundedLanding = bMovingOneShot && Data.Landing.bIsLanding && Movement && Movement->IsMovingOnGround();
 	// Preserve the existing guard order while publishing its exact rejection.
 	if (!Profile) Data.LocomotionSteeringGate = Gate::MissingProfile;
 	else if (!Profile->bEnableLocomotionSteering) Data.LocomotionSteeringGate = Gate::ProfileDisabled;
 	else if (CVarLocomotionSteering.GetValueOnGameThread() == 0) Data.LocomotionSteeringGate = Gate::ConsoleDisabled;
 	else if (!Data.bIsLocallyControlled || !OwningPlayerCharacter || !OwningPlayerCharacter->IsPlayerControlled() || !IsPrimaryMeshAnimInstance()) Data.LocomotionSteeringGate = Gate::Ownership;
-	else if (Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot || !Movement || !Movement->IsMovingOnGround() || Data.Air.bIsInAir) Data.LocomotionSteeringGate = Gate::NotGroundedOnFoot;
+	else if (Data.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot || !Movement || !Movement->IsMovingOnGround() ||
+		(Data.Air.bIsInAir && !bGroundedLanding)) Data.LocomotionSteeringGate = Gate::NotGroundedOnFoot;
 	else if (!Data.Input.bHasMoveInput) Data.LocomotionSteeringGate = Gate::NoInput;
 	else if (!bContinuous && !bMovingOneShot) Data.LocomotionSteeringGate = Gate::PhaseOwner;
 	else if (Data.Combat.bIsAttacking || Data.Combat.bIsDodging || Data.Combat.bIsHitReacting) Data.LocomotionSteeringGate = Gate::Action;
@@ -83,13 +95,27 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	const bool bSprint = Data.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Sprint;
 	const bool bSupportedMode = Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement ||
 		(Data.Combat.bIsCombatMode && Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe);
-	Input.bEligible = Profile && Profile->bEnableGeneralTurnCandidates && CVarGeneralTurnCandidates.GetValueOnGameThread() != 0 &&
+	const bool bObserveShot = Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && Data.OneShotPresentation.bShouldOverrideMotionMatching &&
+		IsMovingOneShotInputOwner(Data);
+	Input.bObserveOnly = bObserveShot;
+	const bool bReleasedAcuteReady = !bOneShotCurveReleasedThisUpdate && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && !Data.OneShotPresentation.bShouldOverrideMotionMatching &&
+		Data.bLocomotionSteeringEnabled && Data.TurnRequest.bAcuteReturnReady &&
+		Data.TurnRequest.IsUsable(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0,
+			Data.LocomotionContext.RotationMode, Data.LocomotionContext.GaitIntent);
+	if (bReleasedAcuteReady)
+	{
+		Context.bMovingTurn180 = true; Context.bUseSettledCycle = false;
+		Context.PhaseFamily = Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
+	}
+	Input.bEligible = !bOneShotCurveReleasedThisUpdate && Profile && Profile->bEnableGeneralTurnCandidates && CVarGeneralTurnCandidates.GetValueOnGameThread() != 0 &&
 		Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() &&
 		Data.bLocomotionSteeringEnabled && bSupportedMode && !Context.bMovingTurn180 &&
 		(Data.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Run || bSprint) &&
 		(!bSprint || (OwningPlayerCharacter && OwningPlayerCharacter->IsSprintInputDirectionAllowed())) &&
-		Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
-		!Data.OneShotPresentation.bShouldOverrideMotionMatching && !Move.ContainsNaN() && !Move.IsNearlyZero();
+		((Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		!Data.OneShotPresentation.bShouldOverrideMotionMatching) || bObserveShot) && !Move.ContainsNaN() && !Move.IsNearlyZero();
 	bool bCandidateDataUnavailable = false;
 	const UProject_JMotionMatchingAssetSet* CandidateSet = nullptr;
 	if (Input.bEligible)
@@ -98,6 +124,9 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 		const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() : OwningPlayerCharacter->GetMotionMatchingAssetSet();
 		CandidateSet = Set;
 		auto CandidateContext = Context;
+		// Validate the prospective return pool, not the currently owned Start/Land
+		// family: direct one-shots intentionally have no MM companion.
+		CandidateContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
 		CandidateContext.bGeneralTurnCandidates = true;
 		CandidateContext.bUseGenericFamiliesForNonOrientToMovement = bCombat;
 		bCandidateDataUnavailable = !Set || !Set->FindTurnCycleCompanion(CandidateContext,
@@ -106,7 +135,7 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	}
 	const auto& Request = Data.TurnRequest;
 	Input.bEligible &= Request.IsUsable(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0,
-		Data.LocomotionContext.RotationMode, Data.LocomotionContext.GaitIntent) && !Request.bAcuteActive;
+		Data.LocomotionContext.RotationMode, Data.LocomotionContext.GaitIntent) && !Request.bAcuteActive && !bReleasedAcuteReady;
 	Input.Mode = Request.Mode;
 	Input.Gait = Request.Gait;
 	Input.Now = Request.Seconds;
@@ -119,7 +148,7 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	// During braking there is no meaningful zero-velocity heading to reject.
 	if (Input.Speed <= 50) Input.VelocityYaw = Input.MoveYaw;
 	const auto& Result = GetCompletedTurnFeedback();
-	if (Input.bEligible && CandidateSet && Result.bRelevant && Result.IsFresh(GFrameCounter, Input.Now, Input.Mode, Input.Gait))
+	if (!bObserveShot && Input.bEligible && CandidateSet && Result.bRelevant && Result.IsFresh(GFrameCounter, Input.Now, Input.Mode, Input.Gait))
 	{
 		const auto& Family = CandidateSet->GetDatabaseFamily(Input.Gait);
 		Input.SelectionFrame = Result.Frame;
@@ -157,6 +186,10 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	Data.bGeneralTurnCycleHandoff = GeneralTurnPolicy.IsCycleHandoffHeld();
 	Data.GeneralTurnDemand = FName(GeneralTurnPolicy.GetDemand());
 	Data.GeneralTurnReason = FName(bCandidateDataUnavailable ? TEXT("CandidateDataUnavailable") : GeneralTurnPolicy.GetReason());
+	// A compatible curve yields to rich directional locomotion, not a new Turn
+	// event or the Strafe straight-only settled pool. Later MM samples retain
+	// the existing physical Turn policy and dynamic-Cycle observation.
+	if (bOneShotCurveReleasedThisUpdate) Context.bUseSettledCycle = false;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeLocomotionSteeringAlpha() const

@@ -6,12 +6,19 @@
 struct FProject_JTurnSelectionFeedback
 {
 	uint64 Frame = 0;
+	uint64 VisualFrame = 0;
 	double Seconds = 0;
 	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
 	EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 	FName SelectedDatabase;
 	bool bRelevant = false, bVisualFacingValid = false;
 	float VisualFacingYaw = 0;
+	bool IsVisualFresh(uint64 CurrentFrame, double Now, EProject_JLocomotionRotationMode CurrentMode,
+		EProject_JLocomotionGaitIntent CurrentGait) const
+	{
+		return bVisualFacingValid && VisualFrame > 0 && VisualFrame <= CurrentFrame && CurrentFrame - VisualFrame <= 2 &&
+			Mode == CurrentMode && Gait == CurrentGait && FMath::IsFinite(Now) && FMath::IsFinite(Seconds) && Now >= Seconds && Now - Seconds <= .1;
+	}
 	bool IsFresh(uint64 CurrentFrame, double Now, EProject_JLocomotionRotationMode CurrentMode,
 		EProject_JLocomotionGaitIntent CurrentGait = EProject_JLocomotionGaitIntent::Run) const
 	{
@@ -25,6 +32,8 @@ struct FProject_JTurnSelectionFeedback
 struct FProject_JTurnRequestSample
 {
 	bool bValid = false, bAcuteActive = false, bAcuteApproach = false;
+	// Physical preparation only while Start/Land owns the pose. Never activates its MM branch.
+	bool bAcuteReturnReady = false;
 	uint64 Frame = 0;
 	double Seconds = 0;
 	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;

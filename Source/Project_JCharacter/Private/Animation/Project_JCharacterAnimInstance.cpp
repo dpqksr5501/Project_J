@@ -16,6 +16,7 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingCVars.h"
+#include "Animation/Project_JOneShotInputResponse.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JWeaponAnimProfile.h"
@@ -579,6 +580,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		? LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle
 		: 30.0f;
 
+	bOneShotCurveReleasedThisUpdate = false;
 	bool bShouldCancelOneShot = bIsTurnCancellableOneShot &&
 		OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled() &&
 		ShouldCancelLocalOneShotForInput(bIsCommittedPivotOneShot, EffectiveMouseTurnCancelAngle, EffectiveMoveInputCancelAngle);
@@ -671,10 +673,9 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 		// A local input turn, or its remote replicated-movement equivalent, invalidates
 		// the trajectory that selected an authored Start/Pivot/Land one-shot. Release it and
-		// refresh regular MM immediately. We do
-		// not route this through a Turn asset: Project_J has not yet authored a
-		// dedicated OTM Turn chooser/transition contract, whereas the Cycle PSD is
-		// already trajectory-aware and stable for Run and Sprint.
+		// refresh regular MM immediately. The publication below admits compatible
+		// Cycle/Turn candidates from observed physical demand; it never commands
+		// a Turn clip or replaces the dedicated Pivot owner.
 		if (bIsLandOneShot) { UpdateReleasedLandingMotionContext(ThreadSafeData, true); }
 		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
 			? EProject_JStateControllerPresentationState::LocomotionLoop
@@ -696,6 +697,7 @@ void UProject_JCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 	else if (!bIsTurnCancellableOneShot)
 	{
+		OneShotCurvePolicy.Reset();
 		bHasStateControllerOneShotControlYaw = false;
 		bHasStateControllerOneShotMoveInputYaw = false;
 		bHasStateControllerRemoteStartReference = false;
@@ -1165,8 +1167,8 @@ void UProject_JCharacterAnimInstance::NativePostEvaluateAnimation()
 			// world yaw. Selection reads this pose; gameplay rotation never does.
 			CompletedTurnFeedback.VisualFacingYaw = FRotator::NormalizeAxis(OwningCharacter->GetActorRotation().Yaw +
 				FMath::FindDeltaAngleDegrees(Mesh->GetComponentRotation().Yaw, RootYaw));
-			CompletedTurnFeedback.bVisualFacingValid = CompletedTurnFeedback.bRelevant &&
-				FMath::IsFinite(CompletedTurnFeedback.VisualFacingYaw);
+			CompletedTurnFeedback.VisualFrame = GFrameCounter;
+			CompletedTurnFeedback.bVisualFacingValid = FMath::IsFinite(CompletedTurnFeedback.VisualFacingYaw);
 		}
 	}
 
@@ -2662,6 +2664,99 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 
 bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle)
 {
+	const auto* Profile = GetLocomotionProfile();
+	if (!bCommittedPivot && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && bHasStateControllerOneShotControlYaw)
+	{
+		UpdateLocomotionSteeringData(ThreadSafeData);
+		FProject_JOneShotInputResponse::FInput Input;
+		Input.bCanSteer = ThreadSafeData.bLocomotionSteeringEnabled;
+		Input.bHasMoveReference = bHasStateControllerOneShotMoveInputYaw;
+		const FVector Move = OwningPlayerCharacter->GetLastMovementInputVector();
+		Input.bHasMoveInput = Move.SizeSquared2D() > UE_KINDA_SMALL_NUMBER;
+		Input.EntryControlYaw = StateControllerOneShotControlYaw; Input.EntryMoveYaw = StateControllerOneShotMoveInputYaw;
+		Input.ControlYaw = OwningPlayerCharacter->GetControlRotation().Yaw;
+		Input.MoveYaw = Input.bHasMoveInput ? Move.Rotation().Yaw : Input.EntryMoveYaw;
+		Input.MouseCancelAngle = MouseCancelAngle; Input.MoveCancelAngle = MoveCancelAngle;
+		Input.SteeringLimit = ThreadSafeData.LocomotionSteeringMaxYawError;
+		const float TargetYaw = ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe
+			? Input.ControlYaw : Input.MoveYaw;
+		const auto& Feedback = GetCompletedTurnFeedback();
+		const bool bVisualFresh = Feedback.IsVisualFresh(GFrameCounter,
+			GetWorld() ? GetWorld()->GetTimeSeconds() : 0, ThreadSafeData.LocomotionContext.RotationMode, ThreadSafeData.LocomotionContext.GaitIntent);
+		const float VisualYaw = bVisualFresh ? Feedback.VisualFacingYaw : OwningPlayerCharacter->GetActorRotation().Yaw;
+		Input.FacingError = FMath::FindDeltaAngleDegrees(VisualYaw, TargetYaw);
+		if (ThreadSafeData.Movement.GroundSpeed > Profile->TransitionPolicy.MovingSpeedThreshold && Input.bHasMoveInput)
+			Input.PathError = FMath::FindDeltaAngleDegrees(ThreadSafeData.Movement.Velocity.Rotation().Yaw, Input.MoveYaw);
+		auto Response = FProject_JOneShotInputResponse::Resolve(Input);
+		FProject_JOneShotCurvePolicy::FInput Curve;
+		const auto* Movement = OwningPlayerCharacter->GetCharacterMovement();
+		const auto& Data = ThreadSafeData;
+		const auto& Shot = Data.OneShotPresentation;
+		const auto Mode = Data.LocomotionContext.RotationMode;
+		const auto Gait = Data.LocomotionContext.GaitIntent;
+		const bool bCombat = Mode == EProject_JLocomotionRotationMode::Strafe && Data.Combat.bIsCombatMode;
+		const auto* Set = bCombat ? OwningPlayerCharacter->GetCombatStrafeMotionMatchingAssetSet() : OwningPlayerCharacter->GetMotionMatchingAssetSet();
+		// Native input resolution precedes chooser publication: a retained Start
+		// may already have semantic Cycle and bRequested/override cleared here.
+		// Its held presentation is the actual owner at this stage.
+		Curve.bEligible = !Response.bRelease && Input.bCanSteer && Input.bHasMoveInput &&
+			StateControllerRuntime.GetHeldState() == Shot.PresentationState && !StateControllerRuntime.HasCommittedPivot() &&
+			Data.LocomotionContext.PhaseFamily != EProject_JLocomotionPhaseFamily::Pivot &&
+			Movement && (Mode == EProject_JLocomotionRotationMode::OrientToMovement || bCombat) &&
+			(Gait == EProject_JLocomotionGaitIntent::Run || Gait == EProject_JLocomotionGaitIntent::Sprint) &&
+			(Gait != EProject_JLocomotionGaitIntent::Sprint || OwningPlayerCharacter->IsSprintInputDirectionAllowed()) &&
+			Data.Movement.bHasFutureTrajectoryVelocity && Set && Set->GetDatabaseFamily(Gait).Cycle &&
+			Data.Movement.SnapshotFrame <= GFrameCounter && GFrameCounter - Data.Movement.SnapshotFrame <= 2 &&
+			Movement->Velocity.Size2D() > Profile->TransitionPolicy.IdleSpeedThreshold;
+		Curve.OwnerRevision = StateControllerChooserSelectionRevision;
+		Curve.Mode = static_cast<int32>(Mode); Curve.Gait = static_cast<int32>(Gait);
+		Curve.TrajectoryRevision = Data.Movement.TrajectoryResetRevision;
+		Curve.Now = AnimationClock.Seconds;
+		Curve.Position = OwningPlayerCharacter->GetActorLocation();
+		Curve.Velocity = Movement ? Movement->Velocity : FVector::ZeroVector;
+		Curve.FutureVelocity = Data.Movement.FutureTrajectoryVelocity;
+		const bool bLand = Shot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+		Curve.bCanExit = bLand ? LocomotionAnimStateComponent && LocomotionAnimStateComponent->bCanExitLanding :
+			Movement && (Shot.bTransitionAnimationAlmostComplete ||
+				(Movement->Velocity.Size2D() >= Movement->GetMaxSpeed() * Profile->TransitionPolicy.StartCompletionSpeedFraction &&
+				Data.Movement.PredictedSpeedGain <= Profile->TransitionPolicy.StartSpeedGainThreshold));
+		FProject_JOneShotCurvePolicy::FSettings CurveSettings;
+		CurveSettings.TravelDistance = Profile->TransitionPolicy.OneShotCurveTravelDistance;
+		CurveSettings.HeadingSweep = Profile->TransitionPolicy.OneShotCurveHeadingSweep;
+		CurveSettings.DirectionConsistency = Profile->TransitionPolicy.OneShotCurveDirectionConsistency;
+		const auto CurveResponse = OneShotCurvePolicy.Update(Curve, CurveSettings);
+		if (CurveResponse.bYield)
+		{
+			Response = {true, TEXT("ContinuousCurveToCycle")};
+			bOneShotCurveReleasedThisUpdate = true;
+		}
+		if (Response.bRelease && !CurveResponse.bYield && Input.bCanSteer && LocomotionAnimStateComponent)
+		{
+			// NativeUpdate can precede the component tick. Probe the existing event
+			// using this actual input, rather than first searching last frame's Cycle.
+			ThreadSafeData.TurnRequest.bAcuteReturnReady = LocomotionAnimStateComponent->ProbeOneShotTurnReturn(Move,
+				ThreadSafeData.LocomotionContext.RotationMode, ThreadSafeData.LocomotionContext.GaitIntent);
+		}
+		if (Project_J::AnimationFlowDebug::ShouldCapture(OwningCharacter) && (Response.bRelease || GFrameCounter % 12 == 0))
+		{
+			UE_LOG(LogProjectJPlayer, Display, TEXT("AnimFlow InputResponse Frame=%llu Actor=%s Release=%d Reason=%s CanSteer=%d FacingError=%.1f PathError=%.1f Limit=%.1f VisualFresh=%d"),
+				GFrameCounter, *GetNameSafe(OwningCharacter), Response.bRelease, Response.Reason, Input.bCanSteer,
+				Input.FacingError, Input.PathError, Input.SteeringLimit, bVisualFresh);
+			UE_LOG(LogProjectJPlayer, Display, TEXT("AnimFlow OneShotCurve Eligible=%d CanExit=%d Yield=%d Distance=%.1f Sweep=%.1f Consistency=%.2f"),
+				Curve.bEligible, Curve.bCanExit, CurveResponse.bYield, CurveResponse.Distance, CurveResponse.Sweep, CurveResponse.Consistency);
+		}
+		if (Response.bRelease) Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), Response.Reason);
+		if (!bHasStateControllerOneShotMoveInputYaw && Input.bHasMoveInput)
+		{
+			StateControllerOneShotMoveInputYaw = Input.MoveYaw;
+			// First movement establishes the key-space basis, not the old landing camera.
+			StateControllerOneShotControlYaw = Input.ControlYaw;
+			bHasStateControllerOneShotMoveInputYaw = true;
+		}
+		return Response.bRelease;
+	}
+	OneShotCurvePolicy.Reset();
 	bool bShouldCancelOneShot = false;
 	if (bHasStateControllerOneShotControlYaw)
 	{

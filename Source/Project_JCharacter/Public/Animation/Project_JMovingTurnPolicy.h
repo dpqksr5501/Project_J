@@ -11,6 +11,7 @@ public:
 	struct FInput
 	{
 		bool bEligible = false, bEntryQualified = true;
+		bool bDeferAdmission = false;
 		EProject_JLocomotionRotationMode RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
 		EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 		float ActorYaw = 0, TargetFacingYaw = 0, VelocityYaw = 0, MoveYaw = 0;
@@ -63,6 +64,13 @@ public:
 		const bool bCorrectionResolved = PathError <= S.SettledPathAngle &&
 			(RemainingFacing <= Exit || (Facing <= Exit && RemainingFacing < S.MinimumRemainingFacingAngle));
 		const bool bFreshSelection = I.SelectionFrame > LastSelectionFrame;
+		// A new direct shot owns its pose; keep only physical preparation, never
+		// an earlier MM turn result or completion permission beneath that shot.
+		if (I.bDeferAdmission)
+		{
+			bTurnUsed = bAllowContinuation = false;
+			if (Stage == EStage::Active) { Stage = EStage::Preparing; PreparedAt = I.NowSeconds; }
+		}
 		if (bFreshSelection) LastSelectionFrame = I.SelectionFrame;
 		if (bAllowContinuation && (Facing > S.RearmFacingAngle || !bForwardRequest ||
 			Angle(CompletedTargetYaw, I.TargetFacingYaw) > S.ContinuationTargetAngle ||
@@ -198,6 +206,11 @@ private:
 	}
 	bool Enter(const FInput& I, const TCHAR* InReason)
 	{
+		if (I.bDeferAdmission)
+		{
+			Stage = EStage::Preparing; bTurnUsed = bAllowContinuation = false;
+			Reason = TEXT("OneShotPreparation"); return false;
+		}
 		Stage = EStage::Active; StartedAt = I.NowSeconds;
 		bArmed = false; bTurnUsed = false; Reason = InReason; return true;
 	}

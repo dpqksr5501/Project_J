@@ -386,17 +386,17 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerIdleBreakMini
 
 UAnimationAsset* UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimation() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimation;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().SelectedAnimation;
 }
 
 FProject_JStateControllerChooserOutput UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationOutput() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().SelectedAnimationOutput;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationStartTime() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.StartTime;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().SelectedAnimationOutput.StartTime;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerPlaybackHoldElapsedTime() const
@@ -411,22 +411,22 @@ int32 UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectionRevi
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldForceBlend() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bForceBlendNextUpdate;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().bForceBlendNextUpdate;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendTime() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.BlendTime;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().SelectedAnimationOutput.BlendTime;
 }
 
 UBlendProfile* UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationBlendProfile() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.SelectedAnimationOutput.BlendProfile;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().SelectedAnimationOutput.BlendProfile;
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationShouldLoop() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bSelectedAnimationShouldLoop;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().bSelectedAnimationShouldLoop;
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerHasSelectedAnimation() const
@@ -439,16 +439,25 @@ bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerShouldOverride
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bShouldOverrideMotionMatching;
 }
 
+float UProject_JCharacterAnimInstance::GetThreadSafeOneShotReturnBlendTime() const
+{
+	const auto& Proxy = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>();
+	const float Authored = Proxy.GetExternalPlaybackData().SelectedAnimationOutput.ReturnBlendTime;
+	const float Duration = Proxy.IsLiveReturnTraversal() && FMath::IsFinite(Authored) && Authored >= 0.f
+		? Authored : Proxy.GetThreadSafeData().MotionMatchingSearchPolicy.TransitionBlendTime;
+	return FMath::IsFinite(Duration) ? FMath::Max(0.f, Duration) : 0.f;
+}
+
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeOrientationWarpingAlpha() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.bShouldEnableCombatStrafeOrientationWarping
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().bShouldEnableCombatStrafeOrientationWarping
 		? 1.0f
 		: 0.0f;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle() const
 {
-	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetThreadSafeData().OneShotPresentation.StrafeDirectionAngle;
+	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().StrafeDirectionAngle;
 }
 
 bool UProject_JCharacterAnimInstance::GetThreadSafeStateControllerSelectedAnimationAlmostComplete() const

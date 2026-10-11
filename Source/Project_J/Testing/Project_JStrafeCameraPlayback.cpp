@@ -4,6 +4,7 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JCombatAnimProfile.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchSchema.h"
 #include "PoseSearch/PoseSearchFeatureChannel_Trajectory.h"
@@ -38,6 +39,10 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 	UPoseSearchDatabase* AuditDatabase = nullptr;
 	EPoseSearchMode OriginalSearchMode = EPoseSearchMode::PCAKDTree;
 	TArray<TPair<int32, float>> OriginalWeights;
+	TMap<FName, float> NonLoopIndexedEnds;
+	bool bPacketCamera = false;
+	float CoverageBlendTime = .20f, CoverageMargin = .23f;
+	int32 Reselections = 0, ShortSegments = 0, TailEntries = 0, LastJumpFrame = -1;
 	TStrongObjectPtr<UProject_JMotionMatchingAssetSet> SchemaTrialSet;
 	UProject_JCombatAnimProfile* TrialProfile = nullptr;
 	UProject_JMotionMatchingAssetSet* OriginalProfileSet = nullptr;
@@ -71,6 +76,7 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		World->BeginTearingDown(); World->EndPlay(EEndPlayReason::Quit);
 		World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
 		World = nullptr; Player = nullptr; Controller = nullptr;
+		NonLoopIndexedEnds.Reset();
 	}
 	bool PrepareSchemaTrial(const UProject_JMotionMatchingAssetSet* Source, float Multiplier)
 	{
@@ -197,6 +203,19 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 				Report += FString::Printf(TEXT("InMemoryVelocityCostMultiplier=%.1f Dimensions=%d\n"), VelocityWeight, OriginalWeights.Num());
 			}
 		}
+		const auto& CoverageIndex = Database->GetSearchIndex();
+		const auto* LocomotionProfile = Player->GetLocomotionProfile();
+		CoverageBlendTime = LocomotionProfile ? LocomotionProfile->MotionMatchingSearchPolicy.DefaultBlendTime : .20f;
+		CoverageMargin = CoverageBlendTime * (LocomotionProfile ? LocomotionProfile->MotionMatchingSearchPolicy.MaxPlayRate : 1.15f);
+		for (const auto& Asset : CoverageIndex.Assets)
+		{
+			if (Asset.IsLooping()) continue;
+			const auto* Entry = Database->GetDatabaseAnimationAsset(Asset.GetSourceAssetIdx());
+			if (!Entry) continue;
+			const float End = Asset.GetLastSampleTime(Database->Schema->SampleRate);
+			NonLoopIndexedEnds.Add(GetFNameSafe(Entry->GetAnimationAsset()), End);
+		}
+		Report += FString::Printf(TEXT("EntryCoverageMeasuredOnly=1 Margin=%.3f PacketCamera=%d\n"), CoverageMargin, bPacketCamera);
 		return true;
 	}
 public:
@@ -206,6 +225,7 @@ public:
 		bVerifyForwardCurve = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyStrafeForwardCurve"));
 		bVerifyCorrection = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyCorrectionTurns"));
 		bVerifyRapidTurn = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyRapidTurns"));
+		bPacketCamera = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafePacketCamera"));
 	}
 	virtual ~FStrafeCameraPlayback() override { Cleanup(); }
 	virtual bool Update() override
@@ -244,7 +264,10 @@ public:
 		if (Case >= 12 && Frame > RotationStartFrame) AccumulatedCameraYaw += Dt * Rate;
 		if (Case >= 23) AccumulatedCameraYaw = FMath::Clamp(AccumulatedCameraYaw,
 			FMath::Min(0.f, RapidTarget), FMath::Max(0.f, RapidTarget));
-		const float CameraYaw = Case >= 12 ? AccumulatedCameraYaw : Frame < 120 ? 0 : (Frame - 120) * Dt * Rate;
+		// A 40Hz pointer sampled by a 120Hz character tick delivers the same
+		// average camera motion in packets, rather than an ideal change every tick.
+		const int32 CameraFrames = bPacketCamera ? ((Frame - 120) / 3) * 3 : Frame - 120;
+		const float CameraYaw = Case >= 12 ? AccumulatedCameraYaw : Frame < 120 ? 0 : CameraFrames * Dt * Rate;
 		Controller->SetControlRotation(FRotator(0, CameraYaw, 0));
 		const FVector Move = FRotator(0, CameraYaw + MoveOffset, 0).Vector();
 		const float Radians = FMath::DegreesToRadians(MoveOffset);
@@ -267,6 +290,14 @@ public:
 		const bool bMeasured = Frame >= 120 && Frame < 360;
 		if (bMeasured)
 		{
+			if (!Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching() && !MM.PostSelection.bIsContinuingPoseSearch)
+			{
+				++Reselections;
+				if (LastJumpFrame >= 0 && (Frame - LastJumpFrame) * Dt < CoverageBlendTime) ++ShortSegments;
+				LastJumpFrame = Frame;
+				if (const float* End = NonLoopIndexedEnds.Find(MM.PostSelection.SelectedAnimation))
+					TailEntries += MM.PostSelection.SelectedAnimationTime > *End - CoverageMargin;
+			}
 			GroundFrames += Movement->IsMovingOnGround();
 			MovingFrames += Movement->Velocity.Size2D() > 100;
 			ArcFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Arc_"));
@@ -333,6 +364,7 @@ public:
 		}
 		if (++Frame < 360) return false;
 		Report += FString::Printf(TEXT("Summary Case=%d GroundFrames=%d MovingFrames=%d ArcFrames=%d\n"), Case, GroundFrames, MovingFrames, ArcFrames);
+		Report += FString::Printf(TEXT("EntrySummary Case=%d Reselections=%d ShortSegments=%d TailEntries=%d\n"), Case, Reselections, ShortSegments, TailEntries);
 		Report += FString::Printf(TEXT("GeneralSummary Case=%d CandidateFrames=%d SelectedFrames=%d LateFrames=%d\n"),
 			Case, GeneralFrames, SelectedGeneralFrames, LateGeneralFrames);
 		Test->TestTrue(TEXT("Measured CMC actually remained grounded"), GroundFrames >= 235);
@@ -397,11 +429,14 @@ public:
 		GeneralFrames = SelectedGeneralFrames = LateGeneralFrames = 0; AccumulatedCameraYaw = 0;
 		AcuteFrames = AcuteSelectedFrames = FalseStopFrames = BrakingTurnFrames = PreparedFrames = PreparedEnterFrames = 0;
 		MinimumTurnSpeed = TNumericLimits<float>::Max();
+		Reselections = ShortSegments = TailEntries = 0; LastJumpFrame = -1;
 		if (++Case < (bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
 		IFileManager::Get().MakeDirectory(*Directory, true);
+		FString Output = Directory / TEXT("Playback.txt");
+		FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafePlaybackOutput="), Output);
 		Test->TestTrue(TEXT("Save CMC direction/prediction evidence"), FFileHelper::SaveStringToFile(Report,
-			*(Directory / TEXT("Playback.txt")), FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
+			*Output, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
 		return true;
 	}
 };

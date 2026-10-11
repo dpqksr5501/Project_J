@@ -266,6 +266,8 @@ public:
 	void ClearMoveInput();
 	/** Current raw local input, including after CMC has consumed its pending vector. */
 	bool HasHeldLocalMoveInput() const;
+	/** Camera-relative raw local input; independent of CMC's consumed world vector. */
+	FVector2D GetHeldLocalMoveInput() const { return GetLocalMovementInputForState(); }
 	/**
 	 * Records a completed Enhanced Input semantic-direction snapshot for cosmetic
 	 * Pivot selection. It never changes CharacterMovement or replication.
@@ -281,6 +283,8 @@ public:
 	/** Complete value-only database-selection contract authored on the game thread. */
 	const FProject_JMotionMatchingSelectionContext& GetMotionMatchingSelectionContext() const { return MotionMatchingSelectionContext; }
 	const FProject_JTurnRequestSample& GetTurnRequestSample() const { return TurnRequestSample; }
+	/** Read-only first-return probe with current input; does not advance the live policy twice. */
+	bool ProbeOneShotTurnReturn(const FVector& MoveWorldDirection, EProject_JLocomotionRotationMode Mode, EProject_JLocomotionGaitIntent Gait) const;
 
 	UFUNCTION(BlueprintPure, Category = "Movement|Debug")
 	FString GetDebugSummary() const;
@@ -311,6 +315,9 @@ private:
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
 	bool UpdateMovingTurnPolicy(const FProject_JLocomotionAuthoritativeContext& AuthContext,
 		const FProject_JLocomotionKinematicContext& KinematicContext, const FProject_JDerivedLocomotionContext& DerivedContext);
+	FProject_JMovingTurnPolicy::FInput BuildMovingTurnInput(const FProject_JLocomotionAuthoritativeContext& AuthContext,
+		const FProject_JLocomotionKinematicContext& Motion, const FProject_JDerivedLocomotionContext& Derived,
+		FProject_JTurnEventSettings& OutSettings, const TCHAR*& OutGuard) const;
 	bool IsMovingForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool HasGroundMovementIntentForContext(const FProject_JLocomotionKinematicContext& KinematicContext) const;
 	bool IsStartingForContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext) const;
@@ -414,6 +421,7 @@ private:
 	bool TryFinishSprintLandingTurnCancel(const FVector2D& MoveInput);
 	bool HasLandingDirectionTurnCancel(const FVector2D& MoveInput, float AngleThreshold);
 	bool HasLandingActorTurnCancel(float AngleThreshold);
+	bool TryResolveLandingInputResponse(const FVector2D& MoveInput, bool& OutRelease) const;
 	void UpdateSharpTurnRequest(bool bAllowSharpTurn);
 	bool ShouldInterruptStartForResponsiveTurn(const FVector2D& MoveInput, bool bAllowLocalControlYaw) const;
 	bool HasLocalStartResponsiveTurn(float AngleThreshold) const;
@@ -871,6 +879,7 @@ private:
 	FVector InitialLandingMoveWorldDirection = FVector::ZeroVector;
 	FVector PreviousLandingMoveWorldDirection = FVector::ZeroVector;
 	float InitialLandingActorYaw = 0.0f;
+	float InitialLandingControlYaw = 0.0f;
 	float PreviousLandingActorYaw = 0.0f;
 	bool bWasInAir = false;
 	bool bPendingStartRequest = false;

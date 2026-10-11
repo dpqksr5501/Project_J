@@ -4,6 +4,8 @@
 
 namespace
 {
+TAutoConsoleVariable<int32> CVarOneShotInputResponse(TEXT("p.ProjectJ.OneShotInputResponse"), 1,
+	TEXT("Start/Land input compatibility and observed return candidates. 0=legacy input cancellation, 1=profile-controlled."));
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
 	TEXT("p.ProjectJ.MM.RepairRemoteTrajectoryFacing"),
 	1,
@@ -118,6 +120,11 @@ bool ShouldCapturePivotDebugTrace()
 bool ShouldCaptureTransitionDebugTrace()
 {
 	return CVarProjectJMMTransitionDebug.GetValueOnAnyThread() != 0;
+}
+
+bool ShouldUseOneShotInputResponse()
+{
+	return CVarOneShotInputResponse.GetValueOnAnyThread() != 0;
 }
 
 bool ShouldTraceCombatStop()
