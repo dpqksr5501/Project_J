@@ -13,6 +13,9 @@
 | 단발 Blend Stack → MM 실제 포즈 크로스페이드·관성 복귀 비교 | [Live Return 구조와 검증](Architecture/OneShot_Live_Return_2026-10-11.md) |
 | Start·Land 작은 입력 유지·지속 곡선의 Cycle 복귀·첫 MM 후보 전달 | [단발 입력 반응과 첫 검색](Architecture/OneShot_Input_Response_2026-10-11.md) |
 | Strafe A/S/D 카메라 회전의 예측 흔들림·재선택 비교 | [Strafe 예측 안정화](Architecture/Strafe_Prediction_Stability_2026-10-11.md) |
+| 전방 Strafe Arc의 실제 몸통 방향·원본 자세 비교 | [전방 몸통 진단](Architecture/Strafe_Forward_Facing_Diagnostics_2026-10-11.md) |
+| Master 공통 상체 방향·프로필 뼈 역할·LOD·보호 포즈 검증 | [Strafe 상체 방향 보정](Architecture/Strafe_Upper_Body_Facing_2026-10-11.md) |
+| 전방 Strafe Run의 골반 방향·기존 발 접지 제약·Turn/몽타주 제외 | [Strafe 하체 방향 보정](Architecture/Strafe_Lower_Body_Facing_2026-10-11.md) |
 | Strafe 네 방향 Pivot·입력 취소 | [Pivot 이동 입력 기준 통일](Architecture/Strafe_Pivot_Input_Basis_2026-10-05.md) |
 | 연속 Pivot·OTM/Strafe 중복 Start/Land 방지 | [일회성 동작의 요청 수명](Architecture/OneShot_Command_Lifetime_2026-10-05.md) |
 | Start·착지 중 입력 변경·MM 복귀의 실행 흐름 | [기본 비활성 흐름 진단](Architecture/Start_Land_Input_Flow_Trace_2026-10-05.md) |

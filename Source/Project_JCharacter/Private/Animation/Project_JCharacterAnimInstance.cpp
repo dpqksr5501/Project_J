@@ -3163,6 +3163,7 @@ void UProject_JCharacterAnimInstance::PublishThreadSafeDataToProxy(FProject_JAni
 			static_cast<int32>(Data.OneShotPresentation.PresentationState), Data.MotionMatching.MinimumSearchInterval);
 	}
 #endif
+	UpdateStrafeFacingData(Data);
 	ProjectProxy.QueueGameThreadData(
 		Data,
 		CurrentActivePoseSearchDatabase,

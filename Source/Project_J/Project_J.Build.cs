@@ -41,6 +41,7 @@ public class Project_J : ModuleRules
 		{
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
 			PrivateDependencyModuleNames.Add("Project_JMount");
+			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
 			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "BlendStack" });
 		}
 

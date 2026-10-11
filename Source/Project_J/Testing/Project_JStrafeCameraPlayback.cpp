@@ -4,6 +4,14 @@
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JCombatAnimProfile.h"
+#include "Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h"
+#include "Animation/AnimBlueprint.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/AnimClassInterface.h"
+#include "Animation/AnimNode_ProjectJStrafeLowerBodyFacing.h"
+#include "Combat/Project_JAttackDefinition.h"
+#include "Combat/Project_JComboDefinition.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchSchema.h"
@@ -26,6 +34,8 @@
 #include "Misc/Paths.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "Misc/Crc.h"
+#include "Engine/SkeletalMesh.h"
 #include "HAL/FileManager.h"
 
 namespace
@@ -41,6 +51,10 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 	TArray<TPair<int32, float>> OriginalWeights;
 	TMap<FName, float> NonLoopIndexedEnds;
 	bool bPacketCamera = false;
+	bool bSlowForwardCamera = false;
+	bool bFacingBoundary = false;
+	bool bColdFacingAudit = false;
+	int32 MontageFrames = 0, TurnInPlaceFrames = 0;
 	float CoverageBlendTime = .20f, CoverageMargin = .23f;
 	int32 Reselections = 0, ShortSegments = 0, TailEntries = 0, LastJumpFrame = -1;
 	TStrongObjectPtr<UProject_JMotionMatchingAssetSet> SchemaTrialSet;
@@ -226,15 +240,37 @@ public:
 		bVerifyCorrection = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyCorrectionTurns"));
 		bVerifyRapidTurn = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyRapidTurns"));
 		bPacketCamera = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafePacketCamera"));
+		// Reuse the actual CMC/MM fixture for this read-only facing diagnostic;
+		// existing regression cases/rates remain unchanged without this flag.
+		bSlowForwardCamera = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeSlowForwardCamera"));
+		bFacingBoundary = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeFacingBoundary"));
+		bSlowForwardCamera |= bFacingBoundary;
+		if (bSlowForwardCamera)
+		{
+			Case = 9;
+			bVerifyForwardCurve = bVerifyCorrection = bVerifyRapidTurn = false;
+			Report += TEXT("FacingAudit=ForwardW Rates=30,60,90deg/s\n");
+			if (bFacingBoundary) Report += TEXT("BoundaryAudit=IdleTurnInPlace,MovingAuthoredCombatMontage,InputRelease\n");
+		}
+		bColdFacingAudit = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeFacingColdPoseAudit"));
+		if (bColdFacingAudit)
+		{
+			Case = 15; bSlowForwardCamera = bFacingBoundary = bVerifyRapidTurn = bVerifyForwardCurve = false;
+			bVerifyCorrection = true;
+			Report += TEXT("ColdPoseAudit=OTM Cases=15,16,17,22\n");
+		}
 	}
 	virtual ~FStrafeCameraPlayback() override { Cleanup(); }
 	virtual bool Update() override
 	{
 		if (!World && !Setup()) { Test->AddError(TEXT("CMC camera fixture setup failed")); Cleanup(); return true; }
+		auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance());
 		constexpr float Dt = 1.f / 120;
 		const int32 Direction = Case >= 33 && Case <= 35 ? Case - 33 : Case >= 9 ? 3 : Case % 3;
 		const int32 RateIndex = Case >= 9 ? Case - 9 : Case / 3;
 		float Rate = RateIndex == 0 ? 90 : RateIndex == 1 ? 240 : 480;
+		if (bSlowForwardCamera) Rate = 30.f * (RateIndex + 1);
+		if (bSlowForwardCamera && FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeSlowForwardCameraLeft"))) Rate = -Rate;
 		if (Case == 12) Rate = 180;
 		if (Case == 13) Rate = 180 + 25 * FMath::Sin(float(Frame - 120) * Dt * 8);
 		if (Case == 14) Rate = Frame < 210 ? 360 : 180;
@@ -243,6 +279,7 @@ public:
 		if (Case == 17 || Case == 20) Rate = 320;
 		if (Case == 19) Rate = 268;
 		if (Case == 21 || Case == 22) Rate = Frame < 139 ? 900 : 0;
+		if (bFacingBoundary && Case == 9) Rate = 120;
 		float RapidTarget = 180;
 		if (Case >= 23 && Case <= 30)
 		{
@@ -271,7 +308,7 @@ public:
 		Controller->SetControlRotation(FRotator(0, CameraYaw, 0));
 		const FVector Move = FRotator(0, CameraYaw + MoveOffset, 0).Vector();
 		const float Radians = FMath::DegreesToRadians(MoveOffset);
-		const bool bRelease = Case == 36 && Frame >= 133;
+		const bool bRelease = Case == 36 && Frame >= 133 || bFacingBoundary && (Case == 9 || Case == 11 && Frame >= 180);
 		if (bRelease) Player->GetLocomotionAnimStateComponent()->ClearMoveInput();
 		else
 		{
@@ -281,11 +318,27 @@ public:
 		if (Case == 37) Player->bIsDodging = Frame >= 133 && Frame < 145;
 		if (Case == 38 && Frame == 133)
 			Player->GetAbilitySystemComponent()->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+		if (bFacingBoundary && Case == 10 && Frame == 180)
+		{
+			FGameplayTagContainer Tags; Player->GetAbilitySystemComponent()->GetOwnedGameplayTags(Tags);
+			const auto* Style = Player->GetCombatStyleDefinition();
+			const auto* Entry = Style && Style->ComboDefinition ? Style->ComboDefinition->FindStartNode(FProject_JGameplayTags::Get().InputTag_Weapon_LMB, Tags) : nullptr;
+			auto* Montage = Entry && Entry->AttackDefinition ? Entry->AttackDefinition->Montage.Get() : nullptr;
+			if (!Test->TestTrue(TEXT("Read-only fixture plays real equipped combat montage"), Montage && Anim->Montage_Play(Montage) > 0))
+			{ Cleanup(); return true; }
+		}
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
 		World->Tick(LEVELTICK_All, Dt);
+		if (bFacingBoundary)
+		{
+			const bool bMontage = Anim->IsAnyMontagePlaying();
+			const bool bTIP = Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TurnInPlace;
+			MontageFrames += bMontage; TurnInPlaceFrames += bTIP;
+			if (bMontage || bTIP || bRelease)
+				Test->TestFalse(TEXT("Real montage/idle rotation/input release owns lower pose without residual"), Anim->GetThreadSafeStrafeLowerBodyFacing().Facing.bCanRelease);
+		}
 		auto* Movement = Player->GetCharacterMovement();
-		auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance());
 		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
 		const bool bMeasured = Frame >= 120 && Frame < 360;
 		if (bMeasured)
@@ -344,6 +397,77 @@ public:
 		}
 		if (Frame % 12 == 0)
 		{
+			if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeLowerBodyFacingTrial")))
+			{
+				auto* Mesh = Player->GetMesh();
+				const auto& CS = Mesh->GetComponentSpaceTransforms();
+				const auto& Local = Mesh->GetBoneSpaceTransforms();
+				const auto Facing = Anim->GetThreadSafeStrafeLowerBodyFacing();
+				bool bSourceFeetChecked = false;
+				if (const auto* Interface = IAnimClassInterface::GetFromClass(Anim->GetClass()))
+					for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
+					{
+						if (!Property || Property->Struct != FAnimNode_ProjectJStrafeLowerBodyFacing::StaticStruct()) continue;
+						const auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeLowerBodyFacing>(Anim);
+						FTransform Left, Right;
+						if (!Node->GetValidationSourceFeet(Left, Right)) continue;
+						const int32 L = Mesh->GetBoneIndex(TEXT("foot_l")), R = Mesh->GetBoneIndex(TEXT("foot_r"));
+						bSourceFeetChecked = CS.IsValidIndex(L) && CS.IsValidIndex(R) && Left.Equals(CS[L], .000001) && Right.Equals(CS[R], .000001);
+					}
+				Test->TestTrue(TEXT("Both final feet match this evaluation's source before Lower Facing, including excluded OTM startup"), bSourceFeetChecked);
+				TArray<double> Values;
+				for (const auto& T : Local)
+				{
+					const auto Q = T.GetRotation(); const auto V = T.GetLocation(); const auto S = T.GetScale3D();
+					Values.Append({Q.X, Q.Y, Q.Z, Q.W, V.X, V.Y, V.Z, S.X, S.Y, S.Z});
+				}
+				Report += FString::Printf(TEXT("LowerBodyPose Case=%d Frame=%d Eligible=%d SourceFeetPreserved=%d AllLocal=%u"), Case, Frame,
+					Facing.Facing.bCanRelease, bSourceFeetChecked, FCrc::MemCrc32(Values.GetData(), Values.Num() * sizeof(double)));
+				if (Frame == 12 && (Case >= 15 && Case <= 17 || Case == 22))
+				{
+					Report += TEXT(" AllValues=");
+					for (const double Value : Values) Report += FString::Printf(TEXT("%.17g,"), Value);
+					Report += TEXT(" AllNames=");
+					const auto& Ref = Mesh->GetSkeletalMeshAsset()->GetRefSkeleton();
+					for (int32 I = 0; I < Ref.GetNum(); ++I) Report += Ref.GetBoneName(I).ToString() + TEXT(",");
+				}
+				for (const FName Bone : {FName(TEXT("root")), FName(TEXT("foot_l")), FName(TEXT("foot_r")), FName(TEXT("ik_foot_l")), FName(TEXT("ik_foot_r"))})
+				{
+					const int32 Index = Mesh->GetBoneIndex(Bone);
+					if (!CS.IsValidIndex(Index)) { Test->AddError(TEXT("Lower-body constraint evidence is missing a required bone")); continue; }
+					const auto& T = CS[Index]; const auto Q = T.GetRotation(); const auto V = T.GetLocation(); const auto S = T.GetScale3D();
+					Report += FString::Printf(TEXT(" %s=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f"),
+						*Bone.ToString(), V.X, V.Y, V.Z, Q.X, Q.Y, Q.Z, Q.W, S.X, S.Y, S.Z);
+				}
+				Report += TEXT("\n");
+			}
+			if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeUpperBodyFacingTrial")))
+			{
+				auto* Mesh = Player->GetMesh();
+				const auto* Asset = Mesh->GetSkeletalMeshAsset();
+				const auto& Local = Mesh->GetBoneSpaceTransforms();
+				const auto& Component = Mesh->GetComponentSpaceTransforms();
+				TArray<double> Protected, Feet;
+				auto Append = [](TArray<double>& Values, const FTransform& Transform)
+				{
+					const auto Q = Transform.GetRotation(); const auto P = Transform.GetTranslation(); const auto S = Transform.GetScale3D();
+					Values.Append({Q.X, Q.Y, Q.Z, Q.W, P.X, P.Y, P.Z, S.X, S.Y, S.Z});
+				};
+				if (Asset)
+				{
+					const auto& Ref = Asset->GetRefSkeleton();
+					for (int32 Index = 0; Index < FMath::Min(Local.Num(), Ref.GetNum()); ++Index)
+						if (!Ref.GetBoneName(Index).ToString().StartsWith(TEXT("spine_"))) Append(Protected, Local[Index]);
+					for (const FName Bone : {FName(TEXT("foot_l")), FName(TEXT("foot_r"))})
+					{
+						const int32 Index = Ref.FindBoneIndex(Bone);
+						if (Component.IsValidIndex(Index)) Append(Feet, Component[Index]);
+					}
+				}
+				Test->TestTrue(TEXT("Protected real-pose evidence includes both feet and other local bones"), Feet.Num() == 20 && Protected.Num() > 20);
+				Report += FString::Printf(TEXT("ProtectedPose Case=%d Frame=%d OtherLocal=%u FeetComponent=%u\n"), Case, Frame,
+					FCrc::MemCrc32(Protected.GetData(), Protected.Num() * sizeof(double)), FCrc::MemCrc32(Feet.GetData(), Feet.Num() * sizeof(double)));
+			}
 			const float ActorYaw = Player->GetActorRotation().Yaw;
 			Report += FString::Printf(TEXT("Direction Case=%d Key=%s Rate=%.0f Frame=%d Camera=%.2f Actor=%.2f Ground=%d Speed=%.2f Accel=%.2f VelocityToActor=%.2f Clip=%s\n"),
 				Case, Direction == 0 ? TEXT("A") : Direction == 1 ? TEXT("S") : Direction == 2 ? TEXT("D") : TEXT("W"), Rate, Frame,
@@ -368,7 +492,13 @@ public:
 		Report += FString::Printf(TEXT("GeneralSummary Case=%d CandidateFrames=%d SelectedFrames=%d LateFrames=%d\n"),
 			Case, GeneralFrames, SelectedGeneralFrames, LateGeneralFrames);
 		Test->TestTrue(TEXT("Measured CMC actually remained grounded"), GroundFrames >= 235);
-		if (Case < 23) Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235);
+		if (Case < 23 && !bFacingBoundary) Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235);
+		if (bFacingBoundary)
+		{
+			Report += FString::Printf(TEXT("BoundarySummary Case=%d MontageFrames=%d TurnInPlaceFrames=%d\n"), Case, MontageFrames, TurnInPlaceFrames);
+			if (Case == 9) Test->TestTrue(TEXT("Idle camera rotation selected actual TurnInPlace"), TurnInPlaceFrames > 0);
+			if (Case == 10) Test->TestTrue(TEXT("Moving Strafe evaluated an actual combat montage"), MontageFrames > 0);
+		}
 		if (Case >= 23)
 		{
 			Report += FString::Printf(TEXT("RapidSummary Case=%d Target=%.0f AcuteFrames=%d PreparedFrames=%d PreparedEnterFrames=%d SelectedAcuteFrames=%d FalseStopFrames=%d BrakingTurnFrames=%d MinimumTurnSpeed=%.2f\n"),
@@ -426,11 +556,14 @@ public:
 			Test->TestEqual(TEXT("Actual CMC recovered correction returns to Cycle"), LateGeneralFrames, 0);
 		}
 		Cleanup(); Frame = GroundFrames = MovingFrames = ArcFrames = 0;
+		MontageFrames = TurnInPlaceFrames = 0;
 		GeneralFrames = SelectedGeneralFrames = LateGeneralFrames = 0; AccumulatedCameraYaw = 0;
 		AcuteFrames = AcuteSelectedFrames = FalseStopFrames = BrakingTurnFrames = PreparedFrames = PreparedEnterFrames = 0;
 		MinimumTurnSpeed = TNumericLimits<float>::Max();
 		Reselections = ShortSegments = TailEntries = 0; LastJumpFrame = -1;
-		if (++Case < (bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
+		++Case;
+		if (bColdFacingAudit && Case == 18) Case = 22;
+		if (Case < (bSlowForwardCamera ? 12 : bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
 		IFileManager::Get().MakeDirectory(*Directory, true);
 		FString Output = Directory / TEXT("Playback.txt");
@@ -445,6 +578,20 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeCameraPlaybackTest, "ProjectJ.An
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJStrafeCameraPlaybackTest::RunTest(const FString&)
 {
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeLowerBodyFacingTrial")))
+	{
+		auto* Master = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master"));
+		if (!TestTrue(TEXT("Compile unsaved constrained lower-body trial"), UProject_JStrafeUpperBodyFacingEditorLibrary::InstallLowerBodyInMasterForReview(Master)) ||
+			!TestTrue(TEXT("Lower-body trial is idempotent"), UProject_JStrafeUpperBodyFacingEditorLibrary::InstallLowerBodyInMasterForReview(Master))) return false;
+	}
+	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeUpperBodyFacingTrial")))
+	{
+		auto* Master = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master"));
+		if (!TestTrue(TEXT("Compile unsaved Master facing trial"), UProject_JStrafeUpperBodyFacingEditorLibrary::InstallInMasterForReview(Master)))
+			return false;
+		if (!TestTrue(TEXT("Master trial installation is idempotent"), UProject_JStrafeUpperBodyFacingEditorLibrary::InstallInMasterForReview(Master)))
+			return false;
+	}
 	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this));
 	return true;
 }

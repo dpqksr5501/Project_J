@@ -1,11 +1,15 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/AnimClassInterface.h"
+#include "Animation/AnimNode_ProjectJStrafeUpperBodyFacing.h"
+#include "Animation/AnimNode_ProjectJStrafeLowerBodyFacing.h"
 #include "Animation/AnimationAsset.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/AnimSequenceHelpers.h"
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
+#include "Engine/SkeletalMesh.h"
 #include "HAL/IConsoleManager.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
@@ -20,7 +24,56 @@
 namespace
 {
 TAutoConsoleVariable<int32> CVarContinuityTrace(TEXT("p.ProjectJ.LocomotionContinuityTrace"), 0,
-	TEXT("Local primary mesh continuity diagnostics: 0=off, 1=state edges plus 5Hz, 2=edges plus 10Hz and graph branches. Read-only, post-evaluation."));
+	TEXT("Local primary mesh continuity diagnostics: 0=off, 1=state edges plus 5Hz, 2=edges plus 10Hz and graph branches/facing, 3=also every evaluated forward Strafe facing frame. Read-only, post-evaluation."));
+
+struct FTraceBoneHeading
+{
+	float Yaw = 0.0f;
+	bool bValid = false;
+};
+
+// Bones have different reference axes. Remove each component-space reference
+// rotation before measuring the character's forward axis, rather than treating
+// a pelvis/spine Rotator.Yaw as a body heading. Never synchronize/re-evaluate.
+FTraceBoneHeading ReadEvaluatedHeading(const USkeletalMeshComponent* Mesh, const ACharacter* Character, FName Bone)
+{
+	FTraceBoneHeading Result;
+	const auto* Asset = Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr;
+	if (!Asset || !Character || Mesh->IsRunningParallelEvaluation()) return Result;
+	const auto& Reference = Asset->GetRefSkeleton();
+	const int32 Index = Mesh->GetBoneIndex(Bone);
+	const auto& Pose = Mesh->GetEditableComponentSpaceTransforms();
+	const auto& RefPose = Reference.GetRefBonePose();
+	if (!Pose.IsValidIndex(Index) || !RefPose.IsValidIndex(Index)) return Result;
+	FTransform RefCS = RefPose[Index];
+	for (int32 Parent = Reference.GetParentIndex(Index); Parent != INDEX_NONE; Parent = Reference.GetParentIndex(Parent))
+	{
+		if (!RefPose.IsValidIndex(Parent)) return Result;
+		RefCS = RefCS * RefPose[Parent];
+	}
+	const FQuat Evaluated = Pose[Index].GetRotation();
+	const FQuat RefRotation = RefCS.GetRotation();
+	const FQuat Component = Mesh->GetComponentQuat();
+	if (Evaluated.ContainsNaN() || RefRotation.ContainsNaN() || Component.ContainsNaN() ||
+		!Evaluated.IsNormalized() || !RefRotation.IsNormalized() || !Component.IsNormalized()) return Result;
+	const FVector NeutralForward = Component.UnrotateVector(Character->GetActorForwardVector());
+	FVector Forward = Component.RotateVector((Evaluated * RefRotation.Inverse()).RotateVector(NeutralForward));
+	Forward.Z = 0;
+	if (Forward.ContainsNaN() || Forward.IsNearlyZero()) return Result;
+	Result.Yaw = Forward.Rotation().Yaw;
+	Result.bValid = true;
+	return Result;
+}
+
+const UMirrorDataTable* ReadPlayerMirrorTable(const FBlendStackAnimPlayer& Player)
+{
+	// UE 5.8 does not export the player's convenience getter. Read its
+	// reflected mirror node and use the exported const getter instead.
+	const auto* Property = FindFProperty<FStructProperty>(FBlendStackAnimPlayer::StaticStruct(), TEXT("MirrorNode"));
+	if (!Property || Property->Struct != FAnimNode_Mirror_Standalone::StaticStruct()) return nullptr;
+	const auto* Mirror = Property->ContainerPtrToValuePtr<FAnimNode_Mirror_Standalone>(&Player);
+	return Mirror->GetMirrorDataTable();
+}
 
 const TCHAR* GateName(EProject_JLocomotionSteeringGate Gate)
 {
@@ -79,9 +132,89 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 	Key.AcuteReason = FName(Data.TurnRequest.AcuteReason);
 	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
 	bool bEdge = false;
-	if (!LocomotionContinuityTraceSampler.ShouldRecord(Key, Now, Mode, bEdge)) return;
-
+	const bool bRecord = LocomotionContinuityTraceSampler.ShouldRecord(Key, Now, FMath::Min(Mode, 2), bEdge);
 	const auto* Mesh = GetSkelMeshComponent();
+	const float CameraYaw = OwningCharacter->GetControlRotation().Yaw;
+	const FVector MoveDirection = Data.LocomotionContext.RequestedMoveWorldDirection;
+	const float MoveToCamera = FMath::FindDeltaAngleDegrees(CameraYaw, MoveDirection.Rotation().Yaw);
+	const bool bForwardStrafe = Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot && !Data.Air.bIsInAir &&
+		(Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle ||
+			Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn) &&
+		!Key.bOverride && Key.bInput && Data.Movement.GroundSpeed > 100 && !MoveDirection.IsNearlyZero() &&
+		FMath::Abs(MoveToCamera) <= 30;
+	if (Mode >= 2 && (bRecord || Mode >= 3) && bForwardStrafe)
+	{
+		const auto Root = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("root"));
+		const auto Pelvis = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("pelvis"));
+		const auto Spine = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("spine_01"));
+		const FName ChestBone = Mesh && Mesh->GetBoneIndex(TEXT("spine_05")) != INDEX_NONE ? TEXT("spine_05") : TEXT("spine_03");
+		const auto Chest = ReadEvaluatedHeading(Mesh, OwningCharacter, ChestBone);
+		if (const auto* Interface = IAnimClassInterface::GetFromClass(GetClass()))
+		{
+			for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
+			{
+				if (Property && Property->Struct == FAnimNode_ProjectJStrafeLowerBodyFacing::StaticStruct())
+				{
+					const auto* Facing = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeLowerBodyFacing>(this);
+					UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=LowerBodyFacing Frame=%llu Enabled=%d InputPelvisYaw=%.2f Desired=%.2f Applied=%.2f ReachScale=%.3f"),
+						GFrameCounter, Facing->WasEnabled(), Facing->GetInputPelvisYaw(), Facing->GetDesiredYaw(), Facing->GetAppliedYaw(), Facing->GetReachScale());
+				}
+				if (!Property || Property->Struct != FAnimNode_ProjectJStrafeUpperBodyFacing::StaticStruct()) continue;
+				const auto* Facing = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeUpperBodyFacing>(this);
+				UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=UpperBodyFacing Frame=%llu Enabled=%d InputChestYaw=%.2f Error=%.2f Desired=%.2f Applied=%.2f RootWeight=%.3f"),
+					GFrameCounter, Facing->WasEnabled(), Facing->GetInputChestYaw(), Facing->GetFacingError(),
+					Facing->GetDesiredYaw(), Facing->GetAppliedYaw(), Facing->GetRootWeight());
+			}
+		}
+		const float VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;
+		const auto* Trajectory = OwningPlayerCharacter->GetMotionMatchingTrajectoryComponent();
+		const bool bTargetValid = Mesh && Data.bLocomotionSteeringEnabled;
+		const float TargetBodyYaw = bTargetValid ?
+			(Data.LocomotionSteeringTarget * Mesh->GetRelativeRotation().Quaternion().Inverse()).Rotator().Yaw : 0.0f;
+		UE_LOG(LogProjectJPlayer, Display,
+			TEXT("LocomotionContinuityTrace Stage=Facing Frame=%llu T=%.3f Actor=%s SnapshotFrame=%llu ResultFrame=%llu Phase=%s PSD=%s Clip=%s ClipTime=%.3f Arc=%d Speed=%.1f ActorYaw=%.2f CameraYaw=%.2f MoveYaw=%.2f MoveToCamera=%.2f VelocityYaw=%.2f VelocityToActor=%.2f Steering=%d TargetValid=%d TargetBodyYaw=%.2f CameraYawRate=%.2f ClampedCameraYawRate=%.2f AimYaw=%.2f AimPitch=%.2f AimAlpha=%.3f BoneBasis=ReferenceCalibrated Buffer=EvaluatedPrePhysics PendingBones=%d RootValid=%d RootBodyYaw=%.2f PelvisValid=%d PelvisBodyYaw=%.2f SpineValid=%d SpineBodyYaw=%.2f ChestBone=%s ChestValid=%d ChestBodyYaw=%.2f ChestToRoot=%.2f ChestToCamera=%.2f ChestToVelocity=%.2f"),
+			GFrameCounter, Now, *OwningCharacter->GetPathName(), Data.Movement.SnapshotFrame, Result.CaptureFrame,
+			Project_J::LocomotionDebug::ToDebugString(Data.LocomotionContext.PhaseFamily),
+			*Result.SelectedDatabase.ToString(), *Result.SelectedAnimation.ToString(), Result.SelectedAnimationTime,
+			Result.SelectedAnimation.ToString().Contains(TEXT("_Arc_")), Data.Movement.GroundSpeed,
+			OwningCharacter->GetActorRotation().Yaw, CameraYaw, MoveDirection.Rotation().Yaw, MoveToCamera, VelocityYaw,
+			Data.Movement.RelativeVelocityDirection, Data.bLocomotionSteeringEnabled, bTargetValid, TargetBodyYaw,
+			Trajectory ? Trajectory->GetCharacterTrajectoryData().ControllerYawRate : 0.0f,
+			Trajectory ? Trajectory->GetCharacterTrajectoryData().ControllerYawRateClamped : 0.0f,
+			Data.Aim.AimYaw, Data.Aim.AimPitch, Data.Aim.AimOffsetAlpha, Mesh && Mesh->IsRunningParallelEvaluation(),
+			Root.bValid, Root.Yaw, Pelvis.bValid, Pelvis.Yaw, Spine.bValid, Spine.Yaw, *ChestBone.ToString(), Chest.bValid, Chest.Yaw,
+			Root.bValid && Chest.bValid ? FMath::FindDeltaAngleDegrees(Root.Yaw, Chest.Yaw) : 0.0f,
+			Chest.bValid ? FMath::FindDeltaAngleDegrees(CameraYaw, Chest.Yaw) : 0.0f,
+			Chest.bValid ? FMath::FindDeltaAngleDegrees(VelocityYaw, Chest.Yaw) : 0.0f);
+		// Inspect each contributing player's authored root horizon only at the
+		// regular sample rate. Mode 3's extra rows are cheap final-pose reads.
+		if (const auto* Node = bRecord ? Proxy.GetCapturedMotionMatchingNode() : nullptr)
+		{
+			for (int32 Index = 0; Index < FMath::Min(4, Node->AnimPlayers.Num()); ++Index)
+			{
+				const auto& Player = Node->AnimPlayers[Index];
+				const auto* Sequence = Cast<UAnimSequence>(Player.GetAnimationAsset());
+				const auto* MirrorTable = ReadPlayerMirrorTable(Player);
+				const bool bAuthoredValid = Sequence && Sequence->GetPlayLength() > UE_SMALL_NUMBER &&
+					(!Player.GetMirror() || MirrorTable);
+				const auto* Mirror = Player.GetMirror() ? MirrorTable : nullptr;
+				const FTransform ShortRoot = bAuthoredValid ? UE::Anim::ExtractRootMotionFromAnimationAsset(
+					Sequence, Mirror, Player.GetCurrentAssetTime(), .1f, Sequence->bLoop) : FTransform::Identity;
+				const float Horizon = FMath::Clamp(Data.LocomotionSteeringAnimatedTime, .01f, 5.0f);
+				const FTransform FutureRoot = bAuthoredValid ? UE::Anim::ExtractRootMotionFromAnimationAsset(
+					Sequence, Mirror, Player.GetCurrentAssetTime(), Horizon, Sequence->bLoop) : FTransform::Identity;
+				UE_LOG(LogProjectJPlayer, Display,
+					TEXT("LocomotionContinuityTrace Stage=FacingPlayer Frame=%llu Actor=%s Player=%d Clip=%s ActualTime=%.3f RelativeWeight=%.3f Active=%d Mirrored=%d MirrorTable=%s PlayerLoop=%d AssetLoop=%d AuthoredValid=%d TravelValid=%d LocalTravelYaw=%.2f ShortRootYaw=%.2f AnimatedHorizon=%.2f FutureRootYaw=%.2f"),
+					GFrameCounter, *OwningCharacter->GetPathName(), Index, *GetNameSafe(Sequence), Player.GetCurrentAssetTime(),
+					Player.GetBlendInWeight(), Player.IsActive(), Player.GetMirror(), *GetNameSafe(MirrorTable),
+					Player.IsLooping(), Sequence && Sequence->bLoop, bAuthoredValid, bAuthoredValid && !ShortRoot.GetTranslation().IsNearlyZero(),
+					ShortRoot.GetTranslation().Rotation().Yaw, ShortRoot.Rotator().Yaw, Horizon, FutureRoot.Rotator().Yaw);
+			}
+		}
+	}
+	if (!bRecord) return;
+
 	const bool bPending = Mesh && Mesh->IsRunningParallelEvaluation();
 	const int32 RootIndex = Mesh ? Mesh->GetBoneIndex(TEXT("root")) : INDEX_NONE;
 	// NativePostEvaluate precedes the engine's read-buffer flip. Socket access

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Animation/Project_JStrafeUpperBodyFacing.h"
+#include "Animation/Project_JStrafeLowerBodyFacing.h"
 #include "Project_JCombatAnimProfile.generated.h"
 
 class UProject_JMotionMatchingAssetSet;
@@ -32,6 +34,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|AimOffset", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 	float CombatAimAlpha = 1.0f;
+
+	/** Camera-facing upper-body presentation after Pose History; no PSD/PSS changes. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Upper Body Facing")
+	FProject_JStrafeUpperBodyFacingPolicy StrafeUpperBodyFacing;
+
+	/** Post-history forward Run pelvis facing with existing feet as constraints. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Lower Body Facing")
+	FProject_JStrafeLowerBodyFacingPolicy StrafeLowerBodyFacing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Movement")
 	bool bAllowSprintInCombat = false;

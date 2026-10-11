@@ -16,6 +16,8 @@
 #include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
+#include "Animation/Project_JStrafeUpperBodyFacing.h"
+#include "Animation/Project_JStrafeLowerBodyFacing.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "BoneControllers/AnimNode_FootPlacement.h"
 #include "Combat/Project_JCombatTypes.h"
@@ -754,6 +756,9 @@ struct PROJECT_JCHARACTER_API FProject_JAnimThreadSafeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimAimThreadSafeData Aim;
 
+	FProject_JStrafeUpperBodyFacingInput StrafeUpperBodyFacing;
+	FProject_JStrafeLowerBodyFacingInput StrafeLowerBodyFacing;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|ThreadSafe")
 	FProject_JAnimMountThreadSafeData Mount;
 
@@ -965,6 +970,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Animation|AimOffset", meta = (BlueprintThreadSafe))
 	float GetThreadSafeAimOffsetAlpha() const;
+
+	FProject_JStrafeUpperBodyFacingInput GetThreadSafeStrafeUpperBodyFacing() const;
+	FProject_JStrafeLowerBodyFacingInput GetThreadSafeStrafeLowerBodyFacing() const;
 
 	/** Actual XY speed for directional combat locomotion Blend Spaces. */
 	UFUNCTION(BlueprintPure, Category = "Animation|Combat Locomotion", meta = (BlueprintThreadSafe))
@@ -1369,6 +1377,7 @@ protected:
 	bool IsPrimaryMeshAnimInstance() const;
 	void ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const;
 	float CalculateAimOffsetAlpha(const FProject_JAnimThreadSafeData& Data) const;
+	void UpdateStrafeFacingData(FProject_JAnimThreadSafeData& Data) const;
 	bool ShouldSkipNativeUpdate(float DeltaSeconds);
 	const UProject_JLocomotionProfile* GetLocomotionProfile() const;
 	FProject_JAnimationBudgetSettings GetEffectiveAnimationBudgetSettings() const;
