@@ -1227,6 +1227,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeOneShotReturnBlendTime() const;
 
+	/** Only the authored player receives its entry warp while a shared stack blends. */
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	float GetThreadSafePlaybackOrientationWarpingAlpha(const FAnimNodeReference& SampleNode) const;
+
+	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
+	bool GetThreadSafePlaybackUsesAuthoredCorrections(const FAnimNodeReference& SampleNode) const;
+
 	/**
 	 * Returns 1 only for a selected Combat-Strafe direct one-shot with a stable
 	 * movement direction. Multiply this by the selected animation's

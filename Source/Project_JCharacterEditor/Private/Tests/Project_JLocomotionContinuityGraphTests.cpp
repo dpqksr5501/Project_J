@@ -2,11 +2,13 @@
 #include "Misc/AutomationTest.h"
 #include "Animation/AnimBlueprint.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/AnimGraphNode_ProjectJLocomotion.h"
 #include "AnimGraphNode_LocalToComponentSpace.h"
 #include "AnimGraphNode_ComponentToLocalSpace.h"
 #include "AnimGraphNode_ResetRoot.h"
 #include "AnimGraph/AnimGraphNode_Steering.h"
 #include "AnimGraphNode_BlendStackInput.h"
+#include "AnimGraphNode_BlendListByBool.h"
 #include "AnimGraph/AnimGraphNode_OffsetRootBone.h"
 #include "K2Node_AnimNodeReference.h"
 #include "K2Node_CallFunction.h"
@@ -112,6 +114,11 @@ bool FProjectJLocomotionContinuityGraphTest::RunTest(const FString&)
 	UAnimGraphNode_OffsetRootBone* Offset = nullptr;
 	for (auto* Graph : Graphs)
 	{
+		for (UEdGraphNode* Node : Graph->Nodes) if (auto* Unified = Cast<UAnimGraphNode_ProjectJLocomotion>(Node))
+		{
+			const auto Samples = Unified->GetSubGraphs();
+			if (!Samples.IsEmpty()) MM = External = Samples[0];
+		}
 		if (Graph->GetPathName().Contains(TEXT("AnimGraphNode_MotionMatching_0.AnimationBlendStackGraph_0"))) MM = Graph;
 		if (Graph->GetPathName().Contains(TEXT("AnimGraphNode_BlendStack_0.AnimationBlendStackGraph_0"))) External = Graph;
 		for (UEdGraphNode* Node : Graph->Nodes) if (auto* Candidate = Cast<UAnimGraphNode_OffsetRootBone>(Node)) Offset = Candidate;
@@ -155,8 +162,13 @@ bool FProjectJLocomotionContinuityGraphTest::RunTest(const FString&)
 	}
 	if (bApply || FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectLocomotionContinuity")))
 	{
-		for (auto* Graph : {MM, External})
+		TArray<UEdGraph*> ProcessingGraphs{MM};
+		ProcessingGraphs.AddUnique(External);
+		for (auto* Graph : ProcessingGraphs)
 		{
+			bool bRouted = false;
+			for (UEdGraphNode* Node : Graph->Nodes)
+				bRouted |= Cast<UAnimGraphNode_BlendListByBool>(Node) != nullptr;
 			int32 General = 0;
 			for (UEdGraphNode* Node : Graph->Nodes)
 			{
@@ -168,7 +180,7 @@ bool FProjectJLocomotionContinuityGraphTest::RunTest(const FString&)
 						TestTrue(TEXT("Each player's steering inputs are connected"), Steering->FindPin(Pin) && Steering->FindPin(Pin)->LinkedTo.Num() == 1);
 				}
 			}
-			TestEqual(TEXT("One general steering per player graph"), General, 1);
+			TestEqual(TEXT("One general steering per processing path"), General, bRouted ? 2 : 1);
 		}
 	}
 	return true;

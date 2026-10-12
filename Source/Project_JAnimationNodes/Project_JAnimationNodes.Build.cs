@@ -6,7 +6,7 @@ public class Project_JAnimationNodes : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PublicDependencyModuleNames.AddRange(new string[] {
-			"Core", "CoreUObject", "Engine", "AnimGraph", "BlueprintGraph", "Project_JCharacter"
+			"Core", "CoreUObject", "Engine", "AnimGraph", "BlueprintGraph", "Project_JCharacter", "BlendStackEditor"
 		});
 		PrivateDependencyModuleNames.Add("UnrealEd");
 	}

@@ -1,4 +1,5 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/AnimNode_ProjectJLocomotion.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/AnimClassInterface.h"
 #include "Animation/AnimNode_ProjectJStrafeUpperBodyFacing.h"
@@ -379,10 +380,12 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 			int32 Stacks = 0;
 			for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
 			{
-				if (!Property || !Property->Struct->IsChildOf(FAnimNode_BlendStack::StaticStruct()) ||
-					Property->Struct->IsChildOf(FAnimNode_MotionMatching::StaticStruct())) continue;
+				if (!Property) continue;
+				const bool bUnified = Property->Struct->IsChildOf(FAnimNode_ProjectJLocomotion::StaticStruct());
+				if (!bUnified && (!Property->Struct->IsChildOf(FAnimNode_BlendStack::StaticStruct()) ||
+					Property->Struct->IsChildOf(FAnimNode_MotionMatching::StaticStruct()))) continue;
 				if (++Stacks > 2) break;
-				const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack>(this);
+				const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack_Standalone>(this);
 				for (int32 Index = 0; Index < FMath::Min(3, Stack->AnimPlayers.Num()); ++Index)
 				{
 					const auto& Player = Stack->AnimPlayers[Index];

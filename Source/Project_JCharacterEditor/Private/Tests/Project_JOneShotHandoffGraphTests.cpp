@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Animation/AnimBlueprint.h"
 #include "Animation/AnimGraphNode_ProjectJOneShotHandoff.h"
+#include "Animation/AnimGraphNode_ProjectJLocomotion.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOneShotHandoffGraphTest, "ProjectJ.Animation.A_Prepare.OneShotReturnGraph",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -13,6 +14,11 @@ bool FProjectJOneShotHandoffGraphTest::RunTest(const FString&)
 	UAnimGraphNode_ProjectJOneShotHandoff* Handoff = nullptr;
 	for (auto* Graph : Graphs) for (UEdGraphNode* Node : Graph->Nodes)
 	{
+		if (auto* Unified = Cast<UAnimGraphNode_ProjectJLocomotion>(Node))
+		{
+			return TestTrue(TEXT("Unified playback drives the existing locomotion output"),
+				Unified->FindPin(TEXT("Pose")) && Unified->FindPin(TEXT("Pose"))->LinkedTo.Num() == 1);
+		}
 		if (auto* Found = Cast<UAnimGraphNode_ProjectJOneShotHandoff>(Node)) Handoff = Found;
 	}
 	if (!TestNotNull(TEXT("Production uses the explicit handoff node"), Handoff)) return false;

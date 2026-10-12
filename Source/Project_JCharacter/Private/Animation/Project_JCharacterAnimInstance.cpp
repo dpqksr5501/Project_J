@@ -1986,8 +1986,28 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	// authored early-transition window) so the root turn and planted feet finish
 	// on the same animation timeline.
 	const float Elapsed = StateControllerRuntime.GetHoldElapsed(NowSeconds);
-	const float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
-	const float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
+	float LeadTime = FMath::Max(InOutOneShot.FallbackLeadTime, 0.0f);
+	float Remaining = FMath::Max(EffectivePlayableLength - Elapsed, 0.0f);
+	// A shared player can report its actual clock. Start -> Cycle must begin
+	// while that player still has enough motion left for the return overlap.
+	// Semantic readiness protects acceleration/first step; Pivot and Land retain
+	// their existing authored completion/impact contracts.
+	const auto& Playback = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>().GetUnifiedPlaybackObservation();
+	if (StateControllerRuntime.GetHeldState() == EProject_JStateControllerPresentationState::TransitionToLocomotion &&
+		StateControllerRuntime.GetPivot().RequestRevision == 0 &&
+		InOutOneShot.PhaseFamily != EProject_JLocomotionPhaseFamily::Pivot &&
+		DesiredState == EProject_JStateControllerPresentationState::LocomotionLoop &&
+		HeldAsset && Playback.Animation == HeldAsset->GetFName() &&
+		Playback.SelectionRevision == StateControllerChooserSelectionRevision &&
+		Playback.CaptureFrame > 0 && Playback.CaptureFrame <= GFrameCounter && GFrameCounter - Playback.CaptureFrame <= 2 &&
+		FMath::IsFinite(Playback.SecondsRemaining) && Playback.SecondsRemaining >= 0.f)
+	{
+		Remaining = Playback.SecondsRemaining;
+		const float AuthoredReturn = CachedStateControllerSelectedAnimationOutput.ReturnBlendTime;
+		const float ReturnTime = FMath::IsFinite(AuthoredReturn) && AuthoredReturn >= 0.f ? AuthoredReturn :
+			Data.MotionMatchingSearchPolicy.TransitionBlendTime;
+		LeadTime = FMath::Max(LeadTime, FMath::Max(0.f, ReturnTime) + FMath::Max(0.f, Data.DeltaTime));
+	}
 	const bool bHasPlayableTransitionAsset = HeldAsset &&
 		EffectivePlayableLength > KINDA_SMALL_NUMBER;
 	const bool bReachedCompletion = bHasPlayableTransitionAsset && Remaining <= LeadTime;

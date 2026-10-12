@@ -1,4 +1,5 @@
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/AnimNode_ProjectJLocomotion.h"
 
 #include "Animation/AnimClassInterface.h"
 #include "Animation/Project_JLocomotionProfile.h"
@@ -187,6 +188,7 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 	bWasPivotPhaseForDebug = false;
 	PivotDebugTrace.Reset();
 	LatestPostSelection = FProject_JAnimMotionMatchingPostSelectionData();
+	UnifiedPlaybackObservation = {};
 	FlowTraceWork = {};
 	bFlowTraceEnabled = false;
 	bUpdatingMotionMatchingGraph = false;
@@ -274,6 +276,17 @@ const FAnimNode_MotionMatching* FProject_JCharacterAnimInstanceProxy::GetCapture
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 {
+	UnifiedPlaybackObservation = {};
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
+	{
+		if (const auto* Node = GetNodeFromIndex<FAnimNode_ProjectJLocomotion>(NodeIndex);
+			Node && Node->IsPlayingOneShot() && Node->GetCachedBlendWeight() > ZERO_ANIMWEIGHT_THRESH)
+		{
+			UnifiedPlaybackObservation = {GFrameCounter, GetFNameSafe(Node->GetOneShotAsset()),
+				Node->GetOneShotSelectionRevision(), Node->GetOneShotSecondsRemaining()};
+			break;
+		}
+	}
 	// The visible Motion Matching node can live in the generated AnimBP graph or a
 	// linked layer. NativeMotionMatchingNode is only the fallback graph, so prefer
 	// a generated node with a cached result. This is a representative result;
@@ -324,7 +337,8 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	LatestPostSelection.ProducerNodeIndex = ResultNodeIndex;
 	LatestPostSelection.ResultCandidateCount = CandidateCount;
 	LatestPostSelection.CaptureFrame = GFrameCounter;
-	LatestPostSelection.CachedNodeWeight = ResultNode->GetCachedBlendWeight();
+	const auto* UnifiedNode = ResultNodeIndex != INDEX_NONE ? GetNodeFromIndex<FAnimNode_ProjectJLocomotion>(ResultNodeIndex) : nullptr;
+	LatestPostSelection.CachedNodeWeight = UnifiedNode && UnifiedNode->IsPlayingOneShot() ? 0.f : ResultNode->GetCachedBlendWeight();
 	LatestPostSelection.SelectedDatabase = Result.SelectedDatabase ? Result.SelectedDatabase->GetFName() : NAME_None;
 	LatestPostSelection.SelectedAnimation = Result.SelectedAnim ? Result.SelectedAnim->GetFName() : NAME_None;
 	LatestPostSelection.SelectedAnimationTime = Result.SelectedTime;

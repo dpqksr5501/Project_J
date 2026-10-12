@@ -2,6 +2,7 @@
 // Resolve actor, component, profile and mutable gameplay state only before proxy publication.
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "BlendStack/AnimNode_BlendStackInput.h"
 
 FProject_JAnimMotionMatchingThreadSafeData UProject_JCharacterAnimInstance::GetMotionMatchingDebugSnapshot() const
 {
@@ -453,6 +454,26 @@ float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeO
 	return GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().bShouldEnableCombatStrafeOrientationWarping
 		? 1.0f
 		: 0.0f;
+}
+
+float UProject_JCharacterAnimInstance::GetThreadSafePlaybackOrientationWarpingAlpha(const FAnimNodeReference& SampleNode) const
+{
+	return GetThreadSafePlaybackUsesAuthoredCorrections(SampleNode) &&
+		GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>().GetExternalPlaybackData().bShouldEnableCombatStrafeOrientationWarping ? 1.f : 0.f;
+}
+
+bool UProject_JCharacterAnimInstance::GetThreadSafePlaybackUsesAuthoredCorrections(const FAnimNodeReference& SampleNode) const
+{
+	const auto& Proxy = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>();
+	if (Proxy.GetExternalPlaybackSampleIndex() == INDEX_NONE) return false;
+	const auto& Playback = Proxy.GetExternalPlaybackData();
+	if (const auto* Input = SampleNode.GetAnimNodePtr<FAnimNode_BlendStackInput>(); Input && Input->Player && *Input->Player)
+	{
+		const auto& Player = **Input->Player;
+		return Player.GetPoseLinkIndex() == Proxy.GetExternalPlaybackSampleIndex() &&
+			Player.GetAnimationAsset() == Playback.SelectedAnimation;
+	}
+	return false;
 }
 
 float UProject_JCharacterAnimInstance::GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle() const

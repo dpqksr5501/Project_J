@@ -7,6 +7,14 @@
 
 class UPoseSearchDatabase;
 
+struct FProject_JUnifiedPlaybackObservation
+{
+	uint64 CaptureFrame = 0;
+	FName Animation;
+	int32 SelectionRevision = 0;
+	float SecondsRemaining = -1.f;
+};
+
 struct FProject_JMotionMatchingBlendStackPlayerDebug
 {
 	FName Animation;
@@ -58,10 +66,14 @@ struct FProject_JCharacterAnimInstanceProxy : public FAnimInstanceProxy
 	const FProject_JAnimOneShotPresentationThreadSafeData* SwapExternalPlaybackOverride(const FProject_JAnimOneShotPresentationThreadSafeData* Playback)
 	{ const auto* Previous = ExternalPlaybackOverride; ExternalPlaybackOverride = Playback; return Previous; }
 	bool IsLiveReturnTraversal() const { return ExternalPlaybackOverride != nullptr; }
+	int32 GetExternalPlaybackSampleIndex() const { return ExternalPlaybackSampleIndex; }
+	int32 SwapExternalPlaybackSampleIndex(int32 Index)
+	{ const int32 Previous = ExternalPlaybackSampleIndex; ExternalPlaybackSampleIndex = Index; return Previous; }
 	UPoseSearchDatabase* GetCurrentActiveDatabase() const { return CurrentActiveDatabase.Get(); }
 	UPoseSearchDatabase* GetTurnCycleCompanion() const { return CurrentTurnCycleCompanion.Get(); }
 	int32 GetThreadSafeCandidateCount() const { return ThreadSafeCandidateCount; }
 	const FProject_JAnimMotionMatchingPostSelectionData& GetLatestPostSelection() const { return LatestPostSelection; }
+	const FProject_JUnifiedPlaybackObservation& GetUnifiedPlaybackObservation() const { return UnifiedPlaybackObservation; }
 	FString GetPivotTraceSummary() const;
 	void SetFlowTraceEnabled(bool bEnabled);
 	void SetMovingTurnTraceEnabled(bool bEnabled) { bMovingTurnTraceEnabled = bEnabled; }
@@ -124,10 +136,12 @@ private:
 	void CacheMotionMatchingPolicyState();
 
 	FProject_JAnimThreadSafeData PendingGameThreadData;
+	FProject_JUnifiedPlaybackObservation UnifiedPlaybackObservation;
 	FProject_JAnimThreadSafeData ThreadSafeData;
-	// Scoped to the handoff node's worker update. The generated node retains/GCs
-	// the outgoing command; this pointer is never published to GT or kept across ticks.
+	// Scoped to playback traversal. The generated node retains/GCs the command;
+	// this pointer is never published to GT or kept across update/evaluate calls.
 	const FProject_JAnimOneShotPresentationThreadSafeData* ExternalPlaybackOverride = nullptr;
+	int32 ExternalPlaybackSampleIndex = INDEX_NONE;
 	uint64 PublishedSnapshotRevision = 0;
 	uint64 ConsumedSnapshotRevision = 0;
 	int32 ThreadSafeCandidateCount = 0;
