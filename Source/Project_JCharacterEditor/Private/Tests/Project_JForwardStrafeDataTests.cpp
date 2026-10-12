@@ -58,12 +58,20 @@ bool FProjectJForwardStrafeDataTest::RunTest(const FString&)
 		!TestTrue(TEXT("Use the dedicated schema without changing fallback schema"), Forward->Schema == ForwardSchema) ||
 		!TestTrue(TEXT("Isolated statistics leave existing search families unchanged"), Forward->NormalizationSet == Norm &&
 			Norm != OriginalNormalization && Norm->Databases == ExpectedNormalization && Norm->Databases.Contains(Forward)) ||
-		!TestEqual(TEXT("Preserve all curves and add all steady loops"), Forward->GetNumAnimationAssets(),
-			Cycle->GetNumAnimationAssets() + Loop->GetNumAnimationAssets())) return false;
+		!TestTrue(TEXT("Keep an authored forward family"), Forward->GetNumAnimationAssets() > Loop->GetNumAnimationAssets())) return false;
 	if (!TestEqual(TEXT("Dedicated steady preference uses the engine's small loop bias"), Forward->LoopingCostBias, -.005f)) return false;
-	// Verify every copied entry including authored flags, sampling ranges and metadata.
+	// The authored forward intent keeps continuous turning arcs and steady loops.
+	// Labels here verify saved data; runtime selection never branches on clip names.
 	auto* Expected = DuplicateObject<UPoseSearchDatabase>(Cycle, GetTransientPackage());
+	int32 AuthoredArcEntries = 0;
+	for (int32 Index = Expected->GetNumAnimationAssets() - 1; Index >= 0; --Index)
+	{
+		if (GetNameSafe(Expected->GetAnimationAsset(Index)).Contains(TEXT("_Arc_"))) ++AuthoredArcEntries;
+		else Expected->RemoveAnimationAssetAt(Index);
+	}
 	for (int32 Index = 0; Index < Loop->GetNumAnimationAssets(); ++Index) Expected->AddAnimationAsset(*Loop->GetDatabaseAnimationAsset(Index));
+	if (!TestEqual(TEXT("Six authored Arc variants cover forward curvature"), AuthoredArcEntries, 6) ||
+		!TestEqual(TEXT("Curated pool preserves all Arc and Loop entries"), Forward->GetNumAnimationAssets(), AuthoredArcEntries + Loop->GetNumAnimationAssets())) return false;
 	if (!TestEqual(TEXT("Forward entries exactly preserve source ranges and flags"), ForwardEntryText(Forward), ForwardEntryText(Expected))) return false;
 	using namespace UE::PoseSearch;
 	if (!TestTrue(TEXT("Ready forward index"), FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(Forward,

@@ -284,6 +284,8 @@ public:
 
 	/** Complete value-only database-selection contract authored on the game thread. */
 	const FProject_JMotionMatchingSelectionContext& GetMotionMatchingSelectionContext() const { return MotionMatchingSelectionContext; }
+	/** GT-only presentation acknowledgement. Physical landing and its timer remain intact. */
+	bool NotifyLandingPresentationReleased(int32 Revision);
 	const FProject_JTurnRequestSample& GetTurnRequestSample() const { return TurnRequestSample; }
 	/** Game-thread physical curvature rate; never an input or replication target. */
 	float GetContinuousCurveYawRate() const { return CombatStrafeCurvePolicy.GetResult().ShortYawRate; }
@@ -313,7 +315,8 @@ private:
 	FProject_JLocomotionKinematicContext BuildKinematicContext(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot, float DeltaTime);
 	FProject_JDerivedLocomotionContext BuildDerivedLocomotionContext(const FProject_JLocomotionAuthoritativeContext& AuthContext, const FProject_JLocomotionKinematicContext& KinematicContext);
 	void ApplyLocomotionPhaseStability(float DeltaTime, FProject_JDerivedLocomotionContext& InOutContext);
-	void UpdateCombatStrafeCycleSelection(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner);
+	void UpdateCombatStrafeCycleSelection(float DeltaTime, const AProject_JPlayerCharacter& PlayerOwner, bool bObserveMotion = true);
+	EProject_JLocomotionPhaseFamily GetSearchPresentationPhase() const;
 	EProject_JLocomotionGaitIntent ResolveGaitIntent(const AProject_JPlayerCharacter& PlayerOwner, const FProject_JLocomotionRuntimeSnapshot& Snapshot) const;
 	EProject_JLocomotionRotationMode ResolveRotationMode(const AProject_JPlayerCharacter& PlayerOwner) const;
 	EProject_JLocomotionPhaseFamily ResolvePhaseFamily(const FProject_JDerivedLocomotionContext& DerivedContext) const;
@@ -684,6 +687,7 @@ public:
 	 * the AnimInstance before the previous direct Blend Stack entry is forgotten.
 	 */
 	int32 LandingPresentationRevision = 0;
+	int32 ReleasedLandingPresentationRevision = INDEX_NONE;
 
 	/** True only for the update in which a database-selection input changed. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")

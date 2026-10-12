@@ -80,7 +80,7 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
 	TObjectPtr<UPoseSearchDatabase> SettledCycle = nullptr;
 
-	/** Optional isolated forward pool with both authored curves and steady loops. */
+	/** Optional aligned-forward PSD: continuous Arc motion and steady loops, curated in data. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
 	TObjectPtr<UPoseSearchDatabase> ForwardCycle = nullptr;
 

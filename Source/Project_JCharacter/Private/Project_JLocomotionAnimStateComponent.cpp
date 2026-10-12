@@ -26,7 +26,7 @@
 namespace
 {
 	TAutoConsoleVariable<int32> CVarStrafeForwardCycle(TEXT("p.ProjectJ.StrafeForwardCycle"), 1,
-		TEXT("Use the optional isolated Loop/curve pool for aligned local forward Strafe Run. 0 restores prior routing."));
+		TEXT("Use the optional curated Loop/Arc pool for aligned local forward Strafe Run. 0 restores prior routing."));
 	TAutoConsoleVariable<int32> CVarStrafeCurveRoutingContinuity(TEXT("p.ProjectJ.StrafeCurveRoutingContinuity"), 1,
 		TEXT("Preserve confirmed Strafe curve candidates across direction reversals. 0 compares the previous strict-proof routing."));
 	// Combat-Strafe Run Pivot has authored cardinal pairs only. A generous axis
@@ -456,11 +456,38 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 	UpdateMotionMatchingSelectionState(*PlayerOwner);
 }
 
+EProject_JLocomotionPhaseFamily UProject_JLocomotionAnimStateComponent::GetSearchPresentationPhase() const
+{
+	if (DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Landing &&
+		IsLandingStateActive() && !bIsPhysicallyInAir && ReleasedLandingPresentationRevision != INDEX_NONE &&
+		ReleasedLandingPresentationRevision == LandingPresentationRevision)
+		return DerivedLocomotionContext.bHasGroundMovementIntent ? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+	return DerivedLocomotionContext.PhaseFamily;
+}
+
+bool UProject_JLocomotionAnimStateComponent::NotifyLandingPresentationReleased(int32 Revision)
+{
+	check(IsInGameThread());
+	const auto* PlayerOwner = GetPlayerOwner();
+	if (!PlayerOwner || !bUsingLocalInputState || !IsLandingStateActive() || bIsPhysicallyInAir ||
+		Revision == INDEX_NONE || Revision != LandingPresentationRevision) return false;
+	if (ReleasedLandingPresentationRevision != Revision)
+	{
+		ReleasedLandingPresentationRevision = Revision;
+		// Native presentation can release before the component's next tick. Use
+		// the same qualification now so the first MM query already sees its pool.
+		UpdateCombatStrafeCycleSelection(0.f, *PlayerOwner, false);
+		UpdateMotionMatchingSelectionState(*PlayerOwner);
+	}
+	return true;
+}
+
 void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	float DeltaTime,
-	const AProject_JPlayerCharacter& PlayerOwner)
+	const AProject_JPlayerCharacter& PlayerOwner, bool bObserveMotion)
 {
 	const bool bWasUsingForwardCycle = bUseCombatStrafeForwardCycle;
+	const auto SearchPhase = GetSearchPresentationPhase();
 	bUseCombatStrafeForwardCycle = false;
 	const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile();
 	const UProject_JMotionMatchingAssetSet* AssetSet = CombatProfile
@@ -512,13 +539,15 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	Curve.Gait = static_cast<int32>(AuthoritativeContext.GaitIntent);
 	Curve.Position = PlayerOwner.GetActorLocation(); Curve.Velocity = KinematicContext.HorizontalVelocity;
 	Curve.bHasRequestedHeading = true; Curve.RequestedHeading = KinematicContext.MoveWorldDirection.Rotation().Yaw;
-	const auto CurveResult = CombatStrafeCurvePolicy.Update(Curve,
-		LocomotionProfile ? LocomotionProfile->TransitionPolicy.ContinuousCurve : FProject_JContinuousCurveSettings());
+	// Presentation acknowledgement reuses the last physical proof; only the
+	// component's normal tick advances observations and settle time.
+	const auto CurveResult = bObserveMotion ? CombatStrafeCurvePolicy.Update(Curve,
+		LocomotionProfile ? LocomotionProfile->TransitionPolicy.ContinuousCurve : FProject_JContinuousCurveSettings()) : CombatStrafeCurvePolicy.GetResult();
 	const bool bCurveCandidates = CVarStrafeCurveRoutingContinuity.GetValueOnGameThread() != 0 ? CurveResult.bRoutingActive : CurveResult.bActive;
 	TurnRequestSample.bContinuousCurve = bCurveCandidates;
 
 	const bool bCycleCanSettle =
-		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		SearchPhase == EProject_JLocomotionPhaseFamily::Cycle &&
 		KinematicContext.bHasMoveInput &&
 		KinematicContext.GroundSpeed >= DerivedTurnMinSpeed &&
 		!KinematicContext.bIsDecelerating;
@@ -537,10 +566,10 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 		bCurveCandidates || bVelocityNotAligned || bActorFacingNotAligned;
 	const FVector2D HeldInput = GetLocalMovementInputForState();
 	const float InputAngle = FMath::RadiansToDegrees(FMath::Atan2(HeldInput.X, HeldInput.Y));
-	const bool bForwardMotion = DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+	const bool bForwardMotion = SearchPhase == EProject_JLocomotionPhaseFamily::Cycle &&
 		KinematicContext.bHasMoveInput && KinematicContext.GroundSpeed >= DerivedTurnMinSpeed &&
 		FVector::DotProduct(KinematicContext.Acceleration, KinematicContext.HorizontalVelocity) >= 0;
-	// Aligned held forward travel always keeps Loop and curves in one search.
+	// Aligned held forward travel keeps authored forward Arc and Loop in one search.
 	// Physical curvature belongs in the trajectory query, not in an angular-rate
 	// gate that removes all Loop poses as soon as pointer packets cross a limit.
 	// Tiny derivatives at constant speed can look like deceleration to the
@@ -569,7 +598,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 {
 	MotionMatchingSelectionContext.GaitIntent = AuthoritativeContext.GaitIntent;
 	MotionMatchingSelectionContext.RotationMode = AuthoritativeContext.RotationMode;
-	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
+	MotionMatchingSelectionContext.PhaseFamily = GetSearchPresentationPhase();
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 	MotionMatchingSelectionContext.bUseSettledCycle = bUseCombatStrafeSettledCycle;
 	MotionMatchingSelectionContext.bUseForwardCycle = bUseCombatStrafeForwardCycle;
@@ -579,7 +608,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	FProject_JMotionMatchingSelectionPolicy::FKey SelectionKey;
 	SelectionKey.Gait = AuthoritativeContext.GaitIntent;
 	SelectionKey.Rotation = AuthoritativeContext.RotationMode;
-	SelectionKey.Phase = DerivedLocomotionContext.PhaseFamily;
+	SelectionKey.Phase = MotionMatchingSelectionContext.PhaseFamily;
 	SelectionKey.GroundMode = GroundMotionMode;
 	SelectionKey.bUseSettledCycle = bUseCombatStrafeSettledCycle;
 	SelectionKey.bUseForwardCycle = bUseCombatStrafeForwardCycle;

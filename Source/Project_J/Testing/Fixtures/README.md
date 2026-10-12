@@ -15,3 +15,7 @@
 단발 복귀 검사는 `-ProjectJOneShotPlaybackCase=N`으로 한 장면만 재생할 수 있다. 예를 들어 `ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback`의 5번은 Strafe Run 착지 이후 지속 회전이다. `-ProjectJOneShotPlaybackHz=120`으로 재생 간격을 지정하고, `-ProjectJOneShotCurveOutput=`으로 공유 스택의 outgoing weight·단발 보정 방향과 실제 가슴 회전 변위를 기록한다. 가슴 변위는 컴포넌트 공간의 프레임 차이이며 체감이나 월드 발 미끄러짐 판정이 아니다. 장면 번호 옵션을 생략하면 기존 전체 장면을 실행한다.
 
 전방 생산 에셋 검사 `ProjectJ.StrafeForward.ProductionData`와 `TrajectorySchema`는 읽기 전용이다. 작성용 Apply 옵션과 임시 Forward Loop bias·정규화·가중치 sweep 옵션은 커밋 정리 때 제거했다. `-ProjectJForwardCostAudit`는 Editor/dev 자동화에서 명시적으로 요청한 경우에만 비용을 재구성하며, 원래 엔진 검색의 query/filter 캡처로 해석하지 않는다.
+
+`ProjectJ.Animation.Naturalness.StrafeLateralCamera`는 A/D 키 각각과 양방향 카메라 회전 21/90/240도/초의 12장면을 검사한다. ForwardCycle이 열리지 않는지, 기존 측면 후보에 Box와 Diamond가 있는지, 실제 측면 회전이 선택되는지 확인한다. `LateralPose`에 선택 에셋·시간과 전체 로컬 포즈 CRC를 저장하여 동일 바이너리·프로필의 전방 PSD 변경 전후를 비교할 수 있다. 순수 측면 경로에서 Diamond 선택을 강제하지 않는다. 전방 PSD의 Arc 6종/Loop 8종 구성은 [후속 문서](../../../../Docs/Animation/Planning/Strafe_Forward_Intent_2026-10-13.md)에 기록한다.
+
+착지 재현에는 `-ProjectJOneShotCameraPitch=2.8`, `-ProjectJOneShotCurveRate=85`, `-ProjectJOneShotJumpAtSeconds=2.5`로 실제 카메라 시점·곡선 회전율·점프 시점을 지정할 수 있다. 가슴의 `Angle3D`는 쿼터니언의 실제 컴포넌트 공간 프레임 차이다. 기존 수평/Euler yaw 차이와 구분한다. 기본값을 생략한 기존 장면은 유지한다. `Inertial` 행은 실제 엔진 debug traversal의 활성 상태이며, 프레임 수는 사용자 체감 승인이나 성능 측정이 아니다. 임시 착지 전용 CVar 전환 옵션은 제거했다.

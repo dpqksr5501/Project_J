@@ -12,7 +12,8 @@
 | 느린 OTM/Strafe 회전·미세 입력·State Controller·미사용 함수 정리 | [지속 곡선 판정과 Master 정리](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
 | 좌우 곡선 반전의 후보 유지·전방 입력 묶음의 예측 안정화 | [사용자 로그 후속 구현](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화) |
 | W 미세 회전의 Loop·곡선 공동 후보·정규화 참조 보정·실제 로그 재생 | [전방 Strafe Run 후속](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현) |
-| 곡선 중 Arc→Box 선택의 전방 PSS 미래 궤적 보정 | [Arc→Box 재현 후속](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#arcbox-재현-후속-전방-미래-궤적-비용-보정) |
+| W 곡선의 전방 후보 구성과 A/D 측면 후보 보호 | [전방 이동 의도별 PSD 구성](Planning/Strafe_Forward_Intent_2026-10-13.md) |
+| 착지 후 약한 회전의 후보 소유권·회복 중 관성 보간 복귀 | [Strafe Land 복귀 보완](Planning/Strafe_Land_Return_2026-10-13.md) |
 | 200명 리타깃·의상 물리 예산·보간·병렬 경계·off/on 결과 | [시각 애니메이션 예산 구현과 검증](Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
 | 실제 그래프 기반 GASP 비교·자연스러움 고도화·후속 프롬프트·PDF | [2026-10-06 조사와 고도화 인계](Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) |
 | 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |

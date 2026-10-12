@@ -1867,6 +1867,15 @@ void UProject_JCharacterAnimInstance::UpdateReleasedLandingMotionContext(
 	Data.LocomotionContext.PhaseFamily = Data.LocomotionContext.bIsMotionMatchingMoving
 		? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
 	Data.MotionMatching.SelectionContext.PhaseFamily = Data.LocomotionContext.PhaseFamily;
+	if (IsPrimaryMeshAnimInstance() && LocomotionAnimStateComponent &&
+		LocomotionAnimStateComponent->NotifyLandingPresentationReleased(Data.Landing.PresentationRevision))
+	{
+		// Candidate ownership follows the released presentation, not the physical
+		// impact flag. Reuse the component's normal direction/action/turn guards.
+		const auto& Selection = LocomotionAnimStateComponent->GetMotionMatchingSelectionContext();
+		Data.MotionMatching.SelectionContext.bUseForwardCycle = Selection.bUseForwardCycle;
+		Data.MotionMatching.SelectionContext.bUseSettledCycle = Selection.bUseSettledCycle;
+	}
 }
 
 void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWithPlaybackHold(

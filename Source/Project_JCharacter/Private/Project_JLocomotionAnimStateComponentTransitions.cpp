@@ -384,6 +384,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Dura
 
 void UProject_JLocomotionAnimStateComponent::BeginLandingState(const AProject_JPlayerCharacter& PlayerOwner, float ImpactFallSpeed)
 {
+	ReleasedLandingPresentationRevision = INDEX_NONE;
 	StopFallOffStart();
 	++LandingPresentationRevision;
 	if (LandingPresentationRevision == 0)
@@ -487,6 +488,7 @@ void UProject_JLocomotionAnimStateComponent::ScheduleLandingTimeout()
 
 void UProject_JLocomotionAnimStateComponent::ClearActiveLandingState()
 {
+	ReleasedLandingPresentationRevision = INDEX_NONE;
 	bIsLanding = false;
 	bLandingRequested = false;
 	bIsInAir = false;

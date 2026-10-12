@@ -56,6 +56,9 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 	bool bSlowForwardCamera = false;
 	bool bCurveStability = false;
 	bool bForwardPoolAudit = false;
+	bool bLateralCamera = false;
+	int32 LateralBoxFrames = 0, LateralDiamondFrames = 0;
+	int32 TotalLateralBoxFrames = 0, TotalLateralDiamondFrames = 0;
 	TArray<FVector2D> CameraReplay;
 	bool bRecordedMicro = false;
 	bool bRecordedCurve = false;
@@ -189,6 +192,9 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		if (!bOTM) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		const auto* Set = bOTM ? Player->GetMotionMatchingAssetSet() : Player->GetCombatStrafeMotionMatchingAssetSet();
 		if (!Set || !Set->RunDatabases.Cycle) return false;
+		if (const auto* Forward = Set->RunDatabases.ForwardCycle.Get())
+			Report += FString::Printf(TEXT("ForwardData Case=%d Schema=%s Cardinality=%d ContinuingBias=%.4f\n"), Case,
+				*GetPathNameSafe(Forward->Schema), Forward->Schema ? Forward->Schema->SchemaCardinality : 0, Forward->ContinuingPoseCostBias);
 		float SchemaWeight = 1.f;
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafeSchemaVelocityWeight="), SchemaWeight);
 		if (SchemaWeight > 1.f)
@@ -244,19 +250,31 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		const auto* LocomotionProfile = Player->GetLocomotionProfile();
 		CoverageBlendTime = LocomotionProfile ? LocomotionProfile->MotionMatchingSearchPolicy.DefaultBlendTime : .20f;
 		CoverageMargin = CoverageBlendTime * (LocomotionProfile ? LocomotionProfile->MotionMatchingSearchPolicy.MaxPlayRate : 1.15f);
+		int32 IndexedBoxPoses = 0, IndexedDiamondPoses = 0;
 		for (const auto& Asset : CoverageIndex.Assets)
 		{
 			if (Asset.IsLooping()) continue;
 			const auto* Entry = Database->GetDatabaseAnimationAsset(Asset.GetSourceAssetIdx());
 			if (!Entry) continue;
+			if (bLateralCamera)
+			{
+				const FString Name = GetNameSafe(Entry->GetAnimationAsset());
+				IndexedBoxPoses += Name.Contains(TEXT("_Box_")) ? Asset.GetNumPoses() : 0;
+				IndexedDiamondPoses += Name.Contains(TEXT("_Diamond_")) ? Asset.GetNumPoses() : 0;
+			}
 			const float End = Asset.GetLastSampleTime(Database->Schema->SampleRate);
 			NonLoopIndexedEnds.Add(GetFNameSafe(Entry->GetAnimationAsset()), End);
+		}
+		if (bLateralCamera)
+		{
+			Test->TestTrue(TEXT("The lateral search index retains usable Box and Diamond poses"), IndexedBoxPoses > 0 && IndexedDiamondPoses > 0);
+			Report += FString::Printf(TEXT("LateralCandidates Case=%d BoxPoses=%d DiamondPoses=%d\n"), Case, IndexedBoxPoses, IndexedDiamondPoses);
 		}
 		Report += FString::Printf(TEXT("EntryCoverageMeasuredOnly=1 Margin=%.3f PacketCamera=%d\n"), CoverageMargin, bPacketCamera);
 		return true;
 	}
 public:
-	explicit FStrafeCameraPlayback(FAutomationTestBase* InTest, bool bRecorded = false, bool bCurve = false) : Test(InTest), bRecordedMicro(bRecorded), bRecordedCurve(bCurve)
+	explicit FStrafeCameraPlayback(FAutomationTestBase* InTest, bool bRecorded = false, bool bCurve = false, bool bLateral = false) : Test(InTest), bLateralCamera(bLateral), bRecordedMicro(bRecorded), bRecordedCurve(bCurve)
 	{
 		bValidateInstalled = FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectStrafeDirectionSchema"));
 		bVerifyForwardCurve = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyStrafeForwardCurve"));
@@ -332,7 +350,7 @@ public:
 		if (!World && !Setup()) { Test->AddError(TEXT("CMC camera fixture setup failed")); Cleanup(); return true; }
 		auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance());
 		const float Dt = float(FrameStep) / 120;
-		const int32 Direction = bForwardPoolAudit && Case == 17 ? 0 : bForwardPoolAudit && Case == 18 ? 1 :
+		const int32 Direction = bLateralCamera ? (Case % 2 ? 2 : 0) : bForwardPoolAudit && Case == 17 ? 0 : bForwardPoolAudit && Case == 18 ? 1 :
 			Case >= 33 && Case <= 35 ? Case - 33 : Case >= 9 ? 3 : Case % 3;
 		const int32 RateIndex = Case >= 9 ? Case - 9 : Case / 3;
 		float Rate = RateIndex == 0 ? 90 : RateIndex == 1 ? 240 : 480;
@@ -362,6 +380,11 @@ public:
 			const float Rates[] = {450, 600, 900, 1200};
 			RapidTarget = Trial % 2 ? 180 : -180;
 			Rate = FMath::Sign(RapidTarget) * Rates[Trial / 2];
+		}
+		if (bLateralCamera)
+		{
+			const float Rates[] = {21, 90, 240};
+			Rate = Rates[Case / 4] * (Case % 4 >= 2 ? -1.f : 1.f);
 		}
 		const float MoveOffset = bForwardPoolAudit && Case == 19 ? 45 : Direction == 0 ? -90 : Direction == 1 ? 180 : Direction == 2 ? 90 : 0;
 		const int32 RotationStartFrame = Case >= 41 ? 180 : 120;
@@ -470,6 +493,12 @@ public:
 		const bool bMeasured = Frame >= 120 && Frame < (bCurveStability ? 720 : 360);
 		if (bMeasured)
 		{
+			if (bLateralCamera)
+			{
+				Test->TestFalse(TEXT("A/D camera rotation keeps the forward-only query family ineligible"), MM.SelectionContext.bUseForwardCycle);
+				LateralBoxFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Box_"));
+				LateralDiamondFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Diamond_"));
+			}
 			if (!Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching() && !MM.PostSelection.bIsContinuingPoseSearch)
 			{
 				++Reselections;
@@ -527,6 +556,18 @@ public:
 		}
 		if (Frame % 12 == 0)
 		{
+			if (bLateralCamera)
+			{
+				TArray<double> Pose;
+				for (const auto& T : Player->GetMesh()->GetBoneSpaceTransforms())
+				{
+					const auto Q = T.GetRotation(); const auto V = T.GetLocation();
+					Pose.Append({Q.X, Q.Y, Q.Z, Q.W, V.X, V.Y, V.Z});
+				}
+				Report += FString::Printf(TEXT("LateralPose Case=%d Frame=%d Forward=%d PSD=%s Clip=%s Time=%.6f PoseCRC=%u\n"), Case, Frame,
+					MM.SelectionContext.bUseForwardCycle, *MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString(),
+					MM.PostSelection.SelectedAnimationTime, FCrc::MemCrc32(Pose.GetData(), Pose.Num() * sizeof(double)));
+			}
 			if (bForwardPoolAudit && FParse::Param(FCommandLine::Get(), TEXT("ProjectJForwardCostAudit")))
 			{
 				Report += FString::Printf(TEXT("ForwardCost Case=%d Frame=%d Rate=%.2f PSD=%s Selected=%s%s\n"),
@@ -649,6 +690,12 @@ public:
 			Test->TestTrue(TEXT("Recorded micro travel predominantly retains Loop"), ReplayFrames > 0 && ReplayLoopFrames >= ReplayFrames * .95f);
 		}
 		Report += FString::Printf(TEXT("Summary Case=%d GroundFrames=%d MovingFrames=%d ArcFrames=%d\n"), Case, GroundFrames, MovingFrames, ArcFrames);
+		if (bLateralCamera)
+		{
+			Report += FString::Printf(TEXT("LateralSummary Case=%d BoxFrames=%d DiamondFrames=%d\n"), Case, LateralBoxFrames, LateralDiamondFrames);
+			TotalLateralBoxFrames += LateralBoxFrames; TotalLateralDiamondFrames += LateralDiamondFrames;
+			LateralBoxFrames = LateralDiamondFrames = 0;
+		}
 		Report += FString::Printf(TEXT("EntrySummary Case=%d Reselections=%d ShortSegments=%d TailEntries=%d\n"), Case, Reselections, ShortSegments, TailEntries);
 		Report += FString::Printf(TEXT("GeneralSummary Case=%d CandidateFrames=%d SelectedFrames=%d LateFrames=%d\n"),
 			Case, GeneralFrames, SelectedGeneralFrames, LateGeneralFrames);
@@ -751,7 +798,13 @@ public:
 		Reselections = ShortSegments = TailEntries = SettledCurveFrames = MicroLoopFrames = MicroFrames = ForwardPoolFrames = 0; LastJumpFrame = -1;
 		++Case;
 		if (bColdFacingAudit && Case == 18) Case = 22;
-		if (SingleCase == INDEX_NONE && Case < (bForwardPoolAudit ? 20 : bCurveStability ? 15 : bSlowForwardCamera ? 12 : bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
+		if (SingleCase == INDEX_NONE && Case < (bLateralCamera ? 12 : bForwardPoolAudit ? 20 : bCurveStability ? 15 : bSlowForwardCamera ? 12 : bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
+		if (bLateralCamera)
+		{
+			// A pure side tangent may favour Box over diagonal Diamond. Verify that
+			// both remain eligible, and that real matching uses the lateral family.
+			Test->TestTrue(TEXT("Real lateral camera curves select authored lateral turns"), TotalLateralBoxFrames + TotalLateralDiamondFrames > 0);
+		}
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
 		IFileManager::Get().MakeDirectory(*Directory, true);
 		FString Output = Directory / TEXT("Playback.txt");
@@ -795,6 +848,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRecordedStrafeCurveTest, "ProjectJ.Ani
 bool FProjectJRecordedStrafeCurveTest::RunTest(const FString&)
 {
 	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this, false, true));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLateralStrafeCameraTest, "ProjectJ.Animation.Naturalness.StrafeLateralCamera",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJLateralStrafeCameraTest::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this, false, false, true));
 	return true;
 }
 #endif

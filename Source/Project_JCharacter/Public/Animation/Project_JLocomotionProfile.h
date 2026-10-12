@@ -124,9 +124,13 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.0", Units = "s"))
 	float TransitionBlendTime = 0.20f;
 
-	/** Requires the One Shot Handoff graph node. No MM background ticking. */
+	/** Unified playback retains eligible authored samples during return. No MM background ticking. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|One Shot Return")
 	bool bEnableLiveOneShotReturn = true;
+	/** Preserve pose velocity when leaving landing recovery before its tail.
+	 * Completed Land tails still use the normal live return. Requires downstream Inertialization. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|One Shot Return")
+	bool bUseInertialLandingInterruptReturn = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Presentation", meta = (ClampMin = "0.2", ClampMax = "3.0"))
 	float MinPlayRate = 0.85f;

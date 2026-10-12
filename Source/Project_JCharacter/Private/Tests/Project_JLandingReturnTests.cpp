@@ -44,6 +44,17 @@ bool FProjectJLandingReturnContextTest::RunTest(const FString&)
 	TestTrue(TEXT("Real landing producer publishes ground movement intent"), Derived.bHasGroundMovementIntent);
 	TestFalse(TEXT("Authored landing still suppresses moving MM before release"), Derived.bIsMotionMatchingMoving);
 	TestEqual(TEXT("Authored landing retains its phase before release"), Derived.PhaseFamily, EProject_JLocomotionPhaseFamily::Landing);
+	Component->DerivedLocomotionContext = Derived;
+	const int32 LandingRevision = Component->LandingPresentationRevision;
+	TestFalse(TEXT("Stale presentation acknowledgement cannot consume a new impact"), Component->NotifyLandingPresentationReleased(LandingRevision - 1));
+	TestTrue(TEXT("The current local landing can release its presentation"), Component->NotifyLandingPresentationReleased(LandingRevision));
+	TestEqual(TEXT("Released search phase follows grounded intent immediately"), Component->GetMotionMatchingSelectionContext().PhaseFamily, EProject_JLocomotionPhaseFamily::Cycle);
+	TestEqual(TEXT("Physical derived phase remains Landing"), Component->DerivedLocomotionContext.PhaseFamily, EProject_JLocomotionPhaseFamily::Landing);
+	TestTrue(TEXT("Physical impact remains active after presentation release"), Component->IsLandingStateActive());
+	TestFalse(TEXT("Presentation release cannot shorten minimum landing protection"), Component->bCanExitLanding);
+	Component->BeginLandingState(*Player, 600.0f);
+	TestEqual(TEXT("A renewed impact starts with its own authored phase"), Component->GetSearchPresentationPhase(), EProject_JLocomotionPhaseFamily::Landing);
+	TestFalse(TEXT("An old release cannot leak across consecutive landings"), Component->NotifyLandingPresentationReleased(LandingRevision));
 	Movement.bHasMoveInput = false;
 	TestFalse(TEXT("Local input release still exits moving MM despite residual speed"), Component->HasGroundMovementIntentForContext(Movement));
 	Component->bUsingLocalInputState = false;

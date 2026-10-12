@@ -16,7 +16,13 @@ bool CanOverlapReturn(const FProject_JAnimThreadSafeData& Data,
 	const bool bEligible = (Presentation.PresentationState == P::TransitionToLocomotion &&
 		Presentation.PhaseFamily != EProject_JLocomotionPhaseFamily::Pivot) ||
 		Presentation.PresentationState == P::TransitionToIdle || Presentation.PresentationState == P::TransitionToLand;
-	return bEligible && (!LiveCVar || LiveCVar->GetInt() != 0) && !bRootTurnEpisode && Data.MotionMatchingSearchPolicy.bEnableLiveOneShotReturn &&
+	const bool bLandingRecoveryInterrupted = Presentation.PresentationState == P::TransitionToLand &&
+		Data.Landing.bIsLanding && !Presentation.bTransitionAnimationAlmostComplete &&
+		Data.MotionMatchingSearchPolicy.bUseInertialLandingInterruptReturn;
+	// Recovery can differ markedly from the incoming locomotion pose. The
+	// existing downstream inertializer preserves the evaluated pose/velocity;
+	// natural tails and Start/Stop retain their continuous outgoing clocks.
+	return bEligible && !bLandingRecoveryInterrupted && (!LiveCVar || LiveCVar->GetInt() != 0) && !bRootTurnEpisode && Data.MotionMatchingSearchPolicy.bEnableLiveOneShotReturn &&
 		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot && !Data.Air.bIsInAir &&
 		!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
 		Data.ProceduralIK.FullBodyMontageWeight <= UE_SMALL_NUMBER &&
