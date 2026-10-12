@@ -83,6 +83,19 @@ bool FProjectJMotionMatchingReturnRequestTest::RunTest(const FString&)
 	Proxy.ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving = true;
 	TestEqual(TEXT("Moving redirects keep continuing pose features"), Proxy.ResolveReselectInterruptMode(),
 		EPoseSearchInterruptMode::ForceInterrupt);
+	Proxy.ClearMotionMatchingReselects();
+	Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+	Data.MotionMatching.SelectionContext.bUseForwardCycle = true;
+	Proxy.QueueGameThreadData(Data, NewObject<UPoseSearchDatabase>(), true, true, false);
+	TestTrue(TEXT("Isolated forward statistics query current history at the boundary"), Proxy.bReselectFromPoseHistory);
+	TestEqual(TEXT("Forward boundary retires differently normalized continuing cost"), Proxy.ResolveReselectInterruptMode(),
+		EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose);
+	const uint64 ForwardRequest = Proxy.PendingReselectRevision;
+	Proxy.QueueGameThreadData(Data, Proxy.CurrentActiveDatabase, true, true, false);
+	TestEqual(TEXT("Stable forward eligibility does not re-arm a boundary every tick"), Proxy.PendingReselectRevision, ForwardRequest);
+	Data.MotionMatching.SelectionContext.bUseSettledCycle = true;
+	Proxy.QueueGameThreadData(Data, Proxy.CurrentActiveDatabase, true, true, false);
+	TestEqual(TEXT("Steady/curve evidence inside one forward pool does not re-arm a normalization boundary"), Proxy.PendingReselectRevision, ForwardRequest);
 	return true;
 }
 

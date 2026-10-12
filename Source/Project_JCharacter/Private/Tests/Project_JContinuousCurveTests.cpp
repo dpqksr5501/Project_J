@@ -61,4 +61,41 @@ bool FProjectJContinuousCurveEvidenceTest::RunTest(const FString&)
 	TestTrue(TEXT("Protected shot can yield as soon as its semantic exit becomes ready"), Shot.Update(I, {}).bYield);
 	return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCurveRoutingReversalTest, "ProjectJ.Animation.OneShotInput.CurveRoutingReversal",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJCurveRoutingReversalTest::RunTest(const FString&)
+{
+	for (int32 Hz : {30, 60, 120}) for (float Rate : {5.f, 21.f, 90.f}) for (bool bPackets : {false, true})
+	{
+		FProject_JContinuousCurvePolicy P; FProject_JContinuousCurvePolicy::FInput I;
+		I.bEligible = I.bHasRequestedHeading = true;
+		bool bConfirmed = false; int32 LostFrames = 0, UnconfirmedBridgeFrames = 0;
+		for (int32 N = 0; N < Hz * 4; ++N)
+		{
+			I.Now = double(N) / Hz;
+			const double T = bPackets ? FMath::FloorToDouble(I.Now * 20) / 20 : I.Now;
+			I.RequestedHeading = float(Rate * (T <= 2 ? T : 4 - T));
+			I.Velocity = FRotator(0, I.RequestedHeading, 0).Vector() * 500;
+			I.Position += I.Velocity / Hz;
+			const auto R = P.Update(I, {});
+			bConfirmed |= R.bActive;
+			if (I.Now >= 1 && !R.bRoutingActive) ++LostFrames;
+			if (I.Now >= 2 && R.bRoutingActive && !R.bActive) ++UnconfirmedBridgeFrames;
+		}
+		TestTrue(TEXT("A genuine curve confirms before its direction reverses"), bConfirmed);
+		TestEqual(TEXT("Coherent opposite travel cannot force a settled-only candidate pool"), LostFrames, 0);
+		TestTrue(TEXT("Routing bridge does not replace the strict authored-exit proof"), UnconfirmedBridgeFrames > 0);
+		for (int32 N = 0; N < Hz * 2; ++N)
+		{
+			I.Now += 1. / Hz; I.RequestedHeading = N % 2 ? .15f : -.15f;
+			I.Velocity = FRotator(0, I.RequestedHeading, 0).Vector() * 500; I.Position += I.Velocity / Hz;
+			const auto R = P.Update(I, {});
+			if (N > Hz * 1.5) TestFalse(TEXT("Pointer noise cannot preserve a stale confirmed curve"), R.bRoutingActive);
+		}
+		I.Now += 1. / Hz; I.HistoryRevision++;
+		TestFalse(TEXT("History reset clears routing protection immediately"), P.Update(I, {}).bRoutingActive);
+	}
+	return true;
+}
 #endif

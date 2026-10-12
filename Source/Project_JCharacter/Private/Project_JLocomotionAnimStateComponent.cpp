@@ -21,9 +21,14 @@
 #include "PoseSearch/PoseSearchSchema.h"
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
+#include "HAL/IConsoleManager.h"
 
 namespace
 {
+	TAutoConsoleVariable<int32> CVarStrafeForwardCycle(TEXT("p.ProjectJ.StrafeForwardCycle"), 1,
+		TEXT("Use the optional isolated Loop/curve pool for aligned local forward Strafe Run. 0 restores prior routing."));
+	TAutoConsoleVariable<int32> CVarStrafeCurveRoutingContinuity(TEXT("p.ProjectJ.StrafeCurveRoutingContinuity"), 1,
+		TEXT("Preserve confirmed Strafe curve candidates across direction reversals. 0 compares the previous strict-proof routing."));
 	// Combat-Strafe Run Pivot has authored cardinal pairs only. A generous axis
 	// tolerance keeps an analog stick near a cardinal direction eligible, while
 	// rejecting the normalized keyboard diagonals (~0.707/0.707).
@@ -211,6 +216,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		bUseCombatStrafeSettledCycle = false;
 		CombatStrafeSettledCycleElapsedTime = 0.0f;
 		CombatStrafeCurvePolicy.Reset();
+		bUseCombatStrafeForwardCycle = false;
 		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
 		MotionMatchingSelectionPolicy.Reset();
 		MovingTurnPolicy.Reset();
@@ -454,6 +460,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	float DeltaTime,
 	const AProject_JPlayerCharacter& PlayerOwner)
 {
+	const bool bWasUsingForwardCycle = bUseCombatStrafeForwardCycle;
+	bUseCombatStrafeForwardCycle = false;
 	const UProject_JCombatAnimProfile* CombatProfile = PlayerOwner.GetCombatAnimProfile();
 	const UProject_JMotionMatchingAssetSet* AssetSet = CombatProfile
 		? CombatProfile->CombatStrafeMotionMatchingAssetSet.Get()
@@ -506,7 +514,8 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	Curve.bHasRequestedHeading = true; Curve.RequestedHeading = KinematicContext.MoveWorldDirection.Rotation().Yaw;
 	const auto CurveResult = CombatStrafeCurvePolicy.Update(Curve,
 		LocomotionProfile ? LocomotionProfile->TransitionPolicy.ContinuousCurve : FProject_JContinuousCurveSettings());
-	TurnRequestSample.bContinuousCurve = CurveResult.bActive;
+	const bool bCurveCandidates = CVarStrafeCurveRoutingContinuity.GetValueOnGameThread() != 0 ? CurveResult.bRoutingActive : CurveResult.bActive;
+	TurnRequestSample.bContinuousCurve = bCurveCandidates;
 
 	const bool bCycleCanSettle =
 		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
@@ -525,7 +534,24 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	const bool bActorFacingNotAligned = FMath::Abs(FMath::FindDeltaAngleDegrees(
 		PlayerOwner.GetActorRotation().Yaw, PlayerOwner.GetControlRotation().Yaw)) > FacingTolerance;
 	const bool bKeepDynamic = !bCycleCanSettle || bInputDirectionChanging ||
-		CurveResult.bActive || bVelocityNotAligned || bActorFacingNotAligned;
+		bCurveCandidates || bVelocityNotAligned || bActorFacingNotAligned;
+	const FVector2D HeldInput = GetLocalMovementInputForState();
+	const float InputAngle = FMath::RadiansToDegrees(FMath::Atan2(HeldInput.X, HeldInput.Y));
+	const bool bForwardMotion = DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		KinematicContext.bHasMoveInput && KinematicContext.GroundSpeed >= DerivedTurnMinSpeed &&
+		FVector::DotProduct(KinematicContext.Acceleration, KinematicContext.HorizontalVelocity) >= 0;
+	// Aligned held forward travel always keeps Loop and curves in one search.
+	// Physical curvature belongs in the trajectory query, not in an angular-rate
+	// gate that removes all Loop poses as soon as pointer packets cross a limit.
+	// Tiny derivatives at constant speed can look like deceleration to the
+	// legacy settled policy. Aligned held input with non-braking CMC acceleration
+	// can still use the inclusive pool; actual stop/action/redirect guards remain.
+	bUseCombatStrafeForwardCycle = CVarStrafeForwardCycle.GetValueOnGameThread() != 0 && GaitFamily.ForwardCycle &&
+		AuthoritativeContext.GaitIntent == EProject_JLocomotionGaitIntent::Run && bForwardMotion && Curve.bEligible &&
+		PlayerOwner.GetAnimationLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot && HasHeldLocalMoveInput() &&
+		FMath::Abs(InputAngle) <= (bWasUsingForwardCycle ? 10.f : 5.f) && !bInputDirectionChanging && !bVelocityNotAligned && !bActorFacingNotAligned &&
+		!TurnRequestSample.bPreparing &&
+		!TurnRequestSample.bAcuteActive && !TurnRequestSample.bAcuteApproach;
 
 	if (bKeepDynamic)
 	{
@@ -546,6 +572,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	MotionMatchingSelectionContext.PhaseFamily = DerivedLocomotionContext.PhaseFamily;
 	MotionMatchingSelectionContext.bUseGenericFamiliesForNonOrientToMovement = false;
 	MotionMatchingSelectionContext.bUseSettledCycle = bUseCombatStrafeSettledCycle;
+	MotionMatchingSelectionContext.bUseForwardCycle = bUseCombatStrafeForwardCycle;
 	MotionMatchingSelectionContext.bMovingTurn180 = DerivedLocomotionContext.bIsMovingTurn180;
 	MotionMatchingSelectionContext.bAllowTurnContinuation = MovingTurnPolicy.AllowsCompletedTurnContinuation();
 
@@ -555,6 +582,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateMotionMatchingSelectionState(
 	SelectionKey.Phase = DerivedLocomotionContext.PhaseFamily;
 	SelectionKey.GroundMode = GroundMotionMode;
 	SelectionKey.bUseSettledCycle = bUseCombatStrafeSettledCycle;
+	SelectionKey.bUseForwardCycle = bUseCombatStrafeForwardCycle;
 	SelectionKey.bMovingTurn180 = DerivedLocomotionContext.bIsMovingTurn180;
 	bMotionMatchingSelectionChanged = MotionMatchingSelectionPolicy.Publish(SelectionKey);
 	MotionMatchingSelectionRevision = MotionMatchingSelectionPolicy.GetRevision();
@@ -1011,6 +1039,7 @@ FProject_JMovingTurnPolicy::FInput UProject_JLocomotionAnimStateComponent::Build
 				Input.SelectionFrame = Feedback.Frame;
 				Input.bSelectedTurn = Family.TurnRedirect && Feedback.SelectedDatabase == Family.TurnRedirect->GetFName();
 				Input.bSelectedCycle = (Family.Cycle && Feedback.SelectedDatabase == Family.Cycle->GetFName()) ||
+					(Family.ForwardCycle && Feedback.SelectedDatabase == Family.ForwardCycle->GetFName()) ||
 					(Family.SettledCycle && Feedback.SelectedDatabase == Family.SettledCycle->GetFName());
 			}
 		}

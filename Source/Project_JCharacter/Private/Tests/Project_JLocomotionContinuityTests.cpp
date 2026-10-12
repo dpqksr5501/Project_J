@@ -51,6 +51,22 @@ bool FProjectJLocomotionCandidateContinuityTest::RunTest(const FString&)
 	Selection.bGeneralTurnCandidates = false; Selection.bMovingTurn180 = true; Selection.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
 	Set->bEnableTurnCycleCandidates = false;
 	TestNull(TEXT("Asset-set rollback retains single PSD"), Set->FindTurnCycleCompanion(Selection, Turn));
+	auto* Forward = NewObject<UPoseSearchDatabase>(); auto* Settled = NewObject<UPoseSearchDatabase>();
+	Set->RunDatabases.ForwardCycle = Forward; Set->RunDatabases.SettledCycle = Settled;
+	Selection.bMovingTurn180 = false; Selection.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+	Selection.bUseForwardCycle = true;
+	TestEqual(TEXT("Qualified forward Run uses its isolated pool"), Set->FindDatabaseForContext(Selection), Forward);
+	Selection.bUseSettledCycle = true;
+	TestEqual(TEXT("Qualified forward travel uses one pool across steady and curved input"), Set->FindDatabaseForContext(Selection), Forward);
+	Selection.bUseSettledCycle = false; Selection.bGeneralTurnCandidates = true;
+	TestEqual(TEXT("General correction keeps its original family"), Set->FindDatabaseForContext(Selection), Cycle);
+	Selection.bGeneralTurnCandidates = false; Selection.GaitIntent = EProject_JLocomotionGaitIntent::Sprint;
+	Set->SprintDatabases.Cycle = Cycle;
+	TestEqual(TEXT("Run forward slot does not leak into Sprint"), Set->FindDatabaseForContext(Selection), Cycle);
+	Selection.GaitIntent = EProject_JLocomotionGaitIntent::Run; Selection.RotationMode = EProject_JLocomotionRotationMode::OrientToMovement;
+	TestEqual(TEXT("Forward flag cannot change OTM"), Set->FindDatabaseForContext(Selection), Cycle);
+	Selection.RotationMode = EProject_JLocomotionRotationMode::Strafe; Set->RunDatabases.ForwardCycle = nullptr;
+	TestEqual(TEXT("Missing optional data restores authored Cycle"), Set->FindDatabaseForContext(Selection), Cycle);
 
 	FProject_JMovingTurnPolicy Policy; FProject_JMovingTurnPolicy::FInput Input; Input.bEligible = true;
 	Policy.Update(Input); Input.NowSeconds = 0.01; Input.TargetFacingYaw = Input.MoveYaw = 180;

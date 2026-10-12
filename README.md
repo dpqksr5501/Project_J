@@ -16,6 +16,10 @@
 
 **애니메이션 후속 구현 — 2026-10-12:** Start/Land 등 단발과 Motion Matching을 `Project Unified Locomotion`의 한 재생 스택으로 통합했습니다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 계속 담당합니다. 지속 회전은 실제 이동·누적 방향 변화로 판정하고, 미세한 Strafe 입력은 안정 Loop 후보군을 유지합니다. [통합 구조](Docs/Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) · [지속 곡선과 Master 함수 정리](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)
 
+**Strafe 사용자 로그 후속:** 단발을 끝내는 엄격한 증거와 이미 확인된 곡선의 후보군 유지 조건을 구분해, 좌우 반전 중 Loop 전용 PSD로 강제 복귀하는 현상을 수정했습니다. 적합한 기존 PSD 후보는 유지하고, 정렬된 전방 이동의 입력 묶음 예측만 제한적으로 안정화합니다. 매우 느린 회전과 급회전의 기존 대응은 보호합니다. [구현 범위·비교·검증](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화)
+
+**Strafe Run W 미세 회전 후속:** MCP에서 기존 Cycle에 Loop 참조가 없음을 확인해, 정렬된 전방 입력용 `ForwardCycle`에 Loop와 기존 곡선 후보를 함께 구성했습니다. 사용자 재현에서 최초 8/12도 회전율 제한이 후보를 다시 닫는 문제를 확인하여 제거했습니다. 안정·곡선 상태에서 같은 PSD를 유지하고 곡률은 궤적 검색으로 판단하며 측면·후방·대각선과 급회전의 기존 경로를 보호합니다. Arc→Box 재현 후 전방 전용 PSS의 미래 위치·방향 가중치를 보정했고, 공통 PSS와 기존 방향·급회전 PSD/시퀀스는 유지합니다. [적용 조건·비용 진단·검증](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현)
+
 **200명 시각 예산 비교:** 같은 바이너리의 기능 off/on, 실제 BP·장비·follower 구성, NullRHI, 조건별 120틱 준비 + 120틱 측정, 2회 반복에서 ABA on 평균 World tick은 근거리 **13.61→11.40ms**, 원거리 **13.78→10.69ms**였습니다. 리타깃 몸체와 의상 물리의 평가 횟수를 줄이고 사이 프레임을 보간하며, 로컬·전투·단발·급회전은 매 프레임 평가를 보호합니다. 동시 공격 ABA on은 **19.76→19.58ms**로 거의 같았습니다. 전체 렌더 FPS·GPU 개선이나 200명 동시 접속 결과로 해석하지 않습니다. [조건·원자료 위치·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)
 
 **구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
@@ -158,9 +162,13 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 
 ### 애니메이션 후속 검증 — 2026-10-12
 
-현재 작업 트리의 지속 곡선·시각 예산 후속 변경 기준입니다. 직접 UBT Editor/Game Development 빌드가 성공했습니다. 시각 예산 회귀는 첫 실행 58개 성공·5개 설정 조건 실패 후, 요구 예산을 설정한 실제 RHI 실행에서 해당 5개와 시각 lifecycle 1개가 모두 성공했습니다. 두 실행에서 성공을 확인한 고유 관련 검증은 63개입니다. 전체 ProjectJ 자동화의 새 전수 실행 수치로 사용하지 않습니다.
+200명 시각 예산 후속 시점의 기록입니다. 직접 UBT Editor/Game Development 빌드가 성공했습니다. 시각 예산 회귀는 첫 실행 58개 성공·5개 설정 조건 실패 후, 요구 예산을 설정한 실제 RHI 실행에서 해당 5개와 시각 lifecycle 1개가 모두 성공했습니다. 두 실행에서 성공을 확인한 고유 관련 검증은 63개입니다. 전체 ProjectJ 자동화의 새 전수 실행 수치로 사용하지 않습니다.
 
 실제 소켓은 서버1 + 클라이언트2 + NPC200, 지연50ms·손실3% 조건에서 검증과 정상 종료를 확인했습니다. 렌더 캡처 17개와 보간 중 실제 뼈 변위를 확인했으며, 이번 최적화 이후 사용자의 체감 확인과 200명 실제 렌더 장면의 GPU·Cook/패키징 검증은 남아 있습니다. [검증 결과와 한계](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기능품질-검증)
+
+Strafe 사용자 로그의 후속 변경은 최종 Editor/Game 직접 UBT 빌드와 고유 관련 검증 **65개**가 성공했습니다. 급회전 57장면, 완만한 회전·반전·미세 입력의 비교 및 실제 RHI 실행을 구분해 기록했습니다. 기존 후보 판정 경로에서도 실패하던 특정 클립 강제 검사와 실제 평가 자세 기준으로 수정한 이유도 남겼습니다. 이 후속 실행에서 200명 CPU/GPU나 소켓 검증을 다시 수행한 것으로 표현하지 않습니다. [후속 검증 기록](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#후속-검증과-해석)
+
+**커밋 정리 시점 — 2026-10-13:** 단발 곡선 복귀 조건을 사용자 요청대로 0.35초·100cm·3도·85%로 복원했습니다. 임시 전방 가중치 실험과 에셋 작성용 테스트 경로를 제거했습니다. 이 상태의 집중 검증은 **21개 성공·1개 실패**이며, 미세 입력은 Loop 732/733 및 Box/Diamond 0입니다. 실패한 곡선 기록을 단독 재생한 결과 Box/Diamond 28/2,596프레임으로 1% 이하 기준을 초과했습니다. 새로 보고된 Strafe 착지 후 튐도 원인 확정과 실제 재현이 남아 있습니다. [현재 제한과 조사 기록](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#2026-10-13-커밋-전-코드-정리와-착지-튐-조사)
 
 ### 이전 기능·수명 검증 — 2026-10-08
 

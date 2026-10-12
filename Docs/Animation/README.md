@@ -10,6 +10,9 @@
 | --- | --- |
 | 현재 단발·MM의 공통 재생 스택과 ABP 노드 역할 | [통합 Locomotion 구현](Planning/Unified_Locomotion_Implementation_2026-10-12.md) |
 | 느린 OTM/Strafe 회전·미세 입력·State Controller·미사용 함수 정리 | [지속 곡선 판정과 Master 정리](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
+| 좌우 곡선 반전의 후보 유지·전방 입력 묶음의 예측 안정화 | [사용자 로그 후속 구현](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화) |
+| W 미세 회전의 Loop·곡선 공동 후보·정규화 참조 보정·실제 로그 재생 | [전방 Strafe Run 후속](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현) |
+| 곡선 중 Arc→Box 선택의 전방 PSS 미래 궤적 보정 | [Arc→Box 재현 후속](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#arcbox-재현-후속-전방-미래-궤적-비용-보정) |
 | 200명 리타깃·의상 물리 예산·보간·병렬 경계·off/on 결과 | [시각 애니메이션 예산 구현과 검증](Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
 | 실제 그래프 기반 GASP 비교·자연스러움 고도화·후속 프롬프트·PDF | [2026-10-06 조사와 고도화 인계](Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) |
 | 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |

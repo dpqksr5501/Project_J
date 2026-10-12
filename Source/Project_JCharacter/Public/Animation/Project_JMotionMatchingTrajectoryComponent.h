@@ -109,6 +109,7 @@ private:
 
 	uint64 LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
 	FProject_JPredictionYawRateFilter PredictionYawRateFilter;
+	bool bWasForwardPredictionSmoothing = false;
 	uint64 LastHistoryFrameCounter = TNumericLimits<uint64>::Max();
 	uint64 LastPostProcessFrameCounter = TNumericLimits<uint64>::Max();
 	bool bWasTrajectoryGenerationEligible = false;

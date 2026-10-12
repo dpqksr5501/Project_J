@@ -269,6 +269,7 @@ public:
 	bool HasHeldLocalMoveInput() const;
 	/** Camera-relative raw local input; independent of CMC's consumed world vector. */
 	FVector2D GetHeldLocalMoveInput() const { return GetLocalMovementInputForState(); }
+	bool IsUsingForwardCycle() const { return bUseCombatStrafeForwardCycle; }
 	/**
 	 * Records a completed Enhanced Input semantic-direction snapshot for cosmetic
 	 * Pivot selection. It never changes CharacterMovement or replication.
@@ -284,6 +285,8 @@ public:
 	/** Complete value-only database-selection contract authored on the game thread. */
 	const FProject_JMotionMatchingSelectionContext& GetMotionMatchingSelectionContext() const { return MotionMatchingSelectionContext; }
 	const FProject_JTurnRequestSample& GetTurnRequestSample() const { return TurnRequestSample; }
+	/** Game-thread physical curvature rate; never an input or replication target. */
+	float GetContinuousCurveYawRate() const { return CombatStrafeCurvePolicy.GetResult().ShortYawRate; }
 	/** Read-only first-return probe with current input; does not advance the live policy twice. */
 	bool ProbeOneShotTurnReturn(const FVector& MoveWorldDirection, EProject_JLocomotionRotationMode Mode, EProject_JLocomotionGaitIntent Gait) const;
 
@@ -693,6 +696,7 @@ public:
 	/** True only when local Combat-Strafe is stable enough to select its optional Loop-only PSD. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")
 	bool bUseCombatStrafeSettledCycle = false;
+	bool bUseCombatStrafeForwardCycle = false;
 
 	/** Accumulated local Combat-Strafe stability time; reset by input, yaw, or velocity changes. */
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Selection")

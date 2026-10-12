@@ -947,6 +947,10 @@ public:
 
 	/** Small native-only snapshot used by the MMO animation profiling command. */
 	FProject_JAnimMotionMatchingThreadSafeData GetMotionMatchingDebugSnapshot() const;
+#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
+	/** Read-only query reconstruction for explicit automation diagnostics. */
+	FString DescribeReconstructedSearchCostsForTesting();
+#endif
 	/** GT-only completed evaluation; never forces synchronization with parallel evaluation. */
 	const FProject_JTurnSelectionFeedback& GetCompletedTurnFeedback() const { check(IsInGameThread()); return CompletedTurnFeedback; }
 	bool HasMovingOneShotInputOwnerOnGameThread() const

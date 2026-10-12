@@ -88,6 +88,11 @@ UPoseSearchDatabase* UProject_JMotionMatchingAssetSet::FindDatabaseForContext(co
 		if (RotationMode == EProject_JLocomotionRotationMode::Strafe && GaitIntent == EProject_JLocomotionGaitIntent::Run &&
 			PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && GaitFamily.BackwardRefaceCycle &&
 			(Context.bBackwardRefaceCandidates || Context.bAllowBackwardRefaceContinuation)) return GaitFamily.BackwardRefaceCycle;
+		if (RotationMode == EProject_JLocomotionRotationMode::Strafe && GaitIntent == EProject_JLocomotionGaitIntent::Run &&
+			PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle && Context.bUseForwardCycle &&
+			!Context.bMovingTurn180 && !Context.bAllowTurnContinuation && !Context.bGeneralTurnCandidates &&
+			!Context.bAllowGeneralTurnContinuation && !Context.bBackwardRefaceCandidates &&
+			!Context.bAllowBackwardRefaceContinuation && GaitFamily.ForwardCycle) return GaitFamily.ForwardCycle;
 		if (UPoseSearchDatabase* GaitDatabase = SelectGaitDatabase(GaitFamily, PhaseFamily, Context.bUseSettledCycle))
 		{
 			return GaitDatabase;

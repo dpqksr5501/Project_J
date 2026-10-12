@@ -48,13 +48,14 @@ public:
 	};
 	struct FResult
 	{
-		bool bActive = false, bRecent = false;
-		float Distance = 0, Sweep = 0, Consistency = 0, Duration = 0;
+		bool bActive = false, bRecent = false, bRoutingActive = false;
+		float Distance = 0, Sweep = 0, Consistency = 0, Duration = 0, ShortYawRate = 0;
 	};
 	void Reset()
 	{
 		bHasSample = false; Count = Next = 0; Last = {}; Result = {};
 		Travel = Sweep = AbsoluteSweep = IntentSweep = 0; Started = LastTurn = LastIntentTurn = -1;
+		LastRoutingProof = -1;
 	}
 	const FResult& GetResult() const { return Result; }
 	FResult Update(const FInput& I, FProject_JContinuousCurveSettings Settings)
@@ -102,6 +103,23 @@ public:
 		Result.bActive = Result.bRecent && Result.Duration + UE_SMALL_NUMBER >= S.Confirmation &&
 			Result.Distance >= S.TravelDistance && FMath::Abs(Result.Sweep) >= S.HeadingSweep &&
 			Result.Consistency >= S.DirectionConsistency;
+		// Authored exits retain the strict signed proof above. Once a curve has
+		// confirmed, short coherent travel may preserve its candidate pool while
+		// the long window still contains the previous turn direction. This never
+		// admits a fresh curve and expires when motion becomes straight or noisy.
+		const FSample Short = HistoryAt(I.Now - S.QuietGrace);
+		const float ShortSweep = Sweep - Short.Sweep;
+		const float ShortAbsolute = AbsoluteSweep - Short.AbsoluteSweep;
+		const float ShortIntent = IntentSweep - Short.IntentSweep;
+		const double ShortSpan = I.Now - Short.Time;
+		Result.ShortYawRate = ShortSpan >= .08 ? float(ShortSweep / ShortSpan) : 0;
+		const float MinimumShortSweep = FMath::Min(.5f, S.HeadingSweep * .2f);
+		const bool bShortCoherent = FMath::Abs(ShortSweep) >= MinimumShortSweep &&
+			ShortAbsolute > UE_SMALL_NUMBER && FMath::Abs(ShortSweep) / ShortAbsolute >= S.DirectionConsistency &&
+			(!I.bHasRequestedHeading || (FMath::Abs(ShortIntent) >= MinimumShortSweep && ShortIntent * ShortSweep > 0));
+		const bool bRoutingWasRecent = LastRoutingProof >= 0 && I.Now - LastRoutingProof <= S.Confirmation;
+		if (Result.bActive || (bRoutingWasRecent && bShortCoherent)) LastRoutingProof = I.Now;
+		Result.bRoutingActive = Result.bActive || (LastRoutingProof >= 0 && I.Now - LastRoutingProof <= S.Confirmation);
 		return Result;
 	}
 private:
@@ -136,4 +154,5 @@ private:
 	FResult Result;
 	float Travel = 0, Sweep = 0, AbsoluteSweep = 0, IntentSweep = 0;
 	double Started = -1, LastTurn = -1, LastIntentTurn = -1;
+	double LastRoutingProof = -1;
 };

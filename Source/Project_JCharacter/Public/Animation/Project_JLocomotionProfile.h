@@ -512,11 +512,19 @@ public:
 	bool bEnableLocomotionSteering = true;
 
 	/** Smooth packet-delivered camera angular velocity before prediction clamping.
-	 * Only coherent local grounded side/backward Strafe; forward Turn queries are unchanged. */
+	 * Coherent local grounded Strafe; physical Turn preparation bypasses forward smoothing. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory")
 	bool bEnableStrafePredictionYawSmoothing = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory", meta = (ClampMin = "0", ClampMax = "0.1", Units = "s"))
 	float StrafePredictionYawRateHalfLife = .025f;
+	/** Minimum physical curve rate for forward prediction smoothing outside the
+	 * inclusive ForwardCycle pool. That pool also smooths gentle pointer packets.
+	 * This does not gate PSD candidates or authored exits. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory", meta = (ClampMin = "0", ClampMax = "45", Units = "deg/s"))
+	float StrafeForwardPredictionMinimumYawRate = 8.f;
+	/** Rapid turns retain the original prediction and existing authored-turn policy. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Trajectory", meta = (ClampMin = "0", ClampMax = "360", Units = "deg/s"))
+	float StrafeForwardPredictionMaximumYawRate = 120.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Steering", meta = (ClampMin = "0.1", ClampMax = "1.0"))
 	float SteeringFacingLookAhead = 0.5f;

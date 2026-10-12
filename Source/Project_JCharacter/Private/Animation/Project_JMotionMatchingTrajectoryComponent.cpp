@@ -138,6 +138,7 @@ void UProject_JMotionMatchingTrajectoryComponent::ResetTrajectoryHistoryWithReas
 	if (GetNetMode() != NM_DedicatedServer) EnsureTrajectoryBuffers();
 	LastGeneratedWorldTimeSeconds = -1.0;
 	PredictionYawRateFilter.Reset();
+	bWasForwardPredictionSmoothing = false;
 	LastResetReason = Reason;
 	++ResetRevision;
 	LastGenerationFrameCounter = TNumericLimits<uint64>::Max();
@@ -305,19 +306,38 @@ void UProject_JMotionMatchingTrajectoryComponent::StabilizeStrafePredictionYawRa
 	const auto* Locomotion = Player ? Player->GetLocomotionAnimStateComponent() : nullptr;
 	const FVector2D MoveInput = Locomotion ? Locomotion->GetHeldLocalMoveInput() : FVector2D::ZeroVector;
 	const float MoveToCamera = FMath::Abs(FMath::RadiansToDegrees(FMath::Atan2(MoveInput.X, MoveInput.Y)));
-	// Forward Strafe has authored Turn preparation/selection. Keep its existing
-	// query unchanged; this stabilization addresses the side/backward Cycle pool.
 	const bool bSideOrBackward = Profile && Locomotion && Locomotion->HasHeldLocalMoveInput() &&
 		MoveToCamera > Profile->StrafeForwardTurn.Resolved().ForwardConeAngle;
+	// Smooth prediction for aligned forward travel too. The actual movement,
+	// controller and acute-turn evidence keep their unfiltered input. Physical
+	// correction and rapid physical curves bypass this forward-only extension.
+	const FVector Desired = FRotator(0, CharacterOwner.GetControlRotation().Yaw, 0).RotateVector(FVector(MoveInput.Y, MoveInput.X, 0));
+	const float PathGap = Movement && !Desired.IsNearlyZero() && Movement->Velocity.SizeSquared2D() > 2500 ?
+		FMath::Abs(FMath::FindDeltaAngleDegrees(Movement->Velocity.Rotation().Yaw, Desired.Rotation().Yaw)) : 180;
+	const auto* Request = Locomotion ? &Locomotion->GetTurnRequestSample() : nullptr;
+	const float MinimumForwardRate = Profile && FMath::IsFinite(Profile->StrafeForwardPredictionMinimumYawRate) ?
+		FMath::Clamp(Profile->StrafeForwardPredictionMinimumYawRate, 0.f, 45.f) : 8.f;
+	const float MaximumForwardRate = Profile && FMath::IsFinite(Profile->StrafeForwardPredictionMaximumYawRate) ?
+		FMath::Clamp(Profile->StrafeForwardPredictionMaximumYawRate, MinimumForwardRate, 360.f) : 120.f;
+	const float PhysicalCurveRate = Locomotion ? FMath::Abs(Locomotion->GetContinuousCurveYawRate()) : 0;
+	const bool bForwardPool = Locomotion && Locomotion->IsUsingForwardCycle();
+	const bool bAlignedForward = Locomotion && Locomotion->HasHeldLocalMoveInput() && !bSideOrBackward && PathGap <= 15 &&
+		(bForwardPool || PhysicalCurveRate >= MinimumForwardRate) && PhysicalCurveRate <= MaximumForwardRate && Request &&
+		!Request->bPreparing && !Request->bAcuteActive && !Request->bAcuteApproach;
 	const float FacingGap = FMath::Abs(FMath::FindDeltaAngleDegrees(CharacterOwner.GetActorRotation().Yaw,
 		CharacterOwner.GetControlRotation().Yaw));
 	const bool bCanSmooth = CVarStrafePredictionYawSmoothing.GetValueOnGameThread() != 0 && Player && Player->IsLocallyControlled() &&
 		Player->GetAnimationLocomotionMode() == EProject_JAnimationLocomotionMode::OnFoot && Player->IsCombatModeActive() &&
 		Profile && Profile->bEnableStrafePredictionYawSmoothing && Combat && Combat->bEnableStrafeFacingRedirect && Combat->bUseCombatRotationMode &&
 		Movement && Movement->IsMovingOnGround() && Movement->bUseControllerDesiredRotation &&
-		bSideOrBackward && !Player->IsAttacking() && !Player->IsDodging() && !Player->IsHitReacting() &&
+		(bSideOrBackward || bAlignedForward) && !Player->IsAttacking() && !Player->IsDodging() && !Player->IsHitReacting() &&
 		!Movement->HasAnimRootMotion() && !Movement->CurrentRootMotion.HasActiveRootMotionSources() && (!Anim || !Anim->IsAnyMontagePlaying()) &&
 		FMath::IsFinite(FacingGap) && FacingGap <= Profile->SteeringMaxVisualYawError;
+	const bool bForwardSmoothing = bCanSmooth && !bSideOrBackward;
+	// Re-entering after a rapid turn must seed from this input, not decay the
+	// bypassed turn's angular velocity into an already stopped camera query.
+	if (bForwardSmoothing != bWasForwardPredictionSmoothing) PredictionYawRateFilter.Reset();
+	bWasForwardPredictionSmoothing = bForwardSmoothing;
 	const float Rate = PredictionYawRateFilter.Update(CharacterTrajectoryData.ControllerYawRate,
 		CharacterOwner.GetWorld() ? CharacterOwner.GetWorld()->GetTimeSeconds() : 0, GFrameCounter,
 		Profile ? Profile->StrafePredictionYawRateHalfLife : 0, bCanSmooth);

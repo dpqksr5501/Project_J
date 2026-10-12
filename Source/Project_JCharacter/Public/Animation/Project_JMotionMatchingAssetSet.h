@@ -43,6 +43,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSelectionContext
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bUseSettledCycle = false;
 
+	/** Local aligned forward Run only; regular directions retain their existing PSDs. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
+	bool bUseForwardCycle = false;
+
 	/** Forward-running 180-degree body/path reversal, authored by the local component. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Motion Matching|Context")
 	bool bMovingTurn180 = false;
@@ -75,6 +79,10 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingGaitDatabaseFamily
 	/** Optional Loop-only PSD used after a Combat-Strafe direction has settled. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
 	TObjectPtr<UPoseSearchDatabase> SettledCycle = nullptr;
+
+	/** Optional isolated forward pool with both authored curves and steady loops. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Cycle")
+	TObjectPtr<UPoseSearchDatabase> ForwardCycle = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Motion Matching|Turn Redirect")
 	TObjectPtr<UPoseSearchDatabase> TurnRedirect = nullptr;

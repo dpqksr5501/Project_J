@@ -111,6 +111,8 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	const bool bRefaceCancelled =
 		(OldContext.bAllowBackwardRefaceContinuation && !NewContext.bAllowBackwardRefaceContinuation) ||
 		(OldContext.bBackwardRefaceCandidates && !NewContext.bBackwardRefaceCandidates && !NewContext.bAllowBackwardRefaceContinuation);
+	const bool bForwardNormalizationChanged = InSelectedDatabase != CurrentActiveDatabase &&
+		(OldContext.bUseForwardCycle || NewContext.bUseForwardCycle);
 	// A Cycle that has already won is the desired handoff. Do not invalidate it
 	// merely because its old GeneralTurn companion/permission is being removed.
 	const auto* CapturedNode = GetCapturedMotionMatchingNode();
@@ -120,7 +122,7 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		GFrameCounter - LatestPostSelection.CaptureFrame <= 2 && LatestPostSelection.CachedNodeWeight > UE_SMALL_NUMBER &&
 		CapturedNode && !CapturedNode->GetMotionMatchingState().SearchResult.bIsInteraction;
 	const bool bContinuationCancelled =
-		bRefaceNormalizationChanged || (OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) ||
+		bForwardNormalizationChanged || bRefaceNormalizationChanged || (OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) ||
 		((bGeneralCancelled || bRefaceCancelled) && !bFreshCycleResult);
 	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame && !bCompletedTurnReturn &&
 		((InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase) ||
@@ -134,7 +136,9 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 		if (!bForceMotionMatchingReselect) bRetireTurnContinuingPose = false;
 		// Coalesce against the newest context. A later GT frame must not discard
 		// an unconsumed return's pose-history query requirement.
-		bReselectFromPoseHistory = bReturnedFromOneShot ||
+		// Dedicated forward statistics cannot reuse an old database's cost/pose.
+		// Search current history once at the boundary; retain normal playback blends.
+		bReselectFromPoseHistory = bReturnedFromOneShot || bForwardNormalizationChanged ||
 			(bForceMotionMatchingReselect && bReselectFromPoseHistory);
 		PendingReselectRevision = ++ReselectSerial;
 		bForceMotionMatchingReselect = true;
@@ -500,7 +504,12 @@ EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseCh
 		ThreadSafeData.Combat.bIsCombatMode &&
 		ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
-		ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle != bLastPolicyUsedSettledCycle;
+		ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle != bLastPolicyUsedSettledCycle &&
+		!(ThreadSafeData.MotionMatching.SelectionContext.bUseForwardCycle && bLastPolicyUsedForwardCycle);
+	const bool bForwardCycleFamilyChanged =
+		ThreadSafeData.Combat.bIsCombatMode && ThreadSafeData.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+		ThreadSafeData.MotionMatching.SelectionContext.bUseForwardCycle != bLastPolicyUsedForwardCycle;
 	const bool bMovingTurnFamilyChanged =
 		bIsMoving && ThreadSafeData.LocomotionContext.PhaseFamily != LastPolicyPhaseFamily &&
 		(ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||
@@ -512,7 +521,7 @@ EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseCh
 	// combat stance and rotation family are its safe equivalent.
 	const bool bInterrupt = bMovementModeChanged ||
 		(!bIsInAir && (bMovementStateChanged || (!bIsMoving && bGaitChanged) ||
-			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged || bMovingTurnFamilyChanged));
+			bLocomotionStanceChanged || bCombatStrafeCycleFamilyChanged || bForwardCycleFamilyChanged || bMovingTurnFamilyChanged));
 	return bInterrupt
 		? EPoseSearchInterruptMode::InterruptOnDatabaseChange
 		: EPoseSearchInterruptMode::DoNotInterrupt;
@@ -525,6 +534,7 @@ void FProject_JCharacterAnimInstanceProxy::CacheMotionMatchingPolicyState()
 	bLastPolicyWasMoving = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving;
 	bLastPolicyWasCombat = ThreadSafeData.Combat.bIsCombatMode;
 	bLastPolicyUsedSettledCycle = ThreadSafeData.MotionMatching.SelectionContext.bUseSettledCycle;
+	bLastPolicyUsedForwardCycle = ThreadSafeData.MotionMatching.SelectionContext.bUseForwardCycle;
 	LastPolicyGaitIntent = ThreadSafeData.LocomotionContext.GaitIntent;
 	LastPolicyRotationMode = ThreadSafeData.LocomotionContext.RotationMode;
 	LastPolicyPhaseFamily = ThreadSafeData.LocomotionContext.PhaseFamily;

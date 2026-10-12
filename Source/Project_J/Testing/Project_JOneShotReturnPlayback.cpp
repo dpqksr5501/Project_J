@@ -68,6 +68,7 @@ class FPlayback : public IAutomationLatentCommand
 	int32 PlaybackHz = 60;
 	int32 At(int32 FrameAt60Hz) const { return FMath::RoundToInt(FrameAt60Hz * PlaybackHz / 60.f); }
 	int32 Scenario = 0, Frame = 0, Returns = 0, WindowFrames = 0, ReturnFrame = -1000;
+	int32 SingleScenario = INDEX_NONE;
 	int32 LiveFrames = 0, StartReturns = 0, LandReturns = 0;
 	bool bWasOverride = false;
 	bool bInputResponse = false, bChangedDuringShot = false;
@@ -82,6 +83,8 @@ class FPlayback : public IAutomationLatentCommand
 	FVector PreviousFoot[2];
 	bool bPreviousFeet = false;
 	float PreviousUnifiedTime = -1.f, PreviousUnifiedSearchElapsed = 0.f;
+	float PreviousChestYaw = 0.f;
+	bool bPreviousChest = false;
 	int32 PreviousUnifiedSelection = INDEX_NONE;
 	FString Report;
 	void Cleanup()
@@ -152,7 +155,13 @@ public:
 		bRender = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderOneShotReturn"));
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotPlaybackHz="), PlaybackHz);
 		if (!Test->TestTrue(TEXT("Playback rate is 30, 60 or 120 Hz"), PlaybackHz == 30 || PlaybackHz == 60 || PlaybackHz == 120)) PlaybackHz = 60;
-		if (bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
+		if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotPlaybackCase="), SingleScenario))
+		{
+			if (Test->TestTrue(TEXT("Requested playback case exists"), SingleScenario >= 0 &&
+				SingleScenario < (bDirections ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8))) Scenario = SingleScenario;
+			else SingleScenario = INDEX_NONE;
+		}
+		else if (bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
 		Report = FString::Printf(TEXT("Authored Blueprint/GAS/CMC playback on collision floor; NullRHI=%d Hz=%d. FootStepCm is component-space displacement per fixed step, not world foot sliding.\n"), GUsingNullRHI, PlaybackHz);
 		FString Output;
 		FParse::Value(FCommandLine::Get(), bDirections ? TEXT("ProjectJOneShotDirectionOutput=") :
@@ -207,9 +216,11 @@ public:
 		if (bCurveResponse && CurveCases()[Scenario].Pattern >= 4 && Frame >= At(240) && bInput && !bOverride)
 		{
 			++MicroSettledFrames;
-			const auto* Expected = Player->GetCombatStrafeMotionMatchingAssetSet()->RunDatabases.SettledCycle.Get();
-			Test->TestTrue(TEXT("Micro camera input retains the Loop-only search pool"), MM.SelectionContext.bUseSettledCycle);
-			Test->TestEqual(TEXT("Actual search result belongs to the Loop-only PSD"), MM.PostSelection.SelectedDatabase, GetFNameSafe(Expected));
+			const auto& Family = Player->GetCombatStrafeMotionMatchingAssetSet()->RunDatabases;
+			const auto* Expected = MM.SelectionContext.bUseForwardCycle && Family.ForwardCycle ? Family.ForwardCycle.Get() : Family.SettledCycle.Get();
+			Test->TestTrue(TEXT("Micro camera input retains steady movement evidence"), MM.SelectionContext.bUseSettledCycle);
+			Test->TestEqual(TEXT("Actual search uses the configured steady forward pool"), MM.PostSelection.SelectedDatabase, GetFNameSafe(Expected));
+			Test->TestTrue(TEXT("Micro W input actually selects a steady Loop"), MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Loop_")));
 			Test->TestFalse(TEXT("Micro W input cannot select Diamond"), MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("Diamond")));
 			if (Frame % At(30) == 0) Report += FString::Printf(TEXT("MicroLoop Scenario=%d Frame=%d PSD=%s Clip=%s\n"), Scenario, Frame,
 				*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString());
@@ -241,7 +252,7 @@ public:
 			Test->TestFalse(TEXT("Curvature does not open General Turn"), MM.SelectionContext.bGeneralTurnCandidates);
 			if (bLand) Test->TestTrue(TEXT("Land minimum hold remains protected"), Locomotion->bCanExitLanding);
 			const auto* Set = IsStrafe() ? Player->GetCombatStrafeMotionMatchingAssetSet() : Player->GetMotionMatchingAssetSet();
-			const UPoseSearchDatabase* Expected = Set->GetDatabaseFamily(bSprint ? EProject_JLocomotionGaitIntent::Sprint : EProject_JLocomotionGaitIntent::Run).Cycle;
+			const auto& Family = Set->GetDatabaseFamily(bSprint ? EProject_JLocomotionGaitIntent::Sprint : EProject_JLocomotionGaitIntent::Run);
 			bool bActualSearch = false;
 			for (const FStructProperty* Property : IAnimClassInterface::GetFromClass(Anim->GetClass())->GetAnimNodeProperties())
 			{
@@ -249,7 +260,9 @@ public:
 				const auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_MotionMatching>(Anim);
 				if (Node->GetCachedBlendWeight() <= ZERO_ANIMWEIGHT_THRESH) continue;
 				const auto& State = Node->GetMotionMatchingState();
-				bActualSearch |= State.SearchResult.SelectedDatabase == Expected && !State.SearchResult.bIsContinuingPoseSearch && FMath::IsNearlyZero(State.ElapsedPoseSearchTime);
+				const bool bRichCycle = State.SearchResult.SelectedDatabase == Family.Cycle ||
+					(IsStrafe() && !bSprint && MM.SelectionContext.bUseForwardCycle && Family.ForwardCycle && State.SearchResult.SelectedDatabase == Family.ForwardCycle);
+				bActualSearch |= bRichCycle && !State.SearchResult.bIsContinuingPoseSearch && FMath::IsNearlyZero(State.ElapsedPoseSearchTime);
 				Report += FString::Printf(TEXT("CurveReturn Scenario=%d Frame=%d ShotFrame=%d SelectedPSD=%s Clip=%s\n"), Scenario, Frame, ShotFrame,
 					*GetNameSafe(State.SearchResult.SelectedDatabase.Get()), *GetNameSafe(State.SearchResult.SelectedAnim.Get()));
 			}
@@ -340,9 +353,18 @@ public:
 					Test->TestTrue(TEXT("One stack retains the real outgoing authored player"), bActualOutgoing);
 				}
 				if (bReturn || bWindow || (bOverride && Frame % 10 == 0))
+				{
 					Report += FString::Printf(TEXT("Unified Scenario=%d Frame=%d Shot=%d Returning=%d OutgoingWeight=%.4f Players=%d ActualTime=%.4f Remaining=%.4f\n"),
 						Scenario, Frame, Unified->IsPlayingOneShot(), Unified->IsReturning(), Unified->GetOutgoingWeight(),
 						Unified->AnimPlayers.Num(), Unified->GetCurrentAssetTime(), Unified->GetOneShotSecondsRemaining());
+					const auto* PresentationProperty = FindFProperty<FStructProperty>(FAnimNode_ProjectJLocomotion::StaticStruct(), TEXT("Presentation"));
+					if (PresentationProperty)
+					{
+						const auto* Presentation = PresentationProperty->ContainerPtrToValuePtr<FProject_JAnimOneShotPresentationThreadSafeData>(Unified);
+						Report += FString::Printf(TEXT("  Authored Clip=%s Warp=%d Direction=%.4f\n"),
+							*GetNameSafe(Presentation->SelectedAnimation), Presentation->bShouldEnableCombatStrafeOrientationWarping, Presentation->StrafeDirectionAngle);
+					}
+				}
 				if (Frame == At(600) - 1) Test->TestFalse(TEXT("Completed shared returns release presentation"), Unified->IsReturning());
 				continue;
 			}
@@ -368,6 +390,9 @@ public:
 			if (Frame == At(600) - 1) Test->TestFalse(TEXT("Completed returns release their retained command"), Handoff->IsLiveReturnActive());
 		}
 		FVector Feet[2]; bool bFeet = !Player->GetMesh()->IsRunningParallelEvaluation();
+		const int32 ChestBone = Player->GetMesh()->GetBoneIndex(TEXT("spine_05"));
+		const bool bChest = !Player->GetMesh()->IsRunningParallelEvaluation() && Player->GetMesh()->GetComponentSpaceTransforms().IsValidIndex(ChestBone);
+		const float ChestYaw = bChest ? Player->GetMesh()->GetComponentSpaceTransforms()[ChestBone].GetRotation().Rotator().Yaw : 0.f;
 		for (int32 Index = 0; Index < 2; ++Index)
 		{
 			const int32 Bone = Player->GetMesh()->GetBoneIndex(Index ? TEXT("foot_r") : TEXT("foot_l"));
@@ -376,6 +401,8 @@ public:
 		}
 		if (bReturn || bWindow || (bOverride && Frame % 10 == 0))
 		{
+			Report += FString::Printf(TEXT("Chest Scenario=%d Frame=%d Valid=%d Yaw=%.4f Step=%.4f\n"), Scenario, Frame, bChest, ChestYaw,
+				bChest && bPreviousChest ? FMath::FindDeltaAngleDegrees(PreviousChestYaw, ChestYaw) : 0.f);
 			Report += FString::Printf(TEXT("Frame Scenario=%d Frame=%d Return=%d Since=%d Override=%d Outgoing=%s PSD=%s Clip=%s Time=%.4f FootStepL=%.3f FootStepR=%.3f\n"),
 				Scenario, Frame, bReturn, Frame - ReturnFrame, bOverride, *OutgoingClip.ToString(),
 				*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString(), MM.PostSelection.SelectedAnimationTime,
@@ -392,6 +419,7 @@ public:
 			}
 		}
 		bPreviousFeet = bFeet;
+		bPreviousChest = bChest; PreviousChestYaw = ChestYaw;
 		if (bFeet) { PreviousFoot[0] = Feet[0]; PreviousFoot[1] = Feet[1]; }
 		bWasOverride = bOverride;
 		if (++Frame < At(600)) return false;
@@ -422,10 +450,11 @@ public:
 		}
 		Cleanup(); Frame = Returns = WindowFrames = 0; ReturnFrame = -1000; bWasOverride = bPreviousFeet = false; OutgoingClip = NAME_None;
 		PreviousUnifiedTime = -1.f; PreviousUnifiedSelection = INDEX_NONE;
+		bPreviousChest = false;
 		LiveFrames = StartReturns = LandReturns = 0;
 		ShotFrame = -1; CompatibleFrames = ObservedTurnFrames = 0; CameraYaw = 0; bChangedDuringShot = false;
 		CurveReturns = MicroSettledFrames = 0;
-		if (++Scenario < (bDirectionCoverage ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8)) return false;
+		if (++Scenario < (bDirectionCoverage ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8) && SingleScenario == INDEX_NONE) return false;
 		FString Output; FParse::Value(FCommandLine::Get(), bDirectionCoverage ? TEXT("ProjectJOneShotDirectionOutput=") :
 			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : bInputResponse ? TEXT("ProjectJOneShotInputOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);
 		if (Output.IsEmpty()) Output = FPaths::ProjectSavedDir() / (bDirectionCoverage ? TEXT("Validation/OneShotReturn/DirectionPlayback.txt") :

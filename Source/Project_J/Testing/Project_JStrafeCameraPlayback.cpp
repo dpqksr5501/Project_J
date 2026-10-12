@@ -47,11 +47,27 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 	AProject_JPlayerCharacter* Player = nullptr;
 	APlayerController* Controller = nullptr;
 	UPoseSearchDatabase* AuditDatabase = nullptr;
+	UPoseSearchDatabase* ForwardAuditDatabase = nullptr;
+	EPoseSearchMode OriginalForwardSearchMode = EPoseSearchMode::PCAKDTree;
 	EPoseSearchMode OriginalSearchMode = EPoseSearchMode::PCAKDTree;
 	TArray<TPair<int32, float>> OriginalWeights;
 	TMap<FName, float> NonLoopIndexedEnds;
 	bool bPacketCamera = false;
 	bool bSlowForwardCamera = false;
+	bool bCurveStability = false;
+	bool bForwardPoolAudit = false;
+	TArray<FVector2D> CameraReplay;
+	bool bRecordedMicro = false;
+	bool bRecordedCurve = false;
+	bool bReplayPrecurve = false;
+	bool bReplayWarmup = false;
+	int32 PrecurveArcFrames = 0;
+	int32 ReplayBoxDiamondFrames = 0;
+	int32 ReplayIndex = 0, ReplayFrames = 0, ReplayLoopFrames = 0, ReplayForwardFrames = 0, ReplayArcFrames = 0;
+	int32 FrameStep = 1;
+	int32 MicroLoopFrames = 0, MicroFrames = 0, ForwardPoolFrames = 0;
+	int32 SingleCase = INDEX_NONE;
+	int32 SettledCurveFrames = 0;
 	bool bFacingBoundary = false;
 	bool bColdFacingAudit = false;
 	int32 MontageFrames = 0, TurnInPlaceFrames = 0;
@@ -81,6 +97,7 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 			AuditDatabase->PoseSearchMode = OriginalSearchMode;
 			AuditDatabase = nullptr;
 		}
+		if (ForwardAuditDatabase) { ForwardAuditDatabase->PoseSearchMode = OriginalForwardSearchMode; ForwardAuditDatabase = nullptr; }
 		if (TrialProfile)
 		{
 			TrialProfile->CombatStrafeMotionMatchingAssetSet = OriginalProfileSet;
@@ -168,7 +185,7 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		Player->SetActorEnableCollision(true);
 		Player->GetCharacterMovement()->SetComponentTickEnabled(true);
 		Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		const bool bOTM = Case >= 15 && Case <= 17 || Case == 22 || Case == 31 || Case == 32 || Case == 39 || Case == 40 || Case >= 49;
+		const bool bOTM = !bForwardPoolAudit && (Case >= 15 && Case <= 17 || Case == 22 || Case == 31 || Case == 32 || Case == 39 || Case == 40 || Case >= 49);
 		if (!bOTM) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		const auto* Set = bOTM ? Player->GetMotionMatchingAssetSet() : Player->GetCombatStrafeMotionMatchingAssetSet();
 		if (!Set || !Set->RunDatabases.Cycle) return false;
@@ -200,6 +217,12 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 			OriginalSearchMode = Database->PoseSearchMode;
 			Database->PoseSearchMode = EPoseSearchMode::BruteForce;
 			Report += TEXT("InMemoryAudit=BruteForce\n");
+			if (Set->RunDatabases.ForwardCycle)
+			{
+				ForwardAuditDatabase = Set->RunDatabases.ForwardCycle;
+				OriginalForwardSearchMode = ForwardAuditDatabase->PoseSearchMode;
+				ForwardAuditDatabase->PoseSearchMode = EPoseSearchMode::BruteForce;
+			}
 			if (VelocityWeight > 1.f)
 			{
 				auto& Index = const_cast<UE::PoseSearch::FSearchIndex&>(Database->GetSearchIndex());
@@ -233,7 +256,7 @@ class FStrafeCameraPlayback : public IAutomationLatentCommand
 		return true;
 	}
 public:
-	explicit FStrafeCameraPlayback(FAutomationTestBase* InTest) : Test(InTest)
+	explicit FStrafeCameraPlayback(FAutomationTestBase* InTest, bool bRecorded = false, bool bCurve = false) : Test(InTest), bRecordedMicro(bRecorded), bRecordedCurve(bCurve)
 	{
 		bValidateInstalled = FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectStrafeDirectionSchema"));
 		bVerifyForwardCurve = FParse::Param(FCommandLine::Get(), TEXT("ProjectJVerifyStrafeForwardCurve"));
@@ -253,20 +276,64 @@ public:
 			if (bFacingBoundary) Report += TEXT("BoundaryAudit=IdleTurnInPlace,MovingAuthoredCombatMontage,InputRelease\n");
 		}
 		bColdFacingAudit = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeFacingColdPoseAudit"));
+		bCurveStability = FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeCurveStability"));
+		bForwardPoolAudit = bRecordedMicro || bRecordedCurve || FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeForwardPoolAudit"));
+		bReplayPrecurve = bRecordedMicro && FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeReplayPrecurve"));
+		bReplayWarmup = bReplayPrecurve && FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeReplayWarmup"));
+		bCurveStability |= bForwardPoolAudit;
+		if (bForwardPoolAudit)
+		{
+			int32 PlaybackHz = 120;
+			FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafePlaybackHz="), PlaybackHz);
+			if (PlaybackHz != 30 && PlaybackHz != 60 && PlaybackHz != 120) Test->AddError(TEXT("PlaybackHz must be 30, 60 or 120"));
+			FrameStep = PlaybackHz == 30 ? 4 : PlaybackHz == 60 ? 2 : 1;
+			FString ReplayPath;
+			if (bRecordedMicro) ReplayPath = FPaths::ProjectDir() / TEXT("Source/Project_J/Testing/Fixtures/StrafeMicroCamera_20261012.csv");
+			else if (bRecordedCurve) ReplayPath = FPaths::ProjectDir() / TEXT("Source/Project_J/Testing/Fixtures/StrafeCurveCamera_20261012.csv");
+			const bool bHasReplayPath = FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafeCameraReplay="), ReplayPath) || bRecordedMicro || bRecordedCurve;
+			if (bHasReplayPath)
+			{
+				TArray<FString> Lines;
+				if (!FFileHelper::LoadFileToStringArray(Lines, *ReplayPath)) Test->AddError(TEXT("Cannot read camera replay"));
+				for (const FString& Line : Lines)
+				{
+					TArray<FString> Fields; Line.ParseIntoArray(Fields, TEXT(","));
+					if (Fields.Num() != 2) { Test->AddError(TEXT("Replay requires time,yaw rows")); break; }
+					const FVector2D Sample(FCString::Atod(*Fields[0]), FCString::Atod(*Fields[1]));
+					if (Sample.ContainsNaN() || Sample.X < 0 || (!CameraReplay.IsEmpty() && Sample.X <= CameraReplay.Last().X))
+					{ Test->AddError(TEXT("Replay times must increase")); break; }
+					CameraReplay.Add(Sample);
+				}
+				if (CameraReplay.Num() < 2) Test->AddError(TEXT("Camera replay needs at least two samples"));
+			}
+			Report += FString::Printf(TEXT("CameraReplay Samples=%d PlaybackHz=%d Duration=%.3f\n"), CameraReplay.Num(), 120 / FrameStep,
+				CameraReplay.IsEmpty() ? 0.0 : CameraReplay.Last().X);
+		}
+		if (bCurveStability)
+		{
+			Case = 9; bSlowForwardCamera = bFacingBoundary = bVerifyRapidTurn = bVerifyForwardCurve = bVerifyCorrection = false;
+			Report += TEXT("CurveStability=Forward21,Reversal21,Reversal90,Reversal5,PointerNoise,IsolatedNudge NoAssetWrites=1\n");
+		}
 		if (bColdFacingAudit)
 		{
 			Case = 15; bSlowForwardCamera = bFacingBoundary = bVerifyRapidTurn = bVerifyForwardCurve = false;
 			bVerifyCorrection = true;
 			Report += TEXT("ColdPoseAudit=OTM Cases=15,16,17,22\n");
 		}
+		if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafeSingleCase="), SingleCase))
+		{
+			SingleCase = FMath::Clamp(SingleCase, bCurveStability ? 9 : 0, bForwardPoolAudit ? 19 : bCurveStability ? 14 : 56); Case = SingleCase;
+		}
+		if (!CameraReplay.IsEmpty()) SingleCase = Case = 15;
 	}
 	virtual ~FStrafeCameraPlayback() override { Cleanup(); }
 	virtual bool Update() override
 	{
 		if (!World && !Setup()) { Test->AddError(TEXT("CMC camera fixture setup failed")); Cleanup(); return true; }
 		auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Player->GetMesh()->GetAnimInstance());
-		constexpr float Dt = 1.f / 120;
-		const int32 Direction = Case >= 33 && Case <= 35 ? Case - 33 : Case >= 9 ? 3 : Case % 3;
+		const float Dt = float(FrameStep) / 120;
+		const int32 Direction = bForwardPoolAudit && Case == 17 ? 0 : bForwardPoolAudit && Case == 18 ? 1 :
+			Case >= 33 && Case <= 35 ? Case - 33 : Case >= 9 ? 3 : Case % 3;
 		const int32 RateIndex = Case >= 9 ? Case - 9 : Case / 3;
 		float Rate = RateIndex == 0 ? 90 : RateIndex == 1 ? 240 : 480;
 		if (bSlowForwardCamera) Rate = 30.f * (RateIndex + 1);
@@ -296,7 +363,7 @@ public:
 			RapidTarget = Trial % 2 ? 180 : -180;
 			Rate = FMath::Sign(RapidTarget) * Rates[Trial / 2];
 		}
-		const float MoveOffset = Direction == 0 ? -90 : Direction == 1 ? 180 : Direction == 2 ? 90 : 0;
+		const float MoveOffset = bForwardPoolAudit && Case == 19 ? 45 : Direction == 0 ? -90 : Direction == 1 ? 180 : Direction == 2 ? 90 : 0;
 		const int32 RotationStartFrame = Case >= 41 ? 180 : 120;
 		if (Case >= 12 && Frame > RotationStartFrame) AccumulatedCameraYaw += Dt * Rate;
 		if (Case >= 23) AccumulatedCameraYaw = FMath::Clamp(AccumulatedCameraYaw,
@@ -304,7 +371,40 @@ public:
 		// A 40Hz pointer sampled by a 120Hz character tick delivers the same
 		// average camera motion in packets, rather than an ideal change every tick.
 		const int32 CameraFrames = bPacketCamera ? ((Frame - 120) / 3) * 3 : Frame - 120;
-		const float CameraYaw = Case >= 12 ? AccumulatedCameraYaw : Frame < 120 ? 0 : CameraFrames * Dt * Rate;
+		float CameraYaw = Case >= 12 ? AccumulatedCameraYaw : Frame < 120 ? 0 : CameraFrames * Dt * Rate;
+		if (bCurveStability)
+		{
+			const float T = FMath::Max(0.f, (Frame - 120) * Dt);
+			const float Sampled = bPacketCamera ? FMath::FloorToFloat(T * 20) / 20 : T;
+			const float Rates[] = {21, 21, 90, 5, 0, 0}; Rate = Case <= 14 ? Rates[Case - 9] : 0;
+			CameraYaw = Rate * (Case == 9 ? FMath::Min(Sampled, 4.f) : Sampled <= 2 ? Sampled : FMath::Max(0.f, 4 - Sampled));
+			if (Case == 13) CameraYaw = T > 0 && T < 4 ? (int32(Sampled * 20) % 2 ? .15f : -.15f) : 0;
+			if (Case == 14) CameraYaw = T > 0 ? .5f : 0;
+			if (bForwardPoolAudit && Case >= 15)
+			{
+				const auto MicroYaw = [](float Time)
+				{
+					const int32 Periods[] = {4, 7, 5, 6, 3, 9, 4, 8};
+					const int32 Ticks = FMath::RoundToInt(FMath::Max(Time, 0.f) * 120);
+					int32 Tick = 0, Pulses = 0;
+					while (Tick + Periods[Pulses % 8] <= Ticks) { Tick += Periods[Pulses % 8]; ++Pulses; }
+					return Pulses * .175f;
+				};
+				CameraYaw = Case == 15 ? MicroYaw(FMath::Min(T, 4.f)) :
+					T <= 1 ? 21.f * T : T <= 1.35f ? 21.f : 21.f - MicroYaw(FMath::Min(T - 1.35f, 2.65f));
+			}
+		}
+		if (!CameraReplay.IsEmpty())
+		{
+			const double CameraTime = FMath::Max(0.0, (Frame - 120) / 120.0);
+			const double ReplayTime = FMath::Max(0.0, CameraTime - (bReplayPrecurve ? (bReplayWarmup ? 4.0 : 2.0) : 0.0));
+			while (ReplayIndex + 1 < CameraReplay.Num() && CameraReplay[ReplayIndex + 1].X <= ReplayTime) ++ReplayIndex;
+			const FVector2D& From = CameraReplay[ReplayIndex];
+			const FVector2D& To = CameraReplay[FMath::Min(ReplayIndex + 1, CameraReplay.Num() - 1)];
+			const double Alpha = To.X > From.X ? FMath::Clamp((ReplayTime - From.X) / (To.X - From.X), 0.0, 1.0) : 0.0;
+			CameraYaw = FMath::Lerp(From.Y, To.Y, Alpha);
+			if (bReplayPrecurve) CameraYaw += 90.f * FMath::Clamp(CameraTime - (bReplayWarmup ? 2.0 : 0.0), 0.0, 2.0);
+		}
 		Controller->SetControlRotation(FRotator(0, CameraYaw, 0));
 		const FVector Move = FRotator(0, CameraYaw + MoveOffset, 0).Vector();
 		const float Radians = FMath::DegreesToRadians(MoveOffset);
@@ -340,13 +440,40 @@ public:
 		}
 		auto* Movement = Player->GetCharacterMovement();
 		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
-		const bool bMeasured = Frame >= 120 && Frame < 360;
+		const int32 PrecurveStartFrame = bReplayWarmup ? 360 : 120;
+		if (bReplayPrecurve && Frame >= PrecurveStartFrame && Frame < PrecurveStartFrame + 240) PrecurveArcFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Arc_"));
+		// Give the previous authored curve half a second to hand off before
+		// measuring the recorded micro interval; neither interval is discarded.
+		const int32 ReplayStartFrame = bReplayPrecurve ? PrecurveStartFrame + 240 : 120;
+		const int32 ReplayObservationStart = bReplayPrecurve ? ReplayStartFrame + 60 : 120;
+		if (!CameraReplay.IsEmpty() && Frame >= ReplayObservationStart && !Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching())
+		{
+			++ReplayFrames;
+			ReplayLoopFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Loop_"));
+			const FString ReplayClip = MM.PostSelection.SelectedAnimation.ToString();
+			ReplayArcFrames += ReplayClip.Contains(TEXT("_Arc_"));
+			ReplayBoxDiamondFrames += ReplayClip.Contains(TEXT("_Box_")) || ReplayClip.Contains(TEXT("_Diamond_"));
+			ReplayForwardFrames += MM.PostSelection.SelectedDatabase.ToString().Contains(TEXT("ForwardCycle"));
+			if (Frame % 12 == 0 || !MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Loop_"))) Report += FString::Printf(TEXT("ReplayFrame Frame=%d Time=%.3f Forward=%d Settled=%d PSD=%s Clip=%s\n"),
+				Frame, (Frame - 120) / 120.f, MM.SelectionContext.bUseForwardCycle, MM.SelectionContext.bUseSettledCycle,
+				*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString());
+		}
+		if (bForwardPoolAudit && Frame >= 360 && Frame < 600 && !Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching())
+		{
+			ForwardPoolFrames += MM.PostSelection.SelectedDatabase.ToString().Contains(TEXT("ForwardCycle"));
+				if (Case == 15 || Case == 16)
+			{
+				++MicroFrames;
+				MicroLoopFrames += MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("_Loop_"));
+			}
+		}
+		const bool bMeasured = Frame >= 120 && Frame < (bCurveStability ? 720 : 360);
 		if (bMeasured)
 		{
 			if (!Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching() && !MM.PostSelection.bIsContinuingPoseSearch)
 			{
 				++Reselections;
-				if (LastJumpFrame >= 0 && (Frame - LastJumpFrame) * Dt < CoverageBlendTime) ++ShortSegments;
+				if (LastJumpFrame >= 0 && (Frame - LastJumpFrame) / 120.f < CoverageBlendTime) ++ShortSegments;
 				LastJumpFrame = Frame;
 				if (const float* End = NonLoopIndexedEnds.Find(MM.PostSelection.SelectedAnimation))
 					TailEntries += MM.PostSelection.SelectedAnimationTime > *End - CoverageMargin;
@@ -359,6 +486,9 @@ public:
 			SelectedGeneralFrames += bSelectedGeneral;
 			if (Frame >= 300) LateGeneralFrames += MM.SelectionContext.bGeneralTurnCandidates || bSelectedGeneral;
 			AcuteFrames += MM.SelectionContext.bMovingTurn180;
+			if (bCurveStability && Case <= 12 && Frame >= 240 && Frame < 600 &&
+				!Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching())
+				SettledCurveFrames += MM.SelectionContext.bUseSettledCycle;
 			if (Direction < 3) Test->TestFalse(TEXT("Side/backward strafe does not open forward GeneralTurn"), MM.SelectionContext.bGeneralTurnCandidates);
 			if (Case >= 23)
 			{
@@ -397,6 +527,13 @@ public:
 		}
 		if (Frame % 12 == 0)
 		{
+			if (bForwardPoolAudit && FParse::Param(FCommandLine::Get(), TEXT("ProjectJForwardCostAudit")))
+			{
+				Report += FString::Printf(TEXT("ForwardCost Case=%d Frame=%d Rate=%.2f PSD=%s Selected=%s%s\n"),
+					Case, Frame, Player->GetLocomotionAnimStateComponent()->GetContinuousCurveYawRate(),
+					*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString(),
+					*Anim->DescribeReconstructedSearchCostsForTesting());
+			}
 			if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJStrafeLowerBodyFacingTrial")))
 			{
 				auto* Mesh = Player->GetMesh();
@@ -486,13 +623,51 @@ public:
 					C->GetCharacterTrajectoryData().ControllerYawRateClamped, FMath::FindDeltaAngleDegrees(Facing, Travel.Rotation().Yaw));
 			}
 		}
-		if (++Frame < 360) return false;
+		Frame += FrameStep;
+		const int32 EndFrame = CameraReplay.IsEmpty() ? (bCurveStability ? 720 : 360) : ReplayStartFrame + FMath::CeilToInt(CameraReplay.Last().X * 120);
+		if (Frame < EndFrame) return false;
+		if (!CameraReplay.IsEmpty()) Report += FString::Printf(TEXT("ReplaySummary Frames=%d LoopFrames=%d ForwardFrames=%d BoxDiamondFrames=%d ArcFrames=%d\n"), ReplayFrames, ReplayLoopFrames, ReplayForwardFrames, ReplayBoxDiamondFrames, ReplayArcFrames);
+		if (bRecordedCurve)
+		{
+			const float RecordedFrameCount = CameraReplay.IsEmpty() ? 0.f : CameraReplay.Last().X * 120.f / FrameStep;
+			Test->TestTrue(TEXT("At least ninety percent of the recorded curve interval reaches real MM playback"),
+				RecordedFrameCount > 0 && ReplayFrames >= RecordedFrameCount * .9f);
+			Test->TestTrue(TEXT("The recorded sustained curves predominantly select authored Arc"), ReplayFrames > 0 && ReplayArcFrames >= ReplayFrames * .85f);
+			// This recording also contains straight crossings during reversals.
+			// Bound unintended Box exposure without banning those assets at runtime.
+			Test->TestTrue(TEXT("Box/Diamond exposure remains below one percent in the recorded curve regression"), ReplayFrames > 0 && ReplayBoxDiamondFrames <= ReplayFrames * .01f);
+		}
+		if (bRecordedMicro)
+		{
+			if (bReplayPrecurve)
+			{
+				Report += FString::Printf(TEXT("PrecurveSummary ArcFrames=%d Warmup=%d ObservationDelay=0.5\n"), PrecurveArcFrames, bReplayWarmup);
+				Test->TestTrue(TEXT("The previous curve actually selected Arc before the recorded input"), PrecurveArcFrames >= 30 / FrameStep);
+			}
+			Test->TestTrue(TEXT("Recorded reproduction traverses the real locomotion graph"), ReplayFrames >= 600 / FrameStep);
+			Test->TestEqual(TEXT("Recorded micro input never selects Box or Diamond"), ReplayBoxDiamondFrames, 0);
+			Test->TestTrue(TEXT("Recorded micro travel predominantly retains Loop"), ReplayFrames > 0 && ReplayLoopFrames >= ReplayFrames * .95f);
+		}
 		Report += FString::Printf(TEXT("Summary Case=%d GroundFrames=%d MovingFrames=%d ArcFrames=%d\n"), Case, GroundFrames, MovingFrames, ArcFrames);
 		Report += FString::Printf(TEXT("EntrySummary Case=%d Reselections=%d ShortSegments=%d TailEntries=%d\n"), Case, Reselections, ShortSegments, TailEntries);
 		Report += FString::Printf(TEXT("GeneralSummary Case=%d CandidateFrames=%d SelectedFrames=%d LateFrames=%d\n"),
 			Case, GeneralFrames, SelectedGeneralFrames, LateGeneralFrames);
-		Test->TestTrue(TEXT("Measured CMC actually remained grounded"), GroundFrames >= 235);
-		if (Case < 23 && !bFacingBoundary) Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235);
+		Test->TestTrue(TEXT("Measured CMC actually remained grounded"), GroundFrames >= 235 / FrameStep);
+		if (bCurveStability)
+		{
+			Report += FString::Printf(TEXT("CurveSummary Case=%d SettledDuringCurve=%d\n"), Case, SettledCurveFrames);
+			if (Case <= 12) Test->TestEqual(TEXT("Actual coherent CMC curves and reversals keep the existing Cycle candidates"), SettledCurveFrames, 0);
+			else if (CameraReplay.IsEmpty()) Test->TestTrue(TEXT("Actual pointer noise and isolated nudge settle into Loop candidates"), MM.SelectionContext.bUseSettledCycle);
+			if (bForwardPoolAudit)
+				Report += FString::Printf(TEXT("ForwardPoolSummary Case=%d PoolFrames=%d MicroLoop=%d MicroFrames=%d\n"), Case, ForwardPoolFrames, MicroLoopFrames, MicroFrames);
+			if (bForwardPoolAudit && (Case == 15 || Case == 16) && FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectForwardPool")))
+				Test->TestTrue(TEXT("Irregular gentle motion retains Loop throughout the settled observation"), MicroFrames > 0 && MicroLoopFrames == MicroFrames);
+			if (bForwardPoolAudit && Case >= 17)
+				Test->TestEqual(TEXT("Side/back/diagonal input never selects the forward pool"), ForwardPoolFrames, 0);
+			if (bForwardPoolAudit && Case == 11 && FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectForwardPool")))
+				Test->TestTrue(TEXT("An inclusive forward pool still selects authored Arc for a sustained 90 degree/s curve"), ArcFrames > 0);
+		}
+		if (Case < 23 && !bFacingBoundary) Test->TestTrue(TEXT("Measured CMC actually moved"), MovingFrames >= 235 / FrameStep);
 		if (bFacingBoundary)
 		{
 			Report += FString::Printf(TEXT("BoundarySummary Case=%d MontageFrames=%d TurnInPlaceFrames=%d\n"), Case, MontageFrames, TurnInPlaceFrames);
@@ -501,6 +676,9 @@ public:
 		}
 		if (Case >= 23)
 		{
+			const auto& FinalRequest = Player->GetLocomotionAnimStateComponent()->GetTurnRequestSample();
+			Report += FString::Printf(TEXT("FinalCorrection Case=%d VisualValid=%d RemainingFacing=%.3f\n"),
+				Case, FinalRequest.bVisualFacingValid, FinalRequest.RemainingFacing);
 			Report += FString::Printf(TEXT("RapidSummary Case=%d Target=%.0f AcuteFrames=%d PreparedFrames=%d PreparedEnterFrames=%d SelectedAcuteFrames=%d FalseStopFrames=%d BrakingTurnFrames=%d MinimumTurnSpeed=%.2f\n"),
 				Case, RapidTarget, AcuteFrames, PreparedFrames, PreparedEnterFrames, AcuteSelectedFrames, FalseStopFrames, BrakingTurnFrames, MinimumTurnSpeed);
 			Test->TestEqual(TEXT("Held steering cannot synthesize an external Stop"), FalseStopFrames, 0);
@@ -518,7 +696,17 @@ public:
 				else
 				{
 					Test->TestTrue(TEXT("Delayed correction exercises preparation"), PreparedFrames > 0);
-					Test->TestTrue(TEXT("Delayed correction can select authored Turn poses"), AcuteSelectedFrames > 0);
+					const auto* Profile = Player->GetLocomotionProfile();
+					const float CompletionAngle = Profile ? Profile->GetForwardTurnSettings(
+						MM.SelectionContext.RotationMode, MM.SelectionContext.GaitIntent).Resolved().CompletionFacingAngle : 15.f;
+					const bool bResolvedByLocomotion = FinalRequest.bVisualFacingValid &&
+						FMath::IsFinite(FinalRequest.RemainingFacing) && FMath::Abs(FinalRequest.RemainingFacing) <= CompletionAngle &&
+						!MM.PostSelection.SelectedAnimation.IsNone();
+					// A live MM search may resolve correction with its current Arc.
+					// Verify evaluated completion rather than require a specific asset
+					// family after the remaining physical demand has already closed.
+					Test->TestTrue(TEXT("Delayed correction selects Turn or resolves evaluated facing within the authored completion limit"),
+						AcuteSelectedFrames > 0 || bResolvedByLocomotion);
 				}
 				// Lower-rate curves can be fully followed by CMC. A camera angle
 				// alone must not require Turn; inspect the recorded residual too.
@@ -560,10 +748,10 @@ public:
 		GeneralFrames = SelectedGeneralFrames = LateGeneralFrames = 0; AccumulatedCameraYaw = 0;
 		AcuteFrames = AcuteSelectedFrames = FalseStopFrames = BrakingTurnFrames = PreparedFrames = PreparedEnterFrames = 0;
 		MinimumTurnSpeed = TNumericLimits<float>::Max();
-		Reselections = ShortSegments = TailEntries = 0; LastJumpFrame = -1;
+		Reselections = ShortSegments = TailEntries = SettledCurveFrames = MicroLoopFrames = MicroFrames = ForwardPoolFrames = 0; LastJumpFrame = -1;
 		++Case;
 		if (bColdFacingAudit && Case == 18) Case = 22;
-		if (Case < (bSlowForwardCamera ? 12 : bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
+		if (SingleCase == INDEX_NONE && Case < (bForwardPoolAudit ? 20 : bCurveStability ? 15 : bSlowForwardCamera ? 12 : bVerifyRapidTurn ? 57 : bVerifyCorrection ? 23 : bVerifyForwardCurve ? 15 : SchemaTrialSet.IsValid() || bValidateInstalled ? 12 : 9)) return false;
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
 		IFileManager::Get().MakeDirectory(*Directory, true);
 		FString Output = Directory / TEXT("Playback.txt");
@@ -593,6 +781,20 @@ bool FProjectJStrafeCameraPlaybackTest::RunTest(const FString&)
 			return false;
 	}
 	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRecordedStrafeMicroTest, "ProjectJ.Animation.Naturalness.RecordedStrafeMicro",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJRecordedStrafeMicroTest::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this, true));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRecordedStrafeCurveTest, "ProjectJ.Animation.Naturalness.RecordedStrafeCurve",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJRecordedStrafeCurveTest::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(FStrafeCameraPlayback(this, false, true));
 	return true;
 }
 #endif

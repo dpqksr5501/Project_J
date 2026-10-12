@@ -8,6 +8,8 @@ Project J uses a C++ locomotion state component, a thread-safe animation snapsho
 
 [지속 곡선 후속 개선](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)은 단발 복귀와 Strafe 후보군 확장에 같은 실제 이동 증거를 사용한다. Start/Land 보호 구간을 먼저 만족해야 하며, 확인 시간이 지났다는 이유만으로 Arc를 강제하지 않는다. 미세 입력은 안정 Loop 후보군을 유지한다.
 
+같은 문서의 [사용자 로그 후속](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화)은 엄격한 단발 종료 증거와 이미 확인된 곡선의 후보 유지 증거를 구분한다. 방향 반전 시 이전 회전과 상쇄돼 Loop 전용 후보로 강제 복귀하지 않게 하며, 정렬된 전방 Strafe의 입력 묶음 예측을 제한적으로 안정화한다. 기존 PSD의 적합한 완만 이동 후보는 보존한다.
+
 [200명 시각 예산](../Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)은 원본 ABA와 별도로 리타깃 몸체·의상 물리의 평가 주기와 보간을 관리한다. Proxy 스냅샷과 엔진 병렬 평가를 활용하고, 로컬·전투·단발·공중·급회전·화면 복귀를 보호한다. NPC scoring·Mass의 병렬 실행부와는 별도 경로다.
 
 2026-10-05의 [외부 Blend Stack 복귀와 worker 검색 예산 보완](MotionMatching_Return_Crowd_2026-10-05.md)은 당시 재생 구조의 기록이다. 미처리 reselect의 수명과 실제 검색을 구분하고, GT 거리 간격을 worker search floor에도 전달하는 정책은 통합 경로에서 활용한다. 과거 재생 연결 설명보다 위 통합 구현과 후속 결과를 먼저 따른다.
@@ -260,14 +262,10 @@ The resolution is deliberately structural rather than a search-cost tweak:
 
 ### Dynamic and Settled Cycle PSDs
 
-Combat Strafe uses two optional continuous Cycle PSDs, but only for the locally
-controlled character:
+Combat Strafe의 안정 이동/미세 전방 회전 최적화는 로컬 캐릭터에 적용한다.
 
-- `Cycle` is the Dynamic PSD. It contains Loops plus only the correction
-  candidates which preserve the Combat-Strafe facing contract while input
-  direction changes, Control Yaw rotates, deceleration is active, or velocity
-  still disagrees with current input. Diamond and Hourglass candidates may stay
-  when visually validated as strafe-preserving corrections.
+- `Cycle`은 기존 Arc/Box/Diamond/Hourglass 후보를 유지한다. Loop도 들어 있다는 종전 설명은 2026-10-12 MCP 실물 조회로 정정했다.
+- optional `ForwardCycle`은 기존 곡선 70개와 Loop 8개를 함께 검색하며 별도 정규화를 사용한다. 로컬 지상 Strafe Run의 정렬된 전방 입력에 적용한다. 최초 8/12도 회전율 제한은 실제 사용자 입력에서 후보를 다시 닫아 제거했고, 곡률은 궤적 검색에 맡긴다. `LoopingCostBias=-0.005`로 Loop가 경쟁할 선호를 준다. Arc→Box 재현 후 전방 풀에만 `PSS_Combat_Run_ForwardTrajectory`를 연결해 미래 위치·방향 네 샘플의 가중치를 보정했다. 차원 수·샘플 시각·현재 속도·과거 궤적은 같으며 공통 PSS·다른 방향의 후보·Turn/Reface 통계는 유지한다. [구현과 재현](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#전방-strafe-run-미세-회전-후속-구현)을 확인한다.
 - `SettledCycle` is a Loop-only PSD. It is used only after the current Cycle
   input, Control Yaw, and velocity alignment remain stable for the profile's
   delay (default 0.25 seconds). This prevents a static diagonal hold from
