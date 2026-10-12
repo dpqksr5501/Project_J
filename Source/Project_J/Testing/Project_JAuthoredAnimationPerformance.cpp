@@ -1,7 +1,9 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/AnimClassInterface.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
 #include "Combat/Project_JComboDefinition.h"
 #include "Combat/Project_JAttackDefinition.h"
@@ -37,10 +39,13 @@ class FMeasurement : public IAutomationLatentCommand
 	TArray<FDelegateHandle> BoneHandles;
 	TArray<double> Samples;
 	TArray<TSharedPtr<FJsonValue>> Rows;
+	TArray<TSharedPtr<FJsonValue>> MeshLayout;
 	int32 Count = 1, Case = 0, Tick = 0, BoneFrames = 0, MMFrames = 0, Followers = 0;
 	int32 Warmup = 120, Measured = 120, Repeats = 2;
 	int32 ProtectedFrames = 0, ManagedFrames = 0;
 	int32 BurstAbilityTasks = 0;
+	int32 VisualUpdates = 0, VisualRequests = 0, ManagedVisualTicks = 0, PostProcessUpdates = 0;
+	TMap<TWeakObjectPtr<UAnimInstance>, int16> VisualCounters;
 	double Deadline = 0;
 	FString Output;
 	bool bFailed = false;
@@ -60,7 +65,7 @@ class FMeasurement : public IAutomationLatentCommand
 			World->BeginTearingDown(); World->EndPlay(EEndPlayReason::Quit);
 			World->DestroyWorld(false); GEngine->DestroyWorldContext(World); World = nullptr;
 		}
-		Players.Reset(); BoneHandles.Reset(); Samples.Reset();
+		Players.Reset(); BoneHandles.Reset(); Samples.Reset(); VisualCounters.Reset();
 	}
 	bool Setup()
 	{
@@ -89,10 +94,23 @@ class FMeasurement : public IAutomationLatentCommand
 			{ if (Tick >= Warmup) { ++BoneFrames; } })));
 			TInlineComponentArray<USkeletalMeshComponent*> Visuals(Player);
 			Followers += Visuals.Num() - 1;
+			if (Case == 0 && I == 0) for (auto* Visual : Visuals)
+			{
+				auto Layout = MakeShared<FJsonObject>();
+				Layout->SetStringField(TEXT("component"), Visual->GetName());
+				Layout->SetStringField(TEXT("animation_class"), GetNameSafe(Visual->GetAnimClass()));
+				Layout->SetStringField(TEXT("leader_pose"), GetNameSafe(Visual->LeaderPoseComponent.Get()));
+				Layout->SetBoolField(TEXT("tick_enabled"), Visual->IsComponentTickEnabled());
+				int32 RigidBodies = 0;
+				if (const auto* Class = IAnimClassInterface::GetFromClass(Visual->GetAnimClass()))
+					for (const auto* Node : Class->GetAnimNodeProperties()) RigidBodies += Node->Struct->GetFName() == TEXT("AnimNode_RigidBody");
+				Layout->SetNumberField(TEXT("rigid_body_nodes"), RigidBodies); MeshLayout.Add(MakeShared<FJsonValueObject>(Layout));
+			}
 			if (auto* Tier = FindFProperty<FFloatProperty>(AProject_JBaseCharacter::StaticClass(), TEXT("CurrentSignificance")))
 			{ Tier->SetPropertyValue_InContainer(Player, Scenario() == 1 ? 2.0f : 0.0f); }
 		}
 		Tick = BoneFrames = MMFrames = ProtectedFrames = ManagedFrames = BurstAbilityTasks = 0;
+		VisualUpdates = VisualRequests = ManagedVisualTicks = PostProcessUpdates = 0;
 		for (int32& Value : TierFrames) { Value = 0; }
 		Deadline = FPlatformTime::Seconds() + 180;
 		return true;
@@ -127,6 +145,10 @@ class FMeasurement : public IAutomationLatentCommand
 		Row->SetNumberField(TEXT("managed_mesh_ticks"), ManagedFrames); Row->SetNumberField(TEXT("combat_protected_ticks"), ProtectedFrames);
 		Row->SetNumberField(TEXT("active_ability_tasks_at_burst"), BurstAbilityTasks);
 		Row->SetNumberField(TEXT("authored_follower_components"), Followers);
+		Row->SetNumberField(TEXT("visual_graph_update_observations"), VisualUpdates);
+		Row->SetNumberField(TEXT("visual_postprocess_update_observations"), PostProcessUpdates);
+		Row->SetNumberField(TEXT("visual_group_requested_actor_ticks"), VisualRequests);
+		Row->SetNumberField(TEXT("visual_group_managed_mesh_ticks"), ManagedVisualTicks);
 		TArray<TSharedPtr<FJsonValue>> Tiers; for (int32 Value : TierFrames) { Tiers.Add(MakeShared<FJsonValueNumber>(Value)); }
 		Row->SetArrayField(TEXT("policy_tier_mesh_ticks_local_near_mid_far_hidden"), Tiers);
 		Rows.Add(MakeShared<FJsonValueObject>(Row));
@@ -143,6 +165,7 @@ class FMeasurement : public IAutomationLatentCommand
 		auto Result = MakeShared<FJsonObject>(); Result->SetBoolField(TEXT("completed"), !bFailed);
 		Result->SetStringField(TEXT("scope"), TEXT("NullRHI CPU: real authored Blueprint, equipment, ABP and constructed followers; controlled movement and simulated render timestamps/significance. World tick wall time includes task completion, excludes outer engine frame/rendering. Bone finalizations include interpolation, MM observations are not search counts."));
 		Result->SetArrayField(TEXT("rows"), Rows);
+		Result->SetArrayField(TEXT("authored_mesh_layout"), MeshLayout);
 		FString Json; FJsonSerializer::Serialize(Result, TJsonWriterFactory<>::Create(&Json));
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Output), true);
 		return FFileHelper::SaveStringToFile(Json, *Output);
@@ -190,6 +213,20 @@ public:
 				auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
 				MMFrames += !Anim->GetThreadSafeMotionMatchingSelectedAnimation().IsNone();
 				++TierFrames[FMath::Clamp(int32(Anim->GetCurrentOptimizationPolicy().Tier), 0, 4)];
+				const auto* Coordinator = Entry->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
+				if (Coordinator) { VisualRequests += Coordinator->DidRequestVisualEvaluation(); ManagedVisualTicks += Coordinator->GetManagedVisualCount(); }
+				TInlineComponentArray<USkeletalMeshComponent*> Visuals(Entry.Get());
+				for (auto* Visual : Visuals) if (Visual != Mesh)
+				{
+					for (UAnimInstance* Instance : {Visual->GetAnimInstance(), Visual->GetPostProcessInstance()})
+					{
+						if (!Instance) continue;
+						const int16 Counter = Instance->GetUpdateCounter().Get();
+						if (const int16* Previous = VisualCounters.Find(Instance); Previous && *Previous != Counter)
+						{ if (Instance == Visual->GetPostProcessInstance()) ++PostProcessUpdates; else ++VisualUpdates; }
+						VisualCounters.Add(Instance, Counter);
+					}
+				}
 			}
 		}
 		if (++Tick < Warmup + Measured) { return false; }

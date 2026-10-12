@@ -1688,6 +1688,8 @@ public:
 	FProject_JAnimOptimizationPolicy CurrentOptimizationPolicy;
 
 	const FProject_JAnimOptimizationPolicy& GetCurrentOptimizationPolicy() const { return CurrentOptimizationPolicy; }
+	/** GT presentation demand; does not wait for a worker proxy or read its mutable state. */
+	bool NeedsFullRateVisualUpdate() const;
 
 	// --- Optimization Settings ---
 

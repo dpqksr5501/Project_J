@@ -14,6 +14,10 @@
 
 ## 측정으로 확인한 변화
 
+**애니메이션 후속 구현 — 2026-10-12:** Start/Land 등 단발과 Motion Matching을 `Project Unified Locomotion`의 한 재생 스택으로 통합했습니다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 계속 담당합니다. 지속 회전은 실제 이동·누적 방향 변화로 판정하고, 미세한 Strafe 입력은 안정 Loop 후보군을 유지합니다. [통합 구조](Docs/Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) · [지속 곡선과 Master 함수 정리](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)
+
+**200명 시각 예산 비교:** 같은 바이너리의 기능 off/on, 실제 BP·장비·follower 구성, NullRHI, 조건별 120틱 준비 + 120틱 측정, 2회 반복에서 ABA on 평균 World tick은 근거리 **13.61→11.40ms**, 원거리 **13.78→10.69ms**였습니다. 리타깃 몸체와 의상 물리의 평가 횟수를 줄이고 사이 프레임을 보간하며, 로컬·전투·단발·급회전은 매 프레임 평가를 보호합니다. 동시 공격 ABA on은 **19.76→19.58ms**로 거의 같았습니다. 전체 렌더 FPS·GPU 개선이나 200명 동시 접속 결과로 해석하지 않습니다. [조건·원자료 위치·복구 설정](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)
+
 **구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
 
 아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이후 구조 변경의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최근 빌드·자동화·실제 소켓 연결 결과는 [검증 현황](#검증-현황)에서 실행 조건과 함께 구분합니다.
@@ -87,6 +91,8 @@ flowchart TD
 
 이 흐름은 NPC 판단·행동의 책임 경계를 나타냅니다. Mass는 별도의 **GT snapshot/grid → 직렬 또는 병렬 chunk 계산 → join → GT 적용** 경로를 사용합니다. 모든 비동기 서비스가 하나의 공통 작업 큐를 공유하는 구조는 아닙니다.
 
+2026-10-12의 시각 애니메이션 예산은 기존 **AnimInstanceProxy 스냅샷과 엔진 병렬 업데이트·평가**를 활용합니다. GT 관리자는 평가 주기·보호 요구만 결정하고, worker proxy의 완료를 기다리지 않습니다. 리타깃 몸체의 실제 평가에는 원본 포즈 의존 순서를 유지합니다. NPC scoring의 `UE::Tasks`나 Mass 청크 작업에 애니메이션을 새로 제출하지 않으며, 캐릭터별 평가 시점 분산을 새 병렬 실행기로 표현하지 않습니다. [스레드별 책임](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계)
+
 ### 장비 권한과 시각 표현의 처리 순서
 
 ```mermaid
@@ -150,7 +156,13 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 
 ## 검증 현황
 
-### 최근 기능·수명 검증 — 2026-10-08
+### 애니메이션 후속 검증 — 2026-10-12
+
+현재 작업 트리의 지속 곡선·시각 예산 후속 변경 기준입니다. 직접 UBT Editor/Game Development 빌드가 성공했습니다. 시각 예산 회귀는 첫 실행 58개 성공·5개 설정 조건 실패 후, 요구 예산을 설정한 실제 RHI 실행에서 해당 5개와 시각 lifecycle 1개가 모두 성공했습니다. 두 실행에서 성공을 확인한 고유 관련 검증은 63개입니다. 전체 ProjectJ 자동화의 새 전수 실행 수치로 사용하지 않습니다.
+
+실제 소켓은 서버1 + 클라이언트2 + NPC200, 지연50ms·손실3% 조건에서 검증과 정상 종료를 확인했습니다. 렌더 캡처 17개와 보간 중 실제 뼈 변위를 확인했으며, 이번 최적화 이후 사용자의 체감 확인과 200명 실제 렌더 장면의 GPU·Cook/패키징 검증은 남아 있습니다. [검증 결과와 한계](Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기능품질-검증)
+
+### 이전 기능·수명 검증 — 2026-10-08
 
 8개 모듈의 소스 위험 패턴과 핵심 런타임 경계를 검토하고 **실제 엔진에서 재현한 결함 5개**를 수정했습니다. 영속 ASC의 Avatar 교체, Destroy와 GC 사이의 탈것 참조, 네이티브 애니메이션 프록시의 GC 추적, 겹치는 무기 노티파이, 화면 밖 몽타주의 종료 처리를 다룹니다. 모든 파일의 모든 실행 경로를 전수 실행한 범위는 아닙니다. [런타임 감사와 재현 근거](Docs/Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) · [검증 요약](Docs/Review/Audits/Project_J_Runtime_Ownership_Validation_2026-10-08.json)
 

@@ -4,13 +4,18 @@
 
 공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.
 
+2026-10-12 기준 Master는 `Project Unified Locomotion`에서 단발과 MM을 같은 재생 스택으로 실행한다. 네이티브 State Controller·Chooser는 계속 사용하며, 이전 ABP State Machine·외부 Blend Stack·Handoff 경로와 미사용 함수 그래프 9개는 제거했다. Inertialization·Lean과 플레이어별 보정·전투·접지 후단은 유지한다. 실제 이동 증거로 지속 곡선을 판정하며, 리타깃 몸체와 의상 물리는 보호 조건을 포함한 시각 예산으로 함께 관리한다.
+
 | 목적 | 기준 문서 |
 | --- | --- |
+| 현재 단발·MM의 공통 재생 스택과 ABP 노드 역할 | [통합 Locomotion 구현](Planning/Unified_Locomotion_Implementation_2026-10-12.md) |
+| 느린 OTM/Strafe 회전·미세 입력·State Controller·미사용 함수 정리 | [지속 곡선 판정과 Master 정리](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
+| 200명 리타깃·의상 물리 예산·보간·병렬 경계·off/on 결과 | [시각 애니메이션 예산 구현과 검증](Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
 | 실제 그래프 기반 GASP 비교·자연스러움 고도화·후속 프롬프트·PDF | [2026-10-06 조사와 고도화 인계](Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md) |
 | 이동 상태·GASP 대응 확인 | [Locomotion](Locomotion/README.md) |
 | Motion Matching 실행·원격·예산 정책 | [Motion Matching 구조와 후속 항목](Architecture/MotionMatchingNextSteps.md) |
-| 외부 Blend Stack 복귀·worker 검색 예산 | [복귀 검색과 군중 예산 보완](Architecture/MotionMatching_Return_Crowd_2026-10-05.md) |
-| 단발 Blend Stack → MM 실제 포즈 크로스페이드·관성 복귀 비교 | [Live Return 구조와 검증](Architecture/OneShot_Live_Return_2026-10-11.md) |
+| 이전 외부 Blend Stack 복귀·현재에도 사용하는 검색 예산의 보완 이력 | [복귀 검색과 군중 예산 보완](Architecture/MotionMatching_Return_Crowd_2026-10-05.md) |
+| 통합 이전의 외부 단발→MM 크로스페이드·관성 복귀 비교 이력 | [Live Return 구조와 당시 검증](Architecture/OneShot_Live_Return_2026-10-11.md) |
 | Start·Land 작은 입력 유지·지속 곡선의 Cycle 복귀·첫 MM 후보 전달 | [단발 입력 반응과 첫 검색](Architecture/OneShot_Input_Response_2026-10-11.md) |
 | Strafe A/S/D 카메라 회전의 예측 흔들림·재선택 비교 | [Strafe 예측 안정화](Architecture/Strafe_Prediction_Stability_2026-10-11.md) |
 | 전방 Strafe Arc의 실제 몸통 방향·원본 자세 비교 | [전방 몸통 진단](Architecture/Strafe_Forward_Facing_Diagnostics_2026-10-11.md) |

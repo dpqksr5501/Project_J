@@ -35,7 +35,7 @@
 
 namespace ProjectJOneShotReturnPlayback
 {
-struct FCurveCase { bool bLand, bStrafe, bSprint; FVector2D Keys; int32 Pattern = 0; };
+struct FCurveCase { bool bLand, bStrafe, bSprint; FVector2D Keys; int32 Pattern = 0; float Rate = 45.f; };
 const TArray<FCurveCase>& CurveCases()
 {
 	static const TArray<FCurveCase> Cases = {
@@ -46,7 +46,13 @@ const TArray<FCurveCase>& CurveCases()
 		{false,true,true,{-1,1}}, {false,true,true,{1,1}}, {true,true,true,{-1,1}}, {true,true,true,{1,1}},
 		{false,true,false,{0,1},1}, {true,true,false,{0,1},1}, // brief small input
 		{false,true,false,{0,1},2}, {true,true,false,{0,1},2}, // alternating input
-		{false,true,false,{0,1},3}, {true,true,false,{0,1},3}  // camera-only, straight world travel
+		{false,true,false,{0,1},3}, {true,true,false,{0,1},3}, // camera-only, straight world travel
+		{false,false,false,{0,1},0,5}, {false,true,false,{0,1},0,5},
+		{true,false,false,{0,1},0,5}, {true,true,false,{0,1},0,5},
+		{false,false,false,{0,1},0,-10}, {false,true,false,{0,1},0,-10},
+		{true,false,false,{0,1},0,-10}, {true,true,false,{0,1},0,-10},
+		{false,true,false,{0,1},4}, {true,true,false,{0,1},4}, // sub-degree isolated nudge
+		{false,true,false,{0,1},5}, {true,true,false,{0,1},5} // small repeated pointer noise
 	};
 	return Cases;
 }
@@ -66,7 +72,7 @@ class FPlayback : public IAutomationLatentCommand
 	bool bWasOverride = false;
 	bool bInputResponse = false, bChangedDuringShot = false;
 	bool bCurveResponse = false;
-	int32 CurveReturns = 0;
+	int32 CurveReturns = 0, MicroSettledFrames = 0;
 	int32 ShotFrame = -1, CompatibleFrames = 0, ObservedTurnFrames = 0;
 	float CameraYaw = 0;
 	bool IsStrafe() const { return bCurveResponse ? CurveCases()[Scenario].bStrafe : Scenario % 2 != 0; }
@@ -107,7 +113,8 @@ class FPlayback : public IAutomationLatentCommand
 		if (bDirectionCoverage && !IsStrafe()) Player->SetActorRotation(FRotator(0, (Scenario / 2) * 45.f, 0));
 		Player->SetActorEnableCollision(true); Player->GetCharacterMovement()->SetComponentTickEnabled(true);
 		if (IsStrafe()) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		if (bRender && !bInputResponse && (bDirectionCoverage ? Scenario == 4 || Scenario == 5 : Scenario < 2))
+		if (bRender && (bCurveResponse ? Scenario == 25 || Scenario == 27 :
+			!bInputResponse && (bDirectionCoverage ? Scenario == 4 || Scenario == 5 : Scenario < 2)))
 		{
 			if (!Test->TestFalse(TEXT("Render capture requires a real RHI"), GUsingNullRHI)) return false;
 			auto* VisualFloor = NewObject<UStaticMeshComponent>(Floor); VisualFloor->SetupAttachment(Box);
@@ -145,9 +152,11 @@ public:
 		bRender = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderOneShotReturn"));
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotPlaybackHz="), PlaybackHz);
 		if (!Test->TestTrue(TEXT("Playback rate is 30, 60 or 120 Hz"), PlaybackHz == 30 || PlaybackHz == 60 || PlaybackHz == 120)) PlaybackHz = 60;
+		if (bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
 		Report = FString::Printf(TEXT("Authored Blueprint/GAS/CMC playback on collision floor; NullRHI=%d Hz=%d. FootStepCm is component-space displacement per fixed step, not world foot sliding.\n"), GUsingNullRHI, PlaybackHz);
 		FString Output;
-		FParse::Value(FCommandLine::Get(), bDirections ? TEXT("ProjectJOneShotDirectionOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);
+		FParse::Value(FCommandLine::Get(), bDirections ? TEXT("ProjectJOneShotDirectionOutput=") :
+			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);
 		CaptureDirectory = (Output.IsEmpty() ? FPaths::ProjectSavedDir() / TEXT("Validation/OneShotReturn") : FPaths::GetPath(Output)) /
 			(bDirections ? TEXT("DirectionFrames") : TEXT("Frames"));
 	}
@@ -171,7 +180,8 @@ public:
 			if (bCurveResponse)
 			{
 				const int32 Pattern = CurveCases()[Scenario].Pattern;
-				CameraYaw = Pattern == 1 ? FMath::Min(5.f, CameraYaw + .75f) : Pattern == 2 ? (Frame % 2 ? 2.f : -2.f) : CameraYaw + .75f;
+				CameraYaw = Pattern == 1 ? FMath::Min(5.f, CameraYaw + 45.f / PlaybackHz) : Pattern == 2 ? (Frame % 2 ? 2.f : -2.f) :
+					Pattern == 4 ? .5f : Pattern == 5 ? .15f * FMath::Sin(Frame * 8.f / PlaybackHz) : CameraYaw + CurveCases()[Scenario].Rate / PlaybackHz;
 			}
 			else if (Kind() == 0 || Kind() == 2) CameraYaw = FMath::Min(40.f, CameraYaw + 1.5f);
 			else if (Kind() == 1) Keys = bSprint ? FVector2D(1, 1).GetSafeNormal() : FVector2D(1, 0);
@@ -194,6 +204,16 @@ public:
 		const bool bOverride = Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching();
 		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
 		const FName External = GetFNameSafe(Anim->GetThreadSafeStateControllerSelectedAnimation());
+		if (bCurveResponse && CurveCases()[Scenario].Pattern >= 4 && Frame >= At(240) && bInput && !bOverride)
+		{
+			++MicroSettledFrames;
+			const auto* Expected = Player->GetCombatStrafeMotionMatchingAssetSet()->RunDatabases.SettledCycle.Get();
+			Test->TestTrue(TEXT("Micro camera input retains the Loop-only search pool"), MM.SelectionContext.bUseSettledCycle);
+			Test->TestEqual(TEXT("Actual search result belongs to the Loop-only PSD"), MM.PostSelection.SelectedDatabase, GetFNameSafe(Expected));
+			Test->TestFalse(TEXT("Micro W input cannot select Diamond"), MM.PostSelection.SelectedAnimation.ToString().Contains(TEXT("Diamond")));
+			if (Frame % At(30) == 0) Report += FString::Printf(TEXT("MicroLoop Scenario=%d Frame=%d PSD=%s Clip=%s\n"), Scenario, Frame,
+				*MM.PostSelection.SelectedDatabase.ToString(), *MM.PostSelection.SelectedAnimation.ToString());
+		}
 		if (bInputResponse && bOverride && ShotFrame < 0 && External.ToString().Contains(bLand ? TEXT("Land") : TEXT("Start"))) ShotFrame = Frame;
 		if (bInputResponse && bChangedDuringShot && bOverride && External.ToString().Contains(bLand ? TEXT("Land") : TEXT("Start")) &&
 			(Kind() == 0 || Kind() == 2))
@@ -395,6 +415,7 @@ public:
 		}
 		if (bCurveResponse)
 		{
+			if (CurveCases()[Scenario].Pattern >= 4) Test->TestTrue(TEXT("Micro input is checked in actual settled MM playback"), MicroSettledFrames >= At(30));
 			Test->TestEqual(FString::Printf(TEXT("Scenario %d yields once for sustained travel, never for transient/noise/camera-only"), Scenario), CurveReturns, CurveCases()[Scenario].Pattern == 0 ? 1 : 0);
 			Report += FString::Printf(TEXT("CurveSummary Scenario=%d Pattern=%d Keys=(%.1f,%.1f) CurveReturns=%d\n"), Scenario, CurveCases()[Scenario].Pattern,
 				CurveCases()[Scenario].Keys.X, CurveCases()[Scenario].Keys.Y, CurveReturns);
@@ -403,7 +424,7 @@ public:
 		PreviousUnifiedTime = -1.f; PreviousUnifiedSelection = INDEX_NONE;
 		LiveFrames = StartReturns = LandReturns = 0;
 		ShotFrame = -1; CompatibleFrames = ObservedTurnFrames = 0; CameraYaw = 0; bChangedDuringShot = false;
-		CurveReturns = 0;
+		CurveReturns = MicroSettledFrames = 0;
 		if (++Scenario < (bDirectionCoverage ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8)) return false;
 		FString Output; FParse::Value(FCommandLine::Get(), bDirectionCoverage ? TEXT("ProjectJOneShotDirectionOutput=") :
 			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : bInputResponse ? TEXT("ProjectJOneShotInputOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);

@@ -4,7 +4,13 @@ Project J uses a C++ locomotion state component, a thread-safe animation snapsho
 
 ## Current Architecture
 
-2026-10-05의 [외부 Blend Stack 복귀와 worker 검색 예산 보완](MotionMatching_Return_Crowd_2026-10-05.md)은 아래 기존 소유권을 유지하면서 미처리 reselect의 수명과 실제 검색을 구분하고, GT 거리 간격을 worker search floor에도 전달한다. 과거 절의 node throttle 설명은 당시 기록이며, 현재 합성 규칙과 검증 범위는 해당 후속 문서를 따른다.
+2026-10-12 기준 단발과 MM은 [통합 Locomotion](../Planning/Unified_Locomotion_Implementation_2026-10-12.md)의 한 재생 스택을 사용한다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 유지하며, 기존 외부 Blend Stack·Handoff·포즈 State Machine은 현재 Master의 활성 경로에서 제거했다. 플레이어별 보정과 Inertialization·Lean·전투·접지 후단은 유지한다.
+
+[지속 곡선 후속 개선](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)은 단발 복귀와 Strafe 후보군 확장에 같은 실제 이동 증거를 사용한다. Start/Land 보호 구간을 먼저 만족해야 하며, 확인 시간이 지났다는 이유만으로 Arc를 강제하지 않는다. 미세 입력은 안정 Loop 후보군을 유지한다.
+
+[200명 시각 예산](../Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)은 원본 ABA와 별도로 리타깃 몸체·의상 물리의 평가 주기와 보간을 관리한다. Proxy 스냅샷과 엔진 병렬 평가를 활용하고, 로컬·전투·단발·공중·급회전·화면 복귀를 보호한다. NPC scoring·Mass의 병렬 실행부와는 별도 경로다.
+
+2026-10-05의 [외부 Blend Stack 복귀와 worker 검색 예산 보완](MotionMatching_Return_Crowd_2026-10-05.md)은 당시 재생 구조의 기록이다. 미처리 reselect의 수명과 실제 검색을 구분하고, GT 거리 간격을 worker search floor에도 전달하는 정책은 통합 경로에서 활용한다. 과거 재생 연결 설명보다 위 통합 구현과 후속 결과를 먼저 따른다.
 
 같은 날짜의 [실제 캐릭터 CPU·소켓 후속 검증](Authored_Animation_Crowd_Network_2026-10-05.md)은 실제 BP·ABP·장비와 constructed follower의 인원별 비용, 실제 SimulatedProxy의 착지 선택·취소·중첩 이벤트 수렴, 동시 공격의 입력 대기 task 절감을 다룬다. NullRHI 결과를 렌더 FPS나 화면의 연결 품질로 해석하지 않는다.
 
@@ -17,7 +23,7 @@ boundaries whose edge semantics cannot be reconstructed after network smoothing.
 - `UProject_JCharacterAnimInstance` publishes a thread-safe snapshot to the native animation proxy.
 - `UProject_JMotionMatchingAssetSet` owns run, sprint, start, remote start, stop, turn, jump, fall, and landing databases.
 - `UProject_JMotionMatchingTrajectoryComponent` owns Motion Matching trajectory samples used by the Pose Search query.
-- `UProject_JAnimationUpdateCoordinatorComponent` owns the shared, non-replicated and non-ticking URO bypass window for sparse remote one-shot boundaries.
+- `UProject_JAnimationUpdateCoordinatorComponent`는 원격 단발의 비복제 URO 우회 요구를 합성하고, GT tick에서 시각 메시 그룹의 평가·보간 주기를 관리한다. dedicated server에서는 시각 관리 tick을 끈다.
 - Animation budget settings throttle database selection and expensive update work. Eligible local/visible players publish a current trajectory; hidden actors suspend generation and re-seed on visibility wake instead of advancing stale history.
 
 ## Trajectory ownership and scope

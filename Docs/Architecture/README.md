@@ -10,6 +10,7 @@
 
 ## 다른 주제의 구조
 
+- [2026-10-12 애니메이션 병렬 경계](../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md#기존-병렬-아키텍처와의-관계): 기존 Proxy·엔진 평가 활용, GT 시각 정책과 NPC/Mass 병렬 계산의 구분.
 - [애니메이션](../Animation/README.md): Motion Matching, 상체 합성, 런타임 리타깃과 손 접촉.
 - [전투](../Combat/README.md): 이동 정책, 공격 합성, 서버 판정과 VFX.
 - [네트워크](../Networking/README.md): 복제 구조, 기준선, Iris/AOI 도입 게이트.

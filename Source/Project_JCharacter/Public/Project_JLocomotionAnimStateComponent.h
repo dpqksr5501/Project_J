@@ -7,6 +7,7 @@
 #include "Animation/Project_JMotionMatchingSelectionPolicy.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
 #include "Animation/Project_JTurnRequestSample.h"
+#include "Animation/Project_JContinuousCurvePolicy.h"
 #include "Animation/Project_JRemoteLocomotionRuntime.h"
 #include "Animation/Project_JReplicatedJumpState.h"
 #include "Project_JLocomotionAnimStateComponentBase.h"
@@ -945,8 +946,7 @@ private:
 	const TCHAR* LastMovingTurnTraceReason = nullptr;
 	const TCHAR* LastMovingTurnTraceGuard = nullptr;
 #endif
-	bool bHasCombatStrafeControlYawSample = false;
-	float LastCombatStrafeControlYaw = 0.0f;
+	FProject_JContinuousCurvePolicy CombatStrafeCurvePolicy;
 	FVector PreviousKinematicHorizontalVelocity = FVector::ZeroVector;
 	bool bHasPreviousKinematicVelocity = false;
 };

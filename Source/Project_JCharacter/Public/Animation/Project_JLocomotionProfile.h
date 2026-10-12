@@ -8,6 +8,7 @@
 #include "Engine/DataAsset.h"
 #include "Project_JLocomotionAnimTypes.h"
 #include "Animation/Project_JTurnEventSettings.h"
+#include "Animation/Project_JContinuousCurvePolicy.h"
 #include "Project_JLocomotionProfile.generated.h"
 
 class UProject_JMotionMatchingAssetSet;
@@ -308,6 +309,10 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	/** Keep compatible Start/Land input on live Steering; observe turn demand for the first MM return search. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response")
 	bool bEnableOneShotInputResponse = true;
+
+	/** Sustained physical curvature shared by authored exits and regular Strafe candidate routing. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response")
+	FProject_JContinuousCurveSettings ContinuousCurve;
 
 	/** Actual curved travel required before a compatible Start/Land may yield to Cycle. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "10.0", ClampMax = "1000.0", Units = "cm"))

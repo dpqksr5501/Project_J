@@ -65,9 +65,13 @@ Controller playback hold and forces the regular trajectory-aware Cycle Motion Ma
 Confirmed Start, Stop, Fall Off, and Land boundaries request a short URO bypass through
 `UProject_JAnimationUpdateCoordinatorComponent`, the same coordinator used by confirmed
 JumpStart. Replication components own only transport and semantic application; they do not
-own skeletal-mesh optimization timers. The coordinator is non-replicated, non-ticking, and
+own skeletal-mesh optimization timers. The coordinator is non-replicated and
 restores the mesh URO state captured before the first overlapping urgent request. The
 default window is 0.10 seconds. Do not permanently disable URO for remote players.
+
+2026-10-12 기준 이 관리자는 GT tick에서 시각 메시 그룹의 평가·보간도 관리한다. 전용 서버에서는 시각 관리 tick을 끄며, 원격 의미 이벤트의 전송·적용 소유권은 그대로 유지한다. 긴급 원본 포즈 요구와 화면 복귀 요구를 합성하고, 리타깃 몸체의 실제 평가는 원본 포즈 의존 순서를 유지한다. [시각 예산·보호·복구 계약](../Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)을 따른다.
+
+현재 단발/MM 재생은 [통합 스택](../Planning/Unified_Locomotion_Implementation_2026-10-12.md)을 사용한다. 앞의 큰 회전 복귀는 유지하며, 느린 회전에는 [지속 곡선 증거 판정](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)을 함께 적용한다. 희소 이벤트를 추가로 복제하거나 Arc 선택을 강제하지 않는다.
 
 `UProject_JLocomotionProfile::IsDataValid` recursively follows the configured State
 Controller table and its referenced Choosers. A Land table that binds a Float Range to

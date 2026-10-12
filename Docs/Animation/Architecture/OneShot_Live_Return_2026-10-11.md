@@ -1,5 +1,7 @@
 # 외부 Blend Stack → Motion Matching의 실제 포즈 크로스페이드
 
+이 문서는 통합 이전의 외부 Handoff 구현·검증 기록이다. 현재 Master는 [2026-10-12 통합 Locomotion](../Planning/Unified_Locomotion_Implementation_2026-10-12.md)에서 단발과 MM을 한 스택으로 재생하며, 아래 외부 Blend Stack·Handoff 연결을 새 기준으로 적용하지 않는다. 단발 복귀의 현재 곡선 판정은 [후속 개선](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)을 따른다.
+
 후속: [Start/Land 입력 반응과 첫 MM 검색](OneShot_Input_Response_2026-10-11.md)은 단발의 유지/복귀 판단과 입력 변화의 후보 연결을 다룬다. 이 문서의 crossfade와 별도 정책이다.
 
 현재 큰 튐은 보이지 않으며, 목표는 Inertialization 복귀에서 움직임의 연결을 더 자연스럽게 만드는 것이다. 첫 복귀 검색을 보장한 [기존 복귀 검색](MotionMatching_Return_Crowd_2026-10-05.md)은 유지하고, 전환 중 실제 외부 포즈를 계속 평가하는 경로를 추가한다.

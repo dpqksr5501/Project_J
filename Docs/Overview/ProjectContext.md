@@ -117,12 +117,17 @@ EquipmentItemDefinition
 Player movement / replicated movement
   → UProject_JLocomotionAnimStateComponent
   → UProject_JCharacterAnimInstance snapshot (thread-safe)
-  → Chooser / Motion Matching / Master ABP
+  → Native State Controller / Chooser의 단발 명령과 MM 후보
+  → Project Unified Locomotion의 공통 재생 스택 / Master ABP
   → Linked job animation layer / montage slots / Foot Placement / Leg IK
+  → 리타깃 몸체 / 손 접촉 / 의상 물리 / 장비 Leader Pose
 ```
 
 - Locomotion 상태 계산은 C++ 컴포넌트가 담당한다. 직업 ABP Event Graph에서 Pawn을 읽어 속도·방향을 다시 계산하지 않는다.
-- Motion Matching은 비전투 기본 locomotion의 선택기다.
+- Motion Matching은 OTM·전투 Strafe의 이동 선택기다. 공격 스킬의 권위·판정·몽타주 선택을 대신하지 않는다.
+- 네이티브 State Controller는 계속 사용한다. 현재 Master에서는 별도 포즈 State Machine·외부 Blend Stack·Handoff를 제거하고 단발과 MM을 한 스택에서 재생한다. [구현과 노드 역할](../Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md)을 따른다.
+- 단발 복귀와 Strafe 후보군은 실제 이동·누적 회전 증거로 지속 곡선을 판정한다. [느린 회전·미세 입력·미사용 함수 정리](../Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)를 따른다.
+- 원본 포즈의 ABA와 별도로 리타깃·의상 물리의 시각 평가·보간을 관리한다. 기존 Proxy·엔진 병렬 평가를 활용하며 GT 관리자는 worker 완료를 기다리지 않는다. [200명 예산·보호·비교·남은 검증](../Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)을 따른다.
 - 무기 전투 자세는 Master ABP의 Linked Anim Layer 경로로 합성한다.
 - 공격·구르기·발도·피격처럼 하체까지 저작된 동작은 `DefaultSlot`의 full-body montage 우선순위를 따른다.
 

@@ -22,6 +22,7 @@ public:
 	{
 		bool bEligible = false;
 		bool bObserveOnly = false;
+		bool bContinuousCurve = false;
 		EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;
 		EProject_JLocomotionGaitIntent Gait = EProject_JLocomotionGaitIntent::Run;
 		double Now = 0;
@@ -88,7 +89,7 @@ public:
 		Demand = bDemand ? (PathError >= S.AlignmentEntryAngle ? TEXT("PathAlignment") : TEXT("FacingAlignment")) : TEXT("None");
 		// Keep the rich Cycle searchable during even gentle curves. Settling is
 		// independent of forward-turn eligibility and has its own quiet hysteresis.
-		if ((bRateReady && (FMath::Abs(MoveYawRate) >= 8 || (bStrafe && FMath::Abs(FacingYawRate) >= 8))) ||
+		if (I.bContinuousCurve || (!bStrafe && bRateReady && FMath::Abs(MoveYawRate) >= 8) ||
 			PathError > 15 || FacingError > 12) DynamicUntil = I.Now + S.QuietGrace;
 		bDynamicCycle = I.Now < DynamicUntil;
 		// The general data contains forward turns only; retain directional Cycles

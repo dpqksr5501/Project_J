@@ -2,6 +2,8 @@
 
 ## 기준과 확장
 
+- [통합 재생 스택](../Planning/Unified_Locomotion_Implementation_2026-10-12.md): 현재 Master 노드와 State Controller의 역할.
+- [지속 곡선·미세 Strafe 입력](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md): 단발 복귀와 Cycle 후보군의 공통 판정.
 - [GASP 대응표](GASP_ProjectJ_Locomotion_Parity.md): 검토한 GASP 경로와 Project J의 적용·보류 범위.
 - [원격 원샷 복제](RemoteOneShotReplication.md): Start/Stop/Land의 희소 이벤트와 로컬 연속 이동 구분.
 - [Motion Matching 구조와 후속 항목](../Architecture/MotionMatchingNextSteps.md).

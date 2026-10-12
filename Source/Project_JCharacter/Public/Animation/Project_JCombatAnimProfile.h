@@ -95,8 +95,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "45.0", Units = "deg"))
 	float StrafeDynamicInputTurnAngle = 5.0f;
 
-	/** Local Control-Yaw speed at or above this value keeps the Dynamic Cycle PSD active. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (EditCondition = "bEnableStrafeSettledCycle", ClampMin = "0.0", UIMin = "0.0", Units = "deg/s"))
+	/** Serialized legacy tuning. Sustained curvature now uses TransitionPolicy.ContinuousCurve. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Motion Matching|Settled Cycle", meta = (DeprecatedProperty, DeprecationMessage = "Use Locomotion TransitionPolicy.ContinuousCurve; instantaneous camera yaw rate no longer opens Dynamic Cycle."))
 	float StrafeDynamicFacingYawRate = 15.0f;
 
 	/** Velocity-to-current-input angle at or above this value keeps the Dynamic Cycle PSD active. */

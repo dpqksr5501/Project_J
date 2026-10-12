@@ -26,6 +26,7 @@ public:
 	void ReleaseAnimationUpdate(UObject* Requester);
 	bool IsManagedByBudget() const { return bManaged; }
 	bool IsCombatCritical() const { return bCombatCritical || bGameplayPoseOverride; }
+	bool HasAnimationUpdateRequirement() const { return bUpdateOverride; }
 	/** Requested tick state is distinct from the allocator's current scheduled tick. */
 	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;

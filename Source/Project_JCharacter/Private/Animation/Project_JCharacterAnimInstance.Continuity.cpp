@@ -146,6 +146,7 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	Input.ActorYaw = Request.ActorYaw;
 	Input.VelocityYaw = Request.VelocityYaw;
 	Input.Speed = Request.Speed;
+	Input.bContinuousCurve = Request.bContinuousCurve;
 	Input.bAcuteApproach = Request.bAcuteApproach;
 	// During braking there is no meaningful zero-velocity heading to reject.
 	if (Input.Speed <= 50) Input.VelocityYaw = Input.MoveYaw;

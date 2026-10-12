@@ -1,54 +1,44 @@
 #pragma once
-#include "CoreMinimal.h"
+#include "Animation/Project_JContinuousCurvePolicy.h"
 
-/** Spatial evidence for handing a direct Start/Land to a curved locomotion Cycle.
- * Samples actual travel, never accumulated camera yaw or a new expiry timer. */
+/** Compatible authored exits use the same evidence rules as regular Strafe routing. */
 class FProject_JOneShotCurvePolicy
 {
 public:
-	struct FSettings { float TravelDistance = 100, HeadingSweep = 20, DirectionConsistency = .85f; };
+	struct FSettings
+	{
+		float TravelDistance = 100, HeadingSweep = 20, DirectionConsistency = .85f;
+		FProject_JContinuousCurveSettings Sustained;
+	};
 	struct FInput
 	{
-		bool bEligible = false, bCanExit = false;
+		bool bEligible = false, bCanExit = false, bHasRequestedHeading = false;
 		int32 OwnerRevision = 0, Mode = 0, Gait = 0, TrajectoryRevision = 0;
 		double Now = 0;
 		FVector Position = FVector::ZeroVector, Velocity = FVector::ZeroVector, FutureVelocity = FVector::ZeroVector;
+		float RequestedHeading = 0;
 	};
 	struct FResult { bool bYield = false; float Distance = 0, Sweep = 0, Consistency = 0; };
-	void Reset() { *this = FProject_JOneShotCurvePolicy(); }
+	void Reset() { Evidence.Reset(); }
 	FResult Update(const FInput& I, FSettings S)
 	{
-		if (!I.bEligible || !FMath::IsFinite(I.Now) || I.Position.ContainsNaN() || I.Velocity.ContainsNaN() ||
-			I.FutureVelocity.ContainsNaN() || I.Velocity.SizeSquared2D() <= UE_SMALL_NUMBER || I.FutureVelocity.SizeSquared2D() <= UE_SMALL_NUMBER)
+		if (I.FutureVelocity.ContainsNaN() || I.FutureVelocity.SizeSquared2D() <= UE_SMALL_NUMBER)
 		{ Reset(); return {}; }
-		if (!bHasSample || I.OwnerRevision != Last.OwnerRevision || I.Mode != Last.Mode || I.Gait != Last.Gait ||
-			I.TrajectoryRevision != Last.TrajectoryRevision || I.Now < Last.Now || I.Now - Last.Now > .1)
-		{ Reset(); bHasSample = true; Last = I; return {}; }
-		const double Dt = I.Now - Last.Now;
-		if (Dt <= UE_SMALL_NUMBER) return {}; // At most one spatial sample per update.
-		const float Distance = FVector::Dist2D(Last.Position, I.Position);
-		const float Step = FMath::FindDeltaAngleDegrees(Last.Velocity.Rotation().Yaw, I.Velocity.Rotation().Yaw);
-		const float ExpectedTravel = FMath::Max(Last.Velocity.Size2D(), I.Velocity.Size2D()) * Dt;
-		Last = I;
-		// A blocked character, correction/teleport, abrupt redirect, or straight
-		// travel cannot contribute old distance to a later curve.
-		if (Distance <= UE_SMALL_NUMBER || Distance > ExpectedTravel * 2 + 2 || FMath::Abs(Step) > 30 || FMath::Abs(Step) < .01f)
-		{ Travel = Sweep = AbsoluteSweep = 0; return {}; }
-		Travel += Distance; Sweep += Step; AbsoluteSweep += FMath::Abs(Step);
-		const float Consistency = AbsoluteSweep > UE_SMALL_NUMBER ? FMath::Abs(Sweep) / AbsoluteSweep : 0;
+		FProject_JContinuousCurvePolicy::FInput Sample;
+		Sample.bEligible = I.bEligible; Sample.bHasRequestedHeading = I.bHasRequestedHeading;
+		Sample.OwnerRevision = I.OwnerRevision; Sample.HistoryRevision = I.TrajectoryRevision;
+		Sample.Mode = I.Mode; Sample.Gait = I.Gait; Sample.Now = I.Now;
+		Sample.Position = I.Position; Sample.Velocity = I.Velocity; Sample.RequestedHeading = I.RequestedHeading;
+		const auto R = Evidence.Update(Sample, S.Sustained);
 		const float FutureStep = FMath::FindDeltaAngleDegrees(I.Velocity.Rotation().Yaw, I.FutureVelocity.Rotation().Yaw);
-		// CMC prediction follows current input; it need not invent future mouse
-		// input. A straight forecast is compatible, an opposing forecast is not.
-		const bool bForecastCompatible = FMath::Abs(FutureStep) <= 1 || FutureStep * Sweep > 0;
-		if (!bForecastCompatible) { Travel = Sweep = AbsoluteSweep = 0; return {}; }
-		const auto Safe = [](float V, float Fallback, float Min, float Max)
-		{ return FMath::IsFinite(V) ? FMath::Clamp(V, Min, Max) : Fallback; };
-		return {I.bCanExit && Travel >= Safe(S.TravelDistance, 100, 10, 1000) &&
-			FMath::Abs(Sweep) >= Safe(S.HeadingSweep, 20, 5, 90) &&
-			Consistency >= Safe(S.DirectionConsistency, .85f, .5f, 1), Travel, Sweep, Consistency};
+		if (FMath::Abs(R.Sweep) > UE_SMALL_NUMBER && FMath::Abs(FutureStep) > 1 && FutureStep * R.Sweep < 0) { Reset(); return {}; }
+		const auto Safe = [](float V, float F, float Lo, float Hi) { return FMath::IsFinite(V) ? FMath::Clamp(V, Lo, Hi) : F; };
+		// Preserve the authored fast-curve path as well as the new sustained path.
+		const bool bFast = R.bRecent && R.Distance >= Safe(S.TravelDistance, 100, 10, 1000) &&
+			FMath::Abs(R.Sweep) >= Safe(S.HeadingSweep, 20, 5, 90) &&
+			R.Consistency >= Safe(S.DirectionConsistency, .85f, .5f, 1);
+		return {I.bCanExit && (R.bActive || bFast), R.Distance, R.Sweep, R.Consistency};
 	}
 private:
-	bool bHasSample = false;
-	FInput Last;
-	float Travel = 0, Sweep = 0, AbsoluteSweep = 0;
+	FProject_JContinuousCurvePolicy Evidence;
 };

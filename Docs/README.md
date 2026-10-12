@@ -8,6 +8,8 @@
 | --- | --- |
 | 프로젝트와 코드 책임 이해 | [프로젝트 개요](Overview/ProjectOverview.md) → [작업 문맥](Overview/ProjectContext.md) |
 | 이동·리타깃·손 접촉 설정 | [애니메이션](Animation/README.md) |
+| 현재 단발→MM 구조·느린 회전·Master 정리 | [통합 재생](Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) → [지속 곡선 판정](Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
+| 200명 시각 예산·기존 병렬 구조·성능 비교 | [2026-10-12 구현과 검증](Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
 | 공격·콤보·전투 VFX 제작 | [전투](Combat/README.md) |
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
 | HUD·가방·장비 조작과 UI 아트 교체 | [UI](UI/README.md) |

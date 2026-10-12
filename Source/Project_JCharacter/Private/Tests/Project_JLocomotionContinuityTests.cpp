@@ -3,6 +3,7 @@
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
+#include "Animation/Project_JContinuousCurvePolicy.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchSchema.h"
@@ -274,16 +275,19 @@ bool FProjectJGeneralTurningContinuousCurvesTest::RunTest(const FString&)
 	for (float Rate : {-90.f, -60.f, -20.f, 20.f, 60.f, 90.f})
 	{
 		Policy P; Policy::FInput I; Policy::FSettings S; I.bEligible = true; I.Speed = 350; I.Mode = Mode;
+		FProject_JContinuousCurvePolicy Curve; FProject_JContinuousCurvePolicy::FInput C; C.bEligible = C.bHasRequestedHeading = true;
 		bool bTurn = false, bDynamic = false;
 		for (int32 Frame = 0; Frame < Hz * 3; ++Frame)
 		{
 			I.Now = double(Frame) / Hz;
 			I.ActorYaw = I.VelocityYaw = I.FacingYaw = I.MoveYaw = FMath::UnwindDegrees(170 + Rate * float(I.Now));
+			C.Now = I.Now; C.RequestedHeading = I.MoveYaw; C.Velocity = FRotator(0, I.VelocityYaw, 0).Vector() * I.Speed;
+			C.Position += C.Velocity / Hz; I.bContinuousCurve = Curve.Update(C, {}).bActive;
 			bTurn |= P.Update(I, S); bDynamic |= P.RequiresDynamicCycle();
 		}
 		TestFalse(TEXT("Continuous aligned curves do not become Turn events from accumulated angle"), bTurn);
 		TestTrue(TEXT("Continuous curves keep the rich Cycle searchable"), bDynamic);
-		for (int32 Frame = 1; Frame <= Hz; ++Frame) { I.Now += 1.0 / Hz; P.Update(I, S); }
+		for (int32 Frame = 1; Frame <= Hz; ++Frame) { I.Now += 1.0 / Hz; C.Now = I.Now; C.Position += C.Velocity / Hz; I.bContinuousCurve = Curve.Update(C, {}).bActive; P.Update(I, S); }
 		TestFalse(TEXT("Straight travel eventually returns to settled routing"), P.RequiresDynamicCycle());
 	}
 	return true;
@@ -294,17 +298,25 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStrafeForwardCurveTest, "ProjectJ.Gene
 bool FProjectJStrafeForwardCurveTest::RunTest(const FString&)
 {
 	using Policy = FProject_JGeneralTurnPolicy;
+	const auto Observe = [](FProject_JContinuousCurvePolicy& P, FProject_JContinuousCurvePolicy::FInput& C, Policy::FInput& I, int32 Hz)
+	{
+		C.bEligible = C.bHasRequestedHeading = true; C.Now = I.Now; C.RequestedHeading = I.MoveYaw;
+		C.Velocity = FRotator(0, I.VelocityYaw, 0).Vector() * I.Speed; C.Position += C.Velocity / Hz;
+		I.bContinuousCurve = P.Update(C, {}).bActive;
+	};
 	for (int32 Hz : {30, 60, 144})
 	for (float Rate : {-320.f, -240.f, -211.f, -180.f, 180.f, 211.f, 240.f, 320.f})
 	{
 		Policy P; Policy::FInput I; I.bEligible = true; I.Speed = 350;
 		I.Mode = EProject_JLocomotionRotationMode::Strafe;
+		FProject_JContinuousCurvePolicy Curve; FProject_JContinuousCurvePolicy::FInput C;
 		bool bTurn = false, bDynamic = false;
 		for (int32 Frame = 0; Frame < Hz * 3; ++Frame)
 		{
 			I.Now = double(Frame) / Hz;
 			I.MoveYaw = I.FacingYaw = I.ActorYaw = FMath::UnwindDegrees(170 + Rate * float(I.Now));
 			I.VelocityYaw = I.MoveYaw - FMath::Sign(Rate) * 14;
+			Observe(Curve, C, I, Hz);
 			bTurn |= P.Update(I, {}); bDynamic |= P.RequiresDynamicCycle();
 		}
 		TestFalse(TEXT("Forward Strafe with normal path lag stays in Cycle through yaw wrap"), bTurn);
@@ -315,6 +327,7 @@ bool FProjectJStrafeForwardCurveTest::RunTest(const FString&)
 	{
 		Policy P; Policy::FInput I; I.bEligible = true; I.Speed = 350;
 		I.Mode = EProject_JLocomotionRotationMode::Strafe;
+		FProject_JContinuousCurvePolicy Curve; FProject_JContinuousCurvePolicy::FInput C;
 		bool bFastTurn = false, bContinued = false, bLateTurn = false;
 		for (int32 Frame = 0; Frame < Hz * 2; ++Frame)
 		{
@@ -322,6 +335,7 @@ bool FProjectJStrafeForwardCurveTest::RunTest(const FString&)
 			I.MoveYaw = I.FacingYaw = I.ActorYaw = FMath::UnwindDegrees(
 				float(I.Now < .5 ? I.Now * 300 : 150 + (I.Now - .5) * 180));
 			I.VelocityYaw = I.MoveYaw - (I.Now >= .1 && I.Now < .5 ? 50 : 14);
+			Observe(Curve, C, I, Hz);
 			const bool bTurn = P.Update(I, {});
 			if (I.Now < .5) bFastTurn |= bTurn;
 			if (I.Now > 1) bLateTurn |= bTurn;
@@ -403,16 +417,19 @@ bool FProjectJGeneralTurningModeSemanticsTest::RunTest(const FString&)
 	{
 		Policy P; Policy::FInput I; Policy::FSettings S; I.bEligible = true; I.Speed = 350;
 		I.Mode = EProject_JLocomotionRotationMode::Strafe;
+		FProject_JContinuousCurvePolicy Curve; FProject_JContinuousCurvePolicy::FInput C; C.bEligible = C.bHasRequestedHeading = true;
 		bool bTurn = false, bDynamic = false;
 		for (int32 Frame = 0; Frame < 90; ++Frame)
 		{
 			I.Now = double(Frame) / 60;
 			I.FacingYaw = I.ActorYaw = Case == 1 ? 0 : Frame * 3.0f;
 			I.MoveYaw = I.VelocityYaw = Case == 0 ? 0 : Case == 1 ? FMath::Min(Frame * 3.0f, 40.f) : I.FacingYaw + 90;
+			C.Now = I.Now; C.RequestedHeading = I.MoveYaw; C.Velocity = FRotator(0, I.VelocityYaw, 0).Vector() * I.Speed;
+			C.Position += C.Velocity / 60; I.bContinuousCurve = Curve.Update(C, {}).bActive;
 			bTurn |= P.Update(I, S); bDynamic |= P.RequiresDynamicCycle();
 		}
 		TestFalse(TEXT("Camera-only, directional-input-only, and lateral Strafe cannot borrow forward Turn"), bTurn);
-		TestTrue(TEXT("Those Strafe changes retain directional Dynamic Cycle"), bDynamic);
+		TestEqual(TEXT("Only sustained physical travel expands the general policy; directional input changes remain owned by the component"), bDynamic, Case == 2);
 	}
 	// OTM ignores camera swivels when world travel stays straight.
 	Policy P; Policy::FInput I; Policy::FSettings S; I.bEligible = true; I.Speed = 350;

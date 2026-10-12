@@ -34,6 +34,7 @@ struct FProject_JTurnRequestSample
 	bool bValid = false, bAcuteActive = false, bAcuteApproach = false;
 	// Physical preparation only while Start/Land owns the pose. Never activates its MM branch.
 	bool bAcuteReturnReady = false;
+	bool bContinuousCurve = false;
 	uint64 Frame = 0;
 	double Seconds = 0;
 	EProject_JLocomotionRotationMode Mode = EProject_JLocomotionRotationMode::OrientToMovement;

@@ -1,5 +1,16 @@
 # 애니메이션 계획과 제안
 
+## 구현 결과와 현재 기준
+
+아래 문서는 Planning 폴더에 있지만 구현·검증 결과를 포함한다. 실제 플레이 품질과 전체 렌더 성능의 남은 확인은 각 문서에서 구분한다.
+
+- [통합 Locomotion 구현](Unified_Locomotion_Implementation_2026-10-12.md): 단발/MM 재생 스택 통합, State Controller 유지, ABP 노드별 역할과 당시 검증.
+- [지속 곡선 판정과 Master 정리](Sustained_Curve_And_Master_Cleanup_2026-10-12.md): 느린 회전의 단발 복귀, Strafe 미세 입력 보호, 사용하지 않는 함수 그래프 제거.
+- [200명 시각 예산](Crowd_Visual_Presentation_Budget_2026-10-12.md): 리타깃·의상 물리의 평가·보간, 보호·복구 조건, 병렬 실행 경계와 동일 바이너리 비교.
+
+## 조사와 제안 이력
+
+- [통합 재생 재설계 조사](Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md): 공식·사용자 구현 자료와 대안 검토. 실제 채택 범위는 위 구현 결과를 따른다.
 - [GASP / Project_J 자연스러움 조사와 고도화 인계](GASP_ProjectJ_Naturalness_2026-10-06/README.md): 실제 그래프·설정·소스 근거, 비교·우선순위·검증·후속 PROMPT와 통합 PDF. 구현 완료 문서가 아니다.
 
 - [파이프라인 구조 개선 제안](Humanoid_Animation_Pipeline_Redesign_Proposal.md): 대안 비교·마이그레이션·당시 요청을 보존한 제안서.

@@ -7,6 +7,8 @@
 #include "ChooserFunctionLibrary.h"
 #include "ChooserTypes.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -2738,6 +2740,8 @@ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCom
 		Curve.Position = OwningPlayerCharacter->GetActorLocation();
 		Curve.Velocity = Movement ? Movement->Velocity : FVector::ZeroVector;
 		Curve.FutureVelocity = Data.Movement.FutureTrajectoryVelocity;
+		Curve.bHasRequestedHeading = Input.bHasMoveInput;
+		Curve.RequestedHeading = Input.MoveYaw;
 		const bool bLand = Shot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
 		Curve.bCanExit = bLand ? LocomotionAnimStateComponent && LocomotionAnimStateComponent->bCanExitLanding :
 			Movement && (Shot.bTransitionAnimationAlmostComplete ||
@@ -2747,6 +2751,7 @@ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCom
 		CurveSettings.TravelDistance = Profile->TransitionPolicy.OneShotCurveTravelDistance;
 		CurveSettings.HeadingSweep = Profile->TransitionPolicy.OneShotCurveHeadingSweep;
 		CurveSettings.DirectionConsistency = Profile->TransitionPolicy.OneShotCurveDirectionConsistency;
+		CurveSettings.Sustained = Profile->TransitionPolicy.ContinuousCurve;
 		const auto CurveResponse = OneShotCurvePolicy.Update(Curve, CurveSettings);
 		if (CurveResponse.bYield)
 		{
@@ -3741,6 +3746,14 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 		Policy.RetargetLODThreshold = -1;
 		return Policy;
 	}
+	// Gameplay pose and sparse replicated boundaries take priority over visual
+	// distance/visibility. Follower IK must not retain a hidden/far source policy.
+	if (const auto* Mesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh());
+		Mesh && (Mesh->IsCombatCritical() || Mesh->HasAnimationUpdateRequirement()))
+	{
+		Policy.Tier = EProject_JAnimBudgetTier::Near;
+		return Policy;
+	}
 
 	const bool bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
 	if (!bRecentlyRendered)
@@ -3815,13 +3828,25 @@ void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAn
 	const bool bFollowerStateChanged = (CurrentOptimizationPolicy.bEnableFollowerRetarget != NewPolicy.bEnableFollowerRetarget);
 	CurrentOptimizationPolicy = NewPolicy;
 
-	if (bFollowerStateChanged && OwningCharacter)
+	const auto* Coordinator = OwningCharacter ? OwningCharacter->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
+	const bool bVisualGroupOwned = Coordinator && Coordinator->IsVisualBudgetEnabled() &&
+		Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh());
+	if (!bVisualGroupOwned && OwningCharacter && bFollowerStateChanged)
 	{
 		if (USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
 		{
 			FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
 		}
 	}
+}
+
+bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const
+{
+	check(IsInGameThread());
+	const auto& Selection = ThreadSafeData.MotionMatching.SelectionContext;
+	return ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching || ThreadSafeData.Air.bIsInAir ||
+		Selection.bMovingTurn180 || Selection.bAllowTurnContinuation || Selection.bGeneralTurnCandidates ||
+		Selection.bAllowGeneralTurnContinuation || Selection.bBackwardRefaceCandidates || Selection.bAllowBackwardRefaceContinuation;
 }
 
 void UProject_JCharacterAnimInstance::ResetTrajectoryHistoryOnAccelerationStop(const FProject_JAnimThreadSafeData& Data) const

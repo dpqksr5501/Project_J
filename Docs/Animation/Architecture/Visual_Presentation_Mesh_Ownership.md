@@ -2,7 +2,15 @@
 
 현재 칼 궤적 정책은 [Weapon_Grip_Drive_Policy.md](../Authoring/Weapon_Hand_Contact_System.md#drive), 전환은 [Weapon_Contact_Recovery.md](../Authoring/Weapon_Hand_Contact_System.md#recovery), 몸체별 소켓·Guided 노드 설정은 [Guided_Hand_Contact.md](../Authoring/Weapon_Hand_Contact_System.md#body)를 기준으로 한다. 아래의 이전 전환 설명보다 이 최신 문서들이 우선한다.
 
-## 2026-10-02 현재 상태
+## 2026-10-12 시각 평가의 소유권
+
+실제 `BP_GreatSword`는 숨겨진 원본 `CharacterMesh0`, 리타깃 몸체 `Greatsword`, 몸체의 Leader Pose를 공유하는 장비 메시 8개로 구성된다. RigidBody 3개는 몸체 ABP 안에 있으며, follower 9개가 독립적으로 리타깃·물리를 실행하는 구조가 아니다.
+
+원본의 ABA·필수 게임플레이 포즈 요구는 기존 서비스가 담당한다. `UProject_JAnimationUpdateCoordinatorComponent`는 몸체의 평가·보간 주기를 관리하며, 로컬·전투·단발·공중·급회전·화면 복귀를 보호한다. 장비 Leader Pose 공유와 보이는 손/등 소켓 기준은 유지한다. 판정은 GT 스냅샷을 읽고, 실제 몸체 평가는 원본 포즈 의존 순서를 유지한 엔진 경로를 사용한다.
+
+다른 external controller가 소유한 메시와 Leader Pose 메시 등은 새로 소유하지 않는다. 비활성화·역할 변경·파괴 시 변경한 tick/URO/visibility·의존 관계를 복구한다. [정책·제외 설정·200명 비교와 검증](../Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md)을 따른다. 아래 파지·무기 부착 계약은 계속 사용한다.
+
+## 2026-10-02 파지 구현 기준
 
 - 오른팔은 FABRIK 대신 `Project J Guided Hand IK`로 입력 포즈 기반 팔꿈치 안정화와 손목 접촉을 수행한다. 왼팔 Two Bone IK는 미연결이며 RigidBody 3개는 유지한다.
 - Palm→손목 공통 변환, 몸체 프로필, 중간 보조 뼈와 누락/LOD 정책을 구현했다. `DA_HGP_Greatsword`는 런타임 ABP 클래스 디폴트의 `Hand Grip Profile`에 할당한다.

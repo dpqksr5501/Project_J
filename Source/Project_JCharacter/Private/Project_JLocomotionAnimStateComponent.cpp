@@ -210,7 +210,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateLocomotionContexts(float Delt
 		bForceMotionMatchingReselect = false;
 		bUseCombatStrafeSettledCycle = false;
 		CombatStrafeSettledCycleElapsedTime = 0.0f;
-		bHasCombatStrafeControlYawSample = false;
+		CombatStrafeCurvePolicy.Reset();
 		MotionMatchingSelectionContext = FProject_JMotionMatchingSelectionContext();
 		MotionMatchingSelectionPolicy.Reset();
 		MovingTurnPolicy.Reset();
@@ -470,7 +470,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	{
 		bUseCombatStrafeSettledCycle = false;
 		CombatStrafeSettledCycleElapsedTime = 0.0f;
-		bHasCombatStrafeControlYawSample = false;
+		CombatStrafeCurvePolicy.Reset(); TurnRequestSample.bContinuousCurve = false;
 		return;
 	}
 
@@ -485,27 +485,28 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 		// never borrow an OTM or another gait's Loop database.
 		bUseCombatStrafeSettledCycle = false;
 		CombatStrafeSettledCycleElapsedTime = 0.0f;
-		bHasCombatStrafeControlYawSample = false;
+		CombatStrafeCurvePolicy.Reset(); TurnRequestSample.bContinuousCurve = false;
 		return;
 	}
 
-	float ControlYawRate = TNumericLimits<float>::Max();
-	if (const AController* Controller = PlayerOwner.GetController())
-	{
-		const float CurrentControlYaw = Controller->GetControlRotation().Yaw;
-		if (bHasCombatStrafeControlYawSample && DeltaTime > UE_KINDA_SMALL_NUMBER)
-		{
-			ControlYawRate = FMath::Abs(FMath::FindDeltaAngleDegrees(
-				LastCombatStrafeControlYaw,
-				CurrentControlYaw)) / DeltaTime;
-		}
-		LastCombatStrafeControlYaw = CurrentControlYaw;
-		bHasCombatStrafeControlYawSample = true;
-	}
-	else
-	{
-		bHasCombatStrafeControlYawSample = false;
-	}
+	const auto* Movement = PlayerOwner.GetCharacterMovement();
+	const auto* Anim = PlayerOwner.GetMesh() ? PlayerOwner.GetMesh()->GetAnimInstance() : nullptr;
+	const auto* LocomotionProfile = PlayerOwner.GetLocomotionProfile();
+	FProject_JContinuousCurvePolicy::FInput Curve;
+	Curve.bEligible = Movement && Movement->IsMovingOnGround() && KinematicContext.bHasMoveInput &&
+		!KinematicContext.MoveWorldDirection.IsNearlyZero() && KinematicContext.GroundSpeed > 10 &&
+		(!DerivedLocomotionContext.bIsPivoting || IsLandingStateActive()) && !DerivedLocomotionContext.bShouldTurnInPlace &&
+		!PlayerOwner.IsAttacking() && !PlayerOwner.IsDodging() && !PlayerOwner.IsHitReacting() &&
+		!Movement->HasAnimRootMotion() && !Movement->CurrentRootMotion.HasActiveRootMotionSources() &&
+		(!Anim || !Anim->IsAnyMontagePlaying());
+	Curve.Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0;
+	Curve.Mode = static_cast<int32>(AuthoritativeContext.RotationMode);
+	Curve.Gait = static_cast<int32>(AuthoritativeContext.GaitIntent);
+	Curve.Position = PlayerOwner.GetActorLocation(); Curve.Velocity = KinematicContext.HorizontalVelocity;
+	Curve.bHasRequestedHeading = true; Curve.RequestedHeading = KinematicContext.MoveWorldDirection.Rotation().Yaw;
+	const auto CurveResult = CombatStrafeCurvePolicy.Update(Curve,
+		LocomotionProfile ? LocomotionProfile->TransitionPolicy.ContinuousCurve : FProject_JContinuousCurveSettings());
+	TurnRequestSample.bContinuousCurve = CurveResult.bActive;
 
 	const bool bCycleCanSettle =
 		DerivedLocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
@@ -514,8 +515,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 		!KinematicContext.bIsDecelerating;
 	const bool bInputDirectionChanging = FMath::Abs(KinematicContext.MoveInputTurnAngle) >=
 		FMath::Max(CombatProfile->StrafeDynamicInputTurnAngle, 0.0f);
-	const bool bControlYawChanging = ControlYawRate >=
-		FMath::Max(CombatProfile->StrafeDynamicFacingYawRate, 0.0f);
 	const bool bVelocityNotAligned = KinematicContext.VelocityToMoveInputAngle >=
 		FMath::Max(CombatProfile->StrafeDynamicVelocityToInputAngle, 0.0f);
 	// Stable input/control yaw is not sufficient after OTM -> Strafe: the
@@ -526,7 +525,7 @@ void UProject_JLocomotionAnimStateComponent::UpdateCombatStrafeCycleSelection(
 	const bool bActorFacingNotAligned = FMath::Abs(FMath::FindDeltaAngleDegrees(
 		PlayerOwner.GetActorRotation().Yaw, PlayerOwner.GetControlRotation().Yaw)) > FacingTolerance;
 	const bool bKeepDynamic = !bCycleCanSettle || bInputDirectionChanging ||
-		bControlYawChanging || bVelocityNotAligned || bActorFacingNotAligned;
+		CurveResult.bActive || bVelocityNotAligned || bActorFacingNotAligned;
 
 	if (bKeepDynamic)
 	{
