@@ -14,6 +14,8 @@
 
 ## 측정으로 확인한 변화
 
+**실시간 리타깃 프로필 — 2026-10-13:** 공통 Master의 최종 포즈와 기존 리타깃·손 IK·의상 물리를 유지하면서, 골격 쌍의 Family와 몸체별 접촉 Body를 분리했습니다. MCP로 실제 Greatsword 외형 ABP에도 연결하고, 프로필 해제·재초기화·source 불일치의 복구를 검증했습니다. 200명 CPU 비교에서는 일부 구간의 증가가 관찰되어 전체 성능 개선으로 보고하지 않습니다. [적용 구조·검증·측정 한계](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)
+
 **애니메이션 후속 구현 — 2026-10-12:** Start/Land 등 단발과 Motion Matching을 `Project Unified Locomotion`의 한 재생 스택으로 통합했습니다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 계속 담당합니다. 지속 회전은 실제 이동·누적 방향 변화로 판정하고, 미세한 Strafe 입력은 안정 Loop 후보군을 유지합니다. [통합 구조](Docs/Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) · [지속 곡선과 Master 함수 정리](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)
 
 **Strafe 사용자 로그 후속:** 단발을 끝내는 엄격한 증거와 이미 확인된 곡선의 후보군 유지 조건을 구분해, 좌우 반전 중 Loop 전용 PSD로 강제 복귀하는 현상을 수정했습니다. 적합한 기존 PSD 후보는 유지하고, 정렬된 전방 이동의 입력 묶음 예측만 제한적으로 안정화합니다. 매우 느린 회전과 급회전의 기존 대응은 보호합니다. [구현 범위·비교·검증](Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md#사용자-로그-후속-곡선-반전과-전방-예측-안정화)

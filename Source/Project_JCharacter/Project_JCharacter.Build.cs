@@ -26,6 +26,7 @@ public class Project_JCharacter : ModuleRules
 			"AnimationCore",
 			"AnimationBudgetAllocator",
 			"AnimGraphRuntime",
+			"IKRig",
 			"AnimationWarpingRuntime",
 			"Project_JCore",
 			"Project_JGAS",

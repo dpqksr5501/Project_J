@@ -6,11 +6,13 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/Project_JAnimationBudgetTypes.h"
 #include "Animation/Project_JHandGripProfile.h"
+#include "Animation/Project_JHandContact.h"
 #include "Project_JRetargetAnimInstance.generated.h"
 
 class USceneComponent;
 class ACharacter;
 class UProject_JWeaponPresentationComponent;
+class UProject_JRetargetBodyProfile;
 
 /**
  * Lightweight native AnimInstance optimized for large-scale MMORPG runtime retargeting.
@@ -25,6 +27,14 @@ class PROJECT_JCHARACTER_API UProject_JRetargetAnimInstance : public UAnimInstan
 	GENERATED_BODY()
 
 public:
+	/** Visual mesh override; otherwise use the character's body profile. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project_J|Retarget")
+	TObjectPtr<UProject_JRetargetBodyProfile> RetargetBodyProfile = nullptr;
+	const UProject_JRetargetBodyProfile* GetRetargetBodyProfile() const;
+	const UProject_JHandGripProfile* GetResolvedHandGripProfile() const;
+	Project_J::Animation::FResolvedHandContact GetBodyHandContact(bool bPrimary) const;
+	Project_J::Animation::FResolvedHandContact GetBodyHandContact(bool bPrimary, const FProject_JHandGripCalibration& Calibration) const;
+
 	/** Optional body profile on the visual ABP, shared across jobs using this body. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Project_J|IK|Config")
 	TObjectPtr<UProject_JHandGripProfile> HandGripProfile = nullptr;
@@ -173,6 +183,8 @@ public:
 	int32 RetargetLODThreshold = -1;
 
 protected:
+	virtual FAnimInstanceProxy* CreateAnimInstanceProxy() override;
+	virtual void DestroyAnimInstanceProxy(FAnimInstanceProxy* Proxy) override;
 	/** Weak reference to the currently tracked weapon visual component. */
 	UPROPERTY(Transient)
 	TWeakObjectPtr<USceneComponent> CachedWeaponComponent = nullptr;

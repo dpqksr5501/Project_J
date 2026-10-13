@@ -3,6 +3,8 @@
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JRetargetBodyProfile.h"
+#include "Animation/Project_JRetargetAnimInstanceProxy.h"
 #include "Animation/Project_JHandContact.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -13,6 +15,8 @@
 #include "AbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Engine/World.h"
+#include "Engine/SkeletalMesh.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 UProject_JRetargetAnimInstance::UProject_JRetargetAnimInstance()
 {
@@ -47,6 +51,10 @@ void UProject_JRetargetAnimInstance::BeginDestroy()
 void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
+	// A reinitialized/rebound visual instance must not remain registered with
+	// its previous presentation owner, including dedicated-server early exits.
+	if (CachedPresentationComp.IsValid()) CachedPresentationComp->UnregisterRetargetAnimInstance(this);
+	CachedPresentationComp.Reset(); CachedWeaponComponent.Reset();
 
 	// Dedicated server: completely disable tick on follower visual mesh to avoid any wasted evaluation
 	if (const UWorld* World = GetWorld())
@@ -71,8 +79,6 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 	bRightContactTargetValid = bLeftContactTargetValid = false;
 	bHasValidRightSnapshot = false;
 	bHasValidLeftSnapshot = false;
-	CachedWeaponComponent.Reset();
-	CachedPresentationComp.Reset();
 
 	if (APawn* OwnerPawn = TryGetPawnOwner())
 	{
@@ -101,11 +107,58 @@ void UProject_JRetargetAnimInstance::SetCombatMode(bool bInCombatMode)
 FProject_JHandGripCalibration UProject_JRetargetAnimInstance::GetHandGripCalibration() const
 {
 	check(IsInGameThread());
+	if (const auto* Profile = GetResolvedHandGripProfile()) return Profile->Calibration;
 	return Project_J::Animation::ResolveHandGripCalibration(Cast<ACharacter>(TryGetPawnOwner()), HandGripProfile);
+}
+
+FAnimInstanceProxy* UProject_JRetargetAnimInstance::CreateAnimInstanceProxy()
+{ return new FProject_JRetargetAnimInstanceProxy(this); }
+void UProject_JRetargetAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProxy* Proxy)
+{ delete static_cast<FProject_JRetargetAnimInstanceProxy*>(Proxy); }
+
+const UProject_JRetargetBodyProfile* UProject_JRetargetAnimInstance::GetRetargetBodyProfile() const
+{
+	check(IsInGameThread());
+	const auto* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
+	const auto* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
+	const auto* Body = RetargetBodyProfile ? RetargetBodyProfile.Get() :
+		(CharacterProfile ? CharacterProfile->RetargetBodyProfile.Get() : nullptr);
+	const auto* Mesh = GetSkelMeshComponent();
+	return Body && Body->Family && Mesh && Mesh->GetSkeletalMeshAsset() &&
+		Body->Family->TargetSkeleton == Mesh->GetSkeletalMeshAsset()->GetSkeleton() ? Body : nullptr;
+}
+
+const UProject_JHandGripProfile* UProject_JRetargetAnimInstance::GetResolvedHandGripProfile() const
+{
+	check(IsInGameThread());
+	// Existing explicit graph overrides retain priority during gradual migration.
+	if (HandGripProfile) return HandGripProfile;
+	if (const auto* Body = GetRetargetBodyProfile()) if (Body->HandGrip) return Body->HandGrip;
+	const auto* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
+	const auto* Profile = Player ? Player->GetCharacterAnimProfile() : nullptr;
+	return Profile ? Profile->HandGripProfile.Get() : nullptr;
+}
+
+Project_J::Animation::FResolvedHandContact UProject_JRetargetAnimInstance::GetBodyHandContact(bool bPrimary) const
+{
+	return GetBodyHandContact(bPrimary, GetHandGripCalibration());
+}
+
+Project_J::Animation::FResolvedHandContact UProject_JRetargetAnimInstance::GetBodyHandContact(
+	bool bPrimary, const FProject_JHandGripCalibration& Calibration) const
+{
+	check(IsInGameThread());
+	const auto* Mesh = GetSkelMeshComponent();
+	if (!Mesh) return {};
+	return Project_J::Animation::ResolveHandContact(*Mesh,
+		bPrimary ? Calibration.PrimaryPalmSocketName : Calibration.SecondaryPalmSocketName,
+		bPrimary ? Calibration.PrimaryArm.Hand : Calibration.SecondaryArm.Hand,
+		Calibration.MissingPalmPolicy == EProject_JMissingPalmPolicy::LegacyWristOrigin);
 }
 
 void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RetargetBody_Snapshot);
 	Super::NativeUpdateAnimation(DeltaSeconds);
 	GripTargetSnapshotFrame = MAX_uint64;
 
@@ -336,12 +389,11 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// targets; neither a graph node nor a downstream rig should convert them again.
 	{
 		const FProject_JHandGripCalibration Calibration = GetHandGripCalibration();
-		const bool bLegacy = Calibration.MissingPalmPolicy == EProject_JMissingPalmPolicy::LegacyWristOrigin;
-		auto ResolveWristTarget = [OwningComp, bLegacy, PrimaryHand = SnapshotPrimaryHandBoneName](FName PalmSocketName, FName HandName,
+		auto ResolveWristTarget = [this, OwningComp, &Calibration, PrimaryHand = SnapshotPrimaryHandBoneName](bool bPrimary,
 			const FTransform& BodyOffset, FTransform& InOutGripWorld, FTransform* InOutHandSpace)
 		{
 			const Project_J::Animation::FResolvedHandContact Contact =
-				Project_J::Animation::ResolveHandContact(*OwningComp, PalmSocketName, HandName, bLegacy);
+				GetBodyHandContact(bPrimary, Calibration);
 			if (!Contact.IsValid()) { return false; }
 			const FVector WristScale = Contact.Hand.IsNone() ? OwningComp->GetComponentScale()
 				: OwningComp->GetBoneTransform(Contact.Hand, RTS_World).GetScale3D();
@@ -360,12 +412,12 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		};
 		if (bHasValidRightSnapshot)
 		{
-			bHasValidRightSnapshot = ResolveWristTarget(Calibration.PrimaryPalmSocketName, Calibration.PrimaryArm.Hand,
+			bHasValidRightSnapshot = ResolveWristTarget(true,
 				Calibration.PrimaryHandOffset, SnapshotRightGripWorldTransform, nullptr);
 		}
 		if (bHasValidLeftSnapshot)
 		{
-			bHasValidLeftSnapshot = ResolveWristTarget(Calibration.SecondaryPalmSocketName, Calibration.SecondaryArm.Hand,
+			bHasValidLeftSnapshot = ResolveWristTarget(false,
 				Calibration.SecondaryHandOffset, SnapshotLeftGripWorldTransform,
 				bHasPrimaryHandSpaceGripSnapshot ? &SnapshotLeftGripInPrimaryHandSpace : nullptr);
 		}
@@ -376,6 +428,7 @@ void UProject_JRetargetAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UProject_JRetargetAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_RetargetBody_ContactMath);
 	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
 
 	// Worker-thread evaluation: purely math on captured snapshots

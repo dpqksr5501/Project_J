@@ -8,6 +8,7 @@
 
 | 목적 | 기준 문서 |
 | --- | --- |
+| 골격·몸체 프로필 공유, 실제 리타깃/손 접촉 연결과 호환·수명 검증 | [실시간 리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
 | 스냅샷·표시·검색·복귀·품질 예산의 경계와 동작 보존 검증 | [파이프라인 리팩토링](Architecture/Animation_Pipeline_Refactor_2026-10-13.md) |
 | 현재 단발·MM의 공통 재생 스택과 ABP 노드 역할 | [통합 Locomotion 구현](Planning/Unified_Locomotion_Implementation_2026-10-12.md) |
 | 느린 OTM/Strafe 회전·미세 입력·State Controller·미사용 함수 정리 | [지속 곡선 판정과 Master 정리](Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |

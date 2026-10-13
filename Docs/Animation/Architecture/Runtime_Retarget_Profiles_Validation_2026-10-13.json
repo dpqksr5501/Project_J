@@ -1,0 +1,939 @@
+{
+  "recorded_at_utc": "2026-10-13T07:15:07.9506592Z",
+  "head": "8485562cdb8cc1da8ba460465045972db9349fda",
+  "branch": "codex/runtime-retarget-profiles",
+  "working_tree_implementation_uncommitted": true,
+  "engine": "UE 5.8.3",
+  "scope": "공통 Master와 기존 리타깃·손 IK·물리를 유지한 Family/Body 설정 공유 및 실제 Greatsword 연결. 독립 의상 예산·새 FBIK·모든 몸체 이행은 미구현.",
+  "builds": [
+    {
+      "name": "BoundedFixtureEditorBuild",
+      "result": "Succeeded",
+      "log": "Saved/Validation/RuntimeRetarget_20261013/BoundedFixtureEditorBuild.log"
+    },
+    {
+      "name": "BoundedFixtureGameBuild",
+      "result": "Succeeded",
+      "log": "Saved/Validation/RuntimeRetarget_20261013/BoundedFixtureGameBuild.log"
+    }
+  ],
+  "functional": {
+    "unique_tests": 32,
+    "regression_passed": 27,
+    "rendered_passed": 6,
+    "test_errors": 0.0,
+    "test_warnings": 2.0,
+    "warnings": [
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "entries": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.13-06.30.23"
+          }
+        ]
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "entries": [
+          {
+            "event": {
+              "type": "Warning",
+              "message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+              "context": "log",
+              "artifact": "00000000000000000000000000000000"
+            },
+            "filename": "",
+            "lineNumber": -1,
+            "timestamp": "2026.10.13-06.30.24"
+          }
+        ]
+      }
+    ],
+    "tests": [
+      {
+        "test": "ProjectJ.Animation.Pipeline.EngineAdapterScopes",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.Pipeline.PolicyContracts",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.HandContactConversion",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.HandContactRig",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.HiddenLeaderVisibleFollower",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.ModularMeshIsolation",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.QualityTierPolicy",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.SecondaryHandContact",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "state": "Success",
+        "warnings": 1,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Combat.CanonicalBladeTrajectory",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Combat.CanonicalMeleeTrace",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Integrated.PresentationRecovery",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Internal.Animation.SnapshotBoundary",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Maturity.Editor.GuidedIKCompileValidation",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.MMCrowd.ActualEngineSearch",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.MMCrowd.GeneratedDatabaseLifecycle",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.MMCrowd.NestedGraphSearch",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Presentation.PrimaryGripAttachment",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+        "state": "Success",
+        "warnings": 1,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Presentation.VisualMeshOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Retarget.BodyContracts",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Retarget.ProductionRuntime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.Naturalness.RecordedStrafeCurve",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.Naturalness.RecordedStrafeMicro",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.Naturalness.StrafeLateralCamera",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.OneShotReturn.RecordedStrafeLand",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Animation.VisualBudget.Lifecycle",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Retarget.ProductionRuntime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ],
+    "final_targeted_tests": [
+      {
+        "test": "ProjectJ.Retarget.BodyContracts",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.Retarget.ProductionRuntime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "test": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ],
+    "land_playback": {
+      "BeforeRows": 3816,
+      "AfterRows": 3816,
+      "DifferentRows": 0,
+      "Identical": true
+    },
+    "png_count": 149,
+    "limitations": "정지 프레임 일부 확인과 기록된 상태 동일성. 전체 동영상·모든 체형·발 접지의 품질 인증은 아니다."
+  },
+  "network": {
+    "root": "Saved/Validation/GroupD_20260910/RuntimeRetarget_20261013_Lag50Loss3_Parallel_BoundedFixture",
+    "passed": true,
+    "clients": 2,
+    "native_npcs": 200,
+    "packet_lag_ms": 50,
+    "packet_loss_percent": 3,
+    "parallel_iris_settings": true,
+    "exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "engine_assertions": 0,
+    "fixture_change": "네트워크 시험 플레이어 두 개의 cull distance를 1000m로 제한해 기본 Iris 상한 1500m 안에서 시험 공간을 커버한다. 생산 관심 영역과 NPC AOI는 변경하지 않는다.",
+    "startup_python_errors": [
+      "[2026.10.13-07.12.47:189][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+      "[2026.10.13-07.12.47:238][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+      "[2026.10.13-07.12.52:405][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+      "[2026.10.13-07.12.52:464][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+      "[2026.10.13-07.12.53:402][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+      "[2026.10.13-07.12.53:444][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'"
+    ],
+    "limitations": "Fixture assertions 통과이며 전체 로그 청결·200개 authored body의 네트워크 비용·200명 실제 접속 검증은 아니다.",
+    "initial_run_with_iris_ensure": "Saved/Validation/GroupD_20260910/RuntimeRetarget_20261013_Lag50Loss3_Parallel",
+    "rejected_always_relevant_fixture": "Saved/Validation/GroupD_20260910/RuntimeRetarget_20261013_Lag50Loss3_Parallel_FixedFixture: 원격 캐릭터 참조 미준비로 stage 1 실패. 해당 코드 변경은 제거했다."
+  },
+  "cpu_comparison": {
+    "before_completed": true,
+    "after_completed": true,
+    "fixture_version": 2,
+    "actors": 200,
+    "repeats": 2,
+    "warmup_ticks": 120,
+    "measured_ticks": 120,
+    "hz": 60,
+    "scope": "NullRHI CPU: real authored Blueprint, equipment, ABP and constructed followers; controlled movement and simulated render timestamps/significance. World tick wall time includes task completion, excludes outer engine frame/rendering. Bone finalizations include interpolation, MM observations are not search counts.",
+    "rows": [
+      {
+        "scenario": "AttackBurst",
+        "aba": false,
+        "before_mean_ms": 20.600535099705063,
+        "after_mean_ms": 22.680921542147793,
+        "delta_percent": 10.098700991861698,
+        "before_repeat_means": [
+          20.35163175314665,
+          20.849438446263473
+        ],
+        "after_repeat_means": [
+          22.183304124822218,
+          23.17853895947337
+        ],
+        "before_p95_mean_ms": 22.35260047018528,
+        "after_p95_mean_ms": 24.731948971748352,
+        "before_max_ms": 25.348398834466934,
+        "after_max_ms": 31.81309998035431,
+        "before_visual_updates": [
+          23800,
+          23800
+        ],
+        "after_visual_updates": [
+          23800,
+          23800
+        ],
+        "before_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "after_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "AttackBurst",
+        "aba": true,
+        "before_mean_ms": 20.10201934414605,
+        "after_mean_ms": 22.735779033973813,
+        "delta_percent": 13.101965751489274,
+        "before_repeat_means": [
+          19.871922209858894,
+          20.33211647843321
+        ],
+        "after_repeat_means": [
+          22.410976607352495,
+          23.06058146059513
+        ],
+        "before_p95_mean_ms": 22.75720052421093,
+        "after_p95_mean_ms": 25.726350024342537,
+        "before_max_ms": 29.41419929265976,
+        "after_max_ms": 33.50970149040222,
+        "before_visual_updates": [
+          23800,
+          23800
+        ],
+        "after_visual_updates": [
+          23800,
+          23800
+        ],
+        "before_bone_finalizations": [
+          22623,
+          22595
+        ],
+        "after_bone_finalizations": [
+          22592,
+          22566
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "Far",
+        "aba": false,
+        "before_mean_ms": 15.139519174893696,
+        "after_mean_ms": 16.16778362852832,
+        "delta_percent": 6.791922793293348,
+        "before_repeat_means": [
+          15.185685052225987,
+          15.093353297561407
+        ],
+        "after_repeat_means": [
+          16.053234972059727,
+          16.282332284996908
+        ],
+        "before_p95_mean_ms": 16.070948913693428,
+        "after_p95_mean_ms": 17.43205077946186,
+        "before_max_ms": 17.573200166225433,
+        "after_max_ms": 22.149398922920227,
+        "before_visual_updates": [
+          5932,
+          5943
+        ],
+        "after_visual_updates": [
+          5950,
+          5962
+        ],
+        "before_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "after_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "Far",
+        "aba": true,
+        "before_mean_ms": 11.099576437845826,
+        "after_mean_ms": 11.4803247153759,
+        "delta_percent": 3.4302955582327543,
+        "before_repeat_means": [
+          10.907389285663763,
+          11.29176359002789
+        ],
+        "after_repeat_means": [
+          11.279750429093838,
+          11.680899001657963
+        ],
+        "before_p95_mean_ms": 12.291401624679565,
+        "after_p95_mean_ms": 12.195050716400146,
+        "before_max_ms": 14.688599854707718,
+        "after_max_ms": 13.566002249717712,
+        "before_visual_updates": [
+          5981,
+          5980
+        ],
+        "after_visual_updates": [
+          5976,
+          5962
+        ],
+        "before_bone_finalizations": [
+          5868,
+          5694
+        ],
+        "after_bone_finalizations": [
+          5635,
+          5635
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "Hidden",
+        "aba": false,
+        "before_mean_ms": 11.324010028814275,
+        "after_mean_ms": 11.321240508308014,
+        "delta_percent": -0.024457065113980825,
+        "before_repeat_means": [
+          11.440433375537395,
+          11.207586682091156
+        ],
+        "after_repeat_means": [
+          11.141690829147896,
+          11.500790187468132
+        ],
+        "before_p95_mean_ms": 12.607449665665627,
+        "after_p95_mean_ms": 12.352550402283669,
+        "before_max_ms": 19.925400614738464,
+        "after_max_ms": 13.116102665662766,
+        "before_visual_updates": [
+          0,
+          0
+        ],
+        "after_visual_updates": [
+          0,
+          0
+        ],
+        "before_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "after_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "Hidden",
+        "aba": true,
+        "before_mean_ms": 6.221449204410115,
+        "after_mean_ms": 6.523207916567722,
+        "delta_percent": 4.8502961648180465,
+        "before_repeat_means": [
+          6.202264875173569,
+          6.240633533646663
+        ],
+        "after_repeat_means": [
+          6.563500997920831,
+          6.482914835214615
+        ],
+        "before_p95_mean_ms": 6.457298994064331,
+        "after_p95_mean_ms": 7.130000740289688,
+        "before_max_ms": 7.599499076604843,
+        "after_max_ms": 8.599497377872467,
+        "before_visual_updates": [
+          0,
+          0
+        ],
+        "after_visual_updates": [
+          0,
+          0
+        ],
+        "before_bone_finalizations": [
+          480,
+          480
+        ],
+        "after_bone_finalizations": [
+          480,
+          480
+        ],
+        "before_mm_observations": [
+          480,
+          480
+        ],
+        "after_mm_observations": [
+          480,
+          480
+        ]
+      },
+      {
+        "scenario": "Near",
+        "aba": false,
+        "before_mean_ms": 18.11518295047184,
+        "after_mean_ms": 19.99122123233974,
+        "delta_percent": 10.356165250978243,
+        "before_repeat_means": [
+          18.124443292617798,
+          18.10592260832588
+        ],
+        "after_repeat_means": [
+          20.338663272559643,
+          19.643779192119837
+        ],
+        "before_p95_mean_ms": 18.795950338244438,
+        "after_p95_mean_ms": 23.21140095591545,
+        "before_max_ms": 19.945699721574783,
+        "after_max_ms": 34.36119854450226,
+        "before_visual_updates": [
+          23800,
+          23800
+        ],
+        "after_visual_updates": [
+          23800,
+          23800
+        ],
+        "before_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "after_bone_finalizations": [
+          24000,
+          24000
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      },
+      {
+        "scenario": "Near",
+        "aba": true,
+        "before_mean_ms": 12.182849723224837,
+        "after_mean_ms": 12.685579434037209,
+        "delta_percent": 4.12653625574968,
+        "before_repeat_means": [
+          12.044811714440584,
+          12.320887732009092
+        ],
+        "after_repeat_means": [
+          12.932849830637375,
+          12.438309037437042
+        ],
+        "before_p95_mean_ms": 13.359550386667252,
+        "after_p95_mean_ms": 14.542598277330399,
+        "before_max_ms": 15.67770168185234,
+        "after_max_ms": 18.529903143644333,
+        "before_visual_updates": [
+          11899,
+          11901
+        ],
+        "after_visual_updates": [
+          11899,
+          11901
+        ],
+        "before_bone_finalizations": [
+          5690,
+          5827
+        ],
+        "after_bone_finalizations": [
+          5634,
+          5635
+        ],
+        "before_mm_observations": [
+          24000,
+          24000
+        ],
+        "after_mm_observations": [
+          24000,
+          24000
+        ]
+      }
+    ]
+  },
+  "profile_settings_trace": [
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0",
+      "count": 24000,
+      "profile_settings_ms_per_tick": 0.12855833333333333,
+      "profile_settings_exclusive_ms_per_tick": 0.12855833333333333
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0",
+      "count": 24000,
+      "profile_settings_ms_per_tick": 0.13051666666666667,
+      "profile_settings_exclusive_ms_per_tick": 0.13051666666666667
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA0_R0",
+      "count": 6000,
+      "profile_settings_ms_per_tick": 0.04371666666666666,
+      "profile_settings_exclusive_ms_per_tick": 0.04371666666666666
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA1_R0",
+      "count": 6000,
+      "profile_settings_ms_per_tick": 0.04314166666666667,
+      "profile_settings_exclusive_ms_per_tick": 0.04314166666666667
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0",
+      "count": 0,
+      "profile_settings_ms_per_tick": 0.0,
+      "profile_settings_exclusive_ms_per_tick": 0.0
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0",
+      "count": 0,
+      "profile_settings_ms_per_tick": 0.0,
+      "profile_settings_exclusive_ms_per_tick": 0.0
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA0_R0",
+      "count": 24000,
+      "profile_settings_ms_per_tick": 0.13497499999999998,
+      "profile_settings_exclusive_ms_per_tick": 0.13497499999999998
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA1_R0",
+      "count": 12000,
+      "profile_settings_ms_per_tick": 0.07442499999999999,
+      "profile_settings_exclusive_ms_per_tick": 0.07442499999999999
+    }
+  ],
+  "cpu_conclusion": "전체 성능 향상과 CPU 회귀 해소를 입증하지 않았다. 일부 2회 반복 표본의 10~13% 증가를 보존한다. 설정 처리의 국소 0.13ms 비용은 전체 증가의 인과 설명이 아니다.",
+  "cpu_evidence": [
+    "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetBefore_20261013",
+    "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetAfter_20261013",
+    "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetAfterTrace_20261013",
+    "Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetProfileScopeTrace_20261013"
+  ],
+  "cpu_build_provenance": "비계측 비교 뒤 최종 수정은 trace 범위와 네트워크 fixture의 분기. 각 실행의 실제 바이너리·소스 해시는 각 manifest 기준이며 최종 빌드와 혼동하지 않는다.",
+  "rejected_cache": "Hand contact metadata cache는 실제 몸체의 교대 25000회×4 국소 측정에서 약 26% 느려 제거했다. 임시 cache·무효화 상태·생산 benchmark loop는 최종 Source에 없다.",
+  "protected_assets": [
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "before_sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A",
+      "after_sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A",
+      "unchanged": true
+    },
+    {
+      "path": "Content/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.uasset",
+      "before_sha256": "A3D2E5C9329C4038F4425FD99D37D15BA983FBE4AEB26701ED484056CDC35FB4",
+      "after_sha256": "A3D2E5C9329C4038F4425FD99D37D15BA983FBE4AEB26701ED484056CDC35FB4",
+      "unchanged": true
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.uasset",
+      "before_sha256": "C849C045173D5EEFA08DF35516D45A9CD26F8EA3D461E987D8B5B226D8BD0031",
+      "after_sha256": "C849C045173D5EEFA08DF35516D45A9CD26F8EA3D461E987D8B5B226D8BD0031",
+      "unchanged": true
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "before_sha256": "AA4E2E350A679A328C6E3D291577D07406F8E9EA3F03B4D4F1A03E1B559A59BF",
+      "after_sha256": "AA4E2E350A679A328C6E3D291577D07406F8E9EA3F03B4D4F1A03E1B559A59BF",
+      "unchanged": true
+    }
+  ],
+  "final_source_and_migrated_asset_hashes": [
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E"
+    },
+    {
+      "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.uasset",
+      "sha256": "C793B56DE27F5D32F956C01396EA1619EB5D8C9E1C1DBA66F1931C95B70910F7"
+    },
+    {
+      "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.uasset",
+      "sha256": "DCB77F11C230B5C20EB4172AB4BA2940ADB8A409A5C14BC132D5592C5A3882B1"
+    },
+    {
+      "path": "Source/Project_J/Project_J.Build.cs",
+      "sha256": "BBAC79FC6E333DA989CB81D95D8459E84D8B75D17157C1FCCC6AF85802B3D15E"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+      "sha256": "20CED13214B08EAAA8A48B113948101427F000E55F7692214961270EBFDE8580"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JRetargetBodyRuntime.cpp",
+      "sha256": "76378F90F06F86A1ACCC4D5914538E9757B32703188A95027987F65E708CE019"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNode_GuidedHandIK.cpp",
+      "sha256": "972A3C3A4B1363E06D6E91370CA0984E512C45EDC298F379C829B6CBE6491F99"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+      "sha256": "1568FAEEAD9A7C4E2A2F73760884BA651452BBD6286A79FAB72BE90BD228537B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.cpp",
+      "sha256": "4D0DAF8318A38039DFA04156023E1B55E9191890ACB15E79E06DDA8DA629204B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.h",
+      "sha256": "AD21B9BCF4E38DCC4460291A84EA057C105D557A7E0AE0C218FB69EFE55DF56C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetBodyProfile.cpp",
+      "sha256": "24BA9B0BA7B7AD4885F2398039477EE3154C403ECB7C006C906607FE6D121588"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "sha256": "06E5B72EB100026575D93607ABBC671831B7C2C057271BAD8F461BD37FF948EF"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JRetargetBodyProfileTests.cpp",
+      "sha256": "D92E2C8B8F406C70F5C18FE0BAECF7904BF98A87CA8E6C535B82090F7889C67F"
+    },
+    {
+      "path": "Source/Project_JCharacter/Project_JCharacter.Build.cs",
+      "sha256": "23A0EC2194EB4C9B0D35AF3EA50DAEA4C4F2C05BD4B0E65906696DC4BCD161CC"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimProfile.h",
+      "sha256": "98F44913BD942843A8F55E06ACC714D5AA702A0B75DC4C12DCE7B684C190C876"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JRetargetAnimInstance.h",
+      "sha256": "665F912D58BD5F61CEBFF780CB56E18E7757BA1FCA596AE0B8C7F33E836BA570"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JRetargetBodyProfile.h",
+      "sha256": "C794DD1DCC2329957AD843E8C42928A8A19B1AB70C0182D3751C01B906CD0A34"
+    }
+  ],
+  "mcp": "공식 Unreal MCP로 실제 source/target/Retargeter/HGP 조회, Family·Body 생성·저장, Body ABP 설정·compile·저장·재조회. native graph DSL 미지원은 ProductionRuntime audit로 보완.",
+  "approval_review": "임시 Python remote execution 활성화가 보안 설정 변경 범위가 과하다는 이유로 거절되어 실행하지 않았다. 로컬 WM_CLOSE 정상 종료 경로를 사용했다.",
+  "remaining": [
+    "전체 200명 CPU 증가의 교대 실행 원인 분석",
+    "실제 렌더 FPS·GPU 예산",
+    "새 골격/체형 추가와 접지·의상 품질",
+    "Cook/package의 profile 참조 확인"
+  ],
+  "commit_cleanup": {
+    "recorded_at_utc": "2026-10-13T07:40:25.5713528Z",
+    "base_head": "8485562cdb8cc1da8ba460465045972db9349fda",
+    "description": "Body.HandGrip이 없어 캐릭터 공유 보정으로 대체되는 진단의 출처 표기를 수정했다. 보정·재생·예산 계산은 변경하지 않았다. 실패한 cache/임시 benchmark 루프 제거 상태와 헬퍼 실제 사용을 확인했다.",
+    "builds": [
+      {
+        "name": "CommitCleanupEditorBuild",
+        "result": "Succeeded",
+        "log": "Saved/Validation/RuntimeRetarget_20261013/CommitCleanupEditorBuild.log"
+      },
+      {
+        "name": "CommitCleanupGameBuild",
+        "result": "Succeeded",
+        "log": "Saved/Validation/RuntimeRetarget_20261013/CommitCleanupGameBuild.log"
+      }
+    ],
+    "tests": [
+      {
+        "test": "ProjectJ.Retarget.BodyContracts",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "test": "ProjectJ.Retarget.ProductionRuntime",
+        "state": "Success",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "source_and_migrated_asset_hashes": [
+      {
+        "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+        "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E"
+      },
+      {
+        "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.uasset",
+        "sha256": "C793B56DE27F5D32F956C01396EA1619EB5D8C9E1C1DBA66F1931C95B70910F7"
+      },
+      {
+        "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.uasset",
+        "sha256": "DCB77F11C230B5C20EB4172AB4BA2940ADB8A409A5C14BC132D5592C5A3882B1"
+      },
+      {
+        "path": "Source/Project_J/Project_J.Build.cs",
+        "sha256": "BBAC79FC6E333DA989CB81D95D8459E84D8B75D17157C1FCCC6AF85802B3D15E"
+      },
+      {
+        "path": "Source/Project_J/Testing/Project_JAuthoredAnimationFixture.h",
+        "sha256": "20CED13214B08EAAA8A48B113948101427F000E55F7692214961270EBFDE8580"
+      },
+      {
+        "path": "Source/Project_J/Testing/Project_JRetargetBodyRuntime.cpp",
+        "sha256": "76378F90F06F86A1ACCC4D5914538E9757B32703188A95027987F65E708CE019"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNode_GuidedHandIK.cpp",
+        "sha256": "972A3C3A4B1363E06D6E91370CA0984E512C45EDC298F379C829B6CBE6491F99"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+        "sha256": "1568FAEEAD9A7C4E2A2F73760884BA651452BBD6286A79FAB72BE90BD228537B"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.cpp",
+        "sha256": "4D0DAF8318A38039DFA04156023E1B55E9191890ACB15E79E06DDA8DA629204B"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.h",
+        "sha256": "AD21B9BCF4E38DCC4460291A84EA057C105D557A7E0AE0C218FB69EFE55DF56C"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetBodyProfile.cpp",
+        "sha256": "24BA9B0BA7B7AD4885F2398039477EE3154C403ECB7C006C906607FE6D121588"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+        "sha256": "5601176C49CAA456B319FE8ED9792A24C6A217F91B40BB326EA7BC7C3F9E1DA3"
+      },
+      {
+        "path": "Source/Project_JCharacter/Private/Tests/Project_JRetargetBodyProfileTests.cpp",
+        "sha256": "D92E2C8B8F406C70F5C18FE0BAECF7904BF98A87CA8E6C535B82090F7889C67F"
+      },
+      {
+        "path": "Source/Project_JCharacter/Project_JCharacter.Build.cs",
+        "sha256": "23A0EC2194EB4C9B0D35AF3EA50DAEA4C4F2C05BD4B0E65906696DC4BCD161CC"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimProfile.h",
+        "sha256": "98F44913BD942843A8F55E06ACC714D5AA702A0B75DC4C12DCE7B684C190C876"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JRetargetAnimInstance.h",
+        "sha256": "665F912D58BD5F61CEBFF780CB56E18E7757BA1FCA596AE0B8C7F33E836BA570"
+      },
+      {
+        "path": "Source/Project_JCharacter/Public/Animation/Project_JRetargetBodyProfile.h",
+        "sha256": "C794DD1DCC2329957AD843E8C42928A8A19B1AB70C0182D3751C01B906CD0A34"
+      }
+    ],
+    "measurement_provenance": "상위 측정 당시 해시·기능 32개·CPU/네트워크 결과는 그대로 보존한다. 이 정리 뒤 전체 성능/원격/렌더 시험을 다시 실행한 기록은 아니다."
+  }
+}

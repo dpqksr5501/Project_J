@@ -7,6 +7,7 @@
 #include "Animation/Project_JHandContact.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JRetargetBodyProfile.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -1444,10 +1445,12 @@ void UProject_JWeaponPresentationComponent::LogAttachmentTrace(const TCHAR* Cont
 	const UProject_JRetargetAnimInstance* Anim = Body ? Cast<UProject_JRetargetAnimInstance>(Body->GetAnimInstance()) : nullptr;
 	const AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(Character);
 	const UProject_JCharacterAnimProfile* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
-	const UProject_JHandGripProfile* BodyProfile = Anim && Anim->HandGripProfile ? Anim->HandGripProfile.Get()
+	const UProject_JHandGripProfile* BodyProfile = Anim ? Anim->GetResolvedHandGripProfile()
 		: (CharacterProfile ? CharacterProfile->HandGripProfile.Get() : nullptr);
+	const UProject_JRetargetBodyProfile* RetargetBody = Anim ? Anim->GetRetargetBodyProfile() : nullptr;
 	const TCHAR* CalibrationSource = Anim && Anim->HandGripProfile ? TEXT("VisualOverride")
-		: (BodyProfile ? TEXT("CharacterSharedProfile") : (CharacterProfile ? TEXT("CharacterInline") : TEXT("Defaults")));
+		: (RetargetBody && BodyProfile && RetargetBody->HandGrip.Get() == BodyProfile ? TEXT("RetargetBodyProfile")
+		: (BodyProfile ? TEXT("CharacterSharedProfile") : (CharacterProfile ? TEXT("CharacterInline") : TEXT("Defaults"))));
 	const FProject_JHandGripCalibration Calibration = Anim ? Anim->GetHandGripCalibration()
 		: Project_J::Animation::ResolveHandGripCalibration(Character, nullptr);
 	const auto Contact = Body ? Project_J::Animation::ResolveHandContact(*Body,

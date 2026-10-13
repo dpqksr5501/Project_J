@@ -1,5 +1,7 @@
 # MMORPG 런타임 리타깃과 무기 손 접촉 구조
 
+> **2026-10-13 후속:** [골격·몸체 프로필 기반 리타깃](Runtime_Retarget_Profiles_2026-10-13.md)을 실제 Greatsword 외형에 연결했다. 공통 Master와 실시간 리타깃은 유지하며 골격 연결/체형 접촉의 공유·수명·GC 경계를 정리했다. 이 문서의 과거 그래프·정책 설명과 최신 구현 범위를 구분한다.
+
 > **2026-10-02 정정:** 아래 본문은 이전 설계와 최적화 기록을 포함한다. 현재 플레이어는 이동 Motion Matching → 전투 상체 합성/몽타주 → 임포트 몸체 런타임 리타깃 → Guided Hand IK → 의상 물리를 사용한다. 현재 노드·복귀·부착은 [Guided 손 접촉](../Authoring/Weapon_Hand_Contact_System.md#body), [무기 정책](../Authoring/Weapon_Hand_Contact_System.md#drive), [Palm 정상 부착](../Authoring/Weapon_Hand_Contact_System.md#mount)을 우선한다. 오프라인 리타깃도 가능하며 추가 의상 뼈만으로 런타임 리타깃이 필수인 것은 아니다. 군중 성능 우위와 임의 궤적의 완전 파지를 보장하지 않는다.
 
 > **문서 버전:** 1.1.0  

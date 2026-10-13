@@ -51,9 +51,7 @@ void FProject_JAnimNode_GuidedHandIK::PreUpdate(const UAnimInstance* InAnimInsta
 			const bool bPrimary = ArmDefinitionSource == EProject_JGuidedArmDefinitionSource::PrimaryBodyProfile;
 			ProfileArmSnapshot = bPrimary ? Calibration.PrimaryArm : Calibration.SecondaryArm;
 			ProfileStabilitySnapshot = bPrimary ? Calibration.PrimaryBendStability : Calibration.SecondaryBendStability;
-			const Project_J::Animation::FResolvedHandContact Contact = Project_J::Animation::ResolveHandContact(*Mesh,
-				bPrimary ? Calibration.PrimaryPalmSocketName : Calibration.SecondaryPalmSocketName,
-				ProfileArmSnapshot.Hand, Calibration.MissingPalmPolicy == EProject_JMissingPalmPolicy::LegacyWristOrigin);
+			const Project_J::Animation::FResolvedHandContact Contact = Retarget->GetBodyHandContact(bPrimary, Calibration);
 			ProfileArmSnapshot.Hand = Contact.Hand;
 			bProfileArmValid = Contact.IsValid() && !Contact.Hand.IsNone() && ProfileStabilitySnapshot.IsValid();
 		}

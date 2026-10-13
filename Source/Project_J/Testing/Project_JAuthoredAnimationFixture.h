@@ -25,9 +25,9 @@ inline AProject_JPlayerCharacter* Spawn(UWorld* World, AController* Controller, 
 	if (World->GetNetMode() != NM_Standalone)
 	{
 		// The AOI NPC workload uses clusters 200m apart; both owned player actors
-		// must remain observable during those camera swaps. Set their cull distance
-		// before FinishSpawning, when the initial replication filter is configured.
-		Player->SetNetCullDistanceSquared(1.0e12f);
+		// must remain observable during those camera swaps. 1000m covers the fixture
+		// while staying within Iris's default supported 1500m distance bound.
+		Player->SetNetCullDistanceSquared(FMath::Square(100000.0f));
 	}
 	Player->SetPlayerState(State);
 	Player->SetActorEnableCollision(World->GetNetMode() != NM_Standalone);

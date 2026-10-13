@@ -1,5 +1,7 @@
 # 보이는 메시 기준의 애니메이션·장비 파이프라인
 
+2026-10-13의 [골격·몸체 프로필 기반 리타깃](Runtime_Retarget_Profiles_2026-10-13.md)은 외형 ABP의 기존 HGP를 Body 프로필로 이행한다. 아래 파지·의상·무기 소유권과 기존 시각 예산은 유지하며, 확장 설정과 실제 저장 연결은 새 문서를 따른다.
+
 현재 칼 궤적 정책은 [Weapon_Grip_Drive_Policy.md](../Authoring/Weapon_Hand_Contact_System.md#drive), 전환은 [Weapon_Contact_Recovery.md](../Authoring/Weapon_Hand_Contact_System.md#recovery), 몸체별 소켓·Guided 노드 설정은 [Guided_Hand_Contact.md](../Authoring/Weapon_Hand_Contact_System.md#body)를 기준으로 한다. 아래의 이전 전환 설명보다 이 최신 문서들이 우선한다.
 
 ## 2026-10-12 시각 평가의 소유권

@@ -4,6 +4,7 @@
 
 | 주제 | 기록 |
 | --- | --- |
+| 전체 구조·버그·병렬·성능 후속 감사 | [2026-10-13 작업 인계와 새 채팅 요청](../Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md). 새 감사의 완료 결과가 아니라 출발 상태·보존 사항·재현·검증 범위다. |
 | 전체 구조·콘텐츠 확장 | [아키텍처 검토](Architecture/README.md) |
 | 코드 감사 | [요청](Audits/Project_J_Codex_Full_Audit_Refinement_Prompt.md) → [결과](Audits/Project_J_Code_Audit_Result_2026-09-23.md) → [후속 요청](Audits/Followups/Project_J_Final_Audit_Followup_Prompt.md) → [후속 결과](Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md) |
 | 캐릭터 런타임 | [책임 분리와 StateController 후속 흐름](CharacterRuntime/README.md) |

@@ -10,6 +10,7 @@
 class UProject_JLocomotionProfile;
 class UProject_JCombatAnimProfile;
 class UProject_JFoleyAudioProfile;
+class UProject_JRetargetBodyProfile;
 
 /**
  * Top-level animation profile for a playable character archetype.
@@ -40,4 +41,8 @@ public:
 	/** Optional shared body profile. Existing inline calibration remains the fallback. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Hand IK")
 	TObjectPtr<UProject_JHandGripProfile> HandGripProfile = nullptr;
+
+	/** Optional client visual-body defaults; gameplay locomotion/combat remain independent. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation|Visual Body")
+	TObjectPtr<UProject_JRetargetBodyProfile> RetargetBodyProfile = nullptr;
 };
