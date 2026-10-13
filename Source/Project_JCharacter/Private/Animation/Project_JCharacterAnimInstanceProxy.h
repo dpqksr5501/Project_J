@@ -105,6 +105,7 @@ private:
 	friend class FProjectJOneShotHandoffOwnershipTest;
 	friend class FProjectJMotionMatchingSearchExecutionTest;
 	friend class FProjectJMotionMatchingCrowdPolicyTest;
+	friend class FProjectJGeneratedMMDatabaseLifecycleTest;
 	friend class FProjectJMotionMatchingNestedGraphTest;
 	friend class FProjectJLocomotionCandidateContinuityTest;
 	friend class FProjectJBackwardRefaceCandidates;

@@ -2,6 +2,7 @@
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/AnimClassInterface.h"
+#include "PoseSearch/AnimNode_MotionMatching.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Combat/Project_JCombatStyleDefinition.h"
@@ -38,12 +39,15 @@ class FMeasurement : public IAutomationLatentCommand
 	TArray<TWeakObjectPtr<AProject_JPlayerCharacter>> Players;
 	TArray<FDelegateHandle> BoneHandles;
 	TArray<double> Samples;
+	TArray<double> ObserverSamples;
+	TArray<int32> AttackMontageCounts;
 	TArray<TSharedPtr<FJsonValue>> Rows;
 	TArray<TSharedPtr<FJsonValue>> MeshLayout;
 	int32 Count = 1, Case = 0, Tick = 0, BoneFrames = 0, MMFrames = 0, Followers = 0;
 	int32 Warmup = 120, Measured = 120, Repeats = 2;
 	int32 ProtectedFrames = 0, ManagedFrames = 0;
 	int32 BurstAbilityTasks = 0;
+	double AttackDispatchAndValidationMs = 0;
 	int32 VisualUpdates = 0, VisualRequests = 0, ManagedVisualTicks = 0, PostProcessUpdates = 0;
 	TMap<TWeakObjectPtr<UAnimInstance>, int16> VisualCounters;
 	double Deadline = 0;
@@ -65,7 +69,7 @@ class FMeasurement : public IAutomationLatentCommand
 			World->BeginTearingDown(); World->EndPlay(EEndPlayReason::Quit);
 			World->DestroyWorld(false); GEngine->DestroyWorldContext(World); World = nullptr;
 		}
-		Players.Reset(); BoneHandles.Reset(); Samples.Reset(); VisualCounters.Reset();
+		Players.Reset(); BoneHandles.Reset(); Samples.Reset(); ObserverSamples.Reset(); AttackMontageCounts.Reset(); VisualCounters.Reset();
 	}
 	bool Setup()
 	{
@@ -101,22 +105,31 @@ class FMeasurement : public IAutomationLatentCommand
 				Layout->SetStringField(TEXT("animation_class"), GetNameSafe(Visual->GetAnimClass()));
 				Layout->SetStringField(TEXT("leader_pose"), GetNameSafe(Visual->LeaderPoseComponent.Get()));
 				Layout->SetBoolField(TEXT("tick_enabled"), Visual->IsComponentTickEnabled());
-				int32 RigidBodies = 0;
+				int32 RigidBodies = 0, MotionMatchingNodes = 0, GraphNodes = 0;
 				if (const auto* Class = IAnimClassInterface::GetFromClass(Visual->GetAnimClass()))
-					for (const auto* Node : Class->GetAnimNodeProperties()) RigidBodies += Node->Struct->GetFName() == TEXT("AnimNode_RigidBody");
+					for (const auto* Node : Class->GetAnimNodeProperties())
+					{
+						++GraphNodes;
+						RigidBodies += Node->Struct->GetFName() == TEXT("AnimNode_RigidBody");
+						MotionMatchingNodes += Node->Struct->IsChildOf(FAnimNode_MotionMatching::StaticStruct());
+					}
+				Layout->SetNumberField(TEXT("graph_nodes"), GraphNodes);
+				Layout->SetNumberField(TEXT("motion_matching_nodes"), MotionMatchingNodes);
 				Layout->SetNumberField(TEXT("rigid_body_nodes"), RigidBodies); MeshLayout.Add(MakeShared<FJsonValueObject>(Layout));
 			}
 			if (auto* Tier = FindFProperty<FFloatProperty>(AProject_JBaseCharacter::StaticClass(), TEXT("CurrentSignificance")))
 			{ Tier->SetPropertyValue_InContainer(Player, Scenario() == 1 ? 2.0f : 0.0f); }
 		}
 		Tick = BoneFrames = MMFrames = ProtectedFrames = ManagedFrames = BurstAbilityTasks = 0;
+		AttackDispatchAndValidationMs = 0;
 		VisualUpdates = VisualRequests = ManagedVisualTicks = PostProcessUpdates = 0;
 		for (int32& Value : TierFrames) { Value = 0; }
-		Deadline = FPlatformTime::Seconds() + 180;
+		Deadline = FPlatformTime::Seconds() + FMath::Max(180.0, (Warmup + Measured) / 60.0 * 10.0);
 		return true;
 	}
 	bool Attack()
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AuthoredAnimation_AttackDispatchAndValidation);
 		for (const auto& Entry : Players)
 		{
 			auto* Player = Entry.Get(); auto* ASC = Player->GetAbilitySystemComponent();
@@ -132,14 +145,29 @@ class FMeasurement : public IAutomationLatentCommand
 	}
 	void FinishCase()
 	{
-		Samples.Sort(); double Sum = 0; for (double Sample : Samples) { Sum += Sample; }
+		// Keep tick order for hitches/attack coverage; quantiles use a separate copy.
+		TArray<double> SortedSamples = Samples;
+		SortedSamples.Sort(); double Sum = 0; for (double Sample : Samples) { Sum += Sample; }
 		auto Row = MakeShared<FJsonObject>();
 		Row->SetNumberField(TEXT("count"), Count); Row->SetBoolField(TEXT("aba"), Budgeted());
 		Row->SetStringField(TEXT("scenario"), Label(Scenario())); Row->SetNumberField(TEXT("repeat"), Case / 8);
 		Row->SetNumberField(TEXT("mean_world_tick_ms"), Sum / Samples.Num());
-		Row->SetNumberField(TEXT("p50_world_tick_ms"), Samples[Samples.Num() / 2]);
-		Row->SetNumberField(TEXT("p95_world_tick_ms"), Samples[FMath::CeilToInt(Samples.Num() * .95) - 1]);
-		Row->SetNumberField(TEXT("max_world_tick_ms"), Samples.Last());
+		Row->SetNumberField(TEXT("p50_world_tick_ms"), SortedSamples[Samples.Num() / 2]);
+		Row->SetNumberField(TEXT("p95_world_tick_ms"), SortedSamples[FMath::CeilToInt(Samples.Num() * .95) - 1]);
+		Row->SetNumberField(TEXT("max_world_tick_ms"), SortedSamples.Last());
+		Row->SetNumberField(TEXT("attack_dispatch_and_validation_ms"), AttackDispatchAndValidationMs);
+		double ObserverSum = 0; for (double Sample : ObserverSamples) { ObserverSum += Sample; }
+		Row->SetNumberField(TEXT("mean_observer_ms"), ObserverSum / ObserverSamples.Num());
+		TArray<TSharedPtr<FJsonValue>> TickSamples, ObservationSamples, MontageCounts;
+		for (int32 I = 0; I < Samples.Num(); ++I)
+		{
+			TickSamples.Add(MakeShared<FJsonValueNumber>(Samples[I]));
+			ObservationSamples.Add(MakeShared<FJsonValueNumber>(ObserverSamples[I]));
+			MontageCounts.Add(MakeShared<FJsonValueNumber>(AttackMontageCounts[I]));
+		}
+		Row->SetArrayField(TEXT("world_tick_samples_ms"), TickSamples);
+		Row->SetArrayField(TEXT("observer_samples_ms"), ObservationSamples);
+		Row->SetArrayField(TEXT("attack_montage_actor_counts_after_tick"), MontageCounts);
 		Row->SetNumberField(TEXT("measured_ticks"), Samples.Num()); Row->SetNumberField(TEXT("warmup_ticks"), Warmup);
 		Row->SetNumberField(TEXT("bone_finalizations"), BoneFrames); Row->SetNumberField(TEXT("mm_result_observations"), MMFrames);
 		Row->SetNumberField(TEXT("managed_mesh_ticks"), ManagedFrames); Row->SetNumberField(TEXT("combat_protected_ticks"), ProtectedFrames);
@@ -153,7 +181,7 @@ class FMeasurement : public IAutomationLatentCommand
 		Row->SetArrayField(TEXT("policy_tier_mesh_ticks_local_near_mid_far_hidden"), Tiers);
 		Rows.Add(MakeShared<FJsonValueObject>(Row));
 		Test->AddInfo(FString::Printf(TEXT("AuthoredCPU Count=%d Scenario=%s ABA=%d Repeat=%d Mean=%.3fms P95=%.3fms Bones=%d MM=%d Followers=%d"),
-			Count, Label(Scenario()), Budgeted(), Case / 8, Sum / Samples.Num(), Samples[FMath::CeilToInt(Samples.Num() * .95) - 1], BoneFrames, MMFrames, Followers));
+			Count, Label(Scenario()), Budgeted(), Case / 8, Sum / Samples.Num(), SortedSamples[FMath::CeilToInt(Samples.Num() * .95) - 1], BoneFrames, MMFrames, Followers));
 		Test->TestTrue(TEXT("Authored workload actually finalized bones"), BoneFrames > 0);
 		if (Scenario() == 0) { Test->TestTrue(TEXT("Authored near graph produced a real MM result"), MMFrames > 0); }
 		if (Scenario() < 3) { Test->TestTrue(TEXT("Fixture exercised its named policy tier"), TierFrames[Scenario() == 0 ? 1 : Scenario() == 1 ? 3 : 4] > 0); }
@@ -163,6 +191,9 @@ class FMeasurement : public IAutomationLatentCommand
 	bool Save()
 	{
 		auto Result = MakeShared<FJsonObject>(); Result->SetBoolField(TEXT("completed"), !bFailed);
+		Result->SetNumberField(TEXT("fixture_version"), 2);
+		Result->SetNumberField(TEXT("simulation_hz"), 60);
+		Result->SetStringField(TEXT("attack_workload"), TEXT("One simultaneous LMB dispatch at the first measured tick; extending the window does not repeat attacks. Dispatch includes fixture validation and ability-task enumeration. Montage counts describe post-tick playback, not hit-window coverage."));
 		Result->SetStringField(TEXT("scope"), TEXT("NullRHI CPU: real authored Blueprint, equipment, ABP and constructed followers; controlled movement and simulated render timestamps/significance. World tick wall time includes task completion, excludes outer engine frame/rendering. Bone finalizations include interpolation, MM observations are not search counts."));
 		Result->SetArrayField(TEXT("rows"), Rows);
 		Result->SetArrayField(TEXT("authored_mesh_layout"), MeshLayout);
@@ -175,6 +206,8 @@ public:
 	{
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJAnimationCount="), Count); Count = FMath::Clamp(Count, 1, 200);
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJAnimationRepeats="), Repeats); Repeats = FMath::Clamp(Repeats, 1, 5);
+		FParse::Value(FCommandLine::Get(), TEXT("ProjectJAnimationWarmupTicks="), Warmup); Warmup = FMath::Clamp(Warmup, 1, 3600);
+		FParse::Value(FCommandLine::Get(), TEXT("ProjectJAnimationMeasuredTicks="), Measured); Measured = FMath::Clamp(Measured, 1, 3600);
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJAnimationOutput="), Output);
 		if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Profiling/AuthoredAnimation") / FGuid::NewGuid().ToString() / TEXT("cpu.json"); }
 	}
@@ -185,8 +218,17 @@ public:
 		{ Test->AddError(TEXT("Authored CPU fixture needs a.Budget.Enabled=1 and valid authored character/equipment/ABP.")); bFailed = true; Cleanup(); Save(); return true; }
 		if (FPlatformTime::Seconds() > Deadline)
 		{ Test->AddError(TEXT("Authored CPU case exceeded bounded lifetime")); bFailed = true; Cleanup(); Save(); return true; }
-		if (Scenario() == 3 && Tick == Warmup && !Attack())
-		{ Test->AddError(TEXT("Production LMB failed to start simultaneous authored attacks")); bFailed = true; Cleanup(); Save(); return true; }
+		if (Scenario() == 3 && Tick == Warmup)
+		{
+			const FString AttackRegionName = FString::Printf(TEXT("ProjectJ.AuthoredAttackDispatch_%d_ABA%d_R%d"), Count, Budgeted(), Case / 8);
+			const uint64 AttackRegion = TRACE_BEGIN_REGION_WITH_ID(*AttackRegionName);
+			const double AttackBegin = FPlatformTime::Seconds();
+			const bool bAttackStarted = Attack();
+			AttackDispatchAndValidationMs = (FPlatformTime::Seconds() - AttackBegin) * 1000;
+			if (AttackRegion) { TRACE_END_REGION_WITH_ID(AttackRegion); }
+			if (!bAttackStarted)
+			{ Test->AddError(TEXT("Production LMB failed to start simultaneous authored attacks")); bFailed = true; Cleanup(); Save(); return true; }
+		}
 		if (Tick == Warmup)
 		{
 			const FString Name = FString::Printf(TEXT("ProjectJ.AuthoredCPU_%d_%s_ABA%d_R%d"), Count, Label(Scenario()), Budgeted(), Case / 8);
@@ -206,11 +248,15 @@ public:
 		if (Tick >= Warmup)
 		{
 			Samples.Add(Milliseconds);
+			const double ObserverBegin = FPlatformTime::Seconds();
+			int32 ActiveAttackMontages = 0;
+			TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AuthoredAnimation_Observation);
 			for (const auto& Entry : Players)
 			{
 				auto* Mesh = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Entry->GetMesh());
 				ManagedFrames += Mesh->IsManagedByBudget(); ProtectedFrames += Mesh->IsCombatCritical();
 				auto* Anim = CastChecked<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
+				if (Scenario() == 3) { ActiveAttackMontages += Anim->IsAnyMontagePlaying(); }
 				MMFrames += !Anim->GetThreadSafeMotionMatchingSelectedAnimation().IsNone();
 				++TierFrames[FMath::Clamp(int32(Anim->GetCurrentOptimizationPolicy().Tier), 0, 4)];
 				const auto* Coordinator = Entry->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
@@ -228,8 +274,11 @@ public:
 					}
 				}
 			}
+			ObserverSamples.Add((FPlatformTime::Seconds() - ObserverBegin) * 1000);
+			AttackMontageCounts.Add(ActiveAttackMontages);
 		}
 		if (++Tick < Warmup + Measured) { return false; }
+		if (Region) { TRACE_END_REGION_WITH_ID(Region); Region = 0; }
 		FinishCase();
 		if (Case < 8 * Repeats) { return false; }
 		Test->TestTrue(TEXT("Saved reproducible CPU measurement"), Save()); return true;

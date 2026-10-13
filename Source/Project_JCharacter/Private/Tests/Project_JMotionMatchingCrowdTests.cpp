@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "UObject/UnrealType.h"
+#include "UObject/StrongObjectPtr.h"
 #include <limits>
 
 namespace
@@ -252,6 +253,63 @@ bool FProjectJMotionMatchingCrowdPolicyTest::RunTest(const FString&)
 	Proxy.ThreadSafeData.MotionMatching.MinimumSearchInterval = 0.0f;
 	Proxy.ApplyMotionMatchingSearchPolicy();
 	TestEqual(TEXT("Visibility wake restores the original quality throttle"), Throttle(Proxy.NativeMotionMatchingNode), 0.05f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGeneratedMMDatabaseLifecycleTest,
+	"ProjectJ.MMCrowd.GeneratedDatabaseLifecycle", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJGeneratedMMDatabaseLifecycleTest::RunTest(const FString&)
+{
+	// Exercise the compiled production graph, including its inherited MM node.
+	UClass* Class = LoadClass<UAnimInstance>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C"));
+	if (!TestNotNull(TEXT("Production master class"), Class)) return false;
+	TStrongObjectPtr<USkeletalMeshComponent> Mesh(NewObject<USkeletalMeshComponent>());
+	TStrongObjectPtr<UAnimInstance> Anim(NewObject<UAnimInstance>(Mesh.Get(), Class));
+	TStrongObjectPtr<UPoseSearchDatabase> Database(NewObject<UPoseSearchDatabase>());
+	TStrongObjectPtr<UPoseSearchDatabase> Companion(NewObject<UPoseSearchDatabase>());
+	FProject_JCharacterAnimInstanceProxy Proxy(Anim.Get());
+	Proxy.Initialize(Anim.Get());
+	const TArray<int32> Indices = Proxy.GetGeneratedMotionMatchingNodeIndices();
+	if (!TestTrue(TEXT("Production graph contains a generated MM node"), !Indices.IsEmpty())) return false;
+	const auto* Databases = FindFProperty<FArrayProperty>(FAnimNode_MotionMatching::StaticStruct(), TEXT("DatabasesToSearch"));
+	const auto* Object = CastField<FObjectPropertyBase>(Databases ? Databases->Inner : nullptr);
+	if (!TestNotNull(TEXT("Engine database array"), Databases) || !TestNotNull(TEXT("Engine database element"), Object)) return false;
+	FProject_JAnimThreadSafeData Data;
+	Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+	Data.LocomotionContext.bIsMotionMatchingMoving = true;
+	const auto CheckDatabases = [&](int32 ExpectedCount)
+	{
+		for (const int32 Index : Indices)
+		{
+			const auto* Node = Proxy.GetNodeFromIndex<FAnimNode_MotionMatching>(Index);
+			if (!TestNotNull(TEXT("Generated node remains valid"), Node)) return;
+			FScriptArrayHelper View(Databases, Databases->ContainerPtrToValuePtr<void>(const_cast<FAnimNode_MotionMatching*>(Node)));
+			TestEqual(TEXT("Actual generated node database count"), View.Num(), ExpectedCount);
+			if (ExpectedCount == 2 && View.Num() == 2)
+			{
+				TestEqual(TEXT("Primary binding reaches the actual node"), Object->GetObjectPropertyValue(View.GetRawPtr(0)), static_cast<UObject*>(Database.Get()));
+				TestEqual(TEXT("Companion binding reaches the actual node"), Object->GetObjectPropertyValue(View.GetRawPtr(1)), static_cast<UObject*>(Companion.Get()));
+			}
+		}
+	};
+	Proxy.QueueGameThreadData(Data, Database.Get(), true, true, false, true, Companion.Get());
+	Proxy.ConsumeQueuedGameThreadData(); Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(2);
+	Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(2);
+	Proxy.QueueGameThreadData(Data, nullptr, false, false, false);
+	Proxy.ConsumeQueuedGameThreadData(); Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(0);
+	TestTrue(TEXT("Disable releases generated primary and companion bindings"), Proxy.AppliedGeneratedDatabases.IsEmpty() && Proxy.AppliedGeneratedCompanions.IsEmpty());
+	Proxy.QueueGameThreadData(Data, Database.Get(), true, true, false, true, Companion.Get());
+	Proxy.ConsumeQueuedGameThreadData(); Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(2);
+	// The engine can change class metadata before the next project traversal.
+	TStrongObjectPtr<UAnimInstance> Plain(NewObject<UAnimInstance>(Mesh.Get()));
+	Proxy.bForceMotionMatchingReselect = false;
+	Proxy.FAnimInstanceProxy::Initialize(Plain.Get());
+	TestTrue(TEXT("A replacement without a generated graph has no stale indices"), Proxy.GetGeneratedMotionMatchingNodeIndices().IsEmpty());
+	TestTrue(TEXT("Class change releases old database bindings and acknowledgements"), Proxy.AppliedGeneratedDatabases.IsEmpty() && Proxy.AppliedGeneratedCompanions.IsEmpty() && Proxy.GeneratedReselectStates.IsEmpty());
+	TestEqual(TEXT("Fulfilled old-class request cannot become a new return"), Proxy.PendingReselectRevision, uint64(0));
+	Proxy.Initialize(Anim.Get());
+	Proxy.QueueGameThreadData(Data, Database.Get(), true, true, false, true, Companion.Get());
+	Proxy.ConsumeQueuedGameThreadData(); Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(2);
 	return true;
 }
 #endif

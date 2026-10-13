@@ -151,6 +151,7 @@ void FProject_JCharacterAnimInstanceProxy::AddReferencedObjects(UAnimInstance* I
 
 void FProject_JCharacterAnimInstanceProxy::ConsumeQueuedGameThreadData()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_ConsumeSnapshot);
 	if (ConsumedSnapshotRevision == PublishedSnapshotRevision) return;
 	ThreadSafeData = PendingGameThreadData;
 	ThreadSafeCandidateCount = bMotionMatchingEnabled && CurrentActiveDatabase ? (CurrentTurnCycleCompanion ? 2 : 1) : 0;
@@ -214,6 +215,7 @@ const FAnimNode_MotionMatching* FProject_JCharacterAnimInstanceProxy::GetCapture
 
 void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_CapturePostSelection);
 	UnifiedPlaybackObservation = {};
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
@@ -475,6 +477,7 @@ FString FProject_JCharacterAnimInstanceProxy::GetPivotTraceSummary() const
 
 void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_ApplySearchPolicy);
 	ApplyMotionMatchingPresentationPolicy(
 		NativeMotionMatchingNode,
 		ThreadSafeData.MotionMatchingSearchPolicy,
@@ -643,6 +646,7 @@ bool FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselect(
 
 void FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselects()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_CompleteReselects);
 	bool bAnySearchExecuted = CompleteMotionMatchingReselect(NativeMotionMatchingNode, NativeReselectState);
 	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
@@ -853,6 +857,7 @@ const TArray<int32>& FProject_JCharacterAnimInstanceProxy::GetGeneratedMotionMat
 
 void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_AnimProxy_ApplyDatabase);
 	const EPoseSearchInterruptMode DatabaseChangeInterruptMode = ResolveDatabaseChangeInterruptMode();
 	LastResolvedDatabaseChangeInterruptMode = DatabaseChangeInterruptMode;
 	if (!bMotionMatchingEnabled || !CurrentActiveDatabase)
@@ -868,8 +873,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 		const IAnimClassInterface* AnimClass = GetAnimClassInterface();
 		if (AnimClass)
 		{
-			const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-			for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+			// The class-scoped cache also covers linked layers with no MM nodes.
+			for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 			{
 				if (FAnimNode_MotionMatching* MotionMatchingNode =
 					const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex)))
@@ -908,8 +913,8 @@ void FProject_JCharacterAnimInstanceProxy::ApplySelectedDatabaseToNativeNode()
 		return;
 	}
 
-	const TArray<FStructProperty*>& AnimNodeProperties = AnimClass->GetAnimNodeProperties();
-	for (int32 NodeIndex = 0; NodeIndex < AnimNodeProperties.Num(); ++NodeIndex)
+	// Reuse the same indices and class invalidation as search policy and capture.
+	for (const int32 NodeIndex : GetGeneratedMotionMatchingNodeIndices())
 	{
 		FAnimNode_MotionMatching* MotionMatchingNode =
 			const_cast<FAnimNode_MotionMatching*>(GetNodeFromIndex<FAnimNode_MotionMatching>(NodeIndex));

@@ -1,6 +1,10 @@
 # 성능 설계·수집·결과
 
+2026-10-13 후속 [200명 애니메이션 런타임 최적화](../Animation/Planning/Animation_Runtime_Optimization_2026-10-13.md)는 MM 데이터베이스 적용의 전체 그래프 탐색을 기존 캐시로 대체하고, 공격 시작·관측 시간·tick 원자료를 보완했다. 해당 timer의 국소 CPU 감소와 전체 World tick 비교의 편차·최대값 한계를 구분한다.
+
 2026-10-13 파이프라인 구조 변경의 200명 CPU 전후 비교와 실행 경계는 [애니메이션 리팩토링](../Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md)에 기록한다. 아래 10월 12일 시각 예산 off/on 결과와 다른 비교다.
+
+다른 채팅에서 후속 작업을 시작할 때는 [200명 애니메이션 최적화 인계](../Animation/Planning/Animation_Optimization_Handoff_2026-10-13.md)를 읽는다. 현재 main 기준·품질 보호·네트워크/병렬 소유권·CPU 과제·원자료·실행 명령을 모았다.
 
 ## 최근 애니메이션 구현과 비교 — 2026-10-12
 
