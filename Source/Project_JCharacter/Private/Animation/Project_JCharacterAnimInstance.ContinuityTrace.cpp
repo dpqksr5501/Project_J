@@ -4,6 +4,7 @@
 #include "Animation/AnimClassInterface.h"
 #include "Animation/AnimNode_ProjectJStrafeUpperBodyFacing.h"
 #include "Animation/AnimNode_ProjectJStrafeLowerBodyFacing.h"
+#include "Animation/AnimNode_Inertialization.h"
 #include "Animation/AnimationAsset.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimSequenceHelpers.h"
@@ -25,12 +26,14 @@
 namespace
 {
 TAutoConsoleVariable<int32> CVarContinuityTrace(TEXT("p.ProjectJ.LocomotionContinuityTrace"), 0,
-	TEXT("Local primary mesh continuity diagnostics: 0=off, 1=state edges plus 5Hz, 2=edges plus 10Hz and graph branches/facing, 3=also every evaluated forward Strafe facing frame. Read-only, post-evaluation."));
+	TEXT("Local primary mesh continuity diagnostics: 0=off, 1=state edges plus 5Hz, 2=edges plus 10Hz and graph branches/facing, 3=also every evaluated forward Strafe/Land facing frame and torso quaternion. Read-only, post-evaluation."));
 
 struct FTraceBoneHeading
 {
 	float Yaw = 0.0f;
 	bool bValid = false;
+	FQuat Rotation = FQuat::Identity;
+	bool bRotationValid = false;
 };
 
 // Bones have different reference axes. Remove each component-space reference
@@ -57,6 +60,8 @@ FTraceBoneHeading ReadEvaluatedHeading(const USkeletalMeshComponent* Mesh, const
 	const FQuat Component = Mesh->GetComponentQuat();
 	if (Evaluated.ContainsNaN() || RefRotation.ContainsNaN() || Component.ContainsNaN() ||
 		!Evaluated.IsNormalized() || !RefRotation.IsNormalized() || !Component.IsNormalized()) return Result;
+	Result.Rotation = Evaluated;
+	Result.bRotationValid = true;
 	const FVector NeutralForward = Component.UnrotateVector(Character->GetActorForwardVector());
 	FVector Forward = Component.RotateVector((Evaluated * RefRotation.Inverse()).RotateVector(NeutralForward));
 	Forward.Z = 0;
@@ -144,17 +149,37 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 			Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn) &&
 		!Key.bOverride && Key.bInput && Data.Movement.GroundSpeed > 100 && !MoveDirection.IsNearlyZero() &&
 		FMath::Abs(MoveToCamera) <= 30;
-	if (Mode >= 2 && (bRecord || Mode >= 3) && bForwardStrafe)
+	const bool bStrafeLand = Mode >= 3 && Key.bOverride &&
+		Data.LocomotionContext.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
+		Shot.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand;
+	if (Mode >= 2 && (bRecord || Mode >= 3) && (bForwardStrafe || bStrafeLand))
 	{
 		const auto Root = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("root"));
 		const auto Pelvis = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("pelvis"));
 		const auto Spine = ReadEvaluatedHeading(Mesh, OwningCharacter, TEXT("spine_01"));
 		const FName ChestBone = Mesh && Mesh->GetBoneIndex(TEXT("spine_05")) != INDEX_NONE ? TEXT("spine_05") : TEXT("spine_03");
 		const auto Chest = ReadEvaluatedHeading(Mesh, OwningCharacter, ChestBone);
+		if (Mode >= 3 && Chest.bRotationValid)
+			UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=TorsoRotation Frame=%llu Override=%d ExternalClip=%s QX=%.9f QY=%.9f QZ=%.9f QW=%.9f"),
+				GFrameCounter, Key.bOverride, *GetNameSafe(Shot.SelectedAnimation), Chest.Rotation.X, Chest.Rotation.Y, Chest.Rotation.Z, Chest.Rotation.W);
 		if (const auto* Interface = IAnimClassInterface::GetFromClass(GetClass()))
 		{
 			for (const FStructProperty* Property : Interface->GetAnimNodeProperties())
 			{
+				if (Mode >= 3 && Property && Property->Struct == FAnimNode_ProjectJLocomotion::StaticStruct())
+				{
+					const auto* Unified = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJLocomotion>(this);
+					UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=ReturnBlend Frame=%llu InertialEnvelopeRemaining=%.4f PlayerCount=%d"),
+						GFrameCounter, Unified->GetInertialReturnSecondsRemaining(), Unified->AnimPlayers.Num());
+				}
+				if (Mode >= 3 && Property && Property->Struct == FAnimNode_Inertialization::StaticStruct())
+				{
+					FNodeDebugData Debug(this);
+					Property->ContainerPtrToValuePtr<FAnimNode_Inertialization>(this)->GatherDebugData(Debug);
+					for (const auto& Row : Debug.GetFlattenedDebugData())
+						if (Row.DebugLine.StartsWith(TEXT("AnimNode_Inertialization")))
+							UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=Inertialization Frame=%llu Node=%s"), GFrameCounter, *Row.DebugLine);
+				}
 				if (Property && Property->Struct == FAnimNode_ProjectJStrafeLowerBodyFacing::StaticStruct())
 				{
 					const auto* Facing = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeLowerBodyFacing>(this);
@@ -163,9 +188,9 @@ void UProject_JCharacterAnimInstance::RecordLocomotionContinuityEvaluation()
 				}
 				if (!Property || Property->Struct != FAnimNode_ProjectJStrafeUpperBodyFacing::StaticStruct()) continue;
 				const auto* Facing = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeUpperBodyFacing>(this);
-				UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=UpperBodyFacing Frame=%llu Enabled=%d InputChestYaw=%.2f Error=%.2f Desired=%.2f Applied=%.2f RootWeight=%.3f"),
+				UE_LOG(LogProjectJPlayer, Display, TEXT("LocomotionContinuityTrace Stage=UpperBodyFacing Frame=%llu Enabled=%d InputChestYaw=%.2f Error=%.2f Desired=%.2f Applied=%.2f RootWeight=%.3f UprightWeight=%.3f"),
 					GFrameCounter, Facing->WasEnabled(), Facing->GetInputChestYaw(), Facing->GetFacingError(),
-					Facing->GetDesiredYaw(), Facing->GetAppliedYaw(), Facing->GetRootWeight());
+					Facing->GetDesiredYaw(), Facing->GetAppliedYaw(), Facing->GetRootWeight(), Facing->GetUprightWeight());
 			}
 		}
 		const float VelocityYaw = Data.Movement.Velocity.Rotation().Yaw;

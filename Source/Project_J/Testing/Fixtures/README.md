@@ -19,3 +19,9 @@
 `ProjectJ.Animation.Naturalness.StrafeLateralCamera`는 A/D 키 각각과 양방향 카메라 회전 21/90/240도/초의 12장면을 검사한다. ForwardCycle이 열리지 않는지, 기존 측면 후보에 Box와 Diamond가 있는지, 실제 측면 회전이 선택되는지 확인한다. `LateralPose`에 선택 에셋·시간과 전체 로컬 포즈 CRC를 저장하여 동일 바이너리·프로필의 전방 PSD 변경 전후를 비교할 수 있다. 순수 측면 경로에서 Diamond 선택을 강제하지 않는다. 전방 PSD의 Arc 6종/Loop 8종 구성은 [후속 문서](../../../../Docs/Animation/Planning/Strafe_Forward_Intent_2026-10-13.md)에 기록한다.
 
 착지 재현에는 `-ProjectJOneShotCameraPitch=2.8`, `-ProjectJOneShotCurveRate=85`, `-ProjectJOneShotJumpAtSeconds=2.5`로 실제 카메라 시점·곡선 회전율·점프 시점을 지정할 수 있다. 가슴의 `Angle3D`는 쿼터니언의 실제 컴포넌트 공간 프레임 차이다. 기존 수평/Euler yaw 차이와 구분한다. 기본값을 생략한 기존 장면은 유지한다. `Inertial` 행은 실제 엔진 debug traversal의 활성 상태이며, 프레임 수는 사용자 체감 승인이나 성능 측정이 아니다. 임시 착지 전용 CVar 전환 옵션은 제거했다.
+
+`StrafeLandCamera_20261013.csv`는 2026-10-13 10:02 사용자 로그에서 가져온 W 이동·카메라 yaw·Aim Pitch·점프 11회의 재현 데이터다. 원래 3,126개 관측점을 약 41.113초 입력 및 종료 관찰 구간으로 재표본화했다. 열은 `Seconds,Yaw,Pitch,Input,Jump`이며 yaw는 경계를 풀고 첫 값을 뺐다. Pitch는 기록된 Aim Pitch 근사다. `ProjectJ.Animation.OneShotReturn.RecordedStrafeLand`는 Strafe Run Case 5와 이 파일을 고정 사용한다. `-ProjectJOneShotPlaybackHz=120`으로 실제 검증했고, 다른 프레임 간격은 이 기록의 최종 검증에 합산하지 않았다.
+
+Strafe CMC 재생의 기본 보고서는 실행별 GUID 하위 폴더에 저장하고 로그의 `CMC playback evidence:`로 경로를 알린다. 여러 검사가 같은 `Playback.txt`를 덮어쓰지 않는다. 명시한 `-ProjectJStrafePlaybackOutput=` 경로는 유지하며 그 실제 부모 폴더를 만든다. 보고서 저장 실패와 움직임 기준 실패는 구분해 보존한다. [파이프라인 리팩토링 검증](../../../../Docs/Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md)에서 후속 재확인 결과를 읽는다.
+
+수동 재현은 `ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback`에 `-ProjectJOneShotPlaybackCase=5 -ProjectJOneShotCameraReplay=<CSV 절대 경로>`를 전달한다. 이 기록 검사는 전방 Strafe Run의 착지 보간 중 실제 MM 재선택을 요구하므로 다른 이동 모드의 일반 회귀 대신 사용하지 않는다. 점프 이벤트는 낮은 재생 주기에서도 건너뛴 표본 전체에서 수집한다. 기존 고정 회전 테스트에는 기록 옵션을 적용하지 않는다. `-ProjectJRenderOneShotReturn`은 실제 RHI에서 복귀 구간의 이미지를 추가한다. `Unified`의 `InertialReturnRemaining`은 요청 보간 수명이며, 실제 엔진 보간 상태와 구분한다.

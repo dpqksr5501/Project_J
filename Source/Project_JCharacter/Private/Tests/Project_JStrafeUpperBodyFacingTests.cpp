@@ -83,4 +83,42 @@ bool FProjectJUpperBodyFacingTest::RunTest(const FString&)
 	TestTrue(TEXT("Turn entry cannot remove 40 degrees in one frame"), FirstRelease >= 34.f && FirstRelease < 40.f);
 	return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUpperBodyYawTest, "ProjectJ.StrafeUpperBodyFacing.TiltInvariantYaw",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUpperBodyYawTest::RunTest(const FString&)
+{
+	using namespace Project_J::Animation;
+	const FQuat Reference = FRotator(12, 67, -31).Quaternion();
+	for (const float ActorYaw : {-165.f, 0.f, 140.f})
+	{
+		const FQuat Component = FRotator(0, ActorYaw - 90, 0).Quaternion();
+		const FVector Neutral = Component.UnrotateVector(FRotator(0, ActorYaw, 0).Vector());
+		for (const float Yaw : {-40.f, 0.f, 40.f})
+			for (const float Tilt : {0.f, 60.f, 89.f, 90.f, 91.f, 120.f})
+			{
+				const FQuat WorldDelta = FQuat(FVector::UpVector, FMath::DegreesToRadians(Yaw)) *
+					FQuat(FVector::RightVector, FMath::DegreesToRadians(Tilt));
+				const FQuat Pose = (Component.Inverse() * WorldDelta * Component * Reference).GetNormalized();
+				float Measured = 0.f;
+				float Upright = 0.f;
+				TestTrue(TEXT("Calibrated bent torso still has a valid yaw"), TryGetUpperBodyYaw(Pose, Reference, Component, Neutral, Measured, Upright));
+				TestTrue(TEXT("Correction follows actual upright pose, independent of yaw/rig"),
+					FMath::Abs(Upright - FMath::Max(0.f, FMath::Cos(FMath::DegreesToRadians(Tilt)))) < .001f);
+				TestTrue(TEXT("Bending through vertical cannot become a false half-turn"),
+					FMath::Abs(FMath::FindDeltaAngleDegrees(ActorYaw + Yaw, Measured)) < .001f);
+				const FQuat Negated(-Pose.X, -Pose.Y, -Pose.Z, -Pose.W);
+				float OppositeSign = 0.f;
+				TestTrue(TEXT("Quaternion sign does not change validity"), TryGetUpperBodyYaw(Negated, Reference, Component, Neutral, OppositeSign, Upright));
+				TestTrue(TEXT("Quaternion sign cannot change torso yaw"), FMath::Abs(FMath::FindDeltaAngleDegrees(Measured, OppositeSign)) < .001f);
+			}
+	}
+	float Measured = 0.f;
+	float Upright = 0.f;
+	TestFalse(TEXT("Undefined upside-down twist is rejected"), TryGetUpperBodyYaw(
+		FQuat(FVector::RightVector, PI), FQuat::Identity, FQuat::Identity, FVector::ForwardVector, Measured, Upright));
+	TestFalse(TEXT("Invalid rotation is rejected"), TryGetUpperBodyYaw(
+		FQuat(0, 0, 0, std::numeric_limits<double>::quiet_NaN()), FQuat::Identity, FQuat::Identity, FVector::ForwardVector, Measured, Upright));
+	return true;
+}
 #endif

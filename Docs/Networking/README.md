@@ -1,5 +1,7 @@
 # 네트워크
 
+애니메이션의 스냅샷·표시·검색 경계와 실제 소켓 후속 검증은 [2026-10-13 파이프라인 리팩토링](../Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md)을 함께 읽는다. 이 변경은 복제 이벤트 형식과 이동 권위를 유지한다.
+
 Shift 달리기 SavedMove와 테스트 지연 설정의 최신 수정은 [달리기 이동 예측·커서 검증](../UI/Cursor_And_Sprint_Prediction_2026-10-10.md)을 읽는다.
 
 | 종류 | 문서 |

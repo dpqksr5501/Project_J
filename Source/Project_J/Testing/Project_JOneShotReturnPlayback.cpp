@@ -7,6 +7,7 @@
 #include "Animation/AnimNode_ProjectJOneShotHandoff.h"
 #include "Animation/AnimNode_ProjectJLocomotion.h"
 #include "Animation/AnimNode_Inertialization.h"
+#include "Animation/AnimNode_ProjectJStrafeUpperBodyFacing.h"
 #include "HAL/IConsoleManager.h"
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
@@ -83,6 +84,11 @@ class FPlayback : public IAutomationLatentCommand
 	float CurveRateOverride = 0;
 	float JumpAtSeconds = 1.5f;
 	bool bReplayCameraView = false;
+	struct FRecordedInput { float Seconds, Yaw, Pitch; bool bInput, bJump; };
+	TArray<FRecordedInput> RecordedInput;
+	int32 RecordedIndex = 0;
+	int32 RecordedJumpCount = 0, CoherentReturnReselections = 0;
+	int32 EndFrame() const { return RecordedInput.IsEmpty() ? At(600) : FMath::CeilToInt(RecordedInput.Last().Seconds * PlaybackHz) + 1; }
 	bool IsStrafe() const { return bCurveResponse ? CurveCases()[Scenario].bStrafe : Scenario % 2 != 0; }
 	bool IsSprint() const { return bDirectionCoverage ? false : bCurveResponse ? CurveCases()[Scenario].bSprint : Scenario % 4 >= 2; }
 	int32 Kind() const { return bDirectionCoverage ? 0 : bCurveResponse ? (CurveCases()[Scenario].bLand ? 2 : 0) : bInputResponse ? Scenario / 4 : (Scenario < 4 ? 0 : 2); }
@@ -124,7 +130,7 @@ class FPlayback : public IAutomationLatentCommand
 		if (bDirectionCoverage && !IsStrafe()) Player->SetActorRotation(FRotator(0, (Scenario / 2) * 45.f, 0));
 		Player->SetActorEnableCollision(true); Player->GetCharacterMovement()->SetComponentTickEnabled(true);
 		if (IsStrafe()) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		if (bRender && (bCurveResponse ? Scenario == 25 || Scenario == 27 :
+		if (bRender && (bCurveResponse ? Scenario == 25 || Scenario == 27 || !RecordedInput.IsEmpty() :
 			!bInputResponse && (bDirectionCoverage ? Scenario == 4 || Scenario == 5 : Scenario < 2)))
 		{
 			if (!Test->TestFalse(TEXT("Render capture requires a real RHI"), GUsingNullRHI)) return false;
@@ -157,7 +163,7 @@ class FPlayback : public IAutomationLatentCommand
 		return true;
 	}
 public:
-	explicit FPlayback(FAutomationTestBase* InTest, bool bResponse = false, bool bCurve = false, bool bDirections = false)
+	explicit FPlayback(FAutomationTestBase* InTest, bool bResponse = false, bool bCurve = false, bool bDirections = false, bool bRecorded = false)
 		: Test(InTest), bDirectionCoverage(bDirections), bInputResponse(bResponse || bCurve), bCurveResponse(bCurve)
 	{
 		bRender = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderOneShotReturn"));
@@ -165,14 +171,35 @@ public:
 		bReplayCameraView = FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotCameraPitch="), CameraPitch);
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotCurveRate="), CurveRateOverride);
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotJumpAtSeconds="), JumpAtSeconds);
+		FString ReplayPath;
+		FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotCameraReplay="), ReplayPath);
+		if (bRecorded)
+		{
+			ReplayPath = FPaths::ProjectDir() / TEXT("Source/Project_J/Testing/Fixtures/StrafeLandCamera_20261013.csv");
+			SingleScenario = Scenario = 5;
+		}
+		if (!ReplayPath.IsEmpty())
+		{
+			TArray<FString> Lines;
+			if (Test->TestTrue(TEXT("Recorded one-shot input file loads"), FFileHelper::LoadFileToStringArray(Lines, *ReplayPath)))
+				for (int32 Index = 1; Index < Lines.Num(); ++Index)
+				{
+					TArray<FString> Values; Lines[Index].ParseIntoArray(Values, TEXT(","));
+					if (!Test->TestEqual(TEXT("Recorded input has five columns"), Values.Num(), 5)) continue;
+					RecordedInput.Add({FCString::Atof(*Values[0]), FCString::Atof(*Values[1]), FCString::Atof(*Values[2]),
+						FCString::Atof(*Values[3]) > .5f, FCString::Atof(*Values[4]) > .5f});
+				}
+			Test->TestTrue(TEXT("Recorded input contains movement frames"), RecordedInput.Num() > 1);
+			bReplayCameraView = true;
+		}
 		if (!Test->TestTrue(TEXT("Playback rate is 30, 60 or 120 Hz"), PlaybackHz == 30 || PlaybackHz == 60 || PlaybackHz == 120)) PlaybackHz = 60;
-		if (FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotPlaybackCase="), SingleScenario))
+		if (!bRecorded && FParse::Value(FCommandLine::Get(), TEXT("ProjectJOneShotPlaybackCase="), SingleScenario))
 		{
 			if (Test->TestTrue(TEXT("Requested playback case exists"), SingleScenario >= 0 &&
 				SingleScenario < (bDirections ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8))) Scenario = SingleScenario;
 			else SingleScenario = INDEX_NONE;
 		}
-		else if (bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
+		else if (!bRecorded && bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
 		Report = FString::Printf(TEXT("Authored Blueprint/GAS/CMC playback on collision floor; NullRHI=%d Hz=%d. FootStepCm is component-space displacement per fixed step, not world foot sliding.\n"), GUsingNullRHI, PlaybackHz);
 		FString Output;
 		FParse::Value(FCommandLine::Get(), bDirections ? TEXT("ProjectJOneShotDirectionOutput=") :
@@ -209,6 +236,20 @@ public:
 			else CameraYaw = 180;
 			if (bWasOverride && OutgoingClip.ToString().Contains(bLand ? TEXT("Land") : TEXT("Start"))) bChangedDuringShot = true;
 		}
+		if (!RecordedInput.IsEmpty())
+		{
+			bool bJumpPressed = Frame == 0 && RecordedInput[0].bJump;
+			while (RecordedIndex + 1 < RecordedInput.Num() && RecordedInput[RecordedIndex + 1].Seconds <= Frame / float(PlaybackHz) + .0001f)
+			{
+				++RecordedIndex;
+				bJumpPressed |= RecordedInput[RecordedIndex].bJump;
+			}
+			const auto& Input = RecordedInput[RecordedIndex];
+			CameraYaw = Input.Yaw; CameraPitch = Input.Pitch; bInput = Input.bInput;
+			Keys = bInput ? FVector2D(0, 1) : FVector2D::ZeroVector;
+			if (bJumpPressed) { Player->Jump(); ++RecordedJumpCount; }
+			else Player->StopJumping();
+		}
 		Controller->SetControlRotation(FRotator(CameraPitch, CameraYaw, 0));
 		if (bReplayCameraView && Controller->PlayerCameraManager)
 		{
@@ -224,8 +265,8 @@ public:
 		if (!bInput) Player->StopSprint();
 		const float TravelYaw = bCurveResponse && CurveCases()[Scenario].Pattern == 3 ? 0 : CameraYaw;
 		Player->AddMovementInput(FRotator(0, TravelYaw, 0).RotateVector(FVector(Keys.Y, Keys.X, 0)), bInput ? 1.f : 0.f);
-		if (bLand && Frame == FMath::RoundToInt(JumpAtSeconds * PlaybackHz)) Player->Jump();
-		if (bLand && Frame == FMath::RoundToInt((JumpAtSeconds + .25f) * PlaybackHz)) Player->StopJumping();
+		if (RecordedInput.IsEmpty() && bLand && Frame == FMath::RoundToInt(JumpAtSeconds * PlaybackHz)) Player->Jump();
+		if (RecordedInput.IsEmpty() && bLand && Frame == FMath::RoundToInt((JumpAtSeconds + .25f) * PlaybackHz)) Player->StopJumping();
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
 		World->Tick(LEVELTICK_All, 1.f / PlaybackHz);
@@ -361,6 +402,12 @@ public:
 			{
 				const auto* Unified = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJLocomotion>(Anim);
 				Test->TestEqual(TEXT("Shared player follows authored ownership"), Unified->IsPlayingOneShot(), bOverride);
+				if (bOverride) Test->TestEqual(TEXT("A new authored owner cancels the prior inertial return envelope"), Unified->GetInertialReturnSecondsRemaining(), 0.f);
+				if (Unified->GetInertialReturnSecondsRemaining() > UE_SMALL_NUMBER)
+				{
+					Test->TestEqual(TEXT("Inertial return cannot start a live stack blend beneath its pose offset"), Unified->AnimPlayers.Num(), 1);
+					if (!bReturn && Unified->AnyNewBlendToThisFrame()) ++CoherentReturnReselections;
+				}
 				if (bOverride && !Unified->AnimPlayers.IsEmpty())
 				{
 					Test->TestEqual(TEXT("Authored command is the actual shared player"), GetFNameSafe(Unified->GetAnimAsset()), External);
@@ -391,9 +438,9 @@ public:
 				}
 				if (bReturn || bWindow || (bOverride && Frame % 10 == 0))
 				{
-					Report += FString::Printf(TEXT("Unified Scenario=%d Frame=%d Shot=%d Returning=%d OutgoingWeight=%.4f Players=%d ActualTime=%.4f Remaining=%.4f\n"),
+					Report += FString::Printf(TEXT("Unified Scenario=%d Frame=%d Shot=%d Returning=%d OutgoingWeight=%.4f Players=%d ActualTime=%.4f Remaining=%.4f InertialReturnRemaining=%.4f\n"),
 						Scenario, Frame, Unified->IsPlayingOneShot(), Unified->IsReturning(), Unified->GetOutgoingWeight(),
-						Unified->AnimPlayers.Num(), Unified->GetCurrentAssetTime(), Unified->GetOneShotSecondsRemaining());
+						Unified->AnimPlayers.Num(), Unified->GetCurrentAssetTime(), Unified->GetOneShotSecondsRemaining(), Unified->GetInertialReturnSecondsRemaining());
 					const auto* PresentationProperty = FindFProperty<FStructProperty>(FAnimNode_ProjectJLocomotion::StaticStruct(), TEXT("Presentation"));
 					if (PresentationProperty)
 					{
@@ -402,7 +449,11 @@ public:
 							*GetNameSafe(Presentation->SelectedAnimation), Presentation->bShouldEnableCombatStrafeOrientationWarping, Presentation->StrafeDirectionAngle);
 					}
 				}
-				if (Frame == At(600) - 1) Test->TestFalse(TEXT("Completed shared returns release presentation"), Unified->IsReturning());
+				if (Frame == EndFrame() - 1)
+				{
+					Test->TestFalse(TEXT("Completed shared returns release presentation"), Unified->IsReturning());
+					Test->TestEqual(TEXT("Completed return envelope has no stale owner"), Unified->GetInertialReturnSecondsRemaining(), 0.f);
+				}
 				continue;
 			}
 			if (!Property->Struct->IsChildOf(FAnimNode_ProjectJOneShotHandoff::StaticStruct())) continue;
@@ -424,7 +475,7 @@ public:
 				}
 				Test->TestTrue(TEXT("Live overlap retains the actual outgoing external asset"), bFoundOutgoing);
 			}
-			if (Frame == At(600) - 1) Test->TestFalse(TEXT("Completed returns release their retained command"), Handoff->IsLiveReturnActive());
+			if (Frame == EndFrame() - 1) Test->TestFalse(TEXT("Completed returns release their retained command"), Handoff->IsLiveReturnActive());
 		}
 		FVector Feet[2]; bool bFeet = !Player->GetMesh()->IsRunningParallelEvaluation();
 		const int32 ChestBone = Player->GetMesh()->GetBoneIndex(TEXT("spine_05"));
@@ -439,6 +490,13 @@ public:
 		}
 		if (bReturn || bWindow || (bOverride && Frame % 10 == 0))
 		{
+			for (const FStructProperty* Property : IAnimClassInterface::GetFromClass(Anim->GetClass())->GetAnimNodeProperties())
+				if (Property->Struct == FAnimNode_ProjectJStrafeUpperBodyFacing::StaticStruct())
+				{
+					const auto* Facing = Property->ContainerPtrToValuePtr<FAnimNode_ProjectJStrafeUpperBodyFacing>(Anim);
+					Report += FString::Printf(TEXT("Torso Scenario=%d Frame=%d Enabled=%d Yaw=%.4f Error=%.4f Desired=%.4f Applied=%.4f UprightWeight=%.4f\n"),
+						Scenario, Frame, Facing->WasEnabled(), Facing->GetInputChestYaw(), Facing->GetFacingError(), Facing->GetDesiredYaw(), Facing->GetAppliedYaw(), Facing->GetUprightWeight());
+				}
 			Report += FString::Printf(TEXT("Chest Scenario=%d Frame=%d Valid=%d Yaw=%.4f Step=%.4f Angle3D=%.4f\n"), Scenario, Frame, bChest, ChestYaw,
 				bChest && bPreviousChest ? FMath::FindDeltaAngleDegrees(PreviousChestYaw, ChestYaw) : 0.f,
 				bChest && bPreviousChest ? FMath::RadiansToDegrees(PreviousChestRotation.AngularDistance(ChestRotation)) : 0.f);
@@ -462,7 +520,7 @@ public:
 		PreviousChestRotation = ChestRotation;
 		if (bFeet) { PreviousFoot[0] = Feet[0]; PreviousFoot[1] = Feet[1]; }
 		bWasOverride = bOverride;
-		if (++Frame < At(600)) return false;
+		if (++Frame < EndFrame()) return false;
 		Test->TestTrue(FString::Printf(TEXT("Scenario %d actually returns from an authored external clip"), Scenario), Returns > 0);
 		Test->TestTrue(TEXT("Return window evaluates actual bones"), WindowFrames >= 12);
 		if (!bLand) Test->TestTrue(TEXT("Actually returns from Start, not merely Stop"), StartReturns > 0);
@@ -484,9 +542,17 @@ public:
 		if (bCurveResponse)
 		{
 			if (CurveCases()[Scenario].Pattern >= 4) Test->TestTrue(TEXT("Micro input is checked in actual settled MM playback"), MicroSettledFrames >= At(30));
-			Test->TestEqual(FString::Printf(TEXT("Scenario %d yields once for sustained travel, never for transient/noise/camera-only"), Scenario), CurveReturns, CurveCases()[Scenario].Pattern == 0 ? 1 : 0);
+			if (RecordedInput.IsEmpty())
+				Test->TestEqual(FString::Printf(TEXT("Scenario %d yields once for sustained travel, never for transient/noise/camera-only"), Scenario), CurveReturns, CurveCases()[Scenario].Pattern == 0 ? 1 : 0);
+			else Test->TestTrue(TEXT("Recorded slow curves actually release authored playback"), CurveReturns > 0);
 			Report += FString::Printf(TEXT("CurveSummary Scenario=%d Pattern=%d Keys=(%.1f,%.1f) CurveReturns=%d\n"), Scenario, CurveCases()[Scenario].Pattern,
 				CurveCases()[Scenario].Keys.X, CurveCases()[Scenario].Keys.Y, CurveReturns);
+		}
+		if (!RecordedInput.IsEmpty())
+		{
+			Test->TestTrue(TEXT("Recorded jumps produce actual Land returns"), LandReturns >= RecordedJumpCount);
+			Test->TestTrue(TEXT("Recorded return actually reselects during its coherent blend"), CoherentReturnReselections > 0);
+			Report += FString::Printf(TEXT("RecordedSummary Jumps=%d LandReturns=%d CoherentReselections=%d\n"), RecordedJumpCount, LandReturns, CoherentReturnReselections);
 		}
 		Cleanup(); Frame = Returns = WindowFrames = 0; ReturnFrame = -1000; bWasOverride = bPreviousFeet = false; OutgoingClip = NAME_None;
 		PreviousUnifiedTime = -1.f; PreviousUnifiedSelection = INDEX_NONE;
@@ -529,5 +595,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOneShotCurvePlayback, "ProjectJ.Animat
 bool FProjectJOneShotCurvePlayback::RunTest(const FString&)
 {
 	ADD_LATENT_AUTOMATION_COMMAND(ProjectJOneShotReturnPlayback::FPlayback(this, true, true)); return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRecordedLandReturn, "ProjectJ.Animation.OneShotReturn.RecordedStrafeLand",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJRecordedLandReturn::RunTest(const FString&)
+{
+	ADD_LATENT_AUTOMATION_COMMAND(ProjectJOneShotReturnPlayback::FPlayback(this, true, true, false, true)); return true;
 }
 #endif

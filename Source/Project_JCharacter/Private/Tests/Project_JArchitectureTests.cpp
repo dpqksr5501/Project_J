@@ -389,8 +389,12 @@ bool FProjectJRemoteOneShotSemanticPolicyTest::RunTest(const FString& Parameters
 		GetDefault<UProject_JAnimationUpdateCoordinatorComponent>();
 	TestFalse(TEXT("The presentation update coordinator adds no replication state"),
 		UpdateCoordinatorDefaults->GetIsReplicated());
-	TestFalse(TEXT("The presentation update coordinator is event-driven and never ticks"),
+	// Since visual-group budgeting (2026-10-12), client cadence is ticked while
+	// sparse urgent demands remain event-driven. BeginPlay disables server visuals.
+	TestTrue(TEXT("The presentation coordinator supports client visual cadence"),
 		UpdateCoordinatorDefaults->PrimaryComponentTick.bCanEverTick);
+	TestEqual(TEXT("Visual decisions precede dependency-controlled mesh evaluation"),
+		UpdateCoordinatorDefaults->PrimaryComponentTick.TickGroup, TG_PrePhysics);
 
 	using Project_J::Locomotion::ResolveLandingGaitIntent;
 	TestEqual(TEXT("A standing landing stays Walk regardless of a stale Sprint bit"),

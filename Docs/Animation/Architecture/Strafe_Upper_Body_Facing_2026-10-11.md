@@ -14,6 +14,8 @@ Master를 평가하는 주 메시에서 한 번 처리하고 기존 follower 리
 
 프로필은 활성화·허용 각도·최대 보정·반감기·회전 속도·전방 범위·최저 속도·루트 추종 시 감쇠를 제공한다. 기본값은 작은 원본 yaw 8도 허용, 최대 보정 40도, 반감기 0.04초, 최대 360도/초다. 에셋 이름에 따른 분기나 캐릭터별 코드 수정은 없다.
 
+2026-10-13 느린 착지 복귀 후속에서는 가슴의 단일 전방 벡터를 수평 투영하던 측정을 기준 포즈로 보정한 회전의 수직축 twist로 교체했다. 깊이 숙인 가슴의 전방 벡터가 수직을 지나며 뒤집히는 것을 큰 yaw 오차로 처리하지 않는다. 보정 강도에는 현재 가슴의 upright 정도 `clamp(dot(DeltaRotation * WorldUp, WorldUp), 0, 1)`를 곱한다. 숙인 회복 포즈에는 적게 개입하고 몸이 서면 기존 보정으로 돌아온다. 기존 반감기·최대 회전율과 실행 경계를 유지하며, 특정 Land/Arc 이름·키·종료 타이머 분기는 추가하지 않는다. [재현·동일 장면 비교](../Planning/Strafe_Land_Return_2026-10-13.md#0926-느린-착지-회전-후속)
+
 ## 실행 경계
 
 - 로컬 플레이어의 primary 메시, Combat·OnFoot·접지·전방 Strafe Cycle·유효 Aim에서 작동한다.
@@ -38,6 +40,8 @@ Game Thread가 프로필·소유권·행동 상태를 값 스냅샷으로 발행
 `-ProjectJStrafeUpperBodyFacingTrial`은 CMC 자동 재현에 이 미저장 연결을 적용한다. `-ProjectJStrafeSlowForwardCamera`는 W 30/60/90도/초, `-ProjectJStrafeSlowForwardCameraLeft`는 같은 속도의 좌회전, `-ProjectJStrafePacketCamera`는 40Hz 카메라 입력 묶음이다. Trial 보고서는 척추 외 모든 로컬 본 및 양발 컴포넌트 포즈 해시를 기록해 ON/OFF 보존 여부를 검사한다.
 
 콘솔 `p.ProjectJ.StrafeUpperBodyFacing 0/1`로 비교한다. `p.ProjectJ.LocomotionContinuityTrace 3`에는 최종 Facing과 `Stage=UpperBodyFacing`의 입력 가슴 방향·오차·목표·실제 보정·루트 감쇠를 기록한다. 검사 후 Trace를 0으로 끈다. 진단 활성 실행으로 실제 프레임 성능을 판정하지 않는다.
+
+2026-10-13 이후 `UpperBodyFacing.UprightWeight`도 기록한다. Trace 3은 Strafe Land 소유 구간까지 포함하며, `TorsoRotation`의 평가된 가슴 컴포넌트 공간 쿼터니언과 실제 `Inertialization` 상태를 남긴다. Land 중 `Facing.Clip`은 마지막 MM 검색 결과일 수 있으므로 현재 소유한 클립은 `TorsoRotation.ExternalClip` 또는 기존 `ExternalPlayer`와 함께 읽는다. 복귀 전후를 3D 회전으로 비교할 수 있으며, 프레임마다 trace하는 추가 작업은 진단을 켠 경우에만 실행한다.
 
 미저장 비교는 선택·이동 보고서가 동일했고 W 60/90도/초 Arc에서 가슴–카메라 차이 중앙값이 30.02/33.47도에서 9.52/9.68도로 감소했다. 루트·골반 방향과 선택 clip/time/Steering 목표도 같았다. W 30도/초 장면에서는 Arc가 선택되지 않아 Arc 개선 수치가 없다.
 

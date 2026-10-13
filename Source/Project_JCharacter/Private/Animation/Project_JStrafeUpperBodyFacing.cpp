@@ -9,6 +9,25 @@ float Safe(float Value, float Fallback, float Min, float Max)
 }
 }
 
+bool Project_J::Animation::TryGetUpperBodyYaw(const FQuat& Pose, const FQuat& Reference,
+	const FQuat& Component, const FVector& NeutralForward, float& OutYaw, float& OutUprightWeight)
+{
+	OutUprightWeight = 0.f;
+	if (Pose.ContainsNaN() || Reference.ContainsNaN() || Component.ContainsNaN() || NeutralForward.ContainsNaN() ||
+		!Pose.IsNormalized() || !Reference.IsNormalized() || !Component.IsNormalized()) return false;
+	const FQuat Delta = Pose * Reference.Inverse();
+	const FVector Up = Component.UnrotateVector(FVector::UpVector);
+	const double Twist = FVector::DotProduct(FVector(Delta.X, Delta.Y, Delta.Z), Up);
+	// A 180-degree swing has no unique up-axis twist. Do not manufacture a yaw.
+	if (FMath::Square(Twist) + FMath::Square(Delta.W) <= UE_SMALL_NUMBER) return false;
+	const FVector Forward = Component.RotateVector(NeutralForward);
+	if (Forward.SizeSquared2D() <= UE_SMALL_NUMBER) return false;
+	OutYaw = FRotator::NormalizeAxis(Forward.Rotation().Yaw +
+		FMath::RadiansToDegrees(2.0 * FMath::Atan2(Twist, Delta.W)));
+	OutUprightWeight = FMath::Clamp(FVector::DotProduct(Delta.RotateVector(Up), Up), 0.0, 1.0);
+	return FMath::IsFinite(OutYaw);
+}
+
 bool Project_J::Animation::IsStrafeFacingTurnOwned(const FProject_JAnimThreadSafeData& Data)
 {
 	return Data.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Turn ||

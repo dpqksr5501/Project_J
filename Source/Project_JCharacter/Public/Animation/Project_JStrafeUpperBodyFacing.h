@@ -55,6 +55,9 @@ struct PROJECT_JCHARACTER_API FProject_JStrafeUpperBodyFacingInput
 
 namespace Project_J::Animation
 {
+/** Calibrated world-up twist and upright weight; a bent torso must not request an upright yaw correction. */
+PROJECT_JCHARACTER_API bool TryGetUpperBodyYaw(const FQuat& Pose, const FQuat& Reference,
+	const FQuat& Component, const FVector& NeutralForward, float& OutYaw, float& OutUprightWeight);
 /** Shared ownership check so upper/lower presentation cannot disagree on Turn owners. */
 PROJECT_JCHARACTER_API bool IsStrafeFacingTurnOwned(const FProject_JAnimThreadSafeData& Data);
 PROJECT_JCHARACTER_API FProject_JStrafeUpperBodyFacingInput BuildStrafeUpperBodyFacingInput(

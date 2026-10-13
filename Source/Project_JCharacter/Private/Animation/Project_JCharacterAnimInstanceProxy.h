@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Animation/AnimInstanceProxy.h"
-#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JAnimationSnapshot.h"
+#include "Animation/Project_JAnimationFlowTrace.h"
 #include "PoseSearch/AnimNode_MotionMatching.h"
 #include "PoseSearch/AnimNode_PoseSearchHistoryCollector.h"
 

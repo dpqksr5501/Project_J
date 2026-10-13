@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PoseSearch/AnimNode_MotionMatching.h"
-#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JPlaybackReturnPolicy.h"
 #include "AnimNode_ProjectJLocomotion.generated.h"
 
 /** State-controller clips and regular MM share the same players, sample graph and clock. */
@@ -21,6 +21,7 @@ public:
 	float GetOneShotSecondsRemaining() const;
 	int32 GetOneShotSelectionRevision() const { return Presentation.SelectionRevision; }
 	UAnimationAsset* GetOneShotAsset() const { return Presentation.SelectedAnimation; }
+	float GetInertialReturnSecondsRemaining() const { return InertialReturn.GetRemaining(); }
 private:
 	UPROPERTY(Transient)
 	FProject_JAnimOneShotPresentationThreadSafeData Presentation;
@@ -28,4 +29,5 @@ private:
 	int32 AuthoredPoseLinkIndex = INDEX_NONE;
 	bool bPlayingOneShot = false;
 	bool bRootTurnEpisode = false;
+	ProjectJ::Animation::FInertialReturnRuntime InertialReturn;
 };

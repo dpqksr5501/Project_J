@@ -27,7 +27,7 @@ FAnimNode_ProjectJStrafeUpperBodyFacing::FAnimNode_ProjectJStrafeUpperBodyFacing
 
 void FAnimNode_ProjectJStrafeUpperBodyFacing::ResetDynamics(ETeleportType)
 {
-	Correction = FacingError = DesiredYaw = InputChestYaw = RootWeight = PendingDeltaTime = 0.f;
+	Correction = FacingError = DesiredYaw = InputChestYaw = RootWeight = UprightWeight = PendingDeltaTime = 0.f;
 	LastUpdate.Reset();
 }
 
@@ -117,7 +117,7 @@ void FAnimNode_ProjectJStrafeUpperBodyFacing::Evaluate_AnyThread(FPoseContext& O
 	Source.Evaluate(Output);
 	const float Dt = PendingDeltaTime;
 	PendingDeltaTime = 0.f;
-	FacingError = DesiredYaw = RootWeight = InputChestYaw = 0.f;
+	FacingError = DesiredYaw = RootWeight = UprightWeight = InputChestYaw = 0.f;
 	if (!Input.bCanRelease || Ancestors.IsEmpty()) { Correction = 0.f; return; }
 	if (!Input.bEnabled && FMath::Abs(Correction) < .001f) { Correction = 0.f; return; }
 	// Only the small root-to-chest path is composed. No whole-pose component
@@ -134,14 +134,14 @@ void FAnimNode_ProjectJStrafeUpperBodyFacing::Evaluate_AnyThread(FPoseContext& O
 	const FQuat Component = Output.AnimInstanceProxy->GetComponentTransform().GetRotation();
 	const FVector Neutral = Component.UnrotateVector(FRotator(0, Input.ActorYaw, 0).Vector());
 	float RootYaw = 0.f;
-	if (!Heading(InputCS.Last().GetRotation(), ReferenceChest, Component, Neutral, InputChestYaw) ||
+	if (!Project_J::Animation::TryGetUpperBodyYaw(InputCS.Last().GetRotation(), ReferenceChest, Component, Neutral, InputChestYaw, UprightWeight) ||
 		!Heading(InputCS[RootPosition].GetRotation(), ReferenceRoot, Component, Neutral, RootYaw))
 	{
 		Correction = 0.f; return;
 	}
 	FacingError = FMath::FindDeltaAngleDegrees(InputChestYaw, Input.TargetYaw);
 	RootWeight = Project_J::Animation::UpperBodyRootFacingWeight(FMath::FindDeltaAngleDegrees(RootYaw, Input.TargetYaw), Input.Policy);
-	DesiredYaw = Input.bEnabled ? Project_J::Animation::UpperBodyFacingDemand(FacingError, Input.Strength * RootWeight, Input.Policy) : 0.f;
+	DesiredYaw = Input.bEnabled ? Project_J::Animation::UpperBodyFacingDemand(FacingError, Input.Strength * RootWeight * UprightWeight, Input.Policy) : 0.f;
 	Correction = Project_J::Animation::StepUpperBodyFacing(Correction, DesiredYaw, Dt, Input.Policy);
 	if (FMath::Abs(Correction) < .001f) return;
 	const FVector Axis = Component.UnrotateVector(FVector::UpVector).GetSafeNormal();

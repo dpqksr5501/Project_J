@@ -806,9 +806,12 @@ public:
 			Test->TestTrue(TEXT("Real lateral camera curves select authored lateral turns"), TotalLateralBoxFrames + TotalLateralDiamondFrames > 0);
 		}
 		const FString Directory = FPaths::ProjectSavedDir() / TEXT("Validation/StrafeCamera_20261006");
-		IFileManager::Get().MakeDirectory(*Directory, true);
-		FString Output = Directory / TEXT("Playback.txt");
+		// Independent replay tests must not overwrite the same Playback.txt.
+		// Each default report owns a path; explicit caller paths remain supported.
+		FString Output = Directory / FGuid::NewGuid().ToString(EGuidFormats::Digits) / TEXT("Playback.txt");
 		FParse::Value(FCommandLine::Get(), TEXT("ProjectJStrafePlaybackOutput="), Output);
+		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Output), true);
+		Test->AddInfo(FString::Printf(TEXT("CMC playback evidence: %s"), *Output));
 		Test->TestTrue(TEXT("Save CMC direction/prediction evidence"), FFileHelper::SaveStringToFile(Report,
 			*Output, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM));
 		return true;

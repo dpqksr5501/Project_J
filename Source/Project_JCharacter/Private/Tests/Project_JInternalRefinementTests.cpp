@@ -4,6 +4,7 @@
 #include "Tests/Project_JInternalTestReceiver.h"
 #include "Animation/Project_JTrajectoryQuery.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
 #include "Camera/Project_JCameraComponent.h"
 #include "Camera/CameraComponent.h"

@@ -156,7 +156,7 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 * it becomes active only after the ABP consumes the accompanying thread-safe
 	 * one-shot request getters.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot")
 	bool bEnableExperimentalOneShotPresentation = false;
 
 	/**
@@ -165,7 +165,7 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 * FProject_JStateControllerChooserOutput metadata for a Blend Stack entry.
 	 * Leave null while the experimental presentation branch is not authored.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot")
 	TObjectPtr<UChooserTable> StateControllerAnimationChooserTable = nullptr;
 
 	/**
@@ -173,7 +173,7 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 * chooser's one-shot candidate set. Cycle remains owned by the regular MM
 	 * node and must not use this path.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot")
 	bool bUseMotionMatchForExperimentalOneShotEntry = true;
 
 	/**
@@ -182,7 +182,7 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 * the State Controller must then rely on the asset's EarlyTransition notify
 	 * or the exact end of the non-looping Blend Stack asset.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot", meta = (ClampMin = "0.0", Units = "s"))
 	float ExperimentalOneShotFallbackLeadTime = 0.0f;
 
 	/**
@@ -190,49 +190,49 @@ struct PROJECT_JCHARACTER_API FProject_JMotionMatchingSearchPolicy
 	 * pose. Keep the authored entry, then hand off to InAirLoop after this maximum
 	 * elapsed time. Zero disables the Fall Off-specific cap.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot", meta = (ClampMin = "0.0", Units = "s"))
 	float ExperimentalFallOffMaxHoldTime = 0.65f;
 
 	/**
 	 * Allows the optional State Controller to run GASP-style Idle Loop -> Idle
 	 * Break variation. It stays off until an Idle Break Chooser path is authored.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot")
 	bool bEnableExperimentalIdleBreak = false;
 
 	/**
 	 * Minimum logical Idle Loop time before an authored Idle Break rule may
 	 * enter. The ABP owns the actual state time and must apply this value.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot", meta = (ClampMin = "0.0", Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot", meta = (ClampMin = "0.0", Units = "s"))
 	float ExperimentalIdleBreakMinimumStateTime = 3.0f;
 
 	/** 공중 점프 체공 중 마우스 회전 또는 이동 입력 변경 시 점프 스타트 방향 재선택 활성화 여부 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump")
 	bool bEnableAirJumpReselection = true;
 
 	/** 공중 점프 재선택 간 최소 쿨다운 시간 (기본 0.08초) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.01", Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "0.01", Units = "s"))
 	float AirJumpReselectCooldown = 0.08f;
 
 	/** 공중 점프 재선택 크로스페이드 블렌드 시간 (기본 0.15초) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.05", ClampMax = "0.5", Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "0.05", ClampMax = "0.5", Units = "s"))
 	float AirJumpBlendTime = 0.15f;
 
 	/** 이전 점프 재선택 블렌드가 이 비율 이상 진행된 후 다음 재선택 허용 (0.7 = 70% 진행 후 허용, 블렌드 중첩 및 팝핑 원천 방지) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.3", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "0.3", ClampMax = "1.0"))
 	float AirJumpMinBlendProgressRatio = 0.70f;
 
 	/** 점프 스타트 모션 길이 대비 재선택 허용 최대 진행률 (0.85 = 85% 이전까지만 재선택 허용하여 착지/루프 핸드오프 보장) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "0.1", ClampMax = "1.0"))
 	float AirJumpMaxProgressRatio = 0.85f;
 
 	/** OTM 지상 점프 진입 시 [Actor Facing vs Velocity] 각도 오차 허용치 (기본 45도, 이내면 Forward, 초과 시 사이드/후방 점프) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "10.0", ClampMax = "90.0", Units = "deg"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "10.0", ClampMax = "90.0", Units = "deg"))
 	float OTMJumpLaunchAngleThreshold = 45.0f;
 
 	/** 공중 체공 중 마우스 회전 시 캡슐이 카메라 Yaw를 추종하는 회전 보간 속도 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Experimental One Shot|Air Jump", meta = (ClampMin = "1.0", Units = "deg/s"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Motion Matching|Authored One Shot|Air Jump", meta = (ClampMin = "1.0", Units = "deg/s"))
 	float AirRotationCatchUpSpeed = 12.0f;
 
 	bool ShouldSearchEveryUpdate(EProject_JLocomotionPhaseFamily PhaseFamily, bool bIsFallOffStart) const;

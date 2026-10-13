@@ -1,33 +1,15 @@
 #include "Animation/AnimNode_ProjectJLocomotion.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/AnimInertializationSyncScope.h"
 #include "Animation/AnimNode_Inertialization.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
-#include "UObject/UnrealType.h"
-#include "HAL/IConsoleManager.h"
+#include "Animation/Project_JMotionMatchingEngineAdapter.h"
+using ProjectJ::Animation::FScopedMotionMatchingReturn;
+#include "Animation/Project_JMotionMatchingCVars.h"
 
 namespace
 {
-bool CanOverlapReturn(const FProject_JAnimThreadSafeData& Data,
-	const FProject_JAnimOneShotPresentationThreadSafeData& Presentation, bool bRootTurnEpisode)
-{
-	static const auto* LiveCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("p.ProjectJ.LiveOneShotReturn"));
-	using P = EProject_JStateControllerPresentationState;
-	const bool bEligible = (Presentation.PresentationState == P::TransitionToLocomotion &&
-		Presentation.PhaseFamily != EProject_JLocomotionPhaseFamily::Pivot) ||
-		Presentation.PresentationState == P::TransitionToIdle || Presentation.PresentationState == P::TransitionToLand;
-	const bool bLandingRecoveryInterrupted = Presentation.PresentationState == P::TransitionToLand &&
-		Data.Landing.bIsLanding && !Presentation.bTransitionAnimationAlmostComplete &&
-		Data.MotionMatchingSearchPolicy.bUseInertialLandingInterruptReturn;
-	// Recovery can differ markedly from the incoming locomotion pose. The
-	// existing downstream inertializer preserves the evaluated pose/velocity;
-	// natural tails and Start/Stop retain their continuous outgoing clocks.
-	return bEligible && !bLandingRecoveryInterrupted && (!LiveCVar || LiveCVar->GetInt() != 0) && !bRootTurnEpisode && Data.MotionMatchingSearchPolicy.bEnableLiveOneShotReturn &&
-		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot && !Data.Air.bIsInAir &&
-		!Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
-		Data.ProceduralIK.FullBodyMontageWeight <= UE_SMALL_NUMBER &&
-		Data.LocomotionContext.RotationMode == Presentation.RotationMode;
-}
 class FScopedPlaybackPresentation
 {
 public:
@@ -47,44 +29,7 @@ private:
 	const FProject_JAnimOneShotPresentationThreadSafeData* Previous = nullptr;
 	int32 PreviousIndex = INDEX_NONE;
 };
-// The engine's MM relevance counter is not updated during direct playback.
-// Suppress its return-time stack reset; this node tracks actual graph relevance.
-class FScopedMMReturnSettings
-{
-public:
-	FScopedMMReturnSettings(FAnimNode_MotionMatching& InNode, float ReturnTime, bool bInertial)
-		: Node(InNode)
-	{
-		Reset = FindFProperty<FBoolProperty>(FAnimNode_MotionMatching::StaticStruct(), TEXT("bResetOnBecomingRelevant"));
-		Inertial = FindFProperty<FBoolProperty>(FAnimNode_MotionMatching::StaticStruct(), TEXT("bUseInertialBlend"));
-		Blend = FindFProperty<FFloatProperty>(FAnimNode_MotionMatching::StaticStruct(), TEXT("BlendTime"));
-		Throttle = FindFProperty<FFloatProperty>(FAnimNode_MotionMatching::StaticStruct(), TEXT("SearchThrottleTime"));
-		check(Reset && Inertial && Blend && Throttle);
-		bReset = Reset->GetPropertyValue_InContainer(&Node);
-		bOldInertial = Inertial->GetPropertyValue_InContainer(&Node);
-		OldBlend = Blend->GetPropertyValue_InContainer(&Node);
-		OldThrottle = Throttle->GetPropertyValue_InContainer(&Node);
-		Reset->SetPropertyValue_InContainer(&Node, false);
-		Inertial->SetPropertyValue_InContainer(&Node, bInertial);
-		Blend->SetPropertyValue_InContainer(&Node, ReturnTime);
-		Throttle->SetPropertyValue_InContainer(&Node, 0.f);
-	}
-	~FScopedMMReturnSettings()
-	{
-		Reset->SetPropertyValue_InContainer(&Node, bReset);
-		Inertial->SetPropertyValue_InContainer(&Node, bOldInertial);
-		Blend->SetPropertyValue_InContainer(&Node, OldBlend);
-		Throttle->SetPropertyValue_InContainer(&Node, OldThrottle);
-	}
-private:
-	FAnimNode_MotionMatching& Node;
-	FBoolProperty* Reset = nullptr;
-	FBoolProperty* Inertial = nullptr;
-	FFloatProperty* Blend = nullptr;
-	FFloatProperty* Throttle = nullptr;
-	bool bReset = false, bOldInertial = false;
-	float OldBlend = 0.f, OldThrottle = 0.f;
-};
+
 }
 
 void FAnimNode_ProjectJLocomotion::Initialize_AnyThread(const FAnimationInitializeContext& Context)
@@ -92,6 +37,7 @@ void FAnimNode_ProjectJLocomotion::Initialize_AnyThread(const FAnimationInitiali
 	Presentation = {};
 	AuthoredPoseLinkIndex = INDEX_NONE;
 	bPlayingOneShot = bRootTurnEpisode = false;
+	InertialReturn.Reset();
 	PlaybackUpdateCounter.Reset();
 	FAnimNode_MotionMatching::Initialize_AnyThread(Context);
 }
@@ -115,12 +61,14 @@ void FAnimNode_ProjectJLocomotion::UpdateAssetPlayer(const FAnimationUpdateConte
 		Presentation = {};
 		AuthoredPoseLinkIndex = INDEX_NONE;
 		bPlayingOneShot = bRootTurnEpisode = false;
+		InertialReturn.Reset();
 	}
 	PlaybackUpdateCounter.SynchronizeWith(Proxy.GetUpdateCounter());
 	const bool bWasOneShot = bPlayingOneShot;
 	bPlayingOneShot = Shot.bShouldOverrideMotionMatching && Shot.SelectedAnimation != nullptr;
 	if (bPlayingOneShot)
 	{
+		InertialReturn.Reset();
 		GetEvaluateGraphExposedInputs().Execute(Context);
 		const bool bNewCommand = !bWasOneShot || Presentation.SelectionRevision != Shot.SelectionRevision ||
 			Presentation.SelectedAnimation != Shot.SelectedAnimation || AnimPlayers.IsEmpty();
@@ -145,7 +93,7 @@ void FAnimNode_ProjectJLocomotion::UpdateAssetPlayer(const FAnimationUpdateConte
 	Presentation.bForceBlendNextUpdate = false;
 	Presentation.StrafeDirectionAngle = Shot.StrafeDirectionAngle;
 	bool bInterruptedReturn = false;
-	if (!bWasOneShot && IsReturning() && !CanOverlapReturn(Data, Presentation, bRootTurnEpisode))
+	if (!bWasOneShot && IsReturning() && !ProjectJ::Animation::CanOverlapAuthoredReturn(Data, Presentation, bRootTurnEpisode, Project_J::MotionMatchingCVars::ShouldUseLiveOneShotReturn()))
 	{
 		if (auto* Requester = Context.GetMessage<UE::Anim::IInertializationRequester>())
 		{
@@ -160,20 +108,42 @@ void FAnimNode_ProjectJLocomotion::UpdateAssetPlayer(const FAnimationUpdateConte
 	}
 	FScopedPlaybackPresentation Playback(Proxy, Presentation.SelectedAnimation ? &Presentation : nullptr, AuthoredPoseLinkIndex);
 	UE::Anim::TOptionalScopedGraphMessage<UE::Anim::FAnimInertializationSyncScope> ReturnSync(bInterruptedReturn, Context);
+	// A forward landing return and its subsequent MM jumps must use one blend
+	// strategy. Starting a live stack fade underneath a still-decaying inertial
+	// offset changes the target twice. This envelope follows requested blend
+	// durations; it does not delay a search or lock a candidate.
+	if (!ProjectJ::Animation::CanContinueInertialReturn(Data, GetMotionMatchingState().SearchResult.bIsInteraction))
+		InertialReturn.Cancel();
 	if (bWasOneShot)
 	{
 		const float AuthoredReturn = Presentation.SelectedAnimationOutput.ReturnBlendTime;
 		const float ReturnTime = FMath::IsFinite(AuthoredReturn) && AuthoredReturn >= 0.f ? AuthoredReturn :
 			FMath::Max(0.f, Data.MotionMatchingSearchPolicy.TransitionBlendTime);
-		const bool bLive = CanOverlapReturn(Data, Presentation, bRootTurnEpisode);
-		FScopedMMReturnSettings Settings(*this, ReturnTime, !bLive);
+		const bool bLive = ProjectJ::Animation::CanOverlapAuthoredReturn(Data, Presentation, bRootTurnEpisode, Project_J::MotionMatchingCVars::ShouldUseLiveOneShotReturn());
+		FScopedMotionMatchingReturn Settings(*this, ReturnTime, !bLive);
 		SetInterruptMode(EPoseSearchInterruptMode::ForceInterruptAndInvalidateContinuingPose);
 		FAnimNode_MotionMatching::UpdateAssetPlayer(Context);
+		if (!bLive && Data.MotionMatchingSearchPolicy.bUseInertialLandingInterruptReturn &&
+			Presentation.PresentationState == EProject_JStateControllerPresentationState::TransitionToLand &&
+			Data.MotionMatching.SelectionContext.bUseForwardCycle && AnyNewBlendToThisFrame() &&
+			Context.GetMessage<UE::Anim::IInertializationRequester>())
+		{
+			InertialReturn.Begin(ReturnTime);
+		}
+	}
+	else if (InertialReturn.IsActive())
+	{
+		// Keep the regular search interval, continuation bias and candidate set.
+		// The engine handles repeated-request deficits and pose velocities.
+		FScopedMotionMatchingReturn Settings(*this, InertialReturn.GetDuration(), true, false);
+		FAnimNode_MotionMatching::UpdateAssetPlayer(Context);
+		if (AnyNewBlendToThisFrame()) InertialReturn.OnReselection();
 	}
 	else
 	{
 		FAnimNode_MotionMatching::UpdateAssetPlayer(Context);
 	}
+	InertialReturn.Advance(Context.GetDeltaTime());
 	if (!IsReturning() && GetAnimAsset() != Presentation.SelectedAnimation)
 	{ Presentation = {}; AuthoredPoseLinkIndex = INDEX_NONE; }
 }

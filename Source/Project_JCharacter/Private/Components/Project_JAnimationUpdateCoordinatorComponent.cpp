@@ -4,6 +4,7 @@
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
 #include "Components/Project_JModularMeshComponent.h"
 #include "Project_JBaseCharacter.h"
 #include "GameFramework/PlayerController.h"
@@ -249,13 +250,8 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 			if (auto* Anim = Mesh->GetPostProcessInstance()) Anim->ResetDynamics(ETeleportType::TeleportPhysics);
 		}
 	}
-	float DesiredInterval = 0;
-	if (!bProtected && !bHidden)
-	{
-		const float Tier = Character->GetSignificance();
-		DesiredInterval = Tier > 1 ? 1.f / 15 : Tier > 0 ? 1.f / 30 :
-			Source->IsManagedByBudget() && Source->GetExternalTickRate() > 1 ? 1.f / 30 : 0;
-	}
+	const float DesiredInterval = ProjectJ::Animation::ResolveVisualInterval(bProtected, bHidden,
+		Character->GetSignificance(), Source->IsManagedByBudget() && Source->GetExternalTickRate() > 1);
 	// Upgrade immediately; downgrade only after a short quiet period. The schedule
 	// phases periodic evaluation per owner so a 200-character arrival does not lockstep.
 	if (DesiredInterval > VisualInterval)

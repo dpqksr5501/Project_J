@@ -1,4 +1,8 @@
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JMotionMatchingEngineAdapter.h"
+#include "Animation/Project_JMotionMatchingBoundaryPolicy.h"
+using namespace ProjectJ::Animation;
 #include "Animation/AnimNode_ProjectJLocomotion.h"
 
 #include "Animation/AnimClassInterface.h"
@@ -9,45 +13,6 @@
 #include "UObject/UnrealType.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include <limits>
-
-namespace
-{
-FFloatProperty* GetMotionMatchingSearchThrottleTimeProperty()
-{
-	static FFloatProperty* Property = FindFProperty<FFloatProperty>(
-		FAnimNode_MotionMatching::StaticStruct(),
-		TEXT("SearchThrottleTime"));
-	return Property;
-}
-
-void SetMotionMatchingSearchThrottleTime(FAnimNode_MotionMatching& Node, float SearchThrottleTime)
-{
-	if (FFloatProperty* Property = GetMotionMatchingSearchThrottleTimeProperty())
-	{
-		Property->SetPropertyValue_InContainer(&Node, SearchThrottleTime);
-	}
-}
-
-float GetMotionMatchingSearchThrottleTime(const FAnimNode_MotionMatching& Node)
-{
-	if (const FFloatProperty* Property = GetMotionMatchingSearchThrottleTimeProperty())
-	{
-		return Property->GetPropertyValue_InContainer(&Node);
-	}
-
-	return 0.0f;
-}
-
-FMotionMatchingState* GetMutableMotionMatchingState(FAnimNode_MotionMatching& Node)
-{
-	// UE 5.8 exposes the state for reading but no search-completion counter. Use
-	// its reflected transient struct, without depending on private C++ offsets.
-	static FStructProperty* Property = FindFProperty<FStructProperty>(
-		FAnimNode_MotionMatching::StaticStruct(), TEXT("MotionMatchingState"));
-	return Property ? Property->ContainerPtrToValuePtr<FMotionMatchingState>(&Node) : nullptr;
-}
-
-}
 
 FProject_JCharacterAnimInstanceProxy::FProject_JCharacterAnimInstanceProxy()
 {
@@ -75,74 +40,43 @@ void FProject_JCharacterAnimInstanceProxy::QueueGameThreadData(
 	bool bInFreshSnapshot,
 	UPoseSearchDatabase* InTurnCycleCompanion)
 {
-	// A draw/sheathe montage can hide the moment input is released. If Cycle and
-	// Idle resolve to the same PSD, changing its search context alone does not
-	// retire the continuing walk pose. Interrupt it once at the Idle edge even
-	// when the database pointer remains unchanged.
-	const bool bEnteredGroundIdle =
-		bMotionMatchingEnabled && bInMotionMatchingEnabled &&
-		!InData.Air.bIsInAir &&
-		!InData.LocomotionContext.bIsMotionMatchingMoving &&
-		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle &&
-		(PendingGameThreadData.LocomotionContext.bIsMotionMatchingMoving ||
-			PendingGameThreadData.LocomotionContext.PhaseFamily != EProject_JLocomotionPhaseFamily::Idle);
-	const bool bReturnedFromOneShot = bMotionMatchingEnabled && bInMotionMatchingEnabled &&
-		PendingGameThreadData.OneShotPresentation.bShouldOverrideMotionMatching &&
-		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
-	const bool bNewForceRequest = bInFreshSnapshot && bInForceMotionMatchingReselect &&
-		(!bLastPublishedForceReselect ||
-			InData.MotionMatching.SelectionRevision != PendingGameThreadData.MotionMatching.SelectionRevision);
-	const bool bCompletedTurnReturn = PendingGameThreadData.MotionMatching.SelectionContext.bMovingTurn180 &&
-		InData.MotionMatching.SelectionContext.bAllowTurnContinuation &&
-		CurrentTurnCycleCompanion && InSelectedDatabase == CurrentTurnCycleCompanion &&
-		PendingGameThreadData.LocomotionContext.RotationMode == InData.LocomotionContext.RotationMode &&
-		PendingGameThreadData.LocomotionContext.GaitIntent == InData.LocomotionContext.GaitIntent &&
-		InData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
-		InData.LocomotionContext.bIsMotionMatchingMoving && !InData.Air.bIsInAir &&
-		!InData.OneShotPresentation.bShouldOverrideMotionMatching;
-	const auto& OldContext = PendingGameThreadData.MotionMatching.SelectionContext;
-	const auto& NewContext = InData.MotionMatching.SelectionContext;
-	const bool bRefaceNormalizationChanged =
-		(OldContext.bBackwardRefaceCandidates || OldContext.bAllowBackwardRefaceContinuation) !=
-		(NewContext.bBackwardRefaceCandidates || NewContext.bAllowBackwardRefaceContinuation);
-	const bool bGeneralCancelled =
-		(OldContext.bAllowGeneralTurnContinuation && !NewContext.bAllowGeneralTurnContinuation) ||
-		(OldContext.bGeneralTurnCandidates && !NewContext.bGeneralTurnCandidates && !NewContext.bAllowGeneralTurnContinuation);
-	const bool bRefaceCancelled =
-		(OldContext.bAllowBackwardRefaceContinuation && !NewContext.bAllowBackwardRefaceContinuation) ||
-		(OldContext.bBackwardRefaceCandidates && !NewContext.bBackwardRefaceCandidates && !NewContext.bAllowBackwardRefaceContinuation);
-	const bool bForwardNormalizationChanged = InSelectedDatabase != CurrentActiveDatabase &&
-		(OldContext.bUseForwardCycle || NewContext.bUseForwardCycle);
-	// A Cycle that has already won is the desired handoff. Do not invalidate it
-	// merely because its old GeneralTurn companion/permission is being removed.
+	// Only completed playback observations are read at the existing GT boundary.
 	const auto* CapturedNode = GetCapturedMotionMatchingNode();
-	const bool bFreshCycleResult = NewContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
+	FSearchPublication Publication{PendingGameThreadData, InData};
+	Publication.bWasEnabled = bMotionMatchingEnabled;
+	Publication.bEnabled = bInMotionMatchingEnabled;
+	Publication.bFresh = bInFreshSnapshot;
+	Publication.bForce = bInForceMotionMatchingReselect;
+	Publication.bLastForce = bLastPublishedForceReselect;
+	Publication.bHasCurrentCompanion = CurrentTurnCycleCompanion != nullptr;
+	Publication.bReturningToCompanion = InSelectedDatabase == CurrentTurnCycleCompanion;
+	Publication.bDatabaseChanged = InSelectedDatabase != CurrentActiveDatabase;
+	Publication.bCompanionChanged = InTurnCycleCompanion != CurrentTurnCycleCompanion;
+	Publication.bHasDatabase = InSelectedDatabase != nullptr;
+	Publication.bHasCompanion = InTurnCycleCompanion != nullptr;
+	Publication.bUpdate = bInUpdateMotionMatchingThisFrame;
+	Publication.bFreshCycleResult = InData.MotionMatching.SelectionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
 		InSelectedDatabase && LatestPostSelection.SelectedDatabase == InSelectedDatabase->GetFName() &&
 		LatestPostSelection.CaptureFrame > 0 && LatestPostSelection.CaptureFrame <= GFrameCounter &&
 		GFrameCounter - LatestPostSelection.CaptureFrame <= 2 && LatestPostSelection.CachedNodeWeight > UE_SMALL_NUMBER &&
 		CapturedNode && !CapturedNode->GetMotionMatchingState().SearchResult.bIsInteraction;
-	const bool bContinuationCancelled =
-		bForwardNormalizationChanged || bRefaceNormalizationChanged || (OldContext.bAllowTurnContinuation && !NewContext.bAllowTurnContinuation) ||
-		((bGeneralCancelled || bRefaceCancelled) && !bFreshCycleResult);
-	const bool bSelectedDatabaseChanged = bInUpdateMotionMatchingThisFrame && !bCompletedTurnReturn &&
-		((InSelectedDatabase && InSelectedDatabase != CurrentActiveDatabase) ||
-			(InTurnCycleCompanion && InTurnCycleCompanion != CurrentTurnCycleCompanion));
-	if (!bInMotionMatchingEnabled || InData.LocomotionMode != EProject_JAnimationLocomotionMode::OnFoot)
+	const FSearchBoundary Boundary = ResolveSearchBoundary(Publication);
+	if (Boundary.bClear)
 	{
 		ClearMotionMatchingReselects();
 	}
-	else if (bNewForceRequest || bEnteredGroundIdle || bReturnedFromOneShot || bSelectedDatabaseChanged || bContinuationCancelled)
+	else if (Boundary.bRequest)
 	{
 		if (!bForceMotionMatchingReselect) bRetireTurnContinuingPose = false;
 		// Coalesce against the newest context. A later GT frame must not discard
 		// an unconsumed return's pose-history query requirement.
 		// Dedicated forward statistics cannot reuse an old database's cost/pose.
 		// Search current history once at the boundary; retain normal playback blends.
-		bReselectFromPoseHistory = bReturnedFromOneShot || bForwardNormalizationChanged ||
+		bReselectFromPoseHistory = Boundary.bFromHistory ||
 			(bForceMotionMatchingReselect && bReselectFromPoseHistory);
 		PendingReselectRevision = ++ReselectSerial;
 		bForceMotionMatchingReselect = true;
-		bRetireTurnContinuingPose |= bContinuationCancelled;
+		bRetireTurnContinuingPose |= Boundary.bRetireContinuation;
 	}
 	PendingGameThreadData = InData;
 	++PublishedSnapshotRevision;
@@ -163,7 +97,7 @@ void FProject_JCharacterAnimInstanceProxy::Initialize(UAnimInstance* InAnimInsta
 {
 	if (bHasNativeDefaultSearchThrottleTime)
 	{
-		SetMotionMatchingSearchThrottleTime(NativeMotionMatchingNode, NativeDefaultSearchThrottleTime);
+		SetSearchThrottleTime(NativeMotionMatchingNode, NativeDefaultSearchThrottleTime);
 	}
 	FAnimInstanceProxy::Initialize(InAnimInstance);
 	PendingGameThreadData = FProject_JAnimThreadSafeData();
@@ -422,49 +356,6 @@ void FProject_JCharacterAnimInstanceProxy::CapturePostSelection()
 	}
 }
 
-FFloatProperty* FindMotionMatchingFloatProperty(const TCHAR* PropertyName)
-{
-	return FindFProperty<FFloatProperty>(FAnimNode_MotionMatching::StaticStruct(), PropertyName);
-}
-
-FStructProperty* GetMotionMatchingPlayRateProperty()
-{
-	static FStructProperty* Property = FindFProperty<FStructProperty>(
-		FAnimNode_MotionMatching::StaticStruct(),
-		TEXT("PlayRate"));
-	return Property;
-}
-
-void SetMotionMatchingFloatProperty(FAnimNode_MotionMatching& Node, const TCHAR* PropertyName, float Value)
-{
-	if (FFloatProperty* Property = FindMotionMatchingFloatProperty(PropertyName))
-	{
-		Property->SetPropertyValue_InContainer(&Node, Value);
-	}
-}
-
-void ApplyMotionMatchingPresentationPolicy(
-	FAnimNode_MotionMatching& Node,
-	const FProject_JMotionMatchingSearchPolicy& Policy,
-	bool bIsInAir,
-	bool bWasInAir,
-	float VerticalSpeed)
-{
-	SetMotionMatchingFloatProperty(Node, TEXT("BlendTime"), Policy.ResolveBlendTime(bIsInAir, bWasInAir, VerticalSpeed));
-	SetMotionMatchingFloatProperty(Node, TEXT("NotifyRecencyTimeOut"), FMath::Max(0.0f, Policy.NotifyRecencyTimeOut));
-	SetMotionMatchingFloatProperty(Node, TEXT("MaxBlendInTimeToOverrideAnimation"), FMath::Max(0.0f, Policy.MaxBlendInTimeToOverrideAnimation));
-	SetMotionMatchingFloatProperty(Node, TEXT("PlayerDepthBlendInTimeMultiplier"), FMath::Max(0.1f, Policy.PlayerDepthBlendInTimeMultiplier));
-	Node.SetMaxActiveBlends(FMath::Clamp(Policy.MaxActiveBlends, 1, 8));
-	if (FStructProperty* PlayRateProperty = GetMotionMatchingPlayRateProperty())
-	{
-		if (FFloatInterval* PlayRate = PlayRateProperty->ContainerPtrToValuePtr<FFloatInterval>(&Node))
-		{
-			PlayRate->Min = FMath::Clamp(Policy.MinPlayRate, 0.2f, 3.0f);
-			PlayRate->Max = FMath::Clamp(FMath::Max(PlayRate->Min, Policy.MaxPlayRate), 0.2f, 3.0f);
-		}
-	}
-}
-
 EPoseSearchInterruptMode FProject_JCharacterAnimInstanceProxy::ResolveDatabaseChangeInterruptMode() const
 {
 	// Stop and Idle both have false movement intent. A database change at that
@@ -592,13 +483,13 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 		ThreadSafeData.Movement.VerticalSpeed);
 	if (!bHasNativeDefaultSearchThrottleTime)
 	{
-		NativeDefaultSearchThrottleTime = GetMotionMatchingSearchThrottleTime(NativeMotionMatchingNode);
+		NativeDefaultSearchThrottleTime = GetSearchThrottleTime(NativeMotionMatchingNode);
 		bHasNativeDefaultSearchThrottleTime = true;
 	}
 	const bool bNativeDatabaseChanged =
 		NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase &&
 		(!CurrentTurnCycleCompanion || NativeMotionMatchingNode.GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentTurnCycleCompanion);
-	SetMotionMatchingSearchThrottleTime(
+	SetSearchThrottleTime(
 		NativeMotionMatchingNode,
 		ThreadSafeData.MotionMatchingSearchPolicy.ResolveSearchThrottleTime(
 			ThreadSafeData.LocomotionContext.PhaseFamily,
@@ -627,7 +518,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 		{
 			DefaultSearchThrottleTime = &DefaultSearchThrottleTimes.Add(
 				NodeIndex,
-				GetMotionMatchingSearchThrottleTime(*MotionMatchingNode));
+				GetSearchThrottleTime(*MotionMatchingNode));
 		}
 		const bool bDatabaseChanged =
 			MotionMatchingNode->GetMotionMatchingState().SearchResult.SelectedDatabase != CurrentActiveDatabase &&
@@ -638,7 +529,7 @@ void FProject_JCharacterAnimInstanceProxy::ApplyMotionMatchingSearchPolicy()
 			!ThreadSafeData.Air.bIsInAir &&
 			!ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving &&
 			ThreadSafeData.LocomotionContext.PhaseFamily == EProject_JLocomotionPhaseFamily::Idle;
-		SetMotionMatchingSearchThrottleTime(
+		SetSearchThrottleTime(
 			*const_cast<FAnimNode_MotionMatching*>(MotionMatchingNode),
 			bRecoverGroundIdle ? 0.0f : ThreadSafeData.MotionMatchingSearchPolicy.ResolveSearchThrottleTime(
 				ThreadSafeData.LocomotionContext.PhaseFamily,
@@ -701,13 +592,13 @@ void FProject_JCharacterAnimInstanceProxy::ArmMotionMatchingReselect(
 		if (MotionState->SearchResult.bIsInteraction) { return; }
 		State.ArmedRevision = PendingReselectRevision;
 		State.SavedElapsedSearchTime = MotionState->ElapsedPoseSearchTime;
-		State.SavedSearchThrottleTime = GetMotionMatchingSearchThrottleTime(Node);
+		State.SavedSearchThrottleTime = GetSearchThrottleTime(Node);
 		// Mark this search due using the engine's own reset value. UE 5.8 resets
 		// this timer to exactly zero only on the regular MotionMatch search path.
 		// Missing history, an inactive branch, and an interaction do not acknowledge
 		// the request. This also works when the search selects the same pose.
 		MotionState->ElapsedPoseSearchTime = std::numeric_limits<float>::infinity();
-		SetMotionMatchingSearchThrottleTime(Node, 0.0f);
+		SetSearchThrottleTime(Node, 0.0f);
 		Node.SetInterruptMode(ResolveReselectInterruptMode());
 	}
 }
@@ -745,7 +636,7 @@ bool FProject_JCharacterAnimInstanceProxy::CompleteMotionMatchingReselect(
 		// later mount/disable cancels the request. The proxy re-arms when needed.
 		Node.SetInterruptMode(EPoseSearchInterruptMode::DoNotInterrupt);
 	}
-	SetMotionMatchingSearchThrottleTime(Node, State.SavedSearchThrottleTime);
+	SetSearchThrottleTime(Node, State.SavedSearchThrottleTime);
 	State.ArmedRevision = 0;
 	return bSearched;
 }

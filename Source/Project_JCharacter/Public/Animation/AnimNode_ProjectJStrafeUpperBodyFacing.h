@@ -33,6 +33,7 @@ struct PROJECT_JCHARACTER_API FAnimNode_ProjectJStrafeUpperBodyFacing : public F
 	float GetFacingError() const { return FacingError; }
 	float GetDesiredYaw() const { return DesiredYaw; }
 	float GetRootWeight() const { return RootWeight; }
+	float GetUprightWeight() const { return UprightWeight; }
 	bool WasEnabled() const { return Input.bEnabled; }
 private:
 	void ResolveBones(const FBoneContainer& Bones);
@@ -50,4 +51,5 @@ private:
 	float DesiredYaw = 0.f;
 	float InputChestYaw = 0.f;
 	float RootWeight = 0.f;
+	float UprightWeight = 0.f;
 };

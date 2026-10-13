@@ -4,6 +4,8 @@
 
 namespace
 {
+TAutoConsoleVariable<int32> CVarLiveReturn(TEXT("p.ProjectJ.LiveOneShotReturn"), 1,
+	TEXT("Authored return: 0=inertial baseline, 1=profile-controlled live Start/Stop/Land overlap."));
 TAutoConsoleVariable<int32> CVarOneShotInputResponse(TEXT("p.ProjectJ.OneShotInputResponse"), 1,
 	TEXT("Start/Land input compatibility and observed return candidates. 0=legacy input cancellation, 1=profile-controlled."));
 TAutoConsoleVariable<int32> CVarProjectJRepairRemoteTrajectoryFacing(
@@ -71,6 +73,7 @@ TAutoConsoleVariable<int32> CVarTurnCycleCandidates(TEXT("p.ProjectJ.TurnCycleCa
 
 namespace Project_J::MotionMatchingCVars
 {
+bool ShouldUseLiveOneShotReturn() { return CVarLiveReturn.GetValueOnAnyThread() != 0; }
 bool ShouldUseTurnCycleCandidates() { return CVarTurnCycleCandidates.GetValueOnAnyThread() != 0; }
 bool ShouldRepairRemoteTrajectoryFacing()
 {

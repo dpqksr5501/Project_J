@@ -1,13 +1,12 @@
 #include "Animation/AnimNode_ProjectJOneShotHandoff.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JMotionMatchingCVars.h"
 #include "HAL/IConsoleManager.h"
 #include "Animation/AnimNode_Inertialization.h"
 #include "Animation/AnimInertializationSyncScope.h"
 
 namespace
 {
-TAutoConsoleVariable<int32> CVarLiveReturn(TEXT("p.ProjectJ.LiveOneShotReturn"), 1,
-	TEXT("One Shot Handoff node: 0=inertial return baseline, 1=profile-controlled live Start/Stop/Land overlap."));
 TAutoConsoleVariable<int32> CVarReturnDebug(TEXT("p.ProjectJ.OneShotReturnDebug"), 0,
 	TEXT("0=off, 1=log each live return blend frame and completion. Does not change playback."));
 }
@@ -48,7 +47,7 @@ void FAnimNode_ProjectJOneShotHandoff::Update_AnyThread(const FAnimationUpdateCo
 			 OutgoingPresentation.PresentationState == P::TransitionToLand);
 	}
 	// A live overlap is presentation only. Gameplay replacements preempt it.
-	bLiveReturn &= CVarLiveReturn.GetValueOnAnyThread() != 0 && Data.MotionMatchingSearchPolicy.bEnableLiveOneShotReturn &&
+	bLiveReturn &= Project_J::MotionMatchingCVars::ShouldUseLiveOneShotReturn() && Data.MotionMatchingSearchPolicy.bEnableLiveOneShotReturn &&
 		Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot &&
 		!Data.Air.bIsInAir && !Data.Combat.bIsAttacking && !Data.Combat.bIsDodging && !Data.Combat.bIsHitReacting &&
 		Data.ProceduralIK.FullBodyMontageWeight <= UE_SMALL_NUMBER &&
