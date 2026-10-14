@@ -1,0 +1,52 @@
+[
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+    "saved": true,
+    "effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  }
+]

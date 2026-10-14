@@ -5,6 +5,12 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 
+void UProject_JCombatIntroComponent::BeginPlay()
+{
+	bEndingPlay = false;
+	Super::BeginPlay();
+}
+
 UProject_JCombatIntroComponent::UProject_JCombatIntroComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;

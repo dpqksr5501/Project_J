@@ -6,6 +6,8 @@
 #include "UI/Project_JCharacterViewModel.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Engine/World.h"
 
 UProject_JCharacterUIBindingComponent::UProject_JCharacterUIBindingComponent()
 {
@@ -20,6 +22,7 @@ void UProject_JCharacterUIBindingComponent::EndPlay(const EEndPlayReason::Type E
 
 void UProject_JCharacterUIBindingComponent::BeginPlay()
 {
+	bEndingPlay = false;
 	Super::BeginPlay();
 	if (auto* Pawn = Cast<APawn>(GetOwner()))
 	{
@@ -55,6 +58,7 @@ void UProject_JCharacterUIBindingComponent::OnControllerChanged(APawn*, AControl
 
 UProject_JCharacterViewModel* UProject_JCharacterUIBindingComponent::GetCharacterViewModel()
 {
+	if (!CanPublishPresentation()) { return nullptr; }
 	// Preserve existing BP/C++ callers. New remote panels should use scoped demand.
 	const auto* Pawn = Cast<APawn>(GetOwner());
 	const bool bLocalHUD = Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled();
@@ -65,7 +69,7 @@ UProject_JCharacterViewModel* UProject_JCharacterUIBindingComponent::GetCharacte
 
 UProject_JCharacterViewModel* UProject_JCharacterUIBindingComponent::AcquireCharacterViewModel(UObject* Consumer)
 {
-	if (!IsValid(Consumer) || bEndingPlay || GetNetMode() == NM_DedicatedServer) { return nullptr; }
+	if (!IsValid(Consumer) || !CanPublishPresentation()) { return nullptr; }
 	Consumers.Add(Consumer);
 	RefreshPresentationBinding();
 	return CharacterViewModel;
@@ -85,12 +89,19 @@ void UProject_JCharacterUIBindingComponent::ReleaseLegacyViewModelRequest()
 
 void UProject_JCharacterUIBindingComponent::UpdateCharacterLevel(int32 CharacterLevel)
 {
+	if (!CanPublishPresentation()) { return; }
 	SourceLevel = CharacterLevel;
-	if (CharacterViewModel) { CharacterViewModel->SetLevel(SourceLevel); }
+	if (CharacterViewModel)
+	{
+		TStrongObjectPtr<UProject_JCharacterUIBindingComponent> CallbackOwner(this);
+		TStrongObjectPtr<UProject_JCharacterViewModel> Model(CharacterViewModel.Get());
+		Model->SetLevel(SourceLevel);
+	}
 }
 
 void UProject_JCharacterUIBindingComponent::InitializeFromAttributes(UProject_JAbilitySystemComponent* InAbilitySystemComponent, UProject_JAttributeSet* InAttributeSet, int32 CharacterLevel)
 {
+	if (!CanPublishPresentation()) { return; }
 	SourceAbilitySystem = InAbilitySystemComponent;
 	SourceAttributes = InAttributeSet;
 	SourceLevel = CharacterLevel;
@@ -100,6 +111,8 @@ void UProject_JCharacterUIBindingComponent::InitializeFromAttributes(UProject_JA
 void UProject_JCharacterUIBindingComponent::RefreshPresentationBinding()
 {
 	check(IsInGameThread());
+	if (!CanPublishPresentation()) { ClearAttributeBindings(); CharacterViewModel = nullptr; return; }
+	TStrongObjectPtr<UProject_JCharacterUIBindingComponent> CallbackOwner(this);
 	for (auto It = Consumers.CreateIterator(); It; ++It)
 	{
 		if (!It->IsValid()) { It.RemoveCurrent(); }
@@ -115,7 +128,8 @@ void UProject_JCharacterUIBindingComponent::RefreshPresentationBinding()
 	if (CharacterViewModel && BoundAbilitySystemComponent == SourceAbilitySystem.Get()
 		&& BoundAttributeSet == SourceAttributes.Get() && HealthChangedHandle.IsValid())
 	{
-		CharacterViewModel->SetLevel(SourceLevel);
+		TStrongObjectPtr<UProject_JCharacterViewModel> Model(CharacterViewModel.Get());
+		Model->SetLevel(SourceLevel);
 		return;
 	}
 	ClearAttributeBindings();
@@ -125,90 +139,70 @@ void UProject_JCharacterUIBindingComponent::RefreshPresentationBinding()
 	}
 	BoundAbilitySystemComponent = SourceAbilitySystem.Get();
 	BoundAttributeSet = SourceAttributes.Get();
-
-	if (!BoundAbilitySystemComponent || !BoundAttributeSet || !CharacterViewModel)
+	const uint64 Revision = BindingRevision;
+	TStrongObjectPtr<UProject_JCharacterViewModel> Model(CharacterViewModel.Get());
+	TStrongObjectPtr<UProject_JAbilitySystemComponent> ASC(BoundAbilitySystemComponent.Get());
+	TStrongObjectPtr<UProject_JAttributeSet> Attributes(BoundAttributeSet.Get());
+	if (!Model.IsValid()) { return; }
+	const bool bHasSource = ASC.IsValid() && !ASC->IsBeingDestroyed() && Attributes.IsValid();
+	// Publish the complete delegate lease before FieldNotify can reenter. A nested
+	// binding then removes exactly these handles; the outer call cannot register again.
+	if (bHasSource)
 	{
-		if (CharacterViewModel)
-		{
-			CharacterViewModel->SetHealth(0);
-			CharacterViewModel->SetMaxHealth(0);
-			CharacterViewModel->SetMana(0);
-			CharacterViewModel->SetMaxMana(0);
-			CharacterViewModel->SetLevel(SourceLevel);
-		}
-		return;
+		HealthChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(Attributes->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged, Revision);
+		MaxHealthChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(Attributes->GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged, Revision);
+		ManaChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(Attributes->GetManaAttribute()).AddUObject(this, &ThisClass::OnManaChanged, Revision);
+		MaxManaChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(Attributes->GetMaxManaAttribute()).AddUObject(this, &ThisClass::OnMaxManaChanged, Revision);
 	}
-
-	CharacterViewModel->SetHealth(BoundAttributeSet->GetHealth());
-	CharacterViewModel->SetMaxHealth(BoundAttributeSet->GetMaxHealth());
-	CharacterViewModel->SetMana(BoundAttributeSet->GetMana());
-	CharacterViewModel->SetMaxMana(BoundAttributeSet->GetMaxMana());
-	CharacterViewModel->SetLevel(SourceLevel);
-
-	HealthChangedHandle = BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetHealthAttribute()).AddUObject(this, &UProject_JCharacterUIBindingComponent::OnHealthChanged);
-	MaxHealthChangedHandle = BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetMaxHealthAttribute()).AddUObject(this, &UProject_JCharacterUIBindingComponent::OnMaxHealthChanged);
-	ManaChangedHandle = BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetManaAttribute()).AddUObject(this, &UProject_JCharacterUIBindingComponent::OnManaChanged);
-	MaxManaChangedHandle = BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetMaxManaAttribute()).AddUObject(this, &UProject_JCharacterUIBindingComponent::OnMaxManaChanged);
+	const auto IsCurrent = [&]()
+	{
+		return CanPublishPresentation() && BindingRevision == Revision && CharacterViewModel == Model.Get()
+			&& (!bHasSource || !ASC->IsBeingDestroyed());
+	};
+	Model->SetHealth(bHasSource ? Attributes->GetHealth() : 0);
+	if (!IsCurrent()) { return; }
+	Model->SetMaxHealth(bHasSource ? Attributes->GetMaxHealth() : 0);
+	if (!IsCurrent()) { return; }
+	Model->SetMana(bHasSource ? Attributes->GetMana() : 0);
+	if (!IsCurrent()) { return; }
+	Model->SetMaxMana(bHasSource ? Attributes->GetMaxMana() : 0);
+	if (!IsCurrent()) { return; }
+	Model->SetLevel(SourceLevel);
 }
 
 void UProject_JCharacterUIBindingComponent::ClearAttributeBindings()
 {
-	if (BoundAbilitySystemComponent && BoundAttributeSet)
+	++BindingRevision;
+	const auto PreviousASC = BoundAbilitySystemComponent;
+	const auto PreviousAttributes = BoundAttributeSet;
+	const auto Health = HealthChangedHandle, MaxHealth = MaxHealthChangedHandle, Mana = ManaChangedHandle, MaxMana = MaxManaChangedHandle;
+	HealthChangedHandle.Reset(); MaxHealthChangedHandle.Reset(); ManaChangedHandle.Reset(); MaxManaChangedHandle.Reset();
+	BoundAbilitySystemComponent = nullptr; BoundAttributeSet = nullptr;
+	if (PreviousASC && PreviousAttributes)
 	{
-		if (HealthChangedHandle.IsValid())
-		{
-			BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetHealthAttribute()).Remove(HealthChangedHandle);
-		}
-		if (MaxHealthChangedHandle.IsValid())
-		{
-			BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetMaxHealthAttribute()).Remove(MaxHealthChangedHandle);
-		}
-		if (ManaChangedHandle.IsValid())
-		{
-			BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetManaAttribute()).Remove(ManaChangedHandle);
-		}
-		if (MaxManaChangedHandle.IsValid())
-		{
-			BoundAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BoundAttributeSet->GetMaxManaAttribute()).Remove(MaxManaChangedHandle);
-		}
+		PreviousASC->GetGameplayAttributeValueChangeDelegate(PreviousAttributes->GetHealthAttribute()).Remove(Health);
+		PreviousASC->GetGameplayAttributeValueChangeDelegate(PreviousAttributes->GetMaxHealthAttribute()).Remove(MaxHealth);
+		PreviousASC->GetGameplayAttributeValueChangeDelegate(PreviousAttributes->GetManaAttribute()).Remove(Mana);
+		PreviousASC->GetGameplayAttributeValueChangeDelegate(PreviousAttributes->GetMaxManaAttribute()).Remove(MaxMana);
 	}
-
-	HealthChangedHandle.Reset();
-	MaxHealthChangedHandle.Reset();
-	ManaChangedHandle.Reset();
-	MaxManaChangedHandle.Reset();
-	BoundAbilitySystemComponent = nullptr;
-	BoundAttributeSet = nullptr;
 }
-
-void UProject_JCharacterUIBindingComponent::OnHealthChanged(const FOnAttributeChangeData& Data)
+bool UProject_JCharacterUIBindingComponent::CanPublishPresentation() const
 {
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetHealth(Data.NewValue);
-	}
+	return !bEndingPlay && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed()
+		&& GetWorld() && !GetWorld()->bIsTearingDown && GetNetMode() != NM_DedicatedServer;
 }
-
-void UProject_JCharacterUIBindingComponent::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
+void UProject_JCharacterUIBindingComponent::PublishAttribute(float Value, uint64 ExpectedRevision, void (UProject_JCharacterViewModel::*Setter)(float))
 {
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMaxHealth(Data.NewValue);
-	}
+	if (!CanPublishPresentation() || BindingRevision != ExpectedRevision || !CharacterViewModel) { return; }
+	TStrongObjectPtr<UProject_JCharacterUIBindingComponent> CallbackOwner(this);
+	TStrongObjectPtr<UProject_JCharacterViewModel> Model(CharacterViewModel.Get());
+	(Model.Get()->*Setter)(Value);
 }
-
-void UProject_JCharacterUIBindingComponent::OnManaChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMana(Data.NewValue);
-	}
-}
-
-void UProject_JCharacterUIBindingComponent::OnMaxManaChanged(const FOnAttributeChangeData& Data)
-{
-	if (CharacterViewModel)
-	{
-		CharacterViewModel->SetMaxMana(Data.NewValue);
-	}
-}
+void UProject_JCharacterUIBindingComponent::OnHealthChanged(const FOnAttributeChangeData& Data, uint64 Revision)
+{ PublishAttribute(Data.NewValue, Revision, &UProject_JCharacterViewModel::SetHealth); }
+void UProject_JCharacterUIBindingComponent::OnMaxHealthChanged(const FOnAttributeChangeData& Data, uint64 Revision)
+{ PublishAttribute(Data.NewValue, Revision, &UProject_JCharacterViewModel::SetMaxHealth); }
+void UProject_JCharacterUIBindingComponent::OnManaChanged(const FOnAttributeChangeData& Data, uint64 Revision)
+{ PublishAttribute(Data.NewValue, Revision, &UProject_JCharacterViewModel::SetMana); }
+void UProject_JCharacterUIBindingComponent::OnMaxManaChanged(const FOnAttributeChangeData& Data, uint64 Revision)
+{ PublishAttribute(Data.NewValue, Revision, &UProject_JCharacterViewModel::SetMaxMana); }

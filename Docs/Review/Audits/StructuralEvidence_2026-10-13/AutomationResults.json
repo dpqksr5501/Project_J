@@ -1,0 +1,46 @@
+[
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/ActorInfoFocused/index.json",
+    "sha256": "099c2f451337081ab9a177f803b8b5b3c78867bf51d442b80d7e89d8e084e27c",
+    "succeeded": 9,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 0.40110939741134644,
+    "failedTests": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Focused1/index.json",
+    "sha256": "6511319d71e314d1aea337140b8ae00eaee49d41b26bec7fca23e32449513d83",
+    "succeeded": 4,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 2.608938217163086,
+    "failedTests": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Whole1/index.json",
+    "sha256": "5e9bd4aeec4dfe485a2991e42bc0f13ab8c10b9893c380dfa95edf5b704ae98b",
+    "succeeded": 296,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 666.0382690429688,
+    "failedTests": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/WholeFinal/index.json",
+    "sha256": "ef846c86da588dbe959a335dcdb6098cc176467f553763d5db48c304423288a0",
+    "succeeded": 297,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 666.4028930664062,
+    "failedTests": []
+  }
+]

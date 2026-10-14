@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"weaponType\\\":\\\"TwoHandSword\\\",\\\"weaponStance\\\":\\\"TwoHanded\\\",\\\"combatPresentationMode\\\":\\\"UpperBodyOverlay\\\",\\\"combatIntroMontage\\\":{\\\"refPath\\\":\\\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip.AM_Greatsword_Equip\\\"},\\\"combatOutroMontage\\\":{\\\"refPath\\\":\\\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip.AM_Greatsword_UnEquip\\\"},\\\"combatAnimationLayerClass\\\":\\\"/Game/Animation_Logic/ABPs/GreatSword/ABP_GreatSword_Layers.ABP_GreatSword_Layers_C\\\",\\\"combatIntroMontagePlayRate\\\":1,\\\"combatOutroMontagePlayRate\\\":1}\"}"
+			}
+		]
+	}
+}

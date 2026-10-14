@@ -1,0 +1,72 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "EB3E6CAB479D7610B7CA5383B7C87BE7",
+			"instanceName": "DESKTOP-5T07C91-19912",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "D3D12_SM6",
+			"rHI": "D3D12 (SM6)",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-22.05.43",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.29323479533195496,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "DistortionPrecacheLayout",
+			"fullTestPath": "ProjectJ.GroupE.DistortionPrecacheLayout",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EB3E6CAB479D7610B7CA5383B7C87BE7"
+			],
+			"duration": 0.0074115991592407227,
+			"dateTime": "2026.10.13-22.05.42",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EffectsPoolLifetime",
+			"fullTestPath": "ProjectJ.GroupE.EffectsPoolLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EB3E6CAB479D7610B7CA5383B7C87BE7"
+			],
+			"duration": 0.28582319617271423,
+			"dateTime": "2026.10.13-22.05.42",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "100 simultaneous authored GPU trails x12 rounds per mode; real RHI/world simulation, no gameplay viewport. Spawn/stop timings include contract checks, not GPU frame cost or visual-quality approval.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-22.05.43"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

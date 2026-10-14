@@ -191,113 +191,81 @@ void UProject_JLocomotionAnimStateComponent::DispatchLandingCancelForAnimation()
 	}
 }
 
+void UProject_JLocomotionAnimStateComponent::OnCachedAbilitySystemChanged()
+{
+    const auto& Tags = FProject_JGameplayTags::Get();
+    ReconcileMovementGameplayTag(Tags.State_Movement_InAir, OwnedInAirTagASC, bInAirGameplayTagRequested);
+    ReconcileMovementGameplayTag(Tags.State_Movement_Landing, OwnedLandingTagASC, bLandingGameplayTagRequested);
+}
+
+void UProject_JLocomotionAnimStateComponent::ReconcileMovementGameplayTag(
+    const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease, const bool& bRequested)
+{
+    if (Lease.Get() != GetCachedAbilitySystemComponent() || !bRequested || bMovementTagOwnershipEnding)
+    { ReleaseMovementGameplayTag(Tag, Lease); }
+    // Release delegates can rebind the ASC, change demand, or end this owner.
+    // Read live demand and cache again; never overwrite a nested acquired lease.
+    if (bMovementTagOwnershipEnding || !bRequested || Lease.IsValid()) { return; }
+    UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent();
+    if (!IsValid(ASC)) { return; }
+    Lease = ASC; // Publish before the synchronous gameplay-tag callbacks.
+    if (auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC)) { ProjectJASC->AddProjectJLooseGameplayTag(Tag); }
+    else { ASC->AddLooseGameplayTag(Tag); }
+}
+
+void UProject_JLocomotionAnimStateComponent::ReleaseMovementGameplayTag(
+    const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease)
+{
+    UAbilitySystemComponent* ASC = Lease.Get();
+    Lease.Reset(); // Detach before callbacks so recursive release cannot decrement twice.
+    if (!IsValid(ASC)) { return; }
+    if (auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC)) { ProjectJASC->RemoveProjectJLooseGameplayTag(Tag); }
+    else { ASC->RemoveLooseGameplayTag(Tag); }
+}
+
 void UProject_JLocomotionAnimStateComponent::AddOwnedInAirGameplayTag()
 {
-	if (bAppliedInAirGameplayTag)
-	{
-		return;
-	}
-
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-		{
-			ProjectJASC->AddProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-		else
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-		bAppliedInAirGameplayTag = true;
-	}
+    if (bMovementTagOwnershipEnding) { return; }
+    bInAirGameplayTagRequested = true;
+    ReconcileMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir, OwnedInAirTagASC, bInAirGameplayTagRequested);
 }
 
 void UProject_JLocomotionAnimStateComponent::RemoveOwnedInAirGameplayTag()
 {
-	if (!bAppliedInAirGameplayTag)
-	{
-		return;
-	}
-
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-		{
-			ProjectJASC->RemoveProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-		else
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
-		}
-	}
-	bAppliedInAirGameplayTag = false;
+    bInAirGameplayTagRequested = false;
+    ReleaseMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir, OwnedInAirTagASC);
 }
 
 void UProject_JLocomotionAnimStateComponent::AddOwnedLandingGameplayTag()
 {
-	if (bAppliedLandingGameplayTag)
-	{
-		return;
-	}
-
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-		{
-			ProjectJASC->AddProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-		else
-		{
-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-		bAppliedLandingGameplayTag = true;
-	}
+    if (bMovementTagOwnershipEnding) { return; }
+    bLandingGameplayTagRequested = true;
+    ReconcileMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing, OwnedLandingTagASC, bLandingGameplayTagRequested);
 }
 
 void UProject_JLocomotionAnimStateComponent::RemoveOwnedLandingGameplayTag()
 {
-	if (!bAppliedLandingGameplayTag)
-	{
-		return;
-	}
-
-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
-	{
-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-		{
-			ProjectJASC->RemoveProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-		else
-		{
-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
-		}
-	}
-	bAppliedLandingGameplayTag = false;
+    bLandingGameplayTagRequested = false;
+    ReleaseMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing, OwnedLandingTagASC);
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearOwnedMovementGameplayTags()
 {
-	RemoveOwnedInAirGameplayTag();
-	RemoveOwnedLandingGameplayTag();
+    bInAirGameplayTagRequested = bLandingGameplayTagRequested = false;
+    RemoveOwnedInAirGameplayTag();
+    RemoveOwnedLandingGameplayTag();
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
 {
-	bStartRequested = false;
 	bPendingStartRequest = false;
 	bPendingStopRequest = false;
 	RemoteRuntime.ClearStopVisualIntent();
-	ResetGroundMotionTransitionRequests();
 	bResolvedMoveInputLastUpdate = false;
 	MoveInputHeldTime = 0.0f;
 	bSharpTurnRequested = false;
 	MoveInputTurnAngle = 0.0f;
 	EnterGroundMotionMode(EProject_JGroundMotionMode::Idle);
-}
-
-void UProject_JLocomotionAnimStateComponent::ClearPendingAnimationExitRequests()
-{
-	bLandingFinishPendingExit = false;
 }
 
 void UProject_JLocomotionAnimStateComponent::ClearResolvedMoveInputState()

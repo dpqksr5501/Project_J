@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "file": "Server/server.json",
+      "success": true,
+      "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+    },
+    {
+      "file": "Client1/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    },
+    {
+      "file": "Client2/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    }
+  ],
+  "exitCodes": [
+    0,
+    0,
+    0
+  ],
+  "nativeHandleCapturedBeforeWait": true,
+  "timeouts": 0,
+  "startupPythonErrors": [
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.14:981][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+    "[2026.10.13-23.49.15:022][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.15:022][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+    "[2026.10.13-23.49.15:022][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+    "[2026.10.13-23.49.15:022][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.15:022][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.13:922][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+    "[2026.10.13-23.49.13:978][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.13:978][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+    "[2026.10.13-23.49.13:978][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+    "[2026.10.13-23.49.13:978][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.13:978][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python/init_unreal.py\", line 5, in <module>",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:     from editor_toolset import skills  # noqa: F401 — imports register @agent_skill modules",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\__init__.py\", line 3, in <module>",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:     from editor_toolset.skills import blueprint_basics",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:   File \"C:\\Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/Toolsets/EditorToolset/Content/Python\\editor_toolset\\skills\\blueprint_basics.py\", line 41, in <module>",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:     class BlueprintBasicsSkill(unreal.AgentSkill):",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error:                                ^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.08:568][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'AgentSkill'",
+    "[2026.10.13-23.49.08:613][  0]LogPython: Error: Traceback (most recent call last):",
+    "[2026.10.13-23.49.08:613][  0]LogPython: Error:   File \"C:/Program Files/Epic Games/UE_5.8/Engine/Plugins/Experimental/ToolsetRegistry/Content/Python/init_unreal.py\", line 7, in <module>",
+    "[2026.10.13-23.49.08:613][  0]LogPython: Error:     tests._toolset_registry_test_runner = unreal.PythonTestRunner.create(",
+    "[2026.10.13-23.49.08:613][  0]LogPython: Error:                                           ^^^^^^^^^^^^^^^^^^^^^^^",
+    "[2026.10.13-23.49.08:613][  0]LogPython: Error: AttributeError: module 'unreal' has no attribute 'PythonTestRunner'"
+  ],
+  "note": "Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean."
+}

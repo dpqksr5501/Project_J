@@ -480,6 +480,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionProfile : public UPrimaryDataAs
 
 public:
 	UProject_JLocomotionProfile();
+	/** Same finite/nonnegative authored movement contract for editor validation and runtime diagnostics. */
+	FName GetMovementValidationFailure() const;
 
 	FProject_JAnimationBudgetSettings GetResolvedAnimationBudgetSettings() const;
 

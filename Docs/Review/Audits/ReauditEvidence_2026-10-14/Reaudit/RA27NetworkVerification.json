@@ -1,0 +1,47 @@
+{
+  "scope": "Three repeats, actual localhost2 sockets and NPC200, lag50ms/loss20%; production unchangedRA25, harnessRA26/27. Not200 connections/WAN/native Server target.",
+  "runs": [
+    {
+      "run": 10,
+      "passed": true,
+      "exit": [
+        0,
+        0,
+        0
+      ],
+      "timeouts": 0,
+      "startupPythonErrors": 0,
+      "disablePythonConfirmed": 3,
+      "observedGroups": 12,
+      "incomplete": []
+    },
+    {
+      "run": 11,
+      "passed": true,
+      "exit": [
+        0,
+        0,
+        0
+      ],
+      "timeouts": 0,
+      "startupPythonErrors": 0,
+      "disablePythonConfirmed": 3,
+      "observedGroups": 12,
+      "incomplete": []
+    },
+    {
+      "run": 12,
+      "passed": true,
+      "exit": [
+        0,
+        0,
+        0
+      ],
+      "timeouts": 0,
+      "startupPythonErrors": 0,
+      "disablePythonConfirmed": 3,
+      "observedGroups": 12,
+      "incomplete": []
+    }
+  ]
+}

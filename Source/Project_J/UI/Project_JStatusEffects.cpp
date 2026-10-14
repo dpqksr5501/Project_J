@@ -3,11 +3,16 @@
 #include "GameplayEffect.h"
 #include "GameplayEffectUIData_TextOnly.h"
 #include "Engine/World.h"
+#include "UObject/StrongObjectPtr.h"
 
 void UProject_JStatusEffectModel::Bind(UAbilitySystemComponent *Source)
 {
+	if (bRetiring || HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) return;
+	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(this);
 	if (ASC == Source) return;
+	const uint64 Revision = BindingRevision + 1;
 	Unbind();
+	if (bRetiring || BindingRevision != Revision) return;
 	ASC = Source;
 	if (Source)
 	{
@@ -20,19 +25,26 @@ void UProject_JStatusEffectModel::Bind(UAbilitySystemComponent *Source)
 }
 void UProject_JStatusEffectModel::Unbind()
 {
-	if (ASC.IsValid())
+	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(bRetiring ? nullptr : this);
+	++BindingRevision;
+	const auto Previous = ASC;
+	const auto Added = AddedHandle, Removed = RemovedHandle;
+	const auto PreviousTimer = Timer;
+	ASC.Reset(); AddedHandle.Reset(); RemovedHandle.Reset(); Timer.Invalidate(); States.Reset();
+	if (Previous.IsValid())
 	{
-		ASC->OnActiveGameplayEffectAddedDelegateToSelf.Remove(AddedHandle);
-		ASC->OnAnyGameplayEffectRemovedDelegate().Remove(RemovedHandle);
-		if (ASC->GetWorld()) ASC->GetWorld()->GetTimerManager().ClearTimer(Timer);
+		Previous->OnActiveGameplayEffectAddedDelegateToSelf.Remove(Added);
+		Previous->OnAnyGameplayEffectRemovedDelegate().Remove(Removed);
+		if (Previous->GetWorld()) { auto Handle = PreviousTimer; Previous->GetWorld()->GetTimerManager().ClearTimer(Handle); }
 	}
-	ASC.Reset();
-	States.Reset();
-	OnChanged.Broadcast();
+	if (!bRetiring) OnChanged.Broadcast();
 }
-void UProject_JStatusEffectModel::BeginDestroy() { Unbind(); Super::BeginDestroy(); }
+void UProject_JStatusEffectModel::BeginDestroy() { bRetiring = true; OnChanged.Clear(); Unbind(); Super::BeginDestroy(); }
 void UProject_JStatusEffectModel::Refresh()
 {
+	if (bRetiring || HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) return;
+	// An OnChanged listener may release the last external reference and run GC.
+	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(this);
 	States.Reset();
 	if (ASC.IsValid() && ASC->GetWorld())
 	{

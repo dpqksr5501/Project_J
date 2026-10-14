@@ -1,0 +1,56 @@
+{
+  "scope": "Diagnostic channel isolation, not another performance comparison or a fix.",
+  "runs": [
+    {
+      "run": "DeepCookedCrowd200",
+      "channels": "cpu,frame,gpu,bookmark,region,counters,task",
+      "exit_code": null,
+      "verification_success": false,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200/manifest.json"
+    },
+    {
+      "run": "DeepCookedCrowd200R2",
+      "channels": "cpu,frame,gpu,bookmark,region,counters,task",
+      "exit_code": 777003,
+      "verification_success": false,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200R2/manifest.json"
+    },
+    {
+      "run": "DeepCookedCrowd200NoTrace",
+      "channels": null,
+      "exit_code": 0,
+      "verification_success": true,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200NoTrace/manifest.json"
+    },
+    {
+      "run": "DeepCookedCrowd200CPUTrace",
+      "channels": "cpu,frame,bookmark,region,counters",
+      "exit_code": 777003,
+      "verification_success": false,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace/manifest.json"
+    },
+    {
+      "run": "DeepCookedCrowd200FrameTrace",
+      "channels": "frame,bookmark",
+      "exit_code": 0,
+      "verification_success": true,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200FrameTrace/manifest.json"
+    },
+    {
+      "run": "DeepCookedCrowd200CPUOnlyTrace",
+      "channels": "cpu,frame,bookmark",
+      "exit_code": 777003,
+      "verification_success": false,
+      "executable_sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+      "manifest": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUOnlyTrace/manifest.json"
+    }
+  ],
+  "observation": "Full channels and cpu+frame+bookmark (with or without region/counters/gpu/task) failed with recorded exit 777003; frame+bookmark and NoTrace passed. CPU channel is sufficient in these observed runs; exact exception/cause is not established.",
+  "root_cause_confirmed": false,
+  "original_failure_resolved": false
+}

@@ -198,6 +198,8 @@ Advancement.OverrideAttributeData
 
 `AttackPower`와 `Defense`는 복제되고 장비 보너스도 적용되지만, 현재 `AttackPower`를 최종 피해량으로 변환하는 Damage Execution Calculation은 아직 없다. 실제 전투 공식은 아래 구조로 추가하는 것이 적합하다.
 
+현재 Greatsword prototype의 피해 원천은 AttackDefinition의 `DamageEffect`다. 2026-10-13 심화 감사에서 LMB1의 기존 Instant Health -10 `GE_TestDamege`를 기준으로 나머지 10개 정의의 `CombatMode` 오연결을 교정했다. `HitSpec.BaseDamage`, knockback/launch 값은 현재 서버 피해 실행기가 소비하지 않는 legacy 필드이며 별도 피해 공식의 증거가 아니다. 상태 태그만 부여하는 GE를 DamageEffect로 지정하지 않는다. [실제 대조와 검증 범위](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)를 함께 읽는다.
+
 ```text
 서버 hit 확인
   -> ConfirmedHitGameplayEffect

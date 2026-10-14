@@ -8,6 +8,7 @@
 
 struct FProject_JAbilityGrantRecord
 {
+	uint64 Generation = 0;
 	int32 LeaseCount = 1;
 	TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	TArray<FActiveGameplayEffectHandle> EffectHandles;
@@ -23,22 +24,28 @@ class PROJECT_JGAS_API UProject_JAbilitySystemComponent : public UAbilitySystemC
 	GENERATED_BODY()
 	
 public:
+	/** Refresh cached controller/component metadata only for the current owner/avatar. */
+	bool RefreshActorInfoForCurrentActor(AActor* Requester);
 	UProject_JAbilitySystemComponent();
 
 	void AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
 	void RemoveProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
-	bool TryActivateAbilitiesByInputTag(const FGameplayTag& InputTag);
 	bool AbilityInputTagPressed(const FGameplayTag& InputTag);
 	bool AbilityInputTagReleased(const FGameplayTag& InputTag);
-	bool ReserveAbilityGrantSource(FName SourceId);
+	/** Discrete intent uses the same reliable actor channel as GAS activation. */
+	UFUNCTION(Server, Reliable)
+	void ServerSendCombatInputEvent(AActor* ExpectedAvatar, FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence);
+	bool ReserveAbilityGrantSource(FName SourceId, uint64& OutGeneration);
 	/** Acquire one provider lease. Only the first provider creates specs/effects. */
-	bool AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant);
-	void RegisterGrantedAbility(FName SourceId, FGameplayAbilitySpecHandle Handle);
-	void RegisterGrantedEffect(FName SourceId, FActiveGameplayEffectHandle Handle);
-	bool RemoveAbilityGrantSource(FName SourceId);
+	bool AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant, uint64& OutGeneration);
+	bool RegisterGrantedAbility(FName SourceId, uint64 Generation, FGameplayAbilitySpecHandle Handle);
+	bool RegisterGrantedEffect(FName SourceId, uint64 Generation, FActiveGameplayEffectHandle Handle);
+	bool RemoveAbilityGrantSource(FName SourceId, uint64 Generation);
 	bool HasAbilityGrantSource(FName SourceId) const;
+	bool IsAbilityGrantSourceCurrent(FName SourceId, uint64 Generation) const;
 
 private:
 	bool HasGameplayTagReplicationAuthority() const;
 	TMap<FName, FProject_JAbilityGrantRecord> AbilityGrantRecords;
+	uint64 NextAbilityGrantGeneration = 0;
 };

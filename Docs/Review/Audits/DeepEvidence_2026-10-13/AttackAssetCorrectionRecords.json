@@ -1,0 +1,62 @@
+[
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  },
+  {
+    "before": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C",
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+    "verified": true,
+    "after": "/Game/GEs/GE_TestDamege.GE_TestDamege_C"
+  }
+]

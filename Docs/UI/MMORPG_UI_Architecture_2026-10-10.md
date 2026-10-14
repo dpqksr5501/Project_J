@@ -1,5 +1,9 @@
 # MMORPG 최소 조작 UI — 2026-10-10
 
+## 현재 구현 책임 — 2026-10-13
+
+`Project_JPlayerHUDWidget.cpp`는 화면 조립·windows·표시, `Project_JSkillButton.cpp`는 퀵슬롯 input/capture/drag와 표시, `Project_JInventoryWidgets.cpp`는 row/tile·entry 재사용을 담당한다. UCLASS/BP API는 유지한다. 두 widget은 `FProject_JUIIconRequest`로 request path/generation/handle의 수명을 공유하며, 상태·브러시·레이블은 각 widget이 소유한다. 기존 engine streamable manager를 사용하고 cancellation/owner GC 및 callback 중 재진입을 검사한다. ViewModel은 데이터 revision/명령을 검증하고 서버 aggregate가 gameplay mutation을 소유한다. [검증과 범위](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)를 함께 읽는다.
+
 검은사막 참고 이후 확장: [캐릭터 UI 프로필·격자 가방·개인 창 위치](Character_UI_Profiles_2026-10-10.md).
 현재 구현: [Compact HUD·혼합 퀵슬롯·독립 창·지도·소모품·의뢰·경험치](Compact_HUD_And_Gameplay_2026-10-10.md).
 아래 초기 검증 기록은 첫 구현 단계의 증거이며, 최신 검증과 범위는 연결 문서를 따른다.
@@ -34,6 +38,8 @@ I로 열고 I/Esc/닫기로 닫는다. 각 목록은 마우스 휠로 스크롤�
 | [Common UI](https://dev.epicgames.com/documentation/en-us/unreal-engine/common-ui-plugin-for-advanced-user-interfaces-in-unreal-engine) | 다중 메뉴·게임패드·입력 라우팅을 확대할 때 적용할 후보다. 이번에는 기존 UMG 입력 경로를 유지한다. |
 
 ## 소유권과 흐름
+
+심화 감사에서는 아이콘 완료 callback의 실행 범위에만 widget을 강하게 유지하고, 상태효과 모델은 source/handle/timer를 먼저 분리한 후 binding revision으로 더 최신 재연결을 보존한다. Bind·Unbind·Refresh의 게시 callback 중 GC와 게시 후 수거를 구분한다. 종료된 모델은 재연결하지 않으며 UI는 GE를 적용하거나 지우지 않는다. [구현 및 검증 상태](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md).
 
 ```text
 Local PlayerController → PlayerUIComponent → HUD/아이템/스킬 위젯
@@ -133,3 +139,13 @@ Saved 로그/백업은 로컬 증거이며 Git의 저장 대상이 아니다.
 다음 고도화는 (1) 임포트할 스킨의 실제 해상도/긴 이름 검증,
 (2) 직업 데이터·UI 프로필 및 전체 HUD 설정, (3) 아이템 정렬/필터/툴팁 스탯 비교,
 (4) 대상/파티/버프 표시 순서로 기존 ViewModel·서버 작업 계약을 확장한다.
+
+## 2026-10-14 재점검의 UI 수명 계약
+
+[재점검 기록](../Review/Audits/Project_J_Reaudit_2026-10-14.md)의 RA01/03/06/07을 적용했다. CharacterUIBinding은 실제 ASC의 delegate lease를 먼저 완성한 뒤 FieldNotify를 게시하며 이전 binding revision의 callback을 거절한다. callback 중 release/GC가 일어나도 호출 범위에서 model/component를 유지한다.
+
+인벤토리 명령과 비교/tooltip은 같은 SourceRevision 경계를 사용한다. 다른 세대의 entry가 새 source 장비를 표시하지 않는다. 미니맵 재구성은 이전 texture/brush/request를 먼저 반환하고 기존 UIIconRequest의 generation/cancel 계약을 사용하며 sampling timer를 등록한 실제 world에서 해제한다.
+
+LocalPlayer settings는 public admission을 닫은 뒤 마지막 coalesced flush를 수행한다. native notification이 Deinitialize를 일으키면 이전 read/write가 계속하지 않는다. storage fault/migration/future-format 보호와 기존 sampling/save delay를 유지한다. 회귀 통과는 모든 해상도/장치/폰트/접근성 품질 검증과 구분한다.
+
+RA19는 Controller의 정상 새 play에서 UI admission을 Super 전에 재개하고 새 projection을 생성한다. 이전 screen/model/subscriptions는 EndPlay에서 반환하며 되살리지 않는다. 실제 initialized GameInstance·Viewport·LocalPlayer의 공개 RefreshSources/GetInventoryModel 회귀를 사용했다. Within=Engine을 어긴 LocalPlayer fixture와 subsystem 미초기화 오류는 제품 재현 근거에서 제외했다. 사용자 저장 경로를 격리한 native 검사와 실제 표시/입력/접근성 품질은 구분한다.

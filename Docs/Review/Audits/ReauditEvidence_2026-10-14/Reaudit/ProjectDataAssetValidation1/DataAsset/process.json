@@ -1,0 +1,9 @@
+{
+  "assetType": "DataAsset",
+  "exitCode": 1,
+  "hasExited": true,
+  "nativeHandleCapturedBeforeWait": true,
+  "validationSummary": null,
+  "validationSummaryAvailable": false,
+  "scope": "On-disk project assets of the exact native class and subclasses, engine excluded; configured excluded directories can be skipped. Read-only native DataValidation commandlet. Exit alone is not proof all assets passed; retain invalid/skipped/unable counters and per-asset logs. Not every asset or visual quality."
+}

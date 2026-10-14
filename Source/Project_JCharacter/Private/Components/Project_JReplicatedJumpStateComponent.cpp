@@ -43,6 +43,7 @@ void UProject_JReplicatedJumpStateComponent::RecordServerConfirmedJump(
 		return;
 	}
 
+	if (JumpState.Sequence == MAX_int32) { return; }
 	++JumpState.Sequence;
 	if (const UWorld* World = GetWorld())
 	{
@@ -89,13 +90,15 @@ void UProject_JReplicatedJumpStateComponent::ApplyConfirmedJumpState(
 	const AActor* Owner = GetOwner();
 	if (!LocomotionAnimStateComponent ||
 		!Owner ||
-		Owner->GetLocalRole() != ROLE_SimulatedProxy ||
-		ConfirmedState.Sequence == LastAppliedRemoteJumpSequence)
+		Owner->GetLocalRole() != ROLE_SimulatedProxy)
 	{
 		return;
 	}
 
-	LastAppliedRemoteJumpSequence = ConfirmedState.Sequence;
+	if (!LocomotionAnimStateComponent->HandleConfirmedRemoteJump(
+		ConfirmedState.Sequence,
+		ResolveServerStartAgeSeconds(ConfirmedState),
+		ConfirmedState.LaunchVelocity)) { return; }
 	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(Owner);
 	const UProject_JLocomotionProfile* LocomotionProfile =
 		PlayerCharacter ? PlayerCharacter->GetLocomotionProfile() : nullptr;
@@ -106,10 +109,6 @@ void UProject_JReplicatedJumpStateComponent::ApplyConfirmedJumpState(
 				? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
 				: 0.10f);
 	}
-	LocomotionAnimStateComponent->HandleConfirmedRemoteJump(
-		ConfirmedState.Sequence,
-		ResolveServerStartAgeSeconds(ConfirmedState),
-		ConfirmedState.LaunchVelocity);
 }
 
 float UProject_JReplicatedJumpStateComponent::ResolveServerStartAgeSeconds(

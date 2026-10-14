@@ -1,0 +1,30 @@
+[
+  {
+    "phase": "A1",
+    "rawSha256": "ec3e0395e07b796effefd17e0c86905772c6620f61b245a82203bf03e27ec407",
+    "rows": 16,
+    "completed": true,
+    "source": "Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_A1"
+  },
+  {
+    "phase": "B1",
+    "rawSha256": "c2400c5d87fd4051d37a8e68336f5b5702bb4e88922327f2f7381ee1d91749e8",
+    "rows": 16,
+    "completed": true,
+    "source": "Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_B1"
+  },
+  {
+    "phase": "A2",
+    "rawSha256": "08e582b48daafa6da31c4753a422076f3edaee008d21df153ab3e362e8064eb1",
+    "rows": 16,
+    "completed": true,
+    "source": "Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_A2"
+  },
+  {
+    "phase": "B2",
+    "rawSha256": "404dcac7d3584cf824f9dd9d51148217b400ab85e0dbdaa45b2b76a14b44400d",
+    "rows": 16,
+    "completed": true,
+    "source": "Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_B2"
+  }
+]

@@ -365,23 +365,26 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 }
 FProject_JEquipmentComparison UProject_JInventoryViewModel::BuildEquipmentComparison(const UProject_JInventoryEntry *Entry) const
 {
-	const auto *Candidate = Entry ? Cast<UProject_JEquipmentItemDefinition>(Entry->Item.ItemDef) : nullptr;
-	FProject_JItemInstanceData Current;
-	const UProject_JEquipmentItemDefinition *Equipped = nullptr;
-	if (Candidate && Entry->Model == this && !Entry->bEquipmentEntry && Equipment.IsValid() &&
-		Equipment->GetEquippedItemInstance(Candidate->EquipmentSlot, Current))
-		Equipped = Cast<UProject_JEquipmentItemDefinition>(Current.ItemDef);
-	auto Result = FProject_JEquipmentComparison::Build(Candidate, Equipped);
-	if (!Entry || Entry->Model != this || !Candidate || (!Entry->bEquipmentEntry && !Equipment.IsValid()))
+	const auto* Candidate = IsCurrentEntry(Entry) ? Cast<UProject_JEquipmentItemDefinition>(Entry->Item.ItemDef) : nullptr;
+	if (!Candidate || (!Entry->bEquipmentEntry && !Equipment.IsValid()))
 	{
+		FProject_JEquipmentComparison Result;
 		Result.bCanCompare = false;
 		Result.Explanation = NSLOCTEXT("ProjectJUI", "CompareUnavailable", "현재 장비 정보를 확인할 수 없습니다.");
+		return Result;
 	}
-	return Result;
+	FProject_JItemInstanceData Current;
+	const UProject_JEquipmentItemDefinition *Equipped = nullptr;
+	if (!Entry->bEquipmentEntry &&
+		Equipment->GetEquippedItemInstance(Candidate->EquipmentSlot, Current))
+		Equipped = Cast<UProject_JEquipmentItemDefinition>(Current.ItemDef);
+	return FProject_JEquipmentComparison::Build(Candidate, Equipped);
 }
 FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry *Entry) const
 {
-	if (!Entry || !Entry->Item.ItemDef)
+	if (!IsCurrentEntry(Entry))
+		return NSLOCTEXT("ProjectJUI", "DetachedEntryTooltip", "아이템 정보가 변경되었습니다. 현재 목록에서 다시 선택하세요.");
+	if (!Entry->Item.ItemDef)
 		return NSLOCTEXT("ProjectJUI", "EmptyEquipmentTooltip", "비어 있는 장비 슬롯 · 호환 장비를 드래그하세요");
 	const UProject_JItemDefinition *Def = Entry->Item.ItemDef;
 	TArray<FText> Lines{Def->ItemName, Def->ItemDescription};

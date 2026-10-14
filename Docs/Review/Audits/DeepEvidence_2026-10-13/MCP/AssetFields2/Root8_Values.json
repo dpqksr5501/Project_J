@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"bEnableTurnCycleCandidates\\\":true,\\\"defaultPoseSearchDatabase\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle.PSD_Idle\\\"},\\\"idlePoseSearchDatabase\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle.PSD_Idle\\\"},\\\"runDatabases\\\":{\\\"cycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.PSD_Run_Cycle\\\"},\\\"settledCycle\\\":\\\"None\\\",\\\"forwardCycle\\\":\\\"None\\\",\\\"turnRedirect\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.PSD_Run_Turn\\\"},\\\"generalTurn\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn.PSD_Run_GeneralTurn\\\"},\\\"backwardReface\\\":\\\"None\\\",\\\"backwardRefaceCycle\\\":\\\"None\\\",\\\"bCookedTurnCycleCompatible\\\":true,\\\"bCookedGeneralTurnCompatible\\\":true,\\\"bCookedBackwardRefaceCompatible\\\":false},\\\"sprintDatabases\\\":{\\\"cycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle.PSD_Sprint_Cycle\\\"},\\\"settledCycle\\\":\\\"None\\\",\\\"forwardCycle\\\":\\\"None\\\",\\\"turnRedirect\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect.PSD_Sprint_TurnRedirect\\\"},\\\"generalTurn\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn.PSD_Sprint_GeneralTurn\\\"},\\\"backwardReface\\\":\\\"None\\\",\\\"backwardRefaceCycle\\\":\\\"None\\\",\\\"bCookedTurnCycleCompatible\\\":true,\\\"bCookedGeneralTurnCompatible\\\":true,\\\"bCookedBackwardRefaceCompatible\\\":false}}\"}"
+			}
+		]
+	}
+}

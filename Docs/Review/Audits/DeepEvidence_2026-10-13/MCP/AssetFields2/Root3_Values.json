@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"bEnableTurnCycleCandidates\\\":true,\\\"defaultPoseSearchDatabase\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle.PSD_Combat_Idle\\\"},\\\"idlePoseSearchDatabase\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle.PSD_Combat_Idle\\\"},\\\"runDatabases\\\":{\\\"cycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.PSD_Combat_Run_Cycle\\\"},\\\"settledCycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop.PSD_Combat_Run_Loop\\\"},\\\"forwardCycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle\\\"},\\\"turnRedirect\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn\\\"},\\\"generalTurn\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn.PSD_Combat_Run_GeneralTurn\\\"},\\\"backwardReface\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface.PSD_Combat_Run_BackwardReface\\\"},\\\"backwardRefaceCycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle.PSD_Combat_Run_RefaceCycle\\\"},\\\"bCookedTurnCycleCompatible\\\":true,\\\"bCookedGeneralTurnCompatible\\\":true,\\\"bCookedBackwardRefaceCompatible\\\":true},\\\"sprintDatabases\\\":{\\\"cycle\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle.PSD_Combat_Sprint_Cycle\\\"},\\\"settledCycle\\\":\\\"None\\\",\\\"forwardCycle\\\":\\\"None\\\",\\\"turnRedirect\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect.PSD_Combat_Sprint_TurnRedirect\\\"},\\\"generalTurn\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn.PSD_Combat_Sprint_GeneralTurn\\\"},\\\"backwardReface\\\":\\\"None\\\",\\\"backwardRefaceCycle\\\":\\\"None\\\",\\\"bCookedTurnCycleCompatible\\\":true,\\\"bCookedGeneralTurnCompatible\\\":true,\\\"bCookedBackwardRefaceCompatible\\\":false}}\"}"
+			}
+		]
+	}
+}

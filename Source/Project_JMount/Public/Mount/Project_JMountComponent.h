@@ -45,9 +45,14 @@ public:
 	FProject_JMountChangedSignature OnMountChanged;
 
 private:
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	void ReleaseMountedTag();
+	bool CanAcceptMountRequest() const;
+	void RetireMount(bool bRestorePossession);
+	uint32 MountRevision = 0;
+	bool bEndingMount = false;
 	TWeakObjectPtr<UProject_JAbilitySystemComponent> MountedTagAbilitySystem;
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> RiderInteractAction = nullptr;

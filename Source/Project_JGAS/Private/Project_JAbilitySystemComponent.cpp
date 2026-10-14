@@ -3,6 +3,7 @@
 #include "Project_JAbilitySystemComponent.h"
 
 #include "GameFramework/Actor.h"
+#include "Project_JCombatInterface.h"
 
 UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()
 {
@@ -10,6 +11,30 @@ UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()
 	// UpdateShouldTick owns activation for ticking tasks, replicated montages and
 	// tickable attributes, then sleeps when idle. bCanEverTick=false prevents all
 	// of those systems from waking the registered component.
+}
+
+void UProject_JAbilitySystemComponent::ServerSendCombatInputEvent_Implementation(AActor* ExpectedAvatar, FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence)
+{
+	// A reliable packet queued before pawn replacement belongs to that old avatar.
+	// GAS activation and intent share this ASC's actor channel and preserve order.
+	if (!IsValid(ExpectedAvatar) || ExpectedAvatar->IsActorBeingDestroyed() || !ExpectedAvatar->HasAuthority()
+		|| GetAvatarActor() != ExpectedAvatar) { return; }
+	if (auto* Receiver = Cast<IProject_JCombatInterface>(ExpectedAvatar))
+	{ Receiver->ReceiveAuthorityCombatInput(InputTag, ClientTimestamp, InputSequence); }
+}
+
+bool UProject_JAbilitySystemComponent::RefreshActorInfoForCurrentActor(AActor* Requester)
+{
+	check(IsInGameThread());
+	if (!IsValid(Requester) || Requester->IsActorBeingDestroyed() || !AbilityActorInfo.IsValid()) { return false; }
+	auto* Owner = AbilityActorInfo->OwnerActor.Get();
+	auto* Avatar = AbilityActorInfo->AvatarActor.Get();
+	if (!IsValid(Owner) || Owner->IsActorBeingDestroyed() || GetOwnerActor() != Owner || GetAvatarActor() != Avatar
+		|| (Avatar && Avatar->IsActorBeingDestroyed()) || (Requester != Owner && Requester != Avatar)) { return false; }
+	// RefreshAbilityActorInfo updates the cached PlayerController and components.
+	// It does not run OnAvatarSet, grant abilities, or reset an active ability.
+	RefreshAbilityActorInfo();
+	return true;
 }
 
 void UProject_JAbilitySystemComponent::AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority)
@@ -38,29 +63,6 @@ void UProject_JAbilitySystemComponent::RemoveProjectJLooseGameplayTag(const FGam
 		: EGameplayTagReplicationState::None;
 
 	RemoveLooseGameplayTag(GameplayTag, 1, ReplicationState);
-}
-
-bool UProject_JAbilitySystemComponent::TryActivateAbilitiesByInputTag(const FGameplayTag& InputTag)
-{
-	if (!InputTag.IsValid())
-	{
-		return false;
-	}
-
-	bool bActivatedAnyAbility = false;
-
-	ABILITYLIST_SCOPE_LOCK();
-	for (FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
-	{
-		if (!AbilitySpec.Ability || !AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
-		{
-			continue;
-		}
-
-		bActivatedAnyAbility |= TryActivateAbility(AbilitySpec.Handle);
-	}
-
-	return bActivatedAnyAbility;
 }
 
 bool UProject_JAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
@@ -157,52 +159,58 @@ bool UProject_JAbilitySystemComponent::HasGameplayTagReplicationAuthority() cons
 	return Owner && Owner->HasAuthority();
 }
 
-bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName SourceId)
+bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName SourceId, uint64& OutGeneration)
 {
-	if (!IsOwnerActorAuthoritative() || SourceId.IsNone() || AbilityGrantRecords.Contains(SourceId))
-	{
-		return false;
-	}
-	AbilityGrantRecords.Add(SourceId);
-	return true;
+	OutGeneration = 0;
+	if (AbilityGrantRecords.Contains(SourceId)) { return false; }
+	bool bNeedsGrant = false;
+	return AcquireAbilityGrantSource(SourceId, bNeedsGrant, OutGeneration);
 }
 
-bool UProject_JAbilitySystemComponent::AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant)
+bool UProject_JAbilitySystemComponent::AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant, uint64& OutGeneration)
 {
 	check(IsInGameThread());
 	bOutNeedsGrant = false;
+	OutGeneration = 0;
 	if (!IsOwnerActorAuthoritative() || SourceId.IsNone()) return false;
 	if (auto* Record = AbilityGrantRecords.Find(SourceId))
 	{
 		if (Record->LeaseCount == MAX_int32) return false;
 		++Record->LeaseCount;
+		OutGeneration = Record->Generation;
 		return true;
 	}
-	AbilityGrantRecords.Add(SourceId);
+	if (NextAbilityGrantGeneration == MAX_uint64) { return false; }
+	OutGeneration = ++NextAbilityGrantGeneration;
+	AbilityGrantRecords.Add(SourceId).Generation = OutGeneration;
 	bOutNeedsGrant = true;
 	return true;
 }
 
-void UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, const FGameplayAbilitySpecHandle Handle)
+bool UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, uint64 Generation, const FGameplayAbilitySpecHandle Handle)
 {
-	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
+	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Record->Generation == Generation && Handle.IsValid())
 	{
 		Record->AbilityHandles.Add(Handle);
+		return true;
 	}
+	return false;
 }
 
-void UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceId, const FActiveGameplayEffectHandle Handle)
+bool UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceId, uint64 Generation, const FActiveGameplayEffectHandle Handle)
 {
-	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
+	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Record->Generation == Generation && Handle.IsValid())
 	{
 		Record->EffectHandles.Add(Handle);
+		return true;
 	}
+	return false;
 }
 
-bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId)
+bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId, uint64 Generation)
 {
 	check(IsInGameThread());
-	if (!IsOwnerActorAuthoritative()) return false;
+	if (!IsOwnerActorAuthoritative() || !IsAbilityGrantSourceCurrent(SourceId, Generation)) return false;
 	if (auto* Existing = AbilityGrantRecords.Find(SourceId); Existing && Existing->LeaseCount > 1)
 	{
 		--Existing->LeaseCount;
@@ -235,4 +243,9 @@ bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName Sour
 bool UProject_JAbilitySystemComponent::HasAbilityGrantSource(const FName SourceId) const
 {
 	return !SourceId.IsNone() && AbilityGrantRecords.Contains(SourceId);
+}
+bool UProject_JAbilitySystemComponent::IsAbilityGrantSourceCurrent(FName SourceId, uint64 Generation) const
+{
+	const auto* Record = AbilityGrantRecords.Find(SourceId);
+	return Generation != 0 && Record && Record->Generation == Generation;
 }

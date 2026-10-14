@@ -1,0 +1,763 @@
+{
+  "total_files": 607,
+  "kinds": {
+    "test_or_fixture": 149,
+    "production_or_tooling": 458
+  },
+  "additional_implementation_bodies_read": 141,
+  "previous_named_contract_files": 75,
+  "additional_named_scopes": [
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ExperimentOutput.h",
+      "scope": "실험 결과의 명시적 Saved 출력과 opt-in CLI root. 실제 production gameplay dependency가 아님.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/PresentationMigrationJournal.h",
+      "scope": "전체 inline receipt/digest/canonical allow-target/verified pending file/preflight/recovery를 읽고 AnimationMigrationTests Main 114–end의 실제 호출과 fixture를 대조. 모든 target을 사전검사한 뒤 부분 publication을 receipt로 재조정하며 후속 author edit를 차단. crash-atomic 다중 파일 transaction으로 표현하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Plugins/ProjectJExperiments/Source/ProjectJExperiments/Private/ProjectJPresentationMigrationCommandlet.h",
+      "scope": "명시적 제작 entry point와 실제 class 구현의 DryRun/Apply/RestoreReceipt 경로를 읽음. 기본 비활성 Editor experiment plugin이며 이번 native whole tests/Cook에 포함된 것으로 계산하지 않음. 실제 실행 검증은 아직 미수행.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JBackendConnection.h",
+      "scope": "Mutation idempotency/transaction/request context, dispatch vs outcome 및 UnknownOutcome reconciliation, legacy query-only fallback을 읽음. HTTP success를 domain success로 사용하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JGatewaySubsystem.h",
+      "scope": "HTTP request tracker/active requests, bounded opt-in remote telemetry queue/pending batch/flush admission과 기존 cpp를 대조. live HTTPS backend 성공을 검증한 것으로 승격하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JHandoverManager.h",
+      "scope": "Additional header scope: outgoing/incoming envelope, bounded replay/capacity/admission, transport/ticker owner and exposed APIs read. Related state callback/map re-query reviewed; live infrastructure remains unverified.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JHandoverTransport.h",
+      "scope": "Server transport port, transfer/attempt matching, local deterministic loopback delay/drop/cancel extension. loopback 통과는 실제 distributed handover adapter 검증이 아님.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JGameMode.h",
+      "scope": "실제 ctor/InitGameState/PostLogin과 prototype identity 생성 extension을 읽음. 임시 UUID는 backend 인증/저장 identity가 아님.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JGameState.h",
+      "scope": "World/public event replicated data와 actual HasAuthority/idempotent setter/ForceNetUpdate cpp 대조. 큰 private data store가 아님.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JInputLeaseSubsystem.h",
+      "scope": "LocalPlayer별 약한 owner/context lease, preexisting mapping 소유권, EnhancedInput 실제 Add/Remove의 동기 delegate 호출을 대조. 현재 PlayerController는 Acquire bool을 사용하지 않으므로 콜백 뒤 반환값 후보는 현재 플레이 결함으로 확정하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerController.h",
+      "scope": "Complete input/UI lifecycle and editor-only fixtures/RPC/header read. Prototype/profile tooling and gameplay runtime are separate build guards; mapping lease remains LocalPlayer owned.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerState.h",
+      "scope": "Persistent ASC/attributes/inventory/equipment/progression/quest의 PS 소유권과 public metadata replication/readiness interface 읽음. private owner-only component와 public PS data를 구분.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JQuestComponent.h",
+      "scope": "PS owner-only progress, trusted objective/reward, snapshot/RPC budget/timer retirement를 읽음. RequiredCount 누락 후보는 cpp FindDefinition의 >0/<=1,000,000/ID/event/nonnegative reward/중복 검증을 확인해 현재 결함으로 기각. native IsDataValid 미지원과 runtime admission은 별개.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+      "scope": "Complete server-authoritative membership/group snapshot and shared party/guild mutation API header read with current cpp. PlayerState is replicated projection, not second membership authority.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JCharacterUIProfile.h",
+      "scope": "Full profile/catalog/resources header was read; tail/namespaced resources helper reread. Hard catalog references provide cook closure, soft UI icon resources remain request-owned.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JCursorInput.h",
+      "scope": "Complete Ctrl key-up gesture and chord/focus-reset state read; input is separate from UI routing and server ability intent.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JEquipmentComparison.h",
+      "scope": "Whole header: authored additive bonus display and conditional explanation distinct from final GAS/item scaling prediction. Current-entry/source generation admission comes from model RA06; static value math retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JHUDWindow.h",
+      "scope": "Whole header read: stable command/window identity, weak HUD owner and normalized local layout/drag interaction. No inventory/GAS ownership. Small native size and existing common presentation behavior retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JInventoryViewModel.cpp",
+      "scope": "RA06: actual widget projection now shares command SourceRevision admission. Stale compare/tooltip mismatches reproduced; WholeFinal1 passed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JInventoryViewModel.h",
+      "scope": "Whole header read: stable entries with source revision, real weak source components, batched summary projections, pending request IDs/type/world and separate refresh lifetime. Commands and comparison/tooltip share RA06 current-entry admission; saved quick-slot identities are separate.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+      "scope": "RA03: actual TakeWidget reconstruction, definition/world rejection, icon request generation and exact timer-world release.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JMinimapWidget.h",
+      "scope": "Whole header read: MapDefinition static authored texture/geometry vs widget current-world sampling, captured SampleWorld, shared icon generation and common release. Dynamic player/quest projection is not authoritative quest state; RA03 retained.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerHUDWidget.h",
+      "scope": "Whole header in three ranges read: owner-only projection/optional skin controls, recycled row/icon lease, quick-slot/item drag frozen identities, native screen/window stack/input/modal/timer/weak layout owner. Gameplay requests stay in controller/models. Existing SI size split and native cpp contracts retained; manual drag/focus/accessibility remain unverified.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerUIComponent.h",
+      "scope": "Complete header read including truncated beginning reread: source projection/model/ASC leases, pressed skills original tags, input mode ownership, local settings identity and editor workload timers. Runtime UI lifetime RA19 and source cpp compared.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JStatusEffects.h",
+      "scope": "Whole header read: owner-only ASC status projection, display component data and actual handle/stack/time, binding revision and timer retirement. Applying/canceling effects is not owned by the UI; existing DS reentry implementation preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JUIIconRequest.h",
+      "scope": "Whole header read: one-widget soft icon selection/load/reset and generation contract, streamable handle ownership. It owns no inventory rows or gameplay stack; existing native callback/cancel/GC cpp contract kept.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JUILayoutSettings.cpp",
+      "scope": "RA07: shutdown admission/private final flush and callback revision/liveness boundary; baseline late storage writes reproduced, fake storage protects user saves. WholeFinal1 passed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JUILayoutSettings.h",
+      "scope": "Whole header read: local-player preference save schema/version, dirty/coalesced fields, ticker/storage boundary, shutdown admission and private final flush. No inventory/GAS persistence; fake storage tests protect users. Existing RA07 reentry/GC fix retained.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JUIModels.h",
+      "scope": "Whole header read: stable saved skill/item references vs projected quantity/cooldown/availability and character-independent key preferences. HUD skin settings separate from gameplay authority. Native class presence/valid package does not verify every authored numeric style value.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JWidgetPresentationHelpers.h",
+      "scope": "Whole inline body read: immutable display-name fallback, shared Activate routes through current-entry model admission, allocation-free localized slot label switch. Static old row name is distinct from stale-row/new-source comparison bug RA06; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JAnimationNodes/Public/Animation/AnimGraphNode_ProjectJLocomotion.h",
+      "scope": "Whole header/inline: UncookedOnly editor wrapper delegates node storage/time metadata to existing BlendStack-compatible native runtime node. No duplicated playback state or additional scheduler; const cast follows inherited editor node accessor boundary.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationPresentationHelpers.h",
+      "scope": "RA13: complete helper body read; identical five-state transition lambda had three real GT callers. Removed duplicate predicate in favor of State Controller; sector/state-routing semantics preserved.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationQualityPolicy.h",
+      "scope": "Complete value-only quality observation API read, no worker proxy or registration mutation.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "scope": "Worker-facing reads use proxy value/external snapshots; final BlendStack sample identity owns authored correction. UObject references require existing proxy GC ownership; no live actor/profile traversal in these getters.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.UpperBodyFacing.cpp",
+      "scope": "GT captures profile/movement and passes value-only inputs to upper/lower worker math; existing local/run/turn/action bypass ownership retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceBase.cpp",
+      "scope": "RA08: detached live follower cache reproduced, replaced duplicate tree/name scans with common attached-role resolver. MCP/public template and actual authored BP construction differ in evidentiary scope; WholeFinal1 passed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+      "scope": "Complete native proxy header read: queued/consumed values, per-node reselect revision, applied generated DB/companion pins and AddReferencedObjects override. Temporal roles are distinct; no field removed by token count. Existing implementation/GC tests retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingBoundaryPolicy.h",
+      "scope": "Complete value-only search publication/boundary policy read. Idle/one-shot return/companion continuation/gait/rotation/normalization reasons compared to native proxy caller; admission differs from node acknowledgement.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingEngineAdapter.h",
+      "scope": "Complete scoped return API read: reflected engine throttle/state access and exact entry-value restoration; no private-offset access or new UObject owner.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "scope": "Single GT producer removes engine example duplicate binding; generation/history/postprocess frame gates, mount/server exclusion, age freshness, profile yaw filtering and remote history/facing preservation inspected. No broad history reset added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstanceProxy.h",
+      "scope": "Complete node-defaults/asset GC/interface cache header read with proxy implementation. Original sets and authored fallback are retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JStrafeLowerBodyFacing.cpp",
+      "scope": "Shared upper-body policy math, value-only local input/run/cycle/contact gates, two-bone solve preserves evaluated foot target. Defaults retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JStrafeUpperBodyFacing.cpp",
+      "scope": "Finite quaternion/twist/yaw, turn ownership, profile-controlled correction/release and bounded history step. Not clip-specific exceptions.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JTrajectoryQuery.h",
+      "scope": "Complete allocation-free trajectory query read: finite time/horizon/location, nearest present/future and positive delta, current-direction turn angle. Same sample count does not imply same sample times.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JCombatStyleDefinition.cpp",
+      "scope": "Authored/derived catalog validation, class/advancement/equipment source rules, transient runtime cache invalidation. Source reading is not every asset graph verification.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JComboDefinition.cpp",
+      "scope": "Exact-tag lookup, owner-tag transition/start selection and native graph definition validation. Duplicate transition inputs reject; source reading does not prove every authored branch/input timing.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp",
+      "scope": "Wake/urgent requests already compose in RefreshSourceRequirement and releases guard the other lease. Initial duplicate-request candidate rejected; no change.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCharacterMovementComponent.cpp",
+      "scope": "SavedMove sprint bit, combine boundary, server legality, replay acceleration policy and common player publisher; valid physics behavior retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp",
+      "scope": "RA02/10: instance retirement, detached/pinned cue maps and fresh BeginPlay admission. WholeFinal1 and RHICosmetics1 actual RHI pool passed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.Diagnostics.cpp",
+      "scope": "Optional GT diagnostics sample configuration and source/visible/target/pose/motion frame provenance; no search/input/physics mutation. Existing runtime vs diagnostic split retained; no claim all visual quality inspected.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Equipment/Project_JWeaponPresentationProfile.cpp",
+      "scope": "RA11: NaN TraceLength accepted by native validator reproduced; shared enabled-contact settings contract and runtime endpoint admission implemented. WholeFinal1 passed; no pre-fix physics crash claimed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp",
+      "scope": "Authority/GT ownership transitions, exact captured controls, copied route fragments, bounded transition cursor, worker join before applying actors. Reentrant deinitialize storage-release concern is potential; current public call evidence insufficient.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "scope": "Viewer/target social and owner relevance, configured distance decision. Native policy helper is not proof of active Iris filter registration or 200 connections.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Network/Project_JNetObjectPrioritizer_Combat.cpp",
+      "scope": "Native GAS-state priority wrapper inspected; active network registration must be distinguished from helper availability.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JFoleySubsystem.cpp",
+      "scope": "World-local listener snapshots, bounded shared async resources, queue admission/age/budget/trace and shutdown cancel. No project AudioComponent pool; audible quality remains separate.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp",
+      "scope": "GT FIFO admission token differs from component revision; coalescing/cancel/re-request cannot reclaim old slot. Bounded visits/applications/wall budget, remove before external component apply, lifecycle stop retained.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/UI/Project_JCharacterUIBindingComponent.cpp",
+      "scope": "RA01: actual ASC/delegate lease, revision publication, native FieldNotify reentry/GC/retirement. WholeRA04 compiled behavior.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h",
+      "scope": "Additional complete header scope: handle arrays vs keyed source generations, mutation revision and grant/take APIs read against existing DS10 source ownership. No second keyed handle owner introduced.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationBudgetTypes.h",
+      "scope": "Complete reflected quality policy/settings read; role distances, MM cadence, hand/foot/retarget controls are separate work contracts. Existing authored defaults retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationClock.h",
+      "scope": "Complete animation-domain clock read; rejects paused/nonfinite/nonpositive delta, preserves UE dilated/URO delta once.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationLayerLease.h",
+      "scope": "Complete GC UPROPERTY pins, weak mesh/master, async path/generation, invalidation/link/unlink APIs read with implementation callers. Same lease is embedded by combat/mount selection owners.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationUpdateSchedule.h",
+      "scope": "Complete finite-delta per-owner phased deadline policy read. Force urgency and normal cadence are separate; no timer added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h",
+      "scope": "Complete shared notify per-mesh/per-instance token storage and authored keys/blends/IK header read with Begin/Tick/End callers. No forced release of another notify instance; actual malformed asset not established.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JBackwardRefacePolicy.h",
+      "scope": "Additional inline scope: complete finite/fresh visual admission, bounded active window, completed-selection Cycle handoff and continuation read. Different candidate geometry from forward turns; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JContinuousCurvePolicy.h",
+      "scope": "Additional inline scope: full finite input/settings, bounded ring, signed physical/intent proof and routing grace read. .35/100/3/.85 unchanged.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JGeneralTurnPolicy.h",
+      "scope": "Additional inline scope: full bounded geometry/candidate window and completed-selection feedback read; prospective database-family/cycle identity callers inspected. Preserved, not a new change.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JGuidedArmChain.h",
+      "scope": "Complete explicit arm-role/helper-bone chain and relative-transform preservation API read with cpp; wrist target ownership retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JGuidedArmSolver.h",
+      "scope": "Complete dimensionless bend settings/history/diagnostic/solve API read with cpp; history never seeds final IK elbow.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JHandContact.h",
+      "scope": "Complete GT calibration/socket contract and value-only contact conversion API read. No world pose or UObject is carried to worker solver.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JHandGripProfile.h",
+      "scope": "Complete reflected bone-role/calibration/bend finite validation header read including truncated range reread. Shared runtime converter is not duplicate state authority.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionContextBuilder.h",
+      "scope": "Complete inline movement and phase precedence read. Entry-qualified MovingTurn request is not requalified by instantaneous braking speed; source sole state owner preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingAssetSet.h",
+      "scope": "Complete header/family getters and companion/fallback declarations read, production selection/validator compared. Family/fallback asset pointers retained; not all index/clip visual quality proof.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMotionMatchingSelectionPolicy.h",
+      "scope": "Additional inline scope: complete semantic FKey publication and redirect reselect cooldown read. Finite tuning/clock assumptions remain caller-specific; no broad reset or timer added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JMovingTurnPolicy.h",
+      "scope": "Additional inline scope: full running origin/preparation/admission/completion and copy-only diagnostics read. Physical geometry owner differs from State Controller hold; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JOneShotCurvePolicy.h",
+      "scope": "Additional inline scope: delegates sustained history to ContinuousCurvePolicy, preserves bounded fast curve evidence and future sign agreement. Actual GT shot-owner/exit readiness caller read; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h",
+      "scope": "Additional inline scope: complete camera-frame key compatibility and steering error policy read, actual local presentation caller and raw profile cancel-angle inputs compared. Malformed entry/tuning numeric contract is a potential gap, not current asset failure.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JPlaybackReturnPolicy.h",
+      "scope": "Additional inline scope: complete value-only overlap/continuation predicates and inertial blend lifetime read. Physical landing/input is immutable, engine inertialization owns deficit; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JStateControllerRuntime.h",
+      "scope": "Additional inline scope: full hold/consumed-command/pivot/turn-sequence policy read, callers in GT presentation/snapshot compared. Sole transition predicate retained by RA13; not proof of every generated BP branch.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JTurnEventSettings.h",
+      "scope": "Additional inline scope: resolved finite bounded settings and dependent angle clamps read; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JTurnRequestSample.h",
+      "scope": "Additional inline scope: full frame/time/mode/gait freshness and finite GT sample vs completed selection/visual feedback read. Evidence ages are not duplicate pose ownership; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Audio/Project_JFoleyAudioProfile.h",
+      "scope": "Surface/tag fallback, loop/depth bounded resolution, source/visible contact sockets, client soft streaming/mix/admission radius settings read. Native validation pass is separate from audible quality and every numeric extension path.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterClassDefinition.h",
+      "scope": "Additional complete header scope: class/advancement graph requirements, exclusivity and grant policy, optional gameplay/style vs VFX override read. Allows cosmetics without duplicated combat styles; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h",
+      "scope": "PS/NPC의 실제 ASC 옆에 있는 persistence state·owner acquisition history·grant handle lease와 trusted XP/no client amount 계약, endpoint lifecycle 및 granted ASC weak ref를 읽음. 기존 DS 소유권 보완 유지.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JAttackDefinition.h",
+      "scope": "Authored identity/montage section/play rate/movement/weapon grip/server damage/hit dimensions와 실제 validator를 대조. runtime 실행·모든 DA numeric field 검증 완료로 승격하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatCommandSet.h",
+      "scope": "Additional complete header/inline scope: input alias sequence/result/conditions differs from active skill ComboDefinition and GAS costs/cancel ownership. Bounded history declarations and caller boundary read; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatHitValidation.h",
+      "scope": "Additional complete header/inline scope: request and policy structs, failure mapping, accepted/rejected result constructors read. Native request validation contracts differ from current live remote testing.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatMovementPolicy.h",
+      "scope": "Complete value-only movement admission policy header read with actual owner-captured tags and cpp. Projection policy is not second gameplay state authority.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatPresentationSet.h",
+      "scope": "Complete immutable cue/profile/style overlay header read with RA02 presentation owner. Cosmetic Niagara lifetime/attachment is separate from gameplay attack authority. All VFX/art quality not verified.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatStyleDefinition.h",
+      "scope": "Authored combo/command/attack/ability vs transient derived runtime catalogs, complete-current/cancel policy, UPROPERTY ownership와 invalidation 제작 경계 대조. 같은 montage 사용과 동일 gameplay execution으로 혼동하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JComboDefinition.h",
+      "scope": "Complete immutable authored node/edge/tag condition/buffer and validator API read with production melee callers. Runtime combo state remains GameplayAbility-owned.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+      "scope": "실행 style/combo/window/queued input/montage task/actual ASC binding/weapon revocation/root-motion restore 소유권을 선언과 caller cpp로 대조. ActiveGameplayStyle의 UPROPERTY→ComboDefinition→Attack→Montage hard refs가 현재 정상 경로를 보유함. 임의로 같은 이름의 bool/token을 병합하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JServerSideRewindComponent.h",
+      "scope": "Additional complete header scope: server sampled capsule geometry ring, discontinuity reset, rate/lifetime and public verify API read. Capsule rewind differs from weapon-sweep history; no duplicate owner merged.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JAnimationUpdateCoordinatorComponent.h",
+      "scope": "Complete visual mesh restoration/source prerequisite/schedule and urgent-request state header read with GT cpp. Requested pose tick vs effective ABA tick retained.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatAnimationLayerComponent.h",
+      "scope": "Complete header read: presentation selection owns combat priority; shared transient DuplicateTransient lease owns class/load/link resources; failed loads require explicit retry.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatHitValidationComponent.h",
+      "scope": "Additional complete header scope: attack/weapon revision, window tokens, bounded server sweep history, request sequence/rate, authoritative/predicted/SSR APIs read. Actual authority damage and current network input pass; full remote SSR remains unverified.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h",
+      "scope": "Additional complete header/inline scope: PlayerState aggregate, FastArray callbacks, authority/owner RPCs, receipts/rate, slot commit lock and retirement read. BeginPlay already reopens aggregate and owner serializer; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h",
+      "scope": "Additional complete header scope: per-slot actual ASC grant handles, visual lease/revision/retry and provider binding ownership read. BeginPlay already reopens runtime admission; potential reuse gate candidate rejected.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JFoleyComponent.h",
+      "scope": "Complete event-only cosmetic component header read: no replicated or persistent PS state, bounded family-side admission. Actual jump/landing owner preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h",
+      "scope": "Additional complete header/inline scope: sole replicated inventory, read-only UI value snapshot, observed-count/order bag requests, bounded receipts/rate/cooldown and lifecycle admission read. BeginPlay already reopens; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h",
+      "scope": "Complete header read: mount actor selects profile, client layer component streams/links; same resource lease and independent mount event selection. No mount-specific master branch added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActionComponent.h",
+      "scope": "Additional header scope: complete server-only start/stop ownership, suspension/resume result, weak action context, path and ability handles, bounded retry timer fields read. Actual cancellation preserves noncancellable GAS ownership.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActivationComponent.h",
+      "scope": "Explicit authority activation/action lease and actual grant/scoring revision ownership; BeginPlay reuse candidate static proof and native public behavior fixture prepared. No automatic activation or generalized worker added.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JReplicatedAnimEventComponent.h",
+      "scope": "Complete reliable semantic boundaries vs unreliable cosmetic/replicated recovery APIs and per-channel sequence state read; merge would erase distinct transports.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JReplicatedJumpStateComponent.h",
+      "scope": "Complete authority jump state and unreliable low-latency observation/recovery API read. Owner predicts, simulated proxies reconcile; actual jump owner preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Equipment/Project_JEquipmentItemDefinition.h",
+      "scope": "Additional complete header scope: independent logical slot/visual mesh/socket/draw policy, actual ASC ability/effect policy, optional stat compatibility and combat vs visual profile read. Preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Equipment/Project_JEquipmentTypes.h",
+      "scope": "Complete slot/failure/result value declarations and diagnostics switch read with native inventory/equipment transaction consumers. Result does not own inventory or equipment state.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h",
+      "scope": "Complete value-only motion key/interpolation/recovery/contact helper header read including truncated tail reread. Numeric key/time/transform validation remains a recorded potential gap; source identity empty-key behavior preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Features/Project_JGameFeatureReceiver.h",
+      "scope": "Complete reflected dynamic injection/removal interface read with native receiver implementations. Extension hook retained despite low native token count; not proof a live GameFeature deployment exists.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Inventory/Project_JItemDefinition.h",
+      "scope": "Additional complete header scope: immutable item identity/text/soft icon and max stack data read. Declaration presence is not every authored item validation; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Inventory/Project_JItemInstanceTypes.h",
+      "scope": "Additional complete header/inline scope: authoritative stable item identity, stack/level/lock/equipped/order and minimum validity read. BagOrder is ordering, not ownership/capacity. Preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Mass/Project_JMassRepresentationSubsystem.h",
+      "scope": "Additional complete header scope: explicit server movement handoff, world/generation token, private entity manager and joined processor, bStepping/admission fields read. Public Deinitialize/storage release vs active step callback is being prepared for native reproduction; not yet fixed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Network/Project_JNetObjectFilter_Distance.h",
+      "scope": "Additional complete header scope: UObject policy helper, not UNetObjectFilter adapter. Future commented hooks are not registered Iris filtering. CPP decisions and Config/default Iris fixture distinguished; preserved.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Network/Project_JNetObjectPrioritizer_Combat.h",
+      "scope": "Additional complete header scope: UObject combat multiplier helper, not active Iris prioritizer. CPP tag priority calculations preserved; interface presence is not active network implementation.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h",
+      "scope": "Complete GT owner/component/ASC refresh cache and protected callback/header read. CachedMesh used by visibility query; protected access is retained as locomotion extension contract.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JNPCCharacter.h",
+      "scope": "Complete default significance/network and opt-in AI policy header read; unused public recommended interval is preserved as documented policy access for future native consumers.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JFoleySubsystem.h",
+      "scope": "Complete client listener/admission/load/resource/post-actor batch header read with cpp. Bounded audio selection prevents backlog; NullRHI/no-sound testing is not audible quality assurance.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JNPCDecisionSubsystem.h",
+      "scope": "Authority registry, observer/target/agent/dispatch/result/action budget, age/revision/ready/batch lifecycle와 전체 header를 읽고 cpp 계약 범위를 대조. full Tick과 collection budget이 별도임.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JNPCPathSubsystem.h",
+      "scope": "Complete async engine path admission/delivery/cancel/tombstone/stat/test-seam header read. RA21 GT pins in progress; no fake worker or blocking join added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/System/Project_JPresentationBudgetSubsystem.h",
+      "scope": "Complete weak component FIFO/admission/revision/capacity/stop header read with remove-before-apply cpp. RA21 GT callback pin hardening in progress; not a performance improvement claim.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JForwardStrafeDataTests.cpp",
+      "scope": "RA27: actual standalone post-test corrupted index warning reproduced despite clean automation report. Removed registered transient DB clone/mutations from expected comparison; uses native entry values, directly checks original70/5288 and Forward14 index readiness/range/animation. Three fresh processes clean, no corrupted-index log lines; whole verification running. No DDC deletion or original asset edits.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Public/Animation/Project_JEarlyTransitionMigrationLibrary.h",
+      "scope": "Whole header: explicit six-clip editor-only metadata repair, preserved source packages. Declaration and previous implementation reading are separate from current imported asset/index quality and actual apply.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Public/Animation/Project_JFoleyMigrationLibrary.h",
+      "scope": "Whole header: explicit package-list dry-run/apply and source GUID/serialized event recovery, separate source mount, no source GASP saves. Narrow asset repair scope is a tooling contract, not a runtime clip exception. Existing full cpp reviewed; no new mutation run in this phase.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/CombatDamageable.h",
+      "scope": "Whole interface header: legacy native damage/heal/death/danger abstraction distinct from server-resolved GAS hit contract. Pure virtual interface is not dead code merely because one combat path uses GAS.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Interaction/Project_JInteractable.h",
+      "scope": "Whole interface header: BlueprintNativeEvent CanInteract/Interact capability; declarations are not authority enforcement. Actual caller/lifetime reviewed in existing interaction implementation.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Interaction/Project_JInteractionTargetComponent.h",
+      "scope": "Whole header: opt-in data-only range/priority/hold/LOS/exclusive config. bEnabled is availability metadata; actual CanInteract and authority/LOS/ownership validation remain in interactor/target implementation. Not a replicated lock or scheduler.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Optimization/Project_JGameplayAsyncTypes.h",
+      "scope": "복사 값 작업 token/kind/GT apply/stale discard 확장 계약. 실제 Core target query와 Mass chunk executor의 구현과 구분.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Optimization/Project_JObjectPoolTypes.h",
+      "scope": "Pool identity/kind/prewarm/retained/authority policy 데이터. concrete Niagara pool이나 memory/GC 감소의 근거가 아님.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Optimization/Project_JRetryDelay.h",
+      "scope": "Whole pure inline policy: bounded exponent and deterministic consumer jitter; existing validated caller base/cap remain authoritative. This helper does not schedule timers or own retry state.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Optimization/Project_JTargetSpatialSnapshot.h",
+      "scope": "Complete immutable grid/3D filter/stable-ID query API read with fallback-bound cpp; source indices only valid in this snapshot.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Project_JMMOTypes.h",
+      "scope": "Complete strong identity wrappers/world identity/replication relevance masks and finite distance/priority policy header read including truncated range reread. Prototype UUID is not backend authentication.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/Project_JSocialStateInterface.h",
+      "scope": "Whole header: party/guild metadata query reused by policy helpers. UObject interface is not evidence active Iris adapter or backend social sync installed.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JAssetManager.h",
+      "scope": "Whole header: configured UAssetManager singleton and startup registration. Resource lease ownership is in streamable/group consumers, not this thin wrapper; no unnecessary god-object expansion.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JGameDataSubsystem.h",
+      "scope": "GI readiness flag 선언/inline과 cpp initialize/deinitialize를 대조. 실제 backend readiness 또는 데이터 마이그레이션 성공과 구분.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JMessageSubsystem.h",
+      "scope": "GI-local GT notification/delegate snapshot, channel 재등록/clear가 다음 broadcast에 반영되는 계약. production native caller는 검색에서 없고 기존 native fixture만 확인. durable bus나 서비스 통신으로 확대 해석하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JObjectPoolRegistrySubsystem.h",
+      "scope": "등록/조회/삭제와 숫자 admission을 cpp/type과 대조. 실제 object acquire/return 실행기가 아닌 pool 정책 registry이므로 확장 계약을 미사용으로 삭제하지 않음.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JTargetScoringSubsystem.h",
+      "scope": "Complete bounded owner/token/epoch/serial-worker/batch/completion APIs read and callback delivery cpp compared. Worker captures copied value-only Work; RA21 pins remain on GT.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCore/Public/System/Project_JVisualAssetSubsystem.h",
+      "scope": "World-local token/owner/group admission, in-flight slot 보존과 timeout/backoff, GT bounded apply, asset pin과 callback 이동, stop/late completion 계약. worker에 UObject 접근을 추가하지 않음.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+      "scope": "Complete grant generation/lease/spec/effect/expected avatar server input and pressed/released API read with implementation. RA25 removes unused nonreflected direct activation loop; no new authority/prediction path.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JMMO/Public/MMO/Coordination.h",
+      "scope": "Complete aggregate reservation/request tracker header read and native locking/completion cpp contracts compared. Closed admission is not task cancellation acknowledgement, process-local locks are not distributed locks.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMMO/Public/MMO/FeatureCatalog.h",
+      "scope": "Complete dependency catalog API read with resolver implementation. Describes extension contracts, not running MMO services.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMMO/Public/MMO/Repository.h",
+      "scope": "Complete revision/tombstone/idempotent receipt/storage port and memory adapter API read with transactional cpp. Memory adapter is a bounded development implementation, not durable production storage.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMMO/Public/MMO/ServicePort.h",
+      "scope": "Complete value-only async query/mutation/request/response port read; dispatch identity is only transport admission, semantic authorization belongs to adapter.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "scope": "RA05 confirmed: old dismount restores captured movement over new mount. Restore now rechecks current rider relationship after callbacks and possession.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JMount/Private/Mount/Project_JMountComponent.cpp",
+      "scope": "RA05/10: public RequestMount -> TryMountRider -> SetMountedMount -> tag callbacks -> Dismount/new request. Baseline count2/leaked1; revision lease/retirement/play reuse implemented; WholeFinal1 passed.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JMount/Public/Animation/Project_JRiderAnimationProfile.h",
+      "scope": "Complete immutable soft linked-layer profile/tag/IK/blend header read and mount selection caller compared; no sync load added.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JFlyingMountCharacter.h",
+      "scope": "Complete header read in bounded ranges including truncated tail reread: authority flight phases, replicated start time, landing progress/stall/attempt state, owned input handles. Absolute replicated presentation time and authority elapsed progress are distinct. Full BP flight visual/invalid numeric matrix remains unverified.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountComponent.h",
+      "scope": "Complete rider-side relationship/revision/actual ASC lease/input-action header read with RA05/10 cpp. Movement/possession authority remains mount actor.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_JMount/Public/Mount/Project_JMountTypes.h",
+      "scope": "Complete shared mount state/eligibility failure/flight cue enums and pure tag policy declaration read with implementations; no duplicative actor-specific classification introduced.",
+      "changed_since_reaudit_baseline": false
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JReauditContractsTests.cpp",
+      "scope": "Targeted native regression fixture only; compiled/executed version must be matched to its build record.",
+      "changed_since_reaudit_baseline": true
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JReauditDataContractsTests.cpp",
+      "scope": "Targeted native regression fixture only; compiled/executed version must be matched to its build record.",
+      "changed_since_reaudit_baseline": true
+    }
+  ],
+  "whole_file_manual_review_claimed": false,
+  "limitation_ko": "목록·구현 본문 읽기·명명된 계약·실제 수정·실행 검증을 합쳐 전수 정밀 완료 비율로 계산하지 않는다. 이전 named scope도 모든 함수 검토가 아니다."
+}

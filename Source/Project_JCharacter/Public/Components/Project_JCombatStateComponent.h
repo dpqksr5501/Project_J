@@ -17,7 +17,9 @@ class PROJECT_JCHARACTER_API UProject_JCombatStateComponent : public UActorCompo
 public:
 	UProject_JCombatStateComponent();
 
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
 	FProject_JCombatStateTagChangedSignature OnCombatStateTagChanged;
@@ -45,6 +47,7 @@ public:
 	bool IsSprintTagActive() const;
 
 private:
+	UAbilitySystemComponent* GetCurrentAvatarAbilitySystem() const;
 	void RegisterStateTagEvents();
 	void UnregisterStateTagEvents();
 	void HandleStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
@@ -52,5 +55,6 @@ private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UAbilitySystemComponent> BoundAbilitySystemComponent;
 
-	TArray<FDelegateHandle> StateTagEventHandles;
+	TMap<FGameplayTag, FDelegateHandle> StateTagEventHandles;
+	bool bEnding = false;
 };

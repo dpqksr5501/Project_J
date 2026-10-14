@@ -57,11 +57,14 @@ private:
 	int32 SourceLevel = 1;
 	bool bLegacyViewModelRequested = false;
 	bool bEndingPlay = false;
+	uint64 BindingRevision = 0;
 	void ClearAttributeBindings();
-	void OnHealthChanged(const FOnAttributeChangeData& Data);
-	void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
-	void OnManaChanged(const FOnAttributeChangeData& Data);
-	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
+	bool CanPublishPresentation() const;
+	void PublishAttribute(float Value, uint64 ExpectedRevision, void (UProject_JCharacterViewModel::*Setter)(float));
+	void OnHealthChanged(const FOnAttributeChangeData& Data, uint64 ExpectedRevision);
+	void OnMaxHealthChanged(const FOnAttributeChangeData& Data, uint64 ExpectedRevision);
+	void OnManaChanged(const FOnAttributeChangeData& Data, uint64 ExpectedRevision);
+	void OnMaxManaChanged(const FOnAttributeChangeData& Data, uint64 ExpectedRevision);
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProject_JCharacterViewModel> CharacterViewModel = nullptr;

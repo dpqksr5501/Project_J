@@ -1,0 +1,74 @@
+{
+  "preserved": [
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E",
+      "matches": true
+    },
+    {
+      "path": "Content/Animation_Logic/RTG_Greatsword_UE5.uasset",
+      "sha256": "74E3E616BC099FFBB1104B8EDB18FE79ED59569D8D4B324CD680C22D38FE9982",
+      "matches": true
+    },
+    {
+      "path": "Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md",
+      "sha256": "DB19C60AE025D12FB2C5EBB2EDB084A113F543CD7D881AA4A81F2225BE174315",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+      "sha256": "F6FB3F5852544838DCE1C8E23A62978F360DD1F64280333A7791872AE112006A",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+      "sha256": "620B52FD82F0D8E0ED2BC41AE0EE7E41BBAF06C502DA9F645A2D517C79C6C7AB",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+      "sha256": "C3F58140B260421D35D872C18D9828E641CD582A4FFCFDBFD2245C84780D3FB8",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+      "sha256": "FD9FCFBBE85F2832ABB2319A938495503365DDC380A8F7C5588823DD7B2B7EDB",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+      "sha256": "25D66F354DA4BBF75C9B13917CE0105BA10663CC8570ADC89EFFC31351979829",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+      "sha256": "39BC10161F7802BA41DD152A9B40586963ECB10D40ED37B06641B2FE1032E3C6",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+      "sha256": "18833229DC7EAE4FB09E6642A7FD88E14EBD7516BA32DB282FB1CE69C8429EFC",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+      "sha256": "1A56C07B2E2C0F011F12D66BF81A46097435A2A6C0770467E95CD45E105CA70C",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+      "sha256": "5235D67272C0AD061B48444E5CE34471E0C8D3F1CBF9E8B4468763B912CDC0D6",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+      "sha256": "76D16DE663F8299C30400B39FAAB3AA6D184935141C1440E8A607462FDC24295",
+      "matches": true
+    }
+  ],
+  "sourceFiles": 650,
+  "sourceMismatches": [],
+  "editorArtifacts": 9,
+  "editorMismatches": [],
+  "meaning": "Current frozen compiled provenance and original user/prior attack work preservation; not whole integrity review."
+}

@@ -507,9 +507,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Animation|One Shot", meta = (BlueprintThreadSafe))
 	float GetThreadSafeStateControllerSelectedAnimationTimeRemaining() const;
 
-	/** Game-thread only bridge for UAnimNotifyState_Project_JLocomotionEarlyTransition. */
-	void BeginOneShotEarlyTransitionWindow();
-	void EndOneShotEarlyTransitionWindow();
+	/** Current held clip and snapshot revision own authored early-transition permission. GT only. */
 	void RequestAuthoredEarlyTransition(UAnimSequenceBase* Animation, bool bRequireGaitChange, EProject_JLocomotionGaitIntent ExcludedGait);
 
 	UFUNCTION(BlueprintPure, Category = "Animation|Mount", meta = (BlueprintThreadSafe))
@@ -597,6 +595,8 @@ public:
 protected:
 	void ResetStateControllerChooserCache();
 	void UpdatePresentationFromSnapshot();
+	void ClearStateControllerInputReferences();
+	void PublishStateControllerGroundLoop(EProject_JStateControllerPresentationState LoopState);
 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
 	void ResolveStateControllerPresentationStateWithPlaybackHold(
 		const FProject_JAnimThreadSafeData& Data,
@@ -652,9 +652,6 @@ protected:
 	float GetEffectiveGenericMoveInputSpeedThreshold() const;
 	float GetEffectiveSprintLocomotionSpeedThreshold() const;
 	FProject_JRemoteVisualLocomotionPolicy GetEffectiveRemoteVisualPolicy() const;
-	float GetEffectiveHiddenRemoteUpdateInterval() const;
-	float GetEffectiveMidMotionMatchingUpdateInterval() const;
-	float GetEffectiveFarMotionMatchingUpdateInterval() const;
 	bool ShouldDisableMotionMatchingBeyondFarDistance() const;
 	const UProject_JCombatAnimProfile* GetCombatAnimProfile() const;
 	float GetEffectiveCombatAimAlpha() const;
@@ -681,8 +678,6 @@ public:
 	FProject_JLocomotionContinuityTraceSampler LocomotionContinuityTraceSampler;
 	bool bAnimationFlowEvaluationPending = false;
 
-	/** Game-thread NotifyState depth. A depth avoids prematurely closing overlapping blend windows. */
-	int32 OneShotEarlyTransitionWindowDepth = 0;
 	friend class FProjectJAuthoredEarlyTransitionTest;
 	bool IsAuthoredEarlyTransitionAllowed(EProject_JLocomotionGaitIntent CurrentGait) const;
 	TWeakObjectPtr<UAnimSequenceBase> AuthoredEarlyTransitionAsset;
@@ -739,7 +734,6 @@ public:
 	bool bHasStateControllerStopGaitForChooser = false;
 	EProject_JLocomotionGaitIntent StateControllerLandGaitForChooser = EProject_JLocomotionGaitIntent::Run;
 	bool bHasStateControllerLandGaitForChooser = false;
-	bool bHasStateControllerFallOffForChooser = false;
 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
 	bool bCachedStateControllerHasSelectedAnimation = false;
@@ -1024,6 +1018,7 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJGroundStateOwnershipTest;
 	friend class FProjectJAnimationProxyLifetimeTest;
 	friend class FProjectJLandingReturnContextTest;
 	friend class FProjectJStrafeFacingSelectionTest;

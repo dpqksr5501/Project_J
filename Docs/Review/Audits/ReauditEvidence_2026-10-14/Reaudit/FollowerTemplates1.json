@@ -1,0 +1,225 @@
+{
+  "blueprint": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+  "method": "public SubobjectDataSubsystem / SubobjectDataBlueprintFunctionLibrary",
+  "asset_mutation": false,
+  "does_not_prove_runtime_or_quality": true,
+  "components": [
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Inner_GEN_VARIABLE",
+      "name": "Inner_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/inner.inner",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Greatsword_GEN_VARIABLE",
+      "name": "Greatsword_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman",
+        "anim_class": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme_C",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Cloak_GEN_VARIABLE",
+      "name": "Cloak_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/cloak.cloak",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Cloak_GEN_VARIABLE",
+      "name": "Cloak_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/cloak.cloak",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Foot_GEN_VARIABLE",
+      "name": "Foot_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/foot.foot",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Foot_GEN_VARIABLE",
+      "name": "Foot_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/foot.foot",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Inner_GEN_VARIABLE",
+      "name": "Inner_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/inner.inner",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Hand_GEN_VARIABLE",
+      "name": "Hand_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/hand.hand",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Hel_GEN_VARIABLE",
+      "name": "Hel_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/hel.hel",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Hand_GEN_VARIABLE",
+      "name": "Hand_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/hand.hand",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Upper_GEN_VARIABLE",
+      "name": "Upper_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/upper.upper",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Upper_GEN_VARIABLE",
+      "name": "Upper_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/upper.upper",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Sho_GEN_VARIABLE",
+      "name": "Sho_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/sho.sho",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Sho_GEN_VARIABLE",
+      "name": "Sho_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/sho.sho",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Lower_GEN_VARIABLE",
+      "name": "Lower_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/lower.lower",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Lower_GEN_VARIABLE",
+      "name": "Lower_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/lower.lower",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C:Hel_GEN_VARIABLE",
+      "name": "Hel_GEN_VARIABLE",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/GreatSword/Clothes/hel.hel",
+        "anim_class": "None",
+        "component_tags": "[]",
+        "hidden_in_game": "False"
+      },
+      "unsupported": {},
+      "parent": null
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CharacterMesh0",
+      "name": "CharacterMesh0",
+      "fields": {
+        "skeletal_mesh_asset": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple",
+        "anim_class": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C",
+        "component_tags": "[]",
+        "hidden_in_game": "True"
+      },
+      "unsupported": {},
+      "parent": "/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CollisionCylinder"
+    }
+  ],
+  "unsupported": []
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"cues\\\":[{\\\"cueTag\\\":{\\\"tagName\\\":\\\"PresentationCue.Combat.Trail\\\"},\\\"niagaraSystem\\\":{\\\"refPath\\\":\\\"/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic.NS_SlashTrail_Basic\\\"},\\\"attachmentTarget\\\":\\\"Weapon\\\",\\\"attachSocketName\\\":\\\"WeaponGroundProbe_Tip\\\",\\\"relativeTransform\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"bLooping\\\":true,\\\"bDestroyImmediatelyOnStop\\\":true}]}\"}"
+			}
+		]
+	}
+}

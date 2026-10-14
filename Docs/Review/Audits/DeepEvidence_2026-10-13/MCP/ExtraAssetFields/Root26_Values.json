@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"actionDescription\\\":\\\"\\\",\\\"bTriggerWhenPaused\\\":false,\\\"bConsumeInput\\\":true,\\\"bConsumesActionAndAxisMappings\\\":false,\\\"bReserveAllMappings\\\":false,\\\"triggerEventsThatConsumeLegacyKeys\\\":0,\\\"valueType\\\":\\\"Boolean\\\",\\\"accumulationBehavior\\\":\\\"TakeHighestAbsoluteValue\\\",\\\"triggers\\\":[{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_Jump.IA_Jump:InputTriggerPressed_0\\\"},{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_Jump.IA_Jump:InputTriggerReleased_0\\\"}],\\\"modifiers\\\":[],\\\"playerMappableKeySettings\\\":\\\"None\\\"}\"}"
+			}
+		]
+	}
+}

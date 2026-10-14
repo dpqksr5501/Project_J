@@ -1,0 +1,45 @@
+{
+  "before": "ForwardIndexRepro1 had 1 clean report but a post-test corrupted index warning in raw log. No DDC deletion.",
+  "after": [
+    {
+      "run": 1,
+      "clean": 1,
+      "warning": 0,
+      "failed": 0,
+      "notRun": 0,
+      "exit": 0,
+      "corruptedIndexLogLines": 0,
+      "indexReportHeader": [
+        "OriginalEntries=70 LoopEntries=8 ForwardEntries=14 Forward=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle Normalization=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle",
+        "CanonicalIndexAssets=70 CanonicalPoses=5288 ExpectedValues=14 NoTransientDatabaseComparison=1"
+      ]
+    },
+    {
+      "run": 2,
+      "clean": 1,
+      "warning": 0,
+      "failed": 0,
+      "notRun": 0,
+      "exit": 0,
+      "corruptedIndexLogLines": 0,
+      "indexReportHeader": [
+        "OriginalEntries=70 LoopEntries=8 ForwardEntries=14 Forward=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle Normalization=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle",
+        "CanonicalIndexAssets=70 CanonicalPoses=5288 ExpectedValues=14 NoTransientDatabaseComparison=1"
+      ]
+    },
+    {
+      "run": 3,
+      "clean": 1,
+      "warning": 0,
+      "failed": 0,
+      "notRun": 0,
+      "exit": 0,
+      "corruptedIndexLogLines": 0,
+      "indexReportHeader": [
+        "OriginalEntries=70 LoopEntries=8 ForwardEntries=14 Forward=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle Normalization=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle",
+        "CanonicalIndexAssets=70 CanonicalPoses=5288 ExpectedValues=14 NoTransientDatabaseComparison=1"
+      ]
+    }
+  ],
+  "scope": "Fresh process repeated read-only value comparison plus canonical index readiness/range/animation assertions; not whole asset integrity."
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"schema\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity\\\"},\\\"normalizationSet\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity\\\"}}\"}"
+			}
+		]
+	}
+}

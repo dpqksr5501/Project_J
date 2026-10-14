@@ -1,0 +1,2 @@
+visual_and_equipment_load_ms=72.336500
+cooked=1

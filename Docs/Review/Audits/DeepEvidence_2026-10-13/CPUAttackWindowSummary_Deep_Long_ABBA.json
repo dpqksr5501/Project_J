@@ -1,0 +1,65 @@
+{
+  "scope": "Post-tick observed montage occupancy partitions; the final boundary tick includes work before occupancy changed. AttackBurst has one authored burst, not a continuously sustained attack workload. All A/B variants use the same occupancy sequence.",
+  "windows": [
+    {
+      "aba": false,
+      "window": "full_200_montages",
+      "variants": {
+        "A": {
+          "samples": 316,
+          "mean_ms": 23.508119172876395
+        },
+        "B": {
+          "samples": 316,
+          "mean_ms": 23.235186734059944
+        }
+      },
+      "delta_percent": -1.1610135069051397
+    },
+    {
+      "aba": false,
+      "window": "after_montage",
+      "variants": {
+        "A": {
+          "samples": 2084,
+          "mean_ms": 22.281298496100817
+        },
+        "B": {
+          "samples": 2084,
+          "mean_ms": 21.579375687178633
+        }
+      },
+      "delta_percent": -3.15027783970947
+    },
+    {
+      "aba": true,
+      "window": "full_200_montages",
+      "variants": {
+        "A": {
+          "samples": 316,
+          "mean_ms": 23.955999260556094
+        },
+        "B": {
+          "samples": 316,
+          "mean_ms": 23.971534169078627
+        }
+      },
+      "delta_percent": 0.06484767491252708
+    },
+    {
+      "aba": true,
+      "window": "after_montage",
+      "variants": {
+        "A": {
+          "samples": 2084,
+          "mean_ms": 10.560460251017748
+        },
+        "B": {
+          "samples": 2084,
+          "mean_ms": 10.362141179332006
+        }
+      },
+      "delta_percent": -1.8779396633459067
+    }
+  ]
+}

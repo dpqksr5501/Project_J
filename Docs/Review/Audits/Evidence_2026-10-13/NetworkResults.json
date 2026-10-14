@@ -1,0 +1,303 @@
+[
+  {
+    "run": "WholeAudit_CombatNormal",
+    "verificationSha256": "9c8acfd24499b0d737691fa4189cfad22470c8bca44bab9fc4e8f91b00295d70",
+    "passed": false,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": false,
+        "reason": "Timeout stage=7 stage=5 seen=90 own=1 foreignEmpty=1 equipment=1 pulse=175 animation=1; stage=5 seen=100 own=1 foreignEmpty=1 equipment=1 pulse=175 animation=1; "
+      },
+      {
+        "file": "Client1/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 0,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_CombatNormal_Diagnostics",
+    "verificationSha256": "16ec513f8abdb1b9d091a6713d1f3bbcfedbe5074ca7fc337908ba9a6fada8b2",
+    "passed": false,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": false,
+        "reason": "Timeout stage=7 stage=5 seen=90 own=1 foreignEmpty=1 equipment=1 pulse=177 animation=1; stage=5 seen=100 own=1 foreignEmpty=1 equipment=1 pulse=176 animation=1; "
+      },
+      {
+        "file": "Client1/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 0,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_CombatNormal_RealCMC",
+    "verificationSha256": "1115cde8ca80d9ca59e6fb33cf307ccbf1a9a14a738495e555158980de79bbd6",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_CombatLag50Loss3_RealCMC",
+    "verificationSha256": "52ff929da3fd8598cea1445a920437f5333433127f243c2034e4bae7b97bfc26",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_CombatLag50Loss20_RealCMC",
+    "verificationSha256": "291c345149e80a4c0835eb2c35a68d3d80da1002ee49e63a5a2d779f5df41b94",
+    "passed": false,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": false,
+        "reason": "Timeout stage=7 stage=5 seen=90 own=1 foreignEmpty=1 equipment=1 pulse=185 animation=1; stage=5 seen=100 own=1 foreignEmpty=1 equipment=1 pulse=185 animation=1; "
+      },
+      {
+        "file": "Client1/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 1,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_OrderedIntent_Lag50Loss20",
+    "verificationSha256": "aa8fc29e840b3620832af4251060824bd91d97b270f73e9aaa885890e039e966",
+    "passed": false,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": false,
+        "reason": "Timeout stage=7 stage=5 seen=90 own=1 foreignEmpty=1 equipment=1 pulse=186 animation=1; stage=5 seen=100 own=1 foreignEmpty=1 equipment=1 pulse=187 animation=1; "
+      },
+      {
+        "file": "Client1/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 0,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_OrderedIntent_Lag50Loss20_Ready",
+    "verificationSha256": "3298acb3db5f51d47b47ecc24ea5b514c688ee87bca23fc6e1def2dea4973163",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_Final_Lag50Loss20",
+    "verificationSha256": "fafa0cde42ecc77519a27ece430e9ecf3a2affc0372f356b62f9ac3e51b888ab",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_Final_Lag50Loss3",
+    "verificationSha256": "4e7a45e7af1ff9ba60a0c88860a24626d4320a6d358b7cb1dd9bb4b492b57f50",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "WholeAudit_Delivery_Lag50Loss20",
+    "verificationSha256": "d704bae0f4a50023aff90921dac7185bfd6668e053010f8d2acfaf390e43dc6f",
+    "manifestSha256": "994263e34e71b1803209da57cd010df77872dec8fc75c188b97171d9488a29f1",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "timeouts": 0,
+    "combatTrialPasses": 3,
+    "startupPythonErrorLines": 45
+  }
+]

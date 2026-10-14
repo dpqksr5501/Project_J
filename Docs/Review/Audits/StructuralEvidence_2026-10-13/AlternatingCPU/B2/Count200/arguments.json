@@ -1,0 +1,21 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-NullRHI",
+  "-nosound",
+  "-nosplash",
+  "-NoLiveCoding",
+  "-nop4",
+  "-ProjectJAnimationCount=200",
+  "-ProjectJAnimationRepeats=2",
+  "-ProjectJAnimationOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_B2/Count200/cpu.json",
+  "-ProjectJAnimationWarmupTicks=120",
+  "-ProjectJAnimationMeasuredTicks=120",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_B2/Count200/Run.log",
+  "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Structural_ABAB_B2/Count200/Automation",
+  "-TestExit=Automation Test Queue Empty",
+  "-ini:Engine:[SystemSettings]:a.Budget.Enabled=1",
+  "-ini:Engine:[SystemSettings]:a.Budget.BudgetMs=2",
+  "-ExecCmds=t.MaxFPS 0,Automation RunTests ProjectJ.Animation.AuthoredCPU; Quit",
+  "-NoDDCCleanup"
+]

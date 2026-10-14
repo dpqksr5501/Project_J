@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JFootPlacementDefaults.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 
@@ -41,25 +42,8 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 {
 	bUseMultiThreadedAnimationUpdate = true;
 
-	FootPlacementPlantSettingsDefault.DistanceToGround = 10.0f;
-	FootPlacementPlantSettingsDefault.MaxExtensionRatio = 0.95f;
-	FootPlacementPlantSettingsDefault.MinExtensionRatio = 0.1f;
-	FootPlacementPlantSettingsDefault.AnkleTwistReduction = 0.75f;
-
-	FootPlacementPlantSettingsStops.DistanceToGround = 10.0f;
-	FootPlacementPlantSettingsStops.MaxExtensionRatio = 0.95f;
-	FootPlacementPlantSettingsStops.MinExtensionRatio = 0.1f;
-	FootPlacementPlantSettingsStops.AnkleTwistReduction = 0.75f;
-	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;
-	FootPlacementPlantSettingsStops.UnplantRadius = 25.0f;
-	FootPlacementPlantSettingsStops.UnplantAngle = 35.0f;
-	FootPlacementPlantSettingsStops.ReplantRadiusRatio = 0.5f;
-	FootPlacementPlantSettingsStops.ReplantAngleRatio = 0.65f;
-
-	FootPlacementInterpolationSettingsStops.UnplantLinearStiffness = 500.0f;
-	FootPlacementInterpolationSettingsStops.UnplantAngularStiffness = 700.0f;
-	FootPlacementInterpolationSettingsStops.FloorLinearStiffness = 1200.0f;
-	FootPlacementInterpolationSettingsStops.FloorAngularStiffness = 650.0f;
+	ProjectJ::Animation::InitializeFootPlacementDefaults(FootPlacementPlantSettingsDefault,
+		FootPlacementPlantSettingsStops, FootPlacementInterpolationSettingsStops);
 }
 
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
@@ -80,7 +64,6 @@ void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
 {
 	bAuthoredEarlyTransitionPending = false;
 	AuthoredEarlyTransitionAsset.Reset();
-	OneShotEarlyTransitionWindowDepth = 0;
 	StateControllerRuntime.Reset();
 	ResetStateControllerChooserCache();
 	CachedStateControllerPresentationState = EProject_JStateControllerPresentationState::Disabled;
@@ -369,11 +352,6 @@ void UProject_JCharacterAnimInstance::OnStateEntry_TurnInPlace(const FAnimUpdate
 	// Empty stub for Blueprint State Machine On Entry Binding
 }
 
-void UProject_JCharacterAnimInstance::BeginOneShotEarlyTransitionWindow()
-{
-	++OneShotEarlyTransitionWindowDepth;
-}
-
 void UProject_JCharacterAnimInstance::RequestAuthoredEarlyTransition(UAnimSequenceBase* Animation, bool bRequireGaitChange, EProject_JLocomotionGaitIntent ExcludedGait)
 {
 	check(IsInGameThread());
@@ -391,11 +369,6 @@ bool UProject_JCharacterAnimInstance::IsAuthoredEarlyTransitionAllowed(EProject_
 		AuthoredEarlyTransitionAsset.Get() == CachedStateControllerSelectedAnimation &&
 		EarlyTransitionSnapshotRevision <= AuthoredEarlyTransitionSnapshotRevision + 1 &&
 		(!bAuthoredEarlyTransitionRequiresGaitChange || CurrentGait != AuthoredEarlyTransitionExcludedGait);
-}
-
-void UProject_JCharacterAnimInstance::EndOneShotEarlyTransitionWindow()
-{
-	OneShotEarlyTransitionWindowDepth = FMath::Max(OneShotEarlyTransitionWindowDepth - 1, 0);
 }
 
 FString UProject_JCharacterAnimInstance::GetAnimationDebugSummary() const

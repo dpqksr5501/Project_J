@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"CombatAnimationLayerComponent\\\":{\\\"refPath\\\":\\\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatAnimationLayerComponent\\\"},\\\"MountedAnimationLayerComponent\\\":{\\\"refPath\\\":\\\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:MountedAnimationLayerComponent\\\"},\\\"MountedAnimationLayerClass\\\":\\\"/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount_C\\\"}\"}"
+			}
+		]
+	}
+}

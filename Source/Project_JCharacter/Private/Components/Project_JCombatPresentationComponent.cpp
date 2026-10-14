@@ -13,6 +13,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Net/UnrealNetwork.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "UObject/StrongObjectPtr.h"
+#include "Engine/World.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCombatPresentation, Log, All);
 
@@ -64,18 +66,38 @@ void UProject_JCombatPresentationComponent::GetLifetimeReplicatedProps(TArray<FL
 
 void UProject_JCombatPresentationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	EndAttackPresentation();
+	RetirePresentation();
 	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JCombatPresentationComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
-	StopAllCues();
+	RetirePresentation();
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+void UProject_JCombatPresentationComponent::BeginPlay()
+{
+	bEndingPresentation = false;
+	Super::BeginPlay();
+}
+
+bool UProject_JCombatPresentationComponent::CanAcceptPresentation() const
+{
+	return !bEndingPresentation && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed()
+		&& GetWorld() && !GetWorld()->bIsTearingDown;
+}
+
+void UProject_JCombatPresentationComponent::RetirePresentation()
+{
+	if (bEndingPresentation) { return; }
+	bEndingPresentation = true;
+	EndAttackPresentation();
 }
 
 void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGameplayTag AttackTag)
 {
+	if (!CanAcceptPresentation()) { return; }
 	if (!AttackTag.IsValid())
 	{
 		if (ProjectJCombatPresentationDebug::IsEnabled())
@@ -88,9 +110,10 @@ void UProject_JCombatPresentationComponent::BeginAttackPresentation(const FGamep
 
 	// Each ability/node begin is a new instance, including repeated attacks with the same tag.
 	{
-		StopAllCues();
+		const uint32 Instance = ++ActiveAttackInstance;
 		ActiveAttackTag = AttackTag;
-		++ActiveAttackInstance;
+		StopAllCues();
+		if (!CanAcceptPresentation() || ActiveAttackInstance != Instance || ActiveAttackTag != AttackTag) { return; }
 		if (UProject_JWeaponPresentationComponent* Weapon = GetOwner()->FindComponentByClass<UProject_JWeaponPresentationComponent>())
 		{
 			Weapon->SetActiveAttackPresentation(AttackTag);
@@ -114,13 +137,15 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 {
 	const bool bHadAttack = ActiveAttackTag.IsValid() || !ActiveLoopingCues.IsEmpty()
 		|| ReplicatedPresentationState.ActiveAttackTag.IsValid();
+	const uint32 Instance = ++ActiveAttackInstance;
 	if (ProjectJCombatPresentationDebug::IsEnabled())
 	{
 		UE_LOG(LogProjectJCombatPresentation, Log, TEXT("[CombatVFX] EndAttack Owner=%s PreviousAttack=%s Authority=%d"),
 			*GetNameSafe(GetOwner()), *ActiveAttackTag.ToString(), GetOwner() && GetOwner()->HasAuthority() ? 1 : 0);
 	}
-	StopAllCues();
 	ActiveAttackTag = FGameplayTag();
+	StopAllCues();
+	if (ActiveAttackInstance != Instance || ActiveAttackTag.IsValid()) { return; }
 	if (AActor* Owner = GetOwner())
 	{
 		if (UProject_JWeaponPresentationComponent* Weapon = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
@@ -128,10 +153,10 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 			Weapon->SetActiveAttackPresentation(FGameplayTag());
 		}
 	}
-	if (bHadAttack && GetOwner() && GetOwner()->HasAuthority())
+	ReplicatedPresentationState.ActiveAttackTag = FGameplayTag();
+	ReplicatedPresentationState.ActiveLoopingCueTags.Reset();
+	if (bHadAttack && CanAcceptPresentation() && GetOwner()->HasAuthority())
 	{
-		ReplicatedPresentationState.ActiveAttackTag = FGameplayTag();
-		ReplicatedPresentationState.ActiveLoopingCueTags.Reset();
 		PublishRecoveryState();
 		MulticastEndAttackPresentation(++NextPresentationEventOrder);
 	}
@@ -139,6 +164,7 @@ void UProject_JCombatPresentationComponent::EndAttackPresentation()
 
 void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 {
+	if (!CanAcceptPresentation()) { return; }
 	if (!ActiveAttackTag.IsValid())
 	{
 		if (ProjectJCombatPresentationDebug::IsEnabled())
@@ -191,6 +217,7 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueTag)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatPresentation_Spawn);
+	if (!CanAcceptPresentation()) { return; }
 	if (GetNetMode() == NM_DedicatedServer)
 	{
 		if (ProjectJCombatPresentationDebug::IsEnabled())
@@ -311,6 +338,7 @@ void UProject_JCombatPresentationComponent::PlayCueLocal(const FGameplayTag CueT
 
 void UProject_JCombatPresentationComponent::StopCue(const FGameplayTag CueTag)
 {
+	if (!CanAcceptPresentation()) { return; }
 	for (auto It = CueLeases.CreateIterator(); It; ++It) { if (It.Value() == CueTag) { It.RemoveCurrent(); } }
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
@@ -333,9 +361,11 @@ void UProject_JCombatPresentationComponent::StopCueLocal(const FGameplayTag CueT
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CombatVFX_StopCueLocal);
 	if (TObjectPtr<UNiagaraComponent>* ActiveComponent = ActiveLoopingCues.Find(CueTag))
 	{
-		ProjectJCombatPresentationDebug::StopComponent(*ActiveComponent, ImmediateDestroyCueTags.HasTagExact(CueTag));
+		TStrongObjectPtr<UNiagaraComponent> Previous(ActiveComponent->Get());
+		const bool bImmediate = ImmediateDestroyCueTags.HasTagExact(CueTag);
 		ActiveLoopingCues.Remove(CueTag);
 		ImmediateDestroyCueTags.RemoveTag(CueTag);
+		ProjectJCombatPresentationDebug::StopComponent(Previous.Get(), bImmediate);
 	}
 }
 
@@ -385,7 +415,7 @@ const FProject_JCombatVFXCueDefinition* UProject_JCombatPresentationComponent::R
 
 void UProject_JCombatPresentationComponent::PublishRecoveryState()
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!CanAcceptPresentation() || !GetOwner()->HasAuthority())
 	{
 		return;
 	}
@@ -397,6 +427,7 @@ void UProject_JCombatPresentationComponent::PublishRecoveryState()
 
 void UProject_JCombatPresentationComponent::ApplyReplicatedState()
 {
+	if (!CanAcceptPresentation()) { return; }
 	if (ReplicatedPresentationState.Revision <= LastAppliedPresentationRevision
 		|| ReplicatedPresentationState.EventOrder <= LastAppliedRecoveryEventOrder)
 	{
@@ -442,7 +473,7 @@ void UProject_JCombatPresentationComponent::OnRep_PresentationState(FProject_JRe
 void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Implementation(
 	const FGameplayTag AttackTag, const FGameplayTag CueTag, const bool bStart, const int32 EventOrder, const uint32 AttackInstance)
 {
-	if (GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
+	if (!CanAcceptPresentation() || GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
 		EventOrder <= LastAppliedPresentationEventOrder)
 	{
 		return;
@@ -476,7 +507,7 @@ void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Impleme
 
 void UProject_JCombatPresentationComponent::MulticastEndAttackPresentation_Implementation(const int32 EventOrder)
 {
-	if (GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
+	if (!CanAcceptPresentation() || GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
 		EventOrder <= LastAppliedPresentationEventOrder)
 	{
 		return;
@@ -490,17 +521,24 @@ void UProject_JCombatPresentationComponent::MulticastEndAttackPresentation_Imple
 void UProject_JCombatPresentationComponent::StopAllCues()
 {
 	CueLeases.Reset();
-	for (TPair<FGameplayTag, TObjectPtr<UNiagaraComponent>>& Pair : ActiveLoopingCues)
-	{
-		ProjectJCombatPresentationDebug::StopComponent(Pair.Value, ImmediateDestroyCueTags.HasTagExact(Pair.Key));
-	}
-	ActiveLoopingCues.Reset();
-	ImmediateDestroyCueTags.Reset();
+	const auto Previous = MoveTemp(ActiveLoopingCues);
+	const auto PreviousImmediate = MoveTemp(ImmediateDestroyCueTags);
 	StartedCueTags.Reset();
+	// Niagara stop callbacks may reenter or collect garbage. Detach the whole
+	// previous generation and pin it before calling into the engine.
+	TArray<TStrongObjectPtr<UNiagaraComponent>> Pins;
+	Pins.Reserve(Previous.Num());
+	for (const auto& Pair : Previous) { Pins.Emplace(Pair.Value.Get()); }
+	int32 Index = 0;
+	for (const auto& Pair : Previous)
+	{
+		ProjectJCombatPresentationDebug::StopComponent(Pins[Index++].Get(), PreviousImmediate.HasTagExact(Pair.Key));
+	}
 }
 
 uint64 UProject_JCombatPresentationComponent::BeginCueLease(FGameplayTag CueTag)
 {
+	if (!CanAcceptPresentation()) { return 0; }
 	const auto* Cue = ResolveCue(CueTag);
 	if (!ActiveAttackTag.IsValid() || !Cue || !Cue->NiagaraSystem) { return 0; }
 	const uint64 Token = ++NextCueLeaseToken;

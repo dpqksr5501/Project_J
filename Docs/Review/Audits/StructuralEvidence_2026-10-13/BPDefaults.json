@@ -1,0 +1,14 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "GetObjectProperties on '/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C' (BP_Greatsword_C): the following properties could not be read: FallbackMountedAnimationLayerClass"
+			}
+		],
+		"isError": true
+	}
+}

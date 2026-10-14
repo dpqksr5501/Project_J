@@ -1,0 +1,20 @@
+[
+  {
+    "lines": 17,
+    "a": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+    "aStart": 183,
+    "aEnd": 201,
+    "b": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+    "bStart": 44,
+    "bEnd": 62
+  },
+  {
+    "lines": 15,
+    "a": "Source/Project_JCharacter/Public/Components/Project_JCombatAnimationLayerComponent.h",
+    "aStart": 52,
+    "aEnd": 71,
+    "b": "Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h",
+    "bStart": 53,
+    "bEnd": 72
+  }
+]

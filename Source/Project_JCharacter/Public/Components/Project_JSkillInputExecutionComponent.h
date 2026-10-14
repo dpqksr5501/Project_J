@@ -24,7 +24,9 @@ public:
 	UProject_JSkillInputExecutionComponent();
 
 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleInputTagPressed(FGameplayTag InputTag);
@@ -32,9 +34,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleInputTagReleased(FGameplayTag InputTag);
 
-	/** Sequence-numbered command verification path; GAS owns predicted ability activation. */
-	UFUNCTION(Server, Unreliable)
-	void ServerSendCombatInputEvent(FGameplayTag InputTag, float ClientTimestamp, int32 InputSequence);
+	/** Validates/replays raw authority intent received through the ASC's ordered channel. */
+	void ReceiveAuthorityCombatInput(FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence);
 
 	/** Clears command history after weapon/state changes that invalidate a sequence. */
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
@@ -44,6 +45,9 @@ private:
 	friend class FProjectJCommandReleaseTest;
 	void RefreshInputAbilitySystem();
 	void ReleaseAllDispatchedInputs();
+	void RetireInput();
+	bool bEnding = false;
+	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UProject_JAbilitySystemComponent> InputAbilitySystem;
 	// One physical input may activate a command alias as well as its raw tag.
 	TMap<FGameplayTag, FGameplayTagContainer> ActiveDispatchTags;
@@ -69,8 +73,8 @@ private:
 	/** Hard cap protects the server against an unexpectedly large authored command sequence. */
 	UPROPERTY(EditDefaultsOnly, Category = "Combat|Input", meta = (ClampMin = "1", ClampMax = "16"))
 	int32 MaximumCommandHistoryEntries = 8;
-	int32 LocalInputSequence = 0;
-	int32 LastServerInputSequence = 0;
+	uint32 LocalInputSequence = 0;
+	uint32 LastServerInputSequence = 0;
 	double ServerRateWindowStart = 0.0;
 	int32 ServerInputsInRateWindow = 0;
 

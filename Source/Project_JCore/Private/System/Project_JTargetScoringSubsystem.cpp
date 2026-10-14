@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Components/ActorComponent.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
@@ -192,6 +193,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
 	if (!IsInitialized() || !bAcceptingQueries) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TargetScoring_DispatchAndApply);
 	TrackedTasks.RemoveAll([](const FTrackedTask& Entry) { return Entry.Task.IsCompleted(); });
 	struct FReady { TSharedPtr<FProjectJTargetScoringJob> Job; FProjectJTargetScoringBatchCompletion Completion; };
@@ -255,6 +257,7 @@ void UProject_JTargetScoringSubsystem::Tick(float DeltaTime)
 		const bool bStillPending = Jobs.RemoveSingle(Entry.Job) != 0;
 		if (bStillPending && IsInitialized() && WorldEpoch == Entry.Completion.WorldEpoch && IsLiveOwner(Entry.Job->Owner.Get()) && Entry.Job->Completion)
 		{
+			TStrongObjectPtr<UObject> PinnedOwner(Entry.Job->Owner.Get());
 			Entry.Job->Completion(Entry.Completion);
 		}
 	}

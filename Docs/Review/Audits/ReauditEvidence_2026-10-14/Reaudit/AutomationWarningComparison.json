@@ -1,0 +1,259 @@
+{
+  "scope": "Warning test names/count comparison only. Equal counts do not prove every warning harmless or every message identical.",
+  "warningTests": [
+    {
+      "name": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+      ]
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.ComponentContext",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_154.Untitled:PersistentLevel.Actor_1"
+      ]
+    },
+    {
+      "name": "ProjectJ.AsyncTargeting.Lifecycle",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_156.Untitled:PersistentLevel.Actor_0"
+      ]
+    },
+    {
+      "name": "ProjectJ.Combat.WeaponPresentationIdentity",
+      "current": 5,
+      "previous": 5,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+      ]
+    },
+    {
+      "name": "ProjectJ.Crowd.RemoteEquipmentBurst",
+      "current": 572,
+      "previous": 572,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+      ]
+    },
+    {
+      "name": "ProjectJ.EquipmentSoak.HundredCharacters",
+      "current": 600,
+      "previous": 600,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.EquipmentSoak.StopDuringAttack",
+      "current": 100,
+      "previous": 100,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+      "current": 100,
+      "previous": 100,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupA.DynamicNavRecovery",
+      "current": 2,
+      "previous": 2,
+      "sameCount": true,
+      "examples": [
+        "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this."
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupB.CombatContinuity.Cancel",
+      "current": 4,
+      "previous": 4,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupB.CombatContinuity.Complete",
+      "current": 4,
+      "previous": 4,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupB.CombatContinuity.Destroy",
+      "current": 4,
+      "previous": 4,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupB.CombatContinuity.Unequip",
+      "current": 4,
+      "previous": 4,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+      "current": 4,
+      "previous": 4,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+      ]
+    },
+    {
+      "name": "ProjectJ.Input.MouseChordLifecycle",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+      ]
+    },
+    {
+      "name": "ProjectJ.Integrated.MovingTargetPursuit",
+      "current": 2,
+      "previous": 2,
+      "sameCount": true,
+      "examples": [
+        "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this."
+      ]
+    },
+    {
+      "name": "ProjectJ.Integrated.NativeNavMovement",
+      "current": 2,
+      "previous": 2,
+      "sameCount": true,
+      "examples": [
+        "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this."
+      ]
+    },
+    {
+      "name": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+      "current": 2,
+      "previous": 2,
+      "sameCount": true,
+      "examples": [
+        "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_263.Untitled:PersistentLevel.Actor_0"
+      ]
+    },
+    {
+      "name": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+      ]
+    },
+    {
+      "name": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+      "current": 1,
+      "previous": 1,
+      "sameCount": true,
+      "examples": [
+        "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+      ]
+    }
+  ],
+  "newReaudit12": [
+    {
+      "fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+      "state": "Success",
+      "warnings": 0,
+      "errors": 0
+    }
+  ]
+}

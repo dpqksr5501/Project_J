@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"CombatAnimationLayerClass\\\":\\\"/Game/Animation_Logic/ABPs/GreatSword/ABP_GreatSword_Layers.ABP_GreatSword_Layers_C\\\"}\"}"
+			}
+		]
+	}
+}

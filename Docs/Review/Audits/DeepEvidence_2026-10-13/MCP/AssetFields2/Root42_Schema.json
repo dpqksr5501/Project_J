@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"quickSlotSize\\\":{\\\"type\\\":\\\"number\\\"},\\\"itemSize\\\":{\\\"type\\\":\\\"number\\\"},\\\"fontSize\\\":{\\\"type\\\":\\\"integer\\\"},\\\"panelColor\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"LinearColor\\\",\\\"properties\\\":{\\\"r\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"g\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"b\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"a\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0}},\\\"required\\\":[\\\"r\\\",\\\"g\\\",\\\"b\\\",\\\"a\\\"]}}\"}"
+			}
+		]
+	}
+}

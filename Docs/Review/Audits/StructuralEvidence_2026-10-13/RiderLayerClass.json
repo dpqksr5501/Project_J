@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"AnimationLayerClass\\\":\\\"/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon_C\\\"}\"}"
+			}
+		]
+	}
+}

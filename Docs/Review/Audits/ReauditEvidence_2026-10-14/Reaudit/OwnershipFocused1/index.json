@@ -1,0 +1,164 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "39FD55E241B6C150AAABB587343316B0",
+			"instanceName": "DESKTOP-5T07C91-28696",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-21.41.58",
+	"succeeded": 9,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.1594184935092926,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.081748798489570618,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0062198974192142487,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0078401975333690643,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0070961005985736847,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0081842988729476929,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0078710988163948059,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.0051826983690261841,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.010298602283000946,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"39FD55E241B6C150AAABB587343316B0"
+			],
+			"duration": 0.02497679740190506,
+			"dateTime": "2026.10.13-21.41.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

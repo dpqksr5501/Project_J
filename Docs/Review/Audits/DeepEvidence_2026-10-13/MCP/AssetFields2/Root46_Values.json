@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"questId\\\":\\\"FirstSteps\\\",\\\"title\\\":\\\"첫걸음\\\",\\\"description\\\":\\\"시작 지역에서 20m 이동하세요. 완료 후 의뢰 창에서 경험치 보상을 받습니다.\\\",\\\"objectiveEvent\\\":\\\"TravelMetres\\\",\\\"requiredCount\\\":20,\\\"rewardExperience\\\":100,\\\"bTravelObjective\\\":true,\\\"bHasMapTarget\\\":false,\\\"mapTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0}}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "92B7A72B4C99F29FA0AF3DBFB1C279CC",
+			"instanceName": "DESKTOP-5T07C91-28108",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-02.03.55",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.090424798429012299,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"92B7A72B4C99F29FA0AF3DBFB1C279CC"
+			],
+			"duration": 0.090424798429012299,
+			"dateTime": "2026.10.14-02.03.55",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

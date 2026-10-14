@@ -10,8 +10,6 @@
 struct FMassEntityManager;
 class UProject_JMassMovementProcessor;
 class AProject_JNPCCharacter;
-class UProject_JNPCActionComponent;
-class UProject_JTargetScoringComponent;
 struct FProjectJMassRepresentationEntry;
 
 struct FProjectJMassAgentToken
@@ -34,6 +32,9 @@ struct FProjectJMassRepresentationStats
  * collision and pose are suspended. This reduces work, not Actor memory/GC count.
  * Gameplay state stays on the Character; only validated route values enter Mass.
  * Private entity manager + joined chunk execution prevents overlap with global Mass phases.
+ * Stop closes admission immediately; an active ownership step returns Character controls
+ * and releases entity/processor storage at its scope exit, including world deinitialization.
+ * Active GT steps and ownership callbacks pin their UObject participants across reentrant GC.
  */
 UCLASS()
 class PROJECT_JCHARACTER_API UProject_JMassRepresentationSubsystem : public UTickableWorldSubsystem
@@ -79,6 +80,7 @@ private:
 	bool bAccepting = false, bStepping = false;
 	FDelegateHandle TearDownHandle;
 #if WITH_DEV_AUTOMATION_TESTS
+	friend class FProjectJMassReentrantRetirementTest;
 	TArray<FVector> TestObservers;
 	bool bTestObservers = false;
 #endif

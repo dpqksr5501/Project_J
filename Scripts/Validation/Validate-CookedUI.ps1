@@ -35,15 +35,18 @@ for ($index = 0; $index -lt $Widths.Count; $index++) {
     if ($DynamicWorkload) { $arguments += '-ProjectJUIDynamicWorkload' }
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $game = Start-Process -FilePath $exePath -ArgumentList $arguments -WindowStyle Hidden -PassThru
+    # Keep the native process handle until WaitForExit has published its exit code.
+    $nativeHandle = $game.Handle
     $game.WaitForExit()
     $watch.Stop()
     $logErrors = if (Test-Path -LiteralPath $logPath) { @(Select-String -LiteralPath $logPath -Pattern 'Log\w+: Error:|Fatal error:') } else { @() }
-    $passed = $game.ExitCode -eq 0 -and $logErrors.Count -eq 0 -and (Test-Path -LiteralPath $logPath) -and
+    $passed = $null -ne $game.ExitCode -and $game.ExitCode -eq 0 -and $logErrors.Count -eq 0 -and (Test-Path -LiteralPath $logPath) -and
         [bool](Select-String -LiteralPath $logPath -SimpleMatch 'PROJECT_J_UI_RUNTIME_SMOKE success=1 cooked=1' -Quiet)
     if ($HeavyWorkload) { $passed = $passed -and [bool](Select-String -LiteralPath $logPath -SimpleMatch 'PROJECT_J_UI_WORKLOAD rows=1000 buffs=24 windows=4 slots=10' -Quiet) }
     if ($DynamicWorkload) { $passed = $passed -and [bool](Select-String -LiteralPath $logPath -SimpleMatch 'PROJECT_J_UI_DYNAMIC steps=50 deltaHz=5 changedPerStep=8 replacements=10 filterChanges=50 windowToggles=5 rows=1000' -Quiet) }
     $result = [pscustomobject]@{ width=$Widths[$index]; height=$Heights[$index]; passed=$passed;
-        exitCode=$game.ExitCode; logErrorCount=$logErrors.Count; seconds=$watch.Elapsed.TotalSeconds; log=$logPath; arguments=$arguments }
+        exitCode=$game.ExitCode; hasExited=$game.HasExited; nativeHandleCapturedBeforeWait=$true;
+        logErrorCount=$logErrors.Count; seconds=$watch.Elapsed.TotalSeconds; log=$logPath; arguments=$arguments }
     $results += $result
     [pscustomobject]@{ executable=$exePath; sha256=(Get-FileHash -LiteralPath $exePath -Algorithm SHA256).Hash;
         utc=[DateTime]::UtcNow.ToString('o'); runs=$results } | ConvertTo-Json -Depth 8 |

@@ -1,0 +1,52 @@
+{
+  "ProjectJExperiments": {
+    "files": 14,
+    "lines": 1376,
+    "definitions": 12
+  },
+  "Project_J": {
+    "files": 105,
+    "lines": 17955,
+    "definitions": 499
+  },
+  "BuildTargets": {
+    "files": 3,
+    "lines": 45,
+    "definitions": 0
+  },
+  "Project_JAnimationNodes": {
+    "files": 15,
+    "lines": 430,
+    "definitions": 17
+  },
+  "Project_JCharacter": {
+    "files": 356,
+    "lines": 59584,
+    "definitions": 1686
+  },
+  "Project_JCharacterEditor": {
+    "files": 26,
+    "lines": 3777,
+    "definitions": 32
+  },
+  "Project_JCore": {
+    "files": 40,
+    "lines": 2479,
+    "definitions": 74
+  },
+  "Project_JGAS": {
+    "files": 12,
+    "lines": 757,
+    "definitions": 34
+  },
+  "Project_JMMO": {
+    "files": 11,
+    "lines": 730,
+    "definitions": 18
+  },
+  "Project_JMount": {
+    "files": 23,
+    "lines": 2429,
+    "definitions": 106
+  }
+}

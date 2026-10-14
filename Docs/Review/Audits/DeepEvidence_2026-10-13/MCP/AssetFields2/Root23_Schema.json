@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"maxHealth\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":1},\\\"health\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"maxMana\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":1},\\\"mana\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"attackPower\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0},\\\"defense\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0}}\"}"
+			}
+		]
+	}
+}

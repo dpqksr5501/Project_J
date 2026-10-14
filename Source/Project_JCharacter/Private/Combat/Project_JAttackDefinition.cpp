@@ -1,5 +1,6 @@
 #include "Combat/Project_JAttackDefinition.h"
 #include "GameplayEffect.h"
+#include "GameplayEffectComponents/AdditionalEffectsGameplayEffectComponent.h"
 #include "Animation/AnimMontage.h"
 
 #if WITH_EDITOR
@@ -70,6 +71,14 @@ EDataValidationResult UProject_JAttackDefinition::IsDataValid(FDataValidationCon
 	if (!DamageEffect)
 	{
 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "MissingDamageEffect", "DamageEffect is empty; this attack will not apply server damage."));
+	}
+	else if (const auto* Effect = DamageEffect->GetDefaultObject<UGameplayEffect>();
+		Effect->Modifiers.IsEmpty() && Effect->Executions.IsEmpty() &&
+		(!Effect->FindComponent<UAdditionalEffectsGameplayEffectComponent>() ||
+			Effect->FindComponent<UAdditionalEffectsGameplayEffectComponent>()->OnApplicationGameplayEffects.IsEmpty()))
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "NoDamagePayload",
+			"DamageEffect has no modifier, execution or conditional effect. A persistent combat-state effect cannot serve as damage."));
 	}
 	return Project_J::DataValidation::MakeResult(Result, bHasError);
 }

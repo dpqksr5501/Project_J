@@ -1,0 +1,119 @@
+{
+  "condition": "Development/D3D12/RenderOffscreen/t.MaxFPS=60; CSV starts after fixture setup; dynamic flag applies local authority deltas at 5Hz; no pre-change comparison",
+  "runs": [
+    {
+      "evidence": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI3",
+      "resolution": "1280x720",
+      "executableSha256": "286A673688D5C56B500E1CDBBBE00CF8294C71E3B92FA9E4C71D03344A7916AA",
+      "csv": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI3\\1280x720\\User\\Saved\\Profiling\\CSV\\Profile(20261014_115020).csv",
+      "csvSha256": "fbd369568edb4dc9bde46eb263f1c1dfe7b25ab5a5e0fbe04fdbaf91a3a26afb",
+      "capturedNumericFrames": 600,
+      "discardedInitialFrames": 120,
+      "sampleFrames": 480,
+      "metrics": {
+        "DrawCall/SlateUI": {
+          "mean": 57.34375,
+          "p95": 62.0,
+          "max": 62.0
+        },
+        "ProjectJUI/GameThread/InventoryFilter": {
+          "mean": 0.04903270833333333,
+          "p95": 0.7705,
+          "max": 0.9683
+        },
+        "ProjectJUI/GameThread/QuickSlotPresentation": {
+          "mean": 0.0083325,
+          "p95": 0.0519,
+          "max": 0.0954
+        },
+        "ProjectJUI/GameThread/InventoryProjection": {
+          "mean": 0.07518958333333334,
+          "p95": 0.5886,
+          "max": 1.6712
+        },
+        "Exclusive/GameThread/UI": {
+          "mean": 0.5737035416666667,
+          "p95": 0.8108,
+          "max": 1.7396
+        },
+        "Slate/GameThread/SObjectWidget_Tick": {
+          "mean": 0.008890833333333332,
+          "p95": 0.0117,
+          "max": 0.0734
+        },
+        "FrameTime": {
+          "mean": 16.666805,
+          "p95": 16.6678,
+          "max": 16.6804
+        },
+        "ProjectJUI/InventoryRows": {
+          "mean": 83.33333333333333,
+          "p95": 1000.0,
+          "max": 1000.0
+        },
+        "ProjectJUI/DynamicSteps": {
+          "mean": 2.5416666666666665,
+          "p95": 26.0,
+          "max": 50.0
+        }
+      }
+    },
+    {
+      "evidence": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI3",
+      "resolution": "1920x1080",
+      "executableSha256": "286A673688D5C56B500E1CDBBBE00CF8294C71E3B92FA9E4C71D03344A7916AA",
+      "csv": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI3\\1920x1080\\User\\Saved\\Profiling\\CSV\\Profile(20261014_115039).csv",
+      "csvSha256": "4a715a24fd6e0745c7886eefa99a207596e72ff5fb54d8f06040480758513977",
+      "capturedNumericFrames": 600,
+      "discardedInitialFrames": 120,
+      "sampleFrames": 480,
+      "metrics": {
+        "DrawCall/SlateUI": {
+          "mean": 57.34791666666667,
+          "p95": 62.0,
+          "max": 62.0
+        },
+        "ProjectJUI/GameThread/InventoryFilter": {
+          "mean": 0.04698395833333333,
+          "p95": 0.7905,
+          "max": 0.857
+        },
+        "ProjectJUI/GameThread/QuickSlotPresentation": {
+          "mean": 0.007883541666666667,
+          "p95": 0.0481,
+          "max": 0.0894
+        },
+        "ProjectJUI/GameThread/InventoryProjection": {
+          "mean": 0.07379791666666667,
+          "p95": 0.6273,
+          "max": 1.7128
+        },
+        "Exclusive/GameThread/UI": {
+          "mean": 0.59002625,
+          "p95": 0.8532,
+          "max": 1.685
+        },
+        "Slate/GameThread/SObjectWidget_Tick": {
+          "mean": 0.008810624999999999,
+          "p95": 0.012,
+          "max": 0.0402
+        },
+        "FrameTime": {
+          "mean": 16.666768333333334,
+          "p95": 16.6675,
+          "max": 16.6713
+        },
+        "ProjectJUI/InventoryRows": {
+          "mean": 83.33333333333333,
+          "p95": 1000.0,
+          "max": 1000.0
+        },
+        "ProjectJUI/DynamicSteps": {
+          "mean": 2.5416666666666665,
+          "p95": 26.0,
+          "max": 50.0
+        }
+      }
+    }
+  ]
+}

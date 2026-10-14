@@ -22,7 +22,7 @@ bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& 
 	return false;
 }
 
-USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character)
+USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character, bool bRequireMeshAsset)
 {
 	const USkeletalMeshComponent* SourceMesh = Character.GetMesh();
 	if (!IsValid(SourceMesh))
@@ -35,12 +35,12 @@ USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacte
 	{
 		USkeletalMeshComponent* Candidate = Cast<USkeletalMeshComponent>(Child);
 		if (!IsValid(Candidate) || Candidate->IsA<UProject_JModularMeshComponent>() ||
-			!Candidate->GetSkeletalMeshAsset())
+			(bRequireMeshAsset && !Candidate->GetSkeletalMeshAsset()))
 		{
 			continue;
 		}
 
-		if (Candidate->ComponentTags.Contains(TEXT("VisualFollower")))
+		if (Candidate->ComponentTags.Contains(TEXT("VisualFollower")) || Candidate->ComponentTags.Contains(TEXT("RetargetFollower")))
 		{
 			return Candidate;
 		}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Game/Animation_Logic/RTG_Greatsword_UE5\",\"/Script/Project_JCharacter\",\"/Game/Characters/Mannequins/Meshes/SK_Mannequin\",\"/Game/Characters/GreatSword/GreatSword_Woman_Skeleton\"]}"
+			}
+		]
+	}
+}

@@ -59,7 +59,8 @@ class PROJECT_J_API UProject_JUILayoutSettings : public ULocalPlayerSubsystem
 #endif
 
   private:
-	void EnsureLoaded();
+	bool EnsureLoaded();
+	bool FlushPending();
 	void Schedule(float Delay = 0.75f);
 	void SetState(EProject_JUIPreferenceState State);
 	void BeforeExit();

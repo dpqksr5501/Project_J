@@ -36,6 +36,12 @@ bool UProject_JNPCActionComponent::SupportsAttackAbility(const UGameplayAbility*
 		&& (Policy == EGameplayAbilityNetExecutionPolicy::ServerOnly || Policy == EGameplayAbilityNetExecutionPolicy::ServerInitiated);
 }
 
+void UProject_JNPCActionComponent::BeginPlay()
+{
+	bEndingPlay = false;
+	Super::BeginPlay();
+}
+
 bool UProject_JNPCActionComponent::IsAttackSupported() const
 {
 	if (!AttackHandle.IsValid()) { return true; }

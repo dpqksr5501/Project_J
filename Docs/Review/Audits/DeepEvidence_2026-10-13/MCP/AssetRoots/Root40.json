@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Engine\",\"/Game/Input/Actions/IA_MouseLook\",\"/Script/EnhancedInput\"]}"
+			}
+		]
+	}
+}

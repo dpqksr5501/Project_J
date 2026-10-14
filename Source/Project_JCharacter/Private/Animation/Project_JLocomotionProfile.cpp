@@ -1,6 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Animation/Project_JFootPlacementDefaults.h"
+
+FName UProject_JLocomotionProfile::GetMovementValidationFailure() const
+{
+	struct FField { const TCHAR* Name; float Value; };
+	const FField Fields[] = {
+		{TEXT("WalkSpeed"), WalkSpeed}, {TEXT("SprintSpeed"), SprintSpeed},
+		{TEXT("WalkRotationRateYaw"), WalkRotationRateYaw}, {TEXT("SprintRotationRateYaw"), SprintRotationRateYaw},
+		{TEXT("MovementPolicy.RunMaxAcceleration"), MovementPolicy.RunMaxAcceleration},
+		{TEXT("MovementPolicy.SprintMaxAcceleration"), MovementPolicy.SprintMaxAcceleration},
+		{TEXT("MovementPolicy.RunBrakingDeceleration"), MovementPolicy.RunBrakingDeceleration},
+		{TEXT("MovementPolicy.SprintBrakingDeceleration"), MovementPolicy.SprintBrakingDeceleration},
+		{TEXT("MovementPolicy.RunGroundFriction"), MovementPolicy.RunGroundFriction},
+		{TEXT("MovementPolicy.SprintGroundFriction"), MovementPolicy.SprintGroundFriction},
+		{TEXT("MovementPolicy.StrafeForwardSpeedMultiplier"), MovementPolicy.StrafeForwardSpeedMultiplier},
+		{TEXT("MovementPolicy.StrafeSideSpeedMultiplier"), MovementPolicy.StrafeSideSpeedMultiplier},
+		{TEXT("MovementPolicy.StrafeBackwardSpeedMultiplier"), MovementPolicy.StrafeBackwardSpeedMultiplier}};
+	for (const auto& Field : Fields)
+		if (!FMath::IsFinite(Field.Value) || Field.Value < 0) { return FName(Field.Name); }
+	if (MovementPolicy.bEnableStrafeDirectionalSpeedScaling)
+		for (const float Multiplier : {MovementPolicy.StrafeForwardSpeedMultiplier, MovementPolicy.StrafeSideSpeedMultiplier, MovementPolicy.StrafeBackwardSpeedMultiplier})
+			if (!FMath::IsFinite(WalkSpeed * Multiplier) || !FMath::IsFinite(SprintSpeed * Multiplier))
+				return TEXT("MovementPolicy.StrafeSpeedProduct");
+	return NAME_None;
+}
 
 #if WITH_EDITOR
 #include "Chooser.h"
@@ -180,25 +205,8 @@ UProject_JLocomotionProfile::UProject_JLocomotionProfile()
 	OTMSprintForwardTurn.RunningQualificationSpeed = StrafeSprintForwardTurn.RunningQualificationSpeed = 300.f;
 	// Include F+A/F+D on the boundary despite floating point angle rounding.
 	StrafeSprintForwardTurn.ForwardConeAngle = 45.5f;
-	FootPlacementPlantSettingsDefault.DistanceToGround = 10.0f;
-	FootPlacementPlantSettingsDefault.MaxExtensionRatio = 0.95f;
-	FootPlacementPlantSettingsDefault.MinExtensionRatio = 0.1f;
-	FootPlacementPlantSettingsDefault.AnkleTwistReduction = 0.75f;
-
-	FootPlacementPlantSettingsStops.DistanceToGround = 10.0f;
-	FootPlacementPlantSettingsStops.MaxExtensionRatio = 0.95f;
-	FootPlacementPlantSettingsStops.MinExtensionRatio = 0.1f;
-	FootPlacementPlantSettingsStops.AnkleTwistReduction = 0.75f;
-	FootPlacementPlantSettingsStops.SpeedThreshold = 80.0f;
-	FootPlacementPlantSettingsStops.UnplantRadius = 25.0f;
-	FootPlacementPlantSettingsStops.UnplantAngle = 35.0f;
-	FootPlacementPlantSettingsStops.ReplantRadiusRatio = 0.5f;
-	FootPlacementPlantSettingsStops.ReplantAngleRatio = 0.65f;
-
-	FootPlacementInterpolationSettingsStops.UnplantLinearStiffness = 500.0f;
-	FootPlacementInterpolationSettingsStops.UnplantAngularStiffness = 700.0f;
-	FootPlacementInterpolationSettingsStops.FloorLinearStiffness = 1200.0f;
-	FootPlacementInterpolationSettingsStops.FloorAngularStiffness = 650.0f;
+	ProjectJ::Animation::InitializeFootPlacementDefaults(FootPlacementPlantSettingsDefault,
+		FootPlacementPlantSettingsStops, FootPlacementInterpolationSettingsStops);
 }
 
 #if WITH_EDITOR
@@ -206,6 +214,11 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	if (const FName Failure = GetMovementValidationFailure(); !Failure.IsNone())
+	{
+		Context.AddError(FText::FromString(FString::Printf(TEXT("%s must produce finite, nonnegative movement values."), *Failure.ToString())));
+		bHasError = true;
+	}
 	const auto ValidateTurnSettings = [&](const FProject_JTurnEventSettings& Settings, const TCHAR* Mode)
 	{
 		const auto Resolved = Settings.Resolved();

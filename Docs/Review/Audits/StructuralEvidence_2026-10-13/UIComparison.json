@@ -1,0 +1,598 @@
+[
+  {
+    "run": "StructUI_A1",
+    "original": "Saved/Validation/StructUI_A1/Results.json",
+    "sha256": "5a10553965e76c307fe24d7ccd8ba9aede1ec58f019e818ee6fe152998ae697c",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeProjectAudit_20261013\\PackagedDelivery\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "90B88EA62A97373AB966D4E7BEABB5FFC7E5BDD2C407F4631B4BE9D12F2C7C5D",
+      "utc": "2026-10-13T12:32:18.1248179Z",
+      "runs": [
+        {
+          "width": 1280,
+          "height": 720,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 18.6920917,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_A1\\1280x720\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1280",
+            "-ResY=720",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_A1/1280x720/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_A1\\1280x720\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_A1/1280x720/User/Saved/Profiling/CSV/Profile(20261013_213202).csv",
+        "sha256": "affa8805b58e995f8a6b7f421b4553d142c3b07b864c78567a33738f539bedc5",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.05751066666666667,
+            "p50": 0.0,
+            "p95": 0.8193599999999999,
+            "max": 1.4869
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.008598833333333333,
+            "p50": 0.0,
+            "p95": 0.053305,
+            "max": 0.0983
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.086394,
+            "p50": 0.0,
+            "p95": 0.6944699999999999,
+            "max": 2.2765
+          },
+          "FrameTime": {
+            "mean": 16.691547333333332,
+            "p50": 16.6668,
+            "p95": 16.668315,
+            "max": 31.079
+          },
+          "GameThreadTime": {
+            "mean": 1.6989881666666666,
+            "p50": 1.4307,
+            "p95": 3.2596199999999995,
+            "max": 14.1361
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.7095088333333333,
+            "p50": 1.44285,
+            "p95": 3.2729249999999994,
+            "max": 14.1407
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_A1_1280x720_UIProfile.csv"
+      }
+    ]
+  },
+  {
+    "run": "StructUI_B1",
+    "original": "Saved/Validation/StructUI_B1/Results.json",
+    "sha256": "29d5cf7dccc79652ab6fc9bfdbe937917c106125c3066c99d33943ca0c6a012c",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013\\Packaged1\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "5B42E69CE131660A295017BECFD221993BAB3F93FF9AE76F165B5F999203AFEB",
+      "utc": "2026-10-13T12:36:00.0961846Z",
+      "runs": [
+        {
+          "width": 1280,
+          "height": 720,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 19.5862283,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_B1\\1280x720\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1280",
+            "-ResY=720",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_B1/1280x720/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_B1\\1280x720\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_B1/1280x720/User/Saved/Profiling/CSV/Profile(20261013_213544).csv",
+        "sha256": "e736eac941596f1c0043d0bb05b63abad37cd5f1802fd6076c20f65494c1b1c0",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.050590666666666666,
+            "p50": 0.0,
+            "p95": 0.7575999999999995,
+            "max": 1.2031
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.0089345,
+            "p50": 0.0,
+            "p95": 0.05481499999999999,
+            "max": 0.1103
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.07391633333333333,
+            "p50": 0.0,
+            "p95": 0.6059999999999995,
+            "max": 1.7412
+          },
+          "FrameTime": {
+            "mean": 16.692787,
+            "p50": 16.6667,
+            "p95": 16.668,
+            "max": 32.2565
+          },
+          "GameThreadTime": {
+            "mean": 1.6552211666666667,
+            "p50": 1.4392,
+            "p95": 2.994499999999999,
+            "max": 14.3708
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.6643401666666666,
+            "p50": 1.4513,
+            "p95": 3.004179999999999,
+            "max": 14.3708
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_B1_1280x720_UIProfile.csv"
+      }
+    ]
+  },
+  {
+    "run": "StructUI_A2",
+    "original": "Saved/Validation/StructUI_A2/Results.json",
+    "sha256": "3b0155a6992665be0cd274c01040b7468d6bb6694510a8a231f970c182b44315",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeProjectAudit_20261013\\PackagedDelivery\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "90B88EA62A97373AB966D4E7BEABB5FFC7E5BDD2C407F4631B4BE9D12F2C7C5D",
+      "utc": "2026-10-13T12:36:19.0476242Z",
+      "runs": [
+        {
+          "width": 1280,
+          "height": 720,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 18.624523,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_A2\\1280x720\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1280",
+            "-ResY=720",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_A2/1280x720/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_A2\\1280x720\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_A2/1280x720/User/Saved/Profiling/CSV/Profile(20261013_213603).csv",
+        "sha256": "a5b107664fc5d338aee9534d21604eded3db43307e3e536d5cf7ebf31c06c2db",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.0508465,
+            "p50": 0.0,
+            "p95": 0.7864,
+            "max": 1.1766
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.008976666666666666,
+            "p50": 0.0,
+            "p95": 0.05462499999999998,
+            "max": 0.1329
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.08008766666666667,
+            "p50": 0.0,
+            "p95": 0.6596199999999998,
+            "max": 2.2669
+          },
+          "FrameTime": {
+            "mean": 16.69287,
+            "p50": 16.6668,
+            "p95": 16.667705,
+            "max": 32.3093
+          },
+          "GameThreadTime": {
+            "mean": 1.6808926666666666,
+            "p50": 1.44025,
+            "p95": 3.0482999999999993,
+            "max": 14.9491
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.6906836666666667,
+            "p50": 1.4471500000000002,
+            "p95": 3.0586549999999995,
+            "max": 14.9576
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_A2_1280x720_UIProfile.csv"
+      }
+    ]
+  },
+  {
+    "run": "StructUI_B2",
+    "original": "Saved/Validation/StructUI_B2/Results.json",
+    "sha256": "6fa3d95642f27fc94407c14e8b2d7ba65b79a7e81594b74c6a2c356305a5ea0f",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013\\Packaged1\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "5B42E69CE131660A295017BECFD221993BAB3F93FF9AE76F165B5F999203AFEB",
+      "utc": "2026-10-13T12:36:38.0198525Z",
+      "runs": [
+        {
+          "width": 1280,
+          "height": 720,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 18.6466451,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_B2\\1280x720\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1280",
+            "-ResY=720",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_B2/1280x720/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_B2\\1280x720\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_B2/1280x720/User/Saved/Profiling/CSV/Profile(20261013_213622).csv",
+        "sha256": "a3a325a0732919ea29c4f51e5adef3a5ace68f46f9de4403c85a77cac17bf018",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.05074733333333333,
+            "p50": 0.0,
+            "p95": 0.7924549999999999,
+            "max": 1.0653
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.0089285,
+            "p50": 0.0,
+            "p95": 0.05392999999999998,
+            "max": 0.1205
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.07305383333333333,
+            "p50": 0.0,
+            "p95": 0.5941449999999999,
+            "max": 1.7292
+          },
+          "FrameTime": {
+            "mean": 16.692152333333333,
+            "p50": 16.6668,
+            "p95": 16.6677,
+            "max": 31.818
+          },
+          "GameThreadTime": {
+            "mean": 1.5918248333333334,
+            "p50": 1.3754,
+            "p95": 2.9319799999999994,
+            "max": 14.1939
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.6013498333333334,
+            "p50": 1.38625,
+            "p95": 2.9462949999999997,
+            "max": 14.1939
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_B2_1280x720_UIProfile.csv"
+      }
+    ]
+  },
+  {
+    "run": "StructUI_1920",
+    "original": "Saved/Validation/StructUI_1920/Results.json",
+    "sha256": "53a2866f2069d219b47071448aade7f22a448cb941d2f1525eb37fa46daae088",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013\\Packaged1\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "5B42E69CE131660A295017BECFD221993BAB3F93FF9AE76F165B5F999203AFEB",
+      "utc": "2026-10-13T12:36:48.9443066Z",
+      "runs": [
+        {
+          "width": 1920,
+          "height": 1080,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 10.5888439,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_1920\\1920x1080\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1920",
+            "-ResY=1080",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_1920/1920x1080/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_1920\\1920x1080\\Game.log\"",
+            "-ExecCmds=\"t.MaxFPS 60,csvprofile FRAMES=240\""
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_1920/1920x1080/User/Saved/Profiling/CSV/Profile(20261013_213639).csv",
+        "sha256": "0ed383330c6359a8844e2818382f076b2950a8b5300b605aa2c75d15f2fdcadb",
+        "samples": 240,
+        "metrics": {
+          "FrameTime": {
+            "mean": 17.41897125,
+            "p50": 16.6667,
+            "p95": 16.667705,
+            "max": 142.1477
+          },
+          "GameThreadTime": {
+            "mean": 1.088505,
+            "p50": 0.9819500000000001,
+            "p95": 1.2915049999999997,
+            "max": 17.3564
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.0994395833333332,
+            "p50": 0.99385,
+            "p95": 1.3016999999999996,
+            "max": 17.4042
+          }
+        },
+        "export": "StructUI_1920_1920x1080_UIProfile.csv"
+      }
+    ]
+  },
+  {
+    "run": "StructUI_Final",
+    "original": "Saved/Validation/StructUI_Final/Results.json",
+    "sha256": "73e788989cb52d7617d9dbdd264b480805969f9ce725d6cbd434a1dfa3c27f94",
+    "results": {
+      "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013\\Packaged2\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+      "sha256": "482E6691B7BD031B0BFF8CFDAE7F1FF25361F1D5B5DA42221A2F067C31B0D896",
+      "utc": "2026-10-13T13:22:14.9497618Z",
+      "runs": [
+        {
+          "width": 1280,
+          "height": 720,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 19.584531,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_Final\\1280x720\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1280",
+            "-ResY=720",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_Final/1280x720/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_Final\\1280x720\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "passed": true,
+          "exitCode": 0,
+          "logErrorCount": 0,
+          "seconds": 18.6296554,
+          "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_Final\\1920x1080\\Game.log",
+          "arguments": [
+            "-ProjectJUIRuntimeSmoke",
+            "-unattended",
+            "-nosound",
+            "-windowed",
+            "-RenderOffscreen",
+            "-ResX=1920",
+            "-ResY=1080",
+            "-SaveToUserDir",
+            "-csvCategories=Slate,ProjectJUI",
+            "-csvCompression=0",
+            "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructUI_Final/1920x1080/User/\"",
+            "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructUI_Final\\1920x1080\\Game.log\"",
+            "-ProjectJUIProfile",
+            "-ExecCmds=\"t.MaxFPS 60\"",
+            "-ProjectJUIWorkload",
+            "-ProjectJUIDynamicWorkload"
+          ]
+        }
+      ]
+    },
+    "profiles": [
+      {
+        "path": "Saved/Validation/StructUI_Final/1280x720/User/Saved/Profiling/CSV/Profile(20261013_222140).csv",
+        "sha256": "025c061776ef8e61143054a804215d29b832c2988081e750e4de629901c40bed",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.052365166666666664,
+            "p50": 0.0,
+            "p95": 0.7857899999999992,
+            "max": 1.276
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.010039666666666667,
+            "p50": 0.0,
+            "p95": 0.05831999999999998,
+            "max": 0.4087
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.07506116666666666,
+            "p50": 0.0,
+            "p95": 0.605795,
+            "max": 1.7206
+          },
+          "FrameTime": {
+            "mean": 16.694231833333333,
+            "p50": 16.6668,
+            "p95": 16.6677,
+            "max": 33.0837
+          },
+          "GameThreadTime": {
+            "mean": 1.7092936666666667,
+            "p50": 1.4769,
+            "p95": 3.1599949999999972,
+            "max": 16.0146
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.7162686666666667,
+            "p50": 1.48625,
+            "p95": 3.1669949999999973,
+            "max": 16.0371
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_Final_1280x720_UIProfile.csv"
+      },
+      {
+        "path": "Saved/Validation/StructUI_Final/1920x1080/User/Saved/Profiling/CSV/Profile(20261013_222159).csv",
+        "sha256": "69ebe77af46a64dfc2f036d62965aa4a7be227939903602fd2c5d01b0c825242",
+        "samples": 600,
+        "metrics": {
+          "ProjectJUI/GameThread/InventoryFilter": {
+            "mean": 0.05142,
+            "p50": 0.0,
+            "p95": 0.7720749999999997,
+            "max": 1.1407
+          },
+          "ProjectJUI/GameThread/QuickSlotPresentation": {
+            "mean": 0.00902,
+            "p50": 0.0,
+            "p95": 0.057405,
+            "max": 0.1085
+          },
+          "ProjectJUI/GameThread/InventoryProjection": {
+            "mean": 0.08429883333333334,
+            "p50": 0.0,
+            "p95": 0.7130249999999998,
+            "max": 2.4773
+          },
+          "FrameTime": {
+            "mean": 16.693069166666668,
+            "p50": 16.6668,
+            "p95": 16.6679,
+            "max": 32.0257
+          },
+          "GameThreadTime": {
+            "mean": 1.6995851666666666,
+            "p50": 1.45385,
+            "p95": 3.1622149999999993,
+            "max": 14.7744
+          },
+          "GameThreadTime_CriticalPath": {
+            "mean": 1.706077,
+            "p50": 1.46185,
+            "p95": 3.169625,
+            "max": 14.7749
+          },
+          "ProjectJUI/DynamicSteps": {
+            "mean": 2.125,
+            "p50": 0.0,
+            "p95": 20.049999999999955,
+            "max": 50.0
+          }
+        },
+        "export": "StructUI_Final_1920x1080_UIProfile.csv"
+      }
+    ]
+  }
+]

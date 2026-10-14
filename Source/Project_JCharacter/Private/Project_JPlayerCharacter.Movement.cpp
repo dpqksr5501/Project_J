@@ -239,24 +239,15 @@ void AProject_JPlayerCharacter::ApplyMovementPolicy(bool bCanSprint, const FVect
 		? EffectiveLocomotionProfile->SprintRotationRateYaw
 		: SprintRotationRateYaw;
 	float DirectionalSpeedMultiplier = 1.0f;
+	float DesiredMaxAcceleration = MoveComp->MaxAcceleration;
+	float DesiredBrakingDeceleration = MoveComp->BrakingDecelerationWalking;
+	float DesiredGroundFriction = MoveComp->GroundFriction;
 	if (EffectiveLocomotionProfile)
 	{
 		const FProject_JLocomotionMovementPolicy& Policy = EffectiveLocomotionProfile->MovementPolicy;
-		const float DesiredMaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
-		const float DesiredBrakingDeceleration = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
-		const float DesiredGroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
-		if (!FMath::IsNearlyEqual(MoveComp->MaxAcceleration, DesiredMaxAcceleration))
-		{
-			MoveComp->MaxAcceleration = DesiredMaxAcceleration;
-		}
-		if (!FMath::IsNearlyEqual(MoveComp->BrakingDecelerationWalking, DesiredBrakingDeceleration))
-		{
-			MoveComp->BrakingDecelerationWalking = DesiredBrakingDeceleration;
-		}
-		if (!FMath::IsNearlyEqual(MoveComp->GroundFriction, DesiredGroundFriction))
-		{
-			MoveComp->GroundFriction = DesiredGroundFriction;
-		}
+		DesiredMaxAcceleration = bCanSprint ? Policy.SprintMaxAcceleration : Policy.RunMaxAcceleration;
+		DesiredBrakingDeceleration = bCanSprint ? Policy.SprintBrakingDeceleration : Policy.RunBrakingDeceleration;
+		DesiredGroundFriction = bCanSprint ? Policy.SprintGroundFriction : Policy.RunGroundFriction;
 
 		if (Policy.bEnableStrafeDirectionalSpeedScaling && IsCombatModeActive())
 		{
@@ -300,6 +291,13 @@ void AProject_JPlayerCharacter::ApplyMovementPolicy(bool bCanSprint, const FVect
 		const float Rate = CombatProfile ? CombatProfile->CombatFacingRotationRateYaw : 360.0f;
 		DesiredRotationRateYaw = FMath::IsFinite(Rate) ? FMath::Clamp(Rate, 1.0f, 1080.0f) : 360.0f;
 	}
+	// Publish one complete CMC policy. Reject an invalid tuple before changing
+	// any field, including finite inputs whose speed product overflowed.
+	for (const float Value : {DesiredMaxAcceleration, DesiredBrakingDeceleration, DesiredGroundFriction, DesiredMaxWalkSpeed, DesiredRotationRateYaw})
+		if (!FMath::IsFinite(Value) || Value < 0) { return; }
+	if (!FMath::IsNearlyEqual(MoveComp->MaxAcceleration, DesiredMaxAcceleration)) MoveComp->MaxAcceleration = DesiredMaxAcceleration;
+	if (!FMath::IsNearlyEqual(MoveComp->BrakingDecelerationWalking, DesiredBrakingDeceleration)) MoveComp->BrakingDecelerationWalking = DesiredBrakingDeceleration;
+	if (!FMath::IsNearlyEqual(MoveComp->GroundFriction, DesiredGroundFriction)) MoveComp->GroundFriction = DesiredGroundFriction;
 	if (!FMath::IsNearlyEqual(MoveComp->MaxWalkSpeed, DesiredMaxWalkSpeed))
 	{
 		MoveComp->MaxWalkSpeed = DesiredMaxWalkSpeed;

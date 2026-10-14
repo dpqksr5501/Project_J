@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword\",\"/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation\"]}"
+			}
+		]
+	}
+}

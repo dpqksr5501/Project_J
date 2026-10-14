@@ -1,0 +1,48 @@
+{
+  "phase": "B1",
+  "baseline": false,
+  "binarySet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013/FinalEditorBinaries",
+  "allEightModulesAndModulesFileSwitched": true,
+  "workingSourceSnapshotMatchesCompiledBinary": true,
+  "compiledSourceBaseline": "Docs/Review/Audits/StructuralEvidence_2026-10-13/SourceHashes.json",
+  "bodyAssetUnchanged": true,
+  "note": "A: before structural SI01-08; B: after SI01-08. Both full non-unity, same toolchain and current unchanged authored assets. Baseline source is the preserved audit baseline, not the working-tree snapshot captured by Measure-AuthoredAnimation.",
+  "artifacts": [
+    {
+      "file": "UnrealEditor-Project_JMMO.dll",
+      "sha256": "C64D243DF26D26A41F638C0900E84923C2349C7DF45C2927F147200462BB79A1"
+    },
+    {
+      "file": "UnrealEditor-Project_J.dll",
+      "sha256": "10F1DB1AB8D2502C582CFEE649F08A5CFC4EF6C01ECCAB5451AF40653362AB32"
+    },
+    {
+      "file": "UnrealEditor-Project_JCore.dll",
+      "sha256": "F1BD418DFD37B5B19CE329E10FF94567F33D50CB95BF55183310E0AF3DD9D794"
+    },
+    {
+      "file": "UnrealEditor-Project_JGAS.dll",
+      "sha256": "940DEAA68E858E0485DBC33D9F12EEB9ABAF909E1CE9845F8FBA0B5D9F51343F"
+    },
+    {
+      "file": "UnrealEditor-Project_JMount.dll",
+      "sha256": "F8582430D8BE9E6666416D4DDBAF3BE2DCE3DB99681040894BAA163893BAFA0A"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacter.dll",
+      "sha256": "44CB5292D6B5F6BD499BE2A0B3EA5F000881E2A2462F6D19BF33D49C48BA744C"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacterEditor.dll",
+      "sha256": "ADB7005F76A2E8E383FFE97E64E0CB6EB4A950EB5C5DE53092698B598B2BB449"
+    },
+    {
+      "file": "UnrealEditor-Project_JAnimationNodes.dll",
+      "sha256": "DABA8B7427CDF5ACF3CE34C78120C86A799536E8168D453BB3053F6E0DC30DD0"
+    },
+    {
+      "file": "UnrealEditor.modules",
+      "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+    }
+  ]
+}

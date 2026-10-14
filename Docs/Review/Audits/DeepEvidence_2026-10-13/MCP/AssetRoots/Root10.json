@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers\",\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip\",\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip\"]}"
+			}
+		]
+	}
+}

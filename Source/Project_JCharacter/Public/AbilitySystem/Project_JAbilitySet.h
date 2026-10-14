@@ -26,7 +26,10 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GrantedHandles
 	TArray<FActiveGameplayEffectHandle> GameplayEffectHandles;
 
 	UPROPERTY()
-	TArray<FName> GrantSourceIds;
+	TMap<FName, uint64> GrantSourceGenerations;
+
+	/** Invalidates an unkeyed grant continuation before synchronous removal callbacks. */
+	uint64 MutationRevision = 0;
 };
 
 USTRUCT(BlueprintType)

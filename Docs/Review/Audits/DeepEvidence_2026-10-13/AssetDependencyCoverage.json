@@ -1,0 +1,521 @@
+[
+  {
+    "root": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/AnimGraph",
+      "/Script/Project_JCharacter",
+      "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+      "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+      "/Game/Anim_Assets/Riding/ANIM_Rider_Idle"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+      "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+      "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+      "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Equip_Player",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+      "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+      "/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect",
+      "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/GE_TestDamege",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/GEs/BP_GE_CombatMode",
+      "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Walk",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Run_Soft",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Jump",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Land",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Scuff",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Handplant",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunBackwards",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffPivot",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffWall",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunStrafe",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Tumble",
+      "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_WalkBackwards"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Game/AS/AS_Greatsword_Base",
+      "/Script/Project_JCharacter",
+      "/Game/AS/AS_Humanoid_Core",
+      "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+      "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Game/AS/AS_Greatsword_Base",
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+      "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+      "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+      "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+      "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JMount",
+      "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter",
+      "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+      "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Game/Animation_Logic/RTG_Greatsword_UE5",
+      "/Script/Project_JCharacter",
+      "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+      "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/GameplayTags",
+      "/Script/Project_JCharacter",
+      "/Game/Input/Actions/IA_Skill_Q",
+      "/Game/Input/Actions/IA_Skill_R",
+      "/Game/Input/Actions/IA_Skill_T"
+    ]
+  },
+  {
+    "root": "/Game/DataAssetSets/Weapons/DA_Player_EquipWeapon",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/Input/IMC_Default",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Game/Input/Actions/IA_Jump",
+      "/Game/Input/Actions/IA_Look",
+      "/Game/Input/Actions/IA_Move",
+      "/Game/Input/Actions/IA_Sprint",
+      "/Game/Input/Actions/IA_Interact",
+      "/Script/EnhancedInput",
+      "/Game/Input/Actions/IA_ToggleCombat",
+      "/Game/Input/Actions/IA_Attack_LMB",
+      "/Game/Input/Actions/IA_Attack_RMB",
+      "/Game/Input/Actions/IA_MountAscend",
+      "/Game/Input/Actions/IA_MountDescend",
+      "/Game/Input/Actions/IA_Skill_Q",
+      "/Game/Input/Actions/IA_Skill_R",
+      "/Game/Input/Actions/IA_Skill_T",
+      "/Game/Input/Actions/IA_MoveIntent_Backward",
+      "/Game/Input/Actions/IA_MoveIntent_Forward",
+      "/Game/Input/Actions/IA_MoveIntent_Left",
+      "/Game/Input/Actions/IA_MoveIntent_Right"
+    ]
+  },
+  {
+    "root": "/Game/Input/IMC_MouseLook",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Engine",
+      "/Game/Input/Actions/IA_MouseLook",
+      "/Script/EnhancedInput"
+    ]
+  },
+  {
+    "root": "/Game/NPCs/BP_NPC_Test",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+      "/Script/Project_JCharacter",
+      "/Script/Project_JGAS",
+      "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"
+    ]
+  },
+  {
+    "root": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J",
+      "/Game/Character_BPs/GreatSword/BP_GreatSword",
+      "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+    ]
+  },
+  {
+    "root": "/Game/UI/DA_ProjectJHUDStyle",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J"
+    ]
+  },
+  {
+    "root": "/Game/UI/DA_ProjectJMap",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J"
+    ]
+  },
+  {
+    "root": "/Game/UI/DA_ProjectJUIDefault",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J"
+    ]
+  },
+  {
+    "root": "/Game/UI/DA_ProjectJUIProfiles",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J",
+      "/Game/UI/DA_ProjectJUIDefault"
+    ]
+  },
+  {
+    "root": "/Game/UI/Gameplay/DA_ProjectJFirstSteps",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_J"
+    ]
+  },
+  {
+    "root": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/Project_JCharacter"
+    ]
+  },
+  {
+    "root": "/Game/UI/WBP_ProjectJItemRow",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/SlateCore",
+      "/Script/UMG",
+      "/Script/UMGEditor",
+      "/Script/Project_J"
+    ]
+  },
+  {
+    "root": "/Game/UI/WBP_ProjectJItemTile",
+    "status": "dependency_list",
+    "dependencies": [
+      "/Script/SlateCore",
+      "/Script/UMG",
+      "/Script/UMGEditor",
+      "/Script/Project_J"
+    ]
+  }
+]

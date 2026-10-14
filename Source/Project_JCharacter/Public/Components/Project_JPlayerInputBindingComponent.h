@@ -81,12 +81,16 @@ class PROJECT_JCHARACTER_API UProject_JPlayerInputBindingComponent : public UAct
 public:
 	UProject_JPlayerInputBindingComponent();
 	void UnbindInput();
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	bool BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet);
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+	bool bEnding = false;
+	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
 	TArray<uint32> OwnedBindingHandles;
 	void HandleMove(const FInputActionValue& Value);
@@ -95,6 +99,8 @@ private:
 	void HandleMoveIntentDirectionStarted(EProject_JMoveIntentDirection Direction);
 	void HandleMoveIntentDirectionStopped(EProject_JMoveIntentDirection Direction);
 	void FinalizeMoveStopped();
+	void FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter);
+	bool MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const;
 	void CancelPendingMoveStopReconciliation();
 	void QueueSemanticMoveIntentRefresh();
 	void RefreshSemanticMoveIntent();

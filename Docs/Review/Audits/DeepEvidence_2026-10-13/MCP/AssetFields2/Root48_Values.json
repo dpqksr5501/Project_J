@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"restoreHealth\\\":0,\\\"restoreMana\\\":25,\\\"cooldownSeconds\\\":10,\\\"itemId\\\":\\\"ManaPotion\\\",\\\"itemName\\\":\\\"마나 물약\\\",\\\"itemDescription\\\":\\\"마나를 최대 25 회복합니다.\\\",\\\"icon\\\":\\\"None\\\",\\\"maxStackCount\\\":99}\"}"
+			}
+		]
+	}
+}

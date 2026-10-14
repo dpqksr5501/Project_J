@@ -1,0 +1,410 @@
+[
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.AsyncTargeting.ComponentContext",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_153.Untitled:PersistentLevel.Actor_1"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.AsyncTargeting.Lifecycle",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_155.Untitled:PersistentLevel.Actor_0"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+    "count": 5,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Crowd.RemoteEquipmentBurst",
+    "count": 572,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_1",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_2"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.EquipmentSoak.HundredCharacters",
+    "count": 600,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.EquipmentSoak.StopDuringAttack",
+    "count": 100,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+    "count": 100,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupA.DynamicNavRecovery",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupB.CombatContinuity.Cancel",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupB.CombatContinuity.Complete",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupB.CombatContinuity.Destroy",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupB.CombatContinuity.Unequip",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Input.MouseChordLifecycle",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Integrated.MovingTargetPursuit",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Integrated.NativeNavMovement",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_261.Untitled:PersistentLevel.Actor_0",
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_261.Untitled:PersistentLevel.Actor_1"
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+    ]
+  },
+  {
+    "run": "Whole1",
+    "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.AsyncTargeting.ComponentContext",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_153.Untitled:PersistentLevel.Actor_1"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.AsyncTargeting.Lifecycle",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_155.Untitled:PersistentLevel.Actor_0"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Combat.WeaponPresentationIdentity",
+    "count": 5,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Crowd.RemoteEquipmentBurst",
+    "count": 572,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_0",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_1",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Sheathe failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Project_JGreatswordCharacter_2"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.EquipmentSoak.HundredCharacters",
+    "count": 600,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.EquipmentSoak.StopDuringAttack",
+    "count": 100,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.EquipmentSoak.WorldCleanupDuringAttack",
+    "count": 100,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_1 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_2 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupA.DynamicNavRecovery",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupB.CombatContinuity.Cancel",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupB.CombatContinuity.Complete",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupB.CombatContinuity.Destroy",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupB.CombatContinuity.Unequip",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+    "count": 4,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Input.MouseChordLifecycle",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Integrated.MovingTargetPursuit",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Integrated.NativeNavMovement",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogNavigation: SpawnMissingNavigationData: No saved navigation data found for 'Default' in level 'PersistentLevel'. Spawning and rebuilding at runtime to recover - this has a performance cost. Rebuild navigation and resave the level to fix this.",
+      "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+    "count": 2,
+    "errors": 0,
+    "firstMessages": [
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_261.Untitled:PersistentLevel.Actor_0",
+      "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_261.Untitled:PersistentLevel.Actor_1"
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned."
+    ]
+  },
+  {
+    "run": "WholeFinal",
+    "test": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+    "count": 1,
+    "errors": 0,
+    "firstMessages": [
+      "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0"
+    ]
+  }
+]

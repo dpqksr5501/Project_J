@@ -1,0 +1,1902 @@
+{
+  "meaning": "Native definition token-count triage, including inl; no dead-code proof for reflected calls, engine overrides or extension APIs.",
+  "candidates": [
+    {
+      "cls": "AProject_JFlyingMountCharacter",
+      "name": "SetGliding",
+      "source": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "line": 164,
+      "declarations": [
+        {
+          "path": "Source/Project_JMount/Public/Mount/Project_JFlyingMountCharacter.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JAbilitySystemComponent",
+      "name": "TryActivateAbilitiesByInputTag",
+      "source": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+      "line": 68,
+      "declarations": [
+        {
+          "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JObjectPoolRegistrySubsystem",
+      "name": "UnregisterDefinition",
+      "source": "Source/Project_JCore/Private/System/Project_JObjectPoolRegistrySubsystem.cpp",
+      "line": 14,
+      "declarations": [
+        {
+          "path": "Source/Project_JCore/Public/System/Project_JObjectPoolRegistrySubsystem.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JEarlyTransitionMigrationLibrary",
+      "name": "RepairSixRunClips",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JEarlyTransitionMigrationLibrary.cpp",
+      "line": 32,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacterEditor/Public/Animation/Project_JEarlyTransitionMigrationLibrary.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JFoleyMigrationLibrary",
+      "name": "MigrateGaspFoley",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JFoleyMigrationLibrary.cpp",
+      "line": 82,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacterEditor/Public/Animation/Project_JFoleyMigrationLibrary.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JFoleyMigrationLibrary",
+      "name": "RepairMissingGaspFoley",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JFoleyMigrationLibrary.cpp",
+      "line": 203,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacterEditor/Public/Animation/Project_JFoleyMigrationLibrary.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JBaseCharacter",
+      "name": "GetCombatSocketLocation_Implementation",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 161,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JBaseCharacter",
+      "name": "IsDead_Implementation",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 172,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JBaseCharacter",
+      "name": "CanApplyAdvancementDefinition",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 234,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JLocomotionAnimStateComponentBase",
+      "name": "GetCachedMeshComponent",
+      "source": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp",
+      "line": 60,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JLocomotionAnimStateComponent",
+      "name": "ResetJumpStartLandingDebugState",
+      "source": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp",
+      "line": 111,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JNPCCharacter",
+      "name": "GetRecommendedAIUpdateInterval",
+      "source": "Source/Project_JCharacter/Private/Project_JNPCCharacter.cpp",
+      "line": 65,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JNPCCharacter.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerCharacter",
+      "name": "InterruptCombatIntroForHit",
+      "source": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "line": 1530,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "BeginOneShotEarlyTransitionWindow",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 356,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "EndOneShotEarlyTransitionWindow",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 380,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMotionMatchingSelectedAnimationProgress",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 497,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMotionMatchingSelectionIsContinuing",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 506,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeTrajectory",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 12,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeCombatLocomotionStartRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 42,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeCombatLocomotionStopRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 47,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeUsesCombatUpperBodyOverlay",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 58,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVelocity",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 63,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVerticalSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 68,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsAccelerating",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 73,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeRelativeAccelerationAmount",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 78,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeLeanAmount",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 83,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeShouldApplyLeanAdditive",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 88,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsSprintCurvatureLeanSuppressed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 93,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafePredictedStopDistance",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 98,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVelocityToMoveInputAngle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 103,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsDecelerating",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 108,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMoveInputSize",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 113,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeHasMoveInput",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 118,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsInAir",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 123,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsJumping",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 128,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsLanding",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 133,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMoving",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 143,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMotionMatchingMoving",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 148,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeGaitIntent",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 153,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeRotationMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 158,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerWantsLocomotion",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 163,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerWantsIdle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 171,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIsGrounded",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 179,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIsInAir",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 185,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeExperimentalOneShotEnabled",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 191,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 196,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotUseMotionMatchOnEntry",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 201,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotRequestRevision",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 206,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotPhase",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 211,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotEarlyTransitionWindowOpen",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 216,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerLocomotionSemanticStateChanged",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 221,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleSemanticStateChanged",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 226,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerStrafeDirection",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 231,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerPreviousStrafeDirection",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 236,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerStance",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 241,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldTurnInPlace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 251,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldAbortTurnInPlace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 257,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerTurnInPlaceSteeringAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 269,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 350,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationHalfLife",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 357,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationRadius",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 362,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleBreakEnabled",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 378,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleBreakMinimumStateTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 383,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationOutput",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 393,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldForceBlend",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 413,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 418,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationBlendProfile",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 423,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationShouldLoop",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 428,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotReturnBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 443,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerCombatStrafeOrientationWarpingAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 452,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafePlaybackOrientationWarpingAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 459,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 479,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationAlmostComplete",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 484,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationTimeRemaining",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 489,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMounted",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 494,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedIsFlying",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 499,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedIsGliding",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 504,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 509,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedVerticalSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 514,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeHasMountedHandIKTargets",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 519,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedLeftHandTargetComponentSpace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 524,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedRightHandTargetComponentSpace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 529,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedAnimationTags",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 534,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedHasAnimationTag",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 539,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedTransitionBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 545,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeUsesOnFootLocomotion",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 555,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "Get_FootPlacementInterpolationSettings",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 565,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeFootPlacementAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 570,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeLegIKAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 575,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "FProject_JCharacterAnimInstanceProxy",
+      "name": "GetCustomRootNode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "line": 786,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "FProject_JCharacterAnimInstanceProxy",
+      "name": "GetCustomNodes",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "line": 800,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JRetargetAnimInstance",
+      "name": "SetCombatMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+      "line": 102,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JRetargetAnimInstance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCameraComponent",
+      "name": "SetCombatRightShoulder",
+      "source": "Source/Project_JCharacter/Private/Camera/Project_JCameraComponent.cpp",
+      "line": 133,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Camera/Project_JCameraComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterDataSubsystem",
+      "name": "InitializeCharacterClassById",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 112,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterDataSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterDataSubsystem",
+      "name": "ApplyAdvancementById",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 124,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterDataSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterDataSubsystem",
+      "name": "ValidateDataRegistry",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 136,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterDataSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JCharacterMovementComponent",
+      "name": "GetPredictionData_Client",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JCharacterMovementComponent.cpp",
+      "line": 42,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JCharacterMovementComponent.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JEquipmentManagerComponent",
+      "name": "EquipItemInstance",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp",
+      "line": 166,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JInventoryComponent",
+      "name": "CanMoveItemInstance",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp",
+      "line": 312,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JMountedAnimationLayerComponent",
+      "name": "IsMountedLayerLinked",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JMountedAnimationLayerComponent.cpp",
+      "line": 216,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JWeaponPresentationComponent",
+      "name": "BeginGroundContact",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 842,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JWeaponPresentationComponent",
+      "name": "EndGroundContact",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 849,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JMassMonster_Trait",
+      "name": "BuildTemplate",
+      "source": "Source/Project_JCharacter/Private/Mass/Project_JMassMonster_Trait.cpp",
+      "line": 4,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Mass/Project_JMassMonster_Trait.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JMassMovementProcessor",
+      "name": "ConfigureQueries",
+      "source": "Source/Project_JCharacter/Private/Mass/Project_JMassMovementProcessor.cpp",
+      "line": 22,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Mass/Project_JMassMovementProcessor.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JNetObjectFilter_Distance",
+      "name": "ShouldReplicateActorForViewer",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 78,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Network/Project_JNetObjectFilter_Distance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JNetObjectFilter_Distance",
+      "name": "SetPolicySettings",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 147,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Network/Project_JNetObjectFilter_Distance.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JNetObjectPrioritizer_Combat",
+      "name": "HasCombatPriority",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectPrioritizer_Combat.cpp",
+      "line": 42,
+      "declarations": [
+        {
+          "path": "Source/Project_JCharacter/Public/Network/Project_JNetObjectPrioritizer_Combat.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JHandoverManager",
+      "name": "InitiateHandover",
+      "source": "Source/Project_J/Backend/Project_JHandoverManager.cpp",
+      "line": 34,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Backend/Project_JHandoverManager.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JGameState",
+      "name": "SetPublicEventId",
+      "source": "Source/Project_J/Game/Project_JGameState.cpp",
+      "line": 33,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JGameState.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "StartProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 181,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "StopProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 206,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 220,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "StartProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 236,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "StopProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 253,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 269,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "ServerStartProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 285,
+      "declarations": []
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "ServerStopProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 317,
+      "declarations": []
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "ServerDumpProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 328,
+      "declarations": []
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpAnimationExecutionPolicy",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 344,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpMMOState",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 376,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpAnimBudget",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 407,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpMotionMatchingTrace",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 426,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpLocomotionKinematics",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 442,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpReplicationPolicy",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 491,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpCharacterComponents",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 516,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpCombatState",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 541,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "DumpMMOProfilingSnapshot",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 571,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "AProject_JPlayerController",
+      "name": "UIPrototypeTest",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 786,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Game/Project_JPlayerController.h",
+          "access": "protected",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JMMOFoundationSubsystem",
+      "name": "ResolveContentDependencies",
+      "source": "Source/Project_J/MMO/Project_JMMOFoundationSubsystem.cpp",
+      "line": 14,
+      "declarations": [
+        {
+          "path": "Source/Project_J/MMO/Project_JMMOFoundationSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JSocialSubsystem",
+      "name": "JoinGuild",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 56,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JSocialSubsystem",
+      "name": "GetPartyIdForCharacter",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 143,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JSocialSubsystem",
+      "name": "GetGuildIdForCharacter",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 148,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JSocialSubsystem",
+      "name": "GetGroupSnapshot",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 393,
+      "declarations": [
+        {
+          "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+          "access": "public",
+          "possiblyReflected": false,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JHUDWindow",
+      "name": "RequestClose",
+      "source": "Source/Project_J/UI/Project_JHUDWindow.cpp",
+      "line": 87,
+      "declarations": [
+        {
+          "path": "Source/Project_J/UI/Project_JHUDWindow.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": false
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JMinimapWidget",
+      "name": "NativeOnMouseWheel",
+      "source": "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+      "line": 109,
+      "declarations": [
+        {
+          "path": "Source/Project_J/UI/Project_JMinimapWidget.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JPlayerUIComponent",
+      "name": "ToggleMenu",
+      "source": "Source/Project_J/UI/Project_JPlayerUIComponent.cpp",
+      "line": 555,
+      "declarations": [
+        {
+          "path": "Source/Project_J/UI/Project_JPlayerUIComponent.h",
+          "access": "public",
+          "possiblyReflected": true,
+          "possiblyOverride": true
+        }
+      ]
+    },
+    {
+      "cls": "UProject_JSkillButton",
+      "name": "NativeOnMouseButtonUp",
+      "source": "Source/Project_J/UI/Project_JSkillButton.cpp",
+      "line": 200,
+      "declarations": [
+        {
+          "path": "Source/Project_J/UI/Project_JPlayerHUDWidget.h",
+          "access": "protected",
+          "possiblyReflected": false,
+          "possiblyOverride": true
+        }
+      ]
+    }
+  ]
+}

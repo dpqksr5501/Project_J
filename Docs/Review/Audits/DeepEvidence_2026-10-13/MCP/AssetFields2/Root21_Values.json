@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.T.1\\\"},\\\"schemaVersion\\\":1,\\\"bMontageDriven\\\":true,\\\"montage\\\":{\\\"refPath\\\":\\\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T.AM_Greatsword_T\\\"},\\\"montageSectionName\\\":\\\"None\\\",\\\"playRate\\\":1,\\\"weaponDrive\\\":\\\"WeaponDefault\\\",\\\"bOverrideGripIK\\\":false,\\\"primaryGripIKAlpha\\\":1,\\\"secondaryGripIKAlpha\\\":0,\\\"movementPolicy\\\":\\\"RootMotionMontage\\\",\\\"bUseFlyingMovementModeForRootMotion\\\":true,\\\"rootMotionEndMovementPolicy\\\":\\\"Land\\\",\\\"hitSpec\\\":{\\\"baseDamage\\\":1.5,\\\"traceDistance\\\":100,\\\"bUseCanonicalBladeTipOffset\\\":false,\\\"canonicalBladeTipOffset\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"traceRadius\\\":50,\\\"knockbackImpulse\\\":200,\\\"launchImpulse\\\":250},\\\"damageEffect\\\":{\\\"refPath\\\":\\\"/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C\\\"},\\\"requiredOwnerTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedOwnerTags\\\":{\\\"gameplayTags\\\":[]}}\"}"
+			}
+		]
+	}
+}

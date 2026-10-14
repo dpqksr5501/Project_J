@@ -289,6 +289,24 @@ bool FProjectJCommandReleaseTest::RunTest(const FString&)
 	Input->HandleInputTagReleased(Raw);
 	TestFalse(TEXT("Raw release clears the original alias even after a style change"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
 	ASC->CancelAllAbilities(); ASC->ClearAllAbilities();
+	// A non-consuming command delivers alias then raw intent to the same receiver.
+	// A synchronous server callback may replace that receiver between the two.
+	Commands->Commands[0].bConsumeMatchedInput = false;
+	Player->SetCurrentCombatStyle(Style);
+	auto* Replacement = Scope.World->SpawnActor<AProject_JGreatswordCharacter>();
+	auto* ReplacementASC = NewObject<UProject_JAbilitySystemComponent>(Replacement); ReplacementASC->RegisterComponent();
+	ASCProperty->SetObjectPropertyValue_InContainer(Replacement, ReplacementASC);
+	ReplacementASC->InitAbilityActorInfo(Replacement, Replacement);
+	int32 AliasEvents = 0, ReplacementRawEvents = 0;
+	ASC->GenericGameplayEventCallbacks.FindOrAdd(Alias).AddLambda(
+		[&AliasEvents, Input, Replacement](const FGameplayEventData*) { ++AliasEvents; Input->Initialize(Replacement); });
+	ReplacementASC->GenericGameplayEventCallbacks.FindOrAdd(Raw).AddLambda(
+		[&ReplacementRawEvents](const FGameplayEventData*) { ++ReplacementRawEvents; });
+	Input->ReceiveAuthorityCombatInput(Raw, 0.0f, 1);
+	TestEqual(TEXT("Authority command alias reaches the original receiver"), AliasEvents, 1);
+	TestEqual(TEXT("Authority alias callback cannot forward the old raw intent to a replacement avatar"), ReplacementRawEvents, 0);
+	ASC->GenericGameplayEventCallbacks.Empty(); ReplacementASC->GenericGameplayEventCallbacks.Empty();
+	Input->Initialize(nullptr);
 	return true;
 }
 #endif

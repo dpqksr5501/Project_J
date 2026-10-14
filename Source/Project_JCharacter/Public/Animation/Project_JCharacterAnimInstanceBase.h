@@ -61,6 +61,4 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> CachedTrajectoryComponent = nullptr;
 
-	UPROPERTY(Transient)
-	mutable TWeakObjectPtr<USkeletalMeshComponent> CachedRuntimeRetargetFollowerMesh = nullptr;
 };

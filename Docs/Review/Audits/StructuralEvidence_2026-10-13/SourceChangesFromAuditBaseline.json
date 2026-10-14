@@ -1,0 +1,240 @@
+[
+  {
+    "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+    "beforeSha256": "BCCA99E394D5B8044D6D1D73A378D0C4FF9165340040FF80F43BB3D99DCDD69E",
+    "afterSha256": "ad8ae69ae862cbfe96a0e110218bd0c24fa8b54768792b9ac42445ef564e32e7",
+    "beforeLines": 960,
+    "afterLines": 959
+  },
+  {
+    "path": "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+    "beforeSha256": "B3E543AA4E4A6475B45727E209CE054E26E04A03CAAB0BCD3F56107D3556BB36",
+    "afterSha256": "4700e0f58b949208481c93834f8204d8e2bbd4279b5d7a5dd0a50058e59d409c",
+    "beforeLines": 156,
+    "afterLines": 157
+  },
+  {
+    "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+    "beforeSha256": "056F533A8E56BFB49D69E9ACA4DA551B244FDB0263AB138EFD55E58A8D1BFA47",
+    "afterSha256": "505ffc57627b65416a9faddc33f5992edeb9ef1797f527a93d622e149e214d5d",
+    "beforeLines": 47,
+    "afterLines": 49
+  },
+  {
+    "path": "Source/Project_J/Game/Project_JPlayerState.h",
+    "beforeSha256": "1F8A81B27C996172053CEC88CEACDCC46CBDDB3FF0DB81A2BA6DEC7C6C08A8B5",
+    "afterSha256": "aaea228a5414d66312014d151fa7400ff1534e8f9de27c74319d1f9f027d7710",
+    "beforeLines": 134,
+    "afterLines": 135
+  },
+  {
+    "path": "Source/Project_J/Game/Project_JPlayerState.cpp",
+    "beforeSha256": "6ABEDD2E1E54E7EB08962D100BEFB0417D19922DE9334E0492F009122435098B",
+    "afterSha256": "3e5cb723653351f7f8e450e3b8569fadcd819278cf1bbfcb812ab19a25766209",
+    "beforeLines": 178,
+    "afterLines": 185
+  },
+  {
+    "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+    "beforeSha256": "D4FB927D5DE0D45A837FDE99536CBD7EB37B354846AC39CD6B3227CD1A0E1ADC",
+    "afterSha256": "b4839b66b594692b87a3ff7b0b664ec352443835437527f474efa6d897536da9",
+    "beforeLines": 249,
+    "afterLines": 263
+  },
+  {
+    "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+    "beforeSha256": "0E1711AB1AE43C57BE2C8F0EE1AF91FCFFC42068C0080172D2C5FE2DBCBFDAFD",
+    "afterSha256": "4d950354734f30dd288f570502c5fffa47531ad4fcbeb1dccfaafa674931514a",
+    "beforeLines": 219,
+    "afterLines": 251
+  },
+  {
+    "path": "Source/Project_J/Private/Tests/Project_JUIIconRequestLifetimeTests.cpp",
+    "beforeSha256": null,
+    "afterSha256": "ee323376cf38db1d8e25993145e4c40c7a92ba45664bbeac65c80c5c61a17ec3",
+    "beforeLines": 0,
+    "afterLines": 75
+  },
+  {
+    "path": "Source/Project_JCharacter/Public/Components/Project_JCombatAnimationLayerComponent.h",
+    "beforeSha256": "8C336B51A311DC44F694BA6CA2D6A37DD62D54C0A16F2559818450F8CCE4A0B9",
+    "afterSha256": "d7251114b53fec6d17e0b1aa19fff91a818e37a6ef1d8d472254cf138a53e361",
+    "beforeLines": 75,
+    "afterLines": 64
+  },
+  {
+    "path": "Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h",
+    "beforeSha256": "C62E152F1A449A4ABFC6FFAC9F941E72FEFDAB11D17BC98E66A4C5EE5DC619D8",
+    "afterSha256": "328e4f7a3b216940ddde8d939c05fc00a0217aa694a0baa3914f25fb37655f21",
+    "beforeLines": 73,
+    "afterLines": 62
+  },
+  {
+    "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimationLayerLease.h",
+    "beforeSha256": null,
+    "afterSha256": "fc84f6e6f3d0438cd0098c3c4e3e5314d48337add163fa73dcc2b157bccbaad5",
+    "beforeLines": 0,
+    "afterLines": 45
+  },
+  {
+    "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+    "beforeSha256": "6F3B0D499631FB507D5288BD6B7172A0DA38E3C2A80042D738A8CA069936AA71",
+    "afterSha256": "2f4809b99306fa06fe74c47c8b96d87c2871e2c43c368c6c37179ee0ba6ce923",
+    "beforeLines": 373,
+    "afterLines": 372
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JInventoryWidgets.cpp",
+    "beforeSha256": null,
+    "afterSha256": "ed6b2847d1f9f521e93ad99897722a41550d6c6a636aec05e70878c7d9971c71",
+    "beforeLines": 0,
+    "afterLines": 309
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JPlayerHUDWidget.cpp",
+    "beforeSha256": "3BBE3082845AD7D6C5289C5889E6FAB517E3A6577102F8807A5F8944C1F90249",
+    "afterSha256": "3ebc5fd7e196f64f15d3efc636be31e7df4cba51992a924f081125b523bbfed3",
+    "beforeLines": 1641,
+    "afterLines": 1152
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JPlayerHUDWidget.h",
+    "beforeSha256": "599E96FB4D3270E32D200937D3DD6C1D9D0BA2F0FA3758EAB91F4A7226812A5E",
+    "afterSha256": "98b6ea06e4e6d4b5c09663e81d952105e70f634d08621e7270fdcfb94e104ca4",
+    "beforeLines": 267,
+    "afterLines": 268
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JSkillButton.cpp",
+    "beforeSha256": null,
+    "afterSha256": "9d691d628ce467a2bbfd31cf5b4f2a3bd58c8177e5dff2b4a2acf1cb3633825d",
+    "beforeLines": 0,
+    "afterLines": 228
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JUIIconRequest.cpp",
+    "beforeSha256": null,
+    "afterSha256": "49a48dc1070fdd78645e30cfd593c37f23eef3940c9f504aa1b4b9fff74152fa",
+    "beforeLines": 0,
+    "afterLines": 43
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JUIIconRequest.h",
+    "beforeSha256": null,
+    "afterSha256": "7bfa196a36abbd1879caf639af62dde74ff7270ee35471ae4893c1a0da6d8cb4",
+    "beforeLines": 0,
+    "afterLines": 22
+  },
+  {
+    "path": "Source/Project_J/UI/Project_JWidgetPresentationHelpers.h",
+    "beforeSha256": null,
+    "afterSha256": "e50fefacb9e3de6ea927ae2c4b77c10dbcffe72256608597016268ee5495ee6a",
+    "beforeLines": 0,
+    "afterLines": 40
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+    "beforeSha256": "8F0EFCCDE930159A8DBBEC76D7AE9149A6F941211CD7B5C42E4714897D61A43C",
+    "afterSha256": "d0ae7c8af2df916b47d7964527a2526a0a2cc909c9980901992044f6c8fd2e6b",
+    "beforeLines": 411,
+    "afterLines": 418
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp",
+    "beforeSha256": "9A00FB4B68788DCFFE20A2FE9701ABE552D1DF2E7AF70EC9701D289449B4130E",
+    "afterSha256": "d8f7ce44394a689cd21d253eb536cb87dbcf8f4dcebdc7bbd3ce86990de40574",
+    "beforeLines": 311,
+    "afterLines": 306
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+    "beforeSha256": "CBD08E11254D6AAEED6F620B390DBF93DECCECC63BEC243AB55AF2FF5670283B",
+    "afterSha256": "d6ebbba33d537c5d10d10e615f2f56cc3e94ab9ec1862edb5ea813f477be4bd3",
+    "beforeLines": 1697,
+    "afterLines": 1699
+  },
+  {
+    "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp",
+    "beforeSha256": "341F8D7737878514D9AC2F0CE67BFA8E25B9880CB365615295FA1C6A9B71A526",
+    "afterSha256": "bd49e270833c9cb2d9e768a9a57e28b27ba4353a89324bea3df7f829c5079e54",
+    "beforeLines": 543,
+    "afterLines": 546
+  },
+  {
+    "path": "Source/Project_J/Testing/Fixtures/README.md",
+    "beforeSha256": "DF638279A6C8036181EFD72CCC1B3838EC667F1A4CF4428EE74EF9643088C3AE",
+    "afterSha256": "74cbe6026c4e6907757cca3cd9d101a116294ef2b05347c71fdbf90a058122ad",
+    "beforeLines": 37,
+    "afterLines": 39
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationLayerLease.cpp",
+    "beforeSha256": null,
+    "afterSha256": "136c36b95747c5f1b938869b4250f61620991373f803012345b4e2a322cc63ac",
+    "beforeLines": 0,
+    "afterLines": 95
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JCombatAnimationLayerComponent.cpp",
+    "beforeSha256": "F5E9AB793767917000E8A45BFF807F5CA247E166B4F3EBA25B52C4D605CAE1B3",
+    "afterSha256": "197e845d7835757b92890b7aef0795756959db3fc33806924d09d33b933cbbec",
+    "beforeLines": 237,
+    "afterLines": 202
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationDiagnostics.h",
+    "beforeSha256": null,
+    "afterSha256": "631a52e42467bbf21dcf4449cf6eeebfce84bc5bbe887c9888c8862abf4c9dac",
+    "beforeLines": 0,
+    "afterLines": 15
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.Diagnostics.cpp",
+    "beforeSha256": null,
+    "afterSha256": "aafeca8b445d756f2aa61cbdf4ca392789eba38d2513171b66fb1949b4ea2051",
+    "beforeLines": 0,
+    "afterLines": 453
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+    "beforeSha256": "5601176C49CAA456B319FE8ED9792A24C6A217F91B40BB326EA7BC7C3F9E1DA3",
+    "afterSha256": "45877003aca47d98cbb9e3417744ac997312126615ab409cbd30936fb3178c5e",
+    "beforeLines": 1857,
+    "afterLines": 1440
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JMountedAnimationLayerComponent.cpp",
+    "beforeSha256": "AE5C7005E60F71625648BFD45FFAD98CB567358EAB28A9CC98BAC8ACD338BCFB",
+    "afterSha256": "35e358bda621065ef0c2725fec454b6996262227f40fbbd97e803ffa730c6c76",
+    "beforeLines": 260,
+    "afterLines": 219
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+    "beforeSha256": "AC7583AE82E5EFFAAFB5DA18AE6C731DD9AF0089DB616FBE1C544DEC7D57A196",
+    "afterSha256": "bc312dbe9dbab0641aeaea0393a32256cf357a6e95129269bf3fffb9d2a60580",
+    "beforeLines": 246,
+    "afterLines": 230
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Animation/Project_JFootPlacementDefaults.h",
+    "beforeSha256": null,
+    "afterSha256": "5ff94e90a333cf77e792b40664ab900e83c6cc0f09fba8bd6f7e687c1ab9194b",
+    "beforeLines": 0,
+    "afterLines": 29
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+    "beforeSha256": "511777A1468F1672F557A90F8BDF4F766608A82A31B4352C6D750F51486FF39C",
+    "afterSha256": "73310c2c28fc6407bdb4fd917cb5dca29169f1a8e5341f502a27a7ab83be1cfa",
+    "beforeLines": 578,
+    "afterLines": 562
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp",
+    "beforeSha256": "01FD8CDAC54EB9291372D87D029101616412ED9EF8EC41F7B80B166DEFE1831E",
+    "afterSha256": "c26094fd12cb4f87567b97ce002add2dc8eb132a0a78caf2c5a541584f6c06e5",
+    "beforeLines": 383,
+    "afterLines": 394
+  }
+]

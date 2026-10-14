@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"family\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.DA_RetargetFamily_Mannequin_Bip01\\\"},\\\"handGrip\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword.DA_HGP_Greatsword\\\"},\\\"bOverrideRetargetSets\\\":false,\\\"retargetOverrideSets\\\":[]}\"}"
+			}
+		]
+	}
+}

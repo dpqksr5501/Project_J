@@ -1,0 +1,119 @@
+{
+  "methods": [
+    {
+      "name": "GetEffectiveHiddenRemoteUpdateInterval",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "line": 657,
+          "text": "float GetEffectiveHiddenRemoteUpdateInterval() const;"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+          "line": 241,
+          "text": "float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    },
+    {
+      "name": "GetEffectiveMidMotionMatchingUpdateInterval",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "line": 658,
+          "text": "float GetEffectiveMidMotionMatchingUpdateInterval() const;"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+          "line": 246,
+          "text": "float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    },
+    {
+      "name": "GetEffectiveFarMotionMatchingUpdateInterval",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "line": 659,
+          "text": "float GetEffectiveFarMotionMatchingUpdateInterval() const;"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+          "line": 251,
+          "text": "float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingUpdateInterval() const"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    },
+    {
+      "name": "BeginOneShotEarlyTransitionWindow",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "line": 511,
+          "text": "void BeginOneShotEarlyTransitionWindow();"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+          "line": 356,
+          "text": "void UProject_JCharacterAnimInstance::BeginOneShotEarlyTransitionWindow()"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    },
+    {
+      "name": "EndOneShotEarlyTransitionWindow",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "line": 512,
+          "text": "void EndOneShotEarlyTransitionWindow();"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+          "line": 380,
+          "text": "void UProject_JCharacterAnimInstance::EndOneShotEarlyTransitionWindow()"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    },
+    {
+      "name": "TryActivateAbilitiesByInputTag",
+      "beforeVersion": "RA01-19",
+      "references": [
+        {
+          "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+          "line": 68,
+          "text": "bool UProject_JAbilitySystemComponent::TryActivateAbilitiesByInputTag(const FGameplayTag& InputTag)"
+        },
+        {
+          "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+          "line": 33,
+          "text": "bool TryActivateAbilitiesByInputTag(const FGameplayTag& InputTag);"
+        }
+      ],
+      "currentSourceOccurrences": [],
+      "notUFunction": true,
+      "nonVirtual": true
+    }
+  ],
+  "scope": "All Source/Plugins/Scripts/Config search cross-checked; API declaration/definition contexts are native and nonreflected. Extension/Blueprint APIs retained. No runtime performance claim."
+}

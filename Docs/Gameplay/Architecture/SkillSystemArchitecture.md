@@ -2,6 +2,8 @@
 
 This note records the current C++ skill/GAS shape and the intended extension path for Project J's MMORPG combat input.
 
+2026-10-13 시작 [심화 감사](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)에서 device 재바인딩의 최신 세대, 종료 후 inventory/equipment 명령 거부, 장비 제공자 OnRetired에 따른 runtime 자기 grant 반환을 보완했다. provider 종료는 저장된 장비 데이터의 삭제나 가짜 Unequip으로 대체하지 않는다.
+
 ## Current Shape
 
 Project J already has the core GAS ownership model needed for player skills:
@@ -14,6 +16,8 @@ Project J already has the core GAS ownership model needed for player skills:
 - `UProject_JAbilitySet` grants gameplay abilities/effects and can attach an `InputTag` to each ability spec.
 
 The intended long-term skill grant path is:
+
+현재 keyed grant의 실제 spec/effect handle은 ASC registry가 소유하며 제공자는 source ID와 generation lease만 보유한다. 동기 callback 후에도 같은 generation인지 확인하며, 반환 전에 제공자 container를 분리한다. 성장·장비·입력의 종료와 late initialize는 서로 별도 수명 경계다. [심화 감사의 실제 재현·검증](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)을 참조한다.
 
 ```text
 Class / Advancement / Equipment
@@ -44,6 +48,8 @@ Examples:
 - Q/R/T resolve through `DirectSkillBindings` to `InputTag.Skill.Q`, `InputTag.Skill.R`, and `InputTag.Skill.T`.
 - Held modifier actions resolve to `InputTag.Modifier.*`; matching chord/direct-binding rows can require or block any combination of those tags.
 - LMB+RMB uses the mapping data's `Simultaneous Chord Grace Seconds` (default `0.08`) and resolves to `InputTag.Weapon.Chord.LMBRMB` only when both button presses arrive within that window. A released quick single tap dispatches immediately rather than waiting for the full grace period.
+
+빠른 단일 tap은 release 전에 held 상태에서 의미 tag를 결정하고, release 상태를 게시한 뒤 dispatch한다. dispatch callback이 같은 버튼을 다시 누르거나 취소하면 이전 completion은 새 입력을 해제하지 않는다. 버튼 revision이 이 수명을 구분한다. 입력 실행과 CombatState는 PlayerState ASC의 현재 Avatar가 자기 Pawn인지 검사한다. 과거 Pawn의 유효한 ASC 포인터를 새 Pawn의 입력·상태 권한으로 사용하지 않는다. 실제 R→RMB 데이터 및 실패/복구 근거는 [전체 감사](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)를 읽는다.
 
 The character still keeps compatibility wrappers, but new skill inputs should go through the router so class, weapon, and chord mappings can evolve without adding one method per skill to `AProject_JPlayerCharacter`. See [Greatsword Combat Authoring Guide](../../Combat/Authoring/GreatswordCombatAuthoringGuide.md) for the current data setup.
 
@@ -130,3 +136,9 @@ Locomotion and skill animation should remain separate:
 - Do not make Motion Matching choose attacks or skills.
 - Keep `InputTag.*` for input intent and `Event.*` for ability/montage events.
 - For MMO scaling, keep authoritative effects and validation on the server while allowing local predicted abilities for responsiveness.
+
+## 전투 의도의 원격 전달 — 2026-10-13
+
+개별 press 의도는 ASC의 reliable RPC로 전달해 GAS predicted activation과 같은 owning actor channel에서 순서를 보존한다. RPC는 입력 당시 ExpectedAvatar를 포함하며 server의 현재 Avatar가 다르면 버린다. Core CombatInterface의 native receiver는 Character 입력 실행기로 전달하고, 서버는 InputTag 계층·serial·rate·age·command 조건을 다시 검사한다. 클라이언트가 Command 결과나 montage event를 직접 주장하지 못한다. 서버 raw-intent 재생은 별도로 ability activation을 반복하지 않는다.
+
+serial은 uint32 모듈러 순서다. wrap 이후 신규 입력은 허용하지만 duplicate/stale 값과 반 범위 이상 도약은 거부한다. 이동·몽타주·스냅샷의 기존 예측/복제 형식은 유지한다. 20% 손실의 이전 R 누락→RMB 시작 재현, 변경 및 fixture 준비 조건은 [전체 감사](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에서 확인한다. 입력 press/release의 물리 타이밍을 서버가 직접 검증하는 시스템은 아니다.

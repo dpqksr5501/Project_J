@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/GameplayTags\",\"/Game/AS/AS_Greatsword_Base\",\"/Script/Project_JCharacter\",\"/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword\",\"/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword\",\"/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile\",\"/Game/DataAssetSets/Combo/DA_Combo_Greatsword\",\"/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base\"]}"
+			}
+		]
+	}
+}

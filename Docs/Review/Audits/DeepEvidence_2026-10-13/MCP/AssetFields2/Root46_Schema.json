@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"questId\\\":{\\\"type\\\":\\\"string\\\"},\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":{\\\"type\\\":\\\"string\\\"},\\\"objectiveEvent\\\":{\\\"type\\\":\\\"string\\\"},\\\"requiredCount\\\":{\\\"type\\\":\\\"integer\\\",\\\"minimum\\\":1},\\\"rewardExperience\\\":{\\\"type\\\":\\\"integer\\\",\\\"minimum\\\":0},\\\"bTravelObjective\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"Enables bounded server-side travel sampling; one count = one metre.\\\"},\\\"bHasMapTarget\\\":{\\\"type\\\":\\\"boolean\\\"},\\\"mapTarget\\\":{\\\"title\\\":\\\"Vector\\\",\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"x\\\":{\\\"type\\\":\\\"number\\\"},\\\"y\\\":{\\\"type\\\":\\\"number\\\"},\\\"z\\\":{\\\"type\\\":\\\"number\\\"}},\\\"required\\\":[\\\"x\\\",\\\"y\\\",\\\"z\\\"]}}\"}"
+			}
+		]
+	}
+}

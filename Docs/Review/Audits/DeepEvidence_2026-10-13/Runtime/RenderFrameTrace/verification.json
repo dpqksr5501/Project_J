@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "exitCode": 0,
+  "fixtureSuccess": true,
+  "capturesExist": true,
+  "traceChannels": "frame,bookmark",
+  "scope": "Diagnostic channel isolation; original full-channel failure remains separate."
+}

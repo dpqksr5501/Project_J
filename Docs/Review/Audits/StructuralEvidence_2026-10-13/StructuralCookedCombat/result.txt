@@ -1,0 +1,4 @@
+success=1
+cooked=1
+cycles=3
+reason=Three real input/GAS/montage/notify/unequip cycles; native character with authored visuals

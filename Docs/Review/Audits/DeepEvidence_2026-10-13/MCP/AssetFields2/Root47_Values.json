@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"restoreHealth\\\":25,\\\"restoreMana\\\":0,\\\"cooldownSeconds\\\":10,\\\"itemId\\\":\\\"HealthPotion\\\",\\\"itemName\\\":\\\"체력 물약\\\",\\\"itemDescription\\\":\\\"체력을 최대 25 회복합니다.\\\",\\\"icon\\\":\\\"None\\\",\\\"maxStackCount\\\":99}\"}"
+			}
+		]
+	}
+}

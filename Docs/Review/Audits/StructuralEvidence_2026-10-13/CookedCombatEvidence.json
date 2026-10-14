@@ -1,0 +1,52 @@
+[
+  {
+    "run": "StructuralCookedCombat",
+    "files": [
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralCookedCombat/frames.csv",
+        "sha256": "ac1126b7766c164ebaf9a6cf04476d7e83d3c43d2b382973336f3f206a76c50e"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralCookedCombat/load.txt",
+        "sha256": "d1545c7cfbe127a9a8be932755326a849539d1d86e34def326be6831c4377c55"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralCookedCombat/manifest.json",
+        "sha256": "b142128b0a763612d7c9faf03d94ef3740f4ff8ede2636b0133acfa4b681e25a"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralCookedCombat/process.json",
+        "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralCookedCombat/result.txt",
+        "sha256": "688598cf479a2dd542a978d0b37f2113dbe3462398a0c490dbf24ce81bb564b1"
+      }
+    ]
+  },
+  {
+    "run": "StructuralFinalCombat",
+    "files": [
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralFinalCombat/frames.csv",
+        "sha256": "ff237189ac45b2c9d592b08875680aa42b003087d211914bd0f35012ca40e309"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralFinalCombat/load.txt",
+        "sha256": "91adf86fc591d43e7b3b015021a5a0d6d4e26cab1d1d83169c31a6d2a43f749d"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralFinalCombat/manifest.json",
+        "sha256": "f27b6fae2ea7fe96c807ac9324c037a03299f0beeb2fdfc2998e9b6bf7bea582"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralFinalCombat/process.json",
+        "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+      },
+      {
+        "path": "Saved/Validation/EF_20260912/StructuralFinalCombat/result.txt",
+        "sha256": "688598cf479a2dd542a978d0b37f2113dbe3462398a0c490dbf24ce81bb564b1"
+      }
+    ]
+  }
+]

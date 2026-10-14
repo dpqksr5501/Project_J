@@ -1,5 +1,9 @@
 # 일회성 이동 동작의 요청 수명 — 2026-10-05
 
+2026-10-14 RA13은 State Controller와 presentation helper의 동일한 다섯 전이 상태 판정을 기존 StateControllerRuntime 함수로 통합했다. 실제 GT 호출 세 곳을 대조했고, hold·worker snapshot·완료 feedback의 서로 다른 소유권과 단발 기준은 유지한다. 최종 Editor의 344개 native 회귀 결과와 아직 검증하지 못한 범위는 [재점검 기록](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에 구분한다.
+
+[2026-10-13 심화 감사](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)는 기존 hold/worker 재생 경계를 보존하며 BP 지상 alias의 이중 요청을 제거하고 GroundMotionMode에서 게시한다. 원격 점프 확인은 실제 적용 상태의 한 sequence에서 older/duplicate를 거절한다. Jump·Landing 전체 packet 타임라인의 시각 품질을 이 native admission 회귀만으로 보증하지 않는다.
+
 ## 사용자 PIE에서 확인한 원인
 
 원본 로그를 `Saved/Validation/PivotLandingLifetime_20261005/UserPIE.log`에 보존했다. 이전 입력 기준 수정만으로 해결되지 않았으며, 이번 원인은 사용자의 실제 연속 입력 로그에서 확인했다.
@@ -42,3 +46,7 @@ Chooser lock은 유효한 선택이 있는 같은 presentation에만 적용한�
 2026-10-05 후속 사용자 확인: 수정 후 "잘된다"고 보고했다. 이는 사용자 PIE 확인이며, 수정 후 별도의 영상이나 로그 분석 결과는 아니다.
 
 사용자 정상 동작 확인 후 임시 `p.ProjectJ.StrafePivotDebug` 진단을 제거했다. 입력 이벤트·감지 사유 확장·snapshot sample·worker의 `ExternalStack/StackPlayer/MMNode` 조회, 진단 CVar 및 전용 상태 필드가 제거 대상이다. 기존 기본값 0의 MM/TIP 디버그 옵션은 유지한다. 실제 요청/선택/hold 수명 수정과 회귀 테스트는 유지하며, 위 진단 로그는 당시 원인 분석의 역사적 증거다.
+
+## 조기 전이 권한의 현재 소유자 — 2026-10-14
+
+실제 LocomotionEarlyTransition NotifyTick은 RequestAuthoredEarlyTransition으로 현재 held clip·gait 조건·snapshot revision에 권한을 게시한다. RA24에서 native 호출자가 없는 Begin/End window와 depth/OR 분기를 제거했다. worker/Blueprint getter는 게시된 bEarlyTransitionWindowOpen snapshot을 계속 소비한다. old outgoing clip의 notify와 만료된 revision은 현재 단발 종료를 승인하지 않는다. 지속 곡선 0.35초·100cm·3도·85%는 유지한다. [검증 장부](../../Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md)를 함께 읽는다.

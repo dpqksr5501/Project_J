@@ -1,0 +1,2146 @@
+[
+  {
+    "run": "ProjectDataAssetValidation1",
+    "process": {
+      "assetType": "DataAsset",
+      "exitCode": 1,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "validationSummary": null,
+      "validationSummaryAvailable": false,
+      "scope": "On-disk project assets of the exact native class and subclasses, engine excluded; configured excluded directories can be skipped. Read-only native DataValidation commandlet. Exit alone is not proof all assets passed; retain invalid/skipped/unable counters and per-asset logs. Not every asset or visual quality."
+    },
+    "per_asset_rows": [
+      {
+        "path": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon.DA_RiderProfile_Dragon",
+        "asset_class": "/Script/Project_JMount.Project_JRiderAnimationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base",
+        "asset_class": "/Script/Project_JCharacter.Project_JAbilitySet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/AS/AS_Humanoid_Core.AS_Humanoid_Core",
+        "asset_class": "/Script/Project_JCharacter.Project_JAbilitySet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.DA_Attack_Greatsword_LMB2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.DA_Attack_Greatsword_LMBRMB",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.DA_Attack_Greatsword_LR1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.DA_Attack_Greatsword_LR2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.DA_Attack_Greatsword_Q1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.DA_Attack_Greatsword_Q2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.DA_Attack_Greatsword_R",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.DA_Attack_Greatsword_RMB1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.DA_Attack_Greatsword_RMB2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.DA_Attack_Greatsword_T",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword.DA_AttackSet_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.DA_Greatsword_AnimProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles.DA_Player_AnimProfiles",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterClassDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat.DA_Player_Combat",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword.DA_CommandSet_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatCommandSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base.DA_CPS_Greatsword_Base",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatPresentationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatStyleDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword.DA_Combo_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JComboDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJManaPotion.DA_ProjectJManaPotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Weapons/DA_Player_EquipWeapon.DA_Player_EquipWeapon",
+        "asset_class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+        "events": [
+          "Validating asset",
+          "contains invalid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Equip_Player.DA_Equip_Player",
+        "asset_class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+        "events": [
+          "Validating asset",
+          "contains invalid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip",
+        "asset_class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley.DA_Mannequin_Foley",
+        "asset_class": "/Script/Project_JCharacter.Project_JFoleyAudioProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword.DA_HGP_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JHandGripProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.DA_Player_Profile",
+        "asset_class": "/Script/Project_JCharacter.Project_JLocomotionProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.DA_Player_Combat_Strafe",
+        "asset_class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion.DA_Player_Locomotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.DA_RetargetFamily_Mannequin_Bip01",
+        "asset_class": "/Script/Project_JCharacter.Project_JRetargetFamilyProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JRetargetBodyProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data.DA_Greatsword_Mapping_Data",
+        "asset_class": "/Script/Project_JCharacter.Project_JSkillInputMappingData",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile.DA_Greatsword_WeaponProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile.DA_Player_WeaponProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.DA_Greatsword_Presentation",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponPresentationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Characters/UEFN_Mannequin/Meshes/Character_LodSettings.Character_LodSettings",
+        "asset_class": "/Script/Engine.SkeletalMeshLODSettings",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Interact.IA_Interact",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Jump.IA_Jump",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Look.IA_Look",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MountAscend.IA_MountAscend",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MountDescend.IA_MountDescend",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MouseLook.IA_MouseLook",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Move.IA_Move",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_Q.IA_Skill_Q",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_R.IA_Skill_R",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_T.IA_Skill_T",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Sprint.IA_Sprint",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/IMC_Default.IMC_Default",
+        "asset_class": "/Script/EnhancedInput.InputMappingContext",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/IMC_MouseLook.IMC_MouseLook",
+        "asset_class": "/Script/EnhancedInput.InputMappingContext",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_FallOff.PSD_Combat_FallOff",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle.PSD_Combat_Idle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_InAir.PSD_Combat_InAir",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Jump_Start.PSD_Combat_Jump_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Run_Heavy.PSD_Combat_Land_Run_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Run_Light.PSD_Combat_Land_Run_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Sprint_Heavy.PSD_Combat_Land_Sprint_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Sprint_Light.PSD_Combat_Land_Sprint_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface.PSD_Combat_Run_BackwardReface",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.PSD_Combat_Run_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn.PSD_Combat_Run_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop.PSD_Combat_Run_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Pivot.PSD_Combat_Run_Pivot",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle.PSD_Combat_Run_RefaceCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Start.PSD_Combat_Run_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Stop.PSD_Combat_Run_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle.PSD_Combat_Sprint_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn.PSD_Combat_Sprint_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Start.PSD_Combat_Sprint_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Stop.PSD_Combat_Sprint_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Turn.PSD_Combat_Sprint_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect.PSD_Combat_Sprint_TurnRedirect",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Stand_Heavy.PSD_Combat_Stand_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Stand_Light.PSD_Combat_Stand_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_TurnInPlace.PSD_Combat_TurnInPlace",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_FallOff.PSD_FallOff",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle.PSD_Idle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_InAir.PSD_InAir",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_JumpStart.PSD_JumpStart",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Run_Heavy.PSD_Land_Run_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Run_Light.PSD_Land_Run_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Sprint_Heavy.PSD_Land_Sprint_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Sprint_light.PSD_Land_Sprint_light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.PSD_Run_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn.PSD_Run_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Loop.PSD_Run_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Start.PSD_Run_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Start_Remote.PSD_Run_Start_Remote",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Stop.PSD_Run_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.PSD_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle.PSD_Sprint_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn.PSD_Sprint_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Loop.PSD_Sprint_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Start.PSD_Sprint_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Start_Remote.PSD_Sprint_Start_Remote",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Stop.PSD_Sprint_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Turn.PSD_Sprint_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect.PSD_Sprint_TurnRedirect",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Stand_Heavy.PSD_Stand_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Stand_Light.PSD_Stand_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_BackwardReface.NS_Combat_Run_BackwardReface",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PNS_PSD_Combat_Sprint_Continuity.PNS_PSD_Combat_Sprint_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PNS_PSD_Sprint_Continuity.PNS_PSD_Sprint_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat.PSS_Combat",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.PSS_Combat_Run_ForwardTrajectory",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_TurnInPlace.PSS_Combat_TurnInPlace",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_InAir_Player.PSS_InAir_Player",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Player.PSS_Player",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackPresentationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Attributes/DA_Player_Attributes.DA_Player_Attributes",
+        "asset_class": "/Script/Project_JCharacter.Project_JDefaultAttributeSetData",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJUIDefault.DA_ProjectJUIDefault",
+        "asset_class": "/Script/Project_J.Project_JCharacterUIProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJUIProfiles.DA_ProjectJUIProfiles",
+        "asset_class": "/Script/Project_J.Project_JUIProfileCatalog",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJMap.DA_ProjectJMap",
+        "asset_class": "/Script/Project_J.Project_JMapDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJFirstSteps.DA_ProjectJFirstSteps",
+        "asset_class": "/Script/Project_J.Project_JQuestDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJHUDStyle.DA_ProjectJHUDStyle",
+        "asset_class": "/Script/Project_J.Project_JHUDStyle",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      }
+    ],
+    "unique_assets_with_validating_log": 132,
+    "unique_assets_with_valid_log": 130,
+    "unique_assets_with_invalid_log": 2,
+    "asset_error_entries": [
+      "[2026.10.14-00.39.41:005][  0]AssetCheck: Error: [AssetLog] C:\\Users\\I\\Documents\\GitHub\\Project_J\\Content\\DataAssetSets\\Weapons\\DA_Player_EquipWeapon.uasset: Weapon equipment requires a CombatStyleDefinition.",
+      "[2026.10.14-00.39.41:012][  0]AssetCheck: Error: [AssetLog] C:\\Users\\I\\Documents\\GitHub\\Project_J\\Content\\DataAssetSets\\Animation_Profiles\\Equip\\DA_Equip_Player.uasset: Weapon equipment requires a CombatStyleDefinition."
+    ],
+    "asset_warning_entries": [
+      "[2026.10.14-00.39.41:005][  0]AssetCheck: Warning: [AssetLog] C:\\Users\\I\\Documents\\GitHub\\Project_J\\Content\\DataAssetSets\\Weapons\\DA_Player_EquipWeapon.uasset: Weapon equipment has no WeaponPresentationProfile and will not display a drawn weapon actor.",
+      "[2026.10.14-00.39.41:012][  0]AssetCheck: Warning: [AssetLog] C:\\Users\\I\\Documents\\GitHub\\Project_J\\Content\\DataAssetSets\\Animation_Profiles\\Equip\\DA_Equip_Player.uasset: Weapon equipment has no WeaponPresentationProfile and will not display a drawn weapon actor."
+    ],
+    "summary_counters_available": false,
+    "limitation": "Counts are actual per-asset log observations; absent skipped/unable summary counters remain unavailable. Generic package/reference validators can return valid without a class-specific gameplay numeric validator. Not all assets or authored visual/index quality."
+  },
+  {
+    "run": "ProjectDataAssetValidation2",
+    "process": {
+      "assetType": "DataAsset",
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "validationSummary": null,
+      "validationSummaryAvailable": false,
+      "scope": "On-disk project assets of the exact native class and subclasses, engine excluded; configured excluded directories can be skipped. Read-only native DataValidation commandlet. Exit alone is not proof all assets passed; retain invalid/skipped/unable counters and per-asset logs. Not every asset or visual quality."
+    },
+    "per_asset_rows": [
+      {
+        "path": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon.DA_RiderProfile_Dragon",
+        "asset_class": "/Script/Project_JMount.Project_JRiderAnimationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base",
+        "asset_class": "/Script/Project_JCharacter.Project_JAbilitySet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/AS/AS_Humanoid_Core.AS_Humanoid_Core",
+        "asset_class": "/Script/Project_JCharacter.Project_JAbilitySet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.DA_Attack_Greatsword_LMB2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.DA_Attack_Greatsword_LMBRMB",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.DA_Attack_Greatsword_LR1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.DA_Attack_Greatsword_LR2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.DA_Attack_Greatsword_Q1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.DA_Attack_Greatsword_Q2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.DA_Attack_Greatsword_R",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.DA_Attack_Greatsword_RMB1",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.DA_Attack_Greatsword_RMB2",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.DA_Attack_Greatsword_T",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword.DA_AttackSet_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.DA_Greatsword_AnimProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles.DA_Player_AnimProfiles",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCharacterClassDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat.DA_Player_Combat",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword.DA_CommandSet_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatCommandSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base.DA_CPS_Greatsword_Base",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatPresentationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JCombatStyleDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword.DA_Combo_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JComboDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJHealthPotion.DA_ProjectJHealthPotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJManaPotion.DA_ProjectJManaPotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip",
+        "asset_class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley.DA_Mannequin_Foley",
+        "asset_class": "/Script/Project_JCharacter.Project_JFoleyAudioProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword.DA_HGP_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JHandGripProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.DA_Player_Profile",
+        "asset_class": "/Script/Project_JCharacter.Project_JLocomotionProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.DA_Player_Combat_Strafe",
+        "asset_class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion.DA_Player_Locomotion",
+        "asset_class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.DA_RetargetFamily_Mannequin_Bip01",
+        "asset_class": "/Script/Project_JCharacter.Project_JRetargetFamilyProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JRetargetBodyProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data.DA_Greatsword_Mapping_Data",
+        "asset_class": "/Script/Project_JCharacter.Project_JSkillInputMappingData",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile.DA_Greatsword_WeaponProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile.DA_Player_WeaponProfile",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.DA_Greatsword_Presentation",
+        "asset_class": "/Script/Project_JCharacter.Project_JWeaponPresentationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Characters/UEFN_Mannequin/Meshes/Character_LodSettings.Character_LodSettings",
+        "asset_class": "/Script/Engine.SkeletalMeshLODSettings",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Interact.IA_Interact",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Jump.IA_Jump",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Look.IA_Look",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MountAscend.IA_MountAscend",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MountDescend.IA_MountDescend",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MouseLook.IA_MouseLook",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Move.IA_Move",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_Q.IA_Skill_Q",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_R.IA_Skill_R",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Skill_T.IA_Skill_T",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_Sprint.IA_Sprint",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat",
+        "asset_class": "/Script/EnhancedInput.InputAction",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/IMC_Default.IMC_Default",
+        "asset_class": "/Script/EnhancedInput.InputMappingContext",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Input/IMC_MouseLook.IMC_MouseLook",
+        "asset_class": "/Script/EnhancedInput.InputMappingContext",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_FallOff.PSD_Combat_FallOff",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle.PSD_Combat_Idle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_InAir.PSD_Combat_InAir",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Jump_Start.PSD_Combat_Jump_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Run_Heavy.PSD_Combat_Land_Run_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Run_Light.PSD_Combat_Land_Run_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Sprint_Heavy.PSD_Combat_Land_Sprint_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Land_Sprint_Light.PSD_Combat_Land_Sprint_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface.PSD_Combat_Run_BackwardReface",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.PSD_Combat_Run_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn.PSD_Combat_Run_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop.PSD_Combat_Run_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Pivot.PSD_Combat_Run_Pivot",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle.PSD_Combat_Run_RefaceCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Start.PSD_Combat_Run_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Stop.PSD_Combat_Run_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle.PSD_Combat_Sprint_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn.PSD_Combat_Sprint_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Start.PSD_Combat_Sprint_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Stop.PSD_Combat_Sprint_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Turn.PSD_Combat_Sprint_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect.PSD_Combat_Sprint_TurnRedirect",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Stand_Heavy.PSD_Combat_Stand_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Stand_Light.PSD_Combat_Stand_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_TurnInPlace.PSD_Combat_TurnInPlace",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_FallOff.PSD_FallOff",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle.PSD_Idle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_InAir.PSD_InAir",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_JumpStart.PSD_JumpStart",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Run_Heavy.PSD_Land_Run_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Run_Light.PSD_Land_Run_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Sprint_Heavy.PSD_Land_Sprint_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Land_Sprint_light.PSD_Land_Sprint_light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.PSD_Run_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn.PSD_Run_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Loop.PSD_Run_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Start.PSD_Run_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Start_Remote.PSD_Run_Start_Remote",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Stop.PSD_Run_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.PSD_Run_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle.PSD_Sprint_Cycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn.PSD_Sprint_GeneralTurn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Loop.PSD_Sprint_Loop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Start.PSD_Sprint_Start",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Start_Remote.PSD_Sprint_Start_Remote",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Stop.PSD_Sprint_Stop",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Turn.PSD_Sprint_Turn",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect.PSD_Sprint_TurnRedirect",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Stand_Heavy.PSD_Stand_Heavy",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Stand_Light.PSD_Stand_Light",
+        "asset_class": "/Script/PoseSearch.PoseSearchDatabase",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_BackwardReface.NS_Combat_Run_BackwardReface",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PNS_PSD_Combat_Sprint_Continuity.PNS_PSD_Combat_Sprint_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PNS_PSD_Sprint_Continuity.PNS_PSD_Sprint_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchNormalizationSet",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat.PSS_Combat",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.PSS_Combat_Run_ForwardTrajectory",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Combat_TurnInPlace.PSS_Combat_TurnInPlace",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_InAir_Player.PSS_InAir_Player",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/Animation_Logic/PSS/PSS_Player.PSS_Player",
+        "asset_class": "/Script/PoseSearch.PoseSearchSchema",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword",
+        "asset_class": "/Script/Project_JCharacter.Project_JAttackPresentationProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/DataAssetSets/Attributes/DA_Player_Attributes.DA_Player_Attributes",
+        "asset_class": "/Script/Project_JCharacter.Project_JDefaultAttributeSetData",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJUIDefault.DA_ProjectJUIDefault",
+        "asset_class": "/Script/Project_J.Project_JCharacterUIProfile",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJUIProfiles.DA_ProjectJUIProfiles",
+        "asset_class": "/Script/Project_J.Project_JUIProfileCatalog",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJMap.DA_ProjectJMap",
+        "asset_class": "/Script/Project_J.Project_JMapDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/Gameplay/DA_ProjectJFirstSteps.DA_ProjectJFirstSteps",
+        "asset_class": "/Script/Project_J.Project_JQuestDefinition",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      },
+      {
+        "path": "/Game/UI/DA_ProjectJHUDStyle.DA_ProjectJHUDStyle",
+        "asset_class": "/Script/Project_J.Project_JHUDStyle",
+        "events": [
+          "Validating asset",
+          "contains valid data."
+        ]
+      }
+    ],
+    "unique_assets_with_validating_log": 130,
+    "unique_assets_with_valid_log": 130,
+    "unique_assets_with_invalid_log": 0,
+    "asset_error_entries": [],
+    "asset_warning_entries": [],
+    "summary_counters_available": false,
+    "limitation": "Counts are actual per-asset log observations; absent skipped/unable summary counters remain unavailable. Generic package/reference validators can return valid without a class-specific gameplay numeric validator. Not all assets or authored visual/index quality."
+  }
+]

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword\",\"/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01\"]}"
+			}
+		]
+	}
+}

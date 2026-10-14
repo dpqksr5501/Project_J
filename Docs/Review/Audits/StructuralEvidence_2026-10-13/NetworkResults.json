@@ -1,0 +1,60 @@
+[
+  {
+    "run": "Structural_Lag50Loss20",
+    "sha256": "2278585cc89e4eb294787e964210618cece424c34ce93823bc6c30d86c8cdc36",
+    "passed": false,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": false,
+        "reason": "Timeout stage=7 stage=5 seen=90 own=1 foreignEmpty=1 equipment=1 pulse=194 animation=1; stage=5 seen=100 own=1 foreignEmpty=1 equipment=1 pulse=194 animation=1; "
+      },
+      {
+        "file": "Client1/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": false,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "combatPasses": 0,
+    "startupPythonErrorLines": 45
+  },
+  {
+    "run": "Structural_ActorInfo_Lag50Loss20",
+    "sha256": "d1818ad0977183b4f2fbbfb50cd2382dd00fb1c20a1b26c73a9e23b756d96c4f",
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "combatPasses": 3,
+    "startupPythonErrorLines": 45
+  }
+]

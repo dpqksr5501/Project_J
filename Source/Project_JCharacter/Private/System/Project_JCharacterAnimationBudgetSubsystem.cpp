@@ -76,6 +76,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	{
 		auto* Mesh = Meshes[Index].Get();
 		if (!Mesh) { Meshes.RemoveAtSwap(Index); continue; }
+		Mesh->RefreshAnimationUpdateRequirements();
 		Mesh->RefreshMontageUpdateRequirement();
 		Protected += Mesh->IsCombatCritical();
 		if (!bEnabled || !Mesh->CanUseBudget()) { Mesh->LeaveBudget(); continue; }

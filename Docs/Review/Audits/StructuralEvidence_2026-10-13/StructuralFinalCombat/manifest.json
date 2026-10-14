@@ -1,0 +1,27 @@
+{
+  "head": "f1bbd48ac4a37eab6ed7a33d025f1de2c270427c",
+  "exe": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013\\Packaged2\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "binarySHA256": "482E6691B7BD031B0BFF8CFDAE7F1FF25361F1D5B5DA42221A2F067C31B0D896",
+  "userDirectory": "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructuralAudit_20261013/CombatFinalUser/",
+  "reused": false,
+  "cacheScope": "Application directory only. OS/driver caches preserved; not certified cold.",
+  "disableDefaultLightFunction": false,
+  "arguments": [
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJCombatCookedFixture",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/StructuralAudit_20261013/CombatFinalUser/",
+    "-SaveToUserDir",
+    "-ProjectJEOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/StructuralFinalCombat",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/StructuralFinalCombat/Run.log",
+    "-ExecCmds=t.MaxFPS 60",
+    "-ini:Engine:[SystemSettings]:r.PSOPrecache.Validation=2"
+  ]
+}

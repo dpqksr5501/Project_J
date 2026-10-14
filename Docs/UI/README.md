@@ -1,5 +1,11 @@
 # 플레이어 UI
 
+현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
+
+[구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)은 HUD 조립과 재사용 skill/inventory widget 구현을 분리하고 두 widget의 아이콘 요청·취소·GC 수명을 공유한다. BP 이름/상속/BindWidget 계약과 PlayerUIComponent/ViewModel의 상태·권한 소유는 유지한다.
+
+[전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)는 화면 생성 실패·재시도의 구독/입력 처리기 수명 경계도 확인한다. 정상 화면 자동화 통과만으로 실패 경로의 수명까지 보장하지 않는다.
+
 Shift 이동 예측과 좌측 Ctrl 조작의 최신 수정은 [커서와 달리기](Cursor_And_Sprint_Prediction_2026-10-10.md)를 읽는다.
 
 최신 전환·키보드·연속 갱신 검증은 [UI 수명과 키보드](Continuity_Keyboard_And_Dynamic_Load_2026-10-10.md), 저장·장비 정책은 [UI 저장과 장비 비교](Reliability_Comparison_And_Load_2026-10-10.md), 기본 화면·아트 교체 계약은 [Compact MMORPG HUD](Compact_HUD_And_Gameplay_2026-10-10.md)를 읽는다.

@@ -28,11 +28,13 @@ void UProject_JLocomotionAnimStateComponentBase::RefreshCachedReferences()
 
 void UProject_JLocomotionAnimStateComponentBase::CacheOwnerReferences()
 {
+	const auto PreviousASC = CachedAbilitySystemComponent;
 	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
 	CachedMovementComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCharacterMovement() : nullptr;
 	CachedCapsuleComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCapsuleComponent() : nullptr;
 	CachedAbilitySystemComponent = CachedPlayerOwner ? CachedPlayerOwner->GetAbilitySystemComponent() : nullptr;
 	CachedMeshComponent = CachedPlayerOwner ? CachedPlayerOwner->GetMesh() : nullptr;
+	if (PreviousASC != CachedAbilitySystemComponent) { OnCachedAbilitySystemChanged(); }
 }
 
 AProject_JPlayerCharacter* UProject_JLocomotionAnimStateComponentBase::GetPlayerOwner() const

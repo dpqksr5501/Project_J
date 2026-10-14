@@ -317,6 +317,14 @@ remains the safe fallback.
 
 ## Planned extensions
 
+### 2026-10-14 탑승 수명·재진입 계약
+
+탑승 관계는 rider의 `MountComponent` revision과 실제 ASC의 mounted 태그 lease가 소유한다. 태그 추가/제거 callback이 하차나 새 탑승을 요청하면 이전 요청은 revision 검사 후 중단한다. Mount actor의 이전 하차 처리도 callback·possession 이후 현재 rider 관계를 다시 확인하고, 새 mount의 possession과 이동 제어를 복원 값으로 덮어쓰지 않는다. EndPlay/Destroy는 관계와 태그를 반환하며, RemovedFromWorld 이후 새 BeginPlay는 요청 admission을 재개한다.
+
+실제 공개 RequestMount 경로의 재진입·태그 개수·이동 제어와 play 재사용 회귀는 [재점검 기록](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에 있다. 이 native 회귀가 모든 탈것 에셋의 비행 품질이나 대규모 원격 탑승을 검증하지는 않는다.
+
+RA17은 rider component와 별도로 Mount actor 자신의 Ending gate도 새 BeginPlay에서 재개한다. rider를 가진 RemovedFromWorld 종료→같은 mount actor의 재진입→정상 rider 재possess→공개 RequestMount를 native로 대조했다. 지난 rider 관계·mounted tag·종료 restore 정책을 새 탑승으로 덮어쓰지 않으며, 폐기된 actor를 재활성화하는 계약은 아니다.
+
 - Persist owned/summoned mounts through inventory and character data.
 - Add cooldowns, summon/despawn rules, stable zones, and combat restrictions.
 - Replace the temporary health path with GAS GameplayEffects and add stamina use for flight/sprint.

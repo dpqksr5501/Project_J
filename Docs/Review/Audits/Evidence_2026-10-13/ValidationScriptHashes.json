@@ -1,0 +1,58 @@
+[
+  {
+    "path": "Scripts/Validation/Measure-Network.ps1",
+    "sha256": "b839617367791c5d0698aa7e2378e6a7f47ff4b09827240f0eb98d8845517ee3"
+  },
+  {
+    "path": "Scripts/Validation/Measure-RenderedCrowd.ps1",
+    "sha256": "87539ec7ab1e9b722c8bf556e608bf26f53768c6289a84c3363ab9d27d64c5d9"
+  },
+  {
+    "path": "Scripts/Validation/Validate-CookedUI.ps1",
+    "sha256": "460f3c60cb2fa0b43ab65183a3660048ba6f0314da91559fd8268907504665b8"
+  },
+  {
+    "path": "Scripts/Validation/Measure-CookedCombat.ps1",
+    "sha256": "7273643e6acf49b9aefff05300caa2a27a928d73d2beccfaeac1c179c37f8077"
+  },
+  {
+    "path": "Scripts/Validation/Validate-MMOArchitecture.py",
+    "sha256": "562d3edb23c7fa58af465cd3fb3edb9c6aa6323df2f8b37c5505171cefe0ec3d"
+  },
+  {
+    "path": "Scripts/Validation/Validate-DocLinks.mjs",
+    "sha256": "fe52c72eae239e9d29d1b777cbff894271684c20c826550850aefd311f8dff70"
+  },
+  {
+    "path": "Scripts/Documentation/Update-DocumentCatalog.mjs",
+    "sha256": "7a38271a8847511b1c36bbacee8c8c6994df9bd7dd381add56f5d730649729f3"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/CallMcp.ps1",
+    "sha256": "5877656d8446dc1974f901deebda78999d91febc9eafa28735664556933a6afd"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Cook-Final.ps1",
+    "sha256": "13020bdb8803e7916dc579c8a81d849487d83c369f1fbd013d9f6a84ddb9d0c9"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Export-CPUTrace.ps1",
+    "sha256": "65fc8ca28c49dd63c2f50f30b729bf6ad09ff4eb5c0191b21cb63a1cb9077409"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Measure-MatchedNonUnity.ps1",
+    "sha256": "2f2d2f7b5c0b446fc5914d252ddd8fbabb670fa1cfed030ff33f02600a1b1f25"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Measure-PreRetargetTrace.ps1",
+    "sha256": "76586cd9deada0b4662193bdb068fcc1c3cfa019d9c07c356c59bf8982ad271d"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Run-LatestWholeRegression.ps1",
+    "sha256": "64d639a03a2416a4879d286fdae4e35e4dc1c1aef282b056d8dadfe1278ff625"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/Stage-Final.ps1",
+    "sha256": "b369de6fe66056c4199ddbe2a17fee87461560fc2f183b91b4a9fbb32eb7339e"
+  }
+]

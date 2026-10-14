@@ -31,7 +31,7 @@ $artifactPaths = @('Project_J.uproject','Binaries/Win64/UnrealEditor-Project_J.d
 $artifactHashes = @($artifactPaths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $projectRoot $_) -Algorithm SHA256).Hash} })
 [ordered]@{head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;counts=$Counts;repeats=$Repeats;warmupTicks=$WarmupTicks;measuredTicks=$MeasuredTicks;simulationHz=60;trace=[bool]$Trace;noDDCCleanup=[bool]$NoDDCCleanup;nullRHI=$true;budgetMs=2;sourceFiles=$hashes;artifacts=$artifactHashes} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 foreach ($count in $Counts) {
-    if (@(Get-Process UnrealEditor*,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count) { throw 'An engine/build process is still active. Wait for normal completion.' }
+    if (@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count) { throw 'An engine/build process is still active. Wait for normal completion.' }
     $output = "$runRoot/Count$count"
     New-Item -ItemType Directory -Path $output | Out-Null
     $arguments = @("$projectRoot/Project_J.uproject",'-unattended','-NullRHI','-nosound','-nosplash','-NoLiveCoding','-nop4',
@@ -45,9 +45,12 @@ foreach ($count in $Counts) {
     $arguments | ConvertTo-Json | Set-Content "$output/arguments.json" -Encoding utf8
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
     $process = Start-Process -FilePath "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" -ArgumentList $quoted -WindowStyle Hidden -PassThru
+    $nativeHandle = $process.Handle
     Write-Output "Started authored CPU count=$count PID=$($process.Id) output=$output"
     $process.WaitForExit()
-    if ($process.ExitCode -ne 0 -or !(Test-Path -LiteralPath "$output/cpu.json")) { throw "CPU fixture failed for count=$count. Inspect $output/Run.log." }
+    [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;nativeHandleCapturedBeforeWait=$true} |
+        ConvertTo-Json | Set-Content "$output/process.json" -Encoding utf8
+    if ($null -eq $process.ExitCode -or $process.ExitCode -ne 0 -or !(Test-Path -LiteralPath "$output/cpu.json")) { throw "CPU fixture failed for count=$count. Inspect $output/Run.log." }
     $report = Get-Content -LiteralPath "$output/Automation/index.json" -Raw | ConvertFrom-Json
     $measurement = Get-Content -LiteralPath "$output/cpu.json" -Raw | ConvertFrom-Json
     $matchingTests = @($report.tests | Where-Object { $_.fullTestPath -eq 'ProjectJ.Animation.AuthoredCPU' })

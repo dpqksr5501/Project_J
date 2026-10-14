@@ -1,0 +1,325 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "7C1CE67D4C768EA53C1719A5B341EFC7",
+			"instanceName": "DESKTOP-5T07C91-10660",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-15.11.19",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 5,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.42212438583374023,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "GroundModeSource",
+			"fullTestPath": "ProjectJ.Animation.StateOwnership.GroundModeSource",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7C1CE67D4C768EA53C1719A5B341EFC7"
+			],
+			"duration": 0.076993092894554138,
+			"dateTime": "2026.10.13-15.11.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Start intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 31,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Stop intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Stop intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Start intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 31,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Stop intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Start intent follows the semantic owner despite stale aliases: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 31,
+					"timestamp": "2026.10.13-15.11.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 6,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestroyedCombatBinding",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.DestroyedCombatBinding",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7C1CE67D4C768EA53C1719A5B341EFC7"
+			],
+			"duration": 0.010364897549152374,
+			"dateTime": "2026.10.13-15.11.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroyed component cannot read or command the live ASC' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentCommitLifetimeTests.cpp",
+					"lineNumber": 73,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late binding cannot revive a destroyed combat component' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentCommitLifetimeTests.cpp",
+					"lineNumber": 75,
+					"timestamp": "2026.10.13-15.11.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentCommitLifetime",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7C1CE67D4C768EA53C1719A5B341EFC7"
+			],
+			"duration": 0.0067646987736225128,
+			"dateTime": "2026.10.13-15.11.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A retired runtime returns its unpublished attack modifier' to be 100.000000, but it was 110.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentCommitLifetimeTests.cpp",
+					"lineNumber": 49,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rollback includes later modifiers and preserves the previous defense' to be 50.000000, but it was 70.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentCommitLifetimeTests.cpp",
+					"lineNumber": 50,
+					"timestamp": "2026.10.13-15.11.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocomotionTagLease",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.LocomotionTagLease",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7C1CE67D4C768EA53C1719A5B341EFC7"
+			],
+			"duration": 0.010956499725580215,
+			"dateTime": "2026.10.13-15.11.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old ASC retains only the unrelated owner's contribution' to be 1, but it was 2.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 72,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New ASC acquires exactly one locomotion contribution' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 73,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Release removes only the new owner's lease' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 78,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Null ASC gap releases the original landing contribution' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 80,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late valid ASC acquires the outstanding landing demand once' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 82,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destruction before BeginPlay releases the owned landing lease' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 89,
+					"timestamp": "2026.10.13-15.11.19"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destruction preserves an unrelated air contribution' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JStateOwnershipTests.cpp",
+					"lineNumber": 90,
+					"timestamp": "2026.10.13-15.11.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 7,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IconRequestLifetime",
+			"fullTestPath": "ProjectJ.Structure.UI.IconRequestLifetime",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7C1CE67D4C768EA53C1719A5B341EFC7"
+			],
+			"duration": 0.31704521179199219,
+			"dateTime": "2026.10.13-15.11.19",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Active completion pins its owner across reentrant GC' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUIIconRequestLifetimeTests.cpp",
+					"lineNumber": 38,
+					"timestamp": "2026.10.13-15.11.19"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		}
+	]
+}

@@ -28,6 +28,14 @@
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "UObject/UnrealType.h"
 #include "Components/BoxComponent.h"
+#include "Project_JAbilitySystemComponent.h"
+#include "Project_JGameplayTags.h"
+#include "Components/Project_JSkillInputRouterComponent.h"
+#include "Components/Project_JCombatPresentationComponent.h"
+#include "Components/Project_JEquipmentRuntimeComponent.h"
+#include "Combat/Project_JComboDefinition.h"
+#include "Combat/Project_JCombatStyleDefinition.h"
+#include "Combat/Project_JAttackDefinition.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJDNetwork, Log, All);
 namespace
@@ -42,6 +50,34 @@ bool Enabled()
 }
 int32 FixtureClients() { int32 N = 2; FParse::Value(FCommandLine::Get(), TEXT("ProjectJFixtureClients="), N); return FMath::Clamp(N, 2, 8); }
 bool AnimationEnabled() { return Enabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAnimationFixture")); }
+bool CombatEnabled() { return AnimationEnabled() && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCombatInputFixture")); }
+bool ReadCombatTags(AProject_JPlayerCharacter* Player, FGameplayTag& R, FGameplayTag& Target)
+{
+	const auto* Style = Player ? Player->GetCombatStyleDefinition() : nullptr;
+	const auto* Combo = Style ? Style->ComboDefinition.Get() : nullptr;
+	const auto& Tags = FProject_JGameplayTags::Get();
+	const auto* Node = Combo ? Combo->FindStartNode(Tags.InputTag_Skill_R, FGameplayTagContainer()) : nullptr;
+	const auto* Edge = Node ? Combo->FindTransition(*Node, Tags.InputTag_Weapon_RMB, FGameplayTagContainer()) : nullptr;
+	const auto* Next = Edge ? Combo->FindNode(Edge->TargetNodeTag) : nullptr;
+	if (!Node || !Node->AttackDefinition || !Next || !Next->AttackDefinition) { return false; }
+	R = Node->AttackDefinition->AttackTag; Target = Next->AttackDefinition->AttackTag;
+	return R.IsValid() && Target.IsValid() && R != Target;
+}
+void RecordCombat(AProject_JPlayerCharacter* Player, int32 Trial, TSet<FName>& RSeen, TSet<FName>& TargetSeen,
+	TSet<FName>& EndSeen, FString* Rows = nullptr)
+{
+	const auto* State = Player ? Player->GetPlayerState<AProject_JPlayerState>() : nullptr;
+	const auto* Presentation = Player ? Player->FindComponentByClass<UProject_JCombatPresentationComponent>() : nullptr;
+	FGameplayTag R, Target;
+	if (!State || !Presentation || !ReadCombatTags(Player, R, Target)) { return; }
+	const FName Id = State->GetPublicClassId();
+	const auto Attack = Presentation->GetActiveAttackTag();
+	if (Attack == R) { RSeen.Add(Id); }
+	if (Attack == Target && RSeen.Contains(Id)) { TargetSeen.Add(Id); }
+	if (!Attack.IsValid() && TargetSeen.Contains(Id)) { EndSeen.Add(Id); }
+	if (Rows) { *Rows += FString::Printf(TEXT("%d,%s,%d,%s,%d,%d,%d\n"), Trial, *Id.ToString(), int32(Player->GetLocalRole()),
+		*Attack.ToString(), RSeen.Contains(Id), TargetSeen.Contains(Id), EndSeen.Contains(Id)); }
+}
 void EnsureAnimationFloor(UWorld* World)
 {
 	if (!AnimationEnabled() || !World || !World->IsGameWorld()) { return; }
@@ -98,6 +134,13 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 			for (TActorIterator<AProject_JPlayerCharacter> It(World); It; ++It)
 			{
 				auto* Movement = It->GetCharacterMovement();
+				const auto* ASC = It->GetAbilitySystemComponent();
+				if (CombatEnabled() && ASC && ASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode))
+				{
+					// Dedicated-server root-motion pose/notifies are driven by CMC.
+					// Prescribed animation-stage kinematics must not suppress that path.
+					Movement->SetComponentTickEnabled(true); continue;
+				}
 				Movement->SetComponentTickEnabled(false);
 				Movement->SetMovementMode(MOVE_Walking);
 			}
@@ -139,6 +182,10 @@ void AProject_JNetworkLoadController::ClientConfigure_Implementation(int32 InSta
 void AProject_JNetworkLoadController::PlayerTick(float DeltaSeconds)
 {
 	Super::PlayerTick(DeltaSeconds);
+	if (CombatEnabled() && !HasAuthority() && CombatTrial != INDEX_NONE)
+	{
+		ObserveCombat(); return;
+	}
 	if (!Enabled() || HasAuthority() || CurrentStage == INDEX_NONE || FPlatformTime::Seconds() < NextObservation) { return; }
 	NextObservation = FPlatformTime::Seconds() + 0.25;
 	TArray<int32> Seen; int32 MinPulse = MAX_int32;
@@ -239,7 +286,89 @@ void AProject_JNetworkLoadController::ClientFinish_Implementation(bool bSuccess)
 	if (!Enabled()) { return; }
 	WriteResult(TEXT("client.json"), bSuccess, TEXT("Server completed connection/AOI/FastArray assertions"), LocalSlot);
 	if (AnimationEnabled()) { FFileHelper::SaveStringToFile(AnimationRows, *(OutputRoot() / TEXT("animation-observations.csv"))); }
+	if (CombatEnabled()) { FFileHelper::SaveStringToFile(CombatRows, *(OutputRoot() / TEXT("combat-observations.csv"))); }
 	FPlatformMisc::RequestExit(false);
+}
+
+void AProject_JNetworkLoadController::ClientBeginCombatTrial_Implementation(int32 Trial)
+{
+	if (!CombatEnabled()) { return; }
+	CombatTrial = Trial; bSentR = bSentMouse = bReportedCombat = false;
+	CombatRSeen.Reset(); CombatTargetSeen.Reset(); CombatEndSeen.Reset();
+}
+void AProject_JNetworkLoadController::ObserveCombat()
+{
+	if (bReportedCombat) { return; }
+	auto* PawnCharacter = Cast<AProject_JPlayerCharacter>(GetPawn());
+	auto* ASC = PawnCharacter ? Cast<UProject_JAbilitySystemComponent>(PawnCharacter->GetAbilitySystemComponent()) : nullptr;
+	const auto* RuntimeEquipment = PawnCharacter ? PawnCharacter->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
+	const auto& InputTags = FProject_JGameplayTags::Get();
+	if (!bSentR && RuntimeEquipment && RuntimeEquipment->GetWeaponRevision() > 0 && ASC && ASC->GetAvatarActor() == PawnCharacter
+		&& ASC->AbilityActorInfo.IsValid() && ASC->AbilityActorInfo->PlayerController.Get() == this && ASC->AbilityActorInfo->IsLocallyControlled()
+		&& ASC->HasMatchingGameplayTag(InputTags.State_CombatMode)
+		&& ASC->GetActivatableAbilities().ContainsByPredicate([&](const FGameplayAbilitySpec& Spec)
+		{ return !Spec.PendingRemove && Spec.Ability && Spec.GetDynamicSpecSourceTags().HasTagExact(InputTags.InputTag_Skill_R)
+			&& Spec.Ability->CanActivateAbility(Spec.Handle, ASC->AbilityActorInfo.Get()); }))
+	{
+		UE_LOG(LogProjectJDNetwork, Display, TEXT("CombatReady trial=%d slot=%d pawn=%s state=%s ASC=%s avatar=%s weapon=%llu local=%d actorInfoPC=%s"),
+			CombatTrial, LocalSlot, *GetNameSafe(PawnCharacter), *GetNameSafe(PawnCharacter->GetPlayerState()),
+			*GetNameSafe(ASC), *GetNameSafe(ASC->GetAvatarActor()), RuntimeEquipment->GetWeaponRevision(),
+			ASC->AbilityActorInfo->IsLocallyControlled(), *GetNameSafe(ASC->AbilityActorInfo->PlayerController.Get()));
+		PawnCharacter->HandleSkillInputTagPressed(InputTags.InputTag_Skill_R); PawnCharacter->HandleSkillInputTagReleased(InputTags.InputTag_Skill_R);
+		UE_LOG(LogProjectJDNetwork, Display, TEXT("CombatR dispatched trial=%d active=%d"), CombatTrial, ASC->HasMatchingGameplayTag(InputTags.State_Attacking));
+		bSentR = true; CombatInputAt = FPlatformTime::Seconds();
+	}
+	if (bSentR && !bSentMouse && FPlatformTime::Seconds() - CombatInputAt >= 0.5)
+	{
+		if (auto* Router = PawnCharacter->FindComponentByClass<UProject_JSkillInputRouterComponent>())
+		{
+			Router->HandleButtonPressed(EProject_JSkillInputButton::RMB);
+			Router->HandleButtonReleased(EProject_JSkillInputButton::RMB); bSentMouse = true;
+		}
+	}
+	for (TActorIterator<AProject_JPlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		const auto* PS = It->GetPlayerState<AProject_JPlayerState>();
+		if (PS && PS->GetPublicClassId().ToString().StartsWith(TEXT("DClient")))
+		{ RecordCombat(*It, CombatTrial, CombatRSeen, CombatTargetSeen, CombatEndSeen, &CombatRows); }
+	}
+	if (bSentMouse && CombatEndSeen.Num() == FixtureClients())
+	{
+		bReportedCombat = true; ServerCombatObserved(CombatTrial, true);
+	}
+}
+void AProject_JNetworkLoadController::ServerCombatObserved_Implementation(int32 Trial, bool bComplete)
+{
+	if (auto* Mode = GetWorld()->GetAuthGameMode<AProject_JNetworkLoadGameMode>())
+	{ Mode->AcceptCombatObservation(this, Trial, bComplete); }
+}
+void AProject_JNetworkLoadGameMode::AcceptCombatObservation(AProject_JNetworkLoadController* PC, int32 Trial, bool bComplete)
+{
+	if (CombatEnabled() && Stage == 7 && Trial == CombatTrial && Clients.Contains(PC) && bComplete)
+	{ PC->ConfirmedStage = 7; }
+}
+void AProject_JNetworkLoadGameMode::BeginCombatTrial()
+{
+	Stage = 7; StageStarted = FPlatformTime::Seconds(); ++CombatTrial;
+	CombatRSeen.Reset(); CombatTargetSeen.Reset(); CombatEndSeen.Reset();
+	for (AProject_JNetworkLoadController* PC : Clients)
+	{
+		PC->ConfirmedStage = INDEX_NONE;
+		if (CombatTrial == 1)
+		{
+			auto* State = PC->GetPlayerState<AProject_JPlayerState>();
+			auto* Definition = LoadObject<UProject_JEquipmentItemDefinition>(nullptr, TEXT("/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip"));
+			State->GetEquipmentManagerComponent()->EquipItem(Definition);
+			CastChecked<UProject_JAbilitySystemComponent>(State->GetAbilitySystemComponent())->AddProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
+		}
+		PC->ClientBeginCombatTrial(CombatTrial);
+	}
+	TRACE_BOOKMARK(TEXT("ProjectJ.Network CombatTrial=%d"), CombatTrial);
+}
+bool AProject_JNetworkLoadGameMode::ObserveServerCombat()
+{
+	for (AProject_JNetworkLoadController* PC : Clients) { RecordCombat(Cast<AProject_JPlayerCharacter>(PC->GetPawn()), CombatTrial, CombatRSeen, CombatTargetSeen, CombatEndSeen); }
+	return CombatEndSeen.Num() == FixtureClients();
 }
 
 AProject_JNetworkLoadGameMode::AProject_JNetworkLoadGameMode()
@@ -388,7 +517,19 @@ void AProject_JNetworkLoadGameMode::Tick(float DeltaSeconds)
 		Rows += FString::Printf(TEXT("%d,%.3f,%d,%u\n"), Stage, Now - StageStarted, Driver->ClientConnections.Num(), Driver->OutTotalBytes - StageOutBytes);
 		UE_LOG(LogProjectJDNetwork, Display, TEXT("PASS stage=%d connections=%d bytes=%u"), Stage, Driver->ClientConnections.Num(), Driver->OutTotalBytes - StageOutBytes);
 		if (Stage < 5) { StartStage(Stage + 1); }
-		else { TRACE_END_REGION_WITH_ID(RegionId); RegionId = 0; Stage = 6; StageStarted = Now; Clients[1]->ClientFinish(true); }
+		else
+		{
+			TRACE_END_REGION_WITH_ID(RegionId); RegionId = 0;
+			if (CombatEnabled()) { BeginCombatTrial(); }
+			else { Stage = 6; StageStarted = Now; Clients[1]->ClientFinish(true); }
+		}
+	}
+	if (Stage == 7 && ObserveServerCombat()
+		&& !Clients.ContainsByPredicate([](const auto& PC) { return !IsValid(PC) || PC->ConfirmedStage != 7; }))
+	{
+		UE_LOG(LogProjectJDNetwork, Display, TEXT("PASS combat trial=%d authority + owner prediction + remote R/target/end"), CombatTrial);
+		if (CombatTrial < 3) { BeginCombatTrial(); }
+		else { Stage = 6; StageStarted = Now; Clients[1]->ClientFinish(true); }
 	}
 	if (Stage == 6 && bSawDisconnect && GetWorld()->GetNetDriver()->ClientConnections.Num() == FixtureClients() - 1) { Finish(true, TEXT("Five AOI/FastArray stages and graceful disconnect passed")); }
 }

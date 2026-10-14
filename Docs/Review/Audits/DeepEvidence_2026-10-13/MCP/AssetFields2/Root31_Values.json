@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"attackPresentations\\\":[{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.LMB.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.LMB.2\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.LMBRMB.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.LMBToRMB.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.LMBToRMB.2\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.Q.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.Q.2\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.R.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.RMB.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.RMB.2\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}},{\\\"attackTag\\\":{\\\"tagName\\\":\\\"Attack.Greatsword.T.1\\\"},\\\"profile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword.DA_AP_Greatsword\\\"}}]}\"}"
+			}
+		]
+	}
+}

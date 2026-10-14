@@ -64,9 +64,12 @@ Motion Matching이 공격이나 스킬을 선택하지 않으며, 전투 조건�
 ```text
 Project_JCore
   -> Project_JGAS
+  -> Project_JMount
   -> Project_JCharacter
   -> Project_J
 ```
+
+위 그림은 주요 실행 층이다. 실제 `.uproject`는 Runtime 6개(Core/GAS/Mount/Character/MMO/Project_J), Editor 1개(CharacterEditor), UncookedOnly 1개(AnimationNodes)다. MMO는 엔진 Core만 의존하는 값 계약이며 Project_JCore와 독립이고 Project_J가 소비한다. AnimationNodes는 Character 실행 노드의 제작 wrapper다. 전체 의존·실행 지도와 구현/계획 경계는 [2026-10-13 전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에 기록한다.
 
 ### Project_JCore
 

@@ -1,0 +1,3 @@
+TimingInsights.ExportThreads "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Deep_Trace_B_trace/Count200/TraceExport/Threads.csv"
+TimingInsights.ExportTimerStatistics "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Deep_Trace_B_trace/Count200/TraceExport/AllTimers.csv"
+TimingInsights.ExportTimerStatistics "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/Deep_Trace_B_trace/Count200/TraceExport/Timers-{region}.csv" -region="ProjectJ.*"

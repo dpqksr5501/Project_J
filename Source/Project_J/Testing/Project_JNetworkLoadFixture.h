@@ -60,11 +60,19 @@ public:
 	UFUNCTION(Server, Reliable) void ServerObserve(int32 Stage, const TArray<int32>& Seen, bool bOwnInventory, bool bForeignInventoryEmpty, bool bEquipment, int32 MinimumPulse, bool bAnimation);
 	UFUNCTION(Client, Reliable) void ClientFinish(bool bSuccess);
 	UFUNCTION(Client, Reliable) void ClientAnimationExpect(int32 Stage, const TArray<AProject_JPlayerCharacter*>& Players, const TArray<FProject_JReplicatedAnimEventState>& States);
+	UFUNCTION(Client, Reliable) void ClientBeginCombatTrial(int32 Trial);
+	UFUNCTION(Server, Reliable) void ServerCombatObserved(int32 Trial, bool bComplete);
 	int32 FixtureSlot = INDEX_NONE;
 	int32 ConfirmedStage = INDEX_NONE;
 	FString LastObservation;
 private:
 	bool ObserveAnimation();
+	void ObserveCombat();
+	int32 CombatTrial = INDEX_NONE;
+	bool bSentR = false, bSentMouse = false, bReportedCombat = false;
+	double CombatInputAt = 0;
+	TSet<FName> CombatRSeen, CombatTargetSeen, CombatEndSeen;
+	FString CombatRows = TEXT("trial,actor,role,attack,r_seen,target_seen,end_seen\n");
 	TArray<TWeakObjectPtr<AProject_JPlayerCharacter>> AnimationPlayers;
 	TArray<FProject_JReplicatedAnimEventState> AnimationStates;
 	TSet<TWeakObjectPtr<AProject_JPlayerCharacter>> ObservedPose;
@@ -90,9 +98,14 @@ public:
 	virtual void Logout(AController* Exiting) override;
 	virtual void Tick(float DeltaSeconds) override;
 	bool ValidateObservation(AProject_JNetworkLoadController* PC, int32 Stage, const TArray<int32>& Seen, bool bOwn, bool bForeignEmpty, bool bEquipment, int32 MinPulse, bool bAnimation);
+	void AcceptCombatObservation(AProject_JNetworkLoadController* PC, int32 Trial, bool bComplete);
 private:
 	void StartStage(int32 NewStage);
 	void Finish(bool bSuccess, const FString& Reason);
+	void BeginCombatTrial();
+	bool ObserveServerCombat();
+	int32 CombatTrial = 0;
+	TSet<FName> CombatRSeen, CombatTargetSeen, CombatEndSeen;
 	TArray<int32> ExpectedIds(int32 Slot) const;
 	UPROPERTY() TArray<TObjectPtr<AProject_JNetworkLoadController>> Clients;
 	UPROPERTY() TArray<TObjectPtr<AProject_JNetworkProbeNPC>> NPCs;

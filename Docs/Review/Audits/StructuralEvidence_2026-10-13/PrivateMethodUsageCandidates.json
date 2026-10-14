@@ -1,0 +1,32 @@
+[
+  {
+    "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp",
+    "line": 297,
+    "owner": "UProject_JLocomotionAnimStateComponent",
+    "name": "ClearPendingAnimationExitRequests",
+    "sourceOccurrences": 2,
+    "declarations": [
+      {
+        "header": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+        "access": "private",
+        "reflected": false,
+        "virtual": false
+      }
+    ]
+  },
+  {
+    "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+    "line": 1350,
+    "owner": "UProject_JWeaponPresentationComponent",
+    "name": "ShouldShowWeapon",
+    "sourceOccurrences": 2,
+    "declarations": [
+      {
+        "header": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+        "access": "private",
+        "reflected": false,
+        "virtual": false
+      }
+    ]
+  }
+]

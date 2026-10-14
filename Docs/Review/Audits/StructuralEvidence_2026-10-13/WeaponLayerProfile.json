@@ -1,0 +1,14 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "GetObjectProperties on '/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip' (Project_JEquipmentItemDefinition): the following properties could not be read: WeaponAnimProfile"
+			}
+		],
+		"isError": true
+	}
+}

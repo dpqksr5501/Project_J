@@ -1,0 +1,7 @@
+{
+  "scope": "Validation harness only; compiled C++ and Config unchanged",
+  "path": "Scripts/Validation/Measure-RenderedCrowd.ps1",
+  "frozenSha256": "87539EC7AB1E9B722C8BF556E608BF26F53768C6289A84C3363AB9D27D64C5D9",
+  "currentSha256": "F9B01C3AF98E5C65254CCEF5A2163AB62521612CDA9E1959651133E675D5FE2B",
+  "reason": "Capture native process handle before waiting; always write actual exit code, reject missing code. Initial run reported failure despite normal exit log and success result; original OS exit was not preserved, so do not retroactively count that run as validated."
+}

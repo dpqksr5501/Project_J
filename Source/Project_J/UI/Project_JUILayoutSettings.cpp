@@ -2,6 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/LocalPlayer.h"
 #include "Misc/CoreDelegates.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
@@ -66,9 +67,10 @@ void UProject_JUILayoutSettings::SetState(EProject_JUIPreferenceState State)
 	SaveState = State;
 	OnSaveStateChanged.Broadcast();
 }
-void UProject_JUILayoutSettings::EnsureLoaded()
+bool UProject_JUILayoutSettings::EnsureLoaded()
 {
-	if (Save) return;
+	if (bShuttingDown) return false;
+	if (Save) return true;
 	if (!Storage) Storage = MakeShared<FSlotStorage>();
 	const bool bExists = Storage->Exists(SlotName());
 	Save = bExists ? Storage->Load(SlotName()) : nullptr;
@@ -76,7 +78,7 @@ void UProject_JUILayoutSettings::EnsureLoaded()
 	{
 		Save = NewObject<UProject_JUILayoutSave>(this);
 		SetState(EProject_JUIPreferenceState::NewerVersion);
-		return;
+		return !bShuttingDown && Save;
 	}
 	const bool bMigration = Save && Save->Version == 1;
 	if (!Save || !Save->Normalize())
@@ -86,7 +88,7 @@ void UProject_JUILayoutSettings::EnsureLoaded()
 		{
 			Save = NewObject<UProject_JUILayoutSave>(this);
 			SetState(EProject_JUIPreferenceState::NewerVersion);
-			return;
+			return !bShuttingDown && Save;
 		}
 		if (Save && Save->Normalize())
 		{
@@ -100,7 +102,9 @@ void UProject_JUILayoutSettings::EnsureLoaded()
 		}
 	}
 	else bRewriteNeeded = bMigration;
+	if (bShuttingDown || !Save) return false;
 	if (bRewriteNeeded) Schedule();
+	return true;
 }
 void UProject_JUILayoutSettings::Schedule(float Delay)
 {
@@ -113,6 +117,11 @@ void UProject_JUILayoutSettings::Schedule(float Delay)
 	}), Delay);
 }
 bool UProject_JUILayoutSettings::FlushNow()
+{
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	return !bShuttingDown && FlushPending();
+}
+bool UProject_JUILayoutSettings::FlushPending()
 {
 	if (SaveTicker.IsValid()) { FTSTicker::RemoveTicker(SaveTicker); SaveTicker.Reset(); }
 	if (!Save) return true;
@@ -149,10 +158,15 @@ bool UProject_JUILayoutSettings::FlushNow()
 	}
 	return bSuccess;
 }
-bool UProject_JUILayoutSettings::Read(const FString &Key, FVector2D &Position) { EnsureLoaded(); return Save->Read(Key, Position); }
+bool UProject_JUILayoutSettings::Read(const FString &Key, FVector2D &Position)
+{
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	return EnsureLoaded() && Save->Read(Key, Position);
+}
 void UProject_JUILayoutSettings::Write(const FString &Key, FVector2D Position)
 {
-	EnsureLoaded();
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	if (!EnsureLoaded()) return;
 	if (!Save->Write(Key, Position)) return;
 	DirtyPositions.Add(Key, Save->MenuPositions[Key]);
 	if (SaveState != EProject_JUIPreferenceState::NewerVersion) SetState(EProject_JUIPreferenceState::Pending);
@@ -160,7 +174,8 @@ void UProject_JUILayoutSettings::Write(const FString &Key, FVector2D Position)
 }
 bool UProject_JUILayoutSettings::ReadHUD(const FString &Key, FProject_JHUDPreferences &Out)
 {
-	EnsureLoaded();
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	if (!EnsureLoaded()) return false;
 	const auto *Value = Save->HUDPreferences.Find(Key);
 	if (Key.IsEmpty() || !Value || !Value->IsValid()) return false;
 	Out = *Value;
@@ -168,21 +183,34 @@ bool UProject_JUILayoutSettings::ReadHUD(const FString &Key, FProject_JHUDPrefer
 }
 void UProject_JUILayoutSettings::WriteHUD(const FString &Key, const FProject_JHUDPreferences &Value)
 {
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
 	if (Key.IsEmpty() || !Value.IsValid()) return;
-	EnsureLoaded();
+	if (!EnsureLoaded()) return;
 	Save->HUDPreferences.Add(Key, Value); DirtyHUD.Add(Key, Value);
 	if (SaveState != EProject_JUIPreferenceState::NewerVersion) SetState(EProject_JUIPreferenceState::Pending);
 	Schedule();
 }
-FProject_JUIKeys UProject_JUILayoutSettings::ReadKeys() { EnsureLoaded(); return Save->InputKeys; }
+FProject_JUIKeys UProject_JUILayoutSettings::ReadKeys()
+{
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	return EnsureLoaded() ? Save->InputKeys : FProject_JUIKeys();
+}
 void UProject_JUILayoutSettings::WriteKeys(const FProject_JUIKeys &Value)
 {
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
 	if (!Value.IsValid()) return;
-	EnsureLoaded(); Save->InputKeys = Value; bKeysDirty = true;
+	if (!EnsureLoaded()) return;
+	Save->InputKeys = Value; bKeysDirty = true;
 	if (SaveState != EProject_JUIPreferenceState::NewerVersion) SetState(EProject_JUIPreferenceState::Pending);
 	Schedule();
 }
-void UProject_JUILayoutSettings::BeforeExit() { bShuttingDown = true; FlushNow(); }
+void UProject_JUILayoutSettings::BeforeExit()
+{
+	if (bShuttingDown) return;
+	const TStrongObjectPtr<UProject_JUILayoutSettings> KeepSelf(this);
+	bShuttingDown = true;
+	FlushPending(); // One final coalesced write while public admission is already closed.
+}
 void UProject_JUILayoutSettings::Deinitialize()
 {
 	FCoreDelegates::OnPreExit.Remove(ExitHandle);

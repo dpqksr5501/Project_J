@@ -37,6 +37,28 @@
 #include "Animation/Project_JAnimationPresentationHelpers.h"
 using namespace ProjectJ::Animation::Presentation;
 
+void UProject_JCharacterAnimInstance::ClearStateControllerInputReferences()
+{
+	bHasStateControllerOneShotControlYaw = false;
+	bHasStateControllerOneShotMoveInputYaw = false;
+	bHasStateControllerRemoteStartReference = false;
+	bHasStateControllerRemoteStartMoveYaw = false;
+}
+
+void UProject_JCharacterAnimInstance::PublishStateControllerGroundLoop(EProject_JStateControllerPresentationState LoopState)
+{
+	check(LoopState == EProject_JStateControllerPresentationState::LocomotionLoop ||
+		LoopState == EProject_JStateControllerPresentationState::IdleLoop);
+	const auto Phase = LoopState == EProject_JStateControllerPresentationState::LocomotionLoop
+		? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
+	ThreadSafeData.OneShotPresentation.PresentationState = LoopState;
+	ThreadSafeData.OneShotPresentation.PhaseFamily = Phase;
+	ThreadSafeData.OneShotPresentation.bRequested = false;
+	ThreadSafeData.LocomotionContext.PhaseFamily = Phase;
+	ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = Phase;
+	StateControllerRuntime.SetFallbackHold(LoopState, AnimationClock.Seconds);
+}
+
 void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 {
 	if (ThreadSafeData.Mount.bIsMounted != bWasMountedForStateController)
@@ -115,10 +137,7 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 		StateControllerRuntime.OnFullBodyActionStart(AnimationClock.Seconds);
 		ResetStateControllerChooserCache();
 		StateControllerRuntime.ClearTurnReselect();
-		bHasStateControllerOneShotControlYaw = false;
-		bHasStateControllerOneShotMoveInputYaw = false;
-		bHasStateControllerRemoteStartReference = false;
-		bHasStateControllerRemoteStartMoveYaw = false;
+		ClearStateControllerInputReferences();
 		++StateControllerChooserSelectionRevision;
 	}
 
@@ -150,10 +169,7 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 			bDiscardingPhysicalLanding || bDiscardingHeldLand);
 		ResetStateControllerChooserCache();
 		StateControllerRuntime.ClearTurnReselect();
-		bHasStateControllerOneShotControlYaw = false;
-		bHasStateControllerOneShotMoveInputYaw = false;
-		bHasStateControllerRemoteStartReference = false;
-		bHasStateControllerRemoteStartMoveYaw = false;
+		ClearStateControllerInputReferences();
 		++StateControllerChooserSelectionRevision;
 
 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
@@ -197,20 +213,12 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 		const EProject_JStateControllerPresentationState FallbackPresentationState = bMoving
 			? EProject_JStateControllerPresentationState::LocomotionLoop
 			: EProject_JStateControllerPresentationState::IdleLoop;
-		const EProject_JLocomotionPhaseFamily FallbackPhaseFamily = bMoving
-			? EProject_JLocomotionPhaseFamily::Cycle
-			: EProject_JLocomotionPhaseFamily::Idle;
-		ThreadSafeData.OneShotPresentation.PresentationState = FallbackPresentationState;
-		ThreadSafeData.OneShotPresentation.PhaseFamily = FallbackPhaseFamily;
-		ThreadSafeData.OneShotPresentation.bRequested = false;
-		ThreadSafeData.LocomotionContext.PhaseFamily = FallbackPhaseFamily;
-		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = FallbackPhaseFamily;
+		PublishStateControllerGroundLoop(FallbackPresentationState);
 		// Re-query only at the presentation boundaries.  The fallback context is
 		// still published every frame, but repeatedly forcing a Pose Search while
 		// a montage is active would be needless per-frame work.
 		ThreadSafeData.MotionMatching.bForceReselect =
 			ThreadSafeData.MotionMatching.bForceReselect || bCombatPresentationTransitionStarted;
-		StateControllerRuntime.SetFallbackHold(FallbackPresentationState, AnimationClock.Seconds);
 	}
 	const EProject_JStateControllerPresentationState PreviousStateControllerPresentationState =
 		StateControllerPresentationStateForChooser;
@@ -397,28 +405,14 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
 			? EProject_JStateControllerPresentationState::LocomotionLoop
 			: EProject_JStateControllerPresentationState::IdleLoop;
-		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
-		ThreadSafeData.OneShotPresentation.PhaseFamily =
-			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::LocomotionLoop
-				? EProject_JLocomotionPhaseFamily::Cycle
-				: EProject_JLocomotionPhaseFamily::Idle;
-		ThreadSafeData.OneShotPresentation.bRequested = false;
-		ThreadSafeData.LocomotionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
-		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
+		PublishStateControllerGroundLoop(CurrentStateControllerPresentationState);
 		ThreadSafeData.MotionMatching.bForceReselect = true;
-		StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, AnimationClock.Seconds);
-		bHasStateControllerOneShotControlYaw = false;
-		bHasStateControllerOneShotMoveInputYaw = false;
-		bHasStateControllerRemoteStartReference = false;
-		bHasStateControllerRemoteStartMoveYaw = false;
+		ClearStateControllerInputReferences();
 	}
 	else if (!bIsTurnCancellableOneShot)
 	{
 		OneShotCurvePolicy.Reset();
-		bHasStateControllerOneShotControlYaw = false;
-		bHasStateControllerOneShotMoveInputYaw = false;
-		bHasStateControllerRemoteStartReference = false;
-		bHasStateControllerRemoteStartMoveYaw = false;
+		ClearStateControllerInputReferences();
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure
 	// enum getter. Publish this game-thread mirror *before* evaluating the
@@ -512,14 +506,9 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 			// represented by the trajectory-aware Cycle PSD. This also avoids
 			// swapping Sprint Start directly to Run Start mid-stride.
 			CurrentStateControllerPresentationState = EProject_JStateControllerPresentationState::LocomotionLoop;
-			ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
-			ThreadSafeData.OneShotPresentation.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
-			ThreadSafeData.OneShotPresentation.bRequested = false;
-			ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
-			ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+			PublishStateControllerGroundLoop(CurrentStateControllerPresentationState);
 			ThreadSafeData.MotionMatching.bForceReselect = true;
 			StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
-			StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, AnimationClock.Seconds);
 			bHasStateControllerStartGaitForChooser = false;
 			bStateControllerStartGaitCommitted = false;
 			GaitIntentForChooser = CurrentStartGait;
@@ -588,12 +577,10 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 	{
 		bStateControllerFallOffForChooser =
 			ThreadSafeData.Air.bIsFallOffStart || bInferFallOffFromFreshAirEntry;
-		bHasStateControllerFallOffForChooser = true;
 	}
 	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToInAir)
 	{
 		bStateControllerFallOffForChooser = false;
-		bHasStateControllerFallOffForChooser = false;
 	}
 	StateControllerLeftFootContactForChooser = CachedStateControllerLeftFootContact;
 	StateControllerRightFootContactForChooser = CachedStateControllerRightFootContact;

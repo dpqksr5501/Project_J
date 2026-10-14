@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/AnimGraph\",\"/Script/Project_JCharacter\",\"/Game/Characters/Mannequins/Meshes/SK_Mannequin\",\"/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount\",\"/Game/Anim_Assets/Riding/ANIM_Rider_Idle\"]}"
+			}
+		]
+	}
+}

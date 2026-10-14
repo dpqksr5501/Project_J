@@ -2,9 +2,17 @@
 
 ### Unreal Engine 5.8 · C++ · Third-person Action MMORPG Prototype
 
+남은 전체 감사·개선과 누락 점검은 [2026-10-14 계속 작업 인계](Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md)에서 이어갑니다. 최신 커밋 기준점·전체 파일 목록·반복 방지·검토/수정/미검증 구분과 완료 기준을 포함합니다.
+
+**전수 범위 재점검 — 2026-10-14:** RA01–27의 실제64개 텍스트 변경과 빈 중복 장비 DA2개 정리를 기능별로 기록했습니다. 최신 native352개(332 clean·20 warning, 실패/미실행0), 실제 index 새 프로세스3회, 원격2접속·NPC200 반복3회, production Game/Cook/패키지·피해·전투·UI·실제 표시200 검증을 확인했습니다. 기존 사용자 리타깃/Body/RTG·공격 DA 교정과 지속 곡선 기본값을 보존했습니다. **모든 함수·에셋 전수 정밀 완료나 CPU 증가 해결 완료는 아닙니다.** [현재 검증 결과](Docs/Review/Audits/Project_J_Reaudit_Verification_2026-10-14.md)·[상태 지도](Docs/Review/Audits/Project_J_Reaudit_Map_2026-10-14.md)·[상세 결과와 남은 문제](Docs/Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md)에 실제 수정/검토/미검증을 구분합니다. 아래 DS01–18 결과는 당시 변경본의 기록입니다.
+
+**전체 구조 심화 감사 — 2026-10-14 검증:** MM 지상 상태·단발 게시와 중복 분기, 실제 ASC 태그/GAS 세대 소유권, 장비 commit·aggregate 종료, 입력 재바인딩, UI callback GC, 퀘스트·성장 수명, 원격 점프 순서를 DS01–18로 개선했습니다. 실제 공격 정의 10개의 무피해/CombatMode 오연결도 교정했습니다. 전체 회귀 332개·Game/Cook·기록한 통합/원격 검증은 통과했습니다. [실제 변경·검토·원자료·남은 범위](Docs/Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)를 확인하세요. 일부 CPU 증가와 packaged RHI trace 종료 실패는 남아 있으며, 모든 함수·에셋의 무결성을 보증하지 않습니다.
+
 서버 권위형 전투·장비 시스템과 Motion Matching을 기반으로, **다수 캐릭터의 판단·이동·애니메이션·이펙트 비용을 제어하는 개인 개발 프로젝트**입니다.
 
 멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
+
+**구조 개선 — 2026-10-13:** 전투·탑승 레이어와 UI 아이콘의 자원 수명을 공통화하고, HUD 조립·재사용 widget·무기 진단의 책임을 분리했습니다. 실제 호출이 없는 private 함수와 중복 기본값을 정리하고, 늦게 도착한 Controller의 GAS metadata 갱신 누락도 보완했습니다. [실제 변경·검토 후 유지한 영역·검증 근거](Docs/Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)를 구분해 기록합니다. 기존 200명 CPU 증가를 해결 완료로 보고하지 않습니다.
 
 [아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [문서 목록](Docs/README.md)
 

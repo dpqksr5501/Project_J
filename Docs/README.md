@@ -1,5 +1,9 @@
 # Project J 문서 시작점
 
+남은 전체 감사·개선과 누락 점검을 다른 채팅에서 이어갈 때는 [2026-10-14 마무리 인계](Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md)를 먼저 읽는다. 최신 RA27 결과·커밋 기준점·반복 방지·전체 범위 장부·완료 기준을 포함하며 전체 정밀 감사 완료를 주장하지 않는다.
+
+2026-10-14 검증 기준 [전체 구조 심화 감사](Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 DS01–18의 실제 변경·검토·미검증을 기록합니다. 상태·자원 소유권, 실제 공격 데이터, 종료/재진입, MCP/native 에셋 대조와 최종 검증·성능 원자료를 연결합니다. CPU 일부 증가와 packaged RHI trace 실패는 남은 문제입니다.
+
 프로젝트 이해 → 작업할 주제 → 문서 종류 순서로 찾는다. 현재 설정은 기준·제작 문서에서, 변경 이유와 검증 근거는 보고서·진단 기록에서 확인한다.
 
 ## 바로 시작하기
@@ -14,7 +18,8 @@
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
 | HUD·가방·장비 조작과 UI 아트 교체 | [UI](UI/README.md) |
 | 런타임 책임과 MMO 확장 기반 확인 | [아키텍처](Architecture/README.md) |
-| 최근 런타임 결함 재현과 전체 회귀 결과 확인 | [2026-10-08 수명·소유권 감사](Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) |
+| 실제 중복 제거·책임 분리·private 미사용 정리 | [2026-10-13 구조 개선](Review/Audits/Project_J_Structural_Improvement_2026-10-13.md) |
+| 최근 전체 구조·결함·소유권·성능 감사 | [2026-10-13 전체 감사](Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md) · [10월 8일 수명 감사](Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) |
 | 복제 구조와 원격 동작 검증 | [네트워크](Networking/README.md) |
 | 성능 수집·측정·최적화 판단 | [성능](Performance/README.md) → [벤치마크](Benchmarks/README.md) |
 | 감사 요청과 후속 결과 확인 | [검토 기록](Review/README.md) |

@@ -9,6 +9,7 @@
 #include "Project_JAttributeSet.h"
 #include "GameplayEffect.h"
 #include "GameFramework/GameStateBase.h"
+#include "Engine/World.h"
 
 void FProject_JInventoryArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
 {
@@ -60,8 +61,40 @@ TArray<FProject_JItemInstanceData> UProject_JInventoryComponent::GetItemInstance
 
 void UProject_JInventoryComponent::BeginPlay()
 {
-	Super::BeginPlay();
+	bEnding = false;
 	InventoryArray.OwnerComponent = this;
+	Super::BeginPlay();
+}
+
+void UProject_JInventoryComponent::EndPlay(const EEndPlayReason::Type Reason)
+{
+	Retire();
+	Super::EndPlay(Reason);
+}
+
+void UProject_JInventoryComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Retire();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+bool UProject_JInventoryComponent::CanPublishState() const
+{
+	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
+		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
+}
+
+bool UProject_JInventoryComponent::HasMutationAuthority() const
+{
+	return CanPublishState() && GetOwner()->HasAuthority();
+}
+
+void UProject_JInventoryComponent::Retire()
+{
+	bEnding = true;
+	InventoryArray.OwnerComponent = nullptr;
+	OnItemAdded.Clear(); OnItemChanged.Clear(); OnItemRemoved.Clear();
+	OnUseCompleted.Clear(); OnBagCompleted.Clear();
 }
 
 void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -81,7 +114,7 @@ FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProj
 	NewItem.ItemLevel = FMath::Max(1, ItemLevel);
 	NewItem.BagOrder = NextBagOrder();
 
-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || NewItem.BagOrder == INDEX_NONE || !CanCommitItemInstance(NewItem))
+	if (!HasMutationAuthority() || bEditingBag || NewItem.BagOrder == INDEX_NONE || !CanCommitItemInstance(NewItem))
 	{
 		return FProject_JItemInstanceData();
 	}
@@ -97,7 +130,7 @@ FProject_JItemInstanceData UProject_JInventoryComponent::AddItemDefinition(UProj
 bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag)
+	if (!HasMutationAuthority() || bEditingBag)
 	{
 		return false;
 	}
@@ -123,7 +156,7 @@ bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
 bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 NewStackCount)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || NewStackCount < 0)
+	if (!HasMutationAuthority() || bEditingBag || NewStackCount < 0)
 	{
 		return false;
 	}
@@ -172,7 +205,7 @@ bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 New
 bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 DeltaStackCount)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!HasMutationAuthority())
 	{
 		return false;
 	}
@@ -197,7 +230,7 @@ bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 Del
 bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 CountToConsume)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!HasMutationAuthority())
 	{
 		return false;
 	}
@@ -225,7 +258,7 @@ bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 Coun
 bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag)
+	if (!HasMutationAuthority() || bEditingBag)
 	{
 		return false;
 	}
@@ -341,6 +374,7 @@ void UProject_JInventoryComponent::ResetReplicationDiagnosticDeltaCounters()
 
 void UProject_JInventoryComponent::HandleReplicatedItemAdded(const FProject_JInventoryArrayItem& Item)
 {
+	if (!CanPublishState()) { return; }
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticAddedCount;
 #endif
@@ -350,6 +384,7 @@ void UProject_JInventoryComponent::HandleReplicatedItemAdded(const FProject_JInv
 
 void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item)
 {
+	if (!CanPublishState()) { return; }
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticChangedCount;
 #endif
@@ -359,6 +394,7 @@ void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JI
 
 void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item)
 {
+	if (!CanPublishState()) { return; }
 #if !UE_BUILD_SHIPPING
 	++ReplicationDiagnosticRemovedCount;
 #endif
@@ -408,24 +444,25 @@ float UProject_JInventoryComponent::GetUseCooldownRemaining() const
 }
 void UProject_JInventoryComponent::RequestUseItem(FGuid RequestId, FGuid InstanceId)
 {
- if (RequestId.IsValid() && InstanceId.IsValid()) ServerUseItem(RequestId, InstanceId);
+ if (CanPublishState() && RequestId.IsValid() && InstanceId.IsValid()) ServerUseItem(RequestId, InstanceId);
 }
 void UProject_JInventoryComponent::ServerUseItem_Implementation(FGuid RequestId, FGuid InstanceId)
 {
- if (!RequestId.IsValid()) return;
+ if (!HasMutationAuthority() || !RequestId.IsValid()) return;
  const double Now = GetWorld()->GetTimeSeconds();
  if (Now - UseRequestWindow >= 1 || UseRequestWindow < 0) { UseRequestWindow = Now; UseRequestCount = 0; }
  if (++UseRequestCount > 20) { ClientUseCompleted(RequestId, EProject_JItemUseResult::RateLimited); return; }
  if (const auto* Receipt = UseReceipts.Find(RequestId)) { ClientUseCompleted(RequestId, *Receipt); return; }
  const auto Result = TryUseItem(InstanceId);
+ if (!CanPublishState()) return;
  if (UseReceiptOrder.Num() >= 64) { UseReceipts.Remove(UseReceiptOrder[0]); UseReceiptOrder.RemoveAt(0); }
  UseReceiptOrder.Add(RequestId); UseReceipts.Add(RequestId, Result);
  ClientUseCompleted(RequestId, Result);
 }
-void UProject_JInventoryComponent::ClientUseCompleted_Implementation(FGuid RequestId, EProject_JItemUseResult Result) { OnUseCompleted.Broadcast(RequestId, Result); }
+void UProject_JInventoryComponent::ClientUseCompleted_Implementation(FGuid RequestId, EProject_JItemUseResult Result) { if (CanPublishState()) OnUseCompleted.Broadcast(RequestId, Result); }
 EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceId)
 {
- if (!GetOwner() || !GetOwner()->HasAuthority() || bUsingItem || bEditingBag) return EProject_JItemUseResult::Unavailable;
+ if (!HasMutationAuthority() || bUsingItem || bEditingBag) return EProject_JItemUseResult::Unavailable;
  FProject_JItemInstanceData Item;
  if (!FindItemInstance(InstanceId, Item)) return EProject_JItemUseResult::Invalid;
  if (Item.bIsLocked || Item.bIsEquipped) return EProject_JItemUseResult::Locked;
@@ -448,11 +485,11 @@ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceI
  if (!CanRemoveItemInstance(InstanceId, 1) || !ConsumeItemStack(InstanceId, 1)) return EProject_JItemUseResult::Unavailable;
  // Reserve shared recovery cooldown before broadcasting GAS attribute events (reentrancy).
  NextUseTime = GetWorld()->GetTimeSeconds() + Def->CooldownSeconds;
- ASC->ApplyGameplayEffectSpecToSelf(Spec); GetOwner()->ForceNetUpdate();
+ ASC->ApplyGameplayEffectSpecToSelf(Spec); if (CanPublishState()) GetOwner()->ForceNetUpdate();
  return EProject_JItemUseResult::Success;
 }
 
-void UProject_JInventoryComponent::OnRep_NextUseTime() { OnItemChanged.Broadcast(FProject_JItemInstanceData()); }
+void UProject_JInventoryComponent::OnRep_NextUseTime() { if (CanPublishState()) OnItemChanged.Broadcast(FProject_JItemInstanceData()); }
 
 int32 UProject_JInventoryComponent::NextBagOrder() const
 {
@@ -463,16 +500,17 @@ int32 UProject_JInventoryComponent::NextBagOrder() const
 }
 void UProject_JInventoryComponent::RequestBagChange(FGuid RequestId, const FProject_JBagRequest &Request)
 {
-	if (RequestId.IsValid()) ServerBagChange(RequestId, Request);
+	if (CanPublishState() && RequestId.IsValid()) ServerBagChange(RequestId, Request);
 }
 void UProject_JInventoryComponent::ServerBagChange_Implementation(FGuid RequestId, FProject_JBagRequest Request)
 {
-	if (!RequestId.IsValid() || !GetWorld()) return;
+	if (!HasMutationAuthority() || !RequestId.IsValid()) return;
 	const double Now = GetWorld()->GetTimeSeconds();
 	if (BagRequestWindow < 0 || Now - BagRequestWindow >= 1) { BagRequestWindow = Now; BagRequestCount = 0; }
 	if (++BagRequestCount > 20) { ClientBagCompleted(RequestId, EProject_JBagResult::RateLimited); return; }
 	if (const auto *Receipt = BagReceipts.Find(RequestId)) { ClientBagCompleted(RequestId, *Receipt); return; }
 	const auto Result = TryBagChange(Request);
+	if (!CanPublishState()) return;
 	if (BagReceiptOrder.Num() >= 64) { BagReceipts.Remove(BagReceiptOrder[0]); BagReceiptOrder.RemoveAt(0); }
 	BagReceiptOrder.Add(RequestId);
 	BagReceipts.Add(RequestId, Result);
@@ -480,12 +518,12 @@ void UProject_JInventoryComponent::ServerBagChange_Implementation(FGuid RequestI
 }
 void UProject_JInventoryComponent::ClientBagCompleted_Implementation(FGuid RequestId, EProject_JBagResult Result)
 {
-	OnBagCompleted.Broadcast(RequestId, Result);
+	if (CanPublishState()) OnBagCompleted.Broadcast(RequestId, Result);
 }
 EProject_JBagResult UProject_JInventoryComponent::TryBagChange(const FProject_JBagRequest &Request)
 {
 	check(IsInGameThread());
-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || bUsingItem) return EProject_JBagResult::Unavailable;
+	if (!HasMutationAuthority() || bEditingBag || bUsingItem) return EProject_JBagResult::Unavailable;
 	const int32 SourceIndex = FindItemIndex(Request.Source);
 	if (SourceIndex == INDEX_NONE) return EProject_JBagResult::Invalid;
 	const auto Source = InventoryArray.Items[SourceIndex].ItemInstance;

@@ -23,9 +23,4 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModularMesh")
 	void AttachAndSetLeader(USkeletalMeshComponent* MainMesh);
 
-protected:
-	virtual void BeginPlay() override;
-
-	// Overridden to selectively enable physics (e.g. KawaiiPhysics / RigidBody) only for specific bone chains
-	// virtual UPhysicsAsset* GetOrBuildMainPhysicsAsset() override;
 };

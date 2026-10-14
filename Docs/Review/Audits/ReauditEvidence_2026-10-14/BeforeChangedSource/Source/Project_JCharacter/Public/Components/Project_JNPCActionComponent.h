@@ -1,0 +1,127 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "AITypes.h"
+#include "TimerManager.h"
+#include "Project_JNPCActionComponent.generated.h"
+
+class AAIController;
+class UAbilitySystemComponent;
+class UGameplayAbility;
+class UProject_JTargetScoringComponent;
+class UProject_JNPCPathSubsystem;
+struct FProjectJNPCPathCompletion;
+struct FPathFollowingResult;
+struct FAbilityEndedData;
+
+struct FProjectJNPCActionSuspension
+{
+	TWeakObjectPtr<UProject_JTargetScoringComponent> Scoring;
+	FGameplayAbilitySpecHandle Attack;
+	uint64 Revision = 0;
+	uint64 OwnershipToken = 0;
+	bool IsValid() const { return Revision != 0; }
+};
+enum class EProjectJNPCActionResume : uint8 { Resumed, Deferred, Superseded };
+
+UENUM(BlueprintType)
+enum class EProjectJNPCActionState : uint8 { Disabled, Idle, AwaitingPath, FollowingPath, InRange, Attacking, Backoff };
+
+/** Per-consumer lifetime counts. RetryScheduled counts backoff decisions, not successful new submissions. */
+struct FProjectJNPCActionStats
+{
+	uint64 PathRequests = 0, PathRejected = 0, PathFailed = 0, PathStale = 0, RetryScheduled = 0, Arrivals = 0;
+	uint64 ReplacedMoves = 0;
+	uint64 ResumeDeferred = 0, ResumeExhausted = 0;
+};
+
+/** Explicit server-only consumer. Existing controller, faction registry, grants and abilities remain authoritative. */
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+class PROJECT_JCHARACTER_API UProject_JNPCActionComponent : public UActorComponent
+{
+	GENERATED_BODY()
+public:
+	UProject_JNPCActionComponent();
+	/** Scoring must already be batch-registered on this NPC. Invalid ability handle enables pursuit only.
+	 * Attack must be an NPC-compatible, InstancedPerActor ServerOnly/ServerInitiated ability already granted to the ASC.
+	 * Its targeting code can read GetIntentTarget(), and must validate hits/cancellation itself. */
+	UFUNCTION(BlueprintCallable, Category="NPC|Action")
+	bool StartActions(UProject_JTargetScoringComponent* Scoring, FGameplayAbilitySpecHandle AttackAbility);
+	static bool SupportsAttackAbility(const UGameplayAbility* Ability);
+	UFUNCTION(BlueprintCallable, Category="NPC|Action")
+	void StopActions();
+	/** Activation ownership survives a Mass suspension; an explicit stop/new start supersedes it. */
+	uint64 GetOwnershipToken() const { return OwnershipToken; }
+	bool StopActionsIfOwned(uint64 Token);
+	UFUNCTION(BlueprintPure, Category="NPC|Action")
+	AActor* GetIntentTarget() const { return IntentTarget.Get(); }
+	/** Current registry, authority, life, range and decision age, rechecked at ability/hit commit. */
+	bool CanCommitToTarget(AActor* Target) const;
+	/** Stops only this consumer's pursuit before the ability commits. Rejects another system's movement. */
+	bool PrepareForAttack(AActor* Target);
+	void UpdateAction();
+	UFUNCTION(BlueprintPure, Category="NPC|Action")
+	EProjectJNPCActionState GetActionState() const { return State; }
+	const FProjectJNPCActionStats& GetStats() const { return Stats; }
+	/** GT representation handoff reads the start contract before StopActions releases it. */
+	UProject_JTargetScoringComponent* GetScoringSource() const { return ScoringComponent.Get(); }
+	FGameplayAbilitySpecHandle GetAttackAbilityHandle() const { return AttackHandle; }
+	bool CanSuspendMovement() const { return IsContextValid() && !HasForeignMovement(); }
+	bool SuspendActions(FProjectJNPCActionSuspension& OutSuspension);
+	EProjectJNPCActionResume ResumeSuspendedActions(const FProjectJNPCActionSuspension& Suspension);
+	bool HasPendingResume() const { return PendingResume.IsValid(); }
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="50", ClampMax="2000"))
+	double AttackRange = 200;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="25", ClampMax="1000"))
+	double RepathDistance = 150;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="0.1", ClampMax="5"))
+	double RetryInterval = 0.5;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NPC|Action", meta=(ClampMin="0.5", ClampMax="10"))
+	double DecisionLifetime = 3.0;
+protected:
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+private:
+	friend class FProjectJNPCPathPressureTest;
+	void BackoffPath();
+	uint32 PathFailures = 0;
+	UFUNCTION()
+	void OnScored(AActor* Target, double Score);
+	void ClearIntent();
+	void CancelPathAndMove();
+	void CancelMove();
+	void CancelOwnedAttack();
+	void OnPathReady(const FProjectJNPCPathCompletion& Completion);
+	void OnMoveFinished(FAIRequestID RequestId, const FPathFollowingResult& Result);
+	void OnAbilityEnded(const FAbilityEndedData& Data);
+	void OnTearDown(UWorld* World);
+	void RetrySuspendedActions();
+	void ClearPendingResume();
+	bool IsContextValid() const;
+	bool IsTargetValid() const;
+	bool HasForeignMovement() const;
+	bool IsAttackSupported() const;
+	FVector GetTargetGoal() const;
+	TWeakObjectPtr<UProject_JTargetScoringComponent> ScoringComponent;
+	TWeakObjectPtr<UProject_JNPCPathSubsystem> Paths;
+	TWeakObjectPtr<AAIController> Controller;
+	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystem;
+	TWeakObjectPtr<AActor> IntentTarget;
+	FGameplayAbilitySpecHandle AttackHandle;
+	FAIRequestID MoveId = FAIRequestID::InvalidRequest;
+	FAIRequestID ReplacingMoveId = FAIRequestID::InvalidRequest;
+	FDelegateHandle ContextHandle, MoveHandle, AbilityEndedHandle, TearDownHandle;
+	uint64 IntentRevision = 0, PathToken = 0;
+	FVector FollowingGoal = FVector::ZeroVector;
+	double LastDecision = 0, NextPathTime = 0, NextAttackTime = 0;
+	EProjectJNPCActionState State = EProjectJNPCActionState::Disabled;
+	bool bEnabled = false, bEndingPlay = false, bOwnsAttack = false, bStopping = false;
+	FProjectJNPCActionStats Stats;
+	uint64 ActionRevision = 0;
+	uint64 NextOwnershipToken = 0, OwnershipToken = 0;
+	FProjectJNPCActionSuspension PendingResume;
+	FTimerHandle ResumeTimer;
+	int32 ResumeAttempts = 0;
+};

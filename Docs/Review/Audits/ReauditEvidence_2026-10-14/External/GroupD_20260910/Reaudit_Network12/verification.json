@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "file": "Server/server.json",
+      "success": true,
+      "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+    },
+    {
+      "file": "Client1/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    },
+    {
+      "file": "Client2/client.json",
+      "success": true,
+      "reason": "Server completed connection/AOI/FastArray assertions"
+    }
+  ],
+  "exitCodes": [
+    0,
+    0,
+    0
+  ],
+  "nativeHandleCapturedBeforeWait": true,
+  "timeouts": 0,
+  "startupPythonErrors": [],
+  "note": "Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean."
+}

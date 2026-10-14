@@ -79,6 +79,11 @@ class PROJECT_JCHARACTER_API AProject_JPlayerCharacter : public AProject_JBaseCh
 {
 	GENERATED_BODY()
 
+public:
+	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence) override;
+
+private:
+
 	friend class UProject_JPlayerInputBindingComponent;
 
 	/** Camera boom positioning the camera behind the character */

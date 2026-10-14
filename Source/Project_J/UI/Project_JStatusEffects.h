@@ -48,8 +48,11 @@ public:
 	UPROPERTY(BlueprintReadOnly) TArray<FProject_JStatusEffectState> States;
 	virtual void BeginDestroy() override;
 private:
+	friend class FProjectJStatusBindingReentryTest;
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 	FDelegateHandle AddedHandle;
 	FDelegateHandle RemovedHandle;
 	FTimerHandle Timer;
+	uint64 BindingRevision = 0;
+	bool bRetiring = false;
 };

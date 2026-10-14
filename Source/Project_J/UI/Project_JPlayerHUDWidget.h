@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "UI/Project_JUIIconRequest.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/DragDropOperation.h"
@@ -20,7 +21,6 @@ class UHorizontalBox;
 class UVerticalBox;
 class UProgressBar;
 class UProject_JPlayerUIComponent;
-struct FStreamableHandle;
 class UProject_JHUDWindow;
 class UProject_JMinimapWidget;
 class UEditableTextBox;
@@ -42,6 +42,7 @@ class PROJECT_J_API UProject_JSkillButton : public UUserWidget
 	virtual FReply NativeOnMouseButtonDown(const FGeometry &, const FPointerEvent &) override;
 	virtual FReply NativeOnMouseButtonUp(const FGeometry &, const FPointerEvent &) override;
 	virtual void NativeDestruct() override;
+	virtual void BeginDestroy() override;
 	virtual void NativeOnMouseCaptureLost(const FCaptureLostEvent &Event) override;
 	virtual void NativeOnDragDetected(const FGeometry &, const FPointerEvent &, UDragDropOperation *&) override;
 	virtual bool NativeOnDrop(const FGeometry &, const FDragDropEvent &, UDragDropOperation *) override;
@@ -57,8 +58,8 @@ class PROJECT_J_API UProject_JSkillButton : public UUserWidget
 	bool bAvailable = false;
 	bool bPressed = false;
 	bool bShowingIconFallback = false;
-	TSharedPtr<FStreamableHandle> IconHandle;
-	FSoftObjectPath IconPath;
+	FProject_JUIIconRequest IconRequest;
+	friend class FProjectJUIIconRequestLifetimeTest;
 };
 
 UCLASS()
@@ -95,6 +96,7 @@ class PROJECT_J_API UProject_JItemWidget : public UUserWidget, public IUserObjec
 	virtual void NativeOnEntryReleased() override;
 	virtual void NativeOnItemSelectionChanged(bool bSelected) override;
 	virtual void NativeDestruct() override;
+	virtual void BeginDestroy() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry &Geometry, const FPointerEvent &Event) override;
 	virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry &Geometry, const FPointerEvent &Event) override;
 	virtual void NativeOnDragDetected(const FGeometry &Geometry, const FPointerEvent &Event,
@@ -112,8 +114,7 @@ class PROJECT_J_API UProject_JItemWidget : public UUserWidget, public IUserObjec
 
   private:
 	UPROPERTY() TObjectPtr<UProject_JInventoryEntry> Entry;
-	TSharedPtr<FStreamableHandle> IconHandle;
-	FSoftObjectPath IconPath;
+	FProject_JUIIconRequest IconRequest;
 	void ReleaseIcon();
 };
 

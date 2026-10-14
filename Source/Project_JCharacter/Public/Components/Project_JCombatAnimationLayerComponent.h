@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Animation/Project_JAnimationLayerLease.h"
 #include "Project_JCombatAnimationLayerComponent.generated.h"
 
-struct FStreamableHandle;
 
 /** Presentation-only state with explicit priority for linked weapon Anim Layers. */
 UENUM(BlueprintType)
@@ -32,6 +32,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	/** Call after equipment, combat, or mount state changes. */
 	void RefreshLayer();
@@ -53,21 +54,9 @@ private:
 	void UnlinkLayer();
 	void ResetPreload();
 
-	/** Hard reference held only while the weapon layer is actively linked. */
-	UPROPERTY(Transient)
-	TSubclassOf<class UAnimInstance> LinkedAnimationLayerClass;
-
-	/** Cached preloaded class for the equipped weapon profile. */
-	UPROPERTY(Transient)
-	TSubclassOf<class UAnimInstance> PreloadedAnimationLayerClass;
-
-	FSoftObjectPath PreloadedAnimationLayerPath;
-	TSharedPtr<FStreamableHandle> LayerPreloadHandle;
-	uint64 LoadGeneration = 0;
-	bool bLoadFailed = false;
+	UPROPERTY(Transient, DuplicateTransient)
+	FProject_JAnimationLayerLease Layer;
 	bool bEndingPlay = false;
-	TWeakObjectPtr<class USkeletalMeshComponent> LinkedMesh;
-	TWeakObjectPtr<class UAnimInstance> LinkedMaster;
 	friend class FProjectJLayerLoadLifecycleTest;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Animation", meta = (AllowPrivateAccess = "true"))

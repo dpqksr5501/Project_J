@@ -1,0 +1,61 @@
+{
+  "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013\\PackagedFinal\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "sha256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+  "utc": "2026-10-13T18:31:44.8247254Z",
+  "runs": [
+    {
+      "width": 1280,
+      "height": 720,
+      "passed": true,
+      "exitCode": 0,
+      "logErrorCount": 0,
+      "seconds": 18.6254526,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepCookedUI\\1280x720\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1280",
+        "-ResY=720",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/DeepCookedUI/1280x720/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepCookedUI\\1280x720\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "passed": true,
+      "exitCode": 0,
+      "logErrorCount": 0,
+      "seconds": 18.5870999,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepCookedUI\\1920x1080\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1920",
+        "-ResY=1080",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/DeepCookedUI/1920x1080/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepCookedUI\\1920x1080\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    }
+  ]
+}

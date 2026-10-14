@@ -1,5 +1,7 @@
 # 전투 애니메이션 합성과 책임 통합 가이드
 
+2026-10-13 [구조 개선](../../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md): Combat/MountedAnimationLayerComponent는 같은 `FProject_JAnimationLayerLease` 구현을 사용하되 각각 독립된 transient/DuplicateTransient 자원을 가진다. request generation/failure cache·stream cancel·class GC pin·원래 mesh/master unlink는 lease 책임이며, weapon/combat/mount suppression·rider profile/fallback·preload admission은 각 component 책임이다. 기존 rendering-client-only·async load·명시 retry 계약과 Blueprint public API는 유지한다.
+
 정리일: 2026-10-03. 전투 포즈 합성, 이동 정책 경계와 무기 계열 레이어의 상세 계약을 한곳에서 읽는다. 기존 세 문서의 제작·입력·콤보·복제·비동기 수명 내용과 체크리스트를 상세 절에 보존했다.
 
 ## 적용 순서와 기준

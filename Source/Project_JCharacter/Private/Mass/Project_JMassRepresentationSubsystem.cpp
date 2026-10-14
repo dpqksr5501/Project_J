@@ -7,7 +7,6 @@
 #include "Project_JNPCCharacter.h"
 #include "Project_JAttributeSet.h"
 #include "Components/Project_JNPCActionComponent.h"
-#include "Components/Project_JTargetScoringComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
@@ -20,6 +19,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "Misc/ScopeExit.h"
+#include "UObject/StrongObjectPtr.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
@@ -159,6 +159,7 @@ bool UProject_JMassRepresentationSubsystem::CanDemote(const FProjectJMassReprese
 void UProject_JMassRepresentationSubsystem::Demote(FProjectJMassRepresentationEntry& E)
 {
 	auto* NPC = E.NPC.Get(); auto* Movement = NPC->GetCharacterMovement();
+	TStrongObjectPtr<AProject_JNPCCharacter> PinnedNPC(NPC);
 	UProject_JNPCActionComponent* ActiveAction = nullptr;
 	if (!ResolveActiveAction(*NPC, ActiveAction)) { return; }
 	E.Action = ActiveAction;
@@ -199,6 +200,7 @@ void UProject_JMassRepresentationSubsystem::Promote(FProjectJMassRepresentationE
 	F.bMassOwnsMovement = false; F.Generation = ++E.Generation; E.bMass = false;
 	if (auto* NPC = E.NPC.Get(); NPC && !NPC->IsActorBeingDestroyed())
 	{
+		TStrongObjectPtr<AProject_JNPCCharacter> PinnedNPC(NPC);
 		NPC->GetCharacterMovement()->SetComponentTickEnabled(E.bMovementTick);
 		NPC->GetMesh()->SetComponentTickEnabled(E.bMeshTick);
 		NPC->SetActorEnableCollision(E.bCollision); NPC->SetCanBeDamaged(E.bDamage); NPC->SetActorHiddenInGame(E.bHidden);
@@ -214,6 +216,7 @@ bool UProject_JMassRepresentationSubsystem::UnregisterNPC(FProjectJMassAgentToke
 {
 	check(IsInGameThread());
 	if (bStepping) { return false; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	if (Token.WorldEpoch != WorldEpoch) { ++Stats.RejectedStale; return false; }
 	for (int32 I = 0; I < Entries.Num(); ++I)
 	{
@@ -232,6 +235,7 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 {
 	check(IsInGameThread());
 	if (!IsTickable() || bStepping) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	bStepping = true;
 	ON_SCOPE_EXIT { bStepping = false; if (!bAccepting) { Stop(); } };
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_MassRepresentation_GT);
@@ -304,7 +308,7 @@ void UProject_JMassRepresentationSubsystem::Tick(float DeltaSeconds)
 			++Stats.MassOwned;
 		}
 	}
-	Stats.Registered = Entries.Num(); Stats.LastStepMilliseconds = (FPlatformTime::Seconds() - Start) * 1000;
+	Stats.Registered = Entries.Num();
 }
 
 bool UProject_JMassRepresentationSubsystem::IsTickable() const
@@ -313,15 +317,20 @@ TStatId UProject_JMassRepresentationSubsystem::GetStatId() const
 { RETURN_QUICK_DECLARE_CYCLE_STAT(ProjectJMassRepresentation, STATGROUP_Tickables); }
 void UProject_JMassRepresentationSubsystem::Stop()
 {
+	check(IsInGameThread());
 	bAccepting = false; if (bStepping) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TGuardValue<bool> Guard(bStepping, true);
 	for (const auto& E : Entries) { Promote(*E, false); Entities->DestroyEntity(E->Entity); }
 	Entries.Reset(); Stats.Registered = Stats.MassOwned = 0;
+	// Tick/Unregister may retire the world from an ownership callback. Their scope exit
+	// finishes the admitted step before this common boundary releases its storage.
+	Processor = nullptr; Archetype = {}; Entities.Reset();
 }
 void UProject_JMassRepresentationSubsystem::OnTearDown(UWorld* World) { if (World == GetWorld()) { Stop(); } }
 void UProject_JMassRepresentationSubsystem::OnWorldEndPlay(UWorld& World) { Stop(); Super::OnWorldEndPlay(World); }
 void UProject_JMassRepresentationSubsystem::Deinitialize()
 {
 	Stop(); FWorldDelegates::OnWorldBeginTearDown.Remove(TearDownHandle);
-	Processor = nullptr; Entities.Reset(); Super::Deinitialize();
+	Super::Deinitialize();
 }

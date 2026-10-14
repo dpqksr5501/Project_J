@@ -1,0 +1,13 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-nosound",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/WholeTransition1/Run.log",
+  "-ReportExportPath=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/WholeTransition1",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ; Quit",
+  "-NullRHI"
+]

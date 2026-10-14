@@ -1,0 +1,59 @@
+{
+  "readOnly": true,
+  "assetsSaved": false,
+  "normalEditorMcpWorks": true,
+  "records": {
+    "CycleLinks": {
+      "schema": {
+        "refPath": "/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity"
+      },
+      "normalizationSet": {
+        "refPath": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity"
+      }
+    },
+    "ForwardLinks": {
+      "schema": {
+        "refPath": "/Game/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.PSS_Combat_Run_ForwardTrajectory"
+      },
+      "normalizationSet": {
+        "refPath": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_ForwardCycle.NS_Combat_Run_ForwardCycle"
+      }
+    },
+    "Norm": {
+      "databases": [
+        {
+          "refPath": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn.PSD_Combat_Run_GeneralTurn"
+        }
+      ]
+    },
+    "MasterClass": {
+      "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C"
+    },
+    "BodyClass": {
+      "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme_C"
+    },
+    "MasterParentPublic": {
+      "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+    },
+    "BodyParentPublic": {
+      "refPath": "/Script/Project_JCharacter.Project_JRetargetAnimInstance"
+    },
+    "BodyProfiles": {
+      "retargetBodyProfile": {
+        "refPath": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword"
+      },
+      "handGripProfile": "None"
+    }
+  },
+  "unsupportedReads": [
+    "databaseAnimationAssets private field rejected; native public API index verification is separate",
+    "parentClass through ObjectTools targets Blueprint CDO and is not a CDO property; official BlueprintTools.get_parent succeeds"
+  ],
+  "scope": "Relevant actual connections only, no whole asset/graph/visual integrity claim."
+}

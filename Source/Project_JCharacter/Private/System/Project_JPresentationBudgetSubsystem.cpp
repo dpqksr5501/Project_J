@@ -1,6 +1,8 @@
 #include "System/Project_JPresentationBudgetSubsystem.h"
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "UObject/StrongObjectPtr.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
 bool UProject_JPresentationBudgetSubsystem::Request(UProject_JWeaponPresentationComponent* Component, uint64 Revision)
@@ -24,6 +26,7 @@ TStatId UProject_JPresentationBudgetSubsystem::GetStatId() const
 void UProject_JPresentationBudgetSubsystem::Tick(float)
 {
 	check(IsInGameThread()); if (!IsTickable() || bTicking) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TGuardValue<bool> Guard(bTicking, true);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_PresentationBudget_Apply);
 	const double Start = FPlatformTime::Seconds(); Stats.LastApplications = 0;
@@ -37,6 +40,8 @@ void UProject_JPresentationBudgetSubsystem::Tick(float)
 		if (!Requests.RemoveAndCopyValue(Key, Request)) { continue; }
 		if (auto* Component = Key.Get())
 		{
+			TStrongObjectPtr<UProject_JWeaponPresentationComponent> PinnedComponent(Component);
+			TStrongObjectPtr<AActor> PinnedOwner(Component->GetOwner());
 			Stats.MaxQueueMilliseconds = FMath::Max(Stats.MaxQueueMilliseconds, (FPlatformTime::Seconds() - Request.QueuedAt) * 1000);
 			++Stats.LastApplications; ++Stats.Applied;
 			Component->ApplyBudgetedPresentation(Request.Revision);

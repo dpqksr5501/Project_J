@@ -1,0 +1,93 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "76AF9016424AB39D4A3A18B5BC55BCAF",
+			"instanceName": "DESKTOP-5T07C91-12508",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-21.49.20",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.071617700159549713,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"76AF9016424AB39D4A3A18B5BC55BCAF"
+			],
+			"duration": 0.071617700159549713,
+			"dateTime": "2026.10.13-21.49.20",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'EndPlay releases the mount relationship' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 209,
+					"timestamp": "2026.10.13-21.49.20"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'EndPlay releases attack presentation' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 210,
+					"timestamp": "2026.10.13-21.49.20"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play lifecycle reopens mount admission' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 215,
+					"timestamp": "2026.10.13-21.49.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-21.49.20"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

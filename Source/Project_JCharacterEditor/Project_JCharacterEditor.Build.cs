@@ -17,6 +17,7 @@ public class Project_JCharacterEditor : ModuleRules
 			"Project_JAnimationNodes",
 			"Json",
 			"AssetRegistry",
+			"Chooser",
 			"KismetCompiler",
 			"ApplicationCore",
 			"PropertyEditor",

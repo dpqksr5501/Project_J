@@ -1,0 +1,57 @@
+[
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMMO.dll",
+    "sha256": "c64d243df26d26a41f638c0900e84923c2349c7df45c2927f147200462bb79a1",
+    "bytes": 198656
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+    "sha256": "10f1db1ab8d2502c582cfee649f08a5cfc4ef6c01eccab5451af40653362ab32",
+    "bytes": 2355200
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCore.dll",
+    "sha256": "f1bd418dfd37b5b19ce329e10ff94567f33d50cb95bf55183310e0af3dd9d794",
+    "bytes": 480256
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JGAS.dll",
+    "sha256": "940deaa68e858e0485dbc33d9f12eeb9abaf909e1ce9845f8fba0b5d9f51343f",
+    "bytes": 199680
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMount.dll",
+    "sha256": "f8582430d8be9e6666416d4ddbaf3be2dce3db99681040894baa163893bafa0a",
+    "bytes": 498176
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+    "sha256": "44cb5292d6b5f6bd499be2a0b3ea5f000881e2a2462f6d19bf33d49c48ba744c",
+    "bytes": 5191680
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll",
+    "sha256": "adb7005f76a2e8e383ffe97e64e0cb6eb4a950eb5c5de53092698b598b2bb449",
+    "bytes": 707584
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll",
+    "sha256": "daba8b7427cdf5acf3ce34c78120c86a799536e8168d453bb3053f6e0dc30dd0",
+    "bytes": 165888
+  },
+  {
+    "path": "Binaries/Win64/Project_J.exe",
+    "sha256": "482e6691b7bd031b0bff8cfdae7f1ff25361f1d5b5da42221a2f067c31b0d896",
+    "bytes": 346819584
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Packaged1/Windows/Project_J/Binaries/Win64/Project_J.exe",
+    "sha256": "5b42e69ce131660a295017becfd221993bab3f93ff9ae76f165b5f999203afeb",
+    "bytes": 346818560
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Packaged2/Windows/Project_J/Binaries/Win64/Project_J.exe",
+    "sha256": "482e6691b7bd031b0bff8cfdae7f1ff25361f1d5b5da42221a2f067c31b0d896",
+    "bytes": 346819584
+  }
+]

@@ -48,6 +48,7 @@ protected:
 private:
 #if WITH_DEV_AUTOMATION_TESTS
 	friend class FProjectJVisualPressureTest;
+	friend class FProjectJSubsystemCallbackGCTest;
 	void ExpireForTest(uint64 Token);
 #endif
 	void Stop();

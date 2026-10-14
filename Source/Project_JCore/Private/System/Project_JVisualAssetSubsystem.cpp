@@ -97,6 +97,7 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
 	if (!bAccepting || bTicking || !GetWorld() || GetWorld()->bIsTearingDown) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TGuardValue<bool> TickGuard(bTicking, true);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualAssets_LoadAndApply);
 	const double Started = FPlatformTime::Seconds();
@@ -150,6 +151,7 @@ void UProject_JVisualAssetSubsystem::Tick(float DeltaTime)
 			{ FailedUntil.Add(Group->Path, FPlatformTime::Seconds() + FailureBackoffSeconds); }
 		}
 		auto Apply = MoveTemp(Lease->Apply);
+		TStrongObjectPtr<UObject> PinnedOwner(Lease->Owner.Get());
 		++Stats.LastTickApplications; ++Stats.Delivered;
 		if (Apply) { Apply(Asset); }
 		// Failed leases never pin a failed group; callers may explicitly retry.

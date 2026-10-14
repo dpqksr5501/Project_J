@@ -1,0 +1,237 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "8549CCED49513B5D4B5D8780CE98E697",
+			"instanceName": "DESKTOP-5T07C91-24048",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-19.20.44",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 254.39540100097656,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredCPU",
+			"fullTestPath": "ProjectJ.Animation.AuthoredCPU",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8549CCED49513B5D4B5D8780CE98E697"
+			],
+			"duration": 254.39540100097656,
+			"dateTime": "2026.10.13-19.16.29",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Near ABA=0 Repeat=0 Mean=18.685ms P95=19.480ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.16.51"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Near ABA=1 Repeat=0 Mean=11.919ms P95=12.473ms Bones=28174 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.17.06"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Far ABA=0 Repeat=0 Mean=15.610ms P95=18.165ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.17.24"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Far ABA=1 Repeat=0 Mean=11.641ms P95=12.617ms Bones=28174 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.17.39"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Hidden ABA=0 Repeat=0 Mean=11.381ms P95=12.494ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.17.53"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Hidden ABA=1 Repeat=0 Mean=6.779ms P95=7.315ms Bones=2400 MM=2400 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.18.03"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=AttackBurst ABA=0 Repeat=0 Mean=21.658ms P95=23.807ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.18.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=AttackBurst ABA=1 Repeat=0 Mean=12.094ms P95=23.491ms Bones=42343 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.18.35"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Near ABA=0 Repeat=1 Mean=19.914ms P95=20.861ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.18.58"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Near ABA=1 Repeat=1 Mean=12.431ms P95=13.241ms Bones=28173 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.19.13"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Far ABA=0 Repeat=1 Mean=15.792ms P95=17.305ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.19.32"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Far ABA=1 Repeat=1 Mean=11.669ms P95=12.632ms Bones=28176 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.19.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Hidden ABA=0 Repeat=1 Mean=11.575ms P95=12.800ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.20.02"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=Hidden ABA=1 Repeat=1 Mean=6.811ms P95=7.332ms Bones=2400 MM=2400 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.20.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=AttackBurst ABA=0 Repeat=1 Mean=21.844ms P95=24.271ms Bones=120000 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.20.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "AuthoredCPU Count=200 Scenario=AttackBurst ABA=1 Repeat=1 Mean=12.242ms P95=24.248ms Bones=42210 MM=120000 Followers=1800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-19.20.44"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

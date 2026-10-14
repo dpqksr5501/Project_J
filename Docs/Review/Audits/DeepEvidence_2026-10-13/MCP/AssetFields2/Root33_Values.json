@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"calibration\\\":{\\\"primaryPalmSocketName\\\":\\\"PalmGrip_R\\\",\\\"secondaryPalmSocketName\\\":\\\"PalmGrip_L\\\",\\\"missingPalmPolicy\\\":\\\"DisableContactIK\\\",\\\"primaryHandOffset\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"secondaryHandOffset\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"primaryElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"secondaryElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"primaryArm\\\":{\\\"shoulder\\\":\\\"Bip01-R-UpperArm\\\",\\\"elbow\\\":\\\"Bip01-R-Forearm\\\",\\\"hand\\\":\\\"Bip01-R-Hand\\\"},\\\"secondaryArm\\\":{\\\"shoulder\\\":\\\"Bip01-L-UpperArm\\\",\\\"elbow\\\":\\\"Bip01-L-Forearm\\\",\\\"hand\\\":\\\"Bip01-L-Hand\\\"},\\\"primaryBendStability\\\":{\\\"bEnabled\\\":true,\\\"fallbackPoleAxis\\\":{\\\"x\\\":0,\\\"y\\\":1,\\\"z\\\":0},\\\"holdBendRatio\\\":0.15000000596046448,\\\"reliableBendRatio\\\":0.25,\\\"reacquireDegreesPerSecond\\\":800,\\\"maxHistorySeconds\\\":0.15000000596046448},\\\"secondaryBendStability\\\":{\\\"bEnabled\\\":true,\\\"fallbackPoleAxis\\\":{\\\"x\\\":0,\\\"y\\\":1,\\\"z\\\":0},\\\"holdBendRatio\\\":0.15000000596046448,\\\"reliableBendRatio\\\":0.25,\\\"reacquireDegreesPerSecond\\\":720,\\\"maxHistorySeconds\\\":0.25}}}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,607 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "8F30E87E4B4AFE4E7B01C398AE19134D",
+			"instanceName": "DESKTOP-5T07C91-26776",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-15.23.51",
+	"succeeded": 35,
+	"succeededWithWarnings": 1,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.68957841396331787,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "GroundModeSource",
+			"fullTestPath": "ProjectJ.Animation.StateOwnership.GroundModeSource",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.008089900016784668,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReentrantRemoval",
+			"fullTestPath": "ProjectJ.Internal.Equipment.ReentrantRemoval",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010762598365545273,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CandidatesAndLifetime",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.CandidatesAndLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0081405974924564362,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionCandidates",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.ProductionCandidates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0082321017980575562,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Cycle=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.PSD_Run_Cycle Turn=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.PSD_Run_Turn Schema=/Game/Animation_Logic/PSS/PSS_Player.PSS_Player Preprocessor=1 CycleNorm=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity TurnNorm=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.23.50"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Cycle=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.PSD_Combat_Run_Cycle Turn=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn Schema=/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity Preprocessor=1 CycleNorm=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity TurnNorm=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.23.50"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionGraph",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.ProductionGraph",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0081829987466335297,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SteeringOwnership",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.SteeringOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010482098907232285,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SuccessAndRejection",
+			"fullTestPath": "ProjectJ.MountDismountMotion.SuccessAndRejection",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010689698159694672,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RetainedInputRecovery",
+			"fullTestPath": "ProjectJ.MountRemount.RetainedInputRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0062929019331932068,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GradualFacing",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Combat.GradualFacing",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010336298495531082,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SettleAfterFacing",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010404698550701141,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InteractDispatchRoundTrip",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0096665993332862854,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InteractInputOwnership",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010513599961996078,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ClockAndTIP",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010066699236631393,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LayerLoadLifecycle",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0082623995840549469,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedVisibility",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.SharedVisibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0096312016248703003,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandBounds",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Authoring.CommandBounds",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0083630010485649109,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EffectiveInputComposition",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Authoring.EffectiveInputComposition",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0094173997640609741,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentAndMontage",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Authoring.EquipmentAndMontage",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0082547999918460846,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComboWindowOwnership",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Combat.ComboWindowOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0098592005670070648,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ConfigurationPolicy",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Combat.ConfigurationPolicy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0081685967743396759,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CueLeaseOwnership",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Combat.CueLeaseOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0094341002404689789,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OriginalASC",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Equipment.OriginalASC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0099547989666461945,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OriginalASC",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Mount.OriginalASC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0097100995481014252,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PossessionAndBlockedExit",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010800402611494064,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.23.50"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Freshness",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Trajectory.Freshness",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.007273603230714798,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AnimationProxyPinsQueuedAssets",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.AnimationProxyPinsQueuedAssets",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.085081502795219421,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestroyedCombatBinding",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.DestroyedCombatBinding",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0096796974539756775,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestroyedMountCanBeResummonedBeforeGC",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010076601058244705,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentCommitLifetime",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010889597237110138,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LateControllerActorInfo",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.LateControllerActorInfo",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010501500219106674,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocomotionTagLease",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.LocomotionTagLease",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0099800974130630493,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MontageBlendOutDrainsBeforeBudget",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.MontageBlendOutDrainsBeforeBudget",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.0095544010400772095,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RetiredAvatarCannotActivateOrObserve",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010387197136878967,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RetiredAvatarCannotCancelSprint",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.RetiredAvatarCannotCancelSprint",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010650400072336197,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SprintMovePrediction",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.SprintMovePrediction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.010166201740503311,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IconRequestLifetime",
+			"fullTestPath": "ProjectJ.Structure.UI.IconRequestLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F30E87E4B4AFE4E7B01C398AE19134D"
+			],
+			"duration": 0.28162080049514771,
+			"dateTime": "2026.10.13-15.23.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

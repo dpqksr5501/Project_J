@@ -55,10 +55,14 @@ There are no legacy runtime fallbacks. Invalid or incomplete assets fail validat
 
 ### AbilitySet lifetime
 
-- The ASC stores grant records by stable source ID.
+- The ASC stores actual grant handles by stable source ID plus a monotonic generation. Keyed providers keep generation leases; unkeyed grants keep individual handles.
 - Player ASCs live on PlayerState, so records survive pawn replacement.
 - Sources use namespaces such as `Class.*`, `Advancement.*`, `CombatStyle.*`, and `Equipment.*`.
 - Removing a source cancels active abilities before clearing specs and effects.
+
+동기 GAS callback은 source를 반환하거나 같은 이름으로 교체할 수 있다. Give 완료는 원래 generation을 확인하고, Take는 제공자의 container를 먼저 분리한다. 장비와 성장 제공자는 실제 부여한 ASC에서 자신의 lease만 반환한다. 종료된 입력 제공자도 자신의 held input·binding·pending chord만 정리한다. [재현과 새 검증 계약](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)을 따른다.
+
+현재 Avatar 초기화와 Controller 도착은 서로 다른 수명 사건이다. PlayerState owner가 ASC 초기화보다 늦게 복제되면 GAS ActorInfo의 PlayerController cache가 비어 있을 수 있다. `RefreshActorInfoForCurrentActor`가 현재 persistent owner/Avatar만 허용하고, PlayerState `OnRep_Owner`와 Pawn `OnRep_Controller`/`PawnClientRestart`에서 `RefreshAbilityActorInfo`로 metadata만 갱신한다. 이 경로는 능력을 다시 부여하거나 `OnAvatarSet`, active ability, combo/input을 reset하지 않는다. 퇴역 Avatar는 교체된 ASC의 cache를 갱신할 수 없다. 근거와 원격 실패 경로는 [2026-10-13 구조 개선](../../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)을 따른다.
 
 ### Server hit authority
 

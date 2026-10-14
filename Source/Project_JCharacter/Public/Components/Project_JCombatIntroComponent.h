@@ -18,6 +18,7 @@ class PROJECT_JCHARACTER_API UProject_JCombatIntroComponent : public UActorCompo
 
 public:
 	UProject_JCombatIntroComponent();
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 

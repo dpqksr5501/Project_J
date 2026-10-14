@@ -1,6 +1,8 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JGeneralTurnPolicy.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
 #include "Animation/Project_JContinuousCurvePolicy.h"

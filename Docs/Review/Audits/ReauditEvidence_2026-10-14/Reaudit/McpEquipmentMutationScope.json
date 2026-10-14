@@ -1,0 +1,9 @@
+{
+  "authorization": "Current user whole audit with necessary asset changes/saves explicitly authorized.",
+  "phase": "Read-only inspection completed; now exact two backed-up empty placeholder deletions through public MCP.",
+  "scope": [
+    "Content/DataAssetSets/Weapons/DA_Player_EquipWeapon.uasset",
+    "Content/DataAssetSets/Animation_Profiles/Equip/DA_Equip_Player.uasset"
+  ],
+  "otherAssetSavesRequested": false
+}

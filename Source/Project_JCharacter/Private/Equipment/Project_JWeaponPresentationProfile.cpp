@@ -1,6 +1,22 @@
 #include "Equipment/Project_JWeaponPresentationProfile.h"
 #include "Equipment/Project_JWeaponPresentationActor.h"
 
+FName FProject_JWeaponGroundContactSettings::GetValidationFailure() const
+{
+	if (!bEnableGroundContact) return NAME_None;
+	struct FField { const TCHAR* Name; float Value; };
+	const FField Fields[] = {
+		{TEXT("TraceStartHeight"), TraceStartHeight}, {TEXT("TraceLength"), TraceLength},
+		{TEXT("SurfaceClearance"), SurfaceClearance}, {TEXT("MaxTranslationCorrection"), MaxTranslationCorrection},
+		{TEXT("CorrectionInterpolationSpeed"), CorrectionInterpolationSpeed},
+		{TEXT("RecentlyRenderedToleranceSeconds"), RecentlyRenderedToleranceSeconds}};
+	for (const auto& Field : Fields)
+		if (!FMath::IsFinite(Field.Value) || Field.Value < 0) return FName(Field.Name);
+	if (TraceLength <= 0) return TEXT("TraceLength");
+	if (TraceChannel.GetValue() >= ECC_MAX) return TEXT("TraceChannel");
+	return NAME_None;
+}
+
 #if WITH_EDITOR
 #include "Validation/Project_JDataValidation.h"
 
@@ -60,9 +76,10 @@ EDataValidationResult UProject_JWeaponPresentationProfile::IsDataValid(FDataVali
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "IncompleteGroundContact", "Ground contact requires PrimaryProbeSocketName."));
 		}
-		if (Ground.bEnableGroundContact && Ground.TraceLength <= 0.0f)
+		if (const FName Failure = Ground.GetValidationFailure(); !Failure.IsNone())
 		{
-			Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJWeaponPresentationProfile", "InvalidGroundTraceLength", "Ground contact TraceLength must be greater than zero."));
+			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
+				NSLOCTEXT("ProjectJWeaponPresentationProfile", "InvalidGroundContact", "Ground contact {0} must be finite and non-negative, with a positive trace length and valid collision channel."), FText::FromName(Failure)));
 		}
 	}
 

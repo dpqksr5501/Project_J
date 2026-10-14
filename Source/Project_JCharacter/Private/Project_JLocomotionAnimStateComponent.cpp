@@ -100,13 +100,27 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 }
 
 
+void UProject_JLocomotionAnimStateComponent::BeginPlay()
+{
+	bMovementTagOwnershipEnding = false;
+	Super::BeginPlay();
+}
+
 void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bMovementTagOwnershipEnding = true;
 	ClearOwnedMovementGameplayTags();
 	RemoteRuntime.Reset();
 	MovingTurnPolicy.Reset();
 	TurnRequestSample = {};
 	Super::EndPlay(EndPlayReason);
+}
+
+void UProject_JLocomotionAnimStateComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bMovementTagOwnershipEnding = true;
+	ClearOwnedMovementGameplayTags();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
 void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)

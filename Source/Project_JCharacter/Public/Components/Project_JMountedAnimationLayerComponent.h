@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Animation/Project_JAnimationLayerLease.h"
 #include "Project_JMountedAnimationLayerComponent.generated.h"
 
 class AProject_JMountCharacter;
-struct FStreamableHandle;
 
 /**
  * Rendering-client-only owner of the rider's MountedLocomotion linked layer.
@@ -26,6 +26,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	/** Re-evaluates the currently mounted actor and links its ready layer. */
 	UFUNCTION(BlueprintCallable, Category = "Mount|Animation")
@@ -54,20 +55,8 @@ private:
 	void UnlinkLayer();
 	void ResetPreload();
 
-	/** Hard reference held only while the matching linked instance is active. */
-	UPROPERTY(Transient)
-	TSubclassOf<class UAnimInstance> LinkedAnimationLayerClass;
-
-	/** Single-entry cache: a player can have only one active/summoned mount. */
-	UPROPERTY(Transient)
-	TSubclassOf<class UAnimInstance> PreloadedAnimationLayerClass;
-
-	FSoftObjectPath PreloadedAnimationLayerPath;
-	TSharedPtr<FStreamableHandle> LayerPreloadHandle;
-	uint64 LoadGeneration = 0;
-	bool bLoadFailed = false;
+	UPROPERTY(Transient, DuplicateTransient)
+	FProject_JAnimationLayerLease Layer;
 	bool bEndingPlay = false;
-	TWeakObjectPtr<class USkeletalMeshComponent> LinkedMesh;
-	TWeakObjectPtr<class UAnimInstance> LinkedMaster;
 	friend class FProjectJLayerLoadLifecycleTest;
 };

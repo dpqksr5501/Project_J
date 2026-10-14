@@ -1,0 +1,16 @@
+{
+  "paths": [
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+    "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T"
+  ],
+  "new_effect": "/Game/GEs/GE_TestDamege.GE_TestDamege_C",
+  "expected_old_effect": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C"
+}

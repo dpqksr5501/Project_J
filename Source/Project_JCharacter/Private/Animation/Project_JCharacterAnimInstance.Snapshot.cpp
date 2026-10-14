@@ -117,8 +117,10 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	Data.Input.MovementDirection = AnimState->MovementDirection;
 	Data.Input.bHasMoveInput = AnimState->bHasMoveInput;
 	Data.Input.bSharpTurnRequested = AnimState->bSharpTurnRequested;
-	Data.Ground.bStartRequested = AnimState->bStartRequested || AnimState->bUseStartDatabase;
-	Data.Ground.bStopRequested = AnimState->bStopRequested || AnimState->bUseStopDatabase;
+	// Selection consumes the owning semantic mode, not aliases published for BP
+	// compatibility. OR-ing aliases can promote a stale display flag to intent.
+	Data.Ground.bStartRequested = AnimState->GroundMotionMode == EProject_JGroundMotionMode::Start;
+	Data.Ground.bStopRequested = AnimState->GroundMotionMode == EProject_JGroundMotionMode::Stop;
 	Data.Ground.bWantsSprint = AnimState->bWantsSprint;
 	Data.Ground.bUseSprintLocomotion = AnimState->bUseSprintLocomotion;
 	Data.Ground.bStartWasSprinting =
@@ -223,7 +225,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	OneShot.bUseMotionMatchOnEntry =
 		OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bUseMotionMatchForExperimentalOneShotEntry;
 	OneShot.bEarlyTransitionWindowOpen = OneShot.bEnabled &&
-		(OneShotEarlyTransitionWindowDepth > 0 || IsAuthoredEarlyTransitionAllowed(Data.LocomotionContext.GaitIntent));
+		IsAuthoredEarlyTransitionAllowed(Data.LocomotionContext.GaitIntent);
 	OneShot.FallbackLeadTime = Data.MotionMatchingSearchPolicy.ExperimentalOneShotFallbackLeadTime;
 	OneShot.bIdleBreakEnabled = OneShot.bEnabled && Data.MotionMatchingSearchPolicy.bEnableExperimentalIdleBreak;
 	OneShot.IdleBreakMinimumStateTime = OneShot.bIdleBreakEnabled

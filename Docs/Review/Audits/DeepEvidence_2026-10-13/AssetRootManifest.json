@@ -1,0 +1,206 @@
+[
+  {
+    "record": "AssetRoots/Root1.json",
+    "root": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon"
+  },
+  {
+    "record": "AssetRoots/Root2.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile"
+  },
+  {
+    "record": "AssetRoots/Root3.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles"
+  },
+  {
+    "record": "AssetRoots/Root4.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe"
+  },
+  {
+    "record": "AssetRoots/Root5.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat"
+  },
+  {
+    "record": "AssetRoots/Root6.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Equip_Player"
+  },
+  {
+    "record": "AssetRoots/Root7.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip"
+  },
+  {
+    "record": "AssetRoots/Root8.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile"
+  },
+  {
+    "record": "AssetRoots/Root9.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion"
+  },
+  {
+    "record": "AssetRoots/Root10.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile"
+  },
+  {
+    "record": "AssetRoots/Root11.json",
+    "root": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile"
+  },
+  {
+    "record": "AssetRoots/Root12.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1"
+  },
+  {
+    "record": "AssetRoots/Root13.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2"
+  },
+  {
+    "record": "AssetRoots/Root14.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB"
+  },
+  {
+    "record": "AssetRoots/Root15.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1"
+  },
+  {
+    "record": "AssetRoots/Root16.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2"
+  },
+  {
+    "record": "AssetRoots/Root17.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1"
+  },
+  {
+    "record": "AssetRoots/Root18.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2"
+  },
+  {
+    "record": "AssetRoots/Root19.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R"
+  },
+  {
+    "record": "AssetRoots/Root20.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1"
+  },
+  {
+    "record": "AssetRoots/Root21.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2"
+  },
+  {
+    "record": "AssetRoots/Root22.json",
+    "root": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T"
+  },
+  {
+    "record": "AssetRoots/Root23.json",
+    "root": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root24.json",
+    "root": "/Game/DataAssetSets/Attributes/DA_Player_Attributes"
+  },
+  {
+    "record": "AssetRoots/Root25.json",
+    "root": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley"
+  },
+  {
+    "record": "AssetRoots/Root26.json",
+    "root": "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root27.json",
+    "root": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root28.json",
+    "root": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root29.json",
+    "root": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root30.json",
+    "root": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon"
+  },
+  {
+    "record": "AssetRoots/Root31.json",
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root32.json",
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base"
+  },
+  {
+    "record": "AssetRoots/Root33.json",
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+  },
+  {
+    "record": "AssetRoots/Root34.json",
+    "root": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root35.json",
+    "root": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+  },
+  {
+    "record": "AssetRoots/Root36.json",
+    "root": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01"
+  },
+  {
+    "record": "AssetRoots/Root37.json",
+    "root": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data"
+  },
+  {
+    "record": "AssetRoots/Root38.json",
+    "root": "/Game/DataAssetSets/Weapons/DA_Player_EquipWeapon"
+  },
+  {
+    "record": "AssetRoots/Root39.json",
+    "root": "/Game/Input/IMC_Default"
+  },
+  {
+    "record": "AssetRoots/Root40.json",
+    "root": "/Game/Input/IMC_MouseLook"
+  },
+  {
+    "record": "AssetRoots/Root41.json",
+    "root": "/Game/NPCs/BP_NPC_Test"
+  },
+  {
+    "record": "AssetRoots/Root42.json",
+    "root": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode"
+  },
+  {
+    "record": "AssetRoots/Root43.json",
+    "root": "/Game/UI/DA_ProjectJHUDStyle"
+  },
+  {
+    "record": "AssetRoots/Root44.json",
+    "root": "/Game/UI/DA_ProjectJMap"
+  },
+  {
+    "record": "AssetRoots/Root45.json",
+    "root": "/Game/UI/DA_ProjectJUIDefault"
+  },
+  {
+    "record": "AssetRoots/Root46.json",
+    "root": "/Game/UI/DA_ProjectJUIProfiles"
+  },
+  {
+    "record": "AssetRoots/Root47.json",
+    "root": "/Game/UI/Gameplay/DA_ProjectJFirstSteps"
+  },
+  {
+    "record": "AssetRoots/Root48.json",
+    "root": "/Game/UI/Gameplay/DA_ProjectJHealthPotion"
+  },
+  {
+    "record": "AssetRoots/Root49.json",
+    "root": "/Game/UI/Gameplay/DA_ProjectJManaPotion"
+  },
+  {
+    "record": "AssetRoots/Root50.json",
+    "root": "/Game/UI/WBP_ProjectJItemRow"
+  },
+  {
+    "record": "AssetRoots/Root51.json",
+    "root": "/Game/UI/WBP_ProjectJItemTile"
+  }
+]

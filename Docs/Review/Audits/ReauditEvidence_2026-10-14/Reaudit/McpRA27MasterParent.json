@@ -1,0 +1,14 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "GetObjectProperties on '/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.Default__ABP_Humanoid_Master_C' (ABP_Humanoid_Master_C): the following properties could not be read: parentClass"
+			}
+		],
+		"isError": true
+	}
+}

@@ -8,6 +8,13 @@
 #include "Components/Project_JSkillInputRouterComponent.h"
 #include "Mount/Project_JMountComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "UObject/StrongObjectPtr.h"
+
+void UProject_JPlayerInputBindingComponent::BeginPlay()
+{
+	bEnding = false;
+	Super::BeginPlay();
+}
 
 UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 {
@@ -18,16 +25,16 @@ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 
 bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
 {
+	if (bEnding || IsBeingDestroyed()) { return false; }
+	const uint64 ExpectedRevision = BindingRevision + 1;
 	UnbindInput();
+	if (bEnding || IsBeingDestroyed() || BindingRevision != ExpectedRevision) { return false; }
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!IsValid(EnhancedInputComponent) || EnhancedInputComponent->IsBeingDestroyed() ||
+		!IsValid(PlayerCharacter) || PlayerCharacter->IsActorBeingDestroyed()) { return false; }
 	BoundPlayerCharacter = PlayerCharacter;
 	ActiveSkillInputMappingData = ActionSet.SkillInputMappingData;
 	ActiveDirectInputTags.Reset();
-
-	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-	if (!EnhancedInputComponent || !BoundPlayerCharacter)
-	{
-		return false;
-	}
 
 	BoundEnhancedInputComponent = EnhancedInputComponent;
 	if (UProject_JMountComponent* Mount = BoundPlayerCharacter->GetMountComponent())
@@ -154,33 +161,53 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 void UProject_JPlayerInputBindingComponent::UnbindInput()
 {
 	check(IsInGameThread());
-	if (UEnhancedInputComponent* Input = BoundEnhancedInputComponent.Get())
-	{
-		for (uint32 Handle : OwnedBindingHandles) Input->RemoveBindingByHandle(Handle);
-	}
-	OwnedBindingHandles.Reset();
-	BoundEnhancedInputComponent.Reset();
+	const uint64 ReleaseRevision = ++BindingRevision;
+	const auto PreviousInput = BoundEnhancedInputComponent;
+	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
+	const auto ReleasedHandles = MoveTemp(OwnedBindingHandles);
 	const auto ReleasedInputs = MoveTemp(ActiveDirectInputTags);
-	if (IsValid(BoundPlayerCharacter))
-	{
-		for (const auto& Entry : ReleasedInputs) BoundPlayerCharacter->HandleSkillInputTagReleased(Entry.Value);
-		if (BoundPlayerCharacter->SkillInputRouterComponent) BoundPlayerCharacter->SkillInputRouterComponent->ResetInputState();
-		HandleJumpStopped();
-		BoundPlayerCharacter->StopSprint();
-		FinalizeMoveStopped();
-	}
+	BoundEnhancedInputComponent.Reset();
+	BoundPlayerCharacter = nullptr;
+	ActiveSkillInputMappingData = nullptr;
 	bPendingMoveStopReconciliation = bPendingSemanticMoveIntentRefresh = false;
 	bSemanticMoveIntentActionsBound = false;
 	bMoveIntentForwardHeld = bMoveIntentBackwardHeld = bMoveIntentLeftHeld = bMoveIntentRightHeld = false;
 	SetComponentTickEnabled(false);
-	ActiveSkillInputMappingData = nullptr;
-	BoundPlayerCharacter = nullptr;
+	if (UEnhancedInputComponent* Input = PreviousInput.Get())
+	{
+		for (uint32 Handle : ReleasedHandles) Input->RemoveBindingByHandle(Handle);
+	}
+	if (PreviousPlayer.IsValid())
+	{
+		for (const auto& Entry : ReleasedInputs) PreviousPlayer->HandleSkillInputTagReleased(Entry.Value);
+		// A callback may acquire a new device for this pawn. Its logical state now
+		// belongs to that binding; old teardown must not reset the new router/move.
+		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
+		if (PreviousPlayer->SkillInputRouterComponent) PreviousPlayer->SkillInputRouterComponent->ResetInputState();
+		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
+		PreviousPlayer->StopJumping();
+		PreviousPlayer->StopSprint();
+		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
+		FinalizeMoveStoppedForCharacter(PreviousPlayer.Get());
+	}
+}
+
+bool UProject_JPlayerInputBindingComponent::MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const
+{
+	return BindingRevision == ReleaseRevision || BoundPlayerCharacter != PlayerCharacter;
 }
 
 void UProject_JPlayerInputBindingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bEnding = true;
 	UnbindInput();
 	Super::EndPlay(EndPlayReason);
+}
+void UProject_JPlayerInputBindingComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bEnding = true;
+	UnbindInput();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
 void UProject_JPlayerInputBindingComponent::TickComponent(
@@ -468,41 +495,49 @@ void UProject_JPlayerInputBindingComponent::CancelPendingMoveStopReconciliation(
 
 void UProject_JPlayerInputBindingComponent::FinalizeMoveStopped()
 {
-	if (!BoundPlayerCharacter)
+	FinalizeMoveStoppedForCharacter(BoundPlayerCharacter.Get());
+}
+
+void UProject_JPlayerInputBindingComponent::FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter)
+{
+	if (!PlayerCharacter)
 	{
 		return;
 	}
+	const uint64 ReleaseRevision = BindingRevision;
 
-	const bool bHadMoveInput = BoundPlayerCharacter->bHadMoveInputForReplication;
+	const bool bHadMoveInput = PlayerCharacter->bHadMoveInputForReplication;
 	const bool bWasSprintingAtStop =
-		BoundPlayerCharacter->IsSprintLocomotionAllowed() ||
-		(BoundPlayerCharacter->LocomotionAnimStateComponent &&
-			(BoundPlayerCharacter->LocomotionAnimStateComponent->bUseSprintLocomotion ||
-			 BoundPlayerCharacter->LocomotionAnimStateComponent->bWantsSprint));
-	BoundPlayerCharacter->ResetMoveStartReplicationState();
+		PlayerCharacter->IsSprintLocomotionAllowed() ||
+		(PlayerCharacter->LocomotionAnimStateComponent &&
+			(PlayerCharacter->LocomotionAnimStateComponent->bUseSprintLocomotion ||
+			 PlayerCharacter->LocomotionAnimStateComponent->bWantsSprint));
+	PlayerCharacter->ResetMoveStartReplicationState();
 
-	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
+	if (PlayerCharacter->LocomotionAnimStateComponent)
 	{
-		BoundPlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
+		PlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
 	}
+	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }
 	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("MMCombatStop Input=StopApplied Actor=%s Frame=%llu Speed=%.1f HadMove=%d Sprint=%d StateInput=%d CachedAxis=%.2f"),
-			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter,
-			BoundPlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
+			*GetNameSafe(PlayerCharacter), GFrameCounter,
+			PlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
 			bWasSprintingAtStop ? 1 : 0,
-			BoundPlayerCharacter->LocomotionAnimStateComponent &&
-				BoundPlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
-			BoundPlayerCharacter->LocomotionAnimStateComponent
-				? BoundPlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
+			PlayerCharacter->LocomotionAnimStateComponent &&
+				PlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
+			PlayerCharacter->LocomotionAnimStateComponent
+				? PlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
 	}
 
-	BoundPlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
+	PlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
+	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }
 
 	if (bHadMoveInput)
 	{
-		BoundPlayerCharacter->DispatchMoveStopAnimationEvent(bWasSprintingAtStop);
+		PlayerCharacter->DispatchMoveStopAnimationEvent(bWasSprintingAtStop);
 	}
 }
 

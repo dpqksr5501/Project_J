@@ -31,6 +31,8 @@ public:
 	void RefreshCachedReferences();
 
 protected:
+	/** GT cache publication is complete before derived ownership is reconciled. */
+	virtual void OnCachedAbilitySystemChanged() {}
 	friend class FProjectJPlayerVisibilityTest;
 	void CacheOwnerReferences();
 	AProject_JPlayerCharacter* GetPlayerOwner() const;

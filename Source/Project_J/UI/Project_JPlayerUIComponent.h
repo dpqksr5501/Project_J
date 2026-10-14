@@ -78,6 +78,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	UFUNCTION(BlueprintCallable) void SetObservedTarget(AActor *Target);
 
   private:
+	friend class FProjectJUIScreenFailureLifetimeTest;
 	bool IsKeyReserved(FKey Key) const;
 	UFUNCTION() void RebuildKeyBindings();
 	FProject_JUIKeys InputKeys;

@@ -1,0 +1,62 @@
+{
+  "preservation": [
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/Animation_Logic/RTG_Greatsword_UE5.uasset",
+      "matches": true
+    },
+    {
+      "path": "Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md",
+      "matches": true
+    }
+  ],
+  "previousAttackAssets": [
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+      "matches": true
+    }
+  ],
+  "emptyPlaceholderFilesAbsent": [
+    true,
+    true
+  ]
+}

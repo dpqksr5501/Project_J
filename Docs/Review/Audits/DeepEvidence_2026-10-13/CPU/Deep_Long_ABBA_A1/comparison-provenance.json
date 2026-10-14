@@ -1,0 +1,50 @@
+{
+  "phase": "A1",
+  "baseline": true,
+  "trace": false,
+  "binarySet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/BaselineBinaries",
+  "allEightModulesAndModulesFileSwitched": true,
+  "warmupTicks": 240,
+  "measuredTicks": 600,
+  "workingSourceSnapshotMatchesCompiledBinary": false,
+  "compiledSourceManifest": "Saved/Validation/DeepAudit_20261013/BaselineManifest.json",
+  "note": "A is before DS01-18, after SI01-08. B is the final deep-audit source. Current assets are identical across all comparison runs, including corrected damage references. Baseline compiled code does not match the working-tree source snapshot copied by the fixture. Trace runs are a separate pair and are excluded from no-trace CPU comparison.",
+  "artifacts": [
+    {
+      "file": "UnrealEditor-Project_JMMO.dll",
+      "sha256": "C64D243DF26D26A41F638C0900E84923C2349C7DF45C2927F147200462BB79A1"
+    },
+    {
+      "file": "UnrealEditor-Project_J.dll",
+      "sha256": "10F1DB1AB8D2502C582CFEE649F08A5CFC4EF6C01ECCAB5451AF40653362AB32"
+    },
+    {
+      "file": "UnrealEditor-Project_JCore.dll",
+      "sha256": "F1BD418DFD37B5B19CE329E10FF94567F33D50CB95BF55183310E0AF3DD9D794"
+    },
+    {
+      "file": "UnrealEditor-Project_JGAS.dll",
+      "sha256": "940DEAA68E858E0485DBC33D9F12EEB9ABAF909E1CE9845F8FBA0B5D9F51343F"
+    },
+    {
+      "file": "UnrealEditor-Project_JMount.dll",
+      "sha256": "F8582430D8BE9E6666416D4DDBAF3BE2DCE3DB99681040894BAA163893BAFA0A"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacter.dll",
+      "sha256": "44CB5292D6B5F6BD499BE2A0B3EA5F000881E2A2462F6D19BF33D49C48BA744C"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacterEditor.dll",
+      "sha256": "ADB7005F76A2E8E383FFE97E64E0CB6EB4A950EB5C5DE53092698B598B2BB449"
+    },
+    {
+      "file": "UnrealEditor-Project_JAnimationNodes.dll",
+      "sha256": "DABA8B7427CDF5ACF3CE34C78120C86A799536E8168D453BB3053F6E0DC30DD0"
+    },
+    {
+      "file": "UnrealEditor.modules",
+      "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+    }
+  ]
+}

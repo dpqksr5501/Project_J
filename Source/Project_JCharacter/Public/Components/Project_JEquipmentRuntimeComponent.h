@@ -110,6 +110,8 @@ private:
 private:
 	UPROPERTY(Transient)
 	UProject_JEquipmentManagerComponent* BoundEquipmentManager;
+	FDelegateHandle ManagerRetiredHandle;
+	void OnEquipmentManagerRetired(UProject_JEquipmentManagerComponent* ExpectedManager);
 
 	UPROPERTY(Transient)
 	TMap<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem> RuntimeItems;
@@ -117,5 +119,6 @@ private:
 	bool bIsEndingPlay = false;
 	FWeaponRevoked WeaponRevoked;
 	uint64 NextVisualRevision = 0;
+	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UProject_JVisualAssetSubsystem> VisualAssets;
 };

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":{\"refPath\":\"/Game/Mount_Assets/Wyvern/BP_Wyvern.Default__BP_Wyvern_C\"}}"
+			}
+		]
+	}
+}

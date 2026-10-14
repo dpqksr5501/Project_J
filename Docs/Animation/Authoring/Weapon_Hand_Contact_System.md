@@ -695,6 +695,8 @@ ProjectJ.Presentation.GripTrace 0
 <a id="recovery-검증과-남은-작업"></a>
 ### 검증과 남은 작업
 
+2026-10-14 재점검에서 enabled 지면 접촉의 숫자 검증을 제작·런타임 공통 계약으로 맞췄다. 6개 설정은 finite/nonnegative, TraceLength는 양수, TraceChannel은 유효 enum 범위여야 한다. 실제 변환한 trace endpoint도 physics query 전 finite 검사한다. Disabled 설정과 정상 기본값은 유지한다. NaN TraceLength를 제작 validator가 수락하던 경로를 native 회귀로 확인했으며, 수정 전 물리 query crash를 재현한 것으로 해석하지 않는다. [재점검 기록](../../Review/Audits/Project_J_Reaudit_2026-10-14.md).
+
 자동화는 독립 목표, 변환, 중단/0초/경과 시간 전환, 프로필 재사용과 기존 프레젠테이션 수명을 검증한다. 최신 직접 UBT 빌드와 자동화 12개, 저장된 런타임 ABP 한 개의 범위 컴파일은 성공했다. 비항등 Palm 부착과 몸체 교체를 포함한 상세 로그는 [Palm 정상 부착 검증](Weapon_Hand_Contact_System.md#mount-검증-결과)에 둔다.
 
 실제 최종 포즈·관절 해부학·루트 모션/카메라·지연·의상·다른 직업/무기·군중 비용은 별도 시각/성능 검증 대상이다. 팔 길이 밖의 접촉은 리타깃/궤적 적응 또는 제한된 상체 Reach 정책이 필요하다. Idle 자동 접촉 부착은 선택 모드로 구현했고 에디터에서 무기 DA에 활성화한다.

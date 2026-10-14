@@ -13,26 +13,35 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 	check(ASC);
 
 	check(IsInGameThread());
-	if (!ASC->IsOwnerActorAuthoritative() || !OutGrantedHandles)
+	if (!ASC->IsOwnerActorAuthoritative() || !OutGrantedHandles || OutGrantedHandles->MutationRevision == MAX_uint64)
 	{
 		return;
 	}
 
 	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+	uint64 GrantGeneration = 0;
+	const uint64 MutationRevision = OutGrantedHandles->MutationRevision;
 	if (!GrantSourceId.IsNone())
 	{
-		if (OutGrantedHandles->GrantSourceIds.Contains(GrantSourceId)) return;
+		if (OutGrantedHandles->GrantSourceGenerations.Contains(GrantSourceId)) return;
 		bool bNeedsGrant = false;
-		if (!ProjectJASC || !ProjectJASC->AcquireAbilityGrantSource(GrantSourceId, bNeedsGrant))
+		if (!ProjectJASC || !ProjectJASC->AcquireAbilityGrantSource(GrantSourceId, bNeedsGrant, GrantGeneration))
 		{
 			return;
 		}
-		OutGrantedHandles->GrantSourceIds.Add(GrantSourceId);
+		OutGrantedHandles->GrantSourceGenerations.Add(GrantSourceId, GrantGeneration);
 		if (!bNeedsGrant) return;
 	}
+	// Keyed specs/effects have one owner: the ASC registry. A provider keeps only
+	// its generation lease. Unkeyed sets keep individual handles instead.
+	const auto CanContinue = [&]() {
+		return GrantSourceId.IsNone() ? OutGrantedHandles->MutationRevision == MutationRevision :
+			ProjectJASC->IsAbilityGrantSourceCurrent(GrantSourceId, GrantGeneration);
+	};
 
 	for (const FProject_JAbilitySet_GameplayAbility& AbilityEntry : GrantedAbilityEntries)
 	{
+		if (!CanContinue()) { return; }
 		if (!AbilityEntry.Ability)
 		{
 			continue;
@@ -46,15 +55,18 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 		AbilitySpec.GetDynamicSpecSourceTags().AppendTags(AbilityEntry.AdditionalInputTags);
 
 		const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
-		OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
-		if (ProjectJASC && !GrantSourceId.IsNone())
+		if (!GrantSourceId.IsNone())
 		{
-			ProjectJASC->RegisterGrantedAbility(GrantSourceId, AbilitySpecHandle);
+			if (!ProjectJASC->RegisterGrantedAbility(GrantSourceId, GrantGeneration, AbilitySpecHandle))
+			{ ASC->CancelAbilityHandle(AbilitySpecHandle); ASC->ClearAbility(AbilitySpecHandle); return; }
 		}
+		else if (CanContinue()) { OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle); }
+		else { ASC->CancelAbilityHandle(AbilitySpecHandle); ASC->ClearAbility(AbilitySpecHandle); return; }
 	}
 
 	for (const FProject_JAbilitySet_GameplayEffect& EffectEntry : GrantedEffectEntries)
 	{
+		if (!CanContinue()) { return; }
 		if (!EffectEntry.Effect)
 		{
 			continue;
@@ -62,11 +74,14 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 
 		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
 		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
-		OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle);
-		if (ProjectJASC && !GrantSourceId.IsNone())
+		if (!GrantSourceId.IsNone())
 		{
-			ProjectJASC->RegisterGrantedEffect(GrantSourceId, GameplayEffectHandle);
+			// Instant effects have no removable handle. They are committed once by GAS.
+			if (GameplayEffectHandle.IsValid() && !ProjectJASC->RegisterGrantedEffect(GrantSourceId, GrantGeneration, GameplayEffectHandle))
+			{ ASC->RemoveActiveGameplayEffect(GameplayEffectHandle); return; }
 		}
+		else if (CanContinue()) { if (GameplayEffectHandle.IsValid()) OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle); }
+		else { if (GameplayEffectHandle.IsValid()) ASC->RemoveActiveGameplayEffect(GameplayEffectHandle); return; }
 	}
 
 }
@@ -79,23 +94,25 @@ void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, F
 	{
 		return;
 	}
-
-	if (!GrantedHandles->GrantSourceIds.IsEmpty())
+	check(IsInGameThread());
+	// Detach before any GAS removal delegate. A nested new grant owns the fresh
+	// container and cannot be reset by completion of this old release.
+	const uint64 NextRevision = GrantedHandles->MutationRevision == MAX_uint64 ? MAX_uint64 : GrantedHandles->MutationRevision + 1;
+	FProject_JAbilitySet_GrantedHandles Retired = MoveTemp(*GrantedHandles);
+	*GrantedHandles = FProject_JAbilitySet_GrantedHandles();
+	GrantedHandles->MutationRevision = NextRevision;
+	if (!Retired.GrantSourceGenerations.IsEmpty())
 	{
 		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
 		{
-			for (const FName GrantSourceId : GrantedHandles->GrantSourceIds)
+			for (const auto& Lease : Retired.GrantSourceGenerations)
 			{
-				ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
+				ProjectJASC->RemoveAbilityGrantSource(Lease.Key, Lease.Value);
 			}
-			GrantedHandles->AbilitySpecHandles.Reset();
-			GrantedHandles->GameplayEffectHandles.Reset();
-			GrantedHandles->GrantSourceIds.Reset();
-			return;
 		}
 	}
 
-	for (const FGameplayAbilitySpecHandle& Handle : GrantedHandles->AbilitySpecHandles)
+	for (const FGameplayAbilitySpecHandle& Handle : Retired.AbilitySpecHandles)
 	{
 		if (Handle.IsValid())
 		{
@@ -103,7 +120,7 @@ void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, F
 		}
 	}
 
-	for (const FActiveGameplayEffectHandle& Handle : GrantedHandles->GameplayEffectHandles)
+	for (const FActiveGameplayEffectHandle& Handle : Retired.GameplayEffectHandles)
 	{
 		if (Handle.IsValid())
 		{
@@ -111,9 +128,6 @@ void UProject_JAbilitySet::TakeFromAbilitySystem(UAbilitySystemComponent* ASC, F
 		}
 	}
 
-	GrantedHandles->AbilitySpecHandles.Reset();
-	GrantedHandles->GameplayEffectHandles.Reset();
-	GrantedHandles->GrantSourceIds.Reset();
 }
 
 #if WITH_EDITOR

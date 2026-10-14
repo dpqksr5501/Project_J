@@ -55,22 +55,35 @@ bool FProjectJCombatInputBoundaryTest::RunTest(const FString& Parameters)
 		[&GameplayEvents](const FGameplayEventData*) { ++GameplayEvents; });
 	ASC->GenericGameplayEventCallbacks.FindOrAdd(Tags.InputTag_Weapon_LMB).AddLambda(
 		[&ValidInputs](const FGameplayEventData*) { ++ValidInputs; });
-	Input->ServerSendCombatInputEvent_Implementation(Tags.Event_Combat_ComboWindow, 0.0f, 1);
+	Input->ReceiveAuthorityCombatInput(Tags.Event_Combat_ComboWindow, 0.0f, 1);
 	TestEqual(TEXT("Client cannot inject a montage gameplay event through input RPC"), GameplayEvents, 0);
-	Input->ServerSendCombatInputEvent_Implementation(Tags.InputTag_Weapon_LMB, 0.0f, 2);
+	Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, 2);
 	TestEqual(TEXT("Valid LMB input reaches the server event listener"), ValidInputs, 1);
-	Input->ServerSendCombatInputEvent_Implementation(Tags.InputTag_Weapon_LMB, 0.0f, 2);
+	Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, 2);
 	TestEqual(TEXT("Duplicate sequence does not replay input"), ValidInputs, 1);
 	int32 CommandEvents = 0;
 	const FGameplayTag CommandTag = FGameplayTag::RequestGameplayTag(TEXT("Command.Greatsword.Special1"));
 	ASC->GenericGameplayEventCallbacks.FindOrAdd(CommandTag).AddLambda(
 		[&CommandEvents](const FGameplayEventData*) { ++CommandEvents; });
-	Input->ServerSendCombatInputEvent_Implementation(CommandTag, 0.0f, 3);
+	Input->ReceiveAuthorityCombatInput(CommandTag, 0.0f, 3);
 	TestEqual(TEXT("Client cannot skip command matching with a resolved alias"), CommandEvents, 0);
-	Input->ServerSendCombatInputEvent_Implementation(FGameplayTag(), 0.0f, 4);
-	Input->ServerSendCombatInputEvent_Implementation(Tags.Event_Combat_ComboWindow, 0.0f, 100);
-	Input->ServerSendCombatInputEvent_Implementation(Tags.InputTag_Weapon_LMB, 0.0f, 3);
+	Input->ReceiveAuthorityCombatInput(FGameplayTag(), 0.0f, 4);
+	Input->ReceiveAuthorityCombatInput(Tags.Event_Combat_ComboWindow, 0.0f, 100);
+	Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, 3);
 	TestEqual(TEXT("Rejected tags do not advance the accepted sequence"), ValidInputs, 2);
+	for (const uint32 Sequence : {0x7fffffffu, 0xfffffffeu, 0xffffffffu, 0u, 1u})
+	{ Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, Sequence); }
+	TestEqual(TEXT("Accepted serials survive uint32 wrap"), ValidInputs, 7);
+	Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, 1u);
+	Input->ReceiveAuthorityCombatInput(Tags.InputTag_Weapon_LMB, 0.0f, 0u);
+	TestEqual(TEXT("Duplicate and stale serials remain rejected after wrap"), ValidInputs, 7);
+	const auto RetireHandle = ASC->GenericGameplayEventCallbacks.FindChecked(Tags.InputTag_Weapon_LMB).AddLambda(
+		[Input](const FGameplayEventData*) { Input->Initialize(nullptr); });
+	Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+	TestEqual(TEXT("Synchronous receiver retirement returns safely after the original event"), ValidInputs, 8);
+	Input->HandleInputTagPressed(Tags.InputTag_Weapon_LMB);
+	TestEqual(TEXT("Retired receiver cannot dispatch again"), ValidInputs, 8);
+	ASC->GenericGameplayEventCallbacks.FindChecked(Tags.InputTag_Weapon_LMB).Remove(RetireHandle);
 	ASC->GenericGameplayEventCallbacks.Empty();
 	World->DestroyWorld(false);
 	return true;

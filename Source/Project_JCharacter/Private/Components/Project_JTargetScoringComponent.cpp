@@ -23,6 +23,12 @@ UProject_JEquipmentManagerComponent* UProject_JTargetScoringComponent::ResolveEq
 	return GetOwner() ? GetOwner()->FindComponentByClass<UProject_JEquipmentManagerComponent>() : nullptr;
 }
 
+void UProject_JTargetScoringComponent::BeginPlay()
+{
+	bEndingPlay = false;
+	Super::BeginPlay();
+}
+
 void UProject_JTargetScoringComponent::BindEquipment(UProject_JEquipmentManagerComponent* Manager)
 {
 	if (BoundEquipment.Get() == Manager) { return; }

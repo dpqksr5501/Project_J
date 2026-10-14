@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"attackPresentations\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"title\\\":\\\"Project_JCombatAttackPresentationEntry\\\",\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"attackTag\\\":{\\\"title\\\":\\\"GameplayTag\\\",\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"tagName\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"태그의 이름입니다.\\\"}},\\\"required\\\":[\\\"tagName\\\"]},\\\"profile\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"/Script/Project_JCharacter.Project_JAttackPresentationProfile\\\",\\\"description\\\":\\\"UObject 또는 UClass에 대한 레퍼런스를 나타냅니다.\\\",\\\"properties\\\":{\\\"refPath\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"소프트 경로 스트링으로 저장된 레퍼런스입니다.\\\"}},\\\"required\\\":[\\\"refPath\\\"]}},\\\"required\\\":[\\\"attackTag\\\",\\\"profile\\\"]}}}\"}"
+			}
+		]
+	}
+}

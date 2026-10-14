@@ -1,0 +1,110 @@
+[
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/EditorBuild1.log",
+    "sha256": "f591e97025302287aac02d90012c9a9371deb37d41e208be4bb254671de6dc0e",
+    "summary": [
+      "Result: Failed (OtherCompilationError)",
+      "Total execution time: 199.85 seconds"
+    ],
+    "firstCompilerErrors": [
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JCombatAnimationLayerComponent.cpp(180,71): error C2065: 'Warning': ﾼﾱﾾ￰ﾵￇ￁￶ ﾾￊ￀ﾺ ﾽￄﾺﾰ￀ￚ￀ￔﾴￏﾴ￙.",
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JCombatAnimationLayerComponent.cpp(180,3): error C3861: 'UE_LogProjectJCombatAnimationLayer': ﾽￄﾺﾰ￀ￚﾸﾦ ￃﾣ￀ﾻ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙.",
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JMountedAnimationLayerComponent.cpp(192,73): error C2065: 'Warning': ﾼﾱﾾ￰ﾵￇ￁￶ ﾾￊ￀ﾺ ﾽￄﾺﾰ￀ￚ￀ￔﾴￏﾴ￙.",
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Components\\Project_JMountedAnimationLayerComponent.cpp(192,3): error C3861: 'UE_LogProjectJMountedAnimationLayer': ﾽￄﾺﾰ￀ￚﾸﾦ ￃﾣ￀ﾻ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙.",
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\UI\\Project_JPlayerHUDWidget.cpp(661,10): error C3861: 'ActivateItem': ﾽￄﾺﾰ￀ￚﾸﾦ ￃﾣ￀ﾻ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙."
+    ]
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/EditorBuild2.log",
+    "sha256": "052b73766d45ab3248ff863b03cd977741af37aba87a19677331a25f24294299",
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 202.19 seconds"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/ActorInfoEditorBuild.log",
+    "sha256": "71ff9648c196e0729a2155fab4869a2da9aa76acd367e36f68828db40952529f",
+    "summary": [
+      "Result: Failed (OtherCompilationError)",
+      "Total execution time: 200.16 seconds"
+    ],
+    "firstCompilerErrors": [
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRuntimeOwnershipTests.cpp(240,13): error C2248: 'AProject_JBaseCharacter::OnRep_Controller': protected ﾸ￢ﾹ￶('AProject_JBaseCharacter' ￅﾬﾷﾡﾽﾺ﾿ﾡﾼﾭ ﾼﾱﾾ￰)﾿ﾡ ﾾￗﾼﾼﾽﾺￇￒ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙.",
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRuntimeOwnershipTests.cpp(245,13): error C2248: 'AProject_JBaseCharacter::OnRep_Controller': protected ﾸ￢ﾹ￶('AProject_JBaseCharacter' ￅﾬﾷﾡﾽﾺ﾿ﾡﾼﾭ ﾼﾱﾾ￰)﾿ﾡ ﾾￗﾼﾼﾽﾺￇￒ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙."
+    ]
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/ActorInfoEditorRetry.log",
+    "sha256": "819023622a07bd654d1b80cd1d7e79ab4fc1dda4884a829e64a4da9363946887",
+    "summary": [
+      "Result: Failed (OtherCompilationError)",
+      "Total execution time: 197.89 seconds"
+    ],
+    "firstCompilerErrors": [
+      "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCore\\Private\\Tests\\Project_JMessageRouterTests.cpp : fatal error C1083: ￄￄￆￄ￀ￏﾷﾯ ﾻ�ﾼﾺ ￆￄ￀ￏ ￆￄ￀ￏ￀ﾻ ﾿ﾭ ﾼ￶ ﾾ￸ﾽ￀ﾴￏﾴ￙. 'C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCore\\Project_JMessageRouterTests.cpp.obj': Permission denied"
+    ]
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/ActorInfoEditorRetry2.log",
+    "sha256": "272ad000df738de78a612e7b66fd5f9ee1554e8569a7208f06f8ac43cb75b364",
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 198.01 seconds"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/GameBuild.log",
+    "sha256": "d8e0a25feb3a67738fd5fe7616d1f9e7eb3bcf8b5288bef4cf65863e8e5b515a",
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 148.90 seconds"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/GameBuildFinal.log",
+    "sha256": "b3e8e2440bea61739c193ee1de3a48f8edca2efd6a7fab88aa2a3da64bd804f6",
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 154.12 seconds"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Cook1/Cook.log",
+    "sha256": "fabf7d8dbc87682404ef4da967234f214177fed79175aa842a680f7dceb9d747",
+    "summary": [
+      "[2026.10.13-12.35.02:962][  0]LogCook: Display: Packages Cooked: 1361, Packages Incrementally Skipped: 0, Packages Skipped by Platform: 7, Total Packages: 1368",
+      "[2026.10.13-12.35.02:975][  0]LogInit: Display: Success - 0 error(s), 1 warning(s)"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Cook2/Cook.log",
+    "sha256": "a3cec055ce5f60496dc4b5b9ad239eb5d90a83b1906d8a5c217aab9404944379",
+    "summary": [
+      "[2026.10.13-13.20.56:637][  0]LogCook: Display: Packages Cooked: 1361, Packages Incrementally Skipped: 0, Packages Skipped by Platform: 7, Total Packages: 1368",
+      "[2026.10.13-13.20.56:657][  0]LogInit: Display: Success - 0 error(s), 1 warning(s)"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Packaged1_Stage.log",
+    "sha256": "ca4570a7ba7b6b082a609bc06ef1e04aa275a90025989acb8102ab7d81e04a3f",
+    "summary": [
+      "AutomationTool exiting with ExitCode=0 (Success)"
+    ],
+    "firstCompilerErrors": []
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/Packaged2_Stage.log",
+    "sha256": "8803e7ada6e6832d2ea28f60b0210f48a3f2c11c5388b31f13730b94a8433632",
+    "summary": [
+      "AutomationTool exiting with ExitCode=0 (Success)"
+    ],
+    "firstCompilerErrors": []
+  }
+]

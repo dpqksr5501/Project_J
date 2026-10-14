@@ -1,0 +1,117 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "143473854A3F9F85D361B89000F5A729",
+			"instanceName": "DESKTOP-5T07C91-34084",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-00.31.56",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.099796697497367859,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"143473854A3F9F85D361B89000F5A729"
+			],
+			"duration": 0.099796697497367859,
+			"dateTime": "2026.10.14-00.31.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reentrant deinitialize retains entity storage until the active step completes' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 294,
+					"timestamp": "2026.10.14-00.31.56"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reentrant deinitialize retains the active processor until the step completes' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 296,
+					"timestamp": "2026.10.14-00.31.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TEST-ONLY RESCUE restored prematurely released storage; this is a contract failure reproduction, not a crash reproduction.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.31.56"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reentrant deinitialize retains entity storage until the active step completes' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 294,
+					"timestamp": "2026.10.14-00.31.56"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reentrant deinitialize retains the active processor until the step completes' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 296,
+					"timestamp": "2026.10.14-00.31.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TEST-ONLY RESCUE restored prematurely released storage; this is a contract failure reproduction, not a crash reproduction.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.31.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		}
+	]
+}

@@ -6,13 +6,15 @@
 
 최근 내부 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)를 따른다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
 
+2026-10-13의 실제 후속 구현은 [전체 결함 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)와 [구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)에 기록한다. 후자는 레이어·UI 자원 수명 공통화, UI/무기 진단 책임 분리, private 미사용 제거와 늦은 Controller의 GAS metadata 갱신이며, 검토만 한 시스템·미해결 CPU 증가와 구분한다.
+
 이전 통합 검증은 [2026-09-19 기록](../Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)이다. 후속 캐릭터 변경과 검증 범위는 [2026-09-20 컴포넌트 실행·수명 정리](../Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md)를 따른다. UI는 소비 수명에 따라 구독하고, 임시 애니메이션 요구는 메시에서 합성하며, 발도·납도 실행 상태는 기존 CombatIntroComponent가 소유한다. 궤적은 현재 생성 경계를 유지한다. 자동화 기록은 실제 멀티플레이·제작 메뉴·에셋 저장의 수동 확인을 대신하지 않는다.
 
 ## 1. 프로젝트 성격과 현재 범위
 
 - Unreal Engine **5.8** 기반의 3인칭 액션 MMORPG 지향 프로젝트다.
 - 핵심은 C++ 기반 캐릭터 이동, GAS, 데이터 기반 직업/장비/전투, 네트워크 권한, 그리고 Motion Matching 애니메이션이다.
-- 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하는 빈 wrapper이며, GameState/PlayerState/Default Pawn 등은 C++ 기준 클래스로 설정되어 있다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
+- 현재 기본 맵은 `Lvl_ThirdPerson`, 기본 GameMode는 `BP_Project_JGameMode`다. 이 Blueprint는 `Project_JGameMode`를 상속하고, GameState/PlayerState는 C++ 클래스다. 실제 CDO의 Pawn은 `BP_GreatSword`, Controller는 `BP_ThirdPersonPlayerController`의 override다. Third Person 샘플 에셋이 남아 있지만 최종 게임 구조를 의미하지는 않는다.
 - 대검은 첫 번째 실제 직업 수직 슬라이스다. `BP_Player`, `ABP_Player`는 테스트 자산이며 생산 직업 구조의 기준은 아니다.
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
 - NPC 타깃 후보는 중앙 스케줄러의 공간 질의를 사용하며, 장비 메시 스트리밍은 `VisualAssetSubsystem`의 요청·수명 관리를 사용한다. 전투/탑승 애니메이션 레이어에는 컴포넌트 로컬 `FStreamableHandle` 경로도 남아 있다. 이를 모든 전투 질의·표현 로딩의 단일 서비스로 일반화하지 않는다. 서버 간 이동은 handover envelope/상태 머신/transport 계약이며 실제 라이브 서버 연결 완료를 의미하지 않는다.
@@ -27,7 +29,7 @@ Project_JCore
   └─ 상호작용 공용 계약
 
 Project_JGAS
-  ├─ Project J AbilitySystemComponent, AttributeSet, AbilitySet 공용 타입
+  ├─ Project J AbilitySystemComponent, AttributeSet, grant lease 공용 계약
   └─ GAS 소유권 계약
 
 Project_JMount
@@ -45,8 +47,14 @@ Project_J
   ├─ Social, Gateway, Handover 등 게임·백엔드 경계
   └─ 전역 게임 흐름과 진입점
 
+Project_JMMO
+  └─ 값 기반 서비스 계약·CAS 메모리 repository·확장 카탈로그
+
 Project_JCharacterEditor
   └─ 에디터 전용 검증·도구 확장
+
+Project_JAnimationNodes
+  └─ UncookedOnly 그래프 wrapper; 실행 노드는 Character 모듈
 ```
 
 의존성은 아래 방향을 유지한다. 하위 모듈이 Character나 Game 모듈을 역참조하지 않도록 한다.
@@ -55,6 +63,8 @@ Project_JCharacterEditor
 Project_JCore → Project_JGAS → Project_JMount
        └──────────────────────→ Project_JCharacter → Project_J
 Project_JMount ───────────────→ Project_JCharacter
+엔진 Core → Project_JMMO → Project_J
+Project_JCharacter → Project_JAnimationNodes → Project_JCharacterEditor
 ```
 
 `Project_JMount`는 Core/GAS 공용 계약 위에 있는 탈것 런타임 모듈이며,
@@ -69,6 +79,7 @@ Mount가 역참조하지 않도록 한다.
 - 플레이어의 장기 상태(ASC, AttributeSet, Inventory, EquipmentManager, ProgressionComponent)는 기본적으로 `AProject_JPlayerState`에 둔다. 재접속·Possess 변경을 고려한 구조다.
 - `AProject_JBaseCharacter`는 플레이어/NPC 공통 기반이다. NPC는 PlayerState 없이 자신에게 로컬 ASC/장비 런타임을 둘 수 있다.
 - 어떤 시스템이든 `GetAbilitySystemComponent()`, `GetInventoryComponent()`, `ResolveEquipmentManagerForRuntime()` 같은 해석 경로를 우회해 캐릭터에 직접 상태를 중복 생성하면 안 된다.
+- ASC 포인터가 살아 있어도 해당 Pawn이 현재 Avatar가 아니면 활성화·취소·상태 조회·입력 해제 권한이 없다. 후속 [전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에서 실제 교체 시험과 검토 범위를 확인한다.
 
 ### 권한과 표현을 분리한다
 

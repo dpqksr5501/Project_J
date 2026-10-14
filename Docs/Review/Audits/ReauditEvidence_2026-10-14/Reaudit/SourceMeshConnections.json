@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"skeletalMeshAsset\\\":{\\\"refPath\\\":\\\"/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple\\\"},\\\"animClass\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master_C\\\"},\\\"bHiddenInGame\\\":true,\\\"componentTags\\\":[]}\"}"
+			}
+		]
+	}
+}

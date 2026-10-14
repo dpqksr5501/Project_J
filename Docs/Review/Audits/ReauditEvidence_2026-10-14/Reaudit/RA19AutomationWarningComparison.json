@@ -1,0 +1,9 @@
+{
+  "baseline": "WholeTransition1 RA01-13",
+  "current": "WholeLifecycle1 RA01-19",
+  "baselineWarningTests": 20,
+  "currentWarningTests": 20,
+  "added": [],
+  "removed": [],
+  "note": "Names/count comparison only, not proof messages identical or every warning harmless."
+}

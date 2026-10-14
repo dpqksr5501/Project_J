@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph\"},{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph.AnimGraphNode_ProjectJLocomotion_0.AnimationBlendStackGraph_0\"},{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:EventGraph\"},{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:CombatUpperBody\"},{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:MountedLocomotion\"}]}"
+			}
+		]
+	}
+}

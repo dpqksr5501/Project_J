@@ -18,6 +18,7 @@ void UProject_JQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 }
 void UProject_JQuestComponent::BeginPlay()
 {
+	bEnding = false;
 	Super::BeginPlay();
 	if (Definitions.IsEmpty())
 		if (auto *Def = LoadObject<UProject_JQuestDefinition>(
@@ -32,9 +33,47 @@ void UProject_JQuestComponent::BeginPlay()
 }
 void UProject_JQuestComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
-	GetWorld()->GetTimerManager().ClearTimer(TravelTimer);
-	OnChanged.Clear();
+	Retire();
 	Super::EndPlay(Reason);
+}
+void UProject_JQuestComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Retire();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+bool UProject_JQuestComponent::CanPublish() const
+{
+	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
+		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
+}
+bool UProject_JQuestComponent::CanMutate() const
+{
+	check(IsInGameThread());
+	return CanPublish() && GetOwner()->HasAuthority() && !bChanging;
+}
+void UProject_JQuestComponent::Retire()
+{
+	bEnding = true;
+	if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
+	TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
+	OnChanged.Clear();
+}
+void UProject_JQuestComponent::ReconcileTravelSampling()
+{
+	const bool bActive = CanPublish() && GetOwner()->HasAuthority() &&
+		States.ContainsByPredicate([this](const FProject_JQuestState& State) {
+			const auto* Def = FindDefinition(State.QuestId);
+			return Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount;
+		});
+	if (!bActive)
+	{
+		if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
+		TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
+	}
+	else if (!GetWorld()->GetTimerManager().TimerExists(TravelTimer))
+	{
+		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
+	}
 }
 UProject_JQuestDefinition *UProject_JQuestComponent::FindDefinition(FName Id) const
 {
@@ -53,29 +92,29 @@ UProject_JQuestDefinition *UProject_JQuestComponent::FindDefinition(FName Id) co
 }
 void UProject_JQuestComponent::Publish()
 {
+	if (!CanPublish()) { return; }
+	ReconcileTravelSampling();
 	GetOwner()->ForceNetUpdate();
 	OnChanged.Broadcast();
 }
 void UProject_JQuestComponent::OnRep_States()
 {
-	OnChanged.Broadcast();
+	if (CanPublish()) { OnChanged.Broadcast(); }
 }
 bool UProject_JQuestComponent::Accept(FName Id)
 {
-	if (!GetOwner()->HasAuthority() || bChanging || States.Num() >= 128 || !FindDefinition(Id) ||
+	if (!CanMutate() || States.Num() >= 128 || !FindDefinition(Id) ||
 		States.ContainsByPredicate([Id](const auto &State) { return State.QuestId == Id; }))
 		return false;
 	FProject_JQuestState State;
 	State.QuestId = Id;
 	States.Add(State);
-	if (FindDefinition(Id)->bTravelObjective && !TravelTimer.IsValid())
-		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
 	Publish();
 	return true;
 }
 void UProject_JQuestComponent::RecordObjective(FName Event, int32 Count)
 {
-	if (!GetOwner()->HasAuthority() || bChanging || Event.IsNone() || Count <= 0 || Count > 1000000)
+	if (!CanMutate() || Event.IsNone() || Count <= 0 || Count > 1000000)
 		return;
 	bool bChanged = false;
 	for (auto &State : States)
@@ -90,7 +129,7 @@ void UProject_JQuestComponent::RecordObjective(FName Event, int32 Count)
 }
 bool UProject_JQuestComponent::Claim(FName Id)
 {
-	if (!GetOwner()->HasAuthority() || bChanging)
+	if (!CanMutate())
 		return false;
 	auto *State = States.FindByPredicate([Id](const auto &Value) { return Value.QuestId == Id; });
 	const auto *Def = FindDefinition(Id);
@@ -113,6 +152,7 @@ bool UProject_JQuestComponent::Claim(FName Id)
 }
 bool UProject_JQuestComponent::AllowRequest()
 {
+	if (!CanMutate()) { return false; }
 	const double Now = GetWorld()->GetTimeSeconds();
 	if (RequestWindow < 0 || Now - RequestWindow >= 1)
 	{
@@ -123,7 +163,7 @@ bool UProject_JQuestComponent::AllowRequest()
 }
 void UProject_JQuestComponent::RequestClaim(FName Id)
 {
-	ServerClaim(Id);
+	if (CanPublish()) { ServerClaim(Id); }
 }
 void UProject_JQuestComponent::ServerClaim_Implementation(FName Id)
 {
@@ -132,7 +172,7 @@ void UProject_JQuestComponent::ServerClaim_Implementation(FName Id)
 }
 void UProject_JQuestComponent::RequestTracking(FName Id, bool bTracked)
 {
-	ServerTracking(Id, bTracked);
+	if (CanPublish()) { ServerTracking(Id, bTracked); }
 }
 void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTracked)
 {
@@ -147,6 +187,7 @@ void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTra
 }
 void UProject_JQuestComponent::SampleTravel()
 {
+	if (!CanMutate()) { return; }
 	bool bActive = false;
 	for (const auto &State : States)
 		if (const auto *Def = FindDefinition(State.QuestId);
@@ -181,7 +222,10 @@ void UProject_JQuestComponent::SampleTravel()
 					if (Def && Def->bTravelObjective)
 						Events.Add(Def->ObjectiveEvent);
 				for (FName Event : Events)
+				{
 					RecordObjective(Event, Count);
+					if (!CanPublish() || !TravelTimer.IsValid()) { return; }
+				}
 			}
 		}
 	}
@@ -198,7 +242,7 @@ FProject_JQuestSnapshot UProject_JQuestComponent::CaptureSnapshot() const
 }
 bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot)
 {
-	if (!GetOwner()->HasAuthority() || bChanging || !States.IsEmpty() || Snapshot.Version != 1 ||
+	if (!CanMutate() || !States.IsEmpty() || Snapshot.Version != 1 ||
 		Snapshot.States.Num() > 128)
 		return false;
 	TSet<FName> Seen;
@@ -211,8 +255,6 @@ bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Sn
 		Seen.Add(State.QuestId);
 	}
 	States = Snapshot.States;
-	if (!States.IsEmpty())
-		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
 	Publish();
 	return true;
 }

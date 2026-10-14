@@ -1,0 +1,45 @@
+{
+  "scope": "Development, real D3D12/offscreen 1280x720, uncapped, VSync0, 200 actual authored BP/retarget bodies, 0 socket connections. Simplified camera/light scene. Phase3 contains one R burst and its return, not sustained full200 attacks. Capture/stalls included; GPU counters may be delayed. No pre-change matched comparison.",
+  "groups": {
+    "phase_1": {
+      "frames": 483,
+      "mean_frame_ms": 18.848726629399586,
+      "fps_from_mean_frame": 53.053981823909254,
+      "mean_gpu_ms": 9.9716983436853,
+      "full_200_montage_frames": 0,
+      "rendered_200_frames": 482
+    },
+    "phase_2": {
+      "frames": 500,
+      "mean_frame_ms": 16.000740804,
+      "fps_from_mean_frame": 62.49710636835087,
+      "mean_gpu_ms": 10.0139052,
+      "full_200_montage_frames": 0,
+      "rendered_200_frames": 500
+    },
+    "phase_3": {
+      "frames": 386,
+      "mean_frame_ms": 20.741959082901555,
+      "fps_from_mean_frame": 48.211453701320856,
+      "mean_gpu_ms": 10.310520207253886,
+      "full_200_montage_frames": 167,
+      "rendered_200_frames": 386
+    },
+    "attack_phase_full_200_montages": {
+      "frames": 167,
+      "mean_frame_ms": 27.114896473053893,
+      "fps_from_mean_frame": 36.88009655481351,
+      "mean_gpu_ms": 10.621112574850299,
+      "full_200_montage_frames": 167,
+      "rendered_200_frames": 167
+    },
+    "attack_phase_no_montages": {
+      "frames": 219,
+      "mean_frame_ms": 15.882230570776256,
+      "fps_from_mean_frame": 62.963448083925165,
+      "mean_gpu_ms": 10.073675799086757,
+      "full_200_montage_frames": 0,
+      "rendered_200_frames": 219
+    }
+  }
+}

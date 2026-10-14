@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"executionChangePolicy\\\":\\\"CompleteCurrentExecution\\\",\\\"bUsesCombo\\\":true,\\\"bRequiresWeaponAnimation\\\":true,\\\"inlineAbilities\\\":[],\\\"inlineEffects\\\":[],\\\"bDeriveAttackCatalog\\\":false,\\\"additionalAttacks\\\":[],\\\"combatStyleTag\\\":{\\\"tagName\\\":\\\"CombatStyle.Greatsword\\\"},\\\"schemaVersion\\\":1,\\\"weaponAnimationProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile.DA_Greatsword_WeaponProfile\\\"},\\\"combatPresentationSet\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base.DA_CPS_Greatsword_Base\\\"},\\\"comboDefinition\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Combo/DA_Combo_Greatsword.DA_Combo_Greatsword\\\"},\\\"commandSet\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword.DA_CommandSet_Greatsword\\\"},\\\"attackSet\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword.DA_AttackSet_Greatsword\\\"},\\\"abilitySets\\\":[{\\\"refPath\\\":\\\"/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base\\\"}]}\"}"
+			}
+		]
+	}
+}

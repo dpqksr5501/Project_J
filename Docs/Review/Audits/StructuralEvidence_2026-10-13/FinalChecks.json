@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-13T13:49:58.9497805Z",
+  "documentation": {
+    "markdownDocuments": 207,
+    "markdownWithRootReadme": 208,
+    "localLinks": 1500,
+    "brokenLinks": 0,
+    "absentHistoricalLocalArchives": 12
+  },
+  "moduleCatalog": {
+    "passed": true,
+    "projectModules": 8,
+    "features": 205,
+    "domains": 20
+  },
+  "gitDiffCheck": "passed",
+  "compiledSourceFrozen": true,
+  "currentEditorSetRestored": true,
+  "handoffUserChangePreserved": true,
+  "contentChanges": [],
+  "commitPushMergeShutdownPerformed": false
+}

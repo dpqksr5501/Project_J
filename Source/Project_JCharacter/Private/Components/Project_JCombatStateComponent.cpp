@@ -10,14 +10,33 @@ UProject_JCombatStateComponent::UProject_JCombatStateComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UProject_JCombatStateComponent::BeginPlay()
+{
+	bEnding = false;
+	Super::BeginPlay();
+}
+
+void UProject_JCombatStateComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bEnding = true;
+	ClearAbilitySystemBinding();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JCombatStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	bEnding = true;
 	ClearAbilitySystemBinding();
 	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JCombatStateComponent::BindToAbilitySystem(UAbilitySystemComponent* InAbilitySystemComponent)
 {
+	if (bEnding || IsBeingDestroyed() ||
+		(InAbilitySystemComponent && InAbilitySystemComponent->GetAvatarActor() != GetOwner()))
+	{
+		InAbilitySystemComponent = nullptr;
+	}
 	if (BoundAbilitySystemComponent.Get() == InAbilitySystemComponent && !StateTagEventHandles.IsEmpty())
 	{
 		return;
@@ -36,13 +55,13 @@ void UProject_JCombatStateComponent::ClearAbilitySystemBinding()
 
 bool UProject_JCombatStateComponent::HasStateTag(const FGameplayTag& StateTag) const
 {
-	const UAbilitySystemComponent* ASC = BoundAbilitySystemComponent.Get();
+	const UAbilitySystemComponent* ASC = GetCurrentAvatarAbilitySystem();
 	return ASC && StateTag.IsValid() && ASC->HasMatchingGameplayTag(StateTag);
 }
 
 bool UProject_JCombatStateComponent::TryActivateAbilityByTag(const FGameplayTag& AbilityTag) const
 {
-	UAbilitySystemComponent* ASC = BoundAbilitySystemComponent.Get();
+	UAbilitySystemComponent* ASC = GetCurrentAvatarAbilitySystem();
 	if (!ASC || !AbilityTag.IsValid())
 	{
 		return false;
@@ -53,7 +72,7 @@ bool UProject_JCombatStateComponent::TryActivateAbilityByTag(const FGameplayTag&
 
 void UProject_JCombatStateComponent::CancelAbilitiesByTag(const FGameplayTag& AbilityTag) const
 {
-	UAbilitySystemComponent* ASC = BoundAbilitySystemComponent.Get();
+	UAbilitySystemComponent* ASC = GetCurrentAvatarAbilitySystem();
 	if (!ASC || !AbilityTag.IsValid())
 	{
 		return;
@@ -66,6 +85,15 @@ void UProject_JCombatStateComponent::CancelAbilitiesByTag(const FGameplayTag& Ab
 bool UProject_JCombatStateComponent::IsCombatModeActive() const
 {
 	return HasStateTag(FProject_JGameplayTags::Get().State_CombatMode);
+}
+
+UAbilitySystemComponent* UProject_JCombatStateComponent::GetCurrentAvatarAbilitySystem() const
+{
+	// PlayerState's ASC can survive this pawn. Binding validity is an avatar
+	// ownership contract, not just a live UObject pointer.
+	auto* ASC = BoundAbilitySystemComponent.Get();
+	const auto* Owner = GetOwner();
+	return !bEnding && !IsBeingDestroyed() && IsValid(Owner) && !Owner->IsActorBeingDestroyed() && ASC && ASC->GetAvatarActor() == Owner ? ASC : nullptr;
 }
 
 bool UProject_JCombatStateComponent::IsAttacking() const
@@ -109,7 +137,7 @@ void UProject_JCombatStateComponent::RegisterStateTagEvents()
 	StateTagEventHandles.Reserve(UE_ARRAY_COUNT(StateTags));
 	for (const FGameplayTag& StateTag : StateTags)
 	{
-		StateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(StateTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &UProject_JCombatStateComponent::HandleStateTagChanged));
+		StateTagEventHandles.Add(StateTag, ASC->RegisterGameplayTagEvent(StateTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &UProject_JCombatStateComponent::HandleStateTagChanged));
 	}
 }
 
@@ -122,19 +150,11 @@ void UProject_JCombatStateComponent::UnregisterStateTagEvents()
 		return;
 	}
 
-	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
-	const FGameplayTag StateTags[] =
+	// Remove the exact tag/handle pairs acquired at registration. There is one
+	// observed-tag list, so extending it cannot drift from the release list.
+	for (const auto& Entry : StateTagEventHandles)
 	{
-		GameplayTags.State_Attacking,
-		GameplayTags.State_Dodging,
-		GameplayTags.State_HitReacting,
-		GameplayTags.State_CombatMode,
-		GameplayTags.State_Movement_Sprinting
-	};
-
-	for (int32 Index = 0; Index < StateTagEventHandles.Num() && Index < UE_ARRAY_COUNT(StateTags); ++Index)
-	{
-		ASC->RegisterGameplayTagEvent(StateTags[Index], EGameplayTagEventType::NewOrRemoved).Remove(StateTagEventHandles[Index]);
+		ASC->RegisterGameplayTagEvent(Entry.Key, EGameplayTagEventType::NewOrRemoved).Remove(Entry.Value);
 	}
 
 	StateTagEventHandles.Reset();
@@ -142,6 +162,7 @@ void UProject_JCombatStateComponent::UnregisterStateTagEvents()
 
 void UProject_JCombatStateComponent::HandleStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
+	if (!GetCurrentAvatarAbilitySystem()) { return; }
 	UE_LOG(LogProjectJCombatState, Log, TEXT("State tag changed. Owner=%s Tag=%s Count=%d"), *GetNameSafe(GetOwner()), *CallbackTag.ToString(), NewCount);
 	OnCombatStateTagChanged.Broadcast(CallbackTag, NewCount);
 }

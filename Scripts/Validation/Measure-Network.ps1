@@ -1,19 +1,21 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName,
     [ValidateRange(2,8)][int]$ClientCount = 2,
     [ValidateRange(100,2048)][int]$NPCCount = 100,
     [switch]$AllRelevant,
     [switch]$ParallelNet,
     [switch]$Animation,
+    [switch]$CombatInput,
     [ValidateRange(0,200)][int]$PacketLag = 0,
     [ValidateRange(0,20)][int]$PacketLoss = 0,
     [int]$Port = 17871,
     [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
 )
 $ErrorActionPreference = 'Stop'
+if ($CombatInput -and !$Animation) { throw 'CombatInput requires the authored Animation fixture.' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
 Set-Location -LiteralPath $projectRoot
-$busy = @(Get-Process UnrealEditor*,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue)
+$busy = @(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue)
 if ($busy.Count) { throw 'Engine processes active; finish them normally before another run/build.' }
 if ($Port -lt 1024 -or $Port -gt 65535) { throw 'Invalid local test port.' }
 $runRoot = "$projectRoot/Saved/Validation/GroupD_20260910/$RunName"
@@ -29,12 +31,24 @@ $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
         [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash}
     }
 })
-[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
+[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
     ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
 $common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
 if ($Animation) { $common += '-ProjectJAnimationFixture' }
+if ($CombatInput) {
+    $common += '-ProjectJCombatInputFixture'
+    $common = @($common | ForEach-Object { if ($_ -like '-ExecCmds=*') { $_ + ',Project_J.Combat.ComboDebug 1,ProjectJ.Combat.Presentation.Debug 1' } else { $_ } })
+}
 $common += @("-PktLag=$PacketLag","-PktLoss=$PacketLoss")
+# These EditorOnly toolsets require editor UClasses. This host runs -game/-server;
+# normal editor/MCP and native Automation RunTests keep their project plugin configuration.
+$disabledEditorToolsets = @('EditorToolset','AutomationTestToolset','ToolsetRegistry')
+$common += "-DisablePlugins=$($disabledEditorToolsets -join ',')"
+# Native game/server fixtures have no Python dependency. ToolsetRegistry can be
+# compiled into the host despite plugin selection; skip Python startup itself here.
+$common += '-DisablePython'
+$disabledEditorToolsets | ConvertTo-Json | Set-Content -LiteralPath "$runRoot/disabled-editor-toolsets.json" -Encoding utf8
 # Start-Process needs quotes retained around arguments containing spaces.
 function Start-Fixture($arguments) {
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
@@ -60,19 +74,23 @@ while (!(Test-Path "$runRoot/Server.log") -or !(Select-String -LiteralPath "$run
 $clients = @(1..$ClientCount | ForEach-Object {
     Start-Fixture ($common + @("127.0.0.1:$Port","-ABSLOG=$runRoot/Client$_.log","-ProjectJDOutput=$runRoot/Client$_","-tracefile=$runRoot/Client$_.utrace"))
 })
+# Retain all handles before waiting for the first process. Clients may finish
+# while the server wait is still in progress.
+$fixtureProcesses = @($server) + $clients
+$nativeHandles = @($fixtureProcesses | ForEach-Object { $_.Handle })
 @($server) + $clients | Select-Object Id,ProcessName | ConvertTo-Json | Set-Content "$runRoot/processes.json" -Encoding utf8
 Write-Output "Started server and $ClientCount clients: $runRoot"
-foreach ($process in (@($server) + $clients)) { $process.WaitForExit() }
+foreach ($process in $fixtureProcesses) { $process.WaitForExit() }
 $resultFiles = @('Server/server.json') + @(1..$ClientCount | ForEach-Object {"Client$_/client.json"})
 $results = @($resultFiles | ForEach-Object {
     $path = "$runRoot/$_"
     if (!(Test-Path -LiteralPath $path)) { [ordered]@{file=$_;success=$false;reason='Missing result'} }
     else { $result = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json; [ordered]@{file=$_;success=$result.success;reason=$result.reason} }
 })
-$exitCodes = @((@($server)+$clients) | ForEach-Object {$_.ExitCode})
+$exitCodes = @($fixtureProcesses | ForEach-Object {$_.ExitCode})
 $timeouts = @(Get-ChildItem -LiteralPath $runRoot -Recurse -Filter timeout.json)
-$passed = @($results | Where-Object { !$_.success }).Count -eq 0 -and @($exitCodes | Where-Object { $_ -ne 0 }).Count -eq 0 -and $timeouts.Count -eq 0
+$passed = @($results | Where-Object { !$_.success }).Count -eq 0 -and @($exitCodes | Where-Object { $null -eq $_ -or $_ -ne 0 }).Count -eq 0 -and $timeouts.Count -eq 0
 $startupErrors = @(Get-ChildItem -LiteralPath $runRoot -Filter '*.log' | Select-String -Pattern 'LogPython: Error:' | ForEach-Object { $_.Line })
-[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
+[ordered]@{passed=$passed;results=$results;exitCodes=$exitCodes;nativeHandleCapturedBeforeWait=$true;timeouts=$timeouts.Count;startupPythonErrors=$startupErrors;note='Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean.'} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/verification.json" -Encoding utf8
 if (!$passed) { throw "Network fixture failed. Inspect $runRoot/verification.json and logs." }
 Write-Output "All processes completed: $runRoot"

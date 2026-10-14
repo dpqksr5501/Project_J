@@ -1,5 +1,11 @@
 # 애니메이션
 
+현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
+
+[구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)은 전투·탑승 linked layer의 리소스 수명을 공통화하고 native/DA 발 배치 기본값의 중복 초기화를 제거했다. 레이어 선택 정책·GT/worker 경계·authored 값은 유지한다.
+
+[2026-10-13 전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)는 사라진 수요 소유자의 예산 복원, Family 제작 검증, 현재 통합 그래프의 재생 관측과 200명 교대 CPU/렌더 검증을 다룬다. 이전 단일 실행의 증가가 해결됐다고 가정하지 않는다.
+
 ## 현재 플레이어 파이프라인
 
 공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.

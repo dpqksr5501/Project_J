@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"databases\\\":[{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.PSD_Combat_Run_ForwardCycle\\\"},{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn\\\"},{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn.PSD_Combat_Run_GeneralTurn\\\"}]}\"}"
+			}
+		]
+	}
+}

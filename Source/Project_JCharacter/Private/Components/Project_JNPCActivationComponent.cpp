@@ -5,6 +5,12 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
 
+void UProject_JNPCActivationComponent::BeginPlay()
+{
+	bEnding = false;
+	Super::BeginPlay();
+}
+
 bool UProject_JNPCActivationComponent::ActivateNPC(const UProject_JNPCActivationDefinition* Definition,
 	UProject_JTargetScoringComponent* Scoring, UProject_JNPCActionComponent* Action, int32 TeamId)
 {

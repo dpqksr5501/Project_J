@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle\"]}"
+			}
+		]
+	}
+}

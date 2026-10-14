@@ -43,6 +43,8 @@ Body ABP의 포즈 그래프를 다시 만들지 않았다. 기존 Retargeter와
 
 ## GT·worker·설정 소유권
 
+제작 검증은 Family 선언의 source/target skeleton을 Retargeter의 실제 preview mesh 쌍과 비교한다. 쌍이 다르면 Family와 이를 쓰는 Body를 invalid로 판정한다. preview가 없으면 검증 불가능 경고를 남긴다. 런타임 `Matches`의 매 프레임 비용·선택 계약은 바꾸지 않는다. 원본 validator가 뒤집힌 쌍을 승인한 재현과 생산 Family 정상 검증은 [전체 감사](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에 남긴다.
+
 `FProject_JRetargetAnimInstanceProxy::PreUpdate`는 **엔진 retarget node의 GT source pose 캡처보다 먼저** 프로필 설정을 적용한다. NativeUpdate 뒤에서 설정하면 캡처/초기화에 한 프레임 차이가 생길 수 있어 이 경계를 사용한다.
 
 - generated 클래스별 표준 `FAnimNode_RetargetPoseFromMesh` 인덱스와 원래 asset/override 설정을 보관한다. 매 프레임 전체 graph를 다시 검색하지 않는다.
@@ -122,6 +124,14 @@ CPU 원자료는 `Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetBef
 
 ## 후속 성능·품질 범위
 
+외형 ABP가 Body를 명시하면 해당 참조를 먼저 사용하고, 없을 때만 Pawn/archetype fallback을 조회한다. 새 캐시·무효화 상태를 추가하지 않으며 기존 Body/Family 우선순위와 skeleton 호환 검사를 유지한다. [전체 감사의 교대 측정](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에서 일부 CPU 증가가 남았으므로 이 조회 생략을 전체 성능 회귀 해결로 해석하지 않는다.
+
 이 구조는 설정 공유·소유권·호환을 개선한다. ABP 분리만으로 retarget op/IK/물리 비용이 사라지는 것은 아니다. 다음 선택적 비용 조정은 기존 200명 v2 fixture, 실제 RHI timer와 접촉/의상 품질을 함께 확인한다. 특히 retarget FK/IK, Guided solve, 물리 3개와 렌더 section/draw/skin 비용을 분리한다. 원본 판정 포즈·소켓·게임플레이 요구와 시각 몸체의 비용을 혼동하지 않는다.
 
 참고: [UE runtime retarget](https://dev.epicgames.com/documentation/en-us/unreal-engine/runtime-ik-retargeting-in-unreal-engine), [ABP linking/templates](https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprint-linking-in-unreal-engine), [모듈러 캐릭터](https://dev.epicgames.com/documentation/en-us/unreal-engine/working-with-modular-characters-in-unreal-engine). 현재 로컬 엔진 소스의 node PreUpdate·UAnimInstance/Proxy 실행 순서·GC API도 확인했다. [이전 리타깃 문서](Runtime_Retarget_HandIK_Architecture.md), [메시 소유권](Visual_Presentation_Mesh_Ownership.md), [손 접촉](../Authoring/Weapon_Hand_Contact_System.md), [시각 예산](../Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md), [최신 MM 최적화](../Planning/Animation_Runtime_Optimization_2026-10-13.md)를 함께 따른다.
+
+## 2026-10-14 메시 역할 재점검
+
+[RA08 재점검](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에서 AnimInstanceBase의 별도 follower 탐색/이름 heuristic/캐시를 기존 공통 resolver로 통합했다. 현재 source에 attached된 명시적 tag 또는 native retarget class가 역할을 결정한다. bone 소비자는 loaded mesh asset을 요구하고 quality 조회는 load 전 role도 확인할 수 있다. 분리됐지만 살아 있는 이전 component가 역할을 계속 소유하지 않는다.
+
+MCP의 실제 source/body profile 연결, public subobject template, actual Blueprint construction을 별도 증거로 대조했다. CDO의 None 또는 template parent null은 runtime 부재를 뜻하지 않는다. 이 정리가 모든 체형/clip/LOD/cloth 품질이나 남은 CPU 증가 해결을 입증하지 않는다.

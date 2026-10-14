@@ -1,0 +1,98 @@
+{
+  "name": "WholeRefinement2",
+  "sourceVersion": "RA01-27",
+  "clean": 332,
+  "warning": 20,
+  "failed": 0,
+  "notRun": 0,
+  "inProcess": 0,
+  "seconds": 665.3429565429688,
+  "process": {
+    "exitCode": 0,
+    "hasExited": true,
+    "nativeHandleCapturedBeforeWait": true
+  },
+  "corruptedIndexLogLines": 0,
+  "reaudit20": [
+    {
+      "name": "ProjectJ.Reaudit.AuthoredFollowerRole",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.CombatPresentationRetirement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.ComponentPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.ControllerUIPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.GroundContactDataValidation",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MassReentrantRetirement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MinimapReconstruction",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MountActorPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MountTagReentry",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MovementDataValidation",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.MovementPublication",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.NPCPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.QuestPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.SubsystemCallbackGC",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.UIPreferenceRetirement",
+      "state": "Success"
+    }
+  ]
+}

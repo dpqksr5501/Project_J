@@ -15,12 +15,14 @@
 
 namespace
 {
-FString ForwardEntryText(const UPoseSearchDatabase* Database)
+FString ForwardEntryText(const UPoseSearchDatabase* Database,
+	const TArray<FPoseSearchDatabaseAnimationAsset>* Entries = nullptr)
 {
 	const auto* Property = FindFProperty<FArrayProperty>(UPoseSearchDatabase::StaticClass(), TEXT("DatabaseAnimationAssets"));
 	check(Property);
 	FString Text;
-	Property->ExportTextItem_Direct(Text, Property->ContainerPtrToValuePtr<void>(Database), nullptr,
+	const void* Value = Entries ? static_cast<const void*>(Entries) : Property->ContainerPtrToValuePtr<void>(Database);
+	Property->ExportTextItem_Direct(Text, Value, nullptr,
 		const_cast<UPoseSearchDatabase*>(Database), PPF_None);
 	return Text;
 }
@@ -62,23 +64,36 @@ bool FProjectJForwardStrafeDataTest::RunTest(const FString&)
 	if (!TestEqual(TEXT("Dedicated steady preference uses the engine's small loop bias"), Forward->LoopingCostBias, -.005f)) return false;
 	// The authored forward intent keeps continuous turning arcs and steady loops.
 	// Labels here verify saved data; runtime selection never branches on clip names.
-	auto* Expected = DuplicateObject<UPoseSearchDatabase>(Cycle, GetTransientPackage());
+	// Comparing authored entries needs values, not a registered database carrying
+	// copied derived-index/normalization state and asynchronous cache work.
+	TArray<FPoseSearchDatabaseAnimationAsset> Expected;
 	int32 AuthoredArcEntries = 0;
-	for (int32 Index = Expected->GetNumAnimationAssets() - 1; Index >= 0; --Index)
+	for (int32 Index = 0; Index < Cycle->GetNumAnimationAssets(); ++Index)
 	{
-		if (GetNameSafe(Expected->GetAnimationAsset(Index)).Contains(TEXT("_Arc_"))) ++AuthoredArcEntries;
-		else Expected->RemoveAnimationAssetAt(Index);
+		if (GetNameSafe(Cycle->GetAnimationAsset(Index)).Contains(TEXT("_Arc_")))
+		{ ++AuthoredArcEntries; Expected.Add(*Cycle->GetDatabaseAnimationAsset(Index)); }
 	}
-	for (int32 Index = 0; Index < Loop->GetNumAnimationAssets(); ++Index) Expected->AddAnimationAsset(*Loop->GetDatabaseAnimationAsset(Index));
+	for (int32 Index = 0; Index < Loop->GetNumAnimationAssets(); ++Index) Expected.Add(*Loop->GetDatabaseAnimationAsset(Index));
 	if (!TestEqual(TEXT("Six authored Arc variants cover forward curvature"), AuthoredArcEntries, 6) ||
 		!TestEqual(TEXT("Curated pool preserves all Arc and Loop entries"), Forward->GetNumAnimationAssets(), AuthoredArcEntries + Loop->GetNumAnimationAssets())) return false;
-	if (!TestEqual(TEXT("Forward entries exactly preserve source ranges and flags"), ForwardEntryText(Forward), ForwardEntryText(Expected))) return false;
+	if (!TestEqual(TEXT("Forward entries exactly preserve source ranges and flags"), ForwardEntryText(Forward), ForwardEntryText(Forward, &Expected))) return false;
 	using namespace UE::PoseSearch;
+	if (!TestTrue(TEXT("Ready canonical source index"), FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(Cycle,
+		ERequestAsyncBuildFlag::ContinueRequest |
+		ERequestAsyncBuildFlag::WaitForCompletion) == EAsyncBuildIndexResult::Success)) return false;
+	for (const auto& Asset : Cycle->GetSearchIndex().Assets)
+	{
+		if (!TestTrue(TEXT("Canonical index source entry is in range"), Asset.GetSourceAssetIdx() >= 0 &&
+			Asset.GetSourceAssetIdx() < Cycle->GetNumAnimationAssets()) ||
+			!TestNotNull(TEXT("Canonical index retains its authored animation"), Cycle->GetAnimationAsset(Asset.GetSourceAssetIdx()))) return false;
+	}
 	if (!TestTrue(TEXT("Ready forward index"), FAsyncPoseSearchDatabasesManagement::RequestAsyncBuildIndex(Forward,
 		ERequestAsyncBuildFlag::ContinueRequest |
 		ERequestAsyncBuildFlag::WaitForCompletion) == EAsyncBuildIndexResult::Success)) return false;
 	FString Report = FString::Printf(TEXT("OriginalEntries=%d LoopEntries=%d ForwardEntries=%d Forward=%s Normalization=%s\n"),
 		Cycle->GetNumAnimationAssets(), Loop->GetNumAnimationAssets(), Forward->GetNumAnimationAssets(), *Forward->GetPathName(), *Norm->GetPathName());
+	Report += FString::Printf(TEXT("CanonicalIndexAssets=%d CanonicalPoses=%d ExpectedValues=%d NoTransientDatabaseComparison=1\n"),
+		Cycle->GetSearchIndex().Assets.Num(), Cycle->GetSearchIndex().GetNumPoses(), Expected.Num());
 	for (const auto& Database : Norm->Databases) Report += FString::Printf(TEXT("NormalizationReference=%s\n"), *GetPathNameSafe(Database));
 	int32 LoopPoses = 0, CurvePoses = 0;
 	for (const auto& Asset : Forward->GetSearchIndex().Assets)

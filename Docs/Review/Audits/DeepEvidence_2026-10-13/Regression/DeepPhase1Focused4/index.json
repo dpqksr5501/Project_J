@@ -1,0 +1,159 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "576D239D48A5D24C54E63BAC58879B36",
+			"instanceName": "DESKTOP-5T07C91-2868",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-15.15.52",
+	"succeeded": 7,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.05838259682059288,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "GroundModeSource",
+			"fullTestPath": "ProjectJ.Animation.StateOwnership.GroundModeSource",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.0080449990928173065,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CandidatesAndLifetime",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.CandidatesAndLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.0079746991395950317,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionCandidates",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.ProductionCandidates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.0081226974725723267,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Cycle=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle.PSD_Run_Cycle Turn=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn.PSD_Run_Turn Schema=/Game/Animation_Logic/PSS/PSS_Player.PSS_Player Preprocessor=1 CycleNorm=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity TurnNorm=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.15.52"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Cycle=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle.PSD_Combat_Run_Cycle Turn=/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn.PSD_Combat_Run_Turn Schema=/Game/Animation_Logic/PSS/PSS_Combat_Run_Continuity.PSS_Combat_Run_Continuity Preprocessor=1 CycleNorm=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity TurnNorm=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/NS_Combat_Run_Continuity.NS_Combat_Run_Continuity",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.15.52"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionGraph",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.ProductionGraph",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.0079541988670825958,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SteeringOwnership",
+			"fullTestPath": "ProjectJ.LocomotionContinuity.SteeringOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.011305499821901321,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LayerLoadLifecycle",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.0048668012022972107,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LocomotionTagLease",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.LocomotionTagLease",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576D239D48A5D24C54E63BAC58879B36"
+			],
+			"duration": 0.010113701224327087,
+			"dateTime": "2026.10.13-15.15.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

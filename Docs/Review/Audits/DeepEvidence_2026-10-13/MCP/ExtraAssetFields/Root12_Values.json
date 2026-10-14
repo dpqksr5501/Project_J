@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"columnsStructs\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.BoolColumn\\\",\\\"inputValue\\\":{\\\"_structType\\\":\\\"/Script/Chooser.BoolContextProperty\\\",\\\"binding\\\":{\\\"propertyBindingChain\\\":[\\\"bChooserLandWasMoving\\\"],\\\"contextIndex\\\":0,\\\"isBoundToRoot\\\":false,\\\"displayName\\\":\\\"Chooser Land Was Moving\\\"}},\\\"defaultRowValue\\\":\\\"MatchAny\\\",\\\"rowValuesWithAny\\\":[\\\"MatchFalse\\\",\\\"MatchTrue\\\",\\\"MatchTrue\\\"],\\\"bDisabled\\\":false,\\\"editorColumnWidth\\\":200},{\\\"_structType\\\":\\\"/Script/Chooser.BoolColumn\\\",\\\"inputValue\\\":{\\\"_structType\\\":\\\"/Script/Chooser.BoolContextProperty\\\",\\\"binding\\\":{\\\"propertyBindingChain\\\":[\\\"bChooserLandWasSprinting\\\"],\\\"contextIndex\\\":0,\\\"isBoundToRoot\\\":false,\\\"displayName\\\":\\\"Chooser Land Was Sprinting\\\"}},\\\"defaultRowValue\\\":\\\"MatchAny\\\",\\\"rowValuesWithAny\\\":[\\\"MatchFalse\\\",\\\"MatchFalse\\\",\\\"MatchTrue\\\"],\\\"bDisabled\\\":false,\\\"editorColumnWidth\\\":200}],\\\"resultType\\\":\\\"ObjectResult\\\",\\\"outputObjectType\\\":{\\\"refPath\\\":\\\"/Script/Chooser.ChooserTable\\\"},\\\"contextData\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeClass\\\",\\\"class\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.Project_JCharacterAnimInstance\\\"},\\\"direction\\\":\\\"ReadWrite\\\"},{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeStruct\\\",\\\"struct\\\":{\\\"refPath\\\":\\\"/Script/Chooser.ChooserPlayerSettings\\\"},\\\"direction\\\":\\\"Write\\\"}]}\"}"
+			}
+		]
+	}
+}

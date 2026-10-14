@@ -1,0 +1,6 @@
+{
+  "scope": "Windows default map + Entry + configured AssetManager/AlwaysCook dependency closure. Not unused sample/plugin CookAll.",
+  "exitCode": 0,
+  "nativeHandleCapturedBeforeWait": true,
+  "hasExited": true
+}

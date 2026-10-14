@@ -1,0 +1,14 @@
+[
+  "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+  "-unattended",
+  "-NullRHI",
+  "-nosound",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/CookedDamage/Run.log",
+  "-ReportExportPath=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/CookedDamage/Report",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=Automation RunTests ProjectJ.Combat.AuthoredDamageContract; Quit",
+  "-UserDir=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/CookedDamage/User/",
+  "-SaveToUserDir"
+]

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/GameplayTags\",\"/Script/Project_JCharacter\",\"/Game/GEs/BP_GE_CombatMode\",\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2\"]}"
+			}
+		]
+	}
+}

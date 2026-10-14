@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "E8F9094E4200FFDBDEEEA2B9FFB7350A",
+			"instanceName": "DESKTOP-5T07C91-21268",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-03.02.50",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.008007097989320755,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ProductionData",
+			"fullTestPath": "ProjectJ.StrafeForward.ProductionData",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"E8F9094E4200FFDBDEEEA2B9FFB7350A"
+			],
+			"duration": 0.008007097989320755,
+			"dateTime": "2026.10.14-03.02.50",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

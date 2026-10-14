@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"mesh\\\":{\\\"refPath\\\":\\\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CharacterMesh0\\\"},\\\"greatsword\\\":\\\"None\\\",\\\"characterAnimProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.DA_Greatsword_AnimProfile\\\"},\\\"locomotionProfile\\\":\\\"None\\\",\\\"mountComponent\\\":{\\\"refPath\\\":\\\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:MountComponent\\\"}}\"}"
+			}
+		]
+	}
+}

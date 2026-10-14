@@ -1,7 +1,6 @@
 #include "UI/Project_JMinimapWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/SizeBox.h"
-#include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -37,6 +36,7 @@ TSharedRef<SWidget> UProject_JMinimapWidget::RebuildWidget()
 }
 void UProject_JMinimapWidget::NativeConstruct()
 {
+	ReleaseMapPresentation();
 	Super::NativeConstruct();
 	if (!Definition)
 		Definition = LoadObject<UProject_JMapDefinition>(nullptr, TEXT("/Game/UI/DA_ProjectJMap.DA_ProjectJMap"));
@@ -46,28 +46,43 @@ void UProject_JMinimapWidget::NativeConstruct()
 	if (Definition && !Definition->Texture.IsNull())
 	{
 		const auto Path = Definition->Texture.ToSoftObjectPath();
-		LoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
-			Path,
-			[WeakThis = TWeakObjectPtr<UProject_JMinimapWidget>(this), Path]()
+		MapIconRequest.Select(Path);
+		MapIconRequest.Load(this,
+			[this, Path](UTexture2D* Texture, uint64 Generation)
 			{
-				if (auto *Self = WeakThis.Get())
+				if (MapIconRequest.IsCurrent(Path, Generation))
 				{
-					Self->MapTexture = Cast<UTexture2D>(Path.ResolveObject());
-					Self->TextureBrush.SetResourceObject(Self->MapTexture);
+					MapTexture = Texture;
+					TextureBrush.SetResourceObject(Texture);
 				}
 			});
 	}
 	Sample();
-	GetWorld()->GetTimerManager().SetTimer(SampleTimer, this, &ThisClass::Sample, 0.2f, true);
+	if (auto* World = GetWorld())
+	{
+		SampleWorld = World;
+		World->GetTimerManager().SetTimer(SampleTimer, this, &ThisClass::Sample, 0.2f, true);
+	}
 	SetToolTipText(NSLOCTEXT("ProjectJUI", "MapTooltip", "휠: 확대/축소 · N: 북쪽 · 노란 점: 추적 목표"));
 }
 void UProject_JMinimapWidget::NativeDestruct()
 {
-	GetWorld()->GetTimerManager().ClearTimer(SampleTimer);
-	if (LoadHandle)
-		LoadHandle->CancelHandle();
-	LoadHandle.Reset();
+	ReleaseMapPresentation();
 	Super::NativeDestruct();
+}
+void UProject_JMinimapWidget::BeginDestroy()
+{
+	ReleaseMapPresentation();
+	Super::BeginDestroy();
+}
+void UProject_JMinimapWidget::ReleaseMapPresentation()
+{
+	if (auto* World = SampleWorld.Get()) { World->GetTimerManager().ClearTimer(SampleTimer); }
+	SampleWorld.Reset(); SampleTimer.Invalidate();
+	MapIconRequest.Reset();
+	MapTexture = nullptr;
+	TextureBrush.SetResourceObject(nullptr);
+	bHasPlayer = false;
 }
 void UProject_JMinimapWidget::Sample()
 {

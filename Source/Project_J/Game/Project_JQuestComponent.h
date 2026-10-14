@@ -47,6 +47,7 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	UProject_JQuestComponent();
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &Out) const override;
 	UPROPERTY(EditDefaultsOnly) TArray<TObjectPtr<UProject_JQuestDefinition>> Definitions;
 	UPROPERTY(ReplicatedUsing = OnRep_States, BlueprintReadOnly) TArray<FProject_JQuestState> States;
@@ -63,12 +64,17 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	FChanged OnChanged;
 
   private:
+	friend class FProjectJQuestLifetimeTest;
 	UFUNCTION() void OnRep_States();
 	UFUNCTION(Server, Reliable) void ServerClaim(FName Id);
 	UFUNCTION(Server, Reliable) void ServerTracking(FName Id, bool bTracked);
 	bool AllowRequest();
 	void Publish();
 	void SampleTravel();
+	bool CanMutate() const;
+	bool CanPublish() const;
+	void Retire();
+	void ReconcileTravelSampling();
 	FTimerHandle TravelTimer;
 	TWeakObjectPtr<APawn> TravelPawn;
 	FVector LastLocation = FVector::ZeroVector;
@@ -76,4 +82,5 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	double RequestWindow = -1;
 	int32 RequestCount = 0;
 	bool bChanging = false;
+	bool bEnding = false;
 };

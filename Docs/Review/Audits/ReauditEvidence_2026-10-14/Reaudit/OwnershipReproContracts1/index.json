@@ -1,0 +1,300 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "07D8A4594CDC81AA327A558D5FC4941B",
+			"instanceName": "DESKTOP-5T07C91-22136",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-21.21.00",
+	"succeeded": 5,
+	"succeededWithWarnings": 0,
+	"failed": 4,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.23551559448242188,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.081359200179576874,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.0072503015398979187,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.067188605666160583,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Detached but live old component cannot retain the pose-source role: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 183,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'No attached follower releases the role' to be null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 185,
+					"timestamp": "2026.10.13-21.21.00"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.039619598537683487,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old generation cannot compare against rebound equipment' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 81,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old tooltip cannot expose rebound equipment metadata' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 82,
+					"timestamp": "2026.10.13-21.21.00"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.0073354989290237427,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.010288901627063751,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nested transition has exactly one mounted contribution' to be 1, but it was 2.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 160,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired first mount cannot restore movement over the new session' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 161,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_1 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Final dismount releases the only contribution' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 162,
+					"timestamp": "2026.10.13-21.21.00"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.0047456994652748108,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.0098115988075733185,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"07D8A4594CDC81AA327A558D5FC4941B"
+			],
+			"duration": 0.0079162009060382843,
+			"dateTime": "2026.10.13-21.21.00",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired subsystem rejects reopening a late preference' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 125,
+					"timestamp": "2026.10.13-21.21.00"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late operations cannot restart persistence' to be 1, but it was 3.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 128,
+					"timestamp": "2026.10.13-21.21.00"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		}
+	]
+}

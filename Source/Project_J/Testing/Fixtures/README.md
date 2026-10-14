@@ -25,3 +25,15 @@
 Strafe CMC 재생의 기본 보고서는 실행별 GUID 하위 폴더에 저장하고 로그의 `CMC playback evidence:`로 경로를 알린다. 여러 검사가 같은 `Playback.txt`를 덮어쓰지 않는다. 명시한 `-ProjectJStrafePlaybackOutput=` 경로는 유지하며 그 실제 부모 폴더를 만든다. 보고서 저장 실패와 움직임 기준 실패는 구분해 보존한다. [파이프라인 리팩토링 검증](../../../../Docs/Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md)에서 후속 재확인 결과를 읽는다.
 
 수동 재현은 `ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback`에 `-ProjectJOneShotPlaybackCase=5 -ProjectJOneShotCameraReplay=<CSV 절대 경로>`를 전달한다. 이 기록 검사는 전방 Strafe Run의 착지 보간 중 실제 MM 재선택을 요구하므로 다른 이동 모드의 일반 회귀 대신 사용하지 않는다. 점프 이벤트는 낮은 재생 주기에서도 건너뛴 표본 전체에서 수집한다. 기존 고정 회전 테스트에는 기록 옵션을 적용하지 않는다. `-ProjectJRenderOneShotReturn`은 실제 RHI에서 복귀 구간의 이미지를 추가한다. `Unified`의 `InertialReturnRemaining`은 요청 보간 수명이며, 실제 엔진 보간 상태와 구분한다.
+
+## 전체 감사의 추가 실패 경로 — 2026-10-13
+
+`ProjectJ.Combat.AuthoredSkillContinuation`은 실제 BP·DA·R montage와 Router의 빠른 RMB tap/의미 입력 대조군을 사용한다. `-ProjectJSkillContinuationHz=30` 또는 `120`으로 같은 시간 지점을 검사하며, 자연 종료·버퍼 중 unequip·새 grant의 독립 시작도 확인한다. MouseChordLifecycle은 chord/hold/cancel/동기 재진입의 입력 수명을 확인한다.
+
+`Scripts/Validation/Measure-Network.ps1 -Animation -CombatInput`은 실제 소켓의 authority/owner/remote R→후속 공격→종료 3회와 기존 AOI/FastArray/animation stages·disconnect를 검사한다. 전투 구간은 CMC가 진행하고 유효한 grant의 활성화 준비를 기다린다. 입력을 반복 재전송하거나 강제 combo window를 열지 않는다.
+
+`Scripts/Validation/Measure-RenderedCrowd.ps1 -RunName <고유 이름>`은 200개 실제 BP construction/retarget 몸체의 viewport 표시와 동시 R, frame delta/GPU counter/PNG를 기록한다. 빈 Entry의 고정 카메라 장면이며 접속자 200명·실제 게임 맵 품질 또는 CPU 비교의 LMB workload와 동일하다는 뜻은 아니다. [감사 결과](../../../../Docs/Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)의 조건과 제한을 함께 읽는다.
+
+`-Executable <새 Cook/stage의 Project_J.exe>`를 추가하면 같은 실제 BP 부하를 패키지에서 실행한다. 실행별 새 UserDir를 사용하고 실행 파일·에셋 SHA256과 packaged 여부를 남긴다. 기존 사용자 설정과 이전 검증 결과를 덮어쓰지 않는다. `ProjectJ.Internal.Input.CommandAliasRelease`는 서버 별명 이벤트의 동기 Avatar 교체 후 남은 원입력이 교체 Avatar로 전달되지 않는지도 검사한다.
+
+`ProjectJ.Structure.UI.IconRequestLifetime`은 실제 texture stream completion을 지연해 A→empty→A의 이전 요청과 owner GC 뒤의 적용을 차단하는지 확인한다. CVar 지연은 테스트 종료 시 복구한다. `ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle`은 shared lease의 stale same-path callback, 실패 캐시, resident non-animation class와 BeginPlay 이전 component 파괴도 검사한다. [구조 개선](../../../../Docs/Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)에서 리뷰 단위와 시스템별 유지 이유를 읽는다.

@@ -1,0 +1,81 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "3ED699DB4250CD7B3774ED802C27FF4B",
+			"instanceName": "DESKTOP-5T07C91-32492",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-17.30.50",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.068308204412460327,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "InputBindingReentry",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.InputBindingReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"3ED699DB4250CD7B3774ED802C27FF4B"
+			],
+			"duration": 0.068308204412460327,
+			"dateTime": "2026.10.13-17.30.50",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older outer bind cannot supersede callback's new connection' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 113,
+					"timestamp": "2026.10.13-17.30.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Superseded device never acquires bindings' to be 0, but it was 3.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 115,
+					"timestamp": "2026.10.13-17.30.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Latest connection's device handles can all be released' to be 0, but it was 3.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 118,
+					"timestamp": "2026.10.13-17.30.50"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

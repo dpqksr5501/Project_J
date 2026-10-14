@@ -1,0 +1,62 @@
+[
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+    "before": "BA594BD9FD9246752680936E803616B1D3CB13964CE65D4C08BD9B4302E5B312",
+    "after": "F6FB3F5852544838DCE1C8E23A62978F360DD1F64280333A7791872AE112006A"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+    "before": "CA2C2024161E219C1D45EDC266F44FC93C92736DDC05D2D57407B83876470783",
+    "after": "620B52FD82F0D8E0ED2BC41AE0EE7E41BBAF06C502DA9F645A2D517C79C6C7AB"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+    "before": "954849619241D2A2584B1D098DB18378C5D19625A33FBB24EE118DA3791B7FF1",
+    "after": "C3F58140B260421D35D872C18D9828E641CD582A4FFCFDBFD2245C84780D3FB8"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+    "before": "26FCDFB4F5BDA759F1D7F9678785CD1CEE2FA76A0E4B46A4C8C7E95281677838",
+    "after": "FD9FCFBBE85F2832ABB2319A938495503365DDC380A8F7C5588823DD7B2B7EDB"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+    "before": "B147CA15241F107379B2327513C11CCE9ADB8DD1EB84BD0CFBB62B99E9D81D1A",
+    "after": "25D66F354DA4BBF75C9B13917CE0105BA10663CC8570ADC89EFFC31351979829"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+    "before": "9C263D65315BAF8931BB9465FB65C06D0ECD64BD2248FA8BF648E7C6348EFE8A",
+    "after": "39BC10161F7802BA41DD152A9B40586963ECB10D40ED37B06641B2FE1032E3C6"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+    "before": "D2910F3F52EDCE62E7736495395E8CB03597CC915889D0BC0680485F263F20C7",
+    "after": "18833229DC7EAE4FB09E6642A7FD88E14EBD7516BA32DB282FB1CE69C8429EFC"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+    "before": "360DACFA68FF22C37E6E6D45F7CA960850D6EE9C03300A8EE0AFBB7CA86734F2",
+    "after": "1A56C07B2E2C0F011F12D66BF81A46097435A2A6C0770467E95CD45E105CA70C"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+    "before": "A1BC02D1D5CF5D2B4DA32539D3B2D88A703382632F63F78B6573DB1FFC46C6A6",
+    "after": "5235D67272C0AD061B48444E5CE34471E0C8D3F1CBF9E8B4468763B912CDC0D6"
+  },
+  {
+    "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+    "file": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+    "before": "5A2AB7CFAC02A9A54A2E77576DC74D6C2D8BAF544091DD6AC5641F83966EF6AE",
+    "after": "76D16DE663F8299C30400B39FAAB3AA6D184935141C1440E8A607462FDC24295"
+  }
+]

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"actionDescription\\\":\\\"\\\",\\\"bTriggerWhenPaused\\\":false,\\\"bConsumeInput\\\":true,\\\"bConsumesActionAndAxisMappings\\\":false,\\\"bReserveAllMappings\\\":false,\\\"triggerEventsThatConsumeLegacyKeys\\\":0,\\\"valueType\\\":\\\"Axis1D\\\",\\\"accumulationBehavior\\\":\\\"TakeHighestAbsoluteValue\\\",\\\"triggers\\\":[],\\\"modifiers\\\":[],\\\"playerMappableKeySettings\\\":\\\"None\\\"}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,63 @@
+{
+  "head": "f1bbd48ac4a37eab6ed7a33d025f1de2c270427c",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "gpu": [
+    "Parsec Virtual Display Adapter",
+    "AMD Radeon RX 9070 XT",
+    "AMD Radeon(TM) Graphics"
+  ],
+  "actors": 200,
+  "connections": 0,
+  "nullRHI": false,
+  "offscreenViewport": true,
+  "resolution": "1280x720",
+  "fpsCap": 0,
+  "vsync": 0,
+  "trace": true,
+  "packaged": true,
+  "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013\\PackagedFinal\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "executableSHA256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+  "arguments": [
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-game",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-NoDDCCleanup",
+    "-NoLiveCoding",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJRenderedCrowdFixture",
+    "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace/Run.log",
+    "-ExecCmds=t.MaxFPS 0,r.VSync 0",
+    "-statnamedevents",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace/User/",
+    "-SaveToUserDir",
+    "-trace=cpu,frame,bookmark,region,counters",
+    "-tracefile=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace/Render.utrace"
+  ],
+  "artifacts": [
+    {
+      "path": "Project_J.uproject",
+      "sha256": "057D84E9060923DB1964C376AA6084EA50598B32FA9B88555B22F69A5C402E61"
+    },
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "sha256": "C3F95C7F2828B4AB89AE9BF86E201B8B003DF811175B172ED28836F6D66E3280"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A"
+    }
+  ],
+  "traceChannels": "cpu,frame,bookmark,region,counters",
+  "diagnosticOnly": "Same packaged binary and fixture; channel isolation is not a performance comparison or proof the original failure was fixed."
+}

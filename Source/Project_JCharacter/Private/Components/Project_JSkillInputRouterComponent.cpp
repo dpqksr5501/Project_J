@@ -8,6 +8,12 @@
 #include "Validation/Project_JDataValidation.h"
 #endif
 
+void UProject_JSkillInputRouterComponent::BeginPlay()
+{
+	bEnding = false;
+	Super::BeginPlay();
+}
+
 #if WITH_EDITOR
 EDataValidationResult UProject_JSkillInputMappingData::IsDataValid(FDataValidationContext& Context) const
 {
@@ -105,7 +111,10 @@ UProject_JSkillInputRouterComponent::UProject_JSkillInputRouterComponent()
 
 void UProject_JSkillInputRouterComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
+	const uint64 Revision = ++BindingRevision;
 	ResetInputState();
+	if (bEnding || Revision != BindingRevision) { return; }
 	BoundPlayerCharacter = InPlayerCharacter;
 	GetEffectiveChords();
 }
@@ -126,6 +135,8 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
 	if (ActiveRMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveRMBInputTag);
 	if (ActiveCombinedInputTag.IsValid()) ReleasedTags.AddTag(ActiveCombinedInputTag);
 	bLMBHeld = bRMBHeld = bHasPendingChordButton = false;
+	++LMBInputRevision;
+	++RMBInputRevision;
 	ActiveLMBInputTag = ActiveRMBInputTag = ActiveCombinedInputTag = FGameplayTag();
 	// Clear before dispatch so a release callback cannot observe stale held state.
 	if (IsValid(BoundPlayerCharacter))
@@ -136,18 +147,31 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
 
 void UProject_JSkillInputRouterComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	RetireInput();
+	Super::EndPlay(EndPlayReason);
+}
+void UProject_JSkillInputRouterComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	RetireInput();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+void UProject_JSkillInputRouterComponent::RetireInput()
+{
+	bEnding = true;
+	++BindingRevision;
 	ResetInputState();
 	BoundPlayerCharacter = nullptr;
-	Super::EndPlay(EndPlayReason);
 }
 
 void UProject_JSkillInputRouterComponent::SetModifierHeld(bool bHeld)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
 	bModifierHeld = bHeld;
 }
 
 void UProject_JSkillInputRouterComponent::HandleModifierPressed(const FGameplayTag ModifierTag)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
 	if (ModifierTag.IsValid())
 	{
 		ActiveModifierTags.AddTag(ModifierTag);
@@ -156,6 +180,7 @@ void UProject_JSkillInputRouterComponent::HandleModifierPressed(const FGameplayT
 
 void UProject_JSkillInputRouterComponent::HandleModifierReleased(const FGameplayTag ModifierTag)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
 	if (ModifierTag.IsValid())
 	{
 		ActiveModifierTags.RemoveTag(ModifierTag);
@@ -169,6 +194,8 @@ bool UProject_JSkillInputRouterComponent::AreModifierTagsMatched(const FGameplay
 
 void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInputButton Button)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
+	++(Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision);
 	if (Button == EProject_JSkillInputButton::LMB)
 	{
 		bLMBHeld = true;
@@ -220,6 +247,12 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
 
 void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillInputButton Button)
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
+	// Resolve a pending press while its button is still held. Release state must
+	// be published before dispatch, but must not invalidate that press's chord.
+	const bool bFlushTap = bHasPendingChordButton && PendingChordButton == Button;
+	const FGameplayTag TapTag = bFlushTap ? ResolveInputTagForButton(Button, false) : FGameplayTag();
+	const uint64 ReleasedRevision = Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision;
 	if (Button == EProject_JSkillInputButton::LMB)
 	{
 		bLMBHeld = false;
@@ -235,7 +268,7 @@ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillIn
 		return;
 	}
 
-	if (bHasPendingChordButton && PendingChordButton == Button)
+	if (bFlushTap)
 	{
 		if (UWorld* World = GetWorld())
 		{
@@ -243,8 +276,13 @@ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillIn
 		}
 		bHasPendingChordButton = false;
 		// A quick tap should not pay the full grace-period delay.
-		DispatchResolvedButtonInput(Button, false);
-		ReleaseActiveTagForButton(Button);
+		DispatchButtonInputTag(Button, TapTag);
+		// Activation can synchronously cancel input or start another press. The
+		// old completion must not release the new press, even if its tag is equal.
+		if (ReleasedRevision == (Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision))
+		{
+			ReleaseActiveTagForButton(Button);
+		}
 		return;
 	}
 
@@ -381,6 +419,7 @@ void UProject_JSkillInputRouterComponent::StartChordGracePeriod(const EProject_J
 
 void UProject_JSkillInputRouterComponent::FlushPendingChordButton()
 {
+	if (bEnding || IsBeingDestroyed()) { return; }
 	if (!bHasPendingChordButton)
 	{
 		return;
@@ -393,7 +432,11 @@ void UProject_JSkillInputRouterComponent::FlushPendingChordButton()
 
 void UProject_JSkillInputRouterComponent::DispatchResolvedButtonInput(const EProject_JSkillInputButton Button, const bool bIncludeCombinedChords)
 {
-	const FGameplayTag InputTag = ResolveInputTagForButton(Button, bIncludeCombinedChords);
+	DispatchButtonInputTag(Button, ResolveInputTagForButton(Button, bIncludeCombinedChords));
+}
+
+void UProject_JSkillInputRouterComponent::DispatchButtonInputTag(const EProject_JSkillInputButton Button, const FGameplayTag InputTag)
+{
 	if (!InputTag.IsValid() || !BoundPlayerCharacter)
 	{
 		return;

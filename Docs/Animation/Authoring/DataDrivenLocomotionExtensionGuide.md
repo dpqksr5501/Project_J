@@ -181,6 +181,12 @@ PIE 검증: 2~4인, 늦은 Join, 좌석 경쟁, 파괴/강제 하차
 
 ## 관련 문서
 
+### 2026-10-14 이동 수치 제작 계약
+
+이동 프로필의 속도·회전·가속·제동·마찰·방향 배율은 finite/nonnegative 공통 validator로 검사한다. 방향 속도 배율의 곱도 finite여야 한다. 런타임의 Player movement publisher는 선택한 CMC 출력 5개를 모두 검사한 뒤 함께 게시하며, 잘못된 tuple은 기존 정상 출력에 부분 적용하지 않는다. 기존 0 허용 항목과 기본 수치를 유지한다. 단발 지속 곡선 기준 0.35초·100cm·3도·85%는 변경하지 않았다.
+
+제작 IsDataValid, 런타임 진단과 실제 CMC publication 회귀의 증거는 [재점검 기록](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에 있다. 설정 validator의 통과와 실제 모든 클립·Chooser 품질은 별도 검증이다.
+
 - [탈것 시스템 구조](../../Gameplay/Architecture/MountSystemArchitecture.md)
 - [전투·로코모션 구조](../../Combat/Architecture/Combat_Animation_System.md#layers)
 - [전투 애니메이션 조합](../../Combat/Architecture/Combat_Animation_System.md#composition)

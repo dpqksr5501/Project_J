@@ -81,6 +81,7 @@ UProject_JPlayerUIComponent::UProject_JPlayerUIComponent()
 }
 void UProject_JPlayerUIComponent::BeginPlay()
 {
+	bEnding = false;
 	Super::BeginPlay();
 	if (!ProfileCatalog && Cast<APlayerController>(GetOwner()) &&
 		Cast<APlayerController>(GetOwner())->IsLocalPlayerController())
@@ -119,6 +120,10 @@ void UProject_JPlayerUIComponent::RefreshSources()
 	{
 		if (!Screen)
 		{
+			// A failed creation must own no input processor, model or subscription.
+			// A later retry publishes those resources only after a screen exists.
+			Screen = CreateWidget<UProject_JPlayerHUDWidget>(PC, ScreenClass);
+			if (!Screen) { return; }
 			PC->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::OnPawnChanged);
 			InventoryModel = NewObject<UProject_JInventoryViewModel>(this);
 			StatusEffects = NewObject<UProject_JStatusEffectModel>(this);
@@ -142,12 +147,8 @@ void UProject_JPlayerUIComponent::RefreshSources()
 				});
 			}
 			InventoryModel->OnChanged.AddDynamic(this, &ThisClass::OnInventoryPresentationChanged);
-			Screen = CreateWidget<UProject_JPlayerHUDWidget>(PC, ScreenClass);
-			if (Screen)
-			{
-				Screen->AddToPlayerScreen(20);
-				Screen->InitializeScreen(this);
-			}
+			Screen->AddToPlayerScreen(20);
+			Screen->InitializeScreen(this);
 			if (SkillSlots.IsEmpty())
 			{
 				const auto &Tags = FProject_JGameplayTags::Get();

@@ -1,0 +1,14 @@
+[
+  {
+    "path": "Content/DataAssetSets/Weapons/DA_Player_EquipWeapon.uasset",
+    "backup": "Saved\\Validation\\Reaudit_20261014\\EmptyEquipmentAssetBackup\\DA_Player_EquipWeapon.uasset",
+    "sha256": "72F9B3DB27620CD605BA520F7479A237B269BA76EAF5632D4259F7F11206B07B",
+    "reason": "Empty duplicate equipment placeholder. MCP props all core references/identity empty; static referencers [] and dirty=false; no Source/Config/Docs path use; not an active weapon definition."
+  },
+  {
+    "path": "Content/DataAssetSets/Animation_Profiles/Equip/DA_Equip_Player.uasset",
+    "backup": "Saved\\Validation\\Reaudit_20261014\\EmptyEquipmentAssetBackup\\DA_Equip_Player.uasset",
+    "sha256": "AC0D9544F52CC9B105D692D674E970481C216569128C222DEEF94681B28142C2",
+    "reason": "Empty duplicate equipment placeholder. MCP props all core references/identity empty; static referencers [] and dirty=false; no Source/Config/Docs path use; not an active weapon definition."
+  }
+]

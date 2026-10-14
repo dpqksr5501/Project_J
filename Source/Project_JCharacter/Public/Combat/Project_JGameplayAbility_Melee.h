@@ -72,6 +72,7 @@ private:
 	friend class FProjectJComboWindowOwnershipTest;
 	friend class FProjectJComboInputSubscriptionTest;
 	friend class FProjectJComboBlendOutTest;
+	friend class FProjectJAuthoredSkillContinuationTest;
 	void UnbindComboInputEvents();
 	FGameplayTagContainer ComboInputTags;
 	TWeakObjectPtr<class UAbilitySystemComponent> ComboInputASC;

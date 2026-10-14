@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/Project_JMotionMatchingSelectionPolicy.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
@@ -223,16 +224,19 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UPr
 	friend class FProjectJStrafePivotCardinalTest;
 	friend class FProjectJStrafePivotConsecutiveTest;
 	friend class FProjectJLandingReturnContextTest;
+	friend class FProjectJLocomotionTagOwnershipTest;
 
 public:
 	UProject_JLocomotionAnimStateComponent();
 
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	void UpdateState(float DeltaTime);
 	void ApplyTransitionPolicy(const FProject_JLocomotionTransitionPolicy& InPolicy);
 	void HandleJumpStarted();
-	void HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
+	bool HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
 	void HandleReplicatedFallOffStarted();
 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
 	void HandleReplicatedMoveStopped(bool bWasSprintingAtStop);
@@ -302,6 +306,7 @@ public:
 	void ResetJumpStartLandingDebugState();
 
 private:
+	virtual void OnCachedAbilitySystemChanged() override;
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
 	bool ShouldSkipUpdateForCurrentContext(float& DeltaTime);
 	void AdvanceStateClocks(float DeltaTime);
@@ -407,7 +412,6 @@ private:
 	void CompleteLanding();
 
 	void EnterGroundMotionMode(EProject_JGroundMotionMode NewMode);
-	void ResetGroundMotionTransitionRequests();
 	void HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode);
 	void EnterStartGroundMotionMode();
 	void EnterStopGroundMotionMode();
@@ -450,8 +454,9 @@ private:
 	void AddOwnedLandingGameplayTag();
 	void RemoveOwnedLandingGameplayTag();
 	void ClearOwnedMovementGameplayTags();
+	void ReconcileMovementGameplayTag(const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease, const bool& bRequested);
+	void ReleaseMovementGameplayTag(const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease);
 	void ClearMovementRequests();
-	void ClearPendingAnimationExitRequests();
 	void ClearResolvedMoveInputState();
 
 public:
@@ -944,8 +949,15 @@ private:
 	bool bReplicatedStopWasSprinting = false;
 	int32 LastConfirmedRemoteLandingSequence = 0;
 	bool bLandingCancelEventDispatched = false;
-	bool bAppliedInAirGameplayTag = false;
-	bool bAppliedLandingGameplayTag = false;
+	// A loose tag lease belongs to the ASC that received the increment, even if
+	// PlayerState/ASC references change before landing or component teardown.
+	TWeakObjectPtr<UAbilitySystemComponent> OwnedInAirTagASC;
+	TWeakObjectPtr<UAbilitySystemComponent> OwnedLandingTagASC;
+	// Tag demand is distinct from cosmetic air/landing state: remote presentation
+	// handlers may deliberately run without requesting gameplay tags.
+	bool bInAirGameplayTagRequested = false;
+	bool bLandingGameplayTagRequested = false;
+	bool bMovementTagOwnershipEnding = false;
 	FProject_JMotionMatchingSelectionPolicy MotionMatchingSelectionPolicy;
 	FProject_JMovingTurnPolicy MovingTurnPolicy;
 	FProject_JTurnRequestSample TurnRequestSample;

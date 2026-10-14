@@ -119,10 +119,15 @@ void UProject_JRetargetAnimInstance::DestroyAnimInstanceProxy(FAnimInstanceProxy
 const UProject_JRetargetBodyProfile* UProject_JRetargetAnimInstance::GetRetargetBodyProfile() const
 {
 	check(IsInGameThread());
-	const auto* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
-	const auto* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
-	const auto* Body = RetargetBodyProfile ? RetargetBodyProfile.Get() :
-		(CharacterProfile ? CharacterProfile->RetargetBodyProfile.Get() : nullptr);
+	const auto* Body = RetargetBodyProfile.Get();
+	if (!Body)
+	{
+		// An explicit visual-body selection already owns precedence. Resolve the
+		// pawn/archetype only for the fallback, without adding cached lifetime state.
+		const auto* Player = Cast<AProject_JPlayerCharacter>(TryGetPawnOwner());
+		const auto* CharacterProfile = Player ? Player->GetCharacterAnimProfile() : nullptr;
+		Body = CharacterProfile ? CharacterProfile->RetargetBodyProfile.Get() : nullptr;
+	}
 	const auto* Mesh = GetSkelMeshComponent();
 	return Body && Body->Family && Mesh && Mesh->GetSkeletalMeshAsset() &&
 		Body->Family->TargetSkeleton == Mesh->GetSkeletalMeshAsset()->GetSkeleton() ? Body : nullptr;

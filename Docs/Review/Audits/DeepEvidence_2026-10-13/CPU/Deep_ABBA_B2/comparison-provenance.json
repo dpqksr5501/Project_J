@@ -1,0 +1,48 @@
+{
+  "phase": "B2",
+  "baseline": false,
+  "trace": false,
+  "binarySet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/FinalEditorBinaries",
+  "allEightModulesAndModulesFileSwitched": true,
+  "workingSourceSnapshotMatchesCompiledBinary": true,
+  "compiledSourceManifest": "Saved/Validation/DeepAudit_20261013/FinalSourceHashes.json",
+  "note": "A is before DS01-18, after SI01-08. B is the final deep-audit source. Current assets are identical across all comparison runs, including corrected damage references. Baseline compiled code does not match the working-tree source snapshot copied by the fixture. Trace runs are a separate pair and are excluded from no-trace CPU comparison.",
+  "artifacts": [
+    {
+      "file": "UnrealEditor-Project_JMMO.dll",
+      "sha256": "99E694CBDC244140BAE64118B9BD84A2E456CAB614D9FEC8D0FB9D07CCA5E73F"
+    },
+    {
+      "file": "UnrealEditor-Project_J.dll",
+      "sha256": "4D7D067BD9391343D569A97F692C5E7B3BF10EC644EB5BC7EE54F13D5C10AF2E"
+    },
+    {
+      "file": "UnrealEditor-Project_JCore.dll",
+      "sha256": "282A7725652489A17A4BBAE1A8C687FB938531ABFD62C01189857BB28B207B91"
+    },
+    {
+      "file": "UnrealEditor-Project_JGAS.dll",
+      "sha256": "66E27A148FBC405E7F36FCF10445A145A15F21441FC682547C587416EAEF2093"
+    },
+    {
+      "file": "UnrealEditor-Project_JMount.dll",
+      "sha256": "F8B1F036E446CF1F9E1E886F27751A14C6C5ED6F03E6034CCC4DCE64FC9DDCA0"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacter.dll",
+      "sha256": "AADCD301655CD7E46F63131B7E2C602EA6AE0864CE747CFC443E1276FCC423C0"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacterEditor.dll",
+      "sha256": "15B6B2C1E19FB859997CD50553AA4C11EA0BC3077F1D89FFA60031E8CF1EF565"
+    },
+    {
+      "file": "UnrealEditor-Project_JAnimationNodes.dll",
+      "sha256": "C1D6659E3409B5AFC27C8269FB8663A914A3E4EF65D1261262C1780ED19B1C01"
+    },
+    {
+      "file": "UnrealEditor.modules",
+      "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+    }
+  ]
+}

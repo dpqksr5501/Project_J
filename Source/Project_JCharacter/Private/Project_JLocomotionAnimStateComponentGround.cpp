@@ -16,13 +16,8 @@ void UProject_JLocomotionAnimStateComponent::EnterGroundMotionMode(EProject_JGro
 
 	GroundMotionMode = NewMode;
 	GroundMotionModeElapsedTime = 0.0f;
-	ResetGroundMotionTransitionRequests();
 	HandleGroundMotionModeEntered(NewMode);
 	RefreshGroundMotionFlags();
-}
-
-void UProject_JLocomotionAnimStateComponent::ResetGroundMotionTransitionRequests()
-{
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode)
@@ -83,9 +78,6 @@ void UProject_JLocomotionAnimStateComponent::ClearGroundMotionSprintTransitionSt
 {
 	bStartWasSprinting = false;
 	bStopWasSprinting = false;
-	bStartRequested = false;
-	bUseStartDatabase = false;
-	bGroundStartFinished = true;
 }
 
 void UProject_JLocomotionAnimStateComponent::CacheRemoteStartTurnReference()
@@ -141,6 +133,8 @@ bool UProject_JLocomotionAnimStateComponent::UpdateLocalStartTurnExitRequest()
 
 void UProject_JLocomotionAnimStateComponent::RefreshGroundMotionFlags()
 {
+	// GroundMotionMode owns the semantic state. Publish its Blueprint-compatible
+	// views together here; transition helpers must not author a second state.
 	bStartRequested = GroundMotionMode == EProject_JGroundMotionMode::Start;
 	bUseStartDatabase = bStartRequested;
 	bGroundStartFinished = !bStartRequested;
@@ -424,10 +418,6 @@ void UProject_JLocomotionAnimStateComponent::UpdateGroundMotionModeFromInput(flo
 	else if (bStartEdge)
 	{
 		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
-	}
-	else if (bStopEdge)
-	{
-		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
 	}
 	else if (GroundMotionMode == EProject_JGroundMotionMode::Start)
 	{

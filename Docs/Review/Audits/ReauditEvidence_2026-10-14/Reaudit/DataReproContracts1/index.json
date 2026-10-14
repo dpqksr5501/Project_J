@@ -1,0 +1,97 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "DDCF3FEC44AC15FECA7C2083809760F0",
+			"instanceName": "DESKTOP-5T07C91-16472",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-20.39.36",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.061913300305604935,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"DDCF3FEC44AC15FECA7C2083809760F0"
+			],
+			"duration": 0.053689099848270416,
+			"dateTime": "2026.10.13-20.39.36",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected map reconstruction cannot retain the previous world's texture' to be null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 35,
+					"timestamp": "2026.10.13-20.39.36"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"DDCF3FEC44AC15FECA7C2083809760F0"
+			],
+			"duration": 0.0082242004573345184,
+			"dateTime": "2026.10.13-20.39.36",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "The authored data validator rejects a nonfinite movement speed: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-20.39.36"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Runtime configuration diagnostics identify the invalid WalkSpeed' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 49,
+					"timestamp": "2026.10.13-20.39.36"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		}
+	]
+}

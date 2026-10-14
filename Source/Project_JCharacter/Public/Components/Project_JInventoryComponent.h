@@ -81,6 +81,9 @@ class PROJECT_JCHARACTER_API UProject_JInventoryComponent : public UActorCompone
 
 public:
 	UProject_JInventoryComponent();
+	bool IsAcceptingRequests() const { return CanPublishState(); }
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	UFUNCTION(BlueprintCallable) void RequestUseItem(FGuid RequestId, FGuid InstanceId);
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) EProject_JItemUseResult TryUseItem(FGuid InstanceId);
 	UPROPERTY(BlueprintAssignable) FProject_JItemUseCompleted OnUseCompleted;
@@ -153,6 +156,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	bool bEnding = false;
+	bool CanPublishState() const;
+	bool HasMutationAuthority() const;
+	void Retire();
 	UFUNCTION(Server, Reliable) void ServerBagChange(FGuid RequestId, FProject_JBagRequest Request);
 	UFUNCTION(Client, Reliable) void ClientBagCompleted(FGuid RequestId, EProject_JBagResult Result);
 	TMap<FGuid, EProject_JBagResult> BagReceipts;

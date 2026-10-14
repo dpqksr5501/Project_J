@@ -255,7 +255,6 @@ private:
 #endif
 	bool CanCreatePresentation() const;
 	const UProject_JWeaponPresentationProfile* GetCurrentPresentationProfile() const;
-	bool ShouldShowWeapon() const;
 	void UpdateIndependentMotion(float DeltaTime);
 	void UpdateContactRecovery(double NowSeconds);
 	void CancelContactRecovery();

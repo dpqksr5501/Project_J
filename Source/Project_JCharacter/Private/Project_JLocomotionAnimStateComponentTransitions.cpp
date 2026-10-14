@@ -24,15 +24,17 @@ void UProject_JLocomotionAnimStateComponent::HandleJumpStarted()
 	AddOwnedInAirGameplayTag();
 }
 
-void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
+bool UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 	int32 Sequence,
 	float ServerStartAgeSeconds,
 	const FVector& LaunchVelocity)
 {
 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
-	if (!PlayerOwner || ShouldUseLocalInputState() || Sequence == LastConfirmedRemoteJumpSequence)
+	if (bMovementTagOwnershipEnding || IsBeingDestroyed() || !IsValid(PlayerOwner) || PlayerOwner->IsActorBeingDestroyed() ||
+		ShouldUseLocalInputState() || Sequence <= LastConfirmedRemoteJumpSequence ||
+		!FMath::IsFinite(ServerStartAgeSeconds) || LaunchVelocity.ContainsNaN())
 	{
-		return;
+		return false;
 	}
 
 	LastConfirmedRemoteJumpSequence = Sequence;
@@ -56,7 +58,7 @@ void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 			ScheduleJumpStartTimeout(
 				FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
 		}
-		return;
+		return true;
 	}
 
 	if (IsLandingStateActive())
@@ -73,11 +75,12 @@ void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
 	if (JumpStartElapsedTime >= ReplicatedJumpStartDuration)
 	{
 		CompleteJumpStart();
-		return;
+		return true;
 	}
 
 	ScheduleJumpStartTimeout(
 		FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
+	return true;
 }
 
 void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()

@@ -1,0 +1,68 @@
+[
+  {
+    "run": "RenderedCrowd200_1",
+    "manifestSha256": "b6e7dc38b02f0c5b4a8805e22627a0b5e3ee654d796685bc28f2b7ea29bf1412",
+    "phases": [
+      {
+        "phase": 2,
+        "samples": 486,
+        "frameMeanMs": 16.431297734567902,
+        "frameP50Ms": 15.162599,
+        "frameP95Ms": 17.6320495,
+        "frameMaxMs": 398.546906,
+        "reciprocalMeanFPS": 60.85946564623535,
+        "gpuMeanMs": 10.894313991769547,
+        "gpuP95Ms": 11.1247,
+        "renderedActorMin": 200,
+        "montageMax": 0
+      },
+      {
+        "phase": 3,
+        "samples": 364,
+        "frameMeanMs": 21.91490441208791,
+        "frameP50Ms": 15.89475,
+        "frameP95Ms": 33.4133917,
+        "frameMaxMs": 76.686501,
+        "reciprocalMeanFPS": 45.631045483749226,
+        "gpuMeanMs": 11.460721978021978,
+        "gpuP95Ms": 12.554475,
+        "renderedActorMin": 200,
+        "montageMax": 200
+      }
+    ],
+    "note": "Excludes capture request rows; later capture costs remain. GPU counters delayed. Different build/runtime from CPU benchmark; not a before/after FPS gain."
+  },
+  {
+    "run": "CookedRenderedCrowd200",
+    "manifestSha256": "e91255952de3e4b0f49233d9ca3dbd84dd29400914ce045bb3e74cdcd5aa6ea4",
+    "phases": [
+      {
+        "phase": 2,
+        "samples": 505,
+        "frameMeanMs": 15.837673869306931,
+        "frameP50Ms": 15.792702,
+        "frameP95Ms": 16.7856182,
+        "frameMaxMs": 68.475204,
+        "reciprocalMeanFPS": 63.14058543268645,
+        "gpuMeanMs": 10.20831108910891,
+        "gpuP95Ms": 10.37686,
+        "renderedActorMin": 200,
+        "montageMax": 0
+      },
+      {
+        "phase": 3,
+        "samples": 390,
+        "frameMeanMs": 20.466312328205127,
+        "frameP50Ms": 16.349349,
+        "frameP95Ms": 27.908853999999994,
+        "frameMaxMs": 77.535194,
+        "reciprocalMeanFPS": 48.86078077787738,
+        "gpuMeanMs": 10.378027692307692,
+        "gpuP95Ms": 10.815735,
+        "renderedActorMin": 200,
+        "montageMax": 200
+      }
+    ],
+    "note": "Excludes capture request rows; later capture costs remain. GPU counters delayed. Different build/runtime from CPU benchmark; not a before/after FPS gain."
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A1/manifest.json",
+    "copy": "MatchedNonUnity/A1/manifest.json",
+    "sha256": "e244b95d8de403e67a5c770d178430ae65df5d845fa0cc03af16f7f2f46ca76d"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A1/Count200/arguments.json",
+    "copy": "MatchedNonUnity/A1/arguments.json",
+    "sha256": "77360fb529a11623e063fccb5c7d82c5fdfe3a842ca8f98a4a1fe0fe790d9a52"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A1/Count200/cpu.json",
+    "copy": "MatchedNonUnity/A1/cpu.json",
+    "sha256": "036e0147d01a7661160e21e3c37b5c667576fd89eb779abaf22bc1918c5b2253"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C1/manifest.json",
+    "copy": "MatchedNonUnity/C1/manifest.json",
+    "sha256": "d8b2c8d0c9e45dab437cabb0a13547ead94bb4c53ff63d878174a806f2eaec9f"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C1/Count200/arguments.json",
+    "copy": "MatchedNonUnity/C1/arguments.json",
+    "sha256": "697a974f12d036bc3e477e637e63acefdc8cde98edd354a8022a420f490ddad6"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C1/Count200/cpu.json",
+    "copy": "MatchedNonUnity/C1/cpu.json",
+    "sha256": "42644decd038ab789f5c889509dc364d8c4225c0ddd9b392083e8a7f1c43412c"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A2/manifest.json",
+    "copy": "MatchedNonUnity/A2/manifest.json",
+    "sha256": "e244b95d8de403e67a5c770d178430ae65df5d845fa0cc03af16f7f2f46ca76d"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A2/Count200/arguments.json",
+    "copy": "MatchedNonUnity/A2/arguments.json",
+    "sha256": "864b893b0ed8a44b86d2d5c595d8626919ed7d28128a02a081a5187209498b54"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_A2/Count200/cpu.json",
+    "copy": "MatchedNonUnity/A2/cpu.json",
+    "sha256": "3ad3f4a54110fd2281a2caad0c52995cea6b8b60e70453543eace00eabcb29ee"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C2/manifest.json",
+    "copy": "MatchedNonUnity/C2/manifest.json",
+    "sha256": "d8b2c8d0c9e45dab437cabb0a13547ead94bb4c53ff63d878174a806f2eaec9f"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C2/Count200/arguments.json",
+    "copy": "MatchedNonUnity/C2/arguments.json",
+    "sha256": "593c91c910864d5aaa67ab83c8129c1921e11a0edd7fd54d7cb0fdbfc77b5d08"
+  },
+  {
+    "original": "Saved/Validation/AuthoredAnimation_20261005/WholeAudit_MatchedNonUnity_C2/Count200/cpu.json",
+    "copy": "MatchedNonUnity/C2/cpu.json",
+    "sha256": "b2ed2b28832aae8197c7a473df8003871f4944705978bc109f44b6effa47c20a"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/manifest.json",
+    "copy": "DeliveryNetwork/manifest.json",
+    "sha256": "994263e34e71b1803209da57cd010df77872dec8fc75c188b97171d9488a29f1"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/verification.json",
+    "copy": "DeliveryNetwork/verification.json",
+    "sha256": "d704bae0f4a50023aff90921dac7185bfd6668e053010f8d2acfaf390e43dc6f"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/server-arguments.json",
+    "copy": "DeliveryNetwork/server-arguments.json",
+    "sha256": "1775d5b43a50fb959ca890054aff39aa8ca68cf0a5f1d0df4c48cdd5dea5c72a"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/Client1/combat-observations.csv",
+    "copy": "DeliveryNetwork/Client1/combat-observations.csv",
+    "sha256": "2b4efc636fdc4093557f17d5e50ffcd6ebfe6327b9452fb53fb3f43a87be0d55"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/Client2/combat-observations.csv",
+    "copy": "DeliveryNetwork/Client2/combat-observations.csv",
+    "sha256": "a009ee11f9225c6cd9b7371c4ae2e832e32b03ae3607ee0614051cb4adc4372b"
+  },
+  {
+    "original": "Saved/Validation/GroupD_20260910/WholeAudit_Delivery_Lag50Loss20/Server/network-phases.csv",
+    "copy": "DeliveryNetwork/Server/network-phases.csv",
+    "sha256": "b4b902715f60edd0fe3b3d0deded1f919051cac79730e9bca751792c42f83d5b"
+  }
+]

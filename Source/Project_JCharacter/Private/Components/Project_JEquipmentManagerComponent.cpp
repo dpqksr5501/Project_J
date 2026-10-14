@@ -4,6 +4,7 @@
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Inventory/Project_JItemDefinition.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/World.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJEquipment, Log, All);
 
@@ -59,8 +60,43 @@ void UProject_JEquipmentManagerComponent::GetLifetimeReplicatedProps(TArray<FLif
 
 void UProject_JEquipmentManagerComponent::BeginPlay()
 {
-	Super::BeginPlay();
+	bEnding = false;
 	EquipmentArray.OwnerComponent = this;
+	Super::BeginPlay();
+}
+
+void UProject_JEquipmentManagerComponent::EndPlay(const EEndPlayReason::Type Reason)
+{
+	Retire();
+	Super::EndPlay(Reason);
+}
+
+void UProject_JEquipmentManagerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Retire();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
+bool UProject_JEquipmentManagerComponent::CanPublishState() const
+{
+	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
+		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
+}
+
+bool UProject_JEquipmentManagerComponent::HasMutationAuthority() const
+{
+	return CanPublishState() && GetOwner()->HasAuthority();
+}
+
+void UProject_JEquipmentManagerComponent::Retire()
+{
+	if (bEnding) { return; }
+	bEnding = true;
+	EquipmentArray.OwnerComponent = nullptr;
+	OnEquipmentEquipped.Clear(); OnEquipmentUnequipped.Clear(); OnRequestCompleted.Clear();
+	auto RetiredListeners = MoveTemp(OnRetired);
+	OnRetired.Clear();
+	RetiredListeners.Broadcast();
 }
 
 bool UProject_JEquipmentManagerComponent::GetEquippedItemInstance(EProject_JEquipmentSlot Slot, FProject_JItemInstanceData& OutItem) const
@@ -72,7 +108,7 @@ bool UProject_JEquipmentManagerComponent::GetEquippedItemInstance(EProject_JEqui
 
 void UProject_JEquipmentManagerComponent::RequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
 {
-	if (!RequestId.IsValid() || !GetOwner()) return;
+	if (!CanPublishState() || !RequestId.IsValid()) return;
 	if (GetOwner()->HasAuthority())
 	{
 		ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
@@ -83,7 +119,7 @@ void UProject_JEquipmentManagerComponent::RequestEquipmentChange(FGuid RequestId
 FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::ExecuteEquipmentRequest(FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
 {
 	using Failure = EProject_JEquipmentOperationFailure;
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
+	if (!HasMutationAuthority()) return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
 	const double Now = FPlatformTime::Seconds();
 	if (RequestWindowStart < 0 || Now - RequestWindowStart >= 1.0) { RequestWindowStart = Now; RequestsInWindow = 0; }
 	if (++RequestsInWindow > 20) return FProject_JEquipmentOperationResult::FailureResult(Failure::RateLimited, InstanceId, Slot);
@@ -111,12 +147,12 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::ExecuteE
 
 void UProject_JEquipmentManagerComponent::ServerRequestEquipmentChange_Implementation(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
 {
-	if (RequestId.IsValid()) ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
+	if (HasMutationAuthority() && RequestId.IsValid()) ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
 }
 
 void UProject_JEquipmentManagerComponent::ClientEquipmentRequestCompleted_Implementation(FGuid RequestId, FProject_JEquipmentOperationResult Result)
 {
-	OnRequestCompleted.Broadcast(RequestId, Result);
+	if (CanPublishState()) { OnRequestCompleted.Broadcast(RequestId, Result); }
 }
 
 void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefinition* ItemDef)
@@ -134,7 +170,7 @@ void UProject_JEquipmentManagerComponent::EquipItemInstance(const FProject_JItem
 
 void UProject_JEquipmentManagerComponent::RequestEquipItemInstanceById(FGuid InstanceId)
 {
-	if (!InstanceId.IsValid())
+	if (!CanPublishState() || !InstanceId.IsValid())
 	{
 		return;
 	}
@@ -150,7 +186,7 @@ void UProject_JEquipmentManagerComponent::RequestEquipItemInstanceById(FGuid Ins
 
 FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::TryEquipItemInstanceById(FGuid InstanceId)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!HasMutationAuthority())
 	{
 		return FProject_JEquipmentOperationResult::FailureResult(
 			EProject_JEquipmentOperationFailure::NotAuthority,
@@ -181,7 +217,7 @@ void UProject_JEquipmentManagerComponent::UnequipItem(UProject_JEquipmentItemDef
 	check(IsInGameThread());
 	if (bEquipmentOperationInProgress) return;
 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
-	if (!ItemDef || !GetOwner() || !GetOwner()->HasAuthority())
+	if (!ItemDef || !HasMutationAuthority())
 	{
 		return;
 	}
@@ -198,7 +234,7 @@ void UProject_JEquipmentManagerComponent::UnequipSlot(EProject_JEquipmentSlot Sl
 	check(IsInGameThread());
 	if (bEquipmentOperationInProgress) return;
 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!HasMutationAuthority())
 	{
 		return;
 	}
@@ -212,7 +248,7 @@ void UProject_JEquipmentManagerComponent::UnequipSlot(EProject_JEquipmentSlot Sl
 
 void UProject_JEquipmentManagerComponent::RequestUnequipSlot(EProject_JEquipmentSlot Slot)
 {
-	if (Slot == EProject_JEquipmentSlot::None)
+	if (!CanPublishState() || Slot == EProject_JEquipmentSlot::None)
 	{
 		return;
 	}
@@ -389,7 +425,7 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
 
 	UProject_JEquipmentItemDefinition* ItemDef = Cast<UProject_JEquipmentItemDefinition>(ItemInstance.ItemDef);
-	if (!GetOwner() || !GetOwner()->HasAuthority())
+	if (!HasMutationAuthority())
 	{
 		return FProject_JEquipmentOperationResult::FailureResult(
 			EProject_JEquipmentOperationFailure::NotAuthority,
@@ -434,6 +470,7 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 
 	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
 	const int32 ConflictIndex = FindEquipmentIndexBySlot(Slot);
+	TWeakObjectPtr<UProject_JInventoryComponent> IncomingInventory(GetOwnerInventoryComponent());
 	bool bIncomingItemLocked = false;
 	if (bRequireInventoryOwnership)
 	{
@@ -446,19 +483,36 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 		}
 		bIncomingItemLocked = true;
 	}
+	const auto RollbackIncomingLock = [&] {
+		if (bIncomingItemLocked && IncomingInventory.IsValid())
+		{
+			IncomingInventory->SetItemInstanceLocked(ItemInstance.InstanceId, false);
+		}
+	};
+	const auto HasIncomingSource = [&] {
+		return !bIncomingItemLocked || (IncomingInventory.IsValid() && IncomingInventory->IsAcceptingRequests() &&
+			GetOwnerInventoryComponent() == IncomingInventory.Get());
+	};
+	if (!HasMutationAuthority() || !HasIncomingSource())
+	{
+		RollbackIncomingLock();
+		return FProject_JEquipmentOperationResult::FailureResult(EProject_JEquipmentOperationFailure::NotAuthority, ItemInstance.InstanceId, Slot);
+	}
 
 	// Lock the incoming item before mutating the occupied slot. If replacement
 	// fails, restore the incoming inventory state and keep the previous item.
 	if (ConflictIndex != INDEX_NONE && !RemoveEquipmentAt(ConflictIndex))
 	{
-		if (bIncomingItemLocked)
-		{
-			SetInventoryEquipmentLock(ItemInstance, false);
-		}
+		RollbackIncomingLock();
 		return FProject_JEquipmentOperationResult::FailureResult(
 			EProject_JEquipmentOperationFailure::InvalidRequest,
 			ItemInstance.InstanceId,
 			Slot);
+	}
+	if (!HasMutationAuthority() || !HasIncomingSource())
+	{
+		RollbackIncomingLock();
+		return FProject_JEquipmentOperationResult::FailureResult(EProject_JEquipmentOperationFailure::NotAuthority, ItemInstance.InstanceId, Slot);
 	}
 
 	FProject_JEquipmentArrayItem& NewItem = EquipmentArray.Items.Add_GetRef(FProject_JEquipmentArrayItem());
@@ -474,7 +528,7 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 
 void UProject_JEquipmentManagerComponent::BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item)
 {
-	if (Item.ItemDef)
+	if (CanPublishState() && Item.ItemDef)
 	{
 		OnEquipmentEquipped.Broadcast(Item.Slot, Item.ItemDef);
 	}
@@ -482,7 +536,7 @@ void UProject_JEquipmentManagerComponent::BroadcastEquipmentEquipped(const FProj
 
 void UProject_JEquipmentManagerComponent::BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item)
 {
-	if (Item.ItemDef)
+	if (CanPublishState() && Item.ItemDef)
 	{
 		OnEquipmentUnequipped.Broadcast(Item.Slot, Item.ItemDef);
 	}

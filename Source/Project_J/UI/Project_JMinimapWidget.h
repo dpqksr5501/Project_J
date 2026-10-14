@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataAsset.h"
+#include "UI/Project_JUIIconRequest.h"
 #include "Project_JMinimapWidget.generated.h"
 
 USTRUCT(BlueprintType)
@@ -41,19 +42,22 @@ class PROJECT_J_API UProject_JMinimapWidget : public UUserWidget
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void BeginDestroy() override;
 	virtual int32 NativePaint(const FPaintArgs &, const FGeometry &, const FSlateRect &, FSlateWindowElementList &,
 							  int32, const FWidgetStyle &, bool) const override;
 	virtual FReply NativeOnMouseWheel(const FGeometry &, const FPointerEvent &) override;
 
   private:
 	void Sample();
+	void ReleaseMapPresentation();
 	FTimerHandle SampleTimer;
+	TWeakObjectPtr<UWorld> SampleWorld;
 	TArray<FProject_JMapMarker> QuestMarkers;
 	FVector PlayerPosition = FVector::ZeroVector;
 	float PlayerYaw = 0;
 	float Zoom = 1;
 	bool bHasPlayer = false;
 	UPROPERTY() TObjectPtr<UTexture2D> MapTexture;
-	TSharedPtr<struct FStreamableHandle> LoadHandle;
+	FProject_JUIIconRequest MapIconRequest;
 	FSlateBrush TextureBrush;
 };

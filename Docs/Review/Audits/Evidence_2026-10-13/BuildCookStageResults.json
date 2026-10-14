@@ -1,0 +1,101 @@
+[
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/AuthorityReentryBuild.log",
+    "sha256": "fe45185c14b4f36e108c540bb0da5c85080ca78527fc8c3e9f7bf044716787ba",
+    "bytes": 17237,
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 33.02 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/NonUnityEditorBuild.log",
+    "sha256": "3bf15354f3669577e8a05e21860cc256d89bedf8739d2b4c1ebd9ae36992f6ec",
+    "bytes": 43702,
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 203.78 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/FinalNonUnityBuild.log",
+    "sha256": "7911bfad6b87d486ea3f9ed97c7055e76f9b05a99ae9578cf8fd45de60317c05",
+    "bytes": 118406,
+    "summary": [
+      "Result: Failed (OtherCompilationError)",
+      "Total execution time: 199.47 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/FinalNonUnityBuildRetry.log",
+    "sha256": "500e61106b63e22c274181a01030c494fa812bb0bb64e54ff69976048a9119dd",
+    "bytes": 35972,
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 203.63 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/GameBuildLatest.log",
+    "sha256": "e6396a4dca97c1988d522d54fb9f32cbf8178655efcfff184e17aba557c8aedc",
+    "bytes": 12179,
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 20.63 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/GameBuildDelivery.log",
+    "sha256": "e625e1e2db9bf668c7999725413ee6ebad26e1542b12905cd3a345e2c50475b0",
+    "bytes": 11746,
+    "summary": [
+      "Result: Succeeded",
+      "Total execution time: 17.81 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/ServerBuild.log",
+    "sha256": "a8914bc21c793a6a0732470a528d36d2b7d297face818cb8a0f313ce3cb9c497",
+    "bytes": 5563,
+    "summary": [
+      "Server targets are not currently supported from this engine distribution.",
+      "BuildException: Server targets are not currently supported from this engine distribution.",
+      "Result: Failed (OtherCompilationError)",
+      "Total execution time: 0.57 seconds"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/StageFinal.log",
+    "sha256": "688d7d76998de383650c7279bd81602145aad4b4a5692a27be1a82aed6666413",
+    "bytes": 10898,
+    "summary": [
+      "AutomationTool exiting with ExitCode=102 (Error_FailedToDeleteStagingDirectory)"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/PackagedDelivery_Stage.log",
+    "sha256": "f91cfe9f52740de1c45312eb1b8d2f5e4f3ae4a54392288eb6ecc1330b489e76",
+    "bytes": 29796,
+    "summary": [
+      "AutomationTool exiting with ExitCode=0 (Success)"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/CookFinal/Cook.log",
+    "sha256": "c0bfd406d9f42fed09c37c100f4cae5fbfb5fb89f1497d5640a978a206d29926",
+    "bytes": 307436,
+    "summary": [
+      "[2026.10.13-10.52.58:189][  0]LogCook: Display: Packages Cooked: 1361, Packages Incrementally Skipped: 0, Packages Skipped by Platform: 7, Total Packages: 1368",
+      "[2026.10.13-10.52.58:210][  0]LogInit: Display: Success - 0 error(s), 1 warning(s)"
+    ]
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/CookDelivery/Cook.log",
+    "sha256": "fe35674d4d8a3a9bbd1fd8b3c3674c042a03c9100c2d69cc70ebe3ec7b3bd2dd",
+    "bytes": 307286,
+    "summary": [
+      "[2026.10.13-11.12.44:652][  0]LogCook: Display: Packages Cooked: 1361, Packages Incrementally Skipped: 0, Packages Skipped by Platform: 7, Total Packages: 1368",
+      "[2026.10.13-11.12.44:670][  0]LogInit: Display: Success - 0 error(s), 1 warning(s)"
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-NullRHI",
+  "-nosound",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013/DeepPhase1Focused4/Run.log",
+  "-ReportExportPath=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013/DeepPhase1Focused4",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.Animation.StateOwnership+ProjectJ.RuntimeOwnership.LocomotionTagLease+ProjectJ.LocomotionContinuity+ProjectJ.Animation.Clock+ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle; Quit"
+]

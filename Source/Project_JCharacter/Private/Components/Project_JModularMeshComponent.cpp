@@ -9,11 +9,6 @@ UProject_JModularMeshComponent::UProject_JModularMeshComponent()
 	bEnableUpdateRateOptimizations = true;
 }
 
-void UProject_JModularMeshComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void UProject_JModularMeshComponent::AttachAndSetLeader(USkeletalMeshComponent* MainMesh)
 {
 	if (!MainMesh) return;

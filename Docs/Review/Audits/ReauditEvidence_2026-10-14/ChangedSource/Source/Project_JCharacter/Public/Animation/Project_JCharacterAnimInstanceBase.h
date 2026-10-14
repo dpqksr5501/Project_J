@@ -1,0 +1,64 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
+#include "Project_JCharacterAnimInstanceBase.generated.h"
+
+class ACharacter;
+class APawn;
+class AProject_JPlayerCharacter;
+class UProject_JLocomotionAnimStateComponent;
+class UProject_JMotionMatchingTrajectoryComponent;
+
+class USkeletalMeshComponent;
+
+/**
+ * Shared owner/reference cache for native character animation instances.
+ *
+ * Motion matching, Chooser evaluation, and player-specific state stay in the
+ * concrete anim instance; this base only owns reusable owner lookup.
+ */
+UCLASS(Abstract, Blueprintable, BlueprintType)
+class PROJECT_JCHARACTER_API UProject_JCharacterAnimInstanceBase : public UAnimInstance
+{
+	GENERATED_BODY()
+
+public:
+	virtual void NativeInitializeAnimation() override;
+
+	/** Returns the dedicated Runtime Retarget Follower mesh on the owning character if present. */
+	UFUNCTION(BlueprintPure, Category = "Animation|Quality")
+	USkeletalMeshComponent* GetRuntimeRetargetFollowerMesh() const;
+
+	/**
+	 * Checks whether any visual representation of the owner was recently rendered.
+	 * Follower mesh and visual meshes take precedence over a gameplay-only hidden leader mesh.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Animation|Quality")
+	bool WasOwnerVisualRecentlyRendered(float RecentlyRenderedTolerance) const;
+
+protected:
+	void CacheOwnerReferences();
+	bool NeedsOwnerReferenceRefresh() const;
+	bool IsDedicatedServerAnimationContext() const;
+	bool IsLocallyControlledCharacter() const;
+	bool WasOwnerRecentlyRendered(float RecentlyRenderedTolerance) const;
+
+	UPROPERTY(Transient)
+	TObjectPtr<APawn> OwningPawn = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ACharacter> OwningCharacter = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<AProject_JPlayerCharacter> OwningPlayerCharacter = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JLocomotionAnimStateComponent> LocomotionAnimStateComponent = nullptr;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UProject_JMotionMatchingTrajectoryComponent> CachedTrajectoryComponent = nullptr;
+
+};

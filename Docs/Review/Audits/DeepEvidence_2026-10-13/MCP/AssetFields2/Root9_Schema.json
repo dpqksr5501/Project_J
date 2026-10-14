@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"weaponType\\\":{\\\"type\\\":\\\"string\\\",\\\"title\\\":\\\"EProject_JWeaponType\\\",\\\"enum\\\":[\\\"None\\\",\\\"Unarmed\\\",\\\"OneHandSword\\\",\\\"TwoHandSword\\\",\\\"DualBlades\\\",\\\"Staff\\\",\\\"Bow\\\"]},\\\"weaponStance\\\":{\\\"type\\\":\\\"string\\\",\\\"title\\\":\\\"EProject_JWeaponAnimStance\\\",\\\"enum\\\":[\\\"None\\\",\\\"OneHanded\\\",\\\"TwoHanded\\\",\\\"DualWield\\\",\\\"Staff\\\",\\\"Bow\\\",\\\"Unarmed\\\"]},\\\"combatPresentationMode\\\":{\\\"type\\\":\\\"string\\\",\\\"title\\\":\\\"EProject_JCombatAnimationPresentationMode\\\",\\\"enum\\\":[\\\"UpperBodyOverlay\\\",\\\"FullBodyLocomotion\\\"],\\\"description\\\":\\\"Selects whether this weapon preserves the shared lower-body Motion Matching\\\\nand contributes an armed upper-body pose, or supplies a validated full-body\\\\ncombat locomotion set. Defaulting to overlay keeps incomplete weapon assets\\\\nfrom replacing stable shared locomotion.\\\"},\\\"combatIntroMontage\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"/Script/Engine.AnimMontage\\\",\\\"description\\\":\\\"The full-body draw / combat-entry montage for this weapon.\\\",\\\"properties\\\":{\\\"refPath\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"소프트 경로 스트링으로 저장된 레퍼런스입니다.\\\"}},\\\"required\\\":[\\\"refPath\\\"]},\\\"combatOutroMontage\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"/Script/Engine.AnimMontage\\\",\\\"description\\\":\\\"Optional weapon-specific sheathe / combat-exit montage. It is authored\\\\nbeside the draw montage because it belongs to the equipped weapon style,\\\\nnot to the job's shared locomotion graph.\\\",\\\"properties\\\":{\\\"refPath\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"소프트 경로 스트링으로 저장된 레퍼런스입니다.\\\"}},\\\"required\\\":[\\\"refPath\\\"]},\\\"combatAnimationLayerClass\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"/Script/CoreUObject.Class\\\",\\\"description\\\":\\\"Weapon/job-specific Linked Anim Layer class. It overrides the production\\\\nhumanoid master only while this weapon is in combat mode.\\\",\\\"properties\\\":{\\\"refPath\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"소프트 경로 스트링으로 저장된 레퍼런스입니다.\\\"}},\\\"required\\\":[\\\"refPath\\\"]},\\\"combatIntroMontagePlayRate\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0.10000000000000001},\\\"combatOutroMontagePlayRate\\\":{\\\"type\\\":\\\"number\\\",\\\"minimum\\\":0.10000000000000001}}\"}"
+			}
+		]
+	}
+}

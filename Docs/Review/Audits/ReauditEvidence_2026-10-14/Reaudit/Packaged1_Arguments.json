@@ -1,0 +1,20 @@
+[
+  "BuildCookRun",
+  "-project=C:\\Users\\I\\Documents\\GitHub\\Project_J/Project_J.uproject",
+  "-noP4",
+  "-installed",
+  "-platform=Win64",
+  "-clientconfig=Development",
+  "-skipbuild",
+  "-skipcook",
+  "-nocompile",
+  "-nocompileuat",
+  "-stage",
+  "-pak",
+  "-iostore",
+  "-package",
+  "-stagingdirectory=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/Packaged1",
+  "-utf8output",
+  "-unattended",
+  "-nocleanstage"
+]

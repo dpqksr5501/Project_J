@@ -48,6 +48,13 @@ void AProject_JPlayerState::PostInitializeComponents()
 	ProgressionComponent->OnChanged.AddUObject(this, &ThisClass::RefreshPublicProgressionSnapshot);
 }
 
+void AProject_JPlayerState::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	// PlayerState/Avatar can replicate before their owning controller resolves.
+	if (AbilitySystemComponent) { AbilitySystemComponent->RefreshActorInfoForCurrentActor(this); }
+}
+
 void AProject_JPlayerState::RefreshPublicProgressionSnapshot()
 {
 	const auto& State = ProgressionComponent->GetState();

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "GameplayTagContainer.h"
 #include "Project_JCombatInterface.generated.h"
 
 // This class does not need to be modified.
@@ -21,6 +22,8 @@ class PROJECT_JCORE_API IProject_JCombatInterface
 	GENERATED_BODY()
 
 public:
+	/** Native authority receiver; transport lives on the owning ASC, not the pawn. */
+	virtual void ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence) {}
 
 	// Returns the combat participant's current character level.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")

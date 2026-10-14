@@ -1,5 +1,9 @@
 # 전투
 
+실제 R 도중 빠른 RMB 연계와 공통 마우스 수명, Avatar 교체·원격 입력의 최신 증거는 [2026-10-13 전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)를 읽는다. 입력 grace나 클립별 예외를 추가하지 않고 공통 press/release 계약을 수정했다.
+
+늦은 Controller 도착에 따른 GAS ActorInfo cache 누락과 전투·탑승 레이어 자원 수명 공통화는 [구조 개선 후속](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)을 읽는다. 전투 판정·예측·능력/콤보 상태는 기존 owner가 유지한다.
+
 ## 기준·설계
 
 | 문서 | 범위 |

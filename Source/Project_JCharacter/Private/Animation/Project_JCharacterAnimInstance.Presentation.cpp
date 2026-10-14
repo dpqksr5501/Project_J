@@ -124,7 +124,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	InOutOneShot.TransitionTimeRemaining = 0.0f;
 	InOutOneShot.bTransitionAnimationAlmostComplete = false;
 
-	if (!IsTransitionState(StateControllerRuntime.GetHeldState()))
+	if (!FProject_JStateControllerRuntime::IsTransitionState(StateControllerRuntime.GetHeldState()))
 	{
 		InOutOneShot.PresentationState = DesiredState;
 		return;
@@ -869,9 +869,9 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		OneShot.PresentationState == EProject_JStateControllerPresentationState::InAirLoop &&
 		Data.Air.bIsInAir && Data.LocomotionMode == EProject_JAnimationLocomotionMode::OnFoot;
 	OneShot.bShouldOverrideMotionMatching = OneShot.bHasSelectedAnimation &&
-		((IsTransitionState(OneShot.PresentationState) && !OneShot.bSelectedAnimationShouldLoop) || bExternalAirLoop);
+		((FProject_JStateControllerRuntime::IsTransitionState(OneShot.PresentationState) && !OneShot.bSelectedAnimationShouldLoop) || bExternalAirLoop);
 	OneShot.bShouldEnableCombatStrafeOrientationWarping =
-		IsTransitionState(OneShot.PresentationState) &&
+		FProject_JStateControllerRuntime::IsTransitionState(OneShot.PresentationState) &&
 		!OneShot.bSelectedAnimationShouldLoop &&
 		Data.Combat.bIsCombatMode &&
 		OneShot.RotationMode == EProject_JLocomotionRotationMode::Strafe &&

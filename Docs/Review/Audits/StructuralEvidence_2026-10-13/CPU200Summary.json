@@ -1,0 +1,110 @@
+{
+  "scope": "NullRHI CPU: real authored Blueprint, equipment, ABP and constructed followers; controlled movement and simulated render timestamps/significance. World tick wall time includes task completion, excludes outer engine frame/rendering. Bone finalizations include interpolation, MM observations are not search counts.",
+  "conditions": "200 authored BP, NullRHI, 60Hz, warm120/measured120, ABA2ms, 2 repeats; current binary only, no A/B attribution.",
+  "rows": [
+    {
+      "scenario": "Near",
+      "aba": false,
+      "repeats": 2,
+      "meanRangeMs": [
+        20.07105266675353,
+        20.500169942776363
+      ],
+      "p95RangeMs": [
+        21.059200167655945,
+        22.912297397851944
+      ]
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "repeats": 2,
+      "meanRangeMs": [
+        12.924615138520798,
+        12.970738640675942
+      ],
+      "p95RangeMs": [
+        13.73400166630745,
+        13.935301452875137
+      ]
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "repeats": 2,
+      "meanRangeMs": [
+        16.169628221541643,
+        16.51154899348815
+      ],
+      "p95RangeMs": [
+        18.198899924755096,
+        18.214698880910873
+      ]
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "repeats": 2,
+      "meanRangeMs": [
+        11.943013376245895,
+        12.457545008510351
+      ],
+      "p95RangeMs": [
+        12.959599494934082,
+        13.973299413919449
+      ]
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "repeats": 2,
+      "meanRangeMs": [
+        12.185235818227133,
+        12.396465831746658
+      ],
+      "p95RangeMs": [
+        13.593699783086777,
+        14.026697725057602
+      ]
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "repeats": 2,
+      "meanRangeMs": [
+        6.807196668038766,
+        6.927245762199163
+      ],
+      "p95RangeMs": [
+        7.184799760580063,
+        7.3807984590530396
+      ]
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeats": 2,
+      "meanRangeMs": [
+        23.73095666989684,
+        24.03842555359006
+      ],
+      "p95RangeMs": [
+        26.767201721668243,
+        27.483101934194565
+      ]
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeats": 2,
+      "meanRangeMs": [
+        23.016110869745415,
+        23.925210535526276
+      ],
+      "p95RangeMs": [
+        26.105400174856186,
+        28.03719788789749
+      ]
+    }
+  ]
+}

@@ -61,6 +61,9 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponGroundContactSettings
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact && bOnlyTraceWhenRecentlyRendered", ClampMin = "0.0"))
 	float RecentlyRenderedToleranceSeconds = 0.25f;
+
+	/** Shared authored/runtime admission for enabled contact queries. Zero remains valid except trace length. */
+	FName GetValidationFailure() const;
 };
 
 /**

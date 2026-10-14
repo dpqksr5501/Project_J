@@ -18,6 +18,8 @@
 #include "UObject/UnrealType.h"
 #include "Components/Project_JCharacterMovementComponent.h"
 #include "Animation/Project_JLocomotionProfile.h"
+#include "Components/Project_JCombatStateComponent.h"
+#include "Project_JAbilitySystemComponent.h"
 
 namespace ProjectJRuntimeOwnershipTests
 {
@@ -122,6 +124,54 @@ bool FProjectJDestroyedSummonedMountTest::RunTest(const FString&)
     TestTrue(TEXT("No possession transfer into destroyed mount"), Controller->GetPawn() == Avatar);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRetiredAvatarActivationTest, "ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJRetiredAvatarActivationTest::RunTest(const FString&)
+{
+    using namespace ProjectJRuntimeOwnershipTests;
+    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
+    Begin(World); ON_SCOPE_EXIT { End(World); };
+    auto* State = World->SpawnActor<AProject_JPlayerState>();
+    auto* Controller = World->SpawnActor<AAIController>();
+    State->SetOwner(Controller); Controller->SetPlayerState(State);
+    auto* First = SpawnAvatar(World, State);
+    auto* Second = SpawnAvatar(World, State);
+    if (!TestNotNull(TEXT("Old avatar"), First) || !TestNotNull(TEXT("Replacement avatar"), Second)) return false;
+    Controller->Possess(First);
+    auto* ASC = State->GetAbilitySystemComponent();
+    FGameplayAbilitySpec SprintSpec(UProject_JGameplayAbility_Sprint::StaticClass(), 1);
+    SprintSpec.GetDynamicSpecSourceTags().AddTag(FProject_JGameplayTags::Get().InputTag_Weapon_RMB);
+    const auto Handle = ASC->GiveAbility(SprintSpec);
+    Controller->Possess(Second);
+    const auto Tag = FProject_JGameplayTags::Get().State_Movement_Sprinting;
+    auto* FirstCombat = First->FindComponentByClass<UProject_JCombatStateComponent>();
+    auto* SecondCombat = Second->FindComponentByClass<UProject_JCombatStateComponent>();
+    TestFalse(TEXT("Delayed old-avatar activation cannot start a new-avatar ability"), FirstCombat->TryActivateAbilityByTag(Tag));
+    TestFalse(TEXT("Old request leaves the replacement sprint inactive"), ASC->HasMatchingGameplayTag(Tag));
+    const auto InputTag = FProject_JGameplayTags::Get().InputTag_Weapon_RMB;
+    int32 Received = 0;
+    const auto EventHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(InputTag).AddLambda([&](const FGameplayEventData*) { ++Received; });
+    auto* ProjectASC = CastChecked<UProject_JAbilitySystemComponent>(ASC);
+    ProjectASC->ServerSendCombatInputEvent_Implementation(First, InputTag, 0.f, 1u);
+    TestEqual(TEXT("An old-avatar reliable packet cannot enter the replacement's stream"), Received, 0);
+    ProjectASC->ServerSendCombatInputEvent_Implementation(Second, InputTag, 0.f, 1u);
+    TestEqual(TEXT("Current-avatar authority input remains available"), Received, 1);
+    ASC->GenericGameplayEventCallbacks.FindChecked(InputTag).Remove(EventHandle);
+    ASC->CancelAbilityHandle(Handle);
+    First->HandleSkillInputTagPressed(FProject_JGameplayTags::Get().InputTag_Weapon_RMB);
+    TestFalse(TEXT("Retired skill-input component cannot activate another avatar's spec"), ASC->HasMatchingGameplayTag(Tag));
+    ASC->CancelAbilityHandle(Handle);
+    TestTrue(TEXT("Current avatar retains normal activation"), SecondCombat->TryActivateAbilityByTag(Tag));
+    TestFalse(TEXT("Old-avatar state lookup cannot observe another avatar's state"), FirstCombat->HasStateTag(Tag));
+    TestTrue(TEXT("Current-avatar state lookup sees its own sprint"), SecondCombat->HasStateTag(Tag));
+    Second->HandleSkillInputTagPressed(FProject_JGameplayTags::Get().InputTag_Weapon_RMB);
+    First->HandleSkillInputTagReleased(FProject_JGameplayTags::Get().InputTag_Weapon_RMB);
+    TestTrue(TEXT("Retired raw release cannot release the replacement's held intent"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
+    Second->HandleSkillInputTagReleased(FProject_JGameplayTags::Get().InputTag_Weapon_RMB);
+    TestFalse(TEXT("Current raw release remains effective"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
+    Second->StopSprint();
+    return true;
+}
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSprintSavedMoveTest, "ProjectJ.RuntimeOwnership.SprintMovePrediction",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJSprintSavedMoveTest::RunTest(const FString&)
@@ -164,6 +214,38 @@ bool FProjectJSprintSavedMoveTest::RunTest(const FString&)
     TestEqual(TEXT("Run acceleration is restored"), Move->MaxAcceleration, Profile->MovementPolicy.RunMaxAcceleration);
     Sprint->Clear();
     TestFalse(TEXT("Recycled saved move clears sprint flag"), (Sprint->GetCompressedFlags() & FSavedMove_Character::FLAG_Custom_0) != 0);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLateControllerActorInfoTest, "ProjectJ.RuntimeOwnership.LateControllerActorInfo",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJLateControllerActorInfoTest::RunTest(const FString&)
+{
+    using namespace ProjectJRuntimeOwnershipTests;
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    Begin(World); ON_SCOPE_EXIT { End(World); };
+    auto* State = World->SpawnActor<AProject_JPlayerState>();
+    auto* Avatar = SpawnAvatar(World, State);
+    if (!TestNotNull(TEXT("Avatar fixture"), Avatar)) return false;
+    auto* ASC = State->GetProjectJAbilitySystemComponent();
+    TestNull(TEXT("ASC can initialize before PlayerState owner is replicated"), ASC->AbilityActorInfo->PlayerController.Get());
+    auto* Controller = World->SpawnActor<APlayerController>();
+    const int32 OriginalSpecs = ASC->GetActivatableAbilities().Num();
+    State->SetOwner(Controller);
+    TestNull(TEXT("Changing owner does not itself refresh cached actor info"), ASC->AbilityActorInfo->PlayerController.Get());
+    State->OnRep_Owner();
+    TestTrue(TEXT("Late owner replication publishes the current controller to GAS"), ASC->AbilityActorInfo->PlayerController.Get() == Controller);
+    TestTrue(TEXT("Metadata refresh preserves current avatar"), ASC->GetAvatarActor() == Avatar);
+    TestEqual(TEXT("Metadata refresh neither grants nor removes specs"), ASC->GetActivatableAbilities().Num(), OriginalSpecs);
+    ASC->AbilityActorInfo->PlayerController.Reset();
+    Avatar->ProcessEvent(Avatar->FindFunctionChecked(TEXT("OnRep_Controller")), nullptr);
+    TestTrue(TEXT("Late controller replication refreshes the same ASC metadata"), ASC->AbilityActorInfo->PlayerController.Get() == Controller);
+    auto* Replacement = SpawnAvatar(World, State);
+    if (!TestNotNull(TEXT("Replacement avatar"), Replacement)) return false;
+    ASC->AbilityActorInfo->PlayerController.Reset();
+    Avatar->ProcessEvent(Avatar->FindFunctionChecked(TEXT("OnRep_Controller")), nullptr);
+    TestNull(TEXT("Retired avatar callback cannot refresh the replacement's actor info"), ASC->AbilityActorInfo->PlayerController.Get());
+    TestTrue(TEXT("Current persistent owner can still refresh metadata"), ASC->RefreshActorInfoForCurrentActor(State));
+    TestTrue(TEXT("Replacement controller is resolved"), ASC->AbilityActorInfo->PlayerController.Get() == Controller);
     return true;
 }
 #endif

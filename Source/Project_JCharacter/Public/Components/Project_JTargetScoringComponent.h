@@ -57,6 +57,7 @@ public:
 	FProjectJTargetContextInvalidated OnContextInvalidated;
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:

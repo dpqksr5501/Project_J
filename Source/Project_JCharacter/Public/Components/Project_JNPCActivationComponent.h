@@ -32,6 +32,7 @@ public:
 	/** Includes a suspended action or a superseded action whose owned grant still needs cleanup. */
 	bool HasOwnedActivation() const { return ActionToken != 0; }
 protected:
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 private:

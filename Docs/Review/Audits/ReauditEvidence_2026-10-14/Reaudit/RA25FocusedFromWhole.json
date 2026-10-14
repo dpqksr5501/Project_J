@@ -1,0 +1,122 @@
+[
+  {
+    "test": "ProjectJ.Reaudit.AuthoredFollowerRole",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.CombatPresentationRetirement",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.ComponentPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.ControllerUIPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.GroundContactDataValidation",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MassReentrantRetirement",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MinimapReconstruction",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MountActorPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MountTagReentry",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MovementDataValidation",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.MovementPublication",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.NPCPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.QuestPlayReuse",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.SubsystemCallbackGC",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  },
+  {
+    "test": "ProjectJ.Reaudit.UIPreferenceRetirement",
+    "state": "Success",
+    "warnings": [],
+    "errors": 0
+  }
+]

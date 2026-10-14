@@ -1,0 +1,524 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "296F2AEA4CC6888D2413CE9F610DC97C",
+			"instanceName": "DESKTOP-5T07C91-10392",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-01.16.06",
+	"succeeded": 13,
+	"succeededWithWarnings": 0,
+	"failed": 6,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.37720674276351929,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredFollowerRole",
+			"fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.012285903096199036,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.079670503735542297,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatIntroPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.062021899968385696,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play starts actual draw montage again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 445,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0096651986241340637,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.010692600160837173,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerUIPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ControllerUIPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.062256000936031342,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJCharacterData: Character data registry is empty. Configure ClassDefinitions and AdvancementDefinitions in DefaultGame.ini.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogEnhancedInput: UEnhancedInputLocalPlayerSubsystem for Local Player 'LocalPlayer_0' does not have a valid PlayerInput object. Failed to load user settings.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(418): 1 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play creates a live UI projection again' to be not null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 213,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play owns a fresh model instead of reviving the retired model' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 215,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 2,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0077093020081520081,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundContactDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0049713999032974243,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.009299401193857193,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.010930400341749191,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0090343020856380463,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountActorPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.MountActorPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0098186023533344269,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'The same returned mount actor accepts a new rider lease' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 465,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0095179006457328796,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0083988979458808899,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0094708986580371857,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.NPCPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.014165099710226059,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused scoring component accepts a new explicit registration' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 380,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused action component accepts a new ownership lease' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 380,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused activation accepts fresh valid collaborators' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 380,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerInputPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0094783008098602295,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play reacquires its EnhancedInput bindings' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 418,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play acquires one set of device bindings' to be 6, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 419,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play publishes held GAS input again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 421,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play admits modifier input again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 422,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.QuestPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.0092858970165252686,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play accepts a different valid quest' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 184,
+					"timestamp": "2026.10.14-01.16.06"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reentry preserves old progress and appends the new quest' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 185,
+					"timestamp": "2026.10.14-01.16.06"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"296F2AEA4CC6888D2413CE9F610DC97C"
+			],
+			"duration": 0.028534200042486191,
+			"dateTime": "2026.10.14-01.16.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

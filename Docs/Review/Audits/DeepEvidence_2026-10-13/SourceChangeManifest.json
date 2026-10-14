@@ -1,0 +1,330 @@
+{
+  "scope": "Source delta from preserved post-SI baseline, not HEAD; includes tests/tools. Existing earlier user changes are already in this baseline.",
+  "patch": "SourceChangesFromDeepBaseline.patch",
+  "files": [
+    {
+      "path": "Source/Project_J/Game/Project_JQuestComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "b248bd684f6223ef6bb9a0b80024c79c39d01f3e4603b4edc8c1d7348edde4c3",
+      "final_sha256": "3ac7d4cebf17a979033371fb39c2fb7a35d2ad77b78bb9f501cf11b0af9494e5"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JQuestComponent.h",
+      "change": "modified",
+      "baseline_sha256": "160c6fc6ebb93712d5f70ef05017ccfc3ac183106ae4a6bff1c3ef5191508c90",
+      "final_sha256": "597fc187d539bf1f0fb5ea0b86757b9a03ac9152de47b6ceeb6632ae2d740574"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JQuestLifetimeTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "1c336f2651e19663e01cafdbcfee7c4c3e4c596ebda43383ad906d369171b8fd"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JStatusBindingReentryTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "5a732897663c10d570ca6c13f266bbc91d04cf57ce2635a1eb6bb89954756409"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JUIIconRequestLifetimeTests.cpp",
+      "change": "modified",
+      "baseline_sha256": "ee323376cf38db1d8e25993145e4c40c7a92ba45664bbeac65c80c5c61a17ec3",
+      "final_sha256": "35407c3611b7cc484b2b6e9e8e0e606dfd35157ded45ed7f624ce4cbb5d0056a"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JStatusEffects.cpp",
+      "change": "modified",
+      "baseline_sha256": "97c5352f46128834c3338fe1ed1c653a04558d82f0cd01c650de449cf1534aca",
+      "final_sha256": "b3752cbed5afce5ed23e963e0440f82e8192dc363ca385b5d52354bfd84c141c"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JStatusEffects.h",
+      "change": "modified",
+      "baseline_sha256": "d1d8f7f8e62bc911e96de35ce116133c6e21af87a8cc326f613edb11c0076362",
+      "final_sha256": "9938e7b8e3c3a2a82511b7b2d2a00a6fd15df41c8d67ae3463dca96000232229"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JUIIconRequest.cpp",
+      "change": "modified",
+      "baseline_sha256": "49a48dc1070fdd78645e30cfd593c37f23eef3940c9f504aa1b4b9fff74152fa",
+      "final_sha256": "0fbefd1c9dae0377d3f934d19230b3d144e7652cbd6753c30c5ac77e53bf7020"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp",
+      "change": "modified",
+      "baseline_sha256": "761cbebdf9430e4b29087dbb44d85842c3fcfa6610736837f894c34dbbf86082",
+      "final_sha256": "ee4d2ea5adb4d2103cbcbf8bf161260c6a1498ff5bd29130ce197ea0dc0287dd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp",
+      "change": "modified",
+      "baseline_sha256": "c12f4cee7b23511e754cfe418fc85c78476d48b2231e78a3f161326f6e4750e4",
+      "final_sha256": "61c1e76e1a371d542a96286c4cfa32abbc16fc280bdd58171ef1c3bdad449862"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp",
+      "change": "modified",
+      "baseline_sha256": "1d9189f4b926493e8d08f8b9905523a5286ffa88729c26b9730f30e73e08fccd",
+      "final_sha256": "4299fd071fbdd6a0143dbd2e6dfc33f2e3ccb4a87a4e6d2f4d60d8bb5f4ae926"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "a081f997a00c90deaac3259456c1067bfb70faa1ae5351d29fda97dffd166058",
+      "final_sha256": "c1c78796da5ae9c5d345d02ed1868d6a6c4fda40a8b01e33b37286a3d1a86d06"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp",
+      "change": "modified",
+      "baseline_sha256": "8825e6e69f86df391f14021e3812e99f4854295850e029310c9b6e4083283725",
+      "final_sha256": "66bc60ce0b476418efbac77edcf4495439d3d1af56c99d6a60b04a2217bc7bd3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Sprint.cpp",
+      "change": "modified",
+      "baseline_sha256": "358d42afc8b7288961e614184b2e04a1e5b0530aa4bae85a2a7d55f0ac9f6521",
+      "final_sha256": "879cc09497e305f34a4aa239482242e106eee0fdb5bd89756192f4f4deecc46a"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatStateComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "f60862da87f4d0ddbdb483bf1169b3a41b32d96b104196070d74c786247cd19b",
+      "final_sha256": "e3b8d1d6db809b21d4fcff1f17c751539034c9cdcb26aed227c175c948af1e6b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "b07b0500a64c682d7856899a878bfb03e23470fc68332e3855962b748acd8043",
+      "final_sha256": "c0df977158cf4b30ee2b0301647c6d6f2595b6705423cc4621d3ee5f61eedef3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "1cb9861112199e359637ca387d62cf598f4d759b7317d885c876a73600dfddf1",
+      "final_sha256": "71e9c79f65c91d0c07bc702f249439240d4d1e1dd3995c760af9e27dea6e782c"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "b6f64870d62f6ccb83a7a6ddcd892506e8ee732c0b1c33073e613b7dc219bfc2",
+      "final_sha256": "0912e780eea7fd9b88856c814abeab04eec83c364bb1ee52a111f186c06d07f8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "ae3757cad3036a6cbf25100ba4954fbe5a2d58f0cbe086ae777db3a0f48f7e78",
+      "final_sha256": "d662a50887db15acb8d39f5ba5c9999b7463b3c9c76c55b95abb278cdc93a555"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JReplicatedJumpStateComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "ff3befca95d699617d6c4584656e3b563cd58445e3762805a5f88c9701f8774e",
+      "final_sha256": "5f945da7d71d84ec938fb25da2343104edaf3c58760b85cdf04a55f33518b9dd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "c2ce7ff82b02d59a6f246de9d273cb62b80e327e3bf9f8cd4907263d39f6432d",
+      "final_sha256": "f7e4ba2d08662c94556ea0aeb5419bd73a3cf975642af54c387dacc729bcdb40"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "bdecb8f9b42f4a8d5dec31318af0a0ed21d6056c1d1f62ad05cd024427611bc9",
+      "final_sha256": "51c50c370b401c75eee89f56cbdd162fe683c7a2d674dcfb047f77e760f4e5f2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "change": "modified",
+      "baseline_sha256": "d0ae7c8af2df916b47d7964527a2526a0a2cc909c9980901992044f6c8fd2e6b",
+      "final_sha256": "cd2c19e0931f6b64a09a0a0fbf4cebf6727161bc123786029cfc21e9176fa731"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "b7d9554f07271ecece487c95d8817299548a0290c3e8b673dfdb73f2897d1850",
+      "final_sha256": "9f307a57b86026e1ea5acac2f966b57e0b98bedd7b19edbec0810400a5396741"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp",
+      "change": "modified",
+      "baseline_sha256": "e316e374196192a48407d7cc366ec98c146d9f3c201b10b0e0d4c5103287dbe3",
+      "final_sha256": "faa2114cc7eac0465ed62a3f6ee524636d540a61360c0b04e0fe9a937aee053e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentGround.cpp",
+      "change": "modified",
+      "baseline_sha256": "e2b8d24fd2e170ed251fc56b7de522038e2e2e5e054d8fd214909243b559e44f",
+      "final_sha256": "e831053253802d9e51601f49d5dcd37b9022985e04fbd026fe572e2bff421224"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp",
+      "change": "modified",
+      "baseline_sha256": "d8f7ce44394a689cd21d253eb536cb87dbcf8f4dcebdc7bbd3ce86990de40574",
+      "final_sha256": "6fe16af100ffde9701a96d5c7e7743c7e41e26c9efcc02cafbbf299a67a27f66"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentTransitions.cpp",
+      "change": "modified",
+      "baseline_sha256": "51b626dd9741db0792a628fde34270db7a84883114cefbdc204951ae324cd00d",
+      "final_sha256": "d80281035b10feb27c0b63bb108ab47a218f7a25a3de12a39e09d6693820adb5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "16d670dfe521a2766bbae78738df2895c0c05608602450abe3b24ce8b2f3d90b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAuthoredDamageTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "58e498ee68fa3209b87f0c1c8fb8259821f2aa49830a20215c400ebe8c8ccad2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentCommitLifetimeTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "55115675364167d202091ee8ea83559f9d8820d18efb5dd708042aeea0f9f2a2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JGrantReentryTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "688deedbcbe82d8ab6e34c248734e48a65be8f9f102b892c7ad7058e9380e1c4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInputRetirementTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "64203d002a7b0bb72bf70429c064f54a35eec72a0555c03734a457f763a1f91f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JProgressionLifetimeTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "5acd9734f0f90872da531b9782f40b41681b5d51d40d6bd3978937cda0ce2bc0"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStateOwnershipTests.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "0c1331ff690710f0aafa944b09fbaa318ee2b34e26b39d500b96680f885a6e9b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h",
+      "change": "modified",
+      "baseline_sha256": "a5270d7560f33848758cf9944df0b75358067b7ac4ee57b95bf12b6fac9a6980",
+      "final_sha256": "f60afbed64369999fbcee35ee1e52e9c867aba4693a4e8b083bdd3836a2876ef"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "change": "modified",
+      "baseline_sha256": "695a7c25a77605b60003e6682fd06c5744ff196152d7e2da7ed86a12d3a8ae55",
+      "final_sha256": "789c17d636b59b216e743d59449a8de9ae631aacea67fd8f4530f920569f0353"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h",
+      "change": "modified",
+      "baseline_sha256": "74f8b44f63ce15e2f731a5827b3d0b2ca337bdaab90908c1b3df7d79b6e46460",
+      "final_sha256": "347af07a7a13ebad3eab796d7987bd9d1268789d538a2c929a3be8ff8d3061ed"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JCombatTypes.h",
+      "change": "modified",
+      "baseline_sha256": "6ece1e9d0caba68c3816317196fb72cd1ad112d3e1a892132480c1dff83b1849",
+      "final_sha256": "4ff2ee7fc038b780de27d0b556e8da333b2941c111fd00966a827d6db48ca4e5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Sprint.h",
+      "change": "modified",
+      "baseline_sha256": "6ae0322150cb5d943bb5c79483c3b08b53e280020927d00d05582d4ca29ee7c9",
+      "final_sha256": "dd491ce19e3c98f878e6676f4c18ba98dabc527a6230952768025344a3fe775e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatStateComponent.h",
+      "change": "modified",
+      "baseline_sha256": "c39f2027525594737f13c6ed926c274819d5bde93f1d8a90547ce78e790f7224",
+      "final_sha256": "e95ad2f82e3f1b4db25e52aece6f192ca60404773f89bd8b4ce5c010cbe3814b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h",
+      "change": "modified",
+      "baseline_sha256": "2b6693a163857a4dd2af0431cb54acc272f2aef467758f8487e0734edd1ec907",
+      "final_sha256": "dcf3f2d70ad510c1c42f0c18dfd1d9073dad17bace23177c0609df002b4585bf"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h",
+      "change": "modified",
+      "baseline_sha256": "5307293093fad71363ef4bf2e21160c4080e924e9f32da3b3d758dea1809a3b4",
+      "final_sha256": "7afb0e757695a5a945c09c5786e5e79eb2f2fb96c82f5ee7d10c7a44a6471dbd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h",
+      "change": "modified",
+      "baseline_sha256": "11ae4f2a26ae16c5f043046027d004a8d5363453e114d1c85b6e1223a828077c",
+      "final_sha256": "efa6fc8f986159db2f11444f3d61091d35911520fb010896f0ee52e1ad192019"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h",
+      "change": "modified",
+      "baseline_sha256": "26d34c77dddb5135565c166f507bb1e5f802a8ee807aa088cb57f087eec57141",
+      "final_sha256": "bc7e2f37aa6bf02141d58963bd5cf8060a4a4acfd1ebf357c2a958cb96948166"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JReplicatedJumpStateComponent.h",
+      "change": "modified",
+      "baseline_sha256": "4c875a4d9a5508682279c92e700291d48168de41e1cfde19004e33b2728988d8",
+      "final_sha256": "7d9ca307819135e13ada4b0e367a57336d9d8a819638c22ea9f53c62760e5742"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h",
+      "change": "modified",
+      "baseline_sha256": "9fb6aa628c74b55f7a1c0d65444c008d4f5688b5d833ef9de9d629ae3a1a94ca",
+      "final_sha256": "7ed45b67042f22d15b83a99e1dcaf903ed7a8fa7e9f29294bc01c21c1f0841cd"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h",
+      "change": "modified",
+      "baseline_sha256": "d9fff6c2f48c3a85055ce51565c7ea698c99d569866ef5dd7495be6d23126329",
+      "final_sha256": "96df2b49e29600163dfc93f5b76695e66b26d037f11357ddb0a5ff215ec6d4ec"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h",
+      "change": "modified",
+      "baseline_sha256": "ad8ae69ae862cbfe96a0e110218bd0c24fa8b54768792b9ac42445ef564e32e7",
+      "final_sha256": "1f85f1584082a3b650272aea0184eecd2e68ba4b84ef62b48690117707b2e7a4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h",
+      "change": "modified",
+      "baseline_sha256": "c1b20dcf51e4e543fe353769d0f79dc6e289e03cb64bb3fcea81beb826156ad2",
+      "final_sha256": "8158017cb0bf4b9963b6b1536ebca9d08b4d7d2f5879ca42a23334d7f27e39fe"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Animation/Project_JAuthoredAssetAudit.cpp",
+      "change": "added",
+      "baseline_sha256": null,
+      "final_sha256": "34e24ed25c73000f980d875ae1fa50fac8ea3c012b89dfd8c0a23b218ad21102"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs",
+      "change": "modified",
+      "baseline_sha256": "04cbeb8a0415d4fc3aed1768d090617941312290e0ebdc6ca7c7232312909c5b",
+      "final_sha256": "c11c372bf266cf59886f05eb823fba654111ea88d04fa885df1f7e676100fbe8"
+    },
+    {
+      "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+      "change": "modified",
+      "baseline_sha256": "b4839b66b594692b87a3ff7b0b664ec352443835437527f474efa6d897536da9",
+      "final_sha256": "04f9e5e440ae57468f68945dcec48bf94374dede364b8cda79278a61a508f489"
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+      "change": "modified",
+      "baseline_sha256": "505ffc57627b65416a9faddc33f5992edeb9ef1797f527a93d622e149e214d5d",
+      "final_sha256": "df07fe2782510a5c34aae987dbc3ff41ccd55f2ef463fc181760caa2e6f99e5a"
+    }
+  ]
+}

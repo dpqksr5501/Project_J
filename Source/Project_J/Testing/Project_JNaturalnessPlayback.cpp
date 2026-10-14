@@ -215,8 +215,10 @@ public:
 				const auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_MotionMatching>(Anim);
 				Searches += Node->GetCachedBlendWeight() > 0 && Node->GetMotionMatchingState().ElapsedPoseSearchTime == 0;
 			}
-			if (!Property->Struct->IsChildOf(FAnimNode_BlendStack::StaticStruct())) continue;
-			const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack>(Anim);
+			// Unified Locomotion/MotionMatching and external BlendStack are siblings
+			// of the shared player stack. Inspect the actual generated player's base.
+			if (!Property->Struct->IsChildOf(FAnimNode_BlendStack_Standalone::StaticStruct())) continue;
+			const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack_Standalone>(Anim);
 			for (const auto& Entry : Stack->AnimPlayers)
 			{
 				bAirStackActive |= Entry.GetAnimationAsset() == Anim->GetThreadSafeStateControllerSelectedAnimation() &&
@@ -305,8 +307,8 @@ public:
 		}
 		if (Scenario == 4)
 		{
-			Test->TestTrue(TEXT("Long fall actually uses external loop output"), AirLoopFrames >= 30);
-			Test->TestTrue(TEXT("Actual external stack plays the selected air loop"), AirStackFrames >= 30);
+			Test->TestTrue(TEXT("Long fall requests authored air-loop output"), AirLoopFrames >= 30);
+			Test->TestTrue(TEXT("Actual generated player stack plays the selected air loop"), AirStackFrames >= 30);
 		}
 		Report += FString::Printf(TEXT("Summary Scenario=%s Finalizations=%d SearchDueResultObservations=%d AirLoopFrames=%d AirStackFrames=%d\n"),
 			Label(Scenario), Finalized, Searches, AirLoopFrames, AirStackFrames);

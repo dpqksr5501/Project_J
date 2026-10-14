@@ -1,0 +1,14 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-run=DataValidation",
+  "-AssetType=Project_JWeaponPresentationProfile",
+  "-IncludeOnlyOnDiskAssets",
+  "-unattended",
+  "-NullRHI",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-nop4",
+  "-nosound",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/AuthoredValidation1/Project_JWeaponPresentationProfile/Run.log",
+  "-UTF8Output"
+]

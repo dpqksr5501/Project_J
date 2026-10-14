@@ -70,6 +70,11 @@ class PROJECT_JCHARACTER_API UProject_JEquipmentManagerComponent : public UActor
 
 public:
 	UProject_JEquipmentManagerComponent();
+	/** Provider lifetime ended; consumers release their own grants/visual leases. */
+	FSimpleMulticastDelegate OnRetired;
+	bool IsAcceptingRequests() const { return CanPublishState(); }
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Equipment")
 	FProject_JEquipmentRequestCompleted OnRequestCompleted;
@@ -131,6 +136,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	bool bEnding = false;
+	bool CanPublishState() const;
+	bool HasMutationAuthority() const;
+	void Retire();
 	UFUNCTION(Server, Reliable)
 	void ServerRequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip);
 	UFUNCTION(Client, Reliable)

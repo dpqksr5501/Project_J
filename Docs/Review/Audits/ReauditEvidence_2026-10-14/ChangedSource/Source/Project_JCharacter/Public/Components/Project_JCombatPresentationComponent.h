@@ -1,0 +1,125 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "Components/ActorComponent.h"
+#include "Project_JCombatPresentationComponent.generated.h"
+
+class UNiagaraComponent;
+class UProject_JCombatPresentationSet;
+struct FProject_JCombatVFXCueDefinition;
+
+/** Recovery state for persistent cosmetic cues; Niagara components themselves never replicate. */
+USTRUCT()
+struct PROJECT_JCHARACTER_API FProject_JReplicatedCombatPresentationState
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameplayTag ActiveAttackTag;
+
+	UPROPERTY()
+	FGameplayTagContainer ActiveLoopingCueTags;
+
+	UPROPERTY()
+	int32 Revision = 0;
+	UPROPERTY()
+	int32 EventOrder = 0;
+	UPROPERTY()
+	uint32 AttackInstance = 0;
+};
+
+/**
+ * Client-only owner for short combat cosmetics attached to the current weapon
+ * or character. Optional engine pooling preserves manual ownership of tracked loops.
+ * No per-frame tick; the server replicates a compact recovery state for active loops.
+ */
+UCLASS(ClassGroup = (Combat), meta = (BlueprintSpawnableComponent))
+class PROJECT_JCHARACTER_API UProject_JCombatPresentationComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+public:
+	UProject_JCombatPresentationComponent();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+	/** NPC/non-player base set. Player combat-style -> advancement -> skin precedence is unchanged. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat|Presentation")
+	TObjectPtr<UProject_JCombatPresentationSet> BasePresentationSet;
+
+	/** Sets the current attack identity used by montage presentation notifies. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
+	void BeginAttackPresentation(FGameplayTag AttackTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
+	void EndAttackPresentation();
+
+	/** Called by a generic montage notify/state; it only affects local presentation. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
+	void PlayCue(FGameplayTag CueTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
+	void StopCue(FGameplayTag CueTag);
+
+	/** End only the state notify's original lease, never infer the current attack. */
+	uint64 BeginCueLease(FGameplayTag CueTag);
+	void EndCueLease(uint64 Token);
+	bool IsCueLeaseCurrent(uint64 Token) const { return CueLeases.Contains(Token); }
+
+	/** Call after combat style, advancement, or visual weapon data changes. */
+	UFUNCTION(BlueprintCallable, Category = "Combat|Presentation")
+	void RefreshPresentation();
+
+	UFUNCTION(BlueprintPure, Category = "Combat|Presentation")
+	FGameplayTag GetActiveAttackTag() const { return ActiveAttackTag; }
+
+private:
+	friend class FProjectJPresentationRecoveryTest;
+	friend class FProjectJCrowdEffectsTest;
+	friend class FProjectJCueLeaseOwnershipTest;
+	uint64 NextCueLeaseToken = 0;
+	TMap<uint64, FGameplayTag> CueLeases;
+	const FProject_JCombatVFXCueDefinition* ResolveCue(FGameplayTag CueTag) const;
+	void PlayCueLocal(FGameplayTag CueTag);
+	void StopCueLocal(FGameplayTag CueTag);
+	void StopAllCues();
+	void RetirePresentation();
+	bool CanAcceptPresentation() const;
+	bool bEndingPresentation = false;
+	void PublishRecoveryState();
+	void ApplyReplicatedState();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayPresentationCue(FGameplayTag AttackTag, FGameplayTag CueTag, bool bStart, int32 EventOrder, uint32 AttackInstance);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastEndAttackPresentation(int32 EventOrder);
+
+	UFUNCTION()
+	void OnRep_PresentationState(FProject_JReplicatedCombatPresentationState PreviousState);
+
+	FGameplayTag ActiveAttackTag;
+
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<UNiagaraComponent>> ActiveLoopingCues;
+
+	/** Stop policy captured at spawn time, so a style/weapon swap cannot change cleanup behavior for an already-running cue. */
+	UPROPERTY(Transient)
+	FGameplayTagContainer ImmediateDestroyCueTags;
+
+	/** Each semantic cue starts once per attack, preventing local prediction and server multicast from double-spawning it. */
+	UPROPERTY(Transient)
+	FGameplayTagContainer StartedCueTags;
+
+	UPROPERTY(ReplicatedUsing = OnRep_PresentationState)
+	FProject_JReplicatedCombatPresentationState ReplicatedPresentationState;
+
+	int32 NextPresentationEventOrder = 0;
+	int32 LastAppliedPresentationEventOrder = 0;
+	int32 LastAppliedPresentationRevision = 0;
+	uint32 ActiveAttackInstance = 0;
+	int32 LastAppliedRecoveryEventOrder = 0;
+};

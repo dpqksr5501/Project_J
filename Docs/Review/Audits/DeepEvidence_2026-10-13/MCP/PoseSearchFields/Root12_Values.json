@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"schema\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSS/PSS_Player.PSS_Player\\\"},\\\"continuingPoseCostBias\\\":-0.25,\\\"baseCostBias\\\":0,\\\"loopingCostBias\\\":-0.004999999888241291,\\\"continuingInteractionCostBias\\\":0,\\\"continuingContextInteractionCostBias\\\":0,\\\"excludeFromDatabaseParameters\\\":{\\\"min\\\":0,\\\"max\\\":-0.30000001192092896},\\\"additionalExtrapolationTime\\\":{\\\"min\\\":-100,\\\"max\\\":100},\\\"tags\\\":[],\\\"normalizationSet\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/NS_Run_Continuity.NS_Run_Continuity\\\"},\\\"previewMesh\\\":\\\"None\\\",\\\"poseSearchMode\\\":\\\"PCAKDTree\\\",\\\"numberOfPrincipalComponents\\\":4,\\\"kDTreeMaxLeafSize\\\":16,\\\"kDTreeQueryNumNeighbors\\\":200,\\\"posePruningSimilarityThreshold\\\":0,\\\"pCAValuesPruningSimilarityThreshold\\\":0,\\\"kDTreeQueryNumNeighborsWithDuplicates\\\":0}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"equipmentSlot\\\":\\\"Weapon\\\",\\\"equipmentMesh\\\":\\\"None\\\",\\\"attachSocketName\\\":\\\"None\\\",\\\"maxDrawDistance\\\":0,\\\"bCastDynamicShadow\\\":true,\\\"abilitySet\\\":\\\"None\\\",\\\"equipmentEffects\\\":[],\\\"statApplicationPolicy\\\":\\\"GameplayEffectsThenStatModifiers\\\",\\\"statModifiers\\\":[],\\\"combatStyleDefinition\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword\\\"},\\\"weaponPresentationProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.DA_Greatsword_Presentation\\\"},\\\"itemId\\\":\\\"Greatsword.Starter\\\",\\\"itemName\\\":\\\"Greatsword\\\",\\\"itemDescription\\\":\\\"기본 대검\\\",\\\"icon\\\":\\\"None\\\",\\\"maxStackCount\\\":1}\"}"
+			}
+		]
+	}
+}

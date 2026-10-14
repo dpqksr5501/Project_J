@@ -1,0 +1,125 @@
+{
+  "scope": "Structural baseline A vs SI01-08 B; full matching non-unity module sets; A1/B1/A2/B2; 200 authored BP; NullRHI; warm120/measured120; 60Hz; ABA2ms; 2 repeats each; not render/GPU or 200 connections.",
+  "rows": [
+    {
+      "scenario": "Near",
+      "aba": false,
+      "baselineRange": [
+        19.682331879933674,
+        20.488342518607777
+      ],
+      "currentRange": [
+        19.084720655033987,
+        20.228527455280226
+      ],
+      "baselineMeanMs": 19.95177074956397,
+      "currentMeanMs": 19.653766012440126,
+      "deltaPercent": -1.4936255075522875
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "baselineRange": [
+        12.7938576353093,
+        13.90285175293684
+      ],
+      "currentRange": [
+        12.501069903373718,
+        13.32863907640179
+      ],
+      "baselineMeanMs": 13.152470121470591,
+      "currentMeanMs": 12.9389668116346,
+      "deltaPercent": -1.6232943915794218
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "baselineRange": [
+        15.780286646137634,
+        16.5961764442424
+      ],
+      "currentRange": [
+        15.714716911315918,
+        17.057139209161203
+      ],
+      "baselineMeanMs": 16.094771462182205,
+      "currentMeanMs": 16.282106765235465,
+      "deltaPercent": 1.1639513086187048
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "baselineRange": [
+        11.639103262374798,
+        12.463222381969294
+      ],
+      "currentRange": [
+        11.621728291114172,
+        12.436028942465782
+      ],
+      "baselineMeanMs": 12.158786412328482,
+      "currentMeanMs": 12.016554890821377,
+      "deltaPercent": -1.1697838639791236
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "baselineRange": [
+        11.590008561809858,
+        12.285253343482813
+      ],
+      "currentRange": [
+        11.599912773817778,
+        14.741251990199089
+      ],
+      "baselineMeanMs": 11.865143997905156,
+      "currentMeanMs": 12.534379532250265,
+      "deltaPercent": 5.640349029588387
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "baselineRange": [
+        6.738865779091914,
+        6.973639968782663
+      ],
+      "currentRange": [
+        6.826759905864795,
+        6.999424286186695
+      ],
+      "baselineMeanMs": 6.8781382792318855,
+      "currentMeanMs": 6.884362432174385,
+      "deltaPercent": 0.09049182627358654
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "baselineRange": [
+        22.251085999111336,
+        23.355513686935108
+      ],
+      "currentRange": [
+        22.37958398958047,
+        23.93531504397591
+      ],
+      "baselineMeanMs": 22.788705793209374,
+      "currentMeanMs": 22.971579572185874,
+      "deltaPercent": 0.8024754921843513
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "baselineRange": [
+        22.185073420405388,
+        22.99512755125761
+      ],
+      "currentRange": [
+        22.280216092864674,
+        24.476830071459215
+      ],
+      "baselineMeanMs": 22.587198795129854,
+      "currentMeanMs": 23.0792769153292,
+      "deltaPercent": 2.1785708120010128
+    }
+  ]
+}

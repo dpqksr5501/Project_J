@@ -21,19 +21,11 @@ void AddWarning(const UObject* Context, TArray<FString>& OutWarnings, const FStr
 	OutWarnings.Add(FString::Printf(TEXT("%s %s"), *GetNameSafe(Context), *Message));
 }
 
-void ValidatePositiveValue(const UObject* Context, TArray<FString>& OutWarnings, const TCHAR* FieldName, float Value)
-{
-	if (Value <= 0.0f)
-	{
-		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has non-positive %s %.3f."), FieldName, Value));
-	}
-}
-
 void ValidateNonNegativeValue(const UObject* Context, TArray<FString>& OutWarnings, const TCHAR* FieldName, float Value)
 {
-	if (Value < 0.0f)
+	if (!FMath::IsFinite(Value) || Value < 0.0f)
 	{
-		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has negative %s %.3f."), FieldName, Value));
+		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid nonnegative %s %.3f."), FieldName, Value));
 	}
 }
 
@@ -47,10 +39,8 @@ void ValidateLocomotionProfile(
 		return;
 	}
 
-	ValidatePositiveValue(Context, OutWarnings, TEXT("WalkSpeed"), LocomotionProfile->WalkSpeed);
-	ValidatePositiveValue(Context, OutWarnings, TEXT("SprintSpeed"), LocomotionProfile->SprintSpeed);
-	ValidatePositiveValue(Context, OutWarnings, TEXT("WalkRotationRateYaw"), LocomotionProfile->WalkRotationRateYaw);
-	ValidatePositiveValue(Context, OutWarnings, TEXT("SprintRotationRateYaw"), LocomotionProfile->SprintRotationRateYaw);
+	if (const FName Failure = LocomotionProfile->GetMovementValidationFailure(); !Failure.IsNone())
+		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid movement parameter %s."), *Failure.ToString()));
 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("GenericMoveInputSpeedThreshold"), LocomotionProfile->GenericMoveInputSpeedThreshold);
 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("SprintLocomotionSpeedThreshold"), LocomotionProfile->SprintLocomotionSpeedThreshold);
 
@@ -98,11 +88,11 @@ void ValidateWeaponProfile(
 		return;
 	}
 
-	if (WeaponProfile->CombatIntroMontage && WeaponProfile->CombatIntroMontagePlayRate <= 0.0f)
+	if (WeaponProfile->CombatIntroMontage && (!FMath::IsFinite(WeaponProfile->CombatIntroMontagePlayRate) || WeaponProfile->CombatIntroMontagePlayRate <= 0.0f))
 	{
 		AddWarning(Context, OutWarnings, TEXT("has CombatIntroMontage but non-positive CombatIntroMontagePlayRate."));
 	}
-	if (WeaponProfile->CombatOutroMontage && WeaponProfile->CombatOutroMontagePlayRate <= 0.0f)
+	if (WeaponProfile->CombatOutroMontage && (!FMath::IsFinite(WeaponProfile->CombatOutroMontagePlayRate) || WeaponProfile->CombatOutroMontagePlayRate <= 0.0f))
 	{
 		AddWarning(Context, OutWarnings, TEXT("has CombatOutroMontage but non-positive CombatOutroMontagePlayRate."));
 	}
@@ -127,7 +117,7 @@ void ValidateCombatProfile(
 
 	if (CombatProfile->bAllowSprintInCombat &&
 		CombatProfile->bRequireForwardInputForSprintInCombat &&
-		CombatProfile->CombatSprintForwardInputThreshold <= 0.0f)
+		(!FMath::IsFinite(CombatProfile->CombatSprintForwardInputThreshold) || CombatProfile->CombatSprintForwardInputThreshold <= 0.0f))
 	{
 		AddWarning(Context, OutWarnings, TEXT("allows combat sprint with a non-positive forward-input threshold; use a small positive value such as 0.1."));
 	}

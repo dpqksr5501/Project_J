@@ -1,0 +1,52 @@
+[
+  {
+    "run": "Structural_Lag50Loss20",
+    "path": "Saved/Validation/GroupD_20260910/Structural_Lag50Loss20/Client1.log",
+    "sha256": "7057069e158ff8d17383ed6ae4db0a6b94338aeea11b84dd2374072c029492b3",
+    "lines": [
+      "[2026.10.13-12.38.10:374][460]LogProjectJDNetwork: Display: CombatReady trial=1 slot=1 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=2",
+      "[2026.10.13-12.38.10:374][460]LogAbilitySystem: Warning: Project_JPlayerState_0: Can't activate EGameplayAbilityNetExecutionPolicy::LocalPredicted ability Default__Project_JGameplayAbility_Melee when not local",
+      "[2026.10.13-12.38.10:374][460]LogAbilitySystem: Warning: Project_JPlayerState_0: Can't activate EGameplayAbilityNetExecutionPolicy::LocalPredicted ability Default__Project_JGameplayAbility_Melee when not local",
+      "[2026.10.13-12.38.10:908][476]LogAbilitySystem: Warning: Project_JPlayerState_0: Can't activate EGameplayAbilityNetExecutionPolicy::LocalPredicted ability Default__Project_JGameplayAbility_Melee when not local",
+      "[2026.10.13-12.38.10:908][476]LogAbilitySystem: Warning: Project_JPlayerState_0: Can't activate EGameplayAbilityNetExecutionPolicy::LocalPredicted ability Default__Project_JGameplayAbility_Melee when not local"
+    ]
+  },
+  {
+    "run": "Structural_Lag50Loss20",
+    "path": "Saved/Validation/GroupD_20260910/Structural_Lag50Loss20/Client2.log",
+    "sha256": "394c48021dd7d80a6fff31a2a4ce22c580d0fe6550b17c0baaff6ebafdec65f7",
+    "lines": [
+      "[2026.10.13-12.38.10:357][520]LogProjectJDNetwork: Display: CombatReady trial=1 slot=0 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=3"
+    ]
+  },
+  {
+    "run": "Structural_ActorInfo_Lag50Loss20",
+    "path": "Saved/Validation/GroupD_20260910/Structural_ActorInfo_Lag50Loss20/Client1.log",
+    "sha256": "49f1647ff2d99be5c57aac8e2592f873c48ea2644709d75d8aed5fa3c1ef247f",
+    "lines": [
+      "[2026.10.13-13.05.54:391][516]LogProjectJDNetwork: Display: CombatReady trial=1 slot=0 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=3 local=1 actorInfoPC=Project_JNetworkLoadController_0",
+      "[2026.10.13-13.06.02:058][746]LogProjectJDNetwork: Display: CombatReady trial=2 slot=0 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=3 local=1 actorInfoPC=Project_JNetworkLoadController_0",
+      "[2026.10.13-13.06.09:358][965]LogProjectJDNetwork: Display: CombatReady trial=3 slot=0 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=3 local=1 actorInfoPC=Project_JNetworkLoadController_0"
+    ]
+  },
+  {
+    "run": "Structural_ActorInfo_Lag50Loss20",
+    "path": "Saved/Validation/GroupD_20260910/Structural_ActorInfo_Lag50Loss20/Client2.log",
+    "sha256": "7049b784b4094e9ae48abcc6a2b28bd05ade57026615e42ff74f1e1fd3e941b4",
+    "lines": [
+      "[2026.10.13-13.05.54:386][482]LogProjectJDNetwork: Display: CombatReady trial=1 slot=1 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=2 local=1 actorInfoPC=Project_JNetworkLoadController_0",
+      "[2026.10.13-13.06.02:286][719]LogProjectJDNetwork: Display: CombatReady trial=2 slot=1 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=2 local=1 actorInfoPC=Project_JNetworkLoadController_0",
+      "[2026.10.13-13.06.09:352][931]LogProjectJDNetwork: Display: CombatReady trial=3 slot=1 pawn=BP_Greatsword_C_0 state=Project_JPlayerState_0 ASC=AbilitySystemComponent avatar=BP_Greatsword_C_0 weapon=2 local=1 actorInfoPC=Project_JNetworkLoadController_0"
+    ]
+  },
+  {
+    "run": "Structural_ActorInfo_Lag50Loss20",
+    "path": "Saved/Validation/GroupD_20260910/Structural_ActorInfo_Lag50Loss20/Server.log",
+    "sha256": "2436f3b6c4483f8827c91793434df6a676d5d8afc85f189e6a662193677d3955",
+    "lines": [
+      "[2026.10.13-13.06.01:981][916]LogProjectJDNetwork: Display: PASS combat trial=1 authority + owner prediction + remote R/target/end",
+      "[2026.10.13-13.06.09:278][134]LogProjectJDNetwork: Display: PASS combat trial=2 authority + owner prediction + remote R/target/end",
+      "[2026.10.13-13.06.16:854][360]LogProjectJDNetwork: Display: PASS combat trial=3 authority + owner prediction + remote R/target/end"
+    ]
+  }
+]

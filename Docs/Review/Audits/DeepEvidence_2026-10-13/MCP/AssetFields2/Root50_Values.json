@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"bCompactTile\\\":true,\\\"colorAndOpacity\\\":{\\\"r\\\":1,\\\"g\\\":1,\\\"b\\\":1,\\\"a\\\":1},\\\"foregroundColor\\\":{\\\"specifiedColor\\\":{\\\"r\\\":1,\\\"g\\\":0,\\\"b\\\":1,\\\"a\\\":1},\\\"colorUseRule\\\":\\\"UseColor_Foreground\\\"},\\\"onVisibilityChanged\\\":\\\"()\\\",\\\"padding\\\":{\\\"left\\\":0,\\\"top\\\":0,\\\"right\\\":0,\\\"bottom\\\":0},\\\"priority\\\":0,\\\"bIsFocusable\\\":false,\\\"bStopAction\\\":false,\\\"previewBackground\\\":\\\"None\\\",\\\"tickFrequency\\\":\\\"Auto\\\",\\\"desiredFocusWidget\\\":{\\\"widgetName\\\":\\\"None\\\"},\\\"slot\\\":\\\"None\\\",\\\"toolTipText\\\":\\\"\\\",\\\"toolTipWidget\\\":\\\"None\\\",\\\"renderTransform\\\":{\\\"translation\\\":{\\\"x\\\":0,\\\"y\\\":0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1},\\\"shear\\\":{\\\"x\\\":0,\\\"y\\\":0},\\\"angle\\\":0},\\\"renderTransformPivot\\\":{\\\"x\\\":0.5,\\\"y\\\":0.5},\\\"flowDirectionPreference\\\":\\\"Inherit\\\",\\\"bIsEnabled\\\":true,\\\"bOverride_Cursor\\\":false,\\\"bOverrideAccessibleDefaults\\\":false,\\\"bCanChildrenBeAccessible\\\":true,\\\"accessibleBehavior\\\":\\\"NotAccessible\\\",\\\"accessibleSummaryBehavior\\\":\\\"Auto\\\",\\\"accessibleText\\\":\\\"\\\",\\\"accessibleSummaryText\\\":\\\"\\\",\\\"bIsVolatile\\\":false,\\\"cursor\\\":\\\"Default\\\",\\\"clipping\\\":\\\"Inherit\\\",\\\"visibility\\\":\\\"SelfHitTestInvisible\\\",\\\"pixelSnapping\\\":\\\"Inherit\\\",\\\"renderOpacity\\\":1,\\\"navigation\\\":\\\"None\\\"}\"}"
+			}
+		]
+	}
+}

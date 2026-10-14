@@ -1,0 +1,740 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "78B37828466C1166C59990BA7247EEC3",
+			"instanceName": "DESKTOP-5T07C91-10816",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-00.57.27",
+	"succeeded": 13,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.4284088611602783,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredFollowerRole",
+			"fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.012400500476360321,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.082769602537155151,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatIntroPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.063942804932594299,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play starts actual draw montage again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 441,
+					"timestamp": "2026.10.14-00.57.25"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0070956982672214508,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0076619982719421387,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0067739002406597137,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundContactDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0047756992280483246,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0099363997578620911,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0087756998836994171,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0096109993755817413,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0099297016859054565,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.0079545006155967712,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.009250100702047348,
+			"dateTime": "2026.10.14-00.57.25",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.NPCPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 1.1469765901565552,
+			"dateTime": "2026.10.14-00.57.26",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogOutputDevice: \n\nScript Stack (0 frames) :\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: === Handled ensure: ===",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Ensure condition failed: this->IsBound()  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\Core\\Public\\Delegates\\DelegateSignatureImpl.inl] [Line: 1220] ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Unable to bind delegate to 'OnActorBump' (function might not be marked as a UFUNCTION or object may be pending kill)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Stack: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9d2be3e18 UnrealEditor-AIModule.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9d2b53097 UnrealEditor-AIModule.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9d2bad201 UnrealEditor-AIModule.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9d2b875b2 UnrealEditor-AIModule.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9d2a403fa UnrealEditor-AIModule.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9ef07683e UnrealEditor-Engine.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9a5a36d24 UnrealEditor-Project_JCharacter.dll!FProjectJNPCPlayReuseTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp:366]",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f32d11b6 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f32f0460 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000027c7bfbf30f UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000027c7bfbe29d UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000027c7bfc27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x0000027c7bfb13fe UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c66325d UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c64c4ac UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c64c5ba UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c651256 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c665c74 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c66838a UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffab95dcd87 KERNEL32.DLL!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffaba6acaec ntdll.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.26"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused scoring component accepts a new explicit registration' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 377,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused action component accepts a new ownership lease' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 377,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A reused activation accepts fresh valid collaborators' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 377,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "EnsureFailed: Ensure condition failed: this->IsBound()  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\Core\\Public\\Delegates\\DelegateSignatureImpl.inl] [Line: 1220] \r\nUnable to bind delegate to 'OnActorBump' (function might not be marked as a UFUNCTION or object may be pending kill)\r\nStack: \r\n0x00007ff9d2be3e18 UnrealEditor-AIModule.dll!UnknownFunction []\r\n0x00007ff9d2b53097 UnrealEditor-AIModule.dll!UnknownFunction []\r\n0x00007ff9d2bad201 UnrealEditor-AIModule.dll!UnknownFunction []\r\n0x00007ff9d2b875b2 UnrealEditor-AIModule.dll!UnknownFunction []\r\n0x00007ff9d2a403fa UnrealEditor-AIModule.dll!UnknownFunction []\r\n0x00007ff9ef07683e UnrealEditor-Engine.dll!UnknownFunction []\r\n0x00007ff9a5a36d24 UnrealEditor-Project_JCharacter.dll!FProjectJNPCPlayReuseTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp:366]\r\n0x00007ff9f32d11b6 UnrealEditor-Core.dll!UnknownFunction []\r\n0x00007ff9f32f0460 UnrealEditor-Core.dll!UnknownFunction []\r\n0x0000027c7bfbf30f UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000027c7bfbe29d UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000027c7bfc27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x0000027c7bfb13fe UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x00007ff69c66325d UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c64c4ac UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c64c5ba UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c651256 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c665c74 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c66838a UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ffab95dcd87 KERNEL32.DLL!UnknownFunction []\r\n0x00007ffaba6acaec ntdll.dll!UnknownFunction []\r\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.27"
+				}
+			],
+			"warnings": 1,
+			"errors": 31,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerInputPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.011720702052116394,
+			"dateTime": "2026.10.14-00.57.27",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play reacquires its EnhancedInput bindings' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 414,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play acquires one set of device bindings' to be 6, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 415,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play publishes held GAS input again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 417,
+					"timestamp": "2026.10.14-00.57.27"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play admits modifier input again' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 418,
+					"timestamp": "2026.10.14-00.57.27"
+				}
+			],
+			"warnings": 2,
+			"errors": 4,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"78B37828466C1166C59990BA7247EEC3"
+			],
+			"duration": 0.02883400022983551,
+			"dateTime": "2026.10.14-00.57.27",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

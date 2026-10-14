@@ -1,0 +1,1577 @@
+{
+  "scope": "A/B separate traced runs, 200 actors, 120 warmup/measurement ticks, 2 repeats. Timer totals are accumulated thread CPU; nested exclusive events are grouped once. Inclusive totals overlap and must not be summed. Worker CPU totals are not the world-tick critical-path wall time. Trace overhead prevents these runs from substituting for no-trace ABBA.",
+  "timer_definitions": {
+    "gt_proxy_preupdate": [
+      "ProjectJ_AnimProxy_PreUpdate_GameThread"
+    ],
+    "gt_anim_update": [
+      "ProjectJ_AnimProxy_Update_GameThread",
+      "ProjectJ_AnimThreadSafeUpdate_GameThread"
+    ],
+    "worker_proxy_update": [
+      "ProjectJ_AnimProxy_Update_Worker",
+      "ProjectJ_AnimThreadSafeUpdate_Worker"
+    ],
+    "snapshot_consumption": [
+      "ProjectJ_AnimProxy_ConsumeSnapshot"
+    ],
+    "mm_and_playback": [
+      "ProjectJ_UnifiedLocomotion",
+      "ProjectJ_AnimProxy_ApplyDatabase",
+      "ProjectJ_AnimProxy_ApplySearchPolicy"
+    ],
+    "post_selection": [
+      "ProjectJ_AnimProxy_CapturePostSelection",
+      "ProjectJ_AnimProxy_CompleteReselects"
+    ],
+    "retarget_capture_and_math": [
+      "ProjectJ_RetargetBody_Snapshot",
+      "ProjectJ_RetargetProfile_PreUpdate",
+      "ProjectJ_RetargetBody_ContactMath"
+    ],
+    "visual_budget": [
+      "ProjectJ_VisualAnimationBudget",
+      "ProjectJ_CharacterABA_Policy"
+    ],
+    "rigid_body": [
+      "FAnimNode_RigidBody::EvaluateSkeletalControl_AnyThread",
+      "RigidBody_PreUpdate"
+    ]
+  },
+  "whole_trace": {
+    "A": {
+      "gt_proxy_preupdate": {
+        "exclusive_cpu_seconds": 0.698492,
+        "calls": 613412
+      },
+      "gt_anim_update": {
+        "exclusive_cpu_seconds": 0.038993,
+        "calls": 9600
+      },
+      "worker_proxy_update": {
+        "exclusive_cpu_seconds": 6.3586100000000005,
+        "calls": 1557960
+      },
+      "snapshot_consumption": {
+        "exclusive_cpu_seconds": 0.312317,
+        "calls": 1185224
+      },
+      "mm_and_playback": {
+        "exclusive_cpu_seconds": 0.643955,
+        "calls": 1433941
+      },
+      "post_selection": {
+        "exclusive_cpu_seconds": 0.41468900000000003,
+        "calls": 1143624
+      },
+      "retarget_capture_and_math": {
+        "exclusive_cpu_seconds": 1.285597,
+        "calls": 1166661
+      },
+      "visual_budget": {
+        "exclusive_cpu_seconds": 1.2050709999999998,
+        "calls": 771856
+      },
+      "rigid_body": {
+        "exclusive_cpu_seconds": 8.867768,
+        "calls": 2338122
+      }
+    },
+    "B": {
+      "gt_proxy_preupdate": {
+        "exclusive_cpu_seconds": 0.688433,
+        "calls": 613407
+      },
+      "gt_anim_update": {
+        "exclusive_cpu_seconds": 0.039243,
+        "calls": 9600
+      },
+      "worker_proxy_update": {
+        "exclusive_cpu_seconds": 6.404616,
+        "calls": 1557943
+      },
+      "snapshot_consumption": {
+        "exclusive_cpu_seconds": 0.319439,
+        "calls": 1185214
+      },
+      "mm_and_playback": {
+        "exclusive_cpu_seconds": 0.6848069999999999,
+        "calls": 1433798
+      },
+      "post_selection": {
+        "exclusive_cpu_seconds": 0.433863,
+        "calls": 1143614
+      },
+      "retarget_capture_and_math": {
+        "exclusive_cpu_seconds": 1.315033,
+        "calls": 1166763
+      },
+      "visual_budget": {
+        "exclusive_cpu_seconds": 1.221462,
+        "calls": 771856
+      },
+      "rigid_body": {
+        "exclusive_cpu_seconds": 8.803469999999999,
+        "calls": 2338326
+      }
+    }
+  },
+  "regions": [
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.046342,
+            "calls": 48000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.27821999999999997,
+            "calls": 75200
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.021593,
+            "calls": 85600
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.029598,
+            "calls": 88800
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.020791,
+            "calls": 75200
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.082604,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.031798,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.52504,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.785636
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.045908,
+            "calls": 48000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.279975,
+            "calls": 75200
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.021741,
+            "calls": 85600
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.030439,
+            "calls": 88800
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.021931,
+            "calls": 75200
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.08388999999999999,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.031806,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.518393,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.762443
+          }
+        }
+      }
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.048459,
+            "calls": 48000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.284536,
+            "calls": 75200
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.021609,
+            "calls": 85600
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.030218000000000002,
+            "calls": 88800
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.021007,
+            "calls": 75200
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.084882,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.033597,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.559183,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.873705
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.048518,
+            "calls": 48000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.29266200000000003,
+            "calls": 75200
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.022743,
+            "calls": 85600
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.032443,
+            "calls": 88800
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.022236000000000002,
+            "calls": 75200
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.088342,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.034448,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.572721,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.9482
+          }
+        }
+      }
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.045215,
+            "calls": 45140
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.26364600000000005,
+            "calls": 69480
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.020458,
+            "calls": 79880
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.027769000000000002,
+            "calls": 81650
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.019794,
+            "calls": 69480
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.08265600000000001,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.034634,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.52076,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.780064
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.043678,
+            "calls": 45138
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.264835,
+            "calls": 69476
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.02071,
+            "calls": 79876
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.028637,
+            "calls": 81645
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.020551,
+            "calls": 69476
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.083714,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.033888,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.512211,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.734027
+          }
+        }
+      }
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.046559,
+            "calls": 45136
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.268443,
+            "calls": 69472
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.020846,
+            "calls": 79872
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.028208,
+            "calls": 81640
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.019871,
+            "calls": 69472
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.08519,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.03563,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.5769139999999999,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.879909
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.044171,
+            "calls": 45140
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.262375,
+            "calls": 69480
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.020782,
+            "calls": 79880
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.029137,
+            "calls": 81650
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.020287,
+            "calls": 69480
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.085169,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.034704,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.550012,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.809361
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.025481,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.27337,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.011569,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.023555,
+            "calls": 52831
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.017536,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009471,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.035952000000000005,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.153726,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.98327
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.025538,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.274281,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.012002,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.025837000000000002,
+            "calls": 52831
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.018498,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009878000000000001,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.036478,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.15636999999999998,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.00974
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.026731,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.280432,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.01191,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.024286,
+            "calls": 52831
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.017869,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009515000000000001,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.036506,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.155537,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.018853
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.02759,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.28975399999999996,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.012598,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.02637,
+            "calls": 52831
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.018779,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009741,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.038532,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.152978,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.084864
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009191,
+            "calls": 5635
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.105114,
+            "calls": 16905
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004581,
+            "calls": 11270
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.011131,
+            "calls": 15561
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006482999999999999,
+            "calls": 11270
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009346,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.041172,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.15253,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.469378
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009011,
+            "calls": 5640
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.10442900000000001,
+            "calls": 16920
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004565,
+            "calls": 11280
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.011752,
+            "calls": 15571
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006626,
+            "calls": 11280
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009767999999999999,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.04168,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.15218399999999999,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.486908
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009457,
+            "calls": 5467
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.102197,
+            "calls": 16401
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004444,
+            "calls": 10934
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.011174,
+            "calls": 15150
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006388,
+            "calls": 10934
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009313,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.044279,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.166153,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.545189
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009251,
+            "calls": 5565
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.105697,
+            "calls": 16695
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004584,
+            "calls": 11130
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.012001,
+            "calls": 15382
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006676,
+            "calls": 11130
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.009666,
+            "calls": 18000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.044037,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.165725,
+            "calls": 36000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.543722
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.021522,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.259215,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.010923,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.020308,
+            "calls": 48646
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.016964,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.021466,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.424834
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.021115,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.258152,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.011101,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.022298,
+            "calls": 48646
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.018243,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.021743000000000002,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.411656
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.022124,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.264125,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.011256,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.021418,
+            "calls": 48682
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.017440999999999998,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.022194000000000002,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.452342
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.022052,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.268632,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.011787,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.023158,
+            "calls": 48682
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.018672,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.022816,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.46304
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.000781,
+            "calls": 480
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.010019,
+            "calls": 1440
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.000397,
+            "calls": 960
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.000995,
+            "calls": 974
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.000717,
+            "calls": 960
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.026362,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 0.858672
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.000767,
+            "calls": 480
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.009395,
+            "calls": 1440
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.000374,
+            "calls": 960
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.0009910000000000001,
+            "calls": 974
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.000672,
+            "calls": 960
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.026628,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 0.851172
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.000787,
+            "calls": 480
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.009791999999999999,
+            "calls": 1440
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.000387,
+            "calls": 960
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.000966,
+            "calls": 974
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.000705,
+            "calls": 960
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.027493999999999998,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 0.858288
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.000802,
+            "calls": 480
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.00978,
+            "calls": 1440
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.000391,
+            "calls": 960
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.001029,
+            "calls": 974
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.0006869999999999999,
+            "calls": 960
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.028435000000000002,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 0.867949
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Near",
+      "aba": false,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.028873,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.290997,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.012712,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.031261,
+            "calls": 72000
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.01774,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.087986,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.04268,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.537418,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.374108
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.028679,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.295097,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.012788,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.033085,
+            "calls": 72000
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.018573,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.09068,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.043143,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.536832,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.362674
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Near",
+      "aba": false,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.030326,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.293808,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.012725,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.03158,
+            "calls": 72000
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.017872,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.090726,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.045071,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.5579630000000001,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.438759
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.029668,
+            "calls": 24000
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.297099,
+            "calls": 72000
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.013043,
+            "calls": 48000
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.033946,
+            "calls": 72000
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.01879,
+            "calls": 48000
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.092333,
+            "calls": 72000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.044861,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.555828,
+            "calls": 144000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 2.452128
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "repeat": 0,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009117,
+            "calls": 5607
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.104698,
+            "calls": 16821
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004476,
+            "calls": 11214
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.011637999999999999,
+            "calls": 16821
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006430999999999999,
+            "calls": 11214
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.044677999999999995,
+            "calls": 36000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.04288,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.268532,
+            "calls": 72000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.563639
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.008833,
+            "calls": 5635
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.10612999999999999,
+            "calls": 16905
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004563,
+            "calls": 11270
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.012405,
+            "calls": 16905
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006656,
+            "calls": 11270
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.044918,
+            "calls": 36000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.042332,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.26219,
+            "calls": 72000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.542337
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "repeat": 1,
+      "variants": {
+        "A": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009274,
+            "calls": 5635
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.105372,
+            "calls": 16905
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004588,
+            "calls": 11270
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.01176,
+            "calls": 16905
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006482,
+            "calls": 11270
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.043666,
+            "calls": 36000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.043045,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.266884,
+            "calls": 72000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.564189
+          }
+        },
+        "B": {
+          "gt_proxy_preupdate": {
+            "exclusive_cpu_seconds": 0.009064,
+            "calls": 5642
+          },
+          "gt_anim_update": {
+            "exclusive_cpu_seconds": 0,
+            "calls": 0
+          },
+          "worker_proxy_update": {
+            "exclusive_cpu_seconds": 0.106188,
+            "calls": 16926
+          },
+          "snapshot_consumption": {
+            "exclusive_cpu_seconds": 0.004629,
+            "calls": 11284
+          },
+          "mm_and_playback": {
+            "exclusive_cpu_seconds": 0.012562,
+            "calls": 16926
+          },
+          "post_selection": {
+            "exclusive_cpu_seconds": 0.006729000000000001,
+            "calls": 11284
+          },
+          "retarget_capture_and_math": {
+            "exclusive_cpu_seconds": 0.044211,
+            "calls": 36000
+          },
+          "visual_budget": {
+            "exclusive_cpu_seconds": 0.04584100000000001,
+            "calls": 24120
+          },
+          "rigid_body": {
+            "exclusive_cpu_seconds": 0.253128,
+            "calls": 72000
+          },
+          "world_tick_wall_from_scope": {
+            "calls": 120,
+            "inclusive_seconds": 1.596124
+          }
+        }
+      }
+    }
+  ]
+}

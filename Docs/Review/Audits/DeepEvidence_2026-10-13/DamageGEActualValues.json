@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"durationPolicy\\\":\\\"Infinite\\\",\\\"modifiers\\\":[],\\\"executions\\\":[],\\\"gEComponents\\\":[{\\\"refPath\\\":\\\"/Game/GEs/BP_GE_CombatMode.Default__BP_GE_CombatMode_C:TargetTagsGameplayEffectComponent_0\\\"}],\\\"inheritableOwnedTagsContainer\\\":{\\\"combinedTags\\\":{\\\"gameplayTags\\\":[{\\\"tagName\\\":\\\"State.CombatMode\\\"}]},\\\"added\\\":{\\\"gameplayTags\\\":[{\\\"tagName\\\":\\\"State.CombatMode\\\"}]},\\\"removed\\\":{\\\"gameplayTags\\\":[]}}}\"}"
+			}
+		]
+	}
+}

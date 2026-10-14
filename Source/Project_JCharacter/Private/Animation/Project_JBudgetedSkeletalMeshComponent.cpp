@@ -10,6 +10,17 @@
 
 namespace Project_J::Anim
 {
+	static bool IsUpdateRequesterAlive(UObject* Requester)
+	{
+		if (!IsValid(Requester)) { return false; }
+		if (const auto* Component = Cast<UActorComponent>(Requester))
+		{
+			const auto* Owner = Component->GetOwner();
+			return !Component->IsBeingDestroyed() && IsValid(Owner) && !Owner->IsActorBeingDestroyed();
+		}
+		if (const auto* Actor = Cast<AActor>(Requester)) { return !Actor->IsActorBeingDestroyed(); }
+		return true;
+	}
 	static TAutoConsoleVariable<int32> CVarBudgetTickWhenNotRendered(
 		TEXT("Project_J.Anim.BudgetTickWhenNotRendered"),
 		1,
@@ -130,7 +141,7 @@ void UProject_JBudgetedSkeletalMeshComponent::SetCombatCritical(bool bCritical)
 void UProject_JBudgetedSkeletalMeshComponent::RequestAnimationUpdate(UObject* Requester, EProject_JAnimationUpdateRequirement Requirement)
 {
 	check(IsInGameThread());
-	if (bEnding || !IsValid(Requester)) { return; }
+	if (bEnding || !Project_J::Anim::IsUpdateRequesterAlive(Requester)) { return; }
 	UpdateRequirements.Add(Requester, Requirement);
 	RefreshAnimationUpdateRequirements();
 }
@@ -144,10 +155,13 @@ void UProject_JBudgetedSkeletalMeshComponent::ReleaseAnimationUpdate(UObject* Re
 
 void UProject_JBudgetedSkeletalMeshComponent::RefreshAnimationUpdateRequirements()
 {
+	// The world policy pass also retires weak requesters. Idle meshes do no map
+	// traversal or policy writes; no new component tick or expiry timer is needed.
+	if (UpdateRequirements.IsEmpty() && !bUpdateOverride) { return; }
 	bool bNeedsGameplayPose = false;
 	for (auto It = UpdateRequirements.CreateIterator(); It; ++It)
 	{
-		if (!It.Key().IsValid()) { It.RemoveCurrent(); }
+		if (!Project_J::Anim::IsUpdateRequesterAlive(It.Key().Get())) { It.RemoveCurrent(); }
 		else { bNeedsGameplayPose |= It.Value() == EProject_JAnimationUpdateRequirement::GameplayPose; }
 	}
 	const bool bNeedsUpdate = !UpdateRequirements.IsEmpty();

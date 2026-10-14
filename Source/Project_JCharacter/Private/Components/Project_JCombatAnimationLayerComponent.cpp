@@ -33,6 +33,14 @@ void UProject_JCombatAnimationLayerComponent::EndPlay(const EEndPlayReason::Type
 	Super::EndPlay(EndPlayReason);
 }
 
+void UProject_JCombatAnimationLayerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bEndingPlay = true;
+	UnlinkLayer();
+	ResetPreload();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 {
 	AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
@@ -48,7 +56,7 @@ void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 			PresentationState == EProject_JCombatAnimationLayerState::CombatActive) &&
 		WeaponProfile &&
 		!WeaponProfile->CombatAnimationLayerClass.IsNull();
-	UE_LOG(LogProjectJCombatAnimationLayer, Verbose, TEXT("RefreshLayer Owner=%s State=%d WeaponProfile=%s ExistingLayer=%s ShouldLink=%s"), *GetNameSafe(Player), static_cast<int32>(PresentationState), *GetNameSafe(WeaponProfile), *GetNameSafe(LinkedAnimationLayerClass.Get()), bShouldLinkLayer ? TEXT("true") : TEXT("false"));
+	UE_LOG(LogProjectJCombatAnimationLayer, Verbose, TEXT("RefreshLayer Owner=%s State=%d WeaponProfile=%s ExistingLayer=%s ShouldLink=%s"), *GetNameSafe(Player), static_cast<int32>(PresentationState), *GetNameSafe(WeaponProfile), *GetNameSafe(Layer.LinkedClass.Get()), bShouldLinkLayer ? TEXT("true") : TEXT("false"));
 	if (!bShouldLinkLayer)
 	{
 		UnlinkLayer();
@@ -56,14 +64,8 @@ void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 	}
 
 	const FSoftObjectPath RequestedPath = ResolveLayerPath(WeaponProfile);
-	if (PreloadedAnimationLayerPath == RequestedPath && bLoadFailed) { UnlinkLayer(); return; }
-	UClass* LoadedLayerClass = PreloadedAnimationLayerPath == RequestedPath
-		? PreloadedAnimationLayerClass.Get()
-		: nullptr;
-	if (!LoadedLayerClass)
-	{
-		LoadedLayerClass = Cast<UClass>(RequestedPath.ResolveObject());
-	}
+	if (Layer.PreloadedPath == RequestedPath && Layer.bFailed) { UnlinkLayer(); return; }
+	UClass* LoadedLayerClass = Layer.ResolveClass(RequestedPath);
 
 	if (!LoadedLayerClass)
 	{
@@ -76,30 +78,21 @@ void UProject_JCombatAnimationLayerComponent::RefreshLayer()
 
 	if (!LoadedLayerClass->IsChildOf(UAnimInstance::StaticClass()))
 	{
-		PreloadedAnimationLayerPath = RequestedPath;
-		bLoadFailed = true;
+		Layer.PreloadedPath = RequestedPath;
+		Layer.bFailed = true;
 		UE_LOG(LogProjectJCombatAnimationLayer, Error, TEXT("Layer class load failed or is not an AnimInstance. Owner=%s RequestedClass=%s"), *GetNameSafe(Player), *GetNameSafe(LoadedLayerClass));
 		UnlinkLayer();
 		return;
 	}
 
-	USkeletalMeshComponent* CurrentMesh = Player->GetMesh();
-	UAnimInstance* CurrentMaster = CurrentMesh ? CurrentMesh->GetAnimInstance() : nullptr;
-	if (LinkedAnimationLayerClass == LoadedLayerClass && LinkedMesh == CurrentMesh
-		&& LinkedMaster == CurrentMaster && CurrentMaster
-		&& CurrentMaster->GetLinkedAnimLayerInstanceByClass(LoadedLayerClass))
+	if (Layer.IsLinkedTo(Player->GetMesh(), LoadedLayerClass))
 	{
 		UE_LOG(LogProjectJCombatAnimationLayer, Verbose, TEXT("Layer already linked. Owner=%s Layer=%s"), *GetNameSafe(Player), *GetNameSafe(LoadedLayerClass));
 		return;
 	}
 
-	UnlinkLayer();
-	if (USkeletalMeshComponent* PlayerMesh = Player->GetMesh(); PlayerMesh && PlayerMesh->GetAnimInstance())
+	if (USkeletalMeshComponent* PlayerMesh = Player->GetMesh(); Layer.Link(PlayerMesh, LoadedLayerClass))
 	{
-		PlayerMesh->LinkAnimClassLayers(LoadedLayerClass);
-		LinkedAnimationLayerClass = LoadedLayerClass;
-		LinkedMesh = PlayerMesh;
-		LinkedMaster = PlayerMesh->GetAnimInstance();
 		UE_LOG(LogProjectJCombatAnimationLayer, Log, TEXT("Layer linked. Owner=%s Layer=%s MasterAnimInstance=%s"), *GetNameSafe(Player), *GetNameSafe(LoadedLayerClass), *GetNameSafe(PlayerMesh->GetAnimInstance()));
 	}
 	else
@@ -124,7 +117,7 @@ void UProject_JCombatAnimationLayerComponent::PreloadLayerForCurrentWeapon()
 	}
 
 	const FSoftObjectPath RequestedPath = ResolveLayerPath(WeaponProfile);
-	if (PreloadedAnimationLayerPath == RequestedPath && (PreloadedAnimationLayerClass || LayerPreloadHandle.IsValid() || bLoadFailed))
+	if (Layer.HasPreloadFor(RequestedPath))
 	{
 		return;
 	}
@@ -137,26 +130,19 @@ void UProject_JCombatAnimationLayerComponent::PreloadLayerForCurrentWeapon()
 	{
 		// In a crowded MMO scene, do not stream every inactive simulated proxy's
 		// combat layer merely because its equipped style replicated.
-		if (PreloadedAnimationLayerPath != RequestedPath)
+		if (Layer.PreloadedPath != RequestedPath)
 		{
 			ResetPreload();
 		}
 		return;
 	}
 
-	ResetPreload();
-	PreloadedAnimationLayerPath = RequestedPath;
-	if (UClass* AlreadyLoadedClass = Cast<UClass>(RequestedPath.ResolveObject()))
+	if (Layer.PreparePreload(RequestedPath))
 	{
-		PreloadedAnimationLayerClass = AlreadyLoadedClass;
 		RefreshLayer();
 		return;
 	}
-
-	LayerPreloadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
-		RequestedPath,
-		FStreamableDelegate::CreateUObject(this, &ThisClass::HandleLayerPreloadCompleted, RequestedPath, LoadGeneration));
-	if (!LayerPreloadHandle.IsValid()) { bLoadFailed = true; }
+	Layer.RequestPreload(FStreamableDelegate::CreateUObject(this, &ThisClass::HandleLayerPreloadCompleted, RequestedPath, Layer.Generation));
 }
 
 EProject_JCombatAnimationLayerState UProject_JCombatAnimationLayerComponent::CalculatePresentationState(const AProject_JPlayerCharacter& Player) const
@@ -188,13 +174,9 @@ FSoftObjectPath UProject_JCombatAnimationLayerComponent::ResolveLayerPath(const 
 
 void UProject_JCombatAnimationLayerComponent::HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath, uint64 RequestGeneration)
 {
-	if (bEndingPlay || RequestGeneration != LoadGeneration || PreloadedAnimationLayerPath != RequestedPath) { return; }
-	PreloadedAnimationLayerClass = Cast<UClass>(RequestedPath.ResolveObject());
-	LayerPreloadHandle.Reset();
-	bLoadFailed = !PreloadedAnimationLayerClass || !PreloadedAnimationLayerClass->IsChildOf(UAnimInstance::StaticClass());
-	if (bLoadFailed)
+	if (bEndingPlay || !Layer.IsCurrentRequest(RequestedPath, RequestGeneration)) { return; }
+	if (!Layer.CompletePreload())
 	{
-		PreloadedAnimationLayerClass = nullptr;
 		UE_LOG(LogProjectJCombatAnimationLayer, Warning, TEXT("Layer load failed; default pose retained until path change or explicit retry. Path=%s"), *RequestedPath.ToString());
 		return;
 	}
@@ -203,29 +185,12 @@ void UProject_JCombatAnimationLayerComponent::HandleLayerPreloadCompleted(FSoftO
 
 void UProject_JCombatAnimationLayerComponent::UnlinkLayer()
 {
-	// Unlink from the original mesh/master only. A replacement master may
-	// already have another owner's layer of the same class.
-	USkeletalMeshComponent* Mesh = LinkedMesh.Get();
-	if (LinkedAnimationLayerClass && Mesh && LinkedMaster.IsValid() && Mesh->GetAnimInstance() == LinkedMaster.Get())
-	{
-		Mesh->UnlinkAnimClassLayers(LinkedAnimationLayerClass);
-	}
-	LinkedAnimationLayerClass = nullptr;
-	LinkedMesh.Reset();
-	LinkedMaster.Reset();
+	Layer.Unlink();
 }
 
 void UProject_JCombatAnimationLayerComponent::ResetPreload()
 {
-	++LoadGeneration;
-	bLoadFailed = false;
-	if (LayerPreloadHandle.IsValid())
-	{
-		LayerPreloadHandle->CancelHandle();
-	}
-	LayerPreloadHandle.Reset();
-	PreloadedAnimationLayerClass = nullptr;
-	PreloadedAnimationLayerPath.Reset();
+	Layer.ResetPreload();
 }
 
 void UProject_JCombatAnimationLayerComponent::RetryLayerLoad()

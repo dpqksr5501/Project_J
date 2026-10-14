@@ -1,0 +1,8 @@
+{
+  "changed": [
+    "Scripts/Validation/Measure-Network.ps1",
+    "Source/Project_JCharacterEditor/Private/Tests/Project_JForwardStrafeDataTests.cpp"
+  ],
+  "productionCodeUnchanged": true,
+  "packageValidationVersion": "RA25; production unchanged at RA27; wrappers and editor-only fixture differ"
+}

@@ -1,0 +1,27 @@
+{
+  "head": "f1bbd48ac4a37eab6ed7a33d025f1de2c270427c",
+  "exe": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013\\PackagedFinal\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "binarySHA256": "8D239902D321099356EBE1F180D29C617A4BE3A4D34946CC38E16C0495F94ECD",
+  "userDirectory": "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/DeepAudit_20261013/CombatUser/",
+  "reused": false,
+  "cacheScope": "Application directory only. OS/driver caches preserved; not certified cold.",
+  "disableDefaultLightFunction": false,
+  "arguments": [
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJCombatCookedFixture",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/DeepAudit_20261013/CombatUser/",
+    "-SaveToUserDir",
+    "-ProjectJEOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/DeepCookedCombat",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/DeepCookedCombat/Run.log",
+    "-ExecCmds=t.MaxFPS 60",
+    "-ini:Engine:[SystemSettings]:r.PSOPrecache.Validation=2"
+  ]
+}

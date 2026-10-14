@@ -1,0 +1,329 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "13B35E4147744B60FBE54B8C075B9366",
+			"instanceName": "DESKTOP-5T07C91-24760",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-02.18.39",
+	"succeeded": 20,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.36771142482757568,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredFollowerRole",
+			"fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.01138480007648468,
+			"dateTime": "2026.10.14-02.18.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.078919500112533569,
+			"dateTime": "2026.10.14-02.18.38",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatIntroPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0075854994356632233,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0073244012892246246,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0073948018252849579,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerUIPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ControllerUIPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.021277401596307755,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0079022012650966644,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundContactDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0082063972949981689,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0094053000211715698,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.049088098108768463,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0098772011697292328,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountActorPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.MountActorPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.010432597249746323,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0094160996377468109,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0080814026296138763,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0094891972839832306,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.NPCPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.012112397700548172,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerInputPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0097297020256519318,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.QuestPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.0092377997934818268,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SubsystemCallbackGC",
+			"fullTestPath": "ProjectJ.Reaudit.SubsystemCallbackGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.064324900507926941,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"13B35E4147744B60FBE54B8C075B9366"
+			],
+			"duration": 0.016521699726581573,
+			"dateTime": "2026.10.14-02.18.39",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

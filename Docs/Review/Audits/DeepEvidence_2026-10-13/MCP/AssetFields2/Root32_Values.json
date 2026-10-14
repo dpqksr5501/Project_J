@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"schemaVersion\\\":1,\\\"weaponActorClass\\\":{\\\"refPath\\\":\\\"/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon.BP_Greatsword_Weapon_C\\\"},\\\"drawnAttachmentMode\\\":\\\"PrimaryGripContact\\\",\\\"drawnSocketName\\\":\\\"WeaponSocket_Greatsword_Combat\\\",\\\"visualDrawnSocketName\\\":\\\"WeaponSocket_Visual_R\\\",\\\"sheathedSocketName\\\":\\\"WeaponSocket_Back\\\",\\\"visualSheathedSocketName\\\":\\\"None\\\",\\\"bPreferVisualFollowerSockets\\\":true,\\\"motionPresentation\\\":{\\\"bSupportsIndependentMotion\\\":true,\\\"bSourceDrivenMontageAttacks\\\":true,\\\"bUseContactHandoff\\\":true,\\\"contactRecoverySeconds\\\":0.11999999731779099,\\\"bFollowMontageBlendOut\\\":true,\\\"defaultAttackPrimaryIKAlpha\\\":1,\\\"defaultAttackSecondaryIKAlpha\\\":0,\\\"attackEntryBlendSeconds\\\":0.079999998211860657,\\\"primaryGripSocketName\\\":\\\"WeaponGrip_R\\\",\\\"bEnableSecondaryGripContact\\\":true,\\\"secondaryGripSocketName\\\":\\\"WeaponGrip_L\\\",\\\"defaultDrawnPrimaryIKAlpha\\\":1,\\\"bAllowPrimaryIKOnVisualAttachment\\\":false,\\\"defaultDrawnSecondaryIKAlpha\\\":0,\\\"defaultSheathedPrimaryIKAlpha\\\":0,\\\"defaultSheathedSecondaryIKAlpha\\\":0,\\\"groundContact\\\":{\\\"bEnableGroundContact\\\":true,\\\"primaryProbeSocketName\\\":\\\"WeaponGroundProbe_Tip\\\",\\\"secondaryProbeSocketName\\\":\\\"WeaponGroundProbe_Base\\\",\\\"traceStartHeight\\\":75,\\\"traceLength\\\":250,\\\"surfaceClearance\\\":0.5,\\\"maxTranslationCorrection\\\":35,\\\"correctionInterpolationSpeed\\\":18,\\\"traceChannel\\\":\\\"ECC_Visibility\\\",\\\"bOnlyTraceWhenRecentlyRendered\\\":true,\\\"recentlyRenderedToleranceSeconds\\\":0.25}},\\\"cosmeticPresentationOverrideSet\\\":\\\"None\\\"}\"}"
+			}
+		]
+	}
+}

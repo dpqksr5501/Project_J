@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"columnsStructs\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.OutputStructColumn\\\",\\\"inputValue\\\":{\\\"_structType\\\":\\\"/Script/Chooser.StructContextProperty\\\",\\\"binding\\\":{\\\"structType\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.Project_JStateControllerChooserOutput\\\"},\\\"propertyBindingChain\\\":[],\\\"contextIndex\\\":2,\\\"isBoundToRoot\\\":true,\\\"displayName\\\":\\\"Project JState Controller Chooser Output\\\"}},\\\"fallbackValue\\\":{\\\"_structType\\\":\\\"/Script/Project_JCharacter.Project_JStateControllerChooserOutput\\\",\\\"startTime\\\":0,\\\"bUseMotionMatch\\\":false,\\\"motionMatchCostLimit\\\":0,\\\"blendTime\\\":0.30000001192092896,\\\"returnBlendTime\\\":-1,\\\"blendProfile\\\":\\\"None\\\",\\\"tags\\\":[]},\\\"defaultRowValue\\\":{\\\"_structType\\\":\\\"/Script/Project_JCharacter.Project_JStateControllerChooserOutput\\\",\\\"startTime\\\":0,\\\"bUseMotionMatch\\\":false,\\\"motionMatchCostLimit\\\":0,\\\"blendTime\\\":0.30000001192092896,\\\"returnBlendTime\\\":-1,\\\"blendProfile\\\":\\\"None\\\",\\\"tags\\\":[]},\\\"rowValues\\\":[{\\\"_structType\\\":\\\"/Script/Project_JCharacter.Project_JStateControllerChooserOutput\\\",\\\"startTime\\\":0,\\\"bUseMotionMatch\\\":false,\\\"motionMatchCostLimit\\\":0,\\\"blendTime\\\":0.30000001192092896,\\\"returnBlendTime\\\":-1,\\\"blendProfile\\\":\\\"None\\\",\\\"tags\\\":[]}],\\\"bDisabled\\\":false,\\\"editorColumnWidth\\\":343}],\\\"resultType\\\":\\\"ObjectResult\\\",\\\"outputObjectType\\\":{\\\"refPath\\\":\\\"/Script/Engine.AnimationAsset\\\"},\\\"contextData\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeClass\\\",\\\"class\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.Project_JCharacterAnimInstance\\\"},\\\"direction\\\":\\\"ReadWrite\\\"},{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeStruct\\\",\\\"struct\\\":{\\\"refPath\\\":\\\"/Script/Chooser.ChooserPlayerSettings\\\"},\\\"direction\\\":\\\"Write\\\"},{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeStruct\\\",\\\"struct\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.Project_JStateControllerChooserOutput\\\"},\\\"direction\\\":\\\"Write\\\"}]}\"}"
+			}
+		]
+	}
+}

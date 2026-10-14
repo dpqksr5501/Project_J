@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"mappings\\\":[],\\\"defaultKeyMappings\\\":{\\\"mappings\\\":[{\\\"triggers\\\":[],\\\"modifiers\\\":[{\\\"refPath\\\":\\\"/Game/Input/IMC_MouseLook.IMC_MouseLook:InputModifierNegate_0\\\"}],\\\"action\\\":{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_MouseLook.IA_MouseLook\\\"},\\\"key\\\":\\\"Mouse2D\\\",\\\"settingBehavior\\\":\\\"InheritSettingsFromAction\\\",\\\"playerMappableKeySettings\\\":\\\"None\\\"}]},\\\"mappingProfileOverrides\\\":{},\\\"inputModeFilterOptions\\\":\\\"UseProjectDefaultQuery\\\",\\\"inputModeQueryOverride\\\":{\\\"tokenStreamVersion\\\":0,\\\"tagDictionary\\\":[],\\\"queryTokenStream\\\":[],\\\"userDescription\\\":\\\"\\\",\\\"autoDescription\\\":\\\"\\\"},\\\"registrationTrackingMode\\\":\\\"Untracked\\\",\\\"contextDescription\\\":\\\"\\\"}\"}"
+			}
+		]
+	}
+}

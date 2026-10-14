@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"equipmentSlot\\\":\\\"Weapon\\\",\\\"equipmentMesh\\\":\\\"None\\\",\\\"attachSocketName\\\":\\\"None\\\",\\\"maxDrawDistance\\\":0,\\\"bCastDynamicShadow\\\":true,\\\"abilitySet\\\":\\\"None\\\",\\\"equipmentEffects\\\":[],\\\"statApplicationPolicy\\\":\\\"GameplayEffectsThenStatModifiers\\\",\\\"statModifiers\\\":[],\\\"combatStyleDefinition\\\":\\\"None\\\",\\\"weaponPresentationProfile\\\":\\\"None\\\",\\\"itemId\\\":\\\"None\\\",\\\"itemName\\\":\\\"\\\",\\\"itemDescription\\\":\\\"\\\",\\\"icon\\\":\\\"None\\\",\\\"maxStackCount\\\":1}\"}"
+			}
+		]
+	}
+}

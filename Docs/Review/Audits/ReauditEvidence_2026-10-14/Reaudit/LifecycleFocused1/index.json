@@ -1,0 +1,314 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "57DBB550434BAFAC6F90F58595817537",
+			"instanceName": "DESKTOP-5T07C91-22960",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-01.24.22",
+	"succeeded": 19,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.29986554384231567,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredFollowerRole",
+			"fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.015608999878168106,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.10330410301685333,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatIntroPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.CombatIntroPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0099442005157470703,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0069210007786750793,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0063134990632534027,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerUIPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ControllerUIPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.01986829936504364,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.010218299925327301,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundContactDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0053465999662876129,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0096811018884181976,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MassReentrantRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.MassReentrantRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0084086023271083832,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0068251006305217743,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountActorPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.MountActorPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0097641013562679291,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0096107013523578644,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0082210972905158997,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0094578005373477936,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.NPCPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.01283629983663559,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerInputPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.PlayerInputPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0097795017063617706,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.QuestPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.0092625990509986877,
+			"dateTime": "2026.10.14-01.24.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"57DBB550434BAFAC6F90F58595817537"
+			],
+			"duration": 0.028493601828813553,
+			"dateTime": "2026.10.14-01.24.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

@@ -1,0 +1,104 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "3F348CD44C0812022D0E57B6A6F1E154",
+			"instanceName": "DESKTOP-5T07C91-30416",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-20.28.56",
+	"succeeded": 5,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.11143100261688232,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "UIDedicatedServer",
+			"fullTestPath": "ProjectJ.Components.UIDedicatedServer",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3F348CD44C0812022D0E57B6A6F1E154"
+			],
+			"duration": 0.011372499167919159,
+			"dateTime": "2026.10.13-20.28.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIDemand",
+			"fullTestPath": "ProjectJ.Components.UIDemand",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3F348CD44C0812022D0E57B6A6F1E154"
+			],
+			"duration": 0.0068696029484272003,
+			"dateTime": "2026.10.13-20.28.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PresentationRecovery",
+			"fullTestPath": "ProjectJ.Integrated.PresentationRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3F348CD44C0812022D0E57B6A6F1E154"
+			],
+			"duration": 0.0068726018071174622,
+			"dateTime": "2026.10.13-20.28.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3F348CD44C0812022D0E57B6A6F1E154"
+			],
+			"duration": 0.079197600483894348,
+			"dateTime": "2026.10.13-20.28.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3F348CD44C0812022D0E57B6A6F1E154"
+			],
+			"duration": 0.0071186982095241547,
+			"dateTime": "2026.10.13-20.28.56",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

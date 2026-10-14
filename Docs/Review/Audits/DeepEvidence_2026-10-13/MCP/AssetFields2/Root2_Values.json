@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"locomotionProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.DA_Player_Profile\\\"},\\\"combatAnimProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat.DA_Player_Combat\\\"},\\\"foleyAudioProfile\\\":\\\"None\\\",\\\"handGripCalibration\\\":{\\\"primaryPalmSocketName\\\":\\\"PalmGrip_R\\\",\\\"secondaryPalmSocketName\\\":\\\"PalmGrip_L\\\",\\\"missingPalmPolicy\\\":\\\"LegacyWristOrigin\\\",\\\"primaryHandOffset\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"secondaryHandOffset\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"primaryElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"secondaryElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"primaryArm\\\":{\\\"shoulder\\\":\\\"None\\\",\\\"elbow\\\":\\\"None\\\",\\\"hand\\\":\\\"None\\\"},\\\"secondaryArm\\\":{\\\"shoulder\\\":\\\"None\\\",\\\"elbow\\\":\\\"None\\\",\\\"hand\\\":\\\"None\\\"},\\\"primaryBendStability\\\":{\\\"bEnabled\\\":true,\\\"fallbackPoleAxis\\\":{\\\"x\\\":0,\\\"y\\\":1,\\\"z\\\":0},\\\"holdBendRatio\\\":0.15000000596046448,\\\"reliableBendRatio\\\":0.25,\\\"reacquireDegreesPerSecond\\\":720,\\\"maxHistorySeconds\\\":0.25},\\\"secondaryBendStability\\\":{\\\"bEnabled\\\":true,\\\"fallbackPoleAxis\\\":{\\\"x\\\":0,\\\"y\\\":1,\\\"z\\\":0},\\\"holdBendRatio\\\":0.15000000596046448,\\\"reliableBendRatio\\\":0.25,\\\"reacquireDegreesPerSecond\\\":720,\\\"maxHistorySeconds\\\":0.25}},\\\"handGripProfile\\\":\\\"None\\\",\\\"retargetBodyProfile\\\":\\\"None\\\"}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile\",\"/Game/DataAssetSets/Audio/DA_Mannequin_Foley\",\"/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat\"]}"
+			}
+		]
+	}
+}

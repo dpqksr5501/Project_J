@@ -175,15 +175,6 @@ namespace ProjectJ::Animation::Presentation
 			: EProject_JStateControllerPresentationState::IdleLoop;
 	}
 
-	inline auto IsTransitionState = [](const EProject_JStateControllerPresentationState State)
-	{
-		return State == EProject_JStateControllerPresentationState::TransitionToLocomotion ||
-			State == EProject_JStateControllerPresentationState::TransitionToIdle ||
-			State == EProject_JStateControllerPresentationState::TransitionToInAir ||
-			State == EProject_JStateControllerPresentationState::TransitionToLand ||
-			State == EProject_JStateControllerPresentationState::TurnInPlace;
-	};
-
 	inline bool ShouldStateControllerPresentationLoop(const EProject_JStateControllerPresentationState PresentationState)
 	{
 		switch (PresentationState)

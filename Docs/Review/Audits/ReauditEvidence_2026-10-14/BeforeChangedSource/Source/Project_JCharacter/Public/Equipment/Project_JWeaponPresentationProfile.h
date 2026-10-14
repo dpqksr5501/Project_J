@@ -1,0 +1,199 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
+#include "Engine/EngineTypes.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+#include "Project_JWeaponPresentationProfile.generated.h"
+
+class AActor;
+class UProject_JCombatPresentationSet;
+
+/** Normal drawn pose only. Source attack arcs and sheath mounts have separate ownership. */
+UENUM(BlueprintType)
+enum class EProject_JDrawnAttachmentMode : uint8
+{
+	Socket UMETA(DisplayName = "Socket (Compatibility / Custom Mount)"),
+	PrimaryGripContact UMETA(DisplayName = "Primary Grip to Body Palm")
+};
+
+/** Data-only contact configuration. Probe sockets live on the weapon visual, never on the shared character skeleton. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JWeaponGroundContactSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact")
+	bool bEnableGroundContact = false;
+
+	/** A socket placed at the authored lowest contact point of the weapon. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact"))
+	FName PrimaryProbeSocketName = TEXT("WeaponGroundProbe_Tip");
+
+	/** Optional fallback probe. It is used only when the primary socket is absent; contact is never averaged across a blade. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact"))
+	FName SecondaryProbeSocketName = TEXT("WeaponGroundProbe_Base");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact", ClampMin = "0.0"))
+	float TraceStartHeight = 75.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact", ClampMin = "1.0"))
+	float TraceLength = 250.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact", ClampMin = "0.0"))
+	float SurfaceClearance = 0.5f;
+
+	/** Prevents an unsuitable weapon/animation pair from being pulled across the whole scene. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact", ClampMin = "0.0"))
+	float MaxTranslationCorrection = 35.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact", ClampMin = "0.0"))
+	float CorrectionInterpolationSpeed = 18.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact"))
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
+
+	/** Distant/hidden characters retain their authored curve but skip collision queries. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact"))
+	bool bOnlyTraceWhenRecentlyRendered = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion|Ground Contact", meta = (EditCondition = "bEnableGroundContact && bOnlyTraceWhenRecentlyRendered", ClampMin = "0.0"))
+	float RecentlyRenderedToleranceSeconds = 0.25f;
+};
+
+/**
+ * Generic presentation data for any weapon that must temporarily move
+ * independently of the primary hand. No character-skeleton extension is required.
+ */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JWeaponMotionPresentation
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	bool bSupportsIndependentMotion = false;
+
+	/** Montage attacks use their source-skeleton weapon arc even without Weapon Motion notifies. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	bool bSourceDrivenMontageAttacks = true;
+
+	/** Recover hand contact and attachment offset together. Disable to keep the legacy socket snap/blend. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	bool bUseContactHandoff = true;
+
+	/** Cosmetic recovery after source motion ends. Zero snaps to the normal socket; no per-frame replication. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion && bUseContactHandoff", ClampMin = "0.0", ClampMax = "1.0", Units = "s"))
+	float ContactRecoverySeconds = 0.12f;
+
+	/** For automatic montage attacks, release contact with the actual source blend-out instead of a separate timer. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion && bUseContactHandoff"))
+	bool bFollowMontageBlendOut = true;
+
+	/** Default hand contact while a source-driven attack has no notify override. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultAttackPrimaryIKAlpha = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultAttackSecondaryIKAlpha = 0.0f;
+
+	/** Short, cosmetic hand-to-source blend when an attack has no Weapon Motion notify, or a notify hands control back to the attack. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion", ClampMin = "0.0", Units = "s"))
+	float AttackEntryBlendSeconds = 0.08f;
+
+	/** Weapon-local socket used as the primary (usually right-hand) IK target. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	FName PrimaryGripSocketName = TEXT("WeaponGrip_R");
+
+	/** Disable for one-handed weapons: curves/notifies cannot activate a secondary contact on this presentation. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	bool bEnableSecondaryGripContact = true;
+
+	/** Weapon-local socket used as the secondary (usually left-hand) IK target. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bEnableSecondaryGripContact"))
+	FName SecondaryGripSocketName = TEXT("WeaponGrip_L");
+
+	/** Default right-hand IK alpha when weapon is drawn outside of independent motion. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultDrawnPrimaryIKAlpha = 1.0f;
+
+	/** An attached visual weapon already follows its primary hand. Enable only for a deliberately authored correction. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	bool bAllowPrimaryIKOnVisualAttachment = false;
+
+	/** Default left-hand IK alpha when weapon is drawn outside of independent motion (e.g. 1.0 for two-handed weapons, 0.0 for one-handed). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultDrawnSecondaryIKAlpha = 0.0f;
+
+	/** Default right-hand IK alpha when weapon is sheathed (e.g. 1.0 if right hand rests on sheathed hilt, 0.0 if not). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultSheathedPrimaryIKAlpha = 0.0f;
+
+	/** Default left-hand IK alpha when weapon is sheathed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DefaultSheathedSecondaryIKAlpha = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion", meta = (EditCondition = "bSupportsIndependentMotion"))
+	FProject_JWeaponGroundContactSettings GroundContact;
+};
+
+/**
+ * Immutable visual definition for an equipped weapon.
+ *
+ * Combat rules and animation selection deliberately live in CombatStyle and
+ * WeaponAnimProfile. This asset may therefore vary per weapon skin without
+ * duplicating a job's combat data. WeaponActorClass should derive from the
+ * common AProject_JWeaponPresentationActor Blueprint base.
+ */
+UCLASS(BlueprintType, Const)
+class PROJECT_JCHARACTER_API UProject_JWeaponPresentationProfile : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Version", meta = (ClampMin = "1"))
+	int32 SchemaVersion = 1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<AActor> WeaponActorClass;
+
+	/** Opt-in palm calibration. Invalid/missing rigid anchors fall back to the configured sockets. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Attachment")
+	EProject_JDrawnAttachmentMode DrawnAttachmentMode = EProject_JDrawnAttachmentMode::Socket;
+
+	/** Socket used while the weapon is drawn and combat presentation is active. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName DrawnSocketName = TEXT("WeaponSocket_R");
+
+	/** Visual follower sockets may have different bone names from the animation source. None reuses DrawnSocketName. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	FName VisualDrawnSocketName = NAME_None;
+
+	/** Socket used after the weapon's sheathe montage transfers it to the back. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName SheathedSocketName = TEXT("WeaponSocket_Back");
+
+	/** None reuses SheathedSocketName. Missing follower sockets fall back to the source mesh. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	FName VisualSheathedSocketName = NAME_None;
+
+	/** Cosmetic attachments prefer the visible retarget follower when it owns the requested socket. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual Follower")
+	bool bPreferVisualFollowerSockets = true;
+
+	/** Optional data-driven independent weapon motion. Kept separate from combat rules and item stats. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon Motion")
+	FProject_JWeaponMotionPresentation MotionPresentation;
+
+	/**
+	 * Optional cosmetic-only per-attack overrides for a particular weapon skin.
+	 * This is applied after the combat style and advancement presentation sets.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<UProject_JCombatPresentationSet> CosmeticPresentationOverrideSet = nullptr;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
+};

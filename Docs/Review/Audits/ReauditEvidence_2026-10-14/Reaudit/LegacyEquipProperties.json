@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"equipmentSlot\\\":\\\"Weapon\\\",\\\"equipmentMesh\\\":\\\"None\\\",\\\"attachSocketName\\\":\\\"None\\\",\\\"abilitySet\\\":\\\"None\\\",\\\"combatStyleDefinition\\\":\\\"None\\\",\\\"weaponPresentationProfile\\\":\\\"None\\\",\\\"itemId\\\":\\\"None\\\",\\\"itemName\\\":\\\"\\\",\\\"maxStackCount\\\":1}\"}"
+			}
+		]
+	}
+}

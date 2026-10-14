@@ -79,6 +79,7 @@ bool AProject_JMountCharacter::GetRiderHandIKTargetsWorld(FVector& OutLeftTarget
 
 void AProject_JMountCharacter::BeginPlay()
 {
+	bEndingPlay = false;
 	MountAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	if (HasAuthority())
 	{
@@ -385,14 +386,20 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 	Rider = nullptr;
 	DetachRider(PreviousRider, DismountLocation);
 	NotifyRiderMountChanged(PreviousRider, false);
+	const auto StillOwnsRiderRestore = [PreviousRider]()
+	{
+		if (!IsValid(PreviousRider) || PreviousRider->IsActorBeingDestroyed()) { return false; }
+		const auto* Component = PreviousRider->FindComponentByClass<UProject_JMountComponent>();
+		return !Component || !Component->IsMounted();
+	};
 	if (bRestorePossession && IsValid(RiderController) && IsValid(PreviousRider) && !PreviousRider->IsActorBeingDestroyed()
-		&& GetWorld() && !GetWorld()->bIsTearingDown && (!bEndingPlay || bRestoreRiderOnEndPlay))
+		&& GetWorld() && !GetWorld()->bIsTearingDown && (!bEndingPlay || bRestoreRiderOnEndPlay) && StillOwnsRiderRestore())
 	{
 		RiderController->Possess(PreviousRider);
 	}
 	// Character::Restart during possession reinstates its default movement
 	// mode. Commit the captured rider mode after that lifecycle hook completes.
-	if (bHasRiderRestoreState && IsValid(PreviousRider) && !PreviousRider->IsActorBeingDestroyed())
+	if (bHasRiderRestoreState && StillOwnsRiderRestore())
 	{
 		PreviousRider->GetCharacterMovement()->SetMovementMode(RiderMovementBeforeMount, RiderCustomMovementBeforeMount);
 	}

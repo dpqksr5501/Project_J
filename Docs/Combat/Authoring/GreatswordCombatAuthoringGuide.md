@@ -4,6 +4,8 @@ This guide is the current authoring contract for Greatsword attacks, combo branc
 
 ## Ownership
 
+2026-10-13 deep audit: the ten attack definitions that incorrectly referenced the infinite `BP_GE_CombatMode` were corrected to the existing working LMB1 instant `GE_TestDamege` (Health -10). The shared combat toggle effect was preserved. `HitSpec.BaseDamage` is a legacy serialized placeholder; the server currently applies the selected DamageEffect's magnitude. Damage effects with no modifier, execution or on-application additional effect fail native data validation. [Evidence and limits](../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md).
+
 ```text
 Enhanced Input action
   -> DA_Greatsword_InputMapping_Data

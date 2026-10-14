@@ -37,7 +37,8 @@ struct FProject_JComboHitSpec
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Damage", meta = (ClampMin = "0.0"))
+	/** Legacy authoring placeholder; server damage is owned by AttackDefinition.DamageEffect. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Legacy", meta = (ClampMin = "0.0", ToolTip = "Legacy serialized placeholder. DamageEffect owns damage magnitude; BaseDamage is not consumed by the server hit path."))
 	float BaseDamage = 1.5f;
 
 	/** Max client-submitted root travel per frame, not weapon reach. Tip rotation allowance is added by validation. */

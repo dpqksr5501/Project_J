@@ -1,0 +1,54 @@
+[
+  {
+    "run": "StructuralCookedCrowd200",
+    "phase": "2",
+    "samples": 498,
+    "frameMeanMs": 16.062344564257028,
+    "frameP50Ms": 15.960300499999999,
+    "frameP95Ms": 17.1742607,
+    "frameMaxMs": 68.897903,
+    "gpuMeanMs": 10.21763514056225,
+    "gpuP95Ms": 10.3863,
+    "minRendered": 200,
+    "maxMontages": 0
+  },
+  {
+    "run": "StructuralCookedCrowd200",
+    "phase": "3",
+    "samples": 387,
+    "frameMeanMs": 20.634456294573642,
+    "frameP50Ms": 16.561399,
+    "frameP95Ms": 28.086859899999997,
+    "frameMaxMs": 74.053604,
+    "gpuMeanMs": 10.476616795865633,
+    "gpuP95Ms": 11.10113,
+    "minRendered": 200,
+    "maxMontages": 200
+  },
+  {
+    "run": "StructuralFinalCrowd200",
+    "phase": "2",
+    "samples": 500,
+    "frameMeanMs": 15.987210208,
+    "frameP50Ms": 15.9530975,
+    "frameP95Ms": 16.884085000000002,
+    "frameMaxMs": 69.375801,
+    "gpuMeanMs": 10.2234464,
+    "gpuP95Ms": 10.376705,
+    "minRendered": 200,
+    "maxMontages": 0
+  },
+  {
+    "run": "StructuralFinalCrowd200",
+    "phase": "3",
+    "samples": 387,
+    "frameMeanMs": 20.62550902842377,
+    "frameP50Ms": 16.684498,
+    "frameP95Ms": 27.6418397,
+    "frameMaxMs": 78.285393,
+    "gpuMeanMs": 10.528748578811369,
+    "gpuP95Ms": 11.29696,
+    "minRendered": 200,
+    "maxMontages": 200
+  }
+]

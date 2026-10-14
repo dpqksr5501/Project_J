@@ -1,0 +1,13 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-run=Cook",
+  "-TargetPlatform=Windows",
+  "-Map=/Game/ThirdPerson/Lvl_ThirdPerson+/Engine/Maps/Entry",
+  "-unattended",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\DeepAudit_20261013/CookFinal/Cook.log",
+  "-UTF8Output",
+  "-stdout"
+]

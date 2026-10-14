@@ -1,0 +1,183 @@
+{
+  "head": "f1bbd48ac4a37eab6ed7a33d025f1de2c270427c",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "counts": [
+    200
+  ],
+  "repeats": 2,
+  "warmupTicks": 120,
+  "measuredTicks": 120,
+  "simulationHz": 60,
+  "trace": false,
+  "noDDCCleanup": true,
+  "nullRHI": true,
+  "budgetMs": 2,
+  "sourceFiles": [
+    {
+      "path": "Scripts/Validation/Measure-Network.ps1",
+      "sha256": "B839617367791C5D0698AA7E2378E6A7F47FF4B09827240F0EB98D8845517EE3"
+    },
+    {
+      "path": "Scripts/Validation/Measure-RenderedCrowd.ps1",
+      "sha256": "D1B38373A01407E637FFCA6B3D771ACDC3481D869D8C711863FDAD05E68650C2"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp",
+      "sha256": "0E1711AB1AE43C57BE2C8F0EE1AF91FCFFC42068C0080172D2C5FE2DBCBFDAFD"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JUIScreenFailureTests.cpp",
+      "sha256": "11CE2117A55D8A622F7BBD3EE26B65E50D1A90BFB1D4B2BEE7BB2479EBCD4DA5"
+    },
+    {
+      "path": "Source/Project_J/Testing/Fixtures/README.md",
+      "sha256": "0658B77E858DB58261CCF6AD9C42A6CECAD69D45FB581707BBB893D13F9CBB85"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JAuthoredSkillContinuationTest.cpp",
+      "sha256": "1BF82ABA5B9D30CF41A92B67DF92EF8FFCB5B4AF226A62C13A6998824AB8DF4C"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JNaturalnessPlayback.cpp",
+      "sha256": "4044DB782957F3A569DB88CFF40DD780F8F90D602987090C80AFC2B6ED4F5FB5"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp",
+      "sha256": "341F8D7737878514D9AC2F0CE67BFA8E25B9880CB365615295FA1C6A9B71A526"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JNetworkLoadFixture.h",
+      "sha256": "3170559931BF7250622A470166D50CAE5C0CD88466D5611E9CAD27FDD99643DA"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JRenderedCrowdFixture.cpp",
+      "sha256": "D9B13BF2B10D4BF2E168F0B803129C1081B1110FFF5A43687AD45CDDC86A3F5A"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JRenderedCrowdFixture.h",
+      "sha256": "9E5A33182288A11607FB8E96CCA0A2D73148D02C070053C43DE1C3B2C56C07B7"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerUIComponent.cpp",
+      "sha256": "AE397F80388C0AD1D8F02460DCAC1DE4237EA934B668A9BB147BBAED6C7EA84E"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerUIComponent.h",
+      "sha256": "7D80803F6B1DF5B673991EC1FD864E760339ED31A32EB6B8E7C342ADBE9C8C0B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp",
+      "sha256": "B40B6CBEBA320EE06AD715EECF8FF256E334470131755F3AF41575AEE8F785B9"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+      "sha256": "3B47BCC1CC8C3952000C4D1D05CF9E71774246568A78485D1707C5EE442B6D0D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetBodyProfile.cpp",
+      "sha256": "3E9ECFC14A1462A09B2C507D1BF1043CF9F9563EBFF5A3D369020A39F21A7297"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JCombatStateComponent.cpp",
+      "sha256": "F60862DA87F4D0DDBDB483BF1169B3A41B32D96B104196070D74C786247CD19B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp",
+      "sha256": "147CB39C21F05CC0ED46FAD59E193DB3CA440E564D755D42F674988503CEAE29"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp",
+      "sha256": "BDECB8F9B42F4A8D5DEC31318AF0A0ED21D6056C1D1F62AD05CD024427611BC9"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "sha256": "CBD08E11254D6AAEED6F620B390DBF93DECCECC63BEC243AB55AF2FF5670283B"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/System/Project_JCharacterAnimationBudgetSubsystem.cpp",
+      "sha256": "6B06AF44319F7DE0AD0D0482B53DE925FD1013BF43C5A29F4A763254520A114D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JAnimationDemandLifetimeTests.cpp",
+      "sha256": "FC37EAA915BE815959500B28675E31A0B25691E923BCC7B9F256BABB15DEA2C5"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JLocomotionContinuityTests.cpp",
+      "sha256": "E33A9760CE3E22ECF616057CB3A2653BDD92246D22663E22EABAD858C812F77D"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMouseChordLifecycleTests.cpp",
+      "sha256": "5FEE926EFCAA472C3C10FAF6D93AF72FA8A1A4CB937FE46514546788DF4712E8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JRetargetBodyProfileTests.cpp",
+      "sha256": "3CD0101A99013BD045633DD5D6C5195C34D25C5007093908EAD3B1F47776E74F"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JSystemsModernizationTests.cpp",
+      "sha256": "18EB852D9019264E4EFC7467D55599C77447B60E07A2AAF6F6F6E29601D9CDB3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h",
+      "sha256": "E8D720C861C5ADE05DBBED717B55BEAA1B4BCE0996998DD6D3CE9B08FE5C5C40"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JCombatStateComponent.h",
+      "sha256": "C39F2027525594737F13C6ED926C274819D5BDE93F1D8A90547CE78E790F7224"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h",
+      "sha256": "9FB6AA628C74B55F7A1C0D65444C008D4F5688B5D833EF9DE9D629AE3A1A94CA"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h",
+      "sha256": "D9FFF6C2F48C3A85055CE51565C7EA698C99D569866EF5DD7495BE6D23126329"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Project_JPlayerCharacter.h",
+      "sha256": "F6FCA67506AA1752AE931F7B9249BCB49C7CB6E85678373A1D3A4F6AF2F20D52"
+    },
+    {
+      "path": "Source/Project_JCore/Public/Project_JCombatInterface.h",
+      "sha256": "549864CBF61D12E10725470EF77DB62F6704ADA20EFDFE946BFF1D13FDCA98F2"
+    },
+    {
+      "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+      "sha256": "D4FB927D5DE0D45A837FDE99536CBD7EB37B354846AC39CD6B3227CD1A0E1ADC"
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+      "sha256": "056F533A8E56BFB49D69E9ACA4DA551B244FDB0263AB138EFD55E58A8D1BFA47"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "Project_J.uproject",
+      "sha256": "057D84E9060923DB1964C376AA6084EA50598B32FA9B88555B22F69A5C402E61"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+      "sha256": "6A0A54253E3C99AFCC60EA9BCDD817BE48E9C57838CB766735D471797126A2D2"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+      "sha256": "17C0AFF0766C6C8065E7C872E084649A470796C490BD3AD5EF9BCAA69B71E010"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A"
+    },
+    {
+      "path": "Content/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.uasset",
+      "sha256": "A3D2E5C9329C4038F4425FD99D37D15BA983FBE4AEB26701ED484056CDC35FB4"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.uasset",
+      "sha256": "C849C045173D5EEFA08DF35516D45A9CD26F8EA3D461E987D8B5B226D8BD0031"
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "sha256": "AA4E2E350A679A328C6E3D291577D07406F8E9EA3F03B4D4F1A03E1B559A59BF"
+    }
+  ]
+}

@@ -290,6 +290,8 @@ void AProject_JPlayerCharacter::PossessedBy(AController* NewController)
 void AProject_JPlayerCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
+	if (auto* ASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{ ASC->RefreshActorInfoForCurrentActor(this); }
 	if (FoleyComponent) { FoleyComponent->PrepareLocalAudio(); }
 }
 
@@ -1605,6 +1607,12 @@ void AProject_JPlayerCharacter::HandleSkillInputTagPressed(FGameplayTag InputTag
 	{
 		SkillInputExecutionComponent->HandleInputTagPressed(InputTag);
 	}
+}
+
+void AProject_JPlayerCharacter::ReceiveAuthorityCombatInput(const FGameplayTag& InputTag, float ClientTimestamp, uint32 InputSequence)
+{
+	if (SkillInputExecutionComponent)
+	{ SkillInputExecutionComponent->ReceiveAuthorityCombatInput(InputTag, ClientTimestamp, InputSequence); }
 }
 
 void AProject_JPlayerCharacter::HandleSkillInputTagReleased(FGameplayTag InputTag)

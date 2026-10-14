@@ -1,0 +1,1175 @@
+{
+  "meaning": "Token-count triage only; reflection, overrides and extension APIs require separate proof before removal.",
+  "candidates": [
+    {
+      "class": "AProject_JFlyingMountCharacter",
+      "name": "SetGliding",
+      "source": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "line": 164
+    },
+    {
+      "class": "FCollisionShape",
+      "name": "MakeCapsule",
+      "source": "Source/Project_JMount/Private/Mount/Project_JFlyingMountCharacter.cpp",
+      "line": 264
+    },
+    {
+      "class": "FCollisionShape",
+      "name": "MakeCapsule",
+      "source": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+      "line": 453
+    },
+    {
+      "class": "UProject_JAbilitySystemComponent",
+      "name": "TryActivateAbilitiesByInputTag",
+      "source": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+      "line": 68
+    },
+    {
+      "class": "UProject_JObjectPoolRegistrySubsystem",
+      "name": "UnregisterDefinition",
+      "source": "Source/Project_JCore/Private/System/Project_JObjectPoolRegistrySubsystem.cpp",
+      "line": 14
+    },
+    {
+      "class": "SAnimNotifyNode",
+      "name": "OnPaint",
+      "source": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "line": 216
+    },
+    {
+      "class": "SAnimNotifyNode",
+      "name": "OnMouseButtonDown",
+      "source": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "line": 265
+    },
+    {
+      "class": "WeaponMotion",
+      "name": "EvaluateStateTransform",
+      "source": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "line": 465
+    },
+    {
+      "class": "UProject_JEarlyTransitionMigrationLibrary",
+      "name": "RepairSixRunClips",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JEarlyTransitionMigrationLibrary.cpp",
+      "line": 32
+    },
+    {
+      "class": "FPackageName",
+      "name": "MountPointExists",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JEarlyTransitionMigrationLibrary.cpp",
+      "line": 46
+    },
+    {
+      "class": "UProject_JFoleyMigrationLibrary",
+      "name": "MigrateGaspFoley",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JFoleyMigrationLibrary.cpp",
+      "line": 82
+    },
+    {
+      "class": "UProject_JFoleyMigrationLibrary",
+      "name": "RepairMissingGaspFoley",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JFoleyMigrationLibrary.cpp",
+      "line": 203
+    },
+    {
+      "class": "FPackageName",
+      "name": "MountPointExists",
+      "source": "Source/Project_JCharacterEditor/Private/Animation/Project_JFoleyMigrationLibrary.cpp",
+      "line": 220
+    },
+    {
+      "class": "FPackageName",
+      "name": "GetLongPackageAssetName",
+      "source": "Source/Project_JCharacterEditor/Private/Authoring/Project_JContentBundleAuthoring.cpp",
+      "line": 64
+    },
+    {
+      "class": "FPackageName",
+      "name": "GetLongPackageAssetName",
+      "source": "Source/Project_JCharacterEditor/Private/Authoring/Project_JContentBundleAuthoring.cpp",
+      "line": 222
+    },
+    {
+      "class": "AProject_JBaseCharacter",
+      "name": "GetCombatSocketLocation_Implementation",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 161
+    },
+    {
+      "class": "AProject_JBaseCharacter",
+      "name": "IsDead_Implementation",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 172
+    },
+    {
+      "class": "AProject_JBaseCharacter",
+      "name": "CanApplyAdvancementDefinition",
+      "source": "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "line": 234
+    },
+    {
+      "class": "UProject_JLocomotionAnimStateComponentBase",
+      "name": "GetCachedMeshComponent",
+      "source": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp",
+      "line": 60
+    },
+    {
+      "class": "UProject_JLocomotionAnimStateComponent",
+      "name": "ResetJumpStartLandingDebugState",
+      "source": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp",
+      "line": 111
+    },
+    {
+      "class": "AProject_JNPCCharacter",
+      "name": "GetRecommendedAIUpdateInterval",
+      "source": "Source/Project_JCharacter/Private/Project_JNPCCharacter.cpp",
+      "line": 65
+    },
+    {
+      "class": "AProject_JPlayerCharacter",
+      "name": "InterruptCombatIntroForHit",
+      "source": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp",
+      "line": 1530
+    },
+    {
+      "class": "Animation",
+      "name": "CanContinueInertialReturn",
+      "source": "Source/Project_JCharacter/Private/Animation/AnimNode_ProjectJLocomotion.cpp",
+      "line": 115
+    },
+    {
+      "class": "FAnimWeight",
+      "name": "IsRelevant",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JAnimNode_GuidedHandIK.cpp",
+      "line": 81
+    },
+    {
+      "class": "FAnimWeight",
+      "name": "IsRelevant",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JAnimNode_GuidedHandIK.cpp",
+      "line": 96
+    },
+    {
+      "class": "UAnimNotifyLibrary",
+      "name": "IsBlendingOut",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_LocomotionEarlyTransition.cpp",
+      "line": 17
+    },
+    {
+      "class": "UAnimNotifyLibrary",
+      "name": "IsBlendingOut",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotify_FoleyEvent.cpp",
+      "line": 16
+    },
+    {
+      "class": "UProject_JBudgetedSkeletalMeshComponent",
+      "name": "SetCombatCritical",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp",
+      "line": 133
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetEffectiveHiddenRemoteUpdateInterval",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+      "line": 241
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetEffectiveMidMotionMatchingUpdateInterval",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+      "line": 246
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetEffectiveFarMotionMatchingUpdateInterval",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+      "line": 251
+    },
+    {
+      "class": "FQuat",
+      "name": "Slerp",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Continuity.cpp",
+      "line": 82
+    },
+    {
+      "class": "Anim",
+      "name": "ExtractRootMotionFromAnimationAsset",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.ContinuityTrace.cpp",
+      "line": 228
+    },
+    {
+      "class": "Anim",
+      "name": "ExtractRootMotionFromAnimationAsset",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.ContinuityTrace.cpp",
+      "line": 231
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "BeginOneShotEarlyTransitionWindow",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 356
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "EndOneShotEarlyTransitionWindow",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 380
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMotionMatchingSelectedAnimationProgress",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 497
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMotionMatchingSelectionIsContinuing",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "line": 506
+    },
+    {
+      "class": "UPoseSearchLibrary",
+      "name": "FindPoseHistoryNode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+      "line": 653
+    },
+    {
+      "class": "UPoseSearchLibrary",
+      "name": "FindPoseHistoryNode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+      "line": 656
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeTrajectory",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 12
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeCombatLocomotionStartRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 42
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeCombatLocomotionStopRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 47
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeUsesCombatUpperBodyOverlay",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 58
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVelocity",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 63
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVerticalSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 68
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsAccelerating",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 73
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeRelativeAccelerationAmount",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 78
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeLeanAmount",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 83
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeShouldApplyLeanAdditive",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 88
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsSprintCurvatureLeanSuppressed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 93
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafePredictedStopDistance",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 98
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeVelocityToMoveInputAngle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 103
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsDecelerating",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 108
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMoveInputSize",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 113
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeHasMoveInput",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 118
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsInAir",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 123
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsJumping",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 128
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsLanding",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 133
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMoving",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 143
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMotionMatchingMoving",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 148
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeGaitIntent",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 153
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeRotationMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 158
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerWantsLocomotion",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 163
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerWantsIdle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 171
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIsGrounded",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 179
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIsInAir",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 185
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeExperimentalOneShotEnabled",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 191
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotRequested",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 196
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotUseMotionMatchOnEntry",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 201
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotRequestRevision",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 206
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotPhase",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 211
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotEarlyTransitionWindowOpen",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 216
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerLocomotionSemanticStateChanged",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 221
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleSemanticStateChanged",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 226
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerStrafeDirection",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 231
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerPreviousStrafeDirection",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 236
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerStance",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 241
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldTurnInPlace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 251
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldAbortTurnInPlace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 257
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerTurnInPlaceSteeringAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 269
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 350
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationHalfLife",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 357
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOffsetRootTranslationRadius",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 362
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleBreakEnabled",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 378
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerIdleBreakMinimumStateTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 383
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationOutput",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 393
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerShouldForceBlend",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 413
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 418
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationBlendProfile",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 423
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationShouldLoop",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 428
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeOneShotReturnBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 443
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerCombatStrafeOrientationWarpingAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 452
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafePlaybackOrientationWarpingAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 459
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerCombatStrafeOrientationWarpingAngle",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 479
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationAlmostComplete",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 484
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeStateControllerSelectedAnimationTimeRemaining",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 489
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeIsMounted",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 494
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedIsFlying",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 499
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedIsGliding",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 504
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 509
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedVerticalSpeed",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 514
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeHasMountedHandIKTargets",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 519
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedLeftHandTargetComponentSpace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 524
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedRightHandTargetComponentSpace",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 529
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedAnimationTags",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 534
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedHasAnimationTag",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 539
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeMountedTransitionBlendTime",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 545
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeUsesOnFootLocomotion",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 555
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "Get_FootPlacementInterpolationSettings",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 565
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeFootPlacementAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 570
+    },
+    {
+      "class": "UProject_JCharacterAnimInstance",
+      "name": "GetThreadSafeLegIKAlpha",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp",
+      "line": 575
+    },
+    {
+      "class": "FProject_JCharacterAnimInstanceProxy",
+      "name": "GetCustomRootNode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "line": 786
+    },
+    {
+      "class": "FProject_JCharacterAnimInstanceProxy",
+      "name": "GetCustomNodes",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceProxy.cpp",
+      "line": 800
+    },
+    {
+      "class": "AnimationCore",
+      "name": "SolveTwoBoneIK",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JGuidedArmSolver.cpp",
+      "line": 162
+    },
+    {
+      "class": "FMotionTrajectoryLibrary",
+      "name": "UpdatePrediction_SimulateCharacterMovement",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "line": 284
+    },
+    {
+      "class": "FMath",
+      "name": "FixedTurn",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JMotionMatchingTrajectoryComponent.cpp",
+      "line": 389
+    },
+    {
+      "class": "UProject_JRetargetAnimInstance",
+      "name": "SetCombatMode",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+      "line": 102
+    },
+    {
+      "class": "AnimationCore",
+      "name": "SolveTwoBoneIK",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JStrafeLowerBodyFacing.cpp",
+      "line": 53
+    },
+    {
+      "class": "FMath",
+      "name": "Exp2",
+      "source": "Source/Project_JCharacter/Private/Animation/Project_JStrafeUpperBodyFacing.cpp",
+      "line": 84
+    },
+    {
+      "class": "FMath",
+      "name": "VInterpTo",
+      "source": "Source/Project_JCharacter/Private/Camera/Project_JCameraComponent.cpp",
+      "line": 119
+    },
+    {
+      "class": "UProject_JCameraComponent",
+      "name": "SetCombatRightShoulder",
+      "source": "Source/Project_JCharacter/Private/Camera/Project_JCameraComponent.cpp",
+      "line": 133
+    },
+    {
+      "class": "UProject_JCharacterDataSubsystem",
+      "name": "InitializeCharacterClassById",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 112
+    },
+    {
+      "class": "UProject_JCharacterDataSubsystem",
+      "name": "ApplyAdvancementById",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 124
+    },
+    {
+      "class": "UProject_JCharacterDataSubsystem",
+      "name": "ValidateDataRegistry",
+      "source": "Source/Project_JCharacter/Private/CharacterClass/Project_JCharacterDataSubsystem.cpp",
+      "line": 136
+    },
+    {
+      "class": "UAbilityTask_PlayMontageAndWait",
+      "name": "CreatePlayMontageAndWaitProxy",
+      "source": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Melee.cpp",
+      "line": 558
+    },
+    {
+      "class": "UAbilityTask_PlayMontageAndWait",
+      "name": "CreatePlayMontageAndWaitProxy",
+      "source": "Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_NPCAttack.cpp",
+      "line": 132
+    },
+    {
+      "class": "FQuat",
+      "name": "Slerp",
+      "source": "Source/Project_JCharacter/Private/Combat/Project_JServerSideRewindComponent.cpp",
+      "line": 100
+    },
+    {
+      "class": "UProject_JCharacterMovementComponent",
+      "name": "GetPredictionData_Client",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JCharacterMovementComponent.cpp",
+      "line": 42
+    },
+    {
+      "class": "UNiagaraFunctionLibrary",
+      "name": "SpawnSystemAtLocation",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp",
+      "line": 286
+    },
+    {
+      "class": "UProject_JEquipmentManagerComponent",
+      "name": "EquipItemInstance",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp",
+      "line": 166
+    },
+    {
+      "class": "FMath",
+      "name": "GetMappedRangeValueClamped",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JFoleyComponent.cpp",
+      "line": 77
+    },
+    {
+      "class": "FMath",
+      "name": "GetMappedRangeValueClamped",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JFoleyComponent.cpp",
+      "line": 87
+    },
+    {
+      "class": "UProject_JInventoryComponent",
+      "name": "CanMoveItemInstance",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp",
+      "line": 312
+    },
+    {
+      "class": "UProject_JMountedAnimationLayerComponent",
+      "name": "IsMountedLayerLinked",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JMountedAnimationLayerComponent.cpp",
+      "line": 216
+    },
+    {
+      "class": "WeaponMotion",
+      "name": "EvaluateMontageContactRecoveryAlpha",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 772
+    },
+    {
+      "class": "WeaponMotion",
+      "name": "EvaluateContactRecoveryAlpha",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 788
+    },
+    {
+      "class": "UProject_JWeaponPresentationComponent",
+      "name": "BeginGroundContact",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 842
+    },
+    {
+      "class": "UProject_JWeaponPresentationComponent",
+      "name": "EndGroundContact",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 849
+    },
+    {
+      "class": "FMath",
+      "name": "VInterpTo",
+      "source": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "line": 1325
+    },
+    {
+      "class": "IProject_JInteractable",
+      "name": "Execute_CanInteract",
+      "source": "Source/Project_JCharacter/Private/Interaction/Project_JInteractionQuery.cpp",
+      "line": 57
+    },
+    {
+      "class": "IProject_JInteractable",
+      "name": "Execute_CanInteract",
+      "source": "Source/Project_JCharacter/Private/Interaction/Project_JInteractionQuery.cpp",
+      "line": 62
+    },
+    {
+      "class": "UProject_JMassMonster_Trait",
+      "name": "BuildTemplate",
+      "source": "Source/Project_JCharacter/Private/Mass/Project_JMassMonster_Trait.cpp",
+      "line": 4
+    },
+    {
+      "class": "UProject_JMassMovementProcessor",
+      "name": "ConfigureQueries",
+      "source": "Source/Project_JCharacter/Private/Mass/Project_JMassMovementProcessor.cpp",
+      "line": 22
+    },
+    {
+      "class": "IProject_JSocialStateInterface",
+      "name": "Execute_GetPartyId",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 47
+    },
+    {
+      "class": "IProject_JSocialStateInterface",
+      "name": "Execute_GetGuildId",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 48
+    },
+    {
+      "class": "IProject_JSocialStateInterface",
+      "name": "Execute_GetPartyId",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 50
+    },
+    {
+      "class": "IProject_JSocialStateInterface",
+      "name": "Execute_GetGuildId",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 51
+    },
+    {
+      "class": "UProject_JNetObjectFilter_Distance",
+      "name": "ShouldReplicateActorForViewer",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 78
+    },
+    {
+      "class": "UProject_JNetObjectFilter_Distance",
+      "name": "SetPolicySettings",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectFilter_Distance.cpp",
+      "line": 147
+    },
+    {
+      "class": "UProject_JNetObjectPrioritizer_Combat",
+      "name": "HasCombatPriority",
+      "source": "Source/Project_JCharacter/Private/Network/Project_JNetObjectPrioritizer_Combat.cpp",
+      "line": 42
+    },
+    {
+      "class": "UGameplayStatics",
+      "name": "PlaySoundAtLocation",
+      "source": "Source/Project_JCharacter/Private/System/Project_JFoleySubsystem.cpp",
+      "line": 339
+    },
+    {
+      "class": "UAnimGraphNode_ProjectJLocomotion",
+      "name": "GetMenuCategory",
+      "source": "Source/Project_JAnimationNodes/Private/Animation/AnimGraphNode_ProjectJLocomotion.cpp",
+      "line": 7
+    },
+    {
+      "class": "UAnimGraphNode_ProjectJOneShotHandoff",
+      "name": "CustomizePinData",
+      "source": "Source/Project_JAnimationNodes/Private/Animation/AnimGraphNode_ProjectJOneShotHandoff.cpp",
+      "line": 14
+    },
+    {
+      "class": "UProject_JHandoverManager",
+      "name": "InitiateHandover",
+      "source": "Source/Project_J/Backend/Project_JHandoverManager.cpp",
+      "line": 34
+    },
+    {
+      "class": "FSHA1",
+      "name": "HashBuffer",
+      "source": "Source/Project_J/Backend/Project_JHandoverManager.cpp",
+      "line": 288
+    },
+    {
+      "class": "AProject_JGameState",
+      "name": "SetPublicEventId",
+      "source": "Source/Project_J/Game/Project_JGameState.cpp",
+      "line": 33
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "StartProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 181
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "StopProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 206
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpProfilingVisualCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 220
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "StartProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 236
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "StopProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 253
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpProfilingReplicatedMovementCrowd",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 269
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "ServerStartProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 285
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "ServerStopProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 317
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "ServerDumpProfilingReplicatedMovementCrowd_Implementation",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 328
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpAnimationExecutionPolicy",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 344
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpMMOState",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 376
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpAnimBudget",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 407
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpMotionMatchingTrace",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 426
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpLocomotionKinematics",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 442
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpReplicationPolicy",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 491
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpCharacterComponents",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 516
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpCombatState",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 541
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "DumpMMOProfilingSnapshot",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 571
+    },
+    {
+      "class": "AProject_JPlayerController",
+      "name": "UIPrototypeTest",
+      "source": "Source/Project_J/Game/Project_JPlayerController.cpp",
+      "line": 786
+    },
+    {
+      "class": "FVector",
+      "name": "Dist2D",
+      "source": "Source/Project_J/Game/Project_JQuestComponent.cpp",
+      "line": 211
+    },
+    {
+      "class": "UProject_JMMOFoundationSubsystem",
+      "name": "ResolveContentDependencies",
+      "source": "Source/Project_J/MMO/Project_JMMOFoundationSubsystem.cpp",
+      "line": 14
+    },
+    {
+      "class": "FPSOCollectorCreateManager",
+      "name": "GetCreateFunction",
+      "source": "Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp",
+      "line": 19
+    },
+    {
+      "class": "FPSOCollectorCreateManager",
+      "name": "GetCreateFunction",
+      "source": "Source/Project_J/Rendering/Project_JDistortionPSOPrecache.cpp",
+      "line": 53
+    },
+    {
+      "class": "UProject_JSocialSubsystem",
+      "name": "JoinGuild",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 56
+    },
+    {
+      "class": "UProject_JSocialSubsystem",
+      "name": "GetPartyIdForCharacter",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 143
+    },
+    {
+      "class": "UProject_JSocialSubsystem",
+      "name": "GetGuildIdForCharacter",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 148
+    },
+    {
+      "class": "UProject_JSocialSubsystem",
+      "name": "GetGroupSnapshot",
+      "source": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "line": 393
+    },
+    {
+      "class": "UProject_JHUDWindow",
+      "name": "RequestClose",
+      "source": "Source/Project_J/UI/Project_JHUDWindow.cpp",
+      "line": 87
+    },
+    {
+      "class": "UI",
+      "name": "EquipmentSlotLabel",
+      "source": "Source/Project_J/UI/Project_JInventoryWidgets.cpp",
+      "line": 185
+    },
+    {
+      "class": "UProject_JMinimapWidget",
+      "name": "NativeOnMouseWheel",
+      "source": "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+      "line": 109
+    },
+    {
+      "class": "UWidgetBlueprintLibrary",
+      "name": "GetDragDroppingContent",
+      "source": "Source/Project_J/UI/Project_JPlayerHUDWidget.cpp",
+      "line": 535
+    },
+    {
+      "class": "UWidgetBlueprintLibrary",
+      "name": "GetDragDroppingContent",
+      "source": "Source/Project_J/UI/Project_JPlayerHUDWidget.cpp",
+      "line": 536
+    },
+    {
+      "class": "UWidgetBlueprintLibrary",
+      "name": "CancelDragDrop",
+      "source": "Source/Project_J/UI/Project_JPlayerHUDWidget.cpp",
+      "line": 538
+    },
+    {
+      "class": "UWidgetBlueprintLibrary",
+      "name": "CancelDragDrop",
+      "source": "Source/Project_J/UI/Project_JPlayerHUDWidget.cpp",
+      "line": 627
+    },
+    {
+      "class": "UProject_JPlayerUIComponent",
+      "name": "ToggleMenu",
+      "source": "Source/Project_J/UI/Project_JPlayerUIComponent.cpp",
+      "line": 555
+    },
+    {
+      "class": "UProject_JSkillButton",
+      "name": "NativeOnMouseButtonUp",
+      "source": "Source/Project_J/UI/Project_JSkillButton.cpp",
+      "line": 200
+    },
+    {
+      "class": "UGameplayStatics",
+      "name": "LoadGameFromSlot",
+      "source": "Source/Project_J/UI/Project_JUILayoutSettings.cpp",
+      "line": 15
+    },
+    {
+      "class": "UGameplayStatics",
+      "name": "LoadGameFromSlot",
+      "source": "Source/Project_J/UI/Project_JUIRuntimeSmoke.cpp",
+      "line": 121
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"bPlayIntroMontageWhenEnteringCombat\\\":true,\\\"bUseCombatRotationMode\\\":true,\\\"bInterruptCombatIntroOnHit\\\":true,\\\"combatAimAlpha\\\":1,\\\"strafeUpperBodyFacing\\\":{\\\"bEnabled\\\":true,\\\"rootBone\\\":\\\"root\\\",\\\"spineRootBone\\\":\\\"spine_01\\\",\\\"chestBone\\\":\\\"spine_05\\\",\\\"tolerance\\\":8,\\\"maxCorrection\\\":40,\\\"halfLife\\\":0.039999999105930328,\\\"maxCorrectionRate\\\":360,\\\"forwardCone\\\":25,\\\"minimumSpeed\\\":150,\\\"rootFadeStart\\\":25,\\\"rootFadeEnd\\\":45},\\\"strafeLowerBodyFacing\\\":{\\\"bEnabled\\\":true,\\\"rootBone\\\":\\\"root\\\",\\\"pelvisBone\\\":\\\"pelvis\\\",\\\"spineRootBone\\\":\\\"spine_01\\\",\\\"leftThighBone\\\":\\\"thigh_l\\\",\\\"leftCalfBone\\\":\\\"calf_l\\\",\\\"leftFootBone\\\":\\\"foot_l\\\",\\\"rightThighBone\\\":\\\"thigh_r\\\",\\\"rightCalfBone\\\":\\\"calf_r\\\",\\\"rightFootBone\\\":\\\"foot_r\\\",\\\"tolerance\\\":10,\\\"maxCorrection\\\":25,\\\"halfLife\\\":0.079999998211860657,\\\"maxCorrectionRate\\\":180,\\\"forwardCone\\\":25,\\\"minimumSpeed\\\":150},\\\"bAllowSprintInCombat\\\":true,\\\"combatFacingRotationRateYaw\\\":360,\\\"bEnableStrafeFacingRedirect\\\":true,\\\"strafeFacingRedirectEntryAngle\\\":150,\\\"strafeFacingRedirectExitAngle\\\":5,\\\"combatStrafeMotionMatchingAssetSet\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.DA_Player_Combat_Strafe\\\"},\\\"bEnableStrafeSettledCycle\\\":true,\\\"strafeSettledCycleDelay\\\":0.25,\\\"strafeSettledFacingToleranceDegrees\\\":5,\\\"strafeDynamicInputTurnAngle\\\":5,\\\"strafeDynamicFacingYawRate\\\":15,\\\"strafeDynamicVelocityToInputAngle\\\":15,\\\"bForceReselectOnStrafeInputTurn\\\":false,\\\"bEnableCombatStrafeRunPivot\\\":true,\\\"strafeInputTurnReselectAngle\\\":35,\\\"strafeInputTurnReselectCooldown\\\":0.10000000149011612,\\\"strafeDirectionMinimumSpeed\\\":10,\\\"strafeDirectionHysteresisDegrees\\\":7.5,\\\"bRequireForwardInputForSprintInCombat\\\":true,\\\"combatSprintForwardInputThreshold\\\":0.10000000149011612}\"}"
+			}
+		]
+	}
+}

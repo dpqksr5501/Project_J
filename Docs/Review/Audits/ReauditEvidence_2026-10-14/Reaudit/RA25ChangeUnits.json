@@ -1,0 +1,589 @@
+{
+  "baseline": "648개 텍스트+9개 Editor artifact, DS01–18 이후/RA 이전, 사용자 변경 포함",
+  "frozen_final": "650개 텍스트+9개 Editor artifact, RA01–25",
+  "units": [
+    {
+      "unit": "RA01",
+      "reason_ko": "실제 ASC delegate lease·FieldNotify 재진입/GC",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/UI/Project_JCharacterUIBindingComponent.cpp",
+          "status": "modified",
+          "sha256": "275734bc5bd6ac120d96cd3b4c10c0ca073e63db3b1ded44c9d6483e4e314699",
+          "baseline_sha256": "367262ce564b122347d9af67bd97aafc4916bc7c0fe7c19a08eeeb20a6efa216"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/UI/Project_JCharacterUIBindingComponent.h",
+          "status": "modified",
+          "sha256": "4db83c3a2ac5ee92bf7dabdfbb08b64eab5d9a288112151dca6367523bc1083c",
+          "baseline_sha256": "45b4265f88f0de254edc798e82855da32806c412143dff3f2731288eecceecfa"
+        }
+      ],
+      "regression_scope": "CharacterUIBindingReentry"
+    },
+    {
+      "unit": "RA02/10",
+      "reason_ko": "전투 시각 retirement·Niagara 소유권·새 play admission",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp",
+          "status": "modified",
+          "sha256": "c82dc27bd8a2c63e32e9c4e336bdeb995b6430de73114ef0a6842f5b575fd2d7",
+          "baseline_sha256": "4dd09e71fee9531d5fd64603e28e1d6ae604e44b4b716b7ecddf5dccf961d4cd"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JCombatPresentationComponent.h",
+          "status": "modified",
+          "sha256": "49990ec094820c6f7dbd92bcd4c153abf412a2d078e3937c97922779ca213be1",
+          "baseline_sha256": "6cb8d974208c8e5f048b0dabfa18ef82ddcd0fba787a556e126f23235336d1c6"
+        }
+      ],
+      "regression_scope": "CombatPresentationRetirement,ComponentPlayReuse"
+    },
+    {
+      "unit": "RA03",
+      "reason_ko": "미니맵 재구성·공통 아이콘 취소/세대",
+      "files": [
+        {
+          "path": "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+          "status": "modified",
+          "sha256": "50a8e1a87488797ebe114c5480ead0439d388c0c71eca9c564a345754a293533",
+          "baseline_sha256": "41b84472e9f4112d17b25198d51b3bfae6b98d5d980f8d7f8ed3b8e8b8c695db"
+        },
+        {
+          "path": "Source/Project_J/UI/Project_JMinimapWidget.h",
+          "status": "modified",
+          "sha256": "a363d5607ee002fa12d18a165585f12aa88d41f3cbd0660e77cee5c4f899aea9",
+          "baseline_sha256": "f435833aaf08498a03e83f7953a1c90d9a7c3c2564e2488b2f45f2b42790df76"
+        }
+      ],
+      "regression_scope": "MinimapReconstruction"
+    },
+    {
+      "unit": "RA04",
+      "reason_ko": "제작/런타임 이동 수치 계약·CMC tuple publication",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp",
+          "status": "modified",
+          "sha256": "ebbaa04881cf49a5136756e2cd1dc7ed68f3998ce69e586fe476786d1cffeb76",
+          "baseline_sha256": "bd2ac65f52e50d8e0a00d23f2ed266735fa749c39aa6e57890ec40a5388c03f4"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+          "status": "modified",
+          "sha256": "4e785a2e1dbab9b67317db5ca17cb69965f155b8af7dff96db1dbc977ea82f10",
+          "baseline_sha256": "bc312dbe9dbab0641aeaea0393a32256cf357a6e95129269bf3fffb9d2a60580"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp",
+          "status": "modified",
+          "sha256": "0197626ce2567ab103dd896b3d4083f09f4010a948ace0eb2d716abaa94c5ba5",
+          "baseline_sha256": "3b74ffec6fc28c2b21d2d06fe79d8207805eaaa2659f3338087fbfb4f3be6977"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h",
+          "status": "modified",
+          "sha256": "29eda85701b02542324eeec33d51cfa5a557822b36def25d3ec3f2c8bb3acff8",
+          "baseline_sha256": "2ec0364ace1e282029160c617ff8828e0e6cd48150e7c547057be0fdfc29227f"
+        }
+      ],
+      "regression_scope": "MovementDataValidation,MovementPublication"
+    },
+    {
+      "unit": "RA05/10",
+      "reason_ko": "탑승 전이·실제 ASC 태그·현재 rider 복원 소유권",
+      "files": [
+        {
+          "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+          "status": "modified",
+          "sha256": "0beccfc516e612fc37b0e9724776a806e6799dd822848dacf0927901949b07a8",
+          "baseline_sha256": "658b4c4923ea5f2ff57b259b1962edfe9b7b5bedfff66ab01b5c152196b485e7"
+        },
+        {
+          "path": "Source/Project_JMount/Private/Mount/Project_JMountComponent.cpp",
+          "status": "modified",
+          "sha256": "36490319dbf04dede6fb4d34a30034ba16a543d81c2a9074c446ae0fa49cbfcd",
+          "baseline_sha256": "fcdb833883025cafa50012df5497e4e0b5160eeb8c9bba8a98676fd5e993a183"
+        },
+        {
+          "path": "Source/Project_JMount/Public/Mount/Project_JMountComponent.h",
+          "status": "modified",
+          "sha256": "b4c26eba2c18c02e000d509a999668c7fd4125be28512b0794b0a1bfe9015de2",
+          "baseline_sha256": "fc41f378fab769568f753bd0e1b91f1887b2a45db422e8ba63e5fece515ac83b"
+        }
+      ],
+      "regression_scope": "MountTagReentry,ComponentPlayReuse"
+    },
+    {
+      "unit": "RA06",
+      "reason_ko": "인벤토리 표시의 현재 source 세대",
+      "files": [
+        {
+          "path": "Source/Project_J/UI/Project_JInventoryViewModel.cpp",
+          "status": "modified",
+          "sha256": "b93a13d660657e17bd10bee26c82a37bbaf7a2aac30c340d602c287c0ae5a262",
+          "baseline_sha256": "b0e0482eb8319d55690dc6676bd657c146ba06f385a5aac2dc2132df3afa31b9"
+        }
+      ],
+      "regression_scope": "InventoryProjectionGeneration"
+    },
+    {
+      "unit": "RA07",
+      "reason_ko": "UI 저장 public admission·private final flush",
+      "files": [
+        {
+          "path": "Source/Project_J/UI/Project_JUILayoutSettings.cpp",
+          "status": "modified",
+          "sha256": "7cf7a9e52d1e7455b3da32fac7b85ad82d9efc20613ad239267b02bcc685be65",
+          "baseline_sha256": "75522e3fb8c54ae75c6c650dc30a2db10dc661d32ec1e8584bb819c9ff33f9d1"
+        },
+        {
+          "path": "Source/Project_J/UI/Project_JUILayoutSettings.h",
+          "status": "modified",
+          "sha256": "1ebb8e6df4386d9358c373080ba3fbcb88dc00a7b473deec733c782337ee3b72",
+          "baseline_sha256": "de22846910a32d7108699fa3e3f81c2dc1a12c1052afa3c8035417799f73d6b1"
+        }
+      ],
+      "regression_scope": "UIPreferenceRetirement"
+    },
+    {
+      "unit": "RA08",
+      "reason_ko": "follower 역할의 공통 resolver·중복 탐색/캐시 제거",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceBase.cpp",
+          "status": "modified",
+          "sha256": "45a78e6b6245c5a7677b3f2de772774e1dfd76236d1b747651fd275a2f8b2e74",
+          "baseline_sha256": "1533881f303bcbb12cccbe0189b928bddf4fa2f38976c395daa3c8935ef4f766"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp",
+          "status": "modified",
+          "sha256": "08268dd4e72361902e38afcacbb24174641c045b3c5c4ba89f4c1b14ff9a0f3e",
+          "baseline_sha256": "0cd359468508e038ea754f1025cc2428b55da0f035df0fdd059e946a6ae0b08d"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.h",
+          "status": "modified",
+          "sha256": "bba826e1e4cd691c5f70214b563b7df5eb2b11130dedb96d790b457cc414db72",
+          "baseline_sha256": "c99305a99d8eb0a811d2ff902b4b93e7d6d9527b90f1f00cfdb091950d4d6696"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstanceBase.h",
+          "status": "modified",
+          "sha256": "afcb348ac3636ea3fced41c6006ec9d20d7088237e58ed02e8ddebaf56478406",
+          "baseline_sha256": "b3ab76989fb193b8a34dff39892ff72e2851543a490079b416ff84b08b5fc51b"
+        }
+      ],
+      "regression_scope": "FollowerIdentityReplacement,AuthoredFollowerRole"
+    },
+    {
+      "unit": "RA09",
+      "reason_ko": "Super 전용 override와 미사용 주석 제거",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp",
+          "status": "modified",
+          "sha256": "40db2d1ab70b8c384bb042908ce28170df84c201281c3f57de7ccf8fd6550ddf",
+          "baseline_sha256": "b005c15bff0496cccf7010e5562690f3be6f3c17c2f2de50d50ce69cfd5a0ebb"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JModularMeshComponent.h",
+          "status": "modified",
+          "sha256": "2f892fdffcb2df630b2db371727ff72e2cf58b34943bb1ae79a4ba61ef92a78c",
+          "baseline_sha256": "c1108028f33b9d42ddfcf046b14088857d1c22e9fcb4c06d2fb695bb41ee8e49"
+        }
+      ],
+      "regression_scope": "기존 inheritance와 전체 회귀; 별도 버그 재현 없음"
+    },
+    {
+      "unit": "RA11",
+      "reason_ko": "enabled ground contact 공통 숫자 계약",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+          "status": "modified",
+          "sha256": "e5ac150cb5ded4f896c09dfa10a5b0eb226d6c1ae07bcbe09570edf5f405b915",
+          "baseline_sha256": "45877003aca47d98cbb9e3417744ac997312126615ab409cbd30936fb3178c5e"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Equipment/Project_JWeaponPresentationProfile.cpp",
+          "status": "modified",
+          "sha256": "9999a7ce0849d861a254968372f2d61303c0dc2e154e76e3d6d83d16776244c1",
+          "baseline_sha256": "9dac8540493a3a2caa4a4fb065fdb3c72e8adaa4d596e5b0994f85ff03f0d83f"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Equipment/Project_JWeaponPresentationProfile.h",
+          "status": "modified",
+          "sha256": "717eed238322f6e41f38b3f60c099b6d0a1eeef54855c92b35d1c483ff5c609b",
+          "baseline_sha256": "5e9386090fc7de7a530a0d445863cf835267e6cbf54c4210b32cb237f6cfae65"
+        }
+      ],
+      "regression_scope": "GroundContactDataValidation"
+    },
+    {
+      "unit": "RA12",
+      "reason_ko": "검증 child process handle/nonnull exit 기록",
+      "files": [
+        {
+          "path": "Scripts/Validation/Measure-AuthoredAnimation.ps1",
+          "status": "modified",
+          "sha256": "730d01df1f51f8a522cf23af6940baaa413aeb8ae294c59c7e0065077fecc2fc",
+          "baseline_sha256": "8d33045bab46f553f4159448f78c617e122640c627d1fccb148addf8397b377b"
+        },
+        {
+          "path": "Scripts/Validation/Measure-Network.ps1",
+          "status": "modified",
+          "sha256": "a34a32c290e15f4ce682767ca84cea183c99ba335dbd2bd4c6428609390ce876",
+          "baseline_sha256": "b839617367791c5d0698aa7e2378e6a7f47ff4b09827240f0eb98d8845517ee3"
+        },
+        {
+          "path": "Scripts/Validation/Validate-CookedUI.ps1",
+          "status": "modified",
+          "sha256": "e86b16e82bfe6f258a4910f55b5e03cbe51df4e1570786b7b3c3caf93ef61ce1",
+          "baseline_sha256": "460f3c60cb2fa0b43ab65183a3660048ba6f0314da91559fd8268907504665b8"
+        }
+      ],
+      "regression_scope": "현재 실제 UI·원격·AuthoredCPU 실행"
+    },
+    {
+      "unit": "RA13",
+      "reason_ko": "단발 전이 상태의 동일 판정 복사본 제거",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationPresentationHelpers.h",
+          "status": "modified",
+          "sha256": "0cd287059322e723ab2adb9858a7ef52bfdab9614505cb2818fddae4d55bb91a",
+          "baseline_sha256": "64218166edb2dcaac9f904fcf6aedc24f0064adde908da1284ba6cbd742706d5"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+          "status": "modified",
+          "sha256": "0201782b42e9ed2c8ce55939587c5dc274843465533c3439797fd64e711db988",
+          "baseline_sha256": "aa91328a25255ae5ee117d549c5d0be6955b265a9ce42c78b1c69a7a17edff57"
+        }
+      ],
+      "regression_scope": "기존 단발/통합/전체 native 회귀"
+    },
+    {
+      "unit": "RA14",
+      "reason_ko": "Mass step 완료 이후 소유권/저장소 반환·불필요 의존 정리",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp",
+          "status": "modified",
+          "sha256": "a81c797fcd1b6427081ea0f2520fc70636dbd8d3472a1713654392cdc941b3c1",
+          "baseline_sha256": "08d4759b3db01b32e8b1736bf75843f3eda536bf1cc1d2822653e66d7014db0a"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityFixtures.h",
+          "status": "modified",
+          "sha256": "c7e0b71b4c7511d743b9b9adb28a40241005cd215e02a02eb617ec99d6eed55b",
+          "baseline_sha256": "4e6b6863a31fd18b861621e7758b2f1cef229b373cbdc170fb7d6f292dfe7395"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Mass/Project_JMassRepresentationSubsystem.h",
+          "status": "modified",
+          "sha256": "97692edd68ee90b0945a50b70fb47aa5dbf9125ac3a36170ecd5c69c0740a825",
+          "baseline_sha256": "7b497517054830d8cc76fe77b07abeea9f3ea1184b757f49fb8ddcb0c5be69a6"
+        }
+      ],
+      "regression_scope": "MassReentrantRetirement"
+    },
+    {
+      "unit": "RA15",
+      "reason_ko": "새 NPC play의 scoring/action/activation admission",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JNPCActionComponent.cpp",
+          "status": "modified",
+          "sha256": "6cb2d7820e8b5b620e339d948bb83a18eb4e885e4b180782e83781291b3a647f",
+          "baseline_sha256": "4a7ad25394361ffa0d7b83a85a0b2d397f2c34530b8f11fd8650d6d87edb1286"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JNPCActivationComponent.cpp",
+          "status": "modified",
+          "sha256": "d5048e31201e45380c94fac31ff85bcc93689cfb21abd04105c96b988e9dc37d",
+          "baseline_sha256": "fcefc2dd1fb95777323660e175012ca543ee59833fce1628778d0630bdd2b228"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JTargetScoringComponent.cpp",
+          "status": "modified",
+          "sha256": "c0d0ecf21298f4d8f41266a81382f6ef729a6e0a701bf3dce1c236164ff9c686",
+          "baseline_sha256": "94426c9f24416858d2072dd36bf435706bc987ad201481cf2315ac073d277710"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActionComponent.h",
+          "status": "modified",
+          "sha256": "fde435e563db538c1b6b74ae0a756c0c3eb4757508b76240b205426bf07e330d",
+          "baseline_sha256": "34342185ebffc5e7fd8c2c3bb0b69d05c4f1c4f13f1d34c2d89d16e19bde0192"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JNPCActivationComponent.h",
+          "status": "modified",
+          "sha256": "82c2ca72130cfcb9969dd2f954e1c4abadf78dd0f3c31b271520f021cf3d9a52",
+          "baseline_sha256": "e42477105a59d9ec844c368ec1e84c7a928cc374af77c07a03e1b0a8ac74f240"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JTargetScoringComponent.h",
+          "status": "modified",
+          "sha256": "04530346bd02e3e246da1fd6fdfbf0cbb6175ac5882a06095713550f06d23102",
+          "baseline_sha256": "1e68c35807f74412568f8951e9b22e020eff7bffbd6671be13e499e9caa58aa9"
+        }
+      ],
+      "regression_scope": "NPCPlayReuse"
+    },
+    {
+      "unit": "RA16",
+      "reason_ko": "새 player play의 실제 입력/GAS/modifier admission",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp",
+          "status": "modified",
+          "sha256": "e2c1e5c4b7234447f95135c700f8c95a237534c1072f3f23448cea89e4c355c2",
+          "baseline_sha256": "d662a50887db15acb8d39f5ba5c9999b7463b3c9c76c55b95abb278cdc93a555"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp",
+          "status": "modified",
+          "sha256": "94fc39d69d63554ad3125e6fca1144f4a31462b52726479ef246dd85a7938375",
+          "baseline_sha256": "f7e4ba2d08662c94556ea0aeb5419bd73a3cf975642af54c387dacc729bcdb40"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp",
+          "status": "modified",
+          "sha256": "51606e98f469eee7c8a53ea6bab9a977cf524df4cf3a0bc343cdc2378e126d19",
+          "baseline_sha256": "51c50c370b401c75eee89f56cbdd162fe683c7a2d674dcfb047f77e760f4e5f2"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h",
+          "status": "modified",
+          "sha256": "4446aa32c720cdc7be4067d2e7c93308d19e1bbf8d5c4e956fd44cab64d220be",
+          "baseline_sha256": "bc7e2f37aa6bf02141d58963bd5cf8060a4a4acfd1ebf357c2a958cb96948166"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h",
+          "status": "modified",
+          "sha256": "9097844aac2105ed81feae3afa9c82ff607c9e86cd605d81c2a1a590a7ab2404",
+          "baseline_sha256": "7ed45b67042f22d15b83a99e1dcaf903ed7a8fa7e9f29294bc01c21c1f0841cd"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h",
+          "status": "modified",
+          "sha256": "d4709a5a1bf64e8b2bb67011199738de4cc4cffabaab933736147579c274f8dd",
+          "baseline_sha256": "96df2b49e29600163dfc93f5b76695e66b26d037f11357ddb0a5ff215ec6d4ec"
+        }
+      ],
+      "regression_scope": "PlayerInputPlayReuse"
+    },
+    {
+      "unit": "RA17",
+      "reason_ko": "새 combat Intro와 mount actor admission",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Components/Project_JCombatIntroComponent.cpp",
+          "status": "modified",
+          "sha256": "37739bf1169b9477da023f49af9498c3f7cba03bebf6f670002fc4aeafd56f03",
+          "baseline_sha256": "adac5e1fb8fdc023488768f4eecca33c7c0205b01cc5b8f1696da5ae5689e26f"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Components/Project_JCombatIntroComponent.h",
+          "status": "modified",
+          "sha256": "14436ccd58d04a92aedf8561f001b6cee7012ca860f29dc6759e1c1683b28248",
+          "baseline_sha256": "ff9463ac421f8bb033a88dc8c6045d00edee8c341ce802507d68c1943cedafeb"
+        },
+        {
+          "path": "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+          "status": "modified",
+          "sha256": "0beccfc516e612fc37b0e9724776a806e6799dd822848dacf0927901949b07a8",
+          "baseline_sha256": "658b4c4923ea5f2ff57b259b1962edfe9b7b5bedfff66ab01b5c152196b485e7"
+        }
+      ],
+      "regression_scope": "CombatIntroPlayReuse,MountActorPlayReuse"
+    },
+    {
+      "unit": "RA25",
+      "reason_ko": "새 Controller UI/Quest admission·진행 보존",
+      "files": [
+        {
+          "path": "Source/Project_J/Game/Project_JQuestComponent.cpp",
+          "status": "modified",
+          "sha256": "ba4d8d57c0ceb46e572e1161d84ed09c2a9bd5122ef2a6ff8bc5532cbae7775e",
+          "baseline_sha256": "3ac7d4cebf17a979033371fb39c2fb7a35d2ad77b78bb9f501cf11b0af9494e5"
+        },
+        {
+          "path": "Source/Project_J/UI/Project_JPlayerUIComponent.cpp",
+          "status": "modified",
+          "sha256": "86b231c1869c43183f1d5dff12e26ecbcdd69b0d59c104f133b457e8c1817a29",
+          "baseline_sha256": "ae397f80388c0ad1d8f02460dcac1de4237ea934b668a9bb147bbaed6c7ea84e"
+        }
+      ],
+      "regression_scope": "ControllerUIPlayReuse,QuestPlayReuse"
+    },
+    {
+      "unit": "RA20",
+      "reason_ko": "Mass active GT owner/NPC GC lease",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Mass/Project_JMassRepresentationSubsystem.cpp",
+          "status": "modified",
+          "sha256": "a81c797fcd1b6427081ea0f2520fc70636dbd8d3472a1713654392cdc941b3c1",
+          "baseline_sha256": "08d4759b3db01b32e8b1736bf75843f3eda536bf1cc1d2822653e66d7014db0a"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Mass/Project_JMassRepresentationSubsystem.h",
+          "status": "modified",
+          "sha256": "97692edd68ee90b0945a50b70fb47aa5dbf9125ac3a36170ecd5c69c0740a825",
+          "baseline_sha256": "7b497517054830d8cc76fe77b07abeea9f3ea1184b757f49fb8ddcb0c5be69a6"
+        }
+      ],
+      "regression_scope": "MassReentrantRetirement; strict processor-root release"
+    },
+    {
+      "unit": "RA21",
+      "reason_ko": "Bounded GT subsystem/completion participant GC lease",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/System/Project_JNPCDecisionSubsystem.cpp",
+          "status": "modified",
+          "sha256": "22c2a546537a9d100fee2c6b1a9de7fb8cb3fc3d0037840d530b79e350a7f0cf",
+          "baseline_sha256": "d58875c906fcce8d9e9f6f8732c6ecd0cb752a404f227c53db1d50ce0c8d1cef"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/System/Project_JNPCPathSubsystem.cpp",
+          "status": "modified",
+          "sha256": "5f60b8b734915817f6a4785d8e421f38124e0231d082d5ad2eff7dde956fc7c8",
+          "baseline_sha256": "ec124ec2a6323731e3f57668c106b2b4e17ae48054e2541dd3e9c6bb52609756"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/System/Project_JPresentationBudgetSubsystem.cpp",
+          "status": "modified",
+          "sha256": "a16d2864d7944d3c8e00f3b4452b26c37e99f9fab1536ab343333e87a0c304fd",
+          "baseline_sha256": "dda73473b31e1a8cb5a639534d10e320994feef75626e783a690817d0775eeee"
+        },
+        {
+          "path": "Source/Project_JCore/Private/System/Project_JTargetScoringSubsystem.cpp",
+          "status": "modified",
+          "sha256": "8d65aba06cbb409271e9c876ed37c26651185323ed7e4a09070753e56aedb9ee",
+          "baseline_sha256": "9291ff99aff276f0dd8232cdc0f540f69cfcd23491bc51a127717ca325999b90"
+        },
+        {
+          "path": "Source/Project_JCore/Private/System/Project_JVisualAssetSubsystem.cpp",
+          "status": "modified",
+          "sha256": "50d2b5a2a329b02598865d1ce24df5f2d09652f4769d42f703c109125caaf814",
+          "baseline_sha256": "86aad8c91b94fd814ca05becec64a7e0550aa3c526e33699655a81592403921a"
+        },
+        {
+          "path": "Source/Project_JCore/Public/System/Project_JVisualAssetSubsystem.h",
+          "status": "modified",
+          "sha256": "d5aa2c74e077e6e6a540d3c6d8a4d741ef115859a91a9d16fe7a5209a880a1c8",
+          "baseline_sha256": "001832ad9554693a62f3310496d53d4a540b151c0625aedad4c6f6ad67de35eb"
+        }
+      ],
+      "regression_scope": "SubsystemCallbackGC; existing async/path/decision/presentation regressions"
+    },
+    {
+      "unit": "RA22",
+      "reason_ko": "Unused native MM cadence accessors removed",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+          "status": "modified",
+          "sha256": "b0511c5307415ce9ffc67ec467837c589ef82c3eba40a3b7b9bbbcce4823bcec",
+          "baseline_sha256": "f8446f0c9adb1a63169df3da1164d3e02b77e2918f70b2d17c3ad100e4d213e1"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+          "status": "modified",
+          "sha256": "8377e825a12f618f4e7177206762f8ae6c06dbb658ad4d9ee01a26b74b725ed2",
+          "baseline_sha256": "73310c2c28fc6407bdb4fd917cb5dca29169f1a8e5341f502a27a7ab83be1cfa"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "status": "modified",
+          "sha256": "9c8508a39708713e32211a07f3c465aa62b0bc4543cb071055fe54f818171c81",
+          "baseline_sha256": "789c17d636b59b216e743d59449a8de9ae631aacea67fd8f4530f920569f0353"
+        }
+      ],
+      "regression_scope": "Native build and existing cadence/whole tests; no perf claim"
+    },
+    {
+      "unit": "RA23",
+      "reason_ko": "EditorOnly toolsets excluded in game/server validation host",
+      "files": [
+        {
+          "path": "Scripts/Validation/Measure-Network.ps1",
+          "status": "modified",
+          "sha256": "a34a32c290e15f4ce682767ca84cea183c99ba335dbd2bd4c6428609390ce876",
+          "baseline_sha256": "b839617367791c5d0698aa7e2378e6a7f47ff4b09827240f0eb98d8845517ee3"
+        }
+      ],
+      "regression_scope": "Reaudit_Network7-9; normal Editor/MCP retained"
+    },
+    {
+      "unit": "RA24",
+      "reason_ko": "Authored early-transition sole clip/revision permission owner",
+      "files": [
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp",
+          "status": "modified",
+          "sha256": "5d9963acb9691287b9186e15f7adb1604c2b1c8c4132443a4624651aeaf14bca",
+          "baseline_sha256": "4299fd071fbdd6a0143dbd2e6dfc33f2e3ccb4a87a4e6d2f4d60d8bb5f4ae926"
+        },
+        {
+          "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+          "status": "modified",
+          "sha256": "8377e825a12f618f4e7177206762f8ae6c06dbb658ad4d9ee01a26b74b725ed2",
+          "baseline_sha256": "73310c2c28fc6407bdb4fd917cb5dca29169f1a8e5341f502a27a7ab83be1cfa"
+        },
+        {
+          "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+          "status": "modified",
+          "sha256": "9c8508a39708713e32211a07f3c465aa62b0bc4543cb071055fe54f818171c81",
+          "baseline_sha256": "789c17d636b59b216e743d59449a8de9ae631aacea67fd8f4530f920569f0353"
+        }
+      ],
+      "regression_scope": "AuthoredConditionAndOwnership; existing one-shot/whole tests"
+    },
+    {
+      "unit": "RA25",
+      "reason_ko": "Unused direct GAS activation loop removed",
+      "files": [
+        {
+          "path": "Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp",
+          "status": "modified",
+          "sha256": "df1f581d291135379bae19fce146c504de22570b2d0b03e1d3a5fe6c2610f1f1",
+          "baseline_sha256": "04f9e5e440ae57468f68945dcec48bf94374dede364b8cda79278a61a508f489"
+        },
+        {
+          "path": "Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h",
+          "status": "modified",
+          "sha256": "5c3f919a111d036e29b360ceac47bd9d7f4716d517dc738b6aca649a4ed9cda5",
+          "baseline_sha256": "df07fe2782510a5c34aae987dbc3ff41ccd55f2ef463fc181760caa2e6f99e5a"
+        }
+      ],
+      "regression_scope": "Existing native input/GAS/combat and real remote/package fixtures"
+    }
+  ],
+  "new_regression_files": [
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JReauditDataContractsTests.cpp",
+      "status": "added",
+      "sha256": "443d6ac2eb78a5e7706a6d8c6cb9e763ef2416648ca9f8602208d4cd80c72f29",
+      "baseline_sha256": null
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JReauditContractsTests.cpp",
+      "status": "added",
+      "sha256": "fafebaee50d7209c69ea6aa877be8879ab29ce968600b2c60a2044d7854b2c23",
+      "baseline_sha256": null
+    }
+  ],
+  "asset_unit": {
+    "unit": "RA18",
+    "reason_ko": "MCP 참조/dirty/빈 정의 확인 뒤 정확한 두 중복 placeholder 백업·삭제",
+    "records": "EmptyEquipmentCleanupBefore.json; EmptyEquipmentCleanupPreservation.json; DataAssetValidationSummary.json"
+  },
+  "limitation_ko": "같은 파일의 RA02/05와 RA10은 같은 lifetime 계약 보완이므로 함께 리뷰한다. 테스트는 명명된 계약 범위이며 전체 무결성 보증이 아니다. 커밋은 하지 않았다."
+}

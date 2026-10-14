@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle\",\"/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop\"]}"
+			}
+		]
+	}
+}

@@ -52,5 +52,4 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> AnimationUpdateCoordinator = nullptr;
 
-	int32 LastAppliedRemoteJumpSequence = 0;
 };

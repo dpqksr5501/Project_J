@@ -1,0 +1,233 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "98C655444B8BCEAE261C07AA261F3C0D",
+			"instanceName": "DESKTOP-5T07C91-35680",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-17.48.09",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.085838198661804199,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "RemoteJumpFreshness",
+			"fullTestPath": "ProjectJ.Animation.StateOwnership.RemoteJumpFreshness",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"98C655444B8BCEAE261C07AA261F3C0D"
+			],
+			"duration": 0.065988898277282715,
+			"dateTime": "2026.10.13-17.48.08",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older confirmation cannot replace current airborne evidence' to be 400.000000, but it was 800.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 86,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older confirmation cannot restart a jump over newer landing' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 86,
+					"timestamp": "2026.10.13-17.48.08"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Equipment",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"98C655444B8BCEAE261C07AA261F3C0D"
+			],
+			"duration": 0.009970497339963913,
+			"dateTime": "2026.10.13-17.48.08",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired aggregate cannot unequip its persisted state' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 66,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired aggregate cannot replace its persisted state' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 68,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired aggregate rejects the owned inventory request' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 69,
+					"timestamp": "2026.10.13-17.48.08"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Inventory",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"98C655444B8BCEAE261C07AA261F3C0D"
+			],
+			"duration": 0.0098787993192672729,
+			"dateTime": "2026.10.13-17.48.08",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Destroyed inventory rejects late consumable use: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 36,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired component cannot heal its still-live owner's ASC' to be 50.000000, but it was 60.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 37,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired inventory cannot change stack counts' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 39,
+					"timestamp": "2026.10.13-17.48.08"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired inventory cannot consume remaining items' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 40,
+					"timestamp": "2026.10.13-17.48.09"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired inventory cannot add another item' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 41,
+					"timestamp": "2026.10.13-17.48.09"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired inventory cannot remove the preserved item' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-17.48.09"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Read-only state remains available for persistence' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 44,
+					"timestamp": "2026.10.13-17.48.09"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retirement preserves the original stack' to be 4, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAggregateRetirementTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-17.48.09"
+				}
+			],
+			"warnings": 0,
+			"errors": 8,
+			"artifacts": []
+		}
+	]
+}

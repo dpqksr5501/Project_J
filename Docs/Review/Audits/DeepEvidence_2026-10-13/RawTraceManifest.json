@@ -1,0 +1,56 @@
+[
+  {
+    "scope": "RenderInitial",
+    "path": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200/Render.utrace",
+    "bytes": 879119229,
+    "sha256": "f3fb1f210549558aed2f4e546ae04042b26c5d57db76897c63f0a99033e61c60",
+    "process_and_fixture_passed": false,
+    "note": "Preserved local raw rendering trace; success applies only to the recorded channel set, not a fix for failed full-channel runs."
+  },
+  {
+    "scope": "RenderTracedR2",
+    "path": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200R2/Render.utrace",
+    "bytes": 878046282,
+    "sha256": "d218babcca95c2ebdde32e582cd0260c535afee164d4c2421e7f92007fe1d847",
+    "process_and_fixture_passed": false,
+    "note": "Preserved local raw rendering trace; success applies only to the recorded channel set, not a fix for failed full-channel runs."
+  },
+  {
+    "scope": "RenderCPUTrace",
+    "path": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUTrace/Render.utrace",
+    "bytes": 462935617,
+    "sha256": "3aa587e871d05f28c692f759c328ff3700dc00e032d90dcb196aaaea0bf0cdea",
+    "process_and_fixture_passed": false,
+    "note": "Preserved local raw rendering trace; success applies only to the recorded channel set, not a fix for failed full-channel runs."
+  },
+  {
+    "scope": "RenderFrameTrace",
+    "path": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200FrameTrace/Render.utrace",
+    "bytes": 406723,
+    "sha256": "2eb7460e8236ca9ffe86b702a8e21f560151925e5173c1a00c34d2b4e0c6dea3",
+    "process_and_fixture_passed": true,
+    "note": "Preserved local raw rendering trace; success applies only to the recorded channel set, not a fix for failed full-channel runs."
+  },
+  {
+    "scope": "RenderCPUOnlyTrace",
+    "path": "Saved/Validation/WholeProjectAudit_20261013/DeepCookedCrowd200CPUOnlyTrace/Render.utrace",
+    "bytes": 454734701,
+    "sha256": "9f6d06dabacb7f09fe2401babd66610c9e012438477809cef900df46eeff9774",
+    "process_and_fixture_passed": false,
+    "note": "Preserved local raw rendering trace; success applies only to the recorded channel set, not a fix for failed full-channel runs."
+  },
+  {
+    "scope": "CPU/Deep_Trace_A_trace",
+    "path": "Saved/Validation/AuthoredAnimation_20261005/Deep_Trace_A_trace/Count200/CPU.utrace",
+    "bytes": 910458679,
+    "sha256": "64f80310f3a26228d19de46044207a9d52af08b6d8b655075cce08ad54a16528",
+    "note": "Raw NullRHI stage trace; both measurement/export completed normally. Accumulated timers are not critical-path wall time."
+  },
+  {
+    "scope": "CPU/Deep_Trace_B_trace",
+    "path": "Saved/Validation/AuthoredAnimation_20261005/Deep_Trace_B_trace/Count200/CPU.utrace",
+    "bytes": 911439333,
+    "sha256": "63ed98643d27f227fced99899a81d44aec8f73759dfa4e10ecf529a2d2ff66c9",
+    "note": "Raw NullRHI stage trace; both measurement/export completed normally. Accumulated timers are not critical-path wall time."
+  }
+]

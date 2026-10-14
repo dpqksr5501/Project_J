@@ -1,0 +1,514 @@
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Setting temp directory to \u0027C:\\Users\\I\\AppData\\Local\\Temp\\UnrealBuildTool\\eb6d2d82\u0027","format":"Setting temp directory to \u0027{Path}\u0027","properties":{"Path":"C:\\Users\\I\\AppData\\Local\\Temp\\UnrealBuildTool\\eb6d2d82"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.AndroidPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.AndroidPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.IOSPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.IOSPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.LinuxPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.LinuxPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.MacPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.MacPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.TVOSPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.TVOSPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.WindowsPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.WindowsPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Windows 10 SDK root at C:\\Program Files (x86)\\Windows Kits\\10 (1)","format":"Found Windows 10 SDK root at {RootDir} (1)","properties":{"RootDir":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Windows 10 SDK root at C:\\Program Files (x86)\\Windows Kits\\10 (2)","format":"Found Windows 10 SDK root at {RootDir} (2)","properties":{"RootDir":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Windows 10 SDK version 10.0.22621.0 at C:\\Program Files (x86)\\Windows Kits\\10","format":"Found Windows 10 SDK version {IncludeVersion} at {InstallDir_10}","properties":{"IncludeVersion":"10.0.22621.0","InstallDir_10":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Universal CRT version 10.0.22621.0 at C:\\Program Files (x86)\\Windows Kits\\10","format":"Found Universal CRT version {IncludeVersion} at {InstallDir_10}","properties":{"IncludeVersion":"10.0.22621.0","InstallDir_10":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Windows 10 SDK version 10.0.26100.0 at C:\\Program Files (x86)\\Windows Kits\\10","format":"Found Windows 10 SDK version {IncludeVersion} at {InstallDir_10}","properties":{"IncludeVersion":"10.0.26100.0","InstallDir_10":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Found Universal CRT version 10.0.26100.0 at C:\\Program Files (x86)\\Windows Kits\\10","format":"Found Universal CRT version {IncludeVersion} at {InstallDir_10}","properties":{"IncludeVersion":"10.0.26100.0","InstallDir_10":"C:\\Program Files (x86)\\Windows Kits\\10"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Win64 Installed SDK(s): MinVersion_Sdk=10.0.19041.0, MaxVersion_Sdk=10.9.99999.0, CurrentVersion_Sdk=10.0.22621.0, Version_AutoSdk=10.0.22621.0, CurrentVersion_AutoSdk=","format":"{Message}","properties":{"Message":"Win64 Installed SDK(s): MinVersion_Sdk=10.0.19041.0, MaxVersion_Sdk=10.9.99999.0, CurrentVersion_Sdk=10.0.22621.0, Version_AutoSdk=10.0.22621.0, CurrentVersion_AutoSdk="}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"        Registering build platform: Win64 - buildable: True","format":"        Registering build platform: {Platform} - buildable: {Buildable}","properties":{"Platform":"Win64","Buildable":true}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"    Registering build platform: UnrealBuildTool.VisionOSPlatformFactory","format":"    Registering build platform: {Platform}","properties":{"Platform":"UnrealBuildTool.VisionOSPlatformFactory"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Command line: \u0022C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\DotNET\\UnrealBuildTool\\UnrealBuildTool.dll\u0022 Project_JEditor Win64 Development -Project=C:\\Users\\I\\Documents\\GitHub\\Project_J/Project_J.uproject -WaitMutex -NoHotReloadFromIDE -NoUBA -DisableUnity -MaxParallelActions=4 -Log=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/DataReproBuild1.log","format":"Command line: {EnvironmentCommandLine}","properties":{"EnvironmentCommandLine":"\u0022C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\DotNET\\UnrealBuildTool\\UnrealBuildTool.dll\u0022 Project_JEditor Win64 Development -Project=C:\\Users\\I\\Documents\\GitHub\\Project_J/Project_J.uproject -WaitMutex -NoHotReloadFromIDE -NoUBA -DisableUnity -MaxParallelActions=4 -Log=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/DataReproBuild1.log"}}
+{"time":"2026-10-13T20:33:03","level":"Information","message":"Executing up to 4 actions based on MaxProcessorCount override"}
+{"time":"2026-10-13T20:33:03","level":"Information","message":"Using \u0027git status\u0027 to determine working set for adaptive non-unity build (C:\\Users\\I\\Documents\\GitHub\\Project_J).","format":"Using \u0027git status\u0027 to determine working set for adaptive non-unity build ({RootDir}).","properties":{"RootDir":"C:\\Users\\I\\Documents\\GitHub\\Project_J"}}
+{"time":"2026-10-13T20:33:03","level":"Information","message":"Creating makefile for Project_JEditor (no existing makefile)","format":"Creating makefile for {DescriptorName} ({ReasonNotLoaded})","properties":{"DescriptorName":"Project_JEditor","ReasonNotLoaded":"no existing makefile"}}
+{"time":"2026-10-13T20:33:03","level":"Information","message":"UbaSessionServer - Disable remote execution (remote sessions will finish current processes)","id":111,"format":"{Message}","properties":{"Message":"UbaSessionServer - Disable remote execution (remote sessions will finish current processes)"}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Skipping C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\BuildRules\\UE5Rules.dll: File is installed","format":"Skipping {OutputAssemblyPath}: File is installed","properties":{"OutputAssemblyPath":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\BuildRules\\UE5Rules.dll"}}}
+{"time":"2026-10-13T20:33:03","level":"Debug","message":"Skipping C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\BuildRules\\UE5ProgramRules.dll: File is installed","format":"Skipping {OutputAssemblyPath}: File is installed","properties":{"OutputAssemblyPath":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\BuildRules\\UE5ProgramRules.dll"}}}
+{"time":"2026-10-13T20:33:04","level":"Information","message":"Invalidating makefile for Project_JEditor (source file added)","format":"Invalidating makefile for {DescriptorName} ({Reason})","properties":{"DescriptorName":"Project_JEditor","Reason":"source file added"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Compiler: C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe","format":"Compiler: {Path}","properties":{"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Linker: C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe","format":"Linker: {Path}","properties":{"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Library Manager: C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe","format":"Library Manager: {Path}","properties":{"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Resource Compiler: C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64\\rc.exe","format":"Resource Compiler: {Path}","properties":{"Path":{"$type":"SourceFile","$text":"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64\\rc.exe"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Resource Converter: C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cvtres.exe","format":"Resource Converter: {Path}","properties":{"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cvtres.exe"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Using EngineIncludeOrderVersion.Unreal5_8 for target Project_JEditor.Target.cs","format":"Using EngineIncludeOrderVersion.{Version} for target {Target}","properties":{"Version":"Unreal5_8","Target":"Project_JEditor.Target.cs"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Building UnrealEditor - Project_JEditor - Win64 - Development","format":"Building {AppName} - {TargetName} - {Platform} - {Configuration}","properties":{"AppName":"UnrealEditor","TargetName":"Project_JEditor","Platform":"Win64","Configuration":"Development"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"VerseVMBytecodeGenerator.Generate, generating CPP headers in: \u0027C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\u0027","format":"VerseVMBytecodeGenerator.Generate, generating CPP headers in: \u0027{OutputDirectory}\u0027","properties":{"OutputDirectory":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tWriting out generated header file. Changed:False Path:\u0027C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMBytecodeOps.gen.h\u0027","format":"\tWriting out generated header file. Changed:{Changed} Path:\u0027{Path}\u0027","properties":{"Changed":false,"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMBytecodeOps.gen.h"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tWriting out generated header file. Changed:False Path:\u0027C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMBytecodesAndCaptures.gen.h\u0027","format":"\tWriting out generated header file. Changed:{Changed} Path:\u0027{Path}\u0027","properties":{"Changed":false,"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMBytecodesAndCaptures.gen.h"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tWriting out generated header file. Changed:False Path:\u0027C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMMakeCapturesFuncs.gen.h\u0027","format":"\tWriting out generated header file. Changed:{Changed} Path:\u0027{Path}\u0027","properties":{"Changed":false,"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMMakeCapturesFuncs.gen.h"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tWriting out generated header file. Changed:False Path:\u0027C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMCaptureSwitch.gen.h\u0027","format":"\tWriting out generated header file. Changed:{Changed} Path:\u0027{Path}\u0027","properties":{"Changed":false,"Path":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Intermediate\\Build\\Win64\\UnrealEditor\\Inc\\CoreUObject\\VerseVMBytecode\\VVMCaptureSwitch.gen.h"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Generated code is up to date.","format":"Generated code is up to date.","properties":{}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Found 5 shared PCH headers (listed in order of preference):","format":"Found {SharedPCHModulesCount} shared PCH headers (listed in order of preference):","properties":{"SharedPCHModulesCount":5}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tUnrealEd","format":"\t{ModuleName}","properties":{"ModuleName":"UnrealEd"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tEngine","format":"\t{ModuleName}","properties":{"ModuleName":"Engine"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tSlate","format":"\t{ModuleName}","properties":{"ModuleName":"Slate"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tCoreUObject","format":"\t{ModuleName}","properties":{"ModuleName":"CoreUObject"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"\tCore","format":"\t{ModuleName}","properties":{"ModuleName":"Core"}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Updating C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib.rsp: contents have changed. Saving previous version to C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib.rsp.old.","format":"Updating {File}: contents have changed. Saving previous version to {BackupFile}.","properties":{"File":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib.rsp"},"BackupFile":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib.rsp.old"}}}
+{"time":"2026-10-13T20:33:04","level":"Debug","message":"Updating C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.dll.rsp: contents have changed. Saving previous version to C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.dll.rsp.old.","format":"Updating {File}: contents have changed. Saving previous version to {BackupFile}.","properties":{"File":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.dll.rsp"},"BackupFile":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.dll.rsp.old"}}}
+{"time":"2026-10-13T20:33:05","level":"Warning","message":"CppDependencyCache - There is no partition covering path to C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\Project_JEditor\\Development\\UnrealEd\\SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.h.dep.json!","format":"CppDependencyCache - There is no partition covering path to {InputPath}!","properties":{"InputPath":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\Project_JEditor\\Development\\UnrealEd\\SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.h.dep.json"}}
+{"time":"2026-10-13T20:33:05","level":"Warning","message":"CppDependencyCache - There is no partition covering path to C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\Project_JEditor\\Development\\Core\\SharedPCH.Core.Project.ValApi.ValExpApi.Cpp20.h.dep.json!","format":"CppDependencyCache - There is no partition covering path to {InputPath}!","properties":{"InputPath":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\Project_JEditor\\Development\\Core\\SharedPCH.Core.Project.ValApi.ValExpApi.Cpp20.h.dep.json"}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCore\\UnrealEditor-Project_JCore.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCore\\UnrealEditor-Project_JCore.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCore.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCore.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JGAS\\UnrealEditor-Project_JGAS.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JGAS\\UnrealEditor-Project_JGAS.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JGAS.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JGAS.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCharacter\\UnrealEditor-Project_JCharacter.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCharacter\\UnrealEditor-Project_JCharacter.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JAnimationNodes\\UnrealEditor-Project_JAnimationNodes.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JAnimationNodes\\UnrealEditor-Project_JAnimationNodes.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JAnimationNodes.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JAnimationNodes.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JMount\\UnrealEditor-Project_JMount.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JMount\\UnrealEditor-Project_JMount.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCharacter.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCharacter.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JMount.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JMount.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JMMO\\UnrealEditor-Project_JMMO.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JMMO\\UnrealEditor-Project_JMMO.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JMMO.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JMMO.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCharacterEditor.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_JCharacterEditor.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCharacterEditor\\UnrealEditor-Project_JCharacterEditor.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_JCharacterEditor\\UnrealEditor-Project_JCharacterEditor.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_J.pdb","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Binaries\\Win64\\UnrealEditor-Project_J.pdb"}}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Deleting outdated item: C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib","format":"Deleting outdated item: {DeleteItem}","properties":{"DeleteItem":{"$type":"SourceFile","$text":"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Intermediate\\Build\\Win64\\x64\\UnrealEditor\\Development\\Project_J\\UnrealEditor-Project_J.lib"}}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"Building Project_JEditor...","format":"Building {Targets}...","properties":{"Targets":"Project_JEditor"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"===== Toolchain Information =====","format":"===== Toolchain Information =====","properties":{}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"Using ISPC compiler (C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\ThirdParty\\Intel\\ISPC\\bin\\Windows\\ispc.exe)","format":"{Diagnostic}","properties":{"Diagnostic":"Using ISPC compiler (C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\ThirdParty\\Intel\\ISPC\\bin\\Windows\\ispc.exe)"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) ","format":"{Diagnostic}","properties":{"Diagnostic":"  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) "}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"Using Visual Studio 14.50.35739 toolchain (C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717) and Windows 10.0.22621.0 SDK (C:\\Program Files (x86)\\Windows Kits\\10).","format":"{Diagnostic}","properties":{"Diagnostic":"Using Visual Studio 14.50.35739 toolchain (C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.50.35717) and Windows 10.0.22621.0 SDK (C:\\Program Files (x86)\\Windows Kits\\10)."}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"[Adaptive Build] Excluded from Project_JCore unity file: Project_JCombatInterface.cpp","format":"{Diagnostic}","properties":{"Diagnostic":"[Adaptive Build] Excluded from Project_JCore unity file: Project_JCombatInterface.cpp"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"[Adaptive Build] Excluded from Project_J unity file: Project_JPlayerState.cpp, Project_JQuestComponent.cpp, Project_JQuestLifetimeTests.cpp, Project_JReauditDataContractsTests.cpp, Project_JRuntimeOwnershipTests.cpp, Project_JStatusBindingReentryTests.cpp, Project_JUIIconRequestLifetimeTests.cpp, Project_JUIScreenFailureTests.cpp, Project_JAuthoredSkillContinuationTest.cpp, Project_JNaturalnessPlayback.cpp, Project_JNetworkLoadFixture.cpp, Project_JRenderedCrowdFixture.cpp, Project_JInventoryWidgets.cpp, Project_JPlayerHUDWidget.cpp, Project_JPlayerUIComponent.cpp, Project_JSkillButton.cpp, Project_JStatusEffects.cpp, Project_JUIIconRequest.cpp, Project_JUIRuntimeSmoke.cpp","format":"{Diagnostic}","properties":{"Diagnostic":"[Adaptive Build] Excluded from Project_J unity file: Project_JPlayerState.cpp, Project_JQuestComponent.cpp, Project_JQuestLifetimeTests.cpp, Project_JReauditDataContractsTests.cpp, Project_JRuntimeOwnershipTests.cpp, Project_JStatusBindingReentryTests.cpp, Project_JUIIconRequestLifetimeTests.cpp, Project_JUIScreenFailureTests.cpp, Project_JAuthoredSkillContinuationTest.cpp, Project_JNaturalnessPlayback.cpp, Project_JNetworkLoadFixture.cpp, Project_JRenderedCrowdFixture.cpp, Project_JInventoryWidgets.cpp, Project_JPlayerHUDWidget.cpp, Project_JPlayerUIComponent.cpp, Project_JSkillButton.cpp, Project_JStatusEffects.cpp, Project_JUIIconRequest.cpp, Project_JUIRuntimeSmoke.cpp"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"[Adaptive Build] Excluded from Project_JGAS unity file: Project_JAbilitySystemComponent.cpp","format":"{Diagnostic}","properties":{"Diagnostic":"[Adaptive Build] Excluded from Project_JGAS unity file: Project_JAbilitySystemComponent.cpp"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"[Adaptive Build] Excluded from Project_JCharacterEditor unity file: Project_JAuthoredAssetAudit.cpp","format":"{Diagnostic}","properties":{"Diagnostic":"[Adaptive Build] Excluded from Project_JCharacterEditor unity file: Project_JAuthoredAssetAudit.cpp"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"[Adaptive Build] Excluded from Project_JCharacter unity file: Project_JBaseCharacter.cpp, Project_JLocomotionAnimStateComponent.cpp, Project_JLocomotionAnimStateComponentAir.cpp, Project_JLocomotionAnimStateComponentBase.cpp, Project_JLocomotionAnimStateComponentGround.cpp, Project_JLocomotionAnimStateComponentInput.cpp, Project_JLocomotionAnimStateComponentSupport.cpp, Project_JLocomotionAnimStateComponentTransitions.cpp, Project_JPlayerCharacter.cpp, Project_JPlayerCharacter.MouseTurnTrace.cpp, Project_JPlayerCharacter.Movement.cpp, Project_JAbilitySet.cpp, Project_JAnimationLayerLease.cpp, Project_JBudgetedSkeletalMeshComponent.cpp, Project_JCharacterAnimInstance.Budget.cpp, Project_JCharacterAnimInstance.Continuity.cpp, Project_JCharacterAnimInstance.ContinuityTrace.cpp, Project_JCharacterAnimInstance.cpp, Project_JCharacterAnimInstance.FlowTrace.cpp, Project_JCharacterAnimInstance.Presentation.cpp, Project_JCharacterAnimInstance.PresentationUpdate.cpp, Project_JCharacterAnimInstance.Search.cpp, Project_JCharacterAnimInstance.SearchCostAudit.cpp, Project_JCharacterAnimInstance.Snapshot.cpp, Project_JCharacterAnimInstance.SnapshotAccessors.cpp, Project_JCharacterAnimInstance.UpperBodyFacing.cpp, Project_JLocomotionProfile.cpp, Project_JRetargetAnimInstance.cpp, Project_JRetargetBodyProfile.cpp, Project_JProgressionComponent.cpp, Project_JAttackDefinition.cpp, Project_JGameplayAbility_Melee.cpp, Project_JGameplayAbility_Sprint.cpp, Project_JCombatAnimationLayerComponent.cpp, Project_JCombatPresentationComponent.cpp, Project_JCombatStateComponent.cpp, Project_JEquipmentManagerComponent.cpp, Project_JEquipmentRuntimeComponent.cpp, Project_JInventoryComponent.cpp, Project_JMountedAnimationLayerComponent.cpp, Project_JPlayerInputBindingComponent.cpp, Project_JReplicatedJumpStateComponent.cpp, Project_JSkillInputExecutionComponent.cpp, Project_JSkillInputRouterComponent.cpp, Project_JWeaponPresentationComponent.cpp, Project_JWeaponPresentationComponent.Diagnostics.cpp, Project_JIrisFastArrayDiagnostics.cpp, Project_JCharacterAnimationBudgetSubsystem.cpp, Project_JAggregateRetirementTests.cpp, Project_JAnimationDemandLifetimeTests.cpp, Project_JAuthoredDamageTests.cpp, Project_JEquipmentCommitLifetimeTests.cpp, Project_JGrantReentryTests.cpp, Project_JInputRetirementTests.cpp, Project_JInternalRefinementTests.cpp, Project_JLocomotionContinuityTests.cpp, Project_JMouseChordLifecycleTests.cpp, Project_JPlayerMaturityTests.cpp, Project_JProgressionLifetimeTests.cpp, Project_JReauditContractsTests.cpp, Project_JRetargetBodyProfileTests.cpp, Project_JStateOwnershipTests.cpp, Project_JSystemsModernizationTests.cpp, Project_JCharacterUIBindingComponent.cpp","format":"{Diagnostic}","properties":{"Diagnostic":"[Adaptive Build] Excluded from Project_JCharacter unity file: Project_JBaseCharacter.cpp, Project_JLocomotionAnimStateComponent.cpp, Project_JLocomotionAnimStateComponentAir.cpp, Project_JLocomotionAnimStateComponentBase.cpp, Project_JLocomotionAnimStateComponentGround.cpp, Project_JLocomotionAnimStateComponentInput.cpp, Project_JLocomotionAnimStateComponentSupport.cpp, Project_JLocomotionAnimStateComponentTransitions.cpp, Project_JPlayerCharacter.cpp, Project_JPlayerCharacter.MouseTurnTrace.cpp, Project_JPlayerCharacter.Movement.cpp, Project_JAbilitySet.cpp, Project_JAnimationLayerLease.cpp, Project_JBudgetedSkeletalMeshComponent.cpp, Project_JCharacterAnimInstance.Budget.cpp, Project_JCharacterAnimInstance.Continuity.cpp, Project_JCharacterAnimInstance.ContinuityTrace.cpp, Project_JCharacterAnimInstance.cpp, Project_JCharacterAnimInstance.FlowTrace.cpp, Project_JCharacterAnimInstance.Presentation.cpp, Project_JCharacterAnimInstance.PresentationUpdate.cpp, Project_JCharacterAnimInstance.Search.cpp, Project_JCharacterAnimInstance.SearchCostAudit.cpp, Project_JCharacterAnimInstance.Snapshot.cpp, Project_JCharacterAnimInstance.SnapshotAccessors.cpp, Project_JCharacterAnimInstance.UpperBodyFacing.cpp, Project_JLocomotionProfile.cpp, Project_JRetargetAnimInstance.cpp, Project_JRetargetBodyProfile.cpp, Project_JProgressionComponent.cpp, Project_JAttackDefinition.cpp, Project_JGameplayAbility_Melee.cpp, Project_JGameplayAbility_Sprint.cpp, Project_JCombatAnimationLayerComponent.cpp, Project_JCombatPresentationComponent.cpp, Project_JCombatStateComponent.cpp, Project_JEquipmentManagerComponent.cpp, Project_JEquipmentRuntimeComponent.cpp, Project_JInventoryComponent.cpp, Project_JMountedAnimationLayerComponent.cpp, Project_JPlayerInputBindingComponent.cpp, Project_JReplicatedJumpStateComponent.cpp, Project_JSkillInputExecutionComponent.cpp, Project_JSkillInputRouterComponent.cpp, Project_JWeaponPresentationComponent.cpp, Project_JWeaponPresentationComponent.Diagnostics.cpp, Project_JIrisFastArrayDiagnostics.cpp, Project_JCharacterAnimationBudgetSubsystem.cpp, Project_JAggregateRetirementTests.cpp, Project_JAnimationDemandLifetimeTests.cpp, Project_JAuthoredDamageTests.cpp, Project_JEquipmentCommitLifetimeTests.cpp, Project_JGrantReentryTests.cpp, Project_JInputRetirementTests.cpp, Project_JInternalRefinementTests.cpp, Project_JLocomotionContinuityTests.cpp, Project_JMouseChordLifecycleTests.cpp, Project_JPlayerMaturityTests.cpp, Project_JProgressionLifetimeTests.cpp, Project_JReauditContractsTests.cpp, Project_JRetargetBodyProfileTests.cpp, Project_JStateOwnershipTests.cpp, Project_JSystemsModernizationTests.cpp, Project_JCharacterUIBindingComponent.cpp"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"=================================","format":"=================================","properties":{}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"Using Unreal Build Accelerator local executor to run 370 action(s)","format":"Using {ExecutorName} executor to run {ActionCount} action(s)","properties":{"ExecutorName":"Unreal Build Accelerator local","ActionCount":370}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"  CPU 8 physical cores, 16 logical cores","format":"  CPU {Physical} physical cores, {Logical} logical cores","properties":{"Physical":8,"Logical":16}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"  Memory 31.16 GB physical, 24.59 GB/47.16 GB committed","format":"  Memory {PhysicalTotal} physical, {CommittedCurrent}/{CommittedTotal} committed","properties":{"PhysicalTotal":"31.16 GB","CommittedCurrent":"24.59 GB","CommittedTotal":"47.16 GB"}}
+{"time":"2026-10-13T20:33:05","level":"Information","message":"  UBA Storage capacity 40 GB","format":"  UBA Storage capacity {StoreCapacity}","properties":{"StoreCapacity":"40 GB"}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"  UBA RootDir C:\\ProgramData\\Epic\\UnrealBuildAccelerator","format":"  UBA RootDir {RootDir}","properties":{"RootDir":"C:\\ProgramData\\Epic\\UnrealBuildAccelerator"}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Cache bucket 463347821 used. Action: Compile [x64] SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.cpp ()","format":"Cache bucket {CacheBucket} used. Action: {CommandDescription} {StatusDescription} ({GroupNames})","properties":{"CacheBucket":463347821,"CommandDescription":"Compile [x64]","StatusDescription":"SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.cpp","GroupNames":""}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Cache bucket 2821654950 used. Action: Compile [x64] Module.Project_JCore.gen.cpp ()","format":"Cache bucket {CacheBucket} used. Action: {CommandDescription} {StatusDescription} ({GroupNames})","properties":{"CacheBucket":2821654950,"CommandDescription":"Compile [x64]","StatusDescription":"Module.Project_JCore.gen.cpp","GroupNames":""}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Cache bucket 3297438153 used. Action: Compile [x64] PerModuleInline.gen.cpp ()","format":"Cache bucket {CacheBucket} used. Action: {CommandDescription} {StatusDescription} ({GroupNames})","properties":{"CacheBucket":3297438153,"CommandDescription":"Compile [x64]","StatusDescription":"PerModuleInline.gen.cpp","GroupNames":""}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"Cache bucket 2611342960 used. Action: Link [x64] UnrealEditor-Project_JCore.lib ()","format":"Cache bucket {CacheBucket} used. Action: {CommandDescription} {StatusDescription} ({GroupNames})","properties":{"CacheBucket":2611342960,"CommandDescription":"Link [x64]","StatusDescription":"UnrealEditor-Project_JCore.lib","GroupNames":""}}
+{"time":"2026-10-13T20:33:05","level":"Debug","message":"All processes queued","format":"All processes queued","properties":{}}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[1/370] Compile [x64] SharedPCH.Core.Project.ValApi.ValExpApi.Cpp20.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[2/370] Compile [x64] Coordination.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[3/370] Compile [x64] FeatureCatalog.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[4/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[5/370] Compile [x64] Project_JMMO.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[6/370] Compile [x64] FoundationTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[7/370] Compile [x64] Repository.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"[8/370] Link [x64] UnrealEditor-Project_JMMO.lib [NoUba]"}
+{"time":"2026-10-13T20:33:08","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JMMO/UnrealEditor-Project_JMMO.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JMMO/UnrealEditor-Project_JMMO.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:33:09","level":"Information","message":"[9/370] Link [x64] UnrealEditor-Project_JMMO.dll [NoUba]"}
+{"time":"2026-10-13T20:33:26","level":"Information","message":"[10/370] Compile [x64] SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:26","level":"Information","message":"[11/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:27","level":"Information","message":"[12/370] Compile [x64] Project_JCombatInterface.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:27","level":"Information","message":"[13/370] Compile [x64] Project_JAssetManager.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:28","level":"Information","message":"[14/370] Compile [x64] Module.Project_JCore.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:29","level":"Information","message":"[15/370] Compile [x64] Project_JCore.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:29","level":"Information","message":"[16/370] Compile [x64] Project_JGameDataSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:29","level":"Information","message":"[17/370] Compile [x64] Project_JInteractionTargetComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:30","level":"Information","message":"[18/370] Compile [x64] Project_JGameplayTags.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:30","level":"Information","message":"[19/370] Compile [x64] Project_JMMOTypes.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:30","level":"Information","message":"[20/370] Compile [x64] Project_JMessageRouterTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:31","level":"Information","message":"[21/370] Compile [x64] Project_JMessageSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:32","level":"Information","message":"[22/370] Compile [x64] Project_JObjectPoolRegistrySubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:32","level":"Information","message":"[23/370] Compile [x64] Project_JSocialStateInterface.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:32","level":"Information","message":"[24/370] Compile [x64] Project_JTargetScoring.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:33","level":"Information","message":"[25/370] Compile [x64] Project_JTargetScoringBatchTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:33","level":"Information","message":"[26/370] Compile [x64] Project_JTargetScoringSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:33","level":"Information","message":"[27/370] Compile [x64] Project_JTargetScoringTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:35","level":"Information","message":"[28/370] Compile [x64] Project_JTargetSpatialSnapshot.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:35","level":"Information","message":"[29/370] Compile [x64] Project_JTargetSpatialSnapshotTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:35","level":"Information","message":"[30/370] Compile [x64] Project_JVisualAssetTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:36","level":"Information","message":"[31/370] Compile [x64] Project_JVisualAssetSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:36","level":"Information","message":"[32/370] Link [x64] UnrealEditor-Project_JCore.lib [NoUba]"}
+{"time":"2026-10-13T20:33:36","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCore/UnrealEditor-Project_JCore.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCore/UnrealEditor-Project_JCore.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:33:36","level":"Information","message":"[33/370] Compile [x64] Module.Project_JGAS.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:36","level":"Information","message":"[34/370] Link [x64] UnrealEditor-Project_JCore.dll [NoUba]"}
+{"time":"2026-10-13T20:33:38","level":"Information","message":"[35/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:38","level":"Information","message":"[36/370] Compile [x64] Project_JAbilitySystemComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:38","level":"Information","message":"[37/370] Compile [x64] Project_JAbilityTickLifecycleTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:39","level":"Information","message":"[38/370] Compile [x64] Project_JAttributeSet.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:40","level":"Information","message":"[39/370] Compile [x64] Project_JGAS.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:40","level":"Information","message":"[40/370] Compile [x64] Project_JResourceInvariantTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:40","level":"Information","message":"[41/370] Link [x64] UnrealEditor-Project_JGAS.lib [NoUba]"}
+{"time":"2026-10-13T20:33:40","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JGAS/UnrealEditor-Project_JGAS.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JGAS/UnrealEditor-Project_JGAS.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:33:40","level":"Information","message":"[42/370] Link [x64] UnrealEditor-Project_JGAS.dll [NoUba]"}
+{"time":"2026-10-13T20:33:41","level":"Information","message":"[43/370] Compile [x64] AnimNode_ProjectJLocomotion.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:42","level":"Information","message":"[44/370] Compile [x64] AnimNode_ProjectJOneShotHandoff.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:43","level":"Information","message":"[45/370] Compile [x64] AnimNode_ProjectJStrafeLowerBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:43","level":"Information","message":"[46/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:45","level":"Information","message":"[47/370] Compile [x64] AnimNode_ProjectJStrafeUpperBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:45","level":"Information","message":"[48/370] Compile [x64] Project_JAbilitySet.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:45","level":"Information","message":"[49/370] Compile [x64] Project_JActionSuspensionTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:48","level":"Information","message":"[50/370] Compile [x64] Project_JAggregateRetirementTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:50","level":"Information","message":"[51/370] Compile [x64] Project_JAirLoopTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:50","level":"Information","message":"[52/370] Compile [x64] Module.Project_JCharacter.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:50","level":"Information","message":"[53/370] Compile [x64] Project_JAnimNotifyState_CombatPresentationCue.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:51","level":"Information","message":"[54/370] Compile [x64] Project_JAnimNode_GuidedHandIK.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:52","level":"Information","message":"[55/370] Compile [x64] Project_JAnimNotifyState_ComboWindow.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:52","level":"Information","message":"[56/370] Compile [x64] Project_JAnimNotifyState_LocomotionEarlyTransition.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:52","level":"Information","message":"[57/370] Compile [x64] Project_JAnimNotifyState_MeleeHit.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:52","level":"Information","message":"[58/370] Compile [x64] Project_JAnimNotifyState_TwoHandIK.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:53","level":"Information","message":"[59/370] Compile [x64] Project_JAnimNotifyState_WeaponGroundContact.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:54","level":"Information","message":"[60/370] Compile [x64] Project_JAnimNotifyState_WeaponMotion.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:55","level":"Information","message":"[61/370] Compile [x64] Project_JAnimNotify_FoleyEvent.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:55","level":"Information","message":"[62/370] Compile [x64] Project_JAnimNotify_WeaponPresentation.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:55","level":"Information","message":"[63/370] Compile [x64] Project_JAnimNotify_SheatheWeapon.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:57","level":"Information","message":"[64/370] Compile [x64] Project_JAnimNotify_SendGameplayEvent.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:57","level":"Information","message":"[65/370] Compile [x64] Project_JAnimationContractAudit.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:57","level":"Information","message":"[66/370] Compile [x64] Project_JAnimationFlowTraceTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:57","level":"Information","message":"[67/370] Compile [x64] Project_JAnimationDemandLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:58","level":"Information","message":"[68/370] Compile [x64] Project_JAnimationLayerLease.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:59","level":"Information","message":"[69/370] Compile [x64] Project_JAnimationQualityPolicy.cpp [NoUba]"}
+{"time":"2026-10-13T20:33:59","level":"Information","message":"[70/370] Compile [x64] Project_JAnimationProfileValidation.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:00","level":"Information","message":"[71/370] Compile [x64] Project_JAnimationPipelinePolicyTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:01","level":"Information","message":"[72/370] Compile [x64] Project_JAnimationProxyLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:02","level":"Information","message":"[73/370] Compile [x64] Project_JArchitectureTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:02","level":"Information","message":"[74/370] Compile [x64] Project_JAnimationUpdateCoordinatorComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:04","level":"Information","message":"[75/370] Compile [x64] Project_JAttackDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:04","level":"Information","message":"[76/370] Compile [x64] Project_JAuthoredDamageTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:04","level":"Information","message":"[77/370] Compile [x64] Project_JAuthorityHitOriginTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:05","level":"Information","message":"[78/370] Compile [x64] Project_JBackwardRefaceTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:05","level":"Information","message":"[79/370] Compile [x64] Project_JCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:06","level":"Information","message":"[80/370] Compile [x64] Project_JBudgetedSkeletalMeshComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:06","level":"Information","message":"[81/370] Compile [x64] Project_JCameraComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:09","level":"Information","message":"[82/370] Compile [x64] Project_JBaseCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:09","level":"Information","message":"[83/370] Compile [x64] Project_JCharacterAnimInstance.Continuity.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:10","level":"Information","message":"[84/370] Compile [x64] Project_JCharacterAnimInstance.Budget.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:10","level":"Information","message":"[85/370] Compile [x64] Project_JCharacterAnimInstance.FlowTrace.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:13","level":"Information","message":"[86/370] Compile [x64] Project_JCharacterAnimInstance.ContinuityTrace.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:13","level":"Information","message":"[87/370] Compile [x64] Project_JCharacterAnimInstance.SearchCostAudit.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:13","level":"Information","message":"[88/370] Compile [x64] Project_JCharacterAnimInstance.PresentationUpdate.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:14","level":"Information","message":"[89/370] Compile [x64] Project_JCharacterAnimInstance.Presentation.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:15","level":"Information","message":"[90/370] Compile [x64] Project_JCharacterAnimInstance.Search.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:16","level":"Information","message":"[91/370] Compile [x64] Project_JCharacterAnimInstance.SnapshotAccessors.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:16","level":"Information","message":"[92/370] Compile [x64] Project_JCharacterAnimInstance.UpperBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:17","level":"Information","message":"[93/370] Compile [x64] Project_JCharacterAnimInstance.Snapshot.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:18","level":"Information","message":"[94/370] Compile [x64] Project_JCharacterAnimInstance.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:18","level":"Information","message":"[95/370] Compile [x64] Project_JCharacterAnimProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:20","level":"Information","message":"[96/370] Compile [x64] Project_JCharacterAnimInstanceBase.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:20","level":"Information","message":"[97/370] Compile [x64] Project_JCharacterAnimInstanceProxy.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:20","level":"Information","message":"[98/370] Compile [x64] Project_JCharacterAnimationBudgetSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:21","level":"Information","message":"[99/370] Compile [x64] Project_JCharacterClassDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:22","level":"Information","message":"[100/370] Compile [x64] Project_JCharacterRuntimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:22","level":"Information","message":"[101/370] Compile [x64] Project_JCharacterMovementComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:23","level":"Information","message":"[102/370] Compile [x64] Project_JCharacterDataSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:23","level":"Information","message":"[103/370] Compile [x64] Project_JCharacterViewModel.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:24","level":"Information","message":"[104/370] Compile [x64] Project_JCombatAnimProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:24","level":"Information","message":"[105/370] Compile [x64] Project_JCharacterUIBindingComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:25","level":"Information","message":"[106/370] Compile [x64] Project_JCombatAnimationLayerComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:25","level":"Information","message":"[107/370] Compile [x64] Project_JCombatHitValidation.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:26","level":"Information","message":"[108/370] Compile [x64] Project_JCombatCommandSet.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:26","level":"Information","message":"[109/370] Compile [x64] Project_JCombatConfiguration.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:27","level":"Information","message":"[110/370] Compile [x64] Project_JCombatMovementPolicy.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:28","level":"Information","message":"[111/370] Compile [x64] Project_JCombatIntroComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:28","level":"Information","message":"[112/370] Compile [x64] Project_JCombatHitValidationComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:29","level":"Information","message":"[113/370] Compile [x64] Project_JCombatPosePolicyTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:30","level":"Information","message":"[114/370] Compile [x64] Project_JCombatPresentationSet.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:30","level":"Information","message":"[115/370] Compile [x64] Project_JCombatStateComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:31","level":"Information","message":"[116/370] Compile [x64] Project_JCombatStyleDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:31","level":"Information","message":"[117/370] Compile [x64] Project_JCombatPresentationComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:33","level":"Information","message":"[118/370] Compile [x64] Project_JComboDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:33","level":"Information","message":"[119/370] Compile [x64] Project_JContinuousCurveTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:34","level":"Information","message":"[120/370] Compile [x64] Project_JComponentOwnershipTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:35","level":"Information","message":"[121/370] Compile [x64] Project_JCrowdAnimationTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:35","level":"Information","message":"[122/370] Compile [x64] Project_JCrowdEffectsTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:36","level":"Information","message":"[123/370] Compile [x64] Project_JDataValidation.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:36","level":"Information","message":"[124/370] Compile [x64] Project_JDefaultAttributeSetData.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:37","level":"Information","message":"[125/370] Compile [x64] Project_JCrowdPresentationTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:38","level":"Information","message":"[126/370] Compile [x64] Project_JEarlyTransitionTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:38","level":"Information","message":"[127/370] Compile [x64] Project_JEquipmentItemDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:39","level":"Information","message":"[128/370] Compile [x64] Project_JEquipmentManagerComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:40","level":"Information","message":"[129/370] Compile [x64] Project_JEquipmentCommitLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:40","level":"Information","message":"[130/370] Compile [x64] Project_JEquipmentRuntimeComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:41","level":"Information","message":"[131/370] Compile [x64] Project_JFoleyAudioProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:41","level":"Information","message":"[132/370] Compile [x64] Project_JFoleyComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:42","level":"Information","message":"[133/370] Compile [x64] Project_JExtensionArchitectureTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:43","level":"Information","message":"[134/370] Compile [x64] Project_JFoleyTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:43","level":"Information","message":"[135/370] Compile [x64] Project_JGameFeatureReceiver.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:43","level":"Information","message":"[136/370] Compile [x64] Project_JFoleyTypes.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:45","level":"Information","message":"[137/370] Compile [x64] Project_JFoleySubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:46","level":"Information","message":"[138/370] Compile [x64] Project_JGameplayAbility_CombatToggle.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:46","level":"Information","message":"[139/370] Compile [x64] Project_JGameplayAbility_Sprint.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:46","level":"Information","message":"[140/370] Compile [x64] Project_JGameplayAbility_Melee.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:47","level":"Information","message":"[141/370] Compile [x64] Project_JGameplayAbility_NPCAttack.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:48","level":"Information","message":"[142/370] Compile [x64] Project_JGameplayEffect_CombatMode.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:48","level":"Information","message":"[143/370] Compile [x64] Project_JGuidedArmChain.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:48","level":"Information","message":"[144/370] Compile [x64] Project_JGreatswordCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:49","level":"Information","message":"[145/370] Compile [x64] Project_JGrantReentryTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:49","level":"Information","message":"[146/370] Compile [x64] Project_JGuidedArmSolver.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:49","level":"Information","message":"[147/370] Compile [x64] Project_JGuidedArmSolverTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:50","level":"Information","message":"[148/370] Compile [x64] Project_JGuidedBendStabilityTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:51","level":"Information","message":"[149/370] Compile [x64] Project_JGuidedHandIKTrace.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:51","level":"Information","message":"[150/370] Compile [x64] Project_JGuidedIKTraceTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:52","level":"Information","message":"[151/370] Compile [x64] Project_JHandGripProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:52","level":"Information","message":"[152/370] Compile [x64] Project_JHandContactRigTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:53","level":"Information","message":"[153/370] Compile [x64] Project_JHandContact.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:53","level":"Information","message":"[154/370] Compile [x64] Project_JHandoverSerializable.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:55","level":"Information","message":"[155/370] Compile [x64] Project_JInteractionQuery.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:56","level":"Information","message":"[156/370] Compile [x64] Project_JInputRetirementTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:56","level":"Information","message":"[157/370] Compile [x64] Project_JInternalRefinementTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:57","level":"Information","message":"[158/370] Compile [x64] Project_JItemDefinition.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:57","level":"Information","message":"[159/370] Compile [x64] Project_JIrisFastArrayDiagnostics.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:58","level":"Information","message":"[160/370] Compile [x64] Project_JInventoryComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:34:58","level":"Information","message":"[161/370] Compile [x64] Project_JLocomotionAnimStateComponentAir.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:00","level":"Information","message":"[162/370] Compile [x64] Project_JLandingReturnTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:00","level":"Information","message":"[163/370] Compile [x64] Project_JLocomotionAnimStateComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:02","level":"Information","message":"[164/370] Compile [x64] Project_JLocomotionAnimStateComponentBase.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:02","level":"Information","message":"[165/370] Compile [x64] Project_JLocomotionAnimStateComponentInput.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:02","level":"Information","message":"[166/370] Compile [x64] Project_JLocomotionAnimStateComponentGround.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:02","level":"Information","message":"[167/370] Compile [x64] Project_JLocomotionAnimStateComponentTransitions.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:04","level":"Information","message":"[168/370] Compile [x64] Project_JLocomotionAnimStateComponentSupport.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:04","level":"Information","message":"[169/370] Compile [x64] Project_JLocomotionProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:05","level":"Information","message":"[170/370] Compile [x64] Project_JMassMonsterSpawner.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:05","level":"Information","message":"[171/370] Compile [x64] Project_JMassMonster_Trait.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:06","level":"Information","message":"[172/370] Compile [x64] Project_JLocomotionContinuityTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:08","level":"Information","message":"[173/370] Compile [x64] Project_JMassMovementProcessor.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:09","level":"Information","message":"[174/370] Compile [x64] Project_JMassRepresentationSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:09","level":"Information","message":"[175/370] Compile [x64] Project_JMassTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:10","level":"Information","message":"[176/370] Compile [x64] Project_JMeleeLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:10","level":"Information","message":"[177/370] Compile [x64] Project_JModularMeshComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:11","level":"Information","message":"[178/370] Compile [x64] Project_JMotionMatchingAssetSet.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:12","level":"Information","message":"[179/370] Compile [x64] Project_JMotionMatchingCVars.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:12","level":"Information","message":"[180/370] Compile [x64] Project_JMotionMatchingCrowdTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:13","level":"Information","message":"[181/370] Compile [x64] Project_JMotionMatchingEngineAdapter.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:15","level":"Information","message":"[182/370] Compile [x64] Project_JMotionMatchingTrajectoryComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:15","level":"Information","message":"[183/370] Compile [x64] Project_JMountedAnimationLayerComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:15","level":"Information","message":"[184/370] Compile [x64] Project_JMouseChordLifecycleTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:16","level":"Information","message":"[185/370] Compile [x64] Project_JMountStrafeFixTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:17","level":"Information","message":"[186/370] Compile [x64] Project_JMovingTurnTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:18","level":"Information","message":"[187/370] Compile [x64] Project_JNPCActionComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:18","level":"Information","message":"[188/370] Compile [x64] Project_JNPCActivationComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:20","level":"Information","message":"[189/370] Compile [x64] Project_JNPCActionTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:21","level":"Information","message":"[190/370] Compile [x64] Project_JNPCCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:21","level":"Information","message":"[191/370] Compile [x64] Project_JNPCDecisionSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:22","level":"Information","message":"[192/370] Compile [x64] Project_JNPCDecisionExperiment.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:22","level":"Information","message":"[193/370] Compile [x64] Project_JNPCPathSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:23","level":"Information","message":"[194/370] Compile [x64] Project_JNetObjectFilter_Distance.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:24","level":"Information","message":"[195/370] Compile [x64] Project_JNPCDecisionTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:24","level":"Information","message":"[196/370] Compile [x64] Project_JNotifyOwnershipTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:24","level":"Information","message":"[197/370] Compile [x64] Project_JOneShotInputResponseTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:25","level":"Information","message":"[198/370] Compile [x64] Project_JNetObjectPrioritizer_Combat.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:26","level":"Information","message":"[199/370] Compile [x64] Project_JOneShotHandoffTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:27","level":"Information","message":"[200/370] Compile [x64] Project_JPlayerCharacter.Movement.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:27","level":"Information","message":"[201/370] Compile [x64] Project_JPlayerCharacter.MouseTurnTrace.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:28","level":"Information","message":"[202/370] Compile [x64] Project_JPlayerInputBindingComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:29","level":"Information","message":"[203/370] Compile [x64] Project_JPredictionYawRateTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:29","level":"Information","message":"[204/370] Compile [x64] Project_JPlayerCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:30","level":"Information","message":"[205/370] Compile [x64] Project_JPresentationBudgetSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:31","level":"Information","message":"[206/370] Compile [x64] Project_JPresentationMeshResolver.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:32","level":"Information","message":"[207/370] Compile [x64] Project_JPresentationMeshResolverTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:32","level":"Information","message":"[208/370] Compile [x64] Project_JPrimaryGripAttachmentTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:32","level":"Information","message":"[209/370] Compile [x64] Project_JPresentationRecoveryTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:33","level":"Information","message":"[210/370] Compile [x64] Project_JPlayerMaturityTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:34","level":"Information","message":"[211/370] Compile [x64] Project_JProgressionComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:35","level":"Information","message":"[212/370] Compile [x64] Project_JReauditContractsTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:35","level":"Information","message":"[213/370] Compile [x64] Project_JProgressionLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:37","level":"Information","message":"[214/370] Compile [x64] Project_JReplicatedAnimEventComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:37","level":"Information","message":"[215/370] Compile [x64] Project_JReplicatedJumpStateComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:38","level":"Information","message":"[216/370] Compile [x64] Project_JRetargetAndSSRFollowupTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:39","level":"Information","message":"[217/370] Compile [x64] Project_JRetargetAnimInstance.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:39","level":"Information","message":"[218/370] Compile [x64] Project_JRetargetBodyProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:40","level":"Information","message":"[219/370] Compile [x64] Project_JRetargetAnimInstanceProxy.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:40","level":"Information","message":"[220/370] Compile [x64] Project_JRetargetBodyProfileTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:41","level":"Information","message":"[221/370] Compile [x64] Project_JServerSideRewindComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:42","level":"Information","message":"[222/370] Compile [x64] Project_JSecondaryHandContactTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:42","level":"Information","message":"[223/370] Compile [x64] Project_JSprintTurnTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:43","level":"Information","message":"[224/370] Compile [x64] Project_JSkillInputExecutionComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:43","level":"Information","message":"[225/370] Compile [x64] Project_JSkillInputRouterComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:44","level":"Information","message":"[226/370] Compile [x64] Project_JStateOwnershipTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:45","level":"Information","message":"[227/370] Compile [x64] Project_JStrafeLowerBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:46","level":"Information","message":"[228/370] Compile [x64] Project_JStopIdleTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:46","level":"Information","message":"[229/370] Compile [x64] Project_JStrafeLowerBodyFacingTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:46","level":"Information","message":"[230/370] Compile [x64] Project_JStrafeFacingRedirectTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:47","level":"Information","message":"[231/370] Compile [x64] Project_JStrafeUpperBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:48","level":"Information","message":"[232/370] Compile [x64] Project_JStrafePivotTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:48","level":"Information","message":"[233/370] Compile [x64] Project_JStrafeUpperBodyFacingTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:49","level":"Information","message":"[234/370] Compile [x64] Project_JTargetScoringComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:50","level":"Information","message":"[235/370] Compile [x64] Project_JTargetScoringComponentTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:50","level":"Information","message":"[236/370] Compile [x64] Project_JSystemsModernizationTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:50","level":"Information","message":"[237/370] Compile [x64] Project_JWeaponAnimProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:50","level":"Information","message":"[238/370] Compile [x64] Project_JUpdateOwnershipTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:52","level":"Information","message":"[239/370] Compile [x64] Project_JTurnHandoffTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:53","level":"Information","message":"[240/370] Compile [x64] Project_JWeaponPresentationActor.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:53","level":"Information","message":"[241/370] Compile [x64] Project_JWeaponAttackLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:54","level":"Information","message":"[242/370] Compile [x64] Project_JWeaponPresentationComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"[243/370] Compile [x64] Project_JWeaponPresentationComponent.Diagnostics.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"[244/370] Compile [x64] Project_JWeaponPresentationProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"[245/370] Compile [x64] Project_JWeaponPresentationIdentityTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"[246/370] Link [x64] UnrealEditor-Project_JCharacter.lib [NoUba]"}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCharacter/UnrealEditor-Project_JCharacter.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCharacter/UnrealEditor-Project_JCharacter.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:35:55","level":"Information","message":"[247/370] Compile [x64] AnimGraphNode_ProjectJOneShotHandoff.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:57","level":"Information","message":"[248/370] Compile [x64] AnimGraphNode_ProjectJLocomotion.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:57","level":"Information","message":"[249/370] Compile [x64] AnimGraphNode_ProjectJStrafeLowerBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:57","level":"Information","message":"[250/370] Compile [x64] AnimGraphNode_ProjectJStrafeUpperBodyFacing.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:58","level":"Information","message":"[251/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:58","level":"Information","message":"[252/370] Compile [x64] Module.Project_JAnimationNodes.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"[253/370] Compile [x64] Project_JAnimGraphNode_GuidedHandIK.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"[254/370] Compile [x64] Project_JAnimationNodesModule.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"[255/370] Compile [x64] Project_JGuidedIKAuthoringTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"[256/370] Compile [x64] Project_JStrafeUpperBodyFacingEditorLibrary.cpp [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"[257/370] Link [x64] UnrealEditor-Project_JAnimationNodes.lib [NoUba]"}
+{"time":"2026-10-13T20:35:59","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JAnimationNodes/UnrealEditor-Project_JAnimationNodes.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JAnimationNodes/UnrealEditor-Project_JAnimationNodes.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:36:00","level":"Information","message":"[258/370] Link [x64] UnrealEditor-Project_JAnimationNodes.dll [NoUba]"}
+{"time":"2026-10-13T20:36:01","level":"Information","message":"[259/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:01","level":"Information","message":"[260/370] Compile [x64] Project_JAnimNotify_MountFlightCue.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:02","level":"Information","message":"[261/370] Compile [x64] Module.Project_JMount.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:02","level":"Information","message":"[262/370] Compile [x64] Project_JFlyingMountAnimInstance.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:03","level":"Information","message":"[263/370] Compile [x64] Project_JMount.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:03","level":"Information","message":"[264/370] Compile [x64] Project_JFlyingMountCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:04","level":"Information","message":"[265/370] Compile [x64] Project_JMountAnimInstance.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:06","level":"Information","message":"[266/370] Compile [x64] Project_JMountAttributeSet.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:06","level":"Information","message":"[267/370] Compile [x64] Project_JMountComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"[268/370] Compile [x64] Project_JMountCharacter.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"[269/370] Compile [x64] Project_JRiderAnimationProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"[270/370] Compile [x64] Project_JMountTypes.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"[271/370] Compile [x64] Project_JMountRefinementTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"[272/370] Link [x64] UnrealEditor-Project_JMount.lib [NoUba]"}
+{"time":"2026-10-13T20:36:07","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JMount/UnrealEditor-Project_JMount.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JMount/UnrealEditor-Project_JMount.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:36:08","level":"Information","message":"[273/370] Compile [x64] Module.Project_JCharacterEditor.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:08","level":"Information","message":"[274/370] Link [x64] UnrealEditor-Project_JMount.dll [NoUba]"}
+{"time":"2026-10-13T20:36:08","level":"Information","message":"[275/370] Link [x64] UnrealEditor-Project_JCharacter.dll [NoUba]"}
+{"time":"2026-10-13T20:36:09","level":"Information","message":"[276/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:10","level":"Information","message":"[277/370] Compile [x64] Project_JBlueprintGraphDiagnostics.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:10","level":"Information","message":"[278/370] Compile [x64] Project_JBackwardRefaceDataTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:11","level":"Information","message":"[279/370] Compile [x64] Project_JAuthoredAssetAudit.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:12","level":"Information","message":"[280/370] Compile [x64] Project_JCharacterEditorModule.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:12","level":"Information","message":"[281/370] Compile [x64] Project_JContentBundleAuthoringTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:12","level":"Information","message":"[282/370] Compile [x64] Project_JContentBundleAuthoring.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:13","level":"Information","message":"[283/370] Compile [x64] Project_JContentBundleMenu.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:14","level":"Information","message":"[284/370] Compile [x64] Project_JEarlyTransitionMigrationLibrary.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:14","level":"Information","message":"[285/370] Compile [x64] Project_JFoleyMigrationLibrary.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:14","level":"Information","message":"[286/370] Compile [x64] Project_JForwardStrafeDataTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:16","level":"Information","message":"[287/370] Compile [x64] Project_JForwardTrajectoryDataTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:17","level":"Information","message":"[288/370] Compile [x64] Project_JGeneralTurningDataTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:18","level":"Information","message":"[289/370] Compile [x64] Project_JLocomotionContinuityGraphTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:18","level":"Information","message":"[290/370] Compile [x64] Project_JNPCNavigationIntegrationTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:19","level":"Information","message":"[291/370] Compile [x64] Project_JNPCNavigationLoadTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:20","level":"Information","message":"[292/370] Compile [x64] Project_JObsoleteMasterFunctionsTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:20","level":"Information","message":"[293/370] Compile [x64] Project_JNaturalnessGraphTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:21","level":"Information","message":"[294/370] Compile [x64] Project_JOneShotHandoffGraphTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:21","level":"Information","message":"[295/370] Compile [x64] Project_JStrafeDirectionSchemaTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:22","level":"Information","message":"[296/370] Compile [x64] Project_JWeaponMotionEditingTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:22","level":"Information","message":"[297/370] Compile [x64] Project_JUnifiedLocomotionGraphTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:22","level":"Information","message":"[298/370] Link [x64] UnrealEditor-Project_JCharacterEditor.lib [NoUba]"}
+{"time":"2026-10-13T20:36:22","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCharacterEditor/UnrealEditor-Project_JCharacterEditor.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_JCharacterEditor/UnrealEditor-Project_JCharacterEditor.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:36:23","level":"Information","message":"[299/370] Link [x64] UnrealEditor-Project_JCharacterEditor.dll [NoUba]"}
+{"time":"2026-10-13T20:36:23","level":"Information","message":"[300/370] Compile [x64] PerModuleInline.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:25","level":"Information","message":"[301/370] Compile [x64] Project_J.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:26","level":"Information","message":"[302/370] Compile [x64] Module.Project_J.gen.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:27","level":"Information","message":"[303/370] Compile [x64] Project_JAnimationBudgetProbe.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:28","level":"Information","message":"[304/370] Compile [x64] Project_JAuthoredAnimationPerformance.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:28","level":"Information","message":"[305/370] Compile [x64] Project_JAuthoredSkillContinuationTest.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:30","level":"Information","message":"[306/370] Compile [x64] Project_JBackwardRefacePlayback.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:31","level":"Information","message":"[307/370] Compile [x64] Project_JCharacterUIProfile.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:33","level":"Information","message":"[308/370] Compile [x64] Project_JCharacterUITests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:33","level":"Information","message":"[309/370] Compile [x64] Project_JCombatCookedFixture.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:33","level":"Information","message":"[310/370] Compile [x64] Project_JComboBlendOutTest.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:34","level":"Information","message":"[311/370] Compile [x64] Project_JComboInputSubscriptionTest.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:34","level":"Information","message":"[312/370] Compile [x64] Project_JCompactHUDTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:35","level":"Information","message":"[313/370] Compile [x64] Project_JCursorInputTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:36","level":"Information","message":"[314/370] Compile [x64] Project_JDistortionPSOPrecache.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:37","level":"Information","message":"[315/370] Compile [x64] Project_JEquipmentComparison.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:37","level":"Information","message":"[316/370] Compile [x64] Project_JEquipmentClientTestComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:38","level":"Information","message":"[317/370] Compile [x64] Project_JEffectsCookedFixture.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:38","level":"Information","message":"[318/370] Compile [x64] Project_JGameMode.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:39","level":"Information","message":"[319/370] Compile [x64] Project_JGameState.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:39","level":"Information","message":"[320/370] Compile [x64] Project_JGatewayAdmissionTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:40","level":"Information","message":"[321/370] Compile [x64] Project_JEquipmentSoak.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:41","level":"Information","message":"[322/370] Compile [x64] Project_JGatewaySubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:42","level":"Information","message":"[323/370] Compile [x64] Project_JHandoverManager.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:42","level":"Information","message":"[324/370] Compile [x64] Project_JHandoverTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:43","level":"Information","message":"[325/370] Compile [x64] Project_JHUDWindow.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:43","level":"Information","message":"[326/370] Compile [x64] Project_JHandoverTransport.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:44","level":"Information","message":"[327/370] Compile [x64] Project_JInputLeaseSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:45","level":"Information","message":"[328/370] Compile [x64] Project_JInventoryUITests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:45","level":"Information","message":"[329/370] Compile [x64] Project_JLogger.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:45","level":"Information","message":"[330/370] Compile [x64] Project_JMMOFoundationSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:47","level":"Information","message":"[331/370] Compile [x64] Project_JInventoryViewModel.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:48","level":"Information","message":"[332/370] Compile [x64] Project_JInventoryWidgets.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:48","level":"Information","message":"[333/370] Compile [x64] Project_JMinimapWidget.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:49","level":"Information","message":"[334/370] Compile [x64] Project_JMaturityContractTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:50","level":"Information","message":"[335/370] Compile [x64] Project_JNaturalnessPlayback.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:52","level":"Information","message":"[336/370] Compile [x64] Project_JNetworkDiagnostics.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:54","level":"Information","message":"[337/370] Compile [x64] Project_JNetworkLoadFixture.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:54","level":"Information","message":"[338/370] Compile [x64] Project_JOneShotReturnPlayback.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:54","level":"Information","message":"[339/370] Compile [x64] Project_JPlayerController.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:56","level":"Information","message":"[340/370] Compile [x64] Project_JPlayerHUDWidget.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:56","level":"Information","message":"[341/370] Compile [x64] Project_JProfilingCrowdComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:56","level":"Information","message":"[342/370] Compile [x64] Project_JPlayerMountLifecycleTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:58","level":"Information","message":"[343/370] Compile [x64] Project_JPlayerState.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:59","level":"Information","message":"[344/370] Compile [x64] Project_JQuestComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:59","level":"Information","message":"[345/370] Compile [x64] Project_JPlayerUIComponent.cpp [NoUba]"}
+{"time":"2026-10-13T20:36:59","level":"Information","message":"[346/370] Compile [x64] Project_JQuestLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:00","level":"Information","message":"[347/370] Compile [x64] Project_JProgressionAvatarTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:01","level":"Information","message":"[348/370] Compile [x64] Project_JRenderingWarmupSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:02","level":"Information","message":"[349/370] Compile [x64] Project_JReauditDataContractsTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:03","level":"Information","message":"[350/370] Compile [x64] Project_JRenderedCrowdFixture.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:04","level":"Information","message":"[351/370] Compile [x64] Project_JSocialSubsystem.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:05","level":"Information","message":"[352/370] Compile [x64] Project_JRuntimeOwnershipTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:05","level":"Information","message":"[353/370] Compile [x64] Project_JRetargetBodyRuntime.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:07","level":"Information","message":"[354/370] Compile [x64] Project_JSkillButton.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:07","level":"Information","message":"[355/370] Compile [x64] Project_JStatusBindingReentryTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:07","level":"Information","message":"[356/370] Compile [x64] Project_JStatusEffects.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:09","level":"Information","message":"[357/370] Compile [x64] Project_JSprintTurnPlayback.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:10","level":"Information","message":"[358/370] Compile [x64] Project_JUIIconRequest.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:11","level":"Information","message":"[359/370] Compile [x64] Project_JStrafeCameraPlayback.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:11","level":"Information","message":"[360/370] Compile [x64] Project_JUIModels.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:12","level":"Information","message":"[361/370] Compile [x64] Project_JUILayoutSettings.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:13","level":"Information","message":"[362/370] Compile [x64] Project_JUIIconRequestLifetimeTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:14","level":"Information","message":"[363/370] Compile [x64] Project_JUIPreferenceTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:14","level":"Information","message":"[364/370] Compile [x64] Project_JUIScreenFailureTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:15","level":"Information","message":"[365/370] Compile [x64] Project_JUIRuntimeSmoke.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:17","level":"Information","message":"[366/370] Compile [x64] Project_JUIValidationEffect.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:17","level":"Information","message":"[367/370] Compile [x64] Project_JVisualAnimationBudgetTests.cpp [NoUba]"}
+{"time":"2026-10-13T20:37:17","level":"Information","message":"[368/370] Link [x64] UnrealEditor-Project_J.lib [NoUba]"}
+{"time":"2026-10-13T20:37:17","level":"Information","message":"   C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_J/UnrealEditor-Project_J.lib \uFFB6\uFFF3\uFFC0\uFFCC\uFFBA\uFFEA\uFFB7\uFFAF\uFFB8\uFFAE \uFFB9\uFFD7 C:/Users/I/Documents/GitHub/Project_J/Intermediate/Build/Win64/x64/UnrealEditor/Development/Project_J/UnrealEditor-Project_J.exp \uFFB0\uFFB3\uFFC3\uFFBC\uFFB8\uFFA6 \uFFBB\uFFFD\uFFBC\uFFBA\uFFC7\uFFCF\uFFB0\uFFED \uFFC0\uFFD6\uFFBD\uFFC0\uFFB4\uFFCF\uFFB4\uFFD9."}
+{"time":"2026-10-13T20:37:17","level":"Information","message":"[369/370] Link [x64] UnrealEditor-Project_J.dll [NoUba]"}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"[370/370] WriteMetadata Project_JEditor.target [NoUba]"}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"","format":"","properties":{}}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"Total time in Unreal Build Accelerator local executor: 252.85 seconds","format":"Total time in {ExecutorName} executor: {TotalSeconds:0.00} seconds","properties":{"ExecutorName":"Unreal Build Accelerator local","TotalSeconds":252.8530694}}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"Output binary: C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe","format":"Output binary: {ExecutableFile}","properties":{"ExecutableFile":{"$type":"SourceFile","$text":"C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe"}}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"WriteFileIfChanged() wrote 0 changed files of 1 requested writes.","format":"WriteFileIfChanged() wrote {TotalWrites} changed files of {TotalRequests} requested writes.","properties":{"TotalWrites":0,"TotalRequests":1}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"","format":"","properties":{}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"Timeline:","format":"Timeline:","properties":{}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.000]  \u002B0.196 Main","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.000]  \u002B0.196","Label":"Main"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   0.009          [  0.009]  \u002B0.056 Apply XmlConfig","format":"{Prefix} {Label}","properties":{"Prefix":"   0.009          [  0.009]  \u002B0.056","Label":"Apply XmlConfig"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   0.070          [  0.070]  \u002B0.034 AddTelemetry","format":"{Prefix} {Label}","properties":{"Prefix":"   0.070          [  0.070]  \u002B0.034","Label":"AddTelemetry"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   0.115          [  0.115]  \u002B0.081 RegisterPlatforms","format":"{Prefix} {Label}","properties":{"Prefix":"   0.115          [  0.115]  \u002B0.081","Label":"RegisterPlatforms"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.206]  \u002B0.017 ParseCommandLine","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.206]  \u002B0.017","Label":"ParseCommandLine"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.272]  \u002B0.024 EngineRulesPlugins","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.272]  \u002B0.024","Label":"EngineRulesPlugins"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.299]  \u002B0.030 EngineRulesFetchDirs","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.299]  \u002B0.030","Label":"EngineRulesFetchDirs"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.335]  \u002B0.006 EngineRulesAssembly","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.335]  \u002B0.006","Label":"EngineRulesAssembly"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.342]  \u002B0.000 ProgramRulesAssembly","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.342]  \u002B0.000","Label":"ProgramRulesAssembly"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.347]  \u002B0.001 ProjectRulesAssembly","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.347]  \u002B0.001","Label":"ProjectRulesAssembly"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.349]  \u002B0.148 CreateTargetRules","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.349]  \u002B0.148","Label":"CreateTargetRules"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.532]  \u002B0.007 CppDependencyCache","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.532]  \u002B0.007","Label":"CppDependencyCache"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.546]  \u002B0.069 LoadMakefile","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.546]  \u002B0.069","Label":"LoadMakefile"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.616]  \u002B0.000 FindPlugins","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.616]  \u002B0.000","Label":"FindPlugins"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.621]  \u002B0.006 MakefileValid","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.621]  \u002B0.006","Label":"MakefileValid"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  0.628]  \u002B0.882 Project_JEditor Win64 Development","format":"{Prefix} {Label}","properties":{"Prefix":"[  0.628]  \u002B0.882","Label":"Project_JEditor Win64 Development"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   0.628          [  0.000]  \u002B0.337 \u003Cunknown\u003E","format":"{Prefix} {Label}","properties":{"Prefix":"   0.628          [  0.000]  \u002B0.337","Label":"\u003Cunknown\u003E"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   0.966          [  0.337]  \u002B0.040 UHTModules","format":"{Prefix} {Label}","properties":{"Prefix":"   0.966          [  0.337]  \u002B0.040","Label":"UHTModules"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.070          [  0.441]  \u002B0.013 UHTManifest","format":"{Prefix} {Label}","properties":{"Prefix":"   1.070          [  0.441]  \u002B0.013","Label":"UHTManifest"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.084          [  0.455]  \u002B0.009 UHTTimestamps","format":"{Prefix} {Label}","properties":{"Prefix":"   1.084          [  0.455]  \u002B0.009","Label":"UHTTimestamps"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.242          [  0.613]  \u002B0.000 GitWait","format":"{Prefix} {Label}","properties":{"Prefix":"   1.242          [  0.613]  \u002B0.000","Label":"GitWait"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.242          [  0.614]  \u002B0.258 \u003Cunknown\u003E","format":"{Prefix} {Label}","properties":{"Prefix":"   1.242          [  0.614]  \u002B0.258","Label":"\u003Cunknown\u003E"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.501          [  0.872]  \u002B0.000 WaitOnWrites","format":"{Prefix} {Label}","properties":{"Prefix":"   1.501          [  0.872]  \u002B0.000","Label":"WaitOnWrites"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  1.511]  \u002B0.063 SavingMakefile","format":"{Prefix} {Label}","properties":{"Prefix":"[  1.511]  \u002B0.063","Label":"SavingMakefile"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.512          [  0.000]  \u002B0.001 UHTWait","format":"{Prefix} {Label}","properties":{"Prefix":"   1.512          [  0.000]  \u002B0.001","Label":"UHTWait"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.548          [  0.036]  \u002B0.000 CppDependencyCache","format":"{Prefix} {Label}","properties":{"Prefix":"   1.548          [  0.036]  \u002B0.000","Label":"CppDependencyCache"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.548          [  0.036]  \u002B0.183 Preparing ActionGraph","format":"{Prefix} {Label}","properties":{"Prefix":"   1.548          [  0.036]  \u002B0.183","Label":"Preparing ActionGraph"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.558             0.046          [  0.009]  \u002B0.003 LinkActions","format":"{Prefix} {Label}","properties":{"Prefix":"   1.558             0.046          [  0.009]  \u002B0.003","Label":"LinkActions"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.562             0.050          [  0.013]  \u002B0.000 GatherPrerequisiteActions","format":"{Prefix} {Label}","properties":{"Prefix":"   1.562             0.050          [  0.013]  \u002B0.000","Label":"GatherPrerequisiteActions"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.563             0.052          [  0.015]  \u002B0.000 CppDependencyCacheWait","format":"{Prefix} {Label}","properties":{"Prefix":"   1.563             0.052          [  0.015]  \u002B0.000","Label":"CppDependencyCacheWait"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.564             0.052          [  0.015]  \u002B0.112 GatherOutdatedActions","format":"{Prefix} {Label}","properties":{"Prefix":"   1.564             0.052          [  0.015]  \u002B0.112","Label":"GatherOutdatedActions"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.679             0.167          [  0.130]  \u002B0.006 LinkActions","format":"{Prefix} {Label}","properties":{"Prefix":"   1.679             0.167          [  0.130]  \u002B0.006","Label":"LinkActions"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.686             0.174          [  0.137]  \u002B0.039 DeleteOutdatedProducedItems","format":"{Prefix} {Label}","properties":{"Prefix":"   1.686             0.174          [  0.137]  \u002B0.039","Label":"DeleteOutdatedProducedItems"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.726             0.214          [  0.177]  \u002B0.003 SaveActionHistory","format":"{Prefix} {Label}","properties":{"Prefix":"   1.726             0.214          [  0.177]  \u002B0.003","Label":"SaveActionHistory"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"   1.730             0.218          [  0.182]  \u002B0.000 CreateDirectoriesForProducedItems","format":"{Prefix} {Label}","properties":{"Prefix":"   1.730             0.218          [  0.182]  \u002B0.000","Label":"CreateDirectoriesForProducedItems"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  1.741]  \u002B0.098 GarbageCollect","format":"{Prefix} {Label}","properties":{"Prefix":"[  1.741]  \u002B0.098","Label":"GarbageCollect"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[  1.839]\u002B252.757 \u003Cunknown\u003E","format":"{Prefix} {Label}","properties":{"Prefix":"[  1.839]\u002B252.757","Label":"\u003Cunknown\u003E"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.597]  \u002B0.000 Deploying targets","format":"{Prefix} {Label}","properties":{"Prefix":"[254.597]  \u002B0.000","Label":"Deploying targets"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.598]  \u002B0.000 DisconnectCache","format":"{Prefix} {Label}","properties":{"Prefix":"[254.598]  \u002B0.000","Label":"DisconnectCache"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.601]  \u002B0.000 SaveCasTable","format":"{Prefix} {Label}","properties":{"Prefix":"[254.601]  \u002B0.000","Label":"SaveCasTable"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.604]  \u002B0.057 Saving caches","format":"{Prefix} {Label}","properties":{"Prefix":"[254.604]  \u002B0.057","Label":"Saving caches"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.662]  \u002B0.002 TelemetryService.FlushEvents","format":"{Prefix} {Label}","properties":{"Prefix":"[254.662]  \u002B0.002","Label":"TelemetryService.FlushEvents"}}
+{"time":"2026-10-13T20:37:18","level":"Debug","message":"[254.665]","format":"[{Time,7}]","properties":{"Time":"254.665"}}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"","format":"","properties":{}}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"Result: Succeeded","format":"Result: {ApplicationResult}","properties":{"ApplicationResult":"Succeeded"}}
+{"time":"2026-10-13T20:37:18","level":"Information","message":"Total execution time: 254.67 seconds","format":"Total execution time: {Time:0.00} seconds","properties":{"Time":254.6656422}}

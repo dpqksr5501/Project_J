@@ -1,0 +1,8 @@
+{
+  "success": false,
+  "exitCode": 777003,
+  "fixtureSuccess": true,
+  "capturesExist": true,
+  "traceChannels": "cpu,frame,bookmark,region,counters",
+  "scope": "Diagnostic channel isolation; original full-channel failure remains separate."
+}

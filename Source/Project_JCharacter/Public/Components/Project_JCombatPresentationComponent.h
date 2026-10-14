@@ -43,6 +43,7 @@ public:
 	UProject_JCombatPresentationComponent();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	/** NPC/non-player base set. Player combat-style -> advancement -> skin precedence is unchanged. */
@@ -85,6 +86,9 @@ private:
 	void PlayCueLocal(FGameplayTag CueTag);
 	void StopCueLocal(FGameplayTag CueTag);
 	void StopAllCues();
+	void RetirePresentation();
+	bool CanAcceptPresentation() const;
+	bool bEndingPresentation = false;
 	void PublishRecoveryState();
 	void ApplyReplicatedState();
 

@@ -1,0 +1,425 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "2558EDE14947198CAD9916822C67E55E",
+			"instanceName": "DESKTOP-5T07C91-28392",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-15.50.07",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.13014450669288635,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredDamageContract",
+			"fullTestPath": "ProjectJ.Combat.AuthoredDamageContract",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2558EDE14947198CAD9916822C67E55E"
+			],
+			"duration": 0.080736197531223297,
+			"dateTime": "2026.10.13-15.50.07",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'LMB1 reduces actual health by authored BaseDamage' to be 98.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'LMB2 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'LMBRMB reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'LR1 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'LR2 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Q1 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Q2 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'R reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'RMB1 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'RMB2 reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'T reduces actual health by authored BaseDamage' to be 88.500000, but it was 90.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 42,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Damage does not grant persistent combat mode to the victim' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JAuthoredDamageTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				}
+			],
+			"warnings": 0,
+			"errors": 21,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GrantSourceReentry",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.GrantSourceReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2558EDE14947198CAD9916822C67E55E"
+			],
+			"duration": 0.0066995993256568909,
+			"dateTime": "2026.10.13-15.50.07",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older apply cannot append an effect to new handles' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JGrantReentryTests.cpp",
+					"lineNumber": 41,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'The retired generation's persistent effect is returned' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JGrantReentryTests.cpp",
+					"lineNumber": 41,
+					"timestamp": "2026.10.13-15.50.07"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.QuestRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2558EDE14947198CAD9916822C67E55E"
+			],
+			"duration": 0.042708702385425568,
+			"dateTime": "2026.10.13-15.50.07",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(422): 1 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroy before BeginPlay retires the owned timer' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQuestLifetimeTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired quest cannot award XP' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQuestLifetimeTests.cpp",
+					"lineNumber": 34,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired claim preserves progression' to be 1, but it was 2.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQuestLifetimeTests.cpp",
+					"lineNumber": 35,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late accept cannot restart a destroyed component' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQuestLifetimeTests.cpp",
+					"lineNumber": 37,
+					"timestamp": "2026.10.13-15.50.07"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late objective cannot mutate retired progress' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQuestLifetimeTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.13-15.50.07"
+				}
+			],
+			"warnings": 0,
+			"errors": 5,
+			"artifacts": []
+		}
+	]
+}

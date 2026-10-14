@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/GameplayTags\",\"/Script/Project_JCharacter\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Walk\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Run_Soft\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Jump\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Land\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Scuff\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Handplant\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunBackwards\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffPivot\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffWall\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunStrafe\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Tumble\",\"/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_WalkBackwards\"]}"
+			}
+		]
+	}
+}

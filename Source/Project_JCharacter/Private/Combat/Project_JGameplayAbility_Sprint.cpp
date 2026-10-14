@@ -2,8 +2,6 @@
 
 #include "Combat/Project_JGameplayAbility_Sprint.h"
 #include "AbilitySystemComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Character.h"
 
 #include "Project_JGameplayTags.h"
 
@@ -18,16 +16,6 @@ UProject_JGameplayAbility_Sprint::UProject_JGameplayAbility_Sprint()
 	SetAssetTags(AssetTags);
 
 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
-}
-
-bool UProject_JGameplayAbility_Sprint::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
-{
-	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
-	{
-		return false;
-	}
-
-	return true;
 }
 
 void UProject_JGameplayAbility_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

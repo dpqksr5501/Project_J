@@ -1,4 +1,5 @@
 #include "System/Project_JNPCDecisionSubsystem.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Components/Project_JTargetScoringComponent.h"
 #include "Components/Project_JNPCActionComponent.h"
 #include "Project_JNPCCharacter.h"
@@ -127,7 +128,12 @@ void UProject_JNPCDecisionSubsystem::UpdateActions()
 			Entry.NextDue = Now + 0.1;
 		}
 		ActionCursor = (ActionCursor + 1) % Actions.Num();
-		if (bDue) { ++Stats.LastTickActionUpdates; Component->UpdateAction(); }
+		if (bDue)
+		{
+			TStrongObjectPtr<UProject_JNPCActionComponent> PinnedComponent(Component);
+			TStrongObjectPtr<AActor> PinnedOwner(Component->GetOwner());
+			++Stats.LastTickActionUpdates; Component->UpdateAction();
+		}
 		// No array reference is used after a callback (which may unregister or end the world).
 	}
 	Stats.LastTickActionMilliseconds = (FPlatformTime::Seconds() - Started) * 1000.0;
@@ -272,10 +278,19 @@ bool UProject_JNPCDecisionSubsystem::CaptureObserverPositions(TArray<FVector>& P
 void UProject_JNPCDecisionSubsystem::StopScheduler()
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	bAccepting = false;
 	const auto OldActions = MoveTemp(Actions);
 	ActionCursor = 0;
-	for (const auto& Entry : OldActions) { if (auto* Action = Entry.Component.Get()) { Action->StopActions(); } }
+	for (const auto& Entry : OldActions)
+	{
+		if (auto* Action = Entry.Component.Get())
+		{
+			TStrongObjectPtr<UProject_JNPCActionComponent> PinnedAction(Action);
+			TStrongObjectPtr<AActor> PinnedOwner(Action->GetOwner());
+			Action->StopActions();
+		}
+	}
 	if (auto* Service = Scoring.Get()) { Service->CancelForOwner(this); }
 	const auto PreviousAgents = MoveTemp(Agents);
 	Ready.Empty(); ActiveBatches.Empty(); Targets.Empty(); Observers.Empty(); OutstandingDecisions = 0;
@@ -330,6 +345,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
 	if (!IsActiveServer() || !Scoring.IsValid() || bTicking) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TGuardValue<bool> TickGuard(bTicking, true);
 	const double FullStarted = FPlatformTime::Seconds();
 	ON_SCOPE_EXIT
@@ -372,6 +388,8 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 			continue;
 		}
 		++Stats.AppliedDecisions;
+		TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
+		TStrongObjectPtr<AActor> PinnedOwner(Owner);
 		Component->ApplyResult(Entry->Completion); // External callbacks only after queue/counters are updated.
 		if (!IsActiveServer()) { return; }
 	}

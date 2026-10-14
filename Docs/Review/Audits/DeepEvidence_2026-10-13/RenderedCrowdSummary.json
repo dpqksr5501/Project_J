@@ -1,0 +1,29 @@
+[
+  {
+    "phase": 1,
+    "samples": 495,
+    "meanFrameMs": 18.32091484444445,
+    "estimatedFPS": 54.582427159920755,
+    "gpuCounterMeanMs": 9.92881434343434,
+    "captureFramesExcluded": 0,
+    "scope": "Offscreen1280x720 uncapped/VSync0 simplified light/camera; captures excluded only on request frame; GPU counter delay and capture spill remain possible."
+  },
+  {
+    "phase": 2,
+    "samples": 523,
+    "meanFrameMs": 15.272834424474174,
+    "estimatedFPS": 65.47573110578188,
+    "gpuCounterMeanMs": 9.961770363288714,
+    "captureFramesExcluded": 1,
+    "scope": "Offscreen1280x720 uncapped/VSync0 simplified light/camera; captures excluded only on request frame; GPU counter delay and capture spill remain possible."
+  },
+  {
+    "phase": 3,
+    "samples": 406,
+    "meanFrameMs": 19.652971918719185,
+    "estimatedFPS": 50.88288957699643,
+    "gpuCounterMeanMs": 10.14709704433498,
+    "captureFramesExcluded": 1,
+    "scope": "Offscreen1280x720 uncapped/VSync0 simplified light/camera; captures excluded only on request frame; GPU counter delay and capture spill remain possible."
+  }
+]

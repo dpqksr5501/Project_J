@@ -1,0 +1,10 @@
+{
+  "handoffSha256": "DB19C60AE025D12FB2C5EBB2EDB084A113F543CD7D881AA4A81F2225BE174315",
+  "baselineHandoffSha256": "DB19C60AE025D12FB2C5EBB2EDB084A113F543CD7D881AA4A81F2225BE174315",
+  "handoffPreserved": true,
+  "bodySha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E",
+  "bodyPreserved": true,
+  "assetChanges": [],
+  "head": "f1bbd48ac4a37eab6ed7a33d025f1de2c270427c",
+  "branch": "codex/runtime-retarget-profiles"
+}

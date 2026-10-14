@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"sampleRate\\\":30,\\\"skeletons\\\":[{\\\"skeleton\\\":{\\\"refPath\\\":\\\"/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin\\\"},\\\"mirrorDataTable\\\":\\\"None\\\",\\\"role\\\":\\\"None\\\"}],\\\"channels\\\":[{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSS/PSS_InAir_Player.PSS_InAir_Player:PoseSearchFeatureChannel_Trajectory_0\\\"},{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSS/PSS_InAir_Player.PSS_InAir_Player:PoseSearchFeatureChannel_Pose_0\\\"},{\\\"refPath\\\":\\\"/Game/Animation_Logic/PSS/PSS_InAir_Player.PSS_InAir_Player:PoseSearchFeatureChannel_Heading_0\\\"}],\\\"dataPreprocessor\\\":\\\"Normalize\\\",\\\"numberOfPermutations\\\":1,\\\"permutationsSampleRate\\\":30,\\\"permutationsTimeOffset\\\":0,\\\"bAddDataPadding\\\":false,\\\"bInjectAdditionalDebugChannels\\\":false,\\\"bDrawInjectAdditionalDebugChannels\\\":false}\"}"
+			}
+		]
+	}
+}

@@ -1,0 +1,50 @@
+{
+  "source_version": "RA01-13",
+  "source_files": 650,
+  "editor_artifacts": 9,
+  "source_mismatch": [],
+  "restored_binary_mismatch": [],
+  "phases": [
+    {
+      "phase": "A1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "rows": 16,
+      "artifacts": 9
+    },
+    {
+      "phase": "B1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "rows": 16,
+      "artifacts": 9
+    },
+    {
+      "phase": "B2",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "rows": 16,
+      "artifacts": 9
+    },
+    {
+      "phase": "A2",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "rows": 16,
+      "artifacts": 9
+    }
+  ],
+  "meaning": "Verifies compiled-source and binary-set provenance; does not assert all code/assets manually audited or CPU regression resolved."
+}

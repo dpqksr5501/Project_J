@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"retargetBodyProfile\\\":{\\\"refPath\\\":\\\"/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.DA_RetargetBody_Greatsword\\\"},\\\"handGripProfile\\\":\\\"None\\\",\\\"rightGripLocation\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"leftGripLocation\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rightGripRotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":0},\\\"leftGripRotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":0},\\\"rightWristTarget\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"leftWristTarget\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"bRightContactTargetValid\\\":false,\\\"bLeftContactTargetValid\\\":false,\\\"leftGripInPrimaryHandSpace\\\":{\\\"location\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rotation\\\":{\\\"pitch\\\":0,\\\"yaw\\\":0,\\\"roll\\\":-0},\\\"scale\\\":{\\\"x\\\":1,\\\"y\\\":1,\\\"z\\\":1}},\\\"primaryHandBoneName\\\":\\\"None\\\",\\\"bUsePrimaryHandSpaceGrip\\\":false,\\\"rightElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"leftElbowTarget\\\":{\\\"x\\\":0,\\\"y\\\":0,\\\"z\\\":0},\\\"rightGripAlpha\\\":0,\\\"leftGripAlpha\\\":0,\\\"gripIKAlpha\\\":0,\\\"primaryGripSocketName\\\":\\\"WeaponGrip_R\\\",\\\"secondaryGripSocketName\\\":\\\"WeaponGrip_L\\\",\\\"leftHandIKCurveName\\\":\\\"LeftHandIK\\\",\\\"rightHandIKCurveName\\\":\\\"RightHandIK\\\",\\\"gripInterpSpeed\\\":12,\\\"bIsCombatMode\\\":false,\\\"bEnableCombatGripIK\\\":true,\\\"bAutoDetectWeaponIfNull\\\":false,\\\"currentQualityTier\\\":\\\"Local\\\",\\\"bEnableFollowerRetarget\\\":true,\\\"bTierAllowsHandIK\\\":true,\\\"bTierAllowsFootIK\\\":true,\\\"bTierAllowsRetargetIK\\\":true,\\\"retargetIKLODThreshold\\\":0,\\\"retargetLODThreshold\\\":-1,\\\"rootMotionMode\\\":\\\"RootMotionFromMontagesOnly\\\",\\\"bReceiveNotifiesFromLinkedInstances\\\":false,\\\"bPropagateNotifiesToLinkedInstances\\\":false,\\\"bUseMainInstanceMontageEvaluationData\\\":false,\\\"onMontageBlendingOut\\\":\\\"()\\\",\\\"onMontageBlendedIn\\\":\\\"()\\\",\\\"onMontageStarted\\\":\\\"()\\\",\\\"onMontageEnded\\\":\\\"()\\\",\\\"onAllMontageInstancesEnded\\\":\\\"()\\\",\\\"onMontageSectionChanged\\\":\\\"()\\\"}\"}"
+			}
+		]
+	}
+}

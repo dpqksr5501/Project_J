@@ -1,0 +1,233 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "7016F30B495D598A811BE1B8DBEBDCED",
+			"instanceName": "DESKTOP-5T07C91-3740",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-16.17.18",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.11971750110387802,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "InputRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.InputRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7016F30B495D598A811BE1B8DBEBDCED"
+			],
+			"duration": 0.070104703307151794,
+			"dateTime": "2026.10.13-16.17.18",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroy before BeginPlay releases the owned GAS input' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Late initialization cannot revive a retired executor' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 36,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired router cannot deliver a late quick tap' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JInputRetirementTests.cpp",
+					"lineNumber": 46,
+					"timestamp": "2026.10.13-16.17.18"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7016F30B495D598A811BE1B8DBEBDCED"
+			],
+			"duration": 0.010914899408817291,
+			"dateTime": "2026.10.13-16.17.18",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retirement returns its lease and preserves another provider' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroyed progression cannot grant late XP' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 34,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroyed progression cannot change level' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 35,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Final provider release leaves no spec' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 36,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroyed progression cannot grant late XP' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 34,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Destroyed progression cannot change level' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 35,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Final provider release leaves no spec' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JProgressionLifetimeTests.cpp",
+					"lineNumber": 36,
+					"timestamp": "2026.10.13-16.17.18"
+				}
+			],
+			"warnings": 0,
+			"errors": 7,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StatusBindingReentry",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.StatusBindingReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"7016F30B495D598A811BE1B8DBEBDCED"
+			],
+			"duration": 0.038697898387908936,
+			"dateTime": "2026.10.13-16.17.18",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Latest nested binding owns the source' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JStatusBindingReentryTests.cpp",
+					"lineNumber": 31,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older bind cannot leave an extra subscription' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JStatusBindingReentryTests.cpp",
+					"lineNumber": 32,
+					"timestamp": "2026.10.13-16.17.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'All acquired effect subscriptions retire' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JStatusBindingReentryTests.cpp",
+					"lineNumber": 33,
+					"timestamp": "2026.10.13-16.17.18"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

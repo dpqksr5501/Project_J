@@ -1,4 +1,5 @@
 #include "System/Project_JNPCPathSubsystem.h"
+#include "UObject/StrongObjectPtr.h"
 #include "NavigationSystem.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
@@ -144,6 +145,7 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 {
 	check(IsInGameThread());
 	if (!IsActiveServer() || bTicking) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TGuardValue<bool> TickGuard(bTicking, true);
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCPath_AdmissionAndDelivery);
 	++Stats.TickSequence;
@@ -182,6 +184,8 @@ void UProject_JNPCPathSubsystem::Tick(float DeltaTime)
 			R->bDelivered = true;
 			if (!R->bDispatched || R->bFinished) { Requests.RemoveSingle(R); }
 			auto Callback = MoveTemp(R->Callback);
+			TStrongObjectPtr<UObject> PinnedOwner(R->Owner.Get());
+			TStrongObjectPtr<APawn> PinnedPawn(Pawn);
 			++Stats.LastTickDeliveries; ++Stats.Delivered;
 			const double DeliveredAt = FPlatformTime::Seconds();
 			R->Result.TotalMilliseconds = (DeliveredAt - R->Submitted) * 1000.0;

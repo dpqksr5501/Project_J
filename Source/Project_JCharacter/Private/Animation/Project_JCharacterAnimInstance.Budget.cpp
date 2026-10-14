@@ -238,21 +238,6 @@ FProject_JRemoteVisualLocomotionPolicy UProject_JCharacterAnimInstance::GetEffec
 	return FProject_JRemoteVisualLocomotionPolicy();
 }
 
-float UProject_JCharacterAnimInstance::GetEffectiveHiddenRemoteUpdateInterval() const
-{
-	return GetEffectiveAnimationBudgetSettings().HiddenUpdateInterval;
-}
-
-float UProject_JCharacterAnimInstance::GetEffectiveMidMotionMatchingUpdateInterval() const
-{
-	return GetEffectiveAnimationBudgetSettings().MidUpdateInterval;
-}
-
-float UProject_JCharacterAnimInstance::GetEffectiveFarMotionMatchingUpdateInterval() const
-{
-	return GetEffectiveAnimationBudgetSettings().FarUpdateInterval;
-}
-
 bool UProject_JCharacterAnimInstance::ShouldDisableMotionMatchingBeyondFarDistance() const
 {
 	return GetEffectiveAnimationBudgetSettings().bDisableMotionMatchingBeyondFarDistance;

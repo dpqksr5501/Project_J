@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"animationLayerClass\\\":{\\\"type\\\":\\\"object\\\",\\\"title\\\":\\\"/Script/CoreUObject.Class\\\",\\\"description\\\":\\\"Linked AnimBP that implements the master's MountedLocomotion layer.\\\\nSeveral profiles may intentionally reference the same generic rider layer.\\\",\\\"properties\\\":{\\\"refPath\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"소프트 경로 스트링으로 저장된 레퍼런스입니다.\\\"}},\\\"required\\\":[\\\"refPath\\\"]},\\\"animationTags\\\":{\\\"title\\\":\\\"GameplayTagContainer\\\",\\\"description\\\":\\\"Data-driven classification consumed by the rider AnimBP. Prefer hierarchical\\\\ntags such as Animation.Mount.Pose.Horse over concrete mount class checks.\\\",\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"gameplayTags\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"title\\\":\\\"GameplayTag\\\",\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"tagName\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"태그의 이름입니다.\\\"}},\\\"required\\\":[\\\"tagName\\\"]},\\\"description\\\":\\\"게임플레이 태그의 배열입니다.\\\"}},\\\"required\\\":[\\\"gameplayTags\\\"]},\\\"bUseHandIK\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"Enables the mount socket targets in the rider's thread-safe animation snapshot.\\\"},\\\"transitionBlendTime\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"Profile-selected blend duration exposed to the rider AnimBP.\\\",\\\"minimum\\\":0}}\"}"
+			}
+		]
+	}
+}

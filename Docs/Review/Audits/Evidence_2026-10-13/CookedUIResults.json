@@ -1,0 +1,55 @@
+{
+  "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeProjectAudit_20261013\\PackagedDelivery\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "sha256": "90B88EA62A97373AB966D4E7BEABB5FFC7E5BDD2C407F4631B4BE9D12F2C7C5D",
+  "utc": "2026-10-13T11:13:46.9933756Z",
+  "runs": [
+    {
+      "width": 1280,
+      "height": 720,
+      "passed": true,
+      "exitCode": 0,
+      "logErrorCount": 0,
+      "seconds": 11.9249776,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeAudit_CookedUIFinal\\1280x720\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1280",
+        "-ResY=720",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeAudit_CookedUIFinal/1280x720/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeAudit_CookedUIFinal\\1280x720\\Game.log\"",
+        "-ExecCmds=\"t.MaxFPS 60,csvprofile FRAMES=240\""
+      ]
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "passed": true,
+      "exitCode": 0,
+      "logErrorCount": 0,
+      "seconds": 10.6584006,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeAudit_CookedUIFinal\\1920x1080\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1920",
+        "-ResY=1080",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeAudit_CookedUIFinal/1920x1080/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\WholeAudit_CookedUIFinal\\1920x1080\\Game.log\"",
+        "-ExecCmds=\"t.MaxFPS 60,csvprofile FRAMES=240\""
+      ]
+    }
+  ]
+}

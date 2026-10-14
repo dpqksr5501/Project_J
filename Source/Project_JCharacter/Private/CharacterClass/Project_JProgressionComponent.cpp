@@ -8,25 +8,74 @@
 namespace
 {
 bool IsStyleReady(const UProject_JCombatStyleDefinition* Style) { return !Style || Style->IsRuntimeReady(); }
-void GrantSets(UAbilitySystemComponent* ASC, UObject* Owner, const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets,
+}
+
+void UProject_JProgressionComponent::GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets,
 	const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles)
 {
 	for (const UProject_JAbilitySet* Set : Sets)
 	{
-		if (Set) Set->GiveToAbilitySystem(ASC, &Handles, Owner, FName(*(Prefix + TEXT(".") + Set->GetPathName())));
+		if (!CanGrant()) { return; }
+		if (Set) Set->GiveToAbilitySystem(GrantedAbilitySystem.Get(), &Handles, GetOwner(), FName(*(Prefix + TEXT(".") + Set->GetPathName())));
 	}
 }
-void GrantStyle(UAbilitySystemComponent* ASC, UObject* Owner, const UProject_JCombatStyleDefinition* Style,
+void UProject_JProgressionComponent::GrantStyle(const UProject_JCombatStyleDefinition* Style,
 	FProject_JAbilitySet_GrantedHandles& Handles)
 {
-	if (Style) GrantSets(ASC, Owner, Style->GetRuntimeAbilitySets(), TEXT("CombatStyle.") + Style->GetPathName(), Handles);
-}
+	if (Style) GrantSets(Style->GetRuntimeAbilitySets(), TEXT("CombatStyle.") + Style->GetPathName(), Handles);
 }
 
 UProject_JProgressionComponent::UProject_JProgressionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
+}
+void UProject_JProgressionComponent::BeginPlay()
+{
+	const bool bResume = bEnding;
+	bEnding = false;
+	Super::BeginPlay();
+	// A streamed actor may begin play again after a prior EndPlay. Reconstruct
+	// only this component's retired leases; persistent progression values remain.
+	if (bResume && CanMutate() && State.Revision > 0)
+	{
+		TGuardValue<bool> Guard(bChanging, true);
+		GrantClass();
+		if (!GrantedAbilitySystem.IsValid() && !bEnding) { GrantedAbilitySystem = GetASC(); }
+		for (const UProject_JCharacterAdvancementDefinition* Advancement : ActiveAdvancements)
+		{
+			if (!CanGrant()) { break; }
+			GrantSets(Advancement->AdditionalAbilitySets, TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
+			GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
+		}
+	}
+}
+void UProject_JProgressionComponent::EndPlay(const EEndPlayReason::Type Reason)
+{
+	RetireGrants();
+	Super::EndPlay(Reason);
+}
+void UProject_JProgressionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	RetireGrants();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+void UProject_JProgressionComponent::RetireGrants()
+{
+	bEnding = true;
+	OnChanged.Clear();
+	if (auto* ASC = GrantedAbilitySystem.Get())
+	{
+		const auto* Set = GetDefault<UProject_JAbilitySet>();
+		Set->TakeFromAbilitySystem(ASC, &ClassHandles);
+		Set->TakeFromAbilitySystem(ASC, &AdvancementHandles);
+	}
+	GrantedAbilitySystem.Reset();
+}
+bool UProject_JProgressionComponent::CanGrant() const
+{
+	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() &&
+		GrantedAbilitySystem.IsValid() && GetASC() == GrantedAbilitySystem.Get();
 }
 
 void UProject_JProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -46,23 +95,26 @@ UAbilitySystemComponent* UProject_JProgressionComponent::GetASC() const
 bool UProject_JProgressionComponent::CanMutate() const
 {
 	check(IsInGameThread());
-	return !bChanging && GetOwner() && !GetOwner()->IsActorBeingDestroyed() && GetOwner()->HasAuthority() && GetASC();
+	return !bEnding && !IsBeingDestroyed() && !bChanging && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() &&
+		GetOwner()->HasAuthority() && GetASC() && (!GrantedAbilitySystem.IsValid() || GetASC() == GrantedAbilitySystem.Get());
 }
 
 void UProject_JProgressionComponent::Publish()
 {
+	if (bEnding || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed()) { return; }
 	State.Revision = State.Revision == MAX_int32 ? 1 : State.Revision + 1;
 	GetOwner()->ForceNetUpdate();
 	OnChanged.Broadcast();
 }
-void UProject_JProgressionComponent::OnRep_State() { OnChanged.Broadcast(); }
+void UProject_JProgressionComponent::OnRep_State() { if (!bEnding) OnChanged.Broadcast(); }
 
 void UProject_JProgressionComponent::GrantClass()
 {
 	if (!State.ClassDefinition) return;
-	GrantSets(GetASC(), GetOwner(), State.ClassDefinition->AbilitySets,
+	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
+	GrantSets(State.ClassDefinition->AbilitySets,
 		TEXT("Class.") + State.ClassDefinition->ClassId.ToString(), ClassHandles);
-	GrantStyle(GetASC(), GetOwner(), State.ClassDefinition->DefaultCombatStyle, ClassHandles);
+	GrantStyle(State.ClassDefinition->DefaultCombatStyle, ClassHandles);
 }
 
 void UProject_JProgressionComponent::InitializeDefaults(UProject_JCharacterClassDefinition* Class,
@@ -91,7 +143,7 @@ bool UProject_JProgressionComponent::InitializeClass(UProject_JCharacterClassDef
 	State.Level = FMath::Max(State.Level, Class->StartingLevel);
 	GrantClass();
 	Publish();
-	return true;
+	return !bEnding;
 }
 
 bool UProject_JProgressionComponent::CanApplyAdvancement(const UProject_JCharacterAdvancementDefinition* Advancement) const
@@ -119,9 +171,11 @@ bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvance
 {
 	if (!CanApplyAdvancement(Advancement)) return false;
 	TGuardValue<bool> Guard(bChanging, true);
+	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
 	if (Advancement->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement)
 	{
 		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(GetASC(), &AdvancementHandles);
+		if (!CanGrant()) { return false; }
 		ActiveAdvancements.Reset();
 	}
 	if (!State.ClassDefinition && Advancement->BaseClass)
@@ -132,11 +186,12 @@ bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvance
 	State.Advancement = Advancement;
 	AcquiredAdvancements.Add(Advancement->AdvancementId);
 	ActiveAdvancements.Add(Advancement);
-	GrantSets(GetASC(), GetOwner(), Advancement->AdditionalAbilitySets,
+	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
+	GrantSets(Advancement->AdditionalAbilitySets,
 		TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
-	GrantStyle(GetASC(), GetOwner(), Advancement->CombatStyleOverride, AdvancementHandles);
+	GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
 	Publish();
-	return true;
+	return !bEnding;
 }
 
 bool UProject_JProgressionComponent::SetLevel(int32 Level)
@@ -170,7 +225,7 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 		|| Snapshot.AdvancementHistory.Num() > 256 || Snapshot.AdvancementHistory.Num() != OrderedHistory.Num()
 		|| Snapshot.ClassId != (Class ? Class->ClassId : NAME_None)
 		|| (Class && (Snapshot.Level < Class->StartingLevel || !IsStyleReady(Class->DefaultCombatStyle)))) return false;
-	const int64 RequiredXP = Snapshot.Level>=FMath::Clamp(MaximumLevel,1,10000) ? 0 : ExperienceRequirements.IsValidIndex(Snapshot.Level-1) ? FMath::Clamp<int64>(ExperienceRequirements[Snapshot.Level-1],1,MAX_int64/10000) : 100LL*Snapshot.Level;
+	const int64 RequiredXP = GetRequiredExperienceForLevel(Snapshot.Level);
  if (Snapshot.SchemaVersion>=2 && (RequiredXP==0 ? Snapshot.Experience!=0 : Snapshot.Experience>=RequiredXP)) return false;
  TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
 	TSet<FName> Seen;
@@ -201,20 +256,27 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 	GrantClass();
 	for (const UProject_JCharacterAdvancementDefinition* Advancement : ActiveAdvancements)
 	{
-		GrantSets(GetASC(), GetOwner(), Advancement->AdditionalAbilitySets,
+		if (!GrantedAbilitySystem.IsValid() && !bEnding) { GrantedAbilitySystem = GetASC(); }
+		GrantSets(Advancement->AdditionalAbilitySets,
 			TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
-		GrantStyle(GetASC(), GetOwner(), Advancement->CombatStyleOverride, AdvancementHandles);
+		GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
 	}
 	Publish();
 	return true;
 }
 
-void UProject_JProgressionComponent::OnRep_Experience() { OnChanged.Broadcast(); }
+void UProject_JProgressionComponent::OnRep_Experience() { if (!bEnding) OnChanged.Broadcast(); }
 int64 UProject_JProgressionComponent::GetNextLevelExperience() const
 {
- if (State.Level >= FMath::Clamp(MaximumLevel, 1, 10000)) return 0;
- const int32 Index = State.Level - 1;
- return ExperienceRequirements.IsValidIndex(Index) ? FMath::Clamp<int64>(ExperienceRequirements[Index], 1, MAX_int64 / 10000) : 100LL * FMath::Max(1, State.Level);
+ return GetRequiredExperienceForLevel(State.Level);
+}
+int64 UProject_JProgressionComponent::GetRequiredExperienceForLevel(int32 Level) const
+{
+	if (Level >= FMath::Clamp(MaximumLevel, 1, 10000)) return 0;
+	const int32 Index = Level - 1;
+	return ExperienceRequirements.IsValidIndex(Index)
+		? FMath::Clamp<int64>(ExperienceRequirements[Index], 1, MAX_int64 / 10000)
+		: 100LL * FMath::Max(1, Level);
 }
 bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
 {

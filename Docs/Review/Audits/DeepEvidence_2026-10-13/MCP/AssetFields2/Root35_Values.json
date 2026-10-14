@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"sourceSkeleton\\\":{\\\"refPath\\\":\\\"/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin\\\"},\\\"targetSkeleton\\\":{\\\"refPath\\\":\\\"/Game/Characters/GreatSword/GreatSword_Woman_Skeleton.GreatSword_Woman_Skeleton\\\"},\\\"retargeter\\\":{\\\"refPath\\\":\\\"/Game/Animation_Logic/RTG_Greatsword_UE5.RTG_Greatsword_UE5\\\"}}\"}"
+			}
+		]
+	}
+}

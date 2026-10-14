@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Game/Input/Actions/IA_Jump\",\"/Game/Input/Actions/IA_Look\",\"/Game/Input/Actions/IA_Move\",\"/Game/Input/Actions/IA_Sprint\",\"/Game/Input/Actions/IA_Interact\",\"/Script/EnhancedInput\",\"/Game/Input/Actions/IA_ToggleCombat\",\"/Game/Input/Actions/IA_Attack_LMB\",\"/Game/Input/Actions/IA_Attack_RMB\",\"/Game/Input/Actions/IA_MountAscend\",\"/Game/Input/Actions/IA_MountDescend\",\"/Game/Input/Actions/IA_Skill_Q\",\"/Game/Input/Actions/IA_Skill_R\",\"/Game/Input/Actions/IA_Skill_T\",\"/Game/Input/Actions/IA_MoveIntent_Backward\",\"/Game/Input/Actions/IA_MoveIntent_Forward\",\"/Game/Input/Actions/IA_MoveIntent_Left\",\"/Game/Input/Actions/IA_MoveIntent_Right\"]}"
+			}
+		]
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"columnsStructs\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.EnumColumn\\\",\\\"inputValue\\\":{\\\"_structType\\\":\\\"/Script/Chooser.EnumContextProperty\\\",\\\"binding\\\":{\\\"enum\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.EProject_JStateControllerPresentationState\\\"},\\\"propertyBindingChain\\\":[\\\"StateControllerPresentationStateForChooser\\\"],\\\"contextIndex\\\":0,\\\"isBoundToRoot\\\":false,\\\"displayName\\\":\\\"State Controller Presentation State for Chooser\\\"}},\\\"defaultRowValue\\\":{\\\"valueName\\\":\\\"None\\\",\\\"comparison\\\":\\\"MatchEqual\\\",\\\"value\\\":0},\\\"rowValues\\\":[{\\\"valueName\\\":\\\"EProject_JStateControllerPresentationState::TurnInPlace\\\",\\\"comparison\\\":\\\"MatchEqual\\\",\\\"value\\\":8},{\\\"valueName\\\":\\\"EProject_JStateControllerPresentationState::TurnInPlace\\\",\\\"comparison\\\":\\\"MatchAny\\\",\\\"value\\\":8}],\\\"bDisabled\\\":false,\\\"editorColumnWidth\\\":200}],\\\"resultType\\\":\\\"ObjectResult\\\",\\\"outputObjectType\\\":{\\\"refPath\\\":\\\"/Script/Chooser.ChooserTable\\\"},\\\"contextData\\\":[{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeClass\\\",\\\"class\\\":{\\\"refPath\\\":\\\"/Script/Project_JCharacter.Project_JCharacterAnimInstance\\\"},\\\"direction\\\":\\\"ReadWrite\\\"},{\\\"_structType\\\":\\\"/Script/Chooser.ContextObjectTypeStruct\\\",\\\"struct\\\":{\\\"refPath\\\":\\\"/Script/Chooser.ChooserPlayerSettings\\\"},\\\"direction\\\":\\\"Write\\\"}]}\"}"
+			}
+		]
+	}
+}

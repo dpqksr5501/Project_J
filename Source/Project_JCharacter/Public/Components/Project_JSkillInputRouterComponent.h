@@ -128,10 +128,12 @@ public:
 	UProject_JSkillInputRouterComponent();
 
 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
+	virtual void BeginPlay() override;
 	void ResetInputState();
 	/** Cancel held/pending mouse attacks without synthesizing a quick tap or clearing keyboard modifiers. */
 	void CancelMouseInput();
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Input|Skills")
 	void SetModifierHeld(bool bHeld);
@@ -157,6 +159,10 @@ public:
 	TObjectPtr<UProject_JSkillInputMappingData> InputMappingData = nullptr;
 
 private:
+	friend class FProjectJInputRetirementTest;
+	void RetireInput();
+	bool bEnding = false;
+	uint64 BindingRevision = 0;
 	const TArray<FProject_JSkillInputChord>& GetEffectiveChords();
 	float GetEffectiveSimultaneousChordGraceSeconds() const;
 	void BuildDefaultChordsIfNeeded();
@@ -166,6 +172,7 @@ private:
 	void StartChordGracePeriod(EProject_JSkillInputButton Button);
 	void FlushPendingChordButton();
 	void DispatchResolvedButtonInput(EProject_JSkillInputButton Button, bool bIncludeCombinedChords);
+	void DispatchButtonInputTag(EProject_JSkillInputButton Button, FGameplayTag InputTag);
 	void ReleaseActiveChordIfReady();
 	bool DoesChordMatchButton(const FProject_JSkillInputChord& Chord, EProject_JSkillInputButton Button) const;
 	void ReleaseActiveTagForButton(EProject_JSkillInputButton Button);
@@ -184,4 +191,6 @@ private:
 	FTimerHandle PendingChordTimerHandle;
 	EProject_JSkillInputButton PendingChordButton = EProject_JSkillInputButton::LMB;
 	bool bHasPendingChordButton = false;
+	uint64 LMBInputRevision = 0;
+	uint64 RMBInputRevision = 0;
 };

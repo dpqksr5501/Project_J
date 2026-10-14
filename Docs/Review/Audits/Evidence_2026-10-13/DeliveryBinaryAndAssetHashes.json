@@ -1,0 +1,54 @@
+[
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+    "sha256": "E4284F60F4EA498FF7A08F17EFB2F2A624B195397DD7630B7591F55B548CCE47"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll",
+    "sha256": "A41494882CD2F91CAFE6F7185F415D9A3923E60C5C7D2A3D955B750A0CC13C0B"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+    "sha256": "56DB2080D25F1E9DE33A620A98CA4F6D16F036F07B34FF8CE38CD7C1A83ED0B6"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll",
+    "sha256": "07F233E4EBDD018B40FED71DCDDD81A9EA45AC624E153F945978E5B018D2D8E8"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JCore.dll",
+    "sha256": "3A78103D535D5631D2FC8F1CDC2FC4ED217FE921053F649CB2EFB0D23328707C"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JGAS.dll",
+    "sha256": "C3AA23D0B77BEF2FB784294680720C0937B8A127F5102CD9186D4D5DF671DD4B"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMMO.dll",
+    "sha256": "2C7BC1CD2B07E222C216BC0AE76DD306B53BED8D44FCF8230B4892F8BBE1A8CB"
+  },
+  {
+    "path": "Binaries/Win64/UnrealEditor-Project_JMount.dll",
+    "sha256": "721079B6B52DCBDD3AE40169D712354E14FD30DBC4D80E5D4EC500DD6F84FB82"
+  },
+  {
+    "path": "Binaries/Win64/Project_J.exe",
+    "sha256": "90B88EA62A97373AB966D4E7BEABB5FFC7E5BDD2C407F4631B4BE9D12F2C7C5D"
+  },
+  {
+    "path": "Saved/Validation/WholeProjectAudit_20261013/PackagedDelivery/Windows/Project_J/Binaries/Win64/Project_J.exe",
+    "sha256": "90B88EA62A97373AB966D4E7BEABB5FFC7E5BDD2C407F4631B4BE9D12F2C7C5D"
+  },
+  {
+    "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.uasset",
+    "sha256": "DCB77F11C230B5C20EB4172AB4BA2940ADB8A409A5C14BC132D5592C5A3882B1"
+  },
+  {
+    "path": "Content/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword.uasset",
+    "sha256": "C793B56DE27F5D32F956C01396EA1619EB5D8C9E1C1DBA66F1931C95B70910F7"
+  },
+  {
+    "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+    "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E"
+  }
+]

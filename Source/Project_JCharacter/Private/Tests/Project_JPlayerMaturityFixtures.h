@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Project_JGreatswordCharacter.h"
+#include "Project_JNPCCharacter.h"
 #include "Project_JPlayerMaturityFixtures.generated.h"
 
 UCLASS(NotBlueprintable, Transient)
@@ -32,4 +33,21 @@ class AProject_JCombatFacingFixture : public AProject_JGreatswordCharacter
 public:
 	void ApplyTestRotationMode(bool bCombat) { ApplyCombatRotationMode(bCombat); }
 	void UpdateTestMovementPolicy() { UpdateMaxWalkSpeed(); }
+};
+
+UCLASS(NotBlueprintable, Transient)
+class AProject_JMassRetirementFixture : public AProject_JNPCCharacter
+{
+	GENERATED_BODY()
+public:
+	TFunction<void(bool)> OnHiddenChanged;
+	virtual void SetActorHiddenInGame(bool bNewHidden) override
+	{
+		Super::SetActorHiddenInGame(bNewHidden);
+		if (OnHiddenChanged)
+		{
+			auto Callback = MoveTemp(OnHiddenChanged);
+			Callback(bNewHidden);
+		}
+	}
 };

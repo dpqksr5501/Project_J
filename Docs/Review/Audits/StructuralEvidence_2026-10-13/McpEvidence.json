@@ -1,0 +1,38 @@
+[
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/BPCurrentLayers.json",
+    "sha256": "b40d23da120bc0f486a10c8b9bd0bcfd9e346be90a459a3903a65bf339746c8e"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/BPDefaults.json",
+    "sha256": "461704d535fee957af79063c9561590b77f38a3548e65f8e0df615367ff4ca64"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/CombatLayerClass.json",
+    "sha256": "d2ae021c0e6f45d6f23fb00a8a1b9fce357e33baf9147c10e8fee6c6ac3dda37"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/CombatLayerLeaseCDO.json",
+    "sha256": "3876249134c2b4e9da8627c71f7afd0c136a6a994eea71b806d7639e960ec792"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/InventoryRowCDO.json",
+    "sha256": "8f80542fa10b296cb6f8cc06c96c6ce2809c02c6b00a64b4324931a2981bb7f3"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/InventoryTileCDO.json",
+    "sha256": "d94b85355b167b8bb2a5b54864adf10c8a844432ab63aa9c1c208053307af2ee"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/MountedLayerLeaseCDO.json",
+    "sha256": "37d27d84416a6742de21c57017ac1061db58c86bac58083a1e1381ab4039d62c"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/RiderLayerClass.json",
+    "sha256": "bd307f0f740bc9ff34cfeb83317e0c20fcad353dcc1be8dd49cf3e59af74231e"
+  },
+  {
+    "path": "Saved/Validation/StructuralAudit_20261013/WeaponLayerProfile.json",
+    "sha256": "fa22b3b0321ccb0d2593f86cfb33d85edc95fbaa72f63694a640b808e93b81bb"
+  }
+]

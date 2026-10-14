@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"simultaneousChordGraceSeconds\\\":0.079999998211860657,\\\"chords\\\":[{\\\"bRequiresLMB\\\":true,\\\"bRequiresRMB\\\":false,\\\"bRequiresModifier\\\":false,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"priority\\\":0,\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Weapon.LMB\\\"}},{\\\"bRequiresLMB\\\":false,\\\"bRequiresRMB\\\":true,\\\"bRequiresModifier\\\":false,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"priority\\\":0,\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Weapon.RMB\\\"}},{\\\"bRequiresLMB\\\":true,\\\"bRequiresRMB\\\":true,\\\"bRequiresModifier\\\":false,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"priority\\\":100,\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Weapon.Chord.LMBRMB\\\"}}],\\\"directSkillBindings\\\":[{\\\"inputAction\\\":{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_Skill_Q.IA_Skill_Q\\\"},\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Skill.Q\\\"},\\\"priority\\\":0,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]}},{\\\"inputAction\\\":{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_Skill_R.IA_Skill_R\\\"},\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Skill.R\\\"},\\\"priority\\\":0,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]}},{\\\"inputAction\\\":{\\\"refPath\\\":\\\"/Game/Input/Actions/IA_Skill_T.IA_Skill_T\\\"},\\\"inputTag\\\":{\\\"tagName\\\":\\\"InputTag.Skill.T\\\"},\\\"priority\\\":0,\\\"requiredModifierTags\\\":{\\\"gameplayTags\\\":[]},\\\"blockedModifierTags\\\":{\\\"gameplayTags\\\":[]}}],\\\"modifierBindings\\\":[]}\"}"
+			}
+		]
+	}
+}

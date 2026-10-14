@@ -51,6 +51,14 @@ void UProject_JMountedAnimationLayerComponent::EndPlay(const EEndPlayReason::Typ
 	Super::EndPlay(EndPlayReason);
 }
 
+void UProject_JMountedAnimationLayerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	bEndingPlay = true;
+	UnlinkLayer();
+	ResetPreload();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UProject_JMountedAnimationLayerComponent::RefreshLayer()
 {
 	AProject_JPlayerCharacter* Player = Cast<AProject_JPlayerCharacter>(GetOwner());
@@ -62,22 +70,14 @@ void UProject_JMountedAnimationLayerComponent::RefreshLayer()
 	const UProject_JMountComponent* MountComponent = Player->GetMountComponent();
 	const AProject_JMountCharacter* MountedMount = MountComponent ? MountComponent->GetMountedMount() : nullptr;
 	const FSoftObjectPath RequestedPath = ResolveLayerPath(MountedMount);
-	if (PreloadedAnimationLayerPath == RequestedPath && bLoadFailed) { UnlinkLayer(); return; }
+	if (Layer.PreloadedPath == RequestedPath && Layer.bFailed) { UnlinkLayer(); return; }
 	if (!MountedMount || RequestedPath.IsNull())
 	{
 		UnlinkLayer();
 		return;
 	}
 
-	UClass* LoadedLayerClass = nullptr;
-	if (PreloadedAnimationLayerPath == RequestedPath)
-	{
-		LoadedLayerClass = PreloadedAnimationLayerClass.Get();
-	}
-	if (!LoadedLayerClass)
-	{
-		LoadedLayerClass = Cast<UClass>(RequestedPath.ResolveObject());
-	}
+	UClass* LoadedLayerClass = Layer.ResolveClass(RequestedPath);
 
 	if (!LoadedLayerClass)
 	{
@@ -90,8 +90,8 @@ void UProject_JMountedAnimationLayerComponent::RefreshLayer()
 
 	if (!LoadedLayerClass->IsChildOf(UAnimInstance::StaticClass()))
 	{
-		PreloadedAnimationLayerPath = RequestedPath;
-		bLoadFailed = true;
+		Layer.PreloadedPath = RequestedPath;
+		Layer.bFailed = true;
 		UE_LOG(LogProjectJMountedAnimationLayer, Error,
 			TEXT("Rider layer is not an AnimInstance. Owner=%s Mount=%s Layer=%s"),
 			*GetNameSafe(Player), *GetNameSafe(MountedMount), *GetNameSafe(LoadedLayerClass));
@@ -99,22 +99,13 @@ void UProject_JMountedAnimationLayerComponent::RefreshLayer()
 		return;
 	}
 
-	USkeletalMeshComponent* CurrentMesh = Player->GetMesh();
-	UAnimInstance* CurrentMaster = CurrentMesh ? CurrentMesh->GetAnimInstance() : nullptr;
-	if (LinkedAnimationLayerClass == LoadedLayerClass && LinkedMesh == CurrentMesh
-		&& LinkedMaster == CurrentMaster && CurrentMaster
-		&& CurrentMaster->GetLinkedAnimLayerInstanceByClass(LoadedLayerClass))
+	if (Layer.IsLinkedTo(Player->GetMesh(), LoadedLayerClass))
 	{
 		return;
 	}
 
-	UnlinkLayer();
-	if (USkeletalMeshComponent* PlayerMesh = Player->GetMesh(); PlayerMesh && PlayerMesh->GetAnimInstance())
+	if (USkeletalMeshComponent* PlayerMesh = Player->GetMesh(); Layer.Link(PlayerMesh, LoadedLayerClass))
 	{
-		PlayerMesh->LinkAnimClassLayers(LoadedLayerClass);
-		LinkedAnimationLayerClass = LoadedLayerClass;
-		LinkedMesh = PlayerMesh;
-		LinkedMaster = PlayerMesh->GetAnimInstance();
 		UE_LOG(LogProjectJMountedAnimationLayer, Verbose,
 			TEXT("Rider layer linked. Owner=%s Mount=%s Layer=%s"),
 			*GetNameSafe(Player), *GetNameSafe(MountedMount), *GetNameSafe(LoadedLayerClass));
@@ -153,25 +144,17 @@ void UProject_JMountedAnimationLayerComponent::PreloadLayerForMount(const AProje
 		return;
 	}
 
-	if (PreloadedAnimationLayerPath == RequestedPath &&
-		(PreloadedAnimationLayerClass || LayerPreloadHandle.IsValid() || bLoadFailed))
+	if (Layer.HasPreloadFor(RequestedPath))
 	{
 		return;
 	}
 
-	ResetPreload();
-	PreloadedAnimationLayerPath = RequestedPath;
-	if (UClass* AlreadyLoadedClass = Cast<UClass>(RequestedPath.ResolveObject()))
+	if (Layer.PreparePreload(RequestedPath))
 	{
-		PreloadedAnimationLayerClass = AlreadyLoadedClass;
 		RefreshLayer();
 		return;
 	}
-
-	LayerPreloadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
-		RequestedPath,
-		FStreamableDelegate::CreateUObject(this, &ThisClass::HandleLayerPreloadCompleted, RequestedPath, LoadGeneration));
-	if (!LayerPreloadHandle.IsValid()) { bLoadFailed = true; }
+	Layer.RequestPreload(FStreamableDelegate::CreateUObject(this, &ThisClass::HandleLayerPreloadCompleted, RequestedPath, Layer.Generation));
 }
 
 void UProject_JMountedAnimationLayerComponent::HandleMountChanged(
@@ -203,13 +186,9 @@ FSoftObjectPath UProject_JMountedAnimationLayerComponent::ResolveLayerPath(const
 
 void UProject_JMountedAnimationLayerComponent::HandleLayerPreloadCompleted(FSoftObjectPath RequestedPath, uint64 RequestGeneration)
 {
-	if (bEndingPlay || RequestGeneration != LoadGeneration || PreloadedAnimationLayerPath != RequestedPath) { return; }
-	PreloadedAnimationLayerClass = Cast<UClass>(RequestedPath.ResolveObject());
-	LayerPreloadHandle.Reset();
-	bLoadFailed = !PreloadedAnimationLayerClass || !PreloadedAnimationLayerClass->IsChildOf(UAnimInstance::StaticClass());
-	if (bLoadFailed)
+	if (bEndingPlay || !Layer.IsCurrentRequest(RequestedPath, RequestGeneration)) { return; }
+	if (!Layer.CompletePreload())
 	{
-		PreloadedAnimationLayerClass = nullptr;
 		UE_LOG(LogProjectJMountedAnimationLayer, Warning, TEXT("Layer load failed; default pose retained until path change or explicit retry. Path=%s"), *RequestedPath.ToString());
 		return;
 	}
@@ -218,29 +197,12 @@ void UProject_JMountedAnimationLayerComponent::HandleLayerPreloadCompleted(FSoft
 
 void UProject_JMountedAnimationLayerComponent::UnlinkLayer()
 {
-	// Unlink from the original mesh/master only. A replacement master may
-	// already have another owner's layer of the same class.
-	USkeletalMeshComponent* Mesh = LinkedMesh.Get();
-	if (LinkedAnimationLayerClass && Mesh && LinkedMaster.IsValid() && Mesh->GetAnimInstance() == LinkedMaster.Get())
-	{
-		Mesh->UnlinkAnimClassLayers(LinkedAnimationLayerClass);
-	}
-	LinkedAnimationLayerClass = nullptr;
-	LinkedMesh.Reset();
-	LinkedMaster.Reset();
+	Layer.Unlink();
 }
 
 void UProject_JMountedAnimationLayerComponent::ResetPreload()
 {
-	++LoadGeneration;
-	bLoadFailed = false;
-	if (LayerPreloadHandle.IsValid())
-	{
-		LayerPreloadHandle->CancelHandle();
-	}
-	LayerPreloadHandle.Reset();
-	PreloadedAnimationLayerClass = nullptr;
-	PreloadedAnimationLayerPath.Reset();
+	Layer.ResetPreload();
 }
 
 void UProject_JMountedAnimationLayerComponent::RetryLayerLoad()
@@ -253,8 +215,5 @@ void UProject_JMountedAnimationLayerComponent::RetryLayerLoad()
 
 bool UProject_JMountedAnimationLayerComponent::IsMountedLayerLinked() const
 {
-	const auto* Mesh = LinkedMesh.Get();
-	const auto* Master = LinkedMaster.Get();
-	return LinkedAnimationLayerClass && Mesh && Master && Mesh->GetAnimInstance() == Master
-		&& Master->GetLinkedAnimLayerInstanceByClass(LinkedAnimationLayerClass);
+	return Layer.IsLinked();
 }

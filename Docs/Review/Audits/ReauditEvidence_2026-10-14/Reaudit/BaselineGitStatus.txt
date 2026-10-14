@@ -1,0 +1,145 @@
+ M Content/Animation_Logic/RTG_Greatsword_UE5.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset
+ M Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset
+ M Docs/Animation/Architecture/OneShot_Command_Lifetime_2026-10-05.md
+ M Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md
+ M Docs/Animation/README.md
+ M Docs/Architecture/README.md
+ M Docs/Architecture/Runtime/README.md
+ M Docs/Architecture/Runtime/Reports/Character_Component_Ownership_2026-09-20.md
+ M Docs/Combat/Architecture/Combat_Animation_System.md
+ M Docs/Combat/Architecture/ScalableCombatFoundation.md
+ M Docs/Combat/Authoring/GreatswordCombatAuthoringGuide.md
+ M Docs/Combat/README.md
+ M Docs/Gameplay/Architecture/SkillSystemArchitecture.md
+ M Docs/Gameplay/Authoring/Content_Authoring_System.md
+ M Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md
+ M Docs/Maintenance/Document_Catalog.md
+ M Docs/Networking/README.md
+ M Docs/Overview/ProjectContext.md
+ M Docs/Overview/ProjectOverview.md
+ M Docs/Performance/README.md
+ M Docs/README.md
+ M Docs/Review/README.md
+ M Docs/UI/MMORPG_UI_Architecture_2026-10-10.md
+ M Docs/UI/README.md
+ M README.md
+ M Scripts/Validation/Measure-Network.ps1
+ M Source/Project_J/Game/Project_JPlayerState.cpp
+ M Source/Project_J/Game/Project_JPlayerState.h
+ M Source/Project_J/Game/Project_JQuestComponent.cpp
+ M Source/Project_J/Game/Project_JQuestComponent.h
+ M Source/Project_J/Private/Tests/Project_JRuntimeOwnershipTests.cpp
+ M Source/Project_J/Testing/Fixtures/README.md
+ M Source/Project_J/Testing/Project_JNaturalnessPlayback.cpp
+ M Source/Project_J/Testing/Project_JNetworkLoadFixture.cpp
+ M Source/Project_J/Testing/Project_JNetworkLoadFixture.h
+ M Source/Project_J/UI/Project_JPlayerHUDWidget.cpp
+ M Source/Project_J/UI/Project_JPlayerHUDWidget.h
+ M Source/Project_J/UI/Project_JPlayerUIComponent.cpp
+ M Source/Project_J/UI/Project_JPlayerUIComponent.h
+ M Source/Project_J/UI/Project_JStatusEffects.cpp
+ M Source/Project_J/UI/Project_JStatusEffects.h
+ M Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JBudgetedSkeletalMeshComponent.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JRetargetBodyProfile.cpp
+ M Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp
+ M Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp
+ M Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Sprint.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JCombatAnimationLayerComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JCombatStateComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JMountedAnimationLayerComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JReplicatedJumpStateComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+ M Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp
+ M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp
+ M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp
+ M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentGround.cpp
+ M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp
+ M Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentTransitions.cpp
+ M Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp
+ M Source/Project_JCharacter/Private/System/Project_JCharacterAnimationBudgetSubsystem.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JInternalRefinementTests.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JLocomotionContinuityTests.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JRetargetBodyProfileTests.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JSystemsModernizationTests.cpp
+ M Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
+ M Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+ M Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h
+ M Source/Project_JCharacter/Public/Combat/Project_JCombatTypes.h
+ M Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Melee.h
+ M Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Sprint.h
+ M Source/Project_JCharacter/Public/Components/Project_JCombatAnimationLayerComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JCombatStateComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JMountedAnimationLayerComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JReplicatedJumpStateComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+ M Source/Project_JCharacter/Public/Project_JBaseCharacter.h
+ M Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h
+ M Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h
+ M Source/Project_JCharacter/Public/Project_JPlayerCharacter.h
+ M Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+ M Source/Project_JCore/Public/Project_JCombatInterface.h
+ M Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp
+ M Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h
+?? Docs/Review/Audits/DeepEvidence_2026-10-13/
+?? Docs/Review/Audits/Evidence_2026-10-13/
+?? Docs/Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md
+?? Docs/Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md
+?? Docs/Review/Audits/Project_J_Structural_Improvement_2026-10-13.md
+?? Docs/Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md
+?? Docs/Review/Audits/StructuralEvidence_2026-10-13/
+?? Scripts/Validation/Measure-RenderedCrowd.ps1
+?? Source/Project_J/Private/Tests/Project_JQuestLifetimeTests.cpp
+?? Source/Project_J/Private/Tests/Project_JStatusBindingReentryTests.cpp
+?? Source/Project_J/Private/Tests/Project_JUIIconRequestLifetimeTests.cpp
+?? Source/Project_J/Private/Tests/Project_JUIScreenFailureTests.cpp
+?? Source/Project_J/Testing/Project_JAuthoredSkillContinuationTest.cpp
+?? Source/Project_J/Testing/Project_JRenderedCrowdFixture.cpp
+?? Source/Project_J/Testing/Project_JRenderedCrowdFixture.h
+?? Source/Project_J/UI/Project_JInventoryWidgets.cpp
+?? Source/Project_J/UI/Project_JSkillButton.cpp
+?? Source/Project_J/UI/Project_JUIIconRequest.cpp
+?? Source/Project_J/UI/Project_JUIIconRequest.h
+?? Source/Project_J/UI/Project_JWidgetPresentationHelpers.h
+?? Source/Project_JCharacter/Private/Animation/Project_JAnimationLayerLease.cpp
+?? Source/Project_JCharacter/Private/Animation/Project_JFootPlacementDefaults.h
+?? Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.Diagnostics.cpp
+?? Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationDiagnostics.h
+?? Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JAnimationDemandLifetimeTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JAuthoredDamageTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JEquipmentCommitLifetimeTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JGrantReentryTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JInputRetirementTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JMouseChordLifecycleTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JProgressionLifetimeTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JStateOwnershipTests.cpp
+?? Source/Project_JCharacter/Public/Animation/Project_JAnimationLayerLease.h
+?? Source/Project_JCharacterEditor/Private/Animation/Project_JAuthoredAssetAudit.cpp

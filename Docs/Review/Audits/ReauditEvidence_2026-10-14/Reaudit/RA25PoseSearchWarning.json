@@ -1,0 +1,39 @@
+{
+  "sourceVersion": "RA01-25",
+  "test": {
+    "testDisplayName": "ProductionData",
+    "fullTestPath": "ProjectJ.StrafeForward.ProductionData",
+    "tags": [],
+    "state": "Success",
+    "deviceInstance": [
+      "68BFCC984206013D1BEC2A88D6823DC5"
+    ],
+    "duration": 0.04606170207262039,
+    "dateTime": "2026.10.14-02.41.50",
+    "entries": [
+      {
+        "event": {
+          "type": "Warning",
+          "message": "LogPoseSearch: 8ff351479e1aaf4c7a54b7a595b83a29b7306bc6 - PSD_Combat_Run_Cycle BuildIndex SearchIndex Corrupted! SearchIndex.Assets referencing missing asset with index 14",
+          "context": "log",
+          "artifact": "00000000000000000000000000000000"
+        },
+        "filename": "",
+        "lineNumber": -1,
+        "timestamp": "2026.10.14-02.41.50"
+      }
+    ],
+    "warnings": 1,
+    "errors": 0,
+    "artifacts": []
+  },
+  "investigation": "Observed corrupted derived index warning, not resolved. Original/expected transient database discrimination and fresh isolated/native/MCP comparison pending. No DDC deletion or warning suppression.",
+  "evidence": {
+    "originalProductionEntries": 70,
+    "forwardEntries": 14,
+    "expectedTransientDuplicateEntries": 14,
+    "warningMissingIndex": 14,
+    "sourceCreatesDuplicateThenRemovesEntries": true,
+    "interpretation": "Engine rejects index14 only if database has at most14 entries. Actual production Cycle remains70 according to pre/post text assertions; mutated transient Expected is a leading source. Fresh isolated and read-only value-copy verification pending; not proof authored Cycle package is corrupt."
+  }
+}

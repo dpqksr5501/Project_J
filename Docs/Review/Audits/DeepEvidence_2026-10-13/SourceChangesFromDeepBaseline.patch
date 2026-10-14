@@ -1,0 +1,3476 @@
+--- deep-baseline/Source/Project_J/Game/Project_JQuestComponent.cpp
++++ final/Source/Project_J/Game/Project_JQuestComponent.cpp
+@@ -32,9 +32,47 @@
+ }
+ void UProject_JQuestComponent::EndPlay(const EEndPlayReason::Type Reason)
+ {
+-	GetWorld()->GetTimerManager().ClearTimer(TravelTimer);
++	Retire();
++	Super::EndPlay(Reason);
++}
++void UProject_JQuestComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	Retire();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++bool UProject_JQuestComponent::CanPublish() const
++{
++	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
++		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
++}
++bool UProject_JQuestComponent::CanMutate() const
++{
++	check(IsInGameThread());
++	return CanPublish() && GetOwner()->HasAuthority() && !bChanging;
++}
++void UProject_JQuestComponent::Retire()
++{
++	bEnding = true;
++	if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
++	TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
+ 	OnChanged.Clear();
+-	Super::EndPlay(Reason);
++}
++void UProject_JQuestComponent::ReconcileTravelSampling()
++{
++	const bool bActive = CanPublish() && GetOwner()->HasAuthority() &&
++		States.ContainsByPredicate([this](const FProject_JQuestState& State) {
++			const auto* Def = FindDefinition(State.QuestId);
++			return Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount;
++		});
++	if (!bActive)
++	{
++		if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
++		TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
++	}
++	else if (!GetWorld()->GetTimerManager().TimerExists(TravelTimer))
++	{
++		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
++	}
+ }
+ UProject_JQuestDefinition *UProject_JQuestComponent::FindDefinition(FName Id) const
+ {
+@@ -53,29 +91,29 @@
+ }
+ void UProject_JQuestComponent::Publish()
+ {
++	if (!CanPublish()) { return; }
++	ReconcileTravelSampling();
+ 	GetOwner()->ForceNetUpdate();
+ 	OnChanged.Broadcast();
+ }
+ void UProject_JQuestComponent::OnRep_States()
+ {
+-	OnChanged.Broadcast();
++	if (CanPublish()) { OnChanged.Broadcast(); }
+ }
+ bool UProject_JQuestComponent::Accept(FName Id)
+ {
+-	if (!GetOwner()->HasAuthority() || bChanging || States.Num() >= 128 || !FindDefinition(Id) ||
++	if (!CanMutate() || States.Num() >= 128 || !FindDefinition(Id) ||
+ 		States.ContainsByPredicate([Id](const auto &State) { return State.QuestId == Id; }))
+ 		return false;
+ 	FProject_JQuestState State;
+ 	State.QuestId = Id;
+ 	States.Add(State);
+-	if (FindDefinition(Id)->bTravelObjective && !TravelTimer.IsValid())
+-		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
+ 	Publish();
+ 	return true;
+ }
+ void UProject_JQuestComponent::RecordObjective(FName Event, int32 Count)
+ {
+-	if (!GetOwner()->HasAuthority() || bChanging || Event.IsNone() || Count <= 0 || Count > 1000000)
++	if (!CanMutate() || Event.IsNone() || Count <= 0 || Count > 1000000)
+ 		return;
+ 	bool bChanged = false;
+ 	for (auto &State : States)
+@@ -90,7 +128,7 @@
+ }
+ bool UProject_JQuestComponent::Claim(FName Id)
+ {
+-	if (!GetOwner()->HasAuthority() || bChanging)
++	if (!CanMutate())
+ 		return false;
+ 	auto *State = States.FindByPredicate([Id](const auto &Value) { return Value.QuestId == Id; });
+ 	const auto *Def = FindDefinition(Id);
+@@ -113,6 +151,7 @@
+ }
+ bool UProject_JQuestComponent::AllowRequest()
+ {
++	if (!CanMutate()) { return false; }
+ 	const double Now = GetWorld()->GetTimeSeconds();
+ 	if (RequestWindow < 0 || Now - RequestWindow >= 1)
+ 	{
+@@ -123,7 +162,7 @@
+ }
+ void UProject_JQuestComponent::RequestClaim(FName Id)
+ {
+-	ServerClaim(Id);
++	if (CanPublish()) { ServerClaim(Id); }
+ }
+ void UProject_JQuestComponent::ServerClaim_Implementation(FName Id)
+ {
+@@ -132,7 +171,7 @@
+ }
+ void UProject_JQuestComponent::RequestTracking(FName Id, bool bTracked)
+ {
+-	ServerTracking(Id, bTracked);
++	if (CanPublish()) { ServerTracking(Id, bTracked); }
+ }
+ void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTracked)
+ {
+@@ -147,6 +186,7 @@
+ }
+ void UProject_JQuestComponent::SampleTravel()
+ {
++	if (!CanMutate()) { return; }
+ 	bool bActive = false;
+ 	for (const auto &State : States)
+ 		if (const auto *Def = FindDefinition(State.QuestId);
+@@ -181,7 +221,10 @@
+ 					if (Def && Def->bTravelObjective)
+ 						Events.Add(Def->ObjectiveEvent);
+ 				for (FName Event : Events)
++				{
+ 					RecordObjective(Event, Count);
++					if (!CanPublish() || !TravelTimer.IsValid()) { return; }
++				}
+ 			}
+ 		}
+ 	}
+@@ -198,7 +241,7 @@
+ }
+ bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot)
+ {
+-	if (!GetOwner()->HasAuthority() || bChanging || !States.IsEmpty() || Snapshot.Version != 1 ||
++	if (!CanMutate() || !States.IsEmpty() || Snapshot.Version != 1 ||
+ 		Snapshot.States.Num() > 128)
+ 		return false;
+ 	TSet<FName> Seen;
+@@ -211,8 +254,6 @@
+ 		Seen.Add(State.QuestId);
+ 	}
+ 	States = Snapshot.States;
+-	if (!States.IsEmpty())
+-		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &ThisClass::SampleTravel, 0.5f, true);
+ 	Publish();
+ 	return true;
+ }
+--- deep-baseline/Source/Project_J/Game/Project_JQuestComponent.h
++++ final/Source/Project_J/Game/Project_JQuestComponent.h
+@@ -47,6 +47,7 @@
+ 	UProject_JQuestComponent();
+ 	virtual void BeginPlay() override;
+ 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &Out) const override;
+ 	UPROPERTY(EditDefaultsOnly) TArray<TObjectPtr<UProject_JQuestDefinition>> Definitions;
+ 	UPROPERTY(ReplicatedUsing = OnRep_States, BlueprintReadOnly) TArray<FProject_JQuestState> States;
+@@ -63,12 +64,17 @@
+ 	FChanged OnChanged;
+ 
+   private:
++	friend class FProjectJQuestLifetimeTest;
+ 	UFUNCTION() void OnRep_States();
+ 	UFUNCTION(Server, Reliable) void ServerClaim(FName Id);
+ 	UFUNCTION(Server, Reliable) void ServerTracking(FName Id, bool bTracked);
+ 	bool AllowRequest();
+ 	void Publish();
+ 	void SampleTravel();
++	bool CanMutate() const;
++	bool CanPublish() const;
++	void Retire();
++	void ReconcileTravelSampling();
+ 	FTimerHandle TravelTimer;
+ 	TWeakObjectPtr<APawn> TravelPawn;
+ 	FVector LastLocation = FVector::ZeroVector;
+@@ -76,4 +82,5 @@
+ 	double RequestWindow = -1;
+ 	int32 RequestCount = 0;
+ 	bool bChanging = false;
++	bool bEnding = false;
+ };
+--- /dev/null
++++ final/Source/Project_J/Private/Tests/Project_JQuestLifetimeTests.cpp
+@@ -0,0 +1,50 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "TimerManager.h"
++#include "Game/Project_JPlayerState.h"
++#include "Game/Project_JQuestComponent.h"
++#include "CharacterClass/Project_JProgressionComponent.h"
++#include "Project_JAbilitySystemComponent.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJQuestLifetimeTest, "ProjectJ.RuntimeOwnership.QuestRetirement",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJQuestLifetimeTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* State = World->SpawnActor<AProject_JPlayerState>();
++    State->GetProjectJAbilitySystemComponent()->InitAbilityActorInfo(State, State);
++    auto* Progression = State->FindComponentByClass<UProject_JProgressionComponent>();
++    Progression->InitializeDefaults(nullptr, nullptr, 1);
++    auto* Definition = LoadObject<UProject_JQuestDefinition>(nullptr,
++        TEXT("/Game/UI/Gameplay/DA_ProjectJFirstSteps.DA_ProjectJFirstSteps"));
++    if (!TestNotNull(TEXT("Authored travel quest"), Definition)) { return false; }
++    auto* Quest = State->FindComponentByClass<UProject_JQuestComponent>();
++    Quest->Definitions = {Definition};
++    TestTrue(TEXT("Actual data accepts before BeginPlay"), Quest->Accept(Definition->QuestId));
++    TestTrue(TEXT("Authored objective owns a travel timer"), World->GetTimerManager().TimerExists(Quest->TravelTimer));
++    Quest->RecordObjective(Definition->ObjectiveEvent, Definition->RequiredCount);
++    Quest->DestroyComponent();
++    TestFalse(TEXT("Destroy before BeginPlay retires the owned timer"), World->GetTimerManager().TimerExists(Quest->TravelTimer));
++    TestFalse(TEXT("Retired quest cannot award XP"), Quest->Claim(Definition->QuestId));
++    TestEqual(TEXT("Retired claim preserves progression"), Progression->GetState().Level, 1);
++    auto* Retired = NewObject<UProject_JQuestComponent>(State); Retired->RegisterComponent();
++    Retired->Definitions = {Definition}; Retired->DestroyComponent();
++    TestFalse(TEXT("Late accept cannot restart a destroyed component"), Retired->Accept(Definition->QuestId));
++    FProject_JQuestSnapshot Snapshot; FProject_JQuestState Entry; Entry.QuestId = Definition->QuestId;
++    Snapshot.States.Add(Entry);
++    TestFalse(TEXT("Late restore cannot create resources on a destroyed component"), Retired->RestoreSnapshot(Snapshot));
++    auto* Pending = NewObject<UProject_JQuestComponent>(State); Pending->RegisterComponent();
++    Pending->Definitions = {Definition}; Pending->Accept(Definition->QuestId);
++    TestTrue(TEXT("Incomplete travel objective owns its sampling timer"), World->GetTimerManager().TimerExists(Pending->TravelTimer));
++    Pending->DestroyComponent();
++    TestFalse(TEXT("Incomplete objective's timer retires on component destruction"), World->GetTimerManager().TimerExists(Pending->TravelTimer));
++    Pending->RecordObjective(Definition->ObjectiveEvent, 1);
++    TestEqual(TEXT("Late objective cannot mutate retired progress"), Pending->States[0].Count, 0);
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_J/Private/Tests/Project_JStatusBindingReentryTests.cpp
+@@ -0,0 +1,46 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "GameFramework/Actor.h"
++#include "AbilitySystemComponent.h"
++#include "UI/Project_JStatusEffects.h"
++#include "UObject/StrongObjectPtr.h"
++#include "UObject/GarbageCollection.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJStatusBindingReentryTest, "ProjectJ.RuntimeOwnership.StatusBindingReentry",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJStatusBindingReentryTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Owner = World->SpawnActor<AActor>();
++    auto MakeASC = [&] { auto* ASC = NewObject<UAbilitySystemComponent>(Owner); ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner); return ASC; };
++    auto* Previous = MakeASC(); auto* Outer = MakeASC(); auto* Nested = MakeASC();
++    TStrongObjectPtr<UProject_JStatusEffectModel> Model(NewObject<UProject_JStatusEffectModel>());
++    Model->Bind(Previous);
++    bool bRebound = false;
++    const auto Delegate = Model->OnChanged.AddLambda([&] {
++        if (!bRebound) { bRebound = true; Model->Bind(Nested); }
++    });
++    Model->Bind(Outer);
++    Model->OnChanged.Remove(Delegate);
++    TestTrue(TEXT("Real status publication reenters binding"), bRebound);
++    TestTrue(TEXT("Latest nested binding owns the source"), Model->ASC.Get() == Nested);
++    TestFalse(TEXT("Older bind cannot leave an extra subscription"), Outer->OnActiveGameplayEffectAddedDelegateToSelf.IsBoundToObject(Model.Get()));
++    Model->Unbind();
++    for (auto* ASC : {Previous, Outer, Nested})
++    { TestFalse(TEXT("All acquired effect subscriptions retire"), ASC->OnActiveGameplayEffectAddedDelegateToSelf.IsBoundToObject(Model.Get())); }
++    TStrongObjectPtr<UProject_JStatusEffectModel> GCModel(NewObject<UProject_JStatusEffectModel>());
++    TWeakObjectPtr<UProject_JStatusEffectModel> WeakModel(GCModel.Get());
++    bool bAliveDuringCallback = false;
++    GCModel->OnChanged.AddLambda([&] { GCModel.Reset(); CollectGarbage(RF_NoFlags); bAliveDuringCallback = WeakModel.IsValid(); });
++    GCModel->Refresh();
++    TestTrue(TEXT("Status model survives collection during its own publication"), bAliveDuringCallback);
++    CollectGarbage(RF_NoFlags);
++    TestFalse(TEXT("Publication does not retain the model after completion"), WeakModel.IsValid());
++    return true;
++}
++#endif
+--- deep-baseline/Source/Project_J/Private/Tests/Project_JUIIconRequestLifetimeTests.cpp
++++ final/Source/Project_J/Private/Tests/Project_JUIIconRequestLifetimeTests.cpp
+@@ -11,7 +11,11 @@
+ struct FIconLifetimeState
+ {
+ 	TStrongObjectPtr<UProject_JSkillButton> Widget;
++	TStrongObjectPtr<UProject_JSkillButton> CallbackOwner;
++	TWeakObjectPtr<UProject_JSkillButton> WeakCallbackOwner;
+ 	int32 StaleApplies = 0, CurrentApplies = 0, RetiredApplies = 0;
++	int32 CallbackApplies = 0;
++	bool bOwnerAliveDuringApply = false;
+ 	bool bWrongTexture = false;
+ 	double Started = FPlatformTime::Seconds();
+ };
+@@ -24,11 +28,15 @@
+ 	bool Update() override
+ 	{
+ 		const double Age = FPlatformTime::Seconds() - State->Started;
+-		if (Age < .25 || (State->CurrentApplies == 0 && Age < 5)) { return false; }
++		if (Age < .25 || ((State->CurrentApplies == 0 || State->CallbackApplies == 0) && Age < 5)) { return false; }
+ 		Test->TestEqual(TEXT("Canceled A request cannot apply after A-to-empty-to-A reuse"), State->StaleApplies, 0);
+ 		Test->TestEqual(TEXT("Current request applies its actual loaded texture once"), State->CurrentApplies, 1);
+ 		Test->TestFalse(TEXT("Completion resolves the requested texture"), State->bWrongTexture);
+ 		Test->TestEqual(TEXT("Collected widget never receives completion"), State->RetiredApplies, 0);
++		Test->TestEqual(TEXT("Completion that retires its owner runs once"), State->CallbackApplies, 1);
++		Test->TestTrue(TEXT("Active completion pins its owner across reentrant GC"), State->bOwnerAliveDuringApply);
++		CollectGarbage(RF_NoFlags);
++		Test->TestFalse(TEXT("Completed request does not retain a retired owner"), State->WeakCallbackOwner.IsValid());
+ 		Cleanup();
+ 		return true;
+ 	}
+@@ -52,6 +60,18 @@
+ 	const int32 PreviousDelay = Delay ? Delay->GetInt() : 1;
+ 	if (Delay) { Delay->Set(3, ECVF_SetByCode); }
+ 	auto& Request = State->Widget->IconRequest;
++	State->CallbackOwner.Reset(NewObject<UProject_JSkillButton>());
++	State->WeakCallbackOwner = State->CallbackOwner.Get();
++	State->CallbackOwner->IconRequest.Select(Path);
++	State->CallbackOwner->IconRequest.Load(State->CallbackOwner.Get(), [State](UTexture2D*, uint64)
++	{
++		// Simulates an apply/UMG callback retiring its last external reference.
++		// Do not dereference the widget after collection on the unfixed baseline.
++		State->CallbackOwner.Reset();
++		CollectGarbage(RF_NoFlags);
++		State->bOwnerAliveDuringApply = State->WeakCallbackOwner.IsValid();
++		++State->CallbackApplies;
++	});
+ 	Request.Select(Path);
+ 	Request.Load(State->Widget.Get(), [State](UTexture2D*, uint64) { ++State->StaleApplies; });
+ 	Request.Reset();
+--- deep-baseline/Source/Project_J/UI/Project_JStatusEffects.cpp
++++ final/Source/Project_J/UI/Project_JStatusEffects.cpp
+@@ -3,11 +3,16 @@
+ #include "GameplayEffect.h"
+ #include "GameplayEffectUIData_TextOnly.h"
+ #include "Engine/World.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ void UProject_JStatusEffectModel::Bind(UAbilitySystemComponent *Source)
+ {
++	if (bRetiring || HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) return;
++	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(this);
+ 	if (ASC == Source) return;
++	const uint64 Revision = BindingRevision + 1;
+ 	Unbind();
++	if (bRetiring || BindingRevision != Revision) return;
+ 	ASC = Source;
+ 	if (Source)
+ 	{
+@@ -20,19 +25,26 @@
+ }
+ void UProject_JStatusEffectModel::Unbind()
+ {
+-	if (ASC.IsValid())
++	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(bRetiring ? nullptr : this);
++	++BindingRevision;
++	const auto Previous = ASC;
++	const auto Added = AddedHandle, Removed = RemovedHandle;
++	const auto PreviousTimer = Timer;
++	ASC.Reset(); AddedHandle.Reset(); RemovedHandle.Reset(); Timer.Invalidate(); States.Reset();
++	if (Previous.IsValid())
+ 	{
+-		ASC->OnActiveGameplayEffectAddedDelegateToSelf.Remove(AddedHandle);
+-		ASC->OnAnyGameplayEffectRemovedDelegate().Remove(RemovedHandle);
+-		if (ASC->GetWorld()) ASC->GetWorld()->GetTimerManager().ClearTimer(Timer);
++		Previous->OnActiveGameplayEffectAddedDelegateToSelf.Remove(Added);
++		Previous->OnAnyGameplayEffectRemovedDelegate().Remove(Removed);
++		if (Previous->GetWorld()) { auto Handle = PreviousTimer; Previous->GetWorld()->GetTimerManager().ClearTimer(Handle); }
+ 	}
+-	ASC.Reset();
+-	States.Reset();
+-	OnChanged.Broadcast();
++	if (!bRetiring) OnChanged.Broadcast();
+ }
+-void UProject_JStatusEffectModel::BeginDestroy() { Unbind(); Super::BeginDestroy(); }
++void UProject_JStatusEffectModel::BeginDestroy() { bRetiring = true; OnChanged.Clear(); Unbind(); Super::BeginDestroy(); }
+ void UProject_JStatusEffectModel::Refresh()
+ {
++	if (bRetiring || HasAnyFlags(RF_BeginDestroyed | RF_FinishDestroyed)) return;
++	// An OnChanged listener may release the last external reference and run GC.
++	TStrongObjectPtr<UProject_JStatusEffectModel> CallbackOwner(this);
+ 	States.Reset();
+ 	if (ASC.IsValid() && ASC->GetWorld())
+ 	{
+--- deep-baseline/Source/Project_J/UI/Project_JStatusEffects.h
++++ final/Source/Project_J/UI/Project_JStatusEffects.h
+@@ -48,8 +48,11 @@
+ 	UPROPERTY(BlueprintReadOnly) TArray<FProject_JStatusEffectState> States;
+ 	virtual void BeginDestroy() override;
+ private:
++	friend class FProjectJStatusBindingReentryTest;
+ 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
+ 	FDelegateHandle AddedHandle;
+ 	FDelegateHandle RemovedHandle;
+ 	FTimerHandle Timer;
++	uint64 BindingRevision = 0;
++	bool bRetiring = false;
+ };
+--- deep-baseline/Source/Project_J/UI/Project_JUIIconRequest.cpp
++++ final/Source/Project_J/UI/Project_JUIIconRequest.cpp
+@@ -23,7 +23,8 @@
+ 		[WeakOwner = TWeakObjectPtr<UObject>(Owner), this, RequestedPath, RequestedGeneration, Apply = MoveTemp(Apply)]()
+ 		{
+ 			// Owner validity must be checked before reading this embedded value.
+-			if (!WeakOwner.IsValid() || !IsCurrent(RequestedPath, RequestedGeneration)) { return; }
++			TStrongObjectPtr<UObject> PinnedOwner(WeakOwner.Get());
++			if (!PinnedOwner.IsValid() || !IsCurrent(RequestedPath, RequestedGeneration)) { return; }
+ 			TStrongObjectPtr<UTexture2D> Texture(Cast<UTexture2D>(RequestedPath.ResolveObject()));
+ 			if (Texture.IsValid()) { Apply(Texture.Get(), RequestedGeneration); }
+ 		});
+--- deep-baseline/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
++++ final/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
+@@ -13,26 +13,35 @@
+ 	check(ASC);
+ 
+ 	check(IsInGameThread());
+-	if (!ASC->IsOwnerActorAuthoritative() || !OutGrantedHandles)
++	if (!ASC->IsOwnerActorAuthoritative() || !OutGrantedHandles || OutGrantedHandles->MutationRevision == MAX_uint64)
+ 	{
+ 		return;
+ 	}
+ 
+ 	UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
++	uint64 GrantGeneration = 0;
++	const uint64 MutationRevision = OutGrantedHandles->MutationRevision;
+ 	if (!GrantSourceId.IsNone())
+ 	{
+-		if (OutGrantedHandles->GrantSourceIds.Contains(GrantSourceId)) return;
++		if (OutGrantedHandles->GrantSourceGenerations.Contains(GrantSourceId)) return;
+ 		bool bNeedsGrant = false;
+-		if (!ProjectJASC || !ProjectJASC->AcquireAbilityGrantSource(GrantSourceId, bNeedsGrant))
++		if (!ProjectJASC || !ProjectJASC->AcquireAbilityGrantSource(GrantSourceId, bNeedsGrant, GrantGeneration))
+ 		{
+ 			return;
+ 		}
+-		OutGrantedHandles->GrantSourceIds.Add(GrantSourceId);
++		OutGrantedHandles->GrantSourceGenerations.Add(GrantSourceId, GrantGeneration);
+ 		if (!bNeedsGrant) return;
+ 	}
++	// Keyed specs/effects have one owner: the ASC registry. A provider keeps only
++	// its generation lease. Unkeyed sets keep individual handles instead.
++	const auto CanContinue = [&]() {
++		return GrantSourceId.IsNone() ? OutGrantedHandles->MutationRevision == MutationRevision :
++			ProjectJASC->IsAbilityGrantSourceCurrent(GrantSourceId, GrantGeneration);
++	};
+ 
+ 	for (const FProject_JAbilitySet_GameplayAbility& AbilityEntry : GrantedAbilityEntries)
+ 	{
++		if (!CanContinue()) { return; }
+ 		if (!AbilityEntry.Ability)
+ 		{
+ 			continue;
+@@ -46,15 +55,18 @@
+ 		AbilitySpec.GetDynamicSpecSourceTags().AppendTags(AbilityEntry.AdditionalInputTags);
+ 
+ 		const FGameplayAbilitySpecHandle AbilitySpecHandle = ASC->GiveAbility(AbilitySpec);
+-		OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle);
+-		if (ProjectJASC && !GrantSourceId.IsNone())
++		if (!GrantSourceId.IsNone())
+ 		{
+-			ProjectJASC->RegisterGrantedAbility(GrantSourceId, AbilitySpecHandle);
++			if (!ProjectJASC->RegisterGrantedAbility(GrantSourceId, GrantGeneration, AbilitySpecHandle))
++			{ ASC->CancelAbilityHandle(AbilitySpecHandle); ASC->ClearAbility(AbilitySpecHandle); return; }
+ 		}
++		else if (CanContinue()) { OutGrantedHandles->AbilitySpecHandles.Add(AbilitySpecHandle); }
++		else { ASC->CancelAbilityHandle(AbilitySpecHandle); ASC->ClearAbility(AbilitySpecHandle); return; }
+ 	}
+ 
+ 	for (const FProject_JAbilitySet_GameplayEffect& EffectEntry : GrantedEffectEntries)
+ 	{
++		if (!CanContinue()) { return; }
+ 		if (!EffectEntry.Effect)
+ 		{
+ 			continue;
+@@ -62,11 +74,14 @@
+ 
+ 		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
+ 		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
+-		OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle);
+-		if (ProjectJASC && !GrantSourceId.IsNone())
++		if (!GrantSourceId.IsNone())
+ 		{
+-			ProjectJASC->RegisterGrantedEffect(GrantSourceId, GameplayEffectHandle);
++			// Instant effects have no removable handle. They are committed once by GAS.
++			if (GameplayEffectHandle.IsValid() && !ProjectJASC->RegisterGrantedEffect(GrantSourceId, GrantGeneration, GameplayEffectHandle))
++			{ ASC->RemoveActiveGameplayEffect(GameplayEffectHandle); return; }
+ 		}
++		else if (CanContinue()) { if (GameplayEffectHandle.IsValid()) OutGrantedHandles->GameplayEffectHandles.Add(GameplayEffectHandle); }
++		else { if (GameplayEffectHandle.IsValid()) ASC->RemoveActiveGameplayEffect(GameplayEffectHandle); return; }
+ 	}
+ 
+ }
+@@ -79,23 +94,25 @@
+ 	{
+ 		return;
+ 	}
+-
+-	if (!GrantedHandles->GrantSourceIds.IsEmpty())
++	check(IsInGameThread());
++	// Detach before any GAS removal delegate. A nested new grant owns the fresh
++	// container and cannot be reset by completion of this old release.
++	const uint64 NextRevision = GrantedHandles->MutationRevision == MAX_uint64 ? MAX_uint64 : GrantedHandles->MutationRevision + 1;
++	FProject_JAbilitySet_GrantedHandles Retired = MoveTemp(*GrantedHandles);
++	*GrantedHandles = FProject_JAbilitySet_GrantedHandles();
++	GrantedHandles->MutationRevision = NextRevision;
++	if (!Retired.GrantSourceGenerations.IsEmpty())
+ 	{
+ 		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+ 		{
+-			for (const FName GrantSourceId : GrantedHandles->GrantSourceIds)
++			for (const auto& Lease : Retired.GrantSourceGenerations)
+ 			{
+-				ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
++				ProjectJASC->RemoveAbilityGrantSource(Lease.Key, Lease.Value);
+ 			}
+-			GrantedHandles->AbilitySpecHandles.Reset();
+-			GrantedHandles->GameplayEffectHandles.Reset();
+-			GrantedHandles->GrantSourceIds.Reset();
+-			return;
+ 		}
+ 	}
+ 
+-	for (const FGameplayAbilitySpecHandle& Handle : GrantedHandles->AbilitySpecHandles)
++	for (const FGameplayAbilitySpecHandle& Handle : Retired.AbilitySpecHandles)
+ 	{
+ 		if (Handle.IsValid())
+ 		{
+@@ -103,7 +120,7 @@
+ 		}
+ 	}
+ 
+-	for (const FActiveGameplayEffectHandle& Handle : GrantedHandles->GameplayEffectHandles)
++	for (const FActiveGameplayEffectHandle& Handle : Retired.GameplayEffectHandles)
+ 	{
+ 		if (Handle.IsValid())
+ 		{
+@@ -111,9 +128,6 @@
+ 		}
+ 	}
+ 
+-	GrantedHandles->AbilitySpecHandles.Reset();
+-	GrantedHandles->GameplayEffectHandles.Reset();
+-	GrantedHandles->GrantSourceIds.Reset();
+ }
+ 
+ #if WITH_EDITOR
+--- deep-baseline/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp
++++ final/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp
+@@ -37,6 +37,28 @@
+ #include "Animation/Project_JAnimationPresentationHelpers.h"
+ using namespace ProjectJ::Animation::Presentation;
+ 
++void UProject_JCharacterAnimInstance::ClearStateControllerInputReferences()
++{
++	bHasStateControllerOneShotControlYaw = false;
++	bHasStateControllerOneShotMoveInputYaw = false;
++	bHasStateControllerRemoteStartReference = false;
++	bHasStateControllerRemoteStartMoveYaw = false;
++}
++
++void UProject_JCharacterAnimInstance::PublishStateControllerGroundLoop(EProject_JStateControllerPresentationState LoopState)
++{
++	check(LoopState == EProject_JStateControllerPresentationState::LocomotionLoop ||
++		LoopState == EProject_JStateControllerPresentationState::IdleLoop);
++	const auto Phase = LoopState == EProject_JStateControllerPresentationState::LocomotionLoop
++		? EProject_JLocomotionPhaseFamily::Cycle : EProject_JLocomotionPhaseFamily::Idle;
++	ThreadSafeData.OneShotPresentation.PresentationState = LoopState;
++	ThreadSafeData.OneShotPresentation.PhaseFamily = Phase;
++	ThreadSafeData.OneShotPresentation.bRequested = false;
++	ThreadSafeData.LocomotionContext.PhaseFamily = Phase;
++	ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = Phase;
++	StateControllerRuntime.SetFallbackHold(LoopState, AnimationClock.Seconds);
++}
++
+ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
+ {
+ 	if (ThreadSafeData.Mount.bIsMounted != bWasMountedForStateController)
+@@ -115,10 +137,7 @@
+ 		StateControllerRuntime.OnFullBodyActionStart(AnimationClock.Seconds);
+ 		ResetStateControllerChooserCache();
+ 		StateControllerRuntime.ClearTurnReselect();
+-		bHasStateControllerOneShotControlYaw = false;
+-		bHasStateControllerOneShotMoveInputYaw = false;
+-		bHasStateControllerRemoteStartReference = false;
+-		bHasStateControllerRemoteStartMoveYaw = false;
++		ClearStateControllerInputReferences();
+ 		++StateControllerChooserSelectionRevision;
+ 	}
+ 
+@@ -150,10 +169,7 @@
+ 			bDiscardingPhysicalLanding || bDiscardingHeldLand);
+ 		ResetStateControllerChooserCache();
+ 		StateControllerRuntime.ClearTurnReselect();
+-		bHasStateControllerOneShotControlYaw = false;
+-		bHasStateControllerOneShotMoveInputYaw = false;
+-		bHasStateControllerRemoteStartReference = false;
+-		bHasStateControllerRemoteStartMoveYaw = false;
++		ClearStateControllerInputReferences();
+ 		++StateControllerChooserSelectionRevision;
+ 
+ 		if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
+@@ -197,20 +213,12 @@
+ 		const EProject_JStateControllerPresentationState FallbackPresentationState = bMoving
+ 			? EProject_JStateControllerPresentationState::LocomotionLoop
+ 			: EProject_JStateControllerPresentationState::IdleLoop;
+-		const EProject_JLocomotionPhaseFamily FallbackPhaseFamily = bMoving
+-			? EProject_JLocomotionPhaseFamily::Cycle
+-			: EProject_JLocomotionPhaseFamily::Idle;
+-		ThreadSafeData.OneShotPresentation.PresentationState = FallbackPresentationState;
+-		ThreadSafeData.OneShotPresentation.PhaseFamily = FallbackPhaseFamily;
+-		ThreadSafeData.OneShotPresentation.bRequested = false;
+-		ThreadSafeData.LocomotionContext.PhaseFamily = FallbackPhaseFamily;
+-		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = FallbackPhaseFamily;
++		PublishStateControllerGroundLoop(FallbackPresentationState);
+ 		// Re-query only at the presentation boundaries.  The fallback context is
+ 		// still published every frame, but repeatedly forcing a Pose Search while
+ 		// a montage is active would be needless per-frame work.
+ 		ThreadSafeData.MotionMatching.bForceReselect =
+ 			ThreadSafeData.MotionMatching.bForceReselect || bCombatPresentationTransitionStarted;
+-		StateControllerRuntime.SetFallbackHold(FallbackPresentationState, AnimationClock.Seconds);
+ 	}
+ 	const EProject_JStateControllerPresentationState PreviousStateControllerPresentationState =
+ 		StateControllerPresentationStateForChooser;
+@@ -397,28 +405,14 @@
+ 		CurrentStateControllerPresentationState = ThreadSafeData.LocomotionContext.bIsMotionMatchingMoving
+ 			? EProject_JStateControllerPresentationState::LocomotionLoop
+ 			: EProject_JStateControllerPresentationState::IdleLoop;
+-		ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+-		ThreadSafeData.OneShotPresentation.PhaseFamily =
+-			CurrentStateControllerPresentationState == EProject_JStateControllerPresentationState::LocomotionLoop
+-				? EProject_JLocomotionPhaseFamily::Cycle
+-				: EProject_JLocomotionPhaseFamily::Idle;
+-		ThreadSafeData.OneShotPresentation.bRequested = false;
+-		ThreadSafeData.LocomotionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
+-		ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = ThreadSafeData.OneShotPresentation.PhaseFamily;
++		PublishStateControllerGroundLoop(CurrentStateControllerPresentationState);
+ 		ThreadSafeData.MotionMatching.bForceReselect = true;
+-		StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, AnimationClock.Seconds);
+-		bHasStateControllerOneShotControlYaw = false;
+-		bHasStateControllerOneShotMoveInputYaw = false;
+-		bHasStateControllerRemoteStartReference = false;
+-		bHasStateControllerRemoteStartMoveYaw = false;
++		ClearStateControllerInputReferences();
+ 	}
+ 	else if (!bIsTurnCancellableOneShot)
+ 	{
+ 		OneShotCurvePolicy.Reset();
+-		bHasStateControllerOneShotControlYaw = false;
+-		bHasStateControllerOneShotMoveInputYaw = false;
+-		bHasStateControllerRemoteStartReference = false;
+-		bHasStateControllerRemoteStartMoveYaw = false;
++		ClearStateControllerInputReferences();
+ 	}
+ 	// Chooser columns require a reflected property rather than a BlueprintPure
+ 	// enum getter. Publish this game-thread mirror *before* evaluating the
+@@ -512,14 +506,9 @@
+ 			// represented by the trajectory-aware Cycle PSD. This also avoids
+ 			// swapping Sprint Start directly to Run Start mid-stride.
+ 			CurrentStateControllerPresentationState = EProject_JStateControllerPresentationState::LocomotionLoop;
+-			ThreadSafeData.OneShotPresentation.PresentationState = CurrentStateControllerPresentationState;
+-			ThreadSafeData.OneShotPresentation.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+-			ThreadSafeData.OneShotPresentation.bRequested = false;
+-			ThreadSafeData.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+-			ThreadSafeData.MotionMatching.SelectionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
++			PublishStateControllerGroundLoop(CurrentStateControllerPresentationState);
+ 			ThreadSafeData.MotionMatching.bForceReselect = true;
+ 			StateControllerPresentationStateForChooser = CurrentStateControllerPresentationState;
+-			StateControllerRuntime.SetFallbackHold(CurrentStateControllerPresentationState, AnimationClock.Seconds);
+ 			bHasStateControllerStartGaitForChooser = false;
+ 			bStateControllerStartGaitCommitted = false;
+ 			GaitIntentForChooser = CurrentStartGait;
+@@ -588,12 +577,10 @@
+ 	{
+ 		bStateControllerFallOffForChooser =
+ 			ThreadSafeData.Air.bIsFallOffStart || bInferFallOffFromFreshAirEntry;
+-		bHasStateControllerFallOffForChooser = true;
+ 	}
+ 	else if (CurrentStateControllerPresentationState != EProject_JStateControllerPresentationState::TransitionToInAir)
+ 	{
+ 		bStateControllerFallOffForChooser = false;
+-		bHasStateControllerFallOffForChooser = false;
+ 	}
+ 	StateControllerLeftFootContactForChooser = CachedStateControllerLeftFootContact;
+ 	StateControllerRightFootContactForChooser = CachedStateControllerRightFootContact;
+--- deep-baseline/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp
++++ final/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp
+@@ -117,8 +117,10 @@
+ 	Data.Input.MovementDirection = AnimState->MovementDirection;
+ 	Data.Input.bHasMoveInput = AnimState->bHasMoveInput;
+ 	Data.Input.bSharpTurnRequested = AnimState->bSharpTurnRequested;
+-	Data.Ground.bStartRequested = AnimState->bStartRequested || AnimState->bUseStartDatabase;
+-	Data.Ground.bStopRequested = AnimState->bStopRequested || AnimState->bUseStopDatabase;
++	// Selection consumes the owning semantic mode, not aliases published for BP
++	// compatibility. OR-ing aliases can promote a stale display flag to intent.
++	Data.Ground.bStartRequested = AnimState->GroundMotionMode == EProject_JGroundMotionMode::Start;
++	Data.Ground.bStopRequested = AnimState->GroundMotionMode == EProject_JGroundMotionMode::Stop;
+ 	Data.Ground.bWantsSprint = AnimState->bWantsSprint;
+ 	Data.Ground.bUseSprintLocomotion = AnimState->bUseSprintLocomotion;
+ 	Data.Ground.bStartWasSprinting =
+--- deep-baseline/Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp
++++ final/Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp
+@@ -8,25 +8,74 @@
+ namespace
+ {
+ bool IsStyleReady(const UProject_JCombatStyleDefinition* Style) { return !Style || Style->IsRuntimeReady(); }
+-void GrantSets(UAbilitySystemComponent* ASC, UObject* Owner, const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets,
++}
++
++void UProject_JProgressionComponent::GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets,
+ 	const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles)
+ {
+ 	for (const UProject_JAbilitySet* Set : Sets)
+ 	{
+-		if (Set) Set->GiveToAbilitySystem(ASC, &Handles, Owner, FName(*(Prefix + TEXT(".") + Set->GetPathName())));
+-	}
+-}
+-void GrantStyle(UAbilitySystemComponent* ASC, UObject* Owner, const UProject_JCombatStyleDefinition* Style,
++		if (!CanGrant()) { return; }
++		if (Set) Set->GiveToAbilitySystem(GrantedAbilitySystem.Get(), &Handles, GetOwner(), FName(*(Prefix + TEXT(".") + Set->GetPathName())));
++	}
++}
++void UProject_JProgressionComponent::GrantStyle(const UProject_JCombatStyleDefinition* Style,
+ 	FProject_JAbilitySet_GrantedHandles& Handles)
+ {
+-	if (Style) GrantSets(ASC, Owner, Style->GetRuntimeAbilitySets(), TEXT("CombatStyle.") + Style->GetPathName(), Handles);
+-}
++	if (Style) GrantSets(Style->GetRuntimeAbilitySets(), TEXT("CombatStyle.") + Style->GetPathName(), Handles);
+ }
+ 
+ UProject_JProgressionComponent::UProject_JProgressionComponent()
+ {
+ 	PrimaryComponentTick.bCanEverTick = false;
+ 	SetIsReplicatedByDefault(true);
++}
++void UProject_JProgressionComponent::BeginPlay()
++{
++	const bool bResume = bEnding;
++	bEnding = false;
++	Super::BeginPlay();
++	// A streamed actor may begin play again after a prior EndPlay. Reconstruct
++	// only this component's retired leases; persistent progression values remain.
++	if (bResume && CanMutate() && State.Revision > 0)
++	{
++		TGuardValue<bool> Guard(bChanging, true);
++		GrantClass();
++		if (!GrantedAbilitySystem.IsValid() && !bEnding) { GrantedAbilitySystem = GetASC(); }
++		for (const UProject_JCharacterAdvancementDefinition* Advancement : ActiveAdvancements)
++		{
++			if (!CanGrant()) { break; }
++			GrantSets(Advancement->AdditionalAbilitySets, TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
++			GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
++		}
++	}
++}
++void UProject_JProgressionComponent::EndPlay(const EEndPlayReason::Type Reason)
++{
++	RetireGrants();
++	Super::EndPlay(Reason);
++}
++void UProject_JProgressionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	RetireGrants();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++void UProject_JProgressionComponent::RetireGrants()
++{
++	bEnding = true;
++	OnChanged.Clear();
++	if (auto* ASC = GrantedAbilitySystem.Get())
++	{
++		const auto* Set = GetDefault<UProject_JAbilitySet>();
++		Set->TakeFromAbilitySystem(ASC, &ClassHandles);
++		Set->TakeFromAbilitySystem(ASC, &AdvancementHandles);
++	}
++	GrantedAbilitySystem.Reset();
++}
++bool UProject_JProgressionComponent::CanGrant() const
++{
++	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() &&
++		GrantedAbilitySystem.IsValid() && GetASC() == GrantedAbilitySystem.Get();
+ }
+ 
+ void UProject_JProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+@@ -46,23 +95,26 @@
+ bool UProject_JProgressionComponent::CanMutate() const
+ {
+ 	check(IsInGameThread());
+-	return !bChanging && GetOwner() && !GetOwner()->IsActorBeingDestroyed() && GetOwner()->HasAuthority() && GetASC();
++	return !bEnding && !IsBeingDestroyed() && !bChanging && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() &&
++		GetOwner()->HasAuthority() && GetASC() && (!GrantedAbilitySystem.IsValid() || GetASC() == GrantedAbilitySystem.Get());
+ }
+ 
+ void UProject_JProgressionComponent::Publish()
+ {
++	if (bEnding || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed()) { return; }
+ 	State.Revision = State.Revision == MAX_int32 ? 1 : State.Revision + 1;
+ 	GetOwner()->ForceNetUpdate();
+ 	OnChanged.Broadcast();
+ }
+-void UProject_JProgressionComponent::OnRep_State() { OnChanged.Broadcast(); }
++void UProject_JProgressionComponent::OnRep_State() { if (!bEnding) OnChanged.Broadcast(); }
+ 
+ void UProject_JProgressionComponent::GrantClass()
+ {
+ 	if (!State.ClassDefinition) return;
+-	GrantSets(GetASC(), GetOwner(), State.ClassDefinition->AbilitySets,
++	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
++	GrantSets(State.ClassDefinition->AbilitySets,
+ 		TEXT("Class.") + State.ClassDefinition->ClassId.ToString(), ClassHandles);
+-	GrantStyle(GetASC(), GetOwner(), State.ClassDefinition->DefaultCombatStyle, ClassHandles);
++	GrantStyle(State.ClassDefinition->DefaultCombatStyle, ClassHandles);
+ }
+ 
+ void UProject_JProgressionComponent::InitializeDefaults(UProject_JCharacterClassDefinition* Class,
+@@ -91,7 +143,7 @@
+ 	State.Level = FMath::Max(State.Level, Class->StartingLevel);
+ 	GrantClass();
+ 	Publish();
+-	return true;
++	return !bEnding;
+ }
+ 
+ bool UProject_JProgressionComponent::CanApplyAdvancement(const UProject_JCharacterAdvancementDefinition* Advancement) const
+@@ -119,9 +171,11 @@
+ {
+ 	if (!CanApplyAdvancement(Advancement)) return false;
+ 	TGuardValue<bool> Guard(bChanging, true);
++	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
+ 	if (Advancement->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement)
+ 	{
+ 		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(GetASC(), &AdvancementHandles);
++		if (!CanGrant()) { return false; }
+ 		ActiveAdvancements.Reset();
+ 	}
+ 	if (!State.ClassDefinition && Advancement->BaseClass)
+@@ -132,11 +186,12 @@
+ 	State.Advancement = Advancement;
+ 	AcquiredAdvancements.Add(Advancement->AdvancementId);
+ 	ActiveAdvancements.Add(Advancement);
+-	GrantSets(GetASC(), GetOwner(), Advancement->AdditionalAbilitySets,
++	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
++	GrantSets(Advancement->AdditionalAbilitySets,
+ 		TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
+-	GrantStyle(GetASC(), GetOwner(), Advancement->CombatStyleOverride, AdvancementHandles);
+-	Publish();
+-	return true;
++	GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
++	Publish();
++	return !bEnding;
+ }
+ 
+ bool UProject_JProgressionComponent::SetLevel(int32 Level)
+@@ -170,7 +225,7 @@
+ 		|| Snapshot.AdvancementHistory.Num() > 256 || Snapshot.AdvancementHistory.Num() != OrderedHistory.Num()
+ 		|| Snapshot.ClassId != (Class ? Class->ClassId : NAME_None)
+ 		|| (Class && (Snapshot.Level < Class->StartingLevel || !IsStyleReady(Class->DefaultCombatStyle)))) return false;
+-	const int64 RequiredXP = Snapshot.Level>=FMath::Clamp(MaximumLevel,1,10000) ? 0 : ExperienceRequirements.IsValidIndex(Snapshot.Level-1) ? FMath::Clamp<int64>(ExperienceRequirements[Snapshot.Level-1],1,MAX_int64/10000) : 100LL*Snapshot.Level;
++	const int64 RequiredXP = GetRequiredExperienceForLevel(Snapshot.Level);
+  if (Snapshot.SchemaVersion>=2 && (RequiredXP==0 ? Snapshot.Experience!=0 : Snapshot.Experience>=RequiredXP)) return false;
+  TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> Active;
+ 	TSet<FName> Seen;
+@@ -201,20 +256,27 @@
+ 	GrantClass();
+ 	for (const UProject_JCharacterAdvancementDefinition* Advancement : ActiveAdvancements)
+ 	{
+-		GrantSets(GetASC(), GetOwner(), Advancement->AdditionalAbilitySets,
++		if (!GrantedAbilitySystem.IsValid() && !bEnding) { GrantedAbilitySystem = GetASC(); }
++		GrantSets(Advancement->AdditionalAbilitySets,
+ 			TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
+-		GrantStyle(GetASC(), GetOwner(), Advancement->CombatStyleOverride, AdvancementHandles);
++		GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
+ 	}
+ 	Publish();
+ 	return true;
+ }
+ 
+-void UProject_JProgressionComponent::OnRep_Experience() { OnChanged.Broadcast(); }
++void UProject_JProgressionComponent::OnRep_Experience() { if (!bEnding) OnChanged.Broadcast(); }
+ int64 UProject_JProgressionComponent::GetNextLevelExperience() const
+ {
+- if (State.Level >= FMath::Clamp(MaximumLevel, 1, 10000)) return 0;
+- const int32 Index = State.Level - 1;
+- return ExperienceRequirements.IsValidIndex(Index) ? FMath::Clamp<int64>(ExperienceRequirements[Index], 1, MAX_int64 / 10000) : 100LL * FMath::Max(1, State.Level);
++ return GetRequiredExperienceForLevel(State.Level);
++}
++int64 UProject_JProgressionComponent::GetRequiredExperienceForLevel(int32 Level) const
++{
++	if (Level >= FMath::Clamp(MaximumLevel, 1, 10000)) return 0;
++	const int32 Index = Level - 1;
++	return ExperienceRequirements.IsValidIndex(Index)
++		? FMath::Clamp<int64>(ExperienceRequirements[Index], 1, MAX_int64 / 10000)
++		: 100LL * FMath::Max(1, Level);
+ }
+ bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
+ {
+--- deep-baseline/Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp
++++ final/Source/Project_JCharacter/Private/Combat/Project_JAttackDefinition.cpp
+@@ -1,5 +1,6 @@
+ #include "Combat/Project_JAttackDefinition.h"
+ #include "GameplayEffect.h"
++#include "GameplayEffectComponents/AdditionalEffectsGameplayEffectComponent.h"
+ #include "Animation/AnimMontage.h"
+ 
+ #if WITH_EDITOR
+@@ -71,6 +72,14 @@
+ 	{
+ 		Project_J::DataValidation::AddWarning(Context, NSLOCTEXT("ProjectJAttackDefinition", "MissingDamageEffect", "DamageEffect is empty; this attack will not apply server damage."));
+ 	}
++	else if (const auto* Effect = DamageEffect->GetDefaultObject<UGameplayEffect>();
++		Effect->Modifiers.IsEmpty() && Effect->Executions.IsEmpty() &&
++		(!Effect->FindComponent<UAdditionalEffectsGameplayEffectComponent>() ||
++			Effect->FindComponent<UAdditionalEffectsGameplayEffectComponent>()->OnApplicationGameplayEffects.IsEmpty()))
++	{
++		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJAttackDefinition", "NoDamagePayload",
++			"DamageEffect has no modifier, execution or conditional effect. A persistent combat-state effect cannot serve as damage."));
++	}
+ 	return Project_J::DataValidation::MakeResult(Result, bHasError);
+ }
+ 
+--- deep-baseline/Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Sprint.cpp
++++ final/Source/Project_JCharacter/Private/Combat/Project_JGameplayAbility_Sprint.cpp
+@@ -2,8 +2,6 @@
+ 
+ #include "Combat/Project_JGameplayAbility_Sprint.h"
+ #include "AbilitySystemComponent.h"
+-#include "GameFramework/CharacterMovementComponent.h"
+-#include "GameFramework/Character.h"
+ 
+ #include "Project_JGameplayTags.h"
+ 
+@@ -18,16 +16,6 @@
+ 	SetAssetTags(AssetTags);
+ 
+ 	ActivationOwnedTags.AddTag(FProject_JGameplayTags::Get().State_Movement_Sprinting);
+-}
+-
+-bool UProject_JGameplayAbility_Sprint::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
+-{
+-	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+-	{
+-		return false;
+-	}
+-
+-	return true;
+ }
+ 
+ void UProject_JGameplayAbility_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JCombatStateComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JCombatStateComponent.cpp
+@@ -10,15 +10,30 @@
+ 	PrimaryComponentTick.bCanEverTick = false;
+ }
+ 
++void UProject_JCombatStateComponent::BeginPlay()
++{
++	bEnding = false;
++	Super::BeginPlay();
++}
++
++void UProject_JCombatStateComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	bEnding = true;
++	ClearAbilitySystemBinding();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++
+ void UProject_JCombatStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
++	bEnding = true;
+ 	ClearAbilitySystemBinding();
+ 	Super::EndPlay(EndPlayReason);
+ }
+ 
+ void UProject_JCombatStateComponent::BindToAbilitySystem(UAbilitySystemComponent* InAbilitySystemComponent)
+ {
+-	if (InAbilitySystemComponent && InAbilitySystemComponent->GetAvatarActor() != GetOwner())
++	if (bEnding || IsBeingDestroyed() ||
++		(InAbilitySystemComponent && InAbilitySystemComponent->GetAvatarActor() != GetOwner()))
+ 	{
+ 		InAbilitySystemComponent = nullptr;
+ 	}
+@@ -78,7 +93,7 @@
+ 	// ownership contract, not just a live UObject pointer.
+ 	auto* ASC = BoundAbilitySystemComponent.Get();
+ 	const auto* Owner = GetOwner();
+-	return IsValid(Owner) && !Owner->IsActorBeingDestroyed() && ASC && ASC->GetAvatarActor() == Owner ? ASC : nullptr;
++	return !bEnding && !IsBeingDestroyed() && IsValid(Owner) && !Owner->IsActorBeingDestroyed() && ASC && ASC->GetAvatarActor() == Owner ? ASC : nullptr;
+ }
+ 
+ bool UProject_JCombatStateComponent::IsAttacking() const
+@@ -122,7 +137,7 @@
+ 	StateTagEventHandles.Reserve(UE_ARRAY_COUNT(StateTags));
+ 	for (const FGameplayTag& StateTag : StateTags)
+ 	{
+-		StateTagEventHandles.Add(ASC->RegisterGameplayTagEvent(StateTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &UProject_JCombatStateComponent::HandleStateTagChanged));
++		StateTagEventHandles.Add(StateTag, ASC->RegisterGameplayTagEvent(StateTag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &UProject_JCombatStateComponent::HandleStateTagChanged));
+ 	}
+ }
+ 
+@@ -135,19 +150,11 @@
+ 		return;
+ 	}
+ 
+-	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
+-	const FGameplayTag StateTags[] =
++	// Remove the exact tag/handle pairs acquired at registration. There is one
++	// observed-tag list, so extending it cannot drift from the release list.
++	for (const auto& Entry : StateTagEventHandles)
+ 	{
+-		GameplayTags.State_Attacking,
+-		GameplayTags.State_Dodging,
+-		GameplayTags.State_HitReacting,
+-		GameplayTags.State_CombatMode,
+-		GameplayTags.State_Movement_Sprinting
+-	};
+-
+-	for (int32 Index = 0; Index < StateTagEventHandles.Num() && Index < UE_ARRAY_COUNT(StateTags); ++Index)
+-	{
+-		ASC->RegisterGameplayTagEvent(StateTags[Index], EGameplayTagEventType::NewOrRemoved).Remove(StateTagEventHandles[Index]);
++		ASC->RegisterGameplayTagEvent(Entry.Key, EGameplayTagEventType::NewOrRemoved).Remove(Entry.Value);
+ 	}
+ 
+ 	StateTagEventHandles.Reset();
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp
+@@ -4,6 +4,7 @@
+ #include "Equipment/Project_JEquipmentItemDefinition.h"
+ #include "Inventory/Project_JItemDefinition.h"
+ #include "Net/UnrealNetwork.h"
++#include "Engine/World.h"
+ 
+ DEFINE_LOG_CATEGORY_STATIC(LogProjectJEquipment, Log, All);
+ 
+@@ -59,8 +60,43 @@
+ 
+ void UProject_JEquipmentManagerComponent::BeginPlay()
+ {
++	bEnding = false;
++	EquipmentArray.OwnerComponent = this;
+ 	Super::BeginPlay();
+-	EquipmentArray.OwnerComponent = this;
++}
++
++void UProject_JEquipmentManagerComponent::EndPlay(const EEndPlayReason::Type Reason)
++{
++	Retire();
++	Super::EndPlay(Reason);
++}
++
++void UProject_JEquipmentManagerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	Retire();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++
++bool UProject_JEquipmentManagerComponent::CanPublishState() const
++{
++	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
++		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
++}
++
++bool UProject_JEquipmentManagerComponent::HasMutationAuthority() const
++{
++	return CanPublishState() && GetOwner()->HasAuthority();
++}
++
++void UProject_JEquipmentManagerComponent::Retire()
++{
++	if (bEnding) { return; }
++	bEnding = true;
++	EquipmentArray.OwnerComponent = nullptr;
++	OnEquipmentEquipped.Clear(); OnEquipmentUnequipped.Clear(); OnRequestCompleted.Clear();
++	auto RetiredListeners = MoveTemp(OnRetired);
++	OnRetired.Clear();
++	RetiredListeners.Broadcast();
+ }
+ 
+ bool UProject_JEquipmentManagerComponent::GetEquippedItemInstance(EProject_JEquipmentSlot Slot, FProject_JItemInstanceData& OutItem) const
+@@ -72,7 +108,7 @@
+ 
+ void UProject_JEquipmentManagerComponent::RequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+ {
+-	if (!RequestId.IsValid() || !GetOwner()) return;
++	if (!CanPublishState() || !RequestId.IsValid()) return;
+ 	if (GetOwner()->HasAuthority())
+ 	{
+ 		ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
+@@ -83,7 +119,7 @@
+ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::ExecuteEquipmentRequest(FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+ {
+ 	using Failure = EProject_JEquipmentOperationFailure;
+-	if (!GetOwner() || !GetOwner()->HasAuthority()) return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
++	if (!HasMutationAuthority()) return FProject_JEquipmentOperationResult::FailureResult(Failure::NotAuthority);
+ 	const double Now = FPlatformTime::Seconds();
+ 	if (RequestWindowStart < 0 || Now - RequestWindowStart >= 1.0) { RequestWindowStart = Now; RequestsInWindow = 0; }
+ 	if (++RequestsInWindow > 20) return FProject_JEquipmentOperationResult::FailureResult(Failure::RateLimited, InstanceId, Slot);
+@@ -111,12 +147,12 @@
+ 
+ void UProject_JEquipmentManagerComponent::ServerRequestEquipmentChange_Implementation(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip)
+ {
+-	if (RequestId.IsValid()) ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
++	if (HasMutationAuthority() && RequestId.IsValid()) ClientEquipmentRequestCompleted(RequestId, ExecuteEquipmentRequest(InstanceId, Slot, bUnequip));
+ }
+ 
+ void UProject_JEquipmentManagerComponent::ClientEquipmentRequestCompleted_Implementation(FGuid RequestId, FProject_JEquipmentOperationResult Result)
+ {
+-	OnRequestCompleted.Broadcast(RequestId, Result);
++	if (CanPublishState()) { OnRequestCompleted.Broadcast(RequestId, Result); }
+ }
+ 
+ void UProject_JEquipmentManagerComponent::EquipItem(UProject_JEquipmentItemDefinition* ItemDef)
+@@ -134,7 +170,7 @@
+ 
+ void UProject_JEquipmentManagerComponent::RequestEquipItemInstanceById(FGuid InstanceId)
+ {
+-	if (!InstanceId.IsValid())
++	if (!CanPublishState() || !InstanceId.IsValid())
+ 	{
+ 		return;
+ 	}
+@@ -150,7 +186,7 @@
+ 
+ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::TryEquipItemInstanceById(FGuid InstanceId)
+ {
+-	if (!GetOwner() || !GetOwner()->HasAuthority())
++	if (!HasMutationAuthority())
+ 	{
+ 		return FProject_JEquipmentOperationResult::FailureResult(
+ 			EProject_JEquipmentOperationFailure::NotAuthority,
+@@ -181,7 +217,7 @@
+ 	check(IsInGameThread());
+ 	if (bEquipmentOperationInProgress) return;
+ 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
+-	if (!ItemDef || !GetOwner() || !GetOwner()->HasAuthority())
++	if (!ItemDef || !HasMutationAuthority())
+ 	{
+ 		return;
+ 	}
+@@ -198,7 +234,7 @@
+ 	check(IsInGameThread());
+ 	if (bEquipmentOperationInProgress) return;
+ 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
+-	if (!GetOwner() || !GetOwner()->HasAuthority())
++	if (!HasMutationAuthority())
+ 	{
+ 		return;
+ 	}
+@@ -212,7 +248,7 @@
+ 
+ void UProject_JEquipmentManagerComponent::RequestUnequipSlot(EProject_JEquipmentSlot Slot)
+ {
+-	if (Slot == EProject_JEquipmentSlot::None)
++	if (!CanPublishState() || Slot == EProject_JEquipmentSlot::None)
+ 	{
+ 		return;
+ 	}
+@@ -389,7 +425,7 @@
+ 	TGuardValue<bool> OperationGuard(bEquipmentOperationInProgress, true);
+ 
+ 	UProject_JEquipmentItemDefinition* ItemDef = Cast<UProject_JEquipmentItemDefinition>(ItemInstance.ItemDef);
+-	if (!GetOwner() || !GetOwner()->HasAuthority())
++	if (!HasMutationAuthority())
+ 	{
+ 		return FProject_JEquipmentOperationResult::FailureResult(
+ 			EProject_JEquipmentOperationFailure::NotAuthority,
+@@ -434,6 +470,7 @@
+ 
+ 	const EProject_JEquipmentSlot Slot = ItemDef->EquipmentSlot;
+ 	const int32 ConflictIndex = FindEquipmentIndexBySlot(Slot);
++	TWeakObjectPtr<UProject_JInventoryComponent> IncomingInventory(GetOwnerInventoryComponent());
+ 	bool bIncomingItemLocked = false;
+ 	if (bRequireInventoryOwnership)
+ 	{
+@@ -446,19 +483,36 @@
+ 		}
+ 		bIncomingItemLocked = true;
+ 	}
++	const auto RollbackIncomingLock = [&] {
++		if (bIncomingItemLocked && IncomingInventory.IsValid())
++		{
++			IncomingInventory->SetItemInstanceLocked(ItemInstance.InstanceId, false);
++		}
++	};
++	const auto HasIncomingSource = [&] {
++		return !bIncomingItemLocked || (IncomingInventory.IsValid() && IncomingInventory->IsAcceptingRequests() &&
++			GetOwnerInventoryComponent() == IncomingInventory.Get());
++	};
++	if (!HasMutationAuthority() || !HasIncomingSource())
++	{
++		RollbackIncomingLock();
++		return FProject_JEquipmentOperationResult::FailureResult(EProject_JEquipmentOperationFailure::NotAuthority, ItemInstance.InstanceId, Slot);
++	}
+ 
+ 	// Lock the incoming item before mutating the occupied slot. If replacement
+ 	// fails, restore the incoming inventory state and keep the previous item.
+ 	if (ConflictIndex != INDEX_NONE && !RemoveEquipmentAt(ConflictIndex))
+ 	{
+-		if (bIncomingItemLocked)
+-		{
+-			SetInventoryEquipmentLock(ItemInstance, false);
+-		}
++		RollbackIncomingLock();
+ 		return FProject_JEquipmentOperationResult::FailureResult(
+ 			EProject_JEquipmentOperationFailure::InvalidRequest,
+ 			ItemInstance.InstanceId,
+ 			Slot);
++	}
++	if (!HasMutationAuthority() || !HasIncomingSource())
++	{
++		RollbackIncomingLock();
++		return FProject_JEquipmentOperationResult::FailureResult(EProject_JEquipmentOperationFailure::NotAuthority, ItemInstance.InstanceId, Slot);
+ 	}
+ 
+ 	FProject_JEquipmentArrayItem& NewItem = EquipmentArray.Items.Add_GetRef(FProject_JEquipmentArrayItem());
+@@ -474,7 +528,7 @@
+ 
+ void UProject_JEquipmentManagerComponent::BroadcastEquipmentEquipped(const FProject_JEquipmentArrayItem& Item)
+ {
+-	if (Item.ItemDef)
++	if (CanPublishState() && Item.ItemDef)
+ 	{
+ 		OnEquipmentEquipped.Broadcast(Item.Slot, Item.ItemDef);
+ 	}
+@@ -482,7 +536,7 @@
+ 
+ void UProject_JEquipmentManagerComponent::BroadcastEquipmentUnequipped(const FProject_JEquipmentArrayItem& Item)
+ {
+-	if (Item.ItemDef)
++	if (CanPublishState() && Item.ItemDef)
+ 	{
+ 		OnEquipmentUnequipped.Broadcast(Item.Slot, Item.ItemDef);
+ 	}
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
+@@ -56,17 +56,23 @@
+ 
+ void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager)
+ {
++	if (InEquipmentManager && (!IsValid(InEquipmentManager) || !InEquipmentManager->IsAcceptingRequests())) { return; }
+ 	if ((bIsEndingPlay && InEquipmentManager) ||
+ 		(BoundEquipmentManager == InEquipmentManager && (InEquipmentManager || RuntimeItems.IsEmpty())))
+ 	{
+ 		return;
+ 	}
+ 
+-	if (BoundEquipmentManager)
+-	{
+-		BoundEquipmentManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
+-		BoundEquipmentManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+-	}
++	const uint64 ThisBindingRevision = ++BindingRevision;
++	auto* PreviousManager = BoundEquipmentManager;
++	BoundEquipmentManager = nullptr; // Revoke before removal/grant callbacks can rebind.
++	if (PreviousManager)
++	{
++		PreviousManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
++		PreviousManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
++		PreviousManager->OnRetired.Remove(ManagerRetiredHandle);
++	}
++	ManagerRetiredHandle.Reset();
+ 
+ 	// Also clean up if the old manager is absent but a slot still owns a request.
+ 	TArray<EProject_JEquipmentSlot> Keys;
+@@ -75,27 +81,38 @@
+ 	{
+ 		const FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
+ 		OnEquipmentUnequipped(Slot, RuntimeItem ? RuntimeItem->ItemDef : nullptr);
+-	}
+-
++		if (ThisBindingRevision != BindingRevision) { return; }
++	}
++
++	if (ThisBindingRevision != BindingRevision || (bIsEndingPlay && InEquipmentManager)) { return; }
+ 	BoundEquipmentManager = InEquipmentManager;
+ 
+ 	if (BoundEquipmentManager)
+ 	{
+ 		BoundEquipmentManager->OnEquipmentEquipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
+ 		BoundEquipmentManager->OnEquipmentUnequipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
++		ManagerRetiredHandle = BoundEquipmentManager->OnRetired.AddUObject(this,
++			&UProject_JEquipmentRuntimeComponent::OnEquipmentManagerRetired, InEquipmentManager);
+ 
+ 		// Initialize currently equipped items
+ 		TArray<UProject_JEquipmentItemDefinition*> CurrentItems = BoundEquipmentManager->GetAllEquippedItems();
+ 		for (UProject_JEquipmentItemDefinition* ItemDef : CurrentItems)
+ 		{
+ 			OnEquipmentEquipped(ItemDef ? ItemDef->EquipmentSlot : EProject_JEquipmentSlot::None, ItemDef);
++			if (ThisBindingRevision != BindingRevision || bIsEndingPlay) { return; }
+ 		}
+ 	}
+ }
+ 
++void UProject_JEquipmentRuntimeComponent::OnEquipmentManagerRetired(UProject_JEquipmentManagerComponent* ExpectedManager)
++{
++	if (BoundEquipmentManager == ExpectedManager) { BindToEquipmentManager(nullptr); }
++}
++
+ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
+ {
+-	if (bIsEndingPlay || !IsValid(ItemDef)) return;
++	if (bIsEndingPlay || IsBeingDestroyed() || !IsValid(ItemDef)) return;
++	const uint64 RequestedBindingRevision = BindingRevision;
+ 
+ 	if (RuntimeItems.Contains(Slot))
+ 	{
+@@ -103,13 +120,22 @@
+ 	}
+ 
+ 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+-	if (!OwnerCharacter) return;
++	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
++		!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed()) return;
+ 
+ 	FProject_JEquipmentRuntimeItem NewRuntimeItem;
+ 	NewRuntimeItem.ItemDef = ItemDef;
+ 	NewRuntimeItem.VisualRevision = ++NextVisualRevision;
+ 
+ 	ApplyEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
++	// GAS grants/stat changes may synchronously retire or rebind this component.
++	// This local transaction has not been published, so teardown cannot own it yet.
++	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
++		OwnerCharacter->IsActorBeingDestroyed() || RuntimeItems.Contains(Slot))
++	{
++		RemoveEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
++		return;
++	}
+ 
+ 	RuntimeItems.Add(Slot, NewRuntimeItem);
+ 	RefreshCurrentWeaponConfiguration();
+@@ -184,28 +210,9 @@
+ 	}
+ 
+ 	UAbilitySystemComponent* ASC = RuntimeItem.GrantedAbilitySystem.Get();
+-	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+-	{
+-		for (const FName GrantSourceId : RuntimeItem.GrantedHandles.GrantSourceIds)
+-		{
+-			ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
+-		}
+-		RuntimeItem.GrantedHandles.AbilitySpecHandles.Reset();
+-		RuntimeItem.GrantedHandles.GameplayEffectHandles.Reset();
+-		RuntimeItem.GrantedHandles.GrantSourceIds.Reset();
+-	}
+-
+ 	if (ASC)
+ 	{
+-		// Generic ASCs have no source registry; retire their individually owned handles.
+-		for (const FGameplayAbilitySpecHandle Handle : RuntimeItem.GrantedHandles.AbilitySpecHandles)
+-		{
+-			ASC->ClearAbility(Handle);
+-		}
+-		for (const FActiveGameplayEffectHandle Handle : RuntimeItem.GrantedHandles.GameplayEffectHandles)
+-		{
+-			ASC->RemoveActiveGameplayEffect(Handle);
+-		}
++		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
+ 		RemoveEquipmentEffects(*ASC, RuntimeItem);
+ 	}
+ 	RuntimeItem.GrantedHandles = FProject_JAbilitySet_GrantedHandles();
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp
+@@ -9,6 +9,7 @@
+ #include "Project_JAttributeSet.h"
+ #include "GameplayEffect.h"
+ #include "GameFramework/GameStateBase.h"
++#include "Engine/World.h"
+ 
+ void FProject_JInventoryArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
+ {
+@@ -60,8 +61,40 @@
+ 
+ void UProject_JInventoryComponent::BeginPlay()
+ {
++	bEnding = false;
++	InventoryArray.OwnerComponent = this;
+ 	Super::BeginPlay();
+-	InventoryArray.OwnerComponent = this;
++}
++
++void UProject_JInventoryComponent::EndPlay(const EEndPlayReason::Type Reason)
++{
++	Retire();
++	Super::EndPlay(Reason);
++}
++
++void UProject_JInventoryComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	Retire();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++
++bool UProject_JInventoryComponent::CanPublishState() const
++{
++	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
++		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
++}
++
++bool UProject_JInventoryComponent::HasMutationAuthority() const
++{
++	return CanPublishState() && GetOwner()->HasAuthority();
++}
++
++void UProject_JInventoryComponent::Retire()
++{
++	bEnding = true;
++	InventoryArray.OwnerComponent = nullptr;
++	OnItemAdded.Clear(); OnItemChanged.Clear(); OnItemRemoved.Clear();
++	OnUseCompleted.Clear(); OnBagCompleted.Clear();
+ }
+ 
+ void UProject_JInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+@@ -81,7 +114,7 @@
+ 	NewItem.ItemLevel = FMath::Max(1, ItemLevel);
+ 	NewItem.BagOrder = NextBagOrder();
+ 
+-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || NewItem.BagOrder == INDEX_NONE || !CanCommitItemInstance(NewItem))
++	if (!HasMutationAuthority() || bEditingBag || NewItem.BagOrder == INDEX_NONE || !CanCommitItemInstance(NewItem))
+ 	{
+ 		return FProject_JItemInstanceData();
+ 	}
+@@ -97,7 +130,7 @@
+ bool UProject_JInventoryComponent::RemoveItemInstance(FGuid InstanceId)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag)
++	if (!HasMutationAuthority() || bEditingBag)
+ 	{
+ 		return false;
+ 	}
+@@ -123,7 +156,7 @@
+ bool UProject_JInventoryComponent::SetItemStackCount(FGuid InstanceId, int32 NewStackCount)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || NewStackCount < 0)
++	if (!HasMutationAuthority() || bEditingBag || NewStackCount < 0)
+ 	{
+ 		return false;
+ 	}
+@@ -172,7 +205,7 @@
+ bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 DeltaStackCount)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority())
++	if (!HasMutationAuthority())
+ 	{
+ 		return false;
+ 	}
+@@ -197,7 +230,7 @@
+ bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 CountToConsume)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority())
++	if (!HasMutationAuthority())
+ 	{
+ 		return false;
+ 	}
+@@ -225,7 +258,7 @@
+ bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag)
++	if (!HasMutationAuthority() || bEditingBag)
+ 	{
+ 		return false;
+ 	}
+@@ -341,6 +374,7 @@
+ 
+ void UProject_JInventoryComponent::HandleReplicatedItemAdded(const FProject_JInventoryArrayItem& Item)
+ {
++	if (!CanPublishState()) { return; }
+ #if !UE_BUILD_SHIPPING
+ 	++ReplicationDiagnosticAddedCount;
+ #endif
+@@ -350,6 +384,7 @@
+ 
+ void UProject_JInventoryComponent::HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item)
+ {
++	if (!CanPublishState()) { return; }
+ #if !UE_BUILD_SHIPPING
+ 	++ReplicationDiagnosticChangedCount;
+ #endif
+@@ -359,6 +394,7 @@
+ 
+ void UProject_JInventoryComponent::HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item)
+ {
++	if (!CanPublishState()) { return; }
+ #if !UE_BUILD_SHIPPING
+ 	++ReplicationDiagnosticRemovedCount;
+ #endif
+@@ -408,24 +444,25 @@
+ }
+ void UProject_JInventoryComponent::RequestUseItem(FGuid RequestId, FGuid InstanceId)
+ {
+- if (RequestId.IsValid() && InstanceId.IsValid()) ServerUseItem(RequestId, InstanceId);
++ if (CanPublishState() && RequestId.IsValid() && InstanceId.IsValid()) ServerUseItem(RequestId, InstanceId);
+ }
+ void UProject_JInventoryComponent::ServerUseItem_Implementation(FGuid RequestId, FGuid InstanceId)
+ {
+- if (!RequestId.IsValid()) return;
++ if (!HasMutationAuthority() || !RequestId.IsValid()) return;
+  const double Now = GetWorld()->GetTimeSeconds();
+  if (Now - UseRequestWindow >= 1 || UseRequestWindow < 0) { UseRequestWindow = Now; UseRequestCount = 0; }
+  if (++UseRequestCount > 20) { ClientUseCompleted(RequestId, EProject_JItemUseResult::RateLimited); return; }
+  if (const auto* Receipt = UseReceipts.Find(RequestId)) { ClientUseCompleted(RequestId, *Receipt); return; }
+  const auto Result = TryUseItem(InstanceId);
++ if (!CanPublishState()) return;
+  if (UseReceiptOrder.Num() >= 64) { UseReceipts.Remove(UseReceiptOrder[0]); UseReceiptOrder.RemoveAt(0); }
+  UseReceiptOrder.Add(RequestId); UseReceipts.Add(RequestId, Result);
+  ClientUseCompleted(RequestId, Result);
+ }
+-void UProject_JInventoryComponent::ClientUseCompleted_Implementation(FGuid RequestId, EProject_JItemUseResult Result) { OnUseCompleted.Broadcast(RequestId, Result); }
++void UProject_JInventoryComponent::ClientUseCompleted_Implementation(FGuid RequestId, EProject_JItemUseResult Result) { if (CanPublishState()) OnUseCompleted.Broadcast(RequestId, Result); }
+ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceId)
+ {
+- if (!GetOwner() || !GetOwner()->HasAuthority() || bUsingItem || bEditingBag) return EProject_JItemUseResult::Unavailable;
++ if (!HasMutationAuthority() || bUsingItem || bEditingBag) return EProject_JItemUseResult::Unavailable;
+  FProject_JItemInstanceData Item;
+  if (!FindItemInstance(InstanceId, Item)) return EProject_JItemUseResult::Invalid;
+  if (Item.bIsLocked || Item.bIsEquipped) return EProject_JItemUseResult::Locked;
+@@ -448,11 +485,11 @@
+  if (!CanRemoveItemInstance(InstanceId, 1) || !ConsumeItemStack(InstanceId, 1)) return EProject_JItemUseResult::Unavailable;
+  // Reserve shared recovery cooldown before broadcasting GAS attribute events (reentrancy).
+  NextUseTime = GetWorld()->GetTimeSeconds() + Def->CooldownSeconds;
+- ASC->ApplyGameplayEffectSpecToSelf(Spec); GetOwner()->ForceNetUpdate();
++ ASC->ApplyGameplayEffectSpecToSelf(Spec); if (CanPublishState()) GetOwner()->ForceNetUpdate();
+  return EProject_JItemUseResult::Success;
+ }
+ 
+-void UProject_JInventoryComponent::OnRep_NextUseTime() { OnItemChanged.Broadcast(FProject_JItemInstanceData()); }
++void UProject_JInventoryComponent::OnRep_NextUseTime() { if (CanPublishState()) OnItemChanged.Broadcast(FProject_JItemInstanceData()); }
+ 
+ int32 UProject_JInventoryComponent::NextBagOrder() const
+ {
+@@ -463,16 +500,17 @@
+ }
+ void UProject_JInventoryComponent::RequestBagChange(FGuid RequestId, const FProject_JBagRequest &Request)
+ {
+-	if (RequestId.IsValid()) ServerBagChange(RequestId, Request);
++	if (CanPublishState() && RequestId.IsValid()) ServerBagChange(RequestId, Request);
+ }
+ void UProject_JInventoryComponent::ServerBagChange_Implementation(FGuid RequestId, FProject_JBagRequest Request)
+ {
+-	if (!RequestId.IsValid() || !GetWorld()) return;
++	if (!HasMutationAuthority() || !RequestId.IsValid()) return;
+ 	const double Now = GetWorld()->GetTimeSeconds();
+ 	if (BagRequestWindow < 0 || Now - BagRequestWindow >= 1) { BagRequestWindow = Now; BagRequestCount = 0; }
+ 	if (++BagRequestCount > 20) { ClientBagCompleted(RequestId, EProject_JBagResult::RateLimited); return; }
+ 	if (const auto *Receipt = BagReceipts.Find(RequestId)) { ClientBagCompleted(RequestId, *Receipt); return; }
+ 	const auto Result = TryBagChange(Request);
++	if (!CanPublishState()) return;
+ 	if (BagReceiptOrder.Num() >= 64) { BagReceipts.Remove(BagReceiptOrder[0]); BagReceiptOrder.RemoveAt(0); }
+ 	BagReceiptOrder.Add(RequestId);
+ 	BagReceipts.Add(RequestId, Result);
+@@ -480,12 +518,12 @@
+ }
+ void UProject_JInventoryComponent::ClientBagCompleted_Implementation(FGuid RequestId, EProject_JBagResult Result)
+ {
+-	OnBagCompleted.Broadcast(RequestId, Result);
++	if (CanPublishState()) OnBagCompleted.Broadcast(RequestId, Result);
+ }
+ EProject_JBagResult UProject_JInventoryComponent::TryBagChange(const FProject_JBagRequest &Request)
+ {
+ 	check(IsInGameThread());
+-	if (!GetOwner() || !GetOwner()->HasAuthority() || bEditingBag || bUsingItem) return EProject_JBagResult::Unavailable;
++	if (!HasMutationAuthority() || bEditingBag || bUsingItem) return EProject_JBagResult::Unavailable;
+ 	const int32 SourceIndex = FindItemIndex(Request.Source);
+ 	if (SourceIndex == INDEX_NONE) return EProject_JBagResult::Invalid;
+ 	const auto Source = InventoryArray.Items[SourceIndex].ItemInstance;
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
+@@ -8,6 +8,7 @@
+ #include "Components/Project_JSkillInputRouterComponent.h"
+ #include "Mount/Project_JMountComponent.h"
+ #include "GameFramework/PlayerController.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
+ {
+@@ -18,16 +19,16 @@
+ 
+ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
+ {
++	if (bEnding || IsBeingDestroyed()) { return false; }
++	const uint64 ExpectedRevision = BindingRevision + 1;
+ 	UnbindInput();
++	if (bEnding || IsBeingDestroyed() || BindingRevision != ExpectedRevision) { return false; }
++	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
++	if (!IsValid(EnhancedInputComponent) || EnhancedInputComponent->IsBeingDestroyed() ||
++		!IsValid(PlayerCharacter) || PlayerCharacter->IsActorBeingDestroyed()) { return false; }
+ 	BoundPlayerCharacter = PlayerCharacter;
+ 	ActiveSkillInputMappingData = ActionSet.SkillInputMappingData;
+ 	ActiveDirectInputTags.Reset();
+-
+-	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+-	if (!EnhancedInputComponent || !BoundPlayerCharacter)
+-	{
+-		return false;
+-	}
+ 
+ 	BoundEnhancedInputComponent = EnhancedInputComponent;
+ 	if (UProject_JMountComponent* Mount = BoundPlayerCharacter->GetMountComponent())
+@@ -154,33 +155,53 @@
+ void UProject_JPlayerInputBindingComponent::UnbindInput()
+ {
+ 	check(IsInGameThread());
+-	if (UEnhancedInputComponent* Input = BoundEnhancedInputComponent.Get())
+-	{
+-		for (uint32 Handle : OwnedBindingHandles) Input->RemoveBindingByHandle(Handle);
+-	}
+-	OwnedBindingHandles.Reset();
++	const uint64 ReleaseRevision = ++BindingRevision;
++	const auto PreviousInput = BoundEnhancedInputComponent;
++	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
++	const auto ReleasedHandles = MoveTemp(OwnedBindingHandles);
++	const auto ReleasedInputs = MoveTemp(ActiveDirectInputTags);
+ 	BoundEnhancedInputComponent.Reset();
+-	const auto ReleasedInputs = MoveTemp(ActiveDirectInputTags);
+-	if (IsValid(BoundPlayerCharacter))
+-	{
+-		for (const auto& Entry : ReleasedInputs) BoundPlayerCharacter->HandleSkillInputTagReleased(Entry.Value);
+-		if (BoundPlayerCharacter->SkillInputRouterComponent) BoundPlayerCharacter->SkillInputRouterComponent->ResetInputState();
+-		HandleJumpStopped();
+-		BoundPlayerCharacter->StopSprint();
+-		FinalizeMoveStopped();
+-	}
++	BoundPlayerCharacter = nullptr;
++	ActiveSkillInputMappingData = nullptr;
+ 	bPendingMoveStopReconciliation = bPendingSemanticMoveIntentRefresh = false;
+ 	bSemanticMoveIntentActionsBound = false;
+ 	bMoveIntentForwardHeld = bMoveIntentBackwardHeld = bMoveIntentLeftHeld = bMoveIntentRightHeld = false;
+ 	SetComponentTickEnabled(false);
+-	ActiveSkillInputMappingData = nullptr;
+-	BoundPlayerCharacter = nullptr;
++	if (UEnhancedInputComponent* Input = PreviousInput.Get())
++	{
++		for (uint32 Handle : ReleasedHandles) Input->RemoveBindingByHandle(Handle);
++	}
++	if (PreviousPlayer.IsValid())
++	{
++		for (const auto& Entry : ReleasedInputs) PreviousPlayer->HandleSkillInputTagReleased(Entry.Value);
++		// A callback may acquire a new device for this pawn. Its logical state now
++		// belongs to that binding; old teardown must not reset the new router/move.
++		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
++		if (PreviousPlayer->SkillInputRouterComponent) PreviousPlayer->SkillInputRouterComponent->ResetInputState();
++		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
++		PreviousPlayer->StopJumping();
++		PreviousPlayer->StopSprint();
++		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
++		FinalizeMoveStoppedForCharacter(PreviousPlayer.Get());
++	}
++}
++
++bool UProject_JPlayerInputBindingComponent::MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const
++{
++	return BindingRevision == ReleaseRevision || BoundPlayerCharacter != PlayerCharacter;
+ }
+ 
+ void UProject_JPlayerInputBindingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
++	bEnding = true;
+ 	UnbindInput();
+ 	Super::EndPlay(EndPlayReason);
++}
++void UProject_JPlayerInputBindingComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	bEnding = true;
++	UnbindInput();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
+ }
+ 
+ void UProject_JPlayerInputBindingComponent::TickComponent(
+@@ -468,41 +489,49 @@
+ 
+ void UProject_JPlayerInputBindingComponent::FinalizeMoveStopped()
+ {
+-	if (!BoundPlayerCharacter)
+-	{
+-		return;
+-	}
+-
+-	const bool bHadMoveInput = BoundPlayerCharacter->bHadMoveInputForReplication;
++	FinalizeMoveStoppedForCharacter(BoundPlayerCharacter.Get());
++}
++
++void UProject_JPlayerInputBindingComponent::FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter)
++{
++	if (!PlayerCharacter)
++	{
++		return;
++	}
++	const uint64 ReleaseRevision = BindingRevision;
++
++	const bool bHadMoveInput = PlayerCharacter->bHadMoveInputForReplication;
+ 	const bool bWasSprintingAtStop =
+-		BoundPlayerCharacter->IsSprintLocomotionAllowed() ||
+-		(BoundPlayerCharacter->LocomotionAnimStateComponent &&
+-			(BoundPlayerCharacter->LocomotionAnimStateComponent->bUseSprintLocomotion ||
+-			 BoundPlayerCharacter->LocomotionAnimStateComponent->bWantsSprint));
+-	BoundPlayerCharacter->ResetMoveStartReplicationState();
+-
+-	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
+-	{
+-		BoundPlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
+-	}
++		PlayerCharacter->IsSprintLocomotionAllowed() ||
++		(PlayerCharacter->LocomotionAnimStateComponent &&
++			(PlayerCharacter->LocomotionAnimStateComponent->bUseSprintLocomotion ||
++			 PlayerCharacter->LocomotionAnimStateComponent->bWantsSprint));
++	PlayerCharacter->ResetMoveStartReplicationState();
++
++	if (PlayerCharacter->LocomotionAnimStateComponent)
++	{
++		PlayerCharacter->LocomotionAnimStateComponent->ClearMoveInput();
++	}
++	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }
+ 	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop())
+ 	{
+ 		UE_LOG(LogProjectJPlayer, Display,
+ 			TEXT("MMCombatStop Input=StopApplied Actor=%s Frame=%llu Speed=%.1f HadMove=%d Sprint=%d StateInput=%d CachedAxis=%.2f"),
+-			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter,
+-			BoundPlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
++			*GetNameSafe(PlayerCharacter), GFrameCounter,
++			PlayerCharacter->GetVelocity().Size2D(), bHadMoveInput ? 1 : 0,
+ 			bWasSprintingAtStop ? 1 : 0,
+-			BoundPlayerCharacter->LocomotionAnimStateComponent &&
+-				BoundPlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
+-			BoundPlayerCharacter->LocomotionAnimStateComponent
+-				? BoundPlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
+-	}
+-
+-	BoundPlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
++			PlayerCharacter->LocomotionAnimStateComponent &&
++				PlayerCharacter->LocomotionAnimStateComponent->bHasMoveInput ? 1 : 0,
++			PlayerCharacter->LocomotionAnimStateComponent
++				? PlayerCharacter->LocomotionAnimStateComponent->MoveInputSize : -1.0f);
++	}
++
++	PlayerCharacter->UpdateSprintInputFromMove(FVector2D::ZeroVector);
++	if (!MayRetirePlayerState(PlayerCharacter, ReleaseRevision)) { return; }
+ 
+ 	if (bHadMoveInput)
+ 	{
+-		BoundPlayerCharacter->DispatchMoveStopAnimationEvent(bWasSprintingAtStop);
++		PlayerCharacter->DispatchMoveStopAnimationEvent(bWasSprintingAtStop);
+ 	}
+ }
+ 
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JReplicatedJumpStateComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JReplicatedJumpStateComponent.cpp
+@@ -43,6 +43,7 @@
+ 		return;
+ 	}
+ 
++	if (JumpState.Sequence == MAX_int32) { return; }
+ 	++JumpState.Sequence;
+ 	if (const UWorld* World = GetWorld())
+ 	{
+@@ -89,13 +90,15 @@
+ 	const AActor* Owner = GetOwner();
+ 	if (!LocomotionAnimStateComponent ||
+ 		!Owner ||
+-		Owner->GetLocalRole() != ROLE_SimulatedProxy ||
+-		ConfirmedState.Sequence == LastAppliedRemoteJumpSequence)
++		Owner->GetLocalRole() != ROLE_SimulatedProxy)
+ 	{
+ 		return;
+ 	}
+ 
+-	LastAppliedRemoteJumpSequence = ConfirmedState.Sequence;
++	if (!LocomotionAnimStateComponent->HandleConfirmedRemoteJump(
++		ConfirmedState.Sequence,
++		ResolveServerStartAgeSeconds(ConfirmedState),
++		ConfirmedState.LaunchVelocity)) { return; }
+ 	const AProject_JPlayerCharacter* PlayerCharacter = Cast<AProject_JPlayerCharacter>(Owner);
+ 	const UProject_JLocomotionProfile* LocomotionProfile =
+ 		PlayerCharacter ? PlayerCharacter->GetLocomotionProfile() : nullptr;
+@@ -106,10 +109,6 @@
+ 				? LocomotionProfile->MotionMatchingSearchPolicy.RemoteJumpUrgentAnimationUpdateDuration
+ 				: 0.10f);
+ 	}
+-	LocomotionAnimStateComponent->HandleConfirmedRemoteJump(
+-		ConfirmedState.Sequence,
+-		ResolveServerStartAgeSeconds(ConfirmedState),
+-		ConfirmedState.LaunchVelocity);
+ }
+ 
+ float UProject_JReplicatedJumpStateComponent::ResolveServerStartAgeSeconds(
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JSkillInputExecutionComponent.cpp
+@@ -20,11 +20,14 @@
+ 
+ void UProject_JSkillInputExecutionComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
++	const uint64 Revision = ++BindingRevision;
+ 	if (BoundPlayerCharacter != InPlayerCharacter)
+ 	{
+ 		ReleaseAllDispatchedInputs();
+ 		ClearCommandInputHistory();
+ 	}
++	if (bEnding || BindingRevision != Revision) { return; }
+ 	BoundPlayerCharacter = InPlayerCharacter;
+ 	RefreshInputAbilitySystem();
+ }
+@@ -54,16 +57,27 @@
+ 
+ void UProject_JSkillInputExecutionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
++	RetireInput();
++	Super::EndPlay(EndPlayReason);
++}
++void UProject_JSkillInputExecutionComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	RetireInput();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++void UProject_JSkillInputExecutionComponent::RetireInput()
++{
++	bEnding = true;
++	++BindingRevision;
+ 	ReleaseAllDispatchedInputs();
+ 	InputAbilitySystem.Reset();
+ 	ClearCommandInputHistory();
+ 	BoundPlayerCharacter = nullptr;
+-	Super::EndPlay(EndPlayReason);
+ }
+ 
+ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag InputTag)
+ {
+-	if (!InputTag.IsValid() || !BoundPlayerCharacter)
++	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !BoundPlayerCharacter)
+ 	{
+ 		return;
+ 	}
+@@ -107,7 +121,7 @@
+ 	// aliases must originate on the server, never from a client-supplied event tag.
+ 	static const FGameplayTag InputRoot = FGameplayTag::RequestGameplayTag(FName(TEXT("InputTag")));
+ 	const uint32 SequenceDelta = InputSequence - LastServerInputSequence;
+-	if (!InputTag.MatchesTag(InputRoot) || InputTag.MatchesTagExact(InputRoot) ||
++	if (bEnding || IsBeingDestroyed() || !InputTag.MatchesTag(InputRoot) || InputTag.MatchesTagExact(InputRoot) ||
+ 		!IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed() || !BoundPlayerCharacter->HasAuthority() || SequenceDelta == 0 || SequenceDelta >= 0x80000000u)
+ 	{
+ 		return;
+@@ -191,7 +205,7 @@
+ 
+ void UProject_JSkillInputExecutionComponent::DispatchInputTag(const FGameplayTag InputTag, const bool bAllowAbilityActivation)
+ {
+-	if (!InputTag.IsValid() || !IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed())
++	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !IsValid(BoundPlayerCharacter) || BoundPlayerCharacter->IsActorBeingDestroyed())
+ 	{
+ 		return;
+ 	}
+@@ -305,7 +319,7 @@
+ 
+ void UProject_JSkillInputExecutionComponent::HandleInputTagReleased(FGameplayTag InputTag)
+ {
+-	if (!InputTag.IsValid()) return;
++	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid()) return;
+ 	RefreshInputAbilitySystem();
+ 	FGameplayTagContainer ReleasedTags;
+ 	ActiveDispatchTags.RemoveAndCopyValue(InputTag, ReleasedTags);
+--- deep-baseline/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
++++ final/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
+@@ -105,7 +105,10 @@
+ 
+ void UProject_JSkillInputRouterComponent::Initialize(AProject_JPlayerCharacter* InPlayerCharacter)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
++	const uint64 Revision = ++BindingRevision;
+ 	ResetInputState();
++	if (bEnding || Revision != BindingRevision) { return; }
+ 	BoundPlayerCharacter = InPlayerCharacter;
+ 	GetEffectiveChords();
+ }
+@@ -138,18 +141,31 @@
+ 
+ void UProject_JSkillInputRouterComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
++	RetireInput();
++	Super::EndPlay(EndPlayReason);
++}
++void UProject_JSkillInputRouterComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	RetireInput();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
++}
++void UProject_JSkillInputRouterComponent::RetireInput()
++{
++	bEnding = true;
++	++BindingRevision;
+ 	ResetInputState();
+ 	BoundPlayerCharacter = nullptr;
+-	Super::EndPlay(EndPlayReason);
+ }
+ 
+ void UProject_JSkillInputRouterComponent::SetModifierHeld(bool bHeld)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	bModifierHeld = bHeld;
+ }
+ 
+ void UProject_JSkillInputRouterComponent::HandleModifierPressed(const FGameplayTag ModifierTag)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	if (ModifierTag.IsValid())
+ 	{
+ 		ActiveModifierTags.AddTag(ModifierTag);
+@@ -158,6 +174,7 @@
+ 
+ void UProject_JSkillInputRouterComponent::HandleModifierReleased(const FGameplayTag ModifierTag)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	if (ModifierTag.IsValid())
+ 	{
+ 		ActiveModifierTags.RemoveTag(ModifierTag);
+@@ -171,6 +188,7 @@
+ 
+ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInputButton Button)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	++(Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision);
+ 	if (Button == EProject_JSkillInputButton::LMB)
+ 	{
+@@ -223,6 +241,7 @@
+ 
+ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillInputButton Button)
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	// Resolve a pending press while its button is still held. Release state must
+ 	// be published before dispatch, but must not invalidate that press's chord.
+ 	const bool bFlushTap = bHasPendingChordButton && PendingChordButton == Button;
+@@ -394,6 +413,7 @@
+ 
+ void UProject_JSkillInputRouterComponent::FlushPendingChordButton()
+ {
++	if (bEnding || IsBeingDestroyed()) { return; }
+ 	if (!bHasPendingChordButton)
+ 	{
+ 		return;
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp
++++ final/Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp
+@@ -339,12 +339,14 @@
+ 					const FName GrantSource(*FString::Printf(TEXT("Default.%s"), *AbilityClass->GetName()));
+ 					if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+ 					{
+-						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource))
++						uint64 GrantGeneration = 0;
++						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource, GrantGeneration))
+ 						{
+ 							continue;
+ 						}
+ 						const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+-						ProjectJASC->RegisterGrantedAbility(GrantSource, Handle);
++						if (!ProjectJASC->RegisterGrantedAbility(GrantSource, GrantGeneration, Handle))
++						{ ASC->CancelAbilityHandle(Handle); ASC->ClearAbility(Handle); }
+ 					}
+ 					else
+ 					{
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp
++++ final/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp
+@@ -100,13 +100,27 @@
+ }
+ 
+ 
++void UProject_JLocomotionAnimStateComponent::BeginPlay()
++{
++	bMovementTagOwnershipEnding = false;
++	Super::BeginPlay();
++}
++
+ void UProject_JLocomotionAnimStateComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
++	bMovementTagOwnershipEnding = true;
+ 	ClearOwnedMovementGameplayTags();
+ 	RemoteRuntime.Reset();
+ 	MovingTurnPolicy.Reset();
+ 	TurnRequestSample = {};
+ 	Super::EndPlay(EndPlayReason);
++}
++
++void UProject_JLocomotionAnimStateComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
++{
++	bMovementTagOwnershipEnding = true;
++	ClearOwnedMovementGameplayTags();
++	Super::OnComponentDestroyed(bDestroyingHierarchy);
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::UpdateState(float DeltaTime)
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp
++++ final/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentBase.cpp
+@@ -28,11 +28,13 @@
+ 
+ void UProject_JLocomotionAnimStateComponentBase::CacheOwnerReferences()
+ {
++	const auto PreviousASC = CachedAbilitySystemComponent;
+ 	CachedPlayerOwner = Cast<AProject_JPlayerCharacter>(GetOwner());
+ 	CachedMovementComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCharacterMovement() : nullptr;
+ 	CachedCapsuleComponent = CachedPlayerOwner ? CachedPlayerOwner->GetCapsuleComponent() : nullptr;
+ 	CachedAbilitySystemComponent = CachedPlayerOwner ? CachedPlayerOwner->GetAbilitySystemComponent() : nullptr;
+ 	CachedMeshComponent = CachedPlayerOwner ? CachedPlayerOwner->GetMesh() : nullptr;
++	if (PreviousASC != CachedAbilitySystemComponent) { OnCachedAbilitySystemChanged(); }
+ }
+ 
+ AProject_JPlayerCharacter* UProject_JLocomotionAnimStateComponentBase::GetPlayerOwner() const
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentGround.cpp
++++ final/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentGround.cpp
+@@ -16,13 +16,8 @@
+ 
+ 	GroundMotionMode = NewMode;
+ 	GroundMotionModeElapsedTime = 0.0f;
+-	ResetGroundMotionTransitionRequests();
+ 	HandleGroundMotionModeEntered(NewMode);
+ 	RefreshGroundMotionFlags();
+-}
+-
+-void UProject_JLocomotionAnimStateComponent::ResetGroundMotionTransitionRequests()
+-{
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode)
+@@ -83,9 +78,6 @@
+ {
+ 	bStartWasSprinting = false;
+ 	bStopWasSprinting = false;
+-	bStartRequested = false;
+-	bUseStartDatabase = false;
+-	bGroundStartFinished = true;
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::CacheRemoteStartTurnReference()
+@@ -141,6 +133,8 @@
+ 
+ void UProject_JLocomotionAnimStateComponent::RefreshGroundMotionFlags()
+ {
++	// GroundMotionMode owns the semantic state. Publish its Blueprint-compatible
++	// views together here; transition helpers must not author a second state.
+ 	bStartRequested = GroundMotionMode == EProject_JGroundMotionMode::Start;
+ 	bUseStartDatabase = bStartRequested;
+ 	bGroundStartFinished = !bStartRequested;
+@@ -425,10 +419,6 @@
+ 	{
+ 		EnterGroundMotionMode(EProject_JGroundMotionMode::Start);
+ 	}
+-	else if (bStopEdge)
+-	{
+-		EnterGroundMotionMode(EProject_JGroundMotionMode::Stop);
+-	}
+ 	else if (GroundMotionMode == EProject_JGroundMotionMode::Start)
+ 	{
+ 		UpdateStartGroundMotionMode(MoveInput, bAllowSharpTurn);
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp
++++ final/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentSupport.cpp
+@@ -191,103 +191,76 @@
+ 	}
+ }
+ 
++void UProject_JLocomotionAnimStateComponent::OnCachedAbilitySystemChanged()
++{
++    const auto& Tags = FProject_JGameplayTags::Get();
++    ReconcileMovementGameplayTag(Tags.State_Movement_InAir, OwnedInAirTagASC, bInAirGameplayTagRequested);
++    ReconcileMovementGameplayTag(Tags.State_Movement_Landing, OwnedLandingTagASC, bLandingGameplayTagRequested);
++}
++
++void UProject_JLocomotionAnimStateComponent::ReconcileMovementGameplayTag(
++    const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease, const bool& bRequested)
++{
++    if (Lease.Get() != GetCachedAbilitySystemComponent() || !bRequested || bMovementTagOwnershipEnding)
++    { ReleaseMovementGameplayTag(Tag, Lease); }
++    // Release delegates can rebind the ASC, change demand, or end this owner.
++    // Read live demand and cache again; never overwrite a nested acquired lease.
++    if (bMovementTagOwnershipEnding || !bRequested || Lease.IsValid()) { return; }
++    UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent();
++    if (!IsValid(ASC)) { return; }
++    Lease = ASC; // Publish before the synchronous gameplay-tag callbacks.
++    if (auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC)) { ProjectJASC->AddProjectJLooseGameplayTag(Tag); }
++    else { ASC->AddLooseGameplayTag(Tag); }
++}
++
++void UProject_JLocomotionAnimStateComponent::ReleaseMovementGameplayTag(
++    const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease)
++{
++    UAbilitySystemComponent* ASC = Lease.Get();
++    Lease.Reset(); // Detach before callbacks so recursive release cannot decrement twice.
++    if (!IsValid(ASC)) { return; }
++    if (auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC)) { ProjectJASC->RemoveProjectJLooseGameplayTag(Tag); }
++    else { ASC->RemoveLooseGameplayTag(Tag); }
++}
++
+ void UProject_JLocomotionAnimStateComponent::AddOwnedInAirGameplayTag()
+ {
+-	if (bAppliedInAirGameplayTag)
+-	{
+-		return;
+-	}
+-
+-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+-	{
+-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+-		{
+-			ProjectJASC->AddProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+-		}
+-		else
+-		{
+-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+-		}
+-		bAppliedInAirGameplayTag = true;
+-	}
++    if (bMovementTagOwnershipEnding) { return; }
++    bInAirGameplayTagRequested = true;
++    ReconcileMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir, OwnedInAirTagASC, bInAirGameplayTagRequested);
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::RemoveOwnedInAirGameplayTag()
+ {
+-	if (!bAppliedInAirGameplayTag)
+-	{
+-		return;
+-	}
+-
+-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+-	{
+-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+-		{
+-			ProjectJASC->RemoveProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+-		}
+-		else
+-		{
+-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir);
+-		}
+-	}
+-	bAppliedInAirGameplayTag = false;
++    bInAirGameplayTagRequested = false;
++    ReleaseMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_InAir, OwnedInAirTagASC);
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::AddOwnedLandingGameplayTag()
+ {
+-	if (bAppliedLandingGameplayTag)
+-	{
+-		return;
+-	}
+-
+-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+-	{
+-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+-		{
+-			ProjectJASC->AddProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+-		}
+-		else
+-		{
+-			ASC->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+-		}
+-		bAppliedLandingGameplayTag = true;
+-	}
++    if (bMovementTagOwnershipEnding) { return; }
++    bLandingGameplayTagRequested = true;
++    ReconcileMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing, OwnedLandingTagASC, bLandingGameplayTagRequested);
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::RemoveOwnedLandingGameplayTag()
+ {
+-	if (!bAppliedLandingGameplayTag)
+-	{
+-		return;
+-	}
+-
+-	if (UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent())
+-	{
+-		if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+-		{
+-			ProjectJASC->RemoveProjectJLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+-		}
+-		else
+-		{
+-			ASC->RemoveLooseGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing);
+-		}
+-	}
+-	bAppliedLandingGameplayTag = false;
++    bLandingGameplayTagRequested = false;
++    ReleaseMovementGameplayTag(FProject_JGameplayTags::Get().State_Movement_Landing, OwnedLandingTagASC);
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::ClearOwnedMovementGameplayTags()
+ {
+-	RemoveOwnedInAirGameplayTag();
+-	RemoveOwnedLandingGameplayTag();
++    bInAirGameplayTagRequested = bLandingGameplayTagRequested = false;
++    RemoveOwnedInAirGameplayTag();
++    RemoveOwnedLandingGameplayTag();
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::ClearMovementRequests()
+ {
+-	bStartRequested = false;
+ 	bPendingStartRequest = false;
+ 	bPendingStopRequest = false;
+ 	RemoteRuntime.ClearStopVisualIntent();
+-	ResetGroundMotionTransitionRequests();
+ 	bResolvedMoveInputLastUpdate = false;
+ 	MoveInputHeldTime = 0.0f;
+ 	bSharpTurnRequested = false;
+--- deep-baseline/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentTransitions.cpp
++++ final/Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponentTransitions.cpp
+@@ -24,15 +24,17 @@
+ 	AddOwnedInAirGameplayTag();
+ }
+ 
+-void UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
++bool UProject_JLocomotionAnimStateComponent::HandleConfirmedRemoteJump(
+ 	int32 Sequence,
+ 	float ServerStartAgeSeconds,
+ 	const FVector& LaunchVelocity)
+ {
+ 	AProject_JPlayerCharacter* PlayerOwner = GetPlayerOwner();
+-	if (!PlayerOwner || ShouldUseLocalInputState() || Sequence == LastConfirmedRemoteJumpSequence)
+-	{
+-		return;
++	if (bMovementTagOwnershipEnding || IsBeingDestroyed() || !IsValid(PlayerOwner) || PlayerOwner->IsActorBeingDestroyed() ||
++		ShouldUseLocalInputState() || Sequence <= LastConfirmedRemoteJumpSequence ||
++		!FMath::IsFinite(ServerStartAgeSeconds) || LaunchVelocity.ContainsNaN())
++	{
++		return false;
+ 	}
+ 
+ 	LastConfirmedRemoteJumpSequence = Sequence;
+@@ -56,7 +58,7 @@
+ 			ScheduleJumpStartTimeout(
+ 				FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
+ 		}
+-		return;
++		return true;
+ 	}
+ 
+ 	if (IsLandingStateActive())
+@@ -73,11 +75,12 @@
+ 	if (JumpStartElapsedTime >= ReplicatedJumpStartDuration)
+ 	{
+ 		CompleteJumpStart();
+-		return;
++		return true;
+ 	}
+ 
+ 	ScheduleJumpStartTimeout(
+ 		FMath::Max(0.05f, ReplicatedJumpStartDuration - JumpStartElapsedTime));
++	return true;
+ }
+ 
+ void UProject_JLocomotionAnimStateComponent::HandleReplicatedFallOffStarted()
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JAggregateRetirementTests.cpp
+@@ -0,0 +1,125 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Tests/Project_JPlayerMaturityFixtures.h"
++#include "Project_JAttributeSet.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "Components/Project_JInventoryComponent.h"
++#include "Components/Project_JEquipmentManagerComponent.h"
++#include "Inventory/Project_JConsumableDefinition.h"
++#include "Equipment/Project_JEquipmentItemDefinition.h"
++#include "Project_JLocomotionAnimStateComponent.h"
++#include "Components/Project_JEquipmentRuntimeComponent.h"
++#include "AbilitySystem/Project_JAbilitySet.h"
++#include "Combat/Project_JGameplayAbility_Sprint.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInventoryRetirementTest, "ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJInventoryRetirementTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner); Owner->CurrentASC = ASC;
++    ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++    ASC->AddAttributeSetSubobject(NewObject<UProject_JAttributeSet>(Owner));
++    ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100);
++    ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 50);
++    ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxManaAttribute(), 100);
++    ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetManaAttribute(), 50);
++    auto* Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
++    auto* Potion = NewObject<UProject_JConsumableDefinition>(); Potion->MaxStackCount = 20;
++    Potion->RestoreHealth = 10; Potion->RestoreMana = 0;
++    const auto Item = Inventory->AddItemDefinition(Potion, 4);
++    if (!TestTrue(TEXT("Live inventory accepts the native consumable"), Item.InstanceId.IsValid())) { return false; }
++    Inventory->DestroyComponent();
++    TestEqual(TEXT("Destroyed inventory rejects late consumable use"), Inventory->TryUseItem(Item.InstanceId), EProject_JItemUseResult::Unavailable);
++    TestEqual(TEXT("Retired component cannot heal its still-live owner's ASC"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), 50.f);
++    TestFalse(TEXT("Retired inventory cannot change stack counts"), Inventory->SetItemStackCount(Item.InstanceId, 2));
++    TestFalse(TEXT("Retired inventory cannot consume remaining items"), Inventory->ConsumeItemStack(Item.InstanceId));
++    TestFalse(TEXT("Retired inventory cannot add another item"), Inventory->AddItemDefinition(Potion).InstanceId.IsValid());
++    TestFalse(TEXT("Retired inventory cannot remove the preserved item"), Inventory->RemoveItemInstance(Item.InstanceId));
++    FProject_JItemInstanceData Preserved;
++    TestTrue(TEXT("Read-only state remains available for persistence"), Inventory->FindItemInstance(Item.InstanceId, Preserved));
++    TestEqual(TEXT("Retirement preserves the original stack"), Preserved.StackCount, 4);
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentAggregateRetirementTest, "ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJEquipmentAggregateRetirementTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Owner = World->SpawnActor<AActor>();
++    auto* Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
++    auto* Manager = NewObject<UProject_JEquipmentManagerComponent>(Owner); Manager->RegisterComponent();
++    auto* Original = NewObject<UProject_JEquipmentItemDefinition>();
++    auto* Replacement = NewObject<UProject_JEquipmentItemDefinition>();
++    Manager->EquipItem(Original);
++    const auto Item = Inventory->AddItemDefinition(Replacement);
++    if (!TestTrue(TEXT("Live equipment aggregate commits its native weapon"), Manager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) == Original)) { return false; }
++    Manager->DestroyComponent();
++    Manager->UnequipSlot(EProject_JEquipmentSlot::Weapon);
++    TestTrue(TEXT("Retired aggregate cannot unequip its persisted state"), Manager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) == Original);
++    Manager->EquipItem(Replacement);
++    TestTrue(TEXT("Retired aggregate cannot replace its persisted state"), Manager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon) == Original);
++    TestFalse(TEXT("Retired aggregate rejects the owned inventory request"), Manager->TryEquipItemInstanceById(Item.InstanceId).bSucceeded);
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRemoteJumpFreshnessTest, "ProjectJ.Animation.StateOwnership.RemoteJumpFreshness",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJRemoteJumpFreshnessTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
++    auto* State = Player->FindComponentByClass<UProject_JLocomotionAnimStateComponent>();
++    State->HandleConfirmedRemoteJump(5, 0, FVector(0, 0, 400));
++    if (!TestEqual(TEXT("Fresh confirmation carries actual upward speed"), State->LastFallSpeed, 400.f)) { return false; }
++    State->bIsLanding = true;
++    State->HandleConfirmedRemoteJump(4, 0, FVector(0, 0, 800));
++    TestEqual(TEXT("Older confirmation cannot replace current airborne evidence"), State->LastFallSpeed, 400.f);
++    TestTrue(TEXT("Older confirmation cannot restart a jump over newer landing"), State->bIsLanding);
++    State->HandleConfirmedRemoteJump(6, 0, FVector(0, 0, 500));
++    TestEqual(TEXT("A genuinely newer confirmation remains admissible"), State->LastFallSpeed, 500.f);
++    TestFalse(TEXT("New accepted jump still replaces old landing"), State->bIsLanding);
++    TestFalse(TEXT("Duplicate confirmation is not accepted again"), State->HandleConfirmedRemoteJump(6, 0, FVector(0, 0, 900)));
++    State->DestroyComponent();
++    TestFalse(TEXT("Retired locomotion owner cannot accept a late confirmation"), State->HandleConfirmedRemoteJump(7, 0, FVector(0, 0, 900)));
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentProviderRetirementTest, "ProjectJ.RuntimeOwnership.AggregateRetirement.EquipmentProvider",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJEquipmentProviderRetirementTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Character = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Character); Character->CurrentASC = ASC;
++    ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Character, Character);
++    const auto OtherProvider = ASC->GiveAbility(FGameplayAbilitySpec(UProject_JGameplayAbility_Sprint::StaticClass(), 1));
++    auto* Set = NewObject<UProject_JAbilitySet>();
++    auto& Ability = Set->GrantedAbilityEntries.AddDefaulted_GetRef(); Ability.Ability = UProject_JGameplayAbility_Sprint::StaticClass();
++    auto* Item = NewObject<UProject_JEquipmentItemDefinition>(); Item->AbilitySet = Set;
++    Item->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly;
++    auto* Manager = NewObject<UProject_JEquipmentManagerComponent>(Character); Manager->RegisterComponent(); Manager->EquipItem(Item);
++    auto* Runtime = NewObject<UProject_JEquipmentRuntimeComponent>(Character); Runtime->RegisterComponent(); Runtime->BindToEquipmentManager(Manager);
++    TestEqual(TEXT("Equipment runtime and independent provider each own a spec"), ASC->GetActivatableAbilities().Num(), 2);
++    Manager->DestroyComponent();
++    TestEqual(TEXT("Provider retirement releases its consumer's actual grant"), ASC->GetActivatableAbilities().Num(), 1);
++    TestNotNull(TEXT("Provider retirement preserves an unrelated spec"), ASC->FindAbilitySpecFromHandle(OtherProvider));
++    Runtime->BindToEquipmentManager(Manager);
++    TestEqual(TEXT("Retired provider cannot reacquire a runtime grant"), ASC->GetActivatableAbilities().Num(), 1);
++    ASC->ClearAbility(OtherProvider);
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JAuthoredDamageTests.cpp
+@@ -0,0 +1,64 @@
++#if WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Tests/Project_JPlayerMaturityFixtures.h"
++#include "Components/Project_JCombatHitValidationComponent.h"
++#include "Combat/Project_JAttackDefinition.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "Project_JAttributeSet.h"
++#include "Project_JGameplayTags.h"
++#include "GameplayEffect.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredDamageTest, "ProjectJ.Combat.AuthoredDamageContract",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJAuthoredDamageTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto MakeActor = [&](const FVector& Position) {
++        auto* Actor = World->SpawnActor<AProject_JPlayerMaturityASCFixture>(); Actor->SetActorLocation(Position);
++        Actor->SetActorEnableCollision(false);
++        auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Actor);
++        Actor->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Actor, Actor);
++        auto* Attributes = NewObject<UProject_JAttributeSet>(Actor); ASC->AddAttributeSetSubobject(Attributes);
++        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetMaxHealthAttribute(), 100);
++        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100);
++        return Actor;
++    };
++    auto* Attacker = MakeActor(FVector::ZeroVector); auto* Target = MakeActor(FVector(100, 0, 0));
++    auto* Hit = NewObject<UProject_JCombatHitValidationComponent>(Attacker); Hit->RegisterComponent();
++    const auto* Reference = LoadObject<UProject_JAttackDefinition>(nullptr,
++        TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1"));
++    if (!TestNotNull(TEXT("Existing working prototype attack"), Reference) || !Reference->DamageEffect) { return false; }
++    const auto* Effect = Reference->DamageEffect->GetDefaultObject<UGameplayEffect>();
++    float HealthDelta = 0;
++    for (const auto& Modifier : Effect->Modifiers)
++    {
++        if (Modifier.Attribute == UProject_JAttributeSet::GetHealthAttribute() && Modifier.ModifierOp == EGameplayModOp::Additive)
++        { float Magnitude = 0; if (Modifier.ModifierMagnitude.GetStaticMagnitudeIfPossible(1.f, Magnitude)) { HealthDelta += Magnitude; } }
++    }
++    if (!TestTrue(TEXT("Working reference is instant and reduces health"), Effect->DurationPolicy == EGameplayEffectDurationType::Instant && HealthDelta < 0)) { return false; }
++    for (const TCHAR* Name : {TEXT("LMB1"), TEXT("LMB2"), TEXT("LMBRMB"), TEXT("LR1"), TEXT("LR2"),
++        TEXT("Q1"), TEXT("Q2"), TEXT("R"), TEXT("RMB1"), TEXT("RMB2"), TEXT("T")})
++    {
++        const FString Path = FString::Printf(TEXT("/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_%s.DA_Attack_Greatsword_%s"), Name, Name);
++        auto* Definition = LoadObject<UProject_JAttackDefinition>(nullptr, *Path);
++        if (!TestNotNull(Path, Definition)) { continue; }
++        // Each definition must demonstrate damage against a living target; the
++        // final attack must not pass merely because earlier hits reached zero.
++        Target->CurrentASC->SetNumericAttributeBase(UProject_JAttributeSet::GetHealthAttribute(), 100);
++        const float Before = Target->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute());
++        Hit->BeginAttackNode(Definition->AttackTag, Definition); Hit->SetHitWindowOpen(true);
++        Hit->RecordAuthoritativeTrace(FVector(20, 0, 0), FVector(100, 0, 0));
++        TestTrue(FString::Printf(TEXT("%s server hit accepted"), Name), Hit->ProcessAuthorityHit(Target));
++        TestEqual(FString::Printf(TEXT("%s applies the existing authored health damage"), Name),
++            Target->CurrentASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute()), FMath::Max(0.f, Before + HealthDelta));
++        TestFalse(TEXT("Damage does not grant persistent combat mode to the victim"), Target->CurrentASC->HasMatchingGameplayTag(FProject_JGameplayTags::Get().State_CombatMode));
++        TestFalse(TEXT("Same swing cannot damage twice"), Hit->ProcessAuthorityHit(Target)); Hit->EndAttack();
++    }
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JEquipmentCommitLifetimeTests.cpp
+@@ -0,0 +1,92 @@
++#if WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Tests/Project_JPlayerMaturityFixtures.h"
++#include "Components/Project_JEquipmentManagerComponent.h"
++#include "Components/Project_JEquipmentRuntimeComponent.h"
++#include "Components/Project_JCombatStateComponent.h"
++#include "Equipment/Project_JEquipmentItemDefinition.h"
++#include "Project_JAttributeSet.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Misc/ScopeExit.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentCommitLifetimeTest,
++    "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJEquipmentCommitLifetimeTest::RunTest(const FString&)
++{
++    // Destruction, a null binding gap and a populated replacement are distinct boundaries.
++    for (int32 Mode = 0; Mode < 3; ++Mode)
++    {
++        UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
++        GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++        ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++        auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++        auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner);
++        Owner->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++        auto* Attributes = NewObject<UProject_JAttributeSet>(Owner); ASC->AddAttributeSetSubobject(Attributes);
++        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetAttackPowerAttribute(), 100.f);
++        ASC->SetNumericAttributeBase(UProject_JAttributeSet::GetDefenseAttribute(), 50.f);
++        auto* Manager = NewObject<UProject_JEquipmentManagerComponent>(Owner); Manager->RegisterComponent();
++        auto* Runtime = NewObject<UProject_JEquipmentRuntimeComponent>(Owner); Runtime->RegisterComponent();
++        Runtime->BindToEquipmentManager(Manager);
++        auto* Definition = NewObject<UProject_JEquipmentItemDefinition>();
++        Definition->EquipmentSlot = EProject_JEquipmentSlot::Weapon;
++        Definition->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly;
++        FProject_JEquipmentStatModifier First; First.Stat = EProject_JEquipmentStat::AttackPower; First.Value = 10;
++        FProject_JEquipmentStatModifier Second; Second.Stat = EProject_JEquipmentStat::Defense; Second.Value = 20;
++        Definition->StatModifiers = {First, Second};
++        auto* ReplacementManager = NewObject<UProject_JEquipmentManagerComponent>(Owner); ReplacementManager->RegisterComponent();
++        auto* ReplacementDefinition = NewObject<UProject_JEquipmentItemDefinition>();
++        ReplacementDefinition->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly;
++        FProject_JEquipmentStatModifier Replacement; Replacement.Stat = EProject_JEquipmentStat::AttackPower; Replacement.Value = 30;
++        ReplacementDefinition->StatModifiers = {Replacement}; ReplacementManager->EquipItem(ReplacementDefinition);
++        uint64 ReplacementRevision = 0;
++        bool bRetiredDuringApply = false;
++        const auto Handle = ASC->GetGameplayAttributeValueChangeDelegate(UProject_JAttributeSet::GetAttackPowerAttribute())
++            .AddLambda([&](const FOnAttributeChangeData& Change)
++            {
++                if (!bRetiredDuringApply && Change.NewValue > 100)
++                {
++                    bRetiredDuringApply = true;
++                    if (Mode == 0) { Runtime->DestroyComponent(); }
++                    else if (Mode == 1) { Runtime->BindToEquipmentManager(nullptr); }
++                    else { Runtime->BindToEquipmentManager(ReplacementManager); ReplacementRevision = Runtime->GetWeaponRevision(); }
++                }
++            });
++        Manager->EquipItem(Definition);
++        ASC->GetGameplayAttributeValueChangeDelegate(UProject_JAttributeSet::GetAttackPowerAttribute()).Remove(Handle);
++        TestTrue(TEXT("Actual attribute callback retired the runtime during apply"), bRetiredDuringApply);
++        TestEqual(TEXT("A retired runtime returns its unpublished attack modifier"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetAttackPowerAttribute()), (Mode == 2 ? 130.f : 100.f));
++        TestEqual(TEXT("Rollback includes later modifiers and preserves the previous defense"), ASC->GetNumericAttribute(UProject_JAttributeSet::GetDefenseAttribute()), 50.f);
++        TestEqual(TEXT("Older apply cannot replace a subsequent binding's weapon lease"), Runtime->GetWeaponRevision(), ReplacementRevision);
++        if (Mode == 2) { TestTrue(TEXT("New binding publishes its own live weapon"), ReplacementRevision != 0); }
++    }
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJDestroyedCombatBindingTest,
++    "ProjectJ.RuntimeOwnership.DestroyedCombatBinding",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJDestroyedCombatBindingTest::RunTest(const FString&)
++{
++    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner);
++    Owner->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++    auto* Combat = NewObject<UProject_JCombatStateComponent>(Owner); Combat->RegisterComponent();
++    Combat->BindToAbilitySystem(ASC);
++    const auto Tag = FGameplayTag::RequestGameplayTag(TEXT("State.CombatMode"));
++    ASC->AddProjectJLooseGameplayTag(Tag);
++    TestTrue(TEXT("Live component observes the actual ASC"), Combat->IsCombatModeActive());
++    Combat->DestroyComponent();
++    TestFalse(TEXT("Destroyed component cannot read or command the live ASC"), Combat->IsCombatModeActive());
++    Combat->BindToAbilitySystem(ASC);
++    TestFalse(TEXT("Late binding cannot revive a destroyed combat component"), Combat->IsCombatModeActive());
++    TestEqual(TEXT("Retiring a listener preserves the gameplay owner's tag"), ASC->GetTagCount(Tag), 1);
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JGrantReentryTests.cpp
+@@ -0,0 +1,46 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Tests/Project_JPlayerMaturityFixtures.h"
++#include "AbilitySystem/Project_JAbilitySet.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "GameplayEffect.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGrantReentryTest, "ProjectJ.RuntimeOwnership.GrantSourceReentry",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJGrantReentryTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner);
++    Owner->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++    auto* EffectClass = LoadClass<UGameplayEffect>(nullptr, TEXT("/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C"));
++    if (!TestNotNull(TEXT("Actual persistent effect class"), EffectClass)) { return false; }
++    auto* First = NewObject<UProject_JAbilitySet>();
++    FProject_JAbilitySet_GameplayEffect Entry; Entry.Effect = EffectClass; First->GrantedEffectEntries.Add(Entry);
++    auto* Replacement = NewObject<UProject_JAbilitySet>();
++    FProject_JAbilitySet_GrantedHandles Handles;
++    constexpr auto Source = TEXT("Test.ReentrantSharedSource");
++    bool bReplaced = false;
++    const auto Delegate = ASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda(
++        [&](UAbilitySystemComponent*, const FGameplayEffectSpec&, FActiveGameplayEffectHandle) {
++            if (bReplaced) { return; }
++            bReplaced = true;
++            First->TakeFromAbilitySystem(ASC, &Handles);
++            Replacement->GiveToAbilitySystem(ASC, &Handles, Owner, Source);
++        });
++    First->GiveToAbilitySystem(ASC, &Handles, Owner, Source);
++    ASC->OnGameplayEffectAppliedDelegateToSelf.Remove(Delegate);
++    TestTrue(TEXT("Actual apply callback replaces the same source identity"), bReplaced);
++    TestTrue(TEXT("Replacement owns its own source reservation"), ASC->HasAbilityGrantSource(Source));
++    TestEqual(TEXT("Older apply cannot append an effect to new handles"), Handles.GameplayEffectHandles.Num(), 0);
++    TestEqual(TEXT("The retired generation's persistent effect is returned"), ASC->GetActiveEffects(FGameplayEffectQuery()).Num(), 0);
++    Replacement->TakeFromAbilitySystem(ASC, &Handles);
++    TestFalse(TEXT("Replacement reservation releases normally"), ASC->HasAbilityGrantSource(Source));
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JInputRetirementTests.cpp
+@@ -0,0 +1,128 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Project_JGreatswordCharacter.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "Project_JGameplayTags.h"
++#include "Combat/Project_JGameplayAbility_Melee.h"
++#include "Combat/Project_JGameplayAbility_Sprint.h"
++#include "Components/Project_JSkillInputExecutionComponent.h"
++#include "Components/Project_JSkillInputRouterComponent.h"
++#include "Components/Project_JPlayerInputBindingComponent.h"
++#include "EnhancedInputComponent.h"
++#include "InputAction.h"
++#include "UObject/UnrealType.h"
++#include "TimerManager.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInputRetirementTest, "ProjectJ.RuntimeOwnership.InputRetirement",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJInputRetirementTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
++    FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
++    ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
++    const auto InputTag = FProject_JGameplayTags::Get().InputTag_Weapon_RMB;
++    FGameplayAbilitySpec Spec(UProject_JGameplayAbility_Melee::StaticClass(), 1); Spec.GetDynamicSpecSourceTags().AddTag(InputTag);
++    const auto Handle = ASC->GiveAbility(Spec);
++    auto* Binding = Player->FindComponentByClass<UProject_JPlayerInputBindingComponent>();
++    auto* DeviceInput = NewObject<UEnhancedInputComponent>(Player); DeviceInput->RegisterComponent();
++    FProject_JPlayerInputActionSet Actions; Actions.AttackAction = NewObject<UInputAction>(); Actions.HeavyAttackAction = NewObject<UInputAction>();
++    TestTrue(TEXT("Input owner acquires actual EnhancedInput bindings"), Binding->BindInput(DeviceInput, Player, Actions));
++    TestTrue(TEXT("Device has acquired event bindings"), DeviceInput->GetActionEventBindings().Num() > 0);
++    Binding->DestroyComponent();
++    TestEqual(TEXT("Destroy before BeginPlay removes all owned device bindings"), DeviceInput->GetActionEventBindings().Num(), 0);
++    TestFalse(TEXT("Destroyed input binding owner cannot rebind"), Binding->BindInput(DeviceInput, Player, Actions));
++    auto* Input = Player->FindComponentByClass<UProject_JSkillInputExecutionComponent>(); Input->Initialize(Player);
++    Input->HandleInputTagPressed(InputTag);
++    TestTrue(TEXT("Actual GAS input is held before component retirement"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
++    Input->DestroyComponent();
++    TestFalse(TEXT("Destroy before BeginPlay releases the owned GAS input"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
++    Input->HandleInputTagReleased(InputTag); // Leave a stable baseline for independent late-initialize coverage.
++    Input->Initialize(Player); Input->HandleInputTagPressed(InputTag);
++    TestFalse(TEXT("Late initialization cannot revive a retired executor"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
++    ASC->AbilityInputTagReleased(InputTag);
++    auto* LiveInput = NewObject<UProject_JSkillInputExecutionComponent>(Player); LiveInput->RegisterComponent(); LiveInput->Initialize(Player);
++    auto* InputProperty = FindFProperty<FObjectPropertyBase>(AProject_JPlayerCharacter::StaticClass(), TEXT("SkillInputExecutionComponent"));
++    if (!TestNotNull(TEXT("Independent live input execution seam"), InputProperty)) { return false; }
++    InputProperty->SetObjectPropertyValue_InContainer(Player, LiveInput);
++    auto* Router = Player->FindComponentByClass<UProject_JSkillInputRouterComponent>(); Router->Initialize(Player);
++    auto* Mapping = NewObject<UProject_JSkillInputMappingData>(Router);
++    auto& Right = Mapping->Chords.AddDefaulted_GetRef(); Right.bRequiresLMB = false; Right.bRequiresRMB = true; Right.InputTag = InputTag;
++    Router->InputMappingData = Mapping;
++    auto& Combined = Mapping->Chords.AddDefaulted_GetRef(); Combined.bRequiresLMB = Combined.bRequiresRMB = true;
++    Combined.InputTag = FProject_JGameplayTags::Get().InputTag_Weapon_LMB;
++    int32 Delivered = 0;
++    ASC->GenericGameplayEventCallbacks.FindOrAdd(InputTag).AddLambda([&](const FGameplayEventData*) { ++Delivered; });
++    Router->HandleButtonPressed(EProject_JSkillInputButton::RMB);
++    TestTrue(TEXT("Router owns an actual pending chord timer"), World->GetTimerManager().TimerExists(Router->PendingChordTimerHandle));
++    Router->DestroyComponent();
++    TestFalse(TEXT("Router destruction retires its pending chord timer"), World->GetTimerManager().TimerExists(Router->PendingChordTimerHandle));
++    Router->Initialize(Player);
++    Router->HandleButtonPressed(EProject_JSkillInputButton::RMB); Router->HandleButtonReleased(EProject_JSkillInputButton::RMB);
++    TestEqual(TEXT("Retired router cannot deliver a late quick tap"), Delivered, 0);
++    ASC->GenericGameplayEventCallbacks.Empty();
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInputBindingReentryTest, "ProjectJ.RuntimeOwnership.InputBindingReentry",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJInputBindingReentryTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
++    FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"))->SetObjectPropertyValue_InContainer(Player, ASC);
++    ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player);
++    Player->FindComponentByClass<UProject_JSkillInputExecutionComponent>()->Initialize(Player);
++    Player->FindComponentByClass<UProject_JSkillInputRouterComponent>()->Initialize(Player);
++    const auto InputTag = FProject_JGameplayTags::Get().InputTag_Weapon_RMB;
++    FGameplayAbilitySpec Spec(UProject_JGameplayAbility_Sprint::StaticClass(), 1);
++    Spec.GetDynamicSpecSourceTags().AddTag(InputTag); const auto Handle = ASC->GiveAbility(Spec);
++    auto* Binding = Player->FindComponentByClass<UProject_JPlayerInputBindingComponent>();
++    auto MakeInput = [&] { auto* Input = NewObject<UEnhancedInputComponent>(Player); Input->RegisterComponent(); return Input; };
++    auto* Original = MakeInput(); auto* Superseded = MakeInput(); auto* Latest = MakeInput();
++    auto* Action = NewObject<UInputAction>();
++    auto* Mapping = NewObject<UProject_JSkillInputMappingData>();
++    auto& Direct = Mapping->DirectSkillBindings.AddDefaulted_GetRef(); Direct.InputAction = Action; Direct.InputTag = InputTag;
++    FProject_JPlayerInputActionSet Actions; Actions.SkillInputMappingData = Mapping;
++    TestTrue(TEXT("Original device binds"), Binding->BindInput(Original, Player, Actions));
++    for (const auto& Event : Original->GetActionEventBindings())
++    {
++        if (Event->GetAction() == Action && Event->GetTriggerEvent() == ETriggerEvent::Started)
++        { Event->Execute(FInputActionInstance(Action)); break; }
++    }
++    if (!TestTrue(TEXT("Actual input activates the persistent sprint ability"), ASC->FindAbilitySpecFromHandle(Handle)->IsActive())) { return false; }
++    bool bReentered = false; bool bLatestBound = false;
++    const auto SprintTag = FProject_JGameplayTags::Get().State_Movement_Sprinting;
++    const auto Callback = ASC->RegisterGameplayTagEvent(SprintTag, EGameplayTagEventType::NewOrRemoved).AddLambda(
++        [&](FGameplayTag, int32 Count) {
++            if (Count == 0 && !bReentered) { bReentered = true; bLatestBound = Binding->BindInput(Latest, Player, Actions); }
++        });
++    const bool bSupersededBound = Binding->BindInput(Superseded, Player, Actions);
++    ASC->RegisterGameplayTagEvent(SprintTag, EGameplayTagEventType::NewOrRemoved).Remove(Callback);
++    TestTrue(TEXT("Actual input release synchronously rebinds the same owner"), bReentered && bLatestBound);
++    TestFalse(TEXT("Older outer bind cannot supersede callback's new connection"), bSupersededBound);
++    TestEqual(TEXT("Retired original device is empty"), Original->GetActionEventBindings().Num(), 0);
++    TestEqual(TEXT("Superseded device never acquires bindings"), Superseded->GetActionEventBindings().Num(), 0);
++    TestEqual(TEXT("Latest device holds the three direct action edges"), Latest->GetActionEventBindings().Num(), 3);
++    for (const auto& Event : Latest->GetActionEventBindings())
++    {
++        if (Event->GetAction() == Action && Event->GetTriggerEvent() == ETriggerEvent::Started)
++        { Event->Execute(FInputActionInstance(Action)); break; }
++    }
++    TestTrue(TEXT("Latest connection continues routing actual input"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
++    Binding->UnbindInput();
++    TestEqual(TEXT("Latest connection's device handles can all be released"), Latest->GetActionEventBindings().Num(), 0);
++    TestFalse(TEXT("Latest connection releases its own held GAS input"), ASC->FindAbilitySpecFromHandle(Handle)->InputPressed);
++    ASC->ClearAbility(Handle);
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JProgressionLifetimeTests.cpp
+@@ -0,0 +1,54 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "Tests/Project_JPlayerMaturityFixtures.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "CharacterClass/Project_JProgressionComponent.h"
++#include "CharacterClass/Project_JCharacterClassDefinition.h"
++#include "Abilities/GameplayAbility.h"
++#include "GameplayEffect.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProgressionLifetimeTest, "ProjectJ.RuntimeOwnership.ProgressionRetirement",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJProgressionLifetimeTest::RunTest(const FString&)
++{
++    auto* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    for (bool bShared : {false, true})
++    {
++        auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++        auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner);
++        Owner->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++        auto* Progression = NewObject<UProject_JProgressionComponent>(Owner); Progression->RegisterComponent();
++        auto* Class = NewObject<UProject_JCharacterClassDefinition>(); Class->ClassId = TEXT("LifetimeClass");
++        auto* Set = NewObject<UProject_JAbilitySet>(); FProject_JAbilitySet_GameplayAbility Entry; Entry.Ability = UGameplayAbility::StaticClass(); Set->GrantedAbilityEntries.Add(Entry); Class->AbilitySets.Add(Set);
++        Progression->InitializeClass(Class);
++        FProject_JAbilitySet_GrantedHandles Other;
++        if (bShared) { Set->GiveToAbilitySystem(ASC, &Other, Owner, FName(*(TEXT("Class.LifetimeClass.") + Set->GetPathName()))); }
++        TestEqual(TEXT("Class grants one real GAS spec"), ASC->GetActivatableAbilities().Num(), 1);
++        Progression->DestroyComponent();
++        TestEqual(TEXT("Retirement returns its lease and preserves another provider"), ASC->GetActivatableAbilities().Num(), bShared ? 1 : 0);
++        TestFalse(TEXT("Destroyed progression cannot grant late XP"), Progression->GrantExperience(100));
++        TestFalse(TEXT("Destroyed progression cannot change level"), Progression->SetLevel(3));
++        if (bShared) { Set->TakeFromAbilitySystem(ASC, &Other); }
++        TestEqual(TEXT("Final provider release leaves no spec"), ASC->GetActivatableAbilities().Num(), 0);
++    }
++    auto* Owner = World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
++    auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Owner);
++    Owner->CurrentASC = ASC; ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Owner, Owner);
++    auto* Progression = NewObject<UProject_JProgressionComponent>(Owner); Progression->RegisterComponent();
++    auto* Class = NewObject<UProject_JCharacterClassDefinition>(); Class->ClassId = TEXT("RetiredDuringGrant");
++    auto* Set = NewObject<UProject_JAbilitySet>(); FProject_JAbilitySet_GameplayEffect Effect;
++    Effect.Effect = LoadClass<UGameplayEffect>(nullptr, TEXT("/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode_C"));
++    Set->GrantedEffectEntries.Add(Effect); Class->AbilitySets.Add(Set);
++    const auto Delegate = ASC->OnGameplayEffectAppliedDelegateToSelf.AddLambda(
++        [&](UAbilitySystemComponent*, const FGameplayEffectSpec&, FActiveGameplayEffectHandle) { Progression->DestroyComponent(); });
++    TestFalse(TEXT("An initialization retired by its real GE callback reports failure"), Progression->InitializeClass(Class));
++    ASC->OnGameplayEffectAppliedDelegateToSelf.Remove(Delegate);
++    TestEqual(TEXT("Unpublished class grant is returned after synchronous retirement"), ASC->GetActiveEffects(FGameplayEffectQuery()).Num(), 0);
++    return true;
++}
++#endif
+--- /dev/null
++++ final/Source/Project_JCharacter/Private/Tests/Project_JStateOwnershipTests.cpp
+@@ -0,0 +1,92 @@
++#if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
++#include "Misc/AutomationTest.h"
++#include "Misc/ScopeExit.h"
++#include "Engine/Engine.h"
++#include "Engine/World.h"
++#include "UObject/UnrealType.h"
++#include "Project_JGreatswordCharacter.h"
++#include "Project_JLocomotionAnimStateComponent.h"
++#include "Project_JAbilitySystemComponent.h"
++#include "Project_JGameplayTags.h"
++#include "Animation/Project_JCharacterAnimInstance.h"
++#include "Components/SkeletalMeshComponent.h"
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundStateOwnershipTest, "ProjectJ.Animation.StateOwnership.GroundModeSource",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJGroundStateOwnershipTest::RunTest(const FString&)
++{
++    auto* State = NewObject<UProject_JLocomotionAnimStateComponent>();
++    auto* Mesh = NewObject<USkeletalMeshComponent>();
++    auto* Anim = NewObject<UProject_JCharacterAnimInstance>(Mesh);
++    Anim->LocomotionAnimStateComponent = State;
++    // A legacy display alias must not become a second source of transition intent.
++    State->bUseStartDatabase = State->bUseStopDatabase = true;
++    for (const auto Mode : {EProject_JGroundMotionMode::Idle, EProject_JGroundMotionMode::Start,
++        EProject_JGroundMotionMode::Locomotion, EProject_JGroundMotionMode::Stop})
++    {
++        State->GroundMotionMode = Mode;
++        FProject_JAnimThreadSafeData Snapshot;
++        Anim->FillLocomotionStateThreadSafeData(Snapshot);
++        TestEqual(TEXT("Snapshot preserves the owning ground mode"), Snapshot.Ground.GroundMotionMode, Mode);
++        TestEqual(TEXT("Start intent follows the semantic owner despite stale aliases"), Snapshot.Ground.bStartRequested,
++            Mode == EProject_JGroundMotionMode::Start);
++        TestEqual(TEXT("Stop intent follows the semantic owner despite stale aliases"), Snapshot.Ground.bStopRequested,
++            Mode == EProject_JGroundMotionMode::Stop);
++    }
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLocomotionTagOwnershipTest, "ProjectJ.RuntimeOwnership.LocomotionTagLease",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJLocomotionTagOwnershipTest::RunTest(const FString&)
++{
++    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
++    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
++    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
++    auto* Player = World->SpawnActor<AProject_JGreatswordCharacter>();
++    auto* State = Player ? Player->GetLocomotionAnimStateComponent() : nullptr;
++    if (!TestNotNull(TEXT("Registered locomotion owner"), State)) { return false; }
++    auto* Property = FindFProperty<FObjectPropertyBase>(AProject_JBaseCharacter::StaticClass(), TEXT("AbilitySystemComponent"));
++    if (!TestNotNull(TEXT("Native ASC owner seam"), Property)) { return false; }
++    auto MakeASC = [&]() {
++        auto* ASC = NewObject<UProject_JAbilitySystemComponent>(Player);
++        ASC->RegisterComponent(); ASC->InitAbilityActorInfo(Player, Player); return ASC;
++    };
++    auto* First = MakeASC(); auto* Second = MakeASC();
++    auto Bind = [&](UAbilitySystemComponent* ASC) {
++        Property->SetObjectPropertyValue_InContainer(Player, ASC); State->RefreshCachedReferences();
++    };
++    const auto& Tags = FProject_JGameplayTags::Get();
++    Bind(First);
++    // Other systems own one contribution each. This component may retire only its own.
++    First->AddProjectJLooseGameplayTag(Tags.State_Movement_InAir);
++    Second->AddProjectJLooseGameplayTag(Tags.State_Movement_InAir);
++    bool bReboundDuringAdd = false;
++    const auto Handle = First->RegisterGameplayTagEvent(Tags.State_Movement_InAir, EGameplayTagEventType::AnyCountChange)
++        .AddLambda([&](FGameplayTag, int32 Count) {
++            if (!bReboundDuringAdd && Count == 2) { bReboundDuringAdd = true; Bind(Second); }
++        });
++    State->AddOwnedInAirGameplayTag();
++    TestTrue(TEXT("Actual synchronous tag delegate changed the ASC"), bReboundDuringAdd);
++    TestEqual(TEXT("Old ASC retains only the unrelated owner's contribution"), First->GetTagCount(Tags.State_Movement_InAir), 1);
++    TestEqual(TEXT("New ASC acquires exactly one locomotion contribution"), Second->GetTagCount(Tags.State_Movement_InAir), 2);
++    First->RegisterGameplayTagEvent(Tags.State_Movement_InAir, EGameplayTagEventType::AnyCountChange).Remove(Handle);
++    State->RemoveOwnedInAirGameplayTag();
++    TestEqual(TEXT("Release removes only the new owner's lease"), Second->GetTagCount(Tags.State_Movement_InAir), 1);
++
++    // Demand survives a real cache gap; it must not decrement an unrelated ASC.
++    Bind(First); State->AddOwnedLandingGameplayTag(); Bind(nullptr);
++    TestEqual(TEXT("Null ASC gap releases the original landing contribution"), First->GetTagCount(Tags.State_Movement_Landing), 0);
++    Bind(Second);
++    TestEqual(TEXT("Late valid ASC acquires the outstanding landing demand once"), Second->GetTagCount(Tags.State_Movement_Landing), 1);
++    State->RemoveOwnedLandingGameplayTag();
++    State->bIsLanding = State->bLandingRequested = true;
++    Bind(First); Bind(Second);
++    TestEqual(TEXT("Cosmetic landing alone does not invent a gameplay tag demand"), Second->GetTagCount(Tags.State_Movement_Landing), 0);
++    State->AddOwnedLandingGameplayTag();
++    State->DestroyComponent();
++    TestEqual(TEXT("Destruction before BeginPlay releases the owned landing lease"), Second->GetTagCount(Tags.State_Movement_Landing), 0);
++    TestEqual(TEXT("Destruction preserves an unrelated air contribution"), Second->GetTagCount(Tags.State_Movement_InAir), 1);
++    return true;
++}
++#endif
+--- deep-baseline/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
++++ final/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
+@@ -26,7 +26,10 @@
+ 	TArray<FActiveGameplayEffectHandle> GameplayEffectHandles;
+ 
+ 	UPROPERTY()
+-	TArray<FName> GrantSourceIds;
++	TMap<FName, uint64> GrantSourceGenerations;
++
++	/** Invalidates an unkeyed grant continuation before synchronous removal callbacks. */
++	uint64 MutationRevision = 0;
+ };
+ 
+ USTRUCT(BlueprintType)
+--- deep-baseline/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
++++ final/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+@@ -597,6 +597,8 @@
+ protected:
+ 	void ResetStateControllerChooserCache();
+ 	void UpdatePresentationFromSnapshot();
++	void ClearStateControllerInputReferences();
++	void PublishStateControllerGroundLoop(EProject_JStateControllerPresentationState LoopState);
+ 	FProject_JAnimThreadSafeData BuildThreadSafeData(float DeltaSeconds) const;
+ 	void ResolveStateControllerPresentationStateWithPlaybackHold(
+ 		const FProject_JAnimThreadSafeData& Data,
+@@ -739,7 +741,6 @@
+ 	bool bHasStateControllerStopGaitForChooser = false;
+ 	EProject_JLocomotionGaitIntent StateControllerLandGaitForChooser = EProject_JLocomotionGaitIntent::Run;
+ 	bool bHasStateControllerLandGaitForChooser = false;
+-	bool bHasStateControllerFallOffForChooser = false;
+ 	TObjectPtr<UAnimationAsset> CachedStateControllerSelectedAnimation = nullptr;
+ 	FProject_JStateControllerChooserOutput CachedStateControllerSelectedAnimationOutput;
+ 	bool bCachedStateControllerHasSelectedAnimation = false;
+@@ -1024,6 +1025,7 @@
+ 
+ private:
+ 	friend class FProjectJAnimationSnapshotBoundaryTest;
++	friend class FProjectJGroundStateOwnershipTest;
+ 	friend class FProjectJAnimationProxyLifetimeTest;
+ 	friend class FProjectJLandingReturnContextTest;
+ 	friend class FProjectJStrafeFacingSelectionTest;
+--- deep-baseline/Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h
++++ final/Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h
+@@ -40,6 +40,9 @@
+ 	GENERATED_BODY()
+ public:
+ 	UProject_JProgressionComponent();
++	virtual void BeginPlay() override;
++	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+ 	const FProject_JProgressionState& GetState() const { return State; }
+ 	const TArray<FName>& GetAcquiredAdvancements() const { return AcquiredAdvancements; }
+@@ -70,8 +73,15 @@
+ 	UPROPERTY(Transient) FProject_JAbilitySet_GrantedHandles AdvancementHandles;
+ 	UPROPERTY(Transient) TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> ActiveAdvancements;
+ 	bool bChanging = false;
++	bool bEnding = false;
++	TWeakObjectPtr<UAbilitySystemComponent> GrantedAbilitySystem;
+ 	UAbilitySystemComponent* GetASC() const;
+ 	bool CanMutate() const;
++	bool CanGrant() const;
++	void RetireGrants();
++	void GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets, const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles);
++	void GrantStyle(const class UProject_JCombatStyleDefinition* Style, FProject_JAbilitySet_GrantedHandles& Handles);
++	int64 GetRequiredExperienceForLevel(int32 Level) const;
+ 	void GrantClass();
+ 	void Publish();
+ 	UFUNCTION() void OnRep_State();
+--- deep-baseline/Source/Project_JCharacter/Public/Combat/Project_JCombatTypes.h
++++ final/Source/Project_JCharacter/Public/Combat/Project_JCombatTypes.h
+@@ -37,7 +37,8 @@
+ {
+ 	GENERATED_BODY()
+ 
+-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Damage", meta = (ClampMin = "0.0"))
++	/** Legacy authoring placeholder; server damage is owned by AttackDefinition.DamageEffect. */
++	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Legacy", meta = (ClampMin = "0.0", ToolTip = "Legacy serialized placeholder. DamageEffect owns damage magnitude; BaseDamage is not consumed by the server hit path."))
+ 	float BaseDamage = 1.5f;
+ 
+ 	/** Max client-submitted root travel per frame, not weapon reach. Tip rotation allowance is added by validation. */
+--- deep-baseline/Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Sprint.h
++++ final/Source/Project_JCharacter/Public/Combat/Project_JGameplayAbility_Sprint.h
+@@ -19,7 +19,6 @@
+ public:
+ 	UProject_JGameplayAbility_Sprint();
+ 
+-	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+ 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+ 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+ 	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JCombatStateComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JCombatStateComponent.h
+@@ -17,7 +17,9 @@
+ public:
+ 	UProject_JCombatStateComponent();
+ 
++	virtual void BeginPlay() override;
+ 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
+ 	FProject_JCombatStateTagChangedSignature OnCombatStateTagChanged;
+@@ -53,5 +55,6 @@
+ 	UPROPERTY(Transient)
+ 	TWeakObjectPtr<UAbilitySystemComponent> BoundAbilitySystemComponent;
+ 
+-	TArray<FDelegateHandle> StateTagEventHandles;
++	TMap<FGameplayTag, FDelegateHandle> StateTagEventHandles;
++	bool bEnding = false;
+ };
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h
+@@ -70,6 +70,11 @@
+ 
+ public:
+ 	UProject_JEquipmentManagerComponent();
++	/** Provider lifetime ended; consumers release their own grants/visual leases. */
++	FSimpleMulticastDelegate OnRetired;
++	bool IsAcceptingRequests() const { return CanPublishState(); }
++	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	UPROPERTY(BlueprintAssignable, Category = "Equipment")
+ 	FProject_JEquipmentRequestCompleted OnRequestCompleted;
+@@ -131,6 +136,10 @@
+ 	virtual void BeginPlay() override;
+ 
+ private:
++	bool bEnding = false;
++	bool CanPublishState() const;
++	bool HasMutationAuthority() const;
++	void Retire();
+ 	UFUNCTION(Server, Reliable)
+ 	void ServerRequestEquipmentChange(FGuid RequestId, FGuid InstanceId, EProject_JEquipmentSlot Slot, bool bUnequip);
+ 	UFUNCTION(Client, Reliable)
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
+@@ -110,6 +110,8 @@
+ private:
+ 	UPROPERTY(Transient)
+ 	UProject_JEquipmentManagerComponent* BoundEquipmentManager;
++	FDelegateHandle ManagerRetiredHandle;
++	void OnEquipmentManagerRetired(UProject_JEquipmentManagerComponent* ExpectedManager);
+ 
+ 	UPROPERTY(Transient)
+ 	TMap<EProject_JEquipmentSlot, FProject_JEquipmentRuntimeItem> RuntimeItems;
+@@ -117,5 +119,6 @@
+ 	bool bIsEndingPlay = false;
+ 	FWeaponRevoked WeaponRevoked;
+ 	uint64 NextVisualRevision = 0;
++	uint64 BindingRevision = 0;
+ 	TWeakObjectPtr<UProject_JVisualAssetSubsystem> VisualAssets;
+ };
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h
+@@ -81,6 +81,9 @@
+ 
+ public:
+ 	UProject_JInventoryComponent();
++	bool IsAcceptingRequests() const { return CanPublishState(); }
++	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 	UFUNCTION(BlueprintCallable) void RequestUseItem(FGuid RequestId, FGuid InstanceId);
+ 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) EProject_JItemUseResult TryUseItem(FGuid InstanceId);
+ 	UPROPERTY(BlueprintAssignable) FProject_JItemUseCompleted OnUseCompleted;
+@@ -153,6 +156,10 @@
+ 	virtual void BeginPlay() override;
+ 
+ private:
++	bool bEnding = false;
++	bool CanPublishState() const;
++	bool HasMutationAuthority() const;
++	void Retire();
+ 	UFUNCTION(Server, Reliable) void ServerBagChange(FGuid RequestId, FProject_JBagRequest Request);
+ 	UFUNCTION(Client, Reliable) void ClientBagCompleted(FGuid RequestId, EProject_JBagResult Result);
+ 	TMap<FGuid, EProject_JBagResult> BagReceipts;
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
+@@ -82,11 +82,14 @@
+ 	UProject_JPlayerInputBindingComponent();
+ 	void UnbindInput();
+ 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	bool BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet);
+ 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+ 
+ private:
++	bool bEnding = false;
++	uint64 BindingRevision = 0;
+ 	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
+ 	TArray<uint32> OwnedBindingHandles;
+ 	void HandleMove(const FInputActionValue& Value);
+@@ -95,6 +98,8 @@
+ 	void HandleMoveIntentDirectionStarted(EProject_JMoveIntentDirection Direction);
+ 	void HandleMoveIntentDirectionStopped(EProject_JMoveIntentDirection Direction);
+ 	void FinalizeMoveStopped();
++	void FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter);
++	bool MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const;
+ 	void CancelPendingMoveStopReconciliation();
+ 	void QueueSemanticMoveIntentRefresh();
+ 	void RefreshSemanticMoveIntent();
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JReplicatedJumpStateComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JReplicatedJumpStateComponent.h
+@@ -52,5 +52,4 @@
+ 	UPROPERTY(Transient)
+ 	TObjectPtr<UProject_JAnimationUpdateCoordinatorComponent> AnimationUpdateCoordinator = nullptr;
+ 
+-	int32 LastAppliedRemoteJumpSequence = 0;
+ };
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JSkillInputExecutionComponent.h
+@@ -25,6 +25,7 @@
+ 
+ 	void Initialize(AProject_JPlayerCharacter* InPlayerCharacter);
+ 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
+ 	void HandleInputTagPressed(FGameplayTag InputTag);
+@@ -43,6 +44,9 @@
+ 	friend class FProjectJCommandReleaseTest;
+ 	void RefreshInputAbilitySystem();
+ 	void ReleaseAllDispatchedInputs();
++	void RetireInput();
++	bool bEnding = false;
++	uint64 BindingRevision = 0;
+ 	TWeakObjectPtr<UProject_JAbilitySystemComponent> InputAbilitySystem;
+ 	// One physical input may activate a command alias as well as its raw tag.
+ 	TMap<FGameplayTag, FGameplayTagContainer> ActiveDispatchTags;
+--- deep-baseline/Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h
++++ final/Source/Project_JCharacter/Public/Components/Project_JSkillInputRouterComponent.h
+@@ -132,6 +132,7 @@
+ 	/** Cancel held/pending mouse attacks without synthesizing a quick tap or clearing keyboard modifiers. */
+ 	void CancelMouseInput();
+ 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	UFUNCTION(BlueprintCallable, Category = "Input|Skills")
+ 	void SetModifierHeld(bool bHeld);
+@@ -157,6 +158,10 @@
+ 	TObjectPtr<UProject_JSkillInputMappingData> InputMappingData = nullptr;
+ 
+ private:
++	friend class FProjectJInputRetirementTest;
++	void RetireInput();
++	bool bEnding = false;
++	uint64 BindingRevision = 0;
+ 	const TArray<FProject_JSkillInputChord>& GetEffectiveChords();
+ 	float GetEffectiveSimultaneousChordGraceSeconds() const;
+ 	void BuildDefaultChordsIfNeeded();
+--- deep-baseline/Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h
++++ final/Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponent.h
+@@ -3,6 +3,7 @@
+ #pragma once
+ 
+ #include "CoreMinimal.h"
++#include "GameplayTagContainer.h"
+ #include "Animation/Project_JMotionMatchingAssetSet.h"
+ #include "Animation/Project_JMotionMatchingSelectionPolicy.h"
+ #include "Animation/Project_JMovingTurnPolicy.h"
+@@ -223,16 +224,19 @@
+ 	friend class FProjectJStrafePivotCardinalTest;
+ 	friend class FProjectJStrafePivotConsecutiveTest;
+ 	friend class FProjectJLandingReturnContextTest;
++	friend class FProjectJLocomotionTagOwnershipTest;
+ 
+ public:
+ 	UProject_JLocomotionAnimStateComponent();
+ 
++	virtual void BeginPlay() override;
+ 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
++	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
+ 
+ 	void UpdateState(float DeltaTime);
+ 	void ApplyTransitionPolicy(const FProject_JLocomotionTransitionPolicy& InPolicy);
+ 	void HandleJumpStarted();
+-	void HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
++	bool HandleConfirmedRemoteJump(int32 Sequence, float ServerStartAgeSeconds, const FVector& LaunchVelocity);
+ 	void HandleReplicatedFallOffStarted();
+ 	void HandleReplicatedMoveStarted(bool bWasSprintingForStart);
+ 	void HandleReplicatedMoveStopped(bool bWasSprintingAtStop);
+@@ -302,6 +306,7 @@
+ 	void ResetJumpStartLandingDebugState();
+ 
+ private:
++	virtual void OnCachedAbilitySystemChanged() override;
+ 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
+ 	bool ShouldSkipUpdateForCurrentContext(float& DeltaTime);
+ 	void AdvanceStateClocks(float DeltaTime);
+@@ -407,7 +412,6 @@
+ 	void CompleteLanding();
+ 
+ 	void EnterGroundMotionMode(EProject_JGroundMotionMode NewMode);
+-	void ResetGroundMotionTransitionRequests();
+ 	void HandleGroundMotionModeEntered(EProject_JGroundMotionMode NewMode);
+ 	void EnterStartGroundMotionMode();
+ 	void EnterStopGroundMotionMode();
+@@ -450,6 +454,8 @@
+ 	void AddOwnedLandingGameplayTag();
+ 	void RemoveOwnedLandingGameplayTag();
+ 	void ClearOwnedMovementGameplayTags();
++	void ReconcileMovementGameplayTag(const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease, const bool& bRequested);
++	void ReleaseMovementGameplayTag(const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease);
+ 	void ClearMovementRequests();
+ 	void ClearResolvedMoveInputState();
+ 
+@@ -943,8 +949,15 @@
+ 	bool bReplicatedStopWasSprinting = false;
+ 	int32 LastConfirmedRemoteLandingSequence = 0;
+ 	bool bLandingCancelEventDispatched = false;
+-	bool bAppliedInAirGameplayTag = false;
+-	bool bAppliedLandingGameplayTag = false;
++	// A loose tag lease belongs to the ASC that received the increment, even if
++	// PlayerState/ASC references change before landing or component teardown.
++	TWeakObjectPtr<UAbilitySystemComponent> OwnedInAirTagASC;
++	TWeakObjectPtr<UAbilitySystemComponent> OwnedLandingTagASC;
++	// Tag demand is distinct from cosmetic air/landing state: remote presentation
++	// handlers may deliberately run without requesting gameplay tags.
++	bool bInAirGameplayTagRequested = false;
++	bool bLandingGameplayTagRequested = false;
++	bool bMovementTagOwnershipEnding = false;
+ 	FProject_JMotionMatchingSelectionPolicy MotionMatchingSelectionPolicy;
+ 	FProject_JMovingTurnPolicy MovingTurnPolicy;
+ 	FProject_JTurnRequestSample TurnRequestSample;
+--- deep-baseline/Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h
++++ final/Source/Project_JCharacter/Public/Project_JLocomotionAnimStateComponentBase.h
+@@ -31,6 +31,8 @@
+ 	void RefreshCachedReferences();
+ 
+ protected:
++	/** GT cache publication is complete before derived ownership is reconciled. */
++	virtual void OnCachedAbilitySystemChanged() {}
+ 	friend class FProjectJPlayerVisibilityTest;
+ 	void CacheOwnerReferences();
+ 	AProject_JPlayerCharacter* GetPlayerOwner() const;
+--- /dev/null
++++ final/Source/Project_JCharacterEditor/Private/Animation/Project_JAuthoredAssetAudit.cpp
+@@ -0,0 +1,110 @@
++#include "AssetRegistry/AssetRegistryModule.h"
++#include "Chooser.h"
++#include "HAL/IConsoleManager.h"
++#include "Misc/FileHelper.h"
++#include "Misc/Paths.h"
++#include "Modules/ModuleManager.h"
++#include "PoseSearch/PoseSearchDatabase.h"
++#include "PoseSearch/PoseSearchSchema.h"
++#include "Serialization/JsonSerializer.h"
++#include "Serialization/JsonWriter.h"
++#include "UObject/UnrealType.h"
++
++DEFINE_LOG_CATEGORY_STATIC(LogProjectJAuthoredAssetAudit, Log, All);
++namespace
++{
++FString ExportStruct(const FInstancedStruct& Value)
++{
++    FString Text;
++    if (const auto* Type = Value.GetScriptStruct())
++    { Type->ExportText(Text, Value.GetMemory(), nullptr, nullptr, PPF_None, nullptr); }
++    return Text;
++}
++void AuditAuthoredAssets(const TArray<FString>& Args)
++{
++    // This tool supplements MCP's public-property view with native authoring
++    // rows. It reads only; it never compiles, annotates, modifies or saves assets.
++    const FString Name = Args.Num() == 1 ? Args[0] : TEXT("AnimationAssetAudit");
++    if (Name.IsEmpty() || Name.Contains(TEXT("/")) || Name.Contains(TEXT("\\")) || Name.Contains(TEXT(".."))) { return; }
++    auto Root = MakeShared<FJsonObject>();
++    Root->SetBoolField(TEXT("assetsModified"), false);
++    TArray<TSharedPtr<FJsonValue>> Records;
++    auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
++    const UClass* Types[] = {UChooserTable::StaticClass(), UPoseSearchDatabase::StaticClass(), UPoseSearchSchema::StaticClass()};
++    for (const UClass* Type : Types)
++    {
++        TArray<FAssetData> Assets; Registry.GetAssetsByClass(Type->GetClassPathName(), Assets, true);
++        Assets.Sort([](const FAssetData& A, const FAssetData& B) { return A.PackageName.LexicalLess(B.PackageName); });
++        for (const auto& Data : Assets)
++        {
++            if (!Data.PackageName.ToString().StartsWith(TEXT("/Game/Animation_Logic/"))) { continue; }
++            auto Record = MakeShared<FJsonObject>();
++            Record->SetStringField(TEXT("asset"), Data.GetObjectPathString());
++            UObject* Asset = Data.GetAsset();
++            if (!Asset) { Record->SetBoolField(TEXT("loadFailed"), true); }
++            else if (const auto* Chooser = Cast<UChooserTable>(Asset))
++            {
++                TArray<TSharedPtr<FJsonValue>> Rows;
++                for (int32 Index = 0; Index < Chooser->ResultsStructs.Num(); ++Index)
++                {
++                    auto Row = MakeShared<FJsonObject>();
++                    Row->SetNumberField(TEXT("row"), Index);
++                    Row->SetBoolField(TEXT("disabled"), Chooser->DisabledRows.IsValidIndex(Index) && Chooser->DisabledRows[Index]);
++                    Row->SetStringField(TEXT("result"), ExportStruct(Chooser->ResultsStructs[Index]));
++                    Rows.Add(MakeShared<FJsonValueObject>(Row));
++                }
++                Record->SetArrayField(TEXT("rows"), Rows);
++                Record->SetStringField(TEXT("fallback"), ExportStruct(Chooser->FallbackResult));
++                TArray<TSharedPtr<FJsonValue>> Columns;
++                for (const auto& Column : Chooser->ColumnsStructs) { Columns.Add(MakeShared<FJsonValueString>(ExportStruct(Column))); }
++                Record->SetArrayField(TEXT("columns"), Columns);
++            }
++            else if (const auto* Database = Cast<UPoseSearchDatabase>(Asset))
++            {
++                Record->SetStringField(TEXT("schema"), GetPathNameSafe(Database->Schema));
++                // Authored rows are readable before the asynchronous DDC index is
++                // ready. Do not call GetSearchIndex here: it requires a valid index.
++                Record->SetBoolField(TEXT("searchIndexNotInspected"), true);
++                TArray<TSharedPtr<FJsonValue>> Entries;
++                for (int32 Index = 0; Index < Database->GetNumAnimationAssets(); ++Index)
++                {
++                    const auto* Entry = Database->GetDatabaseAnimationAsset(Index);
++                    auto Row = MakeShared<FJsonObject>();
++                    Row->SetNumberField(TEXT("entry"), Index);
++                    Row->SetStringField(TEXT("animation"), GetPathNameSafe(Database->GetAnimationAsset(Index)));
++                    if (Entry)
++                    {
++                        Row->SetBoolField(TEXT("enabled"), Entry->IsEnabled());
++                        Row->SetBoolField(TEXT("skeletonCompatible"), Entry->IsSkeletonCompatible(Database->Schema));
++                        Row->SetBoolField(TEXT("mirrorCompatible"), Entry->IsMirrorOptionCompatible(Database->Schema));
++                        Row->SetBoolField(TEXT("disableReselection"), Entry->IsDisableReselection());
++                        Row->SetNumberField(TEXT("rangeMin"), Entry->GetSamplingRange().Min);
++                        Row->SetNumberField(TEXT("rangeMax"), Entry->GetSamplingRange().Max);
++                        Row->SetNumberField(TEXT("mirrorOption"), int32(Entry->GetMirrorOption()));
++                    }
++                    Entries.Add(MakeShared<FJsonValueObject>(Row));
++                }
++                Record->SetArrayField(TEXT("entries"), Entries);
++            }
++            else if (const auto* Schema = Cast<UPoseSearchSchema>(Asset))
++            {
++                Record->SetNumberField(TEXT("sampleRate"), Schema->SampleRate);
++                Record->SetNumberField(TEXT("cardinality"), Schema->SchemaCardinality);
++                Record->SetNumberField(TEXT("finalizedChannelCount"), Schema->GetChannels().Num());
++                TArray<TSharedPtr<FJsonValue>> Skeletons;
++                for (const auto& Entry : Schema->GetRoledSkeletons()) { Skeletons.Add(MakeShared<FJsonValueString>(GetPathNameSafe(Entry.Skeleton))); }
++                Record->SetArrayField(TEXT("skeletons"), Skeletons);
++            }
++            Records.Add(MakeShared<FJsonValueObject>(Record));
++        }
++    }
++    Root->SetArrayField(TEXT("assets"), Records);
++    FString Json; FJsonSerializer::Serialize(Root, TJsonWriterFactory<>::Create(&Json));
++    const FString Output = FPaths::ProjectSavedDir() / TEXT("Validation") / (Name + TEXT(".json"));
++    const bool bWritten = FFileHelper::SaveStringToFile(Json, *Output);
++    UE_LOG(LogProjectJAuthoredAssetAudit, Display, TEXT("Read-only authored asset audit: assets=%d written=%d path=%s"), Records.Num(), bWritten, *Output);
++}
++FAutoConsoleCommand AuditCommand(TEXT("ProjectJ.Animation.AuditAuthoredAssets"),
++    TEXT("Read-only Chooser rows, PSD entries/schema compatibility and schema inventory. Optional output basename under Saved/Validation."),
++    FConsoleCommandWithArgsDelegate::CreateStatic(&AuditAuthoredAssets));
++}
+--- deep-baseline/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
++++ final/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+@@ -17,6 +17,7 @@
+ 			"Project_JAnimationNodes",
+ 			"Json",
+ 			"AssetRegistry",
++			"Chooser",
+ 			"KismetCompiler",
+ 			"ApplicationCore",
+ 			"PropertyEditor",
+--- deep-baseline/Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp
++++ final/Source/Project_JGAS/Private/Project_JAbilitySystemComponent.cpp
+@@ -182,52 +182,58 @@
+ 	return Owner && Owner->HasAuthority();
+ }
+ 
+-bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName SourceId)
+-{
+-	if (!IsOwnerActorAuthoritative() || SourceId.IsNone() || AbilityGrantRecords.Contains(SourceId))
+-	{
+-		return false;
+-	}
+-	AbilityGrantRecords.Add(SourceId);
+-	return true;
+-}
+-
+-bool UProject_JAbilitySystemComponent::AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant)
++bool UProject_JAbilitySystemComponent::ReserveAbilityGrantSource(const FName SourceId, uint64& OutGeneration)
++{
++	OutGeneration = 0;
++	if (AbilityGrantRecords.Contains(SourceId)) { return false; }
++	bool bNeedsGrant = false;
++	return AcquireAbilityGrantSource(SourceId, bNeedsGrant, OutGeneration);
++}
++
++bool UProject_JAbilitySystemComponent::AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant, uint64& OutGeneration)
+ {
+ 	check(IsInGameThread());
+ 	bOutNeedsGrant = false;
++	OutGeneration = 0;
+ 	if (!IsOwnerActorAuthoritative() || SourceId.IsNone()) return false;
+ 	if (auto* Record = AbilityGrantRecords.Find(SourceId))
+ 	{
+ 		if (Record->LeaseCount == MAX_int32) return false;
+ 		++Record->LeaseCount;
+-		return true;
+-	}
+-	AbilityGrantRecords.Add(SourceId);
++		OutGeneration = Record->Generation;
++		return true;
++	}
++	if (NextAbilityGrantGeneration == MAX_uint64) { return false; }
++	OutGeneration = ++NextAbilityGrantGeneration;
++	AbilityGrantRecords.Add(SourceId).Generation = OutGeneration;
+ 	bOutNeedsGrant = true;
+ 	return true;
+ }
+ 
+-void UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, const FGameplayAbilitySpecHandle Handle)
+-{
+-	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
++bool UProject_JAbilitySystemComponent::RegisterGrantedAbility(const FName SourceId, uint64 Generation, const FGameplayAbilitySpecHandle Handle)
++{
++	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Record->Generation == Generation && Handle.IsValid())
+ 	{
+ 		Record->AbilityHandles.Add(Handle);
+-	}
+-}
+-
+-void UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceId, const FActiveGameplayEffectHandle Handle)
+-{
+-	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Handle.IsValid())
++		return true;
++	}
++	return false;
++}
++
++bool UProject_JAbilitySystemComponent::RegisterGrantedEffect(const FName SourceId, uint64 Generation, const FActiveGameplayEffectHandle Handle)
++{
++	if (FProject_JAbilityGrantRecord* Record = AbilityGrantRecords.Find(SourceId); Record && Record->Generation == Generation && Handle.IsValid())
+ 	{
+ 		Record->EffectHandles.Add(Handle);
+-	}
+-}
+-
+-bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId)
++		return true;
++	}
++	return false;
++}
++
++bool UProject_JAbilitySystemComponent::RemoveAbilityGrantSource(const FName SourceId, uint64 Generation)
+ {
+ 	check(IsInGameThread());
+-	if (!IsOwnerActorAuthoritative()) return false;
++	if (!IsOwnerActorAuthoritative() || !IsAbilityGrantSourceCurrent(SourceId, Generation)) return false;
+ 	if (auto* Existing = AbilityGrantRecords.Find(SourceId); Existing && Existing->LeaseCount > 1)
+ 	{
+ 		--Existing->LeaseCount;
+@@ -261,3 +267,8 @@
+ {
+ 	return !SourceId.IsNone() && AbilityGrantRecords.Contains(SourceId);
+ }
++bool UProject_JAbilitySystemComponent::IsAbilityGrantSourceCurrent(FName SourceId, uint64 Generation) const
++{
++	const auto* Record = AbilityGrantRecords.Find(SourceId);
++	return Generation != 0 && Record && Record->Generation == Generation;
++}
+--- deep-baseline/Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h
++++ final/Source/Project_JGAS/Public/Project_JAbilitySystemComponent.h
+@@ -8,6 +8,7 @@
+ 
+ struct FProject_JAbilityGrantRecord
+ {
++	uint64 Generation = 0;
+ 	int32 LeaseCount = 1;
+ 	TArray<FGameplayAbilitySpecHandle> AbilityHandles;
+ 	TArray<FActiveGameplayEffectHandle> EffectHandles;
+@@ -35,15 +36,17 @@
+ 	/** Discrete intent uses the same reliable actor channel as GAS activation. */
+ 	UFUNCTION(Server, Reliable)
+ 	void ServerSendCombatInputEvent(AActor* ExpectedAvatar, FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence);
+-	bool ReserveAbilityGrantSource(FName SourceId);
++	bool ReserveAbilityGrantSource(FName SourceId, uint64& OutGeneration);
+ 	/** Acquire one provider lease. Only the first provider creates specs/effects. */
+-	bool AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant);
+-	void RegisterGrantedAbility(FName SourceId, FGameplayAbilitySpecHandle Handle);
+-	void RegisterGrantedEffect(FName SourceId, FActiveGameplayEffectHandle Handle);
+-	bool RemoveAbilityGrantSource(FName SourceId);
++	bool AcquireAbilityGrantSource(FName SourceId, bool& bOutNeedsGrant, uint64& OutGeneration);
++	bool RegisterGrantedAbility(FName SourceId, uint64 Generation, FGameplayAbilitySpecHandle Handle);
++	bool RegisterGrantedEffect(FName SourceId, uint64 Generation, FActiveGameplayEffectHandle Handle);
++	bool RemoveAbilityGrantSource(FName SourceId, uint64 Generation);
+ 	bool HasAbilityGrantSource(FName SourceId) const;
++	bool IsAbilityGrantSourceCurrent(FName SourceId, uint64 Generation) const;
+ 
+ private:
+ 	bool HasGameplayTagReplicationAuthority() const;
+ 	TMap<FName, FProject_JAbilityGrantRecord> AbilityGrantRecords;
++	uint64 NextAbilityGrantGeneration = 0;
+ };

@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":\"{\\\"attacks\\\":[{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1.DA_Attack_Greatsword_LMB1\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.DA_Attack_Greatsword_LMB2\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.DA_Attack_Greatsword_RMB1\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.DA_Attack_Greatsword_RMB2\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.DA_Attack_Greatsword_LR1\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.DA_Attack_Greatsword_LR2\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.DA_Attack_Greatsword_Q1\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.DA_Attack_Greatsword_Q2\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.DA_Attack_Greatsword_R\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.DA_Attack_Greatsword_T\\\"},{\\\"refPath\\\":\\\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.DA_Attack_Greatsword_LMBRMB\\\"}]}\"}"
+			}
+		]
+	}
+}

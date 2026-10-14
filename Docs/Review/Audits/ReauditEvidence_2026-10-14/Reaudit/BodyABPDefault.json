@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":{\"refPath\":\"/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.Default__ABP_Greatsword_Woman_RunTIme_C\"}}"
+			}
+		]
+	}
+}

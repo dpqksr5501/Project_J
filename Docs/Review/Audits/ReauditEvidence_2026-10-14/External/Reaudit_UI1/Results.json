@@ -1,0 +1,65 @@
+{
+  "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014\\Packaged1\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "sha256": "3878F83036B8B52F939804D08BBE44BCD00F8036DD391CA2FC40D38F29DF51D0",
+  "utc": "2026-10-13T23:43:39.0475689Z",
+  "runs": [
+    {
+      "width": 1280,
+      "height": 720,
+      "passed": true,
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "logErrorCount": 0,
+      "seconds": 18.6280498,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI1\\1280x720\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1280",
+        "-ResY=720",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Reaudit_UI1/1280x720/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI1\\1280x720\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "passed": true,
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "logErrorCount": 0,
+      "seconds": 18.6037418,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI1\\1920x1080\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1920",
+        "-ResY=1080",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Reaudit_UI1/1920x1080/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_UI1\\1920x1080\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    }
+  ]
+}

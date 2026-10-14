@@ -56,17 +56,23 @@ void UProject_JEquipmentRuntimeComponent::OnComponentDestroyed(bool bDestroyingH
 
 void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquipmentManagerComponent* InEquipmentManager)
 {
+	if (InEquipmentManager && (!IsValid(InEquipmentManager) || !InEquipmentManager->IsAcceptingRequests())) { return; }
 	if ((bIsEndingPlay && InEquipmentManager) ||
 		(BoundEquipmentManager == InEquipmentManager && (InEquipmentManager || RuntimeItems.IsEmpty())))
 	{
 		return;
 	}
 
-	if (BoundEquipmentManager)
+	const uint64 ThisBindingRevision = ++BindingRevision;
+	auto* PreviousManager = BoundEquipmentManager;
+	BoundEquipmentManager = nullptr; // Revoke before removal/grant callbacks can rebind.
+	if (PreviousManager)
 	{
-		BoundEquipmentManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
-		BoundEquipmentManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+		PreviousManager->OnEquipmentEquipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
+		PreviousManager->OnEquipmentUnequipped.RemoveDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+		PreviousManager->OnRetired.Remove(ManagerRetiredHandle);
 	}
+	ManagerRetiredHandle.Reset();
 
 	// Also clean up if the old manager is absent but a slot still owns a request.
 	TArray<EProject_JEquipmentSlot> Keys;
@@ -75,27 +81,38 @@ void UProject_JEquipmentRuntimeComponent::BindToEquipmentManager(UProject_JEquip
 	{
 		const FProject_JEquipmentRuntimeItem* RuntimeItem = RuntimeItems.Find(Slot);
 		OnEquipmentUnequipped(Slot, RuntimeItem ? RuntimeItem->ItemDef : nullptr);
+		if (ThisBindingRevision != BindingRevision) { return; }
 	}
 
+	if (ThisBindingRevision != BindingRevision || (bIsEndingPlay && InEquipmentManager)) { return; }
 	BoundEquipmentManager = InEquipmentManager;
 
 	if (BoundEquipmentManager)
 	{
 		BoundEquipmentManager->OnEquipmentEquipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped);
 		BoundEquipmentManager->OnEquipmentUnequipped.AddDynamic(this, &UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped);
+		ManagerRetiredHandle = BoundEquipmentManager->OnRetired.AddUObject(this,
+			&UProject_JEquipmentRuntimeComponent::OnEquipmentManagerRetired, InEquipmentManager);
 
 		// Initialize currently equipped items
 		TArray<UProject_JEquipmentItemDefinition*> CurrentItems = BoundEquipmentManager->GetAllEquippedItems();
 		for (UProject_JEquipmentItemDefinition* ItemDef : CurrentItems)
 		{
 			OnEquipmentEquipped(ItemDef ? ItemDef->EquipmentSlot : EProject_JEquipmentSlot::None, ItemDef);
+			if (ThisBindingRevision != BindingRevision || bIsEndingPlay) { return; }
 		}
 	}
 }
 
+void UProject_JEquipmentRuntimeComponent::OnEquipmentManagerRetired(UProject_JEquipmentManagerComponent* ExpectedManager)
+{
+	if (BoundEquipmentManager == ExpectedManager) { BindToEquipmentManager(nullptr); }
+}
+
 void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef)
 {
-	if (bIsEndingPlay || !IsValid(ItemDef)) return;
+	if (bIsEndingPlay || IsBeingDestroyed() || !IsValid(ItemDef)) return;
+	const uint64 RequestedBindingRevision = BindingRevision;
 
 	if (RuntimeItems.Contains(Slot))
 	{
@@ -103,13 +120,22 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 	}
 
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter) return;
+	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
+		!IsValid(OwnerCharacter) || OwnerCharacter->IsActorBeingDestroyed()) return;
 
 	FProject_JEquipmentRuntimeItem NewRuntimeItem;
 	NewRuntimeItem.ItemDef = ItemDef;
 	NewRuntimeItem.VisualRevision = ++NextVisualRevision;
 
 	ApplyEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
+	// GAS grants/stat changes may synchronously retire or rebind this component.
+	// This local transaction has not been published, so teardown cannot own it yet.
+	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
+		OwnerCharacter->IsActorBeingDestroyed() || RuntimeItems.Contains(Slot))
+	{
+		RemoveEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
+		return;
+	}
 
 	RuntimeItems.Add(Slot, NewRuntimeItem);
 	RefreshCurrentWeaponConfiguration();
@@ -184,28 +210,9 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& Ow
 	}
 
 	UAbilitySystemComponent* ASC = RuntimeItem.GrantedAbilitySystem.Get();
-	if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
-	{
-		for (const FName GrantSourceId : RuntimeItem.GrantedHandles.GrantSourceIds)
-		{
-			ProjectJASC->RemoveAbilityGrantSource(GrantSourceId);
-		}
-		RuntimeItem.GrantedHandles.AbilitySpecHandles.Reset();
-		RuntimeItem.GrantedHandles.GameplayEffectHandles.Reset();
-		RuntimeItem.GrantedHandles.GrantSourceIds.Reset();
-	}
-
 	if (ASC)
 	{
-		// Generic ASCs have no source registry; retire their individually owned handles.
-		for (const FGameplayAbilitySpecHandle Handle : RuntimeItem.GrantedHandles.AbilitySpecHandles)
-		{
-			ASC->ClearAbility(Handle);
-		}
-		for (const FActiveGameplayEffectHandle Handle : RuntimeItem.GrantedHandles.GameplayEffectHandles)
-		{
-			ASC->RemoveActiveGameplayEffect(Handle);
-		}
+		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
 		RemoveEquipmentEffects(*ASC, RuntimeItem);
 	}
 	RuntimeItem.GrantedHandles = FProject_JAbilitySet_GrantedHandles();

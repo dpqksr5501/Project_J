@@ -1,0 +1,194 @@
+[
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/BaselineReproduction/index.json",
+    "sha256": "5901847bdffea066d64768c0d31506ddf16402cf94888f8ee30bb7ef4147aa98",
+    "succeeded": 1,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.2930760383605957,
+    "failedTests": [
+      "ProjectJ.Animation.DemandOwnerLifetime"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/ExpandedContractsBaseline/index.json",
+    "sha256": "bb681792a740453c73c7510db9fca916af3e978f0702e15ab018aa1fec8d0095",
+    "succeeded": 1,
+    "succeededWithWarnings": 1,
+    "failed": 2,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 10.682188987731934,
+    "failedTests": [
+      "ProjectJ.Retarget.FamilyAuthoringValidation",
+      "ProjectJ.RuntimeOwnership.RetiredAvatarCannotActivateOrObserve"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/FirstFixRegression/index.json",
+    "sha256": "c0d8b24f61113b643ce01da780128c37ef3f282343ba6865bf2b02a823355c05",
+    "succeeded": 3,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.1318438053131104,
+    "failedTests": [
+      "ProjectJ.Combat.AuthoredSkillContinuation"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/LatestContracts/index.json",
+    "sha256": "3ce3ca5d8eb7915e90b58689154d4f50e0dbd24e2a71e16d77253df8f1a58d25",
+    "succeeded": 9,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.3026206493377686,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/MouseBaseline/index.json",
+    "sha256": "3e26cf2e6b3b5e31996bbd372bbaa648d4517dd1607ef32a7da8d6e155b7ada1",
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 2,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 1.7758607864379883,
+    "failedTests": [
+      "ProjectJ.Animation.DemandOwnerLifetime",
+      "ProjectJ.Combat.AuthoredSkillContinuation"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/ReceiverRetirementRegression/index.json",
+    "sha256": "7a9c8f1d6da36df8a825fcc0a4abb9c6a4006a66b66bd8de42f9a2879cf90c28",
+    "succeeded": 3,
+    "succeededWithWarnings": 1,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.0673909187316895,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/Skill120Hz/index.json",
+    "sha256": "6f5e6ba233a6455732336fdc514d378873194a78054eeec2fc9640ca6f2daca6",
+    "succeeded": 3,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 3.8508477210998535,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/Skill30Hz/index.json",
+    "sha256": "cee2e08556aa66d4626d62036247e93f80ac95f198056ba7d908256d36d992a5",
+    "succeeded": 3,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 1.1840088367462158,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/UIFixRegression/index.json",
+    "sha256": "287426a7cecd890570b1fe8041715cc5deb060b2f668a26b89bb6ec5146c7d00",
+    "succeeded": 1,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 0.010653398931026459,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/UIScreenFailureBaseline/index.json",
+    "sha256": "76c127edc3b42095c14e3b96336bc857cfe49ff7ec0be29dd72a942f83aeb5a3",
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 0.051917098462581635,
+    "failedTests": [
+      "ProjectJ.UI.Screen.CreationFailureHasNoSubscriptions"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/ValidFixRegression/index.json",
+    "sha256": "f28a74121bf4ebfee309e96cfecf4ad170de13ff0aa123319d4ec2ddf5588538",
+    "succeeded": 4,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.88803768157959,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/ValidMouseBaseline/index.json",
+    "sha256": "32eba0c44e387a069bbed09444a07918bd57dc42c0f067d6cf96c19948e940b7",
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 2.09903621673584,
+    "failedTests": [
+      "ProjectJ.Combat.AuthoredSkillContinuation"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/WholeRegression1/index.json",
+    "sha256": "c087c3f7a73d0657dd8fcba34498b28dcaa99a217e8617248c0cf87aaaf853aa",
+    "succeeded": 291,
+    "succeededWithWarnings": 19,
+    "failed": 1,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 664.7092895507812,
+    "failedTests": [
+      "ProjectJ.Animation.Naturalness.AuthoredPlayback"
+    ]
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/WholeRegressionDelivery/index.json",
+    "sha256": "4a984be625e173510862a52740812a6c503ebd85f665fe57db2b4ab1a455c25f",
+    "succeeded": 295,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 665.5252075195312,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/WholeRegressionFinal/index.json",
+    "sha256": "87a3544faa85f553d955d80e07228180fbe9405d286d32599f32b4c8b9507dfe",
+    "succeeded": 295,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 664.4732666015625,
+    "failedTests": []
+  },
+  {
+    "file": "Saved/Validation/WholeProjectAudit_20261013/WholeRegressionLatest/index.json",
+    "sha256": "5ff6c9809bf1d34a14b419a973ad0d1e56c75d2f07fd33ad7055f54d1622d03c",
+    "succeeded": 295,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 664.4349975585938,
+    "failedTests": []
+  }
+]

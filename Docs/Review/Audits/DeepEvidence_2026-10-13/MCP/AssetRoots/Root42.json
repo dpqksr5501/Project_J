@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_J\",\"/Game/Character_BPs/GreatSword/BP_GreatSword\",\"/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController\"]}"
+			}
+		]
+	}
+}

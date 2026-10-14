@@ -1,0 +1,34 @@
+[
+  {
+    "module": "Project_JMMO",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_J",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JCore",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JGAS",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JMount",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JCharacter",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JCharacterEditor",
+    "matchesFinalSet": true
+  },
+  {
+    "module": "Project_JAnimationNodes",
+    "matchesFinalSet": true
+  }
+]

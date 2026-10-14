@@ -40,6 +40,9 @@ class PROJECT_JCHARACTER_API UProject_JProgressionComponent : public UActorCompo
 	GENERATED_BODY()
 public:
 	UProject_JProgressionComponent();
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	const FProject_JProgressionState& GetState() const { return State; }
 	const TArray<FName>& GetAcquiredAdvancements() const { return AcquiredAdvancements; }
@@ -70,8 +73,15 @@ private:
 	UPROPERTY(Transient) FProject_JAbilitySet_GrantedHandles AdvancementHandles;
 	UPROPERTY(Transient) TArray<TObjectPtr<UProject_JCharacterAdvancementDefinition>> ActiveAdvancements;
 	bool bChanging = false;
+	bool bEnding = false;
+	TWeakObjectPtr<UAbilitySystemComponent> GrantedAbilitySystem;
 	UAbilitySystemComponent* GetASC() const;
 	bool CanMutate() const;
+	bool CanGrant() const;
+	void RetireGrants();
+	void GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets, const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles);
+	void GrantStyle(const class UProject_JCombatStyleDefinition* Style, FProject_JAbilitySet_GrantedHandles& Handles);
+	int64 GetRequiredExperienceForLevel(int32 Level) const;
 	void GrantClass();
 	void Publish();
 	UFUNCTION() void OnRep_State();

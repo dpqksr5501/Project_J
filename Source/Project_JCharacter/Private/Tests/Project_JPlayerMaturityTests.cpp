@@ -227,22 +227,33 @@ bool FProjectJLayerLoadLifecycleTest::RunTest(const FString&)
 {
 	const FSoftObjectPath Path(TEXT("/Game/Tests/Missing.Missing_C"));
 	auto* Mounted = NewObject<UProject_JMountedAnimationLayerComponent>();
-	Mounted->PreloadedAnimationLayerPath = Path; Mounted->LoadGeneration = 10;
+	Mounted->Layer.PreloadedPath = Path; Mounted->Layer.Generation = 10;
 	Mounted->HandleLayerPreloadCompleted(Path, 9);
-	TestFalse(TEXT("Stale mounted callback cannot poison new request"), Mounted->bLoadFailed);
+	TestFalse(TEXT("Stale mounted callback cannot poison new request"), Mounted->Layer.bFailed);
 	AddExpectedError(TEXT("Layer load failed; default pose retained"), EAutomationExpectedErrorFlags::Contains, 2);
 	Mounted->HandleLayerPreloadCompleted(Path, 10);
-	TestTrue(TEXT("Missing mounted layer records terminal failure"), Mounted->bLoadFailed);
+	TestTrue(TEXT("Missing mounted layer records terminal failure"), Mounted->Layer.bFailed);
 	Mounted->ResetPreload();
-	TestFalse(TEXT("Explicit reset creates retryable generation"), Mounted->bLoadFailed);
-	TestTrue(TEXT("Reset invalidates old same-path callback"), Mounted->LoadGeneration > 10);
+	TestFalse(TEXT("Explicit reset creates retryable generation"), Mounted->Layer.bFailed);
+	TestTrue(TEXT("Reset invalidates old same-path callback"), Mounted->Layer.Generation > 10);
 	auto* Combat = NewObject<UProject_JCombatAnimationLayerComponent>();
-	Combat->PreloadedAnimationLayerPath = Path; Combat->LoadGeneration = 20;
+	Combat->Layer.PreloadedPath = Path; Combat->Layer.Generation = 20;
 	Combat->HandleLayerPreloadCompleted(Path, 20);
-	TestTrue(TEXT("Missing combat layer has the same failure contract"), Combat->bLoadFailed);
-	Combat->bEndingPlay = true; Combat->bLoadFailed = false;
+	TestTrue(TEXT("Missing combat layer has the same failure contract"), Combat->Layer.bFailed);
+	Combat->bEndingPlay = true; Combat->Layer.bFailed = false;
 	Combat->HandleLayerPreloadCompleted(Path, 20);
-	TestFalse(TEXT("EndPlay ignores in-flight callback"), Combat->bLoadFailed);
+	TestFalse(TEXT("EndPlay ignores in-flight callback"), Combat->Layer.bFailed);
+	auto* Early = NewObject<UProject_JCombatAnimationLayerComponent>();
+	Early->Layer.PreloadedPath = Path; Early->Layer.Generation = 30;
+	Early->DestroyComponent();
+	Early->HandleLayerPreloadCompleted(Path, 30);
+	TestFalse(TEXT("Destruction before BeginPlay rejects the old completion"), Early->Layer.bFailed);
+	TestTrue(TEXT("Destruction releases the component's preload ownership"), Early->Layer.PreloadedPath.IsNull());
+	FProject_JAnimationLayerLease InvalidResident;
+	InvalidResident.PreparePreload(FSoftObjectPath(UObject::StaticClass()));
+	TestFalse(TEXT("Resident non-animation class is rejected at completion"), InvalidResident.CompletePreload());
+	TestTrue(TEXT("Invalid class failure prevents normal refresh retry"), InvalidResident.HasPreloadFor(FSoftObjectPath(UObject::StaticClass())));
+	TestFalse(TEXT("Other layer owner keeps its independent request state"), Combat->Layer.bFailed);
 	return true;
 }
 

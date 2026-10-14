@@ -1,0 +1,12 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-NullRHI",
+  "-nosound",
+  "-unattended",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-EnablePlugins=PythonScriptPlugin",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/FollowerTemplates1.log",
+  "-ExecCmds=py C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Reaudit_20261014/Read-FollowerTemplates.py"
+]

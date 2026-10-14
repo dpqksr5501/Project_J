@@ -141,6 +141,13 @@ void AProject_JBaseCharacter::OnRep_PlayerState()
 	BindEquipmentRuntimeToResolvedEquipmentManager();
 }
 
+void AProject_JBaseCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	if (auto* ASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{ ASC->RefreshActorInfoForCurrentActor(this); }
+}
+
 
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
@@ -332,12 +339,14 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 					const FName GrantSource(*FString::Printf(TEXT("Default.%s"), *AbilityClass->GetName()));
 					if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
 					{
-						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource))
+						uint64 GrantGeneration = 0;
+						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource, GrantGeneration))
 						{
 							continue;
 						}
 						const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
-						ProjectJASC->RegisterGrantedAbility(GrantSource, Handle);
+						if (!ProjectJASC->RegisterGrantedAbility(GrantSource, GrantGeneration, Handle))
+						{ ASC->CancelAbilityHandle(Handle); ASC->ClearAbility(Handle); }
 					}
 					else
 					{

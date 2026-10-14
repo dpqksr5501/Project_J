@@ -1,0 +1,13 @@
+{
+	"jsonrpc": "2.0",
+	"id": 2,
+	"result":
+	{
+		"content": [
+			{
+				"type": "text",
+				"text": "{\"returnValue\":[\"/Script/Project_JCharacter\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T\",\"/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB\"]}"
+			}
+		]
+	}
+}

@@ -1,0 +1,271 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "500C47A34B0FC3C409A7BF9B9A4B19DB",
+			"instanceName": "DESKTOP-5T07C91-20788",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.13-21.57.20",
+	"succeeded": 10,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.28886798024177551,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredFollowerRole",
+			"fullTestPath": "ProjectJ.Reaudit.AuthoredFollowerRole",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.012634500861167908,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CharacterUIBindingReentry",
+			"fullTestPath": "ProjectJ.Reaudit.CharacterUIBindingReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.081234201788902283,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CombatPresentationRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.CombatPresentationRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0077617019414901733,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.ComponentPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.073552504181861877,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-21.57.20"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "New play lifecycle reopens presentation admission: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Core\\Public\\Misc\\AutomationTest.h",
+					"lineNumber": 2190,
+					"timestamp": "2026.10.13-21.57.20"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New play lifecycle reopens mount admission' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 218,
+					"timestamp": "2026.10.13-21.57.20"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogWorld: UWorld::CleanupWorld called on a world that has begun play, missing call to EndPlay (Untitled)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.13-21.57.20"
+				}
+			],
+			"warnings": 1,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerIdentityReplacement",
+			"fullTestPath": "ProjectJ.Reaudit.FollowerIdentityReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0071128979325294495,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundContactDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.GroundContactDataValidation",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.03445420041680336,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Authored ground contact rejects nonfinite trace length: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JReauditDataContractsTests.cpp",
+					"lineNumber": 155,
+					"timestamp": "2026.10.13-21.57.20"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryProjectionGeneration",
+			"fullTestPath": "ProjectJ.Reaudit.InventoryProjectionGeneration",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0099160000681877136,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MinimapReconstruction",
+			"fullTestPath": "ProjectJ.Reaudit.MinimapReconstruction",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0096065998077392578,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.010561801493167877,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementDataValidation",
+			"fullTestPath": "ProjectJ.Reaudit.MovementDataValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0084975995123386383,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MovementPublication",
+			"fullTestPath": "ProjectJ.Reaudit.MovementPublication",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.0096990019083023071,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIPreferenceRetirement",
+			"fullTestPath": "ProjectJ.Reaudit.UIPreferenceRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"500C47A34B0FC3C409A7BF9B9A4B19DB"
+			],
+			"duration": 0.023837000131607056,
+			"dateTime": "2026.10.13-21.57.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

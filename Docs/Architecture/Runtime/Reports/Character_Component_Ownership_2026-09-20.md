@@ -1,5 +1,7 @@
 # 캐릭터 컴포넌트 실행·수명 정리
 
+2026-10-13 시작 [심화 감사](../../../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)는 지상 전환 enum·실제 ASC tag lease, 입력 device 재바인딩, inventory/equipment aggregate의 변경 권한과 provider 종료를 추가 정리했다. 아래 기존 요구 합성·UI 소비 계약을 유지하며 종료·callback 재진입 검증을 보완한다.
+
 ## 범위
 
 기본 캐릭터/PlayerState 컴포넌트 검토 후 UI 소비 수명, 메시 갱신 요구의 합성, 발도·납도 소유권, 원격 locomotion 시간 처리를 정리한다. 기존 작업 트리의 확장 기반·내부 정리를 유지한다. Blueprint·Data Asset·레벨은 변경하거나 저장하지 않는다.
@@ -63,3 +65,15 @@ NullRHI 자동화는 **86개 통과 / 테스트 오류 0 / 경고 0**이다. 이
 최종 빌드·보고서·소스 해시는 [검증 기록](Character_Component_Ownership_Validation_2026-09-20.json)에 기록한다. 소스 해시는 기존 미커밋 변경을 포함한 전달 시점의 파일 전체를 가리킨다.
 
 실제 2인 PIE의 발도/납도·피격·탑승과 UI widget 수명, 렌더링 재개 품질은 NullRHI 자동화와 별도의 확인 대상이다. 이 변경으로 FPS 또는 동접 성능 개선률을 주장하지 않는다.
+
+## 2026-10-14 새 play·종료 완료 기준
+
+EndPlay의 요청 차단과 자원 반환은 폐기와 새 play의 재사용을 구분한다. 정상 RemovedFromWorld→새 BeginPlay에서는 각 소유자가 Super/Blueprint callback 전에 admission을 다시 연다. 이전 input sequence·ownership token·delegate/task/query revision은 계속 무효화된 상태로 유지한다. 이전 입력·태그·작업을 복원하거나 animation history를 강제 reset하는 방식으로 새 play를 만들지 않는다.
+
+실제 NPC registration/action/activation, EnhancedInput handle·GAS InputPressed·modifier, 동일 draw montage, rider를 가졌던 Mount actor, Controller UI projection, 기존 진행을 보존한 Quest 수락에서 누락을 재현하고 RA15/16/17/19로 보완했다. focused 19개는 모두 clean이며 전체/Game/Cook 및 적절한 통합 검증은 [새 변경본의 기록](../../../Review/Audits/Project_J_Reaudit_2026-10-14.md)을 기준으로 확인한다. 위 9월 검증 수치는 새 변경본의 결과가 아니다.
+
+Mass의 active ownership step에서 월드 종료가 재진입하면 admission은 즉시 닫되, 그 step의 scope exit가 Character control·entity·processor·archetype 반환까지 소유한다(RA14). 기존 worker join과 값 snapshot을 유지한다. cancel 요청을 자원 해제/실제 완료와 같은 것으로 취급하지 않는다.
+
+## 재감사 GT 콜백 수명과 미사용 상태 정리 — 2026-10-14
+
+RA20/21은 Mass·타깃 계산·비주얼 로드·NPC 경로/결정·표현 예산의 외부 GT callback 범위만 UObject를 보유한다. worker는 값 snapshot을 계속 사용하며 epoch/token/FIFO/cancel 완료와 module shutdown join은 유지한다. RA24는 호출 없는 depth 권한을 제거해 현재 held clip·gait·snapshot revision이 단발 조기 전이를 소유한다. 비반영 미사용 MM getter3와 GAS direct activation loop도 정리했다. 새 회귀 및 실제 수정/검토/잠재 위험의 범위는 [상세 장부](../../../Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md)에 있다. 전수 정밀 완료나 CPU 증가 해결을 주장하지 않는다.

@@ -7,6 +7,9 @@
 #include "Engine/SkeletalMesh.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Retargeter/IKRetargeter.h"
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRetargetBodyContracts, "ProjectJ.Retarget.BodyContracts",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -37,4 +40,27 @@ bool FProjectJRetargetBodyContracts::RunTest(const FString&)
 	TestEqual(TEXT("Restoring the target resolves the body again"), Anim->GetRetargetBodyProfile(), static_cast<const UProject_JRetargetBodyProfile*>(Body));
 	return true;
 }
+#if WITH_EDITOR
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJRetargetFamilyValidationTest, "ProjectJ.Retarget.FamilyAuthoringValidation",
+ EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJRetargetFamilyValidationTest::RunTest(const FString&)
+{
+ auto* Authored = LoadObject<UProject_JRetargetFamilyProfile>(nullptr,
+  TEXT("/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01.DA_RetargetFamily_Mannequin_Bip01"));
+ if (!TestNotNull(TEXT("Actual production family"), Authored) || !TestNotNull(TEXT("Actual retargeter"), Authored->Retargeter.Get())) return false;
+ FDataValidationContext Production;
+ TestTrue(TEXT("Production family validates"), Authored->IsDataValid(Production) == EDataValidationResult::Valid);
+ auto* Invalid = NewObject<UProject_JRetargetFamilyProfile>();
+ Invalid->SourceSkeleton = Authored->TargetSkeleton;
+ Invalid->TargetSkeleton = Authored->SourceSkeleton;
+ Invalid->Retargeter = Authored->Retargeter;
+ FDataValidationContext Pair;
+ TestTrue(TEXT("Declared skeleton pair cannot disagree with its retargeter's source/target rigs"),
+  Invalid->IsDataValid(Pair) == EDataValidationResult::Invalid);
+ auto* Body = NewObject<UProject_JRetargetBodyProfile>(); Body->Family = Invalid;
+ FDataValidationContext BodyPair;
+ TestTrue(TEXT("Body cannot validate an incompatible family dependency"), Body->IsDataValid(BodyPair) == EDataValidationResult::Invalid);
+ return true;
+}
+#endif
 #endif

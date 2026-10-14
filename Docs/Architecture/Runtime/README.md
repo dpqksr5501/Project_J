@@ -10,6 +10,7 @@
 
 | 보고서 | 범위 |
 | --- | --- |
+| [2026-10-13 구조 개선](../../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md) | 레이어·UI 자원 수명 공통화, UI/무기 진단 책임 분리, private 미사용 제거, 늦은 Controller의 GAS metadata 갱신. 검토만 한 시스템과 실제 변경을 구분 |
 | [2026-09-19 내부 갱신·수명 정리](Reports/Internal_Polish_2026-09-19.md) · [검증](Reports/Internal_Polish_Validation_2026-09-19.json) | GAS 갱신, 서버 피격 기록, NPC 실행과 제작 도구 |
 | [2026-09-19 서비스 점검](Reports/Service_Internal_Audit_2026-09-19.md) | Core·MMO·서비스의 요청·종료 계약 |
 | [2026-09-13 내부 리팩터링](Reports/Internal_Refinement_2026-09-13.md) · [검증](Reports/Internal_Refinement_Validation_2026-09-13.json) | 전투·입력·장비·카메라·되감기 책임 |

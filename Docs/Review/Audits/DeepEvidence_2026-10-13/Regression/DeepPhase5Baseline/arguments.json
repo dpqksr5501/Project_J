@@ -1,0 +1,13 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-NullRHI",
+  "-nosound",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-ABSLOG=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013/DeepPhase5Baseline/Run.log",
+  "-ReportExportPath=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\StructuralAudit_20261013/DeepPhase5Baseline",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.RuntimeOwnership.InputBindingReentry; Quit"
+]
