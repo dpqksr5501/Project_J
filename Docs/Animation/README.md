@@ -1,16 +1,10 @@
 # 애니메이션
 
-[Mirror Data 도입 판단](Planning/Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 움직임을 유지하고 새 미러 후보는 도입하지 않는다. 특정 동작 연결이 어색해졌을 때만 해당 구간의 발·자세 후보와 실제 재생을 재검토한다. 기존 MDT·미러 지원 기반과 R19·R20 수정은 보존한다.
+현재 동작을 이해할 때는 아래 파이프라인과 목적별 기준 문서를 읽는다. 제작은 [Authoring](Authoring/README.md), 증상·원인은 [Diagnostics](Diagnostics/README.md), 이미 구현한 기능·과거 제안·인계의 구분은 [Planning 목차](Planning/README.md)에서 찾는다.
 
-[R20 대각 점프·착지 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): authored 보정 selector가 첫 Update의 lazy Input.Player 연결을 선행 요구하던 순환 의존성을 해소했습니다. 제자리 회전·OTM 정책/에셋 보존, 호환18개·대각6시나리오·Editor/Game 빌드 결과와 한계를 기록했습니다.
+**현재 결정은 기존 locomotion 유지와 Mirror Data 도입 보류다.** 특정 연결이 어색해졌을 때만 해당 구간을 재검토한다. 최신 착지 수정은 R19의 선택 조건과 R20의 sample 보정 초기화로 나눠 읽는다. 기존 TIP·OTM/Strafe·Run/Sprint·전투·장비·리타깃과 지속 곡선 계약을 보존한다.
 
-[R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)는 Chooser22개 package/내부 포함28개·DT1·입력 연결을 대조하고 Stand 착지의 대각 선택 누락을 수정했다. native 방향 상태를 보존하며 authored alias 조건에서 해결했고, 논리 회귀·Cook과 실제 포즈/원격 경계를 구분한다.
-
-현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
-
-[구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)은 전투·탑승 linked layer의 리소스 수명을 공통화하고 native/DA 발 배치 기본값의 중복 초기화를 제거했다. 레이어 선택 정책·GT/worker 경계·authored 값은 유지한다.
-
-[2026-10-13 전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)는 사라진 수요 소유자의 예산 복원, Family 제작 검증, 현재 통합 그래프의 재생 관측과 200명 교대 CPU/렌더 검증을 다룬다. 이전 단일 실행의 증가가 해결됐다고 가정하지 않는다.
+감사별 변경·시험 조건·성능 미해결 범위는 [검토 목차](../Review/README.md)로 모았다. 과거 검사 횟수나 통과 수는 현재 전체 품질의 보증으로 사용하지 않는다.
 
 ## 현재 플레이어 파이프라인
 
@@ -20,6 +14,10 @@
 
 | 목적 | 기준 문서 |
 | --- | --- |
+| 대각 점프·착지의 실제 sample 보정 초기화 | [R20 보정 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md) |
+| 대각 Stand 착지 선택과 현재 Chooser·입력 대조 | [R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md) |
+| 후진 중 몸 방향 전환과 Cycle 복귀 | [후진 Reface 구현](Planning/GASP_Backward_Reface_Implementation_2026-10-12.md) |
+| Mirror의 현재 유지 결정과 국소 재검토 조건 | [Mirror Data 도입 보류](Planning/Mirror_Data_Adoption_Decision_2026-10-15.md) |
 | 골격·몸체 프로필 공유, 실제 리타깃/손 접촉 연결과 호환·수명 검증 | [실시간 리타깃 프로필](Architecture/Runtime_Retarget_Profiles_2026-10-13.md) |
 | 스냅샷·표시·검색·복귀·품질 예산의 경계와 동작 보존 검증 | [파이프라인 리팩토링](Architecture/Animation_Pipeline_Refactor_2026-10-13.md) |
 | 현재 단발·MM의 공통 재생 스택과 ABP 노드 역할 | [통합 Locomotion 구현](Planning/Unified_Locomotion_Implementation_2026-10-12.md) |

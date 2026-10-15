@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3208개, Markdown 230개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3226개, Markdown 230개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -110,7 +110,7 @@
 | [이동 애니메이션 재설계 조사 — 품질과 200명 예산](../Animation/Planning/Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md) | 계획·제안 | Animation/Planning/Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md |
 | [Mirror Data 도입 보류 결정](../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md) | 계획·제안 | Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md |
 | [Project_J Animation Execution & Threading Audit Plan](../Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md) | 계획·제안 | Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md |
-| [애니메이션 계획과 제안](../Animation/Planning/README.md) | 목차·문서 관리 | Animation/Planning/README.md |
+| [애니메이션 계획과 구현 이력](../Animation/Planning/README.md) | 목차·문서 관리 | Animation/Planning/README.md |
 | [Strafe 전방 곡선과 측면 이동의 후보 책임](../Animation/Planning/Strafe_Forward_Intent_2026-10-13.md) | 계획·제안 | Animation/Planning/Strafe_Forward_Intent_2026-10-13.md |
 | [Strafe Land 복귀 연속성 보완 — 2026-10-13](../Animation/Planning/Strafe_Land_Return_2026-10-13.md) | 계획·제안 | Animation/Planning/Strafe_Land_Return_2026-10-13.md |
 | [지속 곡선 이동 판정과 마스터 ABP 함수 정리](../Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) | 계획·제안 | Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md |
@@ -248,7 +248,7 @@
 | [캐릭터 런타임 리팩터링 흐름](../Review/CharacterRuntime/README.md) | 목차·문서 관리 | Review/CharacterRuntime/README.md |
 | [캐릭터 런타임 책임 분리 요청](../Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Prompt.md) | 당시 작업 요청 | Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Prompt.md |
 | [캐릭터 런타임 책임 분리 결과](../Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md) | 시점별 결과 | Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md |
-| [검토 요청·감사·후속 결과](../Review/README.md) | 목차·문서 관리 | Review/README.md |
+| [검토와 감사 기록](../Review/README.md) | 목차·문서 관리 | Review/README.md |
 | [Q1. 대규모 동접 + Anim Budget Allocator](../Review/RuntimeRetarget/Assessment/ProjectJ_Runtime_Retarget_Architecture_Review.md) | 검토 기록 | Review/RuntimeRetarget/Assessment/ProjectJ_Runtime_Retarget_Architecture_Review.md |
 | [Project J Runtime Retarget 최종 남은 수정 프롬프트](../Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_Final_Integration_Fix_Prompt.md) | 당시 작업 요청 | Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_Final_Integration_Fix_Prompt.md |
 | [Project J Runtime Retarget / SSR / Animation Budget 최종 보완 프롬프트](../Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Final_Fix_Prompt.md) | 당시 작업 요청 | Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Final_Fix_Prompt.md |
@@ -319,6 +319,21 @@
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/tools) | 3 | 문서 이동·보존 기록 |
 | [Architecture/Extensions](../Architecture/Extensions) | 3 | 카탈로그·대응 검증 JSON |
 | [Architecture/Runtime/Reports](../Architecture/Runtime/Reports) | 3 | 카탈로그·대응 검증 JSON |
+| [Archive/Navigation/2026-10-15](../Archive/Navigation/2026-10-15) | 2 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs](../Archive/Navigation/2026-10-15/Docs) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs/Animation](../Archive/Navigation/2026-10-15/Docs/Animation) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs/Animation/Planning](../Archive/Navigation/2026-10-15/Docs/Animation/Planning) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs/Handoffs](../Archive/Navigation/2026-10-15/Docs/Handoffs) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs/Overview](../Archive/Navigation/2026-10-15/Docs/Overview) | 1 | 문서 이동·보존 기록 |
+| [Archive/Navigation/2026-10-15/Docs/Review](../Archive/Navigation/2026-10-15/Docs/Review) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15](../Archive/Requests/2026-10-15) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06](../Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09](../Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Review/Audits](../Archive/Requests/2026-10-15/Docs/Review/Audits) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Review/Audits/Followups](../Archive/Requests/2026-10-15/Docs/Review/Audits/Followups) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Followups](../Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Followups) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Refactor](../Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Refactor) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15/Docs/Review/RuntimeRetarget/Followups](../Archive/Requests/2026-10-15/Docs/Review/RuntimeRetarget/Followups) | 3 | 문서 이동·보존 기록 |
 | [Benchmarks](../Benchmarks) | 1 | CSV·JSON·재계산 원본 |
 | [Benchmarks/Data](../Benchmarks/Data) | 10 | CSV·JSON·재계산 원본 |
 | [Benchmarks/ExecutionExperiments_2026-09-12](../Benchmarks/ExecutionExperiments_2026-09-12) | 1 | CSV·JSON·재계산 원본 |

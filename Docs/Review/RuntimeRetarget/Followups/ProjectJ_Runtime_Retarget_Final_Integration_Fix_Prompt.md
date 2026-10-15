@@ -1,5 +1,7 @@
 # Project J Runtime Retarget 최종 남은 수정 프롬프트
 
+> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 구현 상태는 [현재 리타깃 기준](../../../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)에서 확인한다. 이 요청에 대응하는 전용 완료 보고서는 확인하지 않았으므로 아래 모든 항목이 해결됐다고 표시하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.
+
 ## 역할
 
 당신은 Unreal Engine 5.8 기반 대규모 액션 MMORPG의 Senior Animation / Gameplay / Performance Engineer입니다.

@@ -1,23 +1,39 @@
-# 애니메이션 계획과 제안
+# 애니메이션 계획과 구현 이력
 
-## 구현 결과와 현재 기준
+현재 동작을 이해하려면 [애니메이션 기준 목차](../README.md)를 먼저 읽는다. 이 폴더는 도입 결정·구현 결과·과거 조사·인계가 함께 있으므로 아래 분류로 찾는다. 제목의 Planning이나 날짜만으로 미구현 여부를 판단하지 않는다.
 
-아래 문서는 Planning 폴더에 있지만 구현·검증 결과를 포함한다. 실제 플레이 품질과 전체 렌더 성능의 남은 확인은 각 문서에서 구분한다.
+## 현재 결정
 
-- [실시간 리타깃 프로필](../Architecture/Runtime_Retarget_Profiles_2026-10-13.md): 골격·몸체 설정 공유, MCP 실자산 연결, GT/worker·GC 경계와 효과 없는 메타데이터 캐시 제거.
-- [200명 최적화 인계](Animation_Optimization_Handoff_2026-10-13.md): main 병합 기준, 현재 구조·품질/실행 계약, 동시 공격 CPU 과제, 원자료와 재현 명령, 다음 채팅 요청 예시.
-- [200명 런타임 최적화](Animation_Runtime_Optimization_2026-10-13.md): 기존 MM 인덱스 캐시 재사용, v2 측정 범위·원자료, 국소 timer 감소와 전체 성능의 한계, 빌드·움직임·네트워크 검증.
-- [통합 Locomotion 구현](Unified_Locomotion_Implementation_2026-10-12.md): 단발/MM 재생 스택 통합, State Controller 유지, ABP 노드별 역할과 당시 검증.
-- [지속 곡선 판정과 Master 정리](Sustained_Curve_And_Master_Cleanup_2026-10-12.md): 느린 회전의 단발 복귀, Strafe 미세 입력 보호, 사용하지 않는 함수 그래프 제거.
-- [200명 시각 예산](Crowd_Visual_Presentation_Budget_2026-10-12.md): 리타깃·의상 물리의 평가·보간, 보호·복구 조건, 병렬 실행 경계와 동일 바이너리 비교.
+- [Mirror Data 도입 보류](Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 locomotion을 유지한다. 특정 연결의 발·자세 후보 공백이 확인될 때만 해당 구간을 재검토한다.
 
-## 조사와 제안 이력
+## 이미 구현한 기능과 검증 기록
 
-- [Mirror Data 도입 보류 결정](Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 locomotion 유지. 특정 연결의 발·자세 후보 공백이 확인될 때만 국소 재검토하며, 미러 설정·소비·비용과 보존 조건을 기록한다.
-- [통합 재생 재설계 조사](Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md): 공식·사용자 구현 자료와 대안 검토. 실제 채택 범위는 위 구현 결과를 따른다.
-- [GASP / Project_J 자연스러움 조사와 고도화 인계](GASP_ProjectJ_Naturalness_2026-10-06/README.md): 실제 그래프·설정·소스 근거, 비교·우선순위·검증·후속 PROMPT와 통합 PDF. 구현 완료 문서가 아니다.
+| 기능 | 구현 기록 |
+| --- | --- |
+| 통합 단발/MM 스택 | [Unified Locomotion](Unified_Locomotion_Implementation_2026-10-12.md). State Controller를 유지하고 player별 보정과 재생을 한 스택으로 연결한다. |
+| 지속 곡선·작은 입력·Master 정리 | [지속 곡선 판정과 후속 구현](Sustained_Curve_And_Master_Cleanup_2026-10-12.md). |
+| 후진 중 몸 방향 전환 | [GASP 후진 Reface 구현](GASP_Backward_Reface_Implementation_2026-10-12.md). 기존 비교·인계의 후보 제안을 다시 미구현으로 취급하지 않는다. |
+| 전방 Strafe 후보와 측면 보호 | [이동 의도별 PSD 구성](Strafe_Forward_Intent_2026-10-13.md). |
+| 착지 후 MM 복귀·몸 방향 | [Strafe Land 복귀](Strafe_Land_Return_2026-10-13.md). 후속 선택·보정 수정은 아래 R19/R20을 함께 읽는다. |
+| 실시간 리타깃 프로필 | [Family·Body 구조](../Architecture/Runtime_Retarget_Profiles_2026-10-13.md). 골격·몸체 공유, 실제 연결과 수명 검증. |
+| 다수 캐릭터의 시각 예산 | [시각 예산 구현](Crowd_Visual_Presentation_Budget_2026-10-12.md). 리타깃·의상 평가·보간과 보호·복구 조건. |
+| MM 캐시 재사용 | [런타임 최적화](Animation_Runtime_Optimization_2026-10-13.md). 국소 비용 감소와 전체 성능 문제를 구분한다. |
 
-- [파이프라인 구조 개선 제안](Humanoid_Animation_Pipeline_Redesign_Proposal.md): 대안 비교·마이그레이션·당시 요청을 보존한 제안서.
-- [실행·스레딩 감사 계획](ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md): Insights, 병렬 평가, Fast Path와 MM/Chooser 비용의 확인 절차.
+최신 대각 착지 선택은 [R19](../../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md), sample 보정 초기화는 [R20](../../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md)을 따른다. 당시 빌드·자동화·렌더·네트워크·성능 수치는 각 실행 조건 안에서 읽으며 합산하지 않는다.
 
-현재 손 접촉 구현은 [Guided](../Authoring/Guided_Hand_Contact.md)·[보조 손](../Authoring/Secondary_Hand_Contact.md)·[무기 정책](../Architecture/Weapon_Grip_Drive_Policy.md)을 먼저 읽는다. 제안의 전 항목을 구현 완료로 해석하지 않는다.
+## 과거 조사와 제안
+
+| 자료 | 읽는 범위 |
+| --- | --- |
+| [2026-10-06 GASP 자연스러움 조사](GASP_ProjectJ_Naturalness_2026-10-06/README.md) | 실제 그래프·설정·소스 근거와 당시 제안·후속 구현 묶음. 과거 본문과 현재 통합 구조를 구분한다. |
+| [2026-10-12 회전 자연스러움 비교](GASP_ProjectJ_Naturalness_Comparison_2026-10-12.md) | 후진 Reface 구현 전 비교. 채택 결과는 위 구현 보고서를 읽는다. |
+| [통합 재생 재설계 조사](Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md) | 대안과 도입 조건. 실제 채택 범위는 Unified Locomotion 구현 기록을 따른다. |
+| [파이프라인 개선 제안](Humanoid_Animation_Pipeline_Redesign_Proposal.md) | 대안·마이그레이션·당시 요청을 보존한다. |
+| [실행·스레딩 감사 계획](ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md) | 당시 조사 절차이며 현재 성능 조사 재개 지시가 아니다. |
+
+## 당시 인계와 재현 자료
+
+- [GASP 자연스러움 인계](GASP_Naturalness_Handoff_2026-10-12.md): 후진 Reface 조사 시작 전 요청과 보존 조건. 후속 구현 링크를 먼저 확인한다.
+- [200명 최적화 인계](Animation_Optimization_Handoff_2026-10-13.md): 당시 main 기준·구조·품질 계약·CPU 과제·원자료와 재현 명령. 현재 조사 범위는 [검토 목차](../../Review/README.md)의 유지·보류 기준을 따른다.
+
+현재 손 접촉은 [제작 가이드](../Authoring/Weapon_Hand_Contact_System.md)와 [무기 정책](../Architecture/Weapon_Grip_Drive_Policy.md), 실제 진단은 [Diagnostics](../Diagnostics/README.md)에서 읽는다. 과거 Prompt·인계 안의 권한과 작업 요청은 새 작업의 승인이 아니다.

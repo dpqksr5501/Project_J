@@ -1,5 +1,7 @@
 # 캐릭터 런타임 책임 분리 요청
 
+> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 실제 수행·검증 범위는 [결과 보고서](Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md)를 따른다. 아래 요청 항목 전부를 현재 미완료 과제로 다시 실행하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.
+
 이 문서는 캐릭터 런타임에 집중된 책임을 나누기 위해 작성한 당시의 요청 기록이다. 실제 구조 변경과 검증 결과는 [책임 분리 결과](Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md)를 확인한다.
 
 ## 0. 대상

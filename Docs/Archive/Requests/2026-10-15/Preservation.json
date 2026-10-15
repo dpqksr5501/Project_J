@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-15",
+  "scope": "이전 작업 프롬프트 9개에 상태 안내만 추가. 원문 바이트는 txt로 보존하며 본문의 지시·수치·조건은 삭제하거나 통합하지 않음. 전용 결과가 없는 요청을 전수 완료로 표시하지 않음.",
+  "records": [
+    {
+      "original_path": "Docs/Review/Audits/Project_J_Codex_Full_Audit_Refinement_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/Audits/Project_J_Codex_Full_Audit_Refinement_Prompt.md.txt",
+      "sha256_before": "5b9a6850b2283da8b060bebe2eaf947e33008d2c22cde6375702620b1edce304",
+      "sha256_after": "25a93b08652e6c0d339bfda3faced55d6c41873f5b77c869407f345587a8385b",
+      "status": "결과 연결",
+      "result_or_current_reference": "Docs/Review/Audits/Project_J_Code_Audit_Result_2026-09-23.md",
+      "insert_offset": 40,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 실제 수행·검증 범위는 [결과 보고서](Project_J_Code_Audit_Result_2026-09-23.md)를 따른다. 아래 요청 항목 전부를 현재 미완료 과제로 다시 실행하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "25a93b08652e6c0d339bfda3faced55d6c41873f5b77c869407f345587a8385b"
+    },
+    {
+      "original_path": "Docs/Review/Audits/Followups/Project_J_Final_Audit_Followup_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/Audits/Followups/Project_J_Final_Audit_Followup_Prompt.md.txt",
+      "sha256_before": "6be8bf9a56e2444194f8368d38bb0c2fa1fd321548ed157f7f03fc5fd44d4ecb",
+      "sha256_after": "dab7b4fddc9e77e173c672b656fa7e941686ce723a46b553ce47b719df08b9b0",
+      "status": "결과 연결",
+      "result_or_current_reference": "Docs/Review/Audits/Followups/Project_J_Final_Audit_Followup_Result_2026-09-23.md",
+      "insert_offset": 44,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 실제 수행·검증 범위는 [결과 보고서](Project_J_Final_Audit_Followup_Result_2026-09-23.md)를 따른다. 아래 요청 항목 전부를 현재 미완료 과제로 다시 실행하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "dab7b4fddc9e77e173c672b656fa7e941686ce723a46b553ce47b719df08b9b0"
+    },
+    {
+      "original_path": "Docs/Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Prompt.md.txt",
+      "sha256_before": "3e7bddf7bf805f0d20784e01890d06e694900a338b2a5789fc6262ab3700b676",
+      "sha256_after": "b7ebfb9b2b1b69605bbe12fa2153b812a9819c663fc675dd0a99911c4a5a084a",
+      "status": "결과 연결",
+      "result_or_current_reference": "Docs/Review/CharacterRuntime/Refactor/Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md",
+      "insert_offset": 43,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 실제 수행·검증 범위는 [결과 보고서](Project_J_Character_Runtime_Responsibility_Refactor_Result_2026-09-24.md)를 따른다. 아래 요청 항목 전부를 현재 미완료 과제로 다시 실행하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "b7ebfb9b2b1b69605bbe12fa2153b812a9819c663fc675dd0a99911c4a5a084a"
+    },
+    {
+      "original_path": "Docs/Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Prompt.md.txt",
+      "sha256_before": "2d6c5d4a1f6f9aea6b0fce63656865d2ab9e823b349728ae6dff5ff565716742",
+      "sha256_after": "d42368726e2f87ed9e1332f8ad5f39b3a3eea9d82f20f8c5d6569522d13de486",
+      "status": "결과 연결",
+      "result_or_current_reference": "Docs/Review/CharacterRuntime/Followups/Project_J_StateController_Runtime_Finalization_Result_2026-09-24.md",
+      "insert_offset": 46,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 실제 수행·검증 범위는 [결과 보고서](Project_J_StateController_Runtime_Finalization_Result_2026-09-24.md)를 따른다. 아래 요청 항목 전부를 현재 미완료 과제로 다시 실행하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "d42368726e2f87ed9e1332f8ad5f39b3a3eea9d82f20f8c5d6569522d13de486"
+    },
+    {
+      "original_path": "Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Followup_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Followup_Prompt.md.txt",
+      "sha256_before": "2dd0d251ebb8248380370a7652090250f62e350ee88833fbc4f2ec23aa1bea9b",
+      "sha256_after": "4bbdd5e7fe0b764969d3e552d6b4020d48ca09bef885d6f19e6f142fc53c83dc",
+      "status": "현재 기준으로 대체",
+      "result_or_current_reference": "Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md",
+      "insert_offset": 73,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 구현 상태는 [현재 리타깃 기준](../../../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)에서 확인한다. 이 요청에 대응하는 전용 완료 보고서는 확인하지 않았으므로 아래 모든 항목이 해결됐다고 표시하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "32ee79afa65b71f4d6e119ef55b06c0318f302913e073d6052159b75f448b6a8"
+    },
+    {
+      "original_path": "Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Final_Fix_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_SSR_Final_Fix_Prompt.md.txt",
+      "sha256_before": "0e6073ebab2377d83346c7aad07f4d214107d510b01d4d6e1fbe517a68707a26",
+      "sha256_after": "2327d3636022c26189740a511e8da94c8ec78c798528e946bab13066c9434c39",
+      "status": "현재 기준으로 대체",
+      "result_or_current_reference": "Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md",
+      "insert_offset": 82,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 구현 상태는 [현재 리타깃 기준](../../../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)에서 확인한다. 이 요청에 대응하는 전용 완료 보고서는 확인하지 않았으므로 아래 모든 항목이 해결됐다고 표시하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "9bb19e94e842c177d1efda3f03e02d13c42321c3cde4c66e6b5f67ea025f6ed9"
+    },
+    {
+      "original_path": "Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_Final_Integration_Fix_Prompt.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Review/RuntimeRetarget/Followups/ProjectJ_Runtime_Retarget_Final_Integration_Fix_Prompt.md.txt",
+      "sha256_before": "3d7a59c88016a28f156a25fe4b8f7db7f822d448d1368a1be6124671d99cabed",
+      "sha256_after": "9326a3ee56b9f23b6d5d5d5e11ec5fb22312b0c3ae87b6abceef27a2e530638c",
+      "status": "현재 기준으로 대체",
+      "result_or_current_reference": "Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md",
+      "insert_offset": 63,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 구현 상태는 [현재 리타깃 기준](../../../Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)에서 확인한다. 이 요청에 대응하는 전용 완료 보고서는 확인하지 않았으므로 아래 모든 항목이 해결됐다고 표시하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "9326a3ee56b9f23b6d5d5d5e11ec5fb22312b0c3ae87b6abceef27a2e530638c"
+    },
+    {
+      "original_path": "Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/PROMPT.md.txt",
+      "sha256_before": "8f7c56cae248338cf9bfc697e91ed46db3e25ccb90ffa5979b0f18e04e1a6b10",
+      "sha256_after": "02329051900cf3c620398dd5bb6369ca9021420780bea2a631482dd186dbaddf",
+      "status": "후속 구현과 현재 결정으로 분리",
+      "result_or_current_reference": "Docs/Animation/Planning/README.md",
+      "insert_offset": 29,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. 통합 재생·후진 Reface 등 이미 구현한 기능과 Mirror 도입 보류는 [현재 구현·결정 목차](../README.md)를 따른다. 아래 광범위 고도화·군중 비용 요청은 자동 재개하지 않는다. 전체 분류는 [프롬프트 상태 목록](../../../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "02329051900cf3c620398dd5bb6369ca9021420780bea2a631482dd186dbaddf"
+    },
+    {
+      "original_path": "Docs/Handoffs/SystemsModernization_2026-09-09/새채팅프롬프트.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09/새채팅프롬프트.md.txt",
+      "sha256_before": "be14da10fe24df2733ba9773ef8236e50a42e98880bbf924d4bd6cbaa7a1e808",
+      "sha256_after": "e0ab7a13190758ac452997fb900bd223559d388350d1f4536c2b70524b50d698",
+      "status": "당시 인계 보존",
+      "result_or_current_reference": "Docs/Benchmarks/ExecutionExperiments_2026-09-12/README.md",
+      "insert_offset": 63,
+      "status_notice": "> **2026-10-15 분류: 과거 작업 요청 보존본.** 현재 실행 지시나 수정·빌드·에셋 저장 권한이 아니다. [후속 E/F 결과](../../Benchmarks/ExecutionExperiments_2026-09-12/README.md)와 현재 주제별 기준을 함께 확인한다. 당시 main 커밋·잔여 작업·성능 요청을 현재 지시로 재사용하지 않는다. 전체 분류는 [프롬프트 상태 목록](../README.md#이전-작업-프롬프트의-상태)에서 확인한다.",
+      "normalized_sha256_after_notice": "4f5f25b7629c66072b2c4513d26d4e70f5bf292c58580191e4c4e58ec66d9ad1"
+    }
+  ],
+  "after_hash_scope": "sha256_after는 안내 추가 당시 로컬 작업 사본의 바이트 해시다. 일반 Markdown은 Git 줄바꿈 변환을 받을 수 있으므로 체크아웃 후 비교에는 normalized_sha256_after_notice를 사용한다. archive 원문은 -text로 바이트를 보존한다."
+}

@@ -1,5 +1,23 @@
 # 보관 자료
 
+## 이전 작업 프롬프트 분류 2026-10-15
+
+과거 작업용 프롬프트 9개는 [상태 목록](../Handoffs/README.md#이전-작업-프롬프트의-상태)에서 결과 연결·현재 기준 대체·당시 인계를 구분했다. 기존 파일에는 안내만 추가하고, 변경 전 원문은 바이트 그대로 `.txt`로 보존했다. 각 경로·SHA256·추가한 안내문은 [프롬프트 보존 명세](Requests/2026-10-15/Preservation.json)에 있다. 상대 링크는 원래 경로를 기준으로 해석하며 사용자 인계 파일은 수정하지 않았다.
+
+## 문서 안내 통합 2026-10-15
+
+main 통합 이후 여러 README에 중복 누적된 감사 안내는 [검토 목차](../Review/README.md)로 모았다. 현재 구현·제작 계약과 날짜별 원인·시험·측정 기록은 원래 경로에서 유지한다. 통합 전 안내 7개는 바이트 그대로 `.txt`로 보존하며, 원래 위치·SHA256와 브랜치 Markdown 68개 목록은 [보존 명세](Navigation/2026-10-15/Preservation.json)에 기록했다. 원문 안의 상대 링크는 명세의 원래 경로를 기준으로 해석한다.
+
+| 원래 안내 | 보존 원문 |
+| --- | --- |
+| 루트 README | [원문](Navigation/2026-10-15/README.md.txt) |
+| 문서 시작점 | [원문](Navigation/2026-10-15/Docs/README.md.txt) |
+| 애니메이션 | [원문](Navigation/2026-10-15/Docs/Animation/README.md.txt) |
+| 애니메이션 계획 | [원문](Navigation/2026-10-15/Docs/Animation/Planning/README.md.txt) |
+| 검토·감사 | [원문](Navigation/2026-10-15/Docs/Review/README.md.txt) |
+| 인계 | [원문](Navigation/2026-10-15/Docs/Handoffs/README.md.txt) |
+| 프로젝트 맥락 | [원문](Navigation/2026-10-15/Docs/Overview/ProjectContext.md.txt) |
+
 ## 정리 전 안내문 — 2026-10-03
 
 기존 목차와 안내의 모든 내용을 아래에 보존했다. 현재 시작점은 [Docs 목차](../README.md)이며, 아래 문서의 현재/최근 표현은 보관 전 시점의 안내다. 이동 후에도 자료를 찾을 수 있도록 링크·경로만 갱신했다.

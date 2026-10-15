@@ -4,7 +4,9 @@
 
 > 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
 
-최근 내부 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)를 따른다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
+2026-10-15의 main 통합·R19/R20·소스/BP/DA 정리와 보류 범위는 [검토 목차](../Review/README.md)를 따른다. 애니메이션의 현재 계약은 [주제 목차](../Animation/README.md)에 모으며, Mirror Data는 새로 도입하지 않고 특정 연결 문제가 확인될 때만 재검토한다. 이전 인계의 전체 감사 요청을 현재 작업 지시로 자동 재개하지 않는다.
+
+2026-09-19의 기반 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)에 기록했다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
 
 2026-10-13의 실제 후속 구현은 [전체 결함 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)와 [구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)에 기록한다. 후자는 레이어·UI 자원 수명 공통화, UI/무기 진단 책임 분리, private 미사용 제거와 늦은 Controller의 GAS metadata 갱신이며, 검토만 한 시스템·미해결 CPU 증가와 구분한다.
 

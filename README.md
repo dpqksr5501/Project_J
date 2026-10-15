@@ -1,42 +1,25 @@
 # Project J
 
-**main 통합 — 2026-10-15:** [리타깃·구조 정리·R19/R20 통합 범위와 검증](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). [Mirror Data는 도입하지 않고 현재 locomotion을 유지](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md)하며, 특정 동작 연결 문제가 확인됐을 때만 해당 구간을 재검토합니다. 성능 조사는 계속 보류합니다.
-
-**Strafe 대각 점프·착지 복구 — R20:** [sample graph 초기화 순환 의존성 수정과 보존 검증](Docs/Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md). 제자리 회전·OTM 정책과 에셋을 보존하고 호환18개·대각6시나리오·Editor/Game 빌드를 통과했습니다. R19–20을 함께 커밋하는 기준이며 성능 조사는 보류합니다.
-
-**PC 소스·데이터 누락 대조 — R19:** [DT·Chooser·IA·IMC와 소스/상태 소유권의 명시 범위](Docs/Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md). Stand 착지의 대각 선택 누락을 데이터 조건에서 수정하고 집중 회귀·Windows Cook으로 확인했습니다. 테스트 자산은 보존했습니다. 미검토 preview/fixture 의미와 traversal·mirror 설치/시각·원격 경계, 보류한 성능을 구분하며 전체 무누락 완료를 주장하지 않습니다.
-
-**PC 잔여 BP·DA 검토 마감:** [Door·현재 데이터 연결과 유지 이유](Docs/Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md). Door의 패널 수명·불필요 Sequence와 identity의 파생 표시 경계를 정리했습니다. 93개 회귀와 마지막 BP 변경 후3개 재확인·Windows Cook을 통과했고 테스트/제작 자산을 보존했습니다. 성능 조사는 계속 보류합니다.
-
-**최신 PC 구조 정리:** [소스·BP·DA의 실제 정리와 유지 계약](Docs/Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md). 입력 receipt·상호작용/identity 퇴장·애니메이션 정책 소유권·편집 취소를 정리하고 Class/Style의 실제 중복 스킬 부여를 제거했습니다. 집중90개+실제 BP1개 통과. 성능 조사는 보류하며 전수 에셋 감사 완료와 구분합니다.
-
-**현재 우선 작업:** [전체 시스템의 소스·아키텍처 정리](Docs/Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md). 실제 호출/상태 소유권으로 중복·무동작 코드·책임 혼재를 정리하고 영향 기능을 집중 회귀합니다. 성능·운영·품질 문제의 전수 해결은 최신 요청에 따라 보류합니다.
-
 ### Unreal Engine 5.8 · C++ · Third-person Action MMORPG Prototype
-
-**BP·DA 후속 정리:** [실제 에셋의 호출·소유권·테스트/제작 역할](Docs/Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)을 대조했습니다. 미참조 에셋을 일괄 삭제하지 않고, BP의 상수 상태 override와 MM 중복 writer를 기존 native 계약으로 귀속했습니다. 전체 에셋/환경 정밀 검증과 구분합니다.
-
-남은 전체 감사·개선과 누락 점검은 [2026-10-14 계속 작업 인계](Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md)에서 이어갑니다. 최신 커밋 기준점·전체 파일 목록·반복 방지·검토/수정/미검증 구분과 완료 기준을 포함합니다.
-
-**계속 작업 기준점:** R19–20 정리 커밋의 부모 기준점은 실제 Git에서 확인한 `e5e534e8`입니다. 앞선 `f8ebd8a5`·`855a1c8e`의 RA27·인계도 보존합니다. [종전 시스템별 변경·검토·원자료](Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)와 R19–20 후속 변경을 구분합니다. 사용자가 담당하기로 한 잔여 세 항목은 R20 보고서에 기록하며, 원래 전체 상세 감사와 CPU·렌더 차이 조사는 완료로 승격하지 않습니다.
-
-**2026-10-15 계속 작업:** [진행·인계·NPC 콜백 소유권·표시 수요·입력 상태 검토](Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-15.md)의 CA14–18은 통합389·Game/Cook/패키지·실제 전투·socket2/NPC200 회귀를 통과했습니다. 전체 상세 감사와 CPU 전체 증가·렌더 차이는 미완료이며, 후속 수정은 이 통합 기준점과 분리합니다.
-
-**전수 범위 재점검 — 2026-10-14:** RA01–27의 실제64개 텍스트 변경과 빈 중복 장비 DA2개 정리를 기능별로 기록했습니다. 최신 native352개(332 clean·20 warning, 실패/미실행0), 실제 index 새 프로세스3회, 원격2접속·NPC200 반복3회, production Game/Cook/패키지·피해·전투·UI·실제 표시200 검증을 확인했습니다. 기존 사용자 리타깃/Body/RTG·공격 DA 교정과 지속 곡선 기본값을 보존했습니다. **모든 함수·에셋 전수 정밀 완료나 CPU 증가 해결 완료는 아닙니다.** [현재 검증 결과](Docs/Review/Audits/Project_J_Reaudit_Verification_2026-10-14.md)·[상태 지도](Docs/Review/Audits/Project_J_Reaudit_Map_2026-10-14.md)·[상세 결과와 남은 문제](Docs/Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md)에 실제 수정/검토/미검증을 구분합니다. 아래 DS01–18 결과는 당시 변경본의 기록입니다.
-
-**전체 구조 심화 감사 — 2026-10-14 검증:** MM 지상 상태·단발 게시와 중복 분기, 실제 ASC 태그/GAS 세대 소유권, 장비 commit·aggregate 종료, 입력 재바인딩, UI callback GC, 퀘스트·성장 수명, 원격 점프 순서를 DS01–18로 개선했습니다. 실제 공격 정의 10개의 무피해/CombatMode 오연결도 교정했습니다. 전체 회귀 332개·Game/Cook·기록한 통합/원격 검증은 통과했습니다. [실제 변경·검토·원자료·남은 범위](Docs/Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)를 확인하세요. 일부 CPU 증가와 packaged RHI trace 종료 실패는 남아 있으며, 모든 함수·에셋의 무결성을 보증하지 않습니다.
 
 서버 권위형 전투·장비 시스템과 Motion Matching을 기반으로, **다수 캐릭터의 판단·이동·애니메이션·이펙트 비용을 제어하는 개인 개발 프로젝트**입니다.
 
-멀티스레딩의 설계 기준은 **Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증**입니다. 작업량이 커졌을 때의 처리 시간뿐 아니라 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
+멀티스레딩의 설계 기준은 Game Thread의 상태 소유권, Worker의 값 계산, 완료 결과의 유효성 검증입니다. 취소·재입장·캐릭터 파괴·월드 종료까지 구현과 검증 범위에 포함합니다.
 
-**구조 개선 — 2026-10-13:** 전투·탑승 레이어와 UI 아이콘의 자원 수명을 공통화하고, HUD 조립·재사용 widget·무기 진단의 책임을 분리했습니다. 실제 호출이 없는 private 함수와 중복 기본값을 정리하고, 늦게 도착한 Controller의 GAS metadata 갱신 누락도 보완했습니다. [실제 변경·검토 후 유지한 영역·검증 근거](Docs/Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)를 구분해 기록합니다. 기존 200명 CPU 증가를 해결 완료로 보고하지 않습니다.
+## 현재 기준과 읽는 순서
 
-[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool) · [문서 목록](Docs/README.md)
+| 확인할 내용 | 문서 |
+| --- | --- |
+| 프로젝트 구조와 작업 시작 | [문서 시작점](Docs/README.md) → [프로젝트 맥락](Docs/Overview/ProjectContext.md) |
+| 이번 브랜치의 main 통합 | [2026-10-15 통합 기록](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 문서 결정은 `6d6713f4`까지 반영했습니다. |
+| 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). 단발/MM 통합과 기존 동작을 유지합니다. |
+| Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |
+| 감사 단계별 변경·검증·남은 경계 | [검토 목차](Docs/Review/README.md). 전체 함수·에셋 정밀 감사 완료와 명시 범위의 구조 정리 마감을 구분합니다. |
+| CPU·렌더 차이와 측정 조건 | [성능](Docs/Performance/README.md). 원인 분석·반복 비교·대규모 부하는 보류하며, 기존 증가와 차이가 해결됐다고 하지 않습니다. |
 
-**MMORPG 확장 기반:** 20개 영역의 콘텐츠·운영·기반 계약 205개를 카탈로그로 정리했습니다. `Project_JMMO`는 Unreal Core만 참조하며, 의존성 검증·소유 단위 조정·요청 수명·버전/중복 요청을 검사하는 저장 계약을 제공합니다. 기존 Gateway에도 요청 상한과 종료 처리를 연결했습니다. 목록은 콘텐츠 구현 완료 수가 아니며, 저장 구현은 개발용 메모리 adapter입니다. [설계·실제 구현 범위](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md)
+[아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool)
 
-**직업·전직 확장:** 지속 진행 상태와 능력 소유권을 PlayerState에 모으고, 직업·전직·장비의 전투/애니메이션 구성을 영역별로 선택합니다. 스타일 내부에 능력을 직접 작성하거나 콤보에서 공격 목록을 생성할 수 있어 중복 DA 연결을 줄입니다. [구현 범위·작성법·검증](Docs/Architecture/Extensions/Extension_Foundation_2026-09-19.md)
+누적된 감사 안내는 검토 목차로 모았습니다. 아래 측정·구현·검증 내용은 각각 명시한 시점의 기록이며, 통합 전 안내의 고유 수치와 문장은 [원문 보관소](Docs/Archive/README.md)에도 유지합니다.
 
 ## 측정으로 확인한 변화
 
