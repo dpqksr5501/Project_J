@@ -77,10 +77,9 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	const FString& GatewayUrl,
 	const FString& Endpoint,
 	const FString& Payload,
-	const FProject_JBackendRequestContext& InRequestContext,
+	const FProject_JBackendRequestContext& RequestContext,
 	TFunction<void(const FProject_JBackendResponseEnvelope&)> OnEnvelope)
 {
-	const FProject_JBackendRequestContext RequestContext = NormalizeRequestContext(InRequestContext);
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
 	Request->SetURL(GatewayUrl + Endpoint);
 	Request->SetVerb("POST");
@@ -113,6 +112,15 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 {
 	check(IsInGameThread());
 	const auto Context = NormalizeRequestContext(InContext);
+	// Both public response formats share the same preflight and failure priority.
+	if (GatewayUrl.IsEmpty())
+	{
+		FProject_JBackendResponseEnvelope Response;
+		Response.RequestContext = Context;
+		Response.FailureKind = EProject_JBackendFailureKind::DispatchFailed;
+		Response.ResponseData = TEXT("Gateway URL is not configured");
+		Completion(Response); return;
+	}
 	if (!Context.IsValidForDispatch())
 	{
 		FProject_JBackendResponseEnvelope Response;
@@ -200,15 +208,6 @@ void UProject_JGatewaySubsystem::SendAsyncRequestWithContext(
 	const FProject_JBackendRequestContext& RequestContext,
 	FOnBackendResponse OnResponse)
 {
-	if (GatewayUrl.IsEmpty())
-	{
-		FProject_JBackendResponseEnvelope Envelope;
-		Envelope.RequestContext = NormalizeRequestContext(RequestContext);
-		Envelope.FailureKind = EProject_JBackendFailureKind::DispatchFailed;
-		Envelope.ResponseData = TEXT("Gateway URL is not configured");
-		OnResponse.ExecuteIfBound(false, Envelope.ResponseData);
-		return;
-	}
 	DispatchTrackedRequest(Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope.bSucceeded, Envelope.ResponseData);
@@ -221,15 +220,6 @@ void UProject_JGatewaySubsystem::SendAsyncRequestEnvelope(
 	const FProject_JBackendRequestContext& RequestContext,
 	FOnBackendEnvelopeResponse OnResponse)
 {
-	if (GatewayUrl.IsEmpty())
-	{
-		FProject_JBackendResponseEnvelope Envelope;
-		Envelope.RequestContext = NormalizeRequestContext(RequestContext);
-		Envelope.FailureKind = EProject_JBackendFailureKind::DispatchFailed;
-		Envelope.ResponseData = TEXT("Gateway URL is not configured");
-		OnResponse.ExecuteIfBound(Envelope);
-		return;
-	}
 	DispatchTrackedRequest(Endpoint, Payload, RequestContext, [OnResponse](const FProject_JBackendResponseEnvelope& Envelope)
 	{
 		OnResponse.ExecuteIfBound(Envelope);

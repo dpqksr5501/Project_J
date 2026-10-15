@@ -1,5 +1,9 @@
 # Project J 문서 시작점
 
+**PC 잔여 검토:** [Door·BP·DA의 구조 대조와 마감 검증](Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md). 현재 DA19·GE2와 기존 근거를 연결해 유지 이유를 기록했고 Door·identity 경계를 수정했습니다. 전수 실행 품질·성능 검증과 구분합니다.
+
+**최신 PC 후속:** [소스·BP·DA 정리 결과와 남은 범위](Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md). 실제 중복 스킬 부여·입력 receipt·애니메이션/편집/퇴장 소유권을 정리했습니다. 집중90개+실제 BP1개 통과. 성능·전수 환경 검증과 구분합니다.
+
 **BP·DA 후속 정리:** [실제 에셋 연결·구조 정리·MMORPG 계약](Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md). 테스트/제작용 자산은 보존하고, 확인된 상수 상태 override·MM 중복 writer를 기존 native 경로로 통합했습니다. 전수 에셋 속성·환경/성능 검증과 구분합니다.
 
 **현재 우선 작업:** [전체 시스템의 소스·아키텍처 정리](Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md). 실제 호출/상태 소유권으로 중복·무동작 코드·책임 혼재를 정리하고 영향 기능을 집중 회귀합니다. 성능·운영·품질 문제의 전수 해결은 최신 요청에 따라 보류합니다.

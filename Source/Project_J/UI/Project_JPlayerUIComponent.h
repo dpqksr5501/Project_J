@@ -18,6 +18,13 @@ class AProject_JPlayerState;
 class UProject_JStatusEffectModel;
 struct FOnAttributeChangeData;
 
+/** Transient press identity. Only the matching source may return an acquired input. */
+struct FProject_JUIPressedSkill
+{
+	FGameplayTag InputTag;
+	uint64 Receipt = 0;
+};
+
 /** Per local Controller screen lifetime; authoritative state stays on PlayerState. */
 UCLASS(ClassGroup = (UI), meta = (BlueprintSpawnableComponent))
 class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
@@ -80,6 +87,11 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
   private:
 	friend class FProjectJUIScreenFailureLifetimeTest;
 	friend class FProjectJUISkillReleaseOwnershipTest;
+	friend class FProjectJSkillButtonOriginTest;
+	friend class UProject_JSkillButton;
+	void PressSkillWithReceipt(int32 Index, uint64* OutReceipt);
+	void ReleaseSkillReceipt(int32 Index, uint64 ExpectedReceipt);
+	bool IsSkillReceiptCurrent(int32 Index, uint64 Receipt) const;
 	bool IsKeyReserved(FKey Key) const;
 	UFUNCTION() void RebuildKeyBindings();
 	FProject_JUIKeys InputKeys;
@@ -121,8 +133,10 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 	TWeakObjectPtr<UProject_JProgressionComponent> BoundProgression;
 	TWeakObjectPtr<AProject_JPlayerState> BoundState;
 	TMap<FGameplayAttribute, FDelegateHandle> AttributeHandles;
-	/** Capture the original tag so a profile switch never releases a different input. */
-	TMap<int32, FGameplayTag> PressedSkills;
+	/** One authority for the captured tag and the source's nonzero receipt. */
+	TMap<int32, FProject_JUIPressedSkill> PressedSkills;
+	uint64 NextSkillReceipt = 0;
+	uint64 KeyBindingRevision = 0;
 	UPROPERTY(Transient) TObjectPtr<UProject_JCharacterUIProfile> ActiveProfile;
 	UPROPERTY(Transient) TArray<FProject_JUISkillSlot> PresentedSkills;
 	TArray<FProject_JUIResourceDefinition> PresentedResources;

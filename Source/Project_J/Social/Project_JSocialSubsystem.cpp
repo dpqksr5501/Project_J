@@ -7,7 +7,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJSocial, Log, All);
 void UProject_JSocialSubsystem::BindPlayerState(AProject_JPlayerState* PlayerState)
 {
 	FGuid CharacterId;
-	if (!ResolveAuthoritativeCharacter(PlayerState, CharacterId))
+	if (ResolveAuthoritativeCharacter(PlayerState, CharacterId) != EProject_JSocialOperationFailure::None)
 	{
 		return;
 	}
@@ -71,7 +71,7 @@ bool UProject_JSocialSubsystem::RestoreMembership(
 	FName GuildId)
 {
 	FGuid CharacterId;
-	if (!ResolveAuthoritativeCharacter(Player, CharacterId))
+	if (ResolveAuthoritativeCharacter(Player, CharacterId) != EProject_JSocialOperationFailure::None)
 	{
 		return false;
 	}
@@ -158,17 +158,17 @@ FName UProject_JSocialSubsystem::CreateGroupId(const TCHAR* Prefix)
 		*FGuid::NewGuid().ToString(EGuidFormats::Digits)));
 }
 
-bool UProject_JSocialSubsystem::ResolveAuthoritativeCharacter(
+EProject_JSocialOperationFailure UProject_JSocialSubsystem::ResolveAuthoritativeCharacter(
 	AProject_JPlayerState* Player,
 	FGuid& OutCharacterId) const
 {
-	if (!Player || !Player->HasAuthority())
+	if (!IsValid(Player) || Player->IsActorBeingDestroyed() || !Player->HasAuthority())
 	{
-		return false;
+		return EProject_JSocialOperationFailure::InvalidPlayer;
 	}
 
 	OutCharacterId = Player->GetCharacterId().Value;
-	return OutCharacterId.IsValid();
+	return OutCharacterId.IsValid() ? EProject_JSocialOperationFailure::None : EProject_JSocialOperationFailure::InvalidCharacterId;
 }
 
 FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateGroup(
@@ -179,13 +179,9 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::CreateGroup(
 	FMembershipMap& Memberships)
 {
 	FGuid CharacterId;
-	if (!Leader || !Leader->HasAuthority())
+	if (const auto Failure = ResolveAuthoritativeCharacter(Leader, CharacterId); Failure != EProject_JSocialOperationFailure::None)
 	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidPlayer);
-	}
-	if (!ResolveAuthoritativeCharacter(Leader, CharacterId))
-	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidCharacterId);
+		return FProject_JSocialOperationResult::Failed(Failure);
 	}
 	if (const FName ExistingGroup = Memberships.FindRef(CharacterId); !ExistingGroup.IsNone())
 	{
@@ -215,13 +211,9 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::JoinGroup(
 	FMembershipMap& Memberships)
 {
 	FGuid CharacterId;
-	if (!Player || !Player->HasAuthority())
+	if (const auto Failure = ResolveAuthoritativeCharacter(Player, CharacterId); Failure != EProject_JSocialOperationFailure::None)
 	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidPlayer, GroupId);
-	}
-	if (!ResolveAuthoritativeCharacter(Player, CharacterId))
-	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidCharacterId, GroupId);
+		return FProject_JSocialOperationResult::Failed(Failure, GroupId);
 	}
 	if (const FName ExistingGroup = Memberships.FindRef(CharacterId); !ExistingGroup.IsNone())
 	{
@@ -255,13 +247,9 @@ FProject_JSocialOperationResult UProject_JSocialSubsystem::LeaveGroup(
 	FMembershipMap& Memberships)
 {
 	FGuid CharacterId;
-	if (!Player || !Player->HasAuthority())
+	if (const auto Failure = ResolveAuthoritativeCharacter(Player, CharacterId); Failure != EProject_JSocialOperationFailure::None)
 	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidPlayer);
-	}
-	if (!ResolveAuthoritativeCharacter(Player, CharacterId))
-	{
-		return FProject_JSocialOperationResult::Failed(EProject_JSocialOperationFailure::InvalidCharacterId);
+		return FProject_JSocialOperationResult::Failed(Failure);
 	}
 
 	const FName GroupId = Memberships.FindRef(CharacterId);
@@ -352,12 +340,12 @@ bool UProject_JSocialSubsystem::RestoreGroupMembership(
 
 void UProject_JSocialSubsystem::SynchronizePlayerSnapshot(AProject_JPlayerState* Player)
 {
-	if (!Player || !Player->HasAuthority())
+	FGuid CharacterId;
+	if (ResolveAuthoritativeCharacter(Player, CharacterId) != EProject_JSocialOperationFailure::None)
 	{
 		return;
 	}
 
-	const FGuid CharacterId = Player->GetCharacterId().Value;
 	Player->SetSocialState(
 		CharacterParties.FindRef(CharacterId),
 		CharacterGuilds.FindRef(CharacterId),

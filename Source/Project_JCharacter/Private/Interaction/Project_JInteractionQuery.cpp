@@ -4,10 +4,12 @@
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/Character.h"
+#include "UObject/StrongObjectPtr.h"
 
 bool Project_J::Interaction::IsEligible(ACharacter& Interactor, AActor* Candidate, float SearchRadius)
 {
 	check(IsInGameThread());
+	if (!IsValid(&Interactor) || Interactor.IsActorBeingDestroyed()) return false;
 	UWorld* World = Interactor.GetWorld();
 	if (!World || !IsValid(Candidate) || Candidate == &Interactor || Candidate->IsActorBeingDestroyed() ||
 		Candidate->GetWorld() != World || !Candidate->GetClass()->ImplementsInterface(UProject_JInteractable::StaticClass()) ||
@@ -15,13 +17,15 @@ bool Project_J::Interaction::IsEligible(ACharacter& Interactor, AActor* Candidat
 	const auto* Policy = Candidate->FindComponentByClass<UProject_JInteractionTargetComponent>();
 	if (Policy && !FMath::IsFinite(Policy->InteractionRange)) return false;
 	const float Range = Policy ? FMath::Min(SearchRadius, Policy->InteractionRange) : SearchRadius;
+	const FVector Origin = Interactor.GetActorLocation();
+	const FVector Target = Candidate->GetActorLocation();
 	if ((Policy && !Policy->IsAvailable()) || !FMath::IsFinite(Range) || Range < 0.0f ||
-		FVector::DistSquared(Interactor.GetActorLocation(), Candidate->GetActorLocation()) > FMath::Square(Range)) return false;
+		Origin.ContainsNaN() || Target.ContainsNaN() || FVector::DistSquared(Origin, Target) > FMath::Square(Range)) return false;
 	if (Policy && Policy->bRequireLineOfSight)
 	{
 		FCollisionQueryParams Params(SCENE_QUERY_STAT(ProjectJInteractionVisibility), false, &Interactor);
 		Params.AddIgnoredActor(Candidate);
-		if (World->LineTraceTestByChannel(Interactor.GetActorLocation(), Candidate->GetActorLocation(), ECC_Visibility, Params)) return false;
+		if (World->LineTraceTestByChannel(Origin, Target, ECC_Visibility, Params)) return false;
 	}
 	return true;
 }
@@ -29,6 +33,9 @@ bool Project_J::Interaction::IsEligible(ACharacter& Interactor, AActor* Candidat
 bool Project_J::Interaction::TryInteract(ACharacter& Interactor, float SearchRadius)
 {
 	check(IsInGameThread());
+	if (!IsValid(&Interactor) || Interactor.IsActorBeingDestroyed()) return false;
+	// Reflected CanInteract may destroy the caller and collect garbage synchronously.
+	const TStrongObjectPtr<ACharacter> KeepInteractor(&Interactor);
 	UWorld* World = Interactor.GetWorld();
 	if (!Interactor.HasAuthority() || !World || !FMath::IsFinite(SearchRadius) || SearchRadius <= 0.0f) return false;
 	FCollisionObjectQueryParams ObjectTypes;
@@ -58,9 +65,9 @@ bool Project_J::Interaction::TryInteract(ACharacter& Interactor, float SearchRad
 		Best = WeakCandidate; BestPriority = Priority; BestDistance = Distance;
 	}
 	// CanInteract is extensible and may change actors; validate again at the commit boundary.
-	if (!IsEligible(Interactor, Best.Get(), SearchRadius) ||
+	if (!Interactor.HasAuthority() || !IsEligible(Interactor, Best.Get(), SearchRadius) ||
 		!IProject_JInteractable::Execute_CanInteract(Best.Get(), &Interactor) ||
-		!IsEligible(Interactor, Best.Get(), SearchRadius)) return false;
+		!Interactor.HasAuthority() || !IsEligible(Interactor, Best.Get(), SearchRadius)) return false;
 	IProject_JInteractable::Execute_Interact(Best.Get(), &Interactor);
 	return true;
 }

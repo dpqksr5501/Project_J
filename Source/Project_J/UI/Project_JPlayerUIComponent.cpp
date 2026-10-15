@@ -213,7 +213,7 @@ void UProject_JPlayerUIComponent::ReleaseAllSkills()
 	// and pawn; this operation only releases its captured original inputs.
 	for (const auto& Press : Released)
 		if (IsValid(OriginalPawn.Get()) && !OriginalPawn->IsActorBeingDestroyed())
-			OriginalPawn->HandleSkillInputTagReleased(Press.Value);
+			OriginalPawn->HandleSkillInputTagReleased(Press.Value.InputTag);
 }
 void UProject_JPlayerUIComponent::BindResourceAttributes()
 {
@@ -280,6 +280,7 @@ void UProject_JPlayerUIComponent::RefreshPresentation()
 void UProject_JPlayerUIComponent::BindMenuInput(UInputComponent *Input)
 {
 	if (!Input) return;
+	++KeyBindingRevision;
 	if (MenuInput.IsValid()) MenuInput->KeyBindings.RemoveAll([this](const FInputKeyBinding &B) { return B.KeyDelegate.IsBoundToObject(this); });
 	MenuInput = Input;
 	if (auto *PC = Cast<APlayerController>(GetOwner()); PC && PC->GetLocalPlayer())
@@ -292,25 +293,35 @@ void UProject_JPlayerUIComponent::BindMenuInput(UInputComponent *Input)
 }
 void UProject_JPlayerUIComponent::RebuildKeyBindings()
 {
-	if (!MenuInput.IsValid()) return;
+	const uint64 Revision = ++KeyBindingRevision;
+	if (bEnding || !MenuInput.IsValid()) return;
 	MenuInput->KeyBindings.RemoveAll([this](const FInputKeyBinding &B) { return B.KeyDelegate.IsBoundToObject(this); });
 	for (int32 Index = 0; Index < InputKeys.Keys.Num(); ++Index)
 	{
 		if (IsKeyReserved(InputKeys.Keys[Index])) continue;
+		const TSharedRef<uint64> KeyReceipt = MakeShared<uint64>(0);
 		for (EInputEvent Event : {IE_Pressed, IE_Released})
 		{
 			if (Index >= 10 && Event == IE_Released) continue;
 			FInputKeyBinding Binding(FInputChord(InputKeys.Keys[Index]), Event);
 			Binding.bConsumeInput = true;
-			Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index, Event]()
+			Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index, Event, KeyReceipt, Revision]()
 			{
+				if (bEnding || Revision != KeyBindingRevision) return;
 				if (Index >= 10) ToggleWindow(FProject_JUIKeys::WindowAt(Index));
-				else if (Event == IE_Pressed) PressSkill(Index);
-				else ReleaseSkill(Index);
+				else if (Event == IE_Pressed) PressSkillWithReceipt(Index, &KeyReceipt.Get());
+				else
+				{
+					const uint64 Receipt = KeyReceipt.Get(); KeyReceipt.Get() = 0;
+					if (Receipt) ReleaseSkillReceipt(Index, Receipt);
+				}
 			});
 			MenuInput->KeyBindings.Add(MoveTemp(Binding));
 		}
 	}
+	// Publish the replacement bindings before returning the retired inputs. A
+	// callback may press through the new bindings; old cleanup owns only its batch.
+	ReleaseAllSkills();
 }
 bool UProject_JPlayerUIComponent::IsKeyReserved(FKey Key) const
 {
@@ -522,9 +533,14 @@ void UProject_JPlayerUIComponent::UpdateSkills()
 }
 void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 {
+	PressSkillWithReceipt(Index, nullptr);
+}
+void UProject_JPlayerUIComponent::PressSkillWithReceipt(int32 Index, uint64* OutReceipt)
+{
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
 	if (bEnding || bMenuOpen || !HUDPreferences.Slots.IsValidIndex(Index) || PressedSkills.Contains(Index))
 		return;
-	const auto &Binding = HUDPreferences.Slots[Index];
+	const auto Binding = HUDPreferences.Slots[Index];
 	if (Binding.Kind == EProject_JQuickSlotKind::Item)
 	{
 		if (InventoryModel && !InventoryModel->bPending) InventoryModel->UseByItemId(Binding.ItemId);
@@ -533,11 +549,15 @@ void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 			 PresentedSkills.ContainsByPredicate([&](const auto &Slot) { return Slot.InputTag == Binding.InputTag; }))
 	{
 		auto *PC = Cast<APlayerController>(GetOwner());
-		auto *Pawn = PC ? Cast<AProject_JPlayerCharacter>(PC->GetPawn()) : nullptr;
-		if (Pawn)
+		const TStrongObjectPtr<AProject_JPlayerCharacter> Pawn(PC ? Cast<AProject_JPlayerCharacter>(PC->GetPawn()) : nullptr);
+		if (Pawn.IsValid() && !Pawn->IsActorBeingDestroyed())
 		{
-			PressedPawn = Pawn;
-			PressedSkills.Add(Index, Binding.InputTag);
+			if (++NextSkillReceipt == 0) ++NextSkillReceipt;
+			PressedPawn = Pawn.Get();
+			PressedSkills.Add(Index, {Binding.InputTag, NextSkillReceipt});
+			// Publish the source's receipt before activation can recycle its widget
+			// or key binding. Never write into that source again after callbacks.
+			if (OutReceipt) *OutReceipt = NextSkillReceipt;
 			Pawn->HandleSkillInputTagPressed(Binding.InputTag);
 			QueueSkillRefresh();
 		}
@@ -545,10 +565,20 @@ void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 }
 void UProject_JPlayerUIComponent::ReleaseSkill(int32 Index)
 {
+	ReleaseSkillReceipt(Index, 0); // Preserve the public/BP explicit release facade.
+}
+bool UProject_JPlayerUIComponent::IsSkillReceiptCurrent(int32 Index, uint64 Receipt) const
+{
+	const auto* Press = PressedSkills.Find(Index);
+	return Receipt && Press && Press->Receipt == Receipt;
+}
+void UProject_JPlayerUIComponent::ReleaseSkillReceipt(int32 Index, uint64 ExpectedReceipt)
+{
 	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
-	if (const FGameplayTag* Tag = PressedSkills.Find(Index))
+	if (const auto* Press = PressedSkills.Find(Index))
 	{
-		const FGameplayTag ReleasedTag = *Tag;
+		if (ExpectedReceipt && Press->Receipt != ExpectedReceipt) return;
+		const FGameplayTag ReleasedTag = Press->InputTag;
 		const TStrongObjectPtr<AProject_JPlayerCharacter> OriginalPawn(PressedPawn.Get());
 		PressedSkills.Remove(Index);
 		if (PressedSkills.IsEmpty()) { PressedPawn.Reset(); }
@@ -638,6 +668,7 @@ void UProject_JPlayerUIComponent::EndPlay(const EEndPlayReason::Type Reason)
 	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
 	// Close admission before menu/input cleanup can invoke gameplay callbacks.
 	bEnding = true;
+	++KeyBindingRevision;
 	bCursorMode = false;
 	SetMenuOpen(false);
 	ApplyInputMode();

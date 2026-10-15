@@ -8,6 +8,8 @@
 
 ## 실행 흐름과 책임
 
+2026-10-15 갱신 정책 소유권: retarget AnimInstance 초기화는 external tick-rate control이 없는 standalone mesh에만 기본 visibility tick 정책을 쓴다. coordinator나 다른 외부 allocator가 이미 제어 중이면 그 정책을 보존한다. coordinator 해제는 자신이 취득한 authored 값을 복원한다. [재초기화·해제·standalone 집중 회귀](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
+
 ```mermaid
 flowchart TD
     M[공통 Master: MM·단발·전투 상체] --> R[기존 UE Retarget Pose From Mesh]

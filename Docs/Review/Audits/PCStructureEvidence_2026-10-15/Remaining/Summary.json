@@ -1,0 +1,236 @@
+{
+  "utc": "2026-10-15T04:23:25.018375+00:00",
+  "head": "f8ebd8a5a33fb732f1b8c88dd4c23f75b22a95d1",
+  "relative_baseline": "../CurrentHashes.json",
+  "changed_since_r17": [
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerState.cpp",
+      "before_sha256": "00c983536386c8c2d62545df6b77d6674ea7b3cad1e89785e4ae1fb01074cfb3",
+      "after_sha256": "9cecdd536bc6bea1a812b5227cd60246c56ed5de7de3eb83b5cc9055f15247a3"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JPCStructureOwnershipTests.cpp",
+      "before_sha256": "090efd58e9dc5a2f6a02f6f47953aff6fc8cb7d358c1406b6f9c8ad431b5f89d",
+      "after_sha256": "2e29dd1f7aaf4182f30bfed427767558545fdd1ee22da7b144ae5def8449bbb8"
+    },
+    {
+      "path": "Content/LevelPrototyping/Interactable/Door/BP_DoorFrame.uasset",
+      "before_sha256": "4386d7d71b8d5241fd8150aa47900711eb0d8bd069c00de25fce07f011d698fa",
+      "after_sha256": "6c9fc9a4a01b299632f47b00a7aef1a545b2421cac144319bf0a52636c30f995"
+    }
+  ],
+  "files_added_or_deleted": [],
+  "content_deleted": [],
+  "config_changed": false,
+  "user_handoff_sha_preserved": "9465b0717e3a5152e06831deffaa20fb70d62f7251ae45f9c9ae3b3253b0c5f2",
+  "runs": [
+    {
+      "name": "R18_DoorCook1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "normalCompletion": true,
+        "elapsedSeconds": 42.8096881,
+        "mode": "Cook",
+        "explicitDoorCookRoot": true,
+        "nativeCPPBuild": false,
+        "gameExecutableValidated": false,
+        "packageRemoteValidated": false
+      }
+    },
+    {
+      "name": "R18_DoorCook2",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "normalCompletion": true,
+        "elapsedSeconds": 19.0898524,
+        "mode": "Cook",
+        "explicitDoorCookRoot": true,
+        "nativeCPPBuild": false,
+        "gameExecutableValidated": false,
+        "packageRemoteValidated": false
+      }
+    },
+    {
+      "name": "R18_DoorIdentityFocused1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 4,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.13340970873832703
+      }
+    },
+    {
+      "name": "R18_DoorIdentityRepro3",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 0,
+        "succeededWithWarnings": 0,
+        "failed": 2,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.11259180307388306
+      }
+    },
+    {
+      "name": "R18_DoorIdentityReproBuild3",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 12.8392973,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/4] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R18_DoorLinearFinalFocused1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 3,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.07243969291448593
+      }
+    },
+    {
+      "name": "R18_DoorRepro1",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 0,
+        "succeededWithWarnings": 0,
+        "failed": 1,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.105942502617836
+      }
+    },
+    {
+      "name": "R18_DoorRepro2",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 0,
+        "succeededWithWarnings": 0,
+        "failed": 1,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.10955680161714554
+      }
+    },
+    {
+      "name": "R18_DoorReproBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 13.2117109,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/4] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R18_DoorReproBuild2",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 12.8074825,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/4] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R18_IdentityProjectionFixBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 7.3208715,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/4] Compile [x64] Project_JPlayerState.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R18_RemainingFinalFocused1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 93,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 1.6236047744750977
+      }
+    }
+  ],
+  "final_cook": {
+    "cooked": 1365,
+    "incremental_skipped": 0,
+    "platform_skipped": 7,
+    "total": 1372,
+    "required_in_referenced_set": [
+      "/game/levelprototyping/interactable/door/bp_doorframe",
+      "/game/dataassetsets/class/da_class_greatsword",
+      "/game/dataassetsets/combatstyle/da_combatstyle_greatsword"
+    ],
+    "warning_ko": "기존 GameplayCueNotifyPaths fallback 경고1종 유지",
+    "game_package_remote_validated": false
+  },
+  "structure_review_open_identified_candidates": [],
+  "retained_ko": [
+    "테스트/제작 DA·BP와빈CommandSet연결",
+    "Frame5조각·단문/양문·재질fallback",
+    "실제membership/PSprojection·callback수명",
+    "프로필fallback·GT snapshot/worker·서버피해/cosmetic분리"
+  ],
+  "not_executed_ko": [
+    "임의제작값 형상·실제socket/pose/audio/map 전수품질",
+    "모바일/다중LocalPlayer",
+    "대규모원격·성능·운영"
+  ],
+  "performance_issues_resolved": false,
+  "whole_dynamic_asset_environment_audit_complete": false,
+  "no_commit_push_merge_shutdown": true
+}

@@ -1,0 +1,10 @@
+{
+  "native_asset_file_hash_mismatches": [],
+  "editor_binary_mismatches": [],
+  "portable_receipt_hash_mismatches": [],
+  "report_missing_local_links": [],
+  "active_native_processes": 0,
+  "head": "f8ebd8a5a33fb732f1b8c88dd4c23f75b22a95d1",
+  "handoff_sha256": "9465b0717e3a5152e06831deffaa20fb70d62f7251ae45f9c9ae3b3253b0c5f2",
+  "new_source_ast_or_native_validation": "direct UBT full target +90+1 native tests; no additional source edits after build"
+}

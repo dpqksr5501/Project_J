@@ -1,0 +1,471 @@
+[
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/arguments.json",
+    "sha256": "082915be1c2f8f28d296be33e41769ea5d6006f84fa0ba0c5c39c8c58c398db8",
+    "bytes": 711,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/process.json",
+    "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+    "bytes": 88,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/index.json",
+    "sha256": "7114b899f07333a6a3b61ad8ae1130ceae3a18ca791bc80549ee7be5377e0697",
+    "bytes": 1133,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/arguments.json",
+    "sha256": "e7baf48c6026da436ba4562bb9f563e23b4f512b272a9f409ee642df3f577197",
+    "bytes": 479,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/process.json",
+    "sha256": "9a36a395f275c13e9d7fb29c00d3d7a2b3b8f40350a9d4bd43020e99b927c3f0",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/UBT.log",
+    "sha256": "56750b023da0834c68d8de74a4fed6b32946034eadf38f77a4f60f51dfc52abd",
+    "bytes": 9365,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantAndEditorBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/arguments.json",
+    "sha256": "38e9ee392bfd95c0114f1257eae57325686cf6f6a950f25a2125e0076acb5e33",
+    "bytes": 743,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "bytes": 90,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/index.json",
+    "sha256": "446937ec49e65bdb853685a39a2b534226f956aa72bd95320118c32cb2aac690",
+    "bytes": 6691,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipRepro2/arguments.json",
+    "sha256": "07a6390615e6935963d9e15f85f2d611631916b7a87b02bfbeb6454d1b085417",
+    "bytes": 661,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipRepro2/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipRepro2/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "bytes": 90,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipRepro2/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipRepro2/index.json",
+    "sha256": "6d2b8325c37f9bfdf16fd608d383f5b8f3c3284b4330ced078c5ff9c0074b67c",
+    "bytes": 3625,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipRepro2/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/arguments.json",
+    "sha256": "736bed26e6777aff987d4f5e3fa0025d32fe460084d0b88a8c0335fda79fe77c",
+    "bytes": 479,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/process.json",
+    "sha256": "0377cefd2a4da34aa57a52516e2a88a5936c88ad5ff12c580d551715ef6b9f37",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/UBT.log",
+    "sha256": "17443daf77ddf7a03ebf036584bb4379c3a96786dd3acd7ef137dffb12c162e5",
+    "bytes": 14306,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild2/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/arguments.json",
+    "sha256": "0b450a08c50ec3603e831313e260722c30e188382ed626636e83962576dcf902",
+    "bytes": 479,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/process.json",
+    "sha256": "684bc2dc563fc63a2e643c83299ebc7a73fc0927b9cd43c84281f69d72a31df6",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/UBT.log",
+    "sha256": "f846104a24c0f95c2c87160964a398938a002d37fff048d6dabe9dc621288588",
+    "bytes": 12453,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCOwnershipReproBuild3/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/arguments.json",
+    "sha256": "792aaba540ce9441b8a7a02e9fba0ed4ec2621b26a09f5ab49833012ab41c6c4",
+    "bytes": 481,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/process.json",
+    "sha256": "cc2049c749cfb266697459cff5459b322e3555ef09914ca40f559b91af39b8f5",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/UBT.log",
+    "sha256": "36d203786b3d6a4a3c941c4db5de562fac491636d8521a63eb0e9bb1c77969ee",
+    "bytes": 11438,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCRetargetOwnerFixBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/arguments.json",
+    "sha256": "8ee930389e75447941d36aa81e32e83583232c15ba69719f2a7aae28a35adaa6",
+    "bytes": 482,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/process.json",
+    "sha256": "c692295270d7c92de74e450688451f2560addd0d911f99c2006c3cbc7f7861aa",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/UBT.log",
+    "sha256": "f8d0900d9aa9694062216a67c5211b45dc2170d4da1f368baa77495982d333d5",
+    "bytes": 10102,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureBoundaryBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/arguments.json",
+    "sha256": "1b84cb19822b1e691565b7273c65e582d1e40087bdf92a5357fdd4813ec2c96b",
+    "bytes": 4073,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/process.json",
+    "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+    "bytes": 88,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/index.json",
+    "sha256": "c926efabb17b031fe3be4aa87dcafa6a8a664e750b73fe23a7c6cb70afc9bc96",
+    "bytes": 33109,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/arguments.json",
+    "sha256": "6a48212add8d886a43904db2f34b23a83aff4363a64aed3d7e231a741276f9b3",
+    "bytes": 4315,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/process.json",
+    "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+    "bytes": 88,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/index.json",
+    "sha256": "1e8601fb4d56f96f46be5b9e3c94185310cdf749859f0ca7121297419cff979d",
+    "bytes": 35893,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild1/arguments.json",
+    "sha256": "05c7b62f133843e5a431fc0c5cd5ddc6af5bbc116efede26a327dcc94362d75e",
+    "bytes": 477,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild1/process.json",
+    "sha256": "e54e1590260af4bb9c83b45c02d9d429b4e14e5cf4ed8a5994b1ed39f6ff54a6",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild1/UBT.log",
+    "sha256": "ae6f7196dc9ed10186d389f143ec12496fc2ac85b659998dc0b65f4196def7ae",
+    "bytes": 26154,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild2/arguments.json",
+    "sha256": "e122661f050162b09aa1b6952ea47f06112deb058c8fbdc384a74975c27118e5",
+    "bytes": 477,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild2/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild2/process.json",
+    "sha256": "a4301bea04e62d6b8f11f30d78892afb7d03ecfbd8eb2fb6b172d03ae6f2496d",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild2/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixBuild2/UBT.log",
+    "sha256": "4e973287893679335839aab6173683a5d49b34bd8583ad1a38e8633c12f20bdf",
+    "bytes": 11924,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixBuild2/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/arguments.json",
+    "sha256": "1bf9a91fc9f67c62a52c0d6c02346280e1fab0634240cf695ac6db4e27305171",
+    "bytes": 481,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/process.json",
+    "sha256": "f6ca690affc36f3d7771b35a560b04e6d874280ed075ed7fbc26b534813705be",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/UBT.log",
+    "sha256": "58f1c990a95f2105f219c0bc9ececd3291f5ae0d526927c74210000f865910ab",
+    "bytes": 8439,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFixtureBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused1/arguments.json",
+    "sha256": "725620e6058790f62ccfd3061a2e904fedc5b9801afdce81398a392017049157",
+    "bytes": 800,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFocused1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused1/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "bytes": 90,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFocused1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused1/index.json",
+    "sha256": "b03c4b66334c927e7e2787ccadaf3cb5a5da4eab51d59704ce284de5a6de6dc6",
+    "bytes": 4831,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFocused1/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused2/arguments.json",
+    "sha256": "7169c816d85a5914b69191633a632e5ce946ea9393c05d5b8e7ee73cabad6cd1",
+    "bytes": 800,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFocused2/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused2/process.json",
+    "sha256": "fab14e105327a7f52e9ecc438b7482d1331fd05238675082d5ffd9196efd2251",
+    "bytes": 88,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureFocused2/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureRepro1/arguments.json",
+    "sha256": "599ff3cef31b5ce7c13d10daf91c9f7cb02643a5466930083d3c58cbdc5e8dea",
+    "bytes": 661,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureRepro1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureRepro1/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "bytes": 90,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureRepro1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureRepro1/index.json",
+    "sha256": "001db52bfb97da65c782d278e3f7a5010096486c4722cdc5c101366ffa3ff42a",
+    "bytes": 5587,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureRepro1/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureReproBuild1/arguments.json",
+    "sha256": "23cb84fcee41fb9b046188470a294f784b4689cf9de7b0845c4770937805f091",
+    "bytes": 479,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureReproBuild1/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureReproBuild1/process.json",
+    "sha256": "853e8c629f52496b07ba57f5aa1ce11af1069861c291be9b96413362c8cc64ba",
+    "bytes": 155,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureReproBuild1/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCStructureReproBuild1/UBT.log",
+    "sha256": "d8a518a4700402792206b028982ce7e6a1a3ac3d3815e7f8d52ca55e77b50f09",
+    "bytes": 19759,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCStructureReproBuild1/UBT.log",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/arguments.json",
+    "sha256": "a0aa5899671990c9f47ebeecad50ada389e013e4c0680b6f56a3d14858edf4ee",
+    "bytes": 670,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "bytes": 90,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/index.json",
+    "sha256": "ba6c475c16c3083ee88a308b8c6be06a67d401b8da2d0504e6fbd3e9a69aa481",
+    "bytes": 3630,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/index.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/Arguments.json",
+    "sha256": "2f7e8fc81665653591e3fc2870bd702c8c62acc76c3ed6596bcba25e9f941323",
+    "bytes": 605,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/Arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/Process.json",
+    "sha256": "ebfb7cc3fe687123edee10451812935045a414764ad461d21a6776082809f45c",
+    "bytes": 128,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/Process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/SelectedReadParsed.json",
+    "sha256": "00825bcc9713d3dae242c3f868a35408c41a490e2dac8867a0b78f3f23aed84e",
+    "bytes": 479074,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/SelectedReadParsed.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/DeltaRead.json",
+    "sha256": "6eb08c87bb6dbc8cb311e39eaf983ad5d9e1bdde722f5b917aab602862b690d2",
+    "bytes": 458,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/DeltaRead.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/DeltaRead2Parsed.json",
+    "sha256": "2eb0fa08c7e6a83d9fe5e8a4ea6bf74ad0cca9af4012aefb7169ec315f6a17f6",
+    "bytes": 4419,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/DeltaRead2Parsed.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/GrantOwnersBefore.json",
+    "sha256": "fb03f5bc861dde426be95e29344514249e45e41be7bc034f5ad544b80da7131a",
+    "bytes": 2039,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/GrantOwnersBefore.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetRead1/GrantOwnersBefore2Parsed.json",
+    "sha256": "562beaf177ea270489d778a2ba9c641697b81bf3fdc9cdd8413a3245978f6b43",
+    "bytes": 2913,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetRead1/GrantOwnersBefore2Parsed.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetGrantFix1/Arguments.json",
+    "sha256": "4d7085536919c2c93a29053d957cfcb02742501e1a6bee3e9cde982e0c8087a8",
+    "bytes": 621,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetGrantFix1/Arguments.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetGrantFix1/Process.json",
+    "sha256": "7ef2b01e313817c0b1dc47d208918450a0e96608a48801b4dd0790dc76b83f6f",
+    "bytes": 126,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetGrantFix1/Process.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetGrantFix1/GrantFixParsed.json",
+    "sha256": "af44089e95089dd19546274a775a0c0084e307efa374e658f066696e3c69e6a8",
+    "bytes": 1812,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetGrantFix1/GrantFixParsed.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/Baseline/Head.txt",
+    "sha256": "e18d2016cdc249addd44f0dbd38fcbfc3735a02748200f8c204fc602c0ac48ad",
+    "bytes": 42,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/Baseline/Head.txt",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/Baseline/IncomingUserChangeHash.json",
+    "sha256": "23deb7d11cbaf9957adf276866f1b0fee4940cc7a4af94107a49c245f2451b28",
+    "bytes": 84,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/Baseline/IncomingUserChangeHash.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/AssetBackup/BeforeHash.json",
+    "sha256": "44ac905a9fc1cb4a4f346775c9312bcac8d77ce28b71f92affab7f672251676a",
+    "bytes": 226,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/AssetBackup/BeforeHash.json",
+    "included_in_commit": false
+  },
+  {
+    "source": "Saved/Validation/PCStructure_20261015/FocusedSelection.json",
+    "sha256": "3d3eec030d89a70919aff47621bda957dcf26a3d407267babaa91c03209b9a50",
+    "bytes": 4303,
+    "local_archive": "Saved/Validation/CommitPreparation_20261015_PC/ExcludedReceipts/R17/Validation/PCStructure_20261015/FocusedSelection.json",
+    "included_in_commit": false
+  }
+]

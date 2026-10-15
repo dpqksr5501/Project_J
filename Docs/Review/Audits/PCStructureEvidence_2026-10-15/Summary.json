@@ -1,0 +1,462 @@
+{
+  "utc": "2026-10-15T04:01:20.444273+00:00",
+  "head": "f8ebd8a5a33fb732f1b8c88dd4c23f75b22a95d1",
+  "branch": "codex/runtime-retarget-profiles",
+  "baseline_file_count": 3391,
+  "current_file_count": 3392,
+  "changed_existing": [
+    {
+      "path": "Content/DataAssetSets/Class/DA_Class_Greatsword.uasset",
+      "before_sha256": "df81f7f7b810a3f117c8f15f048813e68d9408d964111c2cf9d2cceed538ce45",
+      "after_sha256": "6ea73b6e2d6748a526e52f5f77572c280930bc7125d5f0749dd6719186f8dc8e"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "before_sha256": "2407ff4d89c87bcec7382ac2e17ab5d26af7c711a348cadb25aabb54d7ccbe99",
+      "after_sha256": "7922044647d629664db7ac3d2f73467c2bd1412f00de5381199014447e959bbf"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JRetargetAnimInstance.cpp",
+      "before_sha256": "9b3965816287aab3f08fe6f65dbb6ee920f368f8e28f6fa007ef4b4a7d0291ba",
+      "after_sha256": "628adc97012cd223b5c6bd5f14985281c4081c1156edab7689cdbba6ac21c822"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Interaction/Project_JInteractionQuery.cpp",
+      "before_sha256": "fd610f4d5d205c957781f519788fe71f7f8767a5150cab99fd77f5a900110404",
+      "after_sha256": "ad67a50af32f0a3b2a8119dc3a40af1b2c6d41a664001be6252d3a65d29526cb"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp",
+      "before_sha256": "5e95ef8a8f53bd56fc2ace0d461ad7611f546b207946205d80bbfc19664b76fc",
+      "after_sha256": "b037f27c6812fe7852d2b6222219bf4cf4c36bba60f62bb3697804678d3ec731"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInternalRefinementTests.cpp",
+      "before_sha256": "378010c7170ba5dcc62b0bf84b2f1eb64a41a4d4481c0e486f165416bead1af2",
+      "after_sha256": "efc3adb1e81055f1f0d7e6c00b8a3ed8336a66b7afba12e86e5c24664c38c6ee"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JInternalTestReceiver.h",
+      "before_sha256": "910bc0e2d18e29dd5bdfc8a3e58fcdc18722e1aa30c473d7732b50d8c5e50529",
+      "after_sha256": "9d9dea53b1003d3bf9c61b9d60578d31f26e560103c5b58ff542824d71e93750"
+    },
+    {
+      "path": "Source/Project_J/Backend/Project_JGatewaySubsystem.cpp",
+      "before_sha256": "e0fab6e10a33ba9dbfdc98fc082c4d404ca444d92f65d31920c91184fb1770ab",
+      "after_sha256": "3bdfb0e6cbfc00d0a694f4f441fe8e7e44e0f412b235384492bde1feef45a869"
+    },
+    {
+      "path": "Source/Project_J/Game/Project_JPlayerState.cpp",
+      "before_sha256": "dcfb9ee9629b41434231589d37eb4a9454a2abc856d548dba918d450880355ee",
+      "after_sha256": "00c983536386c8c2d62545df6b77d6674ea7b3cad1e89785e4ae1fb01074cfb3"
+    },
+    {
+      "path": "Source/Project_J/Social/Project_JSocialSubsystem.cpp",
+      "before_sha256": "12e2b72ec562bacea2dc6eabcbe304a4dc0f0a0b3fd719d71f3064a111a517af",
+      "after_sha256": "6d560f8106003554cf76cca27e6a2a5813b1ac36c0e3ab474d2497d345ed310a"
+    },
+    {
+      "path": "Source/Project_J/Social/Project_JSocialSubsystem.h",
+      "before_sha256": "95edfd21dd4fb9e5e3be8b088a953730de0179ff954c1f774911ad132b48adf1",
+      "after_sha256": "80c546c62b430aee7bd73b8aad97971832f4f9d7e2ba9fd70c1a71b5bda89fd3"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+      "before_sha256": "50a8e1a87488797ebe114c5480ead0439d388c0c71eca9c564a345754a293533",
+      "after_sha256": "db4cc159513f5913b67f0f1f204a106547e3791116df7cffabbfd3d82f5d7fc6"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerHUDWidget.h",
+      "before_sha256": "98b6ea06e4e6d4b5c09663e81d952105e70f634d08621e7270fdcfb94e104ca4",
+      "after_sha256": "24a1e47d898d0ae05edc770dd51bf654381ef766200a40d6da8f1a77a7ddc5fa"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerUIComponent.cpp",
+      "before_sha256": "a068c4cb2bf59e7f461d88c93b5014466bd11ef2ff1838ba1882e1a105e329e8",
+      "after_sha256": "e1ef2b1fb57cccadafdca40162e8cb960d210f2eba66684167a6de463f6aea34"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JPlayerUIComponent.h",
+      "before_sha256": "8f8df38e30fec8612d77cfa2cac2190fa593ac427e9288a73965747266101c39",
+      "after_sha256": "4cf412c1bc8817d2fe2a0134bc7df732f32d5d54b7c5a097e3da20452a6cbeda"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JSkillButton.cpp",
+      "before_sha256": "9d691d628ce467a2bbfd31cf5b4f2a3bd58c8177e5dff2b4a2acf1cb3633825d",
+      "after_sha256": "40638a2c50d85e914165c6bf96f4632c7e03f22483af64cadc7d8733cf71e1b4"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JGatewayAdmissionTests.cpp",
+      "before_sha256": "3529cc013508886d4ea6c651656c6fb73fcf4d8981e5f618ff6a373e5b1562b5",
+      "after_sha256": "7f7dee19257b711c593ab5b510d2d0c3fd543a239413ca7e15f7b44176684c13"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JReauditDataContractsTests.cpp",
+      "before_sha256": "443d6ac2eb78a5e7706a6d8c6cb9e763ef2416648ca9f8602208d4cd80c72f29",
+      "after_sha256": "870b37ecc655b0c310ff71be93648157e7326d9611a3f7974ef1144a331a808b"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JUISkillReleaseOwnershipTests.cpp",
+      "before_sha256": "990bb71276dceea5bec8e79fc2a9ce7da39c602c4e8dd1327ee5252830c448aa",
+      "after_sha256": "056ea98b52cd7515d52c0c3311c6bce93d44eb9843e5d845b574f2e1bb3e63eb"
+    }
+  ],
+  "added_files": [
+    "Source/Project_J/Private/Tests/Project_JPCStructureOwnershipTests.cpp"
+  ],
+  "removed_files": [],
+  "actual_cleanup_groups_ko": [
+    "공통 interaction 승인/퇴장",
+    "미니맵 실패 출력과 소비",
+    "Identity·Social 공통 admission",
+    "Gateway preflight 중복",
+    "PC UI press receipt·바인딩 세대",
+    "Weapon Motion transaction 단일 소유",
+    "Retarget 외부 tick 정책 소유",
+    "Class/Style 중복 AbilitySet 연결1개"
+  ],
+  "content_changed": [
+    "Content/DataAssetSets/Class/DA_Class_Greatsword.uasset"
+  ],
+  "content_deleted": [],
+  "content_added": [],
+  "user_handoff_change_preserved": true,
+  "source_added_uclass": false,
+  "config_packet_module_schema_changed": false,
+  "runs": [
+    {
+      "name": "R17_PCAuthoredCombatFocused1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 1,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.01782410219311714
+      }
+    },
+    {
+      "name": "R17_PCGrantAndEditorBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 16.4509435,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/7] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]",
+        "[4/7] Compile [x64] Project_JCharacterEditorModule.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCGrantReproAndEditor1",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 1,
+        "succeededWithWarnings": 0,
+        "failed": 1,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.07729129493236542
+      }
+    },
+    {
+      "name": "R17_PCOwnershipRepro2",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 2,
+        "succeededWithWarnings": 0,
+        "failed": 2,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.15135890245437622
+      }
+    },
+    {
+      "name": "R17_PCOwnershipReproBuild2",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 45.3165299,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/22] Compile [x64] Project_JInteractionQuery.cpp [NoUba]",
+        "[4/22] Compile [x64] Project_JHUDWindow.cpp [NoUba]",
+        "[5/22] Compile [x64] Project_JCharacterUITests.cpp [NoUba]",
+        "[6/22] Compile [x64] Module.Project_J.gen.cpp [NoUba]",
+        "[7/22] Compile [x64] Project_JMinimapWidget.cpp [NoUba]",
+        "[8/22] Compile [x64] Project_JInventoryWidgets.cpp [NoUba]",
+        "[9/22] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]",
+        "[10/22] Compile [x64] Project_JPlayerHUDWidget.cpp [NoUba]",
+        "[11/22] Compile [x64] Project_JPlayerController.cpp [NoUba]",
+        "[12/22] Compile [x64] Project_JPlayerUIComponent.cpp [NoUba]",
+        "[13/22] Compile [x64] Project_JReauditDataContractsTests.cpp [NoUba]",
+        "[14/22] Compile [x64] Project_JSkillButton.cpp [NoUba]",
+        "[15/22] Compile [x64] Project_JUIIconRequestLifetimeTests.cpp [NoUba]",
+        "[16/22] Compile [x64] Project_JUIModelOwnershipTests.cpp [NoUba]",
+        "[17/22] Compile [x64] Project_JUIRuntimeSmoke.cpp [NoUba]",
+        "[18/22] Compile [x64] Project_JUIScreenFailureTests.cpp [NoUba]",
+        "[19/22] Compile [x64] Project_JUISkillReleaseOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCOwnershipReproBuild3",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 23.7536483,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/11] Compile [x64] Project_JGatewayAdmissionTests.cpp [NoUba]",
+        "[2/11] Compile [x64] Project_JGatewaySubsystem.cpp [NoUba]",
+        "[3/11] Compile [x64] Project_JHandoverTests.cpp [NoUba]",
+        "[4/11] Compile [x64] Module.Project_J.gen.cpp [NoUba]",
+        "[5/11] Compile [x64] Project_JMaturityContractTests.cpp [NoUba]",
+        "[6/11] Compile [x64] Project_JPlayerState.cpp [NoUba]",
+        "[7/11] Compile [x64] Project_JSocialSubsystem.cpp [NoUba]",
+        "[8/11] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCRetargetOwnerFixBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 14.9895375,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/5] Compile [x64] Project_JRetargetAnimInstance.cpp [NoUba]",
+        "[2/5] Compile [x64] Project_JContinuationContractsTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCStructureBoundaryBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 35.2053471,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/15] Compile [x64] Project_JInventoryWidgets.cpp [NoUba]",
+        "[2/15] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]",
+        "[3/15] Compile [x64] Module.Project_J.gen.cpp [NoUba]",
+        "[4/15] Compile [x64] Project_JPlayerController.cpp [NoUba]",
+        "[5/15] Compile [x64] Project_JPlayerHUDWidget.cpp [NoUba]",
+        "[6/15] Compile [x64] Project_JSkillButton.cpp [NoUba]",
+        "[7/15] Compile [x64] Project_JReauditDataContractsTests.cpp [NoUba]",
+        "[8/15] Compile [x64] Project_JPlayerUIComponent.cpp [NoUba]",
+        "[9/15] Compile [x64] Project_JUIModelOwnershipTests.cpp [NoUba]",
+        "[10/15] Compile [x64] Project_JUIScreenFailureTests.cpp [NoUba]",
+        "[11/15] Compile [x64] Project_JUIRuntimeSmoke.cpp [NoUba]",
+        "[12/15] Compile [x64] Project_JUISkillReleaseOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCStructureFinalFocused1",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 83,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 1.4220670461654663
+      }
+    },
+    {
+      "name": "R17_PCStructureFinalFocused2",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 90,
+        "succeededWithWarnings": 0,
+        "failed": 0,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 1.483272910118103
+      }
+    },
+    {
+      "name": "R17_PCStructureFixBuild1",
+      "process": {
+        "exitCode": 6,
+        "elapsedSeconds": 45.4758466,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/21] Compile [x64] Project_JHUDWindow.cpp [NoUba]",
+        "[2/21] Compile [x64] Project_JCharacterUITests.cpp [NoUba]",
+        "[3/21] Compile [x64] Module.Project_J.gen.cpp [NoUba]",
+        "[4/21] Compile [x64] Project_JCharacterEditorModule.cpp [NoUba]",
+        "[7/21] Compile [x64] Project_JInventoryWidgets.cpp [NoUba]",
+        "[8/21] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]",
+        "[9/21] Compile [x64] Project_JPlayerUIComponent.cpp [NoUba]",
+        "[10/21] Compile [x64] Project_JPlayerController.cpp [NoUba]",
+        "[11/21] Compile [x64] Project_JPlayerHUDWidget.cpp [NoUba]",
+        "[12/21] Compile [x64] Project_JReauditDataContractsTests.cpp [NoUba]",
+        "[13/21] Compile [x64] Project_JSkillButton.cpp [NoUba]",
+        "[14/21] Compile [x64] Project_JUIIconRequestLifetimeTests.cpp [NoUba]",
+        "[15/21] Compile [x64] Project_JUIModelOwnershipTests.cpp [NoUba]",
+        "[16/21] Compile [x64] Project_JUIRuntimeSmoke.cpp [NoUba]",
+        "[17/21] Compile [x64] Project_JUIScreenFailureTests.cpp [NoUba]",
+        "[18/21] Compile [x64] Project_JUISkillReleaseOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCStructureFixBuild2",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 15.9505318,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/8] Compile [x64] Project_JSkillButton.cpp [NoUba]",
+        "[2/8] Compile [x64] Project_JContinuationContractsTests.cpp [NoUba]",
+        "[4/8] Compile [x64] Project_JPlayerUIComponent.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCStructureFixtureBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 12.7549089,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[1/4] Compile [x64] Project_JPCStructureOwnershipTests.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCStructureFocused1",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 7,
+        "succeededWithWarnings": 0,
+        "failed": 1,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.2188262939453125
+      }
+    },
+    {
+      "name": "R17_PCStructureFocused2",
+      "process": {
+        "exitCode": 3,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      }
+    },
+    {
+      "name": "R17_PCStructureRepro1",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 0,
+        "succeededWithWarnings": 0,
+        "failed": 2,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.1562063992023468
+      }
+    },
+    {
+      "name": "R17_PCStructureReproBuild1",
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 24.4509862,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "compile_actions": [
+        "[5/17] Compile [x64] Project_JReauditDataContractsTests.cpp [NoUba]",
+        "[9/17] Compile [x64] Project_JComponentOwnershipTests.cpp [NoUba]",
+        "[10/17] Compile [x64] Project_JInternalRefinementTests.cpp [NoUba]",
+        "[11/17] Compile [x64] Module.Project_JCharacter.gen.cpp [NoUba]"
+      ]
+    },
+    {
+      "name": "R17_PCWidgetOriginRepro3",
+      "process": {
+        "exitCode": 255,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "tests": {
+        "succeeded": 3,
+        "succeededWithWarnings": 0,
+        "failed": 1,
+        "notRun": 0,
+        "inProcess": 0,
+        "totalDuration": 0.1528249979019165
+      }
+    }
+  ],
+  "game_cook_package_remote_executed": false,
+  "performance_investigation_executed": false,
+  "whole_asset_property_environment_audit_complete": false,
+  "retained_ko": [
+    "테스트/제작 자산 보존",
+    "BP_Player 직렬화 fallback",
+    "서로 다른 grant source와 동일 Style 공유 lease",
+    "GT/worker·PS/예측·취소/physical 완료 경계"
+  ],
+  "remaining_ko": [
+    "Door prototype 직접 OpenDoor의 pure getter 후보 미재현",
+    "invalid identity clear의 social projection 계약 미확정",
+    "전체 에셋 공개값·동적 참조·다중 환경 전수 미검증",
+    "CPU/GPU·부하·대규모 원격·품질·운영 보류"
+  ],
+  "no_additional_commit_push_merge_shutdown": true
+}

@@ -6,6 +6,8 @@
 
 ## 전체 구조와 담당 데이터
 
+2026-10-15 Persona 편집 계약: 키 drag는 하나의 scoped transaction이 소유한다. 진행 중 Escape는 같은 키·시간·배열·마지막 delta가 유지될 때만 원래 변환으로 되돌린다. 이미 완료한 drag는 Escape로 취소하지 않는다. 외부 편집이 끼면 값을 덮지 않고 해당 transaction의 Undo 기록을 보존한다. transaction 생성이 거절되면 키를 변경하지 않는다. [실제 취소·완료·외부 변경 시험](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)을 확인한다.
+
 | 담당 | 정의할 내용 |
 | --- | --- |
 | 몸체 HandGripProfile | 실제 팔 뼈 역할, Palm 소켓, 손목 접촉 오프셋과 굽힘 안정화 |

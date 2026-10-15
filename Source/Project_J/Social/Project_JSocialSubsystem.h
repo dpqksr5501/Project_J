@@ -123,7 +123,7 @@ private:
 	using FMembershipMap = TMap<FGuid, FName>;
 
 	static FName CreateGroupId(const TCHAR* Prefix);
-	bool ResolveAuthoritativeCharacter(AProject_JPlayerState* Player, FGuid& OutCharacterId) const;
+	EProject_JSocialOperationFailure ResolveAuthoritativeCharacter(AProject_JPlayerState* Player, FGuid& OutCharacterId) const;
 	FProject_JSocialOperationResult CreateGroup(
 		AProject_JPlayerState* Leader,
 		const TCHAR* Prefix,

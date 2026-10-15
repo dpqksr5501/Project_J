@@ -65,6 +65,10 @@ bool FProjectJFollowerPolicyLifetimeTest::RunTest(const FString&)
     Anim->ApplyOptimizationPolicy(Policy);
     TestFalse(TEXT("Identical hidden policy applies to a replacement enabled follower"), Third->IsComponentTickEnabled());
     Third->EnableExternalTickRateControl(true);
+    Third->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+    CastChecked<UProject_JRetargetAnimInstance>(Third->GetAnimInstance())->NativeInitializeAnimation();
+    TestEqual(TEXT("Retarget initialization respects any existing external allocator, not just this coordinator"),
+        Third->VisibilityBasedAnimTickOption, EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered);
     Policy.bEnableFollowerRetarget = true;
     Anim->ApplyOptimizationPolicy(Policy);
     TestFalse(TEXT("An external allocator retains tick ownership"), Third->IsComponentTickEnabled());
@@ -83,14 +87,24 @@ bool FProjectJFollowerPolicyLifetimeTest::RunTest(const FString&)
     Source->AnimScriptInstance = Anim;
     Fourth->SetSkeletalMesh(Asset);
     Fourth->AnimScriptInstance = NewObject<UProject_JRetargetAnimInstance>(Fourth);
+    Fourth->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+    const auto AuthoredVisibility = Fourth->VisibilityBasedAnimTickOption;
     Fourth->SetHiddenInGame(true);
     Coordinator->RefreshVisualBudget(1.f / 60.f);
     TestTrue(TEXT("Coordinator acquires actual external tick controls"), Fourth->IsUsingExternalTickRateControl());
+    CastChecked<UProject_JRetargetAnimInstance>(Fourth->GetAnimInstance())->NativeInitializeAnimation();
+    TestEqual(TEXT("Retarget reinitialization preserves the active visual allocator's visibility ownership"),
+        Fourth->VisibilityBasedAnimTickOption, EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones);
     Anim->ApplyOptimizationPolicy(Policy);
     TestFalse(TEXT("Fallback cannot wake a hidden coordinator-owned mesh"), Fourth->IsComponentTickEnabled());
     Coordinator->bAllowVisualBudget = false;
     Coordinator->RefreshVisualBudget(1.f / 60.f);
     TestFalse(TEXT("Coordinator returns external controls"), Fourth->IsUsingExternalTickRateControl());
+    TestEqual(TEXT("Allocator release restores the original authored visibility after retarget reinitialization"),
+        Fourth->VisibilityBasedAnimTickOption, AuthoredVisibility);
+    CastChecked<UProject_JRetargetAnimInstance>(Fourth->GetAnimInstance())->NativeInitializeAnimation();
+    TestEqual(TEXT("Standalone retarget initialization retains its original visibility default"),
+        Fourth->VisibilityBasedAnimTickOption, EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered);
     Anim->ApplyOptimizationPolicy(Policy);
     TestTrue(TEXT("Identical policy is applied after coordinator release"), Fourth->IsComponentTickEnabled());
     Anim->NativeUninitializeAnimation();

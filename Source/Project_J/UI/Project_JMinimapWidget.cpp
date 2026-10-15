@@ -15,8 +15,10 @@ bool UProject_JMapDefinition::WorldToUV(FVector Position, FVector2D Center, FVec
 	if (Position.ContainsNaN() || Center.ContainsNaN() || HalfExtent.ContainsNaN() || HalfExtent.X <= 0 ||
 		HalfExtent.Y <= 0)
 		return false;
-	OutUV = FVector2D(0.5 + (Position.Y - Center.Y) / (2 * HalfExtent.Y),
+	const FVector2D Candidate(0.5 + (Position.Y - Center.Y) / (2 * HalfExtent.Y),
 					  0.5 - (Position.X - Center.X) / (2 * HalfExtent.X));
+	if (Candidate.ContainsNaN()) return false;
+	OutUV = Candidate;
 	return true;
 }
 TSharedRef<SWidget> UProject_JMinimapWidget::RebuildWidget()
@@ -148,17 +150,21 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 		}
 		++Layer;
 	}
-	const auto PositionOnMap = [&](FVector Position)
+	const auto PositionOnMap = [&](FVector Position, FVector2D& OutPosition)
 	{
 		FVector2D UV;
-		UProject_JMapDefinition::WorldToUV(Position, Center, Extent, UV);
-		return ((UV - ViewCenter) * Zoom + FVector2D(0.5, 0.5)) * Size;
+		if (!UProject_JMapDefinition::WorldToUV(Position, Center, Extent, UV)) return false;
+		const FVector2D Candidate = ((UV - ViewCenter) * Zoom + FVector2D(0.5, 0.5)) * Size;
+		if (Candidate.ContainsNaN()) return false;
+		OutPosition = Candidate;
+		return true;
 	};
 	if (Definition && !MapTexture)
 		for (const auto &Region : Definition->Regions)
 		{
-			const FVector2D A = PositionOnMap(FVector(Region.Min.X, Region.Min.Y, 0)),
-							B = PositionOnMap(FVector(Region.Max.X, Region.Max.Y, 0));
+			FVector2D A, B;
+			if (!PositionOnMap(FVector(Region.Min.X, Region.Min.Y, 0), A) ||
+				!PositionOnMap(FVector(Region.Max.X, Region.Max.Y, 0), B)) continue;
 			const FVector2D Min(FMath::Clamp(FMath::Min(A.X, B.X), 0., Size.X),
 								FMath::Clamp(FMath::Min(A.Y, B.Y), 0., Size.Y)),
 				Max(FMath::Clamp(FMath::Max(A.X, B.X), 0., Size.X), FMath::Clamp(FMath::Max(A.Y, B.Y), 0., Size.Y));
@@ -171,8 +177,8 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 	++Layer;
 	auto DrawMarker = [&](const FProject_JMapMarker &Marker)
 	{
-		const FVector2D P = PositionOnMap(Marker.Position);
-		if (!Marker.Position.ContainsNaN() && P.X >= 4 && P.Y >= 4 && P.X <= Size.X - 4 && P.Y <= Size.Y - 4)
+		FVector2D P;
+		if (PositionOnMap(Marker.Position, P) && P.X >= 4 && P.Y >= 4 && P.X <= Size.X - 4 && P.Y <= Size.Y - 4)
 			FSlateDrawElement::MakeBox(
 				Out, Layer + 1,
 				Geometry.ToPaintGeometry(FVector2f(6, 6), FSlateLayoutTransform(FVector2f(P - FVector2D(3, 3)))), White,
@@ -184,9 +190,9 @@ int32 UProject_JMinimapWidget::NativePaint(const FPaintArgs &Args, const FGeomet
 	for (const auto &Marker : QuestMarkers)
 		DrawMarker(Marker);
 	++Layer;
-	if (bHasPlayer)
+	FVector2D P;
+	if (bHasPlayer && FMath::IsFinite(PlayerYaw) && PositionOnMap(PlayerPosition, P))
 	{
-		const FVector2D P = PositionOnMap(PlayerPosition);
 		const double Angle = FMath::DegreesToRadians(PlayerYaw);
 		const FVector2D Direction(FMath::Sin(Angle), -FMath::Cos(Angle));
 		const FVector2D Side(Direction.Y, -Direction.X);

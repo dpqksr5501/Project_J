@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3186개, Markdown 223개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3200개, Markdown 226개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -227,6 +227,9 @@
 | [전체 시스템 상세 대조와 결함 처리 — 2026-10-15](../Review/Audits/Project_J_Continuation_System_Review_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Continuation_System_Review_2026-10-15.md |
 | [Project_J 전체 구조 심화 감사 — 구현·검증 결과 및 남은 범위](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md |
 | [Project_J 구조·소유권·심화 검토 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md |
+| [PC BP·DA 잔여 구조 검토와 Door 정리 — 2026-10-15](../Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md |
+| [PC 구조 정리 최종 확인과 커밋 경계 — 2026-10-15](../Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md |
+| [PC 소스·BP·DA 구조 정리 — 2026-10-15 후속](../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md |
 | [Project_J 전수 범위 재점검 — 변경·검증과 미완료 범위](../Review/Audits/Project_J_Reaudit_2026-10-14.md) | 검토 기록 | Review/Audits/Project_J_Reaudit_2026-10-14.md |
 | [Project_J 재점검 소유권 지도](../Review/Audits/Project_J_Reaudit_Map_2026-10-14.md) | 검토 기록 | Review/Audits/Project_J_Reaudit_Map_2026-10-14.md |
 | [Project_J 재감사 — 상세 결과와 남은 문제](../Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md) | 검토 기록 | Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md |
@@ -323,7 +326,7 @@
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |
 | [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |
-| [Review/Audits/AssetArchitectureEvidence_2026-10-15](../Review/Audits/AssetArchitectureEvidence_2026-10-15) | 3 | 문서 이동·보존 기록 |
+| [Review/Audits/AssetArchitectureEvidence_2026-10-15](../Review/Audits/AssetArchitectureEvidence_2026-10-15) | 4 | 문서 이동·보존 기록 |
 | [Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015](../Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015) | 2 | 문서 이동·보존 기록 |
 | [Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015/Baseline](../Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015/Baseline) | 2 | 문서 이동·보존 기록 |
 | [Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015/Cook1](../Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015/Cook1) | 1 | 문서 이동·보존 기록 |
@@ -707,6 +710,8 @@
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/A2](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/A2) | 3 | 문서 이동·보존 기록 |
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C1](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C1) | 3 | 문서 이동·보존 기록 |
 | [Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C2](../Review/Audits/Evidence_2026-10-13/MatchedNonUnity/C2) | 3 | 문서 이동·보존 기록 |
+| [Review/Audits/PCStructureEvidence_2026-10-15](../Review/Audits/PCStructureEvidence_2026-10-15) | 5 | 문서 이동·보존 기록 |
+| [Review/Audits/PCStructureEvidence_2026-10-15/Remaining](../Review/Audits/PCStructureEvidence_2026-10-15/Remaining) | 5 | 문서 이동·보존 기록 |
 | [Review/Audits/ReauditEvidence_2026-10-14](../Review/Audits/ReauditEvidence_2026-10-14) | 2 | 문서 이동·보존 기록 |
 | [Review/Audits/ReauditEvidence_2026-10-14/BeforeChangedSource/Scripts/Validation](../Review/Audits/ReauditEvidence_2026-10-14/BeforeChangedSource/Scripts/Validation) | 3 | 문서 이동·보존 기록 |
 | [Review/Audits/ReauditEvidence_2026-10-14/BeforeChangedSource/Source/Project_J/Game](../Review/Audits/ReauditEvidence_2026-10-14/BeforeChangedSource/Source/Project_J/Game) | 1 | 문서 이동·보존 기록 |

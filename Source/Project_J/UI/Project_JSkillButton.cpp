@@ -33,6 +33,7 @@
 #include "Engine/Texture2D.h"
 #include "InputCoreTypes.h"
 #include "Inventory/Project_JItemDefinition.h"
+#include "UObject/StrongObjectPtr.h"
 
 #include "UI/Project_JWidgetPresentationHelpers.h"
 using namespace ProjectJ::UI;
@@ -116,8 +117,26 @@ void UProject_JSkillButton::Present(const FProject_JQuickSlotState &State)
 }
 void UProject_JSkillButton::Configure(UProject_JPlayerUIComponent *Owner, int32 Index)
 {
+	if (ScreenOwner == Owner && SlotIndex == Index) return;
 	ScreenOwner = Owner;
 	SlotIndex = Index;
+	// Publish the new binding before returning only the old acquired press.
+	ReleasePressedSkill();
+}
+void UProject_JSkillButton::NativeConstruct()
+{
+	bAcceptsPress = true;
+	Super::NativeConstruct();
+}
+void UProject_JSkillButton::ReleasePressedSkill()
+{
+	const TStrongObjectPtr<UProject_JSkillButton> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> Owner(PressOwner.Get());
+	const uint64 Receipt = PressReceipt;
+	const int32 Index = PressIndex;
+	PressReceipt = 0; PressIndex = INDEX_NONE;
+	PressOwner.Reset();
+	if (Receipt && Owner.IsValid()) Owner->ReleaseSkillReceipt(Index, Receipt);
 }
 void UProject_JSkillButton::SetIcon(TSoftObjectPtr<UTexture2D> Icon)
 {
@@ -152,7 +171,7 @@ void UProject_JSkillButton::UpdateLabel(const FText &Text, bool bInAvailable)
 }
 FReply UProject_JSkillButton::NativeOnMouseButtonDown(const FGeometry &, const FPointerEvent &Event)
 {
-	if (!ScreenOwner.IsValid())
+	if (!bAcceptsPress || !ScreenOwner.IsValid())
 		return FReply::Unhandled();
 	if (Event.GetEffectingButton() == EKeys::RightMouseButton && ScreenOwner->CanEditQuickSlots())
 	{
@@ -163,11 +182,17 @@ FReply UProject_JSkillButton::NativeOnMouseButtonDown(const FGeometry &, const F
 	{
 		if (ScreenOwner->CanEditQuickSlots())
 			return UWidgetBlueprintLibrary::DetectDragIfPressed(Event, this, EKeys::LeftMouseButton).NativeReply;
-		if (bAvailable)
+		if (bAvailable && !PressReceipt)
 		{
-			bPressed = true;
-			ScreenOwner->PressSkill(SlotIndex);
-			return FReply::Handled().CaptureMouse(TakeWidget());
+			const TStrongObjectPtr<UProject_JSkillButton> KeepSelf(this);
+			const TStrongObjectPtr<UProject_JPlayerUIComponent> Owner(ScreenOwner.Get());
+			PressOwner = Owner.Get(); PressIndex = SlotIndex;
+			Owner->PressSkillWithReceipt(SlotIndex, &PressReceipt);
+			if (auto* CurrentOwner = PressOwner.Get(); bAcceptsPress && CurrentOwner && CurrentOwner->IsSkillReceiptCurrent(PressIndex, PressReceipt))
+				return FReply::Handled().CaptureMouse(TakeWidget());
+			// Activation may have retired the component's receipt without calling
+			// back into this widget. Do not capture from that stale local value.
+			ReleasePressedSkill();
 		}
 	}
 	return FReply::Handled();
@@ -197,12 +222,12 @@ bool UProject_JSkillButton::NativeOnDrop(const FGeometry &, const FDragDropEvent
 		return ScreenOwner->BindItemSlot(SlotIndex, Item->Entry);
 	return false;
 }
-FReply UProject_JSkillButton::NativeOnMouseButtonUp(const FGeometry &, const FPointerEvent &)
+FReply UProject_JSkillButton::NativeOnMouseButtonUp(const FGeometry &Geometry, const FPointerEvent &Event)
 {
-	if (bPressed && ScreenOwner.IsValid())
-		ScreenOwner->ReleaseSkill(SlotIndex);
-	bPressed = false;
-	return FReply::Handled().ReleaseMouseCapture();
+	if (Event.GetEffectingButton() != EKeys::LeftMouseButton) return Super::NativeOnMouseButtonUp(Geometry, Event);
+	ReleasePressedSkill();
+	// A release callback may already own a new press/capture.
+	return !PressReceipt && HasMouseCapture() ? FReply::Handled().ReleaseMouseCapture() : FReply::Handled();
 }
 void UProject_JSkillButton::BeginDestroy()
 {
@@ -212,17 +237,14 @@ void UProject_JSkillButton::BeginDestroy()
 
 void UProject_JSkillButton::NativeDestruct()
 {
-	if (bPressed && ScreenOwner.IsValid())
-		ScreenOwner->ReleaseSkill(SlotIndex);
-	bPressed = false;
+	bAcceptsPress = false;
+	ReleasePressedSkill();
 	IconRequest.Reset();
 	Super::NativeDestruct();
 }
 void UProject_JSkillButton::NativeOnMouseCaptureLost(const FCaptureLostEvent &Event)
 {
-	if (bPressed && ScreenOwner.IsValid())
-		ScreenOwner->ReleaseSkill(SlotIndex);
-	bPressed = false;
+	ReleasePressedSkill();
 	Super::NativeOnMouseCaptureLost(Event);
 }
 

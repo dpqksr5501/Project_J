@@ -22,6 +22,12 @@
 #include "WeaponMotionEditing.h"
 #include "Styling/AppStyle.h"
 #include "UObject/UObjectIterator.h"
+#if WITH_DEV_AUTOMATION_TESTS
+#include "Editor/Transactor.h"
+#include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
+class FProjectJWeaponMotionCancelContractTest;
+#endif
 
 #define LOCTEXT_NAMESPACE "ProjectJWeaponMotionEditor"
 
@@ -294,32 +300,19 @@ namespace Project_J::WeaponMotionEditor
 		virtual bool StartTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override
 		{
 			if (!OwnsSelection() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
-			if (!bInTransaction)
-			{
-				TransactionIndex = GEditor->BeginTransaction(LOCTEXT("EditWeaponMotionKey", "Edit Weapon Motion Key"));
-				SelectedMotionKey.MotionNotify->SetFlags(RF_Transactional);
-				SelectedMotionKey.MotionNotify->Modify();
-				bInTransaction = true;
-			}
-			bManipulating = true;
-			return true;
+			return Transaction || BeginKeyEdit();
 		}
 
 		virtual bool EndTracking(FEditorViewportClient* InViewportClient, FViewport* InViewport) override
 		{
-			if (!bManipulating) return false;
-			if (bInTransaction)
-			{
-				GEditor->EndTransaction();
-				bInTransaction = false;
-			}
-			bManipulating = false;
+			if (!Transaction) return false;
+			FinishTransaction(false);
 			return true;
 		}
 
 		virtual bool InputDelta(FEditorViewportClient* InViewportClient, FViewport* InViewport, FVector& InDrag, FRotator& InRot, FVector& InScale) override
 		{
-			if (!bManipulating || !OwnsSelection() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
+			if (!Transaction || !OwnsSelection() || InViewportClient->GetCurrentWidgetAxis() == EAxisList::None) return false;
 			const UE::Widget::EWidgetMode WidgetMode = InViewportClient->GetWidgetMode();
 			const bool bTranslate = WidgetMode == UE::Widget::WM_Translate || WidgetMode == UE::Widget::WM_TranslateRotateZ;
 			const bool bRotate = WidgetMode == UE::Widget::WM_Rotate || WidgetMode == UE::Widget::WM_TranslateRotateZ;
@@ -329,10 +322,9 @@ namespace Project_J::WeaponMotionEditor
 			UProject_JAnimNotifyState_WeaponMotion* MotionNotify = SelectedMotionKey.MotionNotify.Get();
 			if (!WeaponComponent || !MotionNotify || !MotionNotify->MotionKeys.IsValidIndex(SelectedMotionKey.KeyIndex)) return false;
 
-			FProject_JWeaponMotionKey& Key = MotionNotify->MotionKeys[SelectedMotionKey.KeyIndex];
 			auto* Parent = WeaponComponent->GetAttachParent();
 			const FTransform SocketWorld = Parent ? Parent->GetSocketTransform(WeaponComponent->GetAttachSocketName(), RTS_World) : FTransform::Identity;
-			if (!ApplyWorldDelta(Key.RelativeTransform, SocketWorld, bTranslate ? InDrag : FVector::ZeroVector, bRotate ? InRot : FRotator::ZeroRotator)) { return false; }
+			if (!ApplyKeyDelta(SocketWorld, bTranslate ? InDrag : FVector::ZeroVector, bRotate ? InRot : FRotator::ZeroRotator)) { return false; }
 
 			MotionNotify->MarkPackageDirty();
 			InViewport->Invalidate();
@@ -345,7 +337,7 @@ namespace Project_J::WeaponMotionEditor
 			{
 				FinishTransaction(true);
 				SelectedMotionKey.Clear();
-				GetModeManager()->DeactivateMode(WeaponMotionEditModeId);
+				if (auto* Manager = GetModeManager()) Manager->DeactivateMode(WeaponMotionEditModeId);
 				return true;
 			}
 			return FEdMode::InputKey(InViewportClient, InViewport, Key, Event);
@@ -355,28 +347,112 @@ namespace Project_J::WeaponMotionEditor
 		virtual void Tick(FEditorViewportClient* Client, float DeltaTime) override
 		{
 			FEdMode::Tick(Client, DeltaTime);
-			if (bManipulating && !OwnsSelection()) { FinishTransaction(false); }
+			if (Transaction && !OwnsSelection()) { FinishTransaction(false); }
 		}
 	private:
+#if WITH_DEV_AUTOMATION_TESTS
+		friend class ::FProjectJWeaponMotionCancelContractTest;
+#endif
 		bool OwnsSelection() const
 		{
 			auto* Viewport = FindPersonaViewport(SelectedMotionKey.PreviewMesh.Get());
 			return SelectedMotionKey.IsValid() && Viewport && Viewport->GetModeTools() == GetModeManager();
 		}
+		bool BeginKeyEdit()
+		{
+			auto* Notify = SelectedMotionKey.MotionNotify.Get();
+			if (!GEditor || GEditor->IsTransactionActive() || !Notify || !Notify->MotionKeys.IsValidIndex(SelectedMotionKey.KeyIndex)) return false;
+			Transaction = MakeUnique<FScopedTransaction>(LOCTEXT("EditWeaponMotionKey", "Edit Weapon Motion Key"));
+			if (!Transaction->IsOutstanding()) { Transaction.Reset(); return false; }
+			Notify->SetFlags(RF_Transactional); Notify->Modify();
+			EditedNotify = Notify; EditedIndex = SelectedMotionKey.KeyIndex; EditedKeyCount = Notify->MotionKeys.Num();
+			EditedTime = Notify->MotionKeys[EditedIndex].NormalizedTime;
+			OriginalTransform = LastWrittenTransform = Notify->MotionKeys[EditedIndex].RelativeTransform;
+			return true;
+		}
+		FProject_JWeaponMotionKey* OwnedKey() const
+		{
+			auto* Notify = EditedNotify.Get();
+			if (!Transaction || !Notify || Notify->MotionKeys.Num() != EditedKeyCount || !Notify->MotionKeys.IsValidIndex(EditedIndex)) return nullptr;
+			auto& Key = Notify->MotionKeys[EditedIndex];
+			return Key.NormalizedTime == EditedTime && Key.RelativeTransform.Equals(LastWrittenTransform, 0.0) ? &Key : nullptr;
+		}
+		bool ApplyKeyDelta(const FTransform& SocketWorld, const FVector& Drag, const FRotator& Rotation)
+		{
+			auto* Key = OwnedKey();
+			if (!Key || SelectedMotionKey.MotionNotify != EditedNotify || SelectedMotionKey.KeyIndex != EditedIndex ||
+				!ApplyWorldDelta(Key->RelativeTransform, SocketWorld, Drag, Rotation)) return false;
+			LastWrittenTransform = Key->RelativeTransform;
+			return true;
+		}
 		void FinishTransaction(bool bCancel)
 		{
-			if (bInTransaction && GEditor)
+			if (!Transaction) return;
+			bool bRestoredOwnedKey = false;
+			if (bCancel)
 			{
-				if (bCancel) { GEditor->CancelTransaction(TransactionIndex); }
-				else { GEditor->EndTransaction(); }
+				// Cancel discards the undo record; it does not restore object values.
+				// Restore only this gesture's unchanged key, never an external edit.
+				if (auto* Key = OwnedKey()) { Key->RelativeTransform = OriginalTransform; bRestoredOwnedKey = true; }
 			}
-			bInTransaction = false; bManipulating = false;
+			auto Finished = MoveTemp(Transaction);
+			EditedNotify.Reset(); EditedIndex = INDEX_NONE;
+			// A foreign edit in the same transaction keeps its undo record.
+			if (bRestoredOwnedKey) Finished->Cancel();
 		}
-		int32 TransactionIndex = INDEX_NONE;
-		bool bManipulating = false;
-		bool bInTransaction = false;
+		TUniquePtr<FScopedTransaction> Transaction;
+		TWeakObjectPtr<UProject_JAnimNotifyState_WeaponMotion> EditedNotify;
+		int32 EditedIndex = INDEX_NONE;
+		int32 EditedKeyCount = 0;
+		float EditedTime = 0;
+		FTransform OriginalTransform = FTransform::Identity;
+		FTransform LastWrittenTransform = FTransform::Identity;
 	};
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJWeaponMotionCancelContractTest, "ProjectJ.PCStructure.WeaponMotionCancel",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJWeaponMotionCancelContractTest::RunTest(const FString&)
+{
+	using namespace Project_J::WeaponMotionEditor;
+	if (!TestNotNull(TEXT("Editor transaction authority exists"), GEditor) || !TestFalse(TEXT("No foreign transaction is active"), GEditor->IsTransactionActive())) return false;
+	const auto PreviousSelection = SelectedMotionKey;
+	ON_SCOPE_EXIT { SelectedMotionKey = PreviousSelection; };
+	auto* Notify = NewObject<UProject_JAnimNotifyState_WeaponMotion>();
+	Notify->MotionKeys.SetNum(1); Notify->MotionKeys[0].NormalizedTime = .25f;
+	const FTransform Original(FQuat::Identity, FVector(1, 2, 3));
+	SelectedMotionKey.MotionNotify = Notify; SelectedMotionKey.KeyIndex = 0;
+	{
+		TGuardValue<TObjectPtr<UTransactor>> NoTransactor(GEditor->Trans, nullptr);
+		FWeaponMotionEditMode Edit;
+		TestFalse(TEXT("Editing is rejected when no transaction can be recorded"), Edit.BeginKeyEdit());
+		TestFalse(TEXT("Rejected editing cannot change the key"), Edit.ApplyKeyDelta(FTransform::Identity, FVector(10, 0, 0), FRotator::ZeroRotator));
+	}
+	for (int32 Mode : {0, 1, 2, 3})
+	{
+		Notify->MotionKeys.SetNum(1); Notify->MotionKeys[0].RelativeTransform = Original;
+		FWeaponMotionEditMode Edit;
+		ON_SCOPE_EXIT { Edit.FinishTransaction(false); };
+		const int32 QueueBefore = GEditor->Trans->GetQueueLength();
+		if (!TestTrue(TEXT("Actual edit mode begins its own transaction"), Edit.BeginKeyEdit())) return false;
+		if (!TestTrue(TEXT("Actual delta writer changes its captured key"), Edit.ApplyKeyDelta(FTransform::Identity, FVector(10, 0, 0), FRotator::ZeroRotator))) return false;
+		const FTransform Written = Notify->MotionKeys[0].RelativeTransform;
+		if (Mode == 1) Edit.EndTracking(nullptr, nullptr);
+		if (Mode == 2) Notify->MotionKeys[0].RelativeTransform.SetTranslation(FVector(99));
+		if (Mode == 3) Notify->MotionKeys.AddDefaulted();
+		Edit.InputKey(nullptr, nullptr, EKeys::Escape, IE_Pressed);
+		if (Mode == 0) TestTrue(TEXT("Escape restores the active gesture value"), Notify->MotionKeys[0].RelativeTransform.Equals(Original));
+		if (Mode == 1) TestTrue(TEXT("Escape after completed drag preserves the committed value"), Notify->MotionKeys[0].RelativeTransform.Equals(Written));
+		if (Mode == 2) TestTrue(TEXT("Cancel preserves a newer external key edit"), Notify->MotionKeys[0].RelativeTransform.GetTranslation().Equals(FVector(99)));
+		if (Mode == 3) TestTrue(TEXT("Cancel cannot overwrite a changed key collection"), Notify->MotionKeys.Num() == 2 && Notify->MotionKeys[0].RelativeTransform.Equals(Written));
+		if (Mode == 2 || Mode == 3) TestEqual(TEXT("Foreign edits retain their transaction undo record"), GEditor->Trans->GetQueueLength(), QueueBefore + 1);
+		TestFalse(TEXT("The gesture leaves no active transaction"), GEditor->IsTransactionActive());
+		SelectedMotionKey.MotionNotify = Notify; SelectedMotionKey.KeyIndex = 0;
+	}
+	return true;
+}
+#endif
 
 class FProject_JCharacterEditorModule final : public IModuleInterface
 {

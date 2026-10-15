@@ -28,6 +28,24 @@
 #include "GameFramework/WorldSettings.h"
 #include <limits>
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMapProjectionFailureTest,
+    "ProjectJ.PCStructure.MapProjectionFailure", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJMapProjectionFailureTest::RunTest(const FString&)
+{
+    FVector2D UV(7, 9);
+    TestTrue(TEXT("Normal map bounds project"), UProject_JMapDefinition::WorldToUV(FVector(5000, 5000, 0), FVector2D::ZeroVector, FVector2D(5000), UV));
+    TestTrue(TEXT("North/east axes are preserved"), UV.Equals(FVector2D(1, 0)));
+    const FVector2D Sentinel(7, 9);
+    UV = Sentinel;
+    TestFalse(TEXT("Finite inputs with overflowing difference cannot publish invalid UV"),
+        UProject_JMapDefinition::WorldToUV(FVector(0, 1.7e308, 0), FVector2D(0, -1.7e308), FVector2D(5000), UV));
+    TestTrue(TEXT("Projection failure preserves the caller output"), UV.Equals(Sentinel));
+    TestFalse(TEXT("Invalid authored marker position fails admission"),
+        UProject_JMapDefinition::WorldToUV(FVector(std::numeric_limits<double>::quiet_NaN(), 0, 0), FVector2D::ZeroVector, FVector2D(5000), UV));
+    TestTrue(TEXT("Rejected marker also preserves the output"), UV.Equals(Sentinel));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMinimapReconstructionTest,
     "ProjectJ.Reaudit.MinimapReconstruction", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJMinimapReconstructionTest::RunTest(const FString&)

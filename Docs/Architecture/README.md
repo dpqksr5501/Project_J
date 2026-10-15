@@ -1,5 +1,7 @@
 # 아키텍처
 
+[최신 PC 소스·BP·DA 정리](../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)는 반복 수정 뒤의 실제 호출·상태 소유권을 기준으로 중복 grant, 입력 반환과 애니메이션/편집 정책을 정리한 결과다. 새 추상화보다 기존 PS/ASC·source lease·snapshot 계약을 재사용하며, 유지 이유와 미검증을 분리한다.
+
 현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
 
 ## 책임과 확장 기반

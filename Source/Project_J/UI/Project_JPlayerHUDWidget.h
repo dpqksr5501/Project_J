@@ -39,6 +39,7 @@ class PROJECT_J_API UProject_JSkillButton : public UUserWidget
 
   protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry &, const FPointerEvent &) override;
 	virtual FReply NativeOnMouseButtonUp(const FGeometry &, const FPointerEvent &) override;
 	virtual void NativeDestruct() override;
@@ -56,10 +57,15 @@ class PROJECT_J_API UProject_JSkillButton : public UUserWidget
 	TWeakObjectPtr<UProject_JPlayerUIComponent> ScreenOwner;
 	int32 SlotIndex = INDEX_NONE;
 	bool bAvailable = false;
-	bool bPressed = false;
+	void ReleasePressedSkill();
+	TWeakObjectPtr<UProject_JPlayerUIComponent> PressOwner;
+	int32 PressIndex = INDEX_NONE;
+	uint64 PressReceipt = 0;
+	bool bAcceptsPress = true;
 	bool bShowingIconFallback = false;
 	FProject_JUIIconRequest IconRequest;
 	friend class FProjectJUIIconRequestLifetimeTest;
+	friend class FProjectJSkillButtonOriginTest;
 };
 
 UCLASS()

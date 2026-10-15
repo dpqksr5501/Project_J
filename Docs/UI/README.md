@@ -1,5 +1,7 @@
 # 플레이어 UI
 
+2026-10-15 PC 입력 계약: 키와 마우스 위젯은 자신이 취득한 원래 owner/index/receipt만 해제한다. 재바인딩 전 delegate와 이전 위젯의 늦은 mouse-up/destruct는 callback이 만든 새 press를 소비하지 않는다. 공개 BP Press/Release 경로는 유지한다. [실제 GAS callback·키 delegate·마우스 회귀](../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
+
 현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
 
 [구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)은 HUD 조립과 재사용 skill/inventory widget 구현을 분리하고 두 widget의 아이콘 요청·취소·GC 수명을 공유한다. BP 이름/상속/BindWidget 계약과 PlayerUIComponent/ViewModel의 상태·권한 소유는 유지한다.

@@ -319,6 +319,8 @@ AbilitySets           = [AS_Warrior_Base]
 
 `AS_Warrior_Base`에는 직업이 기본으로 소유할 Ability와 Effect를 넣는다.
 
+DefaultCombatStyle이 같은 AbilitySet을 제공한다면 Class.AbilitySets에 다시 넣지 않는다. Class와 CombatStyle은 서로 다른 grant source이며, 동일 스킬이 각각 생길 수 있다. 같은 CombatStyle을 성장/장비가 함께 제공할 때만 기존 style source lease를 공유한다. 실제 Greatsword는 Class에 `AS_Humanoid_Core`, 기본 Style에 `AS_Greatsword_Base`를 두어 총8개 스킬을 한 번씩 제공한다. [실제 중복 재현·수정·회귀](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
+
 ```text
 GrantedAbilityEntries
   - GA_Warrior_LightAttack / InputTag.Weapon.LightAttack
@@ -332,7 +334,7 @@ GrantedEffectEntries
 > Current rule: use only `GrantedAbilityEntries` and `GrantedEffectEntries`.
 > `GrantedGameplayAbilities` and `GrantedGameplayEffects` no longer exist.
 
-신규 스킬 입력은 반드시 `GrantedAbilityEntries.InputTag`를 사용한다. `GrantedGameplayAbilities`는 InputTag를 붙일 수 없는 레거시 호환 배열이므로 새 콘텐츠에는 가급적 사용하지 않는다.
+신규 스킬 입력은 `GrantedAbilityEntries.InputTag`를 사용한다. 제거된 `GrantedGameplayAbilities` 배열을 제작 경로로 안내하지 않는다.
 
 <a id="expansion-character에-연결"></a>
 #### Character에 연결
@@ -831,3 +833,7 @@ flowchart LR
 ### 2026-10-15 기본 속성 제작 진단
 
 MaxHealth/MaxMana는 finite·strictly positive 검사 한 곳이 승인 권위다. Health/Mana/AttackPower/Defense의 finite·nonnegative 검사와 Health/Mana 초과 clamp warning은 유지한다. 잘못된 Max 값에 같은 원인의 positive/nonnegative 오류를 중복 발행하지 않는다. 허용 데이터 집합이나 런타임 초기화/보정 정책은 바꾸지 않았다. 생성 MMO 카탈로그는 JSON 수정 후 기존 generator/validator 절차를 사용하며 generated inl/MD를 독립 수정하지 않는다.
+
+### 2026-10-15 프로토타입 Door 제작 계약
+
+`BP_DoorFrame`의 Door Frame과 Add Door는 독립 옵션이다. Frame은5조각이며 Add Door가 단문/분할 패널과 detection Box를 구성한다. Add Door=false이면 Box는 NoCollision이고 직접 Open/Close도 없는 첫 패널에 접근하지 않는다. 첫 패널이 사라져도 살아 있는 두 번째 패널은 별도로 갱신된다. Set Mesh는 생성→mesh→mobility→유효한 material override의 순서이며, null material은 mesh 기본 재질을 보존한다. signed 치수·frame scale을 제작 의도 없이 강제 clamp하지 않는다. 이 prototype의 경로/API/옵션과 테스트 용도는 유지했다. [실제 재현·구조 정리·최종 검증](../../Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md)을 확인한다.

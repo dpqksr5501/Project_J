@@ -48,8 +48,10 @@ void UProject_JRetargetAnimInstance::NativeInitializeAnimation()
 		}
 	}
 
-	if (USkeletalMeshComponent* OwningComp = GetOwningComponent())
+	if (USkeletalMeshComponent* OwningComp = GetOwningComponent(); OwningComp && !OwningComp->IsUsingExternalTickRateControl())
 	{
+		// This is a standalone default. A coordinator/allocator already owns the
+		// active visibility contract and its saved authored value across reinit.
 		OwningComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 	}
 

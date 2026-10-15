@@ -1,5 +1,9 @@
 # BP·DA 구조 정리와 MMORPG 확장 계약 — 2026-10-15
 
+최신 PC 잔여 범위는 [Door·현재 DA·GE 검토 마감](Project_J_PC_Asset_Review_Closure_2026-10-15.md)을 확인한다. 아래 모바일/품질·성능 미검증과 PC 구조 대조 결과를 구분한다.
+
+후속 [PC 소스·BP·DA 정리](Project_J_PC_Structure_Cleanup_2026-10-15.md)에서 Class/Style의 실제 중복 grant를 추가 재현·수정하고, profile fallback·GA/GE 상태 소유권과 테스트 자산 유지 이유를 확인했다. 아래 결과는 그 이전 에셋 정리 기준점이다.
+
 소스 정리에 이어 실제 에셋 연결을 대조한 후속 기록이다. **미참조라는 이유만으로 에셋을 삭제하지 않는다.** 게임·시험·샘플·제작 템플릿·확장 계약을 구분하고, 용도가 불명확한 자산과 사용자 변경은 보존한다. 이전 [소스 정리 기준점](Project_J_Source_Architecture_Cleanup_2026-10-15.md)과 이번 결과를 구분한다.
 
 ## 확인 범위와 판단 기준

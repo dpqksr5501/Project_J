@@ -87,7 +87,7 @@ bool FProjectJUISkillReleaseOwnershipTest::RunTest(const FString&)
 				ASC->FindAbilitySpecFromHandle(Handles[2])->InputPressed || ASC->FindAbilitySpecFromHandle(Handles[2])->IsActive());
 			continue;
 		}
-		TestTrue(TEXT("New same-slot receipt survives old release"), UI->PressedSkills.FindRef(0) == Inputs[2]);
+		TestTrue(TEXT("New same-slot receipt survives old release"), UI->PressedSkills.FindRef(0).InputTag == Inputs[2]);
 		TestTrue(TEXT("New receipt retains its pawn"), UI->PressedPawn.Get() == Player);
 		TestTrue(TEXT("New press reaches the current ASC"), ASC->FindAbilitySpecFromHandle(Handles[2])->InputPressed);
 		TestTrue(TEXT("New native ability is active"), ASC->FindAbilitySpecFromHandle(Handles[2])->IsActive());

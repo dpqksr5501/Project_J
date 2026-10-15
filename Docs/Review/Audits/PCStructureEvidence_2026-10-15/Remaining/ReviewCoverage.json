@@ -1,0 +1,726 @@
+{
+  "scope_ko": "선택 native DA44개·GE2개의 값/소비/소유권 대조. 모든 imported asset·동적루트·현장품질 전수 완료 아님.",
+  "native_da": [
+    {
+      "path": "/Game/AS/AS_Greatsword_Base",
+      "class": "/Script/Project_JCharacter.Project_JAbilitySet",
+      "sha256": "a7b1755e6ab574218c476f5d7cedb33981a8ea378133ca0277981b4ec1a3f169",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRead1/DeltaRead2Parsed.json",
+      "evidence_mode_ko": "R17 공개값 재사용",
+      "public_fields_in_value_receipt": [
+        "grantedAbilityEntries",
+        "grantedEffectEntries"
+      ]
+    },
+    {
+      "path": "/Game/AS/AS_Humanoid_Core",
+      "class": "/Script/Project_JCharacter.Project_JAbilitySet",
+      "sha256": "5536bb86cf87aea960d3fdeb3a3c40657fbb63b57c5c07864345fe4d3ba8a3ae",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRead1/DeltaRead2Parsed.json",
+      "evidence_mode_ko": "R17 공개값 재사용",
+      "public_fields_in_value_receipt": [
+        "grantedAbilityEntries",
+        "grantedEffectEntries"
+      ]
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJHUDStyle",
+      "class": "/Script/Project_J.Project_JHUDStyle",
+      "sha256": "163d5d961e11edc1eaef625dd89d85e40eccc70887c85eda4c3be02defc3e0e0",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "quickSlotSize",
+        "itemSize",
+        "fontSize",
+        "panelColor"
+      ]
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJMap",
+      "class": "/Script/Project_J.Project_JMapDefinition",
+      "sha256": "1176f9193f78505ce080a45c505d133e979278f85ab1a773f1e95a3e940e3aca",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "mapName",
+        "center",
+        "halfExtent",
+        "texture",
+        "markers",
+        "regions",
+        "levelName"
+      ]
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIDefault",
+      "class": "/Script/Project_J.Project_JCharacterUIProfile",
+      "sha256": "f660030b262cf51353c91d14b747312e5bf7d4e70bd37c6cbb0e59a5d4dd3612",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "profileId",
+        "displayName",
+        "priority",
+        "classId",
+        "advancementId",
+        "requiredTags",
+        "blockedTags",
+        "bOverrideSkills",
+        "skills",
+        "bOverrideResources",
+        "resources",
+        "characterModuleClass"
+      ]
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIProfiles",
+      "class": "/Script/Project_J.Project_JUIProfileCatalog",
+      "sha256": "37f2bd0418c72220b3afe1fd878ca3362c5fc3d394f4d4c8ec7959675e08cf31",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "profiles"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JAttackSet",
+      "sha256": "a2a2c9ff3dda961415c8671b4725a1c5062bc94d0132e3833435fc4c0bfe4654",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "attacks"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+      "class": "/Script/Project_JCharacter.Project_JDefaultAttributeSetData",
+      "sha256": "7b906832358d1fc7859def84ca8958e3db302b208fd3dc4b90f47ed7dd8a3d65",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "maxHealth",
+        "health",
+        "maxMana",
+        "mana",
+        "attackPower",
+        "defense"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+      "class": "/Script/Project_JCharacter.Project_JFoleyAudioProfile",
+      "sha256": "d18d8be789dde360ce3a00f733f39f478e2c0271559f87c00fe5b32e7af5ec13",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "events",
+        "eventFallbacks",
+        "sourceLeftFoot",
+        "sourceRightFoot",
+        "visualLeftFoot",
+        "visualRightFoot",
+        "sourceLeftHand",
+        "sourceRightHand",
+        "visualLeftHand",
+        "visualRightHand",
+        "surfaceTraceChannel",
+        "traceAboveContact",
+        "traceBelowContact",
+        "audibleDistance",
+        "attenuation",
+        "otherCharacterVolume"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCombatStyleDefinition",
+      "sha256": "dac5a38fa093a4955652929fdf3a6b1e7b8e18deed420265d36f96e12915f80d",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRead1/GrantOwnersBefore2Parsed.json",
+      "evidence_mode_ko": "R17 공개값 재사용",
+      "public_fields_in_value_receipt": [
+        "executionChangePolicy",
+        "bUsesCombo",
+        "bRequiresWeaponAnimation",
+        "inlineAbilities",
+        "inlineEffects",
+        "bDeriveAttackCatalog",
+        "additionalAttacks",
+        "combatStyleTag",
+        "schemaVersion",
+        "weaponAnimationProfile",
+        "combatPresentationSet",
+        "comboDefinition",
+        "commandSet",
+        "attackSet",
+        "abilitySets"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JComboDefinition",
+      "sha256": "047a83c075d42b93da9e5234102a1ac1e27214ed47bef4d518424b8049161394",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "nodes"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCharacterClassDefinition",
+      "sha256": "6ea73b6e2d6748a526e52f5f77572c280930bc7125d5f0749dd6719186f8dc8e",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetGrantFix1/GrantFixParsed.json:after",
+      "evidence_mode_ko": "R17 수정 후 값·freshload 회귀 재사용",
+      "public_fields_in_value_receipt": [
+        "classId",
+        "schemaVersion",
+        "startingLevel",
+        "defaultAttributeData",
+        "abilitySets",
+        "defaultCombatStyle"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+      "class": "/Script/Project_JMount.Project_JRiderAnimationProfile",
+      "sha256": "875b520e1123427cb62c25daf82627fd7d23a37dce3d9bf6cb6528c8491cb2e4",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "animationLayerClass",
+        "animationTags",
+        "bUseHandIK",
+        "transitionBlendTime"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCombatCommandSet",
+      "sha256": "b0bee4143a96b01d76df9f55e91c0113f0aff70870d2229888d8f858f868a00a",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "commands"
+      ]
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJFirstSteps",
+      "class": "/Script/Project_J.Project_JQuestDefinition",
+      "sha256": "bf3d3ddc2d2a2dfba592b84562a30731e28d8618b5b020e15d6b19c5c706a0d4",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "questId",
+        "title",
+        "description",
+        "objectiveEvent",
+        "requiredCount",
+        "rewardExperience",
+        "bTravelObjective",
+        "bHasMapTarget",
+        "mapTarget"
+      ]
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+      "class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+      "sha256": "23b46bb6709fe5dc1dd4b37b8c283fa696500cbf7df03592ca0d398b275ab2fd",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "restoreHealth",
+        "restoreMana",
+        "cooldownSeconds",
+        "itemId",
+        "itemName",
+        "itemDescription",
+        "icon",
+        "maxStackCount"
+      ]
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+      "class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+      "sha256": "ca1c9cb155c5996e2719468faabfb99742d2f61af801b4efb2b37c7fae7c2ccf",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "restoreHealth",
+        "restoreMana",
+        "cooldownSeconds",
+        "itemId",
+        "itemName",
+        "itemDescription",
+        "icon",
+        "maxStackCount"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+      "class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+      "sha256": "0e24242ef753d61110e264283af5d8411e13784cd0e7fc5afc1b0e8584e29df7",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "locomotionProfile",
+        "combatAnimProfile",
+        "foleyAudioProfile",
+        "handGripCalibration",
+        "handGripProfile",
+        "retargetBodyProfile"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+      "class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+      "sha256": "66e19741b86bd75bc8b1ef6bdde3a3cfb0eddfc174e7d3189ddf0b9f0b49336c",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "locomotionProfile",
+        "combatAnimProfile",
+        "foleyAudioProfile",
+        "handGripCalibration",
+        "handGripProfile",
+        "retargetBodyProfile"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+      "class": "/Script/Project_JCharacter.Project_JCombatAnimProfile",
+      "sha256": "c45e7a4508e687e15bf8337d811ebbfaf91417c2ef6e79bd062bce0f8b90c004",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "bPlayIntroMontageWhenEnteringCombat",
+        "bUseCombatRotationMode",
+        "bInterruptCombatIntroOnHit",
+        "combatAimAlpha",
+        "strafeUpperBodyFacing",
+        "strafeLowerBodyFacing",
+        "bAllowSprintInCombat",
+        "combatFacingRotationRateYaw",
+        "bEnableStrafeFacingRedirect",
+        "strafeFacingRedirectEntryAngle",
+        "strafeFacingRedirectExitAngle",
+        "combatStrafeMotionMatchingAssetSet",
+        "bEnableStrafeSettledCycle",
+        "strafeSettledCycleDelay",
+        "strafeSettledFacingToleranceDegrees",
+        "strafeDynamicInputTurnAngle",
+        "strafeDynamicFacingYawRate",
+        "strafeDynamicVelocityToInputAngle",
+        "bForceReselectOnStrafeInputTurn",
+        "bEnableCombatStrafeRunPivot",
+        "strafeInputTurnReselectAngle",
+        "strafeInputTurnReselectCooldown",
+        "strafeDirectionMinimumSpeed",
+        "strafeDirectionHysteresisDegrees",
+        "bRequireForwardInputForSprintInCombat",
+        "combatSprintForwardInputThreshold"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe",
+      "class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+      "sha256": "640d650b067f2229fddc21ced9943fa2ba3038adf46a9a00d7427c08f20a8337",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "bEnableTurnCycleCandidates",
+        "defaultPoseSearchDatabase",
+        "idlePoseSearchDatabase",
+        "runDatabases",
+        "sprintDatabases"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+      "class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+      "sha256": "2c41bf8eaccc58bc563d329f7835dfca8bb7e04dc0e9b9067fb86ae8e1bc8118",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "equipmentSlot",
+        "equipmentMesh",
+        "attachSocketName",
+        "maxDrawDistance",
+        "bCastDynamicShadow",
+        "abilitySet",
+        "equipmentEffects",
+        "statApplicationPolicy",
+        "statModifiers",
+        "combatStyleDefinition",
+        "weaponPresentationProfile",
+        "itemId",
+        "itemName",
+        "itemDescription",
+        "icon",
+        "maxStackCount"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+      "class": "/Script/Project_JCharacter.Project_JLocomotionProfile",
+      "sha256": "aa4e2e350a679a328c6e3d291577d07406f8e9ea3f03b4d4f1a03e1b559a59bf",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "motionMatchingAssetSet",
+        "motionMatchingSearchPolicy",
+        "oTMForwardTurn",
+        "strafeForwardTurn",
+        "oTMSprintForwardTurn",
+        "strafeSprintForwardTurn",
+        "bEnableLocomotionSteering",
+        "bEnableStrafePredictionYawSmoothing",
+        "strafePredictionYawRateHalfLife",
+        "strafeForwardPredictionMinimumYawRate",
+        "strafeForwardPredictionMaximumYawRate",
+        "steeringFacingLookAhead",
+        "steeringProceduralTime",
+        "steeringAnimatedTime",
+        "steeringMaxVisualYawError",
+        "bEnableGeneralTurnCandidates",
+        "bEnableBackwardRefaceCandidates",
+        "generalTurnEntrySpeed",
+        "sprintGeneralTurnEntrySpeed",
+        "generalTurnCommittedHeadingAngle",
+        "generalTurnStrafeEntryYawRate",
+        "generalTurnAlignmentEntryAngle",
+        "generalTurnAlignmentConfirmation",
+        "generalTurnMinimumWindow",
+        "generalTurnQuietGrace",
+        "generalTurnCompletionGrace",
+        "walkSpeed",
+        "sprintSpeed",
+        "walkRotationRateYaw",
+        "sprintRotationRateYaw",
+        "genericMoveInputSpeedThreshold",
+        "sprintLocomotionSpeedThreshold",
+        "transitionPolicy",
+        "movementPolicy",
+        "presentationPolicy",
+        "remoteVisualPolicy",
+        "animStateHiddenRemoteUpdateInterval",
+        "animInstanceHiddenRemoteUpdateInterval",
+        "animationBudget",
+        "nearMotionMatchingDistance",
+        "midMotionMatchingDistance",
+        "farMotionMatchingDistance",
+        "midMotionMatchingUpdateInterval",
+        "farMotionMatchingUpdateInterval",
+        "bDisableMotionMatchingBeyondFarDistance",
+        "footPlacementPlantSettingsDefault",
+        "footPlacementPlantSettingsStops",
+        "footPlacementInterpolationSettingsDefault",
+        "footPlacementInterpolationSettingsStops"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+      "class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+      "sha256": "85632776fdb7495cb01dc8c4ce7112f5d2c2c01a0a89b3bc13f0d6fd9de2adcc",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "bEnableTurnCycleCandidates",
+        "defaultPoseSearchDatabase",
+        "idlePoseSearchDatabase",
+        "runDatabases",
+        "sprintDatabases"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+      "sha256": "d7cd7a94e60a3761d4ff489c4c02894a8ae78b709f7ab6bd096b5afa3fd17960",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "weaponType",
+        "weaponStance",
+        "combatPresentationMode",
+        "combatIntroMontage",
+        "combatOutroMontage",
+        "combatAnimationLayerClass",
+        "combatIntroMontagePlayRate",
+        "combatOutroMontagePlayRate"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "4120242a2dde08dbb514851223909641fbfae08dbc8307b1368a69060456d49e",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "attackTag",
+        "schemaVersion",
+        "bMontageDriven",
+        "montage",
+        "montageSectionName",
+        "playRate",
+        "weaponDrive",
+        "bOverrideGripIK",
+        "primaryGripIKAlpha",
+        "secondaryGripIKAlpha",
+        "movementPolicy",
+        "bUseFlyingMovementModeForRootMotion",
+        "rootMotionEndMovementPolicy",
+        "hitSpec",
+        "damageEffect",
+        "requiredOwnerTags",
+        "blockedOwnerTags"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile",
+      "class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+      "sha256": "422f595eb5d4943fceb5a281b9d519e55725660821446eac3d75679bcc9eae93",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetCleanup_20261015/Editor1/Query3Parsed.json",
+      "evidence_mode_ko": "R16 공개값·파일 무변경 SHA 재사용",
+      "public_fields_in_value_receipt": [
+        "weaponType",
+        "weaponStance",
+        "combatPresentationMode",
+        "combatIntroMontage",
+        "combatOutroMontage",
+        "combatAnimationLayerClass",
+        "combatIntroMontagePlayRate",
+        "combatOutroMontagePlayRate"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+      "class": "/Script/Project_JCharacter.Project_JCombatPresentationSet",
+      "sha256": "7371d0ab79ba0a29b3aa492691bf4ecdec0d67fa81b27fa66c08a92c4fe5d9e1",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "attackPresentations"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation",
+      "class": "/Script/Project_JCharacter.Project_JWeaponPresentationProfile",
+      "sha256": "fcdd68bb434ba49b8eb5dd431a19077cdeff545150a59de6363f1a8b90f44e58",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "schemaVersion",
+        "weaponActorClass",
+        "drawnAttachmentMode",
+        "drawnSocketName",
+        "visualDrawnSocketName",
+        "sheathedSocketName",
+        "visualSheathedSocketName",
+        "bPreferVisualFollowerSockets",
+        "motionPresentation",
+        "cosmeticPresentationOverrideSet"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "f6fb3f5852544838dce1c8e23a62978f360dd1f64280333a7791872ae112006a",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JHandGripProfile",
+      "sha256": "2ef25567e80bc8e450675e191a3797c870f6cf96fb705288b74686875b1c1084",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "calibration"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "620b52fd82f0d8e0ed2bc41ae0ee7e41bbaf06c502da9f645a2d517c79c6c7ab",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JRetargetBodyProfile",
+      "sha256": "c793b56de27f5d32f956c01396ea1619eb5d8c9e1c1dba66f1931c95b70910f7",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "Evidence_2026-10-13/DeliveryBinaryAndAssetHashes.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "c3f58140b260421d35d872c18d9828e641cd582a4ffcfdbfd2245c84780d3fb8",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01",
+      "class": "/Script/Project_JCharacter.Project_JRetargetFamilyProfile",
+      "sha256": "dcb77f11c230b5c20eb4172ab4ba2940adb8a409a5c14bc132d5592c5a3882b1",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "Evidence_2026-10-13/DeliveryBinaryAndAssetHashes.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "fd9fcfbbe85f2832abb2319a938495503365ddc380a8f7c5588823dd7b2b7edb",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+      "class": "/Script/Project_JCharacter.Project_JSkillInputMappingData",
+      "sha256": "532f05cd9a6942c39189aab69fa52b5ccb9e43bef19cef23a01bf1692a9ebff9",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "simultaneousChordGraceSeconds",
+        "chords",
+        "directSkillBindings",
+        "modifierBindings"
+      ]
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "25d66f354da4bbf75c9b13917ce0105ba10663cc8570adc89effc31351979829",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "39bc10161f7802ba41dd152a9b40586963ecb10d40ed37b06641b2fe1032e3c6",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "18833229dc7eae4fb09e6642a7fd88e14ebd7516ba32db282fb1ce69c8429efc",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "1a56c07b2e2c0f011f12d66bf81a46097435a2a6c0770467e95cd45e105ca70c",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "5235d67272c0ad061b48444e5ce34471e0c8d3f1cbf9e8b4468763b912cdc0d6",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "sha256": "76d16de663f8299c30400b39faab3aa6d184935141c1440e8a607462fdc24295",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "DeepAudit_20261013/AttackAssetHashesFinal.json + AttackAssetCorrectionRecords.json",
+      "evidence_mode_ko": "기존 최종값·직접 최종 SHA 근거 재사용",
+      "public_fields_in_value_receipt": []
+    },
+    {
+      "path": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JAttackPresentationProfile",
+      "sha256": "427c38bc7056d72f387567a66386131c10caddea0fe6bca9761363ebc74cdf08",
+      "review_status_ko": "공개값·실제 소비·소유권 구조 대조",
+      "value_evidence": "AssetRemaining1/RemainingDataParsed.json",
+      "evidence_mode_ko": "현재 공개값 재확인",
+      "public_fields_in_value_receipt": [
+        "cues"
+      ]
+    }
+  ],
+  "new_public_value_reads": 21,
+  "ge": [
+    "/Game/GEs/GE_TestDamege",
+    "/Game/GEs/BP_GE_CombatMode"
+  ],
+  "combat_mode_component_evidence": "AssetRemaining1/DoorEventNamesParsed.json:TargetTagsGameplayEffectComponent_0",
+  "door_node_scope": {
+    "original": {
+      "construction": 99,
+      "set_mesh": 10,
+      "event_graph": 39
+    },
+    "final": {
+      "construction": 99,
+      "set_mesh": 9,
+      "event_graph": 40
+    },
+    "all_pins_and_execution_data_connections_read": true
+  },
+  "reused_bp_scope_ko": "기존33BP/111graph·빈DSL node보강. Door전체pin·identity/socialwriter접점 추가. PC비설치touch의 현장실행 완료 아님.",
+  "consumer_groups_ko": [
+    "InputMapping→SkillInputExecution→Command/Combo/AttackSet→Melee/HitValidation",
+    "GA/GE 실행·지속태그·서버피해 분리",
+    "Animation top/fallback→GT snapshot/worker MM·retarget/IK",
+    "Foley event/fallback→단일sound선택·rider snapshot",
+    "UI native 문자열root→HUD/Map/Quest projection"
+  ]
+}

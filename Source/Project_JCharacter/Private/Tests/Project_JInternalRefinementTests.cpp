@@ -309,6 +309,38 @@ bool FProjectJInteractionSelectionTest::RunTest(const FString&)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInteractionRetirementTest, "ProjectJ.PCStructure.InteractionRetirement", InternalTestFlags)
+bool FProjectJInteractionRetirementTest::RunTest(const FString&)
+{
+	for (int32 DestroyOnCall : {1, 2})
+	{
+		FInternalTestWorld Scope;
+		auto* Interactor = Scope.World->SpawnActor<ACharacter>();
+		auto* Target = Scope.World->SpawnActor<AProject_JInternalInteractionTarget>();
+		if (!TestNotNull(TEXT("Interactor exists"), Interactor) || !TestNotNull(TEXT("Target exists"), Target)) { return false; }
+		auto* Sphere = NewObject<USphereComponent>(Target);
+		Target->SetRootComponent(Sphere); Sphere->SetSphereRadius(20);
+		Sphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); Sphere->SetCollisionObjectType(ECC_WorldDynamic);
+		Sphere->SetCollisionResponseToAllChannels(ECR_Overlap); Sphere->RegisterComponent();
+		Target->SetActorLocation(FVector(100, 0, 0));
+		auto* Policy = NewObject<UProject_JInteractionTargetComponent>(Target); Policy->RegisterComponent();
+		Policy->bRequireLineOfSight = false;
+		Scope.World->InitializeActorsForPlay(FURL());
+		Scope.World->GetWorldSettings()->NotifyBeginPlay();
+		int32 Calls = 0;
+		bool bDestroyedInCallback = false;
+		Target->OnCanInteract = [&](ACharacter* Actor)
+		{
+			if (++Calls == DestroyOnCall) { bDestroyedInCallback = Actor->Destroy(); }
+		};
+		TestFalse(TEXT("An extensible approval cannot commit for a retired interactor"), Project_J::Interaction::TryInteract(*Interactor));
+		TestTrue(TEXT("Real actor destruction ran inside the reflected approval"), bDestroyedInCallback);
+		TestEqual(TEXT("Retired caller never reaches Interact"), Target->Interactions, 0);
+		TestFalse(TEXT("Common admission rejects the destroyed caller"), Project_J::Interaction::IsEligible(*Interactor, Target, 300));
+	}
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReleaseTest, "ProjectJ.Internal.Input.CommandAliasRelease", InternalTestFlags)
 bool FProjectJCommandReleaseTest::RunTest(const FString&)
 {

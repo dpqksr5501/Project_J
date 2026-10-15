@@ -23,5 +23,9 @@ Saved/
 *.log
 *.bak
 
+# Session requests/responses and raw execution logs stay in local Saved.
+# Keep only the curated PC review summaries, indexes and hash manifests.
+/Docs/Review/Audits/PCStructureEvidence_2026-10-15/**/Receipts/
+
 # MacOS
 .DS_Store

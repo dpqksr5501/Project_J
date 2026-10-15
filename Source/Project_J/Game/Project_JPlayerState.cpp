@@ -11,6 +11,7 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Social/Project_JSocialSubsystem.h"
+#include "UObject/StrongObjectPtr.h"
 
 AProject_JPlayerState::AProject_JPlayerState()
 {
@@ -112,7 +113,7 @@ void AProject_JPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, const FProject_JCharacterId& InCharacterId)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || IsActorBeingDestroyed())
 	{
 		return;
 	}
@@ -122,24 +123,31 @@ void AProject_JPlayerState::SetIdentity(const FProject_JAccountId& InAccountId, 
 		return;
 	}
 
-	UProject_JSocialSubsystem* SocialSubsystem = nullptr;
+	const TStrongObjectPtr<AProject_JPlayerState> KeepSelf(this);
+	const FProject_JAccountId RequestedAccount = InAccountId;
+	const FProject_JCharacterId RequestedCharacter = InCharacterId;
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
-		SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>();
-		if (SocialSubsystem)
+		if (auto* SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>())
 		{
 			SocialSubsystem->UnbindPlayerState(this);
 		}
 	}
 
-	AccountId = InAccountId;
-	CharacterId = InCharacterId;
+	AccountId = RequestedAccount;
+	CharacterId = RequestedCharacter;
+	// The detached identity has no social projection. Membership remains owned
+	// by the social service and can be rebound to another live PlayerState.
+	if (!RequestedCharacter.IsValid()) SetSocialState(NAME_None, NAME_None, FGuid(), FGuid());
 	OnCharacterIdentityChanged.Broadcast();
+	// Listeners may retire this player or install a newer identity synchronously.
+	if (IsActorBeingDestroyed() || !HasAuthority() || AccountId.Value != RequestedAccount.Value || CharacterId.Value != RequestedCharacter.Value) return;
 	ForceNetUpdate();
 
-	if (SocialSubsystem)
+	if (auto* GameInstance = GetGameInstance())
 	{
-		SocialSubsystem->BindPlayerState(this);
+		if (auto* SocialSubsystem = GameInstance->GetSubsystem<UProject_JSocialSubsystem>())
+			SocialSubsystem->BindPlayerState(this);
 	}
 }
 
@@ -151,7 +159,7 @@ void AProject_JPlayerState::SetSocialState(
 	const FGuid& InPartyLeaderCharacterId,
 	const FGuid& InGuildLeaderCharacterId)
 {
-	if (!HasAuthority() ||
+	if (!HasAuthority() || IsActorBeingDestroyed() ||
 		(PartyId == InPartyId &&
 			GuildId == InGuildId &&
 			PartyLeaderCharacterId == InPartyLeaderCharacterId &&
