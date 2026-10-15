@@ -29,3 +29,6 @@ Saved/
 
 # MacOS
 .DS_Store
+
+# Share project instructions even when this checkout locally excludes AGENTS.md.
+!/AGENTS.md

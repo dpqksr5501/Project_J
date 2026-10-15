@@ -11,6 +11,7 @@
 | 확인할 내용 | 문서 |
 | --- | --- |
 | 프로젝트 구조와 작업 시작 | [문서 시작점](Docs/README.md) → [프로젝트 맥락](Docs/Overview/ProjectContext.md) |
+| 변경 후 정리와 테스트·기존 자산 보존 | [공통 작업 규칙](AGENTS.md) → [변경 마감 기준](Docs/Maintenance/Change_Completion_Policy.md) |
 | 이번 브랜치의 main 통합 | [2026-10-15 통합 기록](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 문서 결정은 `6d6713f4`까지 반영했습니다. |
 | 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). 단발/MM 통합과 기존 동작을 유지합니다. |
 | Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |

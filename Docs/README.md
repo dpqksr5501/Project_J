@@ -16,6 +16,7 @@
 | 하려는 일 | 시작 문서 |
 | --- | --- |
 | 프로젝트와 코드 책임 이해 | [프로젝트 개요](Overview/ProjectOverview.md) → [작업 문맥](Overview/ProjectContext.md) |
+| 버그 수정·리팩터링 후 잔여 로직·중복 에셋 점검 | [공통 작업 규칙](../AGENTS.md) → [변경 마감·중복과 레거시 관리](Maintenance/Change_Completion_Policy.md) |
 | 이동·리타깃·손 접촉 설정 | [애니메이션](Animation/README.md) |
 | 현재 단발→MM 구조·느린 회전·Master 정리 | [통합 재생](Animation/Planning/Unified_Locomotion_Implementation_2026-10-12.md) → [지속 곡선 판정](Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md) |
 | 200명 시각 예산·기존 병렬 구조·성능 비교 | [2026-10-12 구현과 검증](Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
