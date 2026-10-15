@@ -1,5 +1,7 @@
 # 애니메이션
 
+[Mirror Data 도입 판단](Planning/Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 움직임을 유지하고 새 미러 후보는 도입하지 않는다. 특정 동작 연결이 어색해졌을 때만 해당 구간의 발·자세 후보와 실제 재생을 재검토한다. 기존 MDT·미러 지원 기반과 R19·R20 수정은 보존한다.
+
 [R20 대각 점프·착지 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): authored 보정 selector가 첫 Update의 lazy Input.Player 연결을 선행 요구하던 순환 의존성을 해소했습니다. 제자리 회전·OTM 정책/에셋 보존, 호환18개·대각6시나리오·Editor/Game 빌드 결과와 한계를 기록했습니다.
 
 [R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)는 Chooser22개 package/내부 포함28개·DT1·입력 연결을 대조하고 Stand 착지의 대각 선택 누락을 수정했다. native 방향 상태를 보존하며 authored alias 조건에서 해결했고, 논리 회귀·Cook과 실제 포즈/원격 경계를 구분한다.

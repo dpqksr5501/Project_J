@@ -1,5 +1,7 @@
 # Strafe 대각 점프·착지의 보정 분기 복구 — R20
 
+**후속 결정:** R19·R20은 `a28b6657`에 반영됐으며 [main 통합 기록](Project_J_Main_Integration_2026-10-15.md)을 따른다. [Mirror Data는 도입을 보류](../../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md)하고 현재 동작을 유지한다. 아래 초기화 수정은 미러와 별개의 결함 수정이며, 미러의 품질 개선 근거로 재해석하지 않는다.
+
 사용자가 실제 Strafe 대각 점프·이동 착지가 전방 동작으로 나오는 문제를 보고했다. R19의 선택 존재 시험만으로 이 동작을 확인했다고 판단할 수 없었다. **선택된 전방 clip을 대각으로 보정하는 sample graph가 처음부터 실행되지 못하는 순환 의존성을 재현했다.** R19의 Stand 행 보완과는 별개의 native 결함이며 Jump/Land_Run/Land_Sprint 에셋은 R19에서도 변경되지 않았다.
 
 검증 기준 HEAD는 `e5e534e81ad909145fc34130f2c2d420b244049a`다. 검증 당시에는 추가 커밋을 하지 않았고, 이후 사용자의 최신 요청으로 R19·R20을 함께 커밋한다. push·병합은 하지 않는다. 사용자 에디터와 Live Coding 종료를 실제 확인한 뒤 directUBT와 독립 검증을 순서대로 실행했다. 읽기 전용 담당은 source/engine/graph 근거만 조사했고 코드·에디터·시험은 주 작업자만 수행했다.

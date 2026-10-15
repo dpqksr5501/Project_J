@@ -1,5 +1,7 @@
 # Project J
 
+**main 통합 — 2026-10-15:** [리타깃·구조 정리·R19/R20 통합 범위와 검증](Docs/Review/Audits/Project_J_Main_Integration_2026-10-15.md). [Mirror Data는 도입하지 않고 현재 locomotion을 유지](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md)하며, 특정 동작 연결 문제가 확인됐을 때만 해당 구간을 재검토합니다. 성능 조사는 계속 보류합니다.
+
 **Strafe 대각 점프·착지 복구 — R20:** [sample graph 초기화 순환 의존성 수정과 보존 검증](Docs/Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md). 제자리 회전·OTM 정책과 에셋을 보존하고 호환18개·대각6시나리오·Editor/Game 빌드를 통과했습니다. R19–20을 함께 커밋하는 기준이며 성능 조사는 보류합니다.
 
 **PC 소스·데이터 누락 대조 — R19:** [DT·Chooser·IA·IMC와 소스/상태 소유권의 명시 범위](Docs/Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md). Stand 착지의 대각 선택 누락을 데이터 조건에서 수정하고 집중 회귀·Windows Cook으로 확인했습니다. 테스트 자산은 보존했습니다. 미검토 preview/fixture 의미와 traversal·mirror 설치/시각·원격 경계, 보류한 성능을 구분하며 전체 무누락 완료를 주장하지 않습니다.

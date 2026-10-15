@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3206개, Markdown 228개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3208개, Markdown 230개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -108,6 +108,7 @@
 | [GASP와 Project_J의 회전 자연스러움 비교](../Animation/Planning/GASP_ProjectJ_Naturalness_Comparison_2026-10-12.md) | 계획·제안 | Animation/Planning/GASP_ProjectJ_Naturalness_Comparison_2026-10-12.md |
 | [[Project J] 차세대 휴머노이드 스켈레톤 표준 & 애니메이션 파이프라인 구조 개선 제안서](../Animation/Planning/Humanoid_Animation_Pipeline_Redesign_Proposal.md) | 계획·제안 | Animation/Planning/Humanoid_Animation_Pipeline_Redesign_Proposal.md |
 | [이동 애니메이션 재설계 조사 — 품질과 200명 예산](../Animation/Planning/Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md) | 계획·제안 | Animation/Planning/Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md |
+| [Mirror Data 도입 보류 결정](../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md) | 계획·제안 | Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md |
 | [Project_J Animation Execution & Threading Audit Plan](../Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md) | 계획·제안 | Animation/Planning/ProjectJ_Animation_Execution_Threading_Audit_Plan_2026-09-03.md |
 | [애니메이션 계획과 제안](../Animation/Planning/README.md) | 목차·문서 관리 | Animation/Planning/README.md |
 | [Strafe 전방 곡선과 측면 이동의 후보 책임](../Animation/Planning/Strafe_Forward_Intent_2026-10-13.md) | 계획·제안 | Animation/Planning/Strafe_Forward_Intent_2026-10-13.md |
@@ -227,6 +228,7 @@
 | [전체 시스템 상세 대조와 결함 처리 — 2026-10-15](../Review/Audits/Project_J_Continuation_System_Review_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Continuation_System_Review_2026-10-15.md |
 | [Project_J 전체 구조 심화 감사 — 구현·검증 결과 및 남은 범위](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md |
 | [Project_J 구조·소유권·심화 검토 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md |
+| [main 통합과 Mirror Data 결정 반영](../Review/Audits/Project_J_Main_Integration_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Main_Integration_2026-10-15.md |
 | [PC BP·DA 잔여 구조 검토와 Door 정리 — 2026-10-15](../Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md |
 | [PC 구조 정리 최종 확인과 커밋 경계 — 2026-10-15](../Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Commit_Preparation_2026-10-15.md |
 | [PC 소스 누락 대조와 DT·Chooser·IA·IMC 구조 검토 — R19](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md |

@@ -4,6 +4,7 @@
 
 | 주제 | 기록 |
 | --- | --- |
+| main 통합과 Mirror Data 도입 보류 | [2026-10-15 통합 범위와 검증](Audits/Project_J_Main_Integration_2026-10-15.md) · [Mirror 판단](../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 기존 구현·시험·사용자 변경을 보존하고 특정 연결 문제가 확인될 때만 미러를 재검토한다. |
 | 남은 전체 감사·누락 점검을 다른 채팅에서 마무리 | [2026-10-14 계속 작업 인계](../Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md). 최신 커밋 기준점·반복 방지·알려진 후보 외 전체 범위 대조·검토 장부·완료 기준을 연결한다. |
 | 전수 완료 주장 재점검·추가 수명·공통 판정 정리 | [2026-10-14 재점검](Audits/Project_J_Reaudit_2026-10-14.md) · [소유권 지도](Audits/Project_J_Reaudit_Map_2026-10-14.md) · [현재 검증](Audits/Project_J_Reaudit_Verification_2026-10-14.md) · [상세/남은 문제](Audits/Project_J_Reaudit_Remaining_2026-10-14.md). RA01–27 실제64개 변경·352개 native 회귀, 141개 추가 구현 본문과 header/inline 계약, 실제 수정·검토만 한 것·미검증을 구분한다. 전체 607개 정밀 수동 완료를 주장하지 않는다. |
 | MM 이중 상태·공통 수명·GAS 세대·실제 공격 데이터 심화 | [2026-10-13 시작 심화 감사](Audits/Project_J_Deep_Structure_Audit_2026-10-13.md). DS01–18 구현·최종 332개 회귀·Game/Cook·통합 결과, 실제 재현과 MCP/native 대조를 기록한다. CPU 일부 증가·RHI trace 종료 실패와 정밀 미검증은 남아 있다. |

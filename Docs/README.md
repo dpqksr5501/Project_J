@@ -1,5 +1,7 @@
 # Project J 문서 시작점
 
+**main 통합과 현재 결정:** [브랜치 통합 범위와 검증](Review/Audits/Project_J_Main_Integration_2026-10-15.md). 기존 리타깃·구조 정리·R19/R20을 보존하며, [Mirror Data는 도입을 보류](Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md)하고 특정 연결 문제가 확인될 때만 다시 검토한다. 성능 조사는 계속 보류한다.
+
 **최신 R20 수정:** [Strafe 대각 점프·착지의 sample graph 보정 복구](Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md). 제자리 회전·OTM과 기존 정책을 보존하고 호환18개·대각6시나리오·Editor/Game 빌드로 확인했습니다.
 
 **최신 PC 소스·데이터 대조:** [R19 범위 장부·구조 지도·착지 수정·검증](Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md). 기존 검토를 재사용하고 DT·Chooser·IA·IMC 및 BP 실제 연결을 추가 대조했습니다. 미검토/실행 미검증/성능 보류를 별도로 남겼습니다.

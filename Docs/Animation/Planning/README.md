@@ -13,6 +13,7 @@
 
 ## 조사와 제안 이력
 
+- [Mirror Data 도입 보류 결정](Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 locomotion 유지. 특정 연결의 발·자세 후보 공백이 확인될 때만 국소 재검토하며, 미러 설정·소비·비용과 보존 조건을 기록한다.
 - [통합 재생 재설계 조사](Locomotion_Unified_Playback_Redesign_Research_2026-10-12.md): 공식·사용자 구현 자료와 대안 검토. 실제 채택 범위는 위 구현 결과를 따른다.
 - [GASP / Project_J 자연스러움 조사와 고도화 인계](GASP_ProjectJ_Naturalness_2026-10-06/README.md): 실제 그래프·설정·소스 근거, 비교·우선순위·검증·후속 PROMPT와 통합 PDF. 구현 완료 문서가 아니다.
 
