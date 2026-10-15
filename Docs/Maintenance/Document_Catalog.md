@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3226개, Markdown 230개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3227개, Markdown 230개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -266,7 +266,7 @@
 | [SystemsModernization 인수인계 — A–D 다인원 보완·E 구현/측정, E 잔여·F 후속](../Handoffs/SystemsModernization_2026-09-09/인수인계.md) | 작업 인계 | Handoffs/SystemsModernization_2026-09-09/인수인계.md |
 | [어떻게 작업했는가 — A/B/C/D 다인원 보완 및 E 구현·검증 이력](../Handoffs/SystemsModernization_2026-09-09/작업이력.md) | 작업 인계 | Handoffs/SystemsModernization_2026-09-09/작업이력.md |
 | [프로젝트 전체 구조·동작·병렬 처리·성능 감사 인계 — 2026-10-13](../Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md) | 작업 인계 | Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md |
-| [Project_J 전체 감사·개선 마무리 인계 — 2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md) | 작업 인계 | Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md |
+| [전체 감사 인계의 보관과 현재 기준](../Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md) | 작업 인계 | Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md |
 | [Project_J 계속 감사 — 23시 경계 재개 기준점](../Handoffs/WholeProjectAudit_2026-10-14/Project_J_Continuation_Checkpoint_2026-10-14_2300.md) | 작업 인계 | Handoffs/WholeProjectAudit_2026-10-14/Project_J_Continuation_Checkpoint_2026-10-14_2300.md |
 
 ### 참고 원본
@@ -326,7 +326,7 @@
 | [Archive/Navigation/2026-10-15/Docs/Handoffs](../Archive/Navigation/2026-10-15/Docs/Handoffs) | 1 | 문서 이동·보존 기록 |
 | [Archive/Navigation/2026-10-15/Docs/Overview](../Archive/Navigation/2026-10-15/Docs/Overview) | 1 | 문서 이동·보존 기록 |
 | [Archive/Navigation/2026-10-15/Docs/Review](../Archive/Navigation/2026-10-15/Docs/Review) | 1 | 문서 이동·보존 기록 |
-| [Archive/Requests/2026-10-15](../Archive/Requests/2026-10-15) | 1 | 문서 이동·보존 기록 |
+| [Archive/Requests/2026-10-15](../Archive/Requests/2026-10-15) | 2 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06](../Archive/Requests/2026-10-15/Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06) | 1 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09](../Archive/Requests/2026-10-15/Docs/Handoffs/SystemsModernization_2026-09-09) | 1 | 문서 이동·보존 기록 |
 | [Archive/Requests/2026-10-15/Docs/Review/Audits](../Archive/Requests/2026-10-15/Docs/Review/Audits) | 1 | 문서 이동·보존 기록 |

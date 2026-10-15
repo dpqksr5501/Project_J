@@ -102,5 +102,16 @@
       "normalized_sha256_after_notice": "4f5f25b7629c66072b2c4513d26d4e70f5bf292c58580191e4c4e58ec66d9ad1"
     }
   ],
-  "after_hash_scope": "sha256_after는 안내 추가 당시 로컬 작업 사본의 바이트 해시다. 일반 Markdown은 Git 줄바꿈 변환을 받을 수 있으므로 체크아웃 후 비교에는 normalized_sha256_after_notice를 사용한다. archive 원문은 -text로 바이트를 보존한다."
+  "after_hash_scope": "sha256_after는 안내 추가 당시 로컬 작업 사본의 바이트 해시다. 일반 Markdown은 Git 줄바꿈 변환을 받을 수 있으므로 체크아웃 후 비교에는 normalized_sha256_after_notice를 사용한다. archive 원문은 -text로 바이트를 보존한다.",
+  "retired_handoffs": [
+    {
+      "original_path": "Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md",
+      "archive_path": "Docs/Archive/Requests/2026-10-15/WholeProjectAudit_Continuation_2026-10-14.md.txt",
+      "sha256": "9465b0717e3a5152e06831deffaa20fb70d62f7251ae45f9c9ae3b3253b0c5f2",
+      "bytes": 27227,
+      "archived_state": "사용자가 새 채팅 붙여넣기 요청문을 제거한 작업 사본. 제거한 요청문은 복원하지 않음.",
+      "disposition": "최신 사용자 요청에 따라 본문을 보관하고 기존 경로는 현재 기준과 원문으로 연결하는 짧은 안내로 대체.",
+      "current_reference": "Docs/Review/README.md"
+    }
+  ]
 }
