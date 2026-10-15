@@ -1,5 +1,7 @@
 # 전체 시스템 상세 대조와 결함 처리 — 2026-10-15
 
+현재 PC 후속 상태는 [R19 범위 장부와 구조 지도](Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)에서 확인한다. CR13–34의 명시 소스 근거를 재사용하고 DT·Chooser·IA·IMC의 추가 대조/실제 수정/미검토/환경 미검증을 분리했다. 아래 기록은 당시 범위를 보존한다.
+
 > 최신 사용자 범위 변경: [소스·아키텍처 정리](Project_J_Source_Architecture_Cleanup_2026-10-15.md)가 현재 우선 목표다. 아래 전체 감사의 성능·운영·품질 전수 해결은 보류하며 기록은 보존한다.
 
 전체 감사는 미완료다. [최신 검증](Project_J_Continuation_Audit_2026-10-15.md), [소스 범위 장부](ContinuationEvidence_2026-10-14/CoverageLedger.json), [분리된 작업 대기열](ContinuationEvidence_2026-10-14/ContinuationWorkQueues.json)을 함께 사용한다. `source_review_track`은 실제 읽은 함수·header·inline·caller·권위/소유권 범위이고, `defect_execution_track`은 재현·수정·회귀 상태다. 소스 대조가 끝난 범위를 에셋/실행/환경까지 검증 완료로 승격하지 않는다. 대조 결과는 읽기 전용 서브에이전트 3명이 수집했고, 수정·MCP·빌드·실행·저장은 주 작업자만 수행한다.

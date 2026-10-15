@@ -1,0 +1,615 @@
+{
+  "utc": "2026-10-15T05:39:13.529487+00:00",
+  "base_commit": "e5e534e81ad909145fc34130f2c2d420b244049a",
+  "new_commit": false,
+  "root_cause_ko": "Bool selector가 true Input의 최초 Update에서만 연결되는 Player를 먼저 요구해 authored 보정 분기를 영구 차단. 엔진이 graph 진입 전에 게시한 동일 sample execution helper Player로 조회 변경.",
+  "compatibility": {
+    "raw": "Saved/Validation/Continuation_20261014/R20_Compatibility1",
+    "process": {
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true
+    },
+    "succeeded": 17,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 120.25193786621094,
+    "tests": [
+      {
+        "path": "ProjectJ.Animation.A_Prepare.UnifiedLocomotionGraph",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.OneShotReturn.AuthoredPlayback",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.OneShotReturn.DirectionPlayback",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.LocomotionContextBuilder",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.RemoteLocomotionRuntime",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.TurnInPlacePresentationRuntime",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Continuation.ReturnedChooserTraversal",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.CombatTurnLink",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.PlaybackCoverage",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.ProductionSchema",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success"
+      }
+    ]
+  },
+  "cold_turn_in_place": {
+    "raw": "Saved/Validation/Continuation_20261014/R20_ColdTIP1",
+    "process": {
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true
+    },
+    "succeeded": 1,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 3.038536787033081,
+    "tests": [
+      {
+        "path": "ProjectJ.Animation.Naturalness.StrafeCameraCMC",
+        "state": "Success"
+      }
+    ],
+    "tip_frames": 169,
+    "moving_frames": 0,
+    "montage_frames": 0,
+    "limit_ko": "실제 cold BP/ABP/CMC 진입과 하반신 보호. 계속 카메라 회전하므로 최종 TIP→Idle 시각 완료 증거는 아님."
+  },
+  "diagonal_scenarios": [
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase16",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 6.0768866539001465,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 16,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 18,
+      "render": "D3D12_SM6 RenderOffscreen"
+    },
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase17",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 5.037103176116943,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 17,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 18,
+      "render": "NullRHI"
+    },
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase36",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 5.038348197937012,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 36,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 23,
+      "render": "NullRHI"
+    },
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase37",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 5.041733264923096,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 37,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 23,
+      "render": "NullRHI"
+    },
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase38",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 5.0375657081604,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 38,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 23,
+      "render": "NullRHI"
+    },
+    {
+      "raw": "Saved/Validation/Continuation_20261014/R20_FinalCase39",
+      "process": {
+        "exitCode": 0,
+        "hasExited": true,
+        "nativeHandleCapturedBeforeWait": true
+      },
+      "succeeded": 1,
+      "succeededWithWarnings": 0,
+      "failed": 0,
+      "notRun": 0,
+      "inProcess": 0,
+      "totalDuration": 5.043273448944092,
+      "tests": [
+        {
+          "path": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+          "state": "Success"
+        }
+      ],
+      "case": 39,
+      "jump_warp_frames": 62,
+      "land_warp_frames": 23,
+      "render": "NullRHI"
+    }
+  ],
+  "count_note_ko": "호환 고유 테스트18개와 동일 AuthoredCurvePlayback 테스트의 대각 시나리오6회. 고유24개로 합산하지 않음.",
+  "reproduction": {
+    "raw": "Saved/Validation/Continuation_20261014/R20_WarpRegressionRed1",
+    "failed_tests": 1,
+    "failed_assertions": 2,
+    "jump_warp_frames": 0,
+    "land_warp_frames": 0
+  },
+  "builds": {
+    "R20_FinalGameBuild1": {
+      "process": {
+        "exitCode": 6,
+        "elapsedSeconds": 406.6651756,
+        "directUBT": true,
+        "target": "Project_J",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "planned_actions": 334
+    },
+    "R20_FinalGameBuild2": {
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 22.9979949,
+        "directUBT": true,
+        "target": "Project_J",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "executed_actions": 3
+    },
+    "R20_FinalEditorBuild2": {
+      "process": {
+        "exitCode": 0,
+        "elapsedSeconds": 15.7629452,
+        "directUBT": true,
+        "target": "Project_JEditor",
+        "moduleScope": "",
+        "fullTarget": true
+      },
+      "executed_actions": 4
+    }
+  },
+  "build_note_ko": "Game 첫 NoSharedPCH 옵션이 기존 증분 상태를 무효화해334작업을 계획함. 중단 없이 대기했고 기존 Mass 시험의 불완전 UPackage include 오류를 UObject/Package.h 한 줄로 해결. Game 재실행3작업, Editor4작업 성공. 다음 Game 빌드도 현재 옵션과 증분 상태를 고려해야 함. UBA 이전 세션 정리 접근 경고는 원자료에 보존하며 ACL/캐시 우회하지 않음.",
+  "asset_comparison_to_R19": [
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "sha256": "701e189be5aaff7d5d9c4d451cbc3f64bdfa2f8266e936b40936d5d9694ca91a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Player.uasset",
+      "sha256": "463026fb117fd462113375035d4c021f53bc67dba8d42ffb076544ad034ffe43",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_InAir.uasset",
+      "sha256": "0f1e118991abcdd793eb44e86d4da5f3e0d189c9456a39a266b07ac4c073b42e",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_Land.uasset",
+      "sha256": "75d7eafef1171bfeb5c777e26520b6c27780aa0a4d2a585d6429fd6d0eef1d01",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_OTM_Ground.uasset",
+      "sha256": "91431432ad385da98a2d1aac53d8d5415d2f33fe630e74bf794a26d24d0725d7",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations.uasset",
+      "sha256": "38aeb1ca645b2be5e8fc798e39fe768ff6ec6304e86bef2710453c6ec712e006",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_FallOff.uasset",
+      "sha256": "36a015488d3db7595ab119b4404370f09259f98582d6c7bfa7e5ed5d6f42c140",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Ground.uasset",
+      "sha256": "97d9f7abbdf8ad0c440215757ebb955244bb42aa8d25214bd913c61c29a1e1aa",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_GroundPresentation.uasset",
+      "sha256": "ca2d82c38e7c6b110dae2048fe747cc7ec65cec2cf99d850ed1af2ed2b5c34a8",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAir.uasset",
+      "sha256": "d39b4372f59f1e351e05fd7de99664179a773e1f20483bbd5c066a4559c6edb8",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAirLoop.uasset",
+      "sha256": "0cf659b837ea7e570198ac874879e63c8db686ddca2ae6dc2819a6c597de3e2a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Jump.uasset",
+      "sha256": "5ae370224d7bb809751ede3225ab8121df884d244db6a094f20c82da05e66ddd",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land.uasset",
+      "sha256": "f2d09c08f3bbf7d84775c4e1ed9b0eb9c54365b1d7981cc16e438e50e7eb583a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Run.uasset",
+      "sha256": "820bf55c38f8037ee86a7a6def95c41da10ff955441ddaf38134b3d25302fa69",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Sprint.uasset",
+      "sha256": "101ec798e164a6afdb8ec9b1cd944c7f82bab7f4ca0ae92476314f0c8495d2c1",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Stand.uasset",
+      "sha256": "fa4b1fef737f70f3e7c96c3c8b4726976ecfa8948baa237700225aae5b0960b0",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Pivot.uasset",
+      "sha256": "73958277e22c27fe8d8f3e82478241adde131dd1ab55269fc1fea2f98580723a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Start.uasset",
+      "sha256": "f676367907b4ed7b633383eab65fea32e89522741b0b315340987e5c44cb7fcb",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Stop.uasset",
+      "sha256": "18d126e6ef1eb18e22f541a5bf06a1ab6617c85b8f51e66cc656214dabbb74d8",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Start.uasset",
+      "sha256": "492b9547c4c7b54d98c3c5f022bf0629430abf0593739aec0a38063c98708c56",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Stop.uasset",
+      "sha256": "f9a9dc3f1f2e55afb05bf66f3fd0c1df905a14813afb6d16b04da40d03bd2f8d",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_TurnInPlace.uasset",
+      "sha256": "0a2f74c40af10764345abd3e36b076a922e4fa918f069cebdd5b6ad0996a9418",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Character_BPs/BP_Player.uasset",
+      "sha256": "c8063a53600af78dd6059c4c072c0af258b782f76e970c3f962a92d241970e4a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "sha256": "382d852d46bc484dad106f4fa529dc997fdf76d20213ea5e9d900293a8deef3e",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_CMC.uasset",
+      "sha256": "2628a6d16878b60fb3d4f61b7371c3b4072835cf86f11cf5e7cc2e47fc6e0ab5",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_Mover.uasset",
+      "sha256": "fb23113ed58a02214ebc506f42bc17e08cd00e4672a16a398041dbd6588e0f29",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Characters/UEFN_Mannequin/Rigs/MDT_UEFN_Mannequin.uasset",
+      "sha256": "c8c55c3b0ea35076be8b8324871e8aa78c05abe77f4199614de37f9dbba21bc0",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "sha256": "aa4e2e350a679a328c6e3d291577d07406f8e9ea3f03b4d4f1a03e1b559a59bf",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data.uasset",
+      "sha256": "532f05cd9a6942c39189aab69fa52b5ccb9e43bef19cef23a01bf1692a9ebff9",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Attack_LMB.uasset",
+      "sha256": "45f0c1c17b7cc078be8bc3b83441276f12f283982e6a2927b50a2617226b281b",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Attack_RMB.uasset",
+      "sha256": "1e745271324c26892441ea1cc41cb4cae96fca3e457005d90fd731abadbbd5d0",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Interact.uasset",
+      "sha256": "25701321338fdd21f9ca36bdb9a9b334215b7f38f795a4a0bc1815ee893cb4d4",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Jump.uasset",
+      "sha256": "8ad490f62efd49ec3e6739da4bdb407d029ab367b59f5db7ab75a5efa640eee4",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Look.uasset",
+      "sha256": "f486ece3bc8635be84d13562a6daeb4cb1641cc770e02e035275cc0c2c1d903e",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MountAscend.uasset",
+      "sha256": "af7e317a9304bd8b73cba023d438cd508b07356bf7d9833fe52fef0902e55ad1",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MountDescend.uasset",
+      "sha256": "cb50c0ec71655ec97a4e2a16bee03c94f1640ba5c8518cb45ffabcc8cbb4f04f",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MouseLook.uasset",
+      "sha256": "3097246bebc5dfa9374101660bca11e13a8a3beb426d7056633e96e04dd83819",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Move.uasset",
+      "sha256": "fc879e31b195679cc70e472afce9f857c40f6e262c7bb6110035dc9757b0a4bb",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MoveIntent_Backward.uasset",
+      "sha256": "20feb5576d12babe97e329e6468e921d03cee12070306b10690b98b2de97eba5",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MoveIntent_Forward.uasset",
+      "sha256": "149149f2f6265d3bb4de22bd4e544a9a9b686de9ca13ca41c36056d76158bfe5",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MoveIntent_Left.uasset",
+      "sha256": "c3e37c61ce9987c714c957c6f875edd5ec39a456f32bcd0bc00f171c802e85ab",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_MoveIntent_Right.uasset",
+      "sha256": "1decb84b488d5235de7570113ade396c15fad8e05a81a60c5ce72490b13ca151",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Skill_Q.uasset",
+      "sha256": "25602a5bac1321b07fe906106d69aa2988e95909d9481522f23d26790b0f2832",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Skill_R.uasset",
+      "sha256": "8c61464cc3477f5d863b2b447b7a08bf03afbbcd13ad823457a53984f4316877",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Skill_T.uasset",
+      "sha256": "629b54cec684dab6fa08572645021e61bd76b5d7216375a3d40916165293b917",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_Sprint.uasset",
+      "sha256": "64c336f42cc1b86aeb1552e42ba296d9636adf1dfbc7ec0971937c6a36a1c83a",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/Actions/IA_ToggleCombat.uasset",
+      "sha256": "5ed25c52677179d7c66e374e5820468ba7aac71e9b6685ebaf1a744bbe669a3c",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/IMC_Default.uasset",
+      "sha256": "678209d4b9300ed0f3a99a4de0882ccd34da5de5991f0a2fb227b53b4a3ef9b5",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Input/IMC_MouseLook.uasset",
+      "sha256": "6a00157cd520edcf0b037d7091bfe188fa6eb7c48465f695981f7cbe5fb4cc80",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/Mount_Assets/Wyvern/BP_Wyvern.uasset",
+      "sha256": "2f6a9daaaf26dda2c7b636276928b53b04efc39fa3087b496cb5822523306ec2",
+      "equals_R19": true
+    },
+    {
+      "path": "Content/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.uasset",
+      "sha256": "a68229ef07d29a92a453b475cb28bbe6001883f163014ba10512959d2d71d0c5",
+      "equals_R19": true
+    }
+  ],
+  "protected_policy_hashes": {
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Snapshot.cpp": {
+      "current_sha256": "5d9963acb9691287b9186e15f7adb1604c2b1c8c4132443a4624651aeaf14bca",
+      "equals_R18": true
+    },
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp": {
+      "current_sha256": "97efd06cbbfdd0ff852671832a9f43b2a68a33d0338eda7d853fd14116e4001f",
+      "equals_R18": true
+    },
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp": {
+      "current_sha256": "61c1e76e1a371d542a96286c4cfa32abbc16fc280bdd58171ef1c3bdad449862",
+      "equals_R18": true
+    },
+    "Source/Project_JCharacter/Private/Animation/AnimNode_ProjectJLocomotion.cpp": {
+      "current_sha256": "7167a84967587882a10f4e84f1331d668aaaaa38a5f01f5ae382f64d54138a38",
+      "equals_R18": true
+    },
+    "Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h": {
+      "current_sha256": "29eda85701b02542324eeec33d51cfa5a557822b36def25d3ec3f2c8bb3acff8",
+      "equals_R18": true
+    },
+    "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset": {
+      "current_sha256": "701e189be5aaff7d5d9c4d451cbc3f64bdfa2f8266e936b40936d5d9694ca91a",
+      "equals_R18": true
+    }
+  },
+  "R20_source_hashes": {
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.SnapshotAccessors.cpp": "755e12f0dc5b6fcf75b9f39482fc451d67beba6a6650c6d46a3c0ec00caa4134",
+    "Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp": "ad77617238d3dc54721c7c9c3bd54040a9ae83db9ac85dc80ca4e583a3e54048",
+    "Source/Project_JCharacter/Private/Tests/Project_JMassTests.cpp": "33166d3679f74fd8ce7a256f5fb396e051b7f84d2571e468c96a875acb041a97"
+  },
+  "editor_binaries": {
+    "Binaries/Win64/UnrealEditor-Project_JMMO.dll": "36b7c9d54202ef5044e25a1fa5f4d270476fa06d6c9e640ccb45844ea71a06f7",
+    "Binaries/Win64/UnrealEditor-Project_J.dll": "847289759ee9ae9e4a536efc46fac0358f6289cb470c34fe40100ab8b2af8488",
+    "Binaries/Win64/UnrealEditor-Project_JCore.dll": "aa2229f73eb0e8465c1227c05f9948015d4f874bf71ecbd19f2389f91cc18671",
+    "Binaries/Win64/UnrealEditor-Project_JGAS.dll": "ecc32d4f478cf75fee2d83b8312883d2478ababc9795ce0020f731d38bfee7ce",
+    "Binaries/Win64/UnrealEditor-Project_JMount.dll": "91f8969a008a93c35fbe9f558760daaa495e2f8f16bb55ccc81c738876205eea",
+    "Binaries/Win64/UnrealEditor-Project_JCharacter.dll": "f3a28465d1a2d615a29e65db36028c00221d79385bd4889ae7862ac9a7789c74",
+    "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll": "7cc5a5fff523d64e5aa4a88f1bfffe3a5457d6909bd87dc2e403b55b2be2d4e0",
+    "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll": "fa4c333407e81354c586bf8332d56cd9be2bbb5c7b61e9b5a6ae8900679c68e8",
+    "Binaries/Win64/UnrealEditor.modules": "108dca6766d8052fa767709f547b2e75e39676dff75c3627ec863f8520e6fadf"
+  },
+  "game_binary": {
+    "path": "Binaries/Win64/Project_J.exe",
+    "sha256": "b5d0f5980cc0c31e4a0a248c9efc0892edd31f2e1ead26acc331cace3e287ca7"
+  },
+  "limits_ko": [
+    "실제 semantic Jump→CMC→BP/ABP/pose 평가. OS/EnhancedInput 물리 키 이벤트 전수 시험은 아님.",
+    "D3D12 캡처는 시나리오16 Jump/Land만 확인. 전 방향 시각 품질 전수 완료가 아님.",
+    "R19 Cook은 기존 데이터 검증 근거. R20 Cook/패키지 또는 Game exe 실행으로 승격하지 않음. R20은 직렬화/에셋/반영 시그니처 변화 없어 추가 Cook 미실행.",
+    "CPU/GPU/부하/반복 성능·대규모 원격 검증 보류.",
+    "공중 pending 방향 재선택 게시 순서 후보는 별도 미확정 위험으로 보존.",
+    "startup LogAutomationTest Condition failed와 GameplayCue 경고는 원로그 보존. 최종 structured 테스트 결과와 구분."
+  ]
+}

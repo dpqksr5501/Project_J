@@ -1,11 +1,15 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JLocomotionProfile.h"
+#include "Chooser.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Project_JLocomotionAnimStateComponent.h"
 #include "Project_JGreatswordCharacter.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -128,6 +132,62 @@ bool FProjectJLandingReturnContextTest::RunTest(const FString&)
 	Data.LocomotionMode = EProject_JAnimationLocomotionMode::Mounted;
 	Anim->UpdateReleasedLandingMotionContext(Data, true);
 	TestEqual(TEXT("On-foot landing repair does not modify mounted context"), Data.LocomotionContext.PhaseFamily, EProject_JLocomotionPhaseFamily::Landing);
+	// A remote airborne input release can latch Stand while residual velocity (or
+	// the previous low-speed snapshot) still carries any of the eight sectors.
+	// Exercise the real producer and authored root with a fresh playback owner.
+	auto* Profile = NewObject<UProject_JCharacterAnimProfile>();
+	auto* Locomotion = NewObject<UProject_JLocomotionProfile>();
+	Profile->LocomotionProfile = Locomotion;
+	Player->CharacterAnimProfile = Profile;
+	Locomotion->MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation = true;
+	Locomotion->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable = LoadObject<UChooserTable>(nullptr,
+		TEXT("/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations.CHT_Player_StateControllerAnimations"));
+	if (!TestNotNull(TEXT("Actual landing root chooser"), Locomotion->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable.Get())) { return false; }
+	const EProject_JStateControllerStrafeDirection Sectors[] = {
+		EProject_JStateControllerStrafeDirection::Forward, EProject_JStateControllerStrafeDirection::ForwardRight,
+		EProject_JStateControllerStrafeDirection::Right, EProject_JStateControllerStrafeDirection::BackwardRight,
+		EProject_JStateControllerStrafeDirection::Backward, EProject_JStateControllerStrafeDirection::BackwardLeft,
+		EProject_JStateControllerStrafeDirection::Left, EProject_JStateControllerStrafeDirection::ForwardLeft };
+	for (int32 Sector = 0; Sector < UE_ARRAY_COUNT(Sectors); ++Sector)
+	for (bool bResidualVelocity : {false, true})
+	for (bool bHeavy : {false, true})
+	for (auto Foot : {EProject_JStateControllerFoot::Left, EProject_JStateControllerFoot::Right})
+	{
+		auto* State = NewObject<UProject_JLocomotionAnimStateComponent>(Player);
+		State->RefreshCachedReferences();
+		State->bRemoteMoveReleasedWhileAirborne = true;
+		State->bHasMoveInput = false;
+		State->GroundSpeed = bResidualVelocity ? 500.0f : 0.0f;
+		Player->GetCharacterMovement()->Velocity = FRotator(0, Sector * 45.0f, 0).Vector() * State->GroundSpeed;
+		State->BeginLandingState(*Player, bHeavy ? 2000.0f : 100.0f);
+		TestFalse(TEXT("Airborne release latches Stand independently of residual speed"), State->bLandWasMoving);
+		State->AuthoritativeContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
+		State->AuthoritativeContext.GaitIntent = EProject_JLocomotionGaitIntent::Run;
+		State->DerivedLocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Landing;
+		auto* LandingAnim = NewObject<UProject_JCharacterAnimInstance>(Player->GetMesh());
+		LandingAnim->OwningCharacter = Player; LandingAnim->OwningPlayerCharacter = Player;
+		LandingAnim->LocomotionAnimStateComponent = State;
+		LandingAnim->ThreadSafeData.LocomotionContext.RotationMode = EProject_JLocomotionRotationMode::Strafe;
+		LandingAnim->ThreadSafeData.OneShotPresentation.StrafeDirection = Sectors[Sector];
+		FProject_JAnimThreadSafeData LandingData;
+		LandingData.MotionMatchingSearchPolicy = Locomotion->MotionMatchingSearchPolicy;
+		LandingAnim->FillMovementThreadSafeData(LandingData);
+		LandingAnim->FillLocomotionStateThreadSafeData(LandingData);
+		LandingData.OneShotPresentation.Foot = Foot;
+		const FString Case = FString::Printf(TEXT("Stand Land sector %d residual %d heavy %d foot %d"), Sector, bResidualVelocity, bHeavy, int32(Foot));
+		TestEqual(Case + TEXT(" preserves producer sector"), LandingData.OneShotPresentation.StrafeDirection, Sectors[Sector]);
+		TestEqual(Case + TEXT(" preserves impact weight"), LandingData.Landing.bUseHeavyLand, bHeavy);
+		LandingAnim->ResolveStateControllerPresentationStateWithPlaybackHold(LandingData, LandingData.OneShotPresentation);
+		TestEqual(Case + TEXT(" reaches Land presentation"), LandingData.OneShotPresentation.PresentationState,
+			EProject_JStateControllerPresentationState::TransitionToLand);
+		LandingAnim->StateControllerPresentationStateForChooser = LandingData.OneShotPresentation.PresentationState;
+		LandingAnim->RotationModeForChooser = LandingData.LocomotionContext.RotationMode;
+		LandingAnim->GaitIntentForChooser = EProject_JLocomotionGaitIntent::Run;
+		LandingAnim->StateControllerStrafeDirectionForChooser = LandingData.OneShotPresentation.StrafeDirection;
+		LandingAnim->StateControllerOneShotFootForChooser = Foot;
+		LandingAnim->EvaluateStateControllerAnimationChooserOnGameThread(LandingData);
+		TestTrue(Case + TEXT(" selects an authored landing"), LandingData.OneShotPresentation.bHasSelectedAnimation);
+	}
 	return true;
 }
 #endif

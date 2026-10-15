@@ -1,0 +1,341 @@
+{
+  "scope_ko": "로컬 ignored Saved 원자료 위치·SHA만 보관. 원본 request/response·로그·세션·일회성 제작 파일은 커밋에 복사하지 않음.",
+  "receipts": [
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read1/CurrentChoosers.json",
+      "bytes": 210184,
+      "sha256": "d29fac8dd403475ad8f60da04ef4f83f41a689e8a3395b0dd788c7f49ac3035e",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read1/InputMirrorParsed.json",
+      "bytes": 52316,
+      "sha256": "4b234039b0de52c5b965a9c4c7edc29adcaed9d142bc740389b46e18c9855098",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read1/ConnectionsParsed.json",
+      "bytes": 7010,
+      "sha256": "6e76c956ce18c54b85eac2248fbdffa61847f1c34bd581975fa186541c5ed65d",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read1/Process.json",
+      "bytes": 128,
+      "sha256": "ebfb7cc3fe687123edee10451812935045a414764ad461d21a6776082809f45c",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read1/Run.log",
+      "bytes": 426963,
+      "sha256": "ca45c0c907ee1f130e433655af3d1d90bb6399c03f7d01cb58beacdc1b7d913a",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read2/CurrentChoosers.json",
+      "bytes": 290966,
+      "sha256": "74d3a140656356e636e824069f166af411ab67f0c130f92c8692937b5ac50a49",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read2/Process.json",
+      "bytes": 128,
+      "sha256": "ebfb7cc3fe687123edee10451812935045a414764ad461d21a6776082809f45c",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_Read2/Run.log",
+      "bytes": 405437,
+      "sha256": "cdd5adfc6ca946cbe4c3330583521ca66b2bfed895567ce2ea0e287a08525663",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild1/UBT.log",
+      "bytes": 23560,
+      "sha256": "32488ae75217d2a50402d7a069f7145e99155e21f55c8cab9ea4b8e2ee3ea939",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild1/arguments.json",
+      "bytes": 478,
+      "sha256": "a3ba32e3307be6cb26aae414a7c6e39925776636a6de576cf8771812c6b25752",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild1/process.json",
+      "bytes": 154,
+      "sha256": "9f01bc6b8a74ffc871a39f2d691049388bb316360a8429db81b7ac9e418143b5",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild2/UBT.log",
+      "bytes": 7563,
+      "sha256": "076cad168d84643759b73a92f0c6d46410093f50be7de6522cc4f1e98195c000",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild2/arguments.json",
+      "bytes": 478,
+      "sha256": "e7cfa5d3965b358fae844b62374d8a3076c7b90c5e057f986155d90a0ad1ff32",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolBuild2/process.json",
+      "bytes": 152,
+      "sha256": "48582faf949565b198973af53df27c780c53a86934cc47a146266aa5eb374921",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolFinalBuild1/UBT.log",
+      "bytes": 7877,
+      "sha256": "3436e0391f8cb5af9c1a408be233cc878fbec674addaf65170e12d4b60edf536",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolFinalBuild1/arguments.json",
+      "bytes": 483,
+      "sha256": "9703d5377dddd2d2c111929b1124a670c79151fa56d0e04d206794d860325f90",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_ChooserReadToolFinalBuild1/process.json",
+      "bytes": 153,
+      "sha256": "2dd58fa4e2e2fde425a3d51457c64e82311a53f45fd59f420e34e31703657c91",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild1/UBT.log",
+      "bytes": 8975,
+      "sha256": "08809e42bdc17f9a194e4345574510bbf308ce15f4667ad3aab592f8bcb74128",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild1/arguments.json",
+      "bytes": 496,
+      "sha256": "0d56bd4825fb9e69a26e08f5f0691e9433f4802bf594358e23e2eb7715e3fd4c",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild1/process.json",
+      "bytes": 154,
+      "sha256": "37f3103bb4a5760ed5006cc0ed0fe8bd9e77377b3da8edd295aae27edab1cbe1",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild2/UBT.log",
+      "bytes": 10371,
+      "sha256": "ff610fd866c83338099dcdee015bc8cce6e5ce4947ea99948bda46502859cd77",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild2/arguments.json",
+      "bytes": 474,
+      "sha256": "cf9e8bdf43cafca8250c13914ff4142e8ba302f2533d8f187ae2f7fd5592a5d9",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild2/process.json",
+      "bytes": 154,
+      "sha256": "b08e9d3f9282a4f802587ac21de966db4b669465096d60861ce75a64fd22262a",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild3/UBT.log",
+      "bytes": 7902,
+      "sha256": "ed1649bdce66c278e7a2774bcad85a60956febd2ae2cdb4c8d34a38f3ff79cf0",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild3/arguments.json",
+      "bytes": 474,
+      "sha256": "413be50eeb11f80a0290d56af524b022ed0c7cc9214b6a578df3f68cc8b4be0f",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_FinalSourceBuild3/process.json",
+      "bytes": 155,
+      "sha256": "f3371fdf98839582b6af6b56a09f2a17ce1f12f4d1fc0c3be7751937af8efa94",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_NestedChooserLandingReproBuild1/UBT.log",
+      "bytes": 11708,
+      "sha256": "82e9a754e9707f35be2768212fe27bd7b44f222566baf0f5781567ff7e45a565",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_NestedChooserLandingReproBuild1/arguments.json",
+      "bytes": 488,
+      "sha256": "6eda3924e7fd9b43f1d419586eda455b25082fee87a455e3ce79e235cf9982d1",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_NestedChooserLandingReproBuild1/process.json",
+      "bytes": 154,
+      "sha256": "2a2f431cd7f4f691fb4a4a01169babe1e6fde8f1441c984692e58910f7399c58",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandApply1/arguments.json",
+      "bytes": 711,
+      "sha256": "da6ccedd05e0c69c215d30519b22a36074e501943e9f304bd098301b62e72a81",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandApply1/process.json",
+      "bytes": 88,
+      "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandApply1/index.json",
+      "bytes": 1121,
+      "sha256": "1cbbdbf4db278920bfa4ea1b1aa028edeb67fef057e6c4de356eeb1d54e0f3c9",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandApply1/Run.log",
+      "bytes": 319747,
+      "sha256": "61812b1a35701c2818ccab3483fd50a6496d1536b8126bfbe3b7480b2d12b090",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild1/UBT.log",
+      "bytes": 5941,
+      "sha256": "7b901ac298e4409796ca031023d327834ebe20dbb219291b7074b6ed83723155",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild1/arguments.json",
+      "bytes": 481,
+      "sha256": "63ced5358ddf252cdc6007633c13487150ffb1b4b9354dfe7b468778f2283847",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild1/process.json",
+      "bytes": 154,
+      "sha256": "05c9ce4d3b1df3ee78c0b5dc60fdd35d6899aad1e56c3d18771e92013eecb89f",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild2/UBT.log",
+      "bytes": 10681,
+      "sha256": "f40ddeac6be86c868289376183d60d9587ec0216c3253ba6477fc6c12b85f2e1",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild2/arguments.json",
+      "bytes": 503,
+      "sha256": "30f0c547a7374231604ce96987172dc6e84c5e50bc9c44ef55e8d22d6b606cc8",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandAuthoringBuild2/process.json",
+      "bytes": 154,
+      "sha256": "77bb316822ea8b558f7d107ae70da3bd6dee33a8d72785ce344feef7ba272a2e",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandCook1/arguments.json",
+      "bytes": 758,
+      "sha256": "4cc938f435d657e10054a3c56916c9e7dc842efe43c8b2f6ba9eba45e5406f0a",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandCook1/process.json",
+      "bytes": 263,
+      "sha256": "1da3859f5eb512126818d54ca8fa9338676903849182f9920c48647ae9e2a876",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandCook1/Run.log",
+      "bytes": 309407,
+      "sha256": "a33e4321288b3f8eac4496fd8f2a4ae02ef81f8eb1475cc65ce967ac45b20510",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal1/arguments.json",
+      "bytes": 841,
+      "sha256": "ed36160c2610c81a3673206aa4686aaaf5a6a051e13c85ac4e7803202df72e31",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal1/process.json",
+      "bytes": 88,
+      "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal1/index.json",
+      "bytes": 6671,
+      "sha256": "845afb188b5a882377e49322c96b007200ae26ad887397bf2440acc60f9eab66",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal1/Run.log",
+      "bytes": 325867,
+      "sha256": "b7f591cc8a625a2306a66e8a21c0588e500a1344b6f315723fd34b175e0485a2",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal2/arguments.json",
+      "bytes": 807,
+      "sha256": "330ab5b50d66ce4b3303cd4b804c08f9a429e0bb56bfcbf926cbe677f7d8a734",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal2/process.json",
+      "bytes": 88,
+      "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal2/index.json",
+      "bytes": 6669,
+      "sha256": "12cf9a7f55a3a948e86619f2ce3e8ec2610a0d6e1fe20f1a94a4839f2e02be70",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandFinal2/Run.log",
+      "bytes": 326159,
+      "sha256": "e8c509107f3697ac7c08769663439abe7670059353fe4a90c0ab042d0da8701f",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandRepro1/arguments.json",
+      "bytes": 673,
+      "sha256": "93e2c780d5c7f59789e20fdd06c40b814da2d8e90f47492885ad57d073c54ecd",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandRepro1/process.json",
+      "bytes": 90,
+      "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandRepro1/index.json",
+      "bytes": 16221,
+      "sha256": "cfdad694c0007d3da01a060d9446e94c03defe3a8ea94c67cdc9f3949ac996a4",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandRepro1/Run.log",
+      "bytes": 324917,
+      "sha256": "b1c62831a3d43f23ae3dab1840684934b97707d851cd25a166f23dc0abdbb2be",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/PCStructure_20261015/R19_StandLandingMigration.cpp",
+      "bytes": 4524,
+      "sha256": "a1026de965c196e553ac0ff41f5ad456dde50211f13deb23e6168205a9d328a9",
+      "included_in_commit": false
+    },
+    {
+      "local_archive": "Saved/Validation/Continuation_20261014/R19_StandLandCook1/Cooked/Windows/Project_J/Metadata/ReferencedSet.txt",
+      "bytes": 88155,
+      "sha256": "563d163fce1772196e7b68bbd340de835143c3aa9706e157f0082ab23278460f",
+      "included_in_commit": false
+    }
+  ]
+}

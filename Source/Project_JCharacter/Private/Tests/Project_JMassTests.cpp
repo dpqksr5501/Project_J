@@ -8,6 +8,7 @@
 #include "MassExecutor.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "UObject/Package.h"
 #include "GameFramework/WorldSettings.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JNPCCharacter.h"

@@ -6,6 +6,8 @@
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/AnimClassInterface.h"
 #include "Animation/AnimInstanceProxy.h"
+#include "Animation/AnimSequence.h"
+#include "BoneControllers/AnimNode_SkeletalControlBase.h"
 #include "Animation/AnimNode_ProjectJOneShotHandoff.h"
 #include "Animation/AnimNode_ProjectJLocomotion.h"
 #include "Animation/AnimNode_Inertialization.h"
@@ -57,7 +59,9 @@ const TArray<FCurveCase>& CurveCases()
 		{false,false,false,{0,1},0,-10}, {false,true,false,{0,1},0,-10},
 		{true,false,false,{0,1},0,-10}, {true,true,false,{0,1},0,-10},
 		{false,true,false,{0,1},4}, {true,true,false,{0,1},4}, // sub-degree isolated nudge
-		{false,true,false,{0,1},5}, {true,true,false,{0,1},5} // small repeated pointer noise
+		{false,true,false,{0,1},5}, {true,true,false,{0,1},5}, // small repeated pointer noise
+		{true,true,false,{-1,1}}, {true,true,false,{1,1}},
+		{true,true,false,{-1,-1}}, {true,true,false,{1,-1}}
 	};
 	return Cases;
 }
@@ -90,6 +94,7 @@ class FPlayback : public IAutomationLatentCommand
 	TArray<FRecordedInput> RecordedInput;
 	int32 RecordedIndex = 0;
 	int32 RecordedJumpCount = 0, CoherentReturnReselections = 0;
+	int32 JumpWarpFrames = 0, LandWarpFrames = 0;
 	int32 EndFrame() const { return RecordedInput.IsEmpty() ? At(600) : FMath::CeilToInt(RecordedInput.Last().Seconds * PlaybackHz) + 1; }
 	bool IsStrafe() const { return bCurveResponse ? CurveCases()[Scenario].bStrafe : Scenario % 2 != 0; }
 	bool IsSprint() const { return bDirectionCoverage ? false : bCurveResponse ? CurveCases()[Scenario].bSprint : Scenario % 4 >= 2; }
@@ -132,8 +137,9 @@ class FPlayback : public IAutomationLatentCommand
 		if (bDirectionCoverage && !IsStrafe()) Player->SetActorRotation(FRotator(0, (Scenario / 2) * 45.f, 0));
 		Player->SetActorEnableCollision(true); Player->GetCharacterMovement()->SetComponentTickEnabled(true);
 		if (IsStrafe()) Player->GetAbilitySystemComponent()->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
-		if (bRender && (bCurveResponse ? Scenario == 25 || Scenario == 27 || !RecordedInput.IsEmpty() :
-			!bInputResponse && (bDirectionCoverage ? Scenario == 4 || Scenario == 5 : Scenario < 2)))
+		if (bRender && (FParse::Param(FCommandLine::Get(), TEXT("ProjectJOneShotWarpProbe")) ||
+			(bCurveResponse ? Scenario == 25 || Scenario == 27 || !RecordedInput.IsEmpty() :
+			!bInputResponse && (bDirectionCoverage ? Scenario == 4 || Scenario == 5 : Scenario < 2))))
 		{
 			if (!Test->TestFalse(TEXT("Render capture requires a real RHI"), GUsingNullRHI)) return false;
 			auto* VisualFloor = NewObject<UStaticMeshComponent>(Floor); VisualFloor->SetupAttachment(Box);
@@ -267,7 +273,13 @@ public:
 		if (!bInput) Player->StopSprint();
 		const float TravelYaw = bCurveResponse && CurveCases()[Scenario].Pattern == 3 ? 0 : CameraYaw;
 		Player->AddMovementInput(FRotator(0, TravelYaw, 0).RotateVector(FVector(Keys.Y, Keys.X, 0)), bInput ? 1.f : 0.f);
-		if (RecordedInput.IsEmpty() && bLand && Frame == FMath::RoundToInt(JumpAtSeconds * PlaybackHz)) Player->Jump();
+		if (RecordedInput.IsEmpty() && bLand && Frame == FMath::RoundToInt(JumpAtSeconds * PlaybackHz))
+		{
+			// The real input binding publishes semantic Jump before ACharacter::Jump.
+			// A bare Jump() instead exercises FallOff in this controlled controller.
+			if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJOneShotWarpProbe"))) Locomotion->HandleJumpStarted();
+			Player->Jump();
+		}
 		if (RecordedInput.IsEmpty() && bLand && Frame == FMath::RoundToInt((JumpAtSeconds + .25f) * PlaybackHz)) Player->StopJumping();
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		for (auto* Mesh : Meshes) Mesh->SetLastRenderTime(World->GetTimeSeconds());
@@ -276,6 +288,46 @@ public:
 		const bool bOverride = Anim->GetThreadSafeStateControllerShouldOverrideMotionMatching();
 		const auto MM = Anim->GetMotionMatchingDebugSnapshot();
 		const FName External = GetFNameSafe(Anim->GetThreadSafeStateControllerSelectedAnimation());
+		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJOneShotWarpProbe")) &&
+			bOverride && !Player->GetMesh()->IsRunningParallelEvaluation())
+		{
+			for (const auto* NodeProperty : IAnimClassInterface::GetFromClass(Anim->GetClass())->GetAnimNodeProperties())
+			{
+				if (NodeProperty->Struct->GetFName() != TEXT("AnimNode_OrientationWarping")) continue;
+				const void* Node = NodeProperty->ContainerPtrToValuePtr<void>(Anim);
+				auto ReadFloat = [&](const TCHAR* Name)
+				{
+					const auto* Field = FindFProperty<FFloatProperty>(NodeProperty->Struct, Name);
+					return Field ? Field->GetPropertyValue_InContainer(Node) : -999.f;
+				};
+				const auto* AssetField = FindFProperty<FObjectPropertyBase>(NodeProperty->Struct, TEXT("CurrentAnimAsset"));
+				const auto* Sequence = AssetField ? Cast<UAnimSequence>(AssetField->GetObjectPropertyValue_InContainer(Node)) : nullptr;
+				const float Time = ReadFloat(TEXT("CurrentAnimAssetTime"));
+				const FAnimExtractContext Extract(Time, true);
+				const float Curve = Sequence ? Sequence->EvaluateCurveData(TEXT("enable_warping"), Extract) : -1.f;
+				const FVector RootDelta = Sequence ? Sequence->ExtractRootMotionFromRange(Time, Time + 1.f / PlaybackHz, Extract).GetTranslation() : FVector::ZeroVector;
+				// Inactive sample clones retain their previous debug inputs. Count
+				// only the currently selected asset, never a stale Start correction.
+				if (Sequence == Anim->GetThreadSafeStateControllerSelectedAnimation() &&
+					ReadFloat(TEXT("ActualAlpha")) > .01f && FMath::Abs(ReadFloat(TEXT("LocomotionAngle"))) > 20.f)
+				{
+					JumpWarpFrames += Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToInAir;
+					LandWarpFrames += Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToLand;
+				}
+				Report += FString::Printf(TEXT("WarpProbe Frame=%d State=%d Node=%s Alpha=%.4f ActualAlpha=%.4f Angle=%.3f Asset=%s Time=%.4f Curve=%.4f RootEnabled=%d RootSpeed=%.3f Threshold=%.3f\n"),
+					Frame, int32(Anim->GetThreadSafeStateControllerPresentationState()), *NodeProperty->GetName(), ReadFloat(TEXT("Alpha")),
+					ReadFloat(TEXT("ActualAlpha")), ReadFloat(TEXT("LocomotionAngle")), *GetNameSafe(Sequence), Time, Curve,
+					Sequence && Sequence->HasRootMotion(), RootDelta.Size2D() * PlaybackHz, ReadFloat(TEXT("MinRootMotionSpeedThreshold")));
+				if (ReadFloat(TEXT("ActualAlpha")) > .01f && Frame % 5 == 0)
+				{
+					FNodeDebugData Debug(Anim);
+					NodeProperty->ContainerPtrToValuePtr<FAnimNode_SkeletalControlBase>(Anim)->GatherDebugData(Debug);
+					for (const auto& Row : Debug.GetFlattenedDebugData())
+						if (Row.DebugLine.Contains(TEXT("OrientationWarping")))
+							Report += FString::Printf(TEXT("WarpEvaluated Frame=%d %s\n"), Frame, *Row.DebugLine);
+				}
+			}
+		}
 		if (bCurveResponse && CurveCases()[Scenario].Pattern >= 4 && Frame >= At(240) && bInput && !bOverride)
 		{
 			++MicroSettledFrames;
@@ -374,7 +426,10 @@ public:
 		}
 		if (bOverride) OutgoingClip = External;
 		const bool bWindow = Frame - ReturnFrame <= At(18);
-		if (Capture && (Frame == At(120) || (bWindow && (Frame - ReturnFrame) % FMath::Max(1, At(3)) == 0)))
+		const bool bWarpCapture = FParse::Param(FCommandLine::Get(), TEXT("ProjectJOneShotWarpProbe")) && bOverride &&
+			(Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToInAir ||
+			 Anim->GetThreadSafeStateControllerPresentationState() == EProject_JStateControllerPresentationState::TransitionToLand) && Frame % 6 == 0;
+		if (Capture && (bWarpCapture || Frame == At(120) || (bWindow && (Frame - ReturnFrame) % FMath::Max(1, At(3)) == 0)))
 		{
 			const FVector Center = Player->GetActorLocation() + FVector(0,0,-10);
 			const FVector Position = Center + FVector(350,350,130);
@@ -531,6 +586,13 @@ public:
 		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJExpectOneShotHandoff")) && LiveCVar && LiveCVar->GetInt() != 0)
 			Test->TestTrue(TEXT("Prepared graph actually retains outgoing samples or runs engine inertialization"), LiveFrames + InertialFrames >= 3);
 		Report += FString::Printf(TEXT("Summary Scenario=%d Returns=%d WindowFrames=%d StartReturns=%d LandReturns=%d LiveFrames=%d InertialFrames=%d\n"), Scenario, Returns, WindowFrames, StartReturns, LandReturns, LiveFrames, InertialFrames);
+		if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJOneShotWarpProbe")) && bCurveResponse &&
+			IsStrafe() && bLand && FMath::Abs(CurveCases()[Scenario].Keys.X) > .1f)
+		{
+			Test->TestTrue(TEXT("Diagonal jump traverses an active orientation correction"), JumpWarpFrames > 0);
+			Test->TestTrue(TEXT("Diagonal landing traverses an active orientation correction"), LandWarpFrames > 0);
+			Report += FString::Printf(TEXT("WarpSummary JumpFrames=%d LandFrames=%d\n"), JumpWarpFrames, LandWarpFrames);
+		}
 		if (bInputResponse)
 		{
 			Test->TestTrue(TEXT("Input was changed during an actual authored Start/Land"), bChangedDuringShot);
@@ -563,6 +625,7 @@ public:
 		InertialFrames = 0;
 		ShotFrame = -1; CompatibleFrames = ObservedTurnFrames = 0; CameraYaw = 0; bChangedDuringShot = false;
 		CurveReturns = MicroSettledFrames = 0;
+		JumpWarpFrames = LandWarpFrames = 0;
 		if (++Scenario < (bDirectionCoverage ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8) && SingleScenario == INDEX_NONE) return false;
 		FString Output; FParse::Value(FCommandLine::Get(), bDirectionCoverage ? TEXT("ProjectJOneShotDirectionOutput=") :
 			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : bInputResponse ? TEXT("ProjectJOneShotInputOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);

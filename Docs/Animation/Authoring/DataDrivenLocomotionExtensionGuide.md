@@ -1,5 +1,7 @@
 # 데이터 주도형 이동 컨텍스트 확장 가이드
 
+**sample graph 보정 분기 계약:** selector는 아직 Update되지 않은 Input.Player의 lazy 연결을 전제로 판단하면 안 된다. 엔진이 graph 진입 전에 설치한 현재 sample helper의 Player와 authored pose index/asset 일치를 확인한다. 전방 clip을 재사용하는 대각 Jump/Land의 실제 보정 활성까지 확인해야 하며 선택 존재만으로 완료 처리하지 않는다. [R20 원인·수정·회귀](../../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md)를 참조한다.
+
 ## 목적
 
 Project J의 플레이어 전신 애니메이션은 **큰 이동 문맥(Context)** 과
@@ -28,6 +30,12 @@ Transformed                      변신 종족, 형태, 전용 능력/애니메�
 마스터 AnimGraph에 종별 분기를 늘리지 않는다.
 
 ## 현재의 고정 계약
+
+### 방향별 Chooser의 콘텐츠 범위
+
+Strafe 방향은 이동 sector이고 Foot은 접촉 변형이다. Stand 착지의 입력 의도와 잔여 이동 방향도 서로 다른 값이다. 필요한 대각 clip이 없으면 기존 제작 계약처럼 FL/FR→F, BL/BR→B 등의 authored alias를 둘 수 있지만, **입력 대각 조건과 Light/Heavy·Foot·선택 출력을 보존**한다. native sector를 Forward나 과거4방향으로 강제 바꾸어 빈 행을 숨기지 않는다. R19에서 Stand Land의 대각 조건16행을 보완했고 원본19행·비활성 제작 행·출력을 유지했다. [재현·영향 회귀와 실행 한계](../../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)를 함께 확인한다.
+
+Chooser를 확장할 때 root 파일 목록뿐 아니라 result/fallback의 Asset/Evaluate/Nested table, 내부 표와 각 context/출력 소비자를 대조한다. PoseSearch cost로 선택하는 겹치는 조건·양발 행은 단순 중복이 아니다. 미설치 예제의 GUID context나 enum을 확인 없이 현재 player root로 바꾸지 않는다.
 
 `EProject_JAnimationLocomotionMode`는 전신 문맥만 선택한다.
 

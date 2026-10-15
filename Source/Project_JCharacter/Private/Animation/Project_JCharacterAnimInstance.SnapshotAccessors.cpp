@@ -2,6 +2,8 @@
 // Resolve actor, component, profile and mutable gameplay state only before proxy publication.
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
+#include "Animation/AnimClassInterface.h"
+#include "BlendStack/AnimNode_BlendStack.h"
 #include "BlendStack/AnimNode_BlendStackInput.h"
 
 FProject_JAnimMotionMatchingThreadSafeData UProject_JCharacterAnimInstance::GetMotionMatchingDebugSnapshot() const
@@ -467,11 +469,25 @@ bool UProject_JCharacterAnimInstance::GetThreadSafePlaybackUsesAuthoredCorrectio
 	const auto& Proxy = GetProxyOnAnyThread<FProject_JCharacterAnimInstanceProxy>();
 	if (Proxy.GetExternalPlaybackSampleIndex() == INDEX_NONE) return false;
 	const auto& Playback = Proxy.GetExternalPlaybackData();
-	if (const auto* Input = SampleNode.GetAnimNodePtr<FAnimNode_BlendStackInput>(); Input && Input->Player && *Input->Player)
+	if (const auto* Input = SampleNode.GetAnimNodePtr<FAnimNode_BlendStackInput>())
 	{
-		const auto& Player = **Input->Player;
-		return Player.GetPoseLinkIndex() == Proxy.GetExternalPlaybackSampleIndex() &&
-			Player.GetAnimationAsset() == Playback.SelectedAnimation;
+		// A selector can query this before its input branch has ever updated.
+		// Input.Player is connected lazily by that branch's first Update, so using
+		// it here would keep the very branch that initializes it permanently off.
+		// Blend Stack installs the current player in its execution helper before
+		// entering the sample graph. Resolve that same immutable compiled binding.
+		const auto* Interface = IAnimClassInterface::GetFromClass(GetClass());
+		if (!Interface) return false;
+		const auto& Properties = Interface->GetAnimNodeProperties();
+		if (Input->BlendStackAllocationIndex < 0 || Input->BlendStackAllocationIndex >= Properties.Num()) return false;
+		const int32 OwnerIndex = Properties.Num() - 1 - Input->BlendStackAllocationIndex;
+		const auto* Property = Properties[OwnerIndex];
+		if (!Property || !Property->Struct->IsChildOf(FAnimNode_BlendStack_Standalone::StaticStruct())) return false;
+		const auto* Stack = Property->ContainerPtrToValuePtr<FAnimNode_BlendStack_Standalone>(this);
+		if (!Stack->SampleGraphExecutionHelpers.IsValidIndex(Input->SampleIndex)) return false;
+		const auto* Player = Stack->SampleGraphExecutionHelpers[Input->SampleIndex].Player;
+		return Player && Player->GetPoseLinkIndex() == Proxy.GetExternalPlaybackSampleIndex() &&
+			Player->GetAnimationAsset() == Playback.SelectedAnimation;
 	}
 	return false;
 }

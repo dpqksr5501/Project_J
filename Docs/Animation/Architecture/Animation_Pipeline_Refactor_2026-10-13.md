@@ -1,5 +1,7 @@
 # 애니메이션 파이프라인 리팩토링 — 2026-10-13
 
+후속 [R20 Strafe 대각 보정 복구](../../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): sample selector의 소유권은 아직 Update되지 않은 Input.Player의 lazy 연결에 의존하면 안 된다. 엔진이 graph 진입 전에 설치한 현재 helper Player를 compiled allocation/sample index로 확인하고, 정확한 authored pose index/asset 검사를 유지한다.
+
 ## 목적과 기준선
 
 통합 재생과 Strafe/Land 개선을 보존하면서 판단·재생·엔진 연결·품질 예산의 경계를 정리했다. 동작 수치, PSS/PSD, CMC/GAS 및 네트워크 프로토콜을 동시에 바꾸지 않는다.

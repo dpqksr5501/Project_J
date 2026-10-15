@@ -1,5 +1,9 @@
 # Project J 문서 시작점
 
+**최신 R20 수정:** [Strafe 대각 점프·착지의 sample graph 보정 복구](Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md). 제자리 회전·OTM과 기존 정책을 보존하고 호환18개·대각6시나리오·Editor/Game 빌드로 확인했습니다.
+
+**최신 PC 소스·데이터 대조:** [R19 범위 장부·구조 지도·착지 수정·검증](Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md). 기존 검토를 재사용하고 DT·Chooser·IA·IMC 및 BP 실제 연결을 추가 대조했습니다. 미검토/실행 미검증/성능 보류를 별도로 남겼습니다.
+
 **PC 잔여 검토:** [Door·BP·DA의 구조 대조와 마감 검증](Review/Audits/Project_J_PC_Asset_Review_Closure_2026-10-15.md). 현재 DA19·GE2와 기존 근거를 연결해 유지 이유를 기록했고 Door·identity 경계를 수정했습니다. 전수 실행 품질·성능 검증과 구분합니다.
 
 **최신 PC 후속:** [소스·BP·DA 정리 결과와 남은 범위](Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md). 실제 중복 스킬 부여·입력 receipt·애니메이션/편집/퇴장 소유권을 정리했습니다. 집중90개+실제 BP1개 통과. 성능·전수 환경 검증과 구분합니다.

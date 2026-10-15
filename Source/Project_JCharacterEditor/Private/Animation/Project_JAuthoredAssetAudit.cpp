@@ -1,5 +1,6 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Chooser.h"
+#include "ObjectChooser_Asset.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -9,6 +10,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "UObject/UnrealType.h"
+#include "UObject/Package.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJAuthoredAssetAudit, Log, All);
 namespace
@@ -24,40 +26,98 @@ void AuditAuthoredAssets(const TArray<FString>& Args)
 {
     // This tool supplements MCP's public-property view with native authoring
     // rows. It reads only; it never compiles, annotates, modifies or saves assets.
-    const FString Name = Args.Num() == 1 ? Args[0] : TEXT("AnimationAssetAudit");
+    const bool bChoosersOnly = Args.Num() == 2 && Args[1] == TEXT("ChoosersOnly");
+    if (Args.Num() > 2 || (Args.Num() == 2 && !bChoosersOnly)) { return; }
+    const FString Name = Args.IsEmpty() ? TEXT("AnimationAssetAudit") : Args[0];
     if (Name.IsEmpty() || Name.Contains(TEXT("/")) || Name.Contains(TEXT("\\")) || Name.Contains(TEXT(".."))) { return; }
+    const FString Output = FPaths::ProjectSavedDir() / TEXT("Validation") / (Name + TEXT(".json"));
+    if (FPaths::FileExists(Output))
+    {
+        UE_LOG(LogProjectJAuthoredAssetAudit, Error, TEXT("Preserving existing audit: %s"), *Output);
+        return;
+    }
     auto Root = MakeShared<FJsonObject>();
     Root->SetBoolField(TEXT("assetsModified"), false);
+    Root->SetBoolField(TEXT("choosersOnly"), bChoosersOnly);
     TArray<TSharedPtr<FJsonValue>> Records;
+    TSet<const UChooserTable*> SeenChoosers;
     auto& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
     const UClass* Types[] = {UChooserTable::StaticClass(), UPoseSearchDatabase::StaticClass(), UPoseSearchSchema::StaticClass()};
     for (const UClass* Type : Types)
     {
+        if (bChoosersOnly && Type != UChooserTable::StaticClass()) { continue; }
         TArray<FAssetData> Assets; Registry.GetAssetsByClass(Type->GetClassPathName(), Assets, true);
         Assets.Sort([](const FAssetData& A, const FAssetData& B) { return A.PackageName.LexicalLess(B.PackageName); });
         for (const auto& Data : Assets)
         {
-            if (!Data.PackageName.ToString().StartsWith(TEXT("/Game/Animation_Logic/"))) { continue; }
+            if (!Data.PackageName.ToString().StartsWith(bChoosersOnly ? TEXT("/Game/") : TEXT("/Game/Animation_Logic/"))) { continue; }
             auto Record = MakeShared<FJsonObject>();
             Record->SetStringField(TEXT("asset"), Data.GetObjectPathString());
             UObject* Asset = Data.GetAsset();
             if (!Asset) { Record->SetBoolField(TEXT("loadFailed"), true); }
             else if (const auto* Chooser = Cast<UChooserTable>(Asset))
             {
-                TArray<TSharedPtr<FJsonValue>> Rows;
-                for (int32 Index = 0; Index < Chooser->ResultsStructs.Num(); ++Index)
+                // Only the scoped mode follows embedded tables. Default exports
+                // retain their original root-record count and PSD/schema scope.
+                TArray<const UChooserTable*> Pending { Chooser };
+                while (!Pending.IsEmpty())
                 {
-                    auto Row = MakeShared<FJsonObject>();
-                    Row->SetNumberField(TEXT("row"), Index);
-                    Row->SetBoolField(TEXT("disabled"), Chooser->DisabledRows.IsValidIndex(Index) && Chooser->DisabledRows[Index]);
-                    Row->SetStringField(TEXT("result"), ExportStruct(Chooser->ResultsStructs[Index]));
-                    Rows.Add(MakeShared<FJsonValueObject>(Row));
+                    const UChooserTable* Current = Pending.Pop(EAllowShrinking::No);
+                    if (!Current || SeenChoosers.Contains(Current)) { continue; }
+                    SeenChoosers.Add(Current);
+                    auto ChooserRecord = Current == Chooser ? Record : MakeShared<FJsonObject>();
+                    ChooserRecord->SetStringField(TEXT("asset"), Current->GetPathName());
+                    ChooserRecord->SetStringField(TEXT("registryRoot"), Chooser->GetPathName());
+                    ChooserRecord->SetStringField(TEXT("contextOwner"), GetPathNameSafe(Current->GetRootChooser()));
+                    ChooserRecord->SetStringField(TEXT("outputObjectType"), GetPathNameSafe(Current->OutputObjectType));
+                    ChooserRecord->SetNumberField(TEXT("resultType"), int32(Current->ResultType));
+                    ChooserRecord->SetBoolField(TEXT("packageDirty"), Current->GetOutermost()->IsDirty());
+                    TArray<TSharedPtr<FJsonValue>> Contexts;
+                    for (const auto& Context : Current->GetContextData()) { Contexts.Add(MakeShared<FJsonValueString>(ExportStruct(Context))); }
+                    ChooserRecord->SetArrayField(TEXT("contexts"), Contexts);
+                    TArray<TSharedPtr<FJsonValue>> Rows;
+                    TArray<TSharedPtr<FJsonValue>> ReferencedTables;
+                    auto FollowResult = [&](const FInstancedStruct& Result)
+                    {
+                        const UChooserTable* Referenced = nullptr;
+                        if (Result.GetScriptStruct() == FAssetChooser::StaticStruct())
+                        { Referenced = Cast<UChooserTable>(Result.Get<FAssetChooser>().Asset); }
+                        else if (Result.GetScriptStruct() == FEvaluateChooser::StaticStruct())
+                        { Referenced = Result.Get<FEvaluateChooser>().Chooser; }
+                        else if (Result.GetScriptStruct() == FNestedChooser::StaticStruct())
+                        { Referenced = Result.Get<FNestedChooser>().Chooser; }
+                        if (Referenced)
+                        {
+                            ReferencedTables.Add(MakeShared<FJsonValueString>(Referenced->GetPathName()));
+                            if (bChoosersOnly) { Pending.Add(Referenced); }
+                        }
+                    };
+                    for (int32 Index = 0; Index < Current->ResultsStructs.Num(); ++Index)
+                    {
+                        auto Row = MakeShared<FJsonObject>();
+                        Row->SetNumberField(TEXT("row"), Index);
+                        Row->SetBoolField(TEXT("disabled"), Current->DisabledRows.IsValidIndex(Index) && Current->DisabledRows[Index]);
+                        Row->SetStringField(TEXT("result"), ExportStruct(Current->ResultsStructs[Index]));
+                        FollowResult(Current->ResultsStructs[Index]);
+                        Rows.Add(MakeShared<FJsonValueObject>(Row));
+                    }
+                    ChooserRecord->SetArrayField(TEXT("rows"), Rows);
+                    ChooserRecord->SetStringField(TEXT("fallback"), ExportStruct(Current->FallbackResult));
+                    FollowResult(Current->FallbackResult);
+                    ChooserRecord->SetArrayField(TEXT("resultReferencedTables"), ReferencedTables);
+                    TArray<TSharedPtr<FJsonValue>> Columns;
+                    for (const auto& Column : Current->ColumnsStructs) { Columns.Add(MakeShared<FJsonValueString>(ExportStruct(Column))); }
+                    ChooserRecord->SetArrayField(TEXT("columns"), Columns);
+                    TArray<TSharedPtr<FJsonValue>> Nested;
+                    for (const auto& Child : Current->NestedChoosers)
+                    {
+                        Nested.Add(MakeShared<FJsonValueString>(GetPathNameSafe(Child.Get())));
+                        if (bChoosersOnly) { Pending.Add(Child.Get()); }
+                    }
+                    ChooserRecord->SetArrayField(TEXT("nestedChoosers"), Nested);
+                    Records.Add(MakeShared<FJsonValueObject>(ChooserRecord));
                 }
-                Record->SetArrayField(TEXT("rows"), Rows);
-                Record->SetStringField(TEXT("fallback"), ExportStruct(Chooser->FallbackResult));
-                TArray<TSharedPtr<FJsonValue>> Columns;
-                for (const auto& Column : Chooser->ColumnsStructs) { Columns.Add(MakeShared<FJsonValueString>(ExportStruct(Column))); }
-                Record->SetArrayField(TEXT("columns"), Columns);
+                continue;
             }
             else if (const auto* Database = Cast<UPoseSearchDatabase>(Asset))
             {
@@ -100,11 +160,10 @@ void AuditAuthoredAssets(const TArray<FString>& Args)
     }
     Root->SetArrayField(TEXT("assets"), Records);
     FString Json; FJsonSerializer::Serialize(Root, TJsonWriterFactory<>::Create(&Json));
-    const FString Output = FPaths::ProjectSavedDir() / TEXT("Validation") / (Name + TEXT(".json"));
     const bool bWritten = FFileHelper::SaveStringToFile(Json, *Output);
     UE_LOG(LogProjectJAuthoredAssetAudit, Display, TEXT("Read-only authored asset audit: assets=%d written=%d path=%s"), Records.Num(), bWritten, *Output);
 }
 FAutoConsoleCommand AuditCommand(TEXT("ProjectJ.Animation.AuditAuthoredAssets"),
-    TEXT("Read-only Chooser rows, PSD entries/schema compatibility and schema inventory. Optional output basename under Saved/Validation."),
+    TEXT("Read-only Chooser rows, PSD entries/schema compatibility and schema inventory. [OutputName] [ChoosersOnly]. The scoped mode includes all /Game Choosers and embedded tables."),
     FConsoleCommandWithArgsDelegate::CreateStatic(&AuditAuthoredAssets));
 }

@@ -1,5 +1,9 @@
 # 애니메이션
 
+[R20 대각 점프·착지 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): authored 보정 selector가 첫 Update의 lazy Input.Player 연결을 선행 요구하던 순환 의존성을 해소했습니다. 제자리 회전·OTM 정책/에셋 보존, 호환18개·대각6시나리오·Editor/Game 빌드 결과와 한계를 기록했습니다.
+
+[R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md)는 Chooser22개 package/내부 포함28개·DT1·입력 연결을 대조하고 Stand 착지의 대각 선택 누락을 수정했다. native 방향 상태를 보존하며 authored alias 조건에서 해결했고, 논리 회귀·Cook과 실제 포즈/원격 경계를 구분한다.
+
 현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
 
 [구조 개선](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md)은 전투·탑승 linked layer의 리소스 수명을 공통화하고 native/DA 발 배치 기본값의 중복 초기화를 제거했다. 레이어 선택 정책·GT/worker 경계·authored 값은 유지한다.

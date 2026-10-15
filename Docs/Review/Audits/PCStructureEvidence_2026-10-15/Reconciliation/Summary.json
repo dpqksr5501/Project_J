@@ -1,0 +1,480 @@
+{
+  "base_commit": "e5e534e81ad909145fc34130f2c2d420b244049a",
+  "utc": "2026-10-15T05:01:27.542835+00:00",
+  "scope_ko": "기존 명시 본문/헤더/inline/호출/소유권 기록 재사용 + source/config 경로 누락 대조. 이 수치는 함수별 의미 검토나 모든 실행 품질 완료의 증거가 아니다.",
+  "source_config_paths": 636,
+  "new_source_config_paths": [],
+  "removed_source_config_paths": [],
+  "changed_source_config": [
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JLandingReturnTests.cpp",
+      "before_sha256": "210249d6f289e9da6c2adaabd8db2bf7ea200ca2e73b33a2b53b7bbff6667b1d",
+      "current_sha256": "c12e4bb67a2b2c168f34379939e8365e248ec72eb49b60b61e3a7e6486259b69"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Animation/Project_JAuthoredAssetAudit.cpp",
+      "before_sha256": "34e24ed25c73000f980d875ae1fa50fac8ea3c012b89dfd8c0a23b218ad21102",
+      "current_sha256": "2fdbb43f73567f9bd15be46b12cdb801701e9633d3f41bdd7ae387e28e204730"
+    }
+  ],
+  "selected_asset_hashes": [
+    {
+      "asset": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "baseline_sha256": "701e189be5aaff7d5d9c4d451cbc3f64bdfa2f8266e936b40936d5d9694ca91a",
+      "current_sha256": "701e189be5aaff7d5d9c4d451cbc3f64bdfa2f8266e936b40936d5d9694ca91a"
+    },
+    {
+      "asset": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "path": "Content/Animation_Logic/ABPs/ABP_Player.uasset",
+      "baseline_sha256": "463026fb117fd462113375035d4c021f53bc67dba8d42ffb076544ad034ffe43",
+      "current_sha256": "463026fb117fd462113375035d4c021f53bc67dba8d42ffb076544ad034ffe43"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/CHT_Player_InAir",
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_InAir.uasset",
+      "baseline_sha256": "0f1e118991abcdd793eb44e86d4da5f3e0d189c9456a39a266b07ac4c073b42e",
+      "current_sha256": "0f1e118991abcdd793eb44e86d4da5f3e0d189c9456a39a266b07ac4c073b42e"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/CHT_Player_Land",
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_Land.uasset",
+      "baseline_sha256": "75d7eafef1171bfeb5c777e26520b6c27780aa0a4d2a585d6429fd6d0eef1d01",
+      "current_sha256": "75d7eafef1171bfeb5c777e26520b6c27780aa0a4d2a585d6429fd6d0eef1d01"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/CHT_Player_OTM_Ground",
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_OTM_Ground.uasset",
+      "baseline_sha256": "91431432ad385da98a2d1aac53d8d5415d2f33fe630e74bf794a26d24d0725d7",
+      "current_sha256": "91431432ad385da98a2d1aac53d8d5415d2f33fe630e74bf794a26d24d0725d7"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations",
+      "path": "Content/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations.uasset",
+      "baseline_sha256": "38aeb1ca645b2be5e8fc798e39fe768ff6ec6304e86bef2710453c6ec712e006",
+      "current_sha256": "38aeb1ca645b2be5e8fc798e39fe768ff6ec6304e86bef2710453c6ec712e006"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_FallOff",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_FallOff.uasset",
+      "baseline_sha256": "36a015488d3db7595ab119b4404370f09259f98582d6c7bfa7e5ed5d6f42c140",
+      "current_sha256": "36a015488d3db7595ab119b4404370f09259f98582d6c7bfa7e5ed5d6f42c140"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Ground",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Ground.uasset",
+      "baseline_sha256": "97d9f7abbdf8ad0c440215757ebb955244bb42aa8d25214bd913c61c29a1e1aa",
+      "current_sha256": "97d9f7abbdf8ad0c440215757ebb955244bb42aa8d25214bd913c61c29a1e1aa"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_GroundPresentation",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_GroundPresentation.uasset",
+      "baseline_sha256": "ca2d82c38e7c6b110dae2048fe747cc7ec65cec2cf99d850ed1af2ed2b5c34a8",
+      "current_sha256": "ca2d82c38e7c6b110dae2048fe747cc7ec65cec2cf99d850ed1af2ed2b5c34a8"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAir",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAir.uasset",
+      "baseline_sha256": "d39b4372f59f1e351e05fd7de99664179a773e1f20483bbd5c066a4559c6edb8",
+      "current_sha256": "d39b4372f59f1e351e05fd7de99664179a773e1f20483bbd5c066a4559c6edb8"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAirLoop",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_InAirLoop.uasset",
+      "baseline_sha256": "0cf659b837ea7e570198ac874879e63c8db686ddca2ae6dc2819a6c597de3e2a",
+      "current_sha256": "0cf659b837ea7e570198ac874879e63c8db686ddca2ae6dc2819a6c597de3e2a"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Jump",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Jump.uasset",
+      "baseline_sha256": "5ae370224d7bb809751ede3225ab8121df884d244db6a094f20c82da05e66ddd",
+      "current_sha256": "5ae370224d7bb809751ede3225ab8121df884d244db6a094f20c82da05e66ddd"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land.uasset",
+      "baseline_sha256": "f2d09c08f3bbf7d84775c4e1ed9b0eb9c54365b1d7981cc16e438e50e7eb583a",
+      "current_sha256": "f2d09c08f3bbf7d84775c4e1ed9b0eb9c54365b1d7981cc16e438e50e7eb583a"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Run",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Run.uasset",
+      "baseline_sha256": "820bf55c38f8037ee86a7a6def95c41da10ff955441ddaf38134b3d25302fa69",
+      "current_sha256": "820bf55c38f8037ee86a7a6def95c41da10ff955441ddaf38134b3d25302fa69"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Sprint",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Sprint.uasset",
+      "baseline_sha256": "101ec798e164a6afdb8ec9b1cd944c7f82bab7f4ca0ae92476314f0c8495d2c1",
+      "current_sha256": "101ec798e164a6afdb8ec9b1cd944c7f82bab7f4ca0ae92476314f0c8495d2c1"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Stand",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Land_Stand.uasset",
+      "baseline_sha256": "15635ade88180efa3d4236540a90b44a50670bb01a0b3a696e762f2fa3d2c501",
+      "current_sha256": "fa4b1fef737f70f3e7c96c3c8b4726976ecfa8948baa237700225aae5b0960b0"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Pivot",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Pivot.uasset",
+      "baseline_sha256": "73958277e22c27fe8d8f3e82478241adde131dd1ab55269fc1fea2f98580723a",
+      "current_sha256": "73958277e22c27fe8d8f3e82478241adde131dd1ab55269fc1fea2f98580723a"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Start",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Start.uasset",
+      "baseline_sha256": "f676367907b4ed7b633383eab65fea32e89522741b0b315340987e5c44cb7fcb",
+      "current_sha256": "f676367907b4ed7b633383eab65fea32e89522741b0b315340987e5c44cb7fcb"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Stop",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Stop.uasset",
+      "baseline_sha256": "18d126e6ef1eb18e22f541a5bf06a1ab6617c85b8f51e66cc656214dabbb74d8",
+      "current_sha256": "18d126e6ef1eb18e22f541a5bf06a1ab6617c85b8f51e66cc656214dabbb74d8"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Start",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Start.uasset",
+      "baseline_sha256": "492b9547c4c7b54d98c3c5f022bf0629430abf0593739aec0a38063c98708c56",
+      "current_sha256": "492b9547c4c7b54d98c3c5f022bf0629430abf0593739aec0a38063c98708c56"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Stop",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Sprint_Stop.uasset",
+      "baseline_sha256": "f9a9dc3f1f2e55afb05bf66f3fd0c1df905a14813afb6d16b04da40d03bd2f8d",
+      "current_sha256": "f9a9dc3f1f2e55afb05bf66f3fd0c1df905a14813afb6d16b04da40d03bd2f8d"
+    },
+    {
+      "asset": "/Game/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_TurnInPlace",
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_TurnInPlace.uasset",
+      "baseline_sha256": "0a2f74c40af10764345abd3e36b076a922e4fa918f069cebdd5b6ad0996a9418",
+      "current_sha256": "0a2f74c40af10764345abd3e36b076a922e4fa918f069cebdd5b6ad0996a9418"
+    },
+    {
+      "asset": "/Game/Character_BPs/BP_Player",
+      "path": "Content/Character_BPs/BP_Player.uasset",
+      "baseline_sha256": "c8063a53600af78dd6059c4c072c0af258b782f76e970c3f962a92d241970e4a",
+      "current_sha256": "c8063a53600af78dd6059c4c072c0af258b782f76e970c3f962a92d241970e4a"
+    },
+    {
+      "asset": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "baseline_sha256": "382d852d46bc484dad106f4fa529dc997fdf76d20213ea5e9d900293a8deef3e",
+      "current_sha256": "382d852d46bc484dad106f4fa529dc997fdf76d20213ea5e9d900293a8deef3e"
+    },
+    {
+      "asset": "/Game/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_CMC",
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_CMC.uasset",
+      "baseline_sha256": "2628a6d16878b60fb3d4f61b7371c3b4072835cf86f11cf5e7cc2e47fc6e0ab5",
+      "current_sha256": "2628a6d16878b60fb3d4f61b7371c3b4072835cf86f11cf5e7cc2e47fc6e0ab5"
+    },
+    {
+      "asset": "/Game/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_Mover",
+      "path": "Content/Characters/UEFN_Mannequin/Animations/Traversal/CHT_TraversalMontages_Mover.uasset",
+      "baseline_sha256": "fb23113ed58a02214ebc506f42bc17e08cd00e4672a16a398041dbd6588e0f29",
+      "current_sha256": "fb23113ed58a02214ebc506f42bc17e08cd00e4672a16a398041dbd6588e0f29"
+    },
+    {
+      "asset": "/Game/Characters/UEFN_Mannequin/Rigs/MDT_UEFN_Mannequin",
+      "path": "Content/Characters/UEFN_Mannequin/Rigs/MDT_UEFN_Mannequin.uasset",
+      "baseline_sha256": "c8c55c3b0ea35076be8b8324871e8aa78c05abe77f4199614de37f9dbba21bc0",
+      "current_sha256": "c8c55c3b0ea35076be8b8324871e8aa78c05abe77f4199614de37f9dbba21bc0"
+    },
+    {
+      "asset": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "baseline_sha256": "aa4e2e350a679a328c6e3d291577d07406f8e9ea3f03b4d4f1a03e1b559a59bf",
+      "current_sha256": "aa4e2e350a679a328c6e3d291577d07406f8e9ea3f03b4d4f1a03e1b559a59bf"
+    },
+    {
+      "asset": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+      "path": "Content/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data.uasset",
+      "baseline_sha256": "532f05cd9a6942c39189aab69fa52b5ccb9e43bef19cef23a01bf1692a9ebff9",
+      "current_sha256": "532f05cd9a6942c39189aab69fa52b5ccb9e43bef19cef23a01bf1692a9ebff9"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Attack_LMB",
+      "path": "Content/Input/Actions/IA_Attack_LMB.uasset",
+      "baseline_sha256": "45f0c1c17b7cc078be8bc3b83441276f12f283982e6a2927b50a2617226b281b",
+      "current_sha256": "45f0c1c17b7cc078be8bc3b83441276f12f283982e6a2927b50a2617226b281b"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Attack_RMB",
+      "path": "Content/Input/Actions/IA_Attack_RMB.uasset",
+      "baseline_sha256": "1e745271324c26892441ea1cc41cb4cae96fca3e457005d90fd731abadbbd5d0",
+      "current_sha256": "1e745271324c26892441ea1cc41cb4cae96fca3e457005d90fd731abadbbd5d0"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Interact",
+      "path": "Content/Input/Actions/IA_Interact.uasset",
+      "baseline_sha256": "25701321338fdd21f9ca36bdb9a9b334215b7f38f795a4a0bc1815ee893cb4d4",
+      "current_sha256": "25701321338fdd21f9ca36bdb9a9b334215b7f38f795a4a0bc1815ee893cb4d4"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Jump",
+      "path": "Content/Input/Actions/IA_Jump.uasset",
+      "baseline_sha256": "8ad490f62efd49ec3e6739da4bdb407d029ab367b59f5db7ab75a5efa640eee4",
+      "current_sha256": "8ad490f62efd49ec3e6739da4bdb407d029ab367b59f5db7ab75a5efa640eee4"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Look",
+      "path": "Content/Input/Actions/IA_Look.uasset",
+      "baseline_sha256": "f486ece3bc8635be84d13562a6daeb4cb1641cc770e02e035275cc0c2c1d903e",
+      "current_sha256": "f486ece3bc8635be84d13562a6daeb4cb1641cc770e02e035275cc0c2c1d903e"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MountAscend",
+      "path": "Content/Input/Actions/IA_MountAscend.uasset",
+      "baseline_sha256": "af7e317a9304bd8b73cba023d438cd508b07356bf7d9833fe52fef0902e55ad1",
+      "current_sha256": "af7e317a9304bd8b73cba023d438cd508b07356bf7d9833fe52fef0902e55ad1"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MountDescend",
+      "path": "Content/Input/Actions/IA_MountDescend.uasset",
+      "baseline_sha256": "cb50c0ec71655ec97a4e2a16bee03c94f1640ba5c8518cb45ffabcc8cbb4f04f",
+      "current_sha256": "cb50c0ec71655ec97a4e2a16bee03c94f1640ba5c8518cb45ffabcc8cbb4f04f"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MouseLook",
+      "path": "Content/Input/Actions/IA_MouseLook.uasset",
+      "baseline_sha256": "3097246bebc5dfa9374101660bca11e13a8a3beb426d7056633e96e04dd83819",
+      "current_sha256": "3097246bebc5dfa9374101660bca11e13a8a3beb426d7056633e96e04dd83819"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Move",
+      "path": "Content/Input/Actions/IA_Move.uasset",
+      "baseline_sha256": "fc879e31b195679cc70e472afce9f857c40f6e262c7bb6110035dc9757b0a4bb",
+      "current_sha256": "fc879e31b195679cc70e472afce9f857c40f6e262c7bb6110035dc9757b0a4bb"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MoveIntent_Backward",
+      "path": "Content/Input/Actions/IA_MoveIntent_Backward.uasset",
+      "baseline_sha256": "20feb5576d12babe97e329e6468e921d03cee12070306b10690b98b2de97eba5",
+      "current_sha256": "20feb5576d12babe97e329e6468e921d03cee12070306b10690b98b2de97eba5"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MoveIntent_Forward",
+      "path": "Content/Input/Actions/IA_MoveIntent_Forward.uasset",
+      "baseline_sha256": "149149f2f6265d3bb4de22bd4e544a9a9b686de9ca13ca41c36056d76158bfe5",
+      "current_sha256": "149149f2f6265d3bb4de22bd4e544a9a9b686de9ca13ca41c36056d76158bfe5"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MoveIntent_Left",
+      "path": "Content/Input/Actions/IA_MoveIntent_Left.uasset",
+      "baseline_sha256": "c3e37c61ce9987c714c957c6f875edd5ec39a456f32bcd0bc00f171c802e85ab",
+      "current_sha256": "c3e37c61ce9987c714c957c6f875edd5ec39a456f32bcd0bc00f171c802e85ab"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_MoveIntent_Right",
+      "path": "Content/Input/Actions/IA_MoveIntent_Right.uasset",
+      "baseline_sha256": "1decb84b488d5235de7570113ade396c15fad8e05a81a60c5ce72490b13ca151",
+      "current_sha256": "1decb84b488d5235de7570113ade396c15fad8e05a81a60c5ce72490b13ca151"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Skill_Q",
+      "path": "Content/Input/Actions/IA_Skill_Q.uasset",
+      "baseline_sha256": "25602a5bac1321b07fe906106d69aa2988e95909d9481522f23d26790b0f2832",
+      "current_sha256": "25602a5bac1321b07fe906106d69aa2988e95909d9481522f23d26790b0f2832"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Skill_R",
+      "path": "Content/Input/Actions/IA_Skill_R.uasset",
+      "baseline_sha256": "8c61464cc3477f5d863b2b447b7a08bf03afbbcd13ad823457a53984f4316877",
+      "current_sha256": "8c61464cc3477f5d863b2b447b7a08bf03afbbcd13ad823457a53984f4316877"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Skill_T",
+      "path": "Content/Input/Actions/IA_Skill_T.uasset",
+      "baseline_sha256": "629b54cec684dab6fa08572645021e61bd76b5d7216375a3d40916165293b917",
+      "current_sha256": "629b54cec684dab6fa08572645021e61bd76b5d7216375a3d40916165293b917"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_Sprint",
+      "path": "Content/Input/Actions/IA_Sprint.uasset",
+      "baseline_sha256": "64c336f42cc1b86aeb1552e42ba296d9636adf1dfbc7ec0971937c6a36a1c83a",
+      "current_sha256": "64c336f42cc1b86aeb1552e42ba296d9636adf1dfbc7ec0971937c6a36a1c83a"
+    },
+    {
+      "asset": "/Game/Input/Actions/IA_ToggleCombat",
+      "path": "Content/Input/Actions/IA_ToggleCombat.uasset",
+      "baseline_sha256": "5ed25c52677179d7c66e374e5820468ba7aac71e9b6685ebaf1a744bbe669a3c",
+      "current_sha256": "5ed25c52677179d7c66e374e5820468ba7aac71e9b6685ebaf1a744bbe669a3c"
+    },
+    {
+      "asset": "/Game/Input/IMC_Default",
+      "path": "Content/Input/IMC_Default.uasset",
+      "baseline_sha256": "678209d4b9300ed0f3a99a4de0882ccd34da5de5991f0a2fb227b53b4a3ef9b5",
+      "current_sha256": "678209d4b9300ed0f3a99a4de0882ccd34da5de5991f0a2fb227b53b4a3ef9b5"
+    },
+    {
+      "asset": "/Game/Input/IMC_MouseLook",
+      "path": "Content/Input/IMC_MouseLook.uasset",
+      "baseline_sha256": "6a00157cd520edcf0b037d7091bfe188fa6eb7c48465f695981f7cbe5fb4cc80",
+      "current_sha256": "6a00157cd520edcf0b037d7091bfe188fa6eb7c48465f695981f7cbe5fb4cc80"
+    },
+    {
+      "asset": "/Game/Mount_Assets/Wyvern/BP_Wyvern",
+      "path": "Content/Mount_Assets/Wyvern/BP_Wyvern.uasset",
+      "baseline_sha256": "2f6a9daaaf26dda2c7b636276928b53b04efc39fa3087b496cb5822523306ec2",
+      "current_sha256": "2f6a9daaaf26dda2c7b636276928b53b04efc39fa3087b496cb5822523306ec2"
+    },
+    {
+      "asset": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+      "path": "Content/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.uasset",
+      "baseline_sha256": "a68229ef07d29a92a453b475cb28bbe6001883f163014ba10512959d2d71d0c5",
+      "current_sha256": "a68229ef07d29a92a453b475cb28bbe6001883f163014ba10512959d2d71d0c5"
+    }
+  ],
+  "chooser": {
+    "registry_packages": 22,
+    "unique_tables_including_embedded": 28,
+    "rows": 360,
+    "dirty_packages": 0,
+    "primary_before_rows": 268,
+    "primary_after_rows": 284,
+    "traversal_root_rows": 8,
+    "traversal_embedded_rows": 68,
+    "test_samples_deleted": 0
+  },
+  "input": {
+    "IA": 18,
+    "IMC": 2,
+    "mapping_rows": 27,
+    "modifier_trigger_objects": 14,
+    "MCP_input_mirror_records": 35,
+    "MCP_connection_records": 8
+  },
+  "mirror": {
+    "tables": 1,
+    "rows": 87,
+    "self_bones": 11,
+    "reciprocal_pairs": 38,
+    "runtime_installation_proven": false
+  },
+  "remaining_unreviewed_ko": [
+    "DefaultEditor.ini 11–13 preview profile bag 전체 PostProcess 필드 의미·출력",
+    "fixture CSV 원표본 전체 의미·원로그 재대조·시각 품질"
+  ],
+  "deferred_ko": [
+    "CPU/GPU 원인·반복 성능 비교·200표시/실제 socket 부하",
+    "대규모 원격·운영·전수 시각/오디오 품질",
+    "새 외부/동적 콘텐츠와 아직 설치되지 않은 MMORPG 서비스 어댑터의 실행 검증"
+  ],
+  "new_commit": false,
+  "push_merge_shutdown": false,
+  "runtime_unverified_ko": [
+    "Traversal 예제의 producer·GUID context/enum Mode1/2/10·PoseHistory·embedded PSD6 준비·출력 소비 설치",
+    "MDT runtime mirror 설치·최종 mirrored pose/root motion 품질",
+    "Stand 대각 alias 실제 발 생성/정확 clip 재생/접촉·독립 다중클라이언트 전달"
+  ],
+  "unconfirmed_candidate_ko": "미설치 Traversal Hurdles의 일부 Run Min25/다른 Run250 비대칭: cost 선택 의도/실행 근거 부족으로 보존",
+  "review_evidence_reused": [
+    "Docs/Review/Audits/ContinuationEvidence_2026-10-14/AdditionalReadScopes.json",
+    "Docs/Review/Audits/ContinuationEvidence_2026-10-14/ContinuationWorkQueues.json",
+    "Saved/Validation/Continuation_20261014/R15_StructureCleanupVerification1/ReadOnlyReviewClosure.json",
+    "Docs/Review/Audits/PCStructureEvidence_2026-10-15/Remaining/ReviewCoverage.json"
+  ],
+  "scope_note_ko": "명시 소스/데이터 구조 대조와 시험 범위만 기록. source/config636 경로 연결은 모든 함수·환경·에셋 품질 완료 증명이 아님.",
+  "asset_delta_invariants": {
+    "unchanged_preexisting_root_tables": 21,
+    "stand_original_rows_preserved": 19,
+    "stand_added_exact_diagonal_rows": 16,
+    "stand_original_column_cells_preserved": true,
+    "column_comparison_evidence_ko": "읽기 전용 담당자가4컬럼 각각19셀 prefix와 나머지 binding/default/fallback 설정을 비교; 원본·최종 native export는 ReceiptIndex 참조",
+    "dirty_tables": 0,
+    "active_rows": 320,
+    "disabled_rows": 40
+  },
+  "regression": {
+    "succeeded": 9,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 0.08089020103216171,
+    "tests": [
+      {
+        "path": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.Continuation.ReturnedChooserTraversal",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.CombatTurnLink",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.PlaybackCoverage",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafeDirection.ProductionSchema",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success"
+      },
+      {
+        "path": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success"
+      }
+    ],
+    "producer_chooser_combinations": 64,
+    "repro_selection_failures": 32
+  },
+  "build": {
+    "exitCode": 0,
+    "elapsedSeconds": 12.8277402,
+    "directUBT": true,
+    "target": "Project_JEditor",
+    "moduleScope": "",
+    "fullTarget": true,
+    "compile_actions": 1,
+    "total_actions": 4
+  },
+  "cook": {
+    "exitCode": 0,
+    "hasExited": true,
+    "normalCompletion": true,
+    "elapsedSeconds": 22.81505,
+    "mode": "Cook",
+    "explicitStandLandCookRoot": true,
+    "nativeCPPBuild": false,
+    "gameExecutableValidated": false,
+    "packageRemoteValidated": false,
+    "cooked_packages": 1361,
+    "incrementally_skipped": 0,
+    "platform_skipped": 7,
+    "total_packages": 1368,
+    "stand_in_referenced_set": true,
+    "known_warning": "GameplayCueNotifyPaths fallback /Game"
+  },
+  "test_limit_ko": "Foot 입력은 시험이 제공; producer sector/impact/Land 도달과 authored 선택 존재를 검사. 정확 clip/실제 보행 발 생성/포즈/원격 전달 검증이 아님.",
+  "temporary_authoring_cpp_in_source": false,
+  "final_source_hashes": {
+    "Source/Project_JCharacter/Private/Tests/Project_JLandingReturnTests.cpp": "c12e4bb67a2b2c168f34379939e8365e248ec72eb49b60b61e3a7e6486259b69",
+    "Source/Project_JCharacterEditor/Private/Animation/Project_JAuthoredAssetAudit.cpp": "2fdbb43f73567f9bd15be46b12cdb801701e9633d3f41bdd7ae387e28e204730"
+  },
+  "editor_binaries": {
+    "Binaries/Win64/UnrealEditor-Project_JMMO.dll": "36b7c9d54202ef5044e25a1fa5f4d270476fa06d6c9e640ccb45844ea71a06f7",
+    "Binaries/Win64/UnrealEditor-Project_J.dll": "758743b51077598c3d80c208d0a032d7e7db9d063653938b51e84dc1469b2dc7",
+    "Binaries/Win64/UnrealEditor-Project_JCore.dll": "aa2229f73eb0e8465c1227c05f9948015d4f874bf71ecbd19f2389f91cc18671",
+    "Binaries/Win64/UnrealEditor-Project_JGAS.dll": "ecc32d4f478cf75fee2d83b8312883d2478ababc9795ce0020f731d38bfee7ce",
+    "Binaries/Win64/UnrealEditor-Project_JMount.dll": "91f8969a008a93c35fbe9f558760daaa495e2f8f16bb55ccc81c738876205eea",
+    "Binaries/Win64/UnrealEditor-Project_JCharacter.dll": "1ecc80bcea2e28b835c4b4fad2a95523a533864afb944e77638cc058840018bd",
+    "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll": "7cc5a5fff523d64e5aa4a88f1bfffe3a5457d6909bd87dc2e403b55b2be2d4e0",
+    "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll": "fa4c333407e81354c586bf8332d56cd9be2bbb5c7b61e9b5a6ae8900679c68e8",
+    "Binaries/Win64/UnrealEditor.modules": "108dca6766d8052fa767709f547b2e75e39676dff75c3627ec863f8520e6fadf"
+  }
+}
