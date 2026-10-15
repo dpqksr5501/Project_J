@@ -9,6 +9,8 @@
 #include "Mount/Project_JMountComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "UObject/StrongObjectPtr.h"
+#include <functional>
+#include <type_traits>
 
 void UProject_JPlayerInputBindingComponent::BeginPlay()
 {
@@ -26,6 +28,9 @@ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
 bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
 {
 	if (bEnding || IsBeingDestroyed()) { return false; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(PlayerCharacter);
+	TStrongObjectPtr<UInputComponent> PinnedInput(PlayerInputComponent);
 	const uint64 ExpectedRevision = BindingRevision + 1;
 	UnbindInput();
 	if (bEnding || IsBeingDestroyed() || BindingRevision != ExpectedRevision) { return false; }
@@ -41,10 +46,37 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	{
 		Mount->SetRiderInteractAction(ActionSet.InteractAction);
 	}
-	const auto BindOwnedAction = [this, EnhancedInputComponent](auto Action, ETriggerEvent Event, auto* Object, auto Method, auto... Args)
+	const uint64 SourceRevision = BindingRevision;
+	const TWeakObjectPtr<ThisClass> SourceBinding(this);
+	const TWeakObjectPtr<AProject_JPlayerCharacter> SourcePlayer(PlayerCharacter);
+	const TWeakObjectPtr<UEnhancedInputComponent> SourceDevice(EnhancedInputComponent);
+	const auto BindOwnedAction = [this, EnhancedInputComponent, SourceRevision, SourceBinding, SourcePlayer, SourceDevice]
+		(auto Action, ETriggerEvent Event, auto* Object, auto Method, auto... Args)
 	{
 		const UInputAction* InputAction = Action;
-		if (InputAction) OwnedBindingHandles.Add(EnhancedInputComponent->BindAction(InputAction, Event, Object, Method, Args...).GetHandle());
+		if (!InputAction) { return; }
+		using FObjectType = std::remove_pointer_t<decltype(Object)>;
+		const TWeakObjectPtr<FObjectType> SourceObject(Object);
+		const TWeakObjectPtr<const UInputAction> SourceAction(InputAction);
+		// EnhancedPlayerInput clones a frame's delegates before executing them.
+		// Removing a binding cannot revoke that copy; its original receipt must match.
+		auto Callback = [SourceRevision, SourceBinding, SourcePlayer, SourceDevice, SourceObject, SourceAction, Method, Args...]
+			(const FInputActionValue& Value)
+		{
+			auto* Self = SourceBinding.Get(); auto* Player = SourcePlayer.Get(); auto* Device = SourceDevice.Get();
+			auto* Receiver = SourceObject.Get();
+			if (!Self || !Self->IsCurrentBinding(Player, SourceRevision) || !IsValid(Device) || Device->IsBeingDestroyed()
+				|| Self->BoundEnhancedInputComponent.Get() != Device || !IsValid(Receiver) || !SourceAction.IsValid()) { return; }
+			const TStrongObjectPtr<ThisClass> PinnedSelf(Self);
+			const TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(Player);
+			const TStrongObjectPtr<UEnhancedInputComponent> PinnedDevice(Device);
+			const TStrongObjectPtr<FObjectType> PinnedReceiver(Receiver);
+			const TStrongObjectPtr<const UInputAction> PinnedAction(SourceAction.Get());
+			if constexpr (std::is_invocable_v<decltype(Method), FObjectType*, const FInputActionValue&, decltype(Args)...>)
+			{ std::invoke(Method, Receiver, Value, Args...); }
+			else { std::invoke(Method, Receiver, Args...); }
+		};
+		OwnedBindingHandles.Add(EnhancedInputComponent->BindActionValueLambda(InputAction, Event, MoveTemp(Callback)).GetHandle());
 	};
 
 	BindOwnedAction(ActionSet.JumpAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandleJumpStarted);
@@ -62,15 +94,7 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 		ActionSet.MoveIntentRightAction;
 	bSemanticMoveIntentActionsBound = bHasCompleteSemanticMoveIntentActionSet;
 	bPendingSemanticMoveIntentRefresh = false;
-	bMoveIntentForwardHeld = false;
-	bMoveIntentBackwardHeld = false;
-	bMoveIntentLeftHeld = false;
-	bMoveIntentRightHeld = false;
-	MoveIntentPressSequence = 0;
-	ForwardPressSequence = 0;
-	BackwardPressSequence = 0;
-	LeftPressSequence = 0;
-	RightPressSequence = 0;
+	SemanticMoveIntent.Clear();
 
 	const auto BindMoveIntentAction = [BindOwnedAction, this](UInputAction* Action, const EProject_JMoveIntentDirection Direction)
 	{
@@ -161,6 +185,7 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 void UProject_JPlayerInputBindingComponent::UnbindInput()
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	const uint64 ReleaseRevision = ++BindingRevision;
 	const auto PreviousInput = BoundEnhancedInputComponent;
 	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
@@ -171,7 +196,7 @@ void UProject_JPlayerInputBindingComponent::UnbindInput()
 	ActiveSkillInputMappingData = nullptr;
 	bPendingMoveStopReconciliation = bPendingSemanticMoveIntentRefresh = false;
 	bSemanticMoveIntentActionsBound = false;
-	bMoveIntentForwardHeld = bMoveIntentBackwardHeld = bMoveIntentLeftHeld = bMoveIntentRightHeld = false;
+	SemanticMoveIntent.Clear();
 	SetComponentTickEnabled(false);
 	if (UEnhancedInputComponent* Input = PreviousInput.Get())
 	{
@@ -195,6 +220,12 @@ void UProject_JPlayerInputBindingComponent::UnbindInput()
 bool UProject_JPlayerInputBindingComponent::MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const
 {
 	return BindingRevision == ReleaseRevision || BoundPlayerCharacter != PlayerCharacter;
+}
+
+bool UProject_JPlayerInputBindingComponent::IsCurrentBinding(AProject_JPlayerCharacter* PlayerCharacter, uint64 Revision) const
+{
+	return !bEnding && !IsBeingDestroyed() && BindingRevision == Revision && BoundPlayerCharacter == PlayerCharacter &&
+		IsValid(PlayerCharacter) && !PlayerCharacter->IsActorBeingDestroyed();
 }
 
 void UProject_JPlayerInputBindingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -248,43 +279,54 @@ void UProject_JPlayerInputBindingComponent::HandleInteract()
 
 void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& Value)
 {
-	if (!BoundPlayerCharacter)
+	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
+	AProject_JPlayerCharacter* PlayerCharacter = PinnedPlayer.Get();
+	const uint64 Revision = BindingRevision;
+	if (!IsCurrentBinding(PlayerCharacter, Revision))
 	{
 		return;
 	}
 
 	const FVector2D MoveInput = Value.Get<FVector2D>();
+	if (MoveInput.ContainsNaN()) { return; }
 	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop() &&
 		bPendingMoveStopReconciliation && MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
 	{
 		UE_LOG(LogProjectJPlayer, Display,
 			TEXT("MMCombatStop Input=MoveResumed Actor=%s Frame=%llu Axis=(%.2f,%.2f) Speed=%.1f Intro=%d Outro=%d"),
-			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, MoveInput.X, MoveInput.Y,
-			BoundPlayerCharacter->GetVelocity().Size2D(),
-			BoundPlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
-			BoundPlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
+			*GetNameSafe(PlayerCharacter), GFrameCounter, MoveInput.X, MoveInput.Y,
+			PlayerCharacter->GetVelocity().Size2D(),
+			PlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
+			PlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
 	}
 	if (MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
 	{
 		CancelPendingMoveStopReconciliation();
 	}
 
-	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
+	if (PlayerCharacter->LocomotionAnimStateComponent)
 	{
 		// Pivot has to observe the reversal on this movement update, before
 		// CharacterMovement decelerates below its authored minimum speed.
-		BoundPlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
+		PlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
 	}
+	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
 
 	// Sprint ability state affects CharacterMovement, so preserve its immediate
 	// gameplay update as well.
-	BoundPlayerCharacter->UpdateSprintInputFromMove(MoveInput);
-	BoundPlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
+	PlayerCharacter->UpdateSprintInputFromMove(MoveInput);
+	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
+	PlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
+	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
 
-	if (BoundPlayerCharacter->GetController() != nullptr)
+	if (AController* Controller = PlayerCharacter->GetController())
 	{
 		// find out which way is forward
-		const FRotator Rotation = BoundPlayerCharacter->GetController()->GetControlRotation();
+		TStrongObjectPtr<AController> PinnedController(Controller);
+		const FRotator Rotation = Controller->GetControlRotation();
+		if (Rotation.ContainsNaN() || !IsCurrentBinding(PlayerCharacter, Revision) || PlayerCharacter->GetController() != Controller) { return; }
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
@@ -294,8 +336,9 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 		// add movement
-		BoundPlayerCharacter->AddMovementInput(ForwardDirection, MoveInput.Y);
-		BoundPlayerCharacter->AddMovementInput(RightDirection, MoveInput.X);
+		PlayerCharacter->AddMovementInput(ForwardDirection, MoveInput.Y);
+		if (!IsCurrentBinding(PlayerCharacter, Revision) || PlayerCharacter->GetController() != Controller) { return; }
+		PlayerCharacter->AddMovementInput(RightDirection, MoveInput.X);
 	}
 }
 
@@ -344,73 +387,12 @@ void UProject_JPlayerInputBindingComponent::HandleMoveStopped()
 
 void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStarted(const EProject_JMoveIntentDirection Direction)
 {
-	bool* HeldState = nullptr;
-	int32* PressSequence = nullptr;
-	switch (Direction)
-	{
-	case EProject_JMoveIntentDirection::Forward:
-		HeldState = &bMoveIntentForwardHeld;
-		PressSequence = &ForwardPressSequence;
-		break;
-	case EProject_JMoveIntentDirection::Backward:
-		HeldState = &bMoveIntentBackwardHeld;
-		PressSequence = &BackwardPressSequence;
-		break;
-	case EProject_JMoveIntentDirection::Left:
-		HeldState = &bMoveIntentLeftHeld;
-		PressSequence = &LeftPressSequence;
-		break;
-	case EProject_JMoveIntentDirection::Right:
-		HeldState = &bMoveIntentRightHeld;
-		PressSequence = &RightPressSequence;
-		break;
-	default:
-		return;
-	}
-
-	if (*HeldState)
-	{
-		return;
-	}
-
-	*HeldState = true;
-	++MoveIntentPressSequence;
-	if (MoveIntentPressSequence == 0)
-	{
-		MoveIntentPressSequence = 1;
-	}
-	*PressSequence = MoveIntentPressSequence;
-	QueueSemanticMoveIntentRefresh();
+	if (SemanticMoveIntent.Press(Direction)) { QueueSemanticMoveIntentRefresh(); }
 }
 
 void UProject_JPlayerInputBindingComponent::HandleMoveIntentDirectionStopped(const EProject_JMoveIntentDirection Direction)
 {
-	bool* HeldState = nullptr;
-	switch (Direction)
-	{
-	case EProject_JMoveIntentDirection::Forward:
-		HeldState = &bMoveIntentForwardHeld;
-		break;
-	case EProject_JMoveIntentDirection::Backward:
-		HeldState = &bMoveIntentBackwardHeld;
-		break;
-	case EProject_JMoveIntentDirection::Left:
-		HeldState = &bMoveIntentLeftHeld;
-		break;
-	case EProject_JMoveIntentDirection::Right:
-		HeldState = &bMoveIntentRightHeld;
-		break;
-	default:
-		return;
-	}
-
-	if (!*HeldState)
-	{
-		return;
-	}
-
-	*HeldState = false;
-	QueueSemanticMoveIntentRefresh();
+	if (SemanticMoveIntent.Release(Direction)) { QueueSemanticMoveIntentRefresh(); }
 }
 
 void UProject_JPlayerInputBindingComponent::QueueSemanticMoveIntentRefresh()
@@ -436,54 +418,19 @@ void UProject_JPlayerInputBindingComponent::RefreshSemanticMoveIntent()
 		return;
 	}
 
-	const bool bHasHorizontalIntent = bMoveIntentLeftHeld || bMoveIntentRightHeld;
-	const bool bHasVerticalIntent = bMoveIntentForwardHeld || bMoveIntentBackwardHeld;
-	const bool bHasActiveIntent = bHasHorizontalIntent || bHasVerticalIntent;
-
-	float Horizontal = 0.0f;
-	if (bMoveIntentLeftHeld && bMoveIntentRightHeld)
-	{
-		// Explicit semantic policy for opposed keys: the latest pressed direction
-		// wins. This mirrors the player's meaningful edge without querying keys.
-		Horizontal = RightPressSequence >= LeftPressSequence ? 1.0f : -1.0f;
-	}
-	else if (bMoveIntentRightHeld)
-	{
-		Horizontal = 1.0f;
-	}
-	else if (bMoveIntentLeftHeld)
-	{
-		Horizontal = -1.0f;
-	}
-
-	float Vertical = 0.0f;
-	if (bMoveIntentForwardHeld && bMoveIntentBackwardHeld)
-	{
-		Vertical = ForwardPressSequence >= BackwardPressSequence ? 1.0f : -1.0f;
-	}
-	else if (bMoveIntentForwardHeld)
-	{
-		Vertical = 1.0f;
-	}
-	else if (bMoveIntentBackwardHeld)
-	{
-		Vertical = -1.0f;
-	}
-
+	const bool bHasActiveIntent = SemanticMoveIntent.HasActiveIntent();
+	const FVector2D Intent = SemanticMoveIntent.GetIntent();
 	BoundPlayerCharacter->LocomotionAnimStateComponent->SetSemanticMoveIntentInput(
-		FVector2D(Horizontal, Vertical).GetSafeNormal(), bHasActiveIntent);
+		Intent, bHasActiveIntent);
 
 	if (Project_J::MotionMatchingCVars::ShouldCaptureTransitionDebugTrace())
 	{
 		UE_LOG(LogProjectJPlayer, Display,
-			TEXT("CombatStrafeSemanticIntent Actor=%s Held[F=%s B=%s L=%s R=%s] PressSeq[F=%d B=%d L=%d R=%d] Final=(%.2f,%.2f) Active=%s"),
+			TEXT("CombatStrafeSemanticIntent Actor=%s PressRank[F=%d B=%d L=%d R=%d] Final=(%.2f,%.2f) Active=%s"),
 			*GetNameSafe(BoundPlayerCharacter.Get()),
-			bMoveIntentForwardHeld ? TEXT("true") : TEXT("false"),
-			bMoveIntentBackwardHeld ? TEXT("true") : TEXT("false"),
-			bMoveIntentLeftHeld ? TEXT("true") : TEXT("false"),
-			bMoveIntentRightHeld ? TEXT("true") : TEXT("false"),
-			ForwardPressSequence, BackwardPressSequence, LeftPressSequence, RightPressSequence,
-			Horizontal, Vertical,
+			SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Forward), SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Backward),
+			SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Left), SemanticMoveIntent.GetPressRank(EProject_JMoveIntentDirection::Right),
+			Intent.X, Intent.Y,
 			bHasActiveIntent ? TEXT("true") : TEXT("false"));
 	}
 }

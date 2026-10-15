@@ -14,6 +14,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Optimization/Project_JRetryDelay.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJNPCAction, Log, All);
 namespace
@@ -96,37 +97,59 @@ bool UProject_JNPCActionComponent::StartActions(UProject_JTargetScoringComponent
 
 bool UProject_JNPCActionComponent::IsContextValid() const
 {
-	const auto* NPC = Cast<AProject_JNPCCharacter>(GetOwner());
-	const auto* AI = Controller.Get();
-	return bEnabled && !bEndingPlay && !IsBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown
-		&& GetWorld()->GetNetMode() != NM_Client && IsValid(NPC) && NPC->HasAuthority() && !NPC->IsActorBeingDestroyed()
-		&& !IProject_JCombatInterface::Execute_IsDead(const_cast<AProject_JNPCCharacter*>(NPC))
-		&& AI && !AI->IsActorBeingDestroyed() && AI->GetPawn() == NPC
-		&& NPC->GetController() == AI && AI->GetPathFollowingComponent()
-		&& (!AI->GetBrainComponent() || !AI->GetBrainComponent()->IsRunning())
-		&& ScoringComponent.IsValid() && ScoringComponent->IsRegistered() && !ScoringComponent->IsBeingDestroyed()
-		&& ScoringComponent->IsBatchedNPCDecisionRegistered() && Paths.IsValid()
-		&& AbilitySystem.IsValid() && NPC->GetAbilitySystemComponent() == AbilitySystem.Get()
-		&& AbilitySystem->GetAvatarActor() == NPC && IsAttackSupported();
+	const TStrongObjectPtr<const ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AProject_JNPCCharacter> NPC(Cast<AProject_JNPCCharacter>(GetOwner()));
+	const TStrongObjectPtr<AAIController> AI(Controller.Get());
+	const TStrongObjectPtr<UProject_JTargetScoringComponent> Scoring(ScoringComponent.Get());
+	const TStrongObjectPtr<UAbilitySystemComponent> ASC(AbilitySystem.Get());
+	const uint64 Revision = ActionRevision;
+	const auto IsCurrent = [&]
+	{
+		return bEnabled && !bEndingPlay && !IsBeingDestroyed() && ActionRevision == Revision && GetWorld() && !GetWorld()->bIsTearingDown
+			&& GetWorld()->GetNetMode() != NM_Client && IsValid(NPC.Get()) && NPC->HasAuthority() && !NPC->IsActorBeingDestroyed()
+			&& GetOwner() == NPC.Get() && IsValid(AI.Get()) && Controller.Get() == AI.Get() && !AI->IsActorBeingDestroyed()
+			&& AI->GetPawn() == NPC.Get() && NPC->GetController() == AI.Get() && AI->GetPathFollowingComponent()
+			&& (!AI->GetBrainComponent() || !AI->GetBrainComponent()->IsRunning())
+			&& IsValid(Scoring.Get()) && ScoringComponent.Get() == Scoring.Get() && Scoring->IsRegistered() && !Scoring->IsBeingDestroyed()
+			&& Scoring->IsBatchedNPCDecisionRegistered() && Paths.IsValid()
+			&& IsValid(ASC.Get()) && !ASC->IsBeingDestroyed() && AbilitySystem.Get() == ASC.Get()
+			&& NPC->GetAbilitySystemComponent() == ASC.Get() && ASC->GetAvatarActor() == NPC.Get() && IsAttackSupported();
+	};
+	return IsCurrent() && !IProject_JCombatInterface::Execute_IsDead(NPC.Get()) && IsCurrent();
 }
 
 bool UProject_JNPCActionComponent::IsTargetValid() const
 {
-	auto* Target = IntentTarget.Get();
+	const TStrongObjectPtr<const ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> Target(IntentTarget.Get());
+	const TStrongObjectPtr<AActor> Owner(GetOwner());
+	const TStrongObjectPtr<UProject_JTargetScoringComponent> Scoring(ScoringComponent.Get());
+	const uint64 Revision = IntentRevision, Action = ActionRevision;
+	const uint64 Registration = Scoring ? Scoring->GetBatchRegistrationRevision() : 0;
 	const auto* Scheduler = GetWorld() ? GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>() : nullptr;
-	return IsContextValid() && IsValid(Target) && !Target->GetActorLocation().ContainsNaN()
-		&& !GetOwner()->GetActorLocation().ContainsNaN() && Scheduler
-		&& Scheduler->CanActOnTarget(ScoringComponent.Get(), Target)
-		&& FMath::IsFinite(ScoringComponent->Range) && ScoringComponent->Range > 0
-		&& FVector::DistSquared(GetOwner()->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(ScoringComponent->Range)
+	return IsContextValid() && IsValid(Target.Get()) && !Target->IsActorBeingDestroyed() && IsValid(Owner.Get()) && Scheduler
+		&& Scoring && ScoringComponent.Get() == Scoring.Get() && !Target->GetActorLocation().ContainsNaN() && !Owner->GetActorLocation().ContainsNaN()
+		&& Scheduler->CanActOnTarget(Scoring.Get(), Target.Get())
+		&& bEnabled && ActionRevision == Action && IntentRevision == Revision && IntentTarget.Get() == Target.Get()
+		&& GetOwner() == Owner.Get() && IsValid(Owner.Get()) && !Owner->IsActorBeingDestroyed()
+		&& IsValid(Target.Get()) && !Target->IsActorBeingDestroyed() && IsValid(Scoring.Get()) && !Scoring->IsBeingDestroyed()
+		&& ScoringComponent.Get() == Scoring.Get() && Scoring->GetBatchRegistrationRevision() == Registration
+		&& FMath::IsFinite(Scoring->Range) && Scoring->Range > 0
+		&& FVector::DistSquared(Owner->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(Scoring->Range)
 		&& FPlatformTime::Seconds() - LastDecision <= DecisionLifetime;
 }
 
 bool UProject_JNPCActionComponent::CanCommitToTarget(AActor* Target) const
 {
-	return IntentTarget.Get() == Target && IsTargetValid()
-		&& FVector::DistSquared(GetOwner()->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(AttackRange)
-		&& Controller->LineOfSightTo(Target);
+	const TStrongObjectPtr<const ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
+	const TStrongObjectPtr<AActor> Owner(GetOwner());
+	const TStrongObjectPtr<AAIController> AI(Controller.Get());
+	const uint64 Revision = IntentRevision, Action = ActionRevision;
+	return IntentTarget.Get() == Target && IsTargetValid() && AI && Controller.Get() == AI.Get()
+		&& GetOwner() == Owner.Get() && IsValid(Owner.Get()) && IsValid(Target) && !Target->IsActorBeingDestroyed()
+		&& FVector::DistSquared(Owner->GetActorLocation(), Target->GetActorLocation()) <= FMath::Square(AttackRange)
+		&& AI->LineOfSightTo(Target) && bEnabled && ActionRevision == Action && IntentRevision == Revision && IntentTarget.Get() == Target;
 }
 
 bool UProject_JNPCActionComponent::HasForeignMovement() const
@@ -140,9 +163,13 @@ bool UProject_JNPCActionComponent::HasForeignMovement() const
 bool UProject_JNPCActionComponent::PrepareForAttack(AActor* Target)
 {
 	check(IsInGameThread());
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
+	const uint64 Revision = IntentRevision, Action = ActionRevision;
 	if (!CanCommitToTarget(Target) || HasForeignMovement()) { return false; }
 	CancelPathAndMove();
-	return CanCommitToTarget(Target) && !HasForeignMovement();
+	return IntentRevision == Revision && ActionRevision == Action && CanCommitToTarget(Target) && !HasForeignMovement();
 }
 
 FVector UProject_JNPCActionComponent::GetTargetGoal() const
@@ -154,16 +181,22 @@ FVector UProject_JNPCActionComponent::GetTargetGoal() const
 void UProject_JNPCActionComponent::OnScored(AActor* Target, double Score)
 {
 	check(IsInGameThread());
-	if (!IsContextValid()) { StopActions(); return; }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
+	const uint64 Action = ActionRevision, BeforeIntent = IntentRevision;
+	if (!IsContextValid()) { if (ActionRevision == Action && IntentRevision == BeforeIntent) { StopActions(); } return; }
+	if (ActionRevision != Action || IntentRevision != BeforeIntent) { return; }
 	if (Target != IntentTarget.Get())
 	{
 		ClearIntent();
 		// A non-cancellable old attack must not silently read a new target from this component.
-		if (!bEnabled || bOwnsAttack) { return; }
+		if (!bEnabled || bOwnsAttack || ActionRevision != Action || IntentRevision != BeforeIntent + 1) { return; }
 		IntentTarget = Target;
 	}
 	LastDecision = FPlatformTime::Seconds();
-	if (!IsTargetValid()) { ClearIntent(); }
+	const uint64 CurrentIntent = IntentRevision;
+	if (!IsTargetValid() && ActionRevision == Action && IntentRevision == CurrentIntent) { ClearIntent(); }
 }
 
 void UProject_JNPCActionComponent::CancelPathAndMove()
@@ -175,10 +208,14 @@ void UProject_JNPCActionComponent::CancelPathAndMove()
 
 void UProject_JNPCActionComponent::CancelMove()
 {
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
 	const FAIRequestID Previous = MoveId; MoveId = FAIRequestID::InvalidRequest;
 	if (auto* AI = Controller.Get())
 	{
+		const TStrongObjectPtr<AAIController> PinnedAI(AI);
+		const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 		auto* Following = AI->GetPathFollowingComponent();
+		const TStrongObjectPtr<UPathFollowingComponent> PinnedFollowing(Following);
 		if (Following && Previous.IsValid() && Following->GetCurrentRequestId() == Previous)
 		{
 			Following->AbortMove(*this, FPathFollowingResultFlags::OwnerFinished, Previous);
@@ -189,44 +226,65 @@ void UProject_JNPCActionComponent::CancelMove()
 void UProject_JNPCActionComponent::CancelOwnedAttack()
 {
 	if (!bOwnsAttack) { return; }
-	if (auto* ASC = AbilitySystem.Get()) { ASC->CancelAbilityHandle(AttackHandle); }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<UAbilitySystemComponent> ASC(AbilitySystem.Get());
+	if (IsValid(ASC.Get()) && !ASC->IsBeingDestroyed()) { ASC->CancelAbilityHandle(AttackHandle); }
 	// Non-cancellable ability phases remain GAS-owned; do not force EndAbility or cancel unrelated grants.
 }
 
 void UProject_JNPCActionComponent::ClearIntent()
 {
 	check(IsInGameThread());
-	++IntentRevision; IntentTarget.Reset();
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const uint64 Revision = ++IntentRevision, Action = ActionRevision;
+	IntentTarget.Reset();
 	PathFailures = 0; NextPathTime = 0;
-	CancelPathAndMove(); CancelOwnedAttack();
-	State = bEnabled ? EProjectJNPCActionState::Idle : EProjectJNPCActionState::Disabled;
+	CancelPathAndMove();
+	if (IntentRevision != Revision || ActionRevision != Action) { return; }
+	CancelOwnedAttack();
+	if (IntentRevision == Revision && ActionRevision == Action) { State = bEnabled ? EProjectJNPCActionState::Idle : EProjectJNPCActionState::Disabled; }
 }
 
 void UProject_JNPCActionComponent::UpdateAction()
 {
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_NPCAction_Update);
-	if (!IsContextValid() || HasForeignMovement())
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<AActor> PinnedTarget(IntentTarget.Get());
+	const TStrongObjectPtr<AAIController> PinnedController(Controller.Get());
+	const TStrongObjectPtr<UAbilitySystemComponent> PinnedASC(AbilitySystem.Get());
+	const uint64 Action = ActionRevision, Intent = IntentRevision;
+	const auto IsCurrent = [&] { return ActionRevision == Action && IntentRevision == Intent && !bEndingPlay && !IsBeingDestroyed(); };
+	const bool bContextValid = IsContextValid();
+	if (!IsCurrent()) { return; }
+	if (!bContextValid || HasForeignMovement())
 	{
 		UE_CLOG(CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
-			TEXT("Stopped Owner=%s ContextValid=%d ForeignMove=%d"), *GetNameSafe(GetOwner()), IsContextValid(), HasForeignMovement());
+			TEXT("Stopped Owner=%s ContextValid=%d ForeignMove=%d"), *GetNameSafe(GetOwner()), bContextValid, HasForeignMovement());
 		StopActions(); return;
 	}
 	if (!IsTargetValid())
 	{
+		if (!IsCurrent()) { return; }
 		UE_CLOG(IntentTarget.IsValid() && CVarNPCActionDebug.GetValueOnGameThread() != 0, LogProjectJNPCAction, Log,
 			TEXT("Intent invalid Owner=%s Target=%s Distance=%.1f Range=%.1f Age=%.2f"), *GetNameSafe(GetOwner()),
 			*GetNameSafe(IntentTarget.Get()), IntentTarget.IsValid() ? FVector::Dist(GetOwner()->GetActorLocation(), IntentTarget->GetActorLocation()) : 0,
 			ScoringComponent->Range, FPlatformTime::Seconds() - LastDecision);
 		ClearIntent(); return;
 	}
+	if (!IsCurrent()) { return; }
 	const double Now = FPlatformTime::Seconds();
 	if (bOwnsAttack) { State = EProjectJNPCActionState::Attacking; return; }
 	const FVector Delta = IntentTarget->GetActorLocation() - GetOwner()->GetActorLocation();
 	if (Delta.SizeSquared() <= FMath::Square(AttackRange) && Controller->LineOfSightTo(IntentTarget.Get()))
 	{
 		CancelPathAndMove();
-		if (!IsTargetValid()) { ClearIntent(); return; }
+		if (!IsCurrent()) { return; }
+		if (!IsTargetValid()) { if (IsCurrent()) { ClearIntent(); } return; }
+		if (!IsCurrent()) { return; }
 		if (State != EProjectJNPCActionState::InRange && State != EProjectJNPCActionState::Attacking) { ++Stats.Arrivals; }
 		State = EProjectJNPCActionState::InRange;
 		if (!AttackHandle.IsValid() || Now < NextAttackTime) { return; }
@@ -237,6 +295,11 @@ void UProject_JNPCActionComponent::UpdateAction()
 		const uint64 Revision = IntentRevision;
 		bOwnsAttack = true;
 		const bool Activated = AbilitySystem->TryActivateAbility(AttackHandle, false);
+		if (!IsCurrent())
+		{
+			if (ActionRevision == Action) { CancelOwnedAttack(); }
+			return;
+		}
 		if (!Activated) { bOwnsAttack = false; }
 		if (!bEnabled || IntentRevision != Revision) { CancelOwnedAttack(); return; }
 		if (bOwnsAttack) { State = EProjectJNPCActionState::Attacking; }
@@ -253,7 +316,7 @@ void UProject_JNPCActionComponent::UpdateAction()
 	if (AttackHandle.IsValid())
 	{
 		const auto* Spec = AbilitySystem->FindAbilitySpecFromHandle(AttackHandle);
-		if (Spec && Spec->IsActive()) { CancelPathAndMove(); State = EProjectJNPCActionState::InRange; return; }
+		if (Spec && Spec->IsActive()) { CancelPathAndMove(); if (IsCurrent()) { State = EProjectJNPCActionState::InRange; } return; }
 	}
 	const FVector Goal = GetTargetGoal();
 	if (Goal.ContainsNaN() || Goal.GetAbsMax() > 1.e9) { ClearIntent(); return; }
@@ -265,10 +328,12 @@ void UProject_JNPCActionComponent::UpdateAction()
 		{
 			// A pending replacement remains useful even if the old path has become invalid.
 			CancelMove();
+			if (!IsCurrent()) { return; }
 			if (bEnabled) { State = PathToken ? EProjectJNPCActionState::AwaitingPath : EProjectJNPCActionState::Backoff; }
 		}
 	}
-	if (!IsTargetValid()) { ClearIntent(); return; }
+	if (!IsTargetValid()) { if (IsCurrent()) { ClearIntent(); } return; }
+	if (!IsCurrent()) { return; }
 	if (PathToken || Now < NextPathTime) { return; }
 	if (MoveId.IsValid() && FVector::DistSquared(Goal, FollowingGoal) <= FMath::Square(RepathDistance)) { return; }
 	// Keep the valid old path until a replacement is ready. Target motion does not repeatedly cancel in-flight work.
@@ -291,9 +356,18 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 {
 	check(IsInGameThread());
 	if (!bEnabled || PathToken != Completion.Token || IntentRevision != Completion.IntentRevision) { return; }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<AActor> PinnedTarget(IntentTarget.Get());
+	const TStrongObjectPtr<AAIController> PinnedController(Controller.Get());
+	const TStrongObjectPtr<UAbilitySystemComponent> PinnedASC(AbilitySystem.Get());
+	const uint64 Action = ActionRevision, Intent = IntentRevision;
+	const auto IsCurrent = [&] { return bEnabled && ActionRevision == Action && IntentRevision == Intent && !bEndingPlay && !IsBeingDestroyed(); };
 	PathToken = 0;
-	if (!IsContextValid() || HasForeignMovement()) { StopActions(); return; }
-	if (!IsTargetValid()) { ClearIntent(); return; }
+	if (!IsContextValid() || HasForeignMovement()) { if (IsCurrent()) { StopActions(); } return; }
+	if (!IsCurrent()) { return; }
+	if (!IsTargetValid()) { if (IsCurrent()) { ClearIntent(); } return; }
+	if (!IsCurrent()) { return; }
 	NextPathTime = FPlatformTime::Seconds() + RetryInterval;
 	const auto* Pawn = CastChecked<APawn>(GetOwner());
 	const auto* Spec = AttackHandle.IsValid() ? AbilitySystem->FindAbilitySpecFromHandle(AttackHandle) : nullptr;
@@ -324,7 +398,7 @@ void UProject_JNPCActionComponent::OnPathReady(const FProjectJNPCPathCompletion&
 		TGuardValue<FAIRequestID> ReplacingGuard(ReplacingMoveId, MoveId);
 		StartedMove = Controller->RequestMove(Move, Completion.Path);
 	}
-	if (!bEnabled || IntentRevision != Revision)
+	if (!IsCurrent() || IntentRevision != Revision)
 	{
 		if (auto* AI = RequestController.Get())
 		{
@@ -372,6 +446,8 @@ void UProject_JNPCActionComponent::StopActions()
 {
 	check(IsInGameThread());
 	if (bStopping) { return; }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 	TGuardValue<bool> Guard(bStopping, true);
 	++ActionRevision;
 	OwnershipToken = 0;

@@ -1,0 +1,48 @@
+{
+  "recorded_utc": "2026-10-15T01:58:51.465030+00:00",
+  "scope_ko": "최신 요청의 소스·아키텍처 정리. 전체 성능/운영/품질 감사 완료 아님.",
+  "version": "R15_StructureCleanupCompiled2",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "runtime_files": 649,
+  "runtime_hash_mismatches": [],
+  "runtime_path_set_difference": [],
+  "editor_artifacts": 9,
+  "editor_hash_mismatches": [],
+  "preserved_files": 13,
+  "preserved_mismatches": [],
+  "user_handoff_patch_exact_bytes_match": false,
+  "user_handoff_patch_normalized_lf_match": true,
+  "content_tracked_and_untracked_difference_count": 0,
+  "final_build": "R15_StructureCleanupFinalBuild1",
+  "focused_regression": {
+    "name": "R15_StructureCleanupFocused2",
+    "clean": 55,
+    "inherited_warning_tests": 2,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "duration": 1.126007080078125,
+    "new_vs_prior_whole": [
+      "ProjectJ.Continuation.InventoryConsumeContract",
+      "ProjectJ.Continuation.MountAttachRetired",
+      "ProjectJ.Continuation.MountControllerReassigned",
+      "ProjectJ.Continuation.MountPhaseSuperseded",
+      "ProjectJ.Continuation.MountReplicatedReplacement",
+      "ProjectJ.Continuation.NullableRefaceCycle",
+      "ProjectJ.Continuation.ReturnedChooserTraversal",
+      "ProjectJ.Continuation.UIModelOwnership",
+      "ProjectJ.Continuation.UISkillReleaseOwnership"
+    ],
+    "baseline_tests_outside_focus": 341,
+    "inherited_warning_multisets_match": true
+  },
+  "additional_ui_begin_end_boundary": {
+    "name": "R15_UIScreenBoundaryFocused1",
+    "clean": 1,
+    "warnings": 0,
+    "failed": 0
+  },
+  "whole_project_audit_complete": false,
+  "additional_commit_push_merge_shutdown": false
+}

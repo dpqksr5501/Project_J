@@ -1,0 +1,511 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "DEB00F57448C09C1FBECE79D6641BAB0",
+			"instanceName": "DESKTOP-5T07C91-29944",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-07.42.18",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 2.0367646217346191,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "InputLeaseCallback",
+			"fullTestPath": "ProjectJ.Continuation.InputLeaseCallback",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"DEB00F57448C09C1FBECE79D6641BAB0"
+			],
+			"duration": 1.9605121612548828,
+			"dateTime": "2026.10.14-07.42.16",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Class which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogOutputDevice: \n\nScript Stack (0 frames) :\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: === Handled ensure: ===",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Ensure condition failed: false  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\CoreUObject\\Private\\UObject\\UObjectGlobals.cpp] [Line: 3295] ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Class which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: Stack: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f3ca9fd5 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f3aad581 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f3aabb96 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f3aae173 UnrealEditor-CoreUObject.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff98d3d12ad UnrealEditor-Project_J.dll!FProjectJInputLeaseCallbackTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JInputLeaseCallbackTests.cpp:47]",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f1ad11b6 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff9f1af0460 UnrealEditor-Core.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x000001c483fbf30f UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x000001c483fbe29d UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x000001c483fc27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x000001c483fb13fe UnrealEditor-AutomationWorker.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c66325d UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c64c4ac UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c64c5ba UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c651256 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c665c74 UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ff69c66838a UnrealEditor-Cmd.exe!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffab95dcd87 KERNEL32.DLL!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: [Callstack] 0x00007ffaba6acaec ntdll.dll!UnknownFunction []",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "LogOutputDevice: ",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.16"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Actual synchronous release/deinitialize cannot report a live acquired lease' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JInputLeaseCallbackTests.cpp",
+					"lineNumber": 55,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Class which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Actual synchronous release/deinitialize cannot report a live acquired lease' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JInputLeaseCallbackTests.cpp",
+					"lineNumber": 55,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Class which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'An acquire participant survives GC until its mapping callback returns' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JInputLeaseCallbackTests.cpp",
+					"lineNumber": 60,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "EnsureFailed: Ensure condition failed: false  [File:D:\\build\\++UE5\\Sync\\Engine\\Source\\Runtime\\CoreUObject\\Private\\UObject\\UObjectGlobals.cpp] [Line: 3295] \r\nClass which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object\r\nStack: \r\n0x00007ff9f3ca9fd5 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ff9f3aad581 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ff9f3aabb96 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ff9f3aae173 UnrealEditor-CoreUObject.dll!UnknownFunction []\r\n0x00007ff98d3d12ad UnrealEditor-Project_J.dll!FProjectJInputLeaseCallbackTest::RunTest() [C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JInputLeaseCallbackTests.cpp:47]\r\n0x00007ff9f1ad11b6 UnrealEditor-Core.dll!UnknownFunction []\r\n0x00007ff9f1af0460 UnrealEditor-Core.dll!UnknownFunction []\r\n0x000001c483fbf30f UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x000001c483fbe29d UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x000001c483fc27ba UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x000001c483fb13fe UnrealEditor-AutomationWorker.dll!UnknownFunction []\r\n0x00007ff69c66325d UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c64c4ac UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c64c5ba UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c651256 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c665c74 UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ff69c66838a UnrealEditor-Cmd.exe!UnknownFunction []\r\n0x00007ffab95dcd87 KERNEL32.DLL!UnknownFunction []\r\n0x00007ffaba6acaec ntdll.dll!UnknownFunction []\r\n",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.18"
+				}
+			],
+			"warnings": 4,
+			"errors": 29,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MessagePayloadLifetime",
+			"fullTestPath": "ProjectJ.Continuation.MessagePayloadLifetime",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"DEB00F57448C09C1FBECE79D6641BAB0"
+			],
+			"duration": 0.060277201235294342,
+			"dateTime": "2026.10.14-07.42.18",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogUObjectGlobals: Class which was marked abstract was trying to be loaded in Outer /Engine/Transient.  It will be nulled out on save. None Object",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-07.42.18"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Native dispatch keeps its payload alive across listener GC' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCore\\Private\\Tests\\Project_JMessageRouterTests.cpp",
+					"lineNumber": 57,
+					"timestamp": "2026.10.14-07.42.18"
+				}
+			],
+			"warnings": 1,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedMappingLease",
+			"fullTestPath": "ProjectJ.Maturity.Input.SharedMappingLease",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DEB00F57448C09C1FBECE79D6641BAB0"
+			],
+			"duration": 0.010068599134683609,
+			"dateTime": "2026.10.14-07.42.18",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReentrantSubscriptions",
+			"fullTestPath": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DEB00F57448C09C1FBECE79D6641BAB0"
+			],
+			"duration": 0.0059067010879516602,
+			"dateTime": "2026.10.14-07.42.18",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

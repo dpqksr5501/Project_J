@@ -1,0 +1,219 @@
+{
+  "scope_ko": "명시한 compiled manifest/전체9파일의 A 대 B Editor/game-mode D3D12 offscreen·1280×720·실제 body200·socket0. ABBA 동일 조건. 이전 packaged Render2/3과 실행 host가 달라 직접 회귀로 합산하지 않는다.",
+  "limits_ko": "각 run의 one R burst와 복귀. capture/stall 포함; delayed GPU counters. 열·스케줄링·모든 손발/의상/장비 품질 보증 아님. run means를 동일 가중치로 비교하며 지속200 공격으로 승격하지 않음.",
+  "order": [
+    "A1",
+    "B1",
+    "B2",
+    "A2"
+  ],
+  "runs": {
+    "A1": {
+      "full_200_montages": {
+        "frames": 130,
+        "mean_frame_ms": 34.64940539230769,
+        "median_frame_ms": 33.976351,
+        "p95_frame_ms": 37.528599,
+        "fps_from_mean_frame": 28.86052411802726,
+        "mean_gpu_ms": 11.7696877,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 130
+      },
+      "after_montage": {
+        "frames": 220,
+        "mean_frame_ms": 15.927024922727274,
+        "median_frame_ms": 15.597353,
+        "p95_frame_ms": 17.4153,
+        "fps_from_mean_frame": 62.78636498980027,
+        "mean_gpu_ms": 10.569075454545455,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 220
+      }
+    },
+    "B1": {
+      "full_200_montages": {
+        "frames": 138,
+        "mean_frame_ms": 32.84189495652174,
+        "median_frame_ms": 31.9889525,
+        "p95_frame_ms": 36.527702,
+        "fps_from_mean_frame": 30.448912930385585,
+        "mean_gpu_ms": 11.609275369565218,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 138
+      },
+      "after_montage": {
+        "frames": 230,
+        "mean_frame_ms": 15.136284339130436,
+        "median_frame_ms": 14.8951005,
+        "p95_frame_ms": 16.283497,
+        "fps_from_mean_frame": 66.06641217850226,
+        "mean_gpu_ms": 10.254318260869566,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 230
+      }
+    },
+    "B2": {
+      "full_200_montages": {
+        "frames": 131,
+        "mean_frame_ms": 34.504208480916034,
+        "median_frame_ms": 33.804497,
+        "p95_frame_ms": 37.324699,
+        "fps_from_mean_frame": 28.981971881867423,
+        "mean_gpu_ms": 11.981044274809161,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 131
+      },
+      "after_montage": {
+        "frames": 219,
+        "mean_frame_ms": 15.90332286757991,
+        "median_frame_ms": 15.5809,
+        "p95_frame_ms": 17.1985,
+        "fps_from_mean_frame": 62.87994077253964,
+        "mean_gpu_ms": 10.597659817351598,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 219
+      }
+    },
+    "A2": {
+      "full_200_montages": {
+        "frames": 133,
+        "mean_frame_ms": 34.028900180451124,
+        "median_frame_ms": 33.475899,
+        "p95_frame_ms": 36.353397,
+        "fps_from_mean_frame": 29.386785782000636,
+        "mean_gpu_ms": 11.962342857142858,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 133
+      },
+      "after_montage": {
+        "frames": 222,
+        "mean_frame_ms": 15.663568486486486,
+        "median_frame_ms": 15.2849495,
+        "p95_frame_ms": 17.071203,
+        "fps_from_mean_frame": 63.84241246576317,
+        "mean_gpu_ms": 10.642056756756757,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 222
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "window": "full_200_montages",
+      "variants": {
+        "A": {
+          "mean_of_run_frame_means_ms": 34.33915278637941,
+          "mean_of_run_gpu_means_ms": 11.866015278571428,
+          "runs": [
+            {
+              "frames": 130,
+              "mean_frame_ms": 34.64940539230769,
+              "median_frame_ms": 33.976351,
+              "p95_frame_ms": 37.528599,
+              "fps_from_mean_frame": 28.86052411802726,
+              "mean_gpu_ms": 11.7696877,
+              "capture_requested_frames": 1,
+              "rendered_200_frames": 130
+            },
+            {
+              "frames": 133,
+              "mean_frame_ms": 34.028900180451124,
+              "median_frame_ms": 33.475899,
+              "p95_frame_ms": 36.353397,
+              "fps_from_mean_frame": 29.386785782000636,
+              "mean_gpu_ms": 11.962342857142858,
+              "capture_requested_frames": 1,
+              "rendered_200_frames": 133
+            }
+          ]
+        },
+        "B": {
+          "mean_of_run_frame_means_ms": 33.67305171871889,
+          "mean_of_run_gpu_means_ms": 11.79515982218719,
+          "runs": [
+            {
+              "frames": 138,
+              "mean_frame_ms": 32.84189495652174,
+              "median_frame_ms": 31.9889525,
+              "p95_frame_ms": 36.527702,
+              "fps_from_mean_frame": 30.448912930385585,
+              "mean_gpu_ms": 11.609275369565218,
+              "capture_requested_frames": 1,
+              "rendered_200_frames": 138
+            },
+            {
+              "frames": 131,
+              "mean_frame_ms": 34.504208480916034,
+              "median_frame_ms": 33.804497,
+              "p95_frame_ms": 37.324699,
+              "fps_from_mean_frame": 28.981971881867423,
+              "mean_gpu_ms": 11.981044274809161,
+              "capture_requested_frames": 1,
+              "rendered_200_frames": 131
+            }
+          ]
+        }
+      },
+      "delta_frame_percent": -1.9397714084685491
+    },
+    {
+      "window": "after_montage",
+      "variants": {
+        "A": {
+          "mean_of_run_frame_means_ms": 15.79529670460688,
+          "mean_of_run_gpu_means_ms": 10.605566105651107,
+          "runs": [
+            {
+              "frames": 220,
+              "mean_frame_ms": 15.927024922727274,
+              "median_frame_ms": 15.597353,
+              "p95_frame_ms": 17.4153,
+              "fps_from_mean_frame": 62.78636498980027,
+              "mean_gpu_ms": 10.569075454545455,
+              "capture_requested_frames": 0,
+              "rendered_200_frames": 220
+            },
+            {
+              "frames": 222,
+              "mean_frame_ms": 15.663568486486486,
+              "median_frame_ms": 15.2849495,
+              "p95_frame_ms": 17.071203,
+              "fps_from_mean_frame": 63.84241246576317,
+              "mean_gpu_ms": 10.642056756756757,
+              "capture_requested_frames": 0,
+              "rendered_200_frames": 222
+            }
+          ]
+        },
+        "B": {
+          "mean_of_run_frame_means_ms": 15.519803603355172,
+          "mean_of_run_gpu_means_ms": 10.425989039110583,
+          "runs": [
+            {
+              "frames": 230,
+              "mean_frame_ms": 15.136284339130436,
+              "median_frame_ms": 14.8951005,
+              "p95_frame_ms": 16.283497,
+              "fps_from_mean_frame": 66.06641217850226,
+              "mean_gpu_ms": 10.254318260869566,
+              "capture_requested_frames": 0,
+              "rendered_200_frames": 230
+            },
+            {
+              "frames": 219,
+              "mean_frame_ms": 15.90332286757991,
+              "median_frame_ms": 15.5809,
+              "p95_frame_ms": 17.1985,
+              "fps_from_mean_frame": 62.87994077253964,
+              "mean_gpu_ms": 10.597659817351598,
+              "capture_requested_frames": 0,
+              "rendered_200_frames": 219
+            }
+          ]
+        }
+      },
+      "delta_frame_percent": -1.744146415251302
+    }
+  ],
+  "restored": true
+}

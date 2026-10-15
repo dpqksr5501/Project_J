@@ -76,8 +76,8 @@ bool UProject_JCombatStyleDefinition::ValidateDefinition(TArray<FText>& Errors) 
 	auto CheckEffects = [&](const TArray<FProject_JAbilitySet_GameplayEffect>& Entries)
 	{
 		for (const auto& Entry : Entries)
-			if (!Entry.Effect || !FMath::IsFinite(Entry.EffectLevel) || Entry.EffectLevel <= 0)
-				Errors.Add(FText::FromString(TEXT("Effect entries require an execution class and a finite positive level.")));
+			if (!Entry.Effect || !Entry.HasValidLevel())
+				Errors.Add(FText::FromString(TEXT("Effect entries require an execution class and a finite level of at least 1.")));
 	};
 	TSet<const UProject_JAbilitySet*> SeenSets;
 	for (const UProject_JAbilitySet* Set : AbilitySets)

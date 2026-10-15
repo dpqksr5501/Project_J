@@ -1,0 +1,161 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "B25648384C6FDC74ACFAC0A260B9D11B",
+			"instanceName": "DESKTOP-5T07C91-27020",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-18.28.34",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.071332797408103943,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "NPCRegistrationRetired",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationRetired",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"B25648384C6FDC74ACFAC0A260B9D11B"
+			],
+			"duration": 0.053359001874923706,
+			"dateTime": "2026.10.14-18.28.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Registration retired by actual context invalidation cannot succeed' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 46,
+					"timestamp": "2026.10.14-18.28.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired component cannot publish registered ownership' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 48,
+					"timestamp": "2026.10.14-18.28.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Retired admission leaves no scheduler entry' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 49,
+					"timestamp": "2026.10.14-18.28.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationStopped",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationStopped",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"B25648384C6FDC74ACFAC0A260B9D11B"
+			],
+			"duration": 0.010178796947002411,
+			"dateTime": "2026.10.14-18.28.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Team update stopped during invalidation cannot acknowledge registration' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 65,
+					"timestamp": "2026.10.14-18.28.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationSuperseded",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"B25648384C6FDC74ACFAC0A260B9D11B"
+			],
+			"duration": 0.0077949985861778259,
+			"dateTime": "2026.10.14-18.28.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Older admission cannot acknowledge a newer callback registration' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 83,
+					"timestamp": "2026.10.14-18.28.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'One component owns exactly one scheduler agent' to be 1, but it was 2.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 86,
+					"timestamp": "2026.10.14-18.28.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Target eligibility uses the latest team2' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCRegistrationCallbackTests.cpp",
+					"lineNumber": 89,
+					"timestamp": "2026.10.14-18.28.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

@@ -357,7 +357,6 @@ private:
 	void QueueLocalMoveStopIfNeeded(bool bHadMoveInput);
 	void UpdateSprintLocomotionRequest();
 	EProject_JGroundMotionMode ResolveGroundMotionModeAfterSprintStop() const;
-	void TryFinishSprintLandingAfterSprintStop();
 
 	bool HasRealFallingEvidenceForLanding(const AProject_JPlayerCharacter& PlayerOwner) const;
 	bool ShouldIgnoreJumpStartLanding(const AProject_JPlayerCharacter& PlayerOwner) const;

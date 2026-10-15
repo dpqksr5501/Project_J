@@ -1,0 +1,129 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "29D5830D4489DF6A97DA1C8471C74909",
+			"instanceName": "DESKTOP-5T07C91-2596",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-01.05.50",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.037155702710151672,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MountControllerReassigned",
+			"fullTestPath": "ProjectJ.Continuation.MountControllerReassigned",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"29D5830D4489DF6A97DA1C8471C74909"
+			],
+			"duration": 0.037155702710151672,
+			"dateTime": "2026.10.15-01.05.50",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old mount request cannot steal reassigned controller' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 137,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New possession remains authoritative' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 138,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Failed request retires its own rider' to be null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 139,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Failed request detaches its own rider' to be null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 140,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Failed request restores collision: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 140,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Failed request restores movement: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 141,
+					"timestamp": "2026.10.15-01.05.50"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JMountCallbackRiderFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-01.05.50"
+				}
+			],
+			"warnings": 0,
+			"errors": 6,
+			"artifacts": []
+		}
+	]
+}

@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "5A95DA8B4BEB8BD027FAF293533B172F",
+			"instanceName": "DESKTOP-5T07C91-32876",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-12.15.01",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 2.0711696147918701,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "SharedNotifyLifecycle",
+			"fullTestPath": "ProjectJ.Animation.SharedNotifyLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"5A95DA8B4BEB8BD027FAF293533B172F"
+			],
+			"duration": 2.0711696147918701,
+			"dateTime": "2026.10.14-12.14.59",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

@@ -1,0 +1,275 @@
+{
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "counts": [
+    200
+  ],
+  "repeats": 2,
+  "warmupTicks": 240,
+  "measuredTicks": 600,
+  "simulationHz": 60,
+  "trace": false,
+  "noDDCCleanup": true,
+  "nullRHI": true,
+  "budgetMs": 2,
+  "sourceFiles": [
+    {
+      "path": "Scripts/Audit/Analyze-ContinuationComparison.py",
+      "sha256": "3688C06EE2556EFB09222C7046D88E0DD7C38FDF1DD44DF4C271419416EEC4E4"
+    },
+    {
+      "path": "Scripts/Audit/Analyze-ContinuationRender.py",
+      "sha256": "0ECFC028C4C17E0935D5C4A32668EB8BBA062A20A74AD158D6564CC90D0C0044"
+    },
+    {
+      "path": "Scripts/Audit/Analyze-ContinuationTraces.py",
+      "sha256": "30E5B4A39AEE82DE3050B6D164CA932E024BC0D12D195240B07B3699FF60EC95"
+    },
+    {
+      "path": "Scripts/Audit/Capture-ContinuationGame.py",
+      "sha256": "A2019B49AFC5C3CA7EB93080DECC9A7DABB74491B0FAC2F467CAD07B080ECDC0"
+    },
+    {
+      "path": "Scripts/Audit/Capture-ContinuationVersion.py",
+      "sha256": "E21331A726437565905EDC40C99411DE14355380502AFCCD04E302D6DFB68EC0"
+    },
+    {
+      "path": "Scripts/Audit/Prepare-ContinuationCookLayout.py",
+      "sha256": "A003C74B54C86228CFA8F1CA43C2F54E8AD051F8696C34B569CF0BE51A868920"
+    },
+    {
+      "path": "Scripts/Audit/Publish-ContinuationEvidence.py",
+      "sha256": "B4809ED3649805E1119C8E9D972B21E8EE7CCF873956619B24336FAF4BFF1180"
+    },
+    {
+      "path": "Scripts/Audit/Read-ContinuationAssetRegistry.py",
+      "sha256": "58EE660103EFFDFA6E2D633F97E8CA0A3F9A606765AEBADE79680407A7A87FE5"
+    },
+    {
+      "path": "Scripts/Audit/Record-ContinuationReview.py",
+      "sha256": "061ACA85D80168E30C567E6CD1D5E6C248933A9D9305A3406EC8D5B5E8956B8F"
+    },
+    {
+      "path": "Scripts/Audit/Run-ContinuationAssetValidation.ps1",
+      "sha256": "812EA482B2C1A7024095019A0C91BEE916A43832340A8D0FA7C2E8DC72D75E31"
+    },
+    {
+      "path": "Scripts/Audit/Run-ContinuationBuild.ps1",
+      "sha256": "C50FD8279CB1D16E59AEC662AF8116E3C730215622ED54554F32BEFB49137C9F"
+    },
+    {
+      "path": "Scripts/Audit/Run-ContinuationComparison.ps1",
+      "sha256": "F5CDA37431E7A15ADB5655C5D9FEED3A3A72EF80069ACBB65C9D4AC3461D7CC4"
+    },
+    {
+      "path": "Scripts/Audit/Run-ContinuationPackaging.ps1",
+      "sha256": "F0FA5D407B737582E699A53BB7E52FEECE7D22E0DB0808D7DD6D110C519E4BE8"
+    },
+    {
+      "path": "Scripts/Audit/Run-ContinuationTests.ps1",
+      "sha256": "A622AE05580B291675CC66C755A9A1D4D5071FFF745388F1AE3198CE11767418"
+    },
+    {
+      "path": "Scripts/Audit/Start-Continuation.py",
+      "sha256": "03E702BD89747BFE78D1CB34F1C7076C9B29DE37A9397DE01638263670832550"
+    },
+    {
+      "path": "Scripts/Audit/Summarize-ContinuationRegistry.py",
+      "sha256": "3B8FE170811F96F3EEEAA86306E229A5DD57F2AA15F40C2706BE8638F307B8BA"
+    },
+    {
+      "path": "Scripts/Audit/Verify-HistoricalComparison.py",
+      "sha256": "2DD1DA59A6A8F962856E9198CAAF542E675A85644E89EA780A80AE1E40FD6EEA"
+    },
+    {
+      "path": "Scripts/Validation/Measure-AuthoredAnimation.ps1",
+      "sha256": "C789DB53E11786565FEB3DC8548E6F391299078720FA537369D829E9627DA793"
+    },
+    {
+      "path": "Scripts/Validation/Measure-Network.ps1",
+      "sha256": "58A347B1E15C4E7EF33B62BAA3C7E35D371DA56D17C844A33B77B98652DBFD7F"
+    },
+    {
+      "path": "Scripts/Validation/Measure-RenderedCrowd.ps1",
+      "sha256": "2486A6CC7BEEC847758CFB3FDCD47E8EF58BF27E1A29BF9B328C2B9E9BB26FD1"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JInputLeaseCallbackFixture.h",
+      "sha256": "DB88DD86B4302F2FF06480E84C6F2C9412F5098655A6F96B41F6DED39D4B004C"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JInputLeaseCallbackTests.cpp",
+      "sha256": "F3D9B67DF560E2D34C4231DA19C4DA9F06DA2B0F533BACBE866258B557DAB455"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp",
+      "sha256": "20D2F4B34B03798AAF656F6CD4AFB445D7515C261FA16FB2BF7A72180F564FC0"
+    },
+    {
+      "path": "Source/Project_J/UI/Project_JEquipmentComparison.cpp",
+      "sha256": "B7F934E3904CC0189FB1316C36571946B28583CBDC7525FAA45E8255E7E6A568"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp",
+      "sha256": "FF231D87A57DECA4D663E6E0E52A325784A068DF07D8EA7375BDADAFCFC967E6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp",
+      "sha256": "DFAA3866298FC8DA7BB2FCF9EBFB7E3C00ECC08E6F69BDD86B1C433D4D3886A1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp",
+      "sha256": "E843269B17BB59F22788463A194A1054F7107332968A918471A61FB4B810F0A8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp",
+      "sha256": "727C0FFD39896E719B51D5B0DC470303C7FBD9882E59CACE2FA59E9DDCCD4D73"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp",
+      "sha256": "7CA1A86A5E950E2FFBD8E7764D94CFB031961C949E3DA95FFA97EB7C5203C3CA"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+      "sha256": "9132BB479C758CE809457BA07A14E31896261F4354312A782FCED79D8FDE1CC8"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+      "sha256": "08ACFBA5A408E76454F5DB75498A5AB1DDD1B83ED32467D4E5C00F077B98CAAB"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp",
+      "sha256": "DBF52853AF94C3946E92E576929D199AF95C2E13BF2C881579D88560167D5323"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp",
+      "sha256": "AE22EFC7387CC5D6B38DD52D4F1680515FAD093AB4579FC06928681E13341ED4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+      "sha256": "E1B5C57589A9B6775601C741C2E5B603BA64A8E491615F80325D91ADC5146A49"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp",
+      "sha256": "53FECF2E8E166575FEA1015A59B3A0212A5634AD1D6F792B7AEB73CFDD8C2BEE"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Equipment/Project_JGameplayEffect_EquipmentStats.cpp",
+      "sha256": "EBD42310DB11354C17F332374FF7CF420E051C171A3B0EABC1644F55A0078F06"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Equipment/Project_JGameplayEffect_EquipmentStats.h",
+      "sha256": "866CC870CDE1F07425802C5267BE6A508037A7ED86D72DF89A668CB67C62FE1C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp",
+      "sha256": "5E95EF8A8F53BD56FC2ACE0D461AD7611F546B207946205D80BBFC19664B76FC"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JEquipmentStatContractTests.cpp",
+      "sha256": "66561F32807B261FCAAF9D6CFD1B298BBCE1D1213B7F4B71761CDB218C6356B2"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp",
+      "sha256": "8B1990E3184A933132960E019FE4F3596A5CA515D4BDF94211F599F8EAC3CB47"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h",
+      "sha256": "ABB846288A9018BC91A5E043EEE6461834E42165C5DD3953A3B804F2EDD0310C"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h",
+      "sha256": "61D4EAEE7FA01822E21A184B7C1686EFF5B932343AE6129B7C5B58C7C8C6FD13"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "sha256": "A2D3AE5FA9DEA1ABA9A7DEC7436E7D9157F0E736BFF25E542D8B7ECD8CE18F21"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h",
+      "sha256": "FAC51EA248AB7D1F421A29FCB3F7887DCC95136B6E08D71781EA5BECC8EA06A6"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h",
+      "sha256": "19B1ABAE0C0F31CF3B7C112057408922FC3086644D43E7D6716EFFCF47A82DE3"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h",
+      "sha256": "6C7DBAC97E5C0E5D07573254C65B14FC4194AF6402ED3931E3B46B96B5720001"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h",
+      "sha256": "4FC8B13482327B225CDD8018AB6142EC05DB26F5089133D24A1C9685D2757DB2"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp",
+      "sha256": "2407FF4D89C87BCEC7382AC2E17AB5D26AF7C711A348CADB25AABB54D7CCBE99"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionAssetValidationTests.cpp",
+      "sha256": "E9589F3772A40F0C4EBBD98B2D7D1C7E78FA53184CDBD2F93B344FABDAA8C039"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp",
+      "sha256": "1531F68C098AB274C80542251145046851857D34463EBC44F27E860738E537D3"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Validation/Project_JWeaponMotionAssetValidator.cpp",
+      "sha256": "87791572A4C11E8D576913F4F20D89EF87B65F49FDA28D12DD0A75236A51BAA4"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Validation/Project_JWeaponMotionAssetValidator.h",
+      "sha256": "D76050EEC2D64EA7B0F0BA0AF2114CB81BD88E936D126BCD56A59EC8A44B5AF0"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h",
+      "sha256": "A1A0C6983A3EC0F426DC26326CEF836E7FB350BEAAE091178B8A2CD52E5B048B"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs",
+      "sha256": "724486037BA66ADE4B8B0D5E3A340EFA637FF64A214CCAA31E1A2EA8AEECA48C"
+    },
+    {
+      "path": "Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp",
+      "sha256": "392DC881DE70DF97EFCB85120B5DE9392AA6953D6AB2030008A809CB3C1F8E74"
+    },
+    {
+      "path": "Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h",
+      "sha256": "1A0673F9D1A6B1FF38B1CA8B4CEB2235B81C19A1DFF98FD4CFAFEEDA3A1E9B6A"
+    },
+    {
+      "path": "Source/Project_JGAS/Public/Project_JStatTypes.h",
+      "sha256": "8D5B07D4FEE73885D69A5C8ABEFD90E933F971D08C67D5F9AB4FAAD7175A3C63"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "Project_J.uproject",
+      "sha256": "057D84E9060923DB1964C376AA6084EA50598B32FA9B88555B22F69A5C402E61"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+      "sha256": "1B78A73928035F669A3B96337AE86F065184D680701C51F20FD12398E6580BA4"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+      "sha256": "BF44F02D923F6D3B7AADE98EE2F68644CF41F0DF1618DFA772619C96FBE0AF2A"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A"
+    },
+    {
+      "path": "Content/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.uasset",
+      "sha256": "A3D2E5C9329C4038F4425FD99D37D15BA983FBE4AEB26701ED484056CDC35FB4"
+    },
+    {
+      "path": "Content/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.uasset",
+      "sha256": "C849C045173D5EEFA08DF35516D45A9CD26F8EA3D461E987D8B5B226D8BD0031"
+    },
+    {
+      "path": "Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset",
+      "sha256": "AA4E2E350A679A328C6E3D291577D07406F8E9EA3F03B4D4F1A03E1B559A59BF"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "scope_ko": "레지스트리 근거로 지정한 class/style/native persistent-owner 및 NPC BP CDO의 공개 속성만 읽음. 전수 BP/DA 인스턴스/그래프·실서비스 검토 아님.",
+  "asset_mutation": false,
+  "asset_save": false,
+  "records": [
+    {
+      "object": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword",
+      "values": {
+        "combat_style_tag": "CombatStyle.Greatsword",
+        "derive_attack_catalog": false
+      },
+      "unverified": []
+    }
+  ]
+}

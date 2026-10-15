@@ -66,19 +66,50 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 
 void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy)
 {
-	const bool bFollowerStateChanged = (CurrentOptimizationPolicy.bEnableFollowerRetarget != NewPolicy.bEnableFollowerRetarget);
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_FollowerTickPolicy);
+	check(IsInGameThread());
 	CurrentOptimizationPolicy = NewPolicy;
-
-	const auto* Coordinator = OwningCharacter ? OwningCharacter->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
-	const bool bVisualGroupOwned = Coordinator && Coordinator->IsVisualBudgetEnabled() &&
-		Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh());
-	if (!bVisualGroupOwned && OwningCharacter && bFollowerStateChanged)
+	USkeletalMeshComponent* Follower = GetRuntimeRetargetFollowerMesh();
+	if (FallbackFollowerTickMesh.Get() != Follower || !Follower || !Follower->IsRegistered())
 	{
-		if (USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
-		{
-			FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
-		}
+		ReleaseFollowerTickOverride();
 	}
+	if (!Follower || !Follower->IsRegistered()) return;
+	if (Follower->ComponentTags.Contains(TEXT("NoVisualBudget")) || Follower->IsSimulatingPhysics() || Follower->LeaderPoseComponent.IsValid())
+	{
+		ReleaseFollowerTickOverride();
+		return;
+	}
+	// Actual allocation, rather than coordinator configuration, owns these controls.
+	// The coordinator releases this lease before it captures a mesh's authored tick.
+	if (Follower->IsUsingExternalTickRateControl())
+	{
+		ReleaseFollowerTickOverride(false);
+		return;
+	}
+	if (!FallbackFollowerTickMesh.IsValid())
+	{
+		FallbackFollowerTickMesh = Follower;
+		bSavedFollowerTick = Follower->IsComponentTickEnabled();
+		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
+		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
+	}
+	else if (bAppliedFollowerRetarget != NewPolicy.bEnableFollowerRetarget)
+	{
+		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
+		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
+	}
+}
+
+void UProject_JCharacterAnimInstance::ReleaseFollowerTickOverride(bool bRestoreTick)
+{
+	check(IsInGameThread());
+	if (USkeletalMeshComponent* Mesh = FallbackFollowerTickMesh.Get(); bRestoreTick && Mesh &&
+		!Mesh->IsUsingExternalTickRateControl() && Mesh->IsComponentTickEnabled() == bAppliedFollowerRetarget)
+	{
+		Mesh->SetComponentTickEnabled(bSavedFollowerTick);
+	}
+	FallbackFollowerTickMesh.Reset();
 }
 
 bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const

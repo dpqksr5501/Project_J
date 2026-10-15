@@ -1,4 +1,5 @@
 #include "Animation/Project_JAnimNotifyState_CombatPresentationCue.h"
+#include "Animation/AnimSequenceBase.h"
 
 #include "Components/Project_JCombatPresentationComponent.h"
 #include "Components/SkeletalMeshComponent.h"

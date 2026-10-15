@@ -327,7 +327,8 @@ void UProject_JLocomotionAnimStateComponent::HandleSprintStopped()
 		EnterGroundMotionMode(ResolveGroundMotionModeAfterSprintStop());
 	}
 
-	TryFinishSprintLandingAfterSprintStop();
+	// Sprint release preserves the selected landing pose; normal landing
+	// completion resolves the current input into Idle or Locomotion.
 }
 
 bool UProject_JLocomotionAnimStateComponent::HasAnyMoveInputState() const
@@ -382,11 +383,4 @@ EProject_JGroundMotionMode UProject_JLocomotionAnimStateComponent::ResolveGround
 	return GroundSpeed > StopIntentSpeedThreshold
 		? EProject_JGroundMotionMode::Stop
 		: EProject_JGroundMotionMode::Idle;
-}
-
-void UProject_JLocomotionAnimStateComponent::TryFinishSprintLandingAfterSprintStop()
-{
-	// Sprint release must not turn a selected Sprint landing into a Run/Idle
-	// transition mid-pose.  The regular landing completion will evaluate the
-	// current input and enter Idle or Locomotion as appropriate.
 }

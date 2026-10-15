@@ -1,0 +1,94 @@
+{
+	"scope_ko": "Direct native notify stages on actual authored BP bodies/equipment: Motion uses public copied authored R notify; GroundContact is separate native synthetic registry fixture. 50/100/200, warmup1/repeat4, no world ticks inside measured stages; tick uses event-reference time0. Not full montage/GAS/world CPU, rendering/GPU, remote sockets or hand-contact quality.",
+	"completed": true,
+	"motion_asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R.AM_Greatsword_R",
+	"notify_object": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R.AM_Greatsword_R:Project_JAnimNotifyState_WeaponMotion_0",
+	"notify_start_seconds": 2.0472548007965088,
+	"notify_duration_seconds": 1.3570740222930908,
+	"rows": [
+		{
+			"count": 50,
+			"repeat": 0,
+			"begin_ms": 0.34029781818389893,
+			"tick_ms": 0.065300613641738892,
+			"end_ms": 0.2987980842590332
+		},
+		{
+			"count": 50,
+			"repeat": 1,
+			"begin_ms": 0.3295019268989563,
+			"tick_ms": 0.064700841903686523,
+			"end_ms": 0.28920173645019531
+		},
+		{
+			"count": 50,
+			"repeat": 2,
+			"begin_ms": 0.33160299062728882,
+			"tick_ms": 0.06449967622756958,
+			"end_ms": 0.28929859399795532
+		},
+		{
+			"count": 50,
+			"repeat": 3,
+			"begin_ms": 0.32329931855201721,
+			"tick_ms": 0.064998865127563477,
+			"end_ms": 0.29480084776878357
+		},
+		{
+			"count": 100,
+			"repeat": 0,
+			"begin_ms": 0.68039819598197937,
+			"tick_ms": 0.14970079064369202,
+			"end_ms": 0.59599801898002625
+		},
+		{
+			"count": 100,
+			"repeat": 1,
+			"begin_ms": 0.71030110120773315,
+			"tick_ms": 0.14600157737731934,
+			"end_ms": 0.64909830689430237
+		},
+		{
+			"count": 100,
+			"repeat": 2,
+			"begin_ms": 0.675201416015625,
+			"tick_ms": 0.14049932360649109,
+			"end_ms": 0.58839842677116394
+		},
+		{
+			"count": 100,
+			"repeat": 3,
+			"begin_ms": 0.66370144486427307,
+			"tick_ms": 0.1448020339012146,
+			"end_ms": 0.58559700846672058
+		},
+		{
+			"count": 200,
+			"repeat": 0,
+			"begin_ms": 1.3956986367702484,
+			"tick_ms": 0.33349916338920593,
+			"end_ms": 1.2206025421619415
+		},
+		{
+			"count": 200,
+			"repeat": 1,
+			"begin_ms": 1.5754997730255127,
+			"tick_ms": 0.33219903707504272,
+			"end_ms": 1.2053027749061584
+		},
+		{
+			"count": 200,
+			"repeat": 2,
+			"begin_ms": 1.3589970767498016,
+			"tick_ms": 0.32870098948478699,
+			"end_ms": 1.19820237159729
+		},
+		{
+			"count": 200,
+			"repeat": 3,
+			"begin_ms": 1.4351010322570801,
+			"tick_ms": 0.34260004758834839,
+			"end_ms": 1.1969022452831268
+		}
+	]
+}

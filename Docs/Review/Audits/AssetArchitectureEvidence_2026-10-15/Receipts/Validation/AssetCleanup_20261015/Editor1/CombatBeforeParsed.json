@@ -1,0 +1,2128 @@
+{
+  "asset_mutation": false,
+  "asset_save": false,
+  "graphs": [
+    {
+      "graph": {
+        "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript"
+      },
+      "nodes": [
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_FunctionEntry_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": -48,
+            "y": 32
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_FunctionEntry_0"
+          },
+          "type_id": "|ConstructionScript"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_FunctionEntry_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_8"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 288,
+            "y": 16
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_8"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Cloak"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 128,
+            "y": 96
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_8"
+          },
+          "type_id": "|GetCloak"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_9"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 752,
+            "y": 16
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_9"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Foot"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 480,
+            "y": 176
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_9"
+          },
+          "type_id": "|GetFoot"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_0"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_3"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_7"
+                  }
+                },
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_11"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "Greatsword"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": -128,
+            "y": 400
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+          },
+          "type_id": "|GetGreatsword"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_1"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_11"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 288,
+            "y": 288
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_4"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_12"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 768,
+            "y": 288
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_5"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_13"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 288,
+            "y": 528
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_9"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_14"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 768,
+            "y": 528
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_8"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_15"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 288,
+            "y": 912
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_17"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "self"
+            },
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 2,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "MainMesh"
+            }
+          ],
+          "position": {
+            "x": 800,
+            "y": 912
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+          },
+          "type_id": "ModularMesh|AttachAndSetLeader"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_1"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 1040,
+            "y": 256
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_0"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_1"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_1"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 288,
+            "y": 256
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_1"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_3"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_11"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Hand"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 144,
+            "y": 352
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_11"
+          },
+          "type_id": "|GetHand"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_12"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Inner"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 608,
+            "y": 368
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_12"
+          },
+          "type_id": "|GetInner"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_13"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Sho"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 32,
+            "y": 608
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_13"
+          },
+          "type_id": "|GetSho"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_14"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Upper"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 624,
+            "y": 608
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_14"
+          },
+          "type_id": "|GetUpper"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_15"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Hel"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 32,
+            "y": 976
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_15"
+          },
+          "type_id": "|GetHel"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 1,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_17"
+                }
+              },
+              "type_id": "Project JModular Mesh Component Object Reference",
+              "name": "Lower"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 672,
+            "y": 976
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_17"
+          },
+          "type_id": "|GetLower"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_2"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_3"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_2"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 592,
+            "y": 224
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_2"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_2"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_3"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_3"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 256,
+            "y": 224
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_3"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_5"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_4"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_4"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_4"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 1040,
+            "y": 480
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_4"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_5"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_5"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_4"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_5"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 240,
+            "y": 480
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_5"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_6"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_7"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_6"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 624,
+            "y": 704
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_6"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_7"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_7"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 320,
+            "y": 704
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_7"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_7"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_8"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_9"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_8"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 272,
+            "y": 864
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_8"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_8"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_9"
+                }
+              },
+              "type_id": "Exec",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_6"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_9"
+                }
+              },
+              "type_id": "Exec",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 1072,
+            "y": 864
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_9"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 2,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_CallFunction_1"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_10"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_11"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_10"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 720,
+            "y": 1088
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_10"
+          },
+          "type_id": "|RerouteNode"
+        },
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_11"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "OutputPin"
+            }
+          ],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_VariableGet_10"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_11"
+                }
+              },
+              "type_id": "Skeletal Mesh Component Object Reference",
+              "name": "InputPin"
+            }
+          ],
+          "position": {
+            "x": 336,
+            "y": 1088
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript.K2Node_Knot_11"
+          },
+          "type_id": "|RerouteNode"
+        }
+      ]
+    },
+    {
+      "graph": {
+        "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead"
+      },
+      "nodes": [
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionResult_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionEntry_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionEntry_0"
+          },
+          "type_id": "|IsDead"
+        },
+        {
+          "output_pins": [],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionEntry_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "false",
+              "connected_pins": [],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Boolean",
+              "name": "ReturnValue"
+            }
+          ],
+          "position": {
+            "x": 256,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead.K2Node_FunctionResult_0"
+          },
+          "type_id": "|ReturnNode"
+        }
+      ]
+    },
+    {
+      "graph": {
+        "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation"
+      },
+      "nodes": [
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionResult_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionEntry_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            },
+            {
+              "value": "None",
+              "connected_pins": [],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionEntry_0"
+                }
+              },
+              "type_id": "Name (by ref)",
+              "name": "SocketName"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionEntry_0"
+          },
+          "type_id": "|GetCombatSocketLocation"
+        },
+        {
+          "output_pins": [],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionEntry_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "0, 0, 0",
+              "connected_pins": [],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Vector",
+              "name": "ReturnValue"
+            }
+          ],
+          "position": {
+            "x": 256,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation.K2Node_FunctionResult_0"
+          },
+          "type_id": "|ReturnNode"
+        }
+      ]
+    },
+    {
+      "graph": {
+        "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel"
+      },
+      "nodes": [
+        {
+          "output_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Input",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionResult_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Output",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionEntry_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "then"
+            }
+          ],
+          "input_pins": [],
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionEntry_0"
+          },
+          "type_id": "|GetCharacterLevel"
+        },
+        {
+          "output_pins": [],
+          "input_pins": [
+            {
+              "value": "",
+              "connected_pins": [
+                {
+                  "direction": "EGPD_Output",
+                  "index_id": 0,
+                  "node": {
+                    "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionEntry_0"
+                  }
+                }
+              ],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 0,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Exec",
+              "name": "execute"
+            },
+            {
+              "value": "0",
+              "connected_pins": [],
+              "pin_id": {
+                "direction": "EGPD_Input",
+                "index_id": 1,
+                "node": {
+                  "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionResult_0"
+                }
+              },
+              "type_id": "Integer",
+              "name": "ReturnValue"
+            }
+          ],
+          "position": {
+            "x": 256,
+            "y": 0
+          },
+          "node": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel.K2Node_FunctionResult_0"
+          },
+          "type_id": "|ReturnNode"
+        }
+      ]
+    }
+  ],
+  "cdo_values": "{\"cloak\":\"None\",\"foot\":\"None\",\"inner\":\"None\",\"hand\":\"None\",\"upper\":\"None\",\"sho\":\"None\",\"lower\":\"None\",\"hel\":\"None\",\"greatsword\":\"None\",\"cameraBoom\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CameraBoom\"},\"followCamera\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:FollowCamera\"},\"cameraComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CameraComponent\"},\"locomotionAnimStateComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:LocomotionAnimStateComponent\"},\"motionMatchingTrajectoryComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:MotionMatchingTrajectoryComponent\"},\"characterUIBindingComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CharacterUIBindingComponent\"},\"playerInputBindingComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:PlayerInputBindingComponent\"},\"skillInputRouterComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:SkillInputRouterComponent\"},\"skillInputExecutionComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:SkillInputExecutionComponent\"},\"replicatedAnimEventComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:ReplicatedAnimEventComponent\"},\"animationUpdateCoordinator\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:AnimationUpdateCoordinator\"},\"replicatedJumpStateComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:ReplicatedJumpStateComponent\"},\"combatStateComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatStateComponent\"},\"combatIntroComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatIntroComponent\"},\"combatAnimationLayerComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatAnimationLayerComponent\"},\"weaponPresentationComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:WeaponPresentationComponent\"},\"combatPresentationComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatPresentationComponent\"},\"combatHitValidationComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CombatHitValidationComponent\"},\"mountComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:MountComponent\"},\"mountedAnimationLayerComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:MountedAnimationLayerComponent\"},\"summonedMount\":\"None\",\"mountedAnimationLayerClass\":{\"refPath\":\"/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount_C\"},\"prototypeStartingWeapon\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip\"},\"jumpAction\":{\"refPath\":\"/Game/Input/Actions/IA_Jump.IA_Jump\"},\"moveAction\":{\"refPath\":\"/Game/Input/Actions/IA_Move.IA_Move\"},\"moveIntentForwardAction\":{\"refPath\":\"/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward\"},\"moveIntentBackwardAction\":{\"refPath\":\"/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward\"},\"moveIntentLeftAction\":{\"refPath\":\"/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left\"},\"moveIntentRightAction\":{\"refPath\":\"/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right\"},\"lookAction\":{\"refPath\":\"/Game/Input/Actions/IA_Look.IA_Look\"},\"mouseLookAction\":{\"refPath\":\"/Game/Input/Actions/IA_MouseLook.IA_MouseLook\"},\"sprintAction\":{\"refPath\":\"/Game/Input/Actions/IA_Sprint.IA_Sprint\"},\"toggleCombatAction\":{\"refPath\":\"/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat\"},\"attackAction\":{\"refPath\":\"/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB\"},\"heavyAttackAction\":{\"refPath\":\"/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB\"},\"skillModifierAction\":\"None\",\"interactAction\":{\"refPath\":\"/Game/Input/Actions/IA_Interact.IA_Interact\"},\"walkSpeed\":500,\"sprintSpeed\":700,\"walkRotationRateYaw\":500,\"sprintRotationRateYaw\":500,\"characterAnimProfile\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile.DA_Greatsword_AnimProfile\"},\"locomotionProfile\":\"None\",\"motionMatchingAssetSet\":\"None\",\"currentCombatStyle\":\"None\",\"currentWeaponPresentationProfile\":\"None\",\"bIsAttacking\":false,\"bIsDodging\":false,\"bIsHitReacting\":false,\"combatIntroMontage\":\"None\",\"combatIntroMontagePlayRate\":1,\"bIsPlayingCombatIntro\":false,\"bPendingCombatModeFromIntro\":false,\"bInterruptCombatIntroOnHit\":true,\"sprintAbilityTag\":{\"tagName\":\"State.Movement.Sprinting\"},\"combatToggleAbilityTag\":{\"tagName\":\"State.CombatMode\"},\"foleyComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:Foley\"},\"significanceNearDistance\":2500,\"significanceMidDistance\":6000,\"significanceFarDistance\":12000,\"abilitySystemComponent\":\"None\",\"attributeSet\":\"None\",\"equipmentManager\":\"None\",\"equipmentRuntime\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:EquipmentRuntime\"},\"characterLevel\":1,\"defaultAttributeData\":\"None\",\"characterClassDefinition\":{\"refPath\":\"/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword\"},\"advancementDefinition\":\"None\",\"defaultAbilities\":[],\"runtimeStateOwnership\":\"PlayerStatePreferred\",\"mesh\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CharacterMesh0\"},\"characterMovement\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CharMoveComp\"},\"capsuleComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CollisionCylinder\"},\"crouchedEyeHeight\":32,\"bIsCrouched\":false,\"bPressedJump\":false,\"bWasJumping\":false,\"jumpKeyHoldTime\":0,\"jumpForceTimeRemaining\":0,\"proxyJumpForceStartedTime\":0,\"jumpMaxHoldTime\":0,\"jumpMaxCount\":1,\"jumpCurrentCount\":0,\"jumpCurrentCountPreJump\":0,\"onReachedJumpApex\":\"()\",\"landedDelegate\":\"()\",\"movementModeChangedDelegate\":\"()\",\"onCharacterMovementUpdated\":\"()\",\"bUseControllerRotationPitch\":false,\"bUseControllerRotationYaw\":false,\"bUseControllerRotationRoll\":false,\"bCanAffectNavigationGeneration\":false,\"baseEyeHeight\":64,\"autoPossessPlayer\":\"Disabled\",\"autoPossessAI\":\"PlacedInWorld\",\"aIControllerClass\":{\"refPath\":\"/Script/AIModule.AIController\"},\"playerState\":\"None\",\"lastHitBy\":\"None\",\"receiveControllerChangedDelegate\":\"()\",\"receiveRestartedDelegate\":\"()\",\"overrideInputComponentClass\":\"None\",\"primaryActorTick\":{\"tickGroup\":\"TG_PrePhysics\",\"endTickGroup\":\"TG_PrePhysics\",\"bTickEvenWhenPaused\":false,\"bCanEverTick\":true,\"bStartWithTickEnabled\":true,\"bAllowTickOnDedicatedServer\":true,\"tickInterval\":0},\"bOnlyRelevantToOwner\":false,\"bAlwaysRelevant\":false,\"bReplicateMovement\":true,\"bCallPreReplication\":true,\"bCallPreReplicationForReplay\":true,\"bHidden\":false,\"bIsMainWorldOnly\":false,\"bNetLoadOnClient\":true,\"bNetUseOwnerRelevancy\":false,\"bRelevantForLevelBounds\":true,\"bReplayRewindable\":false,\"bAllowTickBeforeBeginPlay\":false,\"bAutoDestroyWhenFinished\":false,\"bCanBeDamaged\":true,\"bBlockInput\":false,\"bFindCameraComponentWhenViewTarget\":true,\"bGenerateOverlapEventsDuringLevelStreaming\":true,\"bIgnoresOriginShifting\":false,\"bEnableAutoLODGeneration\":true,\"bIsEditorOnlyActor\":false,\"bReplicates\":true,\"bCanBeInCluster\":false,\"bMigratingAsset\":false,\"bReplicateUsingRegisteredSubObjectList\":true,\"bAsyncPhysicsTickEnabled\":false,\"updateOverlapsMethodDuringLevelStreaming\":\"UseConfigDefault\",\"defaultUpdateOverlapsMethodDuringLevelStreaming\":\"OnlyUpdateMovable\",\"remoteRole\":\"ROLE_SimulatedProxy\",\"initialLifeSpan\":0,\"customTimeDilation\":1,\"runtimeGrid\":\"None\",\"replicatedMovement\":{\"locationQuantizationLevel\":\"RoundTwoDecimals\",\"velocityQuantizationLevel\":\"RoundWholeNumber\",\"rotationQuantizationLevel\":\"ByteComponents\"},\"role\":\"ROLE_Authority\",\"netDormancy\":\"DORM_Awake\",\"spawnCollisionHandlingMethod\":\"AdjustIfPossibleButDontSpawnIfColliding\",\"autoReceiveInput\":\"Disabled\",\"inputPriority\":0,\"netCullDistanceSquared\":225000000,\"netUpdateFrequency\":100,\"minNetUpdateFrequency\":2,\"netPriority\":3,\"physicsReplicationMode\":\"Default\",\"instigator\":\"None\",\"rootComponent\":{\"refPath\":\"/Game/Character_BPs/GreatSword/BP_GreatSword.Default__BP_Greatsword_C:CollisionCylinder\"},\"pivotOffset\":{\"x\":0,\"y\":0,\"z\":0},\"hLODLayer\":\"None\",\"layers\":[],\"actorGuid\":\"00000000-0000-0000-0000-000000000000\",\"actorInstanceGuid\":\"00000000-0000-0000-0000-000000000000\",\"contentBundleGuid\":\"00000000-0000-0000-0000-000000000000\",\"dataLayerAssets\":[],\"externalDataLayerAsset\":\"None\",\"spriteScale\":1,\"bOptimizeBPComponentData\":false,\"bIsSpatiallyLoaded\":true,\"tags\":[],\"onTakeAnyDamage\":\"()\",\"onTakePointDamage\":\"()\",\"onTakeRadialDamage\":\"()\",\"onActorBeginOverlap\":\"()\",\"onActorEndOverlap\":\"()\",\"onBeginCursorOver\":\"()\",\"onEndCursorOver\":\"()\",\"onClicked\":\"()\",\"onReleased\":\"()\",\"onInputTouchBegin\":\"()\",\"onInputTouchEnd\":\"()\",\"onInputTouchEnter\":\"()\",\"onInputTouchLeave\":\"()\",\"onActorHit\":\"()\",\"onDestroyed\":\"()\",\"onEndPlay\":\"()\"}"
+}

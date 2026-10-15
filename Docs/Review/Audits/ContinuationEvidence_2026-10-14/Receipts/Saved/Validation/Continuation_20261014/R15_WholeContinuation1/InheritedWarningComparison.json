@@ -1,0 +1,18 @@
+{
+  "baseline": "WholeContinuation5",
+  "current": "R15_WholeContinuation1",
+  "missing_old_tests": [],
+  "new_tests": [
+    "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+    "ProjectJ.Continuation.NPCRegistrationRetired",
+    "ProjectJ.Continuation.NPCRegistrationStopped",
+    "ProjectJ.Continuation.NPCRegistrationSuperseded",
+    "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+    "ProjectJ.Continuation.ProgressionLevelAdmission",
+    "ProjectJ.Continuation.ProgressionRestoreRetirement",
+    "ProjectJ.Continuation.StyleEffectAdmission"
+  ],
+  "warning_test_names_match": true,
+  "changed_warning_messages": {},
+  "scope_ko": "실제 automation roster·Warning message 대조. 시험 통과/동일 경고는 전수 수동 감사·모든 배포/품질 완료와 다르다."
+}

@@ -1,6 +1,12 @@
 # 직업·전직·콘텐츠 데이터 제작 통합 가이드
 
+2026-10-15 BP·DA 정리: [실제 연결·유지 이유와 MMORPG 경계](../../Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)를 함께 확인한다. 시험/제작 에셋을 참조0이나 이름만으로 제거하지 않는다. 기본값은 native CDO에서 상속하고 생성 script에는 콘텐츠 override를 기록한다. ItemId/ClassId/ProfileId·PrimaryAssetId·asset path는 서로 다른 계약이며 이름 정리로 저장/서버 승인 범위를 바꾸지 않는다.
+
 정리일: 2026-10-03. 스탯·직업·전직·스킬·장비 확장, DA 역할과 제작 도구를 한 문서에서 찾는다. 기존 세 가이드의 코드 진입점·상세 순서·예외·태그·검수 내용을 유지한다.
+
+2026-10-14 계속 감사: AbilitySet의 EffectLevel은 finite·1 이상이어야 하고 유효한 1.5 같은 값은 그대로 사용한다. 장비의 StatModifiers 제작 형식은 유지하지만 적용은 제거 가능한 native Infinite GE 핸들이 소유한다. 영구 base에 역가산하거나 해제 때 변경된 DA를 다시 읽지 않는다. 제작·UI·runtime은 stat enum/finite/합산 overflow를 같은 tuple 계약으로 검사한다. Handover ini/native timing도 finite와 authored range를 만족해야 하며 age0은 명시한 unlimited 정책이다. 잘못된 tuning은 typed admission 실패이고 새 timer/reset으로 보완하지 않는다. Quest reward가 거절되면 원래 tracking 선택을 보존한다. [당시 수정·검증 범위](../../Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)는 전체 기능/원격/품질 완료와 구분한다.
+
+2026-10-15 제작/실행 승인: CombatStyle의 inline/명시 AbilitySet 효과도 동일한 HasValidLevel(유한·1 이상)을 따른다. opt-in compiled style의0.5 승인/runtime skip을 거절하고1.5 실제 GAS level은 유지한다. class StartingLevel은 사용할 Progression owner MaximumLevel(기본100, 유효 범위1–10000) 안에 있어야 한다. defaults/class 도입·advancement의 최초 base class 채택·level 변경은 같은 effective floor/cap을 검사한다. scalar setter는 기존 하한 보정을 유지하며 portable handover packet은 정확한 level을 요구해 하한 보정으로 다른 값을 적용하거나 상한 거절 후 pose만 성공시키지 않는다. 이미 게시된 XP 지급 성공을 callback 종료 때문에 실패로 바꾸지 않는다. [실제 재현·수정·집중28 및 남은 경계](../../Review/Audits/Project_J_Continuation_Audit_2026-10-15.md)를 참고한다. 모든 기존 DA/BP cap 대조와 배포 검증은 별도 미완료다.
 
 ## 작업 순서
 
@@ -263,15 +269,12 @@ float CriticalChance = 0.05f;
 장비의 고정 보너스로도 사용할 경우:
 
 1. `EProject_JEquipmentStat`에 항목을 추가한다.
-2. `UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers()`에 attribute 매핑을 추가한다.
+2. `FProject_JEquipmentStatValues::NumStats`와 `UProject_JGameplayEffect_EquipmentStats`의 attribute/native SetByCaller tag 매핑을 함께 확장한다. 제작·고정 보너스 UI·runtime이 동일한 tuple을 사용해야 한다.
 
 ```cpp
+// native equipment GE의 attribute 매핑 예시
 case EProject_JEquipmentStat::CriticalChance:
-	ASC->ApplyModToAttribute(
-		UProject_JAttributeSet::GetCriticalChanceAttribute(),
-		EGameplayModOp::Additive,
-		SignedValue);
-	break;
+	return UProject_JAttributeSet::GetCriticalChanceAttribute();
 ```
 
 복잡한 곱연산, 태그 조건, 세트 효과는 `StatModifiers`보다 GameplayEffect를 사용한다.
@@ -516,6 +519,8 @@ WeaponAnimProfile   = WAP_OneHandSword
 
 단순 고정 합산값에 적합하다.
 
+2026-10-14부터 동일 stat의 finite 값을 double로 합산하고 float로 표현 가능한 전체 tuple만 승인한다. 알 수 없는 enum·NaN·Inf·합계 overflow는 일부만 적용하지 않고 해당 stat tuple을 거절한다. 음수는 허용하며 합산 뒤 AttributeSet의 current-value 하한을 적용한다. 순서에 따라 영구 base가 달라지지 않는다. 장착 시 stable native Infinite GE에 SetByCaller 값을 복사하고, 해제 시 원래 ASC의 active handle만 제거한다. 다른 장비·영구 성장·별도 GE를 되돌리지 않고 최대치 감소 시 current를 clamp하며 상승 시 무료 회복하지 않는다.
+
 ```text
 StatModifiers
   - AttackPower +10
@@ -524,7 +529,7 @@ StatModifiers
 
 `StatApplicationPolicy`:
 
-- `GameplayEffectsThenStatModifiers`: Effect가 있으면 Effect를 사용하고, 없으면 StatModifier fallback
+- `GameplayEffectsThenStatModifiers`: 제거 가능한 authored Effect가 실제 적용돼 핸들을 얻으면 그것을 사용하고, 모두 적용되지 않았으면 StatModifier fallback
 - `GameplayEffectsOnly`: GameplayEffect만 사용
 - `StatModifiersOnly`: 고정 StatModifier만 사용
 
@@ -822,3 +827,7 @@ flowchart LR
 ### 검증
 
 `ProjectJ.Authoring.Bundle.*` 3개 테스트는 경로/ID 검증, 메모리 초안의 원본 격리와 공유 경계, 콤보 연결과 카탈로그 변환, 전직의 기본 직업·선행 관계·정책 초기값을 검증했다. 이 결과는 [최종 81개 통합 회귀](../../Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)에 포함된다. 테스트는 `/Game` 에셋을 만들거나 저장하지 않는다. 메뉴 조작, 패키지 생성/삭제, Content Browser 표시와 표준 저장은 에디터 수동 확인 범위다.
+
+### 2026-10-15 기본 속성 제작 진단
+
+MaxHealth/MaxMana는 finite·strictly positive 검사 한 곳이 승인 권위다. Health/Mana/AttackPower/Defense의 finite·nonnegative 검사와 Health/Mana 초과 clamp warning은 유지한다. 잘못된 Max 값에 같은 원인의 positive/nonnegative 오류를 중복 발행하지 않는다. 허용 데이터 집합이나 런타임 초기화/보정 정책은 바꾸지 않았다. 생성 MMO 카탈로그는 JSON 수정 후 기존 generator/validator 절차를 사용하며 generated inl/MD를 독립 수정하지 않는다.

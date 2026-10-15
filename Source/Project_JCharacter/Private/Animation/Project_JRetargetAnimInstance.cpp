@@ -18,27 +18,6 @@
 #include "Engine/SkeletalMesh.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
-UProject_JRetargetAnimInstance::UProject_JRetargetAnimInstance()
-{
-	RightGripLocation = FVector::ZeroVector;
-	LeftGripLocation = FVector::ZeroVector;
-	RightGripAlpha = 1.0f;
-	LeftGripAlpha = 0.0f;
-	GripIKAlpha = 1.0f;
-	PrimaryGripSocketName = TEXT("WeaponGrip_R");
-	SecondaryGripSocketName = TEXT("WeaponGrip_L");
-	GripInterpSpeed = 12.0f;
-	bIsCombatMode = false;
-	bEnableCombatGripIK = true;
-	bAutoDetectWeaponIfNull = false; // Production default: event-driven via UpdateWeaponTarget
-
-	bHasValidRightSnapshot = false;
-	bPrimaryIKSuppressedSnapshot = false;
-	bHasValidLeftSnapshot = false;
-	TargetRightAlphaSnapshot = 1.0f;
-	TargetLeftAlphaSnapshot = 0.0f;
-}
-
 void UProject_JRetargetAnimInstance::BeginDestroy()
 {
 	if (CachedPresentationComp.IsValid())

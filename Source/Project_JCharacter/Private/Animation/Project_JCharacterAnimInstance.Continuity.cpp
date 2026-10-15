@@ -227,7 +227,7 @@ void UProject_JCharacterAnimInstance::UpdateBackwardRefaceData(FProject_JAnimThr
 	{
 		Input.SelectionFrame = Feedback.Frame;
 		Input.bSelectedReface = Set->RunDatabases.BackwardReface && Feedback.SelectedDatabase == Set->RunDatabases.BackwardReface->GetFName();
-		Input.bSelectedCycle = Feedback.SelectedDatabase == Set->RunDatabases.Cycle->GetFName() ||
+		Input.bSelectedCycle = (Set->RunDatabases.Cycle && Feedback.SelectedDatabase == Set->RunDatabases.Cycle->GetFName()) ||
 			(Set->RunDatabases.BackwardRefaceCycle && Feedback.SelectedDatabase == Set->RunDatabases.BackwardRefaceCycle->GetFName()) ||
 			(Set->RunDatabases.SettledCycle && Feedback.SelectedDatabase == Set->RunDatabases.SettledCycle->GetFName());
 	}

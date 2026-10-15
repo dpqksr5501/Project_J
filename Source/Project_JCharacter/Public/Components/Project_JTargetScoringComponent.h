@@ -82,6 +82,8 @@ private:
 	bool bEndingPlay = false;
 	bool bSharedBatchRequest = false;
 	bool bNPCBatchRegistered = false;
+	bool bNotifyingContext = false;
 	int32 NPCDecisionTeam = INDEX_NONE;
 	uint64 BatchRegistrationRevision = 0;
+	void AdvanceRegistrationRevision() { if (BatchRegistrationRevision != MAX_uint64) { ++BatchRegistrationRevision; } }
 };

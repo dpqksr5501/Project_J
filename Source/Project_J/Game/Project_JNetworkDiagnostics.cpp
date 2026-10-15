@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_J.h"
+#include "Engine/ReplicationDriver.h"
 
 #include "Engine/Engine.h"
 #include "Engine/NetDriver.h"

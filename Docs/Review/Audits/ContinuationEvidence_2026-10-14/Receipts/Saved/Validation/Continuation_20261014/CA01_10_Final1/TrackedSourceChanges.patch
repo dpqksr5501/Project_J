@@ -1,0 +1,1967 @@
+diff --git a/Source/Project_J/Backend/Project_JHandoverManager.cpp b/Source/Project_J/Backend/Project_JHandoverManager.cpp
+index e6d41322..ce41ed56 100644
+--- a/Source/Project_J/Backend/Project_JHandoverManager.cpp
++++ b/Source/Project_J/Backend/Project_JHandoverManager.cpp
+@@ -6,9 +6,11 @@
+ #include "Project_J.h"
+ #include "Async/Async.h"
+ #include "Misc/ScopeExit.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
+ {
++	++LifetimeRevision;
+ 	Super::Initialize(Collection);
+ 	bShuttingDown = false;
+ 	TickHandle = FTSTicker::GetCoreTicker().AddTicker(
+@@ -17,17 +19,20 @@ void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
+ 
+ void UProject_JHandoverManager::Deinitialize()
+ {
++	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	++LifetimeRevision;
+ 	bShuttingDown = true;
+ 	FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
+ 	// Detach state before cancellation can invoke a transport completion.
+ 	auto OldStates = MoveTemp(HandoverStates);
+ 	auto OldTransport = MoveTemp(Transport);
++	AppliedTransferIds.Reset();
++	ApplyingTransferIds.Reset();
+ 	if (OldTransport)
+ 	{
+ 		for (const auto& Pair : OldStates) { OldTransport->Cancel(Pair.Key); }
+ 	}
+-	AppliedTransferIds.Reset();
+-	ApplyingTransferIds.Reset();
+ 	Super::Deinitialize();
+ }
+ 
+@@ -68,10 +73,15 @@ bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEn
+ EProject_JHandoverAdmission UProject_JHandoverManager::StartEnvelopeTransferChecked(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor)
+ {
+ 	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	if (bShuttingDown || !Envelope.TransferId.IsValid())
+ 	{
+ 		return bShuttingDown ? EProject_JHandoverAdmission::Closed : EProject_JHandoverAdmission::Invalid;
+ 	}
++	if (SourceActor && (!IsValid(SourceActor) || SourceActor->IsActorBeingDestroyed() || !SourceActor->HasAuthority()))
++	{ return EProject_JHandoverAdmission::Invalid; }
++	TStrongObjectPtr<AActor> PinnedSource(SourceActor);
++	const uint64 Revision = LifetimeRevision;
+ 	if (HandoverStates.Contains(Envelope.TransferId))
+ 	{
+ 		return EProject_JHandoverAdmission::Duplicate;
+@@ -116,6 +126,7 @@ EProject_JHandoverAdmission UProject_JHandoverManager::StartEnvelopeTransferChec
+ 	const FGuid TransferId = Envelope.TransferId;
+ 	SetRecordState(Record, EProject_JHandoverState::Preparing);
+ 	// Notifications can cancel, add records (rehashing the map), or shut down.
++	if (bShuttingDown || Revision != LifetimeRevision) { return EProject_JHandoverAdmission::Closed; }
+ 	if (GetHandoverState(TransferId) == EProject_JHandoverState::Preparing)
+ 	{
+ 		DispatchTransfer(TransferId);
+@@ -151,6 +162,8 @@ bool UProject_JHandoverManager::GetHandoverRecord(const FGuid& TransferId, FProj
+ 
+ void UProject_JHandoverManager::CancelHandover(AActor* Actor)
+ {
++	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	if (!Actor)
+ 	{
+ 		return;
+@@ -172,6 +185,8 @@ void UProject_JHandoverManager::CancelHandover(AActor* Actor)
+ 
+ void UProject_JHandoverManager::CancelHandoverByTransferId(const FGuid& TransferId)
+ {
++	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId);
+ 	if (!Record ||
+ 		Record->State == EProject_JHandoverState::Completed ||
+@@ -192,28 +207,34 @@ bool UProject_JHandoverManager::BuildEnvelope(
+ 	const FString& TargetServerNodeId,
+ 	FProject_JHandoverEnvelope& OutEnvelope) const
+ {
++	check(IsInGameThread());
++	if (bShuttingDown || !IsValid(ActorToHandover) || ActorToHandover->IsActorBeingDestroyed() || !ActorToHandover->HasAuthority()) return false;
++	TStrongObjectPtr<UProject_JHandoverManager> PinnedThis(const_cast<UProject_JHandoverManager*>(this));
++	TStrongObjectPtr<AActor> PinnedActor(ActorToHandover);
++	const uint64 Revision = LifetimeRevision;
+ 	IProject_JHandoverSerializable* SerializableActor = Cast<IProject_JHandoverSerializable>(ActorToHandover);
+ 	if (!SerializableActor || TargetServerNodeId.IsEmpty())
+ 	{
+ 		return false;
+ 	}
+ 
+-	TArray<uint8> Payload;
+-	SerializableActor->SerializeForHandover(Payload);
+-	if (Payload.Num() > FMath::Max(1, MaxPayloadBytes))
++	FProject_JHandoverEnvelope Candidate;
++	Candidate.ActorClassPath = ActorToHandover->GetClass()->GetPathName();
++	Candidate.SourceNodeId = LocalNodeId;
++	Candidate.TargetNodeId = TargetServerNodeId;
++	SerializableActor->SerializeForHandover(Candidate.Payload);
++	if (bShuttingDown || Revision != LifetimeRevision || !IsValid(ActorToHandover) || ActorToHandover->IsActorBeingDestroyed() ||
++		!ActorToHandover->HasAuthority() || Candidate.SourceNodeId != LocalNodeId || Candidate.Payload.Num() > FMath::Max(1, MaxPayloadBytes))
+ 	{
+ 		return false;
+ 	}
+ 
+-	OutEnvelope.Version = 1;
+-	OutEnvelope.TransferId = FGuid::NewGuid();
+-	OutEnvelope.ActorClassPath = ActorToHandover->GetClass()->GetPathName();
+-	OutEnvelope.Payload = MoveTemp(Payload);
+-	OutEnvelope.Timestamp = FDateTime::UtcNow();
+-	OutEnvelope.SourceNodeId = LocalNodeId;
+-	OutEnvelope.TargetNodeId = TargetServerNodeId;
+-	OutEnvelope.PayloadChecksum = CalculatePayloadChecksum(OutEnvelope.Payload);
+-	return ValidateEnvelope(OutEnvelope) == EProject_JHandoverValidationFailure::None;
++	Candidate.TransferId = FGuid::NewGuid();
++	Candidate.Timestamp = FDateTime::UtcNow();
++	Candidate.PayloadChecksum = CalculatePayloadChecksum(Candidate.Payload);
++	if (ValidateEnvelope(Candidate) != EProject_JHandoverValidationFailure::None) return false;
++	OutEnvelope = MoveTemp(Candidate);
++	return true;
+ }
+ 
+ EProject_JHandoverValidationFailure UProject_JHandoverManager::ValidateEnvelope(
+@@ -270,28 +291,33 @@ EProject_JHandoverApplyResult UProject_JHandoverManager::ApplyEnvelopeChecked(
+ 	AActor* DestinationActor, const FProject_JHandoverEnvelope& Envelope)
+ {
+ 	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	const uint64 Revision = LifetimeRevision;
+ 	if (bShuttingDown || !IsValid(DestinationActor) || DestinationActor->IsActorBeingDestroyed() || !DestinationActor->HasAuthority())
+ 	{
+ 		return EProject_JHandoverApplyResult::Rejected;
+ 	}
++	TStrongObjectPtr<AActor> PinnedActor(DestinationActor);
+ 	if (ValidateEnvelope(Envelope) != EProject_JHandoverValidationFailure::None)
+ 	{
+ 		return EProject_JHandoverApplyResult::Rejected;
+ 	}
++	// Own the bounded validated packet before calling an external apply implementation.
++	const FProject_JHandoverEnvelope Snapshot = Envelope;
+ 
+ 	PruneReplayWindow();
+-	if (Envelope.TargetNodeId != LocalNodeId ||
+-		Envelope.ActorClassPath != DestinationActor->GetClass()->GetPathName())
++	if (Snapshot.TargetNodeId != LocalNodeId ||
++		Snapshot.ActorClassPath != DestinationActor->GetClass()->GetPathName())
+ 	{
+ 		return EProject_JHandoverApplyResult::Rejected;
+ 	}
+-	const FSHAHash Digest = FSHA1::HashBuffer(Envelope.Payload.GetData(), Envelope.Payload.Num());
+-	if (const FApplyReceipt* Receipt = AppliedTransferIds.Find(Envelope.TransferId))
++	const FSHAHash Digest = FSHA1::HashBuffer(Snapshot.Payload.GetData(), Snapshot.Payload.Num());
++	if (const FApplyReceipt* Receipt = AppliedTransferIds.Find(Snapshot.TransferId))
+ 	{
+-		return Receipt->Destination.Get() == DestinationActor && Receipt->Digest == Digest && Receipt->SourceNodeId == Envelope.SourceNodeId
++		return Receipt->Destination.Get() == DestinationActor && Receipt->Digest == Digest && Receipt->SourceNodeId == Snapshot.SourceNodeId
+ 			? EProject_JHandoverApplyResult::AlreadyApplied : EProject_JHandoverApplyResult::Rejected;
+ 	}
+-	if (ApplyingTransferIds.Contains(Envelope.TransferId)) { return EProject_JHandoverApplyResult::InProgress; }
++	if (ApplyingTransferIds.Contains(Snapshot.TransferId)) { return EProject_JHandoverApplyResult::InProgress; }
+ 	if (AppliedTransferIds.Num() + ApplyingTransferIds.Num() >= FMath::Max(1, MaxApplyReceipts))
+ 	{
+ 		return EProject_JHandoverApplyResult::Overloaded;
+@@ -303,11 +329,12 @@ EProject_JHandoverApplyResult UProject_JHandoverManager::ApplyEnvelopeChecked(
+ 		return EProject_JHandoverApplyResult::Rejected;
+ 	}
+ 
+-	const FGuid TransferId = Envelope.TransferId;
++	const FGuid TransferId = Snapshot.TransferId;
+ 	ApplyingTransferIds.Add(TransferId);
+-	const FString SourceNodeId = Envelope.SourceNodeId;
+-	ON_SCOPE_EXIT { ApplyingTransferIds.Remove(TransferId); };
+-	if (!SerializableActor->TryApplyHandoverSnapshot(Envelope.Payload) || bShuttingDown)
++	const FString SourceNodeId = Snapshot.SourceNodeId;
++	ON_SCOPE_EXIT { if (Revision == LifetimeRevision) ApplyingTransferIds.Remove(TransferId); };
++	if (!SerializableActor->TryApplyHandoverSnapshot(Snapshot.Payload) || bShuttingDown || Revision != LifetimeRevision ||
++		!IsValid(DestinationActor) || DestinationActor->IsActorBeingDestroyed() || !DestinationActor->HasAuthority())
+ 	{
+ 		return EProject_JHandoverApplyResult::Rejected;
+ 	}
+@@ -328,14 +355,17 @@ void UProject_JHandoverManager::SetTransport(TSharedPtr<IProject_JHandoverTransp
+ 
+ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
+ {
+-	if (bShuttingDown || bTicking) { return; }
++	check(IsInGameThread());
++	if (bShuttingDown || bTicking || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds < 0.0f) { return; }
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	const uint64 Revision = LifetimeRevision;
+ 	TGuardValue<bool> TickGuard(bTicking, true);
+ 	const float SafeDeltaSeconds = FMath::Max(0.0f, DeltaSeconds);
+ 	if (const auto ActiveTransport = Transport)
+ 	{
+ 		ActiveTransport->Tick(SafeDeltaSeconds);
+ 	}
+-	if (bShuttingDown) { return; }
++	if (bShuttingDown || Revision != LifetimeRevision) { return; }
+ 
+ 	TArray<FGuid> TransfersToDispatch;
+ 	TArray<FGuid> TransfersToTimeout;
+@@ -348,7 +378,7 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
+ 		FProject_JHandoverRecord* Found = HandoverStates.Find(TransferId);
+ 		if (!Found) { continue; }
+ 		FProject_JHandoverRecord& Record = *Found;
+-		Record.StateElapsedTime += SafeDeltaSeconds;
++		Record.StateElapsedTime = static_cast<float>(FMath::Min(double(Record.StateElapsedTime) + double(SafeDeltaSeconds), double(MAX_flt)));
+ 
+ 		// Commit cancellation before notifying transport or external listeners.
+ 		if (Record.bHasTrackedActor && !Record.Actor.IsValid() &&
+@@ -422,6 +452,8 @@ bool UProject_JHandoverManager::Tick(float DeltaSeconds)
+ 
+ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
+ {
++	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	// The caller may pass an ID stored inside the map. Own it across notifications.
+ 	const FGuid Id = TransferId;
+ 	FProject_JHandoverRecord* Record = HandoverStates.Find(Id);
+@@ -450,21 +482,21 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
+ 	if (!ActiveTransport) { FailTransfer(*Record, EProject_JHandoverFailureReason::TransportUnavailable); return; }
+ 	const bool bDispatched = ActiveTransport->Send(
+ 		Request,
+-		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this)](
++		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this), Revision = LifetimeRevision](
+ 			const FProject_JHandoverTransportResponse& Response)
+ 		{
+ 			if (IsInGameThread())
+ 			{
+-				if (UProject_JHandoverManager* Manager = WeakThis.Get())
++				if (UProject_JHandoverManager* Manager = WeakThis.Get(); Manager && Manager->LifetimeRevision == Revision)
+ 				{
+ 					Manager->HandleTransportResponse(Response);
+ 				}
+ 				return;
+ 			}
+ 
+-			AsyncTask(ENamedThreads::GameThread, [WeakThis, Response]()
++			AsyncTask(ENamedThreads::GameThread, [WeakThis, Response, Revision]()
+ 			{
+-				if (UProject_JHandoverManager* Manager = WeakThis.Get())
++				if (UProject_JHandoverManager* Manager = WeakThis.Get(); Manager && Manager->LifetimeRevision == Revision)
+ 				{
+ 					Manager->HandleTransportResponse(Response);
+ 				}
+@@ -485,6 +517,7 @@ void UProject_JHandoverManager::HandleTransportResponse(
+ 	const FProject_JHandoverTransportResponse& Response)
+ {
+ 	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	FProject_JHandoverRecord* Record = HandoverStates.Find(Response.TransferId);
+ 	if (!Record ||
+ 		Record->State != EProject_JHandoverState::AwaitingAck ||
+diff --git a/Source/Project_J/Backend/Project_JHandoverManager.h b/Source/Project_J/Backend/Project_JHandoverManager.h
+index 63895aa3..f1cb6278 100644
+--- a/Source/Project_J/Backend/Project_JHandoverManager.h
++++ b/Source/Project_J/Backend/Project_JHandoverManager.h
+@@ -192,6 +192,7 @@ private:
+ 	TSharedPtr<IProject_JHandoverTransport> Transport;
+ 	FTSTicker::FDelegateHandle TickHandle;
+ 	bool bShuttingDown = false;
++	uint64 LifetimeRevision = 0;
+ 	bool bTicking = false;
+ 
+ 	UPROPERTY(Config, EditAnywhere, Category = "Handover")
+diff --git a/Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp b/Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp
+index 592bff9c..748486ea 100644
+--- a/Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp
++++ b/Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp
+@@ -2,14 +2,33 @@
+ #include "EnhancedInputSubsystems.h"
+ #include "InputMappingContext.h"
+ #include "Engine/LocalPlayer.h"
++#include "GameFramework/Actor.h"
++#include "Components/ActorComponent.h"
++#include "UObject/StrongObjectPtr.h"
++
++namespace
++{
++bool CanOwnMapping(UObject* Owner)
++{
++	if (!IsValid(Owner)) { return false; }
++	if (const auto* Actor = Cast<AActor>(Owner); Actor && Actor->IsActorBeingDestroyed()) { return false; }
++	if (const auto* Component = Cast<UActorComponent>(Owner); Component && Component->IsBeingDestroyed()) { return false; }
++	return true;
++}
++}
+ 
+ bool UProject_JInputLeaseSubsystem::Acquire(UObject* Owner, UInputMappingContext* Context)
+ {
+-	if (!bAccepting || !IsValid(Owner) || !IsValid(Context)) { return false; }
++	check(IsInGameThread());
++	if (!bAccepting || !CanOwnMapping(Owner) || !IsValid(Context)) { return false; }
++	// Retain participants only through synchronous mapping callbacks, not in storage.
++	TStrongObjectPtr<UProject_JInputLeaseSubsystem> ThisOperation(this);
++	TStrongObjectPtr<UObject> OwnerOperation(Owner);
++	TStrongObjectPtr<UInputMappingContext> ContextOperation(Context);
+ 	PruneOwners();
+-	if (!bAccepting) { return false; }
+-	auto* Input = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+-	if (!Input) { return false; }
++	if (!bAccepting || !CanOwnMapping(Owner)) { return false; }
++	TStrongObjectPtr<UEnhancedInputLocalPlayerSubsystem> Input(GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>());
++	if (!Input.IsValid()) { return false; }
+ 	auto* Lease = Leases.Find(Context);
+ 	if (!Lease)
+ 	{
+@@ -17,40 +36,48 @@ bool UProject_JInputLeaseSubsystem::Acquire(UObject* Owner, UInputMappingContext
+ 		NewLease.bAddedMapping = !Input->HasMappingContext(Context);
+ 		NewLease.Owners.Add(Owner);
+ 		const bool bAdd = NewLease.bAddedMapping;
+-		Lease = &Leases.Add(Context, MoveTemp(NewLease));
++		Leases.Add(Context, MoveTemp(NewLease));
+ 		if (bAdd) { Input->AddMappingContext(Context, 0); }
+-		return true;
+ 	}
+-	Lease->Owners.Add(Owner);
+-	return true;
++	else { Lease->Owners.Add(Owner); }
++	PruneOwners();
++	// Re-query after callbacks; they may have released, deinitialized or rehashed.
++	const auto* Current = Leases.Find(Context);
++	return bAccepting && CanOwnMapping(Owner) && Current && Current->Owners.Contains(Owner) && Input->HasMappingContext(Context);
+ }
+ 
+ void UProject_JInputLeaseSubsystem::PruneOwners()
+ {
+-	auto* Input = GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
++	check(IsInGameThread());
++	TStrongObjectPtr<UProject_JInputLeaseSubsystem> ThisOperation(this);
++	TStrongObjectPtr<UEnhancedInputLocalPlayerSubsystem> Input(GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>());
+ 	TArray<TWeakObjectPtr<UInputMappingContext>> Contexts;
+ 	Leases.GenerateKeyArray(Contexts);
+ 	for (const auto& Context : Contexts)
+ 	{
+ 		auto* Lease = Leases.Find(Context); if (!Lease) { continue; }
+-		for (auto Owner = Lease->Owners.CreateIterator(); Owner; ++Owner) { if (!Owner->IsValid()) { Owner.RemoveCurrent(); } }
+-		if (Lease->Owners.IsEmpty())
++		for (auto Owner = Lease->Owners.CreateIterator(); Owner; ++Owner) { if (!CanOwnMapping(Owner->Get())) { Owner.RemoveCurrent(); } }
++		if (Lease->Owners.IsEmpty() || !Context.IsValid())
+ 		{
+ 			const bool bRemove = Lease->bAddedMapping;
+ 			Leases.Remove(Context);
+-			if (Input && bRemove && Context.IsValid()) { Input->RemoveMappingContext(Context.Get()); }
++			TStrongObjectPtr<UInputMappingContext> ContextOperation(Context.Get());
++			if (Input.IsValid() && bRemove && ContextOperation.IsValid()) { Input->RemoveMappingContext(ContextOperation.Get()); }
+ 		}
+ 	}
+ }
+ 
+ void UProject_JInputLeaseSubsystem::Release(UObject* Owner)
+ {
++	check(IsInGameThread());
+ 	for (auto& Pair : Leases) { Pair.Value.Owners.Remove(Owner); }
+ 	PruneOwners();
+ }
+ 
+ void UProject_JInputLeaseSubsystem::Deinitialize()
+ {
++	check(IsInGameThread());
++	TStrongObjectPtr<UProject_JInputLeaseSubsystem> ThisOperation(this);
+ 	bAccepting = false;
+ 	for (auto& Pair : Leases) { Pair.Value.Owners.Reset(); }
+ 	PruneOwners();
+diff --git a/Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp b/Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp
+index f04657b2..c52f5e3c 100644
+--- a/Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp
++++ b/Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp
+@@ -116,6 +116,9 @@ bool FProjectJUIEquipmentPolicyTest::RunTest(const FString &)
+ 	}
+ 	Compare = FProject_JEquipmentComparison::Build(nullptr, Equipped);
+ 	TestEqual(TEXT("Empty replacement includes lost equipped bonus"), Compare.Rows[0].Difference, -10.f);
++	Attack.Stat = static_cast<EProject_JEquipmentStat>(255);
++	Candidate->StatModifiers.Add(Attack);
++	TestFalse(TEXT("Unknown stat tuple cannot advertise a valid fixed comparison"), FProject_JEquipmentComparison::Build(Candidate, Equipped).bCanCompare);
+ 	return true;
+ }
+ #endif
+diff --git a/Source/Project_J/UI/Project_JEquipmentComparison.cpp b/Source/Project_J/UI/Project_JEquipmentComparison.cpp
+index 117f65a0..fd2b1a6a 100644
+--- a/Source/Project_J/UI/Project_JEquipmentComparison.cpp
++++ b/Source/Project_J/UI/Project_JEquipmentComparison.cpp
+@@ -16,13 +16,10 @@ EProject_JEquipmentBonusPreview PreviewMode(const UProject_JEquipmentItemDefinit
+ 	return Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly
+ 		? EProject_JEquipmentBonusPreview::GameplayEffects : EProject_JEquipmentBonusPreview::ConditionalFallback;
+ }
+-float FixedBonus(const UProject_JEquipmentItemDefinition *Definition, EProject_JEquipmentStat Stat)
++bool FixedBonuses(const UProject_JEquipmentItemDefinition *Definition, FProject_JEquipmentStatValues& Out)
+ {
+-	if (!Definition || Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly) return 0;
+-	double Value = 0;
+-	for (const auto &Modifier : Definition->StatModifiers)
+-		if (Modifier.Stat == Stat && FMath::IsFinite(Modifier.Value) && !FMath::IsNearlyZero(Modifier.Value)) Value += Modifier.Value;
+-	return static_cast<float>(Value);
++	if (!Definition || Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly) return true;
++	return FProject_JEquipmentStatValues::TryResolve(Definition->StatModifiers, Out);
+ }
+ }
+ FProject_JEquipmentComparison FProject_JEquipmentComparison::Build(const UProject_JEquipmentItemDefinition *Candidate,
+@@ -33,12 +30,15 @@ FProject_JEquipmentComparison FProject_JEquipmentComparison::Build(const UProjec
+ 	Result.EquippedMode = PreviewMode(Equipped);
+ 	Result.bCanCompare = Result.CandidateMode == EProject_JEquipmentBonusPreview::Fixed &&
+ 		Result.EquippedMode == EProject_JEquipmentBonusPreview::Fixed;
+-	for (int32 Index = 0; Index < 4; ++Index)
++	FProject_JEquipmentStatValues CandidateValues, EquippedValues;
++	const bool bValidBonuses = FixedBonuses(Candidate, CandidateValues) && FixedBonuses(Equipped, EquippedValues);
++	Result.bCanCompare &= bValidBonuses;
++	for (int32 Index = 0; bValidBonuses && Index < FProject_JEquipmentStatValues::NumStats; ++Index)
+ 	{
+ 		FProject_JEquipmentComparisonRow Row;
+ 		Row.Stat = static_cast<EProject_JEquipmentStat>(Index);
+-		Row.Candidate = FixedBonus(Candidate, Row.Stat);
+-		Row.Equipped = FixedBonus(Equipped, Row.Stat);
++		Row.Candidate = CandidateValues.Values[Index];
++		Row.Equipped = EquippedValues.Values[Index];
+ 		Row.Difference = Row.Candidate - Row.Equipped;
+ 		if (!FMath::IsFinite(Row.Candidate) || !FMath::IsFinite(Row.Equipped) || !FMath::IsFinite(Row.Difference))
+ 		{
+diff --git a/Source/Project_JAnimationNodes/Private/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.cpp b/Source/Project_JAnimationNodes/Private/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.cpp
+index 4c589ca1..c036df87 100644
+--- a/Source/Project_JAnimationNodes/Private/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.cpp
++++ b/Source/Project_JAnimationNodes/Private/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.cpp
+@@ -6,139 +6,157 @@
+ #include "EdGraph/EdGraphSchema.h"
+ #include "Kismet2/BlueprintEditorUtils.h"
+ #include "Kismet2/KismetEditorUtilities.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+-bool UProject_JStrafeUpperBodyFacingEditorLibrary::InstallInMasterForReview(UAnimBlueprint* Blueprint)
++namespace
++{
++// Compilation can reconstruct pins. Resolve stable node/pin names again for rollback.
++struct FFacingEdge
+ {
+-	if (!Blueprint || Blueprint->GetPathName() != TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master")) return false;
+-	UEdGraph* Graph = nullptr;
+-	for (UEdGraph* Candidate : Blueprint->FunctionGraphs)
+-		if (Candidate && Candidate->GetFName() == TEXT("AnimGraph")) Graph = Candidate;
+-	if (!Graph) return false;
+-	UEdGraphNode* History = nullptr;
+-	UAnimGraphNode_ProjectJStrafeUpperBodyFacing* Existing = nullptr;
+-	for (UEdGraphNode* Node : Graph->Nodes)
+-	{
+-		if (Node->GetClass()->GetFName() == TEXT("AnimGraphNode_PoseSearchHistoryCollector"))
+-		{
+-			if (History) return false;
+-			History = Node;
+-		}
+-		if (auto* Facing = Cast<UAnimGraphNode_ProjectJStrafeUpperBodyFacing>(Node))
+-		{
+-			if (Existing) return false;
+-			Existing = Facing;
+-		}
+-	}
+-	auto* Pose = History ? History->FindPin(TEXT("Pose"), EGPD_Output) : nullptr;
+-	if (!Pose || Pose->LinkedTo.Num() != 1) return false;
+-	if (Existing)
+-	{
+-		auto* Input = Existing->FindPin(TEXT("Source"), EGPD_Input);
+-		auto* Output = Existing->FindPin(TEXT("Pose"), EGPD_Output);
+-		bool bHistoryConnected = Pose->LinkedTo[0] == Input;
+-		if (auto* Lower = Cast<UAnimGraphNode_ProjectJStrafeLowerBodyFacing>(Pose->LinkedTo[0]->GetOwningNode()))
+-		{
+-			const auto* LowerOutput = Lower->FindPin(TEXT("Pose"), EGPD_Output);
+-			bHistoryConnected = Pose->LinkedTo[0]->PinName == TEXT("Source") && LowerOutput &&
+-				LowerOutput->LinkedTo.Num() == 1 && LowerOutput->LinkedTo[0] == Input;
+-		}
+-		return bHistoryConnected && Output && Output->LinkedTo.Num() == 1 &&
+-			Output->LinkedTo[0]->PinName == TEXT("BlendPose_0") && Blueprint->Status != BS_Error;
+-	}
+-	auto* Destination = Pose->LinkedTo[0];
+-	if (Destination->PinName != TEXT("BlendPose_0") ||
+-		Destination->GetOwningNode()->GetClass()->GetFName() != TEXT("AnimGraphNode_BlendListByEnum")) return false;
+-	auto* Facing = NewObject<UAnimGraphNode_ProjectJStrafeUpperBodyFacing>(Graph, NAME_None, RF_Transactional);
+-	Graph->Modify();
+-	Facing->CreateNewGuid();
+-	Graph->AddNode(Facing, false, false);
+-	Facing->PostPlacedNewNode();
+-	Facing->AllocateDefaultPins();
+-	Facing->NodePosX = History->NodePosX + 300;
+-	Facing->NodePosY = History->NodePosY;
+-	auto* Input = Facing->FindPin(TEXT("Source"), EGPD_Input);
+-	auto* Output = Facing->FindPin(TEXT("Pose"), EGPD_Output);
+-	const auto* Schema = Graph->GetSchema();
+-	bool bConnected = Input && Output && Schema;
+-	if (bConnected)
+-	{
+-		Pose->BreakLinkTo(Destination);
+-		bConnected = Schema->TryCreateConnection(Pose, Input) && Schema->TryCreateConnection(Output, Destination);
+-	}
+-	if (bConnected)
+-	{
+-		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+-		FKismetEditorUtilities::CompileBlueprint(Blueprint);
+-		bConnected = Blueprint->Status != BS_Error && Blueprint->GeneratedClass != nullptr;
+-	}
+-	if (!bConnected)
+-	{
+-		Facing->BreakAllNodeLinks();
+-		Graph->RemoveNode(Facing);
+-		if (!Pose->LinkedTo.Contains(Destination)) Pose->MakeLinkTo(Destination);
+-		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+-		FKismetEditorUtilities::CompileBlueprint(Blueprint);
+-		return false;
+-	}
+-	return true;
++    TWeakObjectPtr<UEdGraphNode> From, To;
++    FName FromPin, ToPin;
++    FFacingEdge(UEdGraphPin* A, UEdGraphPin* B)
++        : From(A->GetOwningNode()), To(B->GetOwningNode()), FromPin(A->PinName), ToPin(B->PinName) {}
++    UEdGraphPin* Output() const { return From.IsValid() ? From->FindPin(FromPin, EGPD_Output) : nullptr; }
++    UEdGraphPin* Input() const { return To.IsValid() ? To->FindPin(ToPin, EGPD_Input) : nullptr; }
++    bool operator==(const FFacingEdge& Other) const
++    { return From == Other.From && To == Other.To && FromPin == Other.FromPin && ToPin == Other.ToPin; }
++    void Break() const { if (auto* A = Output()) if (auto* B = Input()) A->BreakLinkTo(B); }
++    bool Restore() const
++    {
++        auto* A = Output(); auto* B = Input();
++        if (!A || !B) return false;
++        if (!A->LinkedTo.Contains(B)) A->MakeLinkTo(B);
++        return A->LinkedTo.Contains(B) && B->LinkedTo.Contains(A);
++    }
++};
++
++bool InstallFacingChain(UAnimBlueprint* Blueprint, bool bRequireLower)
++{
++    check(IsInGameThread());
++    if (!IsValid(Blueprint) || Blueprint->Status == BS_Error) return false;
++    TStrongObjectPtr<UAnimBlueprint> PinnedBlueprint(Blueprint);
++    UEdGraph* Graph = nullptr;
++    for (UEdGraph* Candidate : Blueprint->FunctionGraphs)
++    {
++        if (Candidate && Candidate->GetFName() == TEXT("AnimGraph"))
++        { if (Graph) return false; Graph = Candidate; }
++    }
++    if (!Graph || !Graph->GetSchema()) return false;
++    TStrongObjectPtr<UEdGraph> PinnedGraph(Graph);
++    UEdGraphNode* History = nullptr;
++    UAnimGraphNode_ProjectJStrafeUpperBodyFacing* Upper = nullptr;
++    UAnimGraphNode_ProjectJStrafeLowerBodyFacing* Lower = nullptr;
++    for (UEdGraphNode* Node : Graph->Nodes)
++    {
++        if (!Node) return false;
++        if (Node->GetClass()->GetFName() == TEXT("AnimGraphNode_PoseSearchHistoryCollector"))
++        { if (History) return false; History = Node; }
++        if (auto* Facing = Cast<UAnimGraphNode_ProjectJStrafeUpperBodyFacing>(Node))
++        { if (Upper) return false; Upper = Facing; }
++        if (auto* Facing = Cast<UAnimGraphNode_ProjectJStrafeLowerBodyFacing>(Node))
++        { if (Lower) return false; Lower = Facing; }
++    }
++    auto* HistoryPose = History ? History->FindPin(TEXT("Pose"), EGPD_Output) : nullptr;
++    if (!HistoryPose || HistoryPose->LinkedTo.Num() != 1) return false;
++    TArray<FFacingEdge> Original;
++    UEdGraphPin* Head = HistoryPose;
++    const auto FollowExisting = [&](UEdGraphNode* Node)
++    {
++        if (!Node) return true;
++        auto* Input = Node->FindPin(TEXT("Source"), EGPD_Input);
++        auto* Output = Node->FindPin(TEXT("Pose"), EGPD_Output);
++        if (!Input || !Output || Head->LinkedTo.Num() != 1 || Head->LinkedTo[0] != Input ||
++            Input->LinkedTo.Num() != 1 || Input->LinkedTo[0] != Head || Output->LinkedTo.Num() != 1) return false;
++        Original.Emplace(Head, Input); Head = Output; return true;
++    };
++    if (!FollowExisting(Lower) || !FollowExisting(Upper)) return false;
++    auto* Destination = Head->LinkedTo[0];
++    if (!Destination || Destination->Direction != EGPD_Input || Destination->PinName != TEXT("BlendPose_0") ||
++        Destination->GetOwningNode()->GetGraph() != Graph ||
++        Destination->GetOwningNode()->GetClass()->GetFName() != TEXT("AnimGraphNode_BlendListByEnum") ||
++        Destination->LinkedTo.Num() != 1 || Destination->LinkedTo[0] != Head) return false;
++    Original.Emplace(Head, Destination);
++    if (Upper && (!bRequireLower || Lower)) return Blueprint->GeneratedClass != nullptr;
++
++    // Allocate staged pins without adding nodes or requesting blueprint extensions.
++    TStrongObjectPtr<UAnimGraphNode_ProjectJStrafeUpperBodyFacing> AddedUpper;
++    TStrongObjectPtr<UAnimGraphNode_ProjectJStrafeLowerBodyFacing> AddedLower;
++    if (!Upper)
++    {
++        AddedUpper.Reset(NewObject<UAnimGraphNode_ProjectJStrafeUpperBodyFacing>(Graph, NAME_None, RF_Transactional));
++        Upper = AddedUpper.Get(); Upper->CreateNewGuid(); Upper->AllocateDefaultPins();
++        Upper->NodePosX = History->NodePosX + 300; Upper->NodePosY = History->NodePosY;
++    }
++    if (bRequireLower && !Lower)
++    {
++        AddedLower.Reset(NewObject<UAnimGraphNode_ProjectJStrafeLowerBodyFacing>(Graph, NAME_None, RF_Transactional));
++        Lower = AddedLower.Get(); Lower->CreateNewGuid(); Lower->AllocateDefaultPins();
++        Lower->NodePosX = History->NodePosX + 150; Lower->NodePosY = History->NodePosY + 150;
++    }
++    TArray<FFacingEdge> Planned;
++    Head = HistoryPose;
++    const auto Append = [&](UEdGraphNode* Node)
++    {
++        if (!Node) return true;
++        auto* Input = Node->FindPin(TEXT("Source"), EGPD_Input);
++        auto* Output = Node->FindPin(TEXT("Pose"), EGPD_Output);
++        if (!Input || !Output) return false;
++        Planned.Emplace(Head, Input); Head = Output; return true;
++    };
++    if (!Append(Lower) || !Append(Upper)) return false;
++    Planned.Emplace(Head, Destination);
++    const UEdGraphSchema* Schema = Graph->GetSchema();
++    for (const FFacingEdge& Edge : Planned)
++    {
++        if (!Original.Contains(Edge) && Schema->CanCreateConnection(Edge.Output(), Edge.Input()).Response == CONNECT_RESPONSE_DISALLOW) return false;
++    }
++    const bool bWasDirty = Blueprint->GetOutermost()->IsDirty();
++    Blueprint->Modify(); Graph->Modify();
++    if (AddedUpper.IsValid()) { Graph->AddNode(Upper, false, false); Upper->PostPlacedNewNode(); }
++    if (AddedLower.IsValid()) { Graph->AddNode(Lower, false, false); Lower->PostPlacedNewNode(); }
++    for (const FFacingEdge& Edge : Original) if (!Planned.Contains(Edge)) Edge.Break();
++    bool bConnected = true;
++    for (const FFacingEdge& Edge : Planned)
++    {
++        if (!Original.Contains(Edge) && !Schema->TryCreateConnection(Edge.Output(), Edge.Input())) { bConnected = false; break; }
++    }
++    const bool bCompiled = bConnected;
++    if (bConnected)
++    {
++        FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
++        FKismetEditorUtilities::CompileBlueprint(Blueprint);
++        bConnected = Blueprint->Status != BS_Error && Blueprint->GeneratedClass != nullptr;
++    }
++    if (bConnected) return true;
++
++    // Revoke both newly added nodes and only the links owned by this operation.
++    for (const FFacingEdge& Edge : Planned) if (!Original.Contains(Edge)) Edge.Break();
++    if (AddedLower.IsValid()) { Lower->BreakAllNodeLinks(); Graph->RemoveNode(Lower); }
++    if (AddedUpper.IsValid()) { Upper->BreakAllNodeLinks(); Graph->RemoveNode(Upper); }
++    bool bRestored = true;
++    for (const FFacingEdge& Edge : Original) bRestored = Edge.Restore() && bRestored;
++    if (bCompiled)
++    {
++        FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
++        FKismetEditorUtilities::CompileBlueprint(Blueprint);
++        bRestored = bRestored && Blueprint->Status != BS_Error && Blueprint->GeneratedClass != nullptr;
++    }
++    if (bRestored) Blueprint->GetOutermost()->SetDirtyFlag(bWasDirty);
++    else UE_LOG(LogTemp, Error, TEXT("Facing installation failed and its original graph could not be compiled/restored: %s"), *Blueprint->GetPathName());
++    return false;
++}
+ }
+ 
++bool UProject_JStrafeUpperBodyFacingEditorLibrary::InstallInMasterForReview(UAnimBlueprint* Blueprint)
++{
++    return IsValid(Blueprint) && Blueprint->GetPathName() == TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master") && InstallUpperGraphForReview(Blueprint);
++}
+ bool UProject_JStrafeUpperBodyFacingEditorLibrary::InstallLowerBodyInMasterForReview(UAnimBlueprint* Blueprint)
+ {
+-	if (!InstallInMasterForReview(Blueprint)) return false;
+-	UEdGraph* Graph = nullptr;
+-	for (UEdGraph* Candidate : Blueprint->FunctionGraphs)
+-		if (Candidate && Candidate->GetFName() == TEXT("AnimGraph")) Graph = Candidate;
+-	if (!Graph) return false;
+-	UEdGraphNode* History = nullptr;
+-	UAnimGraphNode_ProjectJStrafeUpperBodyFacing* Upper = nullptr;
+-	UAnimGraphNode_ProjectJStrafeLowerBodyFacing* Existing = nullptr;
+-	for (UEdGraphNode* Node : Graph->Nodes)
+-	{
+-		if (Node->GetClass()->GetFName() == TEXT("AnimGraphNode_PoseSearchHistoryCollector"))
+-		{ if (History) return false; History = Node; }
+-		if (auto* U = Cast<UAnimGraphNode_ProjectJStrafeUpperBodyFacing>(Node))
+-		{ if (Upper) return false; Upper = U; }
+-		if (auto* L = Cast<UAnimGraphNode_ProjectJStrafeLowerBodyFacing>(Node))
+-		{ if (Existing) return false; Existing = L; }
+-	}
+-	auto* Pose = History ? History->FindPin(TEXT("Pose"), EGPD_Output) : nullptr;
+-	auto* Destination = Upper ? Upper->FindPin(TEXT("Source"), EGPD_Input) : nullptr;
+-	if (!Pose || !Destination || Pose->LinkedTo.Num() != 1) return false;
+-	if (Existing)
+-	{
+-		const auto* Input = Existing->FindPin(TEXT("Source"), EGPD_Input);
+-		const auto* Output = Existing->FindPin(TEXT("Pose"), EGPD_Output);
+-		return Pose->LinkedTo[0] == Input && Output && Output->LinkedTo.Num() == 1 &&
+-			Output->LinkedTo[0] == Destination && Blueprint->Status != BS_Error;
+-	}
+-	if (Pose->LinkedTo[0] != Destination) return false;
+-	Graph->Modify();
+-	auto* Lower = NewObject<UAnimGraphNode_ProjectJStrafeLowerBodyFacing>(Graph, NAME_None, RF_Transactional);
+-	Lower->CreateNewGuid(); Graph->AddNode(Lower, false, false);
+-	Lower->PostPlacedNewNode(); Lower->AllocateDefaultPins();
+-	Lower->NodePosX = History->NodePosX + 150; Lower->NodePosY = History->NodePosY + 150;
+-	auto* Input = Lower->FindPin(TEXT("Source"), EGPD_Input);
+-	auto* Output = Lower->FindPin(TEXT("Pose"), EGPD_Output);
+-	const auto* Schema = Graph->GetSchema();
+-	bool bConnected = Input && Output && Schema;
+-	if (bConnected)
+-	{
+-		Pose->BreakLinkTo(Destination);
+-		bConnected = Schema->TryCreateConnection(Pose, Input) && Schema->TryCreateConnection(Output, Destination);
+-	}
+-	if (bConnected)
+-	{
+-		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+-		FKismetEditorUtilities::CompileBlueprint(Blueprint);
+-		bConnected = Blueprint->Status != BS_Error && Blueprint->GeneratedClass;
+-	}
+-	if (!bConnected)
+-	{
+-		Lower->BreakAllNodeLinks(); Graph->RemoveNode(Lower);
+-		if (!Pose->LinkedTo.Contains(Destination)) Pose->MakeLinkTo(Destination);
+-		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+-		FKismetEditorUtilities::CompileBlueprint(Blueprint);
+-	}
+-	return bConnected;
++    return IsValid(Blueprint) && Blueprint->GetPathName() == TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master") && InstallLowerGraphForReview(Blueprint);
+ }
++bool UProject_JStrafeUpperBodyFacingEditorLibrary::InstallUpperGraphForReview(UAnimBlueprint* Blueprint)
++{ return InstallFacingChain(Blueprint, false); }
++bool UProject_JStrafeUpperBodyFacingEditorLibrary::InstallLowerGraphForReview(UAnimBlueprint* Blueprint)
++{ return InstallFacingChain(Blueprint, true); }
+diff --git a/Source/Project_JAnimationNodes/Public/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h b/Source/Project_JAnimationNodes/Public/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h
+index 9a064f30..741b9e8a 100644
+--- a/Source/Project_JAnimationNodes/Public/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h
++++ b/Source/Project_JAnimationNodes/Public/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h
+@@ -16,4 +16,8 @@ public:
+ 	/** Inserts a lower-body constraint node between existing History and Upper Body Facing. Never saves. */
+ 	UFUNCTION(BlueprintCallable, Category = "Project J|Animation|Editor")
+ 	static bool InstallLowerBodyInMasterForReview(UAnimBlueprint* Blueprint);
++private:
++	friend class FProjectJFacingInstallerAtomicTest;
++	static bool InstallUpperGraphForReview(UAnimBlueprint* Blueprint);
++	static bool InstallLowerGraphForReview(UAnimBlueprint* Blueprint);
+ };
+diff --git a/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp b/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
+index 15727bbb..7cd10416 100644
+--- a/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
++++ b/Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
+@@ -67,13 +67,13 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
+ 	for (const FProject_JAbilitySet_GameplayEffect& EffectEntry : GrantedEffectEntries)
+ 	{
+ 		if (!CanContinue()) { return; }
+-		if (!EffectEntry.Effect)
++		if (!EffectEntry.Effect || !EffectEntry.HasValidLevel())
+ 		{
+ 			continue;
+ 		}
+ 
+ 		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
+-		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
++		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, EffectEntry.EffectLevel, ASC->MakeEffectContext());
+ 		if (!GrantSourceId.IsNone())
+ 		{
+ 			// Instant effects have no removable handle. They are committed once by GAS.
+@@ -185,10 +185,10 @@ EDataValidationResult UProject_JAbilitySet::IsDataValid(FDataValidationContext&
+ 				FText::AsNumber(EffectIndex)));
+ 		}
+ 
+-		if (EffectEntry.EffectLevel <= 0.0f)
++		if (!EffectEntry.HasValidLevel())
+ 		{
+ 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
+-				NSLOCTEXT("ProjectJAbilitySet", "InvalidEffectLevel", "GrantedEffectEntries[{0}] has EffectLevel below or equal to 0."),
++				NSLOCTEXT("ProjectJAbilitySet", "InvalidEffectLevel", "GrantedEffectEntries[{0}] requires finite EffectLevel at least 1."),
+ 				FText::AsNumber(EffectIndex)));
+ 		}
+ 	}
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_TwoHandIK.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_TwoHandIK.cpp
+index 9031df07..7ee807d7 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_TwoHandIK.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_TwoHandIK.cpp
+@@ -4,9 +4,11 @@
+ #include "Components/Project_JWeaponPresentationComponent.h"
+ #include "Components/SkeletalMeshComponent.h"
+ #include "GameFramework/Actor.h"
++#include "ProfilingDebugging/CpuProfilerTrace.h"
+ 
+ void UProject_JAnimNotifyState_TwoHandIK::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TwoHandIKNotify_Begin);
+ 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+ 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+ 	{
+@@ -19,6 +21,7 @@ void UProject_JAnimNotifyState_TwoHandIK::NotifyBegin(USkeletalMeshComponent* Me
+ 
+ void UProject_JAnimNotifyState_TwoHandIK::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TwoHandIKNotify_End);
+ 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+ 	{
+ 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp
+index cbf2f69c..e7e1af38 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp
+@@ -3,17 +3,31 @@
+ #include "Components/Project_JWeaponPresentationComponent.h"
+ #include "Components/SkeletalMeshComponent.h"
+ #include "GameFramework/Actor.h"
++#include "ProfilingDebugging/CpuProfilerTrace.h"
++#include "ProfilingDebugging/CountersTrace.h"
++
++TRACE_DECLARE_INT_COUNTER(GroundContactNotifyBegins, TEXT("ProjectJ/Notify/GroundContact/Begins"));
++TRACE_DECLARE_INT_COUNTER(GroundContactNotifyEnds, TEXT("ProjectJ/Notify/GroundContact/Ends"));
++TRACE_DECLARE_INT_COUNTER(GroundContactWeakMeshVisits, TEXT("ProjectJ/Notify/GroundContact/WeakMeshVisits"));
++TRACE_DECLARE_INT_COUNTER(GroundContactInstanceVisits, TEXT("ProjectJ/Notify/GroundContact/InstanceVisits"));
+ 
+ void UProject_JAnimNotifyState_WeaponGroundContact::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_GroundContactNotify_Begin);
++	TRACE_COUNTER_INCREMENT(GroundContactNotifyBegins);
+ 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+ 
+ 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+ 	{
+ 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+ 		{
+-			for (auto It = RuntimeStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) It.RemoveCurrent(); }
++			{
++				TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_GroundContactNotify_WeakMeshPrune);
++				TRACE_COUNTER_ADD(GroundContactWeakMeshVisits, RuntimeStates.Num());
++				for (auto It = RuntimeStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) It.RemoveCurrent(); }
++			}
+ 			auto& MeshStates = RuntimeStates.FindOrAdd(MeshComp);
++			TRACE_COUNTER_ADD(GroundContactInstanceVisits, MeshStates.Num());
+ 			for (auto It = MeshStates.CreateIterator(); It; ++It)
+ 			{
+ 				if (!It.Value().Presentation.IsValid() || !It.Value().Presentation->IsGroundContactNotifyCurrent(It.Value().Token))
+@@ -30,6 +44,8 @@ void UProject_JAnimNotifyState_WeaponGroundContact::NotifyBegin(USkeletalMeshCom
+ 
+ void UProject_JAnimNotifyState_WeaponGroundContact::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_GroundContactNotify_End);
++	TRACE_COUNTER_INCREMENT(GroundContactNotifyEnds);
+ 	if (auto* MeshStates = RuntimeStates.Find(MeshComp))
+ 	{
+ 		FRuntimeState State;
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
+index 2b74584e..70005fab 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
+@@ -3,17 +3,48 @@
+ #include "Components/Project_JWeaponPresentationComponent.h"
+ #include "Components/SkeletalMeshComponent.h"
+ #include "GameFramework/Actor.h"
++#include "ProfilingDebugging/CpuProfilerTrace.h"
++#include "ProfilingDebugging/CountersTrace.h"
++
++TRACE_DECLARE_INT_COUNTER(WeaponMotionNotifyBegins, TEXT("ProjectJ/Notify/WeaponMotion/Begins"));
++TRACE_DECLARE_INT_COUNTER(WeaponMotionNotifyTicks, TEXT("ProjectJ/Notify/WeaponMotion/Ticks"));
++TRACE_DECLARE_INT_COUNTER(WeaponMotionNotifyEnds, TEXT("ProjectJ/Notify/WeaponMotion/Ends"));
++TRACE_DECLARE_INT_COUNTER(WeaponMotionWeakMeshVisits, TEXT("ProjectJ/Notify/WeaponMotion/WeakMeshVisits"));
++TRACE_DECLARE_INT_COUNTER(WeaponMotionInstanceVisits, TEXT("ProjectJ/Notify/WeaponMotion/InstanceVisits"));
++
++#if WITH_EDITOR
++#include "Validation/Project_JDataValidation.h"
++EDataValidationResult UProject_JAnimNotifyState_WeaponMotion::IsDataValid(FDataValidationContext& Context) const
++{
++	const auto Result = Super::IsDataValid(Context);
++	bool bHasError = Result == EDataValidationResult::Invalid;
++	if (const FName Failure = Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, 0.f, EntryBlendSeconds, ExitBlendSeconds); !Failure.IsNone())
++	{
++		Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
++			NSLOCTEXT("ProjectJWeaponMotion", "InvalidMotion", "Weapon Motion {0} must be finite and in its authored range, with normalized rotations and unique ascending key times."), FText::FromName(Failure)));
++	}
++	return Project_J::DataValidation::MakeResult(Result, bHasError);
++}
++#endif
+ 
+ void UProject_JAnimNotifyState_WeaponMotion::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponMotionNotify_Begin);
++	TRACE_COUNTER_INCREMENT(WeaponMotionNotifyBegins);
+ 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+ 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+ 	{
+ 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())
+ 		{
+-			for (auto It = RuntimeStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) { It.RemoveCurrent(); } }
++			{
++				TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponMotionNotify_WeakMeshPrune);
++				TRACE_COUNTER_ADD(WeaponMotionWeakMeshVisits, RuntimeStates.Num());
++				for (auto It = RuntimeStates.CreateIterator(); It; ++It) { if (!It.Key().IsValid()) { It.RemoveCurrent(); } }
++			}
+ 			if (auto* MeshStates = RuntimeStates.Find(MeshComp))
+ 			{
++				TRACE_COUNTER_ADD(WeaponMotionInstanceVisits, MeshStates->Num());
+ 				for (auto It = MeshStates->CreateIterator(); It; ++It)
+ 				{
+ 					if (!It.Value().Presentation.IsValid() || !It.Value().Presentation->IsNotifyIndependentMotionCurrent(It.Value().Token)) { It.RemoveCurrent(); }
+@@ -33,6 +64,8 @@ void UProject_JAnimNotifyState_WeaponMotion::NotifyBegin(USkeletalMeshComponent*
+ 
+ void UProject_JAnimNotifyState_WeaponMotion::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponMotionNotify_Tick);
++	TRACE_COUNTER_INCREMENT(WeaponMotionNotifyTicks);
+ 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
+ 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
+ 	{
+@@ -59,6 +92,8 @@ void UProject_JAnimNotifyState_WeaponMotion::NotifyTick(USkeletalMeshComponent*
+ 
+ void UProject_JAnimNotifyState_WeaponMotion::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_WeaponMotionNotify_End);
++	TRACE_COUNTER_INCREMENT(WeaponMotionNotifyEnds);
+ 	if (auto* MeshStates = RuntimeStates.Find(MeshComp))
+ 	{
+ 		FRuntimeState State;
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
+index db978d53..11957663 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
+@@ -43,6 +43,9 @@ void ValidateLocomotionProfile(
+ 		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid movement parameter %s."), *Failure.ToString()));
+ 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("GenericMoveInputSpeedThreshold"), LocomotionProfile->GenericMoveInputSpeedThreshold);
+ 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("SprintLocomotionSpeedThreshold"), LocomotionProfile->SprintLocomotionSpeedThreshold);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMoveInputCancelAngle"), LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("LandMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.LandMouseTurnCancelAngle);
+ 
+ 	if (LocomotionProfile->SprintSpeed < LocomotionProfile->WalkSpeed)
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
+index e975a1fb..f13f24af 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
+@@ -66,19 +66,50 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
+ 
+ void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy)
+ {
+-	const bool bFollowerStateChanged = (CurrentOptimizationPolicy.bEnableFollowerRetarget != NewPolicy.bEnableFollowerRetarget);
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_FollowerTickPolicy);
++	check(IsInGameThread());
+ 	CurrentOptimizationPolicy = NewPolicy;
++	USkeletalMeshComponent* Follower = GetRuntimeRetargetFollowerMesh();
++	if (FallbackFollowerTickMesh.Get() != Follower || !Follower || !Follower->IsRegistered())
++	{
++		ReleaseFollowerTickOverride();
++	}
++	if (!Follower || !Follower->IsRegistered()) return;
++	if (Follower->ComponentTags.Contains(TEXT("NoVisualBudget")) || Follower->IsSimulatingPhysics() || Follower->LeaderPoseComponent.IsValid())
++	{
++		ReleaseFollowerTickOverride();
++		return;
++	}
++	// Actual allocation, rather than coordinator configuration, owns these controls.
++	// The coordinator releases this lease before it captures a mesh's authored tick.
++	if (Follower->IsUsingExternalTickRateControl())
++	{
++		ReleaseFollowerTickOverride(false);
++		return;
++	}
++	if (!FallbackFollowerTickMesh.IsValid())
++	{
++		FallbackFollowerTickMesh = Follower;
++		bSavedFollowerTick = Follower->IsComponentTickEnabled();
++		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
++		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
++	}
++	else if (bAppliedFollowerRetarget != NewPolicy.bEnableFollowerRetarget)
++	{
++		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
++		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
++	}
++}
+ 
+-	const auto* Coordinator = OwningCharacter ? OwningCharacter->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
+-	const bool bVisualGroupOwned = Coordinator && Coordinator->IsVisualBudgetEnabled() &&
+-		Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh());
+-	if (!bVisualGroupOwned && OwningCharacter && bFollowerStateChanged)
++void UProject_JCharacterAnimInstance::ReleaseFollowerTickOverride(bool bRestoreTick)
++{
++	check(IsInGameThread());
++	if (USkeletalMeshComponent* Mesh = FallbackFollowerTickMesh.Get(); bRestoreTick && Mesh &&
++		!Mesh->IsUsingExternalTickRateControl() && Mesh->IsComponentTickEnabled() == bAppliedFollowerRetarget)
+ 	{
+-		if (USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
+-		{
+-			FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
+-		}
++		Mesh->SetComponentTickEnabled(bSavedFollowerTick);
+ 	}
++	FallbackFollowerTickMesh.Reset();
+ }
+ 
+ bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
+index a064896b..733c2819 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
+@@ -881,6 +881,16 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
+ 
+ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle)
+ {
++	if (!OwningPlayerCharacter || !FMath::IsFinite(MouseCancelAngle) || MouseCancelAngle < 0.f ||
++		!FMath::IsFinite(MoveCancelAngle) || MoveCancelAngle < 0.f ||
++		!FMath::IsFinite(OwningPlayerCharacter->GetControlRotation().Yaw) ||
++		OwningPlayerCharacter->GetLastMovementInputVector().ContainsNaN() ||
++		(bHasStateControllerOneShotControlYaw && !FMath::IsFinite(StateControllerOneShotControlYaw)) ||
++		(bHasStateControllerOneShotMoveInputYaw && !FMath::IsFinite(StateControllerOneShotMoveInputYaw)))
++	{
++		Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), TEXT("InvalidInputSample"));
++		return true;
++	}
+ 	const auto* Profile = GetLocomotionProfile();
+ 	if (!bCommittedPivot && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+ 		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && bHasStateControllerOneShotControlYaw)
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+index 6a2862b0..367f6891 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+@@ -48,6 +48,7 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
+ 
+ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
+ {
++	ReleaseFollowerTickOverride();
+ 	AnimationClock = FProject_JAnimationClock();
+ 	AnimationFlowSampler = {};
+ 	bAnimationFlowEvaluationPending = false;
+@@ -60,6 +61,12 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
+ 	CurrentActivePoseSearchDatabase = nullptr;
+ }
+ 
++void UProject_JCharacterAnimInstance::NativeUninitializeAnimation()
++{
++	ReleaseFollowerTickOverride();
++	Super::NativeUninitializeAnimation();
++}
++
+ void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
+ {
+ 	bAuthoredEarlyTransitionPending = false;
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp b/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+index 7ba40dd6..ad894a6f 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+@@ -214,6 +214,15 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
+ {
+ 	EDataValidationResult Result = Super::IsDataValid(Context);
+ 	bool bHasError = Result == EDataValidationResult::Invalid;
++	const float CancelAngles[] = {TransitionPolicy.StartMouseTurnCancelAngle, TransitionPolicy.StartMoveInputCancelAngle, TransitionPolicy.LandMouseTurnCancelAngle};
++	for (const float Angle : CancelAngles)
++	{
++		if (!FMath::IsFinite(Angle) || Angle < 0.f)
++		{
++			Context.AddError(NSLOCTEXT("ProjectJLocomotionProfile", "InvalidCancelAngle", "Start/Land cancellation angles must be finite and nonnegative."));
++			bHasError = true;
++		}
++	}
+ 	if (const FName Failure = GetMovementValidationFailure(); !Failure.IsNone())
+ 	{
+ 		Context.AddError(FText::FromString(FString::Printf(TEXT("%s must produce finite, nonnegative movement values."), *Failure.ToString())));
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp b/Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp
+index c1e044a5..ad15b427 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp
+@@ -5,9 +5,11 @@
+ #include "Components/SkeletalMeshComponent.h"
+ #include "Engine/SkeletalMesh.h"
+ #include "GameFramework/Character.h"
++#include "ProfilingDebugging/CpuProfilerTrace.h"
+ 
+ bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualDemandResolve);
+ 	const USkeletalMeshComponent* Leader = Character.GetMesh();
+ 	TInlineComponentArray<USkeletalMeshComponent*> Meshes;
+ 	Character.GetComponents(Meshes);
+@@ -24,6 +26,7 @@ bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter&
+ 
+ USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character, bool bRequireMeshAsset)
+ {
++	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualFollowerResolve);
+ 	const USkeletalMeshComponent* SourceMesh = Character.GetMesh();
+ 	if (!IsValid(SourceMesh))
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
+index 62964ce7..9385d1d4 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
+@@ -154,6 +154,12 @@ void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
+ 			(!Mesh->GetAnimInstance() && !Mesh->GetPostProcessInstance())) continue;
+ 		if (Visuals.ContainsByPredicate([Mesh](const FVisualMesh& Entry) { return Entry.Mesh.Get() == Mesh; })) continue;
+ 		if (Mesh->IsUsingExternalTickRateControl()) continue; // A different allocator owns it.
++		if (auto* Native = Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance());
++			Native && Native->FallbackFollowerTickMesh.Get() == Mesh)
++		{
++			// Capture authored controls, not the source fallback's hidden-policy override.
++			Native->ReleaseFollowerTickOverride();
++		}
+ 		FVisualMesh Entry; Entry.Mesh = Mesh; Entry.bSavedURO = Mesh->bEnableUpdateRateOptimizations;
+ 		Entry.bSavedTick = Mesh->IsComponentTickEnabled(); Entry.SavedVisibility = Mesh->VisibilityBasedAnimTickOption;
+ 		Entry.bAddedSourcePrerequisite = !Mesh->PrimaryComponentTick.GetPrerequisites().ContainsByPredicate(
+@@ -184,14 +190,8 @@ void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::Restore(UActorC
+ 
+ void UProject_JAnimationUpdateCoordinatorComponent::RestoreVisualBudget()
+ {
+-	const bool bHadControls = !Visuals.IsEmpty();
+ 	for (auto& Entry : Visuals) Entry.Restore(this, VisualSource.Get());
+ 	Visuals.Reset(); VisualSchedule = {}; AccumulatedVisualDelta = VisualInterval = 0;
+-	if (bHadControls && !IsVisualBudgetEnabled() && GetWorld() && !GetWorld()->bIsTearingDown)
+-		if (const auto* Character = Cast<ACharacter>(GetOwner()))
+-			if (const auto* Native = VisualSource.IsValid() ? Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance()) : nullptr)
+-				if (!Native->GetCurrentOptimizationPolicy().bEnableFollowerRetarget)
+-					if (auto* Follower = Project_J::Animation::FindVisualFollower(*Character)) Follower->SetComponentTickEnabled(false);
+ 	bVisualHidden = bSawAuthoredPresentation = false; AuthoredReturnUntil = 0; DiscoveryElapsed = .5f;
+ 	if (bVisualWakeActive)
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
+index c5fd51e9..7f4d6a8c 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
+@@ -5,11 +5,11 @@
+ #include "Components/Project_JModularMeshComponent.h"
+ #include "Animation/Project_JPresentationMeshResolver.h"
+ #include "Equipment/Project_JEquipmentItemDefinition.h"
++#include "Equipment/Project_JGameplayEffect_EquipmentStats.h"
+ #include "GameFramework/Character.h"
+ #include "AbilitySystemComponent.h"
+ #include "AbilitySystemGlobals.h"
+ #include "GameplayEffect.h"
+-#include "Project_JAttributeSet.h"
+ #include "Project_JAbilitySystemComponent.h"
+ #include "System/Project_JAssetManager.h"
+ #include "System/Project_JVisualAssetSubsystem.h"
+@@ -133,7 +133,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
+ 	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
+ 		OwnerCharacter->IsActorBeingDestroyed() || RuntimeItems.Contains(Slot))
+ 	{
+-		RemoveEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
++		RemoveEquipmentGameplay(NewRuntimeItem);
+ 		return;
+ 	}
+ 
+@@ -153,13 +153,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
+ 	FProject_JEquipmentRuntimeItem RuntimeItem;
+ 	if (!RuntimeItems.RemoveAndCopyValue(Slot, RuntimeItem)) return;
+ 	if (Slot == EProject_JEquipmentSlot::Weapon) { WeaponRevoked.Broadcast(); }
+-	UProject_JEquipmentItemDefinition* RuntimeItemDef = RuntimeItem.ItemDef ? RuntimeItem.ItemDef : ItemDef;
+-
+-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+-	if (OwnerCharacter && RuntimeItemDef)
+-	{
+-		RemoveEquipmentGameplay(*OwnerCharacter, *RuntimeItemDef, RuntimeItem);
+-	}
++	RemoveEquipmentGameplay(RuntimeItem);
+ 
+ 	DestroyEquipmentVisual(RuntimeItem);
+ 
+@@ -178,7 +172,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
+ 	RuntimeItem.GrantedAbilitySystem = ASC;
+ 	if (ASC && ItemDef.AbilitySet)
+ 	{
+-		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetName()));
++		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetPathName()));
+ 		ItemDef.AbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef), GrantSource);
+ 	}
+ 	if (ASC && ItemDef.CombatStyleDefinition)
+@@ -202,22 +196,16 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
+ 	}
+ }
+ 
+-void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
++void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(FProject_JEquipmentRuntimeItem& RuntimeItem) const
+ {
+-	if (!OwnerCharacter.HasAuthority())
+-	{
+-		return;
+-	}
+-
+ 	UAbilitySystemComponent* ASC = RuntimeItem.GrantedAbilitySystem.Get();
+-	if (ASC)
++	if (ASC && ASC->IsOwnerActorAuthoritative())
+ 	{
+ 		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
+ 		RemoveEquipmentEffects(*ASC, RuntimeItem);
+ 	}
+ 	RuntimeItem.GrantedHandles = FProject_JAbilitySet_GrantedHandles();
+ 	RuntimeItem.GrantedEffectHandles.Reset();
+-	RuntimeItem.bAppliedStatModifierFallback = false;
+ 	RuntimeItem.GrantedAbilitySystem.Reset();
+ }
+ 
+@@ -417,8 +405,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
+ {
+ 	if (ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly)
+ 	{
+-		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
+-		RuntimeItem.bAppliedStatModifierFallback = true;
++		ApplyEquipmentStatModifiers(ASC, ItemDef, RuntimeItem);
+ 		return;
+ 	}
+ 
+@@ -450,19 +437,12 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
+ 	if (RuntimeItem.GrantedEffectHandles.IsEmpty() &&
+ 		ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers)
+ 	{
+-		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
+-		RuntimeItem.bAppliedStatModifierFallback = true;
++		ApplyEquipmentStatModifiers(ASC, ItemDef, RuntimeItem);
+ 	}
+ }
+ 
+ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+ {
+-	if (RuntimeItem.bAppliedStatModifierFallback)
+-	{
+-		ApplyEquipmentStatModifiers(ASC, RuntimeItem.ItemDef, -1.0f);
+-		RuntimeItem.bAppliedStatModifierFallback = false;
+-	}
+-
+ 	for (const FActiveGameplayEffectHandle& EffectHandle : RuntimeItem.GrantedEffectHandles)
+ 	{
+ 		if (EffectHandle.IsValid())
+@@ -474,40 +454,12 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemC
+ 	RuntimeItem.GrantedEffectHandles.Reset();
+ }
+ 
+-void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(UAbilitySystemComponent& AbilitySystem, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const
++void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC,
++	const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+ {
+-	AActor* OwnerActor = GetOwner();
+-	UAbilitySystemComponent* ASC = &AbilitySystem;
+-	if (!ItemDef || !OwnerActor || !OwnerActor->HasAuthority()) return;
+-
+-	for (const FProject_JEquipmentStatModifier& Modifier : ItemDef->StatModifiers)
+-	{
+-		if (!FMath::IsFinite(Modifier.Value) || FMath::IsNearlyZero(Modifier.Value)) continue;
+-
+-		const float SignedValue = Modifier.Value * Sign;
+-		switch (Modifier.Stat)
+-		{
+-		case EProject_JEquipmentStat::MaxHealth:
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxHealthAttribute(), EGameplayModOp::Additive, SignedValue);
+-			break;
+-		case EProject_JEquipmentStat::MaxMana:
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxManaAttribute(), EGameplayModOp::Additive, SignedValue);
+-			break;
+-		case EProject_JEquipmentStat::AttackPower:
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetAttackPowerAttribute(), EGameplayModOp::Additive, SignedValue);
+-			break;
+-		case EProject_JEquipmentStat::Defense:
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetDefenseAttribute(), EGameplayModOp::Additive, SignedValue);
+-			break;
+-		}
+-	}
+-
+-	if (const UProject_JAttributeSet* AttributeSet = Cast<UProject_JAttributeSet>(ASC->GetAttributeSet(UProject_JAttributeSet::StaticClass())))
++	const auto Handle = UProject_JGameplayEffect_EquipmentStats::ApplyBonuses(ASC, ItemDef.StatModifiers, &ItemDef);
++	if (Handle.IsValid())
+ 	{
+-		if (AttributeSet->GetHealth() > AttributeSet->GetMaxHealth())
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetHealthAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxHealth());
+-
+-		if (AttributeSet->GetMana() > AttributeSet->GetMaxMana())
+-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetManaAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxMana());
++		RuntimeItem.GrantedEffectHandles.Add(Handle);
+ 	}
+ }
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
+index d4a49483..60f59312 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
+@@ -26,6 +26,9 @@ UProject_JPlayerInputBindingComponent::UProject_JPlayerInputBindingComponent()
+ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInputComponent, AProject_JPlayerCharacter* PlayerCharacter, const FProject_JPlayerInputActionSet& ActionSet)
+ {
+ 	if (bEnding || IsBeingDestroyed()) { return false; }
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(PlayerCharacter);
++	TStrongObjectPtr<UInputComponent> PinnedInput(PlayerInputComponent);
+ 	const uint64 ExpectedRevision = BindingRevision + 1;
+ 	UnbindInput();
+ 	if (bEnding || IsBeingDestroyed() || BindingRevision != ExpectedRevision) { return false; }
+@@ -161,6 +164,7 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
+ void UProject_JPlayerInputBindingComponent::UnbindInput()
+ {
+ 	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
+ 	const uint64 ReleaseRevision = ++BindingRevision;
+ 	const auto PreviousInput = BoundEnhancedInputComponent;
+ 	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
+@@ -197,6 +201,12 @@ bool UProject_JPlayerInputBindingComponent::MayRetirePlayerState(AProject_JPlaye
+ 	return BindingRevision == ReleaseRevision || BoundPlayerCharacter != PlayerCharacter;
+ }
+ 
++bool UProject_JPlayerInputBindingComponent::IsCurrentBinding(AProject_JPlayerCharacter* PlayerCharacter, uint64 Revision) const
++{
++	return !bEnding && !IsBeingDestroyed() && BindingRevision == Revision && BoundPlayerCharacter == PlayerCharacter &&
++		IsValid(PlayerCharacter) && !PlayerCharacter->IsActorBeingDestroyed();
++}
++
+ void UProject_JPlayerInputBindingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+ {
+ 	bEnding = true;
+@@ -248,43 +258,54 @@ void UProject_JPlayerInputBindingComponent::HandleInteract()
+ 
+ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue& Value)
+ {
+-	if (!BoundPlayerCharacter)
++	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
++	AProject_JPlayerCharacter* PlayerCharacter = PinnedPlayer.Get();
++	const uint64 Revision = BindingRevision;
++	if (!IsCurrentBinding(PlayerCharacter, Revision))
+ 	{
+ 		return;
+ 	}
+ 
+ 	const FVector2D MoveInput = Value.Get<FVector2D>();
++	if (MoveInput.ContainsNaN()) { return; }
+ 	if (Project_J::MotionMatchingCVars::ShouldTraceCombatStop() &&
+ 		bPendingMoveStopReconciliation && MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
+ 	{
+ 		UE_LOG(LogProjectJPlayer, Display,
+ 			TEXT("MMCombatStop Input=MoveResumed Actor=%s Frame=%llu Axis=(%.2f,%.2f) Speed=%.1f Intro=%d Outro=%d"),
+-			*GetNameSafe(BoundPlayerCharacter.Get()), GFrameCounter, MoveInput.X, MoveInput.Y,
+-			BoundPlayerCharacter->GetVelocity().Size2D(),
+-			BoundPlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
+-			BoundPlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
++			*GetNameSafe(PlayerCharacter), GFrameCounter, MoveInput.X, MoveInput.Y,
++			PlayerCharacter->GetVelocity().Size2D(),
++			PlayerCharacter->IsCombatIntroPlaying() ? 1 : 0,
++			PlayerCharacter->IsCombatOutroPlaying() ? 1 : 0);
+ 	}
+ 	if (MoveInput.SizeSquared() > KINDA_SMALL_NUMBER)
+ 	{
+ 		CancelPendingMoveStopReconciliation();
+ 	}
+ 
+-	if (BoundPlayerCharacter->LocomotionAnimStateComponent)
++	if (PlayerCharacter->LocomotionAnimStateComponent)
+ 	{
+ 		// Pivot has to observe the reversal on this movement update, before
+ 		// CharacterMovement decelerates below its authored minimum speed.
+-		BoundPlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
++		PlayerCharacter->LocomotionAnimStateComponent->SetMoveInput(MoveInput);
+ 	}
++	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
+ 
+ 	// Sprint ability state affects CharacterMovement, so preserve its immediate
+ 	// gameplay update as well.
+-	BoundPlayerCharacter->UpdateSprintInputFromMove(MoveInput);
+-	BoundPlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
++	PlayerCharacter->UpdateSprintInputFromMove(MoveInput);
++	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
++	PlayerCharacter->UpdateMoveStartReplicationState(MoveInput);
++	if (!IsCurrentBinding(PlayerCharacter, Revision)) { return; }
+ 
+-	if (BoundPlayerCharacter->GetController() != nullptr)
++	if (AController* Controller = PlayerCharacter->GetController())
+ 	{
+ 		// find out which way is forward
+-		const FRotator Rotation = BoundPlayerCharacter->GetController()->GetControlRotation();
++		TStrongObjectPtr<AController> PinnedController(Controller);
++		const FRotator Rotation = Controller->GetControlRotation();
++		if (Rotation.ContainsNaN() || !IsCurrentBinding(PlayerCharacter, Revision) || PlayerCharacter->GetController() != Controller) { return; }
+ 		const FRotator YawRotation(0, Rotation.Yaw, 0);
+ 
+ 		// get forward vector
+@@ -294,8 +315,9 @@ void UProject_JPlayerInputBindingComponent::HandleMove(const FInputActionValue&
+ 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+ 
+ 		// add movement
+-		BoundPlayerCharacter->AddMovementInput(ForwardDirection, MoveInput.Y);
+-		BoundPlayerCharacter->AddMovementInput(RightDirection, MoveInput.X);
++		PlayerCharacter->AddMovementInput(ForwardDirection, MoveInput.Y);
++		if (!IsCurrentBinding(PlayerCharacter, Revision) || PlayerCharacter->GetController() != Controller) { return; }
++		PlayerCharacter->AddMovementInput(RightDirection, MoveInput.X);
+ 	}
+ }
+ 
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
+index 7409aaa8..601730e6 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
+@@ -3,6 +3,7 @@
+ #include "Project_JGameplayTags.h"
+ #include "Project_JPlayerCharacter.h"
+ #include "TimerManager.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ #if WITH_EDITOR
+ #include "Validation/Project_JDataValidation.h"
+@@ -129,6 +130,8 @@ void UProject_JSkillInputRouterComponent::ResetInputState()
+ void UProject_JSkillInputRouterComponent::CancelMouseInput()
+ {
+ 	check(IsInGameThread());
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
+ 	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
+ 	FGameplayTagContainer ReleasedTags;
+ 	if (ActiveLMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveLMBInputTag);
+@@ -139,9 +142,16 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
+ 	++RMBInputRevision;
+ 	ActiveLMBInputTag = ActiveRMBInputTag = ActiveCombinedInputTag = FGameplayTag();
+ 	// Clear before dispatch so a release callback cannot observe stale held state.
+-	if (IsValid(BoundPlayerCharacter))
++	if (PreviousPlayer.IsValid())
+ 	{
+-		for (const FGameplayTag& Tag : ReleasedTags) BoundPlayerCharacter->HandleSkillInputTagReleased(Tag);
++		for (const FGameplayTag& Tag : ReleasedTags)
++		{
++			// Return this cancellation's inputs to their original receiver. A callback
++			// can reinitialize the router and press the same tag on the same pawn.
++			if (BoundPlayerCharacter == PreviousPlayer.Get() &&
++				(Tag == ActiveLMBInputTag || Tag == ActiveRMBInputTag || Tag == ActiveCombinedInputTag)) { continue; }
++			PreviousPlayer->HandleSkillInputTagReleased(Tag);
++		}
+ 	}
+ }
+ 
+@@ -195,6 +205,9 @@ bool UProject_JSkillInputRouterComponent::AreModifierTagsMatched(const FGameplay
+ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInputButton Button)
+ {
+ 	if (bEnding || IsBeingDestroyed()) { return; }
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
++	const uint64 Revision = BindingRevision;
+ 	++(Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision);
+ 	if (Button == EProject_JSkillInputButton::LMB)
+ 	{
+@@ -231,6 +244,7 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
+ 		// The two presses did not form a valid chord (for example because a
+ 		// modifier changed). Preserve both normal button presses instead.
+ 		FlushPendingChordButton();
++		if (bEnding || IsBeingDestroyed() || Revision != BindingRevision || BoundPlayerCharacter != PinnedPlayer.Get()) { return; }
+ 	}
+ 
+ 	const bool bOtherButtonHeld = Button == EProject_JSkillInputButton::LMB ? bRMBHeld : bLMBHeld;
+@@ -248,6 +262,9 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
+ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillInputButton Button)
+ {
+ 	if (bEnding || IsBeingDestroyed()) { return; }
++	TStrongObjectPtr<ThisClass> PinnedThis(this);
++	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
++	const uint64 Revision = BindingRevision;
+ 	// Resolve a pending press while its button is still held. Release state must
+ 	// be published before dispatch, but must not invalidate that press's chord.
+ 	const bool bFlushTap = bHasPendingChordButton && PendingChordButton == Button;
+@@ -279,7 +296,8 @@ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillIn
+ 		DispatchButtonInputTag(Button, TapTag);
+ 		// Activation can synchronously cancel input or start another press. The
+ 		// old completion must not release the new press, even if its tag is equal.
+-		if (ReleasedRevision == (Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision))
++		if (!bEnding && !IsBeingDestroyed() && BindingRevision == Revision && BoundPlayerCharacter == PinnedPlayer.Get() &&
++			ReleasedRevision == (Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision))
+ 		{
+ 			ReleaseActiveTagForButton(Button);
+ 		}
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+index dee92bf4..1190dc1b 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+@@ -498,15 +498,14 @@ void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Rev
+ 
+ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
+ {
++	if (bEndingPlay || IsBeingDestroyed()) return false;
+ 	// No keys mean an identity offset: follow the authored source socket for
+ 	// this whole state, which preserves the original montage weapon arc.
+-	for (int32 Index = 1; Index < MotionKeys.Num(); ++Index)
++	if (const FName Failure = Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds); !Failure.IsNone())
+ 	{
+-		if (MotionKeys[Index].NormalizedTime <= MotionKeys[Index - 1].NormalizedTime)
+-		{
+-			UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion keys must have unique, ascending NormalizedTime values."));
+-			return false;
+-		}
++		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Invalid Weapon Motion %s; state was not changed."), *Failure.ToString());
++		return false;
+ 	}
+ 
+ 	if (bIndependentMotionActive)
+@@ -800,7 +799,7 @@ void UProject_JWeaponPresentationComponent::UpdateContactRecovery(double NowSeco
+ 
+ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float NormalizedTime)
+ {
+-	if (bIndependentMotionActive)
++	if (bIndependentMotionActive && FMath::IsFinite(NormalizedTime))
+ 	{
+ 		ActiveMotionNormalizedTime = FMath::Clamp(NormalizedTime, 0.0f, 1.0f);
+ 		LastMotionEvaluationFrame = MAX_uint64;
+@@ -809,7 +808,8 @@ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float N
+ 
+ void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
+ {
+-	if (!bIndependentMotionActive)
++	if (!bIndependentMotionActive || !Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds).IsNone())
+ 	{
+ 		return;
+ 	}
+@@ -905,6 +905,7 @@ void UProject_JWeaponPresentationComponent::EndTwoHandGripNotify(int32 NotifyIns
+ 
+ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
+ {
++	if (!FMath::IsFinite(DeltaTime) || DeltaTime < 0.f) return;
+ 	if (bAutoAttackMotionActive && ActiveMotionDurationSeconds > UE_KINDA_SMALL_NUMBER)
+ 	{
+ 		ActiveMotionNormalizedTime = FMath::Clamp(ActiveMotionNormalizedTime +
+@@ -926,6 +927,7 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
+ 		return;
+ 	}
+ 	const FTransform SourceSocketWorld = CharacterMesh->GetSocketTransform(PresentationProfile->DrawnSocketName, RTS_World);
++	if (SourceSocketWorld.ContainsNaN() || !SourceSocketWorld.IsRotationNormalized() || ActiveMotionEntryWorld.ContainsNaN()) return;
+ 	const bool bContactHandoff = PresentationProfile->MotionPresentation.bUseContactHandoff;
+ 	const USkeletalMeshComponent* ReturnMesh = bContactHandoff ? nullptr : ActiveMotionReturnMesh.Get();
+ 	const FTransform ReturnSocketWorld = ReturnMesh && !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
+@@ -941,14 +943,18 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
+ 				SourceSocketWorld, ReturnSocketWorld, Correction);
+ 	};
+ 	const FTransform UncorrectedWorld = EvaluateWorld(FVector::ZeroVector);
+-	WeaponRoot->SetRelativeTransform(UncorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
++	const FTransform UncorrectedRelative = UncorrectedWorld.GetRelativeTransform(SourceSocketWorld);
++	if (UncorrectedWorld.ContainsNaN() || UncorrectedRelative.ContainsNaN()) return;
++	WeaponRoot->SetRelativeTransform(UncorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
+ 
+ 	FVector GroundCorrectionComponentSpace = FVector::ZeroVector;
+ 	if ((GroundContactStateCount > 0 || !GroundContactNotifyTokens.IsEmpty()) && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
+ 	{
+ 		const FVector GroundCorrectionWorld = CharacterMesh->GetComponentTransform().TransformVectorNoScale(GroundCorrectionComponentSpace);
+ 		const FTransform CorrectedWorld = EvaluateWorld(GroundCorrectionWorld);
+-		WeaponRoot->SetRelativeTransform(CorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
++		const FTransform CorrectedRelative = CorrectedWorld.GetRelativeTransform(SourceSocketWorld);
++		if (!CorrectedWorld.ContainsNaN() && !CorrectedRelative.ContainsNaN())
++			WeaponRoot->SetRelativeTransform(CorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
+ 	}
+ 
+ 	UpdateGripTargets();
+diff --git a/Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp b/Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp
+index db20e7ce..05141e72 100644
+--- a/Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp
++++ b/Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp
+@@ -60,6 +60,11 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
+ 				FText::AsNumber(ModifierIndex)));
+ 		}
+ 	}
++	FProject_JEquipmentStatValues StatValues;
++	if (!FProject_JEquipmentStatValues::TryResolve(StatModifiers, StatValues))
++	{
++		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJEquipmentItemDefinition", "InvalidStatTuple", "Equipment stats require known stat types, finite values and finite representable per-stat totals."));
++	}
+ 
+ 	if (EquipmentSlot == EProject_JEquipmentSlot::Weapon && !CombatStyleDefinition)
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp b/Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp
+index 07995699..abf27808 100644
+--- a/Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp
++++ b/Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp
+@@ -75,16 +75,16 @@ bool FProjectJEquipmentGrantOwnershipTest::RunTest(const FString&)
+ 	TestEqual(TEXT("Equipment modifies original ASC"), OldStats->GetMaxHealth(), 150.0f);
+ 	TestEqual(TEXT("Equipment grants an ability"), Old->GetActivatableAbilities().Num(), 1);
+ 	Rider->CurrentASC = New;
+-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
++	Runtime->RemoveEquipmentGameplay(Ledger);
+ 	TestEqual(TEXT("Unequip after avatar swap restores original stat"), OldStats->GetMaxHealth(), 100.0f);
+ 	TestEqual(TEXT("Replacement ASC is untouched"), NewStats->GetMaxHealth(), 200.0f);
+ 	TestEqual(TEXT("Original grant is retired"), Old->GetActivatableAbilities().Num(), 0);
+-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
++	Runtime->RemoveEquipmentGameplay(Ledger);
+ 	TestEqual(TEXT("Repeated cleanup is idempotent"), OldStats->GetMaxHealth(), 100.0f);
+ 	Rider->CurrentASC = Old;
+ 	Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
+ 	Rider->CurrentASC = nullptr;
+-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
++	Runtime->RemoveEquipmentGameplay(Ledger);
+ 	TestEqual(TEXT("Losing current ASC still retires old grants"), Old->GetActivatableAbilities().Num(), 0);
+ 	TestEqual(TEXT("Losing current ASC still reverses fallback"), OldStats->GetMaxHealth(), 100.0f);
+ 	Rider->CurrentASC = Old;
+@@ -94,14 +94,14 @@ bool FProjectJEquipmentGrantOwnershipTest::RunTest(const FString&)
+ 	GE.ModifierOp = EGameplayModOp::Additive; GE.ModifierMagnitude = FScalableFloat(25);
+ 	Ledger.GrantedEffectHandles.Add(Old->ApplyGameplayEffectToSelf(Buff, 1, Old->MakeEffectContext()));
+ 	Rider->CurrentASC = New;
+-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
++	Runtime->RemoveEquipmentGameplay(Ledger);
+ 	TestEqual(TEXT("Active effects and fallback retire on original ASC together"), OldStats->GetMaxHealth(), 100.0f);
+ 	Item->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers;
+ 	Item->EquipmentEffects.Add(UGameplayEffect::StaticClass());
+ 	Rider->CurrentASC = Old; Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
+-	TestTrue(TEXT("Instant equipment effect is never retained/applied as a removable buff"), Ledger.GrantedEffectHandles.IsEmpty());
++	TestEqual(TEXT("Invalid instant effect yields only one removable native stat fallback"), Ledger.GrantedEffectHandles.Num(), 1);
+ 	TestEqual(TEXT("Invalid effect uses exactly one stat fallback"), OldStats->GetMaxHealth(), 150.0f);
+-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
++	Runtime->RemoveEquipmentGameplay(Ledger);
+ 	TestEqual(TEXT("Fallback remains reversible"), OldStats->GetMaxHealth(), 100.0f);
+ 	return true;
+ }
+diff --git a/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h b/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
+index 20f03364..f7090ffe 100644
+--- a/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
++++ b/Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
+@@ -64,6 +64,8 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GameplayEffect
+ 
+ 	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (ClampMin = "1"))
+ 	float EffectLevel = 1.0f;
++
++	bool HasValidLevel() const { return FMath::IsFinite(EffectLevel) && EffectLevel >= 1.0f; }
+ };
+ 
+ /**
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h b/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
+index edc0b84f..d8888c69 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
+@@ -20,6 +20,9 @@ public:
+ 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
+ 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
+ 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
++#if WITH_EDITOR
++	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
++#endif
+ 
+ 	/** Empty means follow the source montage's drawn weapon socket without an extra offset. */
+ 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion", meta = (TitleProperty = "NormalizedTime"))
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h b/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+index 33a4d35b..560a7ee1 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+@@ -50,6 +50,7 @@ public:
+ 	UProject_JCharacterAnimInstance();
+ 
+ 	virtual void NativeInitializeAnimation() override;
++	virtual void NativeUninitializeAnimation() override;
+ 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+ 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+ 	virtual void NativePostEvaluateAnimation() override;
+@@ -59,6 +60,16 @@ public:
+ 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
+ 	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
+ 
++private:
++	friend class UProject_JAnimationUpdateCoordinatorComponent;
++	/** GT-only fallback tick lease. The coordinator returns it before capturing authored controls. */
++	void ReleaseFollowerTickOverride(bool bRestoreTick = true);
++	TWeakObjectPtr<USkeletalMeshComponent> FallbackFollowerTickMesh;
++	bool bSavedFollowerTick = true;
++	bool bAppliedFollowerRetarget = true;
++
++public:
++
+ 	// Snapshot-only AnimGraph inputs. Written in UE's thread-safe update phase,
+ 	// then read by generated property-copy handlers on the same animation task.
+ 	// Do not use these as gameplay state or write them from Blueprint callbacks.
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h b/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
+index e9bdf1bf..5d25919e 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
+@@ -14,8 +14,11 @@ struct FProject_JOneShotInputResponse
+ 	struct FResult { bool bRelease = false; const TCHAR* Reason = TEXT("CompatibleInput"); };
+ 	static FResult Resolve(const FInput& I)
+ 	{
+-		if (!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
+-			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit)) return {true, TEXT("InvalidInputSample")};
++		if (!FMath::IsFinite(I.EntryControlYaw) || (I.bHasMoveReference && !FMath::IsFinite(I.EntryMoveYaw)) ||
++			!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
++			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit) || I.SteeringLimit < 0.f ||
++			!FMath::IsFinite(I.MouseCancelAngle) || I.MouseCancelAngle < 0.f ||
++			!FMath::IsFinite(I.MoveCancelAngle) || I.MoveCancelAngle < 0.f) return {true, TEXT("InvalidInputSample")};
+ 		const float CameraDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(I.EntryControlYaw, I.ControlYaw));
+ 		if (!I.bCanSteer)
+ 		{
+diff --git a/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h b/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
+index 9a1b1029..24382ff4 100644
+--- a/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
++++ b/Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
+@@ -39,9 +39,6 @@ struct FProject_JEquipmentRuntimeItem
+ 	UPROPERTY(Transient)
+ 	TWeakObjectPtr<UAbilitySystemComponent> GrantedAbilitySystem;
+ 
+-	UPROPERTY(Transient)
+-	bool bAppliedStatModifierFallback = false;
+-
+ 	// Owned by this equipped slot. Only accessed/cancelled on the Game Thread.
+ 	uint64 VisualLoadToken = 0;
+ 	uint64 VisualRevision = 0;
+@@ -95,7 +92,7 @@ private:
+ 	FTimerHandle VisualRetryTimer;
+ 
+ 	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+-	void RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
++	void RemoveEquipmentGameplay(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+ 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+ 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
+ 	void CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+@@ -104,7 +101,7 @@ private:
+ 	UProject_JWeaponPresentationProfile* ResolveCurrentWeaponPresentationProfile() const;
+ 	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+ 	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+-	void ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
++	void ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+ 	void RefreshCurrentWeaponConfiguration();
+ 
+ private:
+diff --git a/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h b/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
+index 3c833427..d85358f6 100644
+--- a/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
++++ b/Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
+@@ -89,6 +89,7 @@ public:
+ 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+ 
+ private:
++	friend class FProjectJActiveMoveReentryTest;
+ 	bool bEnding = false;
+ 	uint64 BindingRevision = 0;
+ 	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
+@@ -101,6 +102,7 @@ private:
+ 	void FinalizeMoveStopped();
+ 	void FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter);
+ 	bool MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const;
++	bool IsCurrentBinding(AProject_JPlayerCharacter* PlayerCharacter, uint64 Revision) const;
+ 	void CancelPendingMoveStopReconciliation();
+ 	void QueueSemanticMoveIntentRefresh();
+ 	void RefreshSemanticMoveIntent();
+diff --git a/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h b/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+index b2cf7232..d870c728 100644
+--- a/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
++++ b/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+@@ -237,6 +237,7 @@ public:
+ 	void UnregisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
+ 
+ private:
++	friend class FProjectJWeaponMotionNumericAdmissionTest;
+ 	friend class FProjectJWeaponPresentationTeardownTest;
+ 	friend class FProjectJWeaponPresentationIdentityTest;
+ 	friend class FProjectJCrowdPresentationTest;
+diff --git a/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h b/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
+index 5ecf38ed..bc196f71 100644
+--- a/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
++++ b/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
+@@ -25,6 +25,28 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionKey
+ 
+ namespace Project_J::WeaponMotion
+ {
++	/** Shared authoring/runtime admission. Empty keys retain the source-socket contract. */
++	inline FName GetValidationFailure(const TArray<FProject_JWeaponMotionKey>& Keys,
++		float PrimaryAlpha, float SecondaryAlpha, float Duration, float EntryBlend, float ExitBlend)
++	{
++		for (int32 Index = 0; Index < Keys.Num(); ++Index)
++		{
++			const auto& Key = Keys[Index];
++			if (!FMath::IsFinite(Key.NormalizedTime) || Key.NormalizedTime < 0.f || Key.NormalizedTime > 1.f)
++				return TEXT("KeyTime");
++			if (Key.RelativeTransform.ContainsNaN() || !Key.RelativeTransform.IsRotationNormalized())
++				return TEXT("KeyTransform");
++			if (Index > 0 && Key.NormalizedTime <= Keys[Index - 1].NormalizedTime)
++				return TEXT("KeyOrder");
++		}
++		if (!FMath::IsFinite(PrimaryAlpha) || PrimaryAlpha < 0.f || PrimaryAlpha > 1.f) return TEXT("PrimaryIKAlpha");
++		if (!FMath::IsFinite(SecondaryAlpha) || SecondaryAlpha < 0.f || SecondaryAlpha > 1.f) return TEXT("SecondaryIKAlpha");
++		if (!FMath::IsFinite(Duration) || Duration < 0.f) return TEXT("Duration");
++		if (!FMath::IsFinite(EntryBlend) || EntryBlend < 0.f) return TEXT("EntryBlend");
++		if (!FMath::IsFinite(ExitBlend) || ExitBlend < 0.f) return TEXT("ExitBlend");
++		return NAME_None;
++	}
++
+ 	/** Match the remaining source pose contribution; do not apply a second easing curve. */
+ 	inline float EvaluateMontageContactRecoveryAlpha(float CurrentWeight, float StartWeight)
+ 	{
+diff --git a/Source/Project_JCharacter/Public/Project_JPlayerCharacter.h b/Source/Project_JCharacter/Public/Project_JPlayerCharacter.h
+index 9015406c..6b747226 100644
+--- a/Source/Project_JCharacter/Public/Project_JPlayerCharacter.h
++++ b/Source/Project_JCharacter/Public/Project_JPlayerCharacter.h
+@@ -85,6 +85,7 @@ public:
+ private:
+ 
+ 	friend class UProject_JPlayerInputBindingComponent;
++	friend class FProjectJActiveMoveReentryTest;
+ 
+ 	/** Camera boom positioning the camera behind the character */
+ 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+diff --git a/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp b/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
+index 8b687684..2d737bfa 100644
+--- a/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
++++ b/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
+@@ -439,6 +439,9 @@ private:
+ 				}
+ 			}
+ 			if (!ActiveEvent || !ActiveMotionNotify) continue;
++			if (!FMath::IsFinite(MontageTime) || !Project_J::WeaponMotion::GetValidationFailure(ActiveMotionNotify->MotionKeys,
++				ActiveMotionNotify->PrimaryGripIKAlpha, ActiveMotionNotify->SecondaryGripIKAlpha, ActiveEvent->GetDuration(),
++				ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds).IsNone()) continue;
+ 
+ 			ActivePreviewMeshes.Add(PreviewMesh);
+ 			Project_J::WeaponMotionEditor::FPreviewBinding& Binding = PreviewBindings.FindOrAdd(PreviewMesh);
+@@ -462,7 +465,8 @@ private:
+ 			{
+ 				const float Duration = FMath::Max(ActiveEvent->GetDuration(), UE_KINDA_SMALL_NUMBER);
+ 				const float NormalizedTime = FMath::Clamp((MontageTime - ActiveEvent->GetTriggerTime()) / Duration, 0.0f, 1.0f);
+-				WeaponComponent->SetRelativeTransform(Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds));
++				const FTransform PreviewTransform = Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds);
++				if (!PreviewTransform.ContainsNaN()) WeaponComponent->SetRelativeTransform(PreviewTransform);
+ 				if (Project_J::WeaponMotionEditor::SelectedMotionKey.MotionNotify.Get() == ActiveMotionNotify &&
+ 					Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh.Get() == PreviewMesh)
+ 				{
+diff --git a/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp b/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
+index b68e0e87..a938ab4b 100644
+--- a/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
++++ b/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
+@@ -18,6 +18,11 @@ bool FProjectJWeaponMotionEditingTest::RunTest(const FString&)
+ 	const FTransform Before = Relative; Socket.SetScale3D(FVector(1, 2, 1));
+ 	TestFalse(TEXT("Unsupported nonuniform attachment scale cannot silently corrupt a key"), Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, Socket, FVector(1), Delta));
+ 	TestTrue(TEXT("Rejected edit preserves the key"), Before.Equals(Relative));
++	Relative = FTransform(FQuat::Identity, FVector(1.7e308, 0, 0));
++	const FTransform BeforeOverflow = Relative;
++	TestFalse(TEXT("Finite inputs whose sum overflows cannot publish a partial drag"),
++		Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, FTransform::Identity, FVector(1.7e308, 0, 0), FRotator::ZeroRotator));
++	TestTrue(TEXT("Overflow preserves the entire authored transform"), Relative.Equals(BeforeOverflow));
+ 	return true;
+ }
+ #endif
+diff --git a/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h b/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
+index d7ba2363..8443c67f 100644
+--- a/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
++++ b/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
+@@ -7,16 +7,21 @@ namespace Project_J::WeaponMotionEditor
+ 	inline bool ApplyWorldDelta(FTransform& Relative, const FTransform& SocketWorld, const FVector& Drag, const FRotator& Rotation)
+ 	{
+ 		const FVector Scale = SocketWorld.GetScale3D();
+-		if (Relative.ContainsNaN() || SocketWorld.ContainsNaN() || Drag.ContainsNaN() || Rotation.ContainsNaN() ||
++		if (Relative.ContainsNaN() || SocketWorld.ContainsNaN() || !Relative.IsRotationNormalized() || !SocketWorld.IsRotationNormalized() || Drag.ContainsNaN() || Rotation.ContainsNaN() ||
+ 			Scale.X <= UE_SMALL_NUMBER || !Scale.Equals(FVector(Scale.X), UE_KINDA_SMALL_NUMBER)) { return false; }
+-		Relative.AddToTranslation(SocketWorld.InverseTransformVector(Drag));
++		FTransform Candidate = Relative;
++		const FVector Translation = Relative.GetTranslation() + SocketWorld.InverseTransformVector(Drag);
++		if (Translation.ContainsNaN()) return false;
++		Candidate.SetTranslation(Translation);
+ 		FVector Axis; double Angle;
+ 		Rotation.Quaternion().ToAxisAndAngle(Axis, Angle);
+ 		if (!Axis.IsNearlyZero() && !FMath::IsNearlyZero(Angle))
+ 		{
+-			Relative.SetRotation(FQuat(SocketWorld.InverseTransformVectorNoScale(Axis).GetSafeNormal(), Angle) * Relative.GetRotation());
+-			Relative.NormalizeRotation();
++			Candidate.SetRotation(FQuat(SocketWorld.InverseTransformVectorNoScale(Axis).GetSafeNormal(), Angle) * Candidate.GetRotation());
++			Candidate.NormalizeRotation();
+ 		}
++		if (Candidate.ContainsNaN() || !Candidate.IsRotationNormalized()) return false;
++		Relative = Candidate;
+ 		return true;
+ 	}
+ }
+diff --git a/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs b/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+index 8a076477..a5bff67f 100644
+--- a/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
++++ b/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+@@ -14,6 +14,7 @@ public class Project_JCharacterEditor : ModuleRules
+ 		});
+ 
+ 		PrivateDependencyModuleNames.AddRange(new string[] {
++			"DataValidation",
+ 			"Project_JAnimationNodes",
+ 			"Json",
+ 			"AssetRegistry",
+diff --git a/Source/Project_JCore/Private/System/Project_JMessageSubsystem.cpp b/Source/Project_JCore/Private/System/Project_JMessageSubsystem.cpp
+index 23a04fbb..7a6fcea7 100644
+--- a/Source/Project_JCore/Private/System/Project_JMessageSubsystem.cpp
++++ b/Source/Project_JCore/Private/System/Project_JMessageSubsystem.cpp
+@@ -3,6 +3,7 @@
+ #include "System/Project_JMessageSubsystem.h"
+ 
+ #include "Project_JCore.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ void UProject_JMessageSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+ {
+@@ -28,6 +29,8 @@ void UProject_JMessageSubsystem::BroadcastMessage(FGameplayTag Channel, UObject*
+ 
+ 	if (FProject_JMessageDelegate* DelegatePtr = ListenerMap.Find(Channel))
+ 	{
++		TStrongObjectPtr<UProject_JMessageSubsystem> ThisDispatch(this);
++		TStrongObjectPtr<UObject> PayloadDispatch(Payload);
+ 		// Listeners may register another channel (rehashing ListenerMap), clear a
+ 		// channel, or tear down this subsystem. Snapshot this dispatch's listeners.
+ 		const FProject_JMessageDelegate Snapshot = *DelegatePtr;
+diff --git a/Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp b/Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp
+index e2801805..5ce2969b 100644
+--- a/Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp
++++ b/Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp
+@@ -1,6 +1,8 @@
+ #include "Tests/Project_JMessageTestReceiver.h"
+ #include "System/Project_JMessageSubsystem.h"
+ #include "Engine/GameInstance.h"
++#include "UObject/GarbageCollection.h"
++#include "UObject/StrongObjectPtr.h"
+ 
+ void UProject_JMessageTestReceiver::ChangeSubscriptions(FGameplayTag Channel, UObject*)
+ {
+@@ -9,6 +11,14 @@ void UProject_JMessageTestReceiver::ChangeSubscriptions(FGameplayTag Channel, UO
+     Router->GetChannelDelegate(OtherChannel).AddDynamic(this, &UProject_JMessageTestReceiver::Count);
+ }
+ void UProject_JMessageTestReceiver::Count(FGameplayTag, UObject*) { ++SecondCount; }
++void UProject_JMessageTestReceiver::CollectDuringMessage(FGameplayTag, UObject* Payload)
++{
++#if WITH_DEV_AUTOMATION_TESTS
++    CollectGarbage(RF_NoFlags);
++    // Never dereference a collected raw parameter in a failing reproduction.
++    bPayloadSurvivedCollection = ObservedPayload.IsValid() && ObservedPayload.Get() == Payload;
++#endif
++}
+ 
+ #if WITH_DEV_AUTOMATION_TESTS
+ #include "Misc/AutomationTest.h"
+@@ -33,4 +43,22 @@ bool FProjectJMessageRouterTest::RunTest(const FString&)
+     TestEqual(TEXT("New channel usable after reentrant registration"), Receiver->SecondCount, 2);
+     return true;
+ }
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMessagePayloadLifetimeTest, "ProjectJ.Continuation.MessagePayloadLifetime",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++bool FProjectJMessagePayloadLifetimeTest::RunTest(const FString&)
++{
++    TStrongObjectPtr<UGameInstance> GameInstance(NewObject<UGameInstance>());
++    auto* Router = NewObject<UProject_JMessageSubsystem>(GameInstance.Get());
++    TStrongObjectPtr<UProject_JMessageTestReceiver> Receiver(NewObject<UProject_JMessageTestReceiver>());
++    Receiver->Router = Router;
++    auto* Payload = NewObject<UProject_JMessageTestReceiver>(); Receiver->ObservedPayload = Payload;
++    Router->GetChannelDelegate(MessageFixtureA).AddDynamic(Receiver.Get(), &UProject_JMessageTestReceiver::CollectDuringMessage);
++    Router->BroadcastMessage(MessageFixtureA, Payload);
++    TestTrue(TEXT("Native dispatch keeps its payload alive across listener GC"), Receiver->bPayloadSurvivedCollection);
++    CollectGarbage(RF_NoFlags);
++    TestFalse(TEXT("Dispatch does not turn a payload into a permanent root"), Receiver->ObservedPayload.IsValid());
++    Router->ClearChannel(MessageFixtureA);
++    return true;
++}
+ #endif
+diff --git a/Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h b/Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h
+index bdd222fa..f60bf65e 100644
+--- a/Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h
++++ b/Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h
+@@ -15,4 +15,7 @@ public:
+     int32 FirstCount = 0, SecondCount = 0;
+     UFUNCTION() void ChangeSubscriptions(FGameplayTag Channel, UObject* Payload);
+     UFUNCTION() void Count(FGameplayTag Channel, UObject* Payload);
++    TWeakObjectPtr<UObject> ObservedPayload;
++    bool bPayloadSurvivedCollection = false;
++    UFUNCTION() void CollectDuringMessage(FGameplayTag Channel, UObject* Payload);
+ };
+diff --git a/Source/Project_JGAS/Public/Project_JStatTypes.h b/Source/Project_JGAS/Public/Project_JStatTypes.h
+index 69fee3c7..66111f98 100644
+--- a/Source/Project_JGAS/Public/Project_JStatTypes.h
++++ b/Source/Project_JGAS/Public/Project_JStatTypes.h
+@@ -23,3 +23,30 @@ struct FProject_JEquipmentStatModifier
+ 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment|Stats")
+ 	float Value = 0.0f;
+ };
++
++/** Fixed additive equipment tuple shared by authoring, preview and runtime.
++ * Add a new stat here and to the native equipment GE's attribute/tag mapping together. */
++struct FProject_JEquipmentStatValues
++{
++	static constexpr int32 NumStats = static_cast<int32>(EProject_JEquipmentStat::Defense) + 1;
++	float Values[NumStats] = {};
++
++	static bool TryResolve(TConstArrayView<FProject_JEquipmentStatModifier> Modifiers, FProject_JEquipmentStatValues& Out)
++	{
++		double Totals[NumStats] = {};
++		for (const auto& Modifier : Modifiers)
++		{
++			const int32 Index = static_cast<int32>(Modifier.Stat);
++			if (Index < 0 || Index >= NumStats || !FMath::IsFinite(Modifier.Value)) { return false; }
++			if (!FMath::IsNearlyZero(Modifier.Value)) { Totals[Index] += Modifier.Value; }
++		}
++		FProject_JEquipmentStatValues Candidate;
++		for (int32 Index = 0; Index < NumStats; ++Index)
++		{
++			if (!FMath::IsFinite(Totals[Index]) || FMath::Abs(Totals[Index]) > MAX_flt) { return false; }
++			Candidate.Values[Index] = static_cast<float>(Totals[Index]);
++		}
++		Out = Candidate;
++		return true;
++	}
++};

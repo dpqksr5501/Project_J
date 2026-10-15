@@ -1,0 +1,126 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "C7ABE70D448194DC0631AF97D2B5DC2B",
+			"instanceName": "DESKTOP-5T07C91-14508",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-00.42.20",
+	"succeeded": 3,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.098728299140930176,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MountAttachRetired",
+			"fullTestPath": "ProjectJ.Continuation.MountAttachRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C7ABE70D448194DC0631AF97D2B5DC2B"
+			],
+			"duration": 0.011833198368549347,
+			"dateTime": "2026.10.15-00.42.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountPhaseSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.MountPhaseSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C7ABE70D448194DC0631AF97D2B5DC2B"
+			],
+			"duration": 0.010839499533176422,
+			"dateTime": "2026.10.15-00.42.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountReplicatedReplacement",
+			"fullTestPath": "ProjectJ.Continuation.MountReplicatedReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C7ABE70D448194DC0631AF97D2B5DC2B"
+			],
+			"duration": 0.010685499757528305,
+			"dateTime": "2026.10.15-00.42.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountActorPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.MountActorPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"C7ABE70D448194DC0631AF97D2B5DC2B"
+			],
+			"duration": 0.065370097756385803,
+			"dateTime": "2026.10.15-00.42.20",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.42.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.42.20"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'The same returned mount actor accepts a new rider lease' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 556,
+					"timestamp": "2026.10.15-00.42.20"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		}
+	]
+}

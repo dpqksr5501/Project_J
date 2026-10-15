@@ -1,0 +1,209 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "CA394B4A49F2FF60177C1EA839E16785",
+			"instanceName": "DESKTOP-5T07C91-13644",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-19.17.57",
+	"succeeded": 12,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.28424280881881714,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "FollowerPolicyLifetime",
+			"fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.011485598981380463,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ActualEngineSearch",
+			"fullTestPath": "ProjectJ.MMCrowd.ActualEngineSearch",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0048063024878501892,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GeneratedDatabaseLifecycle",
+			"fullTestPath": "ProjectJ.MMCrowd.GeneratedDatabaseLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0081600993871688843,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NestedGraphSearch",
+			"fullTestPath": "ProjectJ.MMCrowd.NestedGraphSearch",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0086074993014335632,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReturnRequestLifetime",
+			"fullTestPath": "ProjectJ.MMCrowd.ReturnRequestLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0082711018621921539,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WorkerSearchPolicy",
+			"fullTestPath": "ProjectJ.MMCrowd.WorkerSearchPolicy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0085286013782024384,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ClockAndTIP",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.ClockAndTIP",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.011073101311922073,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LayerLoadLifecycle",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.LayerLoadLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0044783987104892731,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedVisibility",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Animation.SharedVisibility",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.010406799614429474,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BodyContracts",
+			"fullTestPath": "ProjectJ.Retarget.BodyContracts",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0058312006294727325,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FamilyAuthoringValidation",
+			"fullTestPath": "ProjectJ.Retarget.FamilyAuthoringValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.0088137015700340271,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionRuntime",
+			"fullTestPath": "ProjectJ.Retarget.ProductionRuntime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"CA394B4A49F2FF60177C1EA839E16785"
+			],
+			"duration": 0.19378039240837097,
+			"dateTime": "2026.10.14-19.17.57",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

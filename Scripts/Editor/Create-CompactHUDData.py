@@ -15,12 +15,10 @@ def create(name, folder, cls, fields):
     print('PROJECT_J_COMPACT_DATA_CREATED ' + path)
     return asset
 
-create('DA_ProjectJHUDStyle','/Game/UI',unreal.Project_JHUDStyle,{
-    'quick_slot_size':46.0, 'item_size':46.0, 'font_size':12,
-})
+# Native defaults own layout/map/cooldown policy. This script supplies content overrides only.
+create('DA_ProjectJHUDStyle','/Game/UI',unreal.Project_JHUDStyle,{})
 create('DA_ProjectJMap','/Game/UI',unreal.Project_JMapDefinition,{
     'map_name':unreal.Text('시작 지역'),
-    'center':unreal.Vector2D(0,0), 'half_extent':unreal.Vector2D(5000,5000),
 })
 create('DA_ProjectJFirstSteps','/Game/UI/Gameplay',unreal.Project_JQuestDefinition,{
     'quest_id':'FirstSteps', 'title':unreal.Text('첫걸음'),
@@ -29,9 +27,9 @@ create('DA_ProjectJFirstSteps','/Game/UI/Gameplay',unreal.Project_JQuestDefiniti
 })
 create('DA_ProjectJHealthPotion','/Game/UI/Gameplay',unreal.Project_JConsumableDefinition,{
     'item_id':'HealthPotion','item_name':unreal.Text('체력 물약'), 'item_description':unreal.Text('체력을 최대 25 회복합니다.'),
-    'max_stack_count':99,'restore_health':25.0,'cooldown_seconds':10.0,
+    'max_stack_count':99,'restore_health':25.0,
 })
 create('DA_ProjectJManaPotion','/Game/UI/Gameplay',unreal.Project_JConsumableDefinition,{
     'item_id':'ManaPotion','item_name':unreal.Text('마나 물약'), 'item_description':unreal.Text('마나를 최대 25 회복합니다.'),
-    'max_stack_count':99,'restore_mana':25.0,'cooldown_seconds':10.0,
+    'max_stack_count':99,'restore_mana':25.0,
 })

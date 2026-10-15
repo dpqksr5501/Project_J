@@ -3,6 +3,8 @@ param(
     [switch]$Network,
     [switch]$Animation,
     [switch]$AnimationEvents,
+    [switch]$NotifyCounters,
+    [switch]$NotifyLifecycle,
     [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$OutputName = 'TraceExport',
     [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
 )
@@ -11,6 +13,8 @@ if (@(Get-Process UnrealEditor*,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,Shade
 $RunRoot = (Resolve-Path -LiteralPath $RunRoot).Path.Replace('\','/')
 if ($Network -and $Animation) { throw 'Select one trace workload.' }
 if ($AnimationEvents -and !$Animation) { throw 'AnimationEvents requires Animation.' }
+if ($NotifyCounters -and !$Animation) { throw 'NotifyCounters requires Animation.' }
+if ($NotifyLifecycle -and !$Animation) { throw 'NotifyLifecycle requires Animation.' }
 $trace = if ($Network) { "$RunRoot/Server.utrace" } elseif ($Animation) { "$RunRoot/CPU.utrace" } else { "$RunRoot/Run.utrace" }
 if (!(Test-Path -LiteralPath $trace)) { throw "Missing trace: $trace" }
 $outputRoot = "$RunRoot/$OutputName"
@@ -20,12 +24,31 @@ $commands = @(
     ('TimingInsights.ExportThreads "{0}/Threads.csv"' -f $outputRoot),
     ('TimingInsights.ExportTimerStatistics "{0}/AllTimers.csv"' -f $outputRoot)
 )
+if ($NotifyCounters) {
+    # UE 5.8 ExportCounters passes the entire remainder as the filename;
+    # unlike ExportCounterValues it does not tokenize/strip quotes.
+    $commands += ('TimingInsights.ExportCounters {0}/Counters.csv' -f $outputRoot)
+    $notifyNames = @('WeaponMotion/Begins','WeaponMotion/Ticks','WeaponMotion/Ends','WeaponMotion/WeakMeshVisits','WeaponMotion/InstanceVisits',
+        'GroundContact/Begins','GroundContact/Ends','GroundContact/WeakMeshVisits','GroundContact/InstanceVisits')
+    foreach ($name in $notifyNames) {
+        $filename = $name.Replace('/','-')
+        $commands += ('TimingInsights.ExportCounterValues "{0}/Counter-{1}.csv" -counter="ProjectJ/Notify/{2}"' -f $outputRoot,$filename,$name)
+        $counterRegions = if ($NotifyLifecycle) { @('ProjectJ.NotifyLifecycle.*') } else { @('ProjectJ.AuthoredCPU_*','ProjectJ.AuthoredAttackDispatch_*') }
+        foreach ($region in $counterRegions) {
+            $commands += ('TimingInsights.ExportCounterValues "{0}/Counter-{1}-{{region}}.csv" -counter="ProjectJ/Notify/{2}" -region="{3}"' -f $outputRoot,$filename,$name,$region)
+        }
+    }
+}
 if ($Network) {
     $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.Network.*"' -f $outputRoot)
     $commands += ('TimingInsights.ExportTimingEvents "{0}/Events-{{region}}.csv" -region="ProjectJ.Network.*" -timers="*NetDriver*,*Connection*,*Replication*,*Filtering*" -columns="ThreadId,TimerId,TimerName,StartTime,EndTime,Depth"' -f $outputRoot)
 } elseif ($Animation) {
-    $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.AuthoredCPU_*"' -f $outputRoot)
-    $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.AuthoredAttackDispatch_*"' -f $outputRoot)
+    if ($NotifyLifecycle) {
+        $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.NotifyLifecycle.*"' -f $outputRoot)
+    } else {
+        $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.AuthoredCPU_*"' -f $outputRoot)
+        $commands += ('TimingInsights.ExportTimerStatistics "{0}/Timers-{{region}}.csv" -region="ProjectJ.AuthoredAttackDispatch_*"' -f $outputRoot)
+    }
     if ($AnimationEvents) {
         $commands += ('TimingInsights.ExportTimingEvents "{0}/Events-{{region}}.csv" -region="ProjectJ.AuthoredCPU_*" -timers="ProjectJ_AnimProxy_*,Project_J_AnimNativeUpdate,ProjectJ_AuthoredAnimation_*,IK Retarget Processor Run,FAnimNode_RigidBody::EvaluateSkeletalControl_AnyThread,WaitForTasks" -columns="ThreadId,TimerId,TimerName,StartTime,EndTime,Depth"' -f $outputRoot)
     }

@@ -1,0 +1,348 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "C37AEF45486786FD4AA600808332D66F",
+			"instanceName": "DESKTOP-5T07C91-21384",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-18.38.21",
+	"succeeded": 16,
+	"succeededWithWarnings": 1,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.34219270944595337,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "NPCRegistrationCallbackGC",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.08751939982175827,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationRetired",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.0054404996335506439,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationStopped",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationStopped",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.0078081004321575165,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.0080153010785579681,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCAttackContract",
+			"fullTestPath": "ProjectJ.Integrated.NPCAttackContract",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.010765999555587769,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ActionSuspension",
+			"fullTestPath": "ProjectJ.Maturity.NPC.ActionSuspension",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.007552802562713623,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ContextSeparation",
+			"fullTestPath": "ProjectJ.NPCAction.ContextSeparation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.0083068981766700745,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentLifecycle",
+			"fullTestPath": "ProjectJ.NPCAction.IntentLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.010738402605056763,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LatePathCompletion",
+			"fullTestPath": "ProjectJ.NPCAction.LatePathCompletion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.010094098746776581,
+			"dateTime": "2026.10.14-18.38.20",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PathAdmission",
+			"fullTestPath": "ProjectJ.NPCAction.PathAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.011041298508644104,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Experiment",
+			"fullTestPath": "ProjectJ.NPCDecision.Experiment",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.035911500453948975,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NPCDecision agents=4 targets=3 outstanding=0 batches=1 decisions=4 applied=4 discarded=0 rejected=0 last_gt_ms=0.017 target_reads=0 cells=0 fallback=0 observers=0 incomplete_observers=1 promotions=0 full_tick_ms=0.018 max_full_tick_ms=0.034 shared_snapshot_ms=0.000 oldest_ready_ms=13.547",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-18.38.21"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeBatch",
+			"fullTestPath": "ProjectJ.NPCDecision.NativeBatch",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.074163198471069336,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NativeNPCBatch serviced=95 submitted_decisions=96 root_batches=3 discarded=1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-18.38.21"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Revalidation",
+			"fullTestPath": "ProjectJ.NPCDecision.Revalidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.016609497368335724,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpatialImportance",
+			"fullTestPath": "ProjectJ.NPCDecision.SpatialImportance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.014689799398183823,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundRootMotion",
+			"fullTestPath": "ProjectJ.NPCGameplay.GroundRootMotion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.011118199676275253,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Existing montage root_motion=1; activation, death, falling cancellation verified; no asset saved.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-18.38.21"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponPresentationTeardown",
+			"fullTestPath": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.010210499167442322,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_18.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-18.38.21"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_18.Untitled:PersistentLevel.Actor_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-18.38.21"
+				}
+			],
+			"warnings": 2,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.NPCPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C37AEF45486786FD4AA600808332D66F"
+			],
+			"duration": 0.012207198888063431,
+			"dateTime": "2026.10.14-18.38.21",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

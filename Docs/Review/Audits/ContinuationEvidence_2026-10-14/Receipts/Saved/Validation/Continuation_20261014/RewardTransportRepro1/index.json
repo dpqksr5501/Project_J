@@ -1,0 +1,425 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "0180A8A34D26E2F2D9FD2FB1AC360BE5",
+			"instanceName": "DESKTOP-5T07C91-31808",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-12.35.04",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.076649799942970276,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "HandoverConfiguration",
+			"fullTestPath": "ProjectJ.Continuation.HandoverConfiguration",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"0180A8A34D26E2F2D9FD2FB1AC360BE5"
+			],
+			"duration": 0.058184899389743805,
+			"dateTime": "2026.10.14-12.35.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Nonfinite/out-of-contract server tuning cannot validate a new envelope' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid server tuning is rejected before transport publication: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 95,
+					"timestamp": "2026.10.14-12.35.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 24,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LoopbackFiniteClock",
+			"fullTestPath": "ProjectJ.Continuation.LoopbackFiniteClock",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"0180A8A34D26E2F2D9FD2FB1AC360BE5"
+			],
+			"duration": 0.0074726007878780365,
+			"dateTime": "2026.10.14-12.35.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Invalid elapsed sample cannot poison later valid time' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 65,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Preserved finite delay still completes' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Invalid elapsed sample cannot manufacture an ack' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 63,
+					"timestamp": "2026.10.14-12.35.04"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Preserved finite delay still completes' to be 1, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 71,
+					"timestamp": "2026.10.14-12.35.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestRewardRollback",
+			"fullTestPath": "ProjectJ.Continuation.QuestRewardRollback",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"0180A8A34D26E2F2D9FD2FB1AC360BE5"
+			],
+			"duration": 0.010992299765348434,
+			"dateTime": "2026.10.14-12.35.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Failed claim preserves tracking: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JRewardTransportAdmissionTests.cpp",
+					"lineNumber": 41,
+					"timestamp": "2026.10.14-12.35.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		}
+	]
+}

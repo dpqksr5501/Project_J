@@ -1,0 +1,1792 @@
+{
+  "source_capture": "CA_CPU_Integrated_Trace1: RA27 A / CA01-13 B",
+  "meaning_ko": "이전200actor/socket0 NullRHI 캡처의 관측 GT WorldTick callee tree를 추가 추출. full은 warmup+measured+dispatch의 world scopes이며 region은 기존 measured CPU regions. gameplay/binary 재실행 없음. A demand scope 미관측은 기존 로직/시간0이 아님. parent inclusive와 child exclusive를 더하지 않고 active CPU/critical path로 해석하지 않음. 현재 CA14/15 바이너리의 새 측정 아님.",
+  "variants": {
+    "A": {
+      "demand_scope_observed": false,
+      "demand_by_immediate_parent": {},
+      "common_parent_totals": {
+        "ProjectJ_AuthoredAnimation_WorldTick": {
+          "calls": 3840,
+          "inclusive_thread_elapsed_seconds": 59.5181821,
+          "exclusive_thread_elapsed_seconds": 0.0013794
+        },
+        "Project_J_PlayerCharacterTick_LocomotionState": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 1.1638668,
+          "exclusive_thread_elapsed_seconds": 1.1638668
+        },
+        "Project_J_PlayerCharacterTick_Trajectory": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 0.8775963,
+          "exclusive_thread_elapsed_seconds": 0.8775963
+        },
+        "ProjectJ_VisualAnimationBudget": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 1.0464473,
+          "exclusive_thread_elapsed_seconds": 1.0464473
+        },
+        "Project_J_AnimBuildOptimizationPolicy": {
+          "calls": 1385709,
+          "inclusive_thread_elapsed_seconds": 0.7752389999999999,
+          "exclusive_thread_elapsed_seconds": 0.7752389999999999
+        },
+        "Project_J_AnimBuildThreadSafeData": {
+          "calls": 528613,
+          "inclusive_thread_elapsed_seconds": 1.7471171,
+          "exclusive_thread_elapsed_seconds": 1.7471171
+        }
+      }
+    },
+    "B": {
+      "demand_scope_observed": true,
+      "demand_by_immediate_parent": {
+        "Project_J_PlayerCharacterTick_LocomotionState": {
+          "calls": 1344000,
+          "exclusive_thread_elapsed_seconds": 0.4160458
+        },
+        "Project_J_PlayerCharacterTick_Trajectory": {
+          "calls": 768000,
+          "exclusive_thread_elapsed_seconds": 0.4258031
+        },
+        "ProjectJ_VisualAnimationBudget": {
+          "calls": 704000,
+          "exclusive_thread_elapsed_seconds": 0.591474
+        },
+        "Project_J_AnimBuildThreadSafeData": {
+          "calls": 509224,
+          "exclusive_thread_elapsed_seconds": 0.2727193
+        },
+        "Project_J_AnimBuildOptimizationPolicy": {
+          "calls": 1126410,
+          "exclusive_thread_elapsed_seconds": 0.7297259999999999
+        }
+      },
+      "common_parent_totals": {
+        "ProjectJ_AuthoredAnimation_WorldTick": {
+          "calls": 3840,
+          "inclusive_thread_elapsed_seconds": 62.279522,
+          "exclusive_thread_elapsed_seconds": 0.0014012
+        },
+        "Project_J_PlayerCharacterTick_LocomotionState": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 1.2570946,
+          "exclusive_thread_elapsed_seconds": 0.8410488
+        },
+        "Project_J_PlayerCharacterTick_Trajectory": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 0.9268264,
+          "exclusive_thread_elapsed_seconds": 0.5010233
+        },
+        "ProjectJ_VisualAnimationBudget": {
+          "calls": 768000,
+          "inclusive_thread_elapsed_seconds": 1.1059347,
+          "exclusive_thread_elapsed_seconds": 0.5144607
+        },
+        "Project_J_AnimBuildOptimizationPolicy": {
+          "calls": 1384010,
+          "inclusive_thread_elapsed_seconds": 0.8721352,
+          "exclusive_thread_elapsed_seconds": 0.1424092
+        },
+        "Project_J_AnimBuildThreadSafeData": {
+          "calls": 527944,
+          "inclusive_thread_elapsed_seconds": 1.8717235,
+          "exclusive_thread_elapsed_seconds": 1.5990042
+        }
+      }
+    }
+  },
+  "regions": [
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.5523483,
+              "exclusive_thread_elapsed_seconds": 4.16e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0367529,
+              "exclusive_thread_elapsed_seconds": 0.0367529
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0300501,
+              "exclusive_thread_elapsed_seconds": 0.0300501
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0269366,
+              "exclusive_thread_elapsed_seconds": 0.0269366
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 96600,
+              "inclusive_thread_elapsed_seconds": 0.0177641,
+              "exclusive_thread_elapsed_seconds": 0.0177641
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "inclusive_thread_elapsed_seconds": 0.1237535,
+              "exclusive_thread_elapsed_seconds": 0.1237535
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0148463
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.012419
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 8000,
+              "exclusive_thread_elapsed_seconds": 0.0084767
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 32200,
+              "exclusive_thread_elapsed_seconds": 0.019499
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0298641
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.9501699,
+              "exclusive_thread_elapsed_seconds": 4.85e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0409612,
+              "exclusive_thread_elapsed_seconds": 0.0261149
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.032388,
+              "exclusive_thread_elapsed_seconds": 0.019969
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0289871,
+              "exclusive_thread_elapsed_seconds": 0.0205104
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 96600,
+              "inclusive_thread_elapsed_seconds": 0.026162499999999998,
+              "exclusive_thread_elapsed_seconds": 0.0066635
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "inclusive_thread_elapsed_seconds": 0.165404,
+              "exclusive_thread_elapsed_seconds": 0.1355399
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.6401278,
+              "exclusive_thread_elapsed_seconds": 4.85e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0370296,
+              "exclusive_thread_elapsed_seconds": 0.0370296
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0313326,
+              "exclusive_thread_elapsed_seconds": 0.0313326
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.027927,
+              "exclusive_thread_elapsed_seconds": 0.027927
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 96600,
+              "inclusive_thread_elapsed_seconds": 0.0186409,
+              "exclusive_thread_elapsed_seconds": 0.0186409
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "inclusive_thread_elapsed_seconds": 0.1272336,
+              "exclusive_thread_elapsed_seconds": 0.1272336
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0142203
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0123602
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 8000,
+              "exclusive_thread_elapsed_seconds": 0.0085886
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 32200,
+              "exclusive_thread_elapsed_seconds": 0.015010299999999997
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0217724
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.7550284,
+              "exclusive_thread_elapsed_seconds": 4.53e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0390087,
+              "exclusive_thread_elapsed_seconds": 0.0247884
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0316593,
+              "exclusive_thread_elapsed_seconds": 0.0192991
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0290126,
+              "exclusive_thread_elapsed_seconds": 0.020424
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 96600,
+              "inclusive_thread_elapsed_seconds": 0.0204898,
+              "exclusive_thread_elapsed_seconds": 0.0054795
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 48000,
+              "inclusive_thread_elapsed_seconds": 0.1318124,
+              "exclusive_thread_elapsed_seconds": 0.11004
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.8974437,
+              "exclusive_thread_elapsed_seconds": 5.92e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0394871,
+              "exclusive_thread_elapsed_seconds": 0.0394871
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0340142,
+              "exclusive_thread_elapsed_seconds": 0.0340142
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0332451,
+              "exclusive_thread_elapsed_seconds": 0.0332451
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 90972,
+              "inclusive_thread_elapsed_seconds": 0.0166448,
+              "exclusive_thread_elapsed_seconds": 0.0166448
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45186,
+              "inclusive_thread_elapsed_seconds": 0.13508799999999999,
+              "exclusive_thread_elapsed_seconds": 0.13508799999999999
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0149278
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0125127
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 8000,
+              "exclusive_thread_elapsed_seconds": 0.007928
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 26472,
+              "exclusive_thread_elapsed_seconds": 0.0161177
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45136,
+              "exclusive_thread_elapsed_seconds": 0.0283004
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.9060573,
+              "exclusive_thread_elapsed_seconds": 4.7e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0412023,
+              "exclusive_thread_elapsed_seconds": 0.0262745
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0324699,
+              "exclusive_thread_elapsed_seconds": 0.0199572
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0280726,
+              "exclusive_thread_elapsed_seconds": 0.0201446
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 90872,
+              "inclusive_thread_elapsed_seconds": 0.0219538,
+              "exclusive_thread_elapsed_seconds": 0.0058361
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45136,
+              "inclusive_thread_elapsed_seconds": 0.15560390000000002,
+              "exclusive_thread_elapsed_seconds": 0.1273035
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.6640369,
+              "exclusive_thread_elapsed_seconds": 4.36e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0376959,
+              "exclusive_thread_elapsed_seconds": 0.0376959
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.031563,
+              "exclusive_thread_elapsed_seconds": 0.031563
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0281203,
+              "exclusive_thread_elapsed_seconds": 0.0281203
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 91080,
+              "inclusive_thread_elapsed_seconds": 0.0159375,
+              "exclusive_thread_elapsed_seconds": 0.0159375
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45240,
+              "inclusive_thread_elapsed_seconds": 0.1197622,
+              "exclusive_thread_elapsed_seconds": 0.1197622
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0142524
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0125573
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 8000,
+              "exclusive_thread_elapsed_seconds": 0.0088217
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 26568,
+              "exclusive_thread_elapsed_seconds": 0.0127787
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45184,
+              "exclusive_thread_elapsed_seconds": 0.0212355
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.8065661,
+              "exclusive_thread_elapsed_seconds": 5.09e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0396304,
+              "exclusive_thread_elapsed_seconds": 0.025378
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0323281,
+              "exclusive_thread_elapsed_seconds": 0.0197708
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0297779,
+              "exclusive_thread_elapsed_seconds": 0.0209562
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 90968,
+              "inclusive_thread_elapsed_seconds": 0.0175974,
+              "exclusive_thread_elapsed_seconds": 0.0048187
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 45184,
+              "inclusive_thread_elapsed_seconds": 0.1282776,
+              "exclusive_thread_elapsed_seconds": 0.1070421
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.9185334,
+              "exclusive_thread_elapsed_seconds": 4e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0389591,
+              "exclusive_thread_elapsed_seconds": 0.0389591
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0295692,
+              "exclusive_thread_elapsed_seconds": 0.0295692
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.030368,
+              "exclusive_thread_elapsed_seconds": 0.030368
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52831,
+              "inclusive_thread_elapsed_seconds": 0.0381099,
+              "exclusive_thread_elapsed_seconds": 0.0381099
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0835375,
+              "exclusive_thread_elapsed_seconds": 0.0835375
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0141561
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0120144
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.017557
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52800,
+              "exclusive_thread_elapsed_seconds": 0.0335121
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0123736
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.9235245,
+              "exclusive_thread_elapsed_seconds": 3.88e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.040028,
+              "exclusive_thread_elapsed_seconds": 0.0258719
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.029824,
+              "exclusive_thread_elapsed_seconds": 0.0178096
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0306014,
+              "exclusive_thread_elapsed_seconds": 0.0130444
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52800,
+              "inclusive_thread_elapsed_seconds": 0.0403002,
+              "exclusive_thread_elapsed_seconds": 0.0067881
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0824296,
+              "exclusive_thread_elapsed_seconds": 0.070056
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.9429591,
+              "exclusive_thread_elapsed_seconds": 3.74e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0394019,
+              "exclusive_thread_elapsed_seconds": 0.0394019
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0303023,
+              "exclusive_thread_elapsed_seconds": 0.0303023
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0314018,
+              "exclusive_thread_elapsed_seconds": 0.0314018
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52831,
+              "inclusive_thread_elapsed_seconds": 0.038605099999999996,
+              "exclusive_thread_elapsed_seconds": 0.038605099999999996
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0835191,
+              "exclusive_thread_elapsed_seconds": 0.0835191
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0148967
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.012773
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0221533
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52800,
+              "exclusive_thread_elapsed_seconds": 0.036600900000000006
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0132913
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.1511489,
+              "exclusive_thread_elapsed_seconds": 5.25e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0430486,
+              "exclusive_thread_elapsed_seconds": 0.0281519
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0324688,
+              "exclusive_thread_elapsed_seconds": 0.0196958
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0393321,
+              "exclusive_thread_elapsed_seconds": 0.0171788
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 52800,
+              "inclusive_thread_elapsed_seconds": 0.0442216,
+              "exclusive_thread_elapsed_seconds": 0.0076207
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0930695,
+              "exclusive_thread_elapsed_seconds": 0.0797782
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.3749656,
+              "exclusive_thread_elapsed_seconds": 3.4e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0376717,
+              "exclusive_thread_elapsed_seconds": 0.0376717
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0290926,
+              "exclusive_thread_elapsed_seconds": 0.0290926
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0290321,
+              "exclusive_thread_elapsed_seconds": 0.0290321
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 15574,
+              "inclusive_thread_elapsed_seconds": 0.010586499999999999,
+              "exclusive_thread_elapsed_seconds": 0.010586499999999999
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0221183,
+              "exclusive_thread_elapsed_seconds": 0.0221183
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0140971
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.011987
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0175106
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 15568,
+              "exclusive_thread_elapsed_seconds": 0.009594100000000001
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "exclusive_thread_elapsed_seconds": 0.0029449
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4075858,
+              "exclusive_thread_elapsed_seconds": 3.66e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0397436,
+              "exclusive_thread_elapsed_seconds": 0.0256465
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0301218,
+              "exclusive_thread_elapsed_seconds": 0.0181348
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0304045,
+              "exclusive_thread_elapsed_seconds": 0.0128939
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 15568,
+              "inclusive_thread_elapsed_seconds": 0.0115681,
+              "exclusive_thread_elapsed_seconds": 0.001974
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0223709,
+              "exclusive_thread_elapsed_seconds": 0.019426
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4266839,
+              "exclusive_thread_elapsed_seconds": 3.6e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0387754,
+              "exclusive_thread_elapsed_seconds": 0.0387754
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0311277,
+              "exclusive_thread_elapsed_seconds": 0.0311277
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0305992,
+              "exclusive_thread_elapsed_seconds": 0.0305992
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 15575,
+              "inclusive_thread_elapsed_seconds": 0.0108653,
+              "exclusive_thread_elapsed_seconds": 0.0108653
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0227993,
+              "exclusive_thread_elapsed_seconds": 0.0227993
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0147988
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0132671
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0224937
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 14635,
+              "exclusive_thread_elapsed_seconds": 0.0098478
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5267,
+              "exclusive_thread_elapsed_seconds": 0.0029201
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.5712734,
+              "exclusive_thread_elapsed_seconds": 4.34e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0428087,
+              "exclusive_thread_elapsed_seconds": 0.0280099
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0336222,
+              "exclusive_thread_elapsed_seconds": 0.0203551
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0390632,
+              "exclusive_thread_elapsed_seconds": 0.0165695
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 14635,
+              "inclusive_thread_elapsed_seconds": 0.0118713,
+              "exclusive_thread_elapsed_seconds": 0.0020235
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5267,
+              "inclusive_thread_elapsed_seconds": 0.0227143,
+              "exclusive_thread_elapsed_seconds": 0.0197942
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4024012,
+              "exclusive_thread_elapsed_seconds": 3.46e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0289721,
+              "exclusive_thread_elapsed_seconds": 0.0289721
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0162537,
+              "exclusive_thread_elapsed_seconds": 0.0162537
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0205881,
+              "exclusive_thread_elapsed_seconds": 0.0205881
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28670,
+              "inclusive_thread_elapsed_seconds": 0.0266545,
+              "exclusive_thread_elapsed_seconds": 0.0266545
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 4000,
+              "inclusive_thread_elapsed_seconds": 0.0117273,
+              "exclusive_thread_elapsed_seconds": 0.0117273
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0072611
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0135509
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.012954
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28689,
+              "exclusive_thread_elapsed_seconds": 0.024457800000000002
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4380935,
+              "exclusive_thread_elapsed_seconds": 3.35e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0296913,
+              "exclusive_thread_elapsed_seconds": 0.0224302
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0173386,
+              "exclusive_thread_elapsed_seconds": 0.0037877
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0218771,
+              "exclusive_thread_elapsed_seconds": 0.0089231
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28689,
+              "inclusive_thread_elapsed_seconds": 0.028290100000000002,
+              "exclusive_thread_elapsed_seconds": 0.0038323
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 4000,
+              "inclusive_thread_elapsed_seconds": 0.0121808,
+              "exclusive_thread_elapsed_seconds": 0.0121808
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4408999,
+              "exclusive_thread_elapsed_seconds": 3.58e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0290446,
+              "exclusive_thread_elapsed_seconds": 0.0290446
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0164765,
+              "exclusive_thread_elapsed_seconds": 0.0164765
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.021911,
+              "exclusive_thread_elapsed_seconds": 0.021911
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28675,
+              "inclusive_thread_elapsed_seconds": 0.0280622,
+              "exclusive_thread_elapsed_seconds": 0.0280622
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 4000,
+              "inclusive_thread_elapsed_seconds": 0.0121241,
+              "exclusive_thread_elapsed_seconds": 0.0121241
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0073582
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0138655
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0135494
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28648,
+              "exclusive_thread_elapsed_seconds": 0.025491600000000003
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.4608428,
+              "exclusive_thread_elapsed_seconds": 3.24e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0302379,
+              "exclusive_thread_elapsed_seconds": 0.0228797
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.017692,
+              "exclusive_thread_elapsed_seconds": 0.0038265
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0230377,
+              "exclusive_thread_elapsed_seconds": 0.0094883
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 28648,
+              "inclusive_thread_elapsed_seconds": 0.0292415,
+              "exclusive_thread_elapsed_seconds": 0.0037499
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 4000,
+              "inclusive_thread_elapsed_seconds": 0.0123164,
+              "exclusive_thread_elapsed_seconds": 0.0123164
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 0.7975926,
+              "exclusive_thread_elapsed_seconds": 3.38e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0273687,
+              "exclusive_thread_elapsed_seconds": 0.0273687
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0155669,
+              "exclusive_thread_elapsed_seconds": 0.0155669
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0197849,
+              "exclusive_thread_elapsed_seconds": 0.0197849
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 574,
+              "inclusive_thread_elapsed_seconds": 0.000542,
+              "exclusive_thread_elapsed_seconds": 0.000542
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 80,
+              "inclusive_thread_elapsed_seconds": 0.0003561,
+              "exclusive_thread_elapsed_seconds": 0.0003561
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0092533
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0162126
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0139645
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 572,
+              "exclusive_thread_elapsed_seconds": 0.0005961
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 0.8802728,
+              "exclusive_thread_elapsed_seconds": 3.44e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0348711,
+              "exclusive_thread_elapsed_seconds": 0.0256178
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0203228,
+              "exclusive_thread_elapsed_seconds": 0.0041102
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0225218,
+              "exclusive_thread_elapsed_seconds": 0.0085573
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 572,
+              "inclusive_thread_elapsed_seconds": 0.0007525,
+              "exclusive_thread_elapsed_seconds": 0.00015639999999999998
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 80,
+              "inclusive_thread_elapsed_seconds": 0.0004389,
+              "exclusive_thread_elapsed_seconds": 0.0004389
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 0.7983278,
+              "exclusive_thread_elapsed_seconds": 3.1e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0272769,
+              "exclusive_thread_elapsed_seconds": 0.0272769
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0161148,
+              "exclusive_thread_elapsed_seconds": 0.0161148
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0201252,
+              "exclusive_thread_elapsed_seconds": 0.0201252
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 572,
+              "inclusive_thread_elapsed_seconds": 0.000593,
+              "exclusive_thread_elapsed_seconds": 0.000593
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 80,
+              "inclusive_thread_elapsed_seconds": 0.0003478,
+              "exclusive_thread_elapsed_seconds": 0.0003478
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0082281
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0160448
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.014433
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 572,
+              "exclusive_thread_elapsed_seconds": 0.0005352
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 0.8911108,
+              "exclusive_thread_elapsed_seconds": 3.54e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.032746,
+              "exclusive_thread_elapsed_seconds": 0.0245179
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0200103,
+              "exclusive_thread_elapsed_seconds": 0.0039655
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0239092,
+              "exclusive_thread_elapsed_seconds": 0.0094762
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 572,
+              "inclusive_thread_elapsed_seconds": 0.0006927,
+              "exclusive_thread_elapsed_seconds": 0.00015749999999999998
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 80,
+              "inclusive_thread_elapsed_seconds": 0.0004061,
+              "exclusive_thread_elapsed_seconds": 0.0004061
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.2798091,
+              "exclusive_thread_elapsed_seconds": 4.29e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0399157,
+              "exclusive_thread_elapsed_seconds": 0.0399157
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0295059,
+              "exclusive_thread_elapsed_seconds": 0.0295059
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0404619,
+              "exclusive_thread_elapsed_seconds": 0.0404619
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "inclusive_thread_elapsed_seconds": 0.0452099,
+              "exclusive_thread_elapsed_seconds": 0.0452099
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0857528,
+              "exclusive_thread_elapsed_seconds": 0.0857528
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0144333
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0123324
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0233166
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "exclusive_thread_elapsed_seconds": 0.0423602
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0122782
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.348123,
+              "exclusive_thread_elapsed_seconds": 4.78e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0423928,
+              "exclusive_thread_elapsed_seconds": 0.0279595
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0313297,
+              "exclusive_thread_elapsed_seconds": 0.0189973
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0424019,
+              "exclusive_thread_elapsed_seconds": 0.0190853
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "inclusive_thread_elapsed_seconds": 0.0498146,
+              "exclusive_thread_elapsed_seconds": 0.0074544
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0873289,
+              "exclusive_thread_elapsed_seconds": 0.0750507
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.4324019,
+              "exclusive_thread_elapsed_seconds": 5.57e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0405914,
+              "exclusive_thread_elapsed_seconds": 0.0405914
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0312369,
+              "exclusive_thread_elapsed_seconds": 0.0312369
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0436663,
+              "exclusive_thread_elapsed_seconds": 0.0436663
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "inclusive_thread_elapsed_seconds": 0.046252299999999996,
+              "exclusive_thread_elapsed_seconds": 0.046252299999999996
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0896381,
+              "exclusive_thread_elapsed_seconds": 0.0896381
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0152485
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0128311
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0248532
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "exclusive_thread_elapsed_seconds": 0.04567209999999999
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0132624
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 2.5716188,
+              "exclusive_thread_elapsed_seconds": 5.79e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0450414,
+              "exclusive_thread_elapsed_seconds": 0.0297929
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0334478,
+              "exclusive_thread_elapsed_seconds": 0.0206167
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0458602,
+              "exclusive_thread_elapsed_seconds": 0.021007
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 72000,
+              "inclusive_thread_elapsed_seconds": 0.0536137,
+              "exclusive_thread_elapsed_seconds": 0.0079416
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0946686,
+              "exclusive_thread_elapsed_seconds": 0.0814062
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R0.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.50644,
+              "exclusive_thread_elapsed_seconds": 3.18e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.03827,
+              "exclusive_thread_elapsed_seconds": 0.03827
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0294369,
+              "exclusive_thread_elapsed_seconds": 0.0294369
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0344183,
+              "exclusive_thread_elapsed_seconds": 0.0344183
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16905,
+              "inclusive_thread_elapsed_seconds": 0.0108245,
+              "exclusive_thread_elapsed_seconds": 0.0108245
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0218953,
+              "exclusive_thread_elapsed_seconds": 0.0218953
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0141629
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0119309
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0202701
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16905,
+              "exclusive_thread_elapsed_seconds": 0.010003100000000001
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "exclusive_thread_elapsed_seconds": 0.0029532
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.50803,
+              "exclusive_thread_elapsed_seconds": 3.21e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0402255,
+              "exclusive_thread_elapsed_seconds": 0.0260626
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.03005,
+              "exclusive_thread_elapsed_seconds": 0.0181191
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0351499,
+              "exclusive_thread_elapsed_seconds": 0.0148798
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16905,
+              "inclusive_thread_elapsed_seconds": 0.0116801,
+              "exclusive_thread_elapsed_seconds": 0.001677
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0219024,
+              "exclusive_thread_elapsed_seconds": 0.0189492
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R1.csv",
+      "variants": {
+        "A": {
+          "demand_scope_observed": false,
+          "demand_by_immediate_parent": {},
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.513126,
+              "exclusive_thread_elapsed_seconds": 3.22e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0382242,
+              "exclusive_thread_elapsed_seconds": 0.0382242
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0297246,
+              "exclusive_thread_elapsed_seconds": 0.0297246
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0352277,
+              "exclusive_thread_elapsed_seconds": 0.0352277
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16905,
+              "inclusive_thread_elapsed_seconds": 0.010969300000000001,
+              "exclusive_thread_elapsed_seconds": 0.010969300000000001
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5635,
+              "inclusive_thread_elapsed_seconds": 0.0223011,
+              "exclusive_thread_elapsed_seconds": 0.0223011
+            }
+          }
+        },
+        "B": {
+          "demand_scope_observed": true,
+          "demand_by_immediate_parent": {
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 48000,
+              "exclusive_thread_elapsed_seconds": 0.0147337
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.012464
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "exclusive_thread_elapsed_seconds": 0.0220379
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16776,
+              "exclusive_thread_elapsed_seconds": 0.010702699999999999
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5592,
+              "exclusive_thread_elapsed_seconds": 0.0030655
+            }
+          },
+          "common_parent_totals": {
+            "ProjectJ_AuthoredAnimation_WorldTick": {
+              "calls": 120,
+              "inclusive_thread_elapsed_seconds": 1.6213165,
+              "exclusive_thread_elapsed_seconds": 3.66e-05
+            },
+            "Project_J_PlayerCharacterTick_LocomotionState": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0424757,
+              "exclusive_thread_elapsed_seconds": 0.027742
+            },
+            "Project_J_PlayerCharacterTick_Trajectory": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0324362,
+              "exclusive_thread_elapsed_seconds": 0.0199722
+            },
+            "ProjectJ_VisualAnimationBudget": {
+              "calls": 24000,
+              "inclusive_thread_elapsed_seconds": 0.0383877,
+              "exclusive_thread_elapsed_seconds": 0.0163498
+            },
+            "Project_J_AnimBuildOptimizationPolicy": {
+              "calls": 16776,
+              "inclusive_thread_elapsed_seconds": 0.0124798,
+              "exclusive_thread_elapsed_seconds": 0.0017770999999999998
+            },
+            "Project_J_AnimBuildThreadSafeData": {
+              "calls": 5592,
+              "inclusive_thread_elapsed_seconds": 0.0231755,
+              "exclusive_thread_elapsed_seconds": 0.02011
+            }
+          }
+        }
+      }
+    }
+  ],
+  "exports": [
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0.csv",
+      "sha256": "6db93bb418f294a2971834b620e5155aab8fec8deb737cc31d235eca97bfe04f"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R1.csv",
+      "sha256": "4c3addd7b0e358c757d1a08eb7ab54abaf2e0c1d2a7e37216ab6db3c93170cba"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0.csv",
+      "sha256": "bdf8b435a1fe8b72653ede9b0ce56c9d9dfe738dc5790dead49be581737058ee"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R1.csv",
+      "sha256": "ef1d1de7d320baed8e44813e4351649c7f0deffc79fa5a73bb3301d1d9d975d0"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R0.csv",
+      "sha256": "ff7348922e4bb0af8dd214efe8cda4aa82e9c6e881dd76931b080c9ec98fe2f9"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R1.csv",
+      "sha256": "1e802d67fa04aebda3008180c99aa550c07ee1f930ab7eff582fd4302404be55"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R0.csv",
+      "sha256": "7ec6574fef4ecaf03171ffdf998468747bff2601a6e5e4a2e8b79de2412de7e3"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R1.csv",
+      "sha256": "fbc25a419e30204c5dd32d96dbe14f87ef337aaf632e9ab7df9416024c77c7b9"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0.csv",
+      "sha256": "dd6c5f25434c2d697fe7ddb103ae4a15c921153f6c39971c1e46f215ecd6de2e"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R1.csv",
+      "sha256": "1223c0994892e5336743ee9ca57215ee80c1a7a6faf0b565f33db51078a6f7aa"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0.csv",
+      "sha256": "963cea561c95a03221e894b0246a1d6111c858b59caa557a3228e928b7edc480"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R1.csv",
+      "sha256": "4a12e341d7324f8ee3d3746b95c818c6c72e34f56117d6b4848d4faedbd2e84c"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R0.csv",
+      "sha256": "e0d5ca4f67ff4977987d5115957fc8dd4bc1b6eeac45033f799ef6e295f2f9aa"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R1.csv",
+      "sha256": "c36be893f3f6ff0d28ef0facef202b108dd89a4b8e15972b64665ecb3a874905"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R0.csv",
+      "sha256": "19cc96f965611f478ce03a56e2691b382e99e7eecf5e67e5f96eb9d2be27af91"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R1.csv",
+      "sha256": "7066f85d41d3c3d00f5c9544e9cc09183edbcf09a894f760077d79479c709946"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport_Callees_R15_1/WorldCallees.csv",
+      "sha256": "05c86666706f3f24f7c45fb1bf2a2b2812b92babb86cf2da73f0fb1f4fdf19ae"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0.csv",
+      "sha256": "bb488413c2198250ca8aad0cd692eafb9e47c56487d9df86ee0b228606497db5"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R1.csv",
+      "sha256": "abc5b714dcf0e2e08917c38a36cd955617c6e8a902bfce172311a28cc2dd3186"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0.csv",
+      "sha256": "4b8a14df0f6269ddfd217466d9b5a4f7033a065641c25bc37b6f2217f38602b3"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R1.csv",
+      "sha256": "49d4f85c1e5a6faf7ef7aa2a69b6c2e38669dbdbcdd57269783c51daffa6b173"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R0.csv",
+      "sha256": "f7fc37c0559926abbae25a17d6eba263f47fe41b86099fbf74299a0372f99487"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA0_R1.csv",
+      "sha256": "a9b1422940a2f9c72dbba8fd012387d349607fdef2b99ed07895731f7baf4275"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R0.csv",
+      "sha256": "2403f90174b54988029a59f08da1855f3eacce18052cf47ab2d8cf9e315ba7c3"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Far_ABA1_R1.csv",
+      "sha256": "f71eb7cf963a18129621476b09842fb007db9ad9ce9093558cfdbc9e9e137441"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0.csv",
+      "sha256": "d560d299fef49da6dcaeca81e73a48412acef28c8f03b881769d350bf566cb34"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R1.csv",
+      "sha256": "5f340359850b34f0f31d6ae10668afd0e6d60a78af73b87b2fb39fcbde63bc6d"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0.csv",
+      "sha256": "785f7a1aac08d2e8ba220c872119f04b6dd9a322bd7e2faf3a784bf404118b7a"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R1.csv",
+      "sha256": "20fcacbbc113a1f8d95bc148b5c026b6e4e0cdea3365b878b801429871e24bd0"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R0.csv",
+      "sha256": "77e9b209ff98de77c40e94344b2c2d4be65ab5fd5dd07eb2327c170e052bb570"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA0_R1.csv",
+      "sha256": "8d346c72d7b663e0c7c6a97dfe79dafcd195c0c8b351d717e47b8163c18ef384"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R0.csv",
+      "sha256": "2aafac5f207034126d160ff48bf26f6c5adeeb9430408a422e47fed41052447b"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-ProjectJ.AuthoredCPU_200_Near_ABA1_R1.csv",
+      "sha256": "dfb676d09d1a3f2c4f1b12887e9cf4b131d220da4434e6dd83d64344d78cdf94"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees.csv",
+      "sha256": "e422e9844b926b45850f45b8ad963fde0631a4dede5fc99faf5023ab97e4e036"
+    }
+  ],
+  "cpu_increase_resolved": false
+}

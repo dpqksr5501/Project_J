@@ -1,0 +1,449 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "2F8BEA8644E03C36A8836F88766ED361",
+			"instanceName": "DESKTOP-5T07C91-36376",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-18.09.44",
+	"succeeded": 28,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.36749410629272461,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "EnvelopeValidation",
+			"fullTestPath": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0078584030270576477,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NotificationReentrancy",
+			"fullTestPath": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0082505010068416595,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerCharacterSerialization",
+			"fullTestPath": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.055774897336959839,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StateMachine",
+			"fullTestPath": "ProjectJ.Architecture.Handover.StateMachine",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.004366900771856308,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TransportReentrancy",
+			"fullTestPath": "ProjectJ.Architecture.Handover.TransportReentrancy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0083352997899055481,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AbilitySetEffectLevel",
+			"fullTestPath": "ProjectJ.Continuation.AbilitySetEffectLevel",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.010086297988891602,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerHandoverLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.066735997796058655,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionLevelAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0082436986267566681,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRestoreRetirement",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.026220198720693588,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestRewardRollback",
+			"fullTestPath": "ProjectJ.Continuation.QuestRewardRollback",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0064840987324714661,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StyleEffectAdmission",
+			"fullTestPath": "ProjectJ.Continuation.StyleEffectAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0093898996710777283,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DerivedCatalogAndInlineAbilities",
+			"fullTestPath": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0084563978016376495,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InvalidEquipPreservesState",
+			"fullTestPath": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.009064897894859314,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedOwnership",
+			"fullTestPath": "ProjectJ.Extension.Grants.SharedOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0091989003121852875,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BranchesAndGrants",
+			"fullTestPath": "ProjectJ.Extension.Progression.BranchesAndGrants",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0096354000270366669,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GraphValidation",
+			"fullTestPath": "ProjectJ.Extension.Progression.GraphValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0080524012446403503,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PlayerStateRespawn",
+			"fullTestPath": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.010967697948217392,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ApplyAndAdmission",
+			"fullTestPath": "ProjectJ.Maturity.Handover.ApplyAndAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0074429996311664581,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.QuestPlayReuse",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0073920004069805145,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0094957984983921051,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.QuestRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0098383016884326935,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ConsumableAuthorityAndCooldown",
+			"fullTestPath": "ProjectJ.UI.Compact.ConsumableAuthorityAndCooldown",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.010165300220251083,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ExperienceRewardsAndSnapshots",
+			"fullTestPath": "ProjectJ.UI.Compact.ExperienceRewardsAndSnapshots",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.010720901191234589,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InventoryFiltering",
+			"fullTestPath": "ProjectJ.UI.Compact.InventoryFiltering",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0091346018016338348,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LargeProjectionStability",
+			"fullTestPath": "ProjectJ.UI.Compact.LargeProjectionStability",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0092633999884128571,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MapCoordinates",
+			"fullTestPath": "ProjectJ.UI.Compact.MapCoordinates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0082846023142337799,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PreferencesSaveValidation",
+			"fullTestPath": "ProjectJ.UI.Compact.PreferencesSaveValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.0080728009343147278,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "QuestRewardReplayAndRestore",
+			"fullTestPath": "ProjectJ.UI.Compact.QuestRewardReplayAndRestore",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2F8BEA8644E03C36A8836F88766ED361"
+			],
+			"duration": 0.010561499744653702,
+			"dateTime": "2026.10.14-18.09.44",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

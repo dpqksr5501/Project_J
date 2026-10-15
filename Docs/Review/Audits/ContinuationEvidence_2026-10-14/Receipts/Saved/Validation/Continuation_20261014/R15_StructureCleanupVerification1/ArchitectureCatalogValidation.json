@@ -1,0 +1,43 @@
+{
+  "command": "python Scripts/Validation/Validate-MMOArchitecture.py",
+  "exitCode": 0,
+  "output": {
+    "passed": true,
+    "features": 205,
+    "domains": 20,
+    "projectModuleDependencies": {
+      "Project_J": [
+        "Project_JAnimationNodes",
+        "Project_JCharacter",
+        "Project_JCore",
+        "Project_JGAS",
+        "Project_JMMO",
+        "Project_JMount"
+      ],
+      "Project_JAnimationNodes": [
+        "Project_JCharacter"
+      ],
+      "Project_JCharacter": [
+        "Project_JCore",
+        "Project_JGAS",
+        "Project_JMount"
+      ],
+      "Project_JCharacterEditor": [
+        "Project_JAnimationNodes",
+        "Project_JCharacter",
+        "Project_JGAS"
+      ],
+      "Project_JCore": [],
+      "Project_JGAS": [
+        "Project_JCore"
+      ],
+      "Project_JMMO": [],
+      "Project_JMount": [
+        "Project_JCore",
+        "Project_JGAS"
+      ]
+    }
+  },
+  "stderr": "",
+  "write_requested": false
+}

@@ -2,6 +2,8 @@
 
 갱신일: 2026-10-03. 몸체 손바닥 기준, Idle 부착, 무기 구동, 공격 구간 양손 파지와 복귀를 한 문서에서 읽는다. 원문 다섯 개의 설정·수식·예외·진단·검증 이력을 아래 상세 절에 보존했다.
 
+2026-10-14 추가 숫자 계약: Weapon Motion 키 시간은 finite한 0–1 범위의 엄격한 오름차순이며, 상대 변환은 finite하고 quaternion이 정규화되어야 한다. IK alpha는 0–1, duration/entry/exit blend는 finite·nonnegative다. 빈 키와 duration0의 source socket 계약은 유지한다. runtime Begin/Refresh, notify validator, Persona preview가 같은 판정을 사용한다. 잘못된 refresh는 기존 tuple을 보존하며 NaN 위치는 마지막 finite montage 시간을 덮지 않는다. 편집 drag 합계가 overflow하면 전체 키를 보존한다. 공유 Motion/Ground notify는 mesh/instance별 weak token을 유지하고 dead mesh 정리는 GC 경계에서 수행한다. matching End와 current token 계약을 유지하며 Motion은 map entry 반환 후 component cleanup을 호출한다. 부모 animation asset의 Editor validator 연결과 실행 판정은 [계속 작업 기록](../../Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)을 확인한다.
+
 ## 전체 구조와 담당 데이터
 
 | 담당 | 정의할 내용 |

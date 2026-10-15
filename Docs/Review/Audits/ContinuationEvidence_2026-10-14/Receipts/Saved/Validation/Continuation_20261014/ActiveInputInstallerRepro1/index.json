@@ -1,0 +1,109 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "0D2224124D7DD9BFD5AA629930384223",
+			"instanceName": "DESKTOP-5T07C91-5420",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-11.09.38",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.29217061400413513,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "FacingInstallerPreflightAtomic",
+			"fullTestPath": "ProjectJ.Continuation.FacingInstallerPreflightAtomic",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"0D2224124D7DD9BFD5AA629930384223"
+			],
+			"duration": 0.23537980020046234,
+			"dateTime": "2026.10.14-11.09.38",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected lower install must not leave an added upper node' to be 45, but it was 46.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JAnimationNodes\\Private\\Tests\\Project_JFacingInstallerAtomicTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.14-11.09.38"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected install retains the destination' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JAnimationNodes\\Private\\Tests\\Project_JFacingInstallerAtomicTests.cpp",
+					"lineNumber": 47,
+					"timestamp": "2026.10.14-11.09.38"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RouterCancelReentry",
+			"fullTestPath": "ProjectJ.Continuation.RouterCancelReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"0D2224124D7DD9BFD5AA629930384223"
+			],
+			"duration": 0.056790802627801895,
+			"dateTime": "2026.10.14-11.09.38",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Remaining old input returns to its original ASC' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JActiveInputCallbackTests.cpp",
+					"lineNumber": 72,
+					"timestamp": "2026.10.14-11.09.38"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old cancel cannot release the new avatar's input' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JActiveInputCallbackTests.cpp",
+					"lineNumber": 73,
+					"timestamp": "2026.10.14-11.09.38"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		}
+	]
+}

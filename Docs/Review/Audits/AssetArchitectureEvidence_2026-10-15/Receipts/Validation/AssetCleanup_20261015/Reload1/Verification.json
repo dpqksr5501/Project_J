@@ -1,0 +1,2480 @@
+{
+  "asset_save": false,
+  "asset_delete": false,
+  "game_package_count": 2735,
+  "selected_registry_metadata": [
+    {
+      "package": "/Game/AS/AS_Greatsword_Base",
+      "class": "/Script/Project_JCharacter.Project_JAbilitySet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/GAs/GreatSword/GA_Greatsword",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/GAs/GreatSword/GA_Greatsword",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/AS/AS_Humanoid_Core",
+      "class": "/Script/Project_JCharacter.Project_JAbilitySet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/GAs/GA_CombatToggle",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/GAs/GA_CombatToggle",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/GAs/GA_CombatToggle",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/AS/AS_Humanoid_Core"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/AS/AS_Humanoid_Core"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/GEs/BP_GE_CombatMode",
+          "/Script/GameplayAbilities",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/GEs/BP_GE_CombatMode",
+          "/Script/GameplayAbilities",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Character_BPs/BP_Player",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/ABP_Player",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+          "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Input/Actions/IA_Sprint",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS",
+          "/Script/Project_JMount"
+        ],
+        "soft": [
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount"
+        ],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Player",
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+          "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Input/Actions/IA_Sprint",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS",
+          "/Script/Project_JMount"
+        ]
+      }
+    },
+    {
+      "package": "/Game/GAs/GA_NPC_TestAttack",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Script/GameplayAbilities",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Script/GameplayAbilities",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/GEs/BP_GE_CombatMode",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/GAs/GA_CombatToggle"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/GAs/GA_CombatToggle"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/GameplayAbilities",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/GameplayAbilities",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/GEs/GE_TestDamege",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/GameplayAbilities",
+          "/Script/Project_JGAS"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/GameplayAbilities",
+          "/Script/Project_JGAS"
+        ]
+      }
+    },
+    {
+      "package": "/Game/NPCs/BP_NPC_Test",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/4/60/IIBJ6YNVYRN6N7J985930B"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/4/60/IIBJ6YNVYRN6N7J985930B"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/DA_ProjectJHUDStyle",
+      "class": "/Script/Project_J.Project_JHUDStyle",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/DA_ProjectJMap",
+      "class": "/Script/Project_J.Project_JMapDefinition",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/DA_ProjectJUIDefault",
+      "class": "/Script/Project_J.Project_JCharacterUIProfile",
+      "referencers": {
+        "hard": [
+          "/Game/UI/DA_ProjectJUIProfiles"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/UI/DA_ProjectJUIProfiles"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/DA_ProjectJUIProfiles",
+      "class": "/Script/Project_J.Project_JUIProfileCatalog",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/UI/DA_ProjectJUIDefault",
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/UI/DA_ProjectJUIDefault",
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/WBP_ProjectJItemRow",
+      "class": "/Script/UMGEditor.WidgetBlueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/WBP_ProjectJItemTile",
+      "class": "/Script/UMGEditor.WidgetBlueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand",
+          "/Game/Characters/UEFN_Mannequin/Animations/Poses/BS1D_Additive_Lean_Run",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/AnimationWarpingEditor",
+          "/Script/AnimationWarpingRuntime",
+          "/Script/BlendStack",
+          "/Script/BlendStackEditor",
+          "/Script/ControlRigDeveloper",
+          "/Script/PoseSearch",
+          "/Script/PoseSearchEditor",
+          "/Script/Project_JAnimationNodes",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand",
+          "/Game/Characters/UEFN_Mannequin/Animations/Poses/BS1D_Additive_Lean_Run",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/AnimationWarpingEditor",
+          "/Script/AnimationWarpingRuntime",
+          "/Script/BlendStack",
+          "/Script/BlendStackEditor",
+          "/Script/ControlRigDeveloper",
+          "/Script/PoseSearch",
+          "/Script/PoseSearchEditor",
+          "/Script/Project_JAnimationNodes",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/AnimationWarpingEditor",
+          "/Script/AnimationWarpingRuntime",
+          "/Script/BlendStack",
+          "/Script/BlendStackEditor",
+          "/Script/ControlRigDeveloper",
+          "/Script/PoseSearch",
+          "/Script/PoseSearchEditor",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/AnimationWarpingEditor",
+          "/Script/AnimationWarpingRuntime",
+          "/Script/BlendStack",
+          "/Script/BlendStackEditor",
+          "/Script/ControlRigDeveloper",
+          "/Script/PoseSearch",
+          "/Script/PoseSearchEditor",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/AnimGraph"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/AnimGraph"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/ABP_Player"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Player"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/AnimGraph"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/AnimGraph"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "management": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JAttackSet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+          "/Game/Characters/GreatSword/Clothes/cloak",
+          "/Game/Characters/GreatSword/Clothes/foot",
+          "/Game/Characters/GreatSword/Clothes/hand",
+          "/Game/Characters/GreatSword/Clothes/hel",
+          "/Game/Characters/GreatSword/Clothes/inner",
+          "/Game/Characters/GreatSword/Clothes/lower",
+          "/Game/Characters/GreatSword/Clothes/sho",
+          "/Game/Characters/GreatSword/Clothes/upper",
+          "/Game/Characters/GreatSword/GreatSword_Woman",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+          "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+          "/Game/Input/Actions/IA_Attack_LMB",
+          "/Game/Input/Actions/IA_Attack_RMB",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Input/Actions/IA_MoveIntent_Backward",
+          "/Game/Input/Actions/IA_MoveIntent_Forward",
+          "/Game/Input/Actions/IA_MoveIntent_Left",
+          "/Game/Input/Actions/IA_MoveIntent_Right",
+          "/Game/Input/Actions/IA_Sprint",
+          "/Game/Input/Actions/IA_ToggleCombat",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JMount"
+        ],
+        "soft": [
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount"
+        ],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+          "/Game/Characters/GreatSword/Clothes/cloak",
+          "/Game/Characters/GreatSword/Clothes/foot",
+          "/Game/Characters/GreatSword/Clothes/hand",
+          "/Game/Characters/GreatSword/Clothes/hel",
+          "/Game/Characters/GreatSword/Clothes/inner",
+          "/Game/Characters/GreatSword/Clothes/lower",
+          "/Game/Characters/GreatSword/Clothes/sho",
+          "/Game/Characters/GreatSword/Clothes/upper",
+          "/Game/Characters/GreatSword/GreatSword_Woman",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+          "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+          "/Game/Input/Actions/IA_Attack_LMB",
+          "/Game/Input/Actions/IA_Attack_RMB",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Input/Actions/IA_MoveIntent_Backward",
+          "/Game/Input/Actions/IA_MoveIntent_Forward",
+          "/Game/Input/Actions/IA_MoveIntent_Left",
+          "/Game/Input/Actions/IA_MoveIntent_Right",
+          "/Game/Input/Actions/IA_Sprint",
+          "/Game/Input/Actions/IA_ToggleCombat",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JMount"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+      "class": "/Script/Project_JCharacter.Project_JDefaultAttributeSetData",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+      "class": "/Script/Project_JCharacter.Project_JFoleyAudioProfile",
+      "referencers": {
+        "hard": [],
+        "soft": [
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile"
+        ],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Handplant",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Jump",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Land",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunBackwards",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunStrafe",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Run_Soft",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Scuff",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffPivot",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffWall",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Tumble",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Walk",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_WalkBackwards"
+        ],
+        "management": [
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Handplant",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Jump",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Land",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunBackwards",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_RunStrafe",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Run_Soft",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Scuff",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffPivot",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_ScuffWall",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Tumble",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_Walk",
+          "/Game/Audio/Foley/MetaSounds/Presets/MSS_FoleySound_WalkBackwards",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCharacterClassDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/AS/AS_Greatsword_Base",
+          "/Game/AS/AS_Humanoid_Core",
+          "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/AS/AS_Greatsword_Base",
+          "/Game/AS/AS_Humanoid_Core",
+          "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCombatStyleDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+          "/Game/DataAssetSets/Class/DA_Class_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/AS/AS_Greatsword_Base",
+          "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+          "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/AS/AS_Greatsword_Base",
+          "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+          "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JComboDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+          "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+      "class": "/Script/Project_JMount.Project_JRiderAnimationProfile",
+      "referencers": {
+        "hard": [
+          "/Game/Mount_Assets/Wyvern/BP_Wyvern"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Mount_Assets/Wyvern/BP_Wyvern"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/GameplayTags",
+          "/Script/Project_JMount"
+        ],
+        "soft": [
+          "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon"
+        ],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+          "/Script/GameplayTags",
+          "/Script/Project_JMount"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/CommandSet/DA_CommandSet_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JCombatCommandSet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/GAs/GreatSword/GA_Greatsword",
+      "class": "/Script/GameplayAbilities.GameplayAbilityBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/AS/AS_Greatsword_Base"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/AS/AS_Greatsword_Base"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/GameplayAbilities",
+          "/Script/GameplayAbilitiesEditor",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/GameplayAbilities",
+          "/Script/GameplayAbilitiesEditor",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Input/Touch/BPI_TouchInterface",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ],
+        "soft": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ],
+        "management": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ]
+      },
+      "dependencies": {
+        "hard": [],
+        "soft": [
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine"
+        ],
+        "management": [
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Input/Touch/UI_Thumbstick",
+      "class": "/Script/UMGEditor.WidgetBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ],
+        "soft": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ],
+        "management": [
+          "/Game/Input/Touch/UI_TouchSimple"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Background",
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Script/InputCore",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ],
+        "soft": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Background",
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/InputCore",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor",
+          "/Script/UnrealEd"
+        ],
+        "management": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Background",
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/InputCore",
+          "/Script/SlateCore",
+          "/Script/UMG",
+          "/Script/UMGEditor",
+          "/Script/UnrealEd"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Input/Touch/UI_TouchSimple",
+      "class": "/Script/UMGEditor.WidgetBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+        ],
+        "soft": [
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+        ],
+        "management": [
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Game/Input/Touch/BPI_TouchInterface",
+          "/Game/Input/Touch/UI_Thumbstick",
+          "/Script/UMG",
+          "/Script/UMGEditor"
+        ],
+        "soft": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Game/Input/Touch/BPI_TouchInterface",
+          "/Game/Input/Touch/UI_Thumbstick",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/UMG",
+          "/Script/UMGEditor",
+          "/Script/UnrealEd"
+        ],
+        "management": [
+          "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+          "/Game/Input/Touch/BPI_TouchInterface",
+          "/Game/Input/Touch/UI_Thumbstick",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/UMG",
+          "/Script/UMGEditor",
+          "/Script/UnrealEd"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Mount_Assets/Wyvern/BP_Wyvern"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Mount_Assets/Wyvern/BP_Wyvern"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Fly",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationary",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Glide",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Idle",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Walk",
+          "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern_Skeleton",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/Project_JMount"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Fly",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationary",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Glide",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Idle",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Walk",
+          "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern_Skeleton",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/Project_JMount"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Mount_Assets/Wyvern/BP_Wyvern",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/E/Y3/IELHCLCUVAW69GXNEM1HB3"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/E/Y3/IELHCLCUVAW69GXNEM1HB3"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_MountAscend",
+          "/Game/Input/Actions/IA_MountDescend",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+          "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern",
+          "/Script/Project_JCore",
+          "/Script/Project_JGAS",
+          "/Script/Project_JMount"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+          "/Game/Input/Actions/IA_Interact",
+          "/Game/Input/Actions/IA_MountAscend",
+          "/Game/Input/Actions/IA_MountDescend",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+          "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+          "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern",
+          "/Script/Project_JCore",
+          "/Script/Project_JGAS",
+          "/Script/Project_JMount"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/Gameplay/DA_ProjectJFirstSteps",
+      "class": "/Script/Project_J.Project_JQuestDefinition",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/ThirdPerson/Blueprints/BP_Player_Third",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Script/MotionTrajectory",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+          "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+          "/Game/Input/Actions/IA_Jump",
+          "/Game/Input/Actions/IA_Look",
+          "/Game/Input/Actions/IA_MouseLook",
+          "/Game/Input/Actions/IA_Move",
+          "/Script/MotionTrajectory",
+          "/Script/Project_JCharacter",
+          "/Script/Project_JGAS"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+      "class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+      "class": "/Script/Project_JCharacter.Project_JConsumableDefinition",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/ThirdPerson/Lvl_ThirdPerson"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/ThirdPerson/Lvl_ThirdPerson"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+          "/Script/Project_J"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+          "/Script/Project_J"
+        ]
+      }
+    },
+    {
+      "package": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [
+          "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+          "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Input/IMC_Default",
+          "/Game/Input/IMC_MouseLook",
+          "/Game/Input/Touch/UI_TouchSimple",
+          "/Script/Project_J"
+        ],
+        "soft": [
+          "/Game/Input/IMC_Default",
+          "/Game/Input/IMC_MouseLook",
+          "/Game/Input/Touch/UI_TouchSimple",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/EnhancedInput",
+          "/Script/Project_J",
+          "/Script/UMG"
+        ],
+        "management": [
+          "/Game/Input/IMC_Default",
+          "/Game/Input/IMC_MouseLook",
+          "/Game/Input/Touch/UI_TouchSimple",
+          "/Script/BlueprintGraph",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/EnhancedInput",
+          "/Script/Project_J",
+          "/Script/UMG"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [
+          "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon"
+        ],
+        "management": [
+          "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+          "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [
+          "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile"
+        ],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Idle_Seq",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+          "/Game/Animation_Logic/BSs/GreatSword/BS_Greatsword",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Idle_Seq",
+          "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+          "/Game/Animation_Logic/BSs/GreatSword/BS_Greatsword",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+          "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+          "/Game/Animation_Logic/ABPs/ABP_Player_Mount"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/AnimGraph"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/AnimGraph"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/RTG_Greatsword_UE5",
+          "/Game/Characters/GreatSword/Clothes/cloak_Physics",
+          "/Game/Characters/GreatSword/Clothes/sho_Physics",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/IKRig",
+          "/Script/IKRigDeveloper",
+          "/Script/Project_JAnimationNodes",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/RTG_Greatsword_UE5",
+          "/Game/Characters/GreatSword/Clothes/cloak_Physics",
+          "/Game/Characters/GreatSword/Clothes/sho_Physics",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/IKRig",
+          "/Script/IKRigDeveloper",
+          "/Script/Project_JAnimationNodes",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime"
+        ],
+        "soft": [
+          "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin"
+        ],
+        "management": [
+          "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin",
+          "/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+      "class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [
+          "/Game/DataAssetSets/Audio/DA_Mannequin_Foley"
+        ],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+      "class": "/Script/Project_JCharacter.Project_JCharacterAnimProfile",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+      "class": "/Script/Project_JCharacter.Project_JCombatAnimProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe",
+      "class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Idle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_Loop",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Sprint_TurnRedirect",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Combat_Run_Turn",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+      "class": "/Script/Project_JCharacter.Project_JEquipmentItemDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+      "class": "/Script/Project_JCharacter.Project_JLocomotionProfile",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+          "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations",
+          "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations",
+          "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion",
+      "class": "/Script/Project_JCharacter.Project_JMotionMatchingAssetSet",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/BP_Player",
+          "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Idle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Run_Turn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_Cycle",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_GeneralTurn",
+          "/Game/Animation_Logic/PSD/PSD_Player_Locomotion/PSD_Sprint_TurnRedirect",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers"
+        ],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+          "/Game/GAs/GA_NPC_TestAttack"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword",
+          "/Game/GAs/GA_NPC_TestAttack"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile",
+      "class": "/Script/Project_JCharacter.Project_JWeaponAnimProfile",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base",
+      "class": "/Script/Project_JCharacter.Project_JCombatPresentationSet",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation",
+      "class": "/Script/Project_JCharacter.Project_JWeaponPresentationProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JHandGripProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JRetargetBodyProfile",
+      "referencers": {
+        "hard": [
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_HGP_Greatsword",
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetFamily_Mannequin_Bip01",
+      "class": "/Script/Project_JCharacter.Project_JRetargetFamilyProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Animation_Logic/RTG_Greatsword_UE5",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Animation_Logic/RTG_Greatsword_UE5",
+          "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data",
+      "class": "/Script/Project_JCharacter.Project_JSkillInputMappingData",
+      "referencers": {
+        "hard": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Character_BPs/GreatSword/BP_GreatSword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Input/Actions/IA_Skill_Q",
+          "/Game/Input/Actions/IA_Skill_R",
+          "/Game/Input/Actions/IA_Skill_T",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Input/Actions/IA_Skill_Q",
+          "/Game/Input/Actions/IA_Skill_R",
+          "/Game/Input/Actions/IA_Skill_T",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame",
+      "class": "/Script/Engine.Blueprint",
+      "referencers": {
+        "hard": [],
+        "soft": [],
+        "management": []
+      },
+      "dependencies": {
+        "hard": [
+          "/Engine/EditorBlueprintResources/StandardMacros",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_Door",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Corner",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge",
+          "/Script/NavigationSystem"
+        ],
+        "soft": [],
+        "management": [
+          "/Engine/EditorBlueprintResources/StandardMacros",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_Door",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Corner",
+          "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge",
+          "/Script/NavigationSystem"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T",
+      "class": "/Script/Project_JCharacter.Project_JAttackDefinition",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword",
+          "/Game/DataAssetSets/Combo/DA_Combo_Greatsword"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+          "/Game/GEs/GE_TestDamege",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    },
+    {
+      "package": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "class": "/Script/Engine.AnimBlueprint",
+      "referencers": {
+        "hard": [
+          "/Game/NPCs/BP_NPC_Test",
+          "/Game/ThirdPerson/Blueprints/BP_Player_Third"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/NPCs/BP_NPC_Test",
+          "/Game/ThirdPerson/Blueprints/BP_Player_Third"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land",
+          "/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/ControlRig",
+          "/Script/ControlRigDeveloper"
+        ],
+        "soft": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land",
+          "/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/BlueprintGraph",
+          "/Script/ControlRig",
+          "/Script/ControlRigDeveloper",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/RigVM",
+          "/Script/UnrealEd"
+        ],
+        "management": [
+          "/Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump",
+          "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land",
+          "/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle",
+          "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+          "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+          "/Script/AnimGraph",
+          "/Script/AnimGraphRuntime",
+          "/Script/BlueprintGraph",
+          "/Script/ControlRig",
+          "/Script/ControlRigDeveloper",
+          "/Script/CoreUObject",
+          "/Script/Engine",
+          "/Script/RigVM",
+          "/Script/UnrealEd"
+        ]
+      }
+    },
+    {
+      "package": "/Game/DataAssetSets/Presentation/Greatsword/DA_AP_Greatsword/DA_AP_Greatsword",
+      "class": "/Script/Project_JCharacter.Project_JAttackPresentationProfile",
+      "referencers": {
+        "hard": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/DataAssetSets/Presentation/Greatsword/DA_CPS_Greatsword_Base"
+        ]
+      },
+      "dependencies": {
+        "hard": [
+          "/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ],
+        "soft": [],
+        "management": [
+          "/Game/SlashTrail_SoftTofu/Niagara/Basic/NS_SlashTrail_Basic",
+          "/Script/GameplayTags",
+          "/Script/Project_JCharacter"
+        ]
+      }
+    }
+  ],
+  "bp": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+  "reloaded_graphs": [
+    "UserConstructionScript",
+    "EventGraph"
+  ],
+  "inherited_functions": [
+    {
+      "name": "IsDead",
+      "implemented_in_bp": false
+    },
+    {
+      "name": "GetCombatSocketLocation",
+      "implemented_in_bp": false
+    },
+    {
+      "name": "GetCharacterLevel",
+      "implemented_in_bp": false
+    }
+  ],
+  "native_generator_defaults_verified": true,
+  "existing_generator_assets_unchanged": {
+    "UI/DA_ProjectJHUDStyle": "163d5d961e11edc1eaef625dd89d85e40eccc70887c85eda4c3be02defc3e0e0",
+    "UI/DA_ProjectJMap": "1176f9193f78505ce080a45c505d133e979278f85ab1a773f1e95a3e940e3aca",
+    "UI/Gameplay/DA_ProjectJFirstSteps": "bf3d3ddc2d2a2dfba592b84562a30731e28d8618b5b020e15d6b19c5c706a0d4",
+    "UI/Gameplay/DA_ProjectJHealthPotion": "23b46bb6709fe5dc1dd4b37b8c283fa696500cbf7df03592ca0d398b275ab2fd",
+    "UI/Gameplay/DA_ProjectJManaPotion": "ca1c9cb155c5996e2719468faabfb99742d2f61af801b4efb2b37c7fae7c2ccf"
+  },
+  "items": [
+    {
+      "asset": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+      "item_id": "HealthPotion"
+    },
+    {
+      "asset": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+      "item_id": "ManaPotion"
+    },
+    {
+      "asset": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+      "item_id": "Greatsword.Starter"
+    }
+  ],
+  "scope_ko": "fresh load/compile·세 native 함수 상속·제작 기본값·기존 데이터 보존. registry 분류는 상세 graph/asset 전수 완료 아님."
+}

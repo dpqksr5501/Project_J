@@ -1,0 +1,424 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "47F4CE7D487403960A19C0AFCB65C534",
+			"instanceName": "DESKTOP-5T07C91-9636",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-00.38.01",
+	"succeeded": 21,
+	"succeededWithWarnings": 1,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.26385638117790222,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MountedProfilePolicy",
+			"fullTestPath": "ProjectJ.Architecture.Animation.MountedProfilePolicy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0077244974672794342,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EligibilityGameplayPolicy",
+			"fullTestPath": "ProjectJ.Architecture.Mount.EligibilityGameplayPolicy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0078644007444381714,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountAttachRetired",
+			"fullTestPath": "ProjectJ.Continuation.MountAttachRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.012884598225355148,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountPhaseSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.MountPhaseSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0068417005240917206,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountReplicatedReplacement",
+			"fullTestPath": "ProjectJ.Continuation.MountReplicatedReplacement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0075797997415065765,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AnimationOwnerLoss",
+			"fullTestPath": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0053144991397857666,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FlightTickLifecycle",
+			"fullTestPath": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0096029974520206451,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HealthSingleSource",
+			"fullTestPath": "ProjectJ.Internal.Mount.HealthSingleSource",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0092484988272190094,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InputBindingOwnership",
+			"fullTestPath": "ProjectJ.Internal.Mount.InputBindingOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0091927982866764069,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LandingRecovery",
+			"fullTestPath": "ProjectJ.Maturity.Mount.LandingRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0091862007975578308,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SuccessAndRejection",
+			"fullTestPath": "ProjectJ.MountDismountMotion.SuccessAndRejection",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.011016502976417542,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RetainedInputRecovery",
+			"fullTestPath": "ProjectJ.MountRemount.RetainedInputRecovery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0079542025923728943,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GradualFacing",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Combat.GradualFacing",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0091245993971824646,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SettleAfterFacing",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Combat.SettleAfterFacing",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0059106014668941498,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InteractDispatchRoundTrip",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.010143399238586426,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InteractInputOwnership",
+			"fullTestPath": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.010301101952791214,
+			"dateTime": "2026.10.15-00.38.00",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnequalCapsuleFloorExit",
+			"fullTestPath": "ProjectJ.PivotMountFollowup.Mount.UnequalCapsuleFloorExit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.010480299592018127,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InputRedirectLifetime",
+			"fullTestPath": "ProjectJ.PivotMountFollowup.Pivot.InputRedirectLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0082702003419399261,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OriginalASC",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Mount.OriginalASC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0096010975539684296,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PossessionAndBlockedExit",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Mount.PossessionAndBlockedExit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.012449998408555984,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJPlayer: Project_JGreatswordCharacter_0 has no CharacterAnimProfile, LocomotionProfile, or MotionMatchingAssetSet assigned.",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.38.01"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountActorPlayReuse",
+			"fullTestPath": "ProjectJ.Reaudit.MountActorPlayReuse",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.063098199665546417,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.38.01"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JPlayerMaturityASCFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.38.01"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'The same returned mount actor accepts a new rider lease' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JReauditContractsTests.cpp",
+					"lineNumber": 556,
+					"timestamp": "2026.10.15-00.38.01"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountTagReentry",
+			"fullTestPath": "ProjectJ.Reaudit.MountTagReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.0097022019326686859,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestroyedMountCanBeResummonedBeforeGC",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.DestroyedMountCanBeResummonedBeforeGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"47F4CE7D487403960A19C0AFCB65C534"
+			],
+			"duration": 0.010363999754190445,
+			"dateTime": "2026.10.15-00.38.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

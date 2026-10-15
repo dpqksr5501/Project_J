@@ -1,0 +1,19 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-nosound",
+  "-nop4",
+  "-NoLiveCoding",
+  "-NoDDCCleanup",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AssetCleanup_20261015/Cook2/User",
+  "-SaveToUserDir",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AssetCleanup_20261015/Cook2/Run.log",
+  "-culture=en",
+  "-UTF8Output",
+  "-ProjectJAssetValidationName=Cook2",
+  "-run=Cook",
+  "-TargetPlatform=Windows",
+  "-Map=/Game/ThirdPerson/Lvl_ThirdPerson",
+  "-OutputDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AssetCleanup_20261015/Cook2/Cooked/[Platform]",
+  "-CookDir=C:/Users/I/Documents/GitHub/Project_J/Content/Animation_Logic/ABPs"
+]

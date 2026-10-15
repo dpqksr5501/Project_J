@@ -67,13 +67,13 @@ void UProject_JAbilitySet::GiveToAbilitySystem(UAbilitySystemComponent* ASC, FPr
 	for (const FProject_JAbilitySet_GameplayEffect& EffectEntry : GrantedEffectEntries)
 	{
 		if (!CanContinue()) { return; }
-		if (!EffectEntry.Effect)
+		if (!EffectEntry.Effect || !EffectEntry.HasValidLevel())
 		{
 			continue;
 		}
 
 		const UGameplayEffect* GameplayEffect = EffectEntry.Effect->GetDefaultObject<UGameplayEffect>();
-		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, FMath::Max(1.0f, EffectEntry.EffectLevel), ASC->MakeEffectContext());
+		const FActiveGameplayEffectHandle GameplayEffectHandle = ASC->ApplyGameplayEffectToSelf(GameplayEffect, EffectEntry.EffectLevel, ASC->MakeEffectContext());
 		if (!GrantSourceId.IsNone())
 		{
 			// Instant effects have no removable handle. They are committed once by GAS.
@@ -185,10 +185,10 @@ EDataValidationResult UProject_JAbilitySet::IsDataValid(FDataValidationContext& 
 				FText::AsNumber(EffectIndex)));
 		}
 
-		if (EffectEntry.EffectLevel <= 0.0f)
+		if (!EffectEntry.HasValidLevel())
 		{
 			Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
-				NSLOCTEXT("ProjectJAbilitySet", "InvalidEffectLevel", "GrantedEffectEntries[{0}] has EffectLevel below or equal to 0."),
+				NSLOCTEXT("ProjectJAbilitySet", "InvalidEffectLevel", "GrantedEffectEntries[{0}] requires finite EffectLevel at least 1."),
 				FText::AsNumber(EffectIndex)));
 		}
 	}

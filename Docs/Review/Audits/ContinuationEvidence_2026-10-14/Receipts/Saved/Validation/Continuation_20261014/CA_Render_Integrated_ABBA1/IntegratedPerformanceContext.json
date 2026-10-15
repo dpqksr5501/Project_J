@@ -1,0 +1,227 @@
+{
+  "name": "CA_Render_Integrated_ABBA1",
+  "compiled_variants": {
+    "order": [
+      "A1",
+      "B1",
+      "B2",
+      "A2"
+    ],
+    "workload": "Render",
+    "baselineSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\RA27EditorBinaries",
+    "currentSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA_Render_Integrated_ABBA1/RestoreEditorSet",
+    "restoreSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA_Render_Integrated_ABBA1/RestoreEditorSet",
+    "explicitComparedB": false,
+    "warmupTicks": 240,
+    "measuredTicks": 600,
+    "scope": "D3D12 offscreen 200 body actors; fixed camera/light/resolution/quality; zero remote sockets.",
+    "trace": false,
+    "restoration": "Traced pair is separate from no-trace ABBA. All nine Editor artifacts restored to invocation version.",
+    "baselineArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "D97745485FC0F90AA5883124C17B119FD0C6DAF35D8550BF9C1F145E7C45FDB8"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "0CCED645646CF8F63F895DC275ED04DC115CCE7F2A23EDE4C3A0C1F1F402016F"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "289639B4463B7AC740ACD144F1E6794F714EBE1990AF09BEEE3806AAC6556AC8"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "582C9F82C23328EEB980E9F809D360C429B15D676DDAA24085E7D42774979B3B"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "81A1C7500EDDD8F9823CF95FF99970DEB29F1C99084338E801ED6C3A5128A79C"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "9B9FCA27571C34947C911E897B599C3DD859B4D20EC9EE480C60291A87D888D5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "FCD0FF17D40CD88E20986F7AE47CE221C07FE5199B0F0DE6667679D7ED128C5E"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "4A5F2D429648891A743C42DAEF55FFD778D303D1E5987410ADE34F5A501D4414"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ],
+    "currentArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "E7693741980A0321D6E84D5724A19CE20FA4D42103C9A97E4A1785F37EE7E2E0"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "210980236EFE040C7525B477B3C18ED126E1F0D2C161C5003023D7A0B7AF48FF"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "9140996FE60320B761C97CB0B49C025C87D995AC1FBB9210D4326674FEC820A3"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "EECD397A8EFD98DC15C7852B2D2D99103744C6411C817602BB8FC123C8421671"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "6DF542E13E57FCAEC95C7F52F6BBC9E02D0815742CD2EF09DDDBBAFA9DFEAF73"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "645AC5E98F15C0ACA6087EAB0E277B77B92098C6E7C56100E26EDE54B830D0B5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "5FD85FCB7A83461395618FE7F72C9DA93552FC166F181CB71C44C1EAC48E06C6"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "FBB4E60D99B6BC560433CACEA5922C287F14FC4873327A662ACDC1BD73CEA557"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ],
+    "restoreArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "E7693741980A0321D6E84D5724A19CE20FA4D42103C9A97E4A1785F37EE7E2E0"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "210980236EFE040C7525B477B3C18ED126E1F0D2C161C5003023D7A0B7AF48FF"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "9140996FE60320B761C97CB0B49C025C87D995AC1FBB9210D4326674FEC820A3"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "EECD397A8EFD98DC15C7852B2D2D99103744C6411C817602BB8FC123C8421671"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "6DF542E13E57FCAEC95C7F52F6BBC9E02D0815742CD2EF09DDDBBAFA9DFEAF73"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "645AC5E98F15C0ACA6087EAB0E277B77B92098C6E7C56100E26EDE54B830D0B5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "5FD85FCB7A83461395618FE7F72C9DA93552FC166F181CB71C44C1EAC48E06C6"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "FBB4E60D99B6BC560433CACEA5922C287F14FC4873327A662ACDC1BD73CEA557"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ]
+  },
+  "scope_ko": "비교 variant는 실제 manifest/SHA 기준. 과거 분석기의 CA01–03 hardcoded label을 최신 variant로 오해하지 않는다. 원래 DS→RA13 CPU/packaged Render2→3 문제는 미해결.",
+  "render_run_windows": {
+    "A1": {
+      "full_200_montages": {
+        "frames": 148,
+        "mean_frame_ms": 30.601813635135134,
+        "median_frame_ms": 30.1363,
+        "p95_frame_ms": 32.740501,
+        "fps_from_mean_frame": 32.6778017774692,
+        "mean_gpu_ms": 11.61207027027027,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 148
+      },
+      "after_montage": {
+        "frames": 247,
+        "mean_frame_ms": 14.093906882591092,
+        "median_frame_ms": 13.8878,
+        "p95_frame_ms": 15.137501,
+        "fps_from_mean_frame": 70.95264700770856,
+        "mean_gpu_ms": 10.576494331983806,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 247
+      }
+    },
+    "B1": {
+      "full_200_montages": {
+        "frames": 141,
+        "mean_frame_ms": 31.95445045390071,
+        "median_frame_ms": 30.942101,
+        "p95_frame_ms": 35.414497,
+        "fps_from_mean_frame": 31.294545385552986,
+        "mean_gpu_ms": 12.172243964539007,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 141
+      },
+      "after_montage": {
+        "frames": 245,
+        "mean_frame_ms": 14.269679946938776,
+        "median_frame_ms": 14.0315,
+        "p95_frame_ms": 15.290298,
+        "fps_from_mean_frame": 70.07865654439757,
+        "mean_gpu_ms": 10.989980408163266,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 245
+      }
+    },
+    "B2": {
+      "full_200_montages": {
+        "frames": 151,
+        "mean_frame_ms": 29.89342917218543,
+        "median_frame_ms": 29.3958,
+        "p95_frame_ms": 32.027802,
+        "fps_from_mean_frame": 33.45216750611059,
+        "mean_gpu_ms": 11.554319867549669,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 151
+      },
+      "after_montage": {
+        "frames": 230,
+        "mean_frame_ms": 15.172698782608695,
+        "median_frame_ms": 14.7145505,
+        "p95_frame_ms": 17.103703,
+        "fps_from_mean_frame": 65.90785293557818,
+        "mean_gpu_ms": 10.82804,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 230
+      }
+    },
+    "A2": {
+      "full_200_montages": {
+        "frames": 118,
+        "mean_frame_ms": 38.159608644067795,
+        "median_frame_ms": 34.8966995,
+        "p95_frame_ms": 49.2351,
+        "fps_from_mean_frame": 26.205719490665103,
+        "mean_gpu_ms": 12.51424577118644,
+        "capture_requested_frames": 1,
+        "rendered_200_frames": 118
+      },
+      "after_montage": {
+        "frames": 223,
+        "mean_frame_ms": 15.684983829596412,
+        "median_frame_ms": 15.391901,
+        "p95_frame_ms": 17.193102,
+        "fps_from_mean_frame": 63.7552458366628,
+        "mean_gpu_ms": 11.01627533632287,
+        "capture_requested_frames": 0,
+        "rendered_200_frames": 223
+      }
+    }
+  },
+  "render_note_ko": "최신 B=CA01–13 Integrated1, A=RA27. one R burst/복귀·실제 render body200·socket0. A1/B1/B2/A2 run variance가 크므로 aggregate mean을 확정 개선으로 해석하지 않는다. GPU counter 지연/capture/stall 포함. 손/cloth/의상 품질은 별도."
+}

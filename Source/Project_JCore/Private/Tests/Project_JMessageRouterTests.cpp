@@ -1,6 +1,8 @@
 #include "Tests/Project_JMessageTestReceiver.h"
 #include "System/Project_JMessageSubsystem.h"
 #include "Engine/GameInstance.h"
+#include "UObject/GarbageCollection.h"
+#include "UObject/StrongObjectPtr.h"
 
 void UProject_JMessageTestReceiver::ChangeSubscriptions(FGameplayTag Channel, UObject*)
 {
@@ -9,6 +11,14 @@ void UProject_JMessageTestReceiver::ChangeSubscriptions(FGameplayTag Channel, UO
     Router->GetChannelDelegate(OtherChannel).AddDynamic(this, &UProject_JMessageTestReceiver::Count);
 }
 void UProject_JMessageTestReceiver::Count(FGameplayTag, UObject*) { ++SecondCount; }
+void UProject_JMessageTestReceiver::CollectDuringMessage(FGameplayTag, UObject* Payload)
+{
+#if WITH_DEV_AUTOMATION_TESTS
+    CollectGarbage(RF_NoFlags);
+    // Never dereference a collected raw parameter in a failing reproduction.
+    bPayloadSurvivedCollection = ObservedPayload.IsValid() && ObservedPayload.Get() == Payload;
+#endif
+}
 
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
@@ -31,6 +41,24 @@ bool FProjectJMessageRouterTest::RunTest(const FString&)
     TestEqual(TEXT("Clear applies to following broadcasts"), Receiver->FirstCount, 1);
     Router->BroadcastMessage(MessageFixtureB, nullptr);
     TestEqual(TEXT("New channel usable after reentrant registration"), Receiver->SecondCount, 2);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMessagePayloadLifetimeTest, "ProjectJ.Continuation.MessagePayloadLifetime",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJMessagePayloadLifetimeTest::RunTest(const FString&)
+{
+    TStrongObjectPtr<UGameInstance> GameInstance(NewObject<UGameInstance>());
+    auto* Router = NewObject<UProject_JMessageSubsystem>(GameInstance.Get());
+    TStrongObjectPtr<UProject_JMessageTestReceiver> Receiver(NewObject<UProject_JMessageTestReceiver>());
+    Receiver->Router = Router;
+    auto* Payload = NewObject<UProject_JMessageTestReceiver>(); Receiver->ObservedPayload = Payload;
+    Router->GetChannelDelegate(MessageFixtureA).AddDynamic(Receiver.Get(), &UProject_JMessageTestReceiver::CollectDuringMessage);
+    Router->BroadcastMessage(MessageFixtureA, Payload);
+    TestTrue(TEXT("Native dispatch keeps its payload alive across listener GC"), Receiver->bPayloadSurvivedCollection);
+    CollectGarbage(RF_NoFlags);
+    TestFalse(TEXT("Dispatch does not turn a payload into a permanent root"), Receiver->ObservedPayload.IsValid());
+    Router->ClearChannel(MessageFixtureA);
     return true;
 }
 #endif

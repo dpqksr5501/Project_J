@@ -154,6 +154,12 @@ void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
 			(!Mesh->GetAnimInstance() && !Mesh->GetPostProcessInstance())) continue;
 		if (Visuals.ContainsByPredicate([Mesh](const FVisualMesh& Entry) { return Entry.Mesh.Get() == Mesh; })) continue;
 		if (Mesh->IsUsingExternalTickRateControl()) continue; // A different allocator owns it.
+		if (auto* Native = Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance());
+			Native && Native->FallbackFollowerTickMesh.Get() == Mesh)
+		{
+			// Capture authored controls, not the source fallback's hidden-policy override.
+			Native->ReleaseFollowerTickOverride();
+		}
 		FVisualMesh Entry; Entry.Mesh = Mesh; Entry.bSavedURO = Mesh->bEnableUpdateRateOptimizations;
 		Entry.bSavedTick = Mesh->IsComponentTickEnabled(); Entry.SavedVisibility = Mesh->VisibilityBasedAnimTickOption;
 		Entry.bAddedSourcePrerequisite = !Mesh->PrimaryComponentTick.GetPrerequisites().ContainsByPredicate(
@@ -184,14 +190,8 @@ void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::Restore(UActorC
 
 void UProject_JAnimationUpdateCoordinatorComponent::RestoreVisualBudget()
 {
-	const bool bHadControls = !Visuals.IsEmpty();
 	for (auto& Entry : Visuals) Entry.Restore(this, VisualSource.Get());
 	Visuals.Reset(); VisualSchedule = {}; AccumulatedVisualDelta = VisualInterval = 0;
-	if (bHadControls && !IsVisualBudgetEnabled() && GetWorld() && !GetWorld()->bIsTearingDown)
-		if (const auto* Character = Cast<ACharacter>(GetOwner()))
-			if (const auto* Native = VisualSource.IsValid() ? Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance()) : nullptr)
-				if (!Native->GetCurrentOptimizationPolicy().bEnableFollowerRetarget)
-					if (auto* Follower = Project_J::Animation::FindVisualFollower(*Character)) Follower->SetComponentTickEnabled(false);
 	bVisualHidden = bSawAuthoredPresentation = false; AuthoredReturnUntil = 0; DiscoveryElapsed = .5f;
 	if (bVisualWakeActive)
 	{

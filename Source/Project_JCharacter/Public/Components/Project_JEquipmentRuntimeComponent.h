@@ -10,6 +10,7 @@
 #include "Project_JEquipmentRuntimeComponent.generated.h"
 
 class UProject_JEquipmentItemDefinition;
+class ACharacter;
 class UProject_JEquipmentManagerComponent;
 class UProject_JModularMeshComponent;
 class UProject_JCombatStyleDefinition;
@@ -38,9 +39,6 @@ struct FProject_JEquipmentRuntimeItem
 	/** Grants belong to this ASC even after the avatar loses its PlayerState. */
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UAbilitySystemComponent> GrantedAbilitySystem;
-
-	UPROPERTY(Transient)
-	bool bAppliedStatModifierFallback = false;
 
 	// Owned by this equipped slot. Only accessed/cancelled on the Game Thread.
 	uint64 VisualLoadToken = 0;
@@ -95,7 +93,7 @@ private:
 	FTimerHandle VisualRetryTimer;
 
 	void ApplyEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
-	void RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
+	void RemoveEquipmentGameplay(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void StartLocalSpawnEquipment(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void OnEquipmentMeshLoaded(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* ItemDef);
 	void CancelEquipmentMeshLoad(FProject_JEquipmentRuntimeItem& RuntimeItem) const;
@@ -104,7 +102,7 @@ private:
 	UProject_JWeaponPresentationProfile* ResolveCurrentWeaponPresentationProfile() const;
 	void ApplyEquipmentEffects(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
-	void ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const;
+	void ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const;
 	void RefreshCurrentWeaponConfiguration();
 
 private:

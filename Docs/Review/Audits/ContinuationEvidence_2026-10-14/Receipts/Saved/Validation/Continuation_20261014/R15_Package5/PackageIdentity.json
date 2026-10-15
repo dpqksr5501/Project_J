@@ -1,0 +1,11 @@
+{
+  "game": "R15_GameBuild3",
+  "cook": "R15_Cook3",
+  "stage": "R15_Package5",
+  "source_version": "R15_CA17_18_Integrated1",
+  "source_matches_frozen": true,
+  "packaged_game": "Saved/Validation/Continuation_20261014/R15_Package5/Package/Windows/Project_J/Binaries/Win64/Project_J.exe",
+  "sha256": "e37bd6cb9fe22bb2a750f7883fae9d63ee97a0836e9ecac11778e9836cd3ceb3",
+  "matches_direct_ubt_game": true,
+  "scope_ko": "실제 packaged native exe와 direct UBT Game SHA 대조. bootstrap exe와 구분. 별도 configured Cook closure이며 CookAll·실제 실행/시각·원격·전체 감사 완료를 증명하지 않는다."
+}

@@ -19,6 +19,7 @@
 #include "Project_JAbilitySystemOwnerInterface.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Components/Project_JFoleyComponent.h"
+#include "UObject/StrongObjectPtr.h"
 
 
 AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer)
@@ -407,14 +408,44 @@ AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
 
 void AProject_JBaseCharacter::SetCharacterLevel(int32 NewLevel)
 {
-	if (!HasAuthority()) return;
+	TrySetCharacterLevel(NewLevel);
+}
+
+bool AProject_JBaseCharacter::CanApplyCharacterLevelExactly(int32 NewLevel) const
+{
+	if (!HasAuthority() || IsActorBeingDestroyed()) { return false; }
+	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	{
+		int32 ResolvedLevel;
+		return Progression->CanSetLevel(NewLevel, ResolvedLevel) && ResolvedLevel == NewLevel;
+	}
+	const auto* Class = GetCharacterClassDefinition();
+	return NewLevel >= FMath::Max(1, Class ? Class->StartingLevel : 1);
+}
+
+bool AProject_JBaseCharacter::TrySetCharacterLevel(int32 NewLevel)
+{
+	if (!HasAuthority() || IsActorBeingDestroyed()) return false;
+	const TStrongObjectPtr<AProject_JBaseCharacter> PinnedThis(this);
+	const TStrongObjectPtr<AActor> StateOwner(GetAbilitySystemOwnerActor());
+	const TStrongObjectPtr<UProject_JProgressionComponent> PinnedProgression(GetProgressionComponent());
+	const TStrongObjectPtr<UAbilitySystemComponent> PinnedASC(GetAbilitySystemComponent());
+	const auto IsCurrent = [&]()
+	{
+		return !IsActorBeingDestroyed() && HasAuthority() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
+			&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == PinnedProgression.Get()
+			&& (!PinnedProgression.Get() || !PinnedProgression->IsBeingDestroyed())
+			&& GetAbilitySystemComponent() == PinnedASC.Get();
+	};
 	const int32 PreviousLevel = GetCharacterLevel_Implementation();
 	int32 GuardedLevel = FMath::Max(1, NewLevel);
-	if (auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	if (auto* Progression = PinnedProgression.Get(); Progression && Progression->GetState().Revision > 0)
 	{
-		if (!Progression->SetLevel(NewLevel)) return;
+		if (!Progression->SetLevel(NewLevel) || !IsCurrent()) return false;
 		GuardedLevel = Progression->GetState().Level;
 	}
+	if (!IsCurrent()) { return false; }
 	CharacterLevel = GuardedLevel;
 	if (PreviousLevel != GuardedLevel) InitializeDefaultAttributes(true);
+	return IsCurrent();
 }

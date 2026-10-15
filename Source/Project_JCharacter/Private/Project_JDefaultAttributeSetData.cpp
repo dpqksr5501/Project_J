@@ -21,9 +21,7 @@ EDataValidationResult UProject_JDefaultAttributeSetData::IsDataValid(FDataValida
 		}
 	};
 
-	ValidateFiniteNonNegative(MaxHealth, NSLOCTEXT("ProjectJDefaultAttributes", "MaxHealth", "MaxHealth"));
 	ValidateFiniteNonNegative(Health, NSLOCTEXT("ProjectJDefaultAttributes", "Health", "Health"));
-	ValidateFiniteNonNegative(MaxMana, NSLOCTEXT("ProjectJDefaultAttributes", "MaxMana", "MaxMana"));
 	ValidateFiniteNonNegative(Mana, NSLOCTEXT("ProjectJDefaultAttributes", "Mana", "Mana"));
 	ValidateFiniteNonNegative(AttackPower, NSLOCTEXT("ProjectJDefaultAttributes", "AttackPower", "AttackPower"));
 	ValidateFiniteNonNegative(Defense, NSLOCTEXT("ProjectJDefaultAttributes", "Defense", "Defense"));

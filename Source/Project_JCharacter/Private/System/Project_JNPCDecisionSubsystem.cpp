@@ -34,8 +34,10 @@ namespace
 {
 	bool IsLivingActor(AActor* Actor)
 	{
-		return IsValid(Actor) && !Actor->IsActorBeingDestroyed()
-			&& (!Actor->Implements<UProject_JCombatInterface>() || !IProject_JCombatInterface::Execute_IsDead(Actor));
+		if (!IsValid(Actor) || Actor->IsActorBeingDestroyed()) { return false; }
+		const TStrongObjectPtr<AActor> PinnedActor(Actor);
+		const bool bDead = Actor->Implements<UProject_JCombatInterface>() && IProject_JCombatInterface::Execute_IsDead(Actor);
+		return !bDead && IsValid(Actor) && !Actor->IsActorBeingDestroyed();
 	}
 }
 
@@ -63,16 +65,30 @@ bool UProject_JNPCDecisionSubsystem::RegisterAgent(UProject_JTargetScoringCompon
 	auto* NPC = IsValid(Component) ? Cast<AProject_JNPCCharacter>(Component->GetOwner()) : nullptr;
 	if (!IsActiveServer() || TeamId < 0 || !IsValid(NPC) || !NPC->HasAuthority() || NPC->IsActorBeingDestroyed()
 		|| NPC->GetWorld() != GetWorld() || !Component->IsRegistered() || Component->bEndingPlay || Component->IsBeingDestroyed()) { return false; }
-	for (const auto& Agent : Agents)
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
+	const TStrongObjectPtr<AProject_JNPCCharacter> PinnedOwner(NPC);
+	const uint64 RequestRevision = Component->BatchRegistrationRevision;
+	const auto IsCurrent = [&]()
 	{
-		if (Agent->Component.Get() == Component)
-		{
-			if (Agent->Team != TeamId) { Agent->Team = TeamId; Component->NPCDecisionTeam = TeamId; Component->InvalidateQueryContext(); }
-			return true;
-		}
+		return IsActiveServer() && IsValid(Component) && !Component->bEndingPlay && !Component->IsBeingDestroyed()
+			&& Component->IsRegistered() && Component->GetOwner() == NPC && IsValid(NPC) && NPC->HasAuthority()
+			&& !NPC->IsActorBeingDestroyed() && NPC->GetWorld() == GetWorld()
+			&& Component->BatchRegistrationRevision == RequestRevision;
+	};
+	// Copy the shared entry: invalidation can remove/reallocate the registry.
+	const auto* Existing = Agents.FindByPredicate([Component](const auto& Entry) { return Entry->Component.Get() == Component; });
+	if (Existing)
+	{
+		const auto Agent = *Existing;
+		if (Agent->Team != TeamId) { Agent->Team = TeamId; Component->NPCDecisionTeam = TeamId; Component->InvalidateQueryContext(); }
+		return IsCurrent() && Agent->bRegistered && Agents.Contains(Agent) && Agent->Team == TeamId
+			&& Component->bNPCBatchRegistered && Component->NPCDecisionSubsystem.Get() == this && Component->NPCDecisionTeam == TeamId;
 	}
 	if (Agents.Num() >= MaxAgents) { return false; }
 	Component->InvalidateQueryContext();
+	if (!IsCurrent() || Agents.Num() >= MaxAgents
+		|| Agents.ContainsByPredicate([Component](const auto& Entry) { return Entry->Component.Get() == Component; })) { return false; }
 	const auto Agent = MakeShared<FProjectJNPCDecisionAgent>();
 	Agent->Component = Component;
 	Agent->Team = TeamId;
@@ -142,6 +158,9 @@ void UProject_JNPCDecisionSubsystem::UpdateActions()
 void UProject_JNPCDecisionSubsystem::UnregisterAgent(UProject_JTargetScoringComponent* Component)
 {
 	check(IsInGameThread());
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
+	const TStrongObjectPtr<AActor> PinnedOwner(IsValid(Component) ? Component->GetOwner() : nullptr);
 	Agents.RemoveAll([Component](const auto& Agent)
 	{
 		if (Agent->Component.Get() != Component) { return false; }
@@ -150,6 +169,7 @@ void UProject_JNPCDecisionSubsystem::UnregisterAgent(UProject_JTargetScoringComp
 	});
 	if (IsValid(Component))
 	{
+		Component->AdvanceRegistrationRevision();
 		Component->bNPCBatchRegistered = false;
 		Component->NPCDecisionTeam = INDEX_NONE;
 		Component->NPCDecisionSubsystem.Reset();
@@ -196,9 +216,18 @@ bool UProject_JNPCDecisionSubsystem::CanActOnTarget(const UProject_JTargetScorin
 {
 	check(IsInGameThread());
 	if (!IsActiveServer() || !IsValid(Component) || !Component->bNPCBatchRegistered
-		|| Component->NPCDecisionSubsystem.Get() != this || Component->NPCDecisionTeam < 0
-		|| !IsLivingActor(Component->GetOwner()) || !Component->GetOwner()->HasAuthority()) { return false; }
-	return IsEligibleTarget(Target, Component->NPCDecisionTeam);
+		|| Component->IsBeingDestroyed() || Component->NPCDecisionSubsystem.Get() != this || Component->NPCDecisionTeam < 0) { return false; }
+	const TStrongObjectPtr<const ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<const UProject_JTargetScoringComponent> PinnedComponent(Component);
+	const TStrongObjectPtr<AActor> PinnedOwner(Component->GetOwner());
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
+	const uint64 Revision = Component->BatchRegistrationRevision;
+	const int32 Team = Component->NPCDecisionTeam;
+	return IsLivingActor(PinnedOwner.Get()) && PinnedOwner->HasAuthority() && IsEligibleTarget(Target, Team)
+		&& IsActiveServer() && IsValid(Component) && !Component->IsBeingDestroyed() && Component->IsRegistered()
+		&& Component->GetOwner() == PinnedOwner.Get() && IsValid(PinnedOwner.Get()) && !PinnedOwner->IsActorBeingDestroyed()
+		&& Component->bNPCBatchRegistered && Component->NPCDecisionSubsystem.Get() == this
+		&& Component->BatchRegistrationRevision == Revision && Component->NPCDecisionTeam == Team;
 }
 
 void UProject_JNPCDecisionSubsystem::UnregisterTarget(AActor* Target)
@@ -214,7 +243,8 @@ void UProject_JNPCDecisionSubsystem::UnregisterTarget(AActor* Target)
 
 bool UProject_JNPCDecisionSubsystem::IsEligibleTarget(AActor* Target, int32 Team) const
 {
-	return IsLivingActor(Target) && Target->GetWorld() == GetWorld()
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
+	return IsLivingActor(Target) && IsActiveServer() && Target->GetWorld() == GetWorld()
 		&& Targets.ContainsByPredicate([Target, Team](const FTarget& Entry) { return Entry.Actor.Get() == Target && Entry.Team != Team; });
 }
 
@@ -379,17 +409,23 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		if (!bCurrent) { ++Stats.DiscardedDecisions; continue; }
 		const int32 BestId = Entry->Completion.Result.BestId;
 		AActor* Target = Component->CandidateActors.IsValidIndex(BestId) ? Component->CandidateActors[BestId].Get() : nullptr;
+		const TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
+		const TStrongObjectPtr<AActor> PinnedOwner(Owner);
+		const TStrongObjectPtr<AActor> PinnedTarget(Target);
 		if (!IsLivingActor(Owner) || !Owner->HasAuthority() || FPlatformTime::Seconds() - Entry->Submitted > MaxResultAgeSeconds
 			|| Entry->Completion.Result.Status != ProjectJ::TargetScoring::EStatus::Completed
-			|| (BestId != INDEX_NONE && !IsEligibleTarget(Target, Entry->Agent->Team)))
+			|| (BestId != INDEX_NONE && !IsEligibleTarget(Target, Entry->Agent->Team))
+			|| !IsActiveServer() || !IsValid(Component) || Component->IsBeingDestroyed() || !Entry->Agent->bRegistered
+			|| !IsValid(Owner) || Owner->IsActorBeingDestroyed() || Component->GetOwner() != Owner || !Component->bNPCBatchRegistered
+			|| Component->PendingToken.Value != Entry->Completion.Token.Value || Component->ContextRevision != Entry->Completion.ContextRevision)
 		{
-			Component->InvalidateQueryContext();
+			// A newer query/context owns its own pending result; only retire this completion.
+			if (IsValid(Component) && !Component->IsBeingDestroyed() && Component->PendingToken.Value == Entry->Completion.Token.Value
+				&& Component->ContextRevision == Entry->Completion.ContextRevision) { Component->InvalidateQueryContext(); }
 			++Stats.DiscardedDecisions;
 			continue;
 		}
 		++Stats.AppliedDecisions;
-		TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
-		TStrongObjectPtr<AActor> PinnedOwner(Owner);
 		Component->ApplyResult(Entry->Completion); // External callbacks only after queue/counters are updated.
 		if (!IsActiveServer()) { return; }
 	}
@@ -419,6 +455,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		for (const FTarget& Entry : Registry)
 		{
 			AActor* Target = Entry.Actor.Get();
+			const TStrongObjectPtr<AActor> PinnedTarget(Target);
 			if (!IsLivingActor(Target) || !IsValid(Target) || Target->GetWorld() != GetWorld()) { continue; }
 			const FVector Position = Target->GetActorLocation();
 			++Stats.LastTickTargetPositionReads;
@@ -432,6 +469,7 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 	TArray<ProjectJ::TargetScoring::FSnapshot> Snapshots;
 	TArray<TSharedPtr<FProjectJNPCDecisionAgent>> BatchAgents;
 	TArray<uint64> Revisions;
+	TArray<uint64> RegistrationRevisions;
 	const int32 VisitLimit = FMath::Min(Agents.Num(), MaxAgentVisitsPerTick);
 	for (int32 Visit = 0; Visit < VisitLimit && !Agents.IsEmpty() && WithinBudget()
 		&& BatchAgents.Num() < MaxQueriesPerDispatch && OutstandingDecisions + BatchAgents.Num() < MaxOutstandingDecisions; ++Visit)
@@ -466,12 +504,25 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		Agent->NextDue = Agent->LastScheduled < 0.0 ? 0.0 : Agent->LastScheduled + Agent->Interval;
 		if (Agent->bPending || Now < Agent->NextDue) { continue; }
 		if (Agent->LastScheduled >= 0) { Stats.MaxDecisionLatenessMilliseconds = FMath::Max(Stats.MaxDecisionLatenessMilliseconds, (Now - Agent->NextDue) * 1000); }
-		if (!IsLivingActor(NPC)) { Component->InvalidateQueryContext(); continue; }
+		const TStrongObjectPtr<UProject_JTargetScoringComponent> PinnedComponent(Component);
+		const TStrongObjectPtr<AProject_JNPCCharacter> PinnedNPC(NPC);
+		const uint64 RegistrationRevision = Component->BatchRegistrationRevision;
+		const uint64 QueryRevision = Component->ContextRevision;
+		const auto IsCurrent = [&]
+		{
+			return IsActiveServer() && Agent->bRegistered && IsValid(Component) && !Component->IsBeingDestroyed() && Component->IsRegistered()
+				&& IsValid(NPC) && !NPC->IsActorBeingDestroyed() && Component->GetOwner() == NPC && Component->bNPCBatchRegistered
+				&& Component->NPCDecisionSubsystem.Get() == this && Component->BatchRegistrationRevision == RegistrationRevision
+				&& Component->ContextRevision == QueryRevision;
+		};
+		if (!IsLivingActor(NPC)) { if (IsCurrent()) { Component->InvalidateQueryContext(); } continue; }
+		if (!IsCurrent()) { continue; }
 		if (!bCapturedTargets)
 		{
 			if (!CaptureTargets()) { break; }
 			bCapturedTargets = true;
 		}
+		if (!IsCurrent()) { continue; }
 		if (!IsActiveServer() || CapturedRegistryRevision != TargetRegistryRevision) { break; }
 		TArray<int32> CandidateIndices;
 		ProjectJ::TargetScoring::FSpatialQueryStats QueryStats;
@@ -506,8 +557,24 @@ void UProject_JNPCDecisionSubsystem::Tick(float DeltaTime)
 		Snapshots.Add(MoveTemp(Snapshot));
 		BatchAgents.Add(Agent);
 		Revisions.Add(Component->ContextRevision);
+		RegistrationRevisions.Add(Component->BatchRegistrationRevision);
 	}
-	if (!Snapshots.IsEmpty())
+	// A later agent/target life callback may retire an earlier prepared query.
+	// Never install that old batch token on a newer registration/context.
+	for (int32 Index = BatchAgents.Num() - 1; Index >= 0; --Index)
+	{
+		const auto& Agent = BatchAgents[Index];
+		const auto* Component = Agent->Component.Get();
+		const auto* Owner = Component ? Component->GetOwner() : nullptr;
+		if (!Agent->bRegistered || !IsValid(Component) || Component->IsBeingDestroyed() || !Component->IsRegistered()
+			|| !Component->bNPCBatchRegistered || Component->NPCDecisionSubsystem.Get() != this
+			|| Component->ContextRevision != Revisions[Index] || Component->BatchRegistrationRevision != RegistrationRevisions[Index]
+			|| !IsValid(Owner) || Owner->IsActorBeingDestroyed() || !Owner->HasAuthority())
+		{
+			Snapshots.RemoveAt(Index); BatchAgents.RemoveAt(Index); Revisions.RemoveAt(Index); RegistrationRevisions.RemoveAt(Index);
+		}
+	}
+	if (!Snapshots.IsEmpty() && IsActiveServer() && Scoring.IsValid() && CapturedRegistryRevision == TargetRegistryRevision)
 	{
 		const TWeakObjectPtr<ThisClass> WeakThis(this);
 		const double Submitted = FPlatformTime::Seconds();

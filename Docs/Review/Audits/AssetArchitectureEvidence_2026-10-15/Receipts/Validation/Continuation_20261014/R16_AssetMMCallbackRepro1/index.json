@@ -1,0 +1,105 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "26782D6B48294D375E03C798A1456395",
+			"instanceName": "DESKTOP-5T07C91-7240",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-02.37.17",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.11732290685176849,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "GeneratedDatabaseLifecycle",
+			"fullTestPath": "ProjectJ.MMCrowd.GeneratedDatabaseLifecycle",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"26782D6B48294D375E03C798A1456395"
+			],
+			"duration": 0.11732290685176849,
+			"dateTime": "2026.10.15-02.37.17",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(418): 1 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-02.37.17"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Compiled node callbacks preserve the native candidate set' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JMotionMatchingCrowdTests.cpp",
+					"lineNumber": 345,
+					"timestamp": "2026.10.15-02.37.17"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Compiled node callbacks preserve the native candidate set' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JMotionMatchingCrowdTests.cpp",
+					"lineNumber": 345,
+					"timestamp": "2026.10.15-02.37.17"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Compiled node callbacks preserve the native candidate set' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JMotionMatchingCrowdTests.cpp",
+					"lineNumber": 345,
+					"timestamp": "2026.10.15-02.37.17"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Compiled node callbacks preserve the native candidate set' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JMotionMatchingCrowdTests.cpp",
+					"lineNumber": 345,
+					"timestamp": "2026.10.15-02.37.17"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		}
+	]
+}

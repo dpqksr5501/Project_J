@@ -44,6 +44,8 @@ class PROJECT_J_API UProject_JInventoryViewModel : public UObject
   public:
 	void Bind(UProject_JInventoryComponent *InInventory, UProject_JEquipmentManagerComponent *InEquipment);
 	void Unbind();
+	/** Local HUD guidance cannot replace the status of an in-flight server request. */
+	void SetLocalStatus(FText Message);
 	bool IsCurrentEntry(const UProject_JInventoryEntry *Entry) const;
 	bool Activate(const UProject_JInventoryEntry *Entry);
 	UFUNCTION(BlueprintCallable) bool Equip(FGuid InstanceId, EProject_JEquipmentSlot TargetSlot);

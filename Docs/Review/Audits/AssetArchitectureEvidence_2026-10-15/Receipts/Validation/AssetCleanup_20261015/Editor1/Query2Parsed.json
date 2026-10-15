@@ -1,0 +1,1331 @@
+{
+  "asset_save": false,
+  "asset_mutation": false,
+  "blueprints": [
+    {
+      "path": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+      "referencers": [
+        "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/Project_JCharacter",
+        "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+        "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:EventGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "referencers": [
+        "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/Project_JCharacter",
+        "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+        "/Game/Animation_Logic/BSs/GreatSword/BS_Greatsword",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Sword_Idle_Seq"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:EventGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:CombatUpperBody"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+      "referencers": [
+        "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+        "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.AnimLayerInterface"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat.ALI_HumanoidCombat:CombatUpperBody"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+      "referencers": [
+        "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+        "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+        "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.AnimLayerInterface"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount.ALI_HumanoidMount:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+      "referencers": [
+        "/Game/Animation_Logic/ABPs/ABP_Player"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.AnimLayerInterface"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion.ALI_PlayerLocomotion:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+      "referencers": [
+        "/Game/Character_BPs/GreatSword/BP_GreatSword",
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/IKRig",
+        "/Script/Project_JAnimationNodes",
+        "/Script/Project_JCharacter",
+        "/Script/IKRigDeveloper",
+        "/Game/Animation_Logic/RTG_Greatsword_UE5",
+        "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+        "/Game/Characters/GreatSword/GreatSword_Woman_Skeleton",
+        "/Game/Characters/GreatSword/Clothes/cloak_Physics",
+        "/Game/Characters/GreatSword/Clothes/sho_Physics",
+        "/Game/DataAssetSets/Presentation/Retarget/DA_RetargetBody_Greatsword"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JRetargetAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "referencers": [
+        "/Game/Character_BPs/GreatSword/BP_GreatSword"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/BlendStackEditor",
+        "/Script/PoseSearchEditor",
+        "/Script/BlendStack",
+        "/Script/PoseSearch",
+        "/Script/ControlRigDeveloper",
+        "/Script/Project_JAnimationNodes",
+        "/Script/Project_JCharacter",
+        "/Script/AnimationWarpingEditor",
+        "/Script/AnimationWarpingRuntime",
+        "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+        "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+        "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand",
+        "/Game/Characters/UEFN_Mannequin/Animations/Poses/BS1D_Additive_Lean_Run"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph.AnimGraphNode_ProjectJLocomotion_0.AnimationBlendStackGraph_0"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:EventGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:CombatUpperBody"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "referencers": [
+        "/Game/Character_BPs/BP_Player"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/BlendStackEditor",
+        "/Script/PoseSearchEditor",
+        "/Script/BlendStack",
+        "/Script/PoseSearch",
+        "/Script/ControlRigDeveloper",
+        "/Script/Project_JCharacter",
+        "/Script/AnimationWarpingEditor",
+        "/Script/AnimationWarpingRuntime",
+        "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+        "/Game/Anim_Assets/Riding/ANIM_Rider_Idle",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+        "/Game/Characters/UEFN_Mannequin/Animations/AimOffset/BS_Neutral_AO_Stand"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:AnimGraph.AnimGraphNode_MotionMatching_0.AnimationBlendStackGraph_0"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:OnUpdate"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:EventGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+      "referencers": [
+        "/Game/Character_BPs/BP_Player",
+        "/Game/Character_BPs/GreatSword/BP_GreatSword"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/Project_JCharacter",
+        "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JCharacterAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:EventGraph"
+        },
+        {
+          "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:MountedLocomotion"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "referencers": [
+        "/Game/NPCs/BP_NPC_Test",
+        "/Game/ThirdPerson/Blueprints/BP_Player_Third"
+      ],
+      "dependencies": [
+        "/Script/CoreUObject",
+        "/Script/Engine",
+        "/Script/BlueprintGraph",
+        "/Script/UnrealEd",
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/ControlRigDeveloper",
+        "/Script/ControlRig",
+        "/Script/RigVM",
+        "/Game/Characters/Mannequins/Meshes/SK_Mannequin",
+        "/Game/Characters/Mannequins/Rigs/CR_Mannequin_FootIK",
+        "/Game/Characters/Mannequins/Anims/Unarmed/BS_Idle_Walk_Run",
+        "/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle",
+        "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Fall_Loop",
+        "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Jump",
+        "/Game/Characters/Mannequins/Anims/Unarmed/Jump/MM_Land"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.AnimInstance"
+      },
+      "variables": [
+        "Character",
+        "MovementComponent",
+        "Velocity",
+        "GroundSpeed",
+        "Direction",
+        "ShouldMove",
+        "IsFalling"
+      ],
+      "graphs": [
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateNode_1.Idle"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateNode_2.Walk / Run"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateTransitionNode_0.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateTransitionNode_2.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_0.Locomotion"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_1.Jump"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_0.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_2.Fall Loop"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_1.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_3.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_3.Land"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_5.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_6.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_7.Transition"
+        },
+        {
+          "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess",
+      "referencers": [
+        "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Game/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin",
+        "/Game/Characters/UEFN_Mannequin/Meshes/SK_UEFN_Mannequin"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.AnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess.ABP_UEFN_Mannequin_PostProcess:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess.ABP_UEFN_Mannequin_PostProcess:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Character_BPs/BP_Player",
+      "referencers": [
+        "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+      ],
+      "dependencies": [
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter",
+        "/Script/Project_JGAS",
+        "/Script/Project_JMount",
+        "/Game/Animation_Logic/ABPs/ABP_Player",
+        "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+        "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+        "/Game/Input/Actions/IA_Interact",
+        "/Game/Input/Actions/IA_Jump",
+        "/Game/Input/Actions/IA_Look",
+        "/Game/Input/Actions/IA_MouseLook",
+        "/Game/Input/Actions/IA_Move",
+        "/Game/Input/Actions/IA_Sprint",
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+        "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile",
+        "/Game/DataAssetSets/Animation_Profiles/MMProfiles/DA_Player_Locomotion"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JPlayerCharacter"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Character_BPs/BP_Player.BP_Player:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/Character_BPs/BP_Player.BP_Player:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/BP_Player.BP_Player:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/BP_Player.BP_Player:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword",
+      "referencers": [
+        "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode"
+      ],
+      "dependencies": [
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter",
+        "/Script/Project_JCore",
+        "/Script/Project_JMount",
+        "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+        "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+        "/Game/Characters/GreatSword/GreatSword_Woman",
+        "/Game/Characters/GreatSword/GreatSword_Woman_Physics",
+        "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+        "/Game/Input/Actions/IA_Attack_LMB",
+        "/Game/Input/Actions/IA_Attack_RMB",
+        "/Game/Input/Actions/IA_Interact",
+        "/Game/Input/Actions/IA_Jump",
+        "/Game/Input/Actions/IA_Look",
+        "/Game/Input/Actions/IA_MouseLook",
+        "/Game/Input/Actions/IA_Move",
+        "/Game/Input/Actions/IA_MoveIntent_Backward",
+        "/Game/Input/Actions/IA_MoveIntent_Forward",
+        "/Game/Input/Actions/IA_MoveIntent_Left",
+        "/Game/Input/Actions/IA_MoveIntent_Right",
+        "/Game/Input/Actions/IA_Sprint",
+        "/Game/Input/Actions/IA_ToggleCombat",
+        "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+        "/Game/Characters/GreatSword/Clothes/cloak",
+        "/Game/Characters/GreatSword/Clothes/foot",
+        "/Game/Characters/GreatSword/Clothes/hand",
+        "/Game/Characters/GreatSword/Clothes/hel",
+        "/Game/Characters/GreatSword/Clothes/inner",
+        "/Game/Characters/GreatSword/Clothes/lower",
+        "/Game/Characters/GreatSword/Clothes/sho",
+        "/Game/Characters/GreatSword/Clothes/upper",
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+        "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+        "/Game/DataAssetSets/Skill_Input_Mapping_Data/Greasword/DA_Greatsword_Mapping_Data"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JGreatswordCharacter"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ()\n  (bind _greatsword (Variables|Default|GetGreatsword))\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetCloak) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetFoot) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetHand) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetInner) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetSho) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetUpper) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetHel) _greatsword)\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetLower) _greatsword))\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:IsDead"
+          },
+          "dsl": "(fn IsDead ()\n  (return false))\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCombatSocketLocation"
+          },
+          "dsl": "(fn GetCombatSocketLocation (SocketName)\n  (return \"0, 0, 0\"))\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:GetCharacterLevel"
+          },
+          "dsl": "(fn GetCharacterLevel ()\n  (return 0))\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:EventGraph"
+          },
+          "dsl": "(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventBeginPlay)\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon",
+      "referencers": [
+        "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JWeaponPresentationActor"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon.BP_Greatsword_Weapon:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon.BP_Greatsword_Weapon:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon.BP_Greatsword_Weapon:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_Greatsword_Weapon.BP_Greatsword_Weapon:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1",
+      "referencers": [],
+      "dependencies": [
+        "/Game/Anim_Assets/Great_Sword/Weapon/SM_Sword"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.Actor"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1.BP_Greatsword_Weapon1:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1.BP_Greatsword_Weapon1:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1.BP_Greatsword_Weapon1:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/Character_BPs/GreatSword/BP_GreatSword_Weapon1.BP_Greatsword_Weapon1:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/GAs/GA_CombatToggle",
+      "referencers": [
+        "/Game/AS/AS_Humanoid_Core"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Script/GameplayAbilities",
+        "/Game/GEs/BP_GE_CombatMode"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JGameplayAbility_CombatToggle"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/GAs/GA_CombatToggle.GA_CombatToggle:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/GAs/GA_NPC_TestAttack",
+      "referencers": [],
+      "dependencies": [
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter",
+        "/Script/GameplayAbilities",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JGameplayAbility_NPCAttack"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/GAs/GA_NPC_TestAttack.GA_NPC_TestAttack:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/GAs/GreatSword/GA_Greatsword",
+      "referencers": [
+        "/Game/AS/AS_Greatsword_Base"
+      ],
+      "dependencies": [
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter",
+        "/Script/GameplayAbilities",
+        "/Script/GameplayAbilitiesEditor"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JGameplayAbility_Melee"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/GAs/GreatSword/GA_Greatsword.GA_Greatsword:Gameplay Ability Graph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/GEs/BP_GE_CombatMode",
+      "referencers": [
+        "/Game/GAs/GA_CombatToggle"
+      ],
+      "dependencies": [
+        "/Script/GameplayTags",
+        "/Script/Project_JCharacter",
+        "/Script/GameplayAbilities"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JGameplayEffect_CombatMode"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/GEs/GE_TestDamege",
+      "referencers": [
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2",
+        "/Game/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T"
+      ],
+      "dependencies": [
+        "/Script/Project_JGAS",
+        "/Script/GameplayAbilities"
+      ],
+      "parent": {
+        "refPath": "/Script/GameplayAbilities.GameplayEffect"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/GEs/GE_TestDamege.GE_TestDamege:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Input/Touch/BPI_TouchInterface",
+      "referencers": [
+        "/Game/Input/Touch/UI_TouchSimple"
+      ],
+      "dependencies": [
+        "/Script/CoreUObject",
+        "/Script/Engine",
+        "/Script/BlueprintGraph"
+      ],
+      "parent": {
+        "refPath": "/Script/CoreUObject.Interface"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Primary Thumbstick"
+        },
+        {
+          "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Secondary Thumbstick"
+        },
+        {
+          "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Touch Jump Start"
+        },
+        {
+          "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Touch Jump End"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Input/Touch/UI_Thumbstick",
+      "referencers": [
+        "/Game/Input/Touch/UI_TouchSimple"
+      ],
+      "dependencies": [
+        "/Script/CoreUObject",
+        "/Script/Engine",
+        "/Script/BlueprintGraph",
+        "/Script/UnrealEd",
+        "/Script/InputCore",
+        "/Script/SlateCore",
+        "/Script/UMG",
+        "/Script/UMGEditor",
+        "/Engine/MobileResources/HUD/VirtualJoystick_Background",
+        "/Engine/MobileResources/HUD/VirtualJoystick_Thumb"
+      ],
+      "parent": {
+        "refPath": "/Script/UMG.UserWidget"
+      },
+      "variables": [
+        "TrackInput",
+        "Initial Touch Location",
+        "Position",
+        "Stick Input",
+        "Thumbstick Size",
+        "Invert X",
+        "Invert Y",
+        "Scale Output",
+        "Touch Target"
+      ],
+      "graphs": [
+        {
+          "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:Touch Input Check"
+        },
+        {
+          "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:EventGraph"
+        },
+        {
+          "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:Stick Input"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Input/Touch/UI_TouchSimple",
+      "referencers": [
+        "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+      ],
+      "dependencies": [
+        "/Script/CoreUObject",
+        "/Script/Engine",
+        "/Script/BlueprintGraph",
+        "/Script/UnrealEd",
+        "/Script/UMG",
+        "/Script/UMGEditor",
+        "/Engine/MobileResources/HUD/VirtualJoystick_Thumb",
+        "/Game/Input/Touch/BPI_TouchInterface",
+        "/Game/Input/Touch/UI_Thumbstick"
+      ],
+      "parent": {
+        "refPath": "/Script/UMG.UserWidget"
+      },
+      "variables": [
+        "In String"
+      ],
+      "graphs": [
+        {
+          "refPath": "/Game/Input/Touch/UI_TouchSimple.UI_TouchSimple:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame",
+      "referencers": [],
+      "dependencies": [
+        "/Script/NavigationSystem",
+        "/Engine/EditorBlueprintResources/StandardMacros",
+        "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_Door",
+        "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Corner",
+        "/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge"
+      ],
+      "parent": {
+        "refPath": "/Script/Engine.Actor"
+      },
+      "variables": [
+        "Door Size",
+        "Door Frame",
+        "Door Frame Scale",
+        "Door",
+        "Closed Position",
+        "Door Detection Adjust",
+        "Door Thickness",
+        "Split Door",
+        "Door Frame Overide Material",
+        "Add Door",
+        "Door2",
+        "Closed Position_0"
+      ],
+      "graphs": [
+        {
+          "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:Set Mesh"
+        },
+        {
+          "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "referencers": [
+        "/Game/Mount_Assets/Wyvern/BP_Wyvern"
+      ],
+      "dependencies": [
+        "/Script/AnimGraph",
+        "/Script/AnimGraphRuntime",
+        "/Script/Project_JMount",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Fly",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationary",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Glide",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Idle",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_Walk",
+        "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern_Skeleton"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JMount.Project_JFlyingMountAnimInstance"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_0.Idle"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_1.Walk"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_2.TakeOff"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_3.FlyStationary"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_4.Fly"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_5.Glide"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_0.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_1.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_2.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_3.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_4.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_5.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_6.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_7.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_8.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_6.Landing"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_12.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_13.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_14.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_15.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_16.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_17.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_18.Transition"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/Mount_Assets/Wyvern/BP_Wyvern",
+      "referencers": [
+        "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/E/Y3/IELHCLCUVAW69GXNEM1HB3"
+      ],
+      "dependencies": [
+        "/Script/Project_JCore",
+        "/Script/Project_JGAS",
+        "/Script/Project_JMount",
+        "/Game/DataAssetSets/Mount_Profile/DA_RiderProfile_Dragon",
+        "/Game/Input/Actions/IA_Interact",
+        "/Game/Input/Actions/IA_MountAscend",
+        "/Game/Input/Actions/IA_MountDescend",
+        "/Game/Input/Actions/IA_MouseLook",
+        "/Game/Input/Actions/IA_Move",
+        "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_FlyStationaryToLanding",
+        "/Game/Mount_Assets/Wyvern/Animation_Wyvern/Wyvern_TakeOff",
+        "/Game/Mount_Assets/Wyvern/FBX_Files/SK_Wyvern"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JMount.Project_JFlyingMountCharacter"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/BP_Wyvern.BP_Wyvern:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/Mount_Assets/Wyvern/BP_Wyvern.BP_Wyvern:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/NPCs/BP_NPC_Test",
+      "referencers": [
+        "/Game/__ExternalActors__/ThirdPerson/Lvl_ThirdPerson/4/60/IIBJ6YNVYRN6N7J985930B"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Script/Project_JGAS",
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JNPCCharacter"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/NPCs/BP_NPC_Test.BP_NPC_Test:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/NPCs/BP_NPC_Test.BP_NPC_Test:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/NPCs/BP_NPC_Test.BP_NPC_Test:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/NPCs/BP_NPC_Test.BP_NPC_Test:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/ThirdPerson/Blueprints/BP_Player_Third",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Script/Project_JGAS",
+        "/Script/MotionTrajectory",
+        "/Game/Input/Actions/IA_Jump",
+        "/Game/Input/Actions/IA_Look",
+        "/Game/Input/Actions/IA_MouseLook",
+        "/Game/Input/Actions/IA_Move",
+        "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+        "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_JCharacter.Project_JPlayerCharacter"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_Player_Third.BP_Player_Third:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_Player_Third.BP_Player_Third:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_Player_Third.BP_Player_Third:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_Player_Third.BP_Player_Third:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+      "referencers": [
+        "/Game/ThirdPerson/Lvl_ThirdPerson"
+      ],
+      "dependencies": [
+        "/Script/Project_J",
+        "/Game/Character_BPs/GreatSword/BP_GreatSword",
+        "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_J.Project_JGameMode"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_J",
+        "/Game/Character_BPs/BP_Player",
+        "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_J.Project_JGameMode"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode.BP_ThirdPersonGameMode:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode.BP_ThirdPersonGameMode:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode.BP_ThirdPersonGameMode:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode.BP_ThirdPersonGameMode:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController",
+      "referencers": [
+        "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode",
+        "/Game/ThirdPerson/Blueprints/BP_ThirdPersonGameMode"
+      ],
+      "dependencies": [
+        "/Script/CoreUObject",
+        "/Script/Engine",
+        "/Script/BlueprintGraph",
+        "/Script/UMG",
+        "/Script/EnhancedInput",
+        "/Script/Project_J",
+        "/Game/Input/IMC_Default",
+        "/Game/Input/IMC_MouseLook",
+        "/Game/Input/Touch/UI_TouchSimple"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_J.Project_JPlayerController"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController:UserConstructionScript"
+        },
+        {
+          "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController:EventGraph"
+        }
+      ],
+      "graph_dsl": [
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController:UserConstructionScript"
+          },
+          "dsl": "(fn ConstructionScript ())\n"
+        },
+        {
+          "graph": {
+            "refPath": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController:EventGraph"
+          },
+          "dsl": "(event EventBeginPlay)\n\n(event EventTick (DeltaSeconds))\n"
+        }
+      ]
+    },
+    {
+      "path": "/Game/UI/WBP_ProjectJItemRow",
+      "referencers": [],
+      "dependencies": [
+        "/Script/SlateCore",
+        "/Script/UMG",
+        "/Script/UMGEditor",
+        "/Script/Project_J"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_J.Project_JItemWidget"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/UI/WBP_ProjectJItemRow.WBP_ProjectJItemRow:EventGraph"
+        }
+      ]
+    },
+    {
+      "path": "/Game/UI/WBP_ProjectJItemTile",
+      "referencers": [],
+      "dependencies": [
+        "/Script/SlateCore",
+        "/Script/UMG",
+        "/Script/UMGEditor",
+        "/Script/Project_J"
+      ],
+      "parent": {
+        "refPath": "/Script/Project_J.Project_JItemWidget"
+      },
+      "variables": [],
+      "graphs": [
+        {
+          "refPath": "/Game/UI/WBP_ProjectJItemTile.WBP_ProjectJItemTile:EventGraph"
+        }
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_JCharacter"
+      ],
+      "properties": "{\"weaponType\":{\"type\":\"string\",\"title\":\"EProject_JWeaponType\",\"enum\":[\"None\",\"Unarmed\",\"OneHandSword\",\"TwoHandSword\",\"DualBlades\",\"Staff\",\"Bow\"]},\"weaponStance\":{\"type\":\"string\",\"title\":\"EProject_JWeaponAnimStance\",\"enum\":[\"None\",\"OneHanded\",\"TwoHanded\",\"DualWield\",\"Staff\",\"Bow\",\"Unarmed\"]},\"combatPresentationMode\":{\"type\":\"string\",\"title\":\"EProject_JCombatAnimationPresentationMode\",\"enum\":[\"UpperBodyOverlay\",\"FullBodyLocomotion\"],\"description\":\"Selects whether this weapon preserves the shared lower-body Motion Matching\\nand contributes an armed upper-body pose, or supplies a validated full-body\\ncombat locomotion set. Defaulting to overlay keeps incomplete weapon assets\\nfrom replacing stable shared locomotion.\"},\"combatIntroMontage\":{\"type\":\"object\",\"title\":\"/Script/Engine.AnimMontage\",\"description\":\"The full-body draw / combat-entry montage for this weapon.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatOutroMontage\":{\"type\":\"object\",\"title\":\"/Script/Engine.AnimMontage\",\"description\":\"Optional weapon-specific sheathe / combat-exit montage. It is authored\\nbeside the draw montage because it belongs to the equipped weapon style,\\nnot to the job's shared locomotion graph.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatAnimationLayerClass\":{\"type\":\"object\",\"title\":\"/Script/CoreUObject.Class\",\"description\":\"Weapon/job-specific Linked Anim Layer class. It overrides the production\\nhumanoid master only while this weapon is in combat mode.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatIntroMontagePlayRate\":{\"type\":\"number\",\"minimum\":0.10000000000000001},\"combatOutroMontagePlayRate\":{\"type\":\"number\",\"minimum\":0.10000000000000001}}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "referencers": [
+        "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+        "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip"
+      ],
+      "properties": "{\"weaponType\":{\"type\":\"string\",\"title\":\"EProject_JWeaponType\",\"enum\":[\"None\",\"Unarmed\",\"OneHandSword\",\"TwoHandSword\",\"DualBlades\",\"Staff\",\"Bow\"]},\"weaponStance\":{\"type\":\"string\",\"title\":\"EProject_JWeaponAnimStance\",\"enum\":[\"None\",\"OneHanded\",\"TwoHanded\",\"DualWield\",\"Staff\",\"Bow\",\"Unarmed\"]},\"combatPresentationMode\":{\"type\":\"string\",\"title\":\"EProject_JCombatAnimationPresentationMode\",\"enum\":[\"UpperBodyOverlay\",\"FullBodyLocomotion\"],\"description\":\"Selects whether this weapon preserves the shared lower-body Motion Matching\\nand contributes an armed upper-body pose, or supplies a validated full-body\\ncombat locomotion set. Defaulting to overlay keeps incomplete weapon assets\\nfrom replacing stable shared locomotion.\"},\"combatIntroMontage\":{\"type\":\"object\",\"title\":\"/Script/Engine.AnimMontage\",\"description\":\"The full-body draw / combat-entry montage for this weapon.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatOutroMontage\":{\"type\":\"object\",\"title\":\"/Script/Engine.AnimMontage\",\"description\":\"Optional weapon-specific sheathe / combat-exit montage. It is authored\\nbeside the draw montage because it belongs to the equipped weapon style,\\nnot to the job's shared locomotion graph.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatAnimationLayerClass\":{\"type\":\"object\",\"title\":\"/Script/CoreUObject.Class\",\"description\":\"Weapon/job-specific Linked Anim Layer class. It overrides the production\\nhumanoid master only while this weapon is in combat mode.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatIntroMontagePlayRate\":{\"type\":\"number\",\"minimum\":0.10000000000000001},\"combatOutroMontagePlayRate\":{\"type\":\"number\",\"minimum\":0.10000000000000001}}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+      "referencers": [
+        "/Game/Character_BPs/BP_Player"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+        "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile"
+      ],
+      "properties": "{\"locomotionProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JLocomotionProfile\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatAnimProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JCombatAnimProfile\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"foleyAudioProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JFoleyAudioProfile\",\"description\":\"Optional client-only Foley data; unassigned profiles intentionally remain silent.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"handGripCalibration\":{\"title\":\"Project_JHandGripCalibration\",\"description\":\"Per-body proportions and palm orientation; weapon assets only define grip sockets.\",\"type\":\"object\",\"properties\":{\"primaryPalmSocketName\":{\"type\":\"string\"},\"secondaryPalmSocketName\":{\"type\":\"string\"},\"missingPalmPolicy\":{\"type\":\"string\",\"title\":\"EProject_JMissingPalmPolicy\",\"enum\":[\"LegacyWristOrigin\",\"DisableContactIK\"],\"description\":\"Preserve old assets by default. New body profiles should disable IK for a missing palm anchor.\"},\"primaryHandOffset\":{\"type\":\"object\",\"title\":\"ToolsetTransform\",\"description\":\"Local to the weapon contact socket, before the palm-to-wrist conversion.\",\"properties\":{\"location\":{\"description\":\"The world-space location.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"rotation\":{\"description\":\"The world-space rotation.\",\"title\":\"Rotator\",\"type\":\"object\",\"properties\":{\"pitch\":{\"type\":\"number\",\"description\":\"Pitch (degrees) around Y axis\"},\"yaw\":{\"type\":\"number\",\"description\":\"Yaw (degrees) around Z axis\"},\"roll\":{\"type\":\"number\",\"description\":\"Roll (degrees) around X axis\"}},\"required\":[\"pitch\",\"yaw\",\"roll\"]},\"scale\":{\"description\":\"The scale.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]}}},\"secondaryHandOffset\":{\"type\":\"object\",\"title\":\"ToolsetTransform\",\"description\":\"Represents a 3D transformation with optional location, rotation, and scale.\\nUnset fields mean \\\"identity\\\" when creating objects and \\\"don't change\\\" when modifying existing ones.\",\"properties\":{\"location\":{\"description\":\"The world-space location.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"rotation\":{\"description\":\"The world-space rotation.\",\"title\":\"Rotator\",\"type\":\"object\",\"properties\":{\"pitch\":{\"type\":\"number\",\"description\":\"Pitch (degrees) around Y axis\"},\"yaw\":{\"type\":\"number\",\"description\":\"Yaw (degrees) around Z axis\"},\"roll\":{\"type\":\"number\",\"description\":\"Roll (degrees) around X axis\"}},\"required\":[\"pitch\",\"yaw\",\"roll\"]},\"scale\":{\"description\":\"The scale.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]}}},\"primaryElbowTarget\":{\"title\":\"Vector\",\"description\":\"Component-space pole targets consumed by an authored Two Bone IK graph.\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"secondaryElbowTarget\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"primaryArm\":{\"title\":\"Project_JGripArmBones\",\"type\":\"object\",\"properties\":{\"shoulder\":{\"type\":\"string\"},\"elbow\":{\"type\":\"string\"},\"hand\":{\"type\":\"string\"}},\"required\":[\"shoulder\",\"elbow\",\"hand\"]},\"secondaryArm\":{\"title\":\"Project_JGripArmBones\",\"type\":\"object\",\"properties\":{\"shoulder\":{\"type\":\"string\"},\"elbow\":{\"type\":\"string\"},\"hand\":{\"type\":\"string\"}},\"required\":[\"shoulder\",\"elbow\",\"hand\"]},\"primaryBendStability\":{\"title\":\"Project_JArmBendStability\",\"type\":\"object\",\"properties\":{\"bEnabled\":{\"type\":\"boolean\"},\"fallbackPoleAxis\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"holdBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reliableBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reacquireDegreesPerSecond\":{\"type\":\"number\",\"minimum\":1},\"maxHistorySeconds\":{\"type\":\"number\",\"minimum\":0.01}},\"required\":[\"bEnabled\",\"fallbackPoleAxis\",\"holdBendRatio\",\"reliableBendRatio\",\"reacquireDegreesPerSecond\",\"maxHistorySeconds\"]},\"secondaryBendStability\":{\"title\":\"Project_JArmBendStability\",\"type\":\"object\",\"properties\":{\"bEnabled\":{\"type\":\"boolean\"},\"fallbackPoleAxis\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"holdBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reliableBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reacquireDegreesPerSecond\":{\"type\":\"number\",\"minimum\":1},\"maxHistorySeconds\":{\"type\":\"number\",\"minimum\":0.01}},\"required\":[\"bEnabled\",\"fallbackPoleAxis\",\"holdBendRatio\",\"reliableBendRatio\",\"reacquireDegreesPerSecond\",\"maxHistorySeconds\"]}},\"required\":[\"primaryPalmSocketName\",\"secondaryPalmSocketName\",\"missingPalmPolicy\",\"primaryHandOffset\",\"secondaryHandOffset\",\"primaryElbowTarget\",\"secondaryElbowTarget\",\"primaryArm\",\"secondaryArm\",\"primaryBendStability\",\"secondaryBendStability\"]},\"handGripProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JHandGripProfile\",\"description\":\"Optional shared body profile. Existing inline calibration remains the fallback.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"retargetBodyProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JRetargetBodyProfile\",\"description\":\"Optional client visual-body defaults; gameplay locomotion/combat remain independent.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+      "referencers": [
+        "/Game/Character_BPs/GreatSword/BP_GreatSword"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/DataAssetSets/Audio/DA_Mannequin_Foley",
+        "/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat",
+        "/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile"
+      ],
+      "properties": "{\"locomotionProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JLocomotionProfile\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"combatAnimProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JCombatAnimProfile\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"foleyAudioProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JFoleyAudioProfile\",\"description\":\"Optional client-only Foley data; unassigned profiles intentionally remain silent.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"handGripCalibration\":{\"title\":\"Project_JHandGripCalibration\",\"description\":\"Per-body proportions and palm orientation; weapon assets only define grip sockets.\",\"type\":\"object\",\"properties\":{\"primaryPalmSocketName\":{\"type\":\"string\"},\"secondaryPalmSocketName\":{\"type\":\"string\"},\"missingPalmPolicy\":{\"type\":\"string\",\"title\":\"EProject_JMissingPalmPolicy\",\"enum\":[\"LegacyWristOrigin\",\"DisableContactIK\"],\"description\":\"Preserve old assets by default. New body profiles should disable IK for a missing palm anchor.\"},\"primaryHandOffset\":{\"type\":\"object\",\"title\":\"ToolsetTransform\",\"description\":\"Local to the weapon contact socket, before the palm-to-wrist conversion.\",\"properties\":{\"location\":{\"description\":\"The world-space location.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"rotation\":{\"description\":\"The world-space rotation.\",\"title\":\"Rotator\",\"type\":\"object\",\"properties\":{\"pitch\":{\"type\":\"number\",\"description\":\"Pitch (degrees) around Y axis\"},\"yaw\":{\"type\":\"number\",\"description\":\"Yaw (degrees) around Z axis\"},\"roll\":{\"type\":\"number\",\"description\":\"Roll (degrees) around X axis\"}},\"required\":[\"pitch\",\"yaw\",\"roll\"]},\"scale\":{\"description\":\"The scale.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]}}},\"secondaryHandOffset\":{\"type\":\"object\",\"title\":\"ToolsetTransform\",\"description\":\"Represents a 3D transformation with optional location, rotation, and scale.\\nUnset fields mean \\\"identity\\\" when creating objects and \\\"don't change\\\" when modifying existing ones.\",\"properties\":{\"location\":{\"description\":\"The world-space location.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"rotation\":{\"description\":\"The world-space rotation.\",\"title\":\"Rotator\",\"type\":\"object\",\"properties\":{\"pitch\":{\"type\":\"number\",\"description\":\"Pitch (degrees) around Y axis\"},\"yaw\":{\"type\":\"number\",\"description\":\"Yaw (degrees) around Z axis\"},\"roll\":{\"type\":\"number\",\"description\":\"Roll (degrees) around X axis\"}},\"required\":[\"pitch\",\"yaw\",\"roll\"]},\"scale\":{\"description\":\"The scale.\",\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]}}},\"primaryElbowTarget\":{\"title\":\"Vector\",\"description\":\"Component-space pole targets consumed by an authored Two Bone IK graph.\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"secondaryElbowTarget\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"primaryArm\":{\"title\":\"Project_JGripArmBones\",\"type\":\"object\",\"properties\":{\"shoulder\":{\"type\":\"string\"},\"elbow\":{\"type\":\"string\"},\"hand\":{\"type\":\"string\"}},\"required\":[\"shoulder\",\"elbow\",\"hand\"]},\"secondaryArm\":{\"title\":\"Project_JGripArmBones\",\"type\":\"object\",\"properties\":{\"shoulder\":{\"type\":\"string\"},\"elbow\":{\"type\":\"string\"},\"hand\":{\"type\":\"string\"}},\"required\":[\"shoulder\",\"elbow\",\"hand\"]},\"primaryBendStability\":{\"title\":\"Project_JArmBendStability\",\"type\":\"object\",\"properties\":{\"bEnabled\":{\"type\":\"boolean\"},\"fallbackPoleAxis\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"holdBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reliableBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reacquireDegreesPerSecond\":{\"type\":\"number\",\"minimum\":1},\"maxHistorySeconds\":{\"type\":\"number\",\"minimum\":0.01}},\"required\":[\"bEnabled\",\"fallbackPoleAxis\",\"holdBendRatio\",\"reliableBendRatio\",\"reacquireDegreesPerSecond\",\"maxHistorySeconds\"]},\"secondaryBendStability\":{\"title\":\"Project_JArmBendStability\",\"type\":\"object\",\"properties\":{\"bEnabled\":{\"type\":\"boolean\"},\"fallbackPoleAxis\":{\"title\":\"Vector\",\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"},\"z\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\",\"z\"]},\"holdBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reliableBendRatio\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"reacquireDegreesPerSecond\":{\"type\":\"number\",\"minimum\":1},\"maxHistorySeconds\":{\"type\":\"number\",\"minimum\":0.01}},\"required\":[\"bEnabled\",\"fallbackPoleAxis\",\"holdBendRatio\",\"reliableBendRatio\",\"reacquireDegreesPerSecond\",\"maxHistorySeconds\"]}},\"required\":[\"primaryPalmSocketName\",\"secondaryPalmSocketName\",\"missingPalmPolicy\",\"primaryHandOffset\",\"secondaryHandOffset\",\"primaryElbowTarget\",\"secondaryElbowTarget\",\"primaryArm\",\"secondaryArm\",\"primaryBendStability\",\"secondaryBendStability\"]},\"handGripProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JHandGripProfile\",\"description\":\"Optional shared body profile. Existing inline calibration remains the fallback.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"retargetBodyProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JRetargetBodyProfile\",\"description\":\"Optional client visual-body defaults; gameplay locomotion/combat remain independent.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "referencers": [
+        "/Game/Character_BPs/GreatSword/BP_GreatSword"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/AS/AS_Greatsword_Base",
+        "/Game/AS/AS_Humanoid_Core",
+        "/Game/DataAssetSets/Attributes/DA_Player_Attributes",
+        "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword"
+      ],
+      "properties": "{\"classId\":{\"type\":\"string\"},\"schemaVersion\":{\"type\":\"integer\",\"minimum\":1},\"startingLevel\":{\"type\":\"integer\",\"minimum\":1},\"defaultAttributeData\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JDefaultAttributeSetData\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"abilitySets\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JAbilitySet\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}},\"defaultCombatStyle\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JCombatStyleDefinition\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}}"
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_JCharacter"
+      ],
+      "properties": "{\"restoreHealth\":{\"type\":\"number\"},\"restoreMana\":{\"type\":\"number\"},\"cooldownSeconds\":{\"type\":\"number\",\"minimum\":0.10000000000000001},\"itemId\":{\"type\":\"string\",\"description\":\"Unique identifier for items of this type\"},\"itemName\":{\"type\":\"string\"},\"itemDescription\":{\"type\":\"string\"},\"icon\":{\"type\":\"object\",\"title\":\"/Script/Engine.Texture2D\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"maxStackCount\":{\"type\":\"integer\",\"minimum\":1}}"
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_JCharacter"
+      ],
+      "properties": "{\"restoreHealth\":{\"type\":\"number\"},\"restoreMana\":{\"type\":\"number\"},\"cooldownSeconds\":{\"type\":\"number\",\"minimum\":0.10000000000000001},\"itemId\":{\"type\":\"string\",\"description\":\"Unique identifier for items of this type\"},\"itemName\":{\"type\":\"string\"},\"itemDescription\":{\"type\":\"string\"},\"icon\":{\"type\":\"object\",\"title\":\"/Script/Engine.Texture2D\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"maxStackCount\":{\"type\":\"integer\",\"minimum\":1}}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+      "referencers": [
+        "/Game/Character_BPs/GreatSword/BP_GreatSword"
+      ],
+      "dependencies": [
+        "/Script/Project_JCharacter",
+        "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword",
+        "/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation"
+      ],
+      "properties": "{\"equipmentSlot\":{\"type\":\"string\",\"title\":\"EProject_JEquipmentSlot\",\"enum\":[\"None\",\"Weapon\",\"Head\",\"Chest\",\"Hands\",\"Legs\",\"Feet\",\"Accessory\",\"Back\",\"Mount\"],\"description\":\"Logical slot used to enforce one equipped item per gameplay slot.\"},\"equipmentMesh\":{\"type\":\"object\",\"title\":\"/Script/Engine.SkeletalMesh\",\"description\":\"The skeletal mesh representing the equipment.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"attachSocketName\":{\"type\":\"string\",\"description\":\"Socket name to attach to. If empty, it assumes standard body armor attaching (Leader Pose).\"},\"maxDrawDistance\":{\"type\":\"number\",\"minimum\":0},\"bCastDynamicShadow\":{\"type\":\"boolean\"},\"abilitySet\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JAbilitySet\",\"description\":\"AbilitySet containing skills and passives granted when this equipment is equipped.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"equipmentEffects\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"title\":\"Class@/Script/GameplayAbilities.GameplayEffect\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"description\":\"GameplayEffects applied while this item is equipped.\"},\"statApplicationPolicy\":{\"type\":\"string\",\"title\":\"EProject_JEquipmentStatApplicationPolicy\",\"enum\":[\"GameplayEffectsThenStatModifiers\",\"GameplayEffectsOnly\",\"StatModifiersOnly\"]},\"statModifiers\":{\"type\":\"array\",\"items\":{\"title\":\"Project_JEquipmentStatModifier\",\"type\":\"object\",\"properties\":{\"stat\":{\"type\":\"string\",\"title\":\"EProject_JEquipmentStat\",\"enum\":[\"MaxHealth\",\"MaxMana\",\"AttackPower\",\"Defense\"]},\"value\":{\"type\":\"number\"}},\"required\":[\"stat\",\"value\"]},\"description\":\"Fixed attribute bonuses applied while this item is equipped.\"},\"combatStyleDefinition\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JCombatStyleDefinition\",\"description\":\"Gameplay and animation style selected by this weapon.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"weaponPresentationProfile\":{\"type\":\"object\",\"title\":\"/Script/Project_JCharacter.Project_JWeaponPresentationProfile\",\"description\":\"Visual actor and drawn socket. Weapon skins can vary without duplicating combat data.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"itemId\":{\"type\":\"string\",\"description\":\"Unique identifier for items of this type\"},\"itemName\":{\"type\":\"string\"},\"itemDescription\":{\"type\":\"string\"},\"icon\":{\"type\":\"object\",\"title\":\"/Script/Engine.Texture2D\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"maxStackCount\":{\"type\":\"integer\",\"minimum\":1}}"
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIDefault",
+      "referencers": [
+        "/Game/UI/DA_ProjectJUIProfiles"
+      ],
+      "dependencies": [
+        "/Script/Project_J"
+      ],
+      "properties": "{\"profileId\":{\"type\":\"string\"},\"displayName\":{\"type\":\"string\"},\"priority\":{\"type\":\"integer\"},\"classId\":{\"type\":\"string\"},\"advancementId\":{\"type\":\"string\"},\"requiredTags\":{\"title\":\"GameplayTagContainer\",\"type\":\"object\",\"properties\":{\"gameplayTags\":{\"type\":\"array\",\"items\":{\"title\":\"GameplayTag\",\"type\":\"object\",\"properties\":{\"tagName\":{\"type\":\"string\",\"description\":\"This Tags Name\"}},\"required\":[\"tagName\"]},\"description\":\"Array of gameplay tags\"}},\"required\":[\"gameplayTags\"]},\"blockedTags\":{\"title\":\"GameplayTagContainer\",\"type\":\"object\",\"properties\":{\"gameplayTags\":{\"type\":\"array\",\"items\":{\"title\":\"GameplayTag\",\"type\":\"object\",\"properties\":{\"tagName\":{\"type\":\"string\",\"description\":\"This Tags Name\"}},\"required\":[\"tagName\"]},\"description\":\"Array of gameplay tags\"}},\"required\":[\"gameplayTags\"]},\"bOverrideSkills\":{\"type\":\"boolean\"},\"skills\":{\"type\":\"array\",\"items\":{\"title\":\"Project_JUISkillSlot\",\"type\":\"object\",\"properties\":{\"inputTag\":{\"title\":\"GameplayTag\",\"type\":\"object\",\"properties\":{\"tagName\":{\"type\":\"string\",\"description\":\"This Tags Name\"}},\"required\":[\"tagName\"]},\"label\":{\"type\":\"string\"},\"inputHint\":{\"type\":\"string\",\"description\":\"Presentation hint only. Enhanced Input remains the source of key bindings.\"},\"icon\":{\"type\":\"object\",\"title\":\"/Script/Engine.Texture2D\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}},\"required\":[\"inputTag\",\"label\",\"inputHint\",\"icon\"]}},\"bOverrideResources\":{\"type\":\"boolean\"},\"resources\":{\"type\":\"array\",\"items\":{\"title\":\"Project_JUIResourceDefinition\",\"type\":\"object\",\"properties\":{\"resourceId\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"current\":{\"title\":\"GameplayAttribute\",\"type\":\"object\",\"properties\":{\"attributeName\":{\"type\":\"string\",\"description\":\"Name of the attribute, usually the same as property name\"},\"attribute\":{},\"attributeOwner\":{\"type\":\"object\",\"title\":\"/Script/CoreUObject.Struct\",\"description\":\"FProperty*      Attribute;\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}},\"required\":[\"attributeName\",\"attribute\",\"attributeOwner\"]},\"maximum\":{\"title\":\"GameplayAttribute\",\"type\":\"object\",\"properties\":{\"attributeName\":{\"type\":\"string\",\"description\":\"Name of the attribute, usually the same as property name\"},\"attribute\":{},\"attributeOwner\":{\"type\":\"object\",\"title\":\"/Script/CoreUObject.Struct\",\"description\":\"FProperty*      Attribute;\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}},\"required\":[\"attributeName\",\"attribute\",\"attributeOwner\"]},\"color\":{\"type\":\"object\",\"title\":\"LinearColor\",\"properties\":{\"r\":{\"type\":\"number\",\"minimum\":0},\"g\":{\"type\":\"number\",\"minimum\":0},\"b\":{\"type\":\"number\",\"minimum\":0},\"a\":{\"type\":\"number\",\"minimum\":0}},\"required\":[\"r\",\"g\",\"b\",\"a\"]}},\"required\":[\"resourceId\",\"label\",\"current\",\"maximum\",\"color\"]}},\"characterModuleClass\":{\"type\":\"object\",\"title\":\"Class@/Script/Project_J.Project_JCharacterHUDModule\",\"description\":\"Represents a reference to a UObject or UClass.\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]}}"
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIProfiles",
+      "referencers": [],
+      "dependencies": [
+        "/Script/Project_J",
+        "/Game/UI/DA_ProjectJUIDefault"
+      ],
+      "properties": "{\"profiles\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"title\":\"/Script/Project_J.Project_JCharacterUIProfile\",\"properties\":{\"refPath\":{\"type\":\"string\",\"description\":\"The reference stored as a soft path string.\"}},\"required\":[\"refPath\"]},\"description\":\"Hard references keep assigned profiles and their widget classes in the cook dependency graph.\"}}"
+    }
+  ]
+}

@@ -4,6 +4,8 @@
 #include "Components/Project_JCharacterMovementComponent.h"
 #include "Components/Project_JFoleyComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
+#include "CharacterClass/Project_JProgressionComponent.h"
+#include "UObject/StrongObjectPtr.h"
 #include "Combat/Project_JGameplayAbility_Melee.h"
 #include "Interaction/Project_JInteractionQuery.h"
 #include "Combat/Project_JServerSideRewindComponent.h"
@@ -109,14 +111,6 @@ AProject_JPlayerCharacter::AProject_JPlayerCharacter(const FObjectInitializer& O
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	RuntimeStateOwnership = EProject_JRuntimeStateOwnership::PlayerStatePreferred;
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->SetIsReplicated(false);
-	}
-	if (EquipmentManager)
-	{
-		EquipmentManager->SetIsReplicated(false);
-	}
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -1651,6 +1645,9 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	{
 		return false;
 	}
+	const TStrongObjectPtr<AProject_JPlayerCharacter> PinnedThis(this);
+	const TStrongObjectPtr<AActor> StateOwner(GetAbilitySystemOwnerActor());
+	const TStrongObjectPtr<UProject_JProgressionComponent> Progression(GetProgressionComponent());
 
 	FProject_JPlayerHandoverSnapshot Snapshot;
 	// Version 1 uses fixed-width archive operators. Check the complete size before
@@ -1672,13 +1669,18 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	{
 		return false;
 	}
+	// A portable snapshot requests an exact level. Preserve the scalar setter's
+	// class-floor normalization, but never acknowledge a different level or pose-only apply.
+	if (!CanApplyCharacterLevelExactly(Snapshot.Level)) { return false; }
 
 	if (!SetActorLocationAndRotation(Snapshot.Location, Snapshot.Rotation, false, nullptr, ETeleportType::TeleportPhysics))
 	{
 		return false;
 	}
 
-	SetCharacterLevel(Snapshot.Level);
+	if (IsActorBeingDestroyed() || GetAbilitySystemOwnerActor() != StateOwner.Get()
+		|| GetProgressionComponent() != Progression.Get() || !TrySetCharacterLevel(Snapshot.Level)
+		|| GetCharacterLevel_Implementation() != Snapshot.Level) { return false; }
 
 	// Physics and teleport compensation
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
@@ -1689,11 +1691,25 @@ bool AProject_JPlayerCharacter::TryApplyHandoverSnapshot(const TArray<uint8>& In
 	if (MotionMatchingTrajectoryComponent) MotionMatchingTrajectoryComponent->ResetTrajectoryHistory();
 	if (UProject_JServerSideRewindComponent* Rewind = FindComponentByClass<UProject_JServerSideRewindComponent>()) Rewind->ResetHistory();
 	ForceNetUpdate();
-	return !IsActorBeingDestroyed();
+	return !IsActorBeingDestroyed() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
+		&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == Progression.Get()
+		&& (!Progression.Get() || !Progression->IsBeingDestroyed()) && GetCharacterLevel_Implementation() == Snapshot.Level;
 }
 
 void AProject_JPlayerCharacter::SetCharacterLevel(int32 NewLevel)
 {
 	Super::SetCharacterLevel(NewLevel);
+	// Base's compatibility adapter dispatches the checked override once.
+}
+
+bool AProject_JPlayerCharacter::TrySetCharacterLevel(int32 NewLevel)
+{
+	const TStrongObjectPtr<AProject_JPlayerCharacter> PinnedThis(this);
+	const TStrongObjectPtr<AActor> StateOwner(GetAbilitySystemOwnerActor());
+	const TStrongObjectPtr<UProject_JProgressionComponent> Progression(GetProgressionComponent());
+	if (!Super::TrySetCharacterLevel(NewLevel)) { return false; }
 	RefreshAbilitySystemDependentComponents();
+	return !IsActorBeingDestroyed() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
+		&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == Progression.Get()
+		&& (!Progression.Get() || !Progression->IsBeingDestroyed());
 }

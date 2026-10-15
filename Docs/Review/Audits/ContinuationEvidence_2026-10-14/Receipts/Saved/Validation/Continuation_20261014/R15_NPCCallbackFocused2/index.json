@@ -1,0 +1,834 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "C88F7CC64715AFABBDF7E79EAF9F4AF6",
+			"instanceName": "DESKTOP-5T07C91-22004",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-20.46.02",
+	"succeeded": 33,
+	"succeededWithWarnings": 3,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 7.5021839141845703,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "16384",
+			"fullTestPath": "ProjectJ.AsyncTargeting.Benchmark.16384",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.59955859184265137,
+			"dateTime": "2026.10.14-20.45.54",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=16384 mode=0 samples=12 compute_us_p50=271.097 compute_us_p95=542.797 delivery_ms_p50=8.231 delivery_ms_p95=8.747",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=16384 mode=1 samples=12 compute_us_p50=285.000 compute_us_p95=303.097 delivery_ms_p50=16.650 delivery_ms_p95=16.881",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=16384 mode=2 samples=12 compute_us_p50=156.898 compute_us_p95=223.801 delivery_ms_p50=16.674 delivery_ms_p95=16.861",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.55"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "256",
+			"fullTestPath": "ProjectJ.AsyncTargeting.Benchmark.256",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.59998178482055664,
+			"dateTime": "2026.10.14-20.45.55",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=256 mode=0 samples=12 compute_us_p50=5.599 compute_us_p95=11.601 delivery_ms_p50=8.317 delivery_ms_p95=8.570",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=256 mode=1 samples=12 compute_us_p50=5.201 compute_us_p95=6.098 delivery_ms_p50=16.640 delivery_ms_p95=16.898",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=256 mode=2 samples=12 compute_us_p50=10.200 compute_us_p95=13.899 delivery_ms_p50=16.658 delivery_ms_p95=16.897",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.55"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "4096",
+			"fullTestPath": "ProjectJ.AsyncTargeting.Benchmark.4096",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.59982699155807495,
+			"dateTime": "2026.10.14-20.45.55",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=4096 mode=0 samples=12 compute_us_p50=76.398 compute_us_p95=152.100 delivery_ms_p50=8.324 delivery_ms_p95=8.620",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=4096 mode=1 samples=12 compute_us_p50=69.004 compute_us_p95=76.100 delivery_ms_p50=16.669 delivery_ms_p95=16.928",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.56"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "TargetScoringBenchmark candidates=4096 mode=2 samples=12 compute_us_p50=54.102 compute_us_p95=70.002 delivery_ms_p50=16.646 delivery_ms_p95=16.876",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.56"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BatchDispatchComparison",
+			"fullTestPath": "ProjectJ.AsyncTargeting.BatchDispatchComparison",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 1.7165999412536621,
+			"dateTime": "2026.10.14-20.45.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NPCBatchComparison mode=Individual queries=32 candidates_per_query=256 samples=5 root_tasks_per_round=32 delivery_ms_p50=266.678 delivery_ms_p95=266.824 submit_gt_us_p50=36.597",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.57"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NPCBatchComparison mode=Batch queries=32 candidates_per_query=256 samples=5 root_tasks_per_round=1 delivery_ms_p50=16.675 delivery_ms_p95=16.903 submit_gt_us_p50=8.699",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.58"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BatchMath",
+			"fullTestPath": "ProjectJ.AsyncTargeting.BatchMath",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0098735019564628601,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentContext",
+			"fullTestPath": "ProjectJ.AsyncTargeting.ComponentContext",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0090016014873981476,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_6.Untitled:PersistentLevel.Actor_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.58"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ComponentDefaultParallel",
+			"fullTestPath": "ProjectJ.AsyncTargeting.ComponentDefaultParallel",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.042558100074529648,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Lifecycle",
+			"fullTestPath": "ProjectJ.AsyncTargeting.Lifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010709799826145172,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_8.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.45.58"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Math",
+			"fullTestPath": "ProjectJ.AsyncTargeting.Math",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0083128996193408966,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpatialEdgeCases",
+			"fullTestPath": "ProjectJ.AsyncTargeting.SpatialEdgeCases",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0082233026623725891,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpatialEquivalence",
+			"fullTestPath": "ProjectJ.AsyncTargeting.SpatialEquivalence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.008063100278377533,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCCallbackGC",
+			"fullTestPath": "ProjectJ.Continuation.NPCCallbackGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.1109611988067627,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCCommitSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCCommitSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010327801108360291,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCGrantRegistrationSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCGrantRegistrationSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0099516995251178741,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCLifeRetired",
+			"fullTestPath": "ProjectJ.Continuation.NPCLifeRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010149300098419189,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCPreparedBatchSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCPreparedBatchSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010091297328472137,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationCallbackGC",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationCallbackGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.046612899750471115,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationRetired",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0097763985395431519,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationStopped",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationStopped",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0098913013935089111,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCRegistrationSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCRegistrationSuperseded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0096426978707313538,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCResultBroadcastGC",
+			"fullTestPath": "ProjectJ.Continuation.NPCResultBroadcastGC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.026530902832746506,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Decision2048",
+			"fullTestPath": "ProjectJ.Crowd.Decision2048",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 3.2843499183654785,
+			"dateTime": "2026.10.14-20.45.58",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NativeNPCBatch serviced=2047 submitted_decisions=2053 root_batches=293 discarded=6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.01"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PathPressure",
+			"fullTestPath": "ProjectJ.GroupA.PathPressure",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010292697697877884,
+			"dateTime": "2026.10.14-20.46.01",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "16 physical slots retained through cancel; 6 queued owners drained with bounded urgency and aging.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.01"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ActionBudget",
+			"fullTestPath": "ProjectJ.Integrated.ActionBudget",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.11693380028009415,
+			"dateTime": "2026.10.14-20.46.01",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "96 action consumers serviced and removed; peak_updates=28 cap=32 elapsed=0.106s",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.01"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCAttackContract",
+			"fullTestPath": "ProjectJ.Integrated.NPCAttackContract",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0098625011742115021,
+			"dateTime": "2026.10.14-20.46.01",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ActionSuspension",
+			"fullTestPath": "ProjectJ.Maturity.NPC.ActionSuspension",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.009947601705789566,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ContextSeparation",
+			"fullTestPath": "ProjectJ.NPCAction.ContextSeparation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0099885016679763794,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "IntentLifecycle",
+			"fullTestPath": "ProjectJ.NPCAction.IntentLifecycle",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010158300399780273,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LatePathCompletion",
+			"fullTestPath": "ProjectJ.NPCAction.LatePathCompletion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010061897337436676,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PathAdmission",
+			"fullTestPath": "ProjectJ.NPCAction.PathAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.011450402438640594,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Experiment",
+			"fullTestPath": "ProjectJ.NPCDecision.Experiment",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.03336000069975853,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NPCDecision agents=4 targets=3 outstanding=0 batches=1 decisions=4 applied=4 discarded=0 rejected=0 last_gt_ms=0.018 target_reads=0 cells=0 fallback=0 observers=0 incomplete_observers=1 promotions=0 full_tick_ms=0.018 max_full_tick_ms=0.032 shared_snapshot_ms=0.000 oldest_ready_ms=13.800",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.02"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NativeBatch",
+			"fullTestPath": "ProjectJ.NPCDecision.NativeBatch",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.076887302100658417,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NativeNPCBatch serviced=95 submitted_decisions=96 root_batches=3 discarded=1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.02"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Revalidation",
+			"fullTestPath": "ProjectJ.NPCDecision.Revalidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.016988199204206467,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SpatialImportance",
+			"fullTestPath": "ProjectJ.NPCDecision.SpatialImportance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.015125099569559097,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GroundRootMotion",
+			"fullTestPath": "ProjectJ.NPCGameplay.GroundRootMotion",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.010246001183986664,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Existing montage root_motion=1; activation, death, falling cancellation verified; no asset saved.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.02"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponPresentationTeardown",
+			"fullTestPath": "ProjectJ.NPCGameplay.WeaponPresentationTeardown",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"C88F7CC64715AFABBDF7E79EAF9F4AF6"
+			],
+			"duration": 0.0098869986832141876,
+			"dateTime": "2026.10.14-20.46.02",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_38.Untitled:PersistentLevel.Actor_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.02"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: UWorld::DestroyActor: World has no context! World: Untitled, Actor: /Temp/Untitled_38.Untitled:PersistentLevel.Actor_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-20.46.02"
+				}
+			],
+			"warnings": 2,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

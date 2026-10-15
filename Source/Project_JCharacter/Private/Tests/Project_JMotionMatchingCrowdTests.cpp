@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "UObject/UnrealType.h"
@@ -310,6 +311,57 @@ bool FProjectJGeneratedMMDatabaseLifecycleTest::RunTest(const FString&)
 	Proxy.Initialize(Anim.Get());
 	Proxy.QueueGameThreadData(Data, Database.Get(), true, true, false, true, Companion.Get());
 	Proxy.ConsumeQueuedGameThreadData(); Proxy.ApplySelectedDatabaseToNativeNode(); CheckDatabases(2);
+	// The legacy BP remains a handover test asset. Exercise its real compiled callbacks
+	// with the AnimInstance-owned proxy, rather than a second proxy invisible to BP getters.
+	UClass* LegacyClass = LoadClass<UProject_JCharacterAnimInstance>(nullptr,
+		TEXT("/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player_C"));
+	if (!TestNotNull(TEXT("Preserved handover animation class"), LegacyClass)) return false;
+	TStrongObjectPtr<UProject_JCharacterAnimInstance> Legacy(NewObject<UProject_JCharacterAnimInstance>(Mesh.Get(), LegacyClass));
+	auto& OwnedProxy = Legacy->GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
+	OwnedProxy.Initialize(Legacy.Get());
+	const TArray<int32> LegacyIndices = OwnedProxy.GetGeneratedMotionMatchingNodeIndices();
+	if (!TestTrue(TEXT("Legacy graph has a generated MM node"), !LegacyIndices.IsEmpty())) return false;
+	const auto CheckLegacy = [&](int32 ExpectedCount, bool bRunCallbacks)
+	{
+		TestEqual(TEXT("BP getter and the writer use the same real proxy"), Legacy->GetCurrentActivePoseSearchDatabaseThreadSafe(), OwnedProxy.GetCurrentActiveDatabase());
+		for (int32 Index : LegacyIndices)
+		{
+			auto* Node = const_cast<FAnimNode_MotionMatching*>(OwnedProxy.GetNodeFromIndex<FAnimNode_MotionMatching>(Index));
+			if (!TestNotNull(TEXT("Legacy generated node"), Node)) continue;
+			if (bRunCallbacks)
+			{
+				FAnimationUpdateSharedContext SharedContext;
+				FAnimationUpdateContext Context(&OwnedProxy, 1.f / 60.f, &SharedContext);
+				FPoseLink Link;
+				Link.SetLinkNode(Node);
+				Link.Initialize(FAnimationInitializeContext(&OwnedProxy));
+				// This deliberately isolated node has no history collector. The engine reports
+				// that after executing its real node-function callbacks; no pose search is claimed.
+				AddExpectedError(TEXT("missing IPoseHistory"), EAutomationExpectedErrorFlags::Contains, 1);
+				Link.Update(Context);
+			}
+			FScriptArrayHelper View(Databases, Databases->ContainerPtrToValuePtr<void>(Node));
+			TestEqual(TEXT("Compiled node callbacks preserve the native candidate set"), View.Num(), ExpectedCount);
+			if (ExpectedCount > 0 && View.Num() == ExpectedCount)
+			{
+				TestEqual(TEXT("Legacy primary stays selected"), Object->GetObjectPropertyValue(View.GetRawPtr(0)), static_cast<UObject*>(Database.Get()));
+				if (ExpectedCount == 2)
+					TestEqual(TEXT("Legacy companion survives callbacks"), Object->GetObjectPropertyValue(View.GetRawPtr(1)), static_cast<UObject*>(Companion.Get()));
+			}
+		}
+	};
+	const auto QueueLegacy = [&](bool bEnabled, UPoseSearchDatabase* InCompanion)
+	{
+		OwnedProxy.QueueGameThreadData(Data, bEnabled ? Database.Get() : nullptr, bEnabled, bEnabled, false, true, InCompanion);
+		OwnedProxy.ConsumeQueuedGameThreadData();
+		OwnedProxy.ApplySelectedDatabaseToNativeNode();
+	};
+	QueueLegacy(true, Companion.Get()); CheckLegacy(2, true);
+	QueueLegacy(true, Companion.Get()); CheckLegacy(2, true); // Unchanged IDs must not leave a stale native cache.
+	QueueLegacy(true, nullptr); CheckLegacy(1, true);
+	QueueLegacy(true, Companion.Get()); CheckLegacy(2, true);
+	QueueLegacy(false, nullptr); CheckLegacy(0, false);
+	QueueLegacy(true, Companion.Get()); CheckLegacy(2, true);
 	return true;
 }
 #endif

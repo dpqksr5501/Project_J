@@ -1,0 +1,22 @@
+diff --git a/Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md b/Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md
+index 6ad2f8ab..589f1af7 100644
+--- a/Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md
++++ b/Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md
+@@ -148,17 +148,3 @@ OTM/Strafe, Run/Sprint, 단발/MM 복귀·Land·측면 후보·전투·장비·
+ 
+ 다음 결과는 새 날짜/버전 문서와 run으로 작성한다. 실제 새 소스/에셋 변경, 검토 후 유지, 아직 미검증/미완료 범위를 별도 표로 보고한다. 기존 실패 로그·첫 compiler 오류·unsupported MCP 응답·warning은 삭제하지 않는다. portable 원자료에는 Config token·개인 SaveGame·ephemeral MCP token·비관련 사용자 자료를 넣지 않는다. 최종 Git status와 실행 프로세스·LFS 실제 내용도 확인한다.
+ 
+-## 새 채팅에 붙여 넣을 요청문
+-
+-```text
+-C:\Users\I\Documents\GitHub\Project_J\Docs\Handoffs\WholeProjectAudit_2026-10-14\Project_J_Complete_Audit_Continuation_2026-10-14.md
+-
+-이 인계와 최신 검증·상태 지도·상세 장부·ContinuationCoverageInventory.json을 읽고, 이전 작업을 보존하면서 남은 전체 감사와 개선, 전체 범위 누락 점검을 하나의 계속 작업으로 끝까지 진행해줘.
+-현재 Git/프로세스/인계 커밋/해시부터 확인하고, 이미 구현·검증한 일을 반복하지 말아줘. 모든 시스템의 소스 함수·헤더·inline·실제 호출·상태 권위/소유권·관련 BP/ABP/DA/DT/Chooser/IA/IMC와 제작/검증/배포 경계를 상세히 대조해줘. 파일 목록이나 자동화 성공을 전수 정밀 완료로 해석하지 말아줘.
+-남은 후보 목록에 제한하지 말고 실제 시스템·의존성·실행·실패 흐름에서 새 누락/공통 결함을 조사해줘. 근거 있는 중복·불필요 로직·이중 상태·예외·확장 구조 문제는 직접 정리하고, 유지할 이유가 있는 계약도 기록해줘. 기능별 재현·수정·회귀·필요한 통합/원격/품질/부하/Cook 검증까지 수행해줘.
+-이 작업에 필요한 Unreal MCP·컴퓨터 사용·로그 수집·빌드/재빌드·관련 코드/에셋 수정·필요한 저장을 허용해. 허용 범위를 반복 확인하지 말고 접근 제한을 우회하거나 관련 없는 사용자 작업을 덮어쓰지 말아줘. AGENTS.md의 directUBT·프로세스 겹침 금지·빌드 중단 금지를 지켜줘.
+-OTM/Strafe·Run/Sprint·단발/MM 복귀·Land·측면 후보·전투·장비·리타깃과 지속 곡선0.35초·100cm·3도·85%를 보존해줘. 강제reset·timer·특정키/클립 예외로 증상을 가리지 말고 GT/worker·snapshot·GC·취소/완료·서버 권위/예측과 맞는 원천 계약에서 해결해줘.
+-CPU 증가와 렌더 차이는 아직 해결되지 않았어. 같은 조건의 반복/교대 비교와 단계별trace로 조사하고 NullRHI CPU·렌더FPS/GPU·200표시캐릭터·실제socket수를 구분해줘. 오래된 RA13 binary를 복원하는 Run-BalancedCPU.ps1을 최신본에 그대로 실행하지 말아줘.
+-한국어로 전체 범위 장부·구조지도·발견/최종변경 이유·검증/성능원자료·남은문제를 남기고 관련 기준/제작 문서·README·catalog도 갱신해줘. 실제 수정·범위 명시 검토완료·미완료 검토·환경/접근 미검증을 분리해줘. 전체 검토가 남아 있으면 완료라고 말하지 말아줘.
+-인계 전에 요청한 기준점 커밋은 실제 Git에서 확인해줘. 이후 추가 커밋·push·병합·컴퓨터 종료는 별도 최신 요청으로 남겨줘.
+-```

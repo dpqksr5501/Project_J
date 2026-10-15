@@ -43,6 +43,9 @@ void ValidateLocomotionProfile(
 		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid movement parameter %s."), *Failure.ToString()));
 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("GenericMoveInputSpeedThreshold"), LocomotionProfile->GenericMoveInputSpeedThreshold);
 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("SprintLocomotionSpeedThreshold"), LocomotionProfile->SprintLocomotionSpeedThreshold);
+	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle);
+	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMoveInputCancelAngle"), LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle);
+	ValidateNonNegativeValue(Context, OutWarnings, TEXT("LandMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.LandMouseTurnCancelAngle);
 
 	if (LocomotionProfile->SprintSpeed < LocomotionProfile->WalkSpeed)
 	{

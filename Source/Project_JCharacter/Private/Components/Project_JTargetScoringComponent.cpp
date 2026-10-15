@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerState.h"
+#include "UObject/StrongObjectPtr.h"
 
 UProject_JTargetScoringComponent::UProject_JTargetScoringComponent()
 {
@@ -97,27 +98,44 @@ bool UProject_JTargetScoringComponent::PrepareSnapshot(const TArray<AActor*>& Ca
 bool UProject_JTargetScoringComponent::StartBatchedNPCDecisions(int32 TeamId)
 {
 	check(IsInGameThread());
-	if (!GetWorld() || bEndingPlay || IsBeingDestroyed()) { return false; }
+	if (!GetWorld() || TeamId < 0 || bEndingPlay || IsBeingDestroyed() || BatchRegistrationRevision == MAX_uint64) { return false; }
 	auto* Scheduler = GetWorld()->GetSubsystem<UProject_JNPCDecisionSubsystem>();
-	const bool bStarted = Scheduler && Scheduler->RegisterAgent(this, TeamId);
-	if (bStarted) { ++BatchRegistrationRevision; }
-	return bStarted;
+	if (!Scheduler) { return false; }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const TStrongObjectPtr<UProject_JNPCDecisionSubsystem> PinnedScheduler(Scheduler);
+	// Stop/new Start during invalidation supersede this request before completion.
+	AdvanceRegistrationRevision();
+	const uint64 RequestRevision = BatchRegistrationRevision;
+	const bool bStarted = Scheduler->RegisterAgent(this, TeamId);
+	return bStarted && BatchRegistrationRevision == RequestRevision && !bEndingPlay && !IsBeingDestroyed()
+		&& IsValid(PinnedOwner.Get()) && !PinnedOwner->IsActorBeingDestroyed() && GetOwner() == PinnedOwner.Get()
+		&& bNPCBatchRegistered && NPCDecisionSubsystem.Get() == Scheduler && NPCDecisionTeam == TeamId;
 }
 
 void UProject_JTargetScoringComponent::StopBatchedNPCDecisions()
 {
 	check(IsInGameThread());
-	++BatchRegistrationRevision;
-	if (auto* Scheduler = NPCDecisionSubsystem.Get()) { Scheduler->UnregisterAgent(this); }
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
+	const auto PreviousScheduler = NPCDecisionSubsystem;
+	// Detach before Unregister's delegate can install a newer registration.
 	bNPCBatchRegistered = false;
 	NPCDecisionTeam = INDEX_NONE;
 	NPCDecisionSubsystem.Reset();
-	InvalidateQueryContext();
+	if (auto* Scheduler = PreviousScheduler.Get()) { Scheduler->UnregisterAgent(this); }
+	else { AdvanceRegistrationRevision(); InvalidateQueryContext(); }
 }
 
 void UProject_JTargetScoringComponent::InvalidateQueryContext()
 {
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 	ResetPendingQuery();
+	// Nested invalidation still retires query/revision; remaining listeners of
+	// the in-flight notification observe its latest state without recursive delivery.
+	if (bNotifyingContext) { return; }
+	TGuardValue<bool> Guard(bNotifyingContext, true);
 	OnContextInvalidated.Broadcast();
 }
 
@@ -138,6 +156,8 @@ void UProject_JTargetScoringComponent::ResetPendingQuery()
 void UProject_JTargetScoringComponent::ApplyResult(const FProjectJTargetScoringCompletion& Completion)
 {
 	check(IsInGameThread());
+	const TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const TStrongObjectPtr<AActor> PinnedOwner(GetOwner());
 	const auto* Subsystem = QuerySubsystem.Get();
 	if (bEndingPlay || IsBeingDestroyed() || !Subsystem || Completion.WorldEpoch != Subsystem->GetWorldEpoch()
 		|| Completion.Token.Value != PendingToken.Value || Completion.ContextRevision != ContextRevision) { return; }
@@ -154,6 +174,7 @@ void UProject_JTargetScoringComponent::ApplyResult(const FProjectJTargetScoringC
 	CandidateActors.Empty();
 	SelectedTarget = Target;
 	bSharedBatchRequest = false;
+	const TStrongObjectPtr<AActor> PinnedTarget(Target);
 	// Advisory result: caller must recheck team, life, LOS, range, and authority when committing gameplay.
 	OnQueryCompleted.Broadcast(Target, Target ? Completion.Result.BestScore : 0.0);
 }

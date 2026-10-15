@@ -1,0 +1,14 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-unattended",
+  "-nosound",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-NullRHI",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CallbackIdentityFinalFocused1/User",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CallbackIdentityFinalFocused1/Run.log",
+  "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CallbackIdentityFinalFocused1",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=a.Budget.BudgetMs 0.1,Automation RunTests ProjectJ.Continuation+ProjectJ.MMO.Messaging.ReentrantSubscriptions+ProjectJ.Maturity.Input.SharedMappingLease+ProjectJ.RuntimeOwnership.EquipmentCommitLifetime+ProjectJ.PlayerMaturity.Equipment+ProjectJ.UI.Equipment+ProjectJ.RuntimeOwnership.GrantSourceReentry+ProjectJ.RuntimeOwnership.InputBindingReentry+ProjectJ.Input.MouseChordLifecycle; Quit"
+]

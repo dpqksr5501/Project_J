@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "EdGraph/EdGraph.h"
 #include "Animation/AnimBlueprint.h"
 #include "Animation/AnimGraphNode_ProjectJOneShotHandoff.h"
 #include "Animation/AnimGraphNode_ProjectJLocomotion.h"

@@ -177,9 +177,9 @@ private:
 	EMovementMode RiderMovementBeforeMount = MOVE_Walking;
 	uint8 RiderCustomMovementBeforeMount = 0;
 	bool bHasRiderRestoreState = false;
-	bool CanMountRider(const ACharacter* NewRider) const;
+	uint32 RiderTransitionRevision = 0;
 	bool FindDismountLocation(FVector& OutLocation) const;
-	void AttachRider(ACharacter* NewRider);
+	bool AttachRider(ACharacter* NewRider);
 	void DetachRider(ACharacter* PreviousRider, const FVector& DismountLocation) const;
 	void NotifyRiderMountChanged(ACharacter* ChangedRider, bool bMounted);
 };

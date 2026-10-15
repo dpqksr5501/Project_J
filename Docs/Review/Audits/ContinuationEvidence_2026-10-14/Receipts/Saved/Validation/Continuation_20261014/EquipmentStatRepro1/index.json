@@ -1,0 +1,253 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "81AEB8284ADB95BC4E7595A6D6198367",
+			"instanceName": "DESKTOP-5T07C91-21276",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-06.26.40",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.091878607869148254,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AbilitySetEffectLevel",
+			"fullTestPath": "ProjectJ.Continuation.AbilitySetEffectLevel",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"81AEB8284ADB95BC4E7595A6D6198367"
+			],
+			"duration": 0.067533001303672791,
+			"dateTime": "2026.10.14-06.26.40",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Authoring requires finite EffectLevel at least 1: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 39,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Malformed authored level is rejected before GAS publication' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 43,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Authoring requires finite EffectLevel at least 1: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 39,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Malformed authored level is rejected before GAS publication' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 43,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Authoring requires finite EffectLevel at least 1: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 39,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Malformed authored level is rejected before GAS publication' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 43,
+					"timestamp": "2026.10.14-06.26.40"
+				}
+			],
+			"warnings": 0,
+			"errors": 6,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentStatLease",
+			"fullTestPath": "ProjectJ.Continuation.EquipmentStatLease",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"81AEB8284ADB95BC4E7595A6D6198367"
+			],
+			"duration": 0.024345602840185165,
+			"dateTime": "2026.10.14-06.26.40",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Equipment never overwrites permanent maximum base' to be 100.000000, but it was 0.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 88,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 100.000000, but it was 150.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 100.000000, but it was 11.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Independent base progression retains the live equipment bonus' to be 130.000000, but it was 120.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 100,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 120.000000, but it was 110.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Equipment never overwrites permanent maximum base' to be 100.000000, but it was 0.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 88,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 100.000000, but it was 150.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 100.000000, but it was 11.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Independent base progression retains the live equipment bonus' to be 130.000000, but it was 120.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 100,
+					"timestamp": "2026.10.14-06.26.40"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Removal uses the applied lease rather than a mutable definition or inverse clamp' to be 120.000000, but it was 110.000000 and outside tolerance 0.000100.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentStatContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-06.26.40"
+				}
+			],
+			"warnings": 0,
+			"errors": 10,
+			"artifacts": []
+		}
+	]
+}

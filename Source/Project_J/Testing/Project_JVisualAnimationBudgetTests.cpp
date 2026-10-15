@@ -7,6 +7,7 @@
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
 #include "GameFramework/WorldSettings.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/AutomationTest.h"

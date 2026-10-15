@@ -1,0 +1,349 @@
+{
+  "scope_ko": "저장된 IMC 2개 실제 default mapping27행과 source GetMappings() 계약의 대응. UE5.8 GetMappings는 DefaultKeyMappings를 반환하므로 deprecated Mappings 빈 배열을 미연결로 해석하지 않는다.",
+  "working_asset_changes": "",
+  "contexts": [
+    {
+      "asset": "Content/Input/IMC_Default.uasset",
+      "current_sha256": "678209d4b9300ed0f3a99a4de0882ccd34da5de5991f0a2fb227b53b4a3ef9b5",
+      "inherited_rpc": "Docs/Review/Audits/DeepEvidence_2026-10-13/MCP/AssetFields2/Root38_Values.json",
+      "rpc_sha256": "72f05afa0ab83b04e91e61c232bf542c2a51624222234b8722f56add1d240aa3",
+      "deprecated_mappings": [],
+      "default_key_mappings": [
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Jump.IA_Jump"
+          },
+          "key": "SpaceBar",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Jump.IA_Jump"
+          },
+          "key": "Gamepad_FaceButton_Bottom",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_3"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "W",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_4"
+            },
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierNegate_0"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "S",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierNegate_3"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "A",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "D",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_5"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "Up",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierSwizzleAxis_6"
+            },
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierNegate_2"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "Down",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "Right",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierNegate_6"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "Left",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierDeadZone_0"
+            },
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierScalar_0"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Move.IA_Move"
+          },
+          "key": "Gamepad_Left2D",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_Default.IMC_Default:InputModifierDeadZone_1"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Look.IA_Look"
+          },
+          "key": "Gamepad_Right2D",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Sprint.IA_Sprint"
+          },
+          "key": "LeftShift",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat"
+          },
+          "key": "Tab",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Interact.IA_Interact"
+          },
+          "key": "F",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MountAscend.IA_MountAscend"
+          },
+          "key": "SpaceBar",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MountDescend.IA_MountDescend"
+          },
+          "key": "LeftControl",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB"
+          },
+          "key": "LeftMouseButton",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB"
+          },
+          "key": "RightMouseButton",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Skill_Q.IA_Skill_Q"
+          },
+          "key": "Q",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Skill_R.IA_Skill_R"
+          },
+          "key": "R",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_Skill_T.IA_Skill_T"
+          },
+          "key": "T",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward"
+          },
+          "key": "W",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward"
+          },
+          "key": "S",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left"
+          },
+          "key": "A",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        },
+        {
+          "triggers": [],
+          "modifiers": [],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right"
+          },
+          "key": "D",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        }
+      ],
+      "profile_overrides": {},
+      "limits_ko": "기존 실제 reflected 조회를 계승. modifier subobject의 참조는 실제 numeric 값/모든 장치 품질 완료가 아님. 새 UE 조회를 수행하지 않음."
+    },
+    {
+      "asset": "Content/Input/IMC_MouseLook.uasset",
+      "current_sha256": "6a00157cd520edcf0b037d7091bfe188fa6eb7c48465f695981f7cbe5fb4cc80",
+      "inherited_rpc": "Docs/Review/Audits/DeepEvidence_2026-10-13/MCP/AssetFields2/Root39_Values.json",
+      "rpc_sha256": "98034fbb1a958c0b31931cb13d136a05c928e4820c1377c16720b1b6e1909149",
+      "deprecated_mappings": [],
+      "default_key_mappings": [
+        {
+          "triggers": [],
+          "modifiers": [
+            {
+              "refPath": "/Game/Input/IMC_MouseLook.IMC_MouseLook:InputModifierNegate_0"
+            }
+          ],
+          "action": {
+            "refPath": "/Game/Input/Actions/IA_MouseLook.IA_MouseLook"
+          },
+          "key": "Mouse2D",
+          "settingBehavior": "InheritSettingsFromAction",
+          "playerMappableKeySettings": "None"
+        }
+      ],
+      "profile_overrides": {},
+      "limits_ko": "기존 실제 reflected 조회를 계승. modifier subobject의 참조는 실제 numeric 값/모든 장치 품질 완료가 아님. 새 UE 조회를 수행하지 않음."
+    }
+  ],
+  "current_source_contract_ko": "Controller Setup→mapping lease; Player Setup→ActionSet→binding, four semantic directions all-or-nothing and no game-key exception. movement gameplay is immediate; semantic stop/direction settles after EnhancedInput update. Existing mouse chord grace is authored input ambiguity policy, not a new animation symptom timer.",
+  "unfinished_ko": [
+    "Controller BP DefaultMappingContexts/MobileExcluded arrays and Greatsword input CDO identity not present in these two receipts.",
+    "BP event/instance overrides, profile override selection, focus/device transitions and GC participants require distinct evidence.",
+    "Current Git clean asset paths show no working edit; this does not by itself prove all assets identical to every historical capture."
+  ]
+}

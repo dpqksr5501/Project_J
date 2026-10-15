@@ -1,0 +1,923 @@
+{
+  "scope_ko": "명시한 compiled source와 전체9 산출물의 A/B, 200 authored BP actors·NullRHI·원격 socket0. 4run×16조건=64행. 실제 MM Search 호출은 관찰 field로 대체하지 않고 trace로 별도 검증한다.",
+  "variant_artifact_manifest": {
+    "order": [
+      "A1",
+      "B1",
+      "B2",
+      "A2"
+    ],
+    "workload": "CPU",
+    "baselineSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\RA27EditorBinaries",
+    "currentSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA_CPU_Integrated_ABBA1/RestoreEditorSet",
+    "restoreSet": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA_CPU_Integrated_ABBA1/RestoreEditorSet",
+    "explicitComparedB": false,
+    "warmupTicks": 240,
+    "measuredTicks": 600,
+    "scope": "NullRHI CPU; 200 authored BP actors; zero remote sockets.",
+    "trace": false,
+    "restoration": "Traced pair is separate from no-trace ABBA. All nine Editor artifacts restored to invocation version.",
+    "baselineArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "D97745485FC0F90AA5883124C17B119FD0C6DAF35D8550BF9C1F145E7C45FDB8"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "0CCED645646CF8F63F895DC275ED04DC115CCE7F2A23EDE4C3A0C1F1F402016F"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "289639B4463B7AC740ACD144F1E6794F714EBE1990AF09BEEE3806AAC6556AC8"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "582C9F82C23328EEB980E9F809D360C429B15D676DDAA24085E7D42774979B3B"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "81A1C7500EDDD8F9823CF95FF99970DEB29F1C99084338E801ED6C3A5128A79C"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "9B9FCA27571C34947C911E897B599C3DD859B4D20EC9EE480C60291A87D888D5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "FCD0FF17D40CD88E20986F7AE47CE221C07FE5199B0F0DE6667679D7ED128C5E"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "4A5F2D429648891A743C42DAEF55FFD778D303D1E5987410ADE34F5A501D4414"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ],
+    "currentArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "E7693741980A0321D6E84D5724A19CE20FA4D42103C9A97E4A1785F37EE7E2E0"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "210980236EFE040C7525B477B3C18ED126E1F0D2C161C5003023D7A0B7AF48FF"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "9140996FE60320B761C97CB0B49C025C87D995AC1FBB9210D4326674FEC820A3"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "EECD397A8EFD98DC15C7852B2D2D99103744C6411C817602BB8FC123C8421671"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "6DF542E13E57FCAEC95C7F52F6BBC9E02D0815742CD2EF09DDDBBAFA9DFEAF73"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "645AC5E98F15C0ACA6087EAB0E277B77B92098C6E7C56100E26EDE54B830D0B5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "5FD85FCB7A83461395618FE7F72C9DA93552FC166F181CB71C44C1EAC48E06C6"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "FBB4E60D99B6BC560433CACEA5922C287F14FC4873327A662ACDC1BD73CEA557"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ],
+    "restoreArtifacts": [
+      {
+        "file": "UnrealEditor-Project_JMMO.dll",
+        "sha256": "E7693741980A0321D6E84D5724A19CE20FA4D42103C9A97E4A1785F37EE7E2E0"
+      },
+      {
+        "file": "UnrealEditor-Project_J.dll",
+        "sha256": "210980236EFE040C7525B477B3C18ED126E1F0D2C161C5003023D7A0B7AF48FF"
+      },
+      {
+        "file": "UnrealEditor-Project_JCore.dll",
+        "sha256": "9140996FE60320B761C97CB0B49C025C87D995AC1FBB9210D4326674FEC820A3"
+      },
+      {
+        "file": "UnrealEditor-Project_JGAS.dll",
+        "sha256": "EECD397A8EFD98DC15C7852B2D2D99103744C6411C817602BB8FC123C8421671"
+      },
+      {
+        "file": "UnrealEditor-Project_JMount.dll",
+        "sha256": "6DF542E13E57FCAEC95C7F52F6BBC9E02D0815742CD2EF09DDDBBAFA9DFEAF73"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacter.dll",
+        "sha256": "645AC5E98F15C0ACA6087EAB0E277B77B92098C6E7C56100E26EDE54B830D0B5"
+      },
+      {
+        "file": "UnrealEditor-Project_JCharacterEditor.dll",
+        "sha256": "5FD85FCB7A83461395618FE7F72C9DA93552FC166F181CB71C44C1EAC48E06C6"
+      },
+      {
+        "file": "UnrealEditor-Project_JAnimationNodes.dll",
+        "sha256": "FBB4E60D99B6BC560433CACEA5922C287F14FC4873327A662ACDC1BD73CEA557"
+      },
+      {
+        "file": "UnrealEditor.modules",
+        "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+      }
+    ]
+  },
+  "order": [
+    "A1",
+    "B1",
+    "B2",
+    "A2"
+  ],
+  "rows": 64,
+  "trace": false,
+  "restored": true,
+  "meaning_ko": "반복/교대와 실제 수행량을 함께 기록. 모든 CPU 회귀 해결·통계적 동등성·실제 렌더 FPS/GPU의 증명이 아니다.",
+  "comparisons": [
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 20.216355643545587,
+          "repeat_means_ms": [
+            20.071420893073082,
+            20.804604527850945,
+            19.780816206087668,
+            20.208580947170656
+          ],
+          "run_means_ms": {
+            "A1": 20.43801271046201,
+            "A2": 19.994698576629162
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 21.26243107331296,
+          "repeat_means_ms": [
+            20.66660199314356,
+            21.043523258219164,
+            21.662156774351995,
+            21.677442267537117
+          ],
+          "run_means_ms": {
+            "B1": 20.855062625681363,
+            "B2": 21.669799520944558
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 5.174401599436407
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 11.327511700801551,
+          "repeat_means_ms": [
+            11.26606430237492,
+            11.427209706356129,
+            11.240085288882256,
+            11.376687505592903
+          ],
+          "run_means_ms": {
+            "A1": 11.346637004365524,
+            "A2": 11.30838639723758
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              42466,
+              42466,
+              42464,
+              42462
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              72415,
+              72422,
+              72425,
+              72431
+            ],
+            "visual_group_requested_actor_ticks": [
+              72615,
+              72622,
+              72625,
+              72631
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 12.044919814604025,
+          "repeat_means_ms": [
+            11.41790410503745,
+            11.526216578980288,
+            12.39447383210063,
+            12.84108474229773
+          ],
+          "run_means_ms": {
+            "B1": 11.47206034200887,
+            "B2": 12.61777928719918
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              42468,
+              42466,
+              42462,
+              42347
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              72409,
+              72398,
+              72401,
+              72440
+            ],
+            "visual_group_requested_actor_ticks": [
+              72609,
+              72598,
+              72601,
+              72640
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 6.333324853257127
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 14.784268621976176,
+          "repeat_means_ms": [
+            14.65094717219472,
+            14.921316628654798,
+            14.704787644247213,
+            14.860023042807976
+          ],
+          "run_means_ms": {
+            "A1": 14.78613190042476,
+            "A2": 14.782405343527595
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29948,
+              29972,
+              29948,
+              29972
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 15.491473875008523,
+          "repeat_means_ms": [
+            14.981967030713955,
+            15.527222442130247,
+            15.446201339364052,
+            16.01050468782584
+          ],
+          "run_means_ms": {
+            "B1": 15.254594736422101,
+            "B2": 15.728353013594946
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29981,
+              29981,
+              29981,
+              29958
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 4.783498400327479
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 10.908445402358968,
+          "repeat_means_ms": [
+            10.846941123406092,
+            11.009039971977472,
+            10.763001317779223,
+            11.014799196273088
+          ],
+          "run_means_ms": {
+            "A1": 10.927990547691781,
+            "A2": 10.888900257026155
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              30793,
+              28785,
+              30947,
+              28896
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29928,
+              29991,
+              29928,
+              29991
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 11.162079273102183,
+          "repeat_means_ms": [
+            10.96119903648893,
+            11.014766649653515,
+            11.185676517585913,
+            11.486674888680378
+          ],
+          "run_means_ms": {
+            "B1": 10.987982843071222,
+            "B2": 11.336175703133145
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              30516,
+              28487,
+              28207,
+              28173
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29941,
+              29958,
+              29941,
+              29984
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 2.3251147288903873
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 11.267426152092716,
+          "repeat_means_ms": [
+            11.299003046005964,
+            11.348327727367481,
+            11.167067208637794,
+            11.255306626359621
+          ],
+          "run_means_ms": {
+            "A1": 11.323665386686724,
+            "A2": 11.211186917498708
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 11.261888418036202,
+          "repeat_means_ms": [
+            11.18028063327074,
+            11.26084071273605,
+            11.190675652275482,
+            11.415756673862537
+          ],
+          "run_means_ms": {
+            "B1": 11.220560673003394,
+            "B2": 11.30321616306901
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.049148172632884624
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 6.293283809597293,
+          "repeat_means_ms": [
+            6.246846759070952,
+            6.344770652552445,
+            6.271550754706065,
+            6.3099670720597105
+          ],
+          "run_means_ms": {
+            "A1": 6.295808705811699,
+            "A2": 6.290758913382888
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "mm_result_observations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 6.287972281376521,
+          "repeat_means_ms": [
+            6.2176900915801525,
+            6.25218194598953,
+            6.2961493122080965,
+            6.385867775728305
+          ],
+          "run_means_ms": {
+            "B1": 6.2349360187848415,
+            "B2": 6.341008543968201
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "mm_result_observations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.08439994733229206
+    },
+    {
+      "scenario": "Near",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 18.503189940626424,
+          "repeat_means_ms": [
+            17.991020493209362,
+            18.639792564014595,
+            17.952562104910612,
+            19.429384600371122
+          ],
+          "run_means_ms": {
+            "A1": 18.31540652861198,
+            "A2": 18.690973352640867
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 19.894814090803266,
+          "repeat_means_ms": [
+            19.086778269459803,
+            20.01974806189537,
+            19.707029821972053,
+            20.765700209885836
+          ],
+          "run_means_ms": {
+            "B1": 19.553263165677585,
+            "B2": 20.236365015928946
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 7.520995864185176
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 12.117091331941387,
+          "repeat_means_ms": [
+            12.117755822837353,
+            12.190398325522741,
+            11.82996935521563,
+            12.330241824189821
+          ],
+          "run_means_ms": {
+            "A1": 12.154077074180048,
+            "A2": 12.080105589702725
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              29083,
+              28271,
+              30424,
+              28593
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              59900,
+              59897,
+              59900,
+              59897
+            ],
+            "visual_group_requested_actor_ticks": [
+              60000,
+              60000,
+              60000,
+              60000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 12.526078928882876,
+          "repeat_means_ms": [
+            12.033874622235695,
+            12.95425129433473,
+            12.202545292675495,
+            12.913644506285587
+          ],
+          "run_means_ms": {
+            "B1": 12.494062958285213,
+            "B2": 12.55809489948054
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              30700,
+              28165,
+              28312,
+              28164
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              59900,
+              59902,
+              59900,
+              59900
+            ],
+            "visual_group_requested_actor_ticks": [
+              60000,
+              60000,
+              60000,
+              60000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 3.3752951573730705
+    }
+  ]
+}

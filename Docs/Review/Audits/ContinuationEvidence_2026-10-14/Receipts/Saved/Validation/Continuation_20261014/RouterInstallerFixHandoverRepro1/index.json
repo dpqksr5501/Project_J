@@ -1,0 +1,207 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "2BC60F714A62D798F21286A105ECFEFA",
+			"instanceName": "DESKTOP-5T07C91-19688",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-11.23.59",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 4,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.32340839505195618,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ActiveMoveReentry",
+			"fullTestPath": "ProjectJ.Continuation.ActiveMoveReentry",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.065525397658348083,
+			"dateTime": "2026.10.14-11.23.58",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'The old move must not publish a start event on the new pawn' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JActiveInputCallbackTests.cpp",
+					"lineNumber": 109,
+					"timestamp": "2026.10.14-11.23.58"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FacingInstallerPreflightAtomic",
+			"fullTestPath": "ProjectJ.Continuation.FacingInstallerPreflightAtomic",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.19914969801902771,
+			"dateTime": "2026.10.14-11.23.58",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HandoverFiniteTick",
+			"fullTestPath": "ProjectJ.Continuation.HandoverFiniteTick",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.029874701052904129,
+			"dateTime": "2026.10.14-11.23.59",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Invalid elapsed time cannot manufacture timeout/retry: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 77,
+					"timestamp": "2026.10.14-11.23.59"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HandoverParticipantLifetime",
+			"fullTestPath": "ProjectJ.Continuation.HandoverParticipantLifetime",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.010442100465297699,
+			"dateTime": "2026.10.14-11.23.59",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A retired source cannot publish an envelope after its callback' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 27,
+					"timestamp": "2026.10.14-11.23.59"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Rejected serialization leaves caller's envelope unchanged: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 29,
+					"timestamp": "2026.10.14-11.23.59"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A serialize callback cannot publish through a closed manager' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 32,
+					"timestamp": "2026.10.14-11.23.59"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Success callback cannot acknowledge an actor retired during apply: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 38,
+					"timestamp": "2026.10.14-11.23.59"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HandoverPayloadSnapshot",
+			"fullTestPath": "ProjectJ.Continuation.HandoverPayloadSnapshot",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.0099625997245311737,
+			"dateTime": "2026.10.14-11.23.59",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Callback mutation of caller's storage cannot replace validated bytes' to be 3, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JHandoverContractTests.cpp",
+					"lineNumber": 59,
+					"timestamp": "2026.10.14-11.23.59"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RouterCancelReentry",
+			"fullTestPath": "ProjectJ.Continuation.RouterCancelReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"2BC60F714A62D798F21286A105ECFEFA"
+			],
+			"duration": 0.0084538981318473816,
+			"dateTime": "2026.10.14-11.23.59",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

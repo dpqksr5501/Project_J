@@ -1,0 +1,21 @@
+[
+  "BuildCookRun",
+  "-project=C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-noP4",
+  "-installed",
+  "-platform=Win64",
+  "-clientconfig=Development",
+  "-skipbuild",
+  "-skipcook",
+  "-nocompile",
+  "-nocompileuat",
+  "-CookOutputDir=C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\R15_Cook1\\Cooked",
+  "-stage",
+  "-pak",
+  "-iostore",
+  "-package",
+  "-stagingdirectory=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/R15_Package2/Package",
+  "-utf8output",
+  "-unattended",
+  "-nocleanstage"
+]

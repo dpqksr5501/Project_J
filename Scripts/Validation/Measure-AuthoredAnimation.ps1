@@ -37,17 +37,28 @@ foreach ($count in $Counts) {
     $arguments = @("$projectRoot/Project_J.uproject",'-unattended','-NullRHI','-nosound','-nosplash','-NoLiveCoding','-nop4',
         "-ProjectJAnimationCount=$count","-ProjectJAnimationRepeats=$Repeats","-ProjectJAnimationOutput=$output/cpu.json",
         "-ProjectJAnimationWarmupTicks=$WarmupTicks","-ProjectJAnimationMeasuredTicks=$MeasuredTicks",
-        "-ABSLOG=$output/Run.log","-ReportExportPath=$output/Automation",'-TestExit=Automation Test Queue Empty',
+        "-UserDir=$output/User",'-SaveToUserDir',"-ABSLOG=$output/Run.log","-ReportExportPath=$output/Automation",'-TestExit=Automation Test Queue Empty',
         '-ini:Engine:[SystemSettings]:a.Budget.Enabled=1', '-ini:Engine:[SystemSettings]:a.Budget.BudgetMs=2',
         '-ExecCmds=t.MaxFPS 0,Automation RunTests ProjectJ.Animation.AuthoredCPU; Quit')
     if ($Trace -and $count -eq ($Counts | Measure-Object -Maximum).Maximum) { $arguments += @('-trace=cpu,frame,bookmark,region,counters',"-tracefile=$output/CPU.utrace",'-statnamedevents') }
     if ($NoDDCCleanup) { $arguments += '-NoDDCCleanup' }
     $arguments | ConvertTo-Json | Set-Content "$output/arguments.json" -Encoding utf8
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
+    $processWatch = [Diagnostics.Stopwatch]::StartNew()
     $process = Start-Process -FilePath "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" -ArgumentList $quoted -WindowStyle Hidden -PassThru
     $nativeHandle = $process.Handle
     Write-Output "Started authored CPU count=$count PID=$($process.Id) output=$output"
     $process.WaitForExit()
+    $processWatch.Stop()
+    $osCpu = [ordered]@{available=$false;wholeProcessWallSeconds=$processWatch.Elapsed.TotalSeconds;logicalProcessors=[Environment]::ProcessorCount;
+        scope_ko='전체 자식 프로세스 setup/warmup/측정/종료의 OS 누적 CPU. native world/GT/worker 측정 구간과 별도이며 FPS/GPU가 아니다.'}
+    try {
+        $osCpu.totalCpuSeconds=$process.TotalProcessorTime.TotalSeconds
+        $osCpu.userCpuSeconds=$process.UserProcessorTime.TotalSeconds
+        $osCpu.kernelCpuSeconds=$process.PrivilegedProcessorTime.TotalSeconds
+        $osCpu.available=$true
+    } catch { $osCpu.captureError=$_.Exception.Message }
+    $osCpu | ConvertTo-Json | Set-Content "$output/ProcessCpu.json" -Encoding utf8
     [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;nativeHandleCapturedBeforeWait=$true} |
         ConvertTo-Json | Set-Content "$output/process.json" -Encoding utf8
     if ($null -eq $process.ExitCode -or $process.ExitCode -ne 0 -or !(Test-Path -LiteralPath "$output/cpu.json")) { throw "CPU fixture failed for count=$count. Inspect $output/Run.log." }

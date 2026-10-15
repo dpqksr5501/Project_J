@@ -16,9 +16,13 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_WeaponGroundContact : pub
 	GENERATED_BODY()
 
 public:
+	virtual void BeginDestroy() override;
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 private:
+	friend class FProjectJSharedNotifyGCLifetime;
+	void PruneCollectedMeshes();
+	FDelegateHandle PostGCHandle;
 	struct FRuntimeState
 	{
 		TWeakObjectPtr<UProject_JWeaponPresentationComponent> Presentation;

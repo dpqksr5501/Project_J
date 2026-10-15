@@ -237,6 +237,7 @@ public:
 	void UnregisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
 
 private:
+	friend class FProjectJWeaponMotionNumericAdmissionTest;
 	friend class FProjectJWeaponPresentationTeardownTest;
 	friend class FProjectJWeaponPresentationIdentityTest;
 	friend class FProjectJCrowdPresentationTest;

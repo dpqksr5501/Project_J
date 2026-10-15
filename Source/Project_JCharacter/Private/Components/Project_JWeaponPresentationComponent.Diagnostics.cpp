@@ -1,4 +1,5 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
+#include "Engine/StaticMesh.h"
 
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"

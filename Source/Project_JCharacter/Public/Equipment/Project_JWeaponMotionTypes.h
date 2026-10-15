@@ -25,6 +25,28 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionKey
 
 namespace Project_J::WeaponMotion
 {
+	/** Shared authoring/runtime admission. Empty keys retain the source-socket contract. */
+	inline FName GetValidationFailure(const TArray<FProject_JWeaponMotionKey>& Keys,
+		float PrimaryAlpha, float SecondaryAlpha, float Duration, float EntryBlend, float ExitBlend)
+	{
+		for (int32 Index = 0; Index < Keys.Num(); ++Index)
+		{
+			const auto& Key = Keys[Index];
+			if (!FMath::IsFinite(Key.NormalizedTime) || Key.NormalizedTime < 0.f || Key.NormalizedTime > 1.f)
+				return TEXT("KeyTime");
+			if (Key.RelativeTransform.ContainsNaN() || !Key.RelativeTransform.IsRotationNormalized())
+				return TEXT("KeyTransform");
+			if (Index > 0 && Key.NormalizedTime <= Keys[Index - 1].NormalizedTime)
+				return TEXT("KeyOrder");
+		}
+		if (!FMath::IsFinite(PrimaryAlpha) || PrimaryAlpha < 0.f || PrimaryAlpha > 1.f) return TEXT("PrimaryIKAlpha");
+		if (!FMath::IsFinite(SecondaryAlpha) || SecondaryAlpha < 0.f || SecondaryAlpha > 1.f) return TEXT("SecondaryIKAlpha");
+		if (!FMath::IsFinite(Duration) || Duration < 0.f) return TEXT("Duration");
+		if (!FMath::IsFinite(EntryBlend) || EntryBlend < 0.f) return TEXT("EntryBlend");
+		if (!FMath::IsFinite(ExitBlend) || ExitBlend < 0.f) return TEXT("ExitBlend");
+		return NAME_None;
+	}
+
 	/** Match the remaining source pose contribution; do not apply a second easing curve. */
 	inline float EvaluateMontageContactRecoveryAlpha(float CurrentWeight, float StartWeight)
 	{

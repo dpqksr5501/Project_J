@@ -5,7 +5,7 @@ param(
  [switch]$DisableDefaultLightFunctionPrecache
 )
 $ErrorActionPreference='Stop'
-if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build completion.'}
+if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker,UnrealInsights -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build/trace analysis completion.'}
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
 $exe=(Resolve-Path -LiteralPath $Executable).Path
 $out="$root/Saved/Validation/EF_20260912/$RunName"

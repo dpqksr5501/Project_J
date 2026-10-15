@@ -50,6 +50,7 @@ public:
 	UProject_JCharacterAnimInstance();
 
 	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUninitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativePostEvaluateAnimation() override;
@@ -58,6 +59,16 @@ public:
 
 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
 	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
+
+private:
+	friend class UProject_JAnimationUpdateCoordinatorComponent;
+	/** GT-only fallback tick lease. The coordinator returns it before capturing authored controls. */
+	void ReleaseFollowerTickOverride(bool bRestoreTick = true);
+	TWeakObjectPtr<USkeletalMeshComponent> FallbackFollowerTickMesh;
+	bool bSavedFollowerTick = true;
+	bool bAppliedFollowerRetarget = true;
+
+public:
 
 	// Snapshot-only AnimGraph inputs. Written in UE's thread-safe update phase,
 	// then read by generated property-copy handlers on the same animation task.
@@ -1018,6 +1029,7 @@ public:
 
 private:
 	friend class FProjectJAnimationSnapshotBoundaryTest;
+	friend class FProjectJGeneratedMMDatabaseLifecycleTest;
 	friend class FProjectJGroundStateOwnershipTest;
 	friend class FProjectJAnimationProxyLifetimeTest;
 	friend class FProjectJLandingReturnContextTest;

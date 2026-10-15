@@ -1,0 +1,424 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "89F72CB34C50E6D5A651B5B54C9CC624",
+			"instanceName": "DESKTOP-5T07C91-20888",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-05.23.04",
+	"succeeded": 5,
+	"succeededWithWarnings": 5,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 21.205223083496094,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "FollowerPolicyLifetime",
+			"fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 0.011082097887992859,
+			"dateTime": "2026.10.14-05.22.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OneShotMalformedInput",
+			"fullTestPath": "ProjectJ.Continuation.OneShotMalformedInput",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 0.004726797342300415,
+			"dateTime": "2026.10.14-05.22.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionNumericAdmission",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionNumericAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 0.0083657018840312958,
+			"dateTime": "2026.10.14-05.22.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionParentAssetValidation",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionParentAssetValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 0.0084475018084049225,
+			"dateTime": "2026.10.14-05.22.43",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Cancel",
+			"fullTestPath": "ProjectJ.GroupB.CombatContinuity.Cancel",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 4.3105874061584473,
+			"dateTime": "2026.10.14-05.22.43",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.43"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.45"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.45"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.47"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Complete",
+			"fullTestPath": "ProjectJ.GroupB.CombatContinuity.Complete",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 4.2124223709106445,
+			"dateTime": "2026.10.14-05.22.47",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.47"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.49"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.49"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.51"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Destroy",
+			"fullTestPath": "ProjectJ.GroupB.CombatContinuity.Destroy",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 4.212646484375,
+			"dateTime": "2026.10.14-05.22.52",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.52"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.53"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.54"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.55"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Unequip",
+			"fullTestPath": "ProjectJ.GroupB.CombatContinuity.Unequip",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 4.2136754989624023,
+			"dateTime": "2026.10.14-05.22.56",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.56"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.57"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.58"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.22.59"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnequipBeforeHit",
+			"fullTestPath": "ProjectJ.GroupB.CombatContinuity.UnequipBeforeHit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 4.2150516510009766,
+			"dateTime": "2026.10.14-05.23.00",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.23.00"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.23.01"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.23.02"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponAttachment] Palm mount unavailable; using compatibility socket. reason=MissingPalm Owner=Project_JGreatswordCharacter_0 Profile=DA_Greatsword_Presentation",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-05.23.03"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponSocketFrame",
+			"fullTestPath": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"89F72CB34C50E6D5A651B5B54C9CC624"
+			],
+			"duration": 0.0082197003066539764,
+			"dateTime": "2026.10.14-05.23.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

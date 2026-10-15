@@ -1,0 +1,4 @@
+TimingInsights.ExportThreads "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_A_trace/Count200/TraceExport/Threads.csv"
+TimingInsights.ExportTimerStatistics "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_A_trace/Count200/TraceExport/AllTimers.csv"
+TimingInsights.ExportTimerStatistics "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_A_trace/Count200/TraceExport/Timers-{region}.csv" -region="ProjectJ.AuthoredCPU_*"
+TimingInsights.ExportTimerStatistics "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_A_trace/Count200/TraceExport/Timers-{region}.csv" -region="ProjectJ.AuthoredAttackDispatch_*"

@@ -45,6 +45,51 @@ struct FInternalTestWorld
 constexpr auto InternalTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInventoryConsumeContractTest, "ProjectJ.Continuation.InventoryConsumeContract", InternalTestFlags)
+bool FProjectJInventoryConsumeContractTest::RunTest(const FString&)
+{
+	FInternalTestWorld Scope;
+	auto* Owner = Scope.World->SpawnActor<AActor>();
+	auto* Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
+	auto* Definition = NewObject<UProject_JEquipmentItemDefinition>(); Definition->MaxStackCount = MAX_int32;
+	auto* Receiver = NewObject<UProject_JInternalTestReceiver>(); Receiver->Inventory = Inventory; Receiver->bMutate = false;
+	Inventory->OnItemAdded.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnAdded);
+	Inventory->OnItemChanged.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnChanged);
+	Inventory->OnItemRemoved.AddDynamic(Receiver, &UProject_JInternalTestReceiver::OnRemoved);
+	const auto Item = Inventory->AddItemDefinition(Definition, 3);
+	const auto ResetCounts = [&] { Receiver->AddedCount = Receiver->ChangedCount = Receiver->RemovedCount = 0; };
+	ResetCounts();
+	for (int32 Count : {0, -1, MIN_int32, 4, MAX_int32})
+	{
+		TestFalse(TEXT("Invalid or excessive consume rejected"), Inventory->ConsumeItemStack(Item.InstanceId, Count));
+	}
+	TestFalse(TEXT("Unknown consume rejected"), Inventory->ConsumeItemStack(FGuid::NewGuid(), 1));
+	TestEqual(TEXT("Rejected consumes publish no change"), Receiver->ChangedCount + Receiver->RemovedCount + Receiver->AddedCount, 0);
+	for (bool bEquipped : {false, true})
+	{
+		Inventory->SetItemInstanceLocked(Item.InstanceId, true, bEquipped); ResetCounts();
+		TestFalse(TEXT("Locked/equipped stack rejects consumption"), Inventory->ConsumeItemStack(Item.InstanceId, 1));
+		TestEqual(TEXT("Rejected locked consume publishes no event"), Receiver->ChangedCount + Receiver->RemovedCount, 0);
+	}
+	Inventory->SetItemInstanceLocked(Item.InstanceId, false, false); ResetCounts();
+	FProject_JItemInstanceData Current;
+	Inventory->FindItemInstance(Item.InstanceId, Current);
+	TestEqual(TEXT("Rejected operations preserve stack"), Current.StackCount, 3);
+	TestTrue(TEXT("Partial consume commits"), Inventory->ConsumeItemStack(Item.InstanceId, 1));
+	Inventory->FindItemInstance(Item.InstanceId, Current);
+	TestEqual(TEXT("Partial count"), Current.StackCount, 2);
+	TestEqual(TEXT("Partial consume publishes exactly one change"), Receiver->ChangedCount, 1);
+	TestEqual(TEXT("Partial consume removes nothing"), Receiver->RemovedCount, 0);
+	ResetCounts();
+	TestTrue(TEXT("Final consume commits removal"), Inventory->ConsumeItemStack(Item.InstanceId, 2));
+	TestFalse(TEXT("Final identity removed"), Inventory->HasItemInstance(Item.InstanceId));
+	TestEqual(TEXT("Final consume publishes exactly one removal"), Receiver->RemovedCount, 1);
+	TestEqual(TEXT("Final consume has no change/add publication"), Receiver->ChangedCount + Receiver->AddedCount, 0);
+	TestFalse(TEXT("Repeated final consume rejected"), Inventory->ConsumeItemStack(Item.InstanceId, 1));
+	TestEqual(TEXT("Repeated consume cannot publish another removal"), Receiver->RemovedCount, 1);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJInventoryCallbacksTest, "ProjectJ.Internal.Inventory.CallbacksAndBounds", InternalTestFlags)
 bool FProjectJInventoryCallbacksTest::RunTest(const FString&)
 {

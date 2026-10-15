@@ -1,0 +1,163 @@
+{
+  "utc": "2026-10-14T18:18:04.971142+00:00",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "unit": "CA14",
+  "version": "R15_LevelStyleHandoverFix1",
+  "full_editor_build": {
+    "exitCode": 0,
+    "elapsedSeconds": 255.8626228,
+    "directUBT": true,
+    "target": "Project_JEditor",
+    "moduleScope": "",
+    "fullTarget": true
+  },
+  "runtime_count": 637,
+  "runtime_mismatches": [],
+  "editor_count": 9,
+  "editor_mismatches": [],
+  "preserved_count": 13,
+  "preserved_mismatches": [],
+  "user_handoff_diff_preserved": true,
+  "content_git_diff_empty": true,
+  "focused": {
+    "succeeded": 28,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 0.3674941062927246
+  },
+  "focused_process": {
+    "exitCode": 0,
+    "hasExited": true,
+    "nativeHandleCapturedBeforeWait": true
+  },
+  "focused_tests": [
+    {
+      "name": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Architecture.Handover.StateMachine",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Architecture.Handover.TransportReentrancy",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.AbilitySetEffectLevel",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.ProgressionLevelAdmission",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.QuestRewardRollback",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Continuation.StyleEffectAdmission",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Authoring.DerivedCatalogAndInlineAbilities",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Authoring.InvalidEquipPreservesState",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Grants.SharedOwnership",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Progression.BranchesAndGrants",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Progression.GraphValidation",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Maturity.Handover.ApplyAndAdmission",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.Reaudit.QuestPlayReuse",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.RuntimeOwnership.QuestRetirement",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.ConsumableAuthorityAndCooldown",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.ExperienceRewardsAndSnapshots",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.InventoryFiltering",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.LargeProjectionStability",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.MapCoordinates",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.PreferencesSaveValidation",
+      "state": "Success"
+    },
+    {
+      "name": "ProjectJ.UI.Compact.QuestRewardReplayAndRestore",
+      "state": "Success"
+    }
+  ],
+  "asset_reads": [
+    "R15_LevelAssetRead1/AssetConnections.json",
+    "R15_LevelAssetFieldRepair1/AssetConnections.json"
+  ],
+  "asset_read_scope_ko": "指定 class/style DA + native PS/NPC·BP_NPC_Test CDO public authoring fields only. 최초 bool 속성명 오류는 field repair에서 교정; 접근 제한 우회 아님.",
+  "pending_ko": [
+    "전체 source/asset 상세 감사",
+    "uninitialized persistent owner와 legacy fallback",
+    "실서비스 XP/inventory/cooldown snapshot adapter",
+    "새 기준점 전체 회귀·Game/Cook/package",
+    "동일 조건 CPU 증가·render 차이 원인 및 실제 품질·socket 확장 검증"
+  ],
+  "whole_project_complete": false
+}

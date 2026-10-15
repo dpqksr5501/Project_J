@@ -1,0 +1,38 @@
+[
+  {
+    "TimeCreated": "2026-10-15T06:32:27.9119987+09:00",
+    "Id": 6005,
+    "ProviderName": "EventLog",
+    "Message": "이벤트 로그 서비스가 시작되었습니다."
+  },
+  {
+    "TimeCreated": "2026-10-15T06:31:57.0473862+09:00",
+    "Id": 1074,
+    "ProviderName": "User32",
+    "Message": "다음 이유로 인해 C:\\WINDOWS\\servicing\\TrustedInstaller.exe (DESKTOP-5T07C91) 프로세스에서 NT AUTHORITY\\SYSTEM 사용자를 대신하여 DESKTOP-5T07C91 컴퓨터의 다시 시작을(를) 시작했습니다: 운영 체제: 업그레이드(계획됨)\r\n 이유 코드: 0x80020003\r\n 종료 유형: 다시 시작\r\n 설명: "
+  },
+  {
+    "TimeCreated": "2026-10-15T06:31:57.2775349+09:00",
+    "Id": 6006,
+    "ProviderName": "EventLog",
+    "Message": "이벤트 로그 서비스가 멈추었습니다."
+  },
+  {
+    "TimeCreated": "2026-10-15T06:30:55.3510797+09:00",
+    "Id": 6005,
+    "ProviderName": "EventLog",
+    "Message": "이벤트 로그 서비스가 시작되었습니다."
+  },
+  {
+    "TimeCreated": "2026-10-15T06:30:18.7516883+09:00",
+    "Id": 6006,
+    "ProviderName": "EventLog",
+    "Message": "이벤트 로그 서비스가 멈추었습니다."
+  },
+  {
+    "TimeCreated": "2026-10-15T06:29:19.3261116+09:00",
+    "Id": 1074,
+    "ProviderName": "User32",
+    "Message": "다음 이유로 인해 C:\\WINDOWS\\uus\\AMD64\\MoUsoCoreWorker.exe (DESKTOP-5T07C91) 프로세스에서 NT AUTHORITY\\SYSTEM 사용자를 대신하여 DESKTOP-5T07C91 컴퓨터의 다시 시작을(를) 시작했습니다: 운영 체제: 서비스 팩(계획됨)\r\n 이유 코드: 0x80020010\r\n 종료 유형: 다시 시작\r\n 설명: "
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "file": "UnrealEditor-Project_JMMO.dll",
+    "sha256": "543fdf3f0d3a5c6c2be8f1117a2a0aa5d1b23306c541a632adc4f7dc63523a10"
+  },
+  {
+    "file": "UnrealEditor-Project_J.dll",
+    "sha256": "d243815c243563b293f5a138f6b98adacd19f01834b749958666b83fcca68f11"
+  },
+  {
+    "file": "UnrealEditor-Project_JCore.dll",
+    "sha256": "7c38f7327c2a2c0169b1c2eccfd38bfa8758898c6eeb9969081983644442fe98"
+  },
+  {
+    "file": "UnrealEditor-Project_JGAS.dll",
+    "sha256": "427a8c0142755b20e6d02773c025bb602f5611d3dcae7a2102303799136bd3fb"
+  },
+  {
+    "file": "UnrealEditor-Project_JMount.dll",
+    "sha256": "d81f555de39b7acb3570b84f230885aba443a17d28d6f41a00c9ad3e8c463915"
+  },
+  {
+    "file": "UnrealEditor-Project_JCharacter.dll",
+    "sha256": "4e1938accd11b41eb483476155ed79dba6532b71d4f6ac1feea16bc6785ecf0a"
+  },
+  {
+    "file": "UnrealEditor-Project_JCharacterEditor.dll",
+    "sha256": "0a01ea74f7ece842775ec201a47f69d7a696d5d8643368d9510b44d36631608e"
+  },
+  {
+    "file": "UnrealEditor-Project_JAnimationNodes.dll",
+    "sha256": "b05202ad72ae559939be52708f115042381fabef1469d35962ad4864b71bd85e"
+  },
+  {
+    "file": "UnrealEditor.modules",
+    "sha256": "108dca6766d8052fa767709f547b2e75e39676dff75c3627ec863f8520e6fadf"
+  }
+]

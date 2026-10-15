@@ -1,0 +1,11 @@
+{
+  "game": "CA01_13_GameBuild3",
+  "cook": "CA01_13_Cook3",
+  "stage": "CA01_13_Package4",
+  "source_version": "CA01_13_Integrated1",
+  "source_matches_frozen": true,
+  "packaged_game": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/Project_J.exe",
+  "sha256": "26098d789b055b9e3e54d7832311d391e8d08e24216aa6960e652bcfe37e8cea",
+  "matches_direct_ubt_game": true,
+  "scope_ko": "실제 packaged native exe와 direct UBT Game SHA 대조. bootstrap exe와 구분. 별도 configured Cook closure이며 CookAll·실제 실행/시각·원격·전체 감사 완료를 증명하지 않는다."
+}

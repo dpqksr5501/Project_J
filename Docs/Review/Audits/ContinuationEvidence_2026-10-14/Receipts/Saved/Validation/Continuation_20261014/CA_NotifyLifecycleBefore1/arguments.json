@@ -1,0 +1,19 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-NullRHI",
+  "-unattended",
+  "-nosound",
+  "-NoLiveCoding",
+  "-NoDDCCleanup",
+  "-nop4",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1/User",
+  "-SaveToUserDir",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1/Run.log",
+  "-ReportExportPath=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1",
+  "-ProjectJNotifyOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1/NotifyLifecycle.json",
+  "-trace=cpu,frame,region,counters",
+  "-tracefile=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1/CPU.utrace",
+  "-statnamedevents",
+  "-TestExit=Automation Test Queue Empty",
+  "-ExecCmds=Automation RunTests ProjectJ.Animation.SharedNotifyLifecycle; Quit"
+]

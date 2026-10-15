@@ -1,6 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Backend/Project_JHandoverManager.h"
+#include "Misc/ConfigCacheIni.h"
+#include "UObject/Package.h"
 #include "Project_JPlayerCharacter.h"
 #include "Backend/Project_JHandoverTransport.h"
 #include "Tests/Project_JHandoverTestReceiver.h"

@@ -1,4 +1,5 @@
 #include "Animation/Project_JCharacterAnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Animation/AnimClassInterface.h"

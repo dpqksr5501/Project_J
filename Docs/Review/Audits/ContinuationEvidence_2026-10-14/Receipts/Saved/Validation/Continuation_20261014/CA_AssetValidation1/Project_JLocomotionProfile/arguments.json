@@ -1,0 +1,16 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-run=DataValidation",
+  "-AssetType=Project_JLocomotionProfile",
+  "-IncludeOnlyOnDiskAssets",
+  "-NullRHI",
+  "-unattended",
+  "-NoLiveCoding",
+  "-NoDDCCleanup",
+  "-nop4",
+  "-nosound",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_AssetValidation1/Project_JLocomotionProfile/User",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA_AssetValidation1/Project_JLocomotionProfile/Run.log",
+  "-UTF8Output",
+  "-culture=en"
+]

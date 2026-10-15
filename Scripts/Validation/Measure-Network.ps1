@@ -34,7 +34,7 @@ $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
 [ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
     ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
-$common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
+$common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-NoLiveCoding','-NoDDCCleanup','-SaveToUserDir','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
 if ($Animation) { $common += '-ProjectJAnimationFixture' }
 if ($CombatInput) {
     $common += '-ProjectJCombatInputFixture'
@@ -54,7 +54,7 @@ function Start-Fixture($arguments) {
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
     Start-Process -FilePath $exe -ArgumentList $quoted -WindowStyle Hidden -PassThru
 }
-$serverArgs = $common + @('/Engine/Maps/Entry?game=/Script/Project_J.Project_JNetworkLoadGameMode','-server',"-port=$Port","-ABSLOG=$runRoot/Server.log","-ProjectJDOutput=$runRoot/Server","-tracefile=$runRoot/Server.utrace")
+$serverArgs = $common + @('/Engine/Maps/Entry?game=/Script/Project_J.Project_JNetworkLoadGameMode','-server',"-port=$Port","-ABSLOG=$runRoot/Server.log","-ProjectJDOutput=$runRoot/Server","-tracefile=$runRoot/Server.utrace","-UserDir=$runRoot/ServerUser/")
 if ($AllRelevant) { $serverArgs += '-ProjectJDAllRelevant' }
 if ($ParallelNet) {
     $serverArgs += @(
@@ -72,7 +72,7 @@ while (!(Test-Path "$runRoot/Server.log") -or !(Select-String -LiteralPath "$run
     Start-Sleep -Milliseconds 500
 }
 $clients = @(1..$ClientCount | ForEach-Object {
-    Start-Fixture ($common + @("127.0.0.1:$Port","-ABSLOG=$runRoot/Client$_.log","-ProjectJDOutput=$runRoot/Client$_","-tracefile=$runRoot/Client$_.utrace"))
+    Start-Fixture ($common + @("127.0.0.1:$Port","-ABSLOG=$runRoot/Client$_.log","-ProjectJDOutput=$runRoot/Client$_","-tracefile=$runRoot/Client$_.utrace","-UserDir=$runRoot/Client${_}User/"))
 })
 # Retain all handles before waiting for the first process. Clients may finish
 # while the server wait is still in progress.

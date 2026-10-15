@@ -1,0 +1,79 @@
+{
+  "recorded_utc": "2026-10-15T02:01:39.235014+00:00",
+  "active_scope_ko": "소스·아키텍처 정리",
+  "changes": [
+    {
+      "area": "Player 초기화/미사용 상태",
+      "actual_change_ko": "Base가 null로 초기화한 ASC/EquipmentManager에 대한 무효 constructor 조건과 private 비반영 bAppliedCombatModeTag 제거",
+      "retained_contract_ko": "PS 권위·NPC local 지원·reflected 포인터 유지"
+    },
+    {
+      "area": "Retarget 기본값",
+      "actual_change_ko": "constructor16개 중복 대입을 제거하고 header 초기값 한 곳을 기준으로 사용",
+      "retained_contract_ko": "property 이름/metadata·BP override·NativeInitializeAnimation 재초기화 유지"
+    },
+    {
+      "area": "Sprint landing",
+      "actual_change_ko": "private no-op helper의 선언/유일호출/빈정의 제거; 동작 설명은 호출자에 유지",
+      "retained_contract_ko": "Sprint 해제는 선택된 landing pose를 바꾸지 않고 정상 완료를 기다림"
+    },
+    {
+      "area": "Inventory 소비",
+      "actual_change_ko": "ConsumeItemStack을 양수 guard→기존 AddItemStackCount→SetItemStackCount로 수렴",
+      "retained_contract_ko": "int64 경계·authority·lock/장비lock·마지막 제거·snapshot delegate 한 번 유지"
+    },
+    {
+      "area": "Quest admission",
+      "actual_change_ko": "AllowRequest→CanMutate가 이미 보장하는 중복 bChanging 분기 제거",
+      "retained_contract_ko": "GT 재진입 차단·claim commit/XP/rollback·rate gate 유지"
+    },
+    {
+      "area": "Mount eligibility",
+      "actual_change_ko": "단일 caller의 private 전달 함수를 제거하고 canonical eligibility 직접 사용",
+      "retained_contract_ko": "공개 eligibility·서버 최종승인·권위/거절 의미 유지"
+    },
+    {
+      "area": "Flight tag helper",
+      "actual_change_ko": "미사용 PreviousState 인자만 제거",
+      "retained_contract_ko": "K2/OnRep PreviousState·enum/CMC/tag/cue/충돌 완료 구분 유지"
+    },
+    {
+      "area": "Pool policy",
+      "actual_change_ko": "다른 두 정수 조건이 포함하는 MaxRetainedCount 음수 검사 제거",
+      "retained_contract_ko": "승인 집합·공개 registry·serialized 정책 유지"
+    },
+    {
+      "area": "Default attributes validator",
+      "actual_change_ko": "positive 검사가 이미 담당하는 MaxHealth/MaxMana 중복 nonnegative 진단 제거",
+      "retained_contract_ko": "유효/무효 집합·다른4값·clamp warning 유지"
+    },
+    {
+      "area": "HUD 구독",
+      "actual_change_ko": "InitializeScreen에서 이전 model의 split 구독을 대입 전에 반환",
+      "retained_contract_ko": "새 model/다른 subscriber 보존·public API 유지"
+    },
+    {
+      "area": "ViewModel 상태 발행",
+      "actual_change_ko": "HUD의 안내/취소3경로 직접 status 작성/broadcast를 Model.SetLocalStatus로 귀속",
+      "retained_contract_ko": "pending 서버 요청 상태는 local 안내로 덮지 않음·BP read/OnChanged 유지"
+    },
+    {
+      "area": "UI 입력 수명",
+      "actual_change_ko": "old map/tag/원래pawn을 callback 전에 분리·소비; 기존 bEnding을 EndPlay 첫 callback 전에 게시",
+      "retained_contract_ko": "same-slot 새press·현재pawn receipt 보존, 종료 후 신규입력 거절·operation pins·GAS/alias façade 유지"
+    }
+  ],
+  "verification": "StructureCleanupVerification.json",
+  "scope_checkpoint_complete": true,
+  "whole_project_audit_complete": false,
+  "deferred_ko": [
+    "CPU/GPU 원인·반복 ABBA/단계 trace",
+    "대규모 부하·원격·전수 시각/pose/오디오 품질",
+    "기존 미재현 후보의 전수 수정·운영 서비스/DB/auth/fencing 설치"
+  ],
+  "remaining_ko": [
+    "다른 pawn/profile 교체·arbitrary ability/avatar/GC epoch와 notify batch 등 기존 미재현 후보",
+    "legacy equipment RPC admission 정책 차이·default grant namespace 후보·editor transaction/partial-save 실패 계약",
+    "실제 BP/ABP/DA/DT/Chooser/IA/IMC 전수 그래프·환경 미검증. 제거하지 않은 reflected/serialized 계약은 유지"
+  ]
+}

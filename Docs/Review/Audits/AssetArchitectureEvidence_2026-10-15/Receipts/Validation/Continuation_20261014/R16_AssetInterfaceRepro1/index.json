@@ -1,0 +1,105 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "FAEA52194F23A29671EF4DB8690E4285",
+			"instanceName": "DESKTOP-5T07C91-25596",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-02.19.45",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.06995140016078949,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AuthoredCombatInterface",
+			"fullTestPath": "ProjectJ.AssetArchitecture.AuthoredCombatInterface",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"FAEA52194F23A29671EF4DB8690E4285"
+			],
+			"duration": 0.06995140016078949,
+			"dateTime": "2026.10.15-02.19.45",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(418): 1 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-02.19.45"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reflected interface uses progression authority' to be 12, but it was 0.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JAuthoredCombatInterfaceTests.cpp",
+					"lineNumber": 63,
+					"timestamp": "2026.10.15-02.19.45"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Reflected interface observes zero health' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JAuthoredCombatInterfaceTests.cpp",
+					"lineNumber": 72,
+					"timestamp": "2026.10.15-02.19.45"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Missing socket falls back to actual actor location' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JAuthoredCombatInterfaceTests.cpp",
+					"lineNumber": 77,
+					"timestamp": "2026.10.15-02.19.45"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Existing primary-mesh socket follows mesh location' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JAuthoredCombatInterfaceTests.cpp",
+					"lineNumber": 81,
+					"timestamp": "2026.10.15-02.19.45"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		}
+	]
+}

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JGameMode.h"
+#include "Engine/World.h"
 #include "Project_JGameState.h"
 #include "Project_JPlayerState.h"
 #include "GameFramework/PlayerController.h"

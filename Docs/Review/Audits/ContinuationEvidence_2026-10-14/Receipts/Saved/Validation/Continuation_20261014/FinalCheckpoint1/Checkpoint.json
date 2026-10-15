@@ -1,0 +1,68 @@
+{
+  "utc": "2026-10-14T13:47:18.365790+00:00",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "expected_handoff_commit_matches": true,
+  "source_version": "CA01_13_Integrated1",
+  "checked_game_source_files": 636,
+  "source_mismatches": [],
+  "editor_artifacts": 9,
+  "editor_mismatches": [],
+  "preserved": [
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/Animation_Logic/RTG_Greatsword_UE5.uasset",
+      "matches": true
+    },
+    {
+      "path": "Docs/Handoffs/WholeProjectAudit_2026-10-13/Project_J_Whole_Project_Audit_Handoff_2026-10-13.md",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMB2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LMBRMB.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_LR2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_Q2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_R.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB1.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_RMB2.uasset",
+      "matches": true
+    },
+    {
+      "path": "Content/DataAssetSets/AttackDefinition/GreatSword/DA_Attack_Greatsword_T.uasset",
+      "matches": true
+    }
+  ],
+  "content_git_changes": "",
+  "whole_project_complete": false,
+  "scope_ko": "현재 Git/실제 compiled source·Editor9 복원·보존13·Content diff 확인. Scripts/문서 변경은 compile된 runtime 코드 변경과 분리. 전체 감사 완료나 미확인 접근/운영 증거가 아님."
+}

@@ -1,5 +1,7 @@
 # GASP ↔ Project_J Locomotion / State Controller 대응표
 
+2026-10-15 에셋 정리: 테스트용 `ABP_Player`는 유지하며 MM 노드의 Initial/BecomeRelevant/Update/StateUpdated에 연결됐던 중복 `OnUpdate` setter를 제거했다. generated MM 노드의 primary+companion 및 문맥별 interrupt는 기존 native proxy가 소유한다. BP가 single DB·고정 invalidate를 매 갱신 덮어쓰지 않는다. 기존 pose 그래프/노드/핀과 DB getter는 유지했다. [실제 재현·집중65·Cook 및 범위 제한](../../Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)을 확인한다. OTM/Strafe·Run/Sprint·단발/MM·Land·.35초/100cm/3도/85% 계약은 동일하다.
+
 > **2026-09-22 Skeleton Retargeting Standard:** GASP(`SK_UEFN_Mannequin`) 애니메이션의 Project_J 표준 스켈레톤(`SK_Mannequin`) 호환 및 본 트랜슬레이션 리타기팅 규칙은 [`HumanoidSkeletonRetargetingStandards.md`](../Authoring/HumanoidSkeletonRetargetingStandards.md)를 따른다.
 
 > **2026-08-24 Pivot architecture correction (takes precedence):** GASP에는
@@ -676,3 +678,11 @@ the current native contract is F/B/LL/LR/RL/RR with static bias.
    - `OffsetRootRotationMode` returns `Interpolated` (2) during TIP and `Release` (3) otherwise.
    - `TurnInPlaceSteeringAlpha` returns `1.0` during TIP and `0.0` otherwise.
    - `PhaseFamily::Start`, `Pivot`, and `TurnInPlace` oneshots are active in Strafe mode.
+
+## 입력 연결과 semantic 방향 소유권 — 2026-10-15
+
+PlayerInputBinding의 각 owned action은 원래 pawn/device/binding revision을 동기 실행에서 다시 대조한다. EnhancedInput가 이미 복사한 이전 delegate는 binding 해제 뒤에도 전달될 수 있으므로 최신 연결의 상태를 읽어 새 pawn으로 전달하지 않는다. 정상 새 입력의 value와 기존 native 핸들러를 유지하며 component가 보유한 handle로만 해제한다. semantic 방향은 현재 눌린 최대4 방향의 순서 하나에서 산출한다. 같은 Started는 순서를 갱신하지 않고 Completed/Canceled는 중복 해제가 가능하다. 반대 방향은 가장 나중에 실제로 누른 방향이 우선이며 winner 해제 뒤 아직 눌린 방향을 사용한다. 이 상태는 cosmetic Pivot의 입력이며 CMC/raw input·복제·MM 이동 권위를 대체하지 않는다. OTM/Strafe·Run/Sprint·단발/MM 복귀·Land·측면 후보 및 지속 곡선 .35초/100cm/3도/85% 기준은 유지한다. [명시 수정 범위·집중 회귀와 미완료 경계](../../Review/Audits/Project_J_Continuation_Audit_2026-10-15.md)를 참조한다.
+
+### 2026-10-15 구조 정리 유지 계약
+
+Sprint 해제의 private 무동작 helper만 제거했다. 선택된 Sprint landing pose는 정상 landing 완료가 현재 입력으로 Idle/Locomotion을 결정할 때까지 유지하며 관련 authored timer/receipt를 우회하지 않는다. Retarget 기본값은 header 한 곳으로 통일하고 native reinitialize·owner/GT snapshot/worker·BP property/Chooser mirrors는 보존한다. OTM/Strafe·Run/Sprint·단발/MM·Land·측면 후보 및 .35초/100cm/3도/85% 기준은 동일하다. 이번 소스 정리의 native 집중 회귀를 전수 최종 pose/시각 품질 완료로 해석하지 않는다.

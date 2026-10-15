@@ -1,0 +1,99 @@
+{
+  "utc": "2026-10-15T02:50:07.997219+00:00",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "actual_cleanup_ko": [
+    "BP_GreatSword 상수 인터페이스 override3개→부모 native 권위",
+    "테스트 ABP_Player 네 MM callback 바인딩+중복 single-DB setter→기존 native proxy",
+    "제작 script 중복 기본값→기존 native CDO 상속"
+  ],
+  "asset_delete_count": 0,
+  "asset_added_count": 0,
+  "content_changed": [
+    "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+    "Content/Animation_Logic/ABPs/ABP_Player.uasset"
+  ],
+  "baseline_file_count": 3390,
+  "changed_existing": [
+    "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+    "Content/Animation_Logic/ABPs/ABP_Player.uasset",
+    "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+    "Source/Project_JCharacter/Private/Tests/Project_JMotionMatchingCrowdTests.cpp"
+  ],
+  "added_source": [
+    "Source/Project_J/Private/Tests/Project_JAuthoredCombatInterfaceTests.cpp"
+  ],
+  "removed_files": [],
+  "unchanged_baseline_files": 3386,
+  "incoming_user_handoff_patch_preserved": true,
+  "changed_hashes": [
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "before_sha256": "c3f95c7f2828b4ab89ae9bf86e201b8b003df811175b172ed28836f6d66e3280",
+      "after_sha256": "382d852d46bc484dad106f4fa529dc997fdf76d20213ea5e9d900293a8deef3e"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Player.uasset",
+      "before_sha256": "6b8f26ec75657895d833ba8ab2917a2433566ef11f2ad101dffdf81520a63904",
+      "after_sha256": "463026fb117fd462113375035d4c021f53bc67dba8d42ffb076544ad034ffe43"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "before_sha256": "a2d3ae5fa9dea1aba9a7dec7436e7d9157f0e736bff25e542d8b7ecd8ce18f21",
+      "after_sha256": "4061628b5300c60373501b8ef501282d5b87cb89c449a6e8f3bfe62303865499"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JMotionMatchingCrowdTests.cpp",
+      "before_sha256": "dc357d2a6cddf8ad5b9a92a2373548eaacb30d0d032d8dd6b7ed9dbcf8b01df0",
+      "after_sha256": "8bf9e360eb3096272b8b4744355c07629433befb6d2a29be948f10457e345518"
+    }
+  ],
+  "added_hashes": [
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JAuthoredCombatInterfaceTests.cpp",
+      "sha256": "f5961aab30974c60395671b7f7f0bb5a56bfec535dd35c58c4d6defab6c49706"
+    }
+  ],
+  "editor_binary_hashes": {
+    "Binaries/Win64/UnrealEditor-Project_JMMO.dll": "36b7c9d54202ef5044e25a1fa5f4d270476fa06d6c9e640ccb45844ea71a06f7",
+    "Binaries/Win64/UnrealEditor-Project_J.dll": "d8a83a7981267554e64b781188ececc5e8c7c09bd1b8835df44661b7e263ddc3",
+    "Binaries/Win64/UnrealEditor-Project_JCore.dll": "9b87b683310a8e0c30220b7a30bd6e9f33f39e26e3240c600b75034394d5b366",
+    "Binaries/Win64/UnrealEditor-Project_JGAS.dll": "ecc32d4f478cf75fee2d83b8312883d2478ababc9795ce0020f731d38bfee7ce",
+    "Binaries/Win64/UnrealEditor-Project_JMount.dll": "873a907b09c41fd4cc1129d3a16c4da177e2333930c983c04f42607041cb24ed",
+    "Binaries/Win64/UnrealEditor-Project_JCharacter.dll": "28b107a016234d8d463829e059a3c65c8f37cdfecb65c6820a98259ff537943a",
+    "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll": "228a5c48b8fddfefaff0608cd6f56b15a0d0d86176152a2913b755b565c35248",
+    "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll": "c1cb6c58c7d6d06f92c4339575e030455a372463dc086cd5f34671f332d1136d",
+    "Binaries/Win64/UnrealEditor.modules": "108dca6766d8052fa767709f547b2e75e39676dff75c3627ec863f8520e6fadf"
+  },
+  "blueprint_metadata_count": 33,
+  "listed_graphs": 111,
+  "empty_dsl_graphs_read_via_nodes": 62,
+  "node_count": 342,
+  "game_registry_count": 2735,
+  "selected_registry_metadata_count": 77,
+  "focused": {
+    "succeeded": 65,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 260.93756103515625
+  },
+  "cook": {
+    "cooked": 1363,
+    "incremental_skipped": 0,
+    "platform_skipped": 7,
+    "total": 1370
+  },
+  "both_changed_assets_in_cook_referenced_set": true,
+  "game_executable_package_remote_validated": false,
+  "whole_asset_graph_property_environment_audit_complete": false,
+  "remaining_ko": [
+    "모든 DA/GE·모든 노드 속성·동적 root의 전수 상세 대조",
+    "mobile touch 입력모드/다중 LocalPlayer·Door 제작옵션/권위·Wyvern generated tick 실행",
+    "용도 불명 (1) 제작 snapshot3개·빈 PlayerWeaponProfile·legacy Weapon1 보존",
+    "CPU/GPU·대규모 부하/원격·전수 시각품질·운영 설치 보류"
+  ],
+  "process_rule_ko": "빌드/시험/Cook 정상 종료·겹침 없음. Editor1은 읽기 완료 후 전용 유휴 창 없는 호스트만 종료, 이후 호스트2/3/4 QuitEditor 정상 exit0.",
+  "no_additional_commit_push_merge_shutdown": true
+}

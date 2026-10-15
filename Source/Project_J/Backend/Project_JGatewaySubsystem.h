@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TimerManager.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Project_JBackendConnection.h"
 #include "Project_JGatewaySubsystem.generated.h"

@@ -138,13 +138,14 @@ bool UProject_JQuestComponent::Claim(FName Id)
 		return false;
 	TGuardValue<bool> Guard(bChanging, true);
 	// Commit the claim before reward delegates fire. Repeated/reentrant requests cannot pay twice.
+	const bool bWasTracked = State->bTracked;
 	State->bClaimed = true;
 	State->bTracked = false;
 	if (Def->RewardExperience > 0 && Progression->GetNextLevelExperience() > 0 &&
 		!Progression->GrantExperience(Def->RewardExperience))
 	{
 		State->bClaimed = false;
-		State->bTracked = true;
+		State->bTracked = bWasTracked;
 		return false;
 	}
 	Publish();
@@ -176,7 +177,7 @@ void UProject_JQuestComponent::RequestTracking(FName Id, bool bTracked)
 }
 void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTracked)
 {
-	if (!AllowRequest() || bChanging)
+	if (!AllowRequest())
 		return;
 	if (auto *State = States.FindByPredicate([Id](const auto &Value) { return Value.QuestId == Id; });
 		State && !State->bClaimed)

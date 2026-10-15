@@ -1,6 +1,7 @@
 #include "Mount/Project_JFlyingMountCharacter.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Engine/World.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/AnimTypes.h"
 #include "Animation/Project_JAnimNotify_MountFlightCue.h"
@@ -11,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJFlyingMount, Log, All);
 
@@ -33,6 +35,7 @@ void AProject_JFlyingMountCharacter::BeginPlay()
 
 void AProject_JFlyingMountCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	++FlightStateRevision;
 	ClearFlightInputBindings();
 	bTakeOffRequestPending = false;
 	Super::EndPlay(EndPlayReason);
@@ -394,10 +397,13 @@ void AProject_JFlyingMountCharacter::SetFlightState(EProject_JMountFlightState N
 	}
 
 	const EProject_JMountFlightState PreviousState = FlightState;
+	const TStrongObjectPtr<AProject_JFlyingMountCharacter> KeepSelf(this);
+	const uint32 Revision = ++FlightStateRevision;
 	FlightState = NewState;
 	FlightPhaseStartServerTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
 	RefreshFlightTickEnabled();
-	ApplyFlightStateTags(PreviousState, NewState);
+	ApplyFlightStateTags(NewState);
+	if (FlightStateRevision != Revision || FlightState != NewState || !IsValid(this) || IsActorBeingDestroyed()) { return; }
 	ForceNetUpdate();
 	K2_OnFlightStateChanged(PreviousState, NewState);
 }
@@ -420,7 +426,7 @@ void AProject_JFlyingMountCharacter::OnRep_FlightState(EProject_JMountFlightStat
 	K2_OnFlightStateChanged(PreviousState, FlightState);
 }
 
-void AProject_JFlyingMountCharacter::ApplyFlightStateTags(EProject_JMountFlightState PreviousState, EProject_JMountFlightState NewState)
+void AProject_JFlyingMountCharacter::ApplyFlightStateTags(EProject_JMountFlightState NewState)
 {
 	if (!HasAuthority() || !MountAbilitySystemComponent)
 	{
@@ -428,24 +434,36 @@ void AProject_JFlyingMountCharacter::ApplyFlightStateTags(EProject_JMountFlightS
 	}
 
 	const FProject_JGameplayTags& GameplayTags = FProject_JGameplayTags::Get();
-	MountAbilitySystemComponent->RemoveProjectJLooseGameplayTag(GameplayTags.State_Mount_TakingOff);
-	MountAbilitySystemComponent->RemoveProjectJLooseGameplayTag(GameplayTags.State_Mount_AutoAscending);
-	MountAbilitySystemComponent->RemoveProjectJLooseGameplayTag(GameplayTags.State_Mount_Flying);
-	MountAbilitySystemComponent->RemoveProjectJLooseGameplayTag(GameplayTags.State_Mount_Landing);
+	const TStrongObjectPtr<AProject_JFlyingMountCharacter> KeepSelf(this);
+	const TStrongObjectPtr<UProject_JAbilitySystemComponent> ASC(MountAbilitySystemComponent);
+	const uint32 Revision = FlightStateRevision;
+	const auto IsCurrentPhase = [this, &ASC, Revision, NewState]()
+	{
+		return IsValid(this) && !IsActorBeingDestroyed() && ASC.IsValid() && !ASC->IsBeingDestroyed()
+			&& MountAbilitySystemComponent == ASC.Get() && FlightStateRevision == Revision && FlightState == NewState;
+	};
+	const FGameplayTag PhaseTags[] = { GameplayTags.State_Mount_TakingOff, GameplayTags.State_Mount_AutoAscending,
+		GameplayTags.State_Mount_Flying, GameplayTags.State_Mount_Landing };
+	for (const FGameplayTag& Tag : PhaseTags)
+	{
+		if (!IsCurrentPhase()) { return; }
+		ASC->RemoveProjectJLooseGameplayTag(Tag);
+	}
+	if (!IsCurrentPhase()) { return; }
 
 	switch (NewState)
 	{
 	case EProject_JMountFlightState::TakingOff:
-		MountAbilitySystemComponent->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_TakingOff);
+		ASC->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_TakingOff);
 		break;
 	case EProject_JMountFlightState::AutoAscending:
-		MountAbilitySystemComponent->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_AutoAscending);
+		ASC->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_AutoAscending);
 		break;
 	case EProject_JMountFlightState::Flying:
-		MountAbilitySystemComponent->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_Flying);
+		ASC->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_Flying);
 		break;
 	case EProject_JMountFlightState::Landing:
-		MountAbilitySystemComponent->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_Landing);
+		ASC->AddProjectJLooseGameplayTag(GameplayTags.State_Mount_Landing);
 		break;
 	default:
 		break;

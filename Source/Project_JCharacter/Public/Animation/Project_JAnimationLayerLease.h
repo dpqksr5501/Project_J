@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Templates/SubclassOf.h"
 #include "Engine/StreamableManager.h"
 #include "Project_JAnimationLayerLease.generated.h"
 

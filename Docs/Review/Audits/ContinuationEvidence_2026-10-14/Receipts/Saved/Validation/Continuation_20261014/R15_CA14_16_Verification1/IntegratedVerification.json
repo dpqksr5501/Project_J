@@ -1,0 +1,123 @@
+{
+  "utc": "2026-10-14T20:22:39.567362+00:00",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "version": "R15_CA14_16_Integrated1",
+  "runtime_count": 638,
+  "runtime_mismatches": [],
+  "editor_count": 9,
+  "editor_mismatches": [],
+  "preserved_count": 13,
+  "preserved_mismatches": [],
+  "user_handoff_diff_preserved": true,
+  "content_git_diff_empty": true,
+  "whole_regression": {
+    "succeeded": 361,
+    "succeededWithWarnings": 20,
+    "failed": 0,
+    "notRun": 0,
+    "inProcess": 0,
+    "totalDuration": 669.6118774414062
+  },
+  "whole_regression_process": {
+    "exitCode": 0,
+    "hasExited": true,
+    "nativeHandleCapturedBeforeWait": true
+  },
+  "game_process": {
+    "exitCode": 0,
+    "elapsedSeconds": 190.0967377,
+    "directUBT": true,
+    "target": "Project_J",
+    "moduleScope": "",
+    "fullTarget": true
+  },
+  "game_identity": {
+    "editor_frozen_version": "R15_CA14_16_Integrated1",
+    "actual_game_source_matches_frozen": true,
+    "checked_sources": 638,
+    "mismatches": [],
+    "artifacts": [
+      {
+        "path": "Binaries/Win64/Project_J.exe",
+        "bytes": 346918400,
+        "sha256": "c0d8eb6bdba9fc196615c54ec7c44849aa1b1851de6176c5eca4965f0268e3b8"
+      },
+      {
+        "path": "Binaries/Win64/Project_J.pdb",
+        "bytes": 434884608,
+        "sha256": "0851fd79e80e5b3d5550d51fbfebee81961e0b2f0b24ca6a16ee9f42a7211078"
+      },
+      {
+        "path": "Binaries/Win64/Project_J.target",
+        "bytes": 116686,
+        "sha256": "62e1088858a868953fb96f7aeddd45f79552402a0c1d983e259f89b093322603"
+      }
+    ],
+    "scope_ko": "직접 UBT Game 성공 뒤 실제 exe/pdb/target SHA와 frozen Source/Config/descriptor 대응. Editor-only branch와 모든 Cook/runtime 품질 완료는 별도."
+  },
+  "cook_process": {
+    "exitCode": 0,
+    "hasExited": true,
+    "output": "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/R15_Cook2/Cooked",
+    "scope": "Windows default map + Entry + configured AssetManager/AlwaysCook closure. Prior Saved/Cooked and packages are preserved. Not CookAll unused assets."
+  },
+  "package_process": {
+    "exitCode": 0,
+    "scope": "Stage/package only: direct UBT and separate Cook; unique directory, prior stages preserved."
+  },
+  "package_identity": {
+    "game": "R15_GameBuild2",
+    "cook": "R15_Cook2",
+    "stage": "R15_Package3",
+    "source_version": "R15_CA14_16_Integrated1",
+    "source_matches_frozen": true,
+    "packaged_game": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/Project_J.exe",
+    "sha256": "c0d8eb6bdba9fc196615c54ec7c44849aa1b1851de6176c5eca4965f0268e3b8",
+    "matches_direct_ubt_game": true,
+    "scope_ko": "실제 packaged native exe와 direct UBT Game SHA 대조. bootstrap exe와 구분. 별도 configured Cook closure이며 CookAll·실제 실행/시각·원격·전체 감사 완료를 증명하지 않는다."
+  },
+  "cooked_combat": {
+    "process": {
+      "exitCode": 0
+    },
+    "result": "success=1\ncooked=1\ncycles=3\nreason=Three real input/GAS/montage/notify/unequip cycles; native character with authored visuals"
+  },
+  "editor_remote": {
+    "passed": true,
+    "results": [
+      {
+        "file": "Server/server.json",
+        "success": true,
+        "reason": "Five AOI/FastArray stages and graceful disconnect passed"
+      },
+      {
+        "file": "Client1/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      },
+      {
+        "file": "Client2/client.json",
+        "success": true,
+        "reason": "Server completed connection/AOI/FastArray assertions"
+      }
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "nativeHandleCapturedBeforeWait": true,
+    "timeouts": 0,
+    "startupPythonErrors": [],
+    "note": "Fixture assertions and exit codes are authoritative. Engine ToolsetRegistry Python startup errors, if present, are recorded separately; a passing fixture does not mean the whole log is clean."
+  },
+  "scope_ko": "CA14–16 현재 source·Editor·Game·configured Cook/package·actual combat3cycles·Editor dedicated server 및 실제 socket2/NPC200/lag40/loss2. 전체 소스/에셋 정밀 감사·CookAll·WAN·native Server target·200 sockets·close-up 품질 완료가 아님.",
+  "whole_project_complete": false,
+  "pending_ko": [
+    "전체 시스템 소스/호출/소유권·에셋 상세 범위",
+    "NPC IsDead/공격 취소/결과 callback 수명",
+    "uninitialized progression와 migration adapter",
+    "원래 CPU 증가·render 차이 및 hand/cloth 품질·실제 socket 확장"
+  ]
+}

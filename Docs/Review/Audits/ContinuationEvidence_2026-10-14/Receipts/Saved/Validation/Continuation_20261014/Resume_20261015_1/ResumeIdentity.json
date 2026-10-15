@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-14T17:24:35.917101+00:00",
+  "client_date": "2026-10-15",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "runtime_count": 636,
+  "runtime_mismatches": [],
+  "editor_mismatches": [],
+  "preserved_mismatches": [],
+  "user_handoff_diff_preserved": true,
+  "scope_ko": "재개 당시 실제 기준점·runtime636·Editor9·보존13/user diff 대조. 별도 AdaptiveEcosystem 작업은 이 저장소 변경으로 추정하지 않으며 실제 Git/source에 나타난 영향만 대조. 전체 감사 미완료."
+}

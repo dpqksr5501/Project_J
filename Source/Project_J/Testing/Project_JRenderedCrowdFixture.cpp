@@ -1,4 +1,5 @@
 #include "Testing/Project_JRenderedCrowdFixture.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Project_JAbilitySystemComponent.h"

@@ -1,0 +1,21 @@
+{
+  "baseline": "WholeContinuation4",
+  "current": "WholeContinuation5",
+  "missing_old_tests": [],
+  "new_tests": [
+    "ProjectJ.Animation.SharedNotifyLifecycle",
+    "ProjectJ.Continuation.ActiveMoveReentry",
+    "ProjectJ.Continuation.FacingInstallerPreflightAtomic",
+    "ProjectJ.Continuation.HandoverConfiguration",
+    "ProjectJ.Continuation.HandoverFiniteTick",
+    "ProjectJ.Continuation.HandoverParticipantLifetime",
+    "ProjectJ.Continuation.HandoverPayloadSnapshot",
+    "ProjectJ.Continuation.LoopbackFiniteClock",
+    "ProjectJ.Continuation.QuestRewardRollback",
+    "ProjectJ.Continuation.RouterCancelReentry",
+    "ProjectJ.Continuation.SharedNotifyGCLifetime"
+  ],
+  "warning_test_names_match": true,
+  "changed_warning_messages": {},
+  "scope_ko": "실제 automation roster·Warning message 대조. 시험 통과/동일 경고는 전수 수동 감사·모든 배포/품질 완료와 다르다."
+}

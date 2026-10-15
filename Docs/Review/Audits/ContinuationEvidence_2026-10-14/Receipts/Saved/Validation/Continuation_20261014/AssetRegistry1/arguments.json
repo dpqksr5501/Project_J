@@ -1,0 +1,15 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-run=pythonscript",
+  "-script=C:/Users/I/Documents/GitHub/Project_J/Scripts/Audit/Read-ContinuationAssetRegistry.py",
+  "-EnablePlugins=PythonScriptPlugin",
+  "-NullRHI",
+  "-unattended",
+  "-nosound",
+  "-nop4",
+  "-NoLiveCoding",
+  "-NoDDCCleanup",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AssetRegistry1/User",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/AssetRegistry1/Run.log",
+  "-UTF8Output"
+]

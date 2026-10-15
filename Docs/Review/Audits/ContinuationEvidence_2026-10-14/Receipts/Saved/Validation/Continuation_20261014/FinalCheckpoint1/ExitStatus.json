@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-14T13:56:35.1553572Z",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "active": [],
+  "nativeVersion": "CA01_13_Integrated1",
+  "wholeProjectComplete": false,
+  "scope_ko": "오늘 검증된 통합 기준점 보존 후 종료 상태. 새 commit/push/merge/컴퓨터 종료 없음. 전체 감사 및 원래 CPU/render 원인은 미완료."
+}

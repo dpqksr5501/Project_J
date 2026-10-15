@@ -8,6 +8,13 @@
 #include "ProfilingDebugging/CsvProfiler.h"
 CSV_DECLARE_CATEGORY_EXTERN(ProjectJUI);
 
+void UProject_JInventoryViewModel::SetLocalStatus(FText Message)
+{
+	if (bPending) { return; }
+	Status = MoveTemp(Message);
+	OnChanged.Broadcast();
+}
+
 void UProject_JInventoryViewModel::Bind(UProject_JInventoryComponent *InInventory,
 										UProject_JEquipmentManagerComponent *InEquipment)
 {

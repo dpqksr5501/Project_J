@@ -1,0 +1,129 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "EC5662414BDE82216D1F19AC96485E39",
+			"instanceName": "DESKTOP-5T07C91-29976",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-07.58.24",
+	"succeeded": 4,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.18988440930843353,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "EquipmentGrantIdentity",
+			"fullTestPath": "ProjectJ.Continuation.EquipmentGrantIdentity",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"EC5662414BDE82216D1F19AC96485E39"
+			],
+			"duration": 0.062672600150108337,
+			"dateTime": "2026.10.14-07.58.24",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Overlapping avatar providers retain both distinct equipment grants' to be 2, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentGrantIdentityTests.cpp",
+					"lineNumber": 43,
+					"timestamp": "2026.10.14-07.58.24"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Current definition's ability survives the previous provider release' to be not null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JEquipmentGrantIdentityTests.cpp",
+					"lineNumber": 45,
+					"timestamp": "2026.10.14-07.58.24"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "InputLeaseCallback",
+			"fullTestPath": "ProjectJ.Continuation.InputLeaseCallback",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EC5662414BDE82216D1F19AC96485E39"
+			],
+			"duration": 0.082755297422409058,
+			"dateTime": "2026.10.14-07.58.24",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MessagePayloadLifetime",
+			"fullTestPath": "ProjectJ.Continuation.MessagePayloadLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EC5662414BDE82216D1F19AC96485E39"
+			],
+			"duration": 0.028589602559804916,
+			"dateTime": "2026.10.14-07.58.24",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SharedMappingLease",
+			"fullTestPath": "ProjectJ.Maturity.Input.SharedMappingLease",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EC5662414BDE82216D1F19AC96485E39"
+			],
+			"duration": 0.0099756978452205658,
+			"dateTime": "2026.10.14-07.58.24",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReentrantSubscriptions",
+			"fullTestPath": "ProjectJ.MMO.Messaging.ReentrantSubscriptions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"EC5662414BDE82216D1F19AC96485E39"
+			],
+			"duration": 0.0058912001550197601,
+			"dateTime": "2026.10.14-07.58.24",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

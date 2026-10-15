@@ -85,6 +85,7 @@ public:
 private:
 
 	friend class UProject_JPlayerInputBindingComponent;
+	friend class FProjectJActiveMoveReentryTest;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -533,6 +534,7 @@ public:
 	virtual bool TryApplyHandoverSnapshot(const TArray<uint8>& InData) override;
 
 	virtual void SetCharacterLevel(int32 NewLevel) override;
+	virtual bool TrySetCharacterLevel(int32 NewLevel) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Profile Fallbacks", AdvancedDisplay, meta = (ClampMin = "0.0", UIMin = "0.0", ToolTip = "Fallback used only when no CharacterAnimProfile or LocomotionProfile provides movement speed."))
 	float WalkSpeed = 500.0f;
@@ -659,7 +661,6 @@ private:
 	bool bHadMoveInputForReplication = false;
 	bool bSprintInputHeld = false;
 	FVector2D SprintMoveInput = FVector2D::ZeroVector;
-	bool bAppliedCombatModeTag = false;
 	bool bWasSprintLocomotionAllowed = false;
 
 	FProject_JTurnInPlacePresentationRuntime TurnInPlacePresentationRuntime;

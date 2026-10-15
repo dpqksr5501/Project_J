@@ -1,0 +1,9 @@
+{
+  "pid": 25808,
+  "queryCompleted": true,
+  "assetEdits": false,
+  "buildRunning": false,
+  "automationRunning": false,
+  "normalWindowCloseAvailable": false,
+  "reason": "Stop only task-owned idle windowless query editor; no build or validation is interrupted."
+}

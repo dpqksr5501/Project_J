@@ -1,8 +1,16 @@
 # Project J
 
+**현재 우선 작업:** [전체 시스템의 소스·아키텍처 정리](Docs/Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md). 실제 호출/상태 소유권으로 중복·무동작 코드·책임 혼재를 정리하고 영향 기능을 집중 회귀합니다. 성능·운영·품질 문제의 전수 해결은 최신 요청에 따라 보류합니다.
+
 ### Unreal Engine 5.8 · C++ · Third-person Action MMORPG Prototype
 
+**BP·DA 후속 정리:** [실제 에셋의 호출·소유권·테스트/제작 역할](Docs/Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)을 대조했습니다. 미참조 에셋을 일괄 삭제하지 않고, BP의 상수 상태 override와 MM 중복 writer를 기존 native 계약으로 귀속했습니다. 전체 에셋/환경 정밀 검증과 구분합니다.
+
 남은 전체 감사·개선과 누락 점검은 [2026-10-14 계속 작업 인계](Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md)에서 이어갑니다. 최신 커밋 기준점·전체 파일 목록·반복 방지·검토/수정/미검증 구분과 완료 기준을 포함합니다.
+
+**계속 작업 진행:** 실제 기준점은 `855a1c8e`이며 RA27와 에셋을 보존합니다. follower·무기 숫자·장비 GAS·입력·인계·제작 graph·공유 notify를 시스템 단위로 개선하고 집중 회귀로 검증합니다. [시스템별 실제 변경·명시 검토 범위·원자료·남은 검증](Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)을 확인하세요. 전체 상세 감사와 원래 CPU·렌더 차이 조사는 미완료입니다.
+
+**2026-10-15 계속 작업:** [진행·인계·NPC 콜백 소유권·표시 수요·입력 상태 검토](Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-15.md)의 CA14–18은 통합389·Game/Cook/패키지·실제 전투·socket2/NPC200 회귀를 통과했습니다. 전체 상세 감사와 CPU 전체 증가·렌더 차이는 미완료이며, 후속 수정은 이 통합 기준점과 분리합니다.
 
 **전수 범위 재점검 — 2026-10-14:** RA01–27의 실제64개 텍스트 변경과 빈 중복 장비 DA2개 정리를 기능별로 기록했습니다. 최신 native352개(332 clean·20 warning, 실패/미실행0), 실제 index 새 프로세스3회, 원격2접속·NPC200 반복3회, production Game/Cook/패키지·피해·전투·UI·실제 표시200 검증을 확인했습니다. 기존 사용자 리타깃/Body/RTG·공격 DA 교정과 지속 곡선 기본값을 보존했습니다. **모든 함수·에셋 전수 정밀 완료나 CPU 증가 해결 완료는 아닙니다.** [현재 검증 결과](Docs/Review/Audits/Project_J_Reaudit_Verification_2026-10-14.md)·[상태 지도](Docs/Review/Audits/Project_J_Reaudit_Map_2026-10-14.md)·[상세 결과와 남은 문제](Docs/Review/Audits/Project_J_Reaudit_Remaining_2026-10-14.md)에 실제 수정/검토/미검증을 구분합니다. 아래 DS01–18 결과는 당시 변경본의 기록입니다.
 

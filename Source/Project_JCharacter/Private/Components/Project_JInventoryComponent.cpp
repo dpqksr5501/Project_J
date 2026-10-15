@@ -230,29 +230,9 @@ bool UProject_JInventoryComponent::AddItemStackCount(FGuid InstanceId, int32 Del
 bool UProject_JInventoryComponent::ConsumeItemStack(FGuid InstanceId, int32 CountToConsume)
 {
 	check(IsInGameThread());
-	if (!HasMutationAuthority())
-	{
-		return false;
-	}
-
-	if (CountToConsume <= 0)
-	{
-		return false;
-	}
-
-	const int32 FoundIndex = FindItemIndex(InstanceId);
-	if (FoundIndex == INDEX_NONE)
-	{
-		return false;
-	}
-
-	const int32 CurrentStackCount = InventoryArray.Items[FoundIndex].ItemInstance.StackCount;
-	if (CurrentStackCount < CountToConsume)
-	{
-		return false;
-	}
-
-	return SetItemStackCount(InstanceId, CurrentStackCount - CountToConsume);
+	// Positive consumption is a decrement through the common checked mutator.
+	// Reject before negation (including MIN_int32); zero is not a lookup request.
+	return CountToConsume > 0 && AddItemStackCount(InstanceId, -CountToConsume);
 }
 
 bool UProject_JInventoryComponent::SetItemInstanceLocked(FGuid InstanceId, bool bLocked, bool bEquipped)

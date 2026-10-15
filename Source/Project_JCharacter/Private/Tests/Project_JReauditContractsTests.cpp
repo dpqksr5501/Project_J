@@ -1,5 +1,6 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Engine/SkeletalMesh.h"
 #include "Misc/ScopeExit.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -20,6 +21,7 @@
 #include "Tests/Project_JMountLifecycleFixture.h"
 #include "Project_JGameplayTags.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -544,13 +546,16 @@ bool FProjectJMountActorPlayReuseTest::RunTest(const FString&)
     ON_SCOPE_EXIT {World->EndPlay(EEndPlayReason::Quit);World->DestroyWorld(false);GEngine->DestroyWorldContext(World);};
     World->InitializeActorsForPlay(FURL());World->GetWorldSettings()->NotifyBeginPlay();World->GetWorldSettings()->NotifyMatchStarted();
     auto* Rider=World->SpawnActor<AProject_JPlayerMaturityASCFixture>();
-    auto* Controller=World->SpawnActor<APlayerController>();Controller->Possess(Rider);
+    auto* Controller=World->SpawnActor<APlayerController>();
+    auto* ControllerState=World->SpawnActor<APlayerState>();
+    Controller->SetPlayerState(ControllerState);ControllerState->SetOwner(Controller);Controller->Possess(Rider);
     auto* ASC=NewObject<UProject_JAbilitySystemComponent>(Rider);ASC->RegisterComponent();ASC->InitAbilityActorInfo(Rider,Rider);Rider->CurrentASC=ASC;
     auto* Mounting=NewObject<UProject_JMountComponent>(Rider);Rider->AddInstanceComponent(Mounting);Mounting->RegisterComponent();
     auto* Mount=World->SpawnActor<AProject_JMountLifecycleFixture>();
     if(!TestTrue(TEXT("Initial mount actor accepts an actual rider"),Mounting->RequestMount(Mount))){return false;}
     Mount->RouteEndPlay(EEndPlayReason::RemovedFromWorld);
     TestFalse(TEXT("Mount removal retires the rider relationship"),Mounting->IsMounted());
+    TestTrue(TEXT("A player controller with persistent state survives stream removal"),IsValid(Controller));
     Mount->DispatchBeginPlay(true);Controller->Possess(Rider);ASC->InitAbilityActorInfo(Rider,Rider);
     TestTrue(TEXT("The same returned mount actor accepts a new rider lease"),Mounting->RequestMount(Mount));
     return true;

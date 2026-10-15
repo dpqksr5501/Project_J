@@ -3,6 +3,7 @@
 #include "System/Project_JMessageSubsystem.h"
 
 #include "Project_JCore.h"
+#include "UObject/StrongObjectPtr.h"
 
 void UProject_JMessageSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -28,6 +29,8 @@ void UProject_JMessageSubsystem::BroadcastMessage(FGameplayTag Channel, UObject*
 
 	if (FProject_JMessageDelegate* DelegatePtr = ListenerMap.Find(Channel))
 	{
+		TStrongObjectPtr<UProject_JMessageSubsystem> ThisDispatch(this);
+		TStrongObjectPtr<UObject> PayloadDispatch(Payload);
 		// Listeners may register another channel (rehashing ListenerMap), clear a
 		// channel, or tear down this subsystem. Snapshot this dispatch's listeners.
 		const FProject_JMessageDelegate Snapshot = *DelegatePtr;

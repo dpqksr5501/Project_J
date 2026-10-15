@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"returnValue\":\"{\\\"asset\\\": \\\"/Game/Character_BPs/GreatSword/BP_GreatSword\\\", \\\"removed\\\": {\\\"IsDead\\\": \\\"(fn IsDead ()\\\\n  (return false))\\\", \\\"GetCombatSocketLocation\\\": \\\"(fn GetCombatSocketLocation (SocketName)\\\\n  (return \\\\\\\"0, 0, 0\\\\\\\"))\\\", \\\"GetCharacterLevel\\\": \\\"(fn GetCharacterLevel ()\\\\n  (return 0))\\\"}, \\\"retained_graphs\\\": {\\\"UserConstructionScript\\\": \\\"(fn ConstructionScript ()\\\\n  (bind _greatsword (Variables|Default|GetGreatsword))\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetCloak) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetFoot) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetHand) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetInner) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetSho) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetUpper) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetHel) _greatsword)\\\\n  (ModularMesh|AttachAndSetLeader (Variables|Default|GetLower) _greatsword))\\\", \\\"EventGraph\\\": \\\"(event Collision|EventActorBeginOverlap (OtherActor))\\\\n\\\\n(event EventBeginPlay)\\\\n\\\\n(event EventTick (DeltaSeconds))\\\"}, \\\"cdo_field_count\\\": 183, \\\"cdo_equal\\\": true, \\\"save\\\": true, \\\"after_graphs\\\": [{\\\"refPath\\\": \\\"/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:UserConstructionScript\\\"}, {\\\"refPath\\\": \\\"/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword:EventGraph\\\"}], \\\"scope_ko\\\": \\\"BP override3\\\\uac1c\\\\ub9cc \\\\uc81c\\\\uac70. \\\\ubd80\\\\ubaa8 native state owner\\\\ub97c \\\\uc7ac\\\\uc0ac\\\\uc6a9. \\\\uc5d0\\\\uc14b \\\\uc0ad\\\\uc81c/\\\\uc774\\\\ub984\\\\u00b7ID \\\\ubcc0\\\\uacbd \\\\uc5c6\\\\uc74c.\\\"}\"}"
+      }
+    ]
+  }
+}

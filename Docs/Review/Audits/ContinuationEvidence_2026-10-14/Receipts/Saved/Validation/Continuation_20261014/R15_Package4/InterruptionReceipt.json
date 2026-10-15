@@ -1,0 +1,11 @@
+{
+  "normalCompletion": false,
+  "exitCode": null,
+  "status": "InterruptedHostSession",
+  "stage": "R15_Package4",
+  "lastLogTime": "2026-10-15T06:29:16+09:00",
+  "lastBootUpTime": "2026-10-15T06:32:17+09:00",
+  "evidence": "HostSessionEvents.json",
+  "reason_ko": "Windows System1074에서 MoUsoCoreWorker의06:29:19 및 TrustedInstaller의06:31:57 예정된 운영체제 업데이트 재시작 확인. 원 실행의 정상 완료·성공을 추정하지 않으며 원 Stage.log/arguments와 부분 산출물을 보존. 에이전트가 종료한 기록이 아님.",
+  "recovery": "R15_Package5: same verified Game3/Cook3, package only, no rebuild/no recook"
+}

@@ -6,9 +6,21 @@
 #include "Project_J.h"
 #include "Async/Async.h"
 #include "Misc/ScopeExit.h"
+#include "UObject/StrongObjectPtr.h"
+
+bool UProject_JHandoverManager::HasValidTimingConfiguration() const
+{
+	// Config metadata is authoring guidance; ini/native input still needs the
+	// same admission contract. Finite zero explicitly disables the age limit.
+	return FMath::IsFinite(MaxEnvelopeAgeSeconds) && MaxEnvelopeAgeSeconds >= 0.0f &&
+		FMath::IsFinite(AckTimeoutSeconds) && AckTimeoutSeconds >= 0.05f &&
+		FMath::IsFinite(RetryDelaySeconds) && RetryDelaySeconds >= 0.0f &&
+		FMath::IsFinite(TerminalRecordTtlSeconds) && TerminalRecordTtlSeconds >= 1.0f;
+}
 
 void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 {
+	++LifetimeRevision;
 	Super::Initialize(Collection);
 	bShuttingDown = false;
 	TickHandle = FTSTicker::GetCoreTicker().AddTicker(
@@ -17,17 +29,20 @@ void UProject_JHandoverManager::Initialize(FSubsystemCollectionBase& Collection)
 
 void UProject_JHandoverManager::Deinitialize()
 {
+	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	++LifetimeRevision;
 	bShuttingDown = true;
 	FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
 	// Detach state before cancellation can invoke a transport completion.
 	auto OldStates = MoveTemp(HandoverStates);
 	auto OldTransport = MoveTemp(Transport);
+	AppliedTransferIds.Reset();
+	ApplyingTransferIds.Reset();
 	if (OldTransport)
 	{
 		for (const auto& Pair : OldStates) { OldTransport->Cancel(Pair.Key); }
 	}
-	AppliedTransferIds.Reset();
-	ApplyingTransferIds.Reset();
 	Super::Deinitialize();
 }
 
@@ -68,10 +83,15 @@ bool UProject_JHandoverManager::StartEnvelopeTransfer(const FProject_JHandoverEn
 EProject_JHandoverAdmission UProject_JHandoverManager::StartEnvelopeTransferChecked(const FProject_JHandoverEnvelope& Envelope, AActor* SourceActor)
 {
 	check(IsInGameThread());
-	if (bShuttingDown || !Envelope.TransferId.IsValid())
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	if (bShuttingDown || !Envelope.TransferId.IsValid() || !HasValidTimingConfiguration())
 	{
 		return bShuttingDown ? EProject_JHandoverAdmission::Closed : EProject_JHandoverAdmission::Invalid;
 	}
+	if (SourceActor && (!IsValid(SourceActor) || SourceActor->IsActorBeingDestroyed() || !SourceActor->HasAuthority()))
+	{ return EProject_JHandoverAdmission::Invalid; }
+	TStrongObjectPtr<AActor> PinnedSource(SourceActor);
+	const uint64 Revision = LifetimeRevision;
 	if (HandoverStates.Contains(Envelope.TransferId))
 	{
 		return EProject_JHandoverAdmission::Duplicate;
@@ -116,6 +136,7 @@ EProject_JHandoverAdmission UProject_JHandoverManager::StartEnvelopeTransferChec
 	const FGuid TransferId = Envelope.TransferId;
 	SetRecordState(Record, EProject_JHandoverState::Preparing);
 	// Notifications can cancel, add records (rehashing the map), or shut down.
+	if (bShuttingDown || Revision != LifetimeRevision) { return EProject_JHandoverAdmission::Closed; }
 	if (GetHandoverState(TransferId) == EProject_JHandoverState::Preparing)
 	{
 		DispatchTransfer(TransferId);
@@ -151,6 +172,8 @@ bool UProject_JHandoverManager::GetHandoverRecord(const FGuid& TransferId, FProj
 
 void UProject_JHandoverManager::CancelHandover(AActor* Actor)
 {
+	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	if (!Actor)
 	{
 		return;
@@ -172,6 +195,8 @@ void UProject_JHandoverManager::CancelHandover(AActor* Actor)
 
 void UProject_JHandoverManager::CancelHandoverByTransferId(const FGuid& TransferId)
 {
+	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	FProject_JHandoverRecord* Record = HandoverStates.Find(TransferId);
 	if (!Record ||
 		Record->State == EProject_JHandoverState::Completed ||
@@ -192,33 +217,40 @@ bool UProject_JHandoverManager::BuildEnvelope(
 	const FString& TargetServerNodeId,
 	FProject_JHandoverEnvelope& OutEnvelope) const
 {
+	check(IsInGameThread());
+	if (bShuttingDown || !HasValidTimingConfiguration() || !IsValid(ActorToHandover) || ActorToHandover->IsActorBeingDestroyed() || !ActorToHandover->HasAuthority()) return false;
+	TStrongObjectPtr<UProject_JHandoverManager> PinnedThis(const_cast<UProject_JHandoverManager*>(this));
+	TStrongObjectPtr<AActor> PinnedActor(ActorToHandover);
+	const uint64 Revision = LifetimeRevision;
 	IProject_JHandoverSerializable* SerializableActor = Cast<IProject_JHandoverSerializable>(ActorToHandover);
 	if (!SerializableActor || TargetServerNodeId.IsEmpty())
 	{
 		return false;
 	}
 
-	TArray<uint8> Payload;
-	SerializableActor->SerializeForHandover(Payload);
-	if (Payload.Num() > FMath::Max(1, MaxPayloadBytes))
+	FProject_JHandoverEnvelope Candidate;
+	Candidate.ActorClassPath = ActorToHandover->GetClass()->GetPathName();
+	Candidate.SourceNodeId = LocalNodeId;
+	Candidate.TargetNodeId = TargetServerNodeId;
+	SerializableActor->SerializeForHandover(Candidate.Payload);
+	if (bShuttingDown || Revision != LifetimeRevision || !IsValid(ActorToHandover) || ActorToHandover->IsActorBeingDestroyed() ||
+		!ActorToHandover->HasAuthority() || Candidate.SourceNodeId != LocalNodeId || Candidate.Payload.Num() > FMath::Max(1, MaxPayloadBytes))
 	{
 		return false;
 	}
 
-	OutEnvelope.Version = 1;
-	OutEnvelope.TransferId = FGuid::NewGuid();
-	OutEnvelope.ActorClassPath = ActorToHandover->GetClass()->GetPathName();
-	OutEnvelope.Payload = MoveTemp(Payload);
-	OutEnvelope.Timestamp = FDateTime::UtcNow();
-	OutEnvelope.SourceNodeId = LocalNodeId;
-	OutEnvelope.TargetNodeId = TargetServerNodeId;
-	OutEnvelope.PayloadChecksum = CalculatePayloadChecksum(OutEnvelope.Payload);
-	return ValidateEnvelope(OutEnvelope) == EProject_JHandoverValidationFailure::None;
+	Candidate.TransferId = FGuid::NewGuid();
+	Candidate.Timestamp = FDateTime::UtcNow();
+	Candidate.PayloadChecksum = CalculatePayloadChecksum(Candidate.Payload);
+	if (ValidateEnvelope(Candidate) != EProject_JHandoverValidationFailure::None) return false;
+	OutEnvelope = MoveTemp(Candidate);
+	return true;
 }
 
 EProject_JHandoverValidationFailure UProject_JHandoverManager::ValidateEnvelope(
 	const FProject_JHandoverEnvelope& Envelope) const
 {
+	if (!HasValidTimingConfiguration()) { return EProject_JHandoverValidationFailure::InvalidConfiguration; }
 	if (Envelope.Version != 1)
 	{
 		return EProject_JHandoverValidationFailure::UnsupportedVersion;
@@ -270,28 +302,33 @@ EProject_JHandoverApplyResult UProject_JHandoverManager::ApplyEnvelopeChecked(
 	AActor* DestinationActor, const FProject_JHandoverEnvelope& Envelope)
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const uint64 Revision = LifetimeRevision;
 	if (bShuttingDown || !IsValid(DestinationActor) || DestinationActor->IsActorBeingDestroyed() || !DestinationActor->HasAuthority())
 	{
 		return EProject_JHandoverApplyResult::Rejected;
 	}
+	TStrongObjectPtr<AActor> PinnedActor(DestinationActor);
 	if (ValidateEnvelope(Envelope) != EProject_JHandoverValidationFailure::None)
 	{
 		return EProject_JHandoverApplyResult::Rejected;
 	}
+	// Own the bounded validated packet before calling an external apply implementation.
+	const FProject_JHandoverEnvelope Snapshot = Envelope;
 
 	PruneReplayWindow();
-	if (Envelope.TargetNodeId != LocalNodeId ||
-		Envelope.ActorClassPath != DestinationActor->GetClass()->GetPathName())
+	if (Snapshot.TargetNodeId != LocalNodeId ||
+		Snapshot.ActorClassPath != DestinationActor->GetClass()->GetPathName())
 	{
 		return EProject_JHandoverApplyResult::Rejected;
 	}
-	const FSHAHash Digest = FSHA1::HashBuffer(Envelope.Payload.GetData(), Envelope.Payload.Num());
-	if (const FApplyReceipt* Receipt = AppliedTransferIds.Find(Envelope.TransferId))
+	const FSHAHash Digest = FSHA1::HashBuffer(Snapshot.Payload.GetData(), Snapshot.Payload.Num());
+	if (const FApplyReceipt* Receipt = AppliedTransferIds.Find(Snapshot.TransferId))
 	{
-		return Receipt->Destination.Get() == DestinationActor && Receipt->Digest == Digest && Receipt->SourceNodeId == Envelope.SourceNodeId
+		return Receipt->Destination.Get() == DestinationActor && Receipt->Digest == Digest && Receipt->SourceNodeId == Snapshot.SourceNodeId
 			? EProject_JHandoverApplyResult::AlreadyApplied : EProject_JHandoverApplyResult::Rejected;
 	}
-	if (ApplyingTransferIds.Contains(Envelope.TransferId)) { return EProject_JHandoverApplyResult::InProgress; }
+	if (ApplyingTransferIds.Contains(Snapshot.TransferId)) { return EProject_JHandoverApplyResult::InProgress; }
 	if (AppliedTransferIds.Num() + ApplyingTransferIds.Num() >= FMath::Max(1, MaxApplyReceipts))
 	{
 		return EProject_JHandoverApplyResult::Overloaded;
@@ -303,11 +340,12 @@ EProject_JHandoverApplyResult UProject_JHandoverManager::ApplyEnvelopeChecked(
 		return EProject_JHandoverApplyResult::Rejected;
 	}
 
-	const FGuid TransferId = Envelope.TransferId;
+	const FGuid TransferId = Snapshot.TransferId;
 	ApplyingTransferIds.Add(TransferId);
-	const FString SourceNodeId = Envelope.SourceNodeId;
-	ON_SCOPE_EXIT { ApplyingTransferIds.Remove(TransferId); };
-	if (!SerializableActor->TryApplyHandoverSnapshot(Envelope.Payload) || bShuttingDown)
+	const FString SourceNodeId = Snapshot.SourceNodeId;
+	ON_SCOPE_EXIT { if (Revision == LifetimeRevision) ApplyingTransferIds.Remove(TransferId); };
+	if (!SerializableActor->TryApplyHandoverSnapshot(Snapshot.Payload) || bShuttingDown || Revision != LifetimeRevision ||
+		!IsValid(DestinationActor) || DestinationActor->IsActorBeingDestroyed() || !DestinationActor->HasAuthority())
 	{
 		return EProject_JHandoverApplyResult::Rejected;
 	}
@@ -328,14 +366,17 @@ void UProject_JHandoverManager::SetTransport(TSharedPtr<IProject_JHandoverTransp
 
 void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 {
-	if (bShuttingDown || bTicking) { return; }
+	check(IsInGameThread());
+	if (bShuttingDown || bTicking || !HasValidTimingConfiguration() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds < 0.0f) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	const uint64 Revision = LifetimeRevision;
 	TGuardValue<bool> TickGuard(bTicking, true);
 	const float SafeDeltaSeconds = FMath::Max(0.0f, DeltaSeconds);
 	if (const auto ActiveTransport = Transport)
 	{
 		ActiveTransport->Tick(SafeDeltaSeconds);
 	}
-	if (bShuttingDown) { return; }
+	if (bShuttingDown || Revision != LifetimeRevision) { return; }
 
 	TArray<FGuid> TransfersToDispatch;
 	TArray<FGuid> TransfersToTimeout;
@@ -348,7 +389,7 @@ void UProject_JHandoverManager::TickHandover(float DeltaSeconds)
 		FProject_JHandoverRecord* Found = HandoverStates.Find(TransferId);
 		if (!Found) { continue; }
 		FProject_JHandoverRecord& Record = *Found;
-		Record.StateElapsedTime += SafeDeltaSeconds;
+		Record.StateElapsedTime = static_cast<float>(FMath::Min(double(Record.StateElapsedTime) + double(SafeDeltaSeconds), double(MAX_flt)));
 
 		// Commit cancellation before notifying transport or external listeners.
 		if (Record.bHasTrackedActor && !Record.Actor.IsValid() &&
@@ -422,6 +463,8 @@ bool UProject_JHandoverManager::Tick(float DeltaSeconds)
 
 void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 {
+	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	// The caller may pass an ID stored inside the map. Own it across notifications.
 	const FGuid Id = TransferId;
 	FProject_JHandoverRecord* Record = HandoverStates.Find(Id);
@@ -450,21 +493,21 @@ void UProject_JHandoverManager::DispatchTransfer(const FGuid& TransferId)
 	if (!ActiveTransport) { FailTransfer(*Record, EProject_JHandoverFailureReason::TransportUnavailable); return; }
 	const bool bDispatched = ActiveTransport->Send(
 		Request,
-		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this)](
+		[WeakThis = TWeakObjectPtr<UProject_JHandoverManager>(this), Revision = LifetimeRevision](
 			const FProject_JHandoverTransportResponse& Response)
 		{
 			if (IsInGameThread())
 			{
-				if (UProject_JHandoverManager* Manager = WeakThis.Get())
+				if (UProject_JHandoverManager* Manager = WeakThis.Get(); Manager && Manager->LifetimeRevision == Revision)
 				{
 					Manager->HandleTransportResponse(Response);
 				}
 				return;
 			}
 
-			AsyncTask(ENamedThreads::GameThread, [WeakThis, Response]()
+			AsyncTask(ENamedThreads::GameThread, [WeakThis, Response, Revision]()
 			{
-				if (UProject_JHandoverManager* Manager = WeakThis.Get())
+				if (UProject_JHandoverManager* Manager = WeakThis.Get(); Manager && Manager->LifetimeRevision == Revision)
 				{
 					Manager->HandleTransportResponse(Response);
 				}
@@ -485,6 +528,7 @@ void UProject_JHandoverManager::HandleTransportResponse(
 	const FProject_JHandoverTransportResponse& Response)
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	FProject_JHandoverRecord* Record = HandoverStates.Find(Response.TransferId);
 	if (!Record ||
 		Record->State != EProject_JHandoverState::AwaitingAck ||

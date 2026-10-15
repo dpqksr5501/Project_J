@@ -1,0 +1,224 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "9968B40A4260FDCAB033B1BBC5F40082",
+			"instanceName": "DESKTOP-5T07C91-25640",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-17.50.52",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.07612600177526474,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "PlayerHandoverLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"9968B40A4260FDCAB033B1BBC5F40082"
+			],
+			"duration": 0.011368300765752792,
+			"dateTime": "2026.10.14-17.50.52",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionLevelAdmission",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"9968B40A4260FDCAB033B1BBC5F40082"
+			],
+			"duration": 0.051258798688650131,
+			"dateTime": "2026.10.14-17.50.52",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Class starting above owner cap is rejected before publication' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 47,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected class leaves the initial revision' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 48,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Default class floor above owner cap is not published' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 51,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Default level above owner cap is not published' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 54,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Effective class floor is rechecked at level mutation' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 60,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected effective level preserves the original level' to be 1, but it was 101.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 61,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected effective level preserves the original revision' to be 1, but it was 2.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 62,
+					"timestamp": "2026.10.14-17.50.52"
+				}
+			],
+			"warnings": 0,
+			"errors": 7,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRestoreRetirement",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"9968B40A4260FDCAB033B1BBC5F40082"
+			],
+			"duration": 0.0075307972729206085,
+			"dateTime": "2026.10.14-17.50.52",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Restore retired by its real grant callback reports rejection' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 126,
+					"timestamp": "2026.10.14-17.50.52"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StyleEffectAdmission",
+			"fullTestPath": "ProjectJ.Continuation.StyleEffectAdmission",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"9968B40A4260FDCAB033B1BBC5F40082"
+			],
+			"duration": 0.0059681013226509094,
+			"dateTime": "2026.10.14-17.50.52",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Compiled style admission agrees with GAS set level >= 1' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'An execution-invalid effect cannot mark compiled style ready' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 104,
+					"timestamp": "2026.10.14-17.50.52"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Invalid style publishes no compiled grants' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 105,
+					"timestamp": "2026.10.14-17.50.52"
+				}
+			],
+			"warnings": 0,
+			"errors": 3,
+			"artifacts": []
+		}
+	]
+}

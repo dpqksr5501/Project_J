@@ -1,4 +1,5 @@
 #include "UI/Project_JPlayerUIComponent.h"
+#include "UObject/StrongObjectPtr.h"
 #include "UI/Project_JPlayerHUDWidget.h"
 #include "UI/Project_JInventoryViewModel.h"
 #include "UI/Project_JUILayoutSettings.h"
@@ -203,11 +204,16 @@ void UProject_JPlayerUIComponent::RefreshSources()
 }
 void UProject_JPlayerUIComponent::ReleaseAllSkills()
 {
-	for (const auto &Press : PressedSkills)
-		if (PressedPawn.IsValid())
-			PressedPawn->HandleSkillInputTagReleased(Press.Value);
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	const TStrongObjectPtr<AProject_JPlayerCharacter> OriginalPawn(PressedPawn.Get());
+	const auto Released = MoveTemp(PressedSkills);
 	PressedSkills.Reset();
 	PressedPawn.Reset();
+	// End this receipt before GAS callbacks. Reentrant presses own the new map
+	// and pawn; this operation only releases its captured original inputs.
+	for (const auto& Press : Released)
+		if (IsValid(OriginalPawn.Get()) && !OriginalPawn->IsActorBeingDestroyed())
+			OriginalPawn->HandleSkillInputTagReleased(Press.Value);
 }
 void UProject_JPlayerUIComponent::BindResourceAttributes()
 {
@@ -516,7 +522,7 @@ void UProject_JPlayerUIComponent::UpdateSkills()
 }
 void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 {
-	if (bMenuOpen || !HUDPreferences.Slots.IsValidIndex(Index) || PressedSkills.Contains(Index))
+	if (bEnding || bMenuOpen || !HUDPreferences.Slots.IsValidIndex(Index) || PressedSkills.Contains(Index))
 		return;
 	const auto &Binding = HUDPreferences.Slots[Index];
 	if (Binding.Kind == EProject_JQuickSlotKind::Item)
@@ -539,9 +545,16 @@ void UProject_JPlayerUIComponent::PressSkill(int32 Index)
 }
 void UProject_JPlayerUIComponent::ReleaseSkill(int32 Index)
 {
-	if (const FGameplayTag *Tag = PressedSkills.Find(Index); Tag && PressedPawn.IsValid())
-		PressedPawn->HandleSkillInputTagReleased(*Tag);
-	PressedSkills.Remove(Index);
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	if (const FGameplayTag* Tag = PressedSkills.Find(Index))
+	{
+		const FGameplayTag ReleasedTag = *Tag;
+		const TStrongObjectPtr<AProject_JPlayerCharacter> OriginalPawn(PressedPawn.Get());
+		PressedSkills.Remove(Index);
+		if (PressedSkills.IsEmpty()) { PressedPawn.Reset(); }
+		if (IsValid(OriginalPawn.Get()) && !OriginalPawn->IsActorBeingDestroyed())
+			OriginalPawn->HandleSkillInputTagReleased(ReleasedTag);
+	}
 	UpdateSkills();
 }
 void UProject_JPlayerUIComponent::OnInventoryPresentationChanged()
@@ -622,11 +635,13 @@ void UProject_JPlayerUIComponent::ApplyInputMode()
 }
 void UProject_JPlayerUIComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+	const TStrongObjectPtr<UProject_JPlayerUIComponent> KeepSelf(this);
+	// Close admission before menu/input cleanup can invoke gameplay callbacks.
+	bEnding = true;
 	bCursorMode = false;
 	SetMenuOpen(false);
 	ApplyInputMode();
 	ReleaseAllSkills();
-	bEnding = true;
 	if (FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().UnregisterInputPreProcessor(CursorInputProcessor);

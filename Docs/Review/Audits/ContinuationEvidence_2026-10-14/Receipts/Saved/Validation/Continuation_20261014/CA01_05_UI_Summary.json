@@ -1,0 +1,101 @@
+{
+  "scope_ko": "CA01–05 Final1 cooked UI 동적1000행·24buff·4window·50단계·5Hz·t.MaxFPS60. 원 capture와 앞선 recipe의120행 이후를 함께 기록. 개별 inclusive scope라 임의 합산을 GT 전체 시간으로 표시하지 않는다. 이전 UI3과 A/B 비교가 아님; UI screenshot/모든 접근성 품질 증거 아님.",
+  "runs": [
+    {
+      "resolution": "1280x720",
+      "csv": "Saved/Validation/CA01_05_CookedUI1/1280x720/User/Saved/Profiling/CSV/Profile(20261014_160155).csv",
+      "csv_sha256": "9cdb7ac9cb2ed763764d5f545cad4e6f53d34c4a0a011984f9c659ddd3c672c9",
+      "ignored_non_numeric_rows": 2,
+      "windows": {
+        "full_capture": {
+          "numeric_frames": 600,
+          "metrics": {
+            "ProjectJUI/GameThread/InventoryFilter": {
+              "mean_ms": 0.05364616666666667,
+              "p95_ms": 0.8094,
+              "max_ms": 1.2199
+            },
+            "ProjectJUI/GameThread/QuickSlotPresentation": {
+              "mean_ms": 0.008087833333333334,
+              "p95_ms": 0.0502,
+              "max_ms": 0.0926
+            },
+            "ProjectJUI/GameThread/InventoryProjection": {
+              "mean_ms": 0.075414,
+              "p95_ms": 0.5741,
+              "max_ms": 2.0396
+            }
+          }
+        },
+        "from_numeric_frame_120": {
+          "numeric_frames": 480,
+          "metrics": {
+            "ProjectJUI/GameThread/InventoryFilter": {
+              "mean_ms": 0.05347770833333333,
+              "p95_ms": 0.8086,
+              "max_ms": 1.2199
+            },
+            "ProjectJUI/GameThread/QuickSlotPresentation": {
+              "mean_ms": 0.00813125,
+              "p95_ms": 0.0501,
+              "max_ms": 0.0926
+            },
+            "ProjectJUI/GameThread/InventoryProjection": {
+              "mean_ms": 0.07679458333333333,
+              "p95_ms": 0.5864,
+              "max_ms": 2.0396
+            }
+          }
+        }
+      }
+    },
+    {
+      "resolution": "1920x1080",
+      "csv": "Saved/Validation/CA01_05_CookedUI1/1920x1080/User/Saved/Profiling/CSV/Profile(20261014_160214).csv",
+      "csv_sha256": "2db9df13dd21898774cf094987ca1212c03b9185fadb5d7ae1145037d998f171",
+      "ignored_non_numeric_rows": 2,
+      "windows": {
+        "full_capture": {
+          "numeric_frames": 600,
+          "metrics": {
+            "ProjectJUI/GameThread/InventoryFilter": {
+              "mean_ms": 0.059283666666666665,
+              "p95_ms": 0.8943,
+              "max_ms": 1.5495
+            },
+            "ProjectJUI/GameThread/QuickSlotPresentation": {
+              "mean_ms": 0.009346333333333333,
+              "p95_ms": 0.0566,
+              "max_ms": 0.1203
+            },
+            "ProjectJUI/GameThread/InventoryProjection": {
+              "mean_ms": 0.09101,
+              "p95_ms": 0.7408,
+              "max_ms": 2.8647
+            }
+          }
+        },
+        "from_numeric_frame_120": {
+          "numeric_frames": 480,
+          "metrics": {
+            "ProjectJUI/GameThread/InventoryFilter": {
+              "mean_ms": 0.055904375,
+              "p95_ms": 0.8943,
+              "max_ms": 1.4127
+            },
+            "ProjectJUI/GameThread/QuickSlotPresentation": {
+              "mean_ms": 0.009121666666666667,
+              "p95_ms": 0.0566,
+              "max_ms": 0.1076
+            },
+            "ProjectJUI/GameThread/InventoryProjection": {
+              "mean_ms": 0.08658604166666667,
+              "p95_ms": 0.7122,
+              "max_ms": 2.0984
+            }
+          }
+        }
+      }
+    }
+  ]
+}

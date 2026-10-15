@@ -1,0 +1,2 @@
+TimingInsights.ExportTimerCallees "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees.csv" -timers="ProjectJ_AuthoredAnimation_WorldTick"
+TimingInsights.ExportTimerCallees "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/WorldCallees-{region}.csv" -timers="ProjectJ_AuthoredAnimation_WorldTick" -region="ProjectJ.AuthoredCPU_*"

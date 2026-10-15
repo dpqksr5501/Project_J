@@ -19,12 +19,16 @@ public:
 	bool bPayloadStable = false;
 	bool bRemovalCommitted = false;
 	bool bRecursiveRemovalRejected = false;
+	int32 AddedCount = 0;
+	int32 ChangedCount = 0;
+	int32 RemovedCount = 0;
 	FGuid OtherItem;
 	FGuid ReentrantEquipmentItem;
 	EProject_JEquipmentOperationFailure ReentrantFailure = EProject_JEquipmentOperationFailure::None;
 
 	UFUNCTION() void OnAdded(const FProject_JItemInstanceData& Item)
 	{
+		++AddedCount;
 		if (!bMutate) return;
 		bMutate = false;
 		const FGuid OriginalId = Item.InstanceId;
@@ -34,12 +38,14 @@ public:
 	}
 	UFUNCTION() void OnRemoved(const FProject_JItemInstanceData& Item)
 	{
+		++RemovedCount;
 		if (!bMutate) return;
 		bMutate = false;
 		bRemovalCommitted = !Inventory->HasItemInstance(Item.InstanceId);
 		bRecursiveRemovalRejected = !Inventory->RemoveItemInstance(Item.InstanceId);
 		Inventory->RemoveItemInstance(OtherItem);
 	}
+	UFUNCTION() void OnChanged(const FProject_JItemInstanceData& Item) { ++ChangedCount; }
 	UFUNCTION() void OnUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* Definition)
 	{
 		bRemovalCommitted = Equipment->GetEquippedItemInSlot(Slot) == nullptr;

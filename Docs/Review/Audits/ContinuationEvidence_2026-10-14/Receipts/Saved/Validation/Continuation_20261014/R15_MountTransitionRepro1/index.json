@@ -1,0 +1,197 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "BF5AA1AE49652F7686E456A89B14B095",
+			"instanceName": "DESKTOP-5T07C91-14920",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-00.35.37",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 3,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.07650100439786911,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "MountAttachRetired",
+			"fullTestPath": "ProjectJ.Continuation.MountAttachRetired",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"BF5AA1AE49652F7686E456A89B14B095"
+			],
+			"duration": 0.056843802332878113,
+			"dateTime": "2026.10.15-00.35.37",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountLifecycleFixture_0 Rider=Project_JMountCallbackRiderFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old completion cannot reinstall rider relationship' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 61,
+					"timestamp": "2026.10.15-00.35.37"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountPhaseSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.MountPhaseSuperseded",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"BF5AA1AE49652F7686E456A89B14B095"
+			],
+			"duration": 0.010965600609779358,
+			"dateTime": "2026.10.15-00.35.37",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New phase retains its own tag' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 118,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old completion cannot publish AutoAscending tag' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 119,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogProjectJMountCharacter: DismountSucceeded Mount=Project_JMountRefinementFixture_0 Rider=Project_JMountCallbackRiderFixture_0 Forced=1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-00.35.37"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MountReplicatedReplacement",
+			"fullTestPath": "ProjectJ.Continuation.MountReplicatedReplacement",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"BF5AA1AE49652F7686E456A89B14B095"
+			],
+			"duration": 0.0086916014552116394,
+			"dateTime": "2026.10.15-00.35.37",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Replaced rider is detached' to be null.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 83,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Replaced rider restores its collision: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 83,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Replaced rider restores its own mode: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 84,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "New rider has an independent collision restore slot: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 87,
+					"timestamp": "2026.10.15-00.35.37"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "New rider has an independent movement restore slot: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JMount\\Private\\Tests\\Project_JMountTransitionTests.cpp",
+					"lineNumber": 88,
+					"timestamp": "2026.10.15-00.35.37"
+				}
+			],
+			"warnings": 0,
+			"errors": 5,
+			"artifacts": []
+		}
+	]
+}

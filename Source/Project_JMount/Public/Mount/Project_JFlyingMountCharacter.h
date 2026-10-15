@@ -81,7 +81,8 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Mount|Flight")
 	void K2_OnLandingFailed(EProject_JMountLandingFailure Reason, int32 AttemptId);
 	void ApplyFlightBraking(bool bGliding);
-	void ApplyFlightStateTags(EProject_JMountFlightState PreviousState, EProject_JMountFlightState NewState);
+	void ApplyFlightStateTags(EProject_JMountFlightState NewState);
+	uint32 FlightStateRevision = 0;
 	float ResolveTakeOffImpulseTime() const;
 	float ResolveFlightCueTime(const class UAnimSequenceBase* Animation, EProject_JMountFlightAnimationCue Cue, float FallbackTime) const;
 	UPROPERTY(EditDefaultsOnly, Category="Input") TObjectPtr<class UInputAction> MoveAction = nullptr;

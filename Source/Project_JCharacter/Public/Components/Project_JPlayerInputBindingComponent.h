@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
+#include "Input/Project_JMoveIntentState.h"
 #include "Project_JPlayerInputBindingComponent.generated.h"
 
 class AProject_JPlayerCharacter;
@@ -10,15 +11,6 @@ class UInputAction;
 class UInputComponent;
 class UProject_JSkillInputMappingData;
 struct FInputActionValue;
-
-/** Device-independent semantic movement directions used only by locomotion presentation. */
-enum class EProject_JMoveIntentDirection : uint8
-{
-	Forward,
-	Backward,
-	Left,
-	Right
-};
 
 USTRUCT(BlueprintType)
 struct FProject_JPlayerInputActionSet
@@ -89,6 +81,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+	friend class FProjectJActiveMoveReentryTest;
 	bool bEnding = false;
 	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
@@ -101,6 +94,7 @@ private:
 	void FinalizeMoveStopped();
 	void FinalizeMoveStoppedForCharacter(AProject_JPlayerCharacter* PlayerCharacter);
 	bool MayRetirePlayerState(AProject_JPlayerCharacter* PlayerCharacter, uint64 ReleaseRevision) const;
+	bool IsCurrentBinding(AProject_JPlayerCharacter* PlayerCharacter, uint64 Revision) const;
 	void CancelPendingMoveStopReconciliation();
 	void QueueSemanticMoveIntentRefresh();
 	void RefreshSemanticMoveIntent();
@@ -136,15 +130,7 @@ private:
 	 * (and therefore misleading) semantic intent.
 	 */
 	bool bSemanticMoveIntentActionsBound = false;
-	bool bMoveIntentForwardHeld = false;
-	bool bMoveIntentBackwardHeld = false;
-	bool bMoveIntentLeftHeld = false;
-	bool bMoveIntentRightHeld = false;
-	int32 MoveIntentPressSequence = 0;
-	int32 ForwardPressSequence = 0;
-	int32 BackwardPressSequence = 0;
-	int32 LeftPressSequence = 0;
-	int32 RightPressSequence = 0;
+	FProject_JMoveIntentState SemanticMoveIntent;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;

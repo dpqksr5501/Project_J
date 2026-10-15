@@ -1,0 +1,223 @@
+{
+  "original": "Saved/Validation/Continuation_20261014/R15_Cook1/Cooked",
+  "stage_input": "Saved/Validation/Continuation_20261014/R15_StageCookInput1/Windows",
+  "all_copies_sha_match": true,
+  "files": [
+    {
+      "path": "Windows/ue.projectstore",
+      "sha256": "8ab9573aa9f1df0c21dcea0c344ab2a14eb1aa2656b95d0d277195205bd17045",
+      "bytes": 373
+    },
+    {
+      "path": "Windows/Engine/GlobalShaderCache-PCD3D_SM5.bin",
+      "sha256": "8c69e670eb15f1a5e39ab2332e2bfe477ed12da467077a6386dd3a79de412d28",
+      "bytes": 2330860
+    },
+    {
+      "path": "Windows/Engine/GlobalShaderCache-PCD3D_SM6.bin",
+      "sha256": "3073644fe3207bb98fcafcadeb09302c9e38d14e7b29869cf55531e66baaf10c",
+      "bytes": 5436575
+    },
+    {
+      "path": "Windows/Project_J/AssetRegistry.bin",
+      "sha256": "1a8d13332a4301ef9c96a39677f8acdec751c480dec7a25749ce7fcb9beb739c",
+      "bytes": 431896
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderArchive-Global-PCD3D_SM5-PCD3D_SM5.ushaderbytecode",
+      "sha256": "e097db65d20c70429d23925a0bd7cc67d90daad7301642098269f8a070d74871",
+      "bytes": 15183408
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderArchive-Global-PCD3D_SM6-PCD3D_SM6.ushaderbytecode",
+      "sha256": "6ff94fc7ef01bde0ea2869fb5e92bfcfbfc05af6d4c520903d99231e32c02a50",
+      "bytes": 167681949
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderArchive-Project_J-PCD3D_SM5-PCD3D_SM5.ushaderbytecode",
+      "sha256": "745b5e85ef6c2e5a8c1da6353db6834d07de73bf40fb6f743c6f787b9b08218a",
+      "bytes": 3128990
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderArchive-Project_J-PCD3D_SM6-PCD3D_SM6.ushaderbytecode",
+      "sha256": "9a824ecb265e21b630c3151ab1961ce12c42e158b0a3c3ea2121d0ea3a732cea",
+      "bytes": 22559818
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderAssetInfo-Global-PCD3D_SM5-PCD3D_SM5.assetinfo.json",
+      "sha256": "d7d94e9ebc0860f9a0b3cf14303c86c1490f2c3b5756f46f750bc3b14e837213",
+      "bytes": 31534
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderAssetInfo-Global-PCD3D_SM6-PCD3D_SM6.assetinfo.json",
+      "sha256": "921148b96bec737c413161fc9fa436e2e4485092b28855c44738104ac344db5d",
+      "bytes": 47100
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderAssetInfo-Project_J-PCD3D_SM5-PCD3D_SM5.assetinfo.json",
+      "sha256": "fc2aaa3691f5a84364d540cfbad5ad6fb4322f7c3db57f640cf76fbd7b3db079",
+      "bytes": 17451
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderAssetInfo-Project_J-PCD3D_SM6-PCD3D_SM6.assetinfo.json",
+      "sha256": "54109bbd4f6ca94c08f89e2ed1ccdfb6cd48f49f4e42f83543f969469b5177a2",
+      "bytes": 17524
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderTypeInfo-Global-PCD3D_SM5-PCD3D_SM5.stinfo",
+      "sha256": "f757fa75b93fe1e86109059ebe8311f037f9501e1d16ea95105463f17dd927b2",
+      "bytes": 56588
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderTypeInfo-Global-PCD3D_SM6-PCD3D_SM6.stinfo",
+      "sha256": "03ad92632d8cde24b62f2c1f48c8d5465dd179c69690c5e6095ccbb63574a421",
+      "bytes": 146432
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderTypeInfo-Project_J-PCD3D_SM5-PCD3D_SM5.stinfo",
+      "sha256": "d364644a2c477e45be89784cbce70070748b634ceef51839e76873815696d2c7",
+      "bytes": 13916
+    },
+    {
+      "path": "Windows/Project_J/Content/ShaderTypeInfo-Project_J-PCD3D_SM6-PCD3D_SM6.stinfo",
+      "sha256": "060b46a06b2b2048c30f0151163b9e782bb6265b26328b40a3bdf4c9b5600e96",
+      "bytes": 27548
+    },
+    {
+      "path": "Windows/Project_J/Metadata/CookedIniVersion.txt",
+      "sha256": "2e2e4532644290230371cc5095444688b39ba0346c5ca97ce80ee6402d234338",
+      "bytes": 239613
+    },
+    {
+      "path": "Windows/Project_J/Metadata/CookedSettings.txt",
+      "sha256": "48a13ae487415e1b8399eddab3ec5589e9e70ec0e87abe060f7eb4082f70cb79",
+      "bytes": 278
+    },
+    {
+      "path": "Windows/Project_J/Metadata/CookMetadata.ucookmeta",
+      "sha256": "3e5a4c6715ab997133935dcb9a7ff901eeb80abe7722fd2f02532c2ec8f27de6",
+      "bytes": 28702
+    },
+    {
+      "path": "Windows/Project_J/Metadata/DevelopmentAssetRegistry.bin",
+      "sha256": "641aa550cc46a52329cdd06693b07deec0a52c2ca772ca902c3e220a1b960e98",
+      "bytes": 1129180
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ReferencedSet.txt",
+      "sha256": "563d163fce1772196e7b68bbd340de835143c3aa9706e157f0082ab23278460f",
+      "bytes": 88155
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderTypeStats-PCD3D_SM5.csv",
+      "sha256": "1eff418479913175c59c0484c94334804e0d265e10c15ab16f8f90400084f6f2",
+      "bytes": 70743
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderTypeStats-PCD3D_SM6.csv",
+      "sha256": "35d20e749badc94f06a67e9e80c903579e64af31e93f3f6cf74b83e51ff57ff5",
+      "bytes": 108535
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ValidationCookArtifact.json",
+      "sha256": "cfee5a55b0d0dd95e41f6894041966426c740d87042397a15c98eb2e23105856",
+      "bytes": 73
+    },
+    {
+      "path": "Windows/Project_J/Metadata/zenfs.manifest",
+      "sha256": "33b400c45ab440691d2b2b92819196c460b8f7c1885fecb390a7a4e811d017e2",
+      "bytes": 464037
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderArchive-Global-PCD3D_SM5-PCD3D_SM5.ushaderbytecode",
+      "sha256": "e097db65d20c70429d23925a0bd7cc67d90daad7301642098269f8a070d74871",
+      "bytes": 15183408
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderArchive-Global-PCD3D_SM6-PCD3D_SM6.ushaderbytecode",
+      "sha256": "6ff94fc7ef01bde0ea2869fb5e92bfcfbfc05af6d4c520903d99231e32c02a50",
+      "bytes": 167681949
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderArchive-Project_J-PCD3D_SM5-PCD3D_SM5.ushaderbytecode",
+      "sha256": "745b5e85ef6c2e5a8c1da6353db6834d07de73bf40fb6f743c6f787b9b08218a",
+      "bytes": 3128990
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderArchive-Project_J-PCD3D_SM6-PCD3D_SM6.ushaderbytecode",
+      "sha256": "9a824ecb265e21b630c3151ab1961ce12c42e158b0a3c3ea2121d0ea3a732cea",
+      "bytes": 22559818
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderAssetInfo-Global-PCD3D_SM5-PCD3D_SM5.assetinfo.json",
+      "sha256": "d7d94e9ebc0860f9a0b3cf14303c86c1490f2c3b5756f46f750bc3b14e837213",
+      "bytes": 31534
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderAssetInfo-Global-PCD3D_SM6-PCD3D_SM6.assetinfo.json",
+      "sha256": "921148b96bec737c413161fc9fa436e2e4485092b28855c44738104ac344db5d",
+      "bytes": 47100
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderAssetInfo-Project_J-PCD3D_SM5-PCD3D_SM5.assetinfo.json",
+      "sha256": "fc2aaa3691f5a84364d540cfbad5ad6fb4322f7c3db57f640cf76fbd7b3db079",
+      "bytes": 17451
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderAssetInfo-Project_J-PCD3D_SM6-PCD3D_SM6.assetinfo.json",
+      "sha256": "54109bbd4f6ca94c08f89e2ed1ccdfb6cd48f49f4e42f83543f969469b5177a2",
+      "bytes": 17524
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderTypeInfo-Global-PCD3D_SM5-PCD3D_SM5.stinfo",
+      "sha256": "f757fa75b93fe1e86109059ebe8311f037f9501e1d16ea95105463f17dd927b2",
+      "bytes": 56588
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderTypeInfo-Global-PCD3D_SM6-PCD3D_SM6.stinfo",
+      "sha256": "03ad92632d8cde24b62f2c1f48c8d5465dd179c69690c5e6095ccbb63574a421",
+      "bytes": 146432
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderTypeInfo-Project_J-PCD3D_SM5-PCD3D_SM5.stinfo",
+      "sha256": "d364644a2c477e45be89784cbce70070748b634ceef51839e76873815696d2c7",
+      "bytes": 13916
+    },
+    {
+      "path": "Windows/Project_J/Metadata/ShaderLibrarySource/ShaderTypeInfo-Project_J-PCD3D_SM6-PCD3D_SM6.stinfo",
+      "sha256": "060b46a06b2b2048c30f0151163b9e782bb6265b26328b40a3bdf4c9b5600e96",
+      "bytes": 27548
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/DroidSansFallback.ufont",
+      "sha256": "4272f53593fc9ad959a9b072ee993b063d72779dfa56cb320c5d649f27b2abf0",
+      "bytes": 3939860
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/RobotoBold.ufont",
+      "sha256": "24e2b0d6386fd5501f377bdc8dde73e5513821cd7a82feeb2262fa25b1a31182",
+      "bytes": 163456
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/RobotoBoldItalic.ufont",
+      "sha256": "3c97304848b15ba73a9eb34c0d6353f869603c50fc49ad35024fc1512cbc0648",
+      "bytes": 165872
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/RobotoItalic.ufont",
+      "sha256": "477107ee8bcf6a52add7952b2d9c7b2f6061222d8fec98aa291cd8a19c45fd76",
+      "bytes": 160744
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/RobotoLight.ufont",
+      "sha256": "476c091cfdb0f1eb06432773ea1f38cee328b25a408cbb968286d3ab1b5abbe0",
+      "bytes": 170428
+    },
+    {
+      "path": "Windows/Engine/Content/EngineFonts/Faces/RobotoRegular.ufont",
+      "sha256": "7d70b320057c88085cd07f95fffe574b805154c17d4f750527b041c34ad6b0d1",
+      "bytes": 158612
+    }
+  ],
+  "scope_ko": "원본 Cook 출력/로그 보존. 플랫폼 Windows 디렉터리를 가진 별도 Stage 입력 사본. ue.projectstore 내용/인증 정보는 공개하지 않음; Zen 원자료 수명은 shared cache와 구분."
+}

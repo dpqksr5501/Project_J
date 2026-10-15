@@ -1,0 +1,14 @@
+[
+  "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+  "-run=Cook",
+  "-TargetPlatform=Windows",
+  "-Map=/Game/ThirdPerson/Lvl_ThirdPerson+/Engine/Maps/Entry",
+  "-OutputDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/R15_Cook3/Cooked/[Platform]",
+  "-unattended",
+  "-nop4",
+  "-NoDDCCleanup",
+  "-NoLiveCoding",
+  "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/R15_Cook3/User",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/R15_Cook3/Cook.log",
+  "-UTF8Output"
+]

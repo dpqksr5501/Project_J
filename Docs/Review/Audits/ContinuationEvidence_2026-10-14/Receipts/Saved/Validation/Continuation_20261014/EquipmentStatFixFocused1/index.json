@@ -1,0 +1,224 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "270847A447E541C23844F58B0727C269",
+			"instanceName": "DESKTOP-5T07C91-33788",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-06.36.17",
+	"succeeded": 13,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.12667100131511688,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AbilitySetEffectLevel",
+			"fullTestPath": "ProjectJ.Continuation.AbilitySetEffectLevel",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.01062300056219101,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentStatLease",
+			"fullTestPath": "ProjectJ.Continuation.EquipmentStatLease",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0172434002161026,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentStatTuple",
+			"fullTestPath": "ProjectJ.Continuation.EquipmentStatTuple",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0097277984023094177,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FollowerPolicyLifetime",
+			"fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0095332004129886627,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OneShotMalformedInput",
+			"fullTestPath": "ProjectJ.Continuation.OneShotMalformedInput",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0079865977168083191,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionNumericAdmission",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionNumericAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.008266102522611618,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionParentAssetValidation",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionParentAssetValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0082162991166114807,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ResourceInvariants",
+			"fullTestPath": "ProjectJ.Maturity.GAS.ResourceInvariants",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0096139013767242432,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OriginalASC",
+			"fullTestPath": "ProjectJ.PlayerMaturity.Equipment.OriginalASC",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.010153200477361679,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquipmentCommitLifetime",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0083963982760906219,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GrantSourceReentry",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.GrantSourceReentry",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0092886984348297119,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRetirement",
+			"fullTestPath": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.0093872994184494019,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PolicyAwareComparison",
+			"fullTestPath": "ProjectJ.UI.Equipment.PolicyAwareComparison",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"270847A447E541C23844F58B0727C269"
+			],
+			"duration": 0.008235100656747818,
+			"dateTime": "2026.10.14-06.36.17",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

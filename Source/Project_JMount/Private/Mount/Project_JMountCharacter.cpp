@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
+#include "UObject/StrongObjectPtr.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJMountCharacter, Log, All);
 
@@ -51,7 +52,7 @@ AProject_JMountCharacter::AProject_JMountCharacter()
 }
 
 UAbilitySystemComponent* AProject_JMountCharacter::GetAbilitySystemComponent() const { return MountAbilitySystemComponent; }
-bool AProject_JMountCharacter::CanInteract_Implementation(ACharacter* Interactor) const { return CanMountRider(Interactor); }
+bool AProject_JMountCharacter::CanInteract_Implementation(ACharacter* Interactor) const { return GetMountEligibilityFailure(Interactor) == EProject_JMountEligibilityFailure::None; }
 void AProject_JMountCharacter::Interact_Implementation(ACharacter* Interactor) { TryMountRider(Interactor); }
 
 bool AProject_JMountCharacter::ShouldUseRiderHandIK() const
@@ -98,13 +99,14 @@ void AProject_JMountCharacter::BeginPlay()
 
 void AProject_JMountCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	++RiderTransitionRevision;
+	bEndingPlay = true;
+	bRestoreRiderOnEndPlay = EndPlayReason == EEndPlayReason::Destroyed;
 	ClearDismountInputBindings();
 	if (HasAuthority() && Rider)
 	{
 		// Destroying a mount restores a live rider. World teardown only clears
 		// the relationship; it must not start a new possession during travel.
-		bEndingPlay = true;
-		bRestoreRiderOnEndPlay = EndPlayReason == EEndPlayReason::Destroyed;
 		DismountRider(true);
 	}
 	if (MountAbilitySystemComponent)
@@ -246,11 +248,6 @@ bool AProject_JMountCharacter::ApplyMountDamage(float Damage)
 	return true;
 }
 
-bool AProject_JMountCharacter::CanMountRider(const ACharacter* NewRider) const
-{
-	return GetMountEligibilityFailure(NewRider) == EProject_JMountEligibilityFailure::None;
-}
-
 EProject_JMountEligibilityFailure AProject_JMountCharacter::GetMountEligibilityFailure(const ACharacter* NewRider) const
 {
 	if (!IsValid(this) || IsActorBeingDestroyed() || bEndingPlay)
@@ -320,19 +317,47 @@ bool AProject_JMountCharacter::TryMountRider(ACharacter* NewRider)
 	}
 
 	AController* RiderController = NewRider->GetController();
-	if (!RiderController)
+	if (!IsValid(RiderController))
 	{
 		return false;
 	}
 
+	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
+	const TStrongObjectPtr<ACharacter> KeepRider(NewRider);
+	const TStrongObjectPtr<AController> KeepController(RiderController);
+	const uint32 Revision = ++RiderTransitionRevision;
+	const auto IsCurrentTransition = [this, NewRider, Revision]()
+	{
+		return IsValid(this) && !IsActorBeingDestroyed() && !bEndingPlay
+			&& IsValid(NewRider) && !NewRider->IsActorBeingDestroyed()
+			&& RiderTransitionRevision == Revision && Rider == NewRider
+			&& MountState == EProject_JMountState::Mounting;
+	};
+	const auto ReportRetired = [this, NewRider, Revision](const TCHAR* Stage)
+	{
+		UE_LOG(LogProjectJMountCharacter, Display, TEXT("MountTransitionRetired Stage=%s Revision=%u Current=%u State=%d Ending=%d MountDestroyed=%d RiderValid=%d RiderDestroyed=%d SameRider=%d"),
+			Stage, Revision, RiderTransitionRevision, static_cast<int32>(MountState), bEndingPlay, IsActorBeingDestroyed(),
+			IsValid(NewRider), NewRider->IsActorBeingDestroyed(), Rider == NewRider);
+		return false;
+	};
 	MountState = EProject_JMountState::Mounting;
 	SessionController = RiderController;
 	Rider = NewRider;
-	AttachRider(NewRider);
+	const auto IsCurrentRiderController = [NewRider, RiderController]()
+	{
+		return IsValid(RiderController) && !RiderController->IsActorBeingDestroyed()
+			&& NewRider->GetController() == RiderController && RiderController->GetPawn() == NewRider;
+	};
+	if (!AttachRider(NewRider) || !IsCurrentTransition()) { return ReportRetired(TEXT("Attach")); }
+	if (!IsCurrentRiderController()) { DismountRider(true, false); return false; }
 	NotifyRiderMountChanged(NewRider, true);
-	if (Rider != NewRider || MountState != EProject_JMountState::Mounting) { return false; }
+	if (!IsCurrentTransition()) { return ReportRetired(TEXT("Notify")); }
+	// A callback may have legitimately moved this controller to another pawn.
+	// Retire only this mount attempt; never repossess either pawn on its behalf.
+	if (!IsCurrentRiderController()) { DismountRider(true, false); return false; }
 	RiderController->Possess(this);
-	if (Rider != NewRider || MountState != EProject_JMountState::Mounting || RiderController->GetPawn() != this)
+	if (!IsCurrentTransition()) { return ReportRetired(TEXT("Possess")); }
+	if (!IsValid(RiderController) || RiderController->GetPawn() != this)
 	{
 		DismountRider(true);
 		return false;
@@ -377,6 +402,10 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 		DismountLocation = PreviousRider->GetActorLocation();
 	}
 
+	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
+	const TStrongObjectPtr<ACharacter> KeepRider(PreviousRider);
+	const TStrongObjectPtr<AController> KeepController(RiderController);
+	++RiderTransitionRevision;
 	MountState = EProject_JMountState::Dismounting;
 	// Commit only after the exit checks succeed. Rejected dismount requests
 	// must not interrupt the rider's movement. Retire velocity/acceleration and
@@ -414,23 +443,32 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 
 void AProject_JMountCharacter::OnRep_Rider(ACharacter* PreviousRider)
 {
-	if (Rider)
+	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
+	const TStrongObjectPtr<ACharacter> KeepPrevious(PreviousRider);
+	const TStrongObjectPtr<ACharacter> KeepNew(Rider);
+	const uint32 Revision = ++RiderTransitionRevision;
+	// Replication can coalesce A -> null -> B into A -> B. Retire A's
+	// restore slot before capturing B, including synchronous movement callbacks.
+	if (IsValid(PreviousRider) && PreviousRider != KeepNew.Get())
 	{
-		AttachRider(Rider);
-	}
-	else if (PreviousRider)
-	{
+		const ECollisionEnabled::Type Collision = bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics;
+		const EMovementMode Mode = bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking;
+		const uint8 CustomMode = bHasRiderRestoreState ? RiderCustomMovementBeforeMount : 0;
+		bHasRiderRestoreState = false;
 		PreviousRider->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		if (RiderTransitionRevision != Revision || !IsValid(PreviousRider) || PreviousRider->IsActorBeingDestroyed()) { return; }
 		if (UCapsuleComponent* Capsule = PreviousRider->GetCapsuleComponent())
 		{
-			Capsule->SetCollisionEnabled(bHasRiderRestoreState ? RiderCollisionBeforeMount : ECollisionEnabled::QueryAndPhysics);
+			Capsule->SetCollisionEnabled(Collision);
 		}
+		if (RiderTransitionRevision != Revision || !IsValid(PreviousRider) || PreviousRider->IsActorBeingDestroyed()) { return; }
 		if (UCharacterMovementComponent* MoveComp = PreviousRider->GetCharacterMovement())
 		{
-			MoveComp->SetMovementMode(bHasRiderRestoreState ? RiderMovementBeforeMount : MOVE_Walking, RiderCustomMovementBeforeMount);
+			MoveComp->SetMovementMode(Mode, CustomMode);
 		}
-		bHasRiderRestoreState = false;
 	}
+	if (RiderTransitionRevision != Revision || !IsValid(this) || IsActorBeingDestroyed() || bEndingPlay) { return; }
+	if (KeepNew.IsValid() && !AttachRider(KeepNew.Get())) { return; }
 	// Input setup can precede Rider replication on the owning client.
 	RefreshDismountInputBindings();
 }
@@ -488,12 +526,22 @@ bool AProject_JMountCharacter::FindDismountLocation(FVector& OutLocation) const
 	return false;
 }
 
-void AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
+bool AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
 {
-	if (!NewRider)
+	const uint32 Revision = RiderTransitionRevision;
+	const EProject_JMountState ExpectedState = MountState;
+	const auto IsCurrentAttachment = [this, NewRider, Revision, ExpectedState]()
 	{
-		return;
+		return IsValid(this) && !IsActorBeingDestroyed() && !bEndingPlay
+			&& IsValid(NewRider) && !NewRider->IsActorBeingDestroyed()
+			&& RiderTransitionRevision == Revision && Rider == NewRider && MountState == ExpectedState;
+	};
+	if (!IsCurrentAttachment())
+	{
+		return false;
 	}
+	const TStrongObjectPtr<AProject_JMountCharacter> KeepSelf(this);
+	const TStrongObjectPtr<ACharacter> KeepRider(NewRider);
 	if (!bHasRiderRestoreState)
 	{
 		RiderCollisionBeforeMount = NewRider->GetCapsuleComponent()->GetCollisionEnabled();
@@ -505,8 +553,11 @@ void AProject_JMountCharacter::AttachRider(ACharacter* NewRider)
 	USceneComponent* AttachTarget = GetMesh() ? static_cast<USceneComponent*>(GetMesh()) : GetRootComponent();
 	const FName SocketName = GetMesh() && GetMesh()->DoesSocketExist(RiderSocketName) ? RiderSocketName : NAME_None;
 	NewRider->AttachToComponent(AttachTarget, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketName);
+	if (!IsCurrentAttachment()) { return false; }
 	NewRider->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (!IsCurrentAttachment()) { return false; }
 	NewRider->GetCharacterMovement()->DisableMovement();
+	return IsCurrentAttachment();
 }
 
 void AProject_JMountCharacter::DetachRider(ACharacter* PreviousRider, const FVector& DismountLocation) const

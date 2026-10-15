@@ -1,0 +1,129 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "5C0EB3BF44C6AFAB522CE88CED05DF46",
+			"instanceName": "DESKTOP-5T07C91-24028",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-04.31.50",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.067117400467395782,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "FollowerPolicyLifetime",
+			"fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"5C0EB3BF44C6AFAB522CE88CED05DF46"
+			],
+			"duration": 0.067117400467395782,
+			"dateTime": "2026.10.14-04.31.50",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Initial enabled policy applies to an initially disabled follower' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 43,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Identical policy applies to the replacement follower' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 47,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Detached follower is left untouched' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 48,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'A new animation lifetime reapplies the same policy' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 54,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Identical hidden policy applies to a replacement enabled follower' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 61,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'An external allocator retains tick ownership' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 65,
+					"timestamp": "2026.10.14-04.31.50"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Enabled coordinator does not own an undiscovered follower' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JContinuationContractsTests.cpp",
+					"lineNumber": 73,
+					"timestamp": "2026.10.14-04.31.50"
+				}
+			],
+			"warnings": 0,
+			"errors": 7,
+			"artifacts": []
+		}
+	]
+}

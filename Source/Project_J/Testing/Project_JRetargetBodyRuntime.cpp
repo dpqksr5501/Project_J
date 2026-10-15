@@ -1,5 +1,6 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Testing/Project_JAuthoredAnimationFixture.h"
+#include "UObject/Package.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
 #include "Animation/Project_JRetargetBodyProfile.h"
 #include "Animation/AnimClassInterface.h"

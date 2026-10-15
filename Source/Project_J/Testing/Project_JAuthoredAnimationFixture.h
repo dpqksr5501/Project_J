@@ -3,6 +3,7 @@
 // Read-only authored fixture shared by CPU and real-socket validation. It spawns
 // the Blueprint itself, including its construction script and visual followers.
 #include "AIController.h"
+#include "Engine/World.h"
 #include "Project_JPlayerCharacter.h"
 #include "Game/Project_JPlayerState.h"
 #include "Components/Project_JEquipmentManagerComponent.h"

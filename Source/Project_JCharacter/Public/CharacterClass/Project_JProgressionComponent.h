@@ -50,6 +50,8 @@ public:
 	bool InitializeClass(UProject_JCharacterClassDefinition* Class);
 	bool CanApplyAdvancement(const UProject_JCharacterAdvancementDefinition* Advancement) const;
 	bool ApplyAdvancement(UProject_JCharacterAdvancementDefinition* Advancement);
+	/** Current owner admission; reports the existing class-floor normalization without mutating state. */
+	bool CanSetLevel(int32 Level, int32& OutResolvedLevel) const;
 	bool SetLevel(int32 Level);
 	/** Trusted reward path; no client RPC accepts an experience amount. */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) bool GrantExperience(int64 Amount);
@@ -78,6 +80,8 @@ private:
 	UAbilitySystemComponent* GetASC() const;
 	bool CanMutate() const;
 	bool CanGrant() const;
+	bool IsMutationCurrent(const AActor* Owner, const UAbilitySystemComponent* ASC) const;
+	bool ResolveLevel(int32 Level, const UProject_JCharacterClassDefinition* Class, int32& OutResolvedLevel) const;
 	void RetireGrants();
 	void GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets, const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles);
 	void GrantStyle(const class UProject_JCombatStyleDefinition* Style, FProject_JAbilitySet_GrantedHandles& Handles);

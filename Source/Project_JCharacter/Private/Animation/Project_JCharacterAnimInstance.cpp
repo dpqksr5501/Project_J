@@ -48,6 +48,7 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
 
 void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 {
+	ReleaseFollowerTickOverride();
 	AnimationClock = FProject_JAnimationClock();
 	AnimationFlowSampler = {};
 	bAnimationFlowEvaluationPending = false;
@@ -58,6 +59,12 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
 	MotionMatchingRuntime.Reset();
 	ResetStateControllerOwnerPresentation();
 	CurrentActivePoseSearchDatabase = nullptr;
+}
+
+void UProject_JCharacterAnimInstance::NativeUninitializeAnimation()
+{
+	ReleaseFollowerTickOverride();
+	Super::NativeUninitializeAnimation();
 }
 
 void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()

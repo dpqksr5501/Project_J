@@ -1,0 +1,65 @@
+{
+  "executable": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA01_13_Package4\\Package\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "sha256": "26098D789B055B9E3E54D7832311D391E8D08E24216AA6960E652BCFE37E8CEA",
+  "utc": "2026-10-14T13:43:13.1663656Z",
+  "runs": [
+    {
+      "width": 1280,
+      "height": 720,
+      "passed": true,
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "logErrorCount": 0,
+      "seconds": 18.8298471,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\CA01_13_CookedUI1\\1280x720\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1280",
+        "-ResY=720",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/CA01_13_CookedUI1/1280x720/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\CA01_13_CookedUI1\\1280x720\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "passed": true,
+      "exitCode": 0,
+      "hasExited": true,
+      "nativeHandleCapturedBeforeWait": true,
+      "logErrorCount": 0,
+      "seconds": 18.8034493,
+      "log": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\CA01_13_CookedUI1\\1920x1080\\Game.log",
+      "arguments": [
+        "-ProjectJUIRuntimeSmoke",
+        "-unattended",
+        "-nosound",
+        "-windowed",
+        "-RenderOffscreen",
+        "-ResX=1920",
+        "-ResY=1080",
+        "-SaveToUserDir",
+        "-csvCategories=Slate,ProjectJUI",
+        "-csvCompression=0",
+        "-UserDir=\"C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/CA01_13_CookedUI1/1920x1080/User/\"",
+        "-ABSLOG=\"C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\CA01_13_CookedUI1\\1920x1080\\Game.log\"",
+        "-ProjectJUIProfile",
+        "-ExecCmds=\"t.MaxFPS 60\"",
+        "-ProjectJUIWorkload",
+        "-ProjectJUIDynamicWorkload"
+      ]
+    }
+  ]
+}

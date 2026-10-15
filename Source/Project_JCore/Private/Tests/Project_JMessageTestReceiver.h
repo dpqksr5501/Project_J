@@ -15,4 +15,7 @@ public:
     int32 FirstCount = 0, SecondCount = 0;
     UFUNCTION() void ChangeSubscriptions(FGameplayTag Channel, UObject* Payload);
     UFUNCTION() void Count(FGameplayTag Channel, UObject* Payload);
+    TWeakObjectPtr<UObject> ObservedPayload;
+    bool bPayloadSurvivedCollection = false;
+    UFUNCTION() void CollectDuringMessage(FGameplayTag Channel, UObject* Payload);
 };

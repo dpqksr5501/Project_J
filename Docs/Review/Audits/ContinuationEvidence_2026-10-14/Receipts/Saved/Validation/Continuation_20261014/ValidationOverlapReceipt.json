@@ -1,0 +1,9 @@
+{
+  "scope_ko": "CA01_13_CookedCombat1은 최신 cooked 기능 assertions/exit0만 계승하며 첫 Insights 분석과 겹친 성능/PSO 시간 비교에서 제외. 원본을 보존하고 단독 후속 실행으로 확인한다.",
+  "analysis": "CA_CPU_Integrated_Trace1_A_trace/Count200/TraceExport",
+  "analysisExitUtc": "2026-10-14 13:38:56 UTC",
+  "combatExitUtc": "2026-10-14 13:38:40 UTC",
+  "secondExportBeforeStartGuardRejected": true,
+  "terminated": false,
+  "productionCodeUnchanged": true
+}

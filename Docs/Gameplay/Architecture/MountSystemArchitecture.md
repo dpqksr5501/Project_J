@@ -92,13 +92,13 @@ Input keys are data assets, not hardcoded in C++.
 - `IA_MountAscend`: map to **Space Bar**, then assign it to the flying mount's `Ascend Action` property.  Pressing it starts flight; holding it moves upward while flying.
 - `IA_MountDescend`: map to **Left Control**, then assign it to the flying mount's `Descend Action` property.  Holding it moves downward while flying.
 
-When a descending flying mount reaches ground within the landing trace distance, it automatically returns to walking movement.  The initial version does not yet distinguish water, steep slopes, or restricted landing zones.
+하강 중 지면 탐색은 `MaxLandingSlopeDegrees`로 경사를 제한한다. Grounded 복귀는 서버 충돌 접촉과 authored LandingTouchdown cue를 함께 만족해야 한다. 물/제한 구역 정책은 별도 확장 범위다.
 
 ## Interaction foundation
 
 All future F interactions share `IProject_JInteractable`; `UProject_JInteractionTargetComponent` stores editor-facing prompt, range, priority, and availability settings.  Mounts implement the interface directly and include the component by default.
 
-The present target scan is the first playable server-side version: it searches nearby Pawn interactables in a fixed radius and asks the selected actor whether interaction is allowed.  NPCs and mount actors already fit this flow.  Pickups, chests, hold-to-interact UI, line-of-sight checks, and selecting by component priority/range should be added by evolving the scanner to consume `InteractionTargetComponent` data.  Do not duplicate F key bindings for individual actor Blueprints.
+실제 공통 경로는 `Project_J::Interaction::TryInteract`다. 서버에서 Pawn/WorldDynamic/WorldStatic overlap을 모으고 actor 중복을 제거한 뒤 component의 availability/range·선택적 visibility trace·priority/거리로 선별한다. 확장 가능한 CanInteract 이후 commit 직전 eligibility를 다시 검사한다. Mount interaction은 공개 `GetMountEligibilityFailure`를 직접 사용하고 TryMountRider에서도 최종 승인한다. 개별 BP에 별도 F 입력/탐색기를 추가하지 않는다. focus UI·hold progress 및 특수 target 정책은 별도 확장이다.
 
 ## GAS and attributes
 
@@ -327,7 +327,13 @@ RA17은 rider component와 별도로 Mount actor 자신의 Ending gate도 새 Be
 
 - Persist owned/summoned mounts through inventory and character data.
 - Add cooldowns, summon/despawn rules, stable zones, and combat restrictions.
-- Replace the temporary health path with GAS GameplayEffects and add stamina use for flight/sprint.
+- Add authored mount-specific combat effects and stamina costs for flight/sprint; retain the installed GAS health authority and BP compatibility mirrors.
 - Add body-part hit volumes, damage routing, and optimized far-distance collision policy.
-- Implement interaction focus UI, prompts, hold progress, priority, and non-Pawn target scanning.
+- Extend interaction focus UI and hold progress through the existing common scanner; priority/range/LOS and non-Pawn scanning are already installed.
 - Add prediction/smoothing policy and profiling tiers before supporting large numbers of visible mounts.
+
+### 2026-10-15 소스 정리와 유지한 소유권
+
+탑승 actor의 이동·possession/server phase와 rider component의 복제 관계/원래 ASC 태그 lease는 서로 다른 책임이다. health mirror와 phase/CMC mode·collision/cue 완료도 역할이 달라 유지한다. private eligibility 전달 함수와 tag helper의 미사용 PreviousState 인자는 제거하지만 공개 eligibility·K2/OnRep PreviousState·reflected animation 필드는 보존한다.
+
+CA19는 실제 attach callback 퇴역·복제 A→B·phase tag 중첩·controller 재배정 실패를 수정했고 관련24개 집중 회귀를 통과했다. 강제 lifecycle 하차와 일반 blocked/air 하차 거절은 유지한다. 실제 두 rider transport·BP/최종 pose·중첩 restore 후보는 별도 위험이며 이 native 결과로 완료 처리하지 않는다. 현재 작업은 [소스·아키텍처 정리](../../Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md)다.

@@ -1,5 +1,7 @@
 #if WITH_EDITOR && WITH_DEV_AUTOMATION_TESTS
 #include "Testing/Project_JAuthoredAnimationFixture.h"
+#include "Engine/StaticMesh.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JMotionMatchingAssetSet.h"
 #include "Animation/AnimClassInterface.h"

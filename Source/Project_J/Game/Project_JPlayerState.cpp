@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Project_JPlayerState.h"
+#include "Engine/GameInstance.h"
 #include "Game/Project_JQuestComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"

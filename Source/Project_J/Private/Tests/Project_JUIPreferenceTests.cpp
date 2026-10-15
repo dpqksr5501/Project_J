@@ -116,6 +116,9 @@ bool FProjectJUIEquipmentPolicyTest::RunTest(const FString &)
 	}
 	Compare = FProject_JEquipmentComparison::Build(nullptr, Equipped);
 	TestEqual(TEXT("Empty replacement includes lost equipped bonus"), Compare.Rows[0].Difference, -10.f);
+	Attack.Stat = static_cast<EProject_JEquipmentStat>(255);
+	Candidate->StatModifiers.Add(Attack);
+	TestFalse(TEXT("Unknown stat tuple cannot advertise a valid fixed comparison"), FProject_JEquipmentComparison::Build(Candidate, Equipped).bCanCompare);
 	return true;
 }
 #endif

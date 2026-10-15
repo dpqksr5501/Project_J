@@ -1,6 +1,7 @@
 // Editor-only animation workload. It never substitutes for a combat Character.
 #if WITH_EDITOR
 #include "Animation/AnimMontage.h"
+#include "Engine/SkeletalMesh.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"

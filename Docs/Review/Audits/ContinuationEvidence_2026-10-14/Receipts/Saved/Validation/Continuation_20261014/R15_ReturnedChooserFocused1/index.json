@@ -1,0 +1,102 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "58D1380A40C6530302F2D5A68345391F",
+			"instanceName": "DESKTOP-5T07C91-25200",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-01.12.45",
+	"succeeded": 4,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.033216699957847595,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "CandidatesAndInterrupt",
+			"fullTestPath": "ProjectJ.BackwardReface.CandidatesAndInterrupt",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"58D1380A40C6530302F2D5A68345391F"
+			],
+			"duration": 0.0081786997616291046,
+			"dateTime": "2026.10.15-01.12.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "Lifetime",
+			"fullTestPath": "ProjectJ.BackwardReface.Lifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"58D1380A40C6530302F2D5A68345391F"
+			],
+			"duration": 0.0084514990448951721,
+			"dateTime": "2026.10.15-01.12.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProductionData",
+			"fullTestPath": "ProjectJ.BackwardReface.ProductionData",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"58D1380A40C6530302F2D5A68345391F"
+			],
+			"duration": 0.0083055011928081512,
+			"dateTime": "2026.10.15-01.12.45",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Read-only backward Reface audit: Set=/Game/DataAssetSets/Animation_Profiles/Combat_MMProfile/DA_Player_Combat_Strafe.DA_Player_Combat_Strafe Reface=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_BackwardReface.PSD_Combat_Run_BackwardReface ScopedCycle=/Game/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_RefaceCycle.PSD_Combat_Run_RefaceCycle Entries=70",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.15-01.12.45"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReturnedChooserTraversal",
+			"fullTestPath": "ProjectJ.Continuation.ReturnedChooserTraversal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"58D1380A40C6530302F2D5A68345391F"
+			],
+			"duration": 0.0082809999585151672,
+			"dateTime": "2026.10.15-01.12.45",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

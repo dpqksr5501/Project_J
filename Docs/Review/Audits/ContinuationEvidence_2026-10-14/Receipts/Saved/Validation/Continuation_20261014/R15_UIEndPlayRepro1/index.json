@@ -1,0 +1,139 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "20CB8ECF4714B1E572AF9FBA9F6434E9",
+			"instanceName": "DESKTOP-5T07C91-20708",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-01.40.34",
+	"succeeded": 2,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.16588799655437469,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "InventoryConsumeContract",
+			"fullTestPath": "ProjectJ.Continuation.InventoryConsumeContract",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"20CB8ECF4714B1E572AF9FBA9F6434E9"
+			],
+			"duration": 0.010732501745223999,
+			"dateTime": "2026.10.15-01.40.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NullableRefaceCycle",
+			"fullTestPath": "ProjectJ.Continuation.NullableRefaceCycle",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"20CB8ECF4714B1E572AF9FBA9F6434E9"
+			],
+			"duration": 0.092076405882835388,
+			"dateTime": "2026.10.15-01.40.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Backward facing fixture' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JNullableCycleTests.cpp",
+					"lineNumber": 39,
+					"timestamp": "2026.10.15-01.40.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Valid backward reversal without ordinary cycle: OwnerOrSampleChanged' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JNullableCycleTests.cpp",
+					"lineNumber": 69,
+					"timestamp": "2026.10.15-01.40.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UIModelOwnership",
+			"fullTestPath": "ProjectJ.Continuation.UIModelOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"20CB8ECF4714B1E572AF9FBA9F6434E9"
+			],
+			"duration": 0.0076276995241641998,
+			"dateTime": "2026.10.15-01.40.34",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UISkillReleaseOwnership",
+			"fullTestPath": "ProjectJ.Continuation.UISkillReleaseOwnership",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"20CB8ECF4714B1E572AF9FBA9F6434E9"
+			],
+			"duration": 0.055451396852731705,
+			"dateTime": "2026.10.15-01.40.34",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Actual EndPlay leaves no new receipt' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 86,
+					"timestamp": "2026.10.15-01.40.34"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'EndPlay callback cannot leave a new active input' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 86,
+					"timestamp": "2026.10.15-01.40.34"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		}
+	]
+}

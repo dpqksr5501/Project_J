@@ -1,0 +1,9 @@
+{
+  "available": true,
+  "wholeProcessWallSeconds": 258.8916591,
+  "logicalProcessors": 16,
+  "scope_ko": "전체 자식 프로세스 setup/warmup/측정/종료의 OS 누적 CPU. native world/GT/worker 측정 구간과 별도이며 FPS/GPU가 아니다.",
+  "totalCpuSeconds": 1033.40625,
+  "userCpuSeconds": 1012.5,
+  "kernelCpuSeconds": 20.90625
+}

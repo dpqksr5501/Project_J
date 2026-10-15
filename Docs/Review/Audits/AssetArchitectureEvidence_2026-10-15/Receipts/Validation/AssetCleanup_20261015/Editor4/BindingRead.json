@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"returnValue\":\"{\\\"fields\\\": [\\\"onMotionMatchingStateUpdatedFunction\\\", \\\"initialUpdateFunction\\\", \\\"becomeRelevantFunction\\\", \\\"updateFunction\\\"], \\\"values\\\": \\\"{\\\\\\\"onMotionMatchingStateUpdatedFunction\\\\\\\":{\\\\\\\"memberParent\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberScope\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"memberName\\\\\\\":\\\\\\\"OnUpdate\\\\\\\",\\\\\\\"memberGuid\\\\\\\":\\\\\\\"377D89BD-40E5-6D3E-71EB-3F8B9C09FA57\\\\\\\",\\\\\\\"bSelfContext\\\\\\\":true,\\\\\\\"bWasDeprecated\\\\\\\":false},\\\\\\\"initialUpdateFunction\\\\\\\":{\\\\\\\"memberParent\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberScope\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"memberName\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberGuid\\\\\\\":\\\\\\\"00000000-0000-0000-0000-000000000000\\\\\\\",\\\\\\\"bSelfContext\\\\\\\":false,\\\\\\\"bWasDeprecated\\\\\\\":false},\\\\\\\"becomeRelevantFunction\\\\\\\":{\\\\\\\"memberParent\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberScope\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"memberName\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberGuid\\\\\\\":\\\\\\\"00000000-0000-0000-0000-000000000000\\\\\\\",\\\\\\\"bSelfContext\\\\\\\":false,\\\\\\\"bWasDeprecated\\\\\\\":false},\\\\\\\"updateFunction\\\\\\\":{\\\\\\\"memberParent\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberScope\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"memberName\\\\\\\":\\\\\\\"None\\\\\\\",\\\\\\\"memberGuid\\\\\\\":\\\\\\\"00000000-0000-0000-0000-000000000000\\\\\\\",\\\\\\\"bSelfContext\\\\\\\":false,\\\\\\\"bWasDeprecated\\\\\\\":false}}\\\"}\"}"
+      }
+    ]
+  }
+}

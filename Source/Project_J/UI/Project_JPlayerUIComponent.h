@@ -79,6 +79,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
 
   private:
 	friend class FProjectJUIScreenFailureLifetimeTest;
+	friend class FProjectJUISkillReleaseOwnershipTest;
 	bool IsKeyReserved(FKey Key) const;
 	UFUNCTION() void RebuildKeyBindings();
 	FProject_JUIKeys InputKeys;

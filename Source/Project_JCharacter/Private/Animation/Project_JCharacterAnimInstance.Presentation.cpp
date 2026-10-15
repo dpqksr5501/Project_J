@@ -5,6 +5,7 @@
 #include "Animation/Project_JCharacterAnimInstanceProxy.h"
 
 #include "ChooserFunctionLibrary.h"
+#include "Animation/Project_JReturnedChooserTraversal.h"
 #include "ChooserTypes.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
@@ -569,30 +570,8 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		FProject_JStateControllerChooserOutput ChooserOutput;
 		ChooserContext.AddStructParam(ChooserOutput);
 
-		FString EvaluatedChooserPath = GetNameSafe(ChooserTable);
-		const FInstancedStruct ChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(ChooserTable);
-		UObject* ResultObject = ChooserObject.IsValid()
-			? UChooserFunctionLibrary::EvaluateObjectChooserBase(
-				ChooserContext,
-				ChooserObject,
-				UObject::StaticClass())
-			: nullptr;
-
-		// If Parent Chooser returned a Sub-Chooser Table, evaluate the Sub-Chooser recursively
-		while (UChooserTable* SubChooserTable = Cast<UChooserTable>(ResultObject))
-		{
-			EvaluatedChooserPath += FString::Printf(TEXT(" -> %s"), *GetNameSafe(SubChooserTable));
-			const FInstancedStruct SubChooserObject = UChooserFunctionLibrary::MakeEvaluateChooser(SubChooserTable);
-			if (!SubChooserObject.IsValid())
-			{
-				ResultObject = nullptr;
-				break;
-			}
-			ResultObject = UChooserFunctionLibrary::EvaluateObjectChooserBase(
-				ChooserContext,
-				SubChooserObject,
-				UObject::StaticClass());
-		}
+		FString EvaluatedChooserPath;
+		UObject* ResultObject = Project_J::Animation::EvaluateReturnedChooserTables(ChooserTable, ChooserContext, EvaluatedChooserPath);
 
 		UAnimationAsset* SelectedAsset = Cast<UAnimationAsset>(ResultObject);
 		if (!SelectedAsset &&
@@ -881,6 +860,16 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 
 bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle)
 {
+	if (!OwningPlayerCharacter || !FMath::IsFinite(MouseCancelAngle) || MouseCancelAngle < 0.f ||
+		!FMath::IsFinite(MoveCancelAngle) || MoveCancelAngle < 0.f ||
+		!FMath::IsFinite(OwningPlayerCharacter->GetControlRotation().Yaw) ||
+		OwningPlayerCharacter->GetLastMovementInputVector().ContainsNaN() ||
+		(bHasStateControllerOneShotControlYaw && !FMath::IsFinite(StateControllerOneShotControlYaw)) ||
+		(bHasStateControllerOneShotMoveInputYaw && !FMath::IsFinite(StateControllerOneShotMoveInputYaw)))
+	{
+		Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), TEXT("InvalidInputSample"));
+		return true;
+	}
 	const auto* Profile = GetLocomotionProfile();
 	if (!bCommittedPivot && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
 		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && bHasStateControllerOneShotControlYaw)

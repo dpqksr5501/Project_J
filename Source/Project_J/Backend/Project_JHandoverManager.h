@@ -37,7 +37,8 @@ enum class EProject_JHandoverValidationFailure : uint8
 	InvalidNode,
 	InvalidTimestamp,
 	PayloadTooLarge,
-	ChecksumMismatch
+	ChecksumMismatch,
+	InvalidConfiguration
 };
 
 UENUM(BlueprintType)
@@ -166,6 +167,8 @@ public:
 	FProject_JHandoverStateChanged OnHandoverStateChanged;
 
 private:
+	friend class FProjectJHandoverConfigurationTest;
+	bool HasValidTimingConfiguration() const;
 	bool Tick(float DeltaSeconds);
 	void DispatchTransfer(const FGuid& TransferId);
 	void HandleTransportResponse(const FProject_JHandoverTransportResponse& Response);
@@ -192,6 +195,7 @@ private:
 	TSharedPtr<IProject_JHandoverTransport> Transport;
 	FTSTicker::FDelegateHandle TickHandle;
 	bool bShuttingDown = false;
+	uint64 LifetimeRevision = 0;
 	bool bTicking = false;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover")

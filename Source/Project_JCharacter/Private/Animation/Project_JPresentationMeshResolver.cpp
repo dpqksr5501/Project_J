@@ -5,14 +5,18 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualDemandResolve);
 	const USkeletalMeshComponent* Leader = Character.GetMesh();
-	TInlineComponentArray<USkeletalMeshComponent*> Meshes;
-	Character.GetComponents(Meshes);
-	for (const USkeletalMeshComponent* Mesh : Meshes)
+	// Pure GT visibility queries cannot mutate component ownership. Visit the
+	// actor's same owned set directly and stop at demand, instead of collecting
+	// every skeletal pointer into a temporary array before scanning it again.
+	for (const UActorComponent* Component : Character.GetComponents())
 	{
+		const USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(Component);
 		if (!IsValid(Mesh) || !Mesh->IsRegistered()) { continue; }
 		// A hidden leader's shadow timestamp is not presentation demand. Its
 		// visible follower/equipment independently keeps the source pose awake.
@@ -24,6 +28,7 @@ bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& 
 
 USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacter& Character, bool bRequireMeshAsset)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualFollowerResolve);
 	const USkeletalMeshComponent* SourceMesh = Character.GetMesh();
 	if (!IsValid(SourceMesh))
 	{

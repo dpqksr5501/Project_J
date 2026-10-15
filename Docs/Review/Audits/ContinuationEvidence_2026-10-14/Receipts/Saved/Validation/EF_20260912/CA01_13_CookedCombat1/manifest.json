@@ -1,0 +1,27 @@
+{
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "exe": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA01_13_Package4\\Package\\Windows\\Project_J\\Binaries\\Win64\\Project_J.exe",
+  "binarySHA256": "26098D789B055B9E3E54D7832311D391E8D08E24216AA6960E652BCFE37E8CEA",
+  "userDirectory": "C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA01_13_CookedCombatUser1/",
+  "reused": false,
+  "cacheScope": "Application directory only. OS/driver caches preserved; not certified cold.",
+  "disableDefaultLightFunction": false,
+  "arguments": [
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJCombatCookedFixture",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/Continuation_20261014/CA01_13_CookedCombatUser1/",
+    "-SaveToUserDir",
+    "-ProjectJEOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/CA01_13_CookedCombat1",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/EF_20260912/CA01_13_CookedCombat1/Run.log",
+    "-ExecCmds=t.MaxFPS 60",
+    "-ini:Engine:[SystemSettings]:r.PSOPrecache.Validation=2"
+  ]
+}

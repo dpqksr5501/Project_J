@@ -1,5 +1,7 @@
 # MMORPG Architecture Review
 
+2026-10-15 후속: 아래 문서의 초기 설계 설명과 현재 구현 현황은 구분한다. [소스 정리](../Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md), [실제 BP·DA 연결/정리·서버 권위/저장/로딩 계약](../Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)에 최신 근거·유지 이유·미검증 범위를 기록했다. 에셋 감소나 로컬 회귀를 MMORPG 서버 수용 인원·네트워크 성능 개선의 증명으로 사용하지 않는다.
+
 이 문서는 현재 Project J의 전체 C++ 코드를 기준으로, MMORPG 프로젝트로 확장할 때 취하면 좋은 구조, 최적화, 네트워킹, 시스템 경계, 모션 매칭 작업을 정리합니다. 현재 프로젝트는 캐릭터 이동과 C++ Motion Matching이 가장 많이 구현되어 있지만, 코드에는 이미 Core MMO 타입, GAS, 장비 FastArray, 백엔드 Gateway, handover, replication policy, UI/MVVM, Mass 초안까지 들어와 있습니다.
 
 목표는 지금 단계에 맞는 구조를 유지하면서, 나중에 인벤토리, 장비, 전투, 파티, 길드, 월드 인스턴싱, 서버 이동, 대규모 전투가 붙어도 코드 경계가 무너지지 않게 하는 것입니다.

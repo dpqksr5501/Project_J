@@ -1,0 +1,678 @@
+{
+  "asset_mutation": false,
+  "asset_save": false,
+  "profiles": [
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Player_WeaponProfile",
+      "values": "{\"weaponType\":\"None\",\"weaponStance\":\"None\",\"combatPresentationMode\":\"UpperBodyOverlay\",\"combatIntroMontage\":\"None\",\"combatOutroMontage\":\"None\",\"combatAnimationLayerClass\":\"None\",\"combatIntroMontagePlayRate\":1,\"combatOutroMontagePlayRate\":1}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/WeaponProfiles/DA_Greatsword_WeaponProfile",
+      "values": "{\"weaponType\":\"TwoHandSword\",\"weaponStance\":\"TwoHanded\",\"combatPresentationMode\":\"UpperBodyOverlay\",\"combatIntroMontage\":{\"refPath\":\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip.AM_Greatsword_Equip\"},\"combatOutroMontage\":{\"refPath\":\"/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip.AM_Greatsword_UnEquip\"},\"combatAnimationLayerClass\":{\"refPath\":\"/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers_C\"},\"combatIntroMontagePlayRate\":1,\"combatOutroMontagePlayRate\":1}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_Player_AnimProfiles",
+      "values": "{\"locomotionProfile\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.DA_Player_Profile\"},\"combatAnimProfile\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat.DA_Player_Combat\"},\"foleyAudioProfile\":\"None\",\"handGripCalibration\":{\"primaryPalmSocketName\":\"PalmGrip_R\",\"secondaryPalmSocketName\":\"PalmGrip_L\",\"missingPalmPolicy\":\"LegacyWristOrigin\",\"primaryHandOffset\":{\"location\":{\"x\":0,\"y\":0,\"z\":0},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":-0},\"scale\":{\"x\":1,\"y\":1,\"z\":1}},\"secondaryHandOffset\":{\"location\":{\"x\":0,\"y\":0,\"z\":0},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":-0},\"scale\":{\"x\":1,\"y\":1,\"z\":1}},\"primaryElbowTarget\":{\"x\":0,\"y\":0,\"z\":0},\"secondaryElbowTarget\":{\"x\":0,\"y\":0,\"z\":0},\"primaryArm\":{\"shoulder\":\"None\",\"elbow\":\"None\",\"hand\":\"None\"},\"secondaryArm\":{\"shoulder\":\"None\",\"elbow\":\"None\",\"hand\":\"None\"},\"primaryBendStability\":{\"bEnabled\":true,\"fallbackPoleAxis\":{\"x\":0,\"y\":1,\"z\":0},\"holdBendRatio\":0.15000000596046448,\"reliableBendRatio\":0.25,\"reacquireDegreesPerSecond\":720,\"maxHistorySeconds\":0.25},\"secondaryBendStability\":{\"bEnabled\":true,\"fallbackPoleAxis\":{\"x\":0,\"y\":1,\"z\":0},\"holdBendRatio\":0.15000000596046448,\"reliableBendRatio\":0.25,\"reacquireDegreesPerSecond\":720,\"maxHistorySeconds\":0.25}},\"handGripProfile\":\"None\",\"retargetBodyProfile\":\"None\"}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/AnimProfiles/DA_GreatSword_AnimProfile",
+      "values": "{\"locomotionProfile\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.DA_Player_Profile\"},\"combatAnimProfile\":{\"refPath\":\"/Game/DataAssetSets/Animation_Profiles/ComBatProfiles/DA_Player_Combat.DA_Player_Combat\"},\"foleyAudioProfile\":\"/Game/DataAssetSets/Audio/DA_Mannequin_Foley.DA_Mannequin_Foley\",\"handGripCalibration\":{\"primaryPalmSocketName\":\"PalmGrip_R\",\"secondaryPalmSocketName\":\"PalmGrip_L\",\"missingPalmPolicy\":\"LegacyWristOrigin\",\"primaryHandOffset\":{\"location\":{\"x\":0,\"y\":0,\"z\":0},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":-0},\"scale\":{\"x\":1,\"y\":1,\"z\":1}},\"secondaryHandOffset\":{\"location\":{\"x\":0,\"y\":0,\"z\":0},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":-0},\"scale\":{\"x\":1,\"y\":1,\"z\":1}},\"primaryElbowTarget\":{\"x\":0,\"y\":0,\"z\":0},\"secondaryElbowTarget\":{\"x\":0,\"y\":0,\"z\":0},\"primaryArm\":{\"shoulder\":\"None\",\"elbow\":\"None\",\"hand\":\"None\"},\"secondaryArm\":{\"shoulder\":\"None\",\"elbow\":\"None\",\"hand\":\"None\"},\"primaryBendStability\":{\"bEnabled\":true,\"fallbackPoleAxis\":{\"x\":0,\"y\":1,\"z\":0},\"holdBendRatio\":0.15000000596046448,\"reliableBendRatio\":0.25,\"reacquireDegreesPerSecond\":720,\"maxHistorySeconds\":0.25},\"secondaryBendStability\":{\"bEnabled\":true,\"fallbackPoleAxis\":{\"x\":0,\"y\":1,\"z\":0},\"holdBendRatio\":0.15000000596046448,\"reliableBendRatio\":0.25,\"reacquireDegreesPerSecond\":720,\"maxHistorySeconds\":0.25}},\"handGripProfile\":\"None\",\"retargetBodyProfile\":\"None\"}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Class/DA_Class_Greatsword",
+      "values": "{\"classId\":\"GreatSword\",\"schemaVersion\":1,\"startingLevel\":1,\"defaultAttributeData\":{\"refPath\":\"/Game/DataAssetSets/Attributes/DA_Player_Attributes.DA_Player_Attributes\"},\"abilitySets\":[{\"refPath\":\"/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base\"},{\"refPath\":\"/Game/AS/AS_Humanoid_Core.AS_Humanoid_Core\"}],\"defaultCombatStyle\":{\"refPath\":\"/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword\"}}"
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJHealthPotion",
+      "values": "{\"restoreHealth\":25,\"restoreMana\":0,\"cooldownSeconds\":10,\"itemId\":\"HealthPotion\",\"itemName\":\"체력 물약\",\"itemDescription\":\"체력을 최대 25 회복합니다.\",\"icon\":\"None\",\"maxStackCount\":99}"
+    },
+    {
+      "path": "/Game/UI/Gameplay/DA_ProjectJManaPotion",
+      "values": "{\"restoreHealth\":0,\"restoreMana\":25,\"cooldownSeconds\":10,\"itemId\":\"ManaPotion\",\"itemName\":\"마나 물약\",\"itemDescription\":\"마나를 최대 25 회복합니다.\",\"icon\":\"None\",\"maxStackCount\":99}"
+    },
+    {
+      "path": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip",
+      "values": "{\"equipmentSlot\":\"Weapon\",\"equipmentMesh\":\"None\",\"attachSocketName\":\"None\",\"maxDrawDistance\":0,\"bCastDynamicShadow\":true,\"abilitySet\":\"None\",\"equipmentEffects\":[],\"statApplicationPolicy\":\"GameplayEffectsThenStatModifiers\",\"statModifiers\":[],\"combatStyleDefinition\":{\"refPath\":\"/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword\"},\"weaponPresentationProfile\":{\"refPath\":\"/Game/DataAssetSets/Presentation/Greatsword/DA_Greatsword_Presentation.DA_Greatsword_Presentation\"},\"itemId\":\"Greatsword.Starter\",\"itemName\":\"Greatsword\",\"itemDescription\":\"기본 대검\",\"icon\":\"None\",\"maxStackCount\":1}"
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIDefault",
+      "values": "{\"profileId\":\"Default\",\"displayName\":\"\",\"priority\":0,\"classId\":\"None\",\"advancementId\":\"None\",\"requiredTags\":{\"gameplayTags\":[]},\"blockedTags\":{\"gameplayTags\":[]},\"bOverrideSkills\":false,\"skills\":[],\"bOverrideResources\":false,\"resources\":[],\"characterModuleClass\":\"None\"}"
+    },
+    {
+      "path": "/Game/UI/DA_ProjectJUIProfiles",
+      "values": "{\"profiles\":[{\"refPath\":\"/Game/UI/DA_ProjectJUIDefault.DA_ProjectJUIDefault\"}]}"
+    }
+  ],
+  "graphs": [
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Mounts/ABP_Rider_Dragon.ABP_Rider_Dragon:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Layers.ABP_Greatsword_Layers:CombatUpperBody"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_HumanoidCombat.ALI_HumanoidCombat:CombatUpperBody"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/Mount_ALI/ALI_HumanoidMount.ALI_HumanoidMount:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/Anim_Layer_Interf/ALI_PlayerLocomotion.ALI_PlayerLocomotion:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.ABP_Greatsword_Woman_RunTIme:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:AnimGraph.AnimGraphNode_ProjectJLocomotion_0.AnimationBlendStackGraph_0"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:CombatUpperBody"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:AnimGraph.AnimGraphNode_MotionMatching_0.AnimationBlendStackGraph_0"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:OnUpdate"
+      },
+      "dsl": "(fn OnUpdate (Context Node)\n  (Animation|MotionMatching|SetDatabaseToSearch (Animation|MotionMatching|ConverttoMotionMatchingNode Node) (Animation|MotionMatching|GetCurrentActivePoseSearchDatabaseThreadSafe) \"InterruptOnDatabaseChangeAndInvalidateContinuingPose\")\n  (return))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player.ABP_Player:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Animation_Logic/ABPs/ABP_Player_Mount",
+      "graph": {
+        "refPath": "/Game/Animation_Logic/ABPs/ABP_Player_Mount.ABP_Player_Mount:MountedLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateNode_1.Idle"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateNode_2.Walk / Run"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateTransitionNode_0.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_0.Locomotion.AnimStateTransitionNode_2.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_0.Locomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_1.Jump"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_0.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_2.Fall Loop"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_1.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_3.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateNode_3.Land"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_5.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_6.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:AnimGraph.AnimGraphNode_StateMachine_1.Main States.AnimStateTransitionNode_7.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed",
+      "graph": {
+        "refPath": "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed:EventGraph"
+      },
+      "dsl": "(event EventBlueprintInitializeAnimation\n  (bind _ascharacter (Utilities|Casting|CastToCharacter (Animation|GetOwningActor)))\n  (bind _output_get (Variables|Default|SetCharacter _ascharacter))\n  (Variables|Default|SetMovementComponent (Class|Character|GetCharacterMovement _output_get)))\n\n(event EventBlueprintUpdateAnimation (DeltaTimeX)\n  (ToolMenus|Get)\n  (bind _output_get (Variables|Default|SetVelocity (Variables|Default|GetVelocity (Variables|Default|GetMovementComponent))))\n  (Variables|Default|SetGroundSpeed (Math|Vector|VectorLengthXY _output_get))\n  (Variables|Default|SetDirection (select (|GetbOrientRotationToMovement (Variables|Default|GetMovementComponent)) (Math|Float|Clamp(Float) (Animation|CalculateDirection (Variables|Default|GetVelocity) (Transformation|GetActorRotation (Variables|Default|GetCharacter))) -45.000000 45.000000) (Animation|CalculateDirection (Variables|Default|GetVelocity) (Transformation|GetActorRotation (Variables|Default|GetCharacter)))))\n  (Variables|Default|SetShouldMove (and (> (Variables|Default|GetGroundSpeed) 0.010000) (Math|Vector|NotEqual(Vector) (Pawn|Components|CharacterMovement|GetCurrentAcceleration (Variables|Default|GetMovementComponent)) 0 0)))\n  (Variables|Default|SetIsFalling (AI|Components|NavMovement|IsFalling (Variables|Default|GetMovementComponent))))\n"
+    },
+    {
+      "blueprint": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess",
+      "graph": {
+        "refPath": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess.ABP_UEFN_Mannequin_PostProcess:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess",
+      "graph": {
+        "refPath": "/Game/Characters/UEFN_Mannequin/Rigs/ABP_UEFN_Mannequin_PostProcess.ABP_UEFN_Mannequin_PostProcess:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/GAs/GA_CombatToggle",
+      "graph": {
+        "refPath": "/Game/GAs/GA_CombatToggle.GA_CombatToggle:EventGraph"
+      },
+      "dsl": "(event Ability|EventActivateAbility)\n\n(event Ability|EventOnEndAbility (bWasCancelled))\n"
+    },
+    {
+      "blueprint": "/Game/GAs/GA_NPC_TestAttack",
+      "graph": {
+        "refPath": "/Game/GAs/GA_NPC_TestAttack.GA_NPC_TestAttack:EventGraph"
+      },
+      "dsl": "(event Ability|EventActivateAbility)\n\n(event Ability|EventOnEndAbility (bWasCancelled))\n"
+    },
+    {
+      "blueprint": "/Game/GAs/GreatSword/GA_Greatsword",
+      "graph": {
+        "refPath": "/Game/GAs/GreatSword/GA_Greatsword.GA_Greatsword:Gameplay Ability Graph"
+      },
+      "dsl": "(event Ability|EventActivateAbility)\n\n(event Ability|EventOnEndAbility (bWasCancelled))\n"
+    },
+    {
+      "blueprint": "/Game/GEs/BP_GE_CombatMode",
+      "graph": {
+        "refPath": "/Game/GEs/BP_GE_CombatMode.BP_GE_CombatMode:EventGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/GEs/GE_TestDamege",
+      "graph": {
+        "refPath": "/Game/GEs/GE_TestDamege.GE_TestDamege:EventGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Input/Touch/BPI_TouchInterface",
+      "graph": {
+        "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Primary Thumbstick"
+      },
+      "dsl": "(fn PrimaryThumbstick (Axis))\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/BPI_TouchInterface",
+      "graph": {
+        "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Secondary Thumbstick"
+      },
+      "dsl": "(fn SecondaryThumbstick (Axis))\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/BPI_TouchInterface",
+      "graph": {
+        "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Touch Jump Start"
+      },
+      "dsl": "(fn TouchJumpStart ())\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/BPI_TouchInterface",
+      "graph": {
+        "refPath": "/Game/Input/Touch/BPI_TouchInterface.BPI_TouchInterface:Touch Jump End"
+      },
+      "dsl": "(fn TouchJumpEnd ())\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/UI_Thumbstick",
+      "graph": {
+        "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:Touch Input Check"
+      },
+      "dsl": "(fn TouchInputCheck (FingerIndex)\n  (bind _returnvalue (Game|GetPlayerController 0))\n  (bind _locationx (Game|Player|GetInputTouchState _returnvalue FingerIndex))\n  (bind _locationy (Game|Player|GetInputTouchState _returnvalue FingerIndex))\n  (|Set _locationx _locationy)\n  (bind _output_get (Variables|Default|SetTrackInput (and (Game|Player|GetInputTouchState _returnvalue FingerIndex) (<= (Math|Vector2D|Distance2D _locationx _locationy (Variables|Default|GetPosition)) (Math|Float|Max(Float) (ToolMenus|Get) (ToolMenus|Get))))))\n  (if _output_get\n    (Variables|Default|SetTouchTarget FingerIndex)))\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/UI_Thumbstick",
+      "graph": {
+        "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:EventGraph"
+      },
+      "dsl": "(event UserInterface|EventPreConstruct (IsDesignTime)\n  (bind _container (Variables|UI_Thumbstick|GetContainer))\n  (Layout|SizeBox|SetHeightOverride _container (ToolMenus|Get))\n  (Layout|SizeBox|SetWidthOverride _container (ToolMenus|Get)))\n\n(event UserInterface|EventTick (MyGeometry InDeltaTime)\n  (bind _touch_target (Variables|Default|GetTouchTarget))\n  (bind _returnvalue (Game|GetPlayerController 0))\n  (bind _locationy (Game|Player|GetInputTouchState _returnvalue _touch_target))\n  (bind _locationx (Game|Player|GetInputTouchState _returnvalue _touch_target))\n  (bind _thumbstick_size_y (ToolMenus|Get))\n  (bind _returnvalue_1 (/ _thumbstick_size_y 2.000000))\n  (bind _returnvalue_2 (* _returnvalue_1 -1.000000))\n  (bind _initial_touch_location_y (ToolMenus|Get))\n  (bind _returnvalue_3 (- _locationy _initial_touch_location_y))\n  (bind _returnvalue_4 (Math|Float|Clamp(Float) _returnvalue_3 _returnvalue_2 _returnvalue_1))\n  (bind _thumbstick_size_x (ToolMenus|Get))\n  (bind _returnvalue_5 (/ _thumbstick_size_x 2.000000))\n  (bind _returnvalue_6 (* _returnvalue_5 -1.000000))\n  (bind _initial_touch_location_x (ToolMenus|Get))\n  (bind _returnvalue_7 (- _locationx _initial_touch_location_x))\n  (bind _returnvalue_8 (Math|Float|Clamp(Float) _returnvalue_7 _returnvalue_6 _returnvalue_5))\n  (Variables|Default|SetPosition (Math|Vector2D|vector2d*vector2d (UserInterface|Geometry|LocalToViewport MyGeometry (Math|Vector2D|vector2d/vector2d (Variables|Default|GetThumbstickSize) \"(X=2.000000,Y=2.000000)\")) (Viewport|GetViewportScale)))\n  (if (Variables|Default|GetTrackInput)\n    (Variables|Default|SetTrackInput (Game|Player|GetInputTouchState _returnvalue _touch_target))\n    (Widget|Transform|SetRenderTranslation (Variables|UI_Thumbstick|GetStick) _returnvalue_8 _returnvalue_4)\n    (Default|CallStickInput (Math|Float|SelectFloat (* (Math|Float|SelectFloat (* (/ _returnvalue_8 _returnvalue_5) -1.000000) (/ _returnvalue_8 _returnvalue_5) (Variables|Default|GetInvertX)) (Variables|Default|GetScaleOutput)) 0.0 (Variables|Default|GetTrackInput)) (Math|Float|SelectFloat (* (Math|Float|SelectFloat (* (/ _returnvalue_4 _returnvalue_1) -1.000000) (/ _returnvalue_4 _returnvalue_1) (Variables|Default|GetInvertY)) (Variables|Default|GetScaleOutput)) 0.0 (Variables|Default|GetTrackInput)))\n    (else\n      (Widget|Transform|SetRenderTranslation (Variables|UI_Thumbstick|GetStick) 0.0 0.0)\n      (CallFunction|TouchInputCheck \"Touch1\")\n      (if (not (Variables|Default|GetTrackInput))\n        (CallFunction|TouchInputCheck \"Touch2\")))))\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/UI_Thumbstick",
+      "graph": {
+        "refPath": "/Game/Input/Touch/UI_Thumbstick.UI_Thumbstick:Stick Input"
+      },
+      "dsl": "(fn StickInput (NewParam))\n"
+    },
+    {
+      "blueprint": "/Game/Input/Touch/UI_TouchSimple",
+      "graph": {
+        "refPath": "/Game/Input/Touch/UI_TouchSimple.UI_TouchSimple:EventGraph"
+      },
+      "dsl": "(event UserInterface|EventConstruct\n  (bind _returnvalue (Widget|GetOwningPlayer))\n  (|SetbShowMouseCursor true _returnvalue)\n  (Input|SetInputModeGameAndUI _returnvalue 0 \"DoNotLock\" false))\n\n(event StickInput(Thumbstick_Move) (NewParam)\n  (Touch|PrimaryThumbstick (Pawn|GetControlledPawn (Widget|GetOwningPlayer)) NewParam))\n\n(event StickInput(Thumbstick_Aim) (NewParam)\n  (Touch|SecondaryThumbstick (Pawn|GetControlledPawn (Widget|GetOwningPlayer)) NewParam))\n\n(event OnPressed(Btn_Jump)\n  (Touch|TouchJumpStart (Pawn|GetControlledPawn (Widget|GetOwningPlayer))))\n\n(event OnReleased(Btn_Jump)\n  (Touch|TouchJumpEnd (Pawn|GetControlledPawn (Widget|GetOwningPlayer))))\n"
+    },
+    {
+      "blueprint": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame",
+      "graph": {
+        "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:UserConstructionScript"
+      },
+      "dsl": "(fn ConstructionScript ()\n  (bind _door_size (Variables|Door|GetDoorSize))\n  (bind _returnvalue (Math|Vector|Vector_GetAbs _door_size))\n  (bind _door_size_1 (Variables|Door|GetDoorSize))\n  (bind _returnvalue_1 (Math|Vector|Vector_GetAbs _door_size_1))\n  (bind _z (.z _returnvalue_1))\n  (bind _x (.x _returnvalue_1))\n  (bind _door_frame_scale (Variables|DoorFrame|GetDoorFrameScale))\n  (bind _door_size_2 (Variables|Door|GetDoorSize))\n  (bind _y (.y _door_size_2))\n  (bind _returnvalue_2 (/ _y 100.000000))\n  (bind _returnvalue_3 (Math|Vector|MakeVector _door_frame_scale _returnvalue_2 _door_frame_scale))\n  (bind _x_1 (.x _door_size_2))\n  (bind _z_1 (.z _door_size_2))\n  (bind _z_2 (.z _returnvalue))\n  (bind _returnvalue_4 (/ _z 2.000000))\n  (bind _returnvalue_5 (/ _x 200.000000))\n  (bind _returnvalue_6 (/ _z 200.000000))\n  (bind _returnvalue_7 (/ _z_2 2.000000))\n  (bind _returnvalue_8 (/ _x 2.000000))\n  (bind _box (Variables|Default|GetBox))\n  (bind _door_thickness (Variables|Door|GetDoorThickness))\n  (bind _door_frame_overide_material (Variables|DoorFrame|GetDoorFrameOverideMaterial))\n  (bind _door_frame_overide_material_1 (Variables|DoorFrame|GetDoorFrameOverideMaterial))\n  (if (Variables|DoorFrame|GetDoorFrame)\n    (Class|FoliageTypeInstancedStaticMesh|SetMesh \"/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Corner.SM_DoorFrame_Corner\" (Math|Transform|MakeTransform _x_1 0.0 _z_1 \"0.000000,180.000000,0.000000\" _returnvalue_3) _door_frame_overide_material_1 \"Static\")\n    (Class|FoliageTypeInstancedStaticMesh|SetMesh \"/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Corner.SM_DoorFrame_Corner\" (Math|Transform|MakeTransform (* _x_1 -1.000000) 0.0 _z_1 \"0, 0, 0\" _returnvalue_3) _door_frame_overide_material_1 \"Static\")\n    (Class|FoliageTypeInstancedStaticMesh|SetMesh \"/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge.SM_DoorFrame_Edge\" (Math|Transform|MakeTransform 0.0 0.0 (.z (Variables|Door|GetDoorSize)) \"0, 0, 0\" (/ (- (Math|Float|Absolute(Float) (.x (Variables|Door|GetDoorSize))) (* (Variables|DoorFrame|GetDoorFrameScale) 100.000000)) 100.000000) (/ (.y (Variables|Door|GetDoorSize)) 100.000000) (Variables|DoorFrame|GetDoorFrameScale)) _door_frame_overide_material \"Static\")\n    (Class|FoliageTypeInstancedStaticMesh|SetMesh \"/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge.SM_DoorFrame_Edge\" (Math|Transform|MakeTransform (ToolMenus|Get) 0.0 (/ (- (Math|Float|Absolute(Float) (ToolMenus|Get)) (* (Variables|DoorFrame|GetDoorFrameScale) 100.000000)) 2.000000) \"-90.000000,0.000000,0.000000\" (/ (- (Math|Float|Absolute(Float) (ToolMenus|Get)) (* (Variables|DoorFrame|GetDoorFrameScale) 100.000000)) 200.000000) (/ (ToolMenus|Get) 100.000000) (Variables|DoorFrame|GetDoorFrameScale)) _door_frame_overide_material \"Static\")\n    (Class|FoliageTypeInstancedStaticMesh|SetMesh \"/Game/LevelPrototyping/Interactable/Door/Meshes/SM_DoorFrame_Edge.SM_DoorFrame_Edge\" (Math|Transform|MakeTransform (* (ToolMenus|Get) -1.000000) 0.0 (/ (- (Math|Float|Absolute(Float) (ToolMenus|Get)) (* (Variables|DoorFrame|GetDoorFrameScale) 100.000000)) 2.000000) \"90.000000,0.000000,0.000000\" (/ (- (Math|Float|Absolute(Float) (ToolMenus|Get)) (* (Variables|DoorFrame|GetDoorFrameScale) 100.000000)) 200.000000) (/ (ToolMenus|Get) 100.000000) (Variables|DoorFrame|GetDoorFrameScale)) _door_frame_overide_material \"Static\"))\n  (if (Variables|Door|GetAddDoor)\n    (Components|Box|SetBoxExtent _box (Math|Vector|vector+vector (Math|Vector|MakeVector (.x _returnvalue) (.y _returnvalue) _returnvalue_7) (Variables|Door|GetDoorDetectionAdjust)))\n    (Transformation|SetRelativeLocation _box 0.0 0.0 _returnvalue_7)\n    (if (Variables|Door|GetSplitDoor)\n      (bind _returnvalue_9 (|AddStaticMeshComponent[StaticMeshSM_Door] false (Math|Transform|MakeTransform _returnvalue_8 0.0 _returnvalue_4 \"0, 0, 0\" _returnvalue_5 _door_thickness _returnvalue_6)))\n      (Variables|Default|SetDoor _returnvalue_9)\n      (bind _returnvalue_10 (|AddStaticMeshComponent[StaticMeshSM_Door] false (Math|Transform|MakeTransform (* _returnvalue_8 -1.000000) 0.0 _returnvalue_4 \"0, 0, 0\" _returnvalue_5 _door_thickness _returnvalue_6)))\n      (Variables|Default|SetDoor2 _returnvalue_10)\n      (else\n        (bind _returnvalue_9 (|AddStaticMeshComponent[StaticMeshSM_Door] false (Math|Transform|MakeTransform 0.0 0.0 (/ (.z (Math|Vector|Vector_GetAbs (Variables|Door|GetDoorSize))) 2.000000) \"0, 0, 0\" (/ (.x (Math|Vector|Vector_GetAbs (Variables|Door|GetDoorSize))) 100.000000) (Variables|Door|GetDoorThickness) (/ (.z (Math|Vector|Vector_GetAbs (Variables|Door|GetDoorSize))) 200.000000))))\n        (Variables|Default|SetDoor _returnvalue_9)))\n    (else\n      (Collision|SetCollisionEnabled (Variables|Default|GetBox)))))\n"
+    },
+    {
+      "blueprint": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame",
+      "graph": {
+        "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:Set Mesh"
+      },
+      "dsl": "(fn SetMesh (NewMesh RelativeTransform Material NewMobility)\n  (bind _material (Variables|GetMaterial))\n  (bind _returnvalue (|AddStaticMeshComponent[StaticMeshSM_DoorFrame_Corner] false RelativeTransform))\n  (Components|StaticMesh|SetStaticMesh _returnvalue (Variables|GetNewMesh))\n  (Transformation|SetMobility _returnvalue (Variables|GetNewMobility))\n  (Utilities|IsValid _material\n    (:\"Is Valid\"\n      (Rendering|Material|SetMaterial _returnvalue 0 _material))))\n"
+    },
+    {
+      "blueprint": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame",
+      "graph": {
+        "refPath": "/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame:EventGraph"
+      },
+      "dsl": "(event EventBeginPlay\n  (bind _door (ToolMenus|Get))\n  (Variables|Default|SetClosedPosition (Class|SceneComponent|GetRelativeLocation _door))\n  (bind _door2 (ToolMenus|Get))\n  (|SetClosedPosition_0 (Class|SceneComponent|GetRelativeLocation _door2)))\n\n(event Custom|OpenDoor\n  (bind _door_size_x (ToolMenus|Get))\n  (bind _returnvalue (* _door_size_x 1.500000))\n  (bind _returnvalue_1 (+ _returnvalue -10.000000))\n  (bind _newtrack_0 (|DoorControl 0.0)\n    (:Update\n      (Transformation|SetRelativeLocation (Variables|Default|GetDoor) (Math|Float|SelectFloat (Math|Float|Lerp (ToolMenus|Get) _returnvalue_1 _newtrack_0) 0.0 (Variables|Door|GetSplitDoor)) (ToolMenus|Get) (Math|Float|SelectFloat (ToolMenus|Get) (Math|Float|Lerp (ToolMenus|Get) (+ (* (ToolMenus|Get) -0.500000) 5.000000) _newtrack_0) (Variables|Door|GetSplitDoor)))\n      (bind _door2 (ToolMenus|Get))\n      (Transformation|SetRelativeLocation _door2 (Math|Float|Lerp (ToolMenus|Get) (* _returnvalue_1 -1.000000) _newtrack_0) (ToolMenus|Get) (ToolMenus|Get)))))\n\n(event Collision|EventActorBeginOverlap (OtherActor)\n  (CallFunction|OpenDoor))\n\n(event Custom|CloseDoor\n  (bind _door_size_x (ToolMenus|Get))\n  (bind _returnvalue (* _door_size_x 1.500000))\n  (bind _returnvalue_1 (+ _returnvalue -10.000000))\n  (bind _newtrack_0 (|DoorControl 0.0)\n    (:Update\n      (Transformation|SetRelativeLocation (Variables|Default|GetDoor) (Math|Float|SelectFloat (Math|Float|Lerp (ToolMenus|Get) _returnvalue_1 _newtrack_0) 0.0 (Variables|Door|GetSplitDoor)) (ToolMenus|Get) (Math|Float|SelectFloat (ToolMenus|Get) (Math|Float|Lerp (ToolMenus|Get) (+ (* (ToolMenus|Get) -0.500000) 5.000000) _newtrack_0) (Variables|Door|GetSplitDoor)))\n      (bind _door2 (ToolMenus|Get))\n      (Transformation|SetRelativeLocation _door2 (Math|Float|Lerp (ToolMenus|Get) (* _returnvalue_1 -1.000000) _newtrack_0) (ToolMenus|Get) (ToolMenus|Get)))))\n\n(event Collision|EventActorEndOverlap (OtherActor)\n  (if (== (Utilities|Array|Length (Collision|GetOverlappingActors (Variables|Default|GetBox) \"/Script/Engine.Character\")) 0)\n    (CallFunction|CloseDoor)))\n"
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_0.Idle"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_1.Walk"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_2.TakeOff"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_3.FlyStationary"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_4.Fly"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_5.Glide"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_0.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_1.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_2.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_3.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_4.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_5.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_6.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_7.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_8.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateNode_6.Landing"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_12.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_13.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_14.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_15.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_16.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_17.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:AnimGraph.AnimGraphNode_StateMachine_0.SM_WyvernLocomotion.AnimStateTransitionNode_18.Transition"
+      },
+      "dsl": ""
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/ABP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/ABP_Wyvern.ABP_Wyvern:EventGraph"
+      },
+      "dsl": "(event EventBlueprintUpdateAnimation (DeltaTimeX))\n"
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/BP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/BP_Wyvern.BP_Wyvern:UserConstructionScript"
+      },
+      "dsl": "(fn ConstructionScript ())\n"
+    },
+    {
+      "blueprint": "/Game/Mount_Assets/Wyvern/BP_Wyvern",
+      "graph": {
+        "refPath": "/Game/Mount_Assets/Wyvern/BP_Wyvern.BP_Wyvern:EventGraph"
+      },
+      "dsl": "(event EventBeginPlay)\n\n(event Collision|EventActorBeginOverlap (OtherActor))\n\n(event EventTick (DeltaSeconds))\n"
+    },
+    {
+      "blueprint": "/Game/UI/WBP_ProjectJItemRow",
+      "graph": {
+        "refPath": "/Game/UI/WBP_ProjectJItemRow.WBP_ProjectJItemRow:EventGraph"
+      },
+      "dsl": "(event UserInterface|EventPreConstruct (IsDesignTime))\n\n(event UserInterface|EventConstruct)\n\n(event UserInterface|EventTick (MyGeometry InDeltaTime))\n"
+    },
+    {
+      "blueprint": "/Game/UI/WBP_ProjectJItemTile",
+      "graph": {
+        "refPath": "/Game/UI/WBP_ProjectJItemTile.WBP_ProjectJItemTile:EventGraph"
+      },
+      "dsl": "(event UserInterface|EventPreConstruct (IsDesignTime))\n\n(event UserInterface|EventConstruct)\n\n(event UserInterface|EventTick (MyGeometry InDeltaTime))\n"
+    }
+  ]
+}

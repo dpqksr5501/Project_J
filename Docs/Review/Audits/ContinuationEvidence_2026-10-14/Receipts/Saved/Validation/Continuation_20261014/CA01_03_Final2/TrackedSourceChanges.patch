@@ -1,0 +1,471 @@
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
+index 2b74584e..3a0af650 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
+@@ -4,6 +4,22 @@
+ #include "Components/SkeletalMeshComponent.h"
+ #include "GameFramework/Actor.h"
+ 
++#if WITH_EDITOR
++#include "Validation/Project_JDataValidation.h"
++EDataValidationResult UProject_JAnimNotifyState_WeaponMotion::IsDataValid(FDataValidationContext& Context) const
++{
++	const auto Result = Super::IsDataValid(Context);
++	bool bHasError = Result == EDataValidationResult::Invalid;
++	if (const FName Failure = Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, 0.f, EntryBlendSeconds, ExitBlendSeconds); !Failure.IsNone())
++	{
++		Project_J::DataValidation::AddError(Context, bHasError, FText::Format(
++			NSLOCTEXT("ProjectJWeaponMotion", "InvalidMotion", "Weapon Motion {0} must be finite and in its authored range, with normalized rotations and unique ascending key times."), FText::FromName(Failure)));
++	}
++	return Project_J::DataValidation::MakeResult(Result, bHasError);
++}
++#endif
++
+ void UProject_JAnimNotifyState_WeaponMotion::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+ {
+ 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp b/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
+index db978d53..11957663 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
+@@ -43,6 +43,9 @@ void ValidateLocomotionProfile(
+ 		AddWarning(Context, OutWarnings, FString::Printf(TEXT("has invalid movement parameter %s."), *Failure.ToString()));
+ 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("GenericMoveInputSpeedThreshold"), LocomotionProfile->GenericMoveInputSpeedThreshold);
+ 	ValidateNonNegativeValue(Context, OutWarnings, TEXT("SprintLocomotionSpeedThreshold"), LocomotionProfile->SprintLocomotionSpeedThreshold);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.StartMouseTurnCancelAngle);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("StartMoveInputCancelAngle"), LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle);
++	ValidateNonNegativeValue(Context, OutWarnings, TEXT("LandMouseTurnCancelAngle"), LocomotionProfile->TransitionPolicy.LandMouseTurnCancelAngle);
+ 
+ 	if (LocomotionProfile->SprintSpeed < LocomotionProfile->WalkSpeed)
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
+index e975a1fb..246a8c90 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
+@@ -66,19 +66,49 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
+ 
+ void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy)
+ {
+-	const bool bFollowerStateChanged = (CurrentOptimizationPolicy.bEnableFollowerRetarget != NewPolicy.bEnableFollowerRetarget);
++	check(IsInGameThread());
+ 	CurrentOptimizationPolicy = NewPolicy;
++	USkeletalMeshComponent* Follower = GetRuntimeRetargetFollowerMesh();
++	if (FallbackFollowerTickMesh.Get() != Follower || !Follower || !Follower->IsRegistered())
++	{
++		ReleaseFollowerTickOverride();
++	}
++	if (!Follower || !Follower->IsRegistered()) return;
++	if (Follower->ComponentTags.Contains(TEXT("NoVisualBudget")) || Follower->IsSimulatingPhysics() || Follower->LeaderPoseComponent.IsValid())
++	{
++		ReleaseFollowerTickOverride();
++		return;
++	}
++	// Actual allocation, rather than coordinator configuration, owns these controls.
++	// The coordinator releases this lease before it captures a mesh's authored tick.
++	if (Follower->IsUsingExternalTickRateControl())
++	{
++		ReleaseFollowerTickOverride(false);
++		return;
++	}
++	if (!FallbackFollowerTickMesh.IsValid())
++	{
++		FallbackFollowerTickMesh = Follower;
++		bSavedFollowerTick = Follower->IsComponentTickEnabled();
++		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
++		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
++	}
++	else if (bAppliedFollowerRetarget != NewPolicy.bEnableFollowerRetarget)
++	{
++		bAppliedFollowerRetarget = NewPolicy.bEnableFollowerRetarget;
++		Follower->SetComponentTickEnabled(bAppliedFollowerRetarget);
++	}
++}
+ 
+-	const auto* Coordinator = OwningCharacter ? OwningCharacter->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>() : nullptr;
+-	const bool bVisualGroupOwned = Coordinator && Coordinator->IsVisualBudgetEnabled() &&
+-		Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh());
+-	if (!bVisualGroupOwned && OwningCharacter && bFollowerStateChanged)
++void UProject_JCharacterAnimInstance::ReleaseFollowerTickOverride(bool bRestoreTick)
++{
++	check(IsInGameThread());
++	if (USkeletalMeshComponent* Mesh = FallbackFollowerTickMesh.Get(); bRestoreTick && Mesh &&
++		!Mesh->IsUsingExternalTickRateControl() && Mesh->IsComponentTickEnabled() == bAppliedFollowerRetarget)
+ 	{
+-		if (USkeletalMeshComponent* FollowerMesh = GetRuntimeRetargetFollowerMesh())
+-		{
+-			FollowerMesh->SetComponentTickEnabled(NewPolicy.bEnableFollowerRetarget);
+-		}
++		Mesh->SetComponentTickEnabled(bSavedFollowerTick);
+ 	}
++	FallbackFollowerTickMesh.Reset();
+ }
+ 
+ bool UProject_JCharacterAnimInstance::NeedsFullRateVisualUpdate() const
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
+index a064896b..733c2819 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
+@@ -881,6 +881,16 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
+ 
+ bool UProject_JCharacterAnimInstance::ShouldCancelLocalOneShotForInput(bool bCommittedPivot, float MouseCancelAngle, float MoveCancelAngle)
+ {
++	if (!OwningPlayerCharacter || !FMath::IsFinite(MouseCancelAngle) || MouseCancelAngle < 0.f ||
++		!FMath::IsFinite(MoveCancelAngle) || MoveCancelAngle < 0.f ||
++		!FMath::IsFinite(OwningPlayerCharacter->GetControlRotation().Yaw) ||
++		OwningPlayerCharacter->GetLastMovementInputVector().ContainsNaN() ||
++		(bHasStateControllerOneShotControlYaw && !FMath::IsFinite(StateControllerOneShotControlYaw)) ||
++		(bHasStateControllerOneShotMoveInputYaw && !FMath::IsFinite(StateControllerOneShotMoveInputYaw)))
++	{
++		Project_J::AnimationFlowDebug::Decision(OwningCharacter, TEXT("PresentationInput"), TEXT("InvalidInputSample"));
++		return true;
++	}
+ 	const auto* Profile = GetLocomotionProfile();
+ 	if (!bCommittedPivot && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+ 		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && bHasStateControllerOneShotControlYaw)
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+index 6a2862b0..367f6891 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+@@ -48,6 +48,7 @@ UProject_JCharacterAnimInstance::UProject_JCharacterAnimInstance()
+ 
+ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
+ {
++	ReleaseFollowerTickOverride();
+ 	AnimationClock = FProject_JAnimationClock();
+ 	AnimationFlowSampler = {};
+ 	bAnimationFlowEvaluationPending = false;
+@@ -60,6 +61,12 @@ void UProject_JCharacterAnimInstance::NativeInitializeAnimation()
+ 	CurrentActivePoseSearchDatabase = nullptr;
+ }
+ 
++void UProject_JCharacterAnimInstance::NativeUninitializeAnimation()
++{
++	ReleaseFollowerTickOverride();
++	Super::NativeUninitializeAnimation();
++}
++
+ void UProject_JCharacterAnimInstance::ResetStateControllerOwnerPresentation()
+ {
+ 	bAuthoredEarlyTransitionPending = false;
+diff --git a/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp b/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+index 7ba40dd6..ad894a6f 100644
+--- a/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
++++ b/Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+@@ -214,6 +214,15 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
+ {
+ 	EDataValidationResult Result = Super::IsDataValid(Context);
+ 	bool bHasError = Result == EDataValidationResult::Invalid;
++	const float CancelAngles[] = {TransitionPolicy.StartMouseTurnCancelAngle, TransitionPolicy.StartMoveInputCancelAngle, TransitionPolicy.LandMouseTurnCancelAngle};
++	for (const float Angle : CancelAngles)
++	{
++		if (!FMath::IsFinite(Angle) || Angle < 0.f)
++		{
++			Context.AddError(NSLOCTEXT("ProjectJLocomotionProfile", "InvalidCancelAngle", "Start/Land cancellation angles must be finite and nonnegative."));
++			bHasError = true;
++		}
++	}
+ 	if (const FName Failure = GetMovementValidationFailure(); !Failure.IsNone())
+ 	{
+ 		Context.AddError(FText::FromString(FString::Printf(TEXT("%s must produce finite, nonnegative movement values."), *Failure.ToString())));
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
+index 62964ce7..9385d1d4 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
+@@ -154,6 +154,12 @@ void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
+ 			(!Mesh->GetAnimInstance() && !Mesh->GetPostProcessInstance())) continue;
+ 		if (Visuals.ContainsByPredicate([Mesh](const FVisualMesh& Entry) { return Entry.Mesh.Get() == Mesh; })) continue;
+ 		if (Mesh->IsUsingExternalTickRateControl()) continue; // A different allocator owns it.
++		if (auto* Native = Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance());
++			Native && Native->FallbackFollowerTickMesh.Get() == Mesh)
++		{
++			// Capture authored controls, not the source fallback's hidden-policy override.
++			Native->ReleaseFollowerTickOverride();
++		}
+ 		FVisualMesh Entry; Entry.Mesh = Mesh; Entry.bSavedURO = Mesh->bEnableUpdateRateOptimizations;
+ 		Entry.bSavedTick = Mesh->IsComponentTickEnabled(); Entry.SavedVisibility = Mesh->VisibilityBasedAnimTickOption;
+ 		Entry.bAddedSourcePrerequisite = !Mesh->PrimaryComponentTick.GetPrerequisites().ContainsByPredicate(
+@@ -184,14 +190,8 @@ void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::Restore(UActorC
+ 
+ void UProject_JAnimationUpdateCoordinatorComponent::RestoreVisualBudget()
+ {
+-	const bool bHadControls = !Visuals.IsEmpty();
+ 	for (auto& Entry : Visuals) Entry.Restore(this, VisualSource.Get());
+ 	Visuals.Reset(); VisualSchedule = {}; AccumulatedVisualDelta = VisualInterval = 0;
+-	if (bHadControls && !IsVisualBudgetEnabled() && GetWorld() && !GetWorld()->bIsTearingDown)
+-		if (const auto* Character = Cast<ACharacter>(GetOwner()))
+-			if (const auto* Native = VisualSource.IsValid() ? Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance()) : nullptr)
+-				if (!Native->GetCurrentOptimizationPolicy().bEnableFollowerRetarget)
+-					if (auto* Follower = Project_J::Animation::FindVisualFollower(*Character)) Follower->SetComponentTickEnabled(false);
+ 	bVisualHidden = bSawAuthoredPresentation = false; AuthoredReturnUntil = 0; DiscoveryElapsed = .5f;
+ 	if (bVisualWakeActive)
+ 	{
+diff --git a/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp b/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+index dee92bf4..1190dc1b 100644
+--- a/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
++++ b/Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+@@ -498,15 +498,14 @@ void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Rev
+ 
+ bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
+ {
++	if (bEndingPlay || IsBeingDestroyed()) return false;
+ 	// No keys mean an identity offset: follow the authored source socket for
+ 	// this whole state, which preserves the original montage weapon arc.
+-	for (int32 Index = 1; Index < MotionKeys.Num(); ++Index)
++	if (const FName Failure = Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds); !Failure.IsNone())
+ 	{
+-		if (MotionKeys[Index].NormalizedTime <= MotionKeys[Index - 1].NormalizedTime)
+-		{
+-			UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion keys must have unique, ascending NormalizedTime values."));
+-			return false;
+-		}
++		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Invalid Weapon Motion %s; state was not changed."), *Failure.ToString());
++		return false;
+ 	}
+ 
+ 	if (bIndependentMotionActive)
+@@ -800,7 +799,7 @@ void UProject_JWeaponPresentationComponent::UpdateContactRecovery(double NowSeco
+ 
+ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float NormalizedTime)
+ {
+-	if (bIndependentMotionActive)
++	if (bIndependentMotionActive && FMath::IsFinite(NormalizedTime))
+ 	{
+ 		ActiveMotionNormalizedTime = FMath::Clamp(NormalizedTime, 0.0f, 1.0f);
+ 		LastMotionEvaluationFrame = MAX_uint64;
+@@ -809,7 +808,8 @@ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float N
+ 
+ void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
+ {
+-	if (!bIndependentMotionActive)
++	if (!bIndependentMotionActive || !Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
++		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds).IsNone())
+ 	{
+ 		return;
+ 	}
+@@ -905,6 +905,7 @@ void UProject_JWeaponPresentationComponent::EndTwoHandGripNotify(int32 NotifyIns
+ 
+ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
+ {
++	if (!FMath::IsFinite(DeltaTime) || DeltaTime < 0.f) return;
+ 	if (bAutoAttackMotionActive && ActiveMotionDurationSeconds > UE_KINDA_SMALL_NUMBER)
+ 	{
+ 		ActiveMotionNormalizedTime = FMath::Clamp(ActiveMotionNormalizedTime +
+@@ -926,6 +927,7 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
+ 		return;
+ 	}
+ 	const FTransform SourceSocketWorld = CharacterMesh->GetSocketTransform(PresentationProfile->DrawnSocketName, RTS_World);
++	if (SourceSocketWorld.ContainsNaN() || !SourceSocketWorld.IsRotationNormalized() || ActiveMotionEntryWorld.ContainsNaN()) return;
+ 	const bool bContactHandoff = PresentationProfile->MotionPresentation.bUseContactHandoff;
+ 	const USkeletalMeshComponent* ReturnMesh = bContactHandoff ? nullptr : ActiveMotionReturnMesh.Get();
+ 	const FTransform ReturnSocketWorld = ReturnMesh && !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
+@@ -941,14 +943,18 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
+ 				SourceSocketWorld, ReturnSocketWorld, Correction);
+ 	};
+ 	const FTransform UncorrectedWorld = EvaluateWorld(FVector::ZeroVector);
+-	WeaponRoot->SetRelativeTransform(UncorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
++	const FTransform UncorrectedRelative = UncorrectedWorld.GetRelativeTransform(SourceSocketWorld);
++	if (UncorrectedWorld.ContainsNaN() || UncorrectedRelative.ContainsNaN()) return;
++	WeaponRoot->SetRelativeTransform(UncorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
+ 
+ 	FVector GroundCorrectionComponentSpace = FVector::ZeroVector;
+ 	if ((GroundContactStateCount > 0 || !GroundContactNotifyTokens.IsEmpty()) && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
+ 	{
+ 		const FVector GroundCorrectionWorld = CharacterMesh->GetComponentTransform().TransformVectorNoScale(GroundCorrectionComponentSpace);
+ 		const FTransform CorrectedWorld = EvaluateWorld(GroundCorrectionWorld);
+-		WeaponRoot->SetRelativeTransform(CorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
++		const FTransform CorrectedRelative = CorrectedWorld.GetRelativeTransform(SourceSocketWorld);
++		if (!CorrectedWorld.ContainsNaN() && !CorrectedRelative.ContainsNaN())
++			WeaponRoot->SetRelativeTransform(CorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
+ 	}
+ 
+ 	UpdateGripTargets();
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h b/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
+index edc0b84f..d8888c69 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
+@@ -20,6 +20,9 @@ public:
+ 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
+ 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
+ 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
++#if WITH_EDITOR
++	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
++#endif
+ 
+ 	/** Empty means follow the source montage's drawn weapon socket without an extra offset. */
+ 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion", meta = (TitleProperty = "NormalizedTime"))
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h b/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+index 33a4d35b..560a7ee1 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+@@ -50,6 +50,7 @@ public:
+ 	UProject_JCharacterAnimInstance();
+ 
+ 	virtual void NativeInitializeAnimation() override;
++	virtual void NativeUninitializeAnimation() override;
+ 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+ 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+ 	virtual void NativePostEvaluateAnimation() override;
+@@ -59,6 +60,16 @@ public:
+ 	FProject_JAnimOptimizationPolicy BuildOptimizationPolicy() const;
+ 	void ApplyOptimizationPolicy(const FProject_JAnimOptimizationPolicy& NewPolicy);
+ 
++private:
++	friend class UProject_JAnimationUpdateCoordinatorComponent;
++	/** GT-only fallback tick lease. The coordinator returns it before capturing authored controls. */
++	void ReleaseFollowerTickOverride(bool bRestoreTick = true);
++	TWeakObjectPtr<USkeletalMeshComponent> FallbackFollowerTickMesh;
++	bool bSavedFollowerTick = true;
++	bool bAppliedFollowerRetarget = true;
++
++public:
++
+ 	// Snapshot-only AnimGraph inputs. Written in UE's thread-safe update phase,
+ 	// then read by generated property-copy handlers on the same animation task.
+ 	// Do not use these as gameplay state or write them from Blueprint callbacks.
+diff --git a/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h b/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
+index e9bdf1bf..5d25919e 100644
+--- a/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
++++ b/Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
+@@ -14,8 +14,11 @@ struct FProject_JOneShotInputResponse
+ 	struct FResult { bool bRelease = false; const TCHAR* Reason = TEXT("CompatibleInput"); };
+ 	static FResult Resolve(const FInput& I)
+ 	{
+-		if (!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
+-			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit)) return {true, TEXT("InvalidInputSample")};
++		if (!FMath::IsFinite(I.EntryControlYaw) || (I.bHasMoveReference && !FMath::IsFinite(I.EntryMoveYaw)) ||
++			!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
++			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit) || I.SteeringLimit < 0.f ||
++			!FMath::IsFinite(I.MouseCancelAngle) || I.MouseCancelAngle < 0.f ||
++			!FMath::IsFinite(I.MoveCancelAngle) || I.MoveCancelAngle < 0.f) return {true, TEXT("InvalidInputSample")};
+ 		const float CameraDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(I.EntryControlYaw, I.ControlYaw));
+ 		if (!I.bCanSteer)
+ 		{
+diff --git a/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h b/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+index b2cf7232..d870c728 100644
+--- a/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
++++ b/Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+@@ -237,6 +237,7 @@ public:
+ 	void UnregisterRetargetAnimInstance(class UProject_JRetargetAnimInstance* InAnimInstance);
+ 
+ private:
++	friend class FProjectJWeaponMotionNumericAdmissionTest;
+ 	friend class FProjectJWeaponPresentationTeardownTest;
+ 	friend class FProjectJWeaponPresentationIdentityTest;
+ 	friend class FProjectJCrowdPresentationTest;
+diff --git a/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h b/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
+index 5ecf38ed..bc196f71 100644
+--- a/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
++++ b/Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
+@@ -25,6 +25,28 @@ struct PROJECT_JCHARACTER_API FProject_JWeaponMotionKey
+ 
+ namespace Project_J::WeaponMotion
+ {
++	/** Shared authoring/runtime admission. Empty keys retain the source-socket contract. */
++	inline FName GetValidationFailure(const TArray<FProject_JWeaponMotionKey>& Keys,
++		float PrimaryAlpha, float SecondaryAlpha, float Duration, float EntryBlend, float ExitBlend)
++	{
++		for (int32 Index = 0; Index < Keys.Num(); ++Index)
++		{
++			const auto& Key = Keys[Index];
++			if (!FMath::IsFinite(Key.NormalizedTime) || Key.NormalizedTime < 0.f || Key.NormalizedTime > 1.f)
++				return TEXT("KeyTime");
++			if (Key.RelativeTransform.ContainsNaN() || !Key.RelativeTransform.IsRotationNormalized())
++				return TEXT("KeyTransform");
++			if (Index > 0 && Key.NormalizedTime <= Keys[Index - 1].NormalizedTime)
++				return TEXT("KeyOrder");
++		}
++		if (!FMath::IsFinite(PrimaryAlpha) || PrimaryAlpha < 0.f || PrimaryAlpha > 1.f) return TEXT("PrimaryIKAlpha");
++		if (!FMath::IsFinite(SecondaryAlpha) || SecondaryAlpha < 0.f || SecondaryAlpha > 1.f) return TEXT("SecondaryIKAlpha");
++		if (!FMath::IsFinite(Duration) || Duration < 0.f) return TEXT("Duration");
++		if (!FMath::IsFinite(EntryBlend) || EntryBlend < 0.f) return TEXT("EntryBlend");
++		if (!FMath::IsFinite(ExitBlend) || ExitBlend < 0.f) return TEXT("ExitBlend");
++		return NAME_None;
++	}
++
+ 	/** Match the remaining source pose contribution; do not apply a second easing curve. */
+ 	inline float EvaluateMontageContactRecoveryAlpha(float CurrentWeight, float StartWeight)
+ 	{
+diff --git a/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp b/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
+index 8b687684..2d737bfa 100644
+--- a/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
++++ b/Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
+@@ -439,6 +439,9 @@ private:
+ 				}
+ 			}
+ 			if (!ActiveEvent || !ActiveMotionNotify) continue;
++			if (!FMath::IsFinite(MontageTime) || !Project_J::WeaponMotion::GetValidationFailure(ActiveMotionNotify->MotionKeys,
++				ActiveMotionNotify->PrimaryGripIKAlpha, ActiveMotionNotify->SecondaryGripIKAlpha, ActiveEvent->GetDuration(),
++				ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds).IsNone()) continue;
+ 
+ 			ActivePreviewMeshes.Add(PreviewMesh);
+ 			Project_J::WeaponMotionEditor::FPreviewBinding& Binding = PreviewBindings.FindOrAdd(PreviewMesh);
+@@ -462,7 +465,8 @@ private:
+ 			{
+ 				const float Duration = FMath::Max(ActiveEvent->GetDuration(), UE_KINDA_SMALL_NUMBER);
+ 				const float NormalizedTime = FMath::Clamp((MontageTime - ActiveEvent->GetTriggerTime()) / Duration, 0.0f, 1.0f);
+-				WeaponComponent->SetRelativeTransform(Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds));
++				const FTransform PreviewTransform = Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds);
++				if (!PreviewTransform.ContainsNaN()) WeaponComponent->SetRelativeTransform(PreviewTransform);
+ 				if (Project_J::WeaponMotionEditor::SelectedMotionKey.MotionNotify.Get() == ActiveMotionNotify &&
+ 					Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh.Get() == PreviewMesh)
+ 				{
+diff --git a/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp b/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
+index b68e0e87..a938ab4b 100644
+--- a/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
++++ b/Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
+@@ -18,6 +18,11 @@ bool FProjectJWeaponMotionEditingTest::RunTest(const FString&)
+ 	const FTransform Before = Relative; Socket.SetScale3D(FVector(1, 2, 1));
+ 	TestFalse(TEXT("Unsupported nonuniform attachment scale cannot silently corrupt a key"), Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, Socket, FVector(1), Delta));
+ 	TestTrue(TEXT("Rejected edit preserves the key"), Before.Equals(Relative));
++	Relative = FTransform(FQuat::Identity, FVector(1.7e308, 0, 0));
++	const FTransform BeforeOverflow = Relative;
++	TestFalse(TEXT("Finite inputs whose sum overflows cannot publish a partial drag"),
++		Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, FTransform::Identity, FVector(1.7e308, 0, 0), FRotator::ZeroRotator));
++	TestTrue(TEXT("Overflow preserves the entire authored transform"), Relative.Equals(BeforeOverflow));
+ 	return true;
+ }
+ #endif
+diff --git a/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h b/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
+index d7ba2363..8443c67f 100644
+--- a/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
++++ b/Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
+@@ -7,16 +7,21 @@ namespace Project_J::WeaponMotionEditor
+ 	inline bool ApplyWorldDelta(FTransform& Relative, const FTransform& SocketWorld, const FVector& Drag, const FRotator& Rotation)
+ 	{
+ 		const FVector Scale = SocketWorld.GetScale3D();
+-		if (Relative.ContainsNaN() || SocketWorld.ContainsNaN() || Drag.ContainsNaN() || Rotation.ContainsNaN() ||
++		if (Relative.ContainsNaN() || SocketWorld.ContainsNaN() || !Relative.IsRotationNormalized() || !SocketWorld.IsRotationNormalized() || Drag.ContainsNaN() || Rotation.ContainsNaN() ||
+ 			Scale.X <= UE_SMALL_NUMBER || !Scale.Equals(FVector(Scale.X), UE_KINDA_SMALL_NUMBER)) { return false; }
+-		Relative.AddToTranslation(SocketWorld.InverseTransformVector(Drag));
++		FTransform Candidate = Relative;
++		const FVector Translation = Relative.GetTranslation() + SocketWorld.InverseTransformVector(Drag);
++		if (Translation.ContainsNaN()) return false;
++		Candidate.SetTranslation(Translation);
+ 		FVector Axis; double Angle;
+ 		Rotation.Quaternion().ToAxisAndAngle(Axis, Angle);
+ 		if (!Axis.IsNearlyZero() && !FMath::IsNearlyZero(Angle))
+ 		{
+-			Relative.SetRotation(FQuat(SocketWorld.InverseTransformVectorNoScale(Axis).GetSafeNormal(), Angle) * Relative.GetRotation());
+-			Relative.NormalizeRotation();
++			Candidate.SetRotation(FQuat(SocketWorld.InverseTransformVectorNoScale(Axis).GetSafeNormal(), Angle) * Candidate.GetRotation());
++			Candidate.NormalizeRotation();
+ 		}
++		if (Candidate.ContainsNaN() || !Candidate.IsRotationNormalized()) return false;
++		Relative = Candidate;
+ 		return true;
+ 	}
+ }
+diff --git a/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs b/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+index 8a076477..a5bff67f 100644
+--- a/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
++++ b/Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+@@ -14,6 +14,7 @@ public class Project_JCharacterEditor : ModuleRules
+ 		});
+ 
+ 		PrivateDependencyModuleNames.AddRange(new string[] {
++			"DataValidation",
+ 			"Project_JAnimationNodes",
+ 			"Json",
+ 			"AssetRegistry",

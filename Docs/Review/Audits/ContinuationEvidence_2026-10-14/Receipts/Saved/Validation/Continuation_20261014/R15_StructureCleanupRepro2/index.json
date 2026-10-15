@@ -1,0 +1,157 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "9C4DB0124C1E89700FAD7683A9612428",
+			"instanceName": "DESKTOP-5T07C91-12996",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-01.33.10",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.15447239577770233,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "NullableRefaceCycle",
+			"fullTestPath": "ProjectJ.Continuation.NullableRefaceCycle",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"9C4DB0124C1E89700FAD7683A9612428"
+			],
+			"duration": 0.096505299210548401,
+			"dateTime": "2026.10.15-01.33.10",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Valid backward reversal admits candidates without ordinary cycle' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_JCharacter\\Private\\Tests\\Project_JNullableCycleTests.cpp",
+					"lineNumber": 66,
+					"timestamp": "2026.10.15-01.33.10"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UISkillReleaseOwnership",
+			"fullTestPath": "ProjectJ.Continuation.UISkillReleaseOwnership",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"9C4DB0124C1E89700FAD7683A9612428"
+			],
+			"duration": 0.057967096567153931,
+			"dateTime": "2026.10.15-01.33.10",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New same-slot receipt survives old release' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 77,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New press reaches the current ASC' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 79,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New native ability is active' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 80,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New same-slot receipt survives old release' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 77,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New receipt retains its pawn' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 78,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New press reaches the current ASC' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 79,
+					"timestamp": "2026.10.15-01.33.10"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'New native ability is active' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JUISkillReleaseOwnershipTests.cpp",
+					"lineNumber": 80,
+					"timestamp": "2026.10.15-01.33.10"
+				}
+			],
+			"warnings": 0,
+			"errors": 7,
+			"artifacts": []
+		}
+	]
+}

@@ -1,0 +1,67 @@
+{
+  "baseline_head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "utc": "2026-10-15T02:57:37.0768826Z",
+  "removed_session_tools": [
+    {
+      "original_path": "Scripts/Audit/AssetCleanupMCPHost.py",
+      "sha256": "2db94f57cc51e5e99652bdd7e4dd1cd1cbde68212f8317f7078f195f73f836a1",
+      "bytes": 1026,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/AssetCleanupMCPHost.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/Invoke-AssetCleanupMCP.py",
+      "sha256": "3555a3de3f116e7702ecefdda5a56cf04328c0bbbac0959316baf45975809284",
+      "bytes": 1764,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/Invoke-AssetCleanupMCP.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/Prepare-AssetCleanupQueries.py",
+      "sha256": "4ba10138a5c7077d79eb56390f4e7c47c9aa003dc95f2bb1403aed3050de6ebc",
+      "bytes": 5282,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/Prepare-AssetCleanupQueries.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/Prepare-AssetGraphNodeQuery.py",
+      "sha256": "9f6a7d4ab77ddd3ea12f7e684a4646ef9d492d5174ade6d73474958483b51572",
+      "bytes": 2445,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/Prepare-AssetGraphNodeQuery.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/MCP-ReadCombatInterface.py",
+      "sha256": "89d3b7aff8741f476c77b30eda2395f3741b66780cf63e873da8e924d233c73c",
+      "bytes": 1405,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/MCP-ReadCombatInterface.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/MCP-RetireCombatPlaceholders.py",
+      "sha256": "fcc15f5afc9135737e15d856ec54e97e80135174907aaf7121a4c0d1943ac430",
+      "bytes": 3396,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/MCP-RetireCombatPlaceholders.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    },
+    {
+      "original_path": "Scripts/Audit/MCP-RetireDuplicateMMWriter.py",
+      "sha256": "da59c29a0de8a7b73a9fda5040c6bd83b3959d8b6530f29830bc8c92f39b4711",
+      "bytes": 4340,
+      "local_archive": "Saved/Validation/CommitPreparation_20261015/RetiredSessionTools/MCP-RetireDuplicateMMWriter.py",
+      "reason_ko": "완료된 MCP 세션·특정 graph 일회 도구. 제품·영구 회귀 caller 없음",
+      "removed_from_commit": true
+    }
+  ],
+  "native_code_changed_by_cleanup": false,
+  "asset_deleted_count": 0,
+  "permanent_regressions_preserved": true,
+  "incoming_user_handoff_diff_excluded": true,
+  "scope_ko": "커밋 전 임시 실행 도구 정리. 기존 native·에셋 시험 당시 해시/실패 기록은 보존"
+}

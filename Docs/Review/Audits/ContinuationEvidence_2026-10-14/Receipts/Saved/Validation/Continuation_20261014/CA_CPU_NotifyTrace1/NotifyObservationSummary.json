@@ -1,0 +1,117 @@
+{
+  "scope_ko": "CA05 A/CA07 B의 동일 R 단발 burst·복귀 pair, NullRHI body200·socket0. B 전체 trace의 setup/warmup/measurement 포함. OS active CPU/critical path 및 모든 notify workload 검증이 아님.",
+  "timers": {
+    "ProjectJ_VisualDemandResolve": {
+      "observed": true,
+      "calls": 4453941,
+      "exclusive_thread_seconds": 2.407729,
+      "inclusive_thread_seconds": 2.407729
+    },
+    "ProjectJ_VisualFollowerResolve": {
+      "observed": true,
+      "calls": 1392902,
+      "exclusive_thread_seconds": 0.127767,
+      "inclusive_thread_seconds": 0.127767
+    },
+    "ProjectJ_FollowerTickPolicy": {
+      "observed": true,
+      "calls": 1386502,
+      "exclusive_thread_seconds": 0.144947,
+      "inclusive_thread_seconds": 0.269139
+    },
+    "ProjectJ_WeaponMotionNotify_Begin": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_WeaponMotionNotify_Tick": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_WeaponMotionNotify_End": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_WeaponMotionNotify_WeakMeshPrune": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_GroundContactNotify_Begin": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_GroundContactNotify_End": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_GroundContactNotify_WeakMeshPrune": {
+      "observed": false,
+      "calls": null,
+      "exclusive_thread_seconds": null,
+      "inclusive_thread_seconds": null
+    },
+    "ProjectJ_TwoHandIKNotify_Begin": {
+      "observed": true,
+      "calls": 800,
+      "exclusive_thread_seconds": 0.000653,
+      "inclusive_thread_seconds": 0.000653
+    },
+    "ProjectJ_TwoHandIKNotify_End": {
+      "observed": true,
+      "calls": 800,
+      "exclusive_thread_seconds": 0.000711,
+      "inclusive_thread_seconds": 0.000711
+    }
+  },
+  "whole_counter_files": {
+    "Counter-GroundContact-Begins.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-GroundContact-Ends.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-GroundContact-InstanceVisits.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-GroundContact-WeakMeshVisits.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-WeaponMotion-Begins.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-WeaponMotion-Ends.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-WeaponMotion-InstanceVisits.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-WeaponMotion-Ticks.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    },
+    "Counter-WeaponMotion-WeakMeshVisits.csv": {
+      "samples": 0,
+      "sha256": "5a4a3565946736c3522a114cf308353fb2dd55b5eda60f6ab14b5485407105b7"
+    }
+  },
+  "interpretation_ko": "TwoHandIK Begin/End가 실행됐지만 WeaponMotion/GroundContact timer와 방문 counter는 관찰되지 않았다. empty CSV는 이 조건의 미실행 증거이며 기능 전체의 비용0 또는 O(n²) 가설의 검증/해결 증거가 아니다. 역할 조회의 실제 호출/시간은 관찰했으나 원래 DS→RA13 증가의 인과로 확정하지 않는다.",
+  "next_ko": "실제 WeaponMotion/GroundContact가 포함된 authored montage를 확인해 동시50/100/200 시작·tick·종료/취소/GC를 별도 재현한다. 기존 R 조건과 구분하고 에셋·특정키/클립 예외로 제품 동작을 변경하지 않는다."
+}

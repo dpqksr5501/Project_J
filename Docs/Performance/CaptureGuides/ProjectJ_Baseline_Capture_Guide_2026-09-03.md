@@ -3,6 +3,12 @@
 **Date:** 2026-09-03  
 **Purpose:** Stage 0~1의 성능 기준선을 같은 조건으로 수집하는 실행 가이드. 이 capture는 최적화를 자동 적용하지 않는다.
 
+2026-10-14 계속 비교는 `Scripts/Audit/Run-ContinuationComparison.ps1`에서 명시한 기준 binary/source manifest와 실행 시작 당시 최신 Editor9 산출물을 고정한다. 교대 후 시작 당시 최신본을 복원·해시 확인한다. RA13을 복원하는 이전 `Saved/Validation/Reaudit_20261014/Run-BalancedCPU.ps1`를 최신본에 그대로 실행하지 않는다. NullRHI CPU·실제 렌더200 body의 FPS/GPU·실제 socket 수를 별도로 보고하고, trace pair와 no-trace ABBA를 합치지 않는다. 원인 미확정과 남은 실제 작업량 차이는 [현재 조사 장부](../../Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)에 남긴다.
+
+23시 재개 기준점은 CA01–13 Integrated1이다. 최신 CPU ABBA에서 visible/attack world elapsed 증가를 재관찰했으나 Hidden은 거의 동일하다. actual PCA/KNN 호출은 늘지 않았고 worker/물리/wait·snapshot/역할의 인과는 미완료다. `ProcessCpu.json`은 전체 process setup/warm/측정/종료의 OS 누적 CPU이며 native window와 구분한다. render ABBA의 aggregate 감소는 A1/A2 variance가 커 개선 확정이 아니다. SharedNotifyLifecycle의 time0/same-frame native 단계·synthetic Ground는 전체 montage/손 품질과 다르다. 관련 [재개 인계](../../Handoffs/WholeProjectAudit_2026-10-14/Project_J_Continuation_Checkpoint_2026-10-14_2300.md)의 SHA/수행량/한계와 원자료를 함께 확인한다.
+
+현재 역할 조회는 `ProjectJ_VisualFollowerResolve`/`ProjectJ_VisualDemandResolve`, fallback 적용은 `ProjectJ_FollowerTickPolicy`로 계측한다. WeaponMotion/TwoHandIK/GroundContact의 Begin/Tick/End와 weak-mesh prune timer, `ProjectJ/Notify/*`의 실제 Begin/Tick/End·outer mesh/inner instance 방문 counter를 구분한다. `Export-DTrace.ps1 -Animation -NotifyCounters`는 공식 Insights counter export를 사용한다. 진단 계측만 추가한 상태를 비용 원인 규명이나 O(n²) 수정으로 표시하지 않는다. CPU profiler는 thread elapsed timer이며 wait/worker 누적을 OS CPU active time 또는 world critical path로 더하지 않는다.
+
 ## 1. 이번 빌드의 CPU trace labels
 
 Unreal Insights CPU timeline에서 아래 Project_J scope를 찾는다.

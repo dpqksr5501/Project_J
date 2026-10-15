@@ -18,6 +18,11 @@ bool FProjectJWeaponMotionEditingTest::RunTest(const FString&)
 	const FTransform Before = Relative; Socket.SetScale3D(FVector(1, 2, 1));
 	TestFalse(TEXT("Unsupported nonuniform attachment scale cannot silently corrupt a key"), Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, Socket, FVector(1), Delta));
 	TestTrue(TEXT("Rejected edit preserves the key"), Before.Equals(Relative));
+	Relative = FTransform(FQuat::Identity, FVector(1.7e308, 0, 0));
+	const FTransform BeforeOverflow = Relative;
+	TestFalse(TEXT("Finite inputs whose sum overflows cannot publish a partial drag"),
+		Project_J::WeaponMotionEditor::ApplyWorldDelta(Relative, FTransform::Identity, FVector(1.7e308, 0, 0), FRotator::ZeroRotator));
+	TestTrue(TEXT("Overflow preserves the entire authored transform"), Relative.Equals(BeforeOverflow));
 	return true;
 }
 #endif

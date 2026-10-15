@@ -1,4 +1,5 @@
 #include "Rendering/Project_JRenderingWarmupSubsystem.h"
+#include "MaterialDomain.h"
 #include "HAL/IConsoleManager.h"
 #include "Materials/Material.h"
 #include "LocalVertexFactory.h"

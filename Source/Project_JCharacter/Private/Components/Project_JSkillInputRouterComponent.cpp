@@ -1,8 +1,10 @@
 #include "Components/Project_JSkillInputRouterComponent.h"
+#include "Engine/World.h"
 
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
 #include "TimerManager.h"
+#include "UObject/StrongObjectPtr.h"
 
 #if WITH_EDITOR
 #include "Validation/Project_JDataValidation.h"
@@ -129,6 +131,8 @@ void UProject_JSkillInputRouterComponent::ResetInputState()
 void UProject_JSkillInputRouterComponent::CancelMouseInput()
 {
 	check(IsInGameThread());
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
 	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
 	FGameplayTagContainer ReleasedTags;
 	if (ActiveLMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveLMBInputTag);
@@ -139,9 +143,16 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
 	++RMBInputRevision;
 	ActiveLMBInputTag = ActiveRMBInputTag = ActiveCombinedInputTag = FGameplayTag();
 	// Clear before dispatch so a release callback cannot observe stale held state.
-	if (IsValid(BoundPlayerCharacter))
+	if (PreviousPlayer.IsValid())
 	{
-		for (const FGameplayTag& Tag : ReleasedTags) BoundPlayerCharacter->HandleSkillInputTagReleased(Tag);
+		for (const FGameplayTag& Tag : ReleasedTags)
+		{
+			// Return this cancellation's inputs to their original receiver. A callback
+			// can reinitialize the router and press the same tag on the same pawn.
+			if (BoundPlayerCharacter == PreviousPlayer.Get() &&
+				(Tag == ActiveLMBInputTag || Tag == ActiveRMBInputTag || Tag == ActiveCombinedInputTag)) { continue; }
+			PreviousPlayer->HandleSkillInputTagReleased(Tag);
+		}
 	}
 }
 
@@ -195,6 +206,9 @@ bool UProject_JSkillInputRouterComponent::AreModifierTagsMatched(const FGameplay
 void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInputButton Button)
 {
 	if (bEnding || IsBeingDestroyed()) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
+	const uint64 Revision = BindingRevision;
 	++(Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision);
 	if (Button == EProject_JSkillInputButton::LMB)
 	{
@@ -231,6 +245,7 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
 		// The two presses did not form a valid chord (for example because a
 		// modifier changed). Preserve both normal button presses instead.
 		FlushPendingChordButton();
+		if (bEnding || IsBeingDestroyed() || Revision != BindingRevision || BoundPlayerCharacter != PinnedPlayer.Get()) { return; }
 	}
 
 	const bool bOtherButtonHeld = Button == EProject_JSkillInputButton::LMB ? bRMBHeld : bLMBHeld;
@@ -248,6 +263,9 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
 void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillInputButton Button)
 {
 	if (bEnding || IsBeingDestroyed()) { return; }
+	TStrongObjectPtr<ThisClass> PinnedThis(this);
+	TStrongObjectPtr<AProject_JPlayerCharacter> PinnedPlayer(BoundPlayerCharacter.Get());
+	const uint64 Revision = BindingRevision;
 	// Resolve a pending press while its button is still held. Release state must
 	// be published before dispatch, but must not invalidate that press's chord.
 	const bool bFlushTap = bHasPendingChordButton && PendingChordButton == Button;
@@ -279,7 +297,8 @@ void UProject_JSkillInputRouterComponent::HandleButtonReleased(EProject_JSkillIn
 		DispatchButtonInputTag(Button, TapTag);
 		// Activation can synchronously cancel input or start another press. The
 		// old completion must not release the new press, even if its tag is equal.
-		if (ReleasedRevision == (Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision))
+		if (!bEnding && !IsBeingDestroyed() && BindingRevision == Revision && BoundPlayerCharacter == PinnedPlayer.Get() &&
+			ReleasedRevision == (Button == EProject_JSkillInputButton::LMB ? LMBInputRevision : RMBInputRevision))
 		{
 			ReleaseActiveTagForButton(Button);
 		}

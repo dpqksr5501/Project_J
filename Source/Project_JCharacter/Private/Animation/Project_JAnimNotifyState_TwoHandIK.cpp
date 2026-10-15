@@ -4,9 +4,11 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Actor.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 void UProject_JAnimNotifyState_TwoHandIK::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TwoHandIKNotify_Begin);
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
@@ -19,6 +21,7 @@ void UProject_JAnimNotifyState_TwoHandIK::NotifyBegin(USkeletalMeshComponent* Me
 
 void UProject_JAnimNotifyState_TwoHandIK::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_TwoHandIKNotify_End);
 	if (AActor* Owner = MeshComp ? MeshComp->GetOwner() : nullptr)
 	{
 		if (UProject_JWeaponPresentationComponent* Presentation = Owner->FindComponentByClass<UProject_JWeaponPresentationComponent>())

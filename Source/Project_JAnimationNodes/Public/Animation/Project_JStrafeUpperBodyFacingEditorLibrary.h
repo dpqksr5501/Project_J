@@ -16,4 +16,8 @@ public:
 	/** Inserts a lower-body constraint node between existing History and Upper Body Facing. Never saves. */
 	UFUNCTION(BlueprintCallable, Category = "Project J|Animation|Editor")
 	static bool InstallLowerBodyInMasterForReview(UAnimBlueprint* Blueprint);
+private:
+	friend class FProjectJFacingInstallerAtomicTest;
+	static bool InstallUpperGraphForReview(UAnimBlueprint* Blueprint);
+	static bool InstallLowerGraphForReview(UAnimBlueprint* Blueprint);
 };

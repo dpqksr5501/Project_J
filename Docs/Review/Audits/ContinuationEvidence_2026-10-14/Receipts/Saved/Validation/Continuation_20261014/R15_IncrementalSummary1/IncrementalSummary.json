@@ -1,0 +1,126 @@
+{
+  "rows": [
+    {
+      "name": "R15_IncrementalProbe1",
+      "actual_actions": 386,
+      "exitCode": 0,
+      "elapsedSeconds": 253.4998285,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_IncrementalNoSharedModule1",
+      "actual_actions": 8,
+      "exitCode": 0,
+      "elapsedSeconds": 5.9826423,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMMO",
+      "fullTarget": false
+    },
+    {
+      "name": "R15_IncrementalNoSharedModule2",
+      "actual_actions": 0,
+      "exitCode": 0,
+      "elapsedSeconds": 1.2125462,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMMO",
+      "fullTarget": false
+    },
+    {
+      "name": "R15_MountTransitionReproBuild1",
+      "actual_actions": 46,
+      "exitCode": 6,
+      "elapsedSeconds": 51.5228781,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMount",
+      "fullTarget": false
+    },
+    {
+      "name": "R15_MountTransitionReproBuild2",
+      "actual_actions": 3,
+      "exitCode": 0,
+      "elapsedSeconds": 9.2633954,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMount",
+      "fullTarget": false
+    },
+    {
+      "name": "R15_NoSharedEditorIntegration1",
+      "actual_actions": 331,
+      "exitCode": 6,
+      "elapsedSeconds": 531.0743157,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_NoSharedEditorIntegration2",
+      "actual_actions": 108,
+      "exitCode": 6,
+      "elapsedSeconds": 224.6379045,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_NoSharedEditorIntegration3",
+      "actual_actions": 13,
+      "exitCode": 6,
+      "elapsedSeconds": 23.8466237,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_NoSharedEditorIntegration4",
+      "actual_actions": 4,
+      "exitCode": 0,
+      "elapsedSeconds": 13.9109891,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_NoSharedEditorNoop1",
+      "actual_actions": 0,
+      "exitCode": 0,
+      "elapsedSeconds": 1.2021926,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "",
+      "fullTarget": true
+    },
+    {
+      "name": "R15_MountControllerReproBuild1",
+      "actual_actions": 3,
+      "exitCode": 0,
+      "elapsedSeconds": 8.7031304,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMount",
+      "fullTarget": false
+    },
+    {
+      "name": "R15_MountControllerFixBuild1",
+      "actual_actions": 3,
+      "exitCode": 0,
+      "elapsedSeconds": 10.1357112,
+      "directUBT": true,
+      "target": "Project_JEditor",
+      "moduleScope": "Project_JMount",
+      "fullTarget": false
+    }
+  ],
+  "note_ko": "386개 무변경 재컴파일에서 shared PCH dep cache partition 실패 전파 확인. 공식 NoSharedPCH 전체 전환과 직접 include 보완 후 같은 소스 전체 target 재빌드0개/.93초. 로그 경로만 다른 동일 옵션. 엔진/ACL/캐시 변경·빌드중단 없음. 범위 모듈 성공을 full target으로 승격하지 않음.",
+  "whole_project_complete": false
+}

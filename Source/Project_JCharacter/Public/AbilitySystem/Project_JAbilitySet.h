@@ -64,6 +64,8 @@ struct PROJECT_JCHARACTER_API FProject_JAbilitySet_GameplayEffect
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (ClampMin = "1"))
 	float EffectLevel = 1.0f;
+
+	bool HasValidLevel() const { return FMath::IsFinite(EffectLevel) && EffectLevel >= 1.0f; }
 };
 
 /**

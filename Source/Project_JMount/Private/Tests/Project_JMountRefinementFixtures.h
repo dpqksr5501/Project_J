@@ -2,6 +2,7 @@
 
 #include "Mount/Project_JFlyingMountCharacter.h"
 #include "Animation/Project_JFlyingMountAnimInstance.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Project_JMountRefinementFixtures.generated.h"
 
 /** Native, asset-independent automation fixtures. Never registered or spawned by gameplay. */
@@ -58,4 +59,22 @@ UCLASS(NotBlueprintable, Transient)
 class UProject_JMountAnimRefinementFixture : public UProject_JFlyingMountAnimInstance
 {
 	GENERATED_BODY()
+};
+
+/** Synchronous movement callbacks at the real Character lifecycle boundary. */
+UCLASS(NotBlueprintable, Transient)
+class AProject_JMountCallbackRiderFixture : public ACharacter
+{
+	GENERATED_BODY()
+public:
+	TFunction<void()> OnMovementDisabled;
+	virtual void OnMovementModeChanged(EMovementMode PreviousMode, uint8 PreviousCustomMode = 0) override
+	{
+		Super::OnMovementModeChanged(PreviousMode, PreviousCustomMode);
+		if (GetCharacterMovement()->MovementMode == MOVE_None && OnMovementDisabled)
+		{
+			TFunction<void()> Callback = MoveTemp(OnMovementDisabled);
+			Callback();
+		}
+	}
 };

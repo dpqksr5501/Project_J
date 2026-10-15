@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable)
+param([Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunName, [switch]$Trace, [string]$Executable, [switch]$DisableEditorPython)
 $ErrorActionPreference='Stop'
 if(@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCoding*,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count){throw 'Wait for engine/build completion.'}
 $root=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
@@ -10,6 +10,7 @@ $arguments=@('/Engine/Maps/Entry?game=/Script/Engine.GameModeBase','-game','-una
  '-RenderOffscreen','-windowed','-ResX=1280','-ResY=720','-ProjectJRenderedCrowdFixture',"-ProjectJRenderedCrowdOutput=$out","-ABSLOG=$out/Run.log",
  '-ExecCmds=t.MaxFPS 0,r.VSync 0', '-statnamedevents', "-UserDir=$out/User/", '-SaveToUserDir')
 if (!$Executable) { $arguments = @("$root/Project_J.uproject") + $arguments }
+if ($DisableEditorPython -and !$Executable) { $arguments += '-DisablePython' }
 if($Trace){$arguments+=@('-trace=cpu,frame,gpu,bookmark,region,counters,task',"-tracefile=$out/Render.utrace")}
 $files=@('Project_J.uproject','Content/Character_BPs/GreatSword/BP_GreatSword.uasset',
  'Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset','Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset')

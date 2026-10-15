@@ -1,0 +1,69 @@
+{
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "gpu": [
+    "Parsec Virtual Display Adapter",
+    "AMD Radeon RX 9070 XT",
+    "AMD Radeon(TM) Graphics"
+  ],
+  "actors": 200,
+  "connections": 0,
+  "nullRHI": false,
+  "offscreenViewport": true,
+  "resolution": "1280x720",
+  "fpsCap": 0,
+  "vsync": 0,
+  "trace": false,
+  "packaged": false,
+  "executable": "C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe",
+  "executableSHA256": "4DBAB2739E7AFEF7EC96CDFE48A63211742209F9A56AF0620CF228913D64FB0C",
+  "arguments": [
+    "C:/Users/I/Documents/GitHub/Project_J/Project_J.uproject",
+    "/Engine/Maps/Entry?game=/Script/Engine.GameModeBase",
+    "-game",
+    "-unattended",
+    "-nop4",
+    "-nosplash",
+    "-nosound",
+    "-NoDDCCleanup",
+    "-NoLiveCoding",
+    "-RenderOffscreen",
+    "-windowed",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ProjectJRenderedCrowdFixture",
+    "-ProjectJRenderedCrowdOutput=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/CA_Render_ABBA1_B1",
+    "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/CA_Render_ABBA1_B1/Run.log",
+    "-ExecCmds=t.MaxFPS 0,r.VSync 0",
+    "-statnamedevents",
+    "-UserDir=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/WholeProjectAudit_20261013/CA_Render_ABBA1_B1/User/",
+    "-SaveToUserDir",
+    "-DisablePython"
+  ],
+  "artifacts": [
+    {
+      "path": "Project_J.uproject",
+      "sha256": "057D84E9060923DB1964C376AA6084EA50598B32FA9B88555B22F69A5C402E61"
+    },
+    {
+      "path": "Content/Character_BPs/GreatSword/BP_GreatSword.uasset",
+      "sha256": "C3F95C7F2828B4AB89AE9BF86E201B8B003DF811175B172ED28836F6D66E3280"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/GreatSword/ABP_Greatsword_Woman_RunTIme.uasset",
+      "sha256": "27283D5F8A7F9F5B67FD493EF0D5CCBCCC4B75CE640E2264B3B02D739A995D9E"
+    },
+    {
+      "path": "Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset",
+      "sha256": "701E189BE5AAFF7D5D9C4D451CBC3F64BDFA2F8266E936B40936D5D9694CA91A"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+      "sha256": "BDA4B1D1676DBC40FB534D99AA13A2425F45AC915E34BB063D13BF0175316353"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+      "sha256": "524F99B552A4D81BED36AD1A6D6BCB2EA1C8AF2EB654839CE992C872F5863A3F"
+    }
+  ]
+}

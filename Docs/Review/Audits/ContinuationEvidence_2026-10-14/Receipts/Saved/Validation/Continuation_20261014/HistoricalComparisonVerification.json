@@ -1,0 +1,55 @@
+{
+  "scope_ko": "역사적 DS01–18/RA01–13 frozen source+완전한9 binary 검증. 현재 asset과 실행 스크립트로 A/B 비교하며 복원은 실행 당시 최신9만 사용. 당시 asset/열 조건 동일을 주장하지 않음.",
+  "checks": [
+    {
+      "label": "DS_source",
+      "rows": 648,
+      "mismatches": []
+    },
+    {
+      "label": "RA13_source",
+      "rows": 650,
+      "mismatches": []
+    },
+    {
+      "label": "DS_editor",
+      "rows": 9,
+      "mismatches": []
+    },
+    {
+      "label": "RA13_editor",
+      "rows": 9,
+      "mismatches": []
+    }
+  ],
+  "changed_production_paths": [
+    "Source/Project_J/UI/Project_JInventoryViewModel.cpp",
+    "Source/Project_J/UI/Project_JMinimapWidget.cpp",
+    "Source/Project_J/UI/Project_JMinimapWidget.h",
+    "Source/Project_J/UI/Project_JUILayoutSettings.cpp",
+    "Source/Project_J/UI/Project_JUILayoutSettings.h",
+    "Source/Project_JCharacter/Private/Animation/Project_JAnimationPresentationHelpers.h",
+    "Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp",
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+    "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstanceBase.cpp",
+    "Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp",
+    "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp",
+    "Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.h",
+    "Source/Project_JCharacter/Private/Components/Project_JCombatPresentationComponent.cpp",
+    "Source/Project_JCharacter/Private/Components/Project_JModularMeshComponent.cpp",
+    "Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp",
+    "Source/Project_JCharacter/Private/Equipment/Project_JWeaponPresentationProfile.cpp",
+    "Source/Project_JCharacter/Private/Project_JPlayerCharacter.Movement.cpp",
+    "Source/Project_JCharacter/Private/UI/Project_JCharacterUIBindingComponent.cpp",
+    "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstanceBase.h",
+    "Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h",
+    "Source/Project_JCharacter/Public/Components/Project_JCombatPresentationComponent.h",
+    "Source/Project_JCharacter/Public/Components/Project_JModularMeshComponent.h",
+    "Source/Project_JCharacter/Public/Equipment/Project_JWeaponPresentationProfile.h",
+    "Source/Project_JCharacter/Public/UI/Project_JCharacterUIBindingComponent.h",
+    "Source/Project_JMount/Private/Mount/Project_JMountCharacter.cpp",
+    "Source/Project_JMount/Private/Mount/Project_JMountComponent.cpp",
+    "Source/Project_JMount/Public/Mount/Project_JMountComponent.h"
+  ],
+  "valid": true
+}

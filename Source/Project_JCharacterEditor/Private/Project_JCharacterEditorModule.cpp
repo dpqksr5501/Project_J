@@ -439,6 +439,9 @@ private:
 				}
 			}
 			if (!ActiveEvent || !ActiveMotionNotify) continue;
+			if (!FMath::IsFinite(MontageTime) || !Project_J::WeaponMotion::GetValidationFailure(ActiveMotionNotify->MotionKeys,
+				ActiveMotionNotify->PrimaryGripIKAlpha, ActiveMotionNotify->SecondaryGripIKAlpha, ActiveEvent->GetDuration(),
+				ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds).IsNone()) continue;
 
 			ActivePreviewMeshes.Add(PreviewMesh);
 			Project_J::WeaponMotionEditor::FPreviewBinding& Binding = PreviewBindings.FindOrAdd(PreviewMesh);
@@ -462,7 +465,8 @@ private:
 			{
 				const float Duration = FMath::Max(ActiveEvent->GetDuration(), UE_KINDA_SMALL_NUMBER);
 				const float NormalizedTime = FMath::Clamp((MontageTime - ActiveEvent->GetTriggerTime()) / Duration, 0.0f, 1.0f);
-				WeaponComponent->SetRelativeTransform(Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds));
+				const FTransform PreviewTransform = Binding.BaseRelativeTransform * Project_J::WeaponMotion::EvaluateStateTransform(ActiveMotionNotify->MotionKeys, NormalizedTime, Duration, ActiveMotionNotify->EntryBlendSeconds, ActiveMotionNotify->ExitBlendSeconds);
+				if (!PreviewTransform.ContainsNaN()) WeaponComponent->SetRelativeTransform(PreviewTransform);
 				if (Project_J::WeaponMotionEditor::SelectedMotionKey.MotionNotify.Get() == ActiveMotionNotify &&
 					Project_J::WeaponMotionEditor::SelectedMotionKey.PreviewMesh.Get() == PreviewMesh)
 				{

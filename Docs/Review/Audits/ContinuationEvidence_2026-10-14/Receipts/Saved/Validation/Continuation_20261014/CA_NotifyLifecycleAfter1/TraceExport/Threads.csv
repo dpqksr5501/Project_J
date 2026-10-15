@@ -1,0 +1,64 @@
+Id,Name,Group
+1196447025,GPU1,GPU
+1196447026,GPU2,GPU
+1448235845,VerseSampling,Verse
+16777216,Game Frames,Frame Tracks
+16777217,Rendering Frames,Frame Tracks
+2,GameThread,
+42,RenderThread 0,Render
+43,RTHeartBeat 0,Render
+4,BackgroundThreadPool #0,BackgroundThreadPool
+5,BackgroundThreadPool #1,BackgroundThreadPool
+27,IOThreadPool #0,IOThreadPool
+28,IOThreadPool #1,IOThreadPool
+29,IOThreadPool #2,IOThreadPool
+30,IOThreadPool #3,IOThreadPool
+32,DDC IO ThreadPool #0,DDC IO ThreadPool
+33,DDC IO ThreadPool #1,DDC IO ThreadPool
+34,DDC IO ThreadPool #2,DDC IO ThreadPool
+35,DDC IO ThreadPool #3,DDC IO ThreadPool
+6,Foreground Worker #0,Foreground Workers
+7,Foreground Worker #1,Foreground Workers
+56,Foreground Worker (Standby #0),Foreground Workers
+58,Foreground Worker (Standby #1),Foreground Workers
+8,Background Worker #0,Background Workers
+10,Background Worker #2,Background Workers
+11,Background Worker #3,Background Workers
+12,Background Worker #4,Background Workers
+13,Background Worker #5,Background Workers
+14,Background Worker #7,Background Workers
+15,Background Worker #6,Background Workers
+16,Background Worker #8,Background Workers
+17,Background Worker #9,Background Workers
+18,Background Worker #10,Background Workers
+39,Background Worker (Standby #0),Background Workers
+57,Background Worker (Standby #1),Background Workers
+31,WindowsRawInputThread,
+38,IoDispatcher,
+45,FUdpMessageProcessor.Sender,
+46,FUdpMessageBeacon,
+47,UdpMessageMulticastReceiver,
+48,UdpMessageUnicastReceiver,
+54,FUdpMessageProcessor,
+22,FMediaTicker,
+23,HttpManagerThread,
+25,OnlineAsyncTaskThreadNull DefaultInstance(1),
+26,OutputDeviceRedirector,
+36,ShaderCompilingThread,
+40,HttpConnectionPool,
+41,FMessageBus.DefaultBus.Router,
+44,FTcpMessageTransport,
+50,AsyncTaskThread_1,
+51,AsyncTaskThread_2,
+52,AsyncTaskThread_3,
+53,MegascansPlugin1,
+55,FAndroidDeviceDetectionRunnable,
+59,StallDetectorThread,
+9,Background Worker #1,
+19,Background Worker #11,
+20,FAsyncWriter_Run,
+21,FAssetDataDiscovery,
+24,LibwebsocketsThread,
+37,FAssetDataGatherer,
+49,FContentBrowserFileDataDiscovery,
+3,Trace,

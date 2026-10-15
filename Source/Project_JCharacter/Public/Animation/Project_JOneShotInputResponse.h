@@ -14,8 +14,11 @@ struct FProject_JOneShotInputResponse
 	struct FResult { bool bRelease = false; const TCHAR* Reason = TEXT("CompatibleInput"); };
 	static FResult Resolve(const FInput& I)
 	{
-		if (!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
-			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit)) return {true, TEXT("InvalidInputSample")};
+		if (!FMath::IsFinite(I.EntryControlYaw) || (I.bHasMoveReference && !FMath::IsFinite(I.EntryMoveYaw)) ||
+			!FMath::IsFinite(I.ControlYaw) || !FMath::IsFinite(I.MoveYaw) || !FMath::IsFinite(I.FacingError) ||
+			!FMath::IsFinite(I.PathError) || !FMath::IsFinite(I.SteeringLimit) || I.SteeringLimit < 0.f ||
+			!FMath::IsFinite(I.MouseCancelAngle) || I.MouseCancelAngle < 0.f ||
+			!FMath::IsFinite(I.MoveCancelAngle) || I.MoveCancelAngle < 0.f) return {true, TEXT("InvalidInputSample")};
 		const float CameraDelta = FMath::Abs(FMath::FindDeltaAngleDegrees(I.EntryControlYaw, I.ControlYaw));
 		if (!I.bCanSteer)
 		{

@@ -1,0 +1,18 @@
+{
+  "captured_utc": "2026-10-14T04:07:08.492764+00:00",
+  "head": "855a1c8e111c94a5dffdd08ad05c68bdea2accec",
+  "branch": "codex/runtime-retarget-profiles",
+  "initial_status": " M Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md\n?? Scripts/Audit/\n",
+  "initial_user_diff_path": "InitialUserChanges.patch",
+  "process_check": {
+    "Get-CimInstance": "access_denied; no workaround",
+    "Get-Process": "success; no Unreal/UBT/dotnet/LiveCoding/MSBuild/ShaderCompileWorker/Project_J"
+  },
+  "hash_counts": {
+    "source": 650,
+    "editor": 9,
+    "preserved": 13
+  },
+  "hash_mismatches": [],
+  "meaning_ko": "이전 RA27와 시작 버전의 동일성 확인. 전체 상세 검토/에셋 무결성 판정이 아니다."
+}

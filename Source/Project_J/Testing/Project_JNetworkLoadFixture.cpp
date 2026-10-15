@@ -1,4 +1,5 @@
 #include "Testing/Project_JNetworkLoadFixture.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Game/Project_JPlayerState.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"

@@ -1,0 +1,114 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "8F9241164BB5E2F5E7DB358DA4699118",
+			"instanceName": "DESKTOP-5T07C91-2040",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-18.02.32",
+	"succeeded": 3,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.13139569759368896,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "PlayerHandoverLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"8F9241164BB5E2F5E7DB358DA4699118"
+			],
+			"duration": 0.051728900521993637,
+			"dateTime": "2026.10.14-18.02.32",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Level rejected by persistent owner cannot publish a pose-only handover' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 107,
+					"timestamp": "2026.10.14-18.02.32"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Rejected level leaves original pose' to be true.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JLevelHandoverAdmissionTests.cpp",
+					"lineNumber": 108,
+					"timestamp": "2026.10.14-18.02.32"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionLevelAdmission",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionLevelAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F9241164BB5E2F5E7DB358DA4699118"
+			],
+			"duration": 0.0073583014309406281,
+			"dateTime": "2026.10.14-18.02.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProgressionRestoreRetirement",
+			"fullTestPath": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F9241164BB5E2F5E7DB358DA4699118"
+			],
+			"duration": 0.062874898314476013,
+			"dateTime": "2026.10.14-18.02.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StyleEffectAdmission",
+			"fullTestPath": "ProjectJ.Continuation.StyleEffectAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"8F9241164BB5E2F5E7DB358DA4699118"
+			],
+			"duration": 0.0094335973262786865,
+			"dateTime": "2026.10.14-18.02.32",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

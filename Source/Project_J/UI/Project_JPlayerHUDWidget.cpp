@@ -296,6 +296,7 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 void UProject_JPlayerHUDWidget::InitializeScreen(UProject_JPlayerUIComponent *Owner)
 {
 	if (LayoutSettings.IsValid()) LayoutSettings->OnSaveStateChanged.RemoveAll(this);
+	if (InventoryModel) InventoryModel->OnSplitRequested.RemoveAll(this);
 	ScreenOwner = Owner;
 	if (auto *LocalPlayer = GetOwningLocalPlayer())
 	{
@@ -887,7 +888,7 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 {
 	const FString Value = Command.ToString();
 	if (Command == TEXT("SplitSelected")) { OpenSplit(InventoryList ? Cast<UProject_JInventoryEntry>(InventoryList->GetSelectedItem()) : nullptr); return; }
-	if (Command == TEXT("CancelMerge")) { MergeSource = nullptr; if (InventoryModel) { InventoryModel->Status = FText::GetEmpty(); InventoryModel->OnChanged.Broadcast(); } return; }
+	if (Command == TEXT("CancelMerge")) { MergeSource = nullptr; if (InventoryModel) { InventoryModel->SetLocalStatus(FText::GetEmpty()); } return; }
 	if (Command == TEXT("MergeSelected"))
 	{
 		auto *Selected = InventoryList ? Cast<UProject_JInventoryEntry>(InventoryList->GetSelectedItem()) : nullptr;
@@ -900,8 +901,7 @@ void UProject_JPlayerHUDWidget::ExecuteCommand(FName Command)
 		else
 		{
 			MergeSource = DuplicateObject<UProject_JInventoryEntry>(Selected, this);
-			InventoryModel->Status = NSLOCTEXT("ProjectJUI", "MergeChooseTarget", "합칠 대상 스택을 선택한 뒤 합치기를 다시 누르세요.");
-			InventoryModel->OnChanged.Broadcast();
+			InventoryModel->SetLocalStatus(NSLOCTEXT("ProjectJUI", "MergeChooseTarget", "합칠 대상 스택을 선택한 뒤 합치기를 다시 누르세요."));
 		}
 		return;
 	}
@@ -1070,7 +1070,7 @@ void UProject_JPlayerHUDWidget::OpenSplit(UProject_JInventoryEntry *Entry)
 	if (!InventoryModel || !InventoryModel->IsCurrentEntry(Entry) || InventoryModel->bPending || !Entry->Item.IsValid() ||
 		Entry->Item.bIsLocked || Entry->Item.bIsEquipped || Entry->Item.StackCount <= 1)
 	{
-		if (InventoryModel && !InventoryModel->bPending) { InventoryModel->Status = NSLOCTEXT("ProjectJUI", "CannotSplit", "분할할 잠기지 않은 스택을 선택하세요. 수량이 2개 이상이어야 합니다."); InventoryModel->OnChanged.Broadcast(); }
+		if (InventoryModel && !InventoryModel->bPending) { InventoryModel->SetLocalStatus(NSLOCTEXT("ProjectJUI", "CannotSplit", "분할할 잠기지 않은 스택을 선택하세요. 수량이 2개 이상이어야 합니다.")); }
 		return;
 	}
 	SplitSource = DuplicateObject<UProject_JInventoryEntry>(Entry, this);

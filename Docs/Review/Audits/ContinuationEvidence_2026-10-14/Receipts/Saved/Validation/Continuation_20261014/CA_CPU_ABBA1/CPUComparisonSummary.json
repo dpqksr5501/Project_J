@@ -1,0 +1,791 @@
+{
+  "scope_ko": "동일 invocation의 RA27 대 CA01–03 Final2, 200 authored BP actors·NullRHI·원격 socket0. 4run×16조건=64행. 실제 MM Search 호출은 관찰 field로 대체하지 않고 trace로 별도 검증한다.",
+  "order": [
+    "A1",
+    "B1",
+    "B2",
+    "A2"
+  ],
+  "rows": 64,
+  "trace": false,
+  "restored": true,
+  "meaning_ko": "반복/교대와 실제 수행량을 함께 기록. 모든 CPU 회귀 해결·통계적 동등성·실제 렌더 FPS/GPU의 증명이 아니다.",
+  "comparisons": [
+    {
+      "scenario": "AttackBurst",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 20.815805167270206,
+          "repeat_means_ms": [
+            20.08508489156763,
+            21.03828152641654,
+            20.404305911312502,
+            21.735548339784145
+          ],
+          "run_means_ms": {
+            "A1": 20.561683208992086,
+            "A2": 21.069927125548325
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 20.139607284218073,
+          "repeat_means_ms": [
+            19.96626790612936,
+            20.19918093457818,
+            20.150109479824703,
+            20.242870816340048
+          ],
+          "run_means_ms": {
+            "B1": 20.08272442035377,
+            "B2": 20.196490148082376
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -3.248482956188281
+    },
+    {
+      "scenario": "AttackBurst",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 11.879589757882059,
+          "repeat_means_ms": [
+            11.482109564046064,
+            12.356123638649782,
+            11.713294765601555,
+            11.966831063230833
+          ],
+          "run_means_ms": {
+            "A1": 11.919116601347923,
+            "A2": 11.840062914416194
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              42466,
+              42214,
+              42466,
+              42347
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              72415,
+              72465,
+              72415,
+              72447
+            ],
+            "visual_group_requested_actor_ticks": [
+              72615,
+              72665,
+              72615,
+              72647
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 11.555584487505257,
+          "repeat_means_ms": [
+            11.495683963100115,
+            11.63890884568294,
+            11.453330367803574,
+            11.6344147734344
+          ],
+          "run_means_ms": {
+            "B1": 11.567296404391527,
+            "B2": 11.543872570618987
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              42466,
+              42466,
+              42462,
+              42462
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              72415,
+              72422,
+              72381,
+              72376
+            ],
+            "visual_group_requested_actor_ticks": [
+              72615,
+              72622,
+              72581,
+              72576
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -2.727411274129443
+    },
+    {
+      "scenario": "Far",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 15.262229749932885,
+          "repeat_means_ms": [
+            14.977286023398241,
+            15.121624115854502,
+            15.229643924782673,
+            15.720364935696125
+          ],
+          "run_means_ms": {
+            "A1": 15.049455069626372,
+            "A2": 15.475004430239398
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29948,
+              29972,
+              29948,
+              29932
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 15.202429626757901,
+          "repeat_means_ms": [
+            15.196188874542713,
+            15.196013742436966,
+            15.186494681984186,
+            15.231021208067736
+          ],
+          "run_means_ms": {
+            "B1": 15.19610130848984,
+            "B2": 15.208757945025962
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29918,
+              29963,
+              29918,
+              29963
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.3918177366924236
+    },
+    {
+      "scenario": "Far",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 11.02640523109585,
+          "repeat_means_ms": [
+            10.999282294263443,
+            11.019056520114342,
+            10.970874099681774,
+            11.116408010323843
+          ],
+          "run_means_ms": {
+            "A1": 11.009169407188892,
+            "A2": 11.043641055002809
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              30103,
+              29371,
+              29230,
+              28834
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29928,
+              29991,
+              29928,
+              29917
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 11.048206232177714,
+          "repeat_means_ms": [
+            10.899841810266176,
+            11.231074575334787,
+            11.004784107208252,
+            11.057124435901642
+          ],
+          "run_means_ms": {
+            "B1": 11.065458192800481,
+            "B2": 11.030954271554947
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              28539,
+              28175,
+              29988,
+              28752
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              29975,
+              29935,
+              29975,
+              29935
+            ],
+            "visual_group_requested_actor_ticks": [
+              30000,
+              30000,
+              30000,
+              30000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": 0.19771630576737032
+    },
+    {
+      "scenario": "Hidden",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 11.329056525913378,
+          "repeat_means_ms": [
+            11.235808599740267,
+            11.313505185147127,
+            11.210434641689062,
+            11.556477677077055
+          ],
+          "run_means_ms": {
+            "A1": 11.274656892443698,
+            "A2": 11.383456159383059
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 11.293198643252254,
+          "repeat_means_ms": [
+            11.165944083283344,
+            11.326913454880318,
+            11.293474516520897,
+            11.386462518324455
+          ],
+          "run_means_ms": {
+            "B1": 11.246428769081831,
+            "B2": 11.339968517422676
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.31651252316647893
+    },
+    {
+      "scenario": "Hidden",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 6.311375397878388,
+          "repeat_means_ms": [
+            6.299697135885556,
+            6.411994577695926,
+            6.253433121989171,
+            6.280376755942901
+          ],
+          "run_means_ms": {
+            "A1": 6.355845856790741,
+            "A2": 6.266904938966036
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "mm_result_observations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 6.2564188831796255,
+          "repeat_means_ms": [
+            6.228186159084241,
+            6.287465325246255,
+            6.231715884059668,
+            6.278308164328337
+          ],
+          "run_means_ms": {
+            "B1": 6.257825742165248,
+            "B2": 6.255012024194002
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "mm_result_observations": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "visual_graph_update_observations": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_requested_actor_ticks": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.8707533815408341
+    },
+    {
+      "scenario": "Near",
+      "aba": false,
+      "variants": {
+        "A": {
+          "mean_ms": 18.922262474273644,
+          "repeat_means_ms": [
+            18.374463114887476,
+            18.823801788191002,
+            18.743924405425787,
+            19.746860588590305
+          ],
+          "run_means_ms": {
+            "A1": 18.59913245153924,
+            "A2": 19.245392497008048
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 18.787247181559604,
+          "repeat_means_ms": [
+            18.053296736131113,
+            19.029378797858953,
+            18.578962981700897,
+            19.487350210547447
+          ],
+          "run_means_ms": {
+            "B1": 18.541337766995035,
+            "B2": 19.033156596124172
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              119800,
+              119800,
+              119800,
+              119800
+            ],
+            "visual_group_requested_actor_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -0.7135261594516273
+    },
+    {
+      "scenario": "Near",
+      "aba": true,
+      "variants": {
+        "A": {
+          "mean_ms": 12.497905567288399,
+          "repeat_means_ms": [
+            12.032492328435183,
+            12.63042114675045,
+            12.438133644560972,
+            12.89057514940699
+          ],
+          "run_means_ms": {
+            "A1": 12.331456737592816,
+            "A2": 12.664354396983981
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              29590,
+              28067,
+              28235,
+              28151
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              59900,
+              59897,
+              59900,
+              59896
+            ],
+            "visual_group_requested_actor_ticks": [
+              60000,
+              60000,
+              60000,
+              60000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        },
+        "B": {
+          "mean_ms": 12.102132984437048,
+          "repeat_means_ms": [
+            11.993615285803875,
+            12.226167507469654,
+            11.962507522354523,
+            12.226241622120142
+          ],
+          "run_means_ms": {
+            "B1": 12.109891396636765,
+            "B2": 12.094374572237331
+          },
+          "workload_observations": {
+            "bone_finalizations": [
+              29619,
+              28232,
+              29485,
+              28280
+            ],
+            "mm_result_observations": [
+              120000,
+              120000,
+              120000,
+              120000
+            ],
+            "visual_graph_update_observations": [
+              59901,
+              59900,
+              59901,
+              59900
+            ],
+            "visual_group_requested_actor_ticks": [
+              60000,
+              60000,
+              60000,
+              60000
+            ],
+            "visual_group_managed_mesh_ticks": [
+              120000,
+              120000,
+              120000,
+              120000
+            ]
+          }
+        }
+      },
+      "delta_percent": -3.166711259902877
+    }
+  ]
+}

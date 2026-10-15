@@ -498,15 +498,14 @@ void UProject_JWeaponPresentationComponent::ApplyBudgetedPresentation(uint64 Rev
 
 bool UProject_JWeaponPresentationComponent::BeginIndependentMotion(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
+	if (bEndingPlay || IsBeingDestroyed()) return false;
 	// No keys mean an identity offset: follow the authored source socket for
 	// this whole state, which preserves the original montage weapon arc.
-	for (int32 Index = 1; Index < MotionKeys.Num(); ++Index)
+	if (const FName Failure = Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
+		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds); !Failure.IsNone())
 	{
-		if (MotionKeys[Index].NormalizedTime <= MotionKeys[Index - 1].NormalizedTime)
-		{
-			UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Weapon Motion keys must have unique, ascending NormalizedTime values."));
-			return false;
-		}
+		UE_LOG(LogProjectJWeaponPresentation, Warning, TEXT("[ProjectJ][WeaponPresentation] Invalid Weapon Motion %s; state was not changed."), *Failure.ToString());
+		return false;
 	}
 
 	if (bIndependentMotionActive)
@@ -800,7 +799,7 @@ void UProject_JWeaponPresentationComponent::UpdateContactRecovery(double NowSeco
 
 void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float NormalizedTime)
 {
-	if (bIndependentMotionActive)
+	if (bIndependentMotionActive && FMath::IsFinite(NormalizedTime))
 	{
 		ActiveMotionNormalizedTime = FMath::Clamp(NormalizedTime, 0.0f, 1.0f);
 		LastMotionEvaluationFrame = MAX_uint64;
@@ -809,7 +808,8 @@ void UProject_JWeaponPresentationComponent::SetIndependentMotionPosition(float N
 
 void UProject_JWeaponPresentationComponent::RefreshIndependentMotionKeys(const TArray<FProject_JWeaponMotionKey>& MotionKeys, float PrimaryGripIKAlpha, float SecondaryGripIKAlpha, float MotionDurationSeconds, float EntryBlendSeconds, float ExitBlendSeconds)
 {
-	if (!bIndependentMotionActive)
+	if (!bIndependentMotionActive || !Project_J::WeaponMotion::GetValidationFailure(MotionKeys, PrimaryGripIKAlpha,
+		SecondaryGripIKAlpha, MotionDurationSeconds, EntryBlendSeconds, ExitBlendSeconds).IsNone())
 	{
 		return;
 	}
@@ -905,6 +905,7 @@ void UProject_JWeaponPresentationComponent::EndTwoHandGripNotify(int32 NotifyIns
 
 void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaTime)
 {
+	if (!FMath::IsFinite(DeltaTime) || DeltaTime < 0.f) return;
 	if (bAutoAttackMotionActive && ActiveMotionDurationSeconds > UE_KINDA_SMALL_NUMBER)
 	{
 		ActiveMotionNormalizedTime = FMath::Clamp(ActiveMotionNormalizedTime +
@@ -926,6 +927,7 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 		return;
 	}
 	const FTransform SourceSocketWorld = CharacterMesh->GetSocketTransform(PresentationProfile->DrawnSocketName, RTS_World);
+	if (SourceSocketWorld.ContainsNaN() || !SourceSocketWorld.IsRotationNormalized() || ActiveMotionEntryWorld.ContainsNaN()) return;
 	const bool bContactHandoff = PresentationProfile->MotionPresentation.bUseContactHandoff;
 	const USkeletalMeshComponent* ReturnMesh = bContactHandoff ? nullptr : ActiveMotionReturnMesh.Get();
 	const FTransform ReturnSocketWorld = ReturnMesh && !ActiveMotionReturnSocket.IsNone() && ReturnMesh->DoesSocketExist(ActiveMotionReturnSocket)
@@ -941,14 +943,18 @@ void UProject_JWeaponPresentationComponent::UpdateIndependentMotion(float DeltaT
 				SourceSocketWorld, ReturnSocketWorld, Correction);
 	};
 	const FTransform UncorrectedWorld = EvaluateWorld(FVector::ZeroVector);
-	WeaponRoot->SetRelativeTransform(UncorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
+	const FTransform UncorrectedRelative = UncorrectedWorld.GetRelativeTransform(SourceSocketWorld);
+	if (UncorrectedWorld.ContainsNaN() || UncorrectedRelative.ContainsNaN()) return;
+	WeaponRoot->SetRelativeTransform(UncorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
 
 	FVector GroundCorrectionComponentSpace = FVector::ZeroVector;
 	if ((GroundContactStateCount > 0 || !GroundContactNotifyTokens.IsEmpty()) && TryGetGroundCorrection(DeltaTime, GroundCorrectionComponentSpace))
 	{
 		const FVector GroundCorrectionWorld = CharacterMesh->GetComponentTransform().TransformVectorNoScale(GroundCorrectionComponentSpace);
 		const FTransform CorrectedWorld = EvaluateWorld(GroundCorrectionWorld);
-		WeaponRoot->SetRelativeTransform(CorrectedWorld.GetRelativeTransform(SourceSocketWorld), false, nullptr, ETeleportType::TeleportPhysics);
+		const FTransform CorrectedRelative = CorrectedWorld.GetRelativeTransform(SourceSocketWorld);
+		if (!CorrectedWorld.ContainsNaN() && !CorrectedRelative.ContainsNaN())
+			WeaponRoot->SetRelativeTransform(CorrectedRelative, false, nullptr, ETeleportType::TeleportPhysics);
 	}
 
 	UpdateGripTargets();

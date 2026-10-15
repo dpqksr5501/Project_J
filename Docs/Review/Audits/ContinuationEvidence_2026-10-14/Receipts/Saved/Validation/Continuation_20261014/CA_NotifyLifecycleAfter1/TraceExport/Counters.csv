@@ -1,0 +1,2013 @@
+Id,Type,Name
+0,Int64,STAT_TotalLLM
+1,Int64,STAT_TrackedTotalSummaryLLM
+2,Int64,STAT_UntrackedLLM
+3,Int64,STAT_PlatformTotalLLM
+4,Int64,STAT_TrackedTotalLLM
+5,Int64,STAT_UntaggedTotalLLM
+6,Int64,STAT_WorkingSetSizeLLM
+7,Int64,STAT_PagefileUsedLLM
+8,Int64,STAT_PlatformTrackedTotalLLM
+9,Int64,STAT_PlatformUntaggedTotalLLM
+10,Int64,STAT_PlatformUntrackedLLM
+11,Int64,STAT_PlatformOverheadLLM
+12,Int64,STAT_PlatformOSAvailableLLM
+13,Int64,STAT_FMallocLLM
+14,Int64,STAT_FMallocUnusedLLM
+15,Int64,STAT_EngineSummaryLLM
+16,Int64,STAT_RHIUnusedLLM
+17,Int64,STAT_ThreadStackLLM
+18,Int64,STAT_ThreadStackPlatformLLM
+19,Int64,STAT_ProgramSizePlatformLLM
+20,Int64,STAT_ProgramSizeLLM
+21,Int64,STAT_OOMBackupPoolPlatformLLM
+22,Int64,STAT_OOMBackupPoolLLM
+23,Int64,STAT_GenericPlatformMallocCrashLLM
+24,Int64,STAT_GenericPlatformMallocCrashPlatformLLM
+25,Int64,STAT_EngineMiscLLM
+26,Int64,STAT_TaskGraphTasksMiscLLM
+27,Int64,STAT_LinearAllocatorLLM
+28,Int64,STAT_AudioLLM
+29,Int64,STAT_AudioSummaryLLM
+30,Int64,STAT_AudioMiscLLM
+31,Int64,STAT_AudioSoundWavesLLM
+32,Int64,STAT_AudioSoundWaveProxiesLLM
+33,Int64,STAT_AudioMixerLLM
+34,Int64,STAT_AudioMixerPluginsLLM
+35,Int64,STAT_AudioPrecacheLLM
+36,Int64,STAT_AudioDecompressLLM
+37,Int64,STAT_AudioRealtimePrecacheLLM
+38,Int64,STAT_AudioFullDecompressLLM
+39,Int64,STAT_AudioStreamCacheLLM
+40,Int64,STAT_AudioStreamCacheCompressedDataLLM
+41,Int64,STAT_AudioSynthesisLLM
+42,Int64,STAT_RealTimeCommunicationsLLM
+43,Int64,STAT_FNameLLM
+44,Int64,STAT_FNameCompressedLLM
+45,Int64,STAT_NetworkingLLM
+46,Int64,STAT_NetworkingSummaryLLM
+47,Int64,STAT_MeshesLLM
+48,Int64,STAT_MeshesSummaryLLM
+49,Int64,STAT_StatsLLM
+50,Int64,STAT_ShadersLLM
+51,Int64,STAT_PSOLLM
+52,Int64,STAT_TexturesLLM
+53,Int64,STAT_TexturesSummaryLLM
+54,Int64,STAT_TextureMetaDataLLM
+55,Int64,STAT_VirtualTextureSystemLLM
+56,Int64,STAT_RenderTargetsLLM
+57,Int64,STAT_SceneRenderLLM
+58,Int64,STAT_RHIMiscLLM
+59,Int64,STAT_AsyncLoadingLLM
+60,Int64,STAT_UObjectLLM
+61,Int64,STAT_UObjectSummaryLLM
+62,Int64,STAT_AnimationLLM
+63,Int64,STAT_AnimationSummaryLLM
+64,Int64,STAT_StaticMeshLLM
+65,Int64,STAT_StaticMeshSummaryLLM
+66,Int64,STAT_MaterialsLLM
+67,Int64,STAT_MaterialsSummaryLLM
+68,Int64,STAT_ParticlesLLM
+69,Int64,STAT_ParticlesSummaryLLM
+70,Int64,STAT_NiagaraLLM
+71,Int64,STAT_NiagaraSummaryLLM
+72,Int64,STAT_GPUSortLLM
+73,Int64,STAT_GCLLM
+74,Int64,STAT_UILLM
+75,Int64,STAT_UISummaryLLM
+76,Int64,STAT_NavigationRecastLLM
+77,Int64,STAT_NavigationSummaryLLM
+78,Int64,STAT_PhysicsLLM
+79,Int64,STAT_PhysicsSummaryLLM
+80,Int64,STAT_PhysXLLM
+81,Int64,STAT_PhysXSummaryLLM
+82,Int64,STAT_PhysXGeometryLLM
+83,Int64,STAT_PhysXTrimeshLLM
+84,Int64,STAT_PhysXConvexLLM
+85,Int64,STAT_PhysXAllocatorLLM
+86,Int64,STAT_PhysXLandscapeLLM
+87,Int64,STAT_ChaosLLM
+88,Int64,STAT_ChaosSummaryLLM
+89,Int64,STAT_ChaosGeometryLLM
+90,Int64,STAT_ChaosAccelerationLLM
+91,Int64,STAT_ChaosParticlesLLM
+92,Int64,STAT_ChaosLandscapeLLM
+93,Int64,STAT_ChaosTrimeshLLM
+94,Int64,STAT_ChaosConvexLLM
+95,Int64,STAT_ChaosSceneLLM
+96,Int64,STAT_ChaosUpdateLLM
+97,Int64,STAT_ChaosActorLLM
+98,Int64,STAT_ChaosBodyLLM
+99,Int64,STAT_ChaosConstraintLLM
+100,Int64,STAT_ChaosMaterialLLM
+101,Int64,STAT_EnginePreInitLLM
+102,Int64,STAT_EngineInitLLM
+103,Int64,STAT_RenderingThreadLLM
+104,Int64,STAT_LoadMapMiscLLM
+105,Int64,STAT_StreamingManagerLLM
+106,Int64,STAT_GraphicsPlatformLLM
+107,Int64,STAT_FileSystemLLM
+108,Int64,STAT_LocalizationLLM
+109,Int64,STAT_AssetRegistryLLM
+110,Int64,STAT_ConfigSystemLLM
+111,Int64,STAT_InitUObjectLLM
+112,Int64,STAT_VideoRecordingLLM
+113,Int64,STAT_ReplaysLLM
+114,Int64,STAT_MaterialInstanceLLM
+115,Int64,STAT_SkeletalMeshLLM
+116,Int64,STAT_InstancedMeshLLM
+117,Int64,STAT_LandscapeLLM
+118,Int64,STAT_CsvProfilerLLM
+119,Int64,STAT_MediaStreamingLLM
+120,Int64,STAT_MediaStreamingSummaryLLM
+121,Int64,STAT_ElectraPlayerLLM
+122,Int64,STAT_WMFPlayerLLM
+123,Int64,STAT_PlatformMMIOLLM
+124,Int64,STAT_PlatformVMLLM
+125,Int64,STAT_CustomName
+126,Int64,STAT_LockFreeListLinks
+127,Int64,STAT_AsyncFileMemory
+128,Int64,STAT_AsyncFileHandles
+129,Int64,STAT_AsyncFileRequests
+130,Int64,STAT_MappedFileMemory
+131,Int64,STAT_MappedFileHandles
+132,Int64,STAT_MappedFileRegions
+133,Int64,MCR_Physical
+134,Int64,MCR_PhysicalLLM
+135,Int64,MCR_GPU
+136,Int64,MCR_TexturePool
+137,Int64,MCR_StreamingPool
+138,Int64,MCR_UsedStreamingPool
+139,Int64,STAT_TotalPhysical
+140,Int64,STAT_TotalVirtual
+141,Int64,STAT_PageSize
+142,Int64,STAT_TotalPhysicalGB
+143,Int64,STAT_AvailablePhysical
+144,Int64,STAT_AvailableVirtual
+145,Int64,STAT_UsedPhysical
+146,Int64,STAT_PeakUsedPhysical
+147,Int64,STAT_UsedVirtual
+148,Int64,STAT_PeakUsedVirtual
+149,Int64,PlatformMemory/TotalPhysical
+150,Int64,PlatformMemory/TotalVirtual
+151,Int64,PlatformMemory/PageSize
+152,Int64,PlatformMemory/AvailablePhysical
+153,Int64,PlatformMemory/AvailableVirtual
+154,Int64,PlatformMemory/UsedPhysical
+155,Int64,PlatformMemory/PeakUsedPhysical
+156,Int64,PlatformMemory/UsedVirtual
+157,Int64,PlatformMemory/PeakUsedVirtual
+158,Int64,STAT_LLMOverheadTotal
+159,Int64,STAT_ProjectSummaryLLM
+160,Int64,STAT_Binned_OsCurrent
+161,Int64,STAT_Binned_OsPeak
+162,Int64,STAT_Binned_WasteCurrent
+163,Int64,STAT_Binned_WastePeak
+164,Int64,STAT_Binned_UsedCurrent
+165,Int64,STAT_Binned_UsedPeak
+166,Int64|ResetEveryFrame,STAT_Binned_CurrentAllocs
+167,Int64|ResetEveryFrame,STAT_Binned_TotalAllocs
+168,Int64,STAT_Binned_SlackCurrent
+169,Int64|ResetEveryFrame,STAT_MallocCalls
+170,Int64|ResetEveryFrame,STAT_FreeCalls
+171,Int64|ResetEveryFrame,STAT_ReallocCalls
+172,Int64|ResetEveryFrame,STAT_TotalAllocatorCalls
+173,Int64|ResetEveryFrame,STAT_ThreadPoolDummyCounter
+174,Int64,IoDispatcher/ChunkDecoderQueueCount
+175,Int64,IoDispatcher/AvailableChunkDecoderWorkerCount
+176,Double,STAT_UncompressorTime
+177,Int64,STAT_AudioMemory
+178,Int64,STAT_TextureMemory
+179,Int64,STAT_MemoryPhysXTotalAllocationSize
+180,Int64,STAT_MemoryICUTotalAllocationSize
+181,Int64,STAT_MemoryICUDataFileAllocationSize
+182,Int64,STAT_PrecomputedVisibilityMemory
+183,Int64,STAT_SkeletalMeshVertexMemory
+184,Int64,STAT_SkeletalMeshIndexMemory
+185,Int64,STAT_SkeletalMeshMotionBlurSkinningMemory
+186,Int64,STAT_VertexShaderMemory
+187,Int64,STAT_PixelShaderMemory
+188,Int64,STAT_NavigationMemory
+189,Int64,STAT_ReflectionCaptureTextureMemory
+190,Int64,STAT_ReflectionCaptureMemory
+191,Double|ResetEveryFrame,STAT_GameTickWantedWaitTime
+192,Double|ResetEveryFrame,STAT_GameTickAdditionalWaitTime
+193,Double|ResetEveryFrame,STAT_CPUTimePct
+194,Double|ResetEveryFrame,STAT_CPUTimePctRelative
+195,Int64,STAT_MemStackLargeBLock
+196,Int64,STAT_PageAllocatorFree
+197,Int64,STAT_PageAllocatorUsed
+198,Int64,QueuedThreadPoolWrapper/ScheduledWorkAllocs
+199,Int64,StallDetector/Count
+200,Double,StallDetector/TimeSeconds
+201,Int64,StallDetector/TotalTriggeredCount
+202,Int64,StallDetector/TotalReportedCount
+203,Int64|ResetEveryFrame,STAT_StatFrameMessages
+204,Int64|ResetEveryFrame,STAT_StatFramePackets
+205,Int64|ResetEveryFrame,STAT_StatFramePacketsCondensed
+206,Int64,STAT_StatMessagesMemory
+207,Double|ResetEveryFrame,STAT_SecondsPerCycle
+208,Int64|ResetEveryFrame,STAT_StatFramePacketsRecv
+209,Int64,STAT_StatDescMemory
+210,Double|ResetEveryFrame,STAT_DeviceTemperature
+211,Int64|ResetEveryFrame,STAT_ThermalState
+212,Int64,STAT_WindowsSpecificMemoryStat
+213,Int64,PC / Memory / Total Virtual
+214,Int64,PC / Memory / Total Physical
+215,Int64,PC / Memory / Used Physical (Main Process)
+216,Int64,PC / Memory / Used Virtual (Main Process)
+217,Int64,PC / Memory / Available Physical
+218,Int64,PC / Memory / Available Virtual
+219,Int64,PC / Memory / Free & Zero Page List
+220,Int64,PC / Memory / Private Bytes (Local Shader Compile Workers)
+221,Int64,PC / Memory / Used Virtual (Local Shader Compile Workers)
+222,Double,PC / Memory / Demand Zero Page Faults
+223,Double,PC / GPU Engine / Total Usage
+224,Int64,PC / GPU Memory / Used Dedicated
+225,Double,PC / CPU / Total Usage
+226,Int64,PC / CPU / Total Thread Count
+227,Int64,PC / Network / Total Bytes Sent
+228,Int64,PC / Network / Total Bytes Received
+229,Int64,ZenClient/StreamedBytes
+230,Double,ZenClient/StreamedSeconds
+231,Int64,STAT_DDC_NumGets
+232,Int64,STAT_DDC_NumPuts
+233,Int64,STAT_DDC_NumBuilds
+234,Int64,STAT_DDC_NumExist
+235,Double,STAT_DDC_SyncGetTime
+236,Double,STAT_DDC_ASyncWaitTime
+237,Double,STAT_DDC_PutTime
+238,Double,STAT_DDC_SyncBuildTime
+239,Double,STAT_DDC_ExistTime
+240,Int64,FileSystemDDC Get
+241,Int64,FileSystemDDC Get Hit
+242,Int64,FileSystemDDC Put
+243,Int64,FileSystemDDC Put Hit
+244,Int64,FileSystemDDC Bytes Read
+245,Int64,FileSystemDDC Bytes Written
+246,Int64,HttpDDC Get
+247,Int64,HttpDDC Get Hit
+248,Int64,HttpDDC Put
+249,Int64,HttpDDC Put Hit
+250,Int64,HttpDDC Bytes Received
+251,Int64,HttpDDC Bytes Sent
+252,Int64,S3DDC Get
+253,Int64,S3DDC Get Hit
+254,Int64,ZenDDC Get
+255,Int64,ZenDDC Get Hit
+256,Int64,ZenDDC Put
+257,Int64,ZenDDC Put Hit
+258,Int64,ZenDDC Bytes Received
+259,Int64,ZenDDC Bytes Sent
+260,Int64,ZenDDC CacheRecord Request Count
+261,Int64,ZenDDC Chunk Request Count
+262,Int64,STAT_StreamingAllocSize
+263,Double,STAT_FAsyncPackage_TotalPostLoadGameThread
+264,Double,STAT_AsyncIO_AsyncLoadingBlockingTime
+265,Double,STAT_AsyncIO_AsyncPackagePrecacheWaitTime
+266,Int64,STAT_FAsyncArchiveMem
+267,Int64,BulkData/BatchRequest/Count
+268,Int64,BulkData/BatchRequest/Pending
+269,Int64,EditorBulkData/PayloadDataLoaded
+270,Int64,EditorBulkData/PayloadDataPulled
+271,Int64,STAT_LinkerCount
+272,Int64,STAT_TextAssetLinkerCount
+273,Int64,STAT_LiveLinkerCount
+274,Double,STAT_EditorOnlyFixupTime
+275,Int64|ResetEveryFrame,STAT_UObjectsStatGroupTester
+276,Int64|ResetEveryFrame,STAT_FindObject
+277,Int64|ResetEveryFrame,STAT_FindObjectFast
+278,Int64,STAT_NameTableEntries
+279,Int64,STAT_NameTableAnsiEntries
+280,Int64,STAT_NameTableWideEntries
+281,Int64,STAT_NameTableMemorySize
+282,Int64|ResetEveryFrame,STAT_Hash_NumObjects
+283,Int64,AsyncLoading/PackagesQueued
+284,Int64,AsyncLoading/PackagesLoading
+285,Int64,AsyncLoading/PackagesWithRemainingWork
+286,Int64,AsyncLoading/PendingIoRequests
+287,Int64,AsyncLoading/TotalLoaded
+288,Int64,AsyncLoadingThread/FileSystemLoads
+289,Int64,AsyncLoadingThread/IoStoreLoads
+290,Int64,STAT_SlateRawFontDataMemory
+291,Int64,STAT_SlateBulkFontDataMemory
+292,Int64,STAT_SlateNumFontAtlases
+293,Int64,STAT_SlateNumFontNonAtlasedTextures
+294,Int64,STAT_SlateShapedGlyphSequenceMemory
+295,Int64,STAT_SlateFontMeasureCacheMemory
+296,Int64,STAT_SlateFreetypeAllocatedMemory
+297,Int64,STAT_SlateResidentFontCount
+298,Int64,STAT_SlateStreamingFontCount
+299,Int64,STAT_FSlateWindowElementListMemManager
+300,Int64|ResetEveryFrame,STAT_FSlateWindowElementListMemManagerCount
+301,Int64,STAT_SlateBufferPoolMemory
+302,Int64,STAT_SlateCachedDrawElementMemory
+303,Int64|ResetEveryFrame,STAT_SlateElements
+304,Int64|ResetEveryFrame,STAT_SlateElements_Box
+305,Int64|ResetEveryFrame,STAT_SlateElements_Border
+306,Int64|ResetEveryFrame,STAT_SlateElements_Text
+307,Int64|ResetEveryFrame,STAT_SlateElements_ShapedText
+308,Int64|ResetEveryFrame,STAT_SlateElements_Line
+309,Int64|ResetEveryFrame,STAT_SlateElements_Other
+310,Int64|ResetEveryFrame,STAT_SlateInvalidation_RecachedElements
+311,Int64,STAT_SlateTextureGPUMemory
+312,Int64,STAT_SlateTextureDataMemory
+313,Int64,STAT_SlateTextureAtlasMemory
+314,Int64,STAT_UI_SlateLLM
+315,Int64,STAT_UI_UMGLLM
+316,Int64,STAT_UI_TextLLM
+317,Int64,STAT_UI_TextureLLM
+318,Int64,STAT_UI_StyleLLM
+319,Int64,STAT_SlateSWidgetAllocSize
+320,Int64|ResetEveryFrame,STAT_SlateTotalWidgetsPerFrame
+321,Int64|ResetEveryFrame,STAT_SlateNumPaintedWidgets
+322,Int64|ResetEveryFrame,STAT_SlateNumTickedWidgets
+323,Int64,STAT_SlateTotalWidgets
+324,Int64,STAT_TexturePool_Allocated
+325,Int64,STAT_TexturePool_Free
+326,Int64,STAT_TexturePool_LargestHole
+327,Int64,STAT_TexturePool_RelocatedSize
+328,Int64,STAT_TexturePool_NumRelocations
+329,Int64,STAT_TexturePool_NumHoles
+330,Int64,STAT_TexturePool_TotalAsyncReallocations
+331,Int64,STAT_TexturePool_TotalAsyncAllocations
+332,Int64,STAT_TexturePool_TotalAsyncCancellations
+333,Int64,STAT_TotalGraphicsPipelineStateCount
+334,Int64,STAT_TotalComputePipelineStateCount
+335,Int64,STAT_TotalRayTracingPipelineStateCount
+336,Int64,STAT_SerializedGraphicsPipelineStateCount
+337,Int64,STAT_SerializedComputePipelineStateCount
+338,Int64,STAT_SerializedRayTracingPipelineStateCount
+339,Int64,STAT_NewGraphicsPipelineStateCount
+340,Int64,STAT_NewComputePipelineStateCount
+341,Int64,STAT_NewRayTracingPipelineStateCount
+342,Int64,STAT_NewCachedPSOMemory
+343,Int64,STAT_PSOStatMemory
+344,Int64,STAT_FileCacheMemory
+345,Int64,STAT_RuntimeGraphicsPSOHitchCount
+346,Int64,STAT_RuntimeComputePSOHitchCount
+347,Int64,STAT_TotalGraphicsPrecachedPSOs
+348,Int64,STAT_TotalComputePrecachedPSOs
+349,Int64,STAT_ActiveGraphicsPSOPrecacheRequests
+350,Int64,STAT_ActiveComputePSOPrecacheRequests
+351,Int64,STAT_HighestPriorityGraphicsPSOPrecacheRequests
+352,Int64,STAT_HighestPriorityComputePSOPrecacheRequests
+353,Int64,STAT_HighPriorityGraphicsPSOPrecacheRequests
+354,Int64,STAT_HighPriorityComputePSOPrecacheRequests
+355,Int64,STAT_MediumPriorityGraphicsPSOPrecacheRequests
+356,Int64,STAT_MediumPriorityComputePSOPrecacheRequests
+357,Int64,STAT_LowPriorityGraphicsPSOPrecacheRequests
+358,Int64,STAT_LowPriorityComputePSOPrecacheRequests
+359,Int64,STAT_PrecachedGraphicsPrecachedPSOsInMemory
+360,Int64,STAT_PrecachedComputePrecachedPSOsInMemory
+361,Int64,STAT_ActiveRuntimeGraphicsPSOs
+362,Int64,STAT_ActiveRuntimeComputePSOs
+363,Int64,STAT_RuntimeGraphicsPSOsFromInMemoryPSOCache
+364,Int64,STAT_RuntimeComputePSOsFromInMemoryPSOCache
+365,Int64|ResetEveryFrame,STAT_NonImmedCmdListMemory
+366,Int64|ResetEveryFrame,STAT_NonImmedCmdListCount
+367,Int64|ResetEveryFrame,STAT_ImmedCmdListMemory
+368,Int64|ResetEveryFrame,STAT_ImmedCmdListCount
+369,Int64|ResetEveryFrame,STAT_RHIDraws
+370,Int64|ResetEveryFrame,STAT_RHIDispatches
+371,Int64|ResetEveryFrame,STAT_RHIPrimitives
+372,Int64|ResetEveryFrame,STAT_RHIVertices
+373,Int64,STAT_RenderTargetMemory2D
+374,Int64,STAT_RenderTargetMemory3D
+375,Int64,STAT_RenderTargetMemoryCube
+376,Int64,STAT_UAVTextureMemory
+377,Int64,STAT_TextureMemory2D
+378,Int64,STAT_TextureMemory3D
+379,Int64,STAT_TextureMemoryCube
+380,Int64,STAT_UniformBufferMemory
+381,Int64,STAT_IndexBufferMemory
+382,Int64,STAT_VertexBufferMemory
+383,Int64,STAT_RTAccelerationStructureMemory
+384,Int64,STAT_StructuredBufferMemory
+385,Int64,STAT_ByteAddressBufferMemory
+386,Int64,STAT_DrawIndirectBufferMemory
+387,Int64,STAT_MiscBufferMemory
+388,Int64,STAT_ReservedUncommittedBufferMemory
+389,Int64,STAT_ReservedCommittedBufferMemory
+390,Int64,STAT_ReservedUncommittedTextureMemory
+391,Int64,STAT_ReservedCommittedTextureMemory
+392,Int64,STAT_SamplerDescriptorsAllocated
+393,Int64,STAT_ResourceDescriptorsAllocated
+394,Int64,STAT_BindlessSamplerHeapMemory
+395,Int64,STAT_BindlessResourceHeapMemory
+396,Int64,STAT_BindlessSamplerDescriptorsAllocated
+397,Int64,STAT_BindlessResourceDescriptorsAllocated
+398,Int64,STAT_D3DTotalVideoMemory
+399,Int64,STAT_D3DTotalSystemMemory
+400,Int64,STAT_D3DUsedVideoMemory
+401,Int64,STAT_D3DUsedSystemMemory
+402,Int64,STAT_D3DAvailableVideoMemory
+403,Int64,STAT_D3DAvailableSystemMemory
+404,Int64,STAT_D3DDemotedVideoMemory
+405,Int64,STAT_D3DDemotedSystemMemory
+406,Int64,STAT_SceneLights
+407,Int64|ResetEveryFrame,STAT_MeshDrawCalls
+408,Int64,STAT_SceneDecals
+409,Int64|ResetEveryFrame,STAT_Decals
+410,Int64,STAT_PrimitiveInfoMemory
+411,Int64,STAT_RenderingSceneMemory
+412,Int64,STAT_ViewStateMemory
+413,Int64,STAT_LightInteractionMemory
+414,Int64|ResetEveryFrame,STAT_RayTracingTotalInstances
+415,Int64|ResetEveryFrame,STAT_RayTracingActiveInstances
+416,Int64|ResetEveryFrame,STAT_ProcessedPrimitives
+417,Int64|ResetEveryFrame,STAT_CulledPrimitives
+418,Int64|ResetEveryFrame,STAT_VisibleRayTracingPrimitives
+419,Int64|ResetEveryFrame,STAT_StaticallyOccludedPrimitives
+420,Int64|ResetEveryFrame,STAT_OccludedPrimitives
+421,Int64|ResetEveryFrame,STAT_OcclusionQueries
+422,Int64|ResetEveryFrame,STAT_VisibleStaticMeshElements
+423,Int64|ResetEveryFrame,STAT_VisibleDynamicPrimitives
+424,Int64|ResetEveryFrame,STAT_IndirectLightingCacheUpdates
+425,Int64|ResetEveryFrame,STAT_PrecomputedLightingBufferUpdates
+426,Int64|ResetEveryFrame,STAT_CSMSubjects
+427,Int64|ResetEveryFrame,STAT_CSMStaticMeshReceivers
+428,Int64|ResetEveryFrame,STAT_CSMStaticPrimitiveReceivers
+429,Int64|ResetEveryFrame,STAT_WholeSceneShadows
+430,Int64|ResetEveryFrame,STAT_CachedWholeSceneShadows
+431,Int64|ResetEveryFrame,STAT_PerObjectShadows
+432,Int64|ResetEveryFrame,STAT_PreShadows
+433,Int64|ResetEveryFrame,STAT_CachedPreShadows
+434,Int64|ResetEveryFrame,STAT_ShadowDynamicPathDrawCalls
+435,Int64|ResetEveryFrame,STAT_NumShadowedLights
+436,Int64|ResetEveryFrame,STAT_NumLightFunctionOnlyLights
+437,Int64|ResetEveryFrame,STAT_NumBatchedLights
+438,Int64|ResetEveryFrame,STAT_NumLightsInjectedIntoTranslucency
+439,Int64|ResetEveryFrame,STAT_NumLightsInjectedIntoTranslucencyBatched
+440,Int64|ResetEveryFrame,STAT_NumLightsUsingStandardDeferred
+441,Int64|ResetEveryFrame,STAT_LightShaftsLights
+442,Int64|ResetEveryFrame,STAT_GameToRendererMallocTotal
+443,Int64|ResetEveryFrame,STAT_NumReflectiveShadowMapLights
+444,Int64,STAT_ShadowmapAtlasMemory
+445,Int64,STAT_CachedShadowmapMemory
+446,Int64,STAT_RenderTargetPoolSize
+447,Int64,STAT_RenderTargetPoolUsed
+448,Int64|ResetEveryFrame,STAT_RenderTargetPoolCount
+449,Int64,RDG/PassCount
+450,Int64,RDG/PassWithParameterCount
+451,Int64,RDG/PassCullCount
+452,Int64,RDG/RenderPassMergeCount
+453,Int64,RDG/PassDependencyCount
+454,Int64,RDG/TextureCount
+455,Int64,RDG/TextureReferenceCount
+456,Double,RDG/TextureReferenceAverage
+457,Int64,RDG/BufferCount
+458,Int64,RDG/BufferReferenceCount
+459,Double,RDG/BufferReferenceAverage
+460,Int64,RDG/ViewCount
+461,Int64,RDG/TransientTextureCount
+462,Int64,RDG/TransientBufferCount
+463,Int64,RDG/TransitionCount
+464,Int64,RDG/AliasingCount
+465,Int64,RDG/TransitionBatchCount
+466,Int64,RDG/MemoryWatermark
+467,Int64|ResetEveryFrame,STAT_RDG_PassCount
+468,Int64|ResetEveryFrame,STAT_RDG_PassWithParameterCount
+469,Int64|ResetEveryFrame,STAT_RDG_PassCullCount
+470,Int64|ResetEveryFrame,STAT_RDG_RenderPassMergeCount
+471,Int64|ResetEveryFrame,STAT_RDG_PassDependencyCount
+472,Int64|ResetEveryFrame,STAT_RDG_TextureCount
+473,Int64|ResetEveryFrame,STAT_RDG_TextureReferenceCount
+474,Double|ResetEveryFrame,STAT_RDG_TextureReferenceAverage
+475,Int64|ResetEveryFrame,STAT_RDG_BufferCount
+476,Int64|ResetEveryFrame,STAT_RDG_BufferReferenceCount
+477,Double|ResetEveryFrame,STAT_RDG_BufferReferenceAverage
+478,Int64|ResetEveryFrame,STAT_RDG_ViewCount
+479,Int64|ResetEveryFrame,STAT_RDG_TransientTextureCount
+480,Int64|ResetEveryFrame,STAT_RDG_TransientBufferCount
+481,Int64|ResetEveryFrame,STAT_RDG_TransitionCount
+482,Int64|ResetEveryFrame,STAT_RDG_AliasingCount
+483,Int64|ResetEveryFrame,STAT_RDG_TransitionBatchCount
+484,Int64,STAT_RDG_MemoryWatermark
+485,Int64,BufferPool/BufferCount
+486,Int64,BufferPool/BufferCreateCount
+487,Int64,BufferPool/BufferReleaseCount
+488,Int64,BufferPool/Size
+489,Int64,RenderTargetPool/Count
+490,Int64,RenderTargetPool/Size
+491,Double,STAT_ShaderCompiling_NiagaraShaders
+492,Int64,STAT_ShaderCompiling_NumTotalNiagaraShaders
+493,Double,STAT_ShaderCompiling_OpenColorIOShaders
+494,Int64,STAT_ShaderCompiling_NumTotalOpenColorIOShaders
+495,Double,STAT_ShaderCompiling_MaterialShaders
+496,Double,STAT_ShaderCompiling_GlobalShaders
+497,Double,STAT_ShaderCompiling_RHI
+498,Double,STAT_ShaderCompiling_HashingShaderFiles
+499,Double,STAT_ShaderCompiling_LoadingShaderFiles
+500,Double,STAT_ShaderCompiling_HLSLTranslation
+501,Double,STAT_ShaderCompiling_DDCLoading
+502,Double,STAT_ShaderCompiling_MaterialLoading
+503,Double,STAT_ShaderCompiling_MaterialCompiling
+504,Int64,STAT_ShaderCompiling_NumTotalMaterialShaders
+505,Int64,STAT_ShaderCompiling_NumSpecialMaterialShaders
+506,Int64,STAT_ShaderCompiling_NumParticleMaterialShaders
+507,Int64,STAT_ShaderCompiling_NumSkinnedMaterialShaders
+508,Int64,STAT_ShaderCompiling_NumLitMaterialShaders
+509,Int64,STAT_ShaderCompiling_NumUnlitMaterialShaders
+510,Int64,STAT_ShaderCompiling_NumTransparentMaterialShaders
+511,Int64,STAT_ShaderCompiling_NumOpaqueMaterialShaders
+512,Int64,STAT_ShaderCompiling_NumMaskedMaterialShaders
+513,Int64,STAT_Shaders_NumShadersLoaded
+514,Int64,STAT_Shaders_NumShadersCreated
+515,Int64,STAT_Shaders_NumShaderMaps
+516,Int64,STAT_Shaders_NumShaderMapsUsedForRendering
+517,Int64,STAT_Shaders_ShaderMemory
+518,Int64,STAT_Shaders_ShaderResourceMemory
+519,Int64,STAT_Shaders_ShaderPreloadMemory
+520,Int64,STAT_ShaderPipelineTaskCount
+521,Int64,STAT_ShaderPipelineWaitingTaskCount
+522,Int64,STAT_ShaderPipelineActiveTaskCount
+523,Int64,STAT_PreCompileMemory
+524,Double,STAT_PreCompileTotalTime
+525,Int64,STAT_PreCompileShadersTotal
+526,Int64|ResetEveryFrame,STAT_PreCompileShadersNum
+527,Int64,STAT_PreCompileBatchTotal
+528,Int64|ResetEveryFrame,STAT_PreCompileBatchNum
+529,Int64|ResetEveryFrame,STAT_GraphicPSOsCompiled
+530,Int64|ResetEveryFrame,STAT_GraphicPSOsSkipped
+531,Int64|ResetEveryFrame,STAT_ComputePSOsCompiled
+532,Int64|ResetEveryFrame,STAT_ComputePSOsSkipped
+533,Double,STAT_PakFile_Read
+534,Int64,STAT_PakFile_NumOpenHandles
+535,Int64,STAT_PakCache_SyncDecrypts
+536,Double,STAT_PakCache_DecryptTime
+537,Int64,STAT_PakCache_CompressedDecrypts
+538,Int64,STAT_PakCache_UncompressedDecrypts
+539,Double,STAT_FChunkCacheWorker_ProcessQueue
+540,Double,STAT_FChunkCacheWorker_CheckSignature
+541,Double,STAT_FChunkCacheWorker_RequestQueueUpdate
+542,Double,STAT_FChunkCacheWorker_RequestWaitTime
+543,Double,STAT_FChunkCacheWorker_Serialize
+544,Double,STAT_FChunkCacheWorker_HashBuffer
+545,Double,STAT_FChunkCacheWorker_WaitingForEvent
+546,Double,STAT_FChunkCacheWorker_GetFreeBuffer
+547,Double,STAT_FChunkCacheWorker_ReleaseBuffer
+548,Int64,STAT_FChunkCacheWorker_NumProcessQueue
+549,Int64,STAT_FChunkCacheWorker_NumProcessQueueWithWork
+550,Double,STAT_SignedArchiveReader_Serialize
+551,Double,STAT_SignedArchiveReader_PreCacheChunks
+552,Double,STAT_SignedArchiveReader_CopyFromNewCache
+553,Double,STAT_SignedArchiveReader_CopyFromExistingCache
+554,Double,STAT_SignedArchiveReader_ProcessChunkRequests
+555,Double,STAT_SignedArchiveReader_WaitForChunkWorker
+556,Int64,STAT_SignedArchiveReader_NumSerializes
+557,Int64,STAT_SignedArchiveReader_NumChunkRequests
+558,Double|ResetEveryFrame,STAT_PhysicsThreadTotalTime
+559,Int64|ResetEveryFrame,STAT_NumActiveConstraintsDedicated
+560,Int64|ResetEveryFrame,STAT_NumActiveParticlesDedicated
+561,Int64|ResetEveryFrame,STAT_NumActiveCollisionPointsDedicated
+562,Int64|ResetEveryFrame,STAT_NumActiveShapesDedicated
+563,Int64|ResetEveryFrame,STAT_GCTotalTransforms
+564,Int64|ResetEveryFrame,STAT_GCChangedTransforms
+565,Int64|ResetEveryFrame,STAT_GCReplicatedClusters
+566,Int64|ResetEveryFrame,STAT_GCReplicatedFractures
+567,Double|ResetEveryFrame,STAT_PhysicsThreadTime
+568,Double|ResetEveryFrame,STAT_PhysicsThreadTimeEff
+569,Double|ResetEveryFrame,STAT_PhysicsThreadFps
+570,Double|ResetEveryFrame,STAT_PhysicsThreadFpsEff
+571,Int64,STAT_ChaosCollisionCounter_NumContactUpdates
+572,Int64|ResetEveryFrame,STAT_ChaosCounter_NumDisabledBodies
+573,Int64|ResetEveryFrame,STAT_ChaosCounter_NumBodies
+574,Int64|ResetEveryFrame,STAT_ChaosCounter_NumDynamicBodies
+575,Int64|ResetEveryFrame,STAT_ChaosCounter_NumKinematicBodies
+576,Int64|ResetEveryFrame,STAT_ChaosCounter_NumStaticBodies
+577,Int64|ResetEveryFrame,STAT_ChaosCounter_NumGeometryCollectionBodies
+578,Int64|ResetEveryFrame,STAT_ChaosCounter_NumMovingBodies
+579,Int64|ResetEveryFrame,STAT_ChaosCounter_NumStaticShapes
+580,Int64|ResetEveryFrame,STAT_ChaosCounter_NumKinematicShapes
+581,Int64|ResetEveryFrame,STAT_ChaosCounter_NumDynamicShapes
+582,Int64|ResetEveryFrame,STAT_ChaosCounter_NumIslands
+583,Int64|ResetEveryFrame,STAT_ChaosCounter_NumIslandGroups
+584,Int64|ResetEveryFrame,STAT_ChaosCounter_NumContacts
+585,Int64|ResetEveryFrame,STAT_ChaosCounter_NumValidConstraints
+586,Int64|ResetEveryFrame,STAT_ChaosCounter_NumActiveConstraints
+587,Int64|ResetEveryFrame,STAT_ChaosCounter_NumRestoredConstraints
+588,Int64|ResetEveryFrame,STAT_ChaosCounter_NumManifoldPoints
+589,Int64|ResetEveryFrame,STAT_ChaosCounter_NumActiveManifoldPoints
+590,Int64|ResetEveryFrame,STAT_ChaosCounter_NumRestoredManifoldPoints
+591,Int64|ResetEveryFrame,STAT_ChaosCounter_NumUpdatedManifoldPoints
+592,Int64|ResetEveryFrame,STAT_ChaosCounter_NumJoints
+593,Int64|ResetEveryFrame,STAT_ChaosCounter_NumCharacterGroundConstraints
+594,Int64|ResetEveryFrame,STAT_ChaosCounter_NumBroadPhasePairs
+595,Int64|ResetEveryFrame,STAT_ChaosCounter_NumMidPhases
+596,Int64,Chaos/Solver/Bodies/NumDisabled
+597,Int64,Chaos/Solver/Bodies/Num
+598,Int64,Chaos/Solver/Bodies/NumStatic
+599,Int64,Chaos/Solver/Bodies/NumKinematic
+600,Int64,Chaos/Solver/Bodies/NumDynamic
+601,Int64,Chaos/Solver/Bodies/NumGC
+602,Int64,Chaos/Solver/Bodies/NumMoving
+603,Int64,Chaos/Solver/Collisions/NumStaticShapes
+604,Int64,Chaos/Solver/Collisions/NumKinematicShapes
+605,Int64,Chaos/Solver/Collisions/NumDynamicShapes
+606,Int64,Chaos/Solver/Islands/NumIslands
+607,Int64,Chaos/Solver/Islands/NumIslandGroups
+608,Int64,Chaos/Solver/Collisions/NumConstraints
+609,Int64,Chaos/Solver/Collisions/NumValidConstraints
+610,Int64,Chaos/Solver/Collisions/NumActiveConstraints
+611,Int64,Chaos/Solver/Collisions/NumRestoredConstraints
+612,Int64,Chaos/Solver/Collisions/NumManifoldPoints
+613,Int64,Chaos/Solver/Collisions/NumActiveManifoldPoints
+614,Int64,Chaos/Solver/Collisions/NumRestoredManifoldPoints
+615,Int64,Chaos/Solver/Collisions/NumUpdatedManifoldPoints
+616,Int64,Chaos/Solver/Joints/NumConstraints
+617,Int64,Chaos/Solver/Character/NumConstraints
+618,Int64,Chaos/Solver/Collisions/NumBroadPhasePairs
+619,Int64,Chaos/Solver/Collisions/NumMidPhases
+620,Int64,Chaos/Solver/MidPhase/NumShapePair
+621,Int64,Chaos/Solver/MidPhase/NumGeneric
+622,Int64|ResetEveryFrame,STAT_ChaosCounter_NumPositionIterations
+623,Int64|ResetEveryFrame,STAT_ChaosCounter_NumVelocityIterations
+624,Int64|ResetEveryFrame,STAT_ChaosCounter_NumProjectionIterations
+625,Int64,Chaos/Solver/Iterations/NumPosition
+626,Int64,Chaos/Solver/Iterations/NumVelocity
+627,Int64,Chaos/Solver/Iterations/NumProjection
+628,Int64|ResetEveryFrame,STAT_ChaosCounter_NumCollisionColors
+629,Int64|ResetEveryFrame,STAT_ChaosCounter_NumLinearJointColors
+630,Int64|ResetEveryFrame,STAT_ChaosCounter_NumNonLinearJointColors
+631,Int64|ResetEveryFrame,STAT_ChaosCounter_NumSuspensionConstraintColors
+632,Int64|ResetEveryFrame,STAT_ChaosCounter_NumCharacterGroundConstraintColors
+633,Int64,Chaos/Solver/Colors/NumCollisionColors
+634,Int64,Chaos/Solver/Colors/NumLinearJointColors
+635,Int64,Chaos/Solver/Colors/NumNonLinearJointColors
+636,Int64,Chaos/Solver/Colors/NumSuspensionConstraintColors
+637,Int64,Chaos/Solver/Colors/NumCharacterGroundConstraintColors
+638,Int64,STAT_ChaosCounter_NumDirtyAABBTreeElements
+639,Int64,STAT_ChaosCounter_NumDirtyGridOverflowElements
+640,Int64,STAT_ChaosCounter_NumDirtyElementsTooLargeForGrid
+641,Int64,STAT_ChaosCounter_NumDirtyNonEmptyCellsInGrid
+642,Int64,STAT_AudioSpatializationPluginsLLM
+643,Int64,STAT_IrisLLM
+644,Int64,STAT_IrisStateLLM
+645,Int64,STAT_IrisInitializationLLM
+646,Int64,STAT_IrisConnectionLLM
+647,Int64,STAT_NetTokenStructStateLLM
+648,Int64,IoStoreWriter/SourceReadsUsedBufferMemory
+649,Int64,IoStoreWriter/SourceReadsInflight
+650,Int64,IoStoreWriter/SourceReadsDone
+651,Int64,IoStoreWriter/CompressionMemoryUsed
+652,Int64,IoStoreWriter/CompressionMemoryScheduled
+653,Int64,IoStoreWriter/CompressionInflight
+654,Int64,IoStoreWriter/RefDbInFlight
+655,Int64,IoStoreWriter/RefDbDone
+656,Int64,IoStoreWriter/BeginCompression
+657,Int64,IoStoreWriter/BeginEncryptionAndSigning
+658,Int64,IoStoreWriter/BeginWrite
+659,Int64,IoStoreWriter/DDCGetInflightCount
+660,Int64,IoStoreWriter/DDCPutInflightCount
+661,Int64,IoStoreWriter/DDCHitCount
+662,Int64,IoStoreWriter/DDCMissCount
+663,Int64,IoStoreWriter/DDCPutCount
+664,Double,STAT_GameplayTags_AddTagIniSearchPath
+665,Double,STAT_GameplayTags_RemoveTagIniSearchPath
+666,Int64,STAT_AI_BehaviorTree_NumTemplates
+667,Int64,STAT_AI_BehaviorTree_NumInstances
+668,Int64,STAT_AI_BehaviorTree_InstanceMemory
+669,Int64|ResetEveryFrame,STAT_AI_EQS_NumInstances
+670,Int64|ResetEveryFrame,STAT_AI_EQS_NumItems
+671,Int64,STAT_AI_EQS_InstanceMemory
+672,Double|ResetEveryFrame,STAT_AI_EQS_AvgInstanceResponseTime
+673,Int64|ResetEveryFrame,STAT_AI_Crowd_NumAgents
+674,Int64|ResetEveryFrame,STAT_Navigation_UpdateNavOctree
+675,Int64,STAT_Navigation_CollisionTreeMemory
+676,Int64,STAT_Navigation_NavDataMemory
+677,Int64,STAT_Navigation_TileCacheMemory
+678,Int64|ResetEveryFrame,STAT_Navigation_OutOfNodesPath
+679,Int64|ResetEveryFrame,STAT_Navigation_PartialPath
+680,Double,STAT_Navigation_CumulativeBuildTime
+681,Int64|ResetEveryFrame,STAT_Navigation_ObservedPathsCount
+682,Int64,STAT_Navigation_RecastMemory
+683,Int64,STAT_Navigation_DetourTEMP
+684,Int64,STAT_Navigation_DetourPERM
+685,Int64,STAT_Navigation_DetourPERM_AVOIDANCE
+686,Int64,STAT_Navigation_DetourPERM_CROWD
+687,Int64,STAT_Navigation_DetourPERM_LOOKUP
+688,Int64,STAT_Navigation_DetourPERM_NAVQUERY
+689,Int64,STAT_Navigation_DetourPERM_NAVMESH
+690,Int64,STAT_Navigation_DetourPERM_NODE_POOL
+691,Int64,STAT_Navigation_DetourPERM_PATH_CORRIDOR
+692,Int64,STAT_Navigation_DetourPERM_PATH_QUEUE
+693,Int64,STAT_Navigation_DetourPERM_PROXY_GRID
+694,Int64,STAT_Navigation_DetourPERM_TILE_DATA
+695,Int64,STAT_Navigation_DetourPERM_TILE_DYNLINK
+696,Int64,STAT_Navigation_DetourPERM_TILE_DYNLINK_CLUSTER
+697,Int64,STAT_Navigation_DetourPERM_TILES
+698,Int64,STAT_Navigation_DetourPERM_TILE_LINK_BUILDER
+699,Int64,STAT_DetourTileMemory
+700,Int64,STAT_DetourTileMeshHeaderMemory
+701,Int64,STAT_DetourTileNavVertsMemory
+702,Int64,STAT_DetourTileNavPolysMemory
+703,Int64,STAT_DetourTileLinksMemory
+704,Int64,STAT_DetourTileDetailMeshesMemory
+705,Int64,STAT_DetourTileDetailVertsMemory
+706,Int64,STAT_DetourTileDetailTrisMemory
+707,Int64,STAT_DetourTileBVTreeMemory
+708,Int64,STAT_DetourTileOffMeshConsMemory
+709,Int64,STAT_DetourTileOffMeshSegsMemory
+710,Int64,STAT_DetourTileClustersMemory
+711,Int64,STAT_DetourTilePolyClustersMemory
+712,Int64,STAT_SlateVertexBufferMemory
+713,Int64,STAT_SLATEPPRenderTargetMem
+714,Int64|ResetEveryFrame,STAT_SlateNumLayers
+715,Int64|ResetEveryFrame,STAT_SlateNumBatches
+716,Int64|ResetEveryFrame,STAT_SlateVertexCount
+717,Int64|ResetEveryFrame,STAT_SlateScissorClips
+718,Int64|ResetEveryFrame,STAT_SlateStencilClips
+719,Int64,STAT_SlateNumTextureAtlases
+720,Int64,STAT_SlateNumNonAtlasedTextures
+721,Int64,STAT_SlateNumDynamicTextures
+722,Int64,STAT_SlateUTotalWidgets
+723,Int64|ResetEveryFrame,STAT_AnimDynamicsSubSteps
+724,Int64|ResetEveryFrame,MovieSceneRepl_NumServerSamples
+725,Double|ResetEveryFrame,MovieSceneRepl_SmoothedServerTime
+726,Double|ResetEveryFrame,STAT_MediaUtils_FacadeTime
+727,Int64|ResetEveryFrame,STAT_MediaUtils_FacadeNumVideoSamples
+728,Int64|ResetEveryFrame,STAT_MediaUtils_FacadeNumAudioSamples
+729,Int64|ResetEveryFrame,STAT_MediaUtils_FacadeNumPurgedVideoSamples
+730,Int64,STAT_MediaUtils_FacadeTotalPurgedVideoSamples
+731,Int64|ResetEveryFrame,STAT_MediaUtils_FacadeNumPurgedSubtitleSamples
+732,Int64,STAT_MediaUtils_FacadeTotalPurgedSubtitleSamples
+733,Int64|ResetEveryFrame,STAT_MediaUtils_FacadeNumPurgedCaptionSamples
+734,Int64,STAT_MediaUtils_FacadeTotalPurgedCaptionSamples
+735,Int64,AudioSourceManager Qd Cmds
+736,Double|ResetEveryFrame,STAT_MediaUtils_MediaSoundComponentSync
+737,Double|ResetEveryFrame,STAT_MediaUtils_MediaSoundComponentSampleTime
+738,Int64|ResetEveryFrame,STAT_Media_SoundCompQueued
+739,Double|ResetEveryFrame,STAT_MediaUtils_TextureSampleTime
+740,Int64|ResetEveryFrame,STAT_NaniteCustomDepthInstances
+741,Int64|ResetEveryFrame,STAT_NaniteBasePassTotalRasterBins
+742,Int64|ResetEveryFrame,STAT_NaniteBasePassVisibleRasterBins
+743,Int64|ResetEveryFrame,STAT_NaniteBasePassTotalShadingBins
+744,Int64|ResetEveryFrame,STAT_NaniteBasePassVisibleShadingBins
+745,Int64,STAT_DistanceFieldsLLM
+746,Int64,STAT_DistanceFieldsSummaryLLM
+747,Int64,STAT_GPUSceneLLM
+748,Int64,STAT_GPUSceneSummaryLLM
+749,Int64|ResetEveryFrame,STAT_VSMLocalProjectionOnePassFast
+750,Int64,STAT_LumenLLM
+751,Int64,STAT_LumenSummaryLLM
+752,Int64|ResetEveryFrame,STAT_Culling_TotalNumPrimitives
+753,Int64|ResetEveryFrame,STAT_Culling_TotalNumVertices
+754,Int64|ResetEveryFrame,STAT_Culling_TotalNumInstances
+755,Int64|ResetEveryFrame,STAT_Culling_InstanceCullingIndirectNumPrimitives
+756,Int64|ResetEveryFrame,STAT_Culling_InstanceCullingIndirectNumVertices
+757,Int64|ResetEveryFrame,STAT_Culling_InstanceCullingIndirectNumInstances
+758,Int64|ResetEveryFrame,STAT_Culling_CustomIndirectNumPrimitives
+759,Int64|ResetEveryFrame,STAT_Culling_CustomIndirectNumVertices
+760,Int64|ResetEveryFrame,STAT_Culling_CustomIndirectNumInstances
+761,Int64|ResetEveryFrame,STAT_NaniteCullingContexts
+762,Double|ResetEveryFrame,DynamicNaniteScalingPrimary_TargetMs
+763,Double|ResetEveryFrame,DynamicNaniteScalingPrimary_MeasuredMs
+764,Double|ResetEveryFrame,DynamicNaniteScalingPrimary_MinFraction
+765,Double|ResetEveryFrame,DynamicNaniteScalingPrimary_MaxFraction
+766,Double|ResetEveryFrame,DynamicNaniteScalingPrimary_Fraction
+767,Double|ResetEveryFrame,DynamicNaniteScalingShadow_TargetMs
+768,Double|ResetEveryFrame,DynamicNaniteScalingShadow_MeasuredMs
+769,Double|ResetEveryFrame,DynamicNaniteScalingShadow_MinFraction
+770,Double|ResetEveryFrame,DynamicNaniteScalingShadow_MaxFraction
+771,Double|ResetEveryFrame,DynamicNaniteScalingShadow_Fraction
+772,Int64,STAT_NaniteRayTracingInFlightUpdates
+773,Int64|ResetEveryFrame,STAT_NaniteRayTracingStreamOutRequests
+774,Int64|ResetEveryFrame,STAT_NaniteRayTracingFailedStreamOutRequests
+775,Int64|ResetEveryFrame,STAT_NaniteRayTracingScheduledBuilds
+776,Int64|ResetEveryFrame,STAT_NaniteRayTracingScheduledBuildsNumPrimitives
+777,Int64,STAT_NaniteRayTracingPendingBuilds
+778,Int64,STAT_NaniteRayTracingAuxiliaryDataBuffer
+779,Int64,STAT_NaniteRayTracingStagingAuxiliaryDataBuffer
+780,Int64,STAT_NaniteRayTracingCLASAllocatedSize
+781,Int64,STAT_NaniteRayTracingCLASBufferSize
+782,Int64,STAT_NaniteRayTracingStagingSize
+783,Int64,STAT_NaniteRayTracingScratchSize
+784,Int64|ResetEveryFrame,STAT_NaniteRayTracingCLASBuilds
+785,Int64|ResetEveryFrame,STAT_NaniteRayTracingBLASBuilds
+786,Int64|ResetEveryFrame,STAT_RayTracingDynamicBuildPrimitives
+787,Int64|ResetEveryFrame,STAT_RayTracingDynamicUpdatePrimitives
+788,Int64|ResetEveryFrame,STAT_RayTracingDynamicSkippedPrimitives
+789,Int64,STAT_RayTracingDynamicSharedVertexBufferMemory
+790,Int64,Scene/Primitives
+791,Int64,Scene/Primitives/Adds
+792,Int64,Scene/Primitives/Removes
+793,Int64,Scene/Primitives/Updates/Transforms
+794,Int64,Scene/Primitives/Updates/Instances
+795,Int64,Scene/PrimitiveArrayMax
+796,Int64,Scene/Lights
+797,Int64|ResetEveryFrame,STAT_SceneCulling_TestSphereBlocks
+798,Int64|ResetEveryFrame,STAT_SceneCulling_TestSphereCells
+799,Int64|ResetEveryFrame,STAT_SceneCulling_TestSphereBounds
+800,Int64|ResetEveryFrame,STAT_SceneCulling_RemovedInstanceCount
+801,Int64|ResetEveryFrame,STAT_SceneCulling_UpdatedInstanceCount
+802,Int64|ResetEveryFrame,STAT_SceneCulling_AddedInstanceCount
+803,Int64|ResetEveryFrame,STAT_SceneCulling_UploadedChunks
+804,Int64|ResetEveryFrame,STAT_SceneCulling_UploadedCells
+805,Int64|ResetEveryFrame,STAT_SceneCulling_UploadedItems
+806,Int64|ResetEveryFrame,STAT_SceneCulling_UploadedBlocks
+807,Int64|ResetEveryFrame,STAT_SceneCulling_BlockCount
+808,Int64|ResetEveryFrame,STAT_SceneCulling_CellCount
+809,Int64|ResetEveryFrame,STAT_SceneCulling_ItemChunkCount
+810,Int64|ResetEveryFrame,STAT_SceneCulling_ExplicitChunkCount
+811,Int64|ResetEveryFrame,STAT_SceneCulling_CompressedChunkCount
+812,Int64|ResetEveryFrame,STAT_SceneCulling_ItemBufferSize
+813,Double|ResetEveryFrame,STAT_SceneCulling_ChunkOccupancy
+814,Int64|ResetEveryFrame,STAT_SceneCulling_IdCacheSize
+815,Int64|ResetEveryFrame,STAT_SceneCulling_SceneInstanceCount
+816,Int64|ResetEveryFrame,STAT_SceneCulling_NumStaticInstances
+817,Int64|ResetEveryFrame,STAT_SceneCulling_NumDynamicInstances
+818,Int64|ResetEveryFrame,STAT_SceneCulling_NonEmptyCellCount
+819,Int64|ResetEveryFrame,STAT_SceneCulling_RangeCount
+820,Int64|ResetEveryFrame,STAT_SceneCulling_CompRangeCount
+821,Int64|ResetEveryFrame,STAT_SceneCulling_VisitedIdCount
+822,Int64|ResetEveryFrame,STAT_SceneCulling_CopiedIdCount
+823,Int64,STAT_SceneCullingLLM
+824,Int64,STAT_SceneCullingSummaryLLM
+825,Int64,Scene/Visibility/NumProcessedPrimitives
+826,Int64,Scene/Visibility/FrustumCull/NumCulledPrimitives
+827,Int64,Scene/Visibility/FrustumCull/NumPrimitivesPerTask
+828,Int64,Scene/Visibility/OcclusionCull/NumTestedQueries
+829,Int64,Scene/Visibility/OcclusionCull/NumCulledPrimitives
+830,Int64,Scene/Visibility/Relevance/NumPrimitivesPerPacket
+831,Int64,Scene/Visibility/Relevance/NumPrimitivesProcessed
+832,Int64|ResetEveryFrame,STAT_ActiveLightCount
+833,Int64|ResetEveryFrame,STAT_VSMNaniteBasePassTotalRasterBins
+834,Int64|ResetEveryFrame,STAT_VSMNaniteBasePassVisibleRasterBins
+835,Int64|ResetEveryFrame,STAT_VSMNaniteBasePassTotalShadingBins
+836,Int64|ResetEveryFrame,STAT_VSMNaniteBasePassVisibleShadingBins
+837,Int64|ResetEveryFrame,STAT_DistantLightCount
+838,Int64|ResetEveryFrame,STAT_DistantCachedCount
+839,Int64|ResetEveryFrame,STAT_VSMDirectionalProjectionFull
+840,Int64|ResetEveryFrame,STAT_VSMLocalProjectionFull
+841,Int64|ResetEveryFrame,STAT_VSMLocalProjectionOnePassCopy
+842,Int64,STAT_AnimSequenceTransformProvider_Sequences
+843,Int64,STAT_AnimSequenceTransformProvider_Mappings
+844,Int64,STAT_AnimSequenceTransformProvider_SequenceTransformMemory
+845,Int64,STAT_AnimSequenceTransformProvider_RetargetingDataMemory
+846,Int64,STAT_AnimSequenceTransformProvider_ProxyDataMemory
+847,Int64,STAT_AnimSequenceTransformProvider_MappingDataMemory
+848,Int64,STAT_AnimSequenceTransformProvider_SequenceDataMemory
+849,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_ActiveTracks
+850,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_EvaluateBlocks
+851,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_EvaluateBlendBlocks
+852,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_CurrentTransformUpdates
+853,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_PreviousTransformUpdates
+854,Int64|ResetEveryFrame,STAT_AnimSequenceTransformProvider_SequenceFrameUploads
+855,Int64,STAT_AnimSequenceTransformProvider_RegisteredProxies
+856,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_NumPrimitives
+857,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_NumAllocations
+858,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_NumUpdates
+859,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_HeaderBufferSize
+860,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneTransformBufferSize
+861,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneMapBufferSize
+862,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneHierarchyBufferSize
+863,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneObjectSpaceBufferSize
+864,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneTransformUploadSize
+865,Int64|ResetEveryFrame,STAT_SkinningSceneExtension_BoneTransformAllocatorSize
+866,Double|ResetEveryFrame,STAT_TranslucencyGPU
+867,Double|ResetEveryFrame,DynamicTranslucencyResolution_TargetMs
+868,Double|ResetEveryFrame,DynamicTranslucencyResolution_MeasuredMs
+869,Double|ResetEveryFrame,DynamicTranslucencyResolution_MinFraction
+870,Double|ResetEveryFrame,DynamicTranslucencyResolution_MaxFraction
+871,Double|ResetEveryFrame,DynamicTranslucencyResolution_Fraction
+872,Int64|ResetEveryFrame,STAT_VSMNaniteViewsPrimary
+873,Int64|ResetEveryFrame,STAT_VSMSinglePageCount
+874,Int64|ResetEveryFrame,STAT_VSMFullCount
+875,Double|ResetEveryFrame,DynamicResolutionVSMNanite_TargetMs
+876,Double|ResetEveryFrame,DynamicResolutionVSMNanite_MeasuredMs
+877,Double|ResetEveryFrame,DynamicResolutionVSMNanite_MinFraction
+878,Double|ResetEveryFrame,DynamicResolutionVSMNanite_MaxFraction
+879,Double|ResetEveryFrame,DynamicResolutionVSMNanite_Fraction
+880,Int64|ResetEveryFrame,STAT_RenderedPages
+881,Int64|ResetEveryFrame,STAT_VirtualTexture_PendingFeedback
+882,Int64|ResetEveryFrame,STAT_VirtualTexture_WriteFeedback
+883,Int64|ResetEveryFrame,STAT_VirtualTexture_ReadFeedback
+884,Int64|ResetEveryFrame,STAT_VirtualTexture_LostFeedback
+885,Int64|ResetEveryFrame,STAT_VirtualTexture_ReadFeedbackLostPage
+886,Int64,STAT_TotalPhysicalMemory
+887,Int64|ResetEveryFrame,STAT_NumPageVisible
+888,Int64|ResetEveryFrame,STAT_NumPageVisibleResident
+889,Int64|ResetEveryFrame,STAT_NumPageVisibleNotResident
+890,Int64|ResetEveryFrame,STAT_NumPagePrefetch
+891,Int64|ResetEveryFrame,STAT_NumPageUpdate
+892,Int64|ResetEveryFrame,STAT_NumMappedPageUpdate
+893,Int64|ResetEveryFrame,STAT_NumContinuousPageUpdate
+894,Int64|ResetEveryFrame,STAT_NumPagesProduced
+895,Int64|ResetEveryFrame,STAT_NumPagesPending
+896,Int64|ResetEveryFrame,STAT_NumPagesThrottled
+897,Int64|ResetEveryFrame,STAT_NumPagesSaturated
+898,Int64|ResetEveryFrame,STAT_NumPagesInvalid
+899,Int64|ResetEveryFrame,STAT_NumPagesFailAllocate
+900,Int64|ResetEveryFrame,STAT_NumStacksRequested
+901,Int64|ResetEveryFrame,STAT_NumStacksProduced
+902,Int64|ResetEveryFrame,STAT_NumFlushCache
+903,Int64,STAT_TotalPagetableMemory
+904,Int64|ResetEveryFrame,STAT_LandscapeComponentRenderPasses
+905,Int64|ResetEveryFrame,STAT_LandscapeDrawCalls
+906,Int64|ResetEveryFrame,STAT_LandscapeTriangles
+907,Int64|ResetEveryFrame,STAT_LandscapeLayersRegenerateDrawCalls
+908,Int64,STAT_GrassExclusionVolumes
+909,Int64,AsyncCompilation/QueuedConstructionScripts
+910,Int64,AsyncCompilation/QueuedAnimationSequences
+911,Int64,AsyncCompilation/QueuedAnimBank
+912,Int64,AsyncCompilation/QueuedAnimSequenceTransformProvider
+913,Int64,STAT_AssetCompilationLLM
+914,Int64,STAT_AssetCompilationSummaryLLM
+915,Int64,AsyncCompilation/MaxConcurrency
+916,Int64,AsyncCompilation/Concurrency
+917,Int64,AsyncCompilation/AvailableMemory
+918,Int64,AsyncCompilation/TotalEstimatedMemory
+919,Int64,AsyncCompilation/DelayedTask
+920,Int64,AsyncCompilation/DelayedTaskActive
+921,Int64,STAT_AudioMemorySize
+922,Int64|ResetEveryFrame,STAT_ActiveSounds
+923,Int64|ResetEveryFrame,STAT_AudioSources
+924,Int64|ResetEveryFrame,STAT_AudioVirtualLoops
+925,Int64|ResetEveryFrame,STAT_WaveInstances
+926,Int64|ResetEveryFrame,STAT_WavesDroppedDueToPriority
+927,Int64|ResetEveryFrame,STAT_AudioMaxChannels
+928,Int64|ResetEveryFrame,STAT_AudioMaxStoppingSources
+929,Int64|ResetEveryFrame,STAT_AudibleWavesDroppedDueToPriority
+930,Int64|ResetEveryFrame,STAT_AudioFinishedDelegatesCalled
+931,Double,STAT_AudioBufferTime
+932,Double,STAT_AudioBufferTimeChannels
+933,Int64,AudioStreamCache Loads
+934,Int64,AudioStreamCache Loads Request
+935,Int64,AudioStreamCache Loads Playback
+936,Int64,STAT_PersistentUberGraphFrameMemory
+937,Int64,STAT_BPCompInstancingFastPathMemory
+938,Int64,STAT_InstVertexColorMemory
+939,Int64,STAT_StaticMeshPreCulledIndexMemory
+940,Int64,STAT_VTP_NumGenerate
+941,Int64,STAT_VTP_NumTranscode
+942,Int64|ResetEveryFrame,STAT_VTP_NumTranscodeDropped
+943,Int64|ResetEveryFrame,STAT_VTP_NumTranscodeRetired
+944,Int64|ResetEveryFrame,STAT_VTP_NumIntraFrameFlush
+945,Int64|ResetEveryFrame,STAT_VTP_NumUploads
+946,Int64,STAT_NetChannelLLM
+947,Int64,STAT_NetObjReplicatorLLM
+948,Double|ResetEveryFrame,DynamicPrimaryResolution_TargetMs
+949,Double|ResetEveryFrame,DynamicPrimaryResolution_MeasuredMs
+950,Double|ResetEveryFrame,DynamicPrimaryResolution_MinFraction
+951,Double|ResetEveryFrame,DynamicPrimaryResolution_MaxFraction
+952,Double|ResetEveryFrame,DynamicPrimaryResolution_Fraction
+953,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumDispatches
+954,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumBuffers
+955,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumRayTracingDispatches
+956,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumRayTracingBuffers
+957,Int64|ResetEveryFrame,STAT_GPUSkinCache_TotalNumChunks
+958,Int64|ResetEveryFrame,STAT_GPUSkinCache_TotalNumVertices
+959,Int64,STAT_GPUSkinCache_TotalMemUsed
+960,Int64,STAT_GPUSkinCache_TangentsIntermediateMemUsed
+961,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumTrianglesForRecomputeTangents
+962,Int64|ResetEveryFrame,STAT_GPUSkinCache_NumSectionsProcessed
+963,Int64|ResetEveryFrame,STAT_FoliageRuns
+964,Int64|ResetEveryFrame,STAT_FoliageMeshBatches
+965,Int64|ResetEveryFrame,STAT_FoliageTriangles
+966,Int64|ResetEveryFrame,STAT_FoliageInstances
+967,Int64|ResetEveryFrame,STAT_OcclusionCulledFoliageInstances
+968,Int64|ResetEveryFrame,STAT_FoliageTraversals
+969,Int64,STAT_FoliageInstanceBuffers
+970,Int64,STAT_InstanceDataInstanceCount
+971,Int64,STAT_ProxyInstanceMemory
+972,Int64,STAT_InstanceHasDynamicCount
+973,Int64,STAT_InstanceHasSkinningCount
+974,Int64,STAT_InstanceHasLMSMBiasCount
+975,Int64,STAT_InstanceHasCustomDataCount
+976,Int64,STAT_InstanceHasRandomCount
+977,Int64,STAT_InstanceHasLocalBounds
+978,Int64,STAT_InstanceHasHierarchyOffset
+979,Int64,UObject Count
+980,Int64|ResetEveryFrame,STAT_VolumeStreamingChecks
+981,Double|ResetEveryFrame,STAT_NetServerGatherPrioritizeRepActorsTime
+982,Int64|ResetEveryFrame,STAT_NetSkippedDynamicProps
+983,Int64,STAT_StationaryLightBuildData
+984,Int64,STAT_ReflectionCaptureBuildData
+985,Int64,Shaders/FMaterialShaderMap/DDCRequests
+986,Int64,Shaders/FMaterialShaderMap/DDCHits
+987,Int64,Shaders/FMaterialShaderMap/DDCBytesReceived
+988,Int64,Shaders/FMaterialShaderMap/DDCBytesSent
+989,Int64,Shaders/OnDemandShaderRequests
+990,Int64,STAT_NetConnectionLLM
+991,Int64,STAT_NetDriverLLM
+992,Int64,STAT_Ping
+993,Int64,STAT_Channels
+994,Int64,STAT_MaxPacketOverhead
+995,Int64,STAT_InRate
+996,Int64,STAT_OutRate
+997,Int64,STAT_InRateClientMax
+998,Int64,STAT_InRateClientMin
+999,Int64,STAT_InRateClientAvg
+1000,Int64,STAT_InPacketsClientMax
+1001,Int64,STAT_InPacketsClientMin
+1002,Int64,STAT_InPacketsClientAvg
+1003,Int64,STAT_OutRateClientMax
+1004,Int64,STAT_OutRateClientMin
+1005,Int64,STAT_OutRateClientAvg
+1006,Int64,STAT_OutPacketsClientMax
+1007,Int64,STAT_OutPacketsClientMin
+1008,Int64,STAT_OutPacketsClientAvg
+1009,Int64,STAT_NetNumClients
+1010,Int64,STAT_InPackets
+1011,Int64,STAT_OutPackets
+1012,Int64,STAT_InBunches
+1013,Int64,STAT_OutBunches
+1014,Int64,STAT_OutLoss
+1015,Int64,STAT_InLoss
+1016,Int64,STAT_NumConsideredActors
+1017,Int64,STAT_PrioritizedActors
+1018,Int64,STAT_NumReplicatedActors
+1019,Int64,STAT_NumReplicatedActorBytes
+1020,Int64,STAT_NumRelevantDeletedActors
+1021,Int64,STAT_NumActorChannels
+1022,Int64,STAT_NumActors
+1023,Int64,STAT_NumNetActors
+1024,Int64,STAT_NumDormantActors
+1025,Int64,STAT_NumInitiallyDormantActors
+1026,Int64,STAT_NumNetGUIDsAckd
+1027,Int64,STAT_NumNetGUIDsPending
+1028,Int64,STAT_NumNetGUIDsUnAckd
+1029,Int64,STAT_ObjPathBytes
+1030,Int64,STAT_NetGUIDInRate
+1031,Int64,STAT_NetGUIDOutRate
+1032,Int64,STAT_NetSaturated
+1033,Int64,STAT_ImportedNetGuids
+1034,Int64,STAT_PendingOuterNetGuids
+1035,Int64,STAT_UnmappedReplicators
+1036,Int64,STAT_OutgoingReliableMessageQueueMaxSize
+1037,Int64,STAT_IncomingReliableMessageQueueMaxSize
+1038,Int64,STAT_VoiceBytesSent
+1039,Int64,STAT_VoiceBytesRecv
+1040,Int64,STAT_VoicePacketsSent
+1041,Int64,STAT_VoicePacketsRecv
+1042,Int64,STAT_PercentInVoice
+1043,Int64,STAT_PercentOutVoice
+1044,Int64,STAT_MaxPacket
+1045,Int64,STAT_MaxPacketMinusReserved
+1046,Int64,STAT_PacketReservedTotal
+1047,Int64,STAT_PacketReservedNetConnection
+1048,Int64,STAT_PacketReservedPacketHandler
+1049,Int64,STAT_PacketReservedHandshake
+1050,Int64,STAT_NetInBunchTimeOvershootPercent
+1051,Int64|ResetEveryFrame,STAT_NumSaturatedConnections
+1052,Int64|ResetEveryFrame,STAT_SharedSerializationRPCHit
+1053,Int64|ResetEveryFrame,STAT_SharedSerializationRPCMiss
+1054,Int64|ResetEveryFrame,STAT_NumSkippedObjectEmptyUpdates
+1055,Int64|ResetEveryFrame,STAT_SharedSerializationPropertyHit
+1056,Int64|ResetEveryFrame,STAT_SharedSerializationPropertyMiss
+1057,Int64,STAT_Ping_RoundTripInclFrame
+1058,Int64,STAT_Ping_RoundTripExclFrame
+1059,Int64,STAT_Ping_ICMP
+1060,Int64,STAT_PingTimeouts_ICMP
+1061,Double,STAT_PingTimeoutPercent_ICMP
+1062,Int64,STAT_Ping_UDPQoS
+1063,Int64,STAT_PingTimeouts_UDPQoS
+1064,Double,STAT_PingTimeoutPercent_UDPQoS
+1065,Int64,STAT_GuidCacheLLM
+1066,Int64|ResetEveryFrame,STAT_BeamParticles
+1067,Int64|ResetEveryFrame,STAT_BeamParticlesRenderCalls
+1068,Int64|ResetEveryFrame,STAT_BeamParticlesSpawned
+1069,Int64|ResetEveryFrame,STAT_BeamParticlesUpdateCalls
+1070,Int64|ResetEveryFrame,STAT_BeamParticlesUpdated
+1071,Int64|ResetEveryFrame,STAT_BeamParticlesKilled
+1072,Int64|ResetEveryFrame,STAT_BeamParticlesTrianglesRendered
+1073,Int64|ResetEveryFrame,STAT_EmittersStatGroupTester
+1074,Int64|ResetEveryFrame,STAT_EmittersRTStatGroupTester
+1075,Int64|ResetEveryFrame,STAT_ParticleDrawCalls
+1076,Int64|ResetEveryFrame,STAT_SpriteParticles
+1077,Int64|ResetEveryFrame,STAT_SpriteParticlesSpawned
+1078,Int64|ResetEveryFrame,STAT_SpriteParticlesUpdated
+1079,Int64|ResetEveryFrame,STAT_SpriteParticlesKilled
+1080,Int64|ResetEveryFrame,STAT_MeshParticles
+1081,Int64|ResetEveryFrame,STAT_MeshParticlePolys
+1082,Int64|ResetEveryFrame,STAT_GPUSpriteParticles
+1083,Int64|ResetEveryFrame,STAT_GPUSpritesSpawned
+1084,Int64|ResetEveryFrame,STAT_SortedGPUParticles
+1085,Int64|ResetEveryFrame,STAT_SortedGPUEmitters
+1086,Int64|ResetEveryFrame,STAT_FreeGPUTiles
+1087,Int64|ResetEveryFrame,STAT_GPUSingleIterationEmitters
+1088,Int64|ResetEveryFrame,STAT_GPUMultiIterationsEmitters
+1089,Int64,STAT_GTParticleData
+1090,Int64,STAT_DynamicSpriteGTMem
+1091,Int64,STAT_DynamicSubUVGTMem
+1092,Int64,STAT_DynamicMeshGTMem
+1093,Int64,STAT_DynamicBeamGTMem
+1094,Int64,STAT_DynamicRibbonGTMem
+1095,Int64,STAT_DynamicAnimTrailGTMem
+1096,Int64,STAT_DynamicUntrackedGTMem
+1097,Int64|ResetEveryFrame,STAT_RTParticleData
+1098,Int64|ResetEveryFrame,STAT_GTParticleData_MAX
+1099,Int64|ResetEveryFrame,STAT_RTParticleData_MAX
+1100,Int64|ResetEveryFrame,STAT_RTParticleData_Largest
+1101,Int64|ResetEveryFrame,STAT_RTParticleData_Largest_MAX
+1102,Int64|ResetEveryFrame,STAT_DynamicPSysCompMem
+1103,Int64|ResetEveryFrame,STAT_DynamicPSysCompMem_MAX
+1104,Int64|ResetEveryFrame,STAT_DynamicPSysCompCount
+1105,Int64|ResetEveryFrame,STAT_DynamicPSysCompCount_MAX
+1106,Int64|ResetEveryFrame,STAT_DynamicEmitterMem
+1107,Int64|ResetEveryFrame,STAT_DynamicEmitterMem_MAX
+1108,Int64|ResetEveryFrame,STAT_DynamicEmitterCount
+1109,Int64|ResetEveryFrame,STAT_DynamicEmitterCount_MAX
+1110,Int64|ResetEveryFrame,STAT_DynamicEmitterGTMem_Waste
+1111,Int64|ResetEveryFrame,STAT_DynamicEmitterGTMem_Waste_MAX
+1112,Int64|ResetEveryFrame,STAT_DynamicEmitterGTMem_Largest
+1113,Int64|ResetEveryFrame,STAT_DynamicEmitterGTMem_Largest_MAX
+1114,Int64|ResetEveryFrame,STAT_DynamicSpriteCount
+1115,Int64|ResetEveryFrame,STAT_DynamicSpriteCount_MAX
+1116,Int64|ResetEveryFrame,STAT_DynamicSpriteGTMem_MAX
+1117,Int64|ResetEveryFrame,STAT_DynamicSubUVCount
+1118,Int64|ResetEveryFrame,STAT_DynamicSubUVCount_MAX
+1119,Int64|ResetEveryFrame,STAT_DynamicSubUVGTMem_Max
+1120,Int64|ResetEveryFrame,STAT_DynamicMeshCount
+1121,Int64|ResetEveryFrame,STAT_DynamicMeshCount_MAX
+1122,Int64|ResetEveryFrame,STAT_DynamicMeshGTMem_MAX
+1123,Int64|ResetEveryFrame,STAT_DynamicBeamCount
+1124,Int64|ResetEveryFrame,STAT_DynamicBeamCount_MAX
+1125,Int64|ResetEveryFrame,STAT_DynamicBeamGTMem_MAX
+1126,Int64|ResetEveryFrame,STAT_DynamicRibbonCount
+1127,Int64|ResetEveryFrame,STAT_DynamicRibbonCount_MAX
+1128,Int64|ResetEveryFrame,STAT_DynamicRibbonGTMem_MAX
+1129,Int64|ResetEveryFrame,STAT_DynamicAnimTrailCount
+1130,Int64|ResetEveryFrame,STAT_DynamicAnimTrailCount_MAX
+1131,Int64|ResetEveryFrame,STAT_DynamicAnimTrailGTMem_MAX
+1132,Int64|ResetEveryFrame,STAT_DynamicUntrackedGTMem_MAX
+1133,Int64|ResetEveryFrame,STAT_TrailParticles
+1134,Int64|ResetEveryFrame,STAT_TrailParticlesRenderCalls
+1135,Int64|ResetEveryFrame,STAT_TrailParticlesSpawned
+1136,Int64|ResetEveryFrame,STAT_TrailParticlesTickCalls
+1137,Int64|ResetEveryFrame,STAT_TrailParticlesKilled
+1138,Int64|ResetEveryFrame,STAT_TrailParticlesTrianglesRendered
+1139,Int64|ResetEveryFrame,STAT_NumCloths
+1140,Int64|ResetEveryFrame,STAT_NumClothVerts
+1141,Int64|ResetEveryFrame,STAT_NumBroadphaseAdds
+1142,Int64|ResetEveryFrame,STAT_NumBroadphaseRemoves
+1143,Int64|ResetEveryFrame,STAT_NumActiveConstraints
+1144,Int64|ResetEveryFrame,STAT_NumActiveSimulatedBodies
+1145,Int64|ResetEveryFrame,STAT_NumActiveKinematicBodies
+1146,Int64|ResetEveryFrame,STAT_NumMobileBodies
+1147,Int64|ResetEveryFrame,STAT_NumStaticBodies
+1148,Int64|ResetEveryFrame,STAT_NumShapes
+1149,Int64|ResetEveryFrame,STAT_NumBroadphaseAddsAsync
+1150,Int64|ResetEveryFrame,STAT_NumBroadphaseRemovesAsync
+1151,Int64|ResetEveryFrame,STAT_NumActiveConstraintsAsync
+1152,Int64|ResetEveryFrame,STAT_NumActiveSimulatedBodiesAsync
+1153,Int64|ResetEveryFrame,STAT_NumActiveKinematicBodiesAsync
+1154,Int64|ResetEveryFrame,STAT_NumMobileBodiesAsync
+1155,Int64|ResetEveryFrame,STAT_NumStaticBodiesAsync
+1156,Int64|ResetEveryFrame,STAT_NumShapesAsync
+1157,Int64|ResetEveryFrame,STAT_ImmediateSimulate_ChaosCounter_NumBodies
+1158,Int64|ResetEveryFrame,STAT_ImmediateSimulate_ChaosCounter_NumDynamicBodies
+1159,Int64|ResetEveryFrame,STAT_ImmediateSimulate_ChaosCounter_NumKinematicBodies
+1160,Int64|ResetEveryFrame,STAT_ImmediateSimulate_ChaosCounter_NumContacts
+1161,Int64|ResetEveryFrame,STAT_ImmediateSimulate_ChaosCounter_NumJoints
+1162,Int64,STAT_PrecomputedLightVolumeBuildData
+1163,Int64,STAT_VolumetricLightmapBuildData
+1164,Int64,StreamableManager/JITLoadersActives
+1165,Int64,StreamableManager/StreamablesInFlight
+1166,Int64,StreamableManager/TotalStreamablesQueued
+1167,Int64,StreamableManager/TotalStreamablesCancelled
+1168,Double,StreamableManager/AvgStreamableProcessingTime
+1169,Int64,STAT_NaniteCoarseMeshTotalCount
+1170,Int64,STAT_NaniteCoarseMeshNonStreamingCount
+1171,Int64,STAT_NaniteCoarseMeshMemoryNonStreaming
+1172,Int64,STAT_NaniteCoarseMeshTotalMemory
+1173,Int64,STAT_NaniteCoarseMeshStreamingMeshesLoaded
+1174,Int64,STAT_NaniteCoarseMeshStreamingMeshesRequested
+1175,Int64,STAT_NaniteCoarseMeshStreamingMeshMemoryUsed
+1176,Int64,STAT_NaniteCoarseMeshStreamingMeshMemoryRequested
+1177,Int64,STAT_NaniteLLM
+1178,Int64,STAT_NaniteSummaryLLM
+1179,Int64,STAT_NaniteStreaming00_NaniteResources
+1180,Int64,STAT_NaniteStreaming02_HierarchyNodes
+1181,Int64,STAT_NaniteStreaming03_PeakHierarchyNodes
+1182,Int64,STAT_NaniteStreaming04_MaxHierarchyLevels
+1183,Int64,STAT_NaniteStreaming06_RootPages
+1184,Int64,STAT_NaniteStreaming07_PeakRootPages
+1185,Int64,STAT_NaniteStreaming08_AllocatedRootPages
+1186,Int64,STAT_NaniteStreaming09_RootPageLimit
+1187,Int64,STAT_NaniteStreaming0A_StreamingPoolPages
+1188,Int64,STAT_NaniteStreaming0B_TotalStreamingPages
+1189,Double,STAT_NaniteStreaming11_HiearchySizeMB
+1190,Double,STAT_NaniteStreaming12_TotalPoolSizeMB
+1191,Double,STAT_NaniteStreaming13_AllocatedRootPagesSizeMB
+1192,Double,STAT_NaniteStreaming14_StreamingPoolSizeMB
+1193,Double,STAT_NaniteStreaming15_TotalPoolSizeLimitMB
+1194,Int64|ResetEveryFrame,STAT_NaniteStreaming20_PageRequests
+1195,Int64|ResetEveryFrame,STAT_NaniteStreaming21_PageRequestsGPU
+1196,Int64|ResetEveryFrame,STAT_NaniteStreaming22_PageRequestsExplicit
+1197,Int64|ResetEveryFrame,STAT_NaniteStreaming23_PageRequestsPrefetch
+1198,Int64|ResetEveryFrame,STAT_NaniteStreaming24_PageRequestsParents
+1199,Int64|ResetEveryFrame,STAT_NaniteStreaming25_PageRequestsUnique
+1200,Int64|ResetEveryFrame,STAT_NaniteStreaming26_PageRequestsRegistered
+1201,Int64|ResetEveryFrame,STAT_NaniteStreaming27_PageRequestsNew
+1202,Double|ResetEveryFrame,STAT_NaniteStreaming30_VisibleStreamingDataSizeMB
+1203,Double|ResetEveryFrame,STAT_NaniteStreaming31_VisibleStreamingPoolPercentage
+1204,Double|ResetEveryFrame,STAT_NaniteStreaming32_VisibleStreamingQualityScale
+1205,Double|ResetEveryFrame,STAT_NaniteStreaming40_IORequestSizeMB
+1206,Int64|ResetEveryFrame,STAT_NaniteStreaming41_ReadbackSize
+1207,Int64|ResetEveryFrame,STAT_NaniteStreaming42_ReadbackBufferSize
+1208,Int64,STAT_RayTracingGeometryCount
+1209,Int64,STAT_RayTracingGeometryGroupCount
+1210,Int64,STAT_RayTracingGeometryResidentMemory
+1211,Int64,STAT_RayTracingGeometryAlwaysResidentMemory
+1212,Int64,STAT_RayTracingGeometryReferencedMemory
+1213,Int64,STAT_RayTracingGeometryRequestedMemory
+1214,Int64,STAT_RayTracingPendingBuilds
+1215,Int64,STAT_RayTracingPendingBuildPrimitives
+1216,Int64,STAT_RayTracingPendingStreamingRequests
+1217,Int64,STAT_RayTracingInflightStreamingRequests
+1218,Int64,Shaders/JobCache/SearchAttempts
+1219,Int64,Shaders/JobCache/Hits
+1220,Int64,Shaders/JobCache/DDCRequests
+1221,Int64,Shaders/JobCache/DDCHits
+1222,Int64,Shaders/JobCache/DDCBytesReceived
+1223,Int64,Shaders/JobCache/DDCBytesSent
+1224,Int64,Shaders/Pending
+1225,Int64,Shaders/Compiled
+1226,Int64,AsyncCompilation/SCWIndividualMemory_Max
+1227,Int64,AsyncCompilation/SCWIndividualMemory_Median
+1228,Int64,AsyncCompilation/SCWMemoryViolationSize
+1229,Int64,AsyncCompilation/SCWMemory
+1230,Int64,AsyncCompilation/SCWMemoryLimit
+1231,Int64,AsyncCompilation/SCWMemoryLoan
+1232,Int64,AsyncCompilation/SCWsActive
+1233,Int64,SkeletalMesh/DynamicDataPool/Size
+1234,Int64,SkeletalMesh/DynamicDataPool/Bucket0
+1235,Int64,SkeletalMesh/DynamicDataPool/Bucket1
+1236,Int64,SkeletalMesh/DynamicDataPool/Bucket2
+1237,Int64,SkeletalMesh/DynamicDataPool/Bucket3
+1238,Int64,SkeletalMesh/DynamicDataPool/Bucket4
+1239,Int64,AsyncCompilation/QueuedSkinnedAsset
+1240,Int64,AsyncCompilation/QueuedSoundWave
+1241,Int64,STAT_SVTCPUMemoryTotal
+1242,Int64,STAT_SVTPageTableMemory
+1243,Int64,STAT_SVTGPUMemoryTotal
+1244,Int64,STAT_SVTTileDataMemory
+1245,Int64,STAT_StaticMeshTotalMemory2
+1246,Int64,STAT_StaticMeshVertexMemory
+1247,Int64,STAT_ResourceVertexColorMemory
+1248,Int64,STAT_StaticMeshIndexMemory
+1249,Int64,STAT_StaticMeshTotalMemory
+1250,Double,STAT_StaticMesh_SerializeFull
+1251,Double,STAT_StaticMesh_SerializeParent
+1252,Double,STAT_StaticMesh_RenderData
+1253,Double,STAT_StaticMesh_RenderDataFixup
+1254,Int64,AsyncCompilation/QueuedStaticMesh
+1255,Int64,StreamableAssets/RegisteredAssets
+1256,Int64,StreamableAssets/SimpleStreamableAssetManager/RegisteredObjects
+1257,Int64,StreamableAssets/SimpleStreamableAssetManager/RegisteredAssets
+1258,Int64,StreamableAssets/SimpleStreamableAssetManager/AddedObjects
+1259,Int64,StreamableAssets/SimpleStreamableAssetManager/RemovedObjects
+1260,Int64,StreamableAssets/SimpleStreamableAssetManager/UpdateObjects
+1261,Int64,StreamableAssets/SimpleStreamableAssetManager/SelfHealedRegistrations
+1262,Int64,STAT_Streaming01_SafetyPool
+1263,Int64,STAT_Streaming02_TemporaryPool
+1264,Int64,STAT_Streaming03_StreamingPool
+1265,Int64,STAT_Streaming04_NonStreamingMips
+1266,Int64,STAT_Streaming05_RequiredPool
+1267,Int64,STAT_Streaming06_VisibleMips
+1268,Int64,STAT_Streaming07_HiddenMips
+1269,Int64,STAT_Streaming08_ForcedMips
+1270,Int64,STAT_Streaming09_UnkownRefMips
+1271,Int64,STAT_Streaming11_CachedMips
+1272,Int64,STAT_Streaming12_WantedMips
+1273,Int64,STAT_Streaming13_InflightRequests
+1274,Int64,STAT_Streaming14_MipIOBandwidth
+1275,Int64,STAT_Streaming15_EditorRequiredPool
+1276,Int64,STAT_Streaming16_DesiredDataLoadedPct
+1277,Int64,STAT_Streaming17_VirtualTexturePool
+1278,Int64,STAT_Streaming18_VirtualTextureRequired
+1279,Int64,STAT_Streaming19_VirtualTextureUsed
+1280,Int64|ResetEveryFrame,STAT_Streaming05_Pending2DUpdate
+1281,Int64|ResetEveryFrame,STAT_Streaming06_VirtualTextureCount
+1282,Int64,STAT_StreamingOverview01_StreamableRenderAssets
+1283,Int64,STAT_StreamingOverview02_Required
+1284,Int64,STAT_StreamingOverview03_Cached
+1285,Int64,STAT_StreamingOverview04_StreamingOverbudget
+1286,Int64,STAT_StreamingOverview05_UnstreamableRenderAssets
+1287,Int64,STAT_StreamingOverview06_NeverStream
+1288,Int64,STAT_StreamingOverview07_UIGroup
+1289,Int64,STAT_StreamingOverview08_AverageRequiredPool
+1290,Int64|ResetEveryFrame,STAT_StreamingOverview09_NumStreamedMeshes
+1291,Double|ResetEveryFrame,STAT_StreamingOverview10_AvgNumStreamedLODs
+1292,Double|ResetEveryFrame,STAT_StreamingOverview11_AvgNumResidentLODs
+1293,Double|ResetEveryFrame,STAT_StreamingOverview12_AvgNumEvictedLODs
+1294,Int64,STAT_StreamingOverview13_StreamedMeshMem
+1295,Int64,STAT_StreamingOverview14_ResidentMeshMem
+1296,Int64,STAT_StreamingOverview15_EvictedMeshMem
+1297,Int64,STAT_TEXTUREGROUP_World
+1298,Int64,STAT_TEXTUREGROUP_WorldNormalMap
+1299,Int64,STAT_TEXTUREGROUP_WorldSpecular
+1300,Int64,STAT_TEXTUREGROUP_Character
+1301,Int64,STAT_TEXTUREGROUP_CharacterNormalMap
+1302,Int64,STAT_TEXTUREGROUP_CharacterSpecular
+1303,Int64,STAT_TEXTUREGROUP_Weapon
+1304,Int64,STAT_TEXTUREGROUP_WeaponNormalMap
+1305,Int64,STAT_TEXTUREGROUP_WeaponSpecular
+1306,Int64,STAT_TEXTUREGROUP_Vehicle
+1307,Int64,STAT_TEXTUREGROUP_VehicleNormalMap
+1308,Int64,STAT_TEXTUREGROUP_VehicleSpecular
+1309,Int64,STAT_TEXTUREGROUP_Cinematic
+1310,Int64,STAT_TEXTUREGROUP_Effects
+1311,Int64,STAT_TEXTUREGROUP_EffectsNotFiltered
+1312,Int64,STAT_TEXTUREGROUP_Skybox
+1313,Int64,STAT_TEXTUREGROUP_UI
+1314,Int64,STAT_TEXTUREGROUP_Lightmap
+1315,Int64,STAT_TEXTUREGROUP_RenderTarget
+1316,Int64,STAT_TEXTUREGROUP_MobileFlattened
+1317,Int64,STAT_TEXTUREGROUP_ProcBuilding_Face
+1318,Int64,STAT_TEXTUREGROUP_ProcBuilding_LightMap
+1319,Int64,STAT_TEXTUREGROUP_Shadowmap
+1320,Int64,STAT_TEXTUREGROUP_ColorLookupTable
+1321,Int64,STAT_TEXTUREGROUP_Terrain_Heightmap
+1322,Int64,STAT_TEXTUREGROUP_Terrain_Weightmap
+1323,Int64,STAT_TEXTUREGROUP_Bokeh
+1324,Int64,STAT_TEXTUREGROUP_IESLightProfile
+1325,Int64,STAT_TEXTUREGROUP_Pixels2D
+1326,Int64,STAT_TEXTUREGROUP_HierarchicalLOD
+1327,Int64,STAT_TEXTUREGROUP_Impostor
+1328,Int64,STAT_TEXTUREGROUP_ImpostorNormalDepth
+1329,Int64,STAT_TEXTUREGROUP_8BitData
+1330,Int64,STAT_TEXTUREGROUP_16BitData
+1331,Int64,STAT_TEXTUREGROUP_Project01
+1332,Int64,STAT_TEXTUREGROUP_Project02
+1333,Int64,STAT_TEXTUREGROUP_Project03
+1334,Int64,STAT_TEXTUREGROUP_Project04
+1335,Int64,STAT_TEXTUREGROUP_Project05
+1336,Int64,STAT_TEXTUREGROUP_Project06
+1337,Int64,STAT_TEXTUREGROUP_Project07
+1338,Int64,STAT_TEXTUREGROUP_Project08
+1339,Int64,STAT_TEXTUREGROUP_Project09
+1340,Int64,STAT_TEXTUREGROUP_Project10
+1341,Int64,STAT_TEXTUREGROUP_Project11
+1342,Int64,STAT_TEXTUREGROUP_Project12
+1343,Int64,STAT_TEXTUREGROUP_Project13
+1344,Int64,STAT_TEXTUREGROUP_Project14
+1345,Int64,STAT_TEXTUREGROUP_Project15
+1346,Int64,STAT_TEXTUREGROUP_Project16
+1347,Int64,STAT_TEXTUREGROUP_Project17
+1348,Int64,STAT_TEXTUREGROUP_Project18
+1349,Int64,STAT_TEXTUREGROUP_Project19
+1350,Int64,STAT_TEXTUREGROUP_Project20
+1351,Int64,STAT_TEXTUREGROUP_Project21
+1352,Int64,STAT_TEXTUREGROUP_Project22
+1353,Int64,STAT_TEXTUREGROUP_Project23
+1354,Int64,STAT_TEXTUREGROUP_Project24
+1355,Int64,STAT_TEXTUREGROUP_Project25
+1356,Int64,STAT_TEXTUREGROUP_Project26
+1357,Int64,STAT_TEXTUREGROUP_Project27
+1358,Int64,STAT_TEXTUREGROUP_Project28
+1359,Int64,STAT_TEXTUREGROUP_Project29
+1360,Int64,STAT_TEXTUREGROUP_Project30
+1361,Int64,STAT_TEXTUREGROUP_Project31
+1362,Int64,STAT_TEXTUREGROUP_Project32
+1363,Int64,STAT_TEXTUREGROUP_Project33
+1364,Int64,STAT_TEXTUREGROUP_Project34
+1365,Int64,STAT_TEXTUREGROUP_Project35
+1366,Int64,STAT_TEXTUREGROUP_Project36
+1367,Int64,STAT_TEXTUREGROUP_Project37
+1368,Int64,STAT_TEXTUREGROUP_Project38
+1369,Int64,STAT_TEXTUREGROUP_Project39
+1370,Int64,STAT_TEXTUREGROUP_Project40
+1371,Int64,STAT_TEXTUREGROUP_Project41
+1372,Int64,STAT_TEXTUREGROUP_Project42
+1373,Int64,STAT_TEXTUREGROUP_Project43
+1374,Int64,STAT_TEXTUREGROUP_Project44
+1375,Int64,STAT_TEXTUREGROUP_Project45
+1376,Int64,STAT_TEXTUREGROUP_Project46
+1377,Int64,STAT_TEXTUREGROUP_Project47
+1378,Int64,STAT_TEXTUREGROUP_Project48
+1379,Int64,AsyncCompilation/QueuedTexture
+1380,Int64|ResetEveryFrame,STAT_TicksQueued
+1381,Int64|ResetEveryFrame,STAT_NumHeapEntries
+1382,Int64|ResetEveryFrame,STAT_Canvas_NumBatchesCreated
+1383,Int64,STAT_FileCacheSize
+1384,Int64,STAT_TotalHeaderSize
+1385,Int64,STAT_TotalDiskSize
+1386,Int64,STAT_NumTileHeaders
+1387,Int64,STAT_NumCodecs
+1388,Double|ResetEveryFrame,STAT_IORequestsComplete
+1389,Int64,STAT_TotalGPUUploadSize
+1390,Int64,STAT_TotalCPUUploadSize
+1391,Int64,LevelStreamingProfiling/NumStreamingLevelsToConsider
+1392,Double|ResetEveryFrame,STAT_InputLatencyTime
+1393,Int64|ResetEveryFrame,STAT_StaticMeshTriangles
+1394,Int64|ResetEveryFrame,STAT_SkelMeshTriangles
+1395,Int64|ResetEveryFrame,STAT_SkelMeshDrawCalls
+1396,Int64|ResetEveryFrame,STAT_CPUSkinVertices
+1397,Int64|ResetEveryFrame,STAT_GPUSkinVertices
+1398,Double|ResetEveryFrame,STAT_UnitFrame
+1399,Double|ResetEveryFrame,STAT_UnitGame
+1400,Double|ResetEveryFrame,STAT_UnitRender
+1401,Double|ResetEveryFrame,STAT_UnitRHIT
+1402,Double|ResetEveryFrame,STAT_UnitGPU
+1403,Double,Trace/Bandwidth/Sent
+1404,Double,Trace/Bandwidth/Emitted
+1405,Double,Trace/BlockPoolUsage
+1406,Int64,Trace/Memory/MemoryUsed
+1407,Int64,Trace/Memory/BlockPoolAllocated
+1408,Int64,Trace/Memory/FixedBufferAllocated
+1409,Int64,Trace/Memory/CacheAllocated
+1410,Int64,Trace/Memory/SharedAllocated
+1411,Int64,IoDispatcher/PendingIoRequests
+1412,Int64,IoDispatcher/TotalLoaded (PackageData)
+1413,Double,IoDispatcher/AverageDuration (PackageData)
+1414,Int64,IoDispatcher/TotalLoaded (BulkData)
+1415,Double,IoDispatcher/AverageDuration (BulkData)
+1416,Int64,IoDispatcher/TotalLoaded (Shaders)
+1417,Double,IoDispatcher/AverageDuration (Shaders)
+1418,Int64,IoDispatcher/TotalLoaded (Misc)
+1419,Double,IoDispatcher/AverageDuration (Misc)
+1420,Int64,ZenClient/JournalSectioned/Chunks
+1421,Int64,ZenClient/JournalSectioned/Entries
+1422,Int64,ZenClient/JournalSimple/Chunks
+1423,Int64,ZenClient/JournalSimple/Entries
+1424,Int64,ZenClient/JournalSimple/Invalidated
+1425,Int64,ZenClient/BlockingStorage/FrontBuffer
+1426,Int64,ZenClient/BlockingStorage/BackBuffer
+1427,Int64,ZenClient/LinearStrategyCache/CurrentSize
+1428,Int64,ZenClient/LinearStrategyCache/InvalidSize
+1429,Int64,ZenClient/SerializedBytes (compressed)
+1430,Int64,ZenClient/ThroughputBytes (decompressed)
+1431,Double,ZenClient/Cache/HitRatio
+1432,Int64,ZenClient/Cache/Hit
+1433,Int64,ZenClient/Cache/Miss
+1434,Int64,ZenClient/Cache/HitBytes
+1435,Int64,ZenClient/Cache/MissBytes
+1436,Double,ZenClient/FileCache/HitRatio
+1437,Int64,TransientAllocator/ResourceCreateCount
+1438,Int64,TransientAllocator/TextureCreateCount
+1439,Int64,TransientAllocator/TextureCount
+1440,Int64,TransientAllocator/TextureCacheSize
+1441,Double,TransientAllocator/TextureCacheHitPercentage
+1442,Int64,TransientAllocator/BufferCreateCount
+1443,Int64,TransientAllocator/BufferCount
+1444,Int64,TransientAllocator/BufferCacheSize
+1445,Double,TransientAllocator/BufferCacheHitPercentage
+1446,Int64,TransientAllocator/PageMapCount
+1447,Int64,TransientAllocator/PageAllocateCount
+1448,Int64,TransientAllocator/PageSpanCount
+1449,Int64,TransientAllocator/MemoryRangeCount
+1450,Int64,TransientAllocator/MemoryUsed
+1451,Int64,TransientAllocator/MemoryRequested
+1452,Int64,AsyncCompilation/QueuedGroomBinding
+1453,Int64,AsyncCompilation/SCWIndividualMemory_0
+1454,Int64,AsyncCompilation/SCWIndividualMemory_1
+1455,Int64,AsyncCompilation/SCWIndividualMemory_2
+1456,Int64,AsyncCompilation/SCWIndividualMemory_3
+1457,Int64,AsyncCompilation/SCWIndividualMemory_4
+1458,Int64,AsyncCompilation/SCWIndividualMemory_5
+1459,Int64,AsyncCompilation/SCWIndividualMemory_6
+1460,Int64,AsyncCompilation/SCWIndividualMemory_7
+1461,Int64,Mass Active Processors
+1462,Int64,Mass Execution Concurrency HWM
+1463,Int64,Mass Global Concurrency HWM
+1464,Int64,Mass Active Chunks
+1465,Int64,Mass Execution Chunk HWM
+1466,Int64,Mass Global Chunk HWM
+1467,Int64,MutableRuntime/OpenTask
+1468,Int64,MutableRuntime/ClosedTasks
+1469,Int64,MutableRuntime/IssuedTasks
+1470,Int64,MutableRuntime/IssuedHoldTasks
+1471,Int64,MutableRuntime/LiveInstances
+1472,Int64,MutableRuntime/Updates
+1473,Int64,MutableRuntime/MemInternal
+1474,Int64,MutableRuntime/MemTemp
+1475,Int64,MutableRuntime/MemPool
+1476,Int64,MutableRuntime/MemCache
+1477,Int64,MutableRuntime/MemRom
+1478,Int64,MutableRuntime/MemImage
+1479,Int64,MutableRuntime/MemMesh
+1480,Int64,MutableRuntime/MemStream
+1481,Int64,MutableRuntime/MemTotal
+1482,Int64,MutableRuntime/MemBudget
+1483,Int64,TedsAssetData/PathAdd/Remaining
+1484,Int64,TedsAssetData/AssetAdd/Remaining
+1485,Int64,TedsAssetData/AssetUpdate/Remaining
+1486,Double,TedsAssetData/PathAdd/AvgTime
+1487,Double,TedsAssetData/AssetAdd/AvgTime
+1488,Double,TedsAssetData/AssetUpdate/AvgTime
+1489,Int64,TedsAssetData/PathAdd/Batch/Size
+1490,Int64,TedsAssetData/AssetAdd/Batch/Size
+1491,Int64,TedsAssetData/AssetUpdate/Batch/Size
+1492,Int64,TedsAssetData/PathAdd/Batch/Size/Received
+1493,Int64,TedsAssetData/AssetAdd/Batch/Size/Received
+1494,Int64,TedsAssetData/AssetUpdate/Batch/Size/Received
+1495,Double,TedsAssetData/PathAdd/Batch/LastDuration
+1496,Double,TedsAssetData/AssetAdd/Batch/LastDuration
+1497,Double,TedsAssetData/AssetUpdate/Batch/LastDuration
+1498,Double,TedsAssetData/TotalProcessingTime
+1499,Int64,MetaSound/OperatorPool/NumOperatorsInPool
+1500,Double,MetaSound/OperatorPool/HitRatio
+1501,Double,MetaSound/OperatorPool/WindowedHitRatio
+1502,Int64,ProjectJ/CharacterABA/Managed
+1503,Int64,ProjectJ/CharacterABA/CombatProtected
+1504,Int64,ProjectJ/NPCPath/Queued
+1505,Int64,ProjectJ/NPCPath/InFlight
+1506,Int64,ProjectJ/NPCPath/Tombstones
+1507,Int64,ProjectJ/NPCPath/Accepted
+1508,Int64,ProjectJ/NPCPath/Rejected
+1509,Int64,ProjectJ/NPCPath/Delivered
+1510,Int64,ProjectJ/NPCPath/Cancelled
+1511,Int64,ProjectJ/NPCPath/Expired
+1512,Int64,ProjectJ/NPCPath/Discarded
+1513,Int64,ProjectJ/NPCPath/PeakInFlight
+1514,Int64,ProjectJ/NPCPath/PeakQueued
+1515,Int64,ProjectJ/NPCPath/IgnoredAfterStop
+1516,Double,ProjectJ/NPCPath/LastQueueMs
+1517,Double,ProjectJ/NPCPath/LastEngineObservedMs
+1518,Double,ProjectJ/NPCPath/LastDeliveryMs
+1519,Double,ProjectJ/NPCPath/PolicyMs
+1520,Int64,ProjectJ/Notify/GroundContact/Begins
+1521,Int64,ProjectJ/Notify/GroundContact/Ends
+1522,Int64,ProjectJ/Notify/GroundContact/WeakMeshVisits
+1523,Int64,ProjectJ/Notify/GroundContact/InstanceVisits
+1524,Int64,ProjectJ/Notify/WeaponMotion/Begins
+1525,Int64,ProjectJ/Notify/WeaponMotion/Ticks
+1526,Int64,ProjectJ/Notify/WeaponMotion/Ends
+1527,Int64,ProjectJ/Notify/WeaponMotion/WeakMeshVisits
+1528,Int64,ProjectJ/Notify/WeaponMotion/InstanceVisits
+1529,Int64,ProjectJ/AnimationBudgetProbe/Mode
+1530,Int64,ProjectJ/AnimationBudgetProbe/Actors
+1531,Int64,ProjectJ/AnimationBudgetProbe/BoneFinalizations
+1532,Int64,ProjectJ/AnimationBudgetProbe/MeasuredFrames
+1533,Int64,ProjectJ/EquipmentSoak/Actors
+1534,Int64,ProjectJ/EquipmentSoak/Equipped
+1535,Int64,ProjectJ/EquipmentSoak/Attacking
+1536,Int64,ProjectJ/EquipmentSoak/CompletedActorCycles
+1537,Int64,ProjectJ/EquipmentSoak/Failures
+1538,Int64,ProjectJ/EquipmentSoak/Phase
+1539,Double,ProjectJ/EquipmentSoak/WorldTickIntervalMs
+1540,Double,ProjectJ/EquipmentSoak/DriverMs
+1541,Double,ProjectJ/EquipmentSoak/PhaseElapsedMs
+1542,Double,ProjectJ/EquipmentSoak/ProcessPhysicalMiB
+1543,Int64,ProjectJ/NavLoad/Phase
+1544,Int64,ProjectJ/NavLoad/BuildRemaining
+1545,Int64,ProjectJ/NavLoad/BuildRunning
+1546,Int64,ProjectJ/NavLoad/Arrived
+1547,Double,TedsCore/Tick/CoopTaskTimeMs
+1548,Int64,StallDetector/FEngineLoop::Tick TriggerCount
+1549,Double,StallDetector/FEngineLoop::Tick OverageSeconds
+1550,Int64,QuartzSubsystem::NumClocks
+1551,Int64,QuartzSubsystem::NumSubscribers
+1552,Double,STAT_GameTickWantedWaitTime (1/frame)
+1553,Double,STAT_GameTickAdditionalWaitTime (1/frame)
+1554,Double,STAT_CPUTimePct (1/frame)
+1555,Double,STAT_CPUTimePctRelative (1/frame)
+1556,Double,STAT_SecondsPerCycle (1/frame)
+1557,Double,STAT_DeviceTemperature (1/frame)
+1558,Double,STAT_RDG_TextureReferenceAverage (1/frame)
+1559,Double,STAT_RDG_BufferReferenceAverage (1/frame)
+1560,Double,STAT_PhysicsThreadTotalTime (1/frame)
+1561,Double,STAT_PhysicsThreadTime (1/frame)
+1562,Double,STAT_PhysicsThreadTimeEff (1/frame)
+1563,Double,STAT_PhysicsThreadFps (1/frame)
+1564,Double,STAT_PhysicsThreadFpsEff (1/frame)
+1565,Double,STAT_AI_EQS_AvgInstanceResponseTime (1/frame)
+1566,Double,MovieSceneRepl_SmoothedServerTime (1/frame)
+1567,Double,STAT_MediaUtils_FacadeTime (1/frame)
+1568,Double,STAT_MediaUtils_MediaSoundComponentSync (1/frame)
+1569,Double,STAT_MediaUtils_MediaSoundComponentSampleTime (1/frame)
+1570,Double,STAT_MediaUtils_TextureSampleTime (1/frame)
+1571,Double,DynamicNaniteScalingPrimary_TargetMs (1/frame)
+1572,Double,DynamicNaniteScalingPrimary_MeasuredMs (1/frame)
+1573,Double,DynamicNaniteScalingPrimary_MinFraction (1/frame)
+1574,Double,DynamicNaniteScalingPrimary_MaxFraction (1/frame)
+1575,Double,DynamicNaniteScalingPrimary_Fraction (1/frame)
+1576,Double,DynamicNaniteScalingShadow_TargetMs (1/frame)
+1577,Double,DynamicNaniteScalingShadow_MeasuredMs (1/frame)
+1578,Double,DynamicNaniteScalingShadow_MinFraction (1/frame)
+1579,Double,DynamicNaniteScalingShadow_MaxFraction (1/frame)
+1580,Double,DynamicNaniteScalingShadow_Fraction (1/frame)
+1581,Double,STAT_SceneCulling_ChunkOccupancy (1/frame)
+1582,Double,STAT_TranslucencyGPU (1/frame)
+1583,Double,DynamicTranslucencyResolution_TargetMs (1/frame)
+1584,Double,DynamicTranslucencyResolution_MeasuredMs (1/frame)
+1585,Double,DynamicTranslucencyResolution_MinFraction (1/frame)
+1586,Double,DynamicTranslucencyResolution_MaxFraction (1/frame)
+1587,Double,DynamicTranslucencyResolution_Fraction (1/frame)
+1588,Double,DynamicResolutionVSMNanite_TargetMs (1/frame)
+1589,Double,DynamicResolutionVSMNanite_MeasuredMs (1/frame)
+1590,Double,DynamicResolutionVSMNanite_MinFraction (1/frame)
+1591,Double,DynamicResolutionVSMNanite_MaxFraction (1/frame)
+1592,Double,DynamicResolutionVSMNanite_Fraction (1/frame)
+1593,Double,DynamicPrimaryResolution_TargetMs (1/frame)
+1594,Double,DynamicPrimaryResolution_MeasuredMs (1/frame)
+1595,Double,DynamicPrimaryResolution_MinFraction (1/frame)
+1596,Double,DynamicPrimaryResolution_MaxFraction (1/frame)
+1597,Double,DynamicPrimaryResolution_Fraction (1/frame)
+1598,Double,STAT_NetServerGatherPrioritizeRepActorsTime (1/frame)
+1599,Double,STAT_NaniteStreaming30_VisibleStreamingDataSizeMB (1/frame)
+1600,Double,STAT_NaniteStreaming31_VisibleStreamingPoolPercentage (1/frame)
+1601,Double,STAT_NaniteStreaming32_VisibleStreamingQualityScale (1/frame)
+1602,Double,STAT_NaniteStreaming40_IORequestSizeMB (1/frame)
+1603,Double,STAT_StreamingOverview10_AvgNumStreamedLODs (1/frame)
+1604,Double,STAT_StreamingOverview11_AvgNumResidentLODs (1/frame)
+1605,Double,STAT_StreamingOverview12_AvgNumEvictedLODs (1/frame)
+1606,Double,STAT_IORequestsComplete (1/frame)
+1607,Double,STAT_InputLatencyTime (1/frame)
+1608,Double,STAT_UnitFrame (1/frame)
+1609,Double,STAT_UnitGame (1/frame)
+1610,Double,STAT_UnitRender (1/frame)
+1611,Double,STAT_UnitRHIT (1/frame)
+1612,Double,STAT_UnitGPU (1/frame)
+1613,Int64,STAT_Binned_CurrentAllocs (1/frame)
+1614,Int64,STAT_Binned_TotalAllocs (1/frame)
+1615,Int64,STAT_MallocCalls (1/frame)
+1616,Int64,STAT_FreeCalls (1/frame)
+1617,Int64,STAT_ReallocCalls (1/frame)
+1618,Int64,STAT_TotalAllocatorCalls (1/frame)
+1619,Int64,STAT_ThreadPoolDummyCounter (1/frame)
+1620,Int64,STAT_StatFrameMessages (1/frame)
+1621,Int64,STAT_StatFramePackets (1/frame)
+1622,Int64,STAT_StatFramePacketsCondensed (1/frame)
+1623,Int64,STAT_StatFramePacketsRecv (1/frame)
+1624,Int64,STAT_ThermalState (1/frame)
+1625,Int64,STAT_UObjectsStatGroupTester (1/frame)
+1626,Int64,STAT_FindObject (1/frame)
+1627,Int64,STAT_FindObjectFast (1/frame)
+1628,Int64,STAT_Hash_NumObjects (1/frame)
+1629,Int64,STAT_FSlateWindowElementListMemManagerCount (1/frame)
+1630,Int64,STAT_SlateElements (1/frame)
+1631,Int64,STAT_SlateElements_Box (1/frame)
+1632,Int64,STAT_SlateElements_Border (1/frame)
+1633,Int64,STAT_SlateElements_Text (1/frame)
+1634,Int64,STAT_SlateElements_ShapedText (1/frame)
+1635,Int64,STAT_SlateElements_Line (1/frame)
+1636,Int64,STAT_SlateElements_Other (1/frame)
+1637,Int64,STAT_SlateInvalidation_RecachedElements (1/frame)
+1638,Int64,STAT_SlateTotalWidgetsPerFrame (1/frame)
+1639,Int64,STAT_SlateNumPaintedWidgets (1/frame)
+1640,Int64,STAT_SlateNumTickedWidgets (1/frame)
+1641,Int64,STAT_NonImmedCmdListMemory (1/frame)
+1642,Int64,STAT_NonImmedCmdListCount (1/frame)
+1643,Int64,STAT_ImmedCmdListMemory (1/frame)
+1644,Int64,STAT_ImmedCmdListCount (1/frame)
+1645,Int64,STAT_RHIDraws (1/frame)
+1646,Int64,STAT_RHIDispatches (1/frame)
+1647,Int64,STAT_RHIPrimitives (1/frame)
+1648,Int64,STAT_RHIVertices (1/frame)
+1649,Int64,STAT_MeshDrawCalls (1/frame)
+1650,Int64,STAT_Decals (1/frame)
+1651,Int64,STAT_RayTracingTotalInstances (1/frame)
+1652,Int64,STAT_RayTracingActiveInstances (1/frame)
+1653,Int64,STAT_ProcessedPrimitives (1/frame)
+1654,Int64,STAT_CulledPrimitives (1/frame)
+1655,Int64,STAT_VisibleRayTracingPrimitives (1/frame)
+1656,Int64,STAT_StaticallyOccludedPrimitives (1/frame)
+1657,Int64,STAT_OccludedPrimitives (1/frame)
+1658,Int64,STAT_OcclusionQueries (1/frame)
+1659,Int64,STAT_VisibleStaticMeshElements (1/frame)
+1660,Int64,STAT_VisibleDynamicPrimitives (1/frame)
+1661,Int64,STAT_IndirectLightingCacheUpdates (1/frame)
+1662,Int64,STAT_PrecomputedLightingBufferUpdates (1/frame)
+1663,Int64,STAT_CSMSubjects (1/frame)
+1664,Int64,STAT_CSMStaticMeshReceivers (1/frame)
+1665,Int64,STAT_CSMStaticPrimitiveReceivers (1/frame)
+1666,Int64,STAT_WholeSceneShadows (1/frame)
+1667,Int64,STAT_CachedWholeSceneShadows (1/frame)
+1668,Int64,STAT_PerObjectShadows (1/frame)
+1669,Int64,STAT_PreShadows (1/frame)
+1670,Int64,STAT_CachedPreShadows (1/frame)
+1671,Int64,STAT_ShadowDynamicPathDrawCalls (1/frame)
+1672,Int64,STAT_NumShadowedLights (1/frame)
+1673,Int64,STAT_NumLightFunctionOnlyLights (1/frame)
+1674,Int64,STAT_NumBatchedLights (1/frame)
+1675,Int64,STAT_NumLightsInjectedIntoTranslucency (1/frame)
+1676,Int64,STAT_NumLightsInjectedIntoTranslucencyBatched (1/frame)
+1677,Int64,STAT_NumLightsUsingStandardDeferred (1/frame)
+1678,Int64,STAT_LightShaftsLights (1/frame)
+1679,Int64,STAT_GameToRendererMallocTotal (1/frame)
+1680,Int64,STAT_NumReflectiveShadowMapLights (1/frame)
+1681,Int64,STAT_RenderTargetPoolCount (1/frame)
+1682,Int64,STAT_RDG_PassCount (1/frame)
+1683,Int64,STAT_RDG_PassWithParameterCount (1/frame)
+1684,Int64,STAT_RDG_PassCullCount (1/frame)
+1685,Int64,STAT_RDG_RenderPassMergeCount (1/frame)
+1686,Int64,STAT_RDG_PassDependencyCount (1/frame)
+1687,Int64,STAT_RDG_TextureCount (1/frame)
+1688,Int64,STAT_RDG_TextureReferenceCount (1/frame)
+1689,Int64,STAT_RDG_BufferCount (1/frame)
+1690,Int64,STAT_RDG_BufferReferenceCount (1/frame)
+1691,Int64,STAT_RDG_ViewCount (1/frame)
+1692,Int64,STAT_RDG_TransientTextureCount (1/frame)
+1693,Int64,STAT_RDG_TransientBufferCount (1/frame)
+1694,Int64,STAT_RDG_TransitionCount (1/frame)
+1695,Int64,STAT_RDG_AliasingCount (1/frame)
+1696,Int64,STAT_RDG_TransitionBatchCount (1/frame)
+1697,Int64,STAT_PreCompileShadersNum (1/frame)
+1698,Int64,STAT_PreCompileBatchNum (1/frame)
+1699,Int64,STAT_GraphicPSOsCompiled (1/frame)
+1700,Int64,STAT_GraphicPSOsSkipped (1/frame)
+1701,Int64,STAT_ComputePSOsCompiled (1/frame)
+1702,Int64,STAT_ComputePSOsSkipped (1/frame)
+1703,Int64,STAT_NumActiveConstraintsDedicated (1/frame)
+1704,Int64,STAT_NumActiveParticlesDedicated (1/frame)
+1705,Int64,STAT_NumActiveCollisionPointsDedicated (1/frame)
+1706,Int64,STAT_NumActiveShapesDedicated (1/frame)
+1707,Int64,STAT_GCTotalTransforms (1/frame)
+1708,Int64,STAT_GCChangedTransforms (1/frame)
+1709,Int64,STAT_GCReplicatedClusters (1/frame)
+1710,Int64,STAT_GCReplicatedFractures (1/frame)
+1711,Int64,STAT_ChaosCounter_NumDisabledBodies (1/frame)
+1712,Int64,STAT_ChaosCounter_NumBodies (1/frame)
+1713,Int64,STAT_ChaosCounter_NumDynamicBodies (1/frame)
+1714,Int64,STAT_ChaosCounter_NumKinematicBodies (1/frame)
+1715,Int64,STAT_ChaosCounter_NumStaticBodies (1/frame)
+1716,Int64,STAT_ChaosCounter_NumGeometryCollectionBodies (1/frame)
+1717,Int64,STAT_ChaosCounter_NumMovingBodies (1/frame)
+1718,Int64,STAT_ChaosCounter_NumStaticShapes (1/frame)
+1719,Int64,STAT_ChaosCounter_NumKinematicShapes (1/frame)
+1720,Int64,STAT_ChaosCounter_NumDynamicShapes (1/frame)
+1721,Int64,STAT_ChaosCounter_NumIslands (1/frame)
+1722,Int64,STAT_ChaosCounter_NumIslandGroups (1/frame)
+1723,Int64,STAT_ChaosCounter_NumContacts (1/frame)
+1724,Int64,STAT_ChaosCounter_NumValidConstraints (1/frame)
+1725,Int64,STAT_ChaosCounter_NumActiveConstraints (1/frame)
+1726,Int64,STAT_ChaosCounter_NumRestoredConstraints (1/frame)
+1727,Int64,STAT_ChaosCounter_NumManifoldPoints (1/frame)
+1728,Int64,STAT_ChaosCounter_NumActiveManifoldPoints (1/frame)
+1729,Int64,STAT_ChaosCounter_NumRestoredManifoldPoints (1/frame)
+1730,Int64,STAT_ChaosCounter_NumUpdatedManifoldPoints (1/frame)
+1731,Int64,STAT_ChaosCounter_NumJoints (1/frame)
+1732,Int64,STAT_ChaosCounter_NumCharacterGroundConstraints (1/frame)
+1733,Int64,STAT_ChaosCounter_NumBroadPhasePairs (1/frame)
+1734,Int64,STAT_ChaosCounter_NumMidPhases (1/frame)
+1735,Int64,STAT_ChaosCounter_NumPositionIterations (1/frame)
+1736,Int64,STAT_ChaosCounter_NumVelocityIterations (1/frame)
+1737,Int64,STAT_ChaosCounter_NumProjectionIterations (1/frame)
+1738,Int64,STAT_ChaosCounter_NumCollisionColors (1/frame)
+1739,Int64,STAT_ChaosCounter_NumLinearJointColors (1/frame)
+1740,Int64,STAT_ChaosCounter_NumNonLinearJointColors (1/frame)
+1741,Int64,STAT_ChaosCounter_NumSuspensionConstraintColors (1/frame)
+1742,Int64,STAT_ChaosCounter_NumCharacterGroundConstraintColors (1/frame)
+1743,Int64,STAT_AI_EQS_NumInstances (1/frame)
+1744,Int64,STAT_AI_EQS_NumItems (1/frame)
+1745,Int64,STAT_AI_Crowd_NumAgents (1/frame)
+1746,Int64,STAT_Navigation_UpdateNavOctree (1/frame)
+1747,Int64,STAT_Navigation_OutOfNodesPath (1/frame)
+1748,Int64,STAT_Navigation_PartialPath (1/frame)
+1749,Int64,STAT_Navigation_ObservedPathsCount (1/frame)
+1750,Int64,STAT_SlateNumLayers (1/frame)
+1751,Int64,STAT_SlateNumBatches (1/frame)
+1752,Int64,STAT_SlateVertexCount (1/frame)
+1753,Int64,STAT_SlateScissorClips (1/frame)
+1754,Int64,STAT_SlateStencilClips (1/frame)
+1755,Int64,STAT_AnimDynamicsSubSteps (1/frame)
+1756,Int64,MovieSceneRepl_NumServerSamples (1/frame)
+1757,Int64,STAT_MediaUtils_FacadeNumVideoSamples (1/frame)
+1758,Int64,STAT_MediaUtils_FacadeNumAudioSamples (1/frame)
+1759,Int64,STAT_MediaUtils_FacadeNumPurgedVideoSamples (1/frame)
+1760,Int64,STAT_MediaUtils_FacadeNumPurgedSubtitleSamples (1/frame)
+1761,Int64,STAT_MediaUtils_FacadeNumPurgedCaptionSamples (1/frame)
+1762,Int64,STAT_Media_SoundCompQueued (1/frame)
+1763,Int64,STAT_NaniteCustomDepthInstances (1/frame)
+1764,Int64,STAT_NaniteBasePassTotalRasterBins (1/frame)
+1765,Int64,STAT_NaniteBasePassVisibleRasterBins (1/frame)
+1766,Int64,STAT_NaniteBasePassTotalShadingBins (1/frame)
+1767,Int64,STAT_NaniteBasePassVisibleShadingBins (1/frame)
+1768,Int64,STAT_VSMLocalProjectionOnePassFast (1/frame)
+1769,Int64,STAT_Culling_TotalNumPrimitives (1/frame)
+1770,Int64,STAT_Culling_TotalNumVertices (1/frame)
+1771,Int64,STAT_Culling_TotalNumInstances (1/frame)
+1772,Int64,STAT_Culling_InstanceCullingIndirectNumPrimitives (1/frame)
+1773,Int64,STAT_Culling_InstanceCullingIndirectNumVertices (1/frame)
+1774,Int64,STAT_Culling_InstanceCullingIndirectNumInstances (1/frame)
+1775,Int64,STAT_Culling_CustomIndirectNumPrimitives (1/frame)
+1776,Int64,STAT_Culling_CustomIndirectNumVertices (1/frame)
+1777,Int64,STAT_Culling_CustomIndirectNumInstances (1/frame)
+1778,Int64,STAT_NaniteCullingContexts (1/frame)
+1779,Int64,STAT_NaniteRayTracingStreamOutRequests (1/frame)
+1780,Int64,STAT_NaniteRayTracingFailedStreamOutRequests (1/frame)
+1781,Int64,STAT_NaniteRayTracingScheduledBuilds (1/frame)
+1782,Int64,STAT_NaniteRayTracingScheduledBuildsNumPrimitives (1/frame)
+1783,Int64,STAT_NaniteRayTracingCLASBuilds (1/frame)
+1784,Int64,STAT_NaniteRayTracingBLASBuilds (1/frame)
+1785,Int64,STAT_RayTracingDynamicBuildPrimitives (1/frame)
+1786,Int64,STAT_RayTracingDynamicUpdatePrimitives (1/frame)
+1787,Int64,STAT_RayTracingDynamicSkippedPrimitives (1/frame)
+1788,Int64,STAT_SceneCulling_TestSphereBlocks (1/frame)
+1789,Int64,STAT_SceneCulling_TestSphereCells (1/frame)
+1790,Int64,STAT_SceneCulling_TestSphereBounds (1/frame)
+1791,Int64,STAT_SceneCulling_RemovedInstanceCount (1/frame)
+1792,Int64,STAT_SceneCulling_UpdatedInstanceCount (1/frame)
+1793,Int64,STAT_SceneCulling_AddedInstanceCount (1/frame)
+1794,Int64,STAT_SceneCulling_UploadedChunks (1/frame)
+1795,Int64,STAT_SceneCulling_UploadedCells (1/frame)
+1796,Int64,STAT_SceneCulling_UploadedItems (1/frame)
+1797,Int64,STAT_SceneCulling_UploadedBlocks (1/frame)
+1798,Int64,STAT_SceneCulling_BlockCount (1/frame)
+1799,Int64,STAT_SceneCulling_CellCount (1/frame)
+1800,Int64,STAT_SceneCulling_ItemChunkCount (1/frame)
+1801,Int64,STAT_SceneCulling_ExplicitChunkCount (1/frame)
+1802,Int64,STAT_SceneCulling_CompressedChunkCount (1/frame)
+1803,Int64,STAT_SceneCulling_ItemBufferSize (1/frame)
+1804,Int64,STAT_SceneCulling_IdCacheSize (1/frame)
+1805,Int64,STAT_SceneCulling_SceneInstanceCount (1/frame)
+1806,Int64,STAT_SceneCulling_NumStaticInstances (1/frame)
+1807,Int64,STAT_SceneCulling_NumDynamicInstances (1/frame)
+1808,Int64,STAT_SceneCulling_NonEmptyCellCount (1/frame)
+1809,Int64,STAT_SceneCulling_RangeCount (1/frame)
+1810,Int64,STAT_SceneCulling_CompRangeCount (1/frame)
+1811,Int64,STAT_SceneCulling_VisitedIdCount (1/frame)
+1812,Int64,STAT_SceneCulling_CopiedIdCount (1/frame)
+1813,Int64,STAT_ActiveLightCount (1/frame)
+1814,Int64,STAT_VSMNaniteBasePassTotalRasterBins (1/frame)
+1815,Int64,STAT_VSMNaniteBasePassVisibleRasterBins (1/frame)
+1816,Int64,STAT_VSMNaniteBasePassTotalShadingBins (1/frame)
+1817,Int64,STAT_VSMNaniteBasePassVisibleShadingBins (1/frame)
+1818,Int64,STAT_DistantLightCount (1/frame)
+1819,Int64,STAT_DistantCachedCount (1/frame)
+1820,Int64,STAT_VSMDirectionalProjectionFull (1/frame)
+1821,Int64,STAT_VSMLocalProjectionFull (1/frame)
+1822,Int64,STAT_VSMLocalProjectionOnePassCopy (1/frame)
+1823,Int64,STAT_AnimSequenceTransformProvider_ActiveTracks (1/frame)
+1824,Int64,STAT_AnimSequenceTransformProvider_EvaluateBlocks (1/frame)
+1825,Int64,STAT_AnimSequenceTransformProvider_EvaluateBlendBlocks (1/frame)
+1826,Int64,STAT_AnimSequenceTransformProvider_CurrentTransformUpdates (1/frame)
+1827,Int64,STAT_AnimSequenceTransformProvider_PreviousTransformUpdates (1/frame)
+1828,Int64,STAT_AnimSequenceTransformProvider_SequenceFrameUploads (1/frame)
+1829,Int64,STAT_SkinningSceneExtension_NumPrimitives (1/frame)
+1830,Int64,STAT_SkinningSceneExtension_NumAllocations (1/frame)
+1831,Int64,STAT_SkinningSceneExtension_NumUpdates (1/frame)
+1832,Int64,STAT_SkinningSceneExtension_HeaderBufferSize (1/frame)
+1833,Int64,STAT_SkinningSceneExtension_BoneTransformBufferSize (1/frame)
+1834,Int64,STAT_SkinningSceneExtension_BoneMapBufferSize (1/frame)
+1835,Int64,STAT_SkinningSceneExtension_BoneHierarchyBufferSize (1/frame)
+1836,Int64,STAT_SkinningSceneExtension_BoneObjectSpaceBufferSize (1/frame)
+1837,Int64,STAT_SkinningSceneExtension_BoneTransformUploadSize (1/frame)
+1838,Int64,STAT_SkinningSceneExtension_BoneTransformAllocatorSize (1/frame)
+1839,Int64,STAT_VSMNaniteViewsPrimary (1/frame)
+1840,Int64,STAT_VSMSinglePageCount (1/frame)
+1841,Int64,STAT_VSMFullCount (1/frame)
+1842,Int64,STAT_RenderedPages (1/frame)
+1843,Int64,STAT_VirtualTexture_PendingFeedback (1/frame)
+1844,Int64,STAT_VirtualTexture_WriteFeedback (1/frame)
+1845,Int64,STAT_VirtualTexture_ReadFeedback (1/frame)
+1846,Int64,STAT_VirtualTexture_LostFeedback (1/frame)
+1847,Int64,STAT_VirtualTexture_ReadFeedbackLostPage (1/frame)
+1848,Int64,STAT_NumPageVisible (1/frame)
+1849,Int64,STAT_NumPageVisibleResident (1/frame)
+1850,Int64,STAT_NumPageVisibleNotResident (1/frame)
+1851,Int64,STAT_NumPagePrefetch (1/frame)
+1852,Int64,STAT_NumPageUpdate (1/frame)
+1853,Int64,STAT_NumMappedPageUpdate (1/frame)
+1854,Int64,STAT_NumContinuousPageUpdate (1/frame)
+1855,Int64,STAT_NumPagesProduced (1/frame)
+1856,Int64,STAT_NumPagesPending (1/frame)
+1857,Int64,STAT_NumPagesThrottled (1/frame)
+1858,Int64,STAT_NumPagesSaturated (1/frame)
+1859,Int64,STAT_NumPagesInvalid (1/frame)
+1860,Int64,STAT_NumPagesFailAllocate (1/frame)
+1861,Int64,STAT_NumStacksRequested (1/frame)
+1862,Int64,STAT_NumStacksProduced (1/frame)
+1863,Int64,STAT_NumFlushCache (1/frame)
+1864,Int64,STAT_LandscapeComponentRenderPasses (1/frame)
+1865,Int64,STAT_LandscapeDrawCalls (1/frame)
+1866,Int64,STAT_LandscapeTriangles (1/frame)
+1867,Int64,STAT_LandscapeLayersRegenerateDrawCalls (1/frame)
+1868,Int64,STAT_ActiveSounds (1/frame)
+1869,Int64,STAT_AudioSources (1/frame)
+1870,Int64,STAT_AudioVirtualLoops (1/frame)
+1871,Int64,STAT_WaveInstances (1/frame)
+1872,Int64,STAT_WavesDroppedDueToPriority (1/frame)
+1873,Int64,STAT_AudioMaxChannels (1/frame)
+1874,Int64,STAT_AudioMaxStoppingSources (1/frame)
+1875,Int64,STAT_AudibleWavesDroppedDueToPriority (1/frame)
+1876,Int64,STAT_AudioFinishedDelegatesCalled (1/frame)
+1877,Int64,STAT_VTP_NumTranscodeDropped (1/frame)
+1878,Int64,STAT_VTP_NumTranscodeRetired (1/frame)
+1879,Int64,STAT_VTP_NumIntraFrameFlush (1/frame)
+1880,Int64,STAT_VTP_NumUploads (1/frame)
+1881,Int64,STAT_GPUSkinCache_NumDispatches (1/frame)
+1882,Int64,STAT_GPUSkinCache_NumBuffers (1/frame)
+1883,Int64,STAT_GPUSkinCache_NumRayTracingDispatches (1/frame)
+1884,Int64,STAT_GPUSkinCache_NumRayTracingBuffers (1/frame)
+1885,Int64,STAT_GPUSkinCache_TotalNumChunks (1/frame)
+1886,Int64,STAT_GPUSkinCache_TotalNumVertices (1/frame)
+1887,Int64,STAT_GPUSkinCache_NumTrianglesForRecomputeTangents (1/frame)
+1888,Int64,STAT_GPUSkinCache_NumSectionsProcessed (1/frame)
+1889,Int64,STAT_FoliageRuns (1/frame)
+1890,Int64,STAT_FoliageMeshBatches (1/frame)
+1891,Int64,STAT_FoliageTriangles (1/frame)
+1892,Int64,STAT_FoliageInstances (1/frame)
+1893,Int64,STAT_OcclusionCulledFoliageInstances (1/frame)
+1894,Int64,STAT_FoliageTraversals (1/frame)
+1895,Int64,STAT_VolumeStreamingChecks (1/frame)
+1896,Int64,STAT_NetSkippedDynamicProps (1/frame)
+1897,Int64,STAT_NumSaturatedConnections (1/frame)
+1898,Int64,STAT_SharedSerializationRPCHit (1/frame)
+1899,Int64,STAT_SharedSerializationRPCMiss (1/frame)
+1900,Int64,STAT_NumSkippedObjectEmptyUpdates (1/frame)
+1901,Int64,STAT_SharedSerializationPropertyHit (1/frame)
+1902,Int64,STAT_SharedSerializationPropertyMiss (1/frame)
+1903,Int64,STAT_BeamParticles (1/frame)
+1904,Int64,STAT_BeamParticlesRenderCalls (1/frame)
+1905,Int64,STAT_BeamParticlesSpawned (1/frame)
+1906,Int64,STAT_BeamParticlesUpdateCalls (1/frame)
+1907,Int64,STAT_BeamParticlesUpdated (1/frame)
+1908,Int64,STAT_BeamParticlesKilled (1/frame)
+1909,Int64,STAT_BeamParticlesTrianglesRendered (1/frame)
+1910,Int64,STAT_EmittersStatGroupTester (1/frame)
+1911,Int64,STAT_EmittersRTStatGroupTester (1/frame)
+1912,Int64,STAT_ParticleDrawCalls (1/frame)
+1913,Int64,STAT_SpriteParticles (1/frame)
+1914,Int64,STAT_SpriteParticlesSpawned (1/frame)
+1915,Int64,STAT_SpriteParticlesUpdated (1/frame)
+1916,Int64,STAT_SpriteParticlesKilled (1/frame)
+1917,Int64,STAT_MeshParticles (1/frame)
+1918,Int64,STAT_MeshParticlePolys (1/frame)
+1919,Int64,STAT_GPUSpriteParticles (1/frame)
+1920,Int64,STAT_GPUSpritesSpawned (1/frame)
+1921,Int64,STAT_SortedGPUParticles (1/frame)
+1922,Int64,STAT_SortedGPUEmitters (1/frame)
+1923,Int64,STAT_FreeGPUTiles (1/frame)
+1924,Int64,STAT_GPUSingleIterationEmitters (1/frame)
+1925,Int64,STAT_GPUMultiIterationsEmitters (1/frame)
+1926,Int64,STAT_RTParticleData (1/frame)
+1927,Int64,STAT_GTParticleData_MAX (1/frame)
+1928,Int64,STAT_RTParticleData_MAX (1/frame)
+1929,Int64,STAT_RTParticleData_Largest (1/frame)
+1930,Int64,STAT_RTParticleData_Largest_MAX (1/frame)
+1931,Int64,STAT_DynamicPSysCompMem (1/frame)
+1932,Int64,STAT_DynamicPSysCompMem_MAX (1/frame)
+1933,Int64,STAT_DynamicPSysCompCount (1/frame)
+1934,Int64,STAT_DynamicPSysCompCount_MAX (1/frame)
+1935,Int64,STAT_DynamicEmitterMem (1/frame)
+1936,Int64,STAT_DynamicEmitterMem_MAX (1/frame)
+1937,Int64,STAT_DynamicEmitterCount (1/frame)
+1938,Int64,STAT_DynamicEmitterCount_MAX (1/frame)
+1939,Int64,STAT_DynamicEmitterGTMem_Waste (1/frame)
+1940,Int64,STAT_DynamicEmitterGTMem_Waste_MAX (1/frame)
+1941,Int64,STAT_DynamicEmitterGTMem_Largest (1/frame)
+1942,Int64,STAT_DynamicEmitterGTMem_Largest_MAX (1/frame)
+1943,Int64,STAT_DynamicSpriteCount (1/frame)
+1944,Int64,STAT_DynamicSpriteCount_MAX (1/frame)
+1945,Int64,STAT_DynamicSpriteGTMem_MAX (1/frame)
+1946,Int64,STAT_DynamicSubUVCount (1/frame)
+1947,Int64,STAT_DynamicSubUVCount_MAX (1/frame)
+1948,Int64,STAT_DynamicSubUVGTMem_Max (1/frame)
+1949,Int64,STAT_DynamicMeshCount (1/frame)
+1950,Int64,STAT_DynamicMeshCount_MAX (1/frame)
+1951,Int64,STAT_DynamicMeshGTMem_MAX (1/frame)
+1952,Int64,STAT_DynamicBeamCount (1/frame)
+1953,Int64,STAT_DynamicBeamCount_MAX (1/frame)
+1954,Int64,STAT_DynamicBeamGTMem_MAX (1/frame)
+1955,Int64,STAT_DynamicRibbonCount (1/frame)
+1956,Int64,STAT_DynamicRibbonCount_MAX (1/frame)
+1957,Int64,STAT_DynamicRibbonGTMem_MAX (1/frame)
+1958,Int64,STAT_DynamicAnimTrailCount (1/frame)
+1959,Int64,STAT_DynamicAnimTrailCount_MAX (1/frame)
+1960,Int64,STAT_DynamicAnimTrailGTMem_MAX (1/frame)
+1961,Int64,STAT_DynamicUntrackedGTMem_MAX (1/frame)
+1962,Int64,STAT_TrailParticles (1/frame)
+1963,Int64,STAT_TrailParticlesRenderCalls (1/frame)
+1964,Int64,STAT_TrailParticlesSpawned (1/frame)
+1965,Int64,STAT_TrailParticlesTickCalls (1/frame)
+1966,Int64,STAT_TrailParticlesKilled (1/frame)
+1967,Int64,STAT_TrailParticlesTrianglesRendered (1/frame)
+1968,Int64,STAT_NumCloths (1/frame)
+1969,Int64,STAT_NumClothVerts (1/frame)
+1970,Int64,STAT_NumBroadphaseAdds (1/frame)
+1971,Int64,STAT_NumBroadphaseRemoves (1/frame)
+1972,Int64,STAT_NumActiveConstraints (1/frame)
+1973,Int64,STAT_NumActiveSimulatedBodies (1/frame)
+1974,Int64,STAT_NumActiveKinematicBodies (1/frame)
+1975,Int64,STAT_NumMobileBodies (1/frame)
+1976,Int64,STAT_NumStaticBodies (1/frame)
+1977,Int64,STAT_NumShapes (1/frame)
+1978,Int64,STAT_NumBroadphaseAddsAsync (1/frame)
+1979,Int64,STAT_NumBroadphaseRemovesAsync (1/frame)
+1980,Int64,STAT_NumActiveConstraintsAsync (1/frame)
+1981,Int64,STAT_NumActiveSimulatedBodiesAsync (1/frame)
+1982,Int64,STAT_NumActiveKinematicBodiesAsync (1/frame)
+1983,Int64,STAT_NumMobileBodiesAsync (1/frame)
+1984,Int64,STAT_NumStaticBodiesAsync (1/frame)
+1985,Int64,STAT_NumShapesAsync (1/frame)
+1986,Int64,STAT_ImmediateSimulate_ChaosCounter_NumBodies (1/frame)
+1987,Int64,STAT_ImmediateSimulate_ChaosCounter_NumDynamicBodies (1/frame)
+1988,Int64,STAT_ImmediateSimulate_ChaosCounter_NumKinematicBodies (1/frame)
+1989,Int64,STAT_ImmediateSimulate_ChaosCounter_NumContacts (1/frame)
+1990,Int64,STAT_ImmediateSimulate_ChaosCounter_NumJoints (1/frame)
+1991,Int64,STAT_NaniteStreaming20_PageRequests (1/frame)
+1992,Int64,STAT_NaniteStreaming21_PageRequestsGPU (1/frame)
+1993,Int64,STAT_NaniteStreaming22_PageRequestsExplicit (1/frame)
+1994,Int64,STAT_NaniteStreaming23_PageRequestsPrefetch (1/frame)
+1995,Int64,STAT_NaniteStreaming24_PageRequestsParents (1/frame)
+1996,Int64,STAT_NaniteStreaming25_PageRequestsUnique (1/frame)
+1997,Int64,STAT_NaniteStreaming26_PageRequestsRegistered (1/frame)
+1998,Int64,STAT_NaniteStreaming27_PageRequestsNew (1/frame)
+1999,Int64,STAT_NaniteStreaming41_ReadbackSize (1/frame)
+2000,Int64,STAT_NaniteStreaming42_ReadbackBufferSize (1/frame)
+2001,Int64,STAT_Streaming05_Pending2DUpdate (1/frame)
+2002,Int64,STAT_Streaming06_VirtualTextureCount (1/frame)
+2003,Int64,STAT_StreamingOverview09_NumStreamedMeshes (1/frame)
+2004,Int64,STAT_TicksQueued (1/frame)
+2005,Int64,STAT_NumHeapEntries (1/frame)
+2006,Int64,STAT_Canvas_NumBatchesCreated (1/frame)
+2007,Int64,STAT_StaticMeshTriangles (1/frame)
+2008,Int64,STAT_SkelMeshTriangles (1/frame)
+2009,Int64,STAT_SkelMeshDrawCalls (1/frame)
+2010,Int64,STAT_CPUSkinVertices (1/frame)
+2011,Int64,STAT_GPUSkinVertices (1/frame)

@@ -43,7 +43,7 @@ void FProject_JLoopbackHandoverTransport::Cancel(const FGuid& TransferId)
 
 void FProject_JLoopbackHandoverTransport::Tick(float DeltaSeconds)
 {
-	if (PendingResponses.IsEmpty() || DeltaSeconds <= 0.0f)
+	if (PendingResponses.IsEmpty() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.0f)
 	{
 		return;
 	}

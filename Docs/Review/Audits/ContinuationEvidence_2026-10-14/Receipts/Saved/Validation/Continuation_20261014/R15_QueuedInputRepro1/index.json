@@ -1,0 +1,69 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "8661ADC94198648EAE96CE9307E814D5",
+			"instanceName": "DESKTOP-5T07C91-32052",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-20.53.24",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.049838602542877197,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "QueuedInputOrigin",
+			"fullTestPath": "ProjectJ.Continuation.QueuedInputOrigin",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"8661ADC94198648EAE96CE9307E814D5"
+			],
+			"duration": 0.049838602542877197,
+			"dateTime": "2026.10.14-20.53.24",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Queued old press cannot enqueue semantic input on the new pawn' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQueuedInputOriginTests.cpp",
+					"lineNumber": 49,
+					"timestamp": "2026.10.14-20.53.24"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Queued old release cannot retire the new pawn's held direction' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JQueuedInputOriginTests.cpp",
+					"lineNumber": 57,
+					"timestamp": "2026.10.14-20.53.24"
+				}
+			],
+			"warnings": 0,
+			"errors": 2,
+			"artifacts": []
+		}
+	]
+}

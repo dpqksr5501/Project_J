@@ -4,19 +4,33 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace
 {
 bool IsStyleReady(const UProject_JCombatStyleDefinition* Style) { return !Style || Style->IsRuntimeReady(); }
+// GAS and publication delegates may synchronously retire participants and collect garbage.
+// These pins last for one operation; persistent ASC ownership remains weak.
+struct FProgressionMutationLifetime
+{
+	TStrongObjectPtr<UProject_JProgressionComponent> Component;
+	TStrongObjectPtr<AActor> Owner;
+	TStrongObjectPtr<UAbilitySystemComponent> ASC;
+	FProgressionMutationLifetime(UProject_JProgressionComponent* InComponent, UAbilitySystemComponent* InASC)
+		: Component(InComponent), Owner(InComponent->GetOwner()), ASC(InASC) {}
+};
 }
 
 void UProject_JProgressionComponent::GrantSets(const TArray<TObjectPtr<UProject_JAbilitySet>>& Sets,
 	const FString& Prefix, FProject_JAbilitySet_GrantedHandles& Handles)
 {
-	for (const UProject_JAbilitySet* Set : Sets)
+	TArray<TStrongObjectPtr<const UProject_JAbilitySet>> Snapshot;
+	for (const UProject_JAbilitySet* Set : Sets) { if (Set) Snapshot.Emplace(Set); }
+	for (const auto& PinnedSet : Snapshot)
 	{
 		if (!CanGrant()) { return; }
-		if (Set) Set->GiveToAbilitySystem(GrantedAbilitySystem.Get(), &Handles, GetOwner(), FName(*(Prefix + TEXT(".") + Set->GetPathName())));
+		const auto* Set = PinnedSet.Get();
+		Set->GiveToAbilitySystem(GrantedAbilitySystem.Get(), &Handles, GetOwner(), FName(*(Prefix + TEXT(".") + Set->GetPathName())));
 	}
 }
 void UProject_JProgressionComponent::GrantStyle(const UProject_JCombatStyleDefinition* Style,
@@ -99,6 +113,29 @@ bool UProject_JProgressionComponent::CanMutate() const
 		GetOwner()->HasAuthority() && GetASC() && (!GrantedAbilitySystem.IsValid() || GetASC() == GrantedAbilitySystem.Get());
 }
 
+bool UProject_JProgressionComponent::IsMutationCurrent(const AActor* Owner, const UAbilitySystemComponent* ASC) const
+{
+	return !bEnding && !IsBeingDestroyed() && IsValid(Owner) && !Owner->IsActorBeingDestroyed()
+		&& GetOwner() == Owner && Owner->HasAuthority() && IsValid(ASC) && !ASC->IsBeingDestroyed()
+		&& GetASC() == ASC && (!GrantedAbilitySystem.IsValid() || GrantedAbilitySystem.Get() == ASC);
+}
+
+bool UProject_JProgressionComponent::ResolveLevel(int32 Level, const UProject_JCharacterClassDefinition* Class,
+	int32& OutResolvedLevel) const
+{
+	const int32 Floor = Class ? Class->StartingLevel : 1;
+	if (Floor < 1) { return false; }
+	const int32 Resolved = FMath::Max(FMath::Max(1, Level), Floor);
+	if (Resolved > FMath::Clamp(MaximumLevel, 1, 10000)) { return false; }
+	OutResolvedLevel = Resolved;
+	return true;
+}
+
+bool UProject_JProgressionComponent::CanSetLevel(int32 Level, int32& OutResolvedLevel) const
+{
+	return CanMutate() && State.Revision != 0 && ResolveLevel(Level, State.ClassDefinition, OutResolvedLevel);
+}
+
 void UProject_JProgressionComponent::Publish()
 {
 	if (bEnding || IsBeingDestroyed() || !IsValid(GetOwner()) || GetOwner()->IsActorBeingDestroyed()) { return; }
@@ -123,13 +160,17 @@ void UProject_JProgressionComponent::InitializeDefaults(UProject_JCharacterClass
 	if (!CanMutate() || State.Revision != 0 || (Class && !IsStyleReady(Class->DefaultCombatStyle))
 		|| (Advancement && (!IsStyleReady(Advancement->CombatStyleOverride)
 			|| (Advancement->BaseClass && !IsStyleReady(Advancement->BaseClass->DefaultCombatStyle))))) return;
+	auto* InitialClass = Class ? Class : (Advancement ? Advancement->BaseClass.Get() : nullptr);
+	int32 ResolvedLevel;
+	if (!ResolveLevel(Level, InitialClass, ResolvedLevel)) { return; }
+	const FProgressionMutationLifetime Lifetime(this, GetASC());
 	// Avatar defaults are applied once. A respawn must never roll persistent state back.
 	{
 		TGuardValue<bool> Guard(bChanging, true);
-		State.ClassDefinition = Class ? Class : (Advancement ? Advancement->BaseClass.Get() : nullptr);
-		State.Level = FMath::Max(FMath::Max(1, Level), State.ClassDefinition ? State.ClassDefinition->StartingLevel : 1);
+		State.ClassDefinition = InitialClass;
+		State.Level = ResolvedLevel;
 		GrantClass();
-		Publish();
+		if (IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get())) { Publish(); }
 	}
 	if (Advancement) ApplyAdvancement(Advancement);
 }
@@ -137,13 +178,17 @@ void UProject_JProgressionComponent::InitializeDefaults(UProject_JCharacterClass
 bool UProject_JProgressionComponent::InitializeClass(UProject_JCharacterClassDefinition* Class)
 {
 	if (!CanMutate() || !Class || Class->ClassId.IsNone() || !IsStyleReady(Class->DefaultCombatStyle)) return false;
-	if (State.ClassDefinition) return State.ClassDefinition == Class;
+	int32 ResolvedLevel;
+	if (!ResolveLevel(State.Level, Class, ResolvedLevel)) { return false; }
+	if (State.ClassDefinition) return State.ClassDefinition == Class && State.Level == ResolvedLevel;
+	const FProgressionMutationLifetime Lifetime(this, GetASC());
 	TGuardValue<bool> Guard(bChanging, true);
 	State.ClassDefinition = Class;
-	State.Level = FMath::Max(State.Level, Class->StartingLevel);
+	State.Level = ResolvedLevel;
 	GrantClass();
+	if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get())) { return false; }
 	Publish();
-	return !bEnding;
+	return IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get());
 }
 
 bool UProject_JProgressionComponent::CanApplyAdvancement(const UProject_JCharacterAdvancementDefinition* Advancement) const
@@ -154,6 +199,9 @@ bool UProject_JProgressionComponent::CanApplyAdvancement(const UProject_JCharact
 		|| (Advancement->BaseClass && !IsStyleReady(Advancement->BaseClass->DefaultCombatStyle))
 		|| State.Level < Advancement->RequiredLevel
 		|| (State.ClassDefinition && Advancement->BaseClass && State.ClassDefinition != Advancement->BaseClass)) return false;
+	int32 ResolvedLevel;
+	if (!ResolveLevel(State.Level, State.ClassDefinition ? State.ClassDefinition.Get() : Advancement->BaseClass.Get(), ResolvedLevel)
+		|| (State.ClassDefinition && State.Level != ResolvedLevel)) { return false; }
 	for (FName Prerequisite : Advancement->RequiredAdvancementIds)
 		if (!AcquiredAdvancements.Contains(Prerequisite)) return false;
 	if (!Advancement->ExclusiveBranch.IsNone())
@@ -170,6 +218,9 @@ bool UProject_JProgressionComponent::CanApplyAdvancement(const UProject_JCharact
 bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvancementDefinition* Advancement)
 {
 	if (!CanApplyAdvancement(Advancement)) return false;
+	const FProgressionMutationLifetime Lifetime(this, GetASC());
+	int32 ResolvedLevel;
+	if (!ResolveLevel(State.Level, State.ClassDefinition ? State.ClassDefinition.Get() : Advancement->BaseClass.Get(), ResolvedLevel)) { return false; }
 	TGuardValue<bool> Guard(bChanging, true);
 	if (!GrantedAbilitySystem.IsValid()) { GrantedAbilitySystem = GetASC(); }
 	if (Advancement->AbilityGrantPolicy == EProject_JAdvancementAbilityGrantPolicy::ReplacePreviousAdvancement)
@@ -181,7 +232,9 @@ bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvance
 	if (!State.ClassDefinition && Advancement->BaseClass)
 	{
 		State.ClassDefinition = Advancement->BaseClass;
+		State.Level = ResolvedLevel;
 		GrantClass();
+		if (!CanGrant()) { return false; }
 	}
 	State.Advancement = Advancement;
 	AcquiredAdvancements.Add(Advancement->AdvancementId);
@@ -190,20 +243,23 @@ bool UProject_JProgressionComponent::ApplyAdvancement(UProject_JCharacterAdvance
 	GrantSets(Advancement->AdditionalAbilitySets,
 		TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
 	GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
+	if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get())) { return false; }
 	Publish();
-	return !bEnding;
+	return IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get());
 }
 
 bool UProject_JProgressionComponent::SetLevel(int32 Level)
 {
-	if (!CanMutate() || State.Revision == 0 || Level>FMath::Clamp(MaximumLevel,1,10000)) return false;
-	Level = FMath::Max(FMath::Max(1, Level), State.ClassDefinition ? State.ClassDefinition->StartingLevel : 1);
+	int32 ResolvedLevel;
+	if (!CanSetLevel(Level, ResolvedLevel)) return false;
+	Level = ResolvedLevel;
 	if (State.Level == Level) return true;
+	const FProgressionMutationLifetime Lifetime(this, GetASC());
 	TGuardValue<bool> Guard(bChanging, true);
 	State.Level = Level;
 	Experience=0;
 	Publish();
-	return true;
+	return IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get());
 }
 
 FProject_JProgressionSnapshot UProject_JProgressionComponent::CaptureSnapshot() const
@@ -246,6 +302,7 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 	}
 	// Validation is complete before any state or GAS mutation. Historical tag/level gates
 	// are not replayed; the trusted repository owns the fact that acquisition happened.
+	const FProgressionMutationLifetime Lifetime(this, GetASC());
 	TGuardValue<bool> Guard(bChanging, true);
 	State.ClassDefinition = Class;
 	State.Level = Snapshot.Level;
@@ -254,15 +311,17 @@ bool UProject_JProgressionComponent::RestoreSnapshot(const FProject_JProgression
 	AcquiredAdvancements = Snapshot.AdvancementHistory;
 	ActiveAdvancements = MoveTemp(Active);
 	GrantClass();
+	if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get())) { return false; }
 	for (const UProject_JCharacterAdvancementDefinition* Advancement : ActiveAdvancements)
 	{
 		if (!GrantedAbilitySystem.IsValid() && !bEnding) { GrantedAbilitySystem = GetASC(); }
 		GrantSets(Advancement->AdditionalAbilitySets,
 			TEXT("Advancement.") + Advancement->AdvancementId.ToString(), AdvancementHandles);
 		GrantStyle(Advancement->CombatStyleOverride, AdvancementHandles);
+		if (!IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get())) { return false; }
 	}
 	Publish();
-	return true;
+	return IsMutationCurrent(Lifetime.Owner.Get(), Lifetime.ASC.Get());
 }
 
 void UProject_JProgressionComponent::OnRep_Experience() { if (!bEnding) OnChanged.Broadcast(); }
@@ -281,6 +340,7 @@ int64 UProject_JProgressionComponent::GetRequiredExperienceForLevel(int32 Level)
 bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
 {
  if (!CanMutate() || State.Revision==0 || Amount <= 0 || Amount > MAX_int64 - Experience || GetNextLevelExperience() <= 0) return false;
+ const FProgressionMutationLifetime Lifetime(this, GetASC());
  TGuardValue<bool> Guard(bChanging, true);
  Experience += Amount;
  while (GetNextLevelExperience() > 0 && Experience >= GetNextLevelExperience())
@@ -288,5 +348,7 @@ bool UProject_JProgressionComponent::GrantExperience(int64 Amount)
   Experience -= GetNextLevelExperience(); ++State.Level;
  }
  if (GetNextLevelExperience() == 0) Experience = 0;
+ // Once published, XP is paid. Returning failure after a notification retires the
+ // owner would allow the quest reward caller to undo its claim and pay twice.
  Publish(); return true;
 }

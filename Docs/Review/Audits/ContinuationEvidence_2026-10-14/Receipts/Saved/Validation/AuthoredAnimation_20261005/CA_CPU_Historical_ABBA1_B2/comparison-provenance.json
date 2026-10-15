@@ -1,0 +1,45 @@
+{
+  "phase": "B2",
+  "baseline": false,
+  "compiledSourceManifest": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Saved\\Validation\\Continuation_20261014\\CA_CPU_Historical_ABBA1/ComparedCompiledSourceManifest.json",
+  "installedArtifacts": [
+    {
+      "file": "UnrealEditor-Project_JMMO.dll",
+      "sha256": "A6C9529EDBFEAF91997620D65241F7B41C0494564F26088EFE20639D68404FE1"
+    },
+    {
+      "file": "UnrealEditor-Project_J.dll",
+      "sha256": "1B78A73928035F669A3B96337AE86F065184D680701C51F20FD12398E6580BA4"
+    },
+    {
+      "file": "UnrealEditor-Project_JCore.dll",
+      "sha256": "79CFD2D797E6EFF8055C70BBA4BA3FAFDB08907D41D428635D803C3189ACB075"
+    },
+    {
+      "file": "UnrealEditor-Project_JGAS.dll",
+      "sha256": "5501423458CEABC12E2339CE4C11E205CCDB39B0AA8E3F440CDCC735DC5A06AD"
+    },
+    {
+      "file": "UnrealEditor-Project_JMount.dll",
+      "sha256": "09B8EEAADD05240C9310CBDF4F1BC76F1648284D4ADC26FF16AF5E1B31D39173"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacter.dll",
+      "sha256": "BF44F02D923F6D3B7AADE98EE2F68644CF41F0DF1618DFA772619C96FBE0AF2A"
+    },
+    {
+      "file": "UnrealEditor-Project_JCharacterEditor.dll",
+      "sha256": "84FC0FB5026B263F51059933A423C59EE9B04B73E3F9D73E43BB6E8FA3FB449B"
+    },
+    {
+      "file": "UnrealEditor-Project_JAnimationNodes.dll",
+      "sha256": "FA8B802C785A45C2F96A742BDFDC27552C79FC2ACBA66C9041D5402103349834"
+    },
+    {
+      "file": "UnrealEditor.modules",
+      "sha256": "108DCA6766D8052FA767709F547B2E75E39676DFF75C3627EC863F8520E6FADF"
+    }
+  ],
+  "workingSourceMatchesCompiledVariant": false,
+  "meaning": "Fixture SourceSnapshot is the working tree; explicit historical A/B provenance uses the compiled manifests. Restoration always uses invocation-time artifacts."
+}

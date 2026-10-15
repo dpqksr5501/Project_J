@@ -148,6 +148,9 @@ protected:
 
 	// Helper function to initialize attributes (e.g. from a gameplay effect or table)
 	virtual void SetCharacterLevel(int32 NewLevel);
+	/** Checked mutation for adapters that must acknowledge a current owner. Legacy void API remains. */
+	virtual bool TrySetCharacterLevel(int32 NewLevel);
+	bool CanApplyCharacterLevelExactly(int32 NewLevel) const;
 	virtual void InitializeDefaultAttributes(bool bForceReset = false) const;
 	void InitializeAbilitySystem();
 	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;

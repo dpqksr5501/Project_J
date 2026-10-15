@@ -214,6 +214,15 @@ EDataValidationResult UProject_JLocomotionProfile::IsDataValid(FDataValidationCo
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	bool bHasError = Result == EDataValidationResult::Invalid;
+	const float CancelAngles[] = {TransitionPolicy.StartMouseTurnCancelAngle, TransitionPolicy.StartMoveInputCancelAngle, TransitionPolicy.LandMouseTurnCancelAngle};
+	for (const float Angle : CancelAngles)
+	{
+		if (!FMath::IsFinite(Angle) || Angle < 0.f)
+		{
+			Context.AddError(NSLOCTEXT("ProjectJLocomotionProfile", "InvalidCancelAngle", "Start/Land cancellation angles must be finite and nonnegative."));
+			bHasError = true;
+		}
+	}
 	if (const FName Failure = GetMovementValidationFailure(); !Failure.IsNone())
 	{
 		Context.AddError(FText::FromString(FString::Printf(TEXT("%s must produce finite, nonnegative movement values."), *Failure.ToString())));

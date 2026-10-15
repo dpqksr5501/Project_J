@@ -1,0 +1,349 @@
+{
+  "recorded_utc": "2026-10-15T02:02:51.719146+00:00",
+  "whole_project_complete": false,
+  "active_scope_ko": "최신 요청: 소스·아키텍처 정리. 전체 성능/운영/품질 전수 감사는 보류",
+  "current_checkpoint": "R15_StructureCleanupVerification1/StructureCleanupVerification.json",
+  "source_review_track": [
+    {
+      "unit": "CR13",
+      "scope_ko": "기존 Mount23개 runtime/header/inline·fixture/test·module/build의 전체 함수와 Character mounted layer/lease 및 Player summon/interaction/snapshot의 지정 caller. 새 TransitionTests는 주 작업자의 CA19 재현·수정 범위다. Character/Player 전체 모듈 완료 아님.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR14",
+      "scope_ko": "Gateway/connection/manager/loopback/interface/MMO foundation/PS/GameMode 전체 함수·header·inline. Base/Player level·handover 및 Inventory cooldown 소비는 지정 함수만. catalog inl 항목을 읽었으나 JSON205 항목별 상호대조 미완료.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR15",
+      "scope_ko": "Quest/Social 및 지정 UI cpp/header 전체. PS/social relevance와 UI→Player→Execution→ASC release caller 대조. HUD는 Quest action/profile/CharacterModule 표시 함수만이며 layout/drag/drop/widgets 전체 미완료.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR16",
+      "scope_ko": "NPC actor/policy/attack/Mass4쌍/Path/Core scoring 전체 함수·header·inline. Action resume/timer/suspend/owned callback, Decision capture/admission/queue/dispatch/shutdown 확장. NavigationLoad 전체 줄 검토는 아니며 큰 Base/Player 전체 아님.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR17",
+      "scope_ko": "Inventory/EquipmentManager/Runtime/AbilitySet/ASC/definitions/types/WeaponPresentation main/profile/layer lease cpp/header 전체와 실제 Base/Player/PS callers. Diagnostics.cpp·Persona 전체·HUD 전체는 별도 미완료.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR18",
+      "scope_ko": "GAS12파일 전체·execution/router·Sprint/Toggle/Melee/CombatMode·실행데이터·hit/SSR·combat state/intro/presentation·두 notify 전체 cpp/header/inline. Player façade/authority/refresh/teleport caller는 지정 구간만. 모든 외부 task/BP/prediction 검증 아님.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR19",
+      "scope_ko": "위 main/split cpp/header 전체와 context·remote/gait/turn·MM selection/boundary/engine adapter·unified/legacy node·snapshot policy·retarget/IK/facing 순수 helper 전체를 연결 대조. 큰 Player의 init/jump/edge/Landed만이며 모든 notify/모든 에셋 완료 아님. 추가: Movement/MouseTurnTrace·CMC cpp/header 및 관련 Build/module 전체, notify는 지정 exact-path manifest의 전체본문; ComboWindow/TwoHandIK cpp 기존 수정은 재사용하며 Super/BP·Melee/Cue 공통 callback은 미재현.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR20",
+      "scope_ko": "ContentBundle/menu/Persona/좌표helper/WeaponMotion validator/Foley·Early migration/asset graph diagnostics 및 AnimationNodes wrapper/installer 전체 함수·header·inline. 회귀파일 전체 미검토. Experiments는 descriptor/startup/presentation audit/migration journal·receipt/output만이며 physics/GPU/audio/PCG 내부 미완료. 추가: Project_J Build 및 Game/Editor/Server Target 4개 전체 읽기. Editor 조건 직접 의존성·root modules 대조.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR21",
+      "scope_ko": "registry/types·InputLease·Message·Core asset/data services·Controller·Distance/Prioritizer·diagnostics/crowd 전체와 Base significance 등록/해제/callback·설치manager·actual consumers. 전체Player/Base·runtime Iris/custom graph 설치 완료 아님. 추가: 전체 GameplayTags 선언23/등록표·MMOTypes·Core/MMO module/Build와 Logger cpp 실제 본문 대조. tags 등록/사용 불일치 발견 없음.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR22",
+      "scope_ko": "HUD/window/inventory widgets/skillbutton 전체·cursor/presentation helper·Core interaction/Character query·GameState/main module/UI smoke·warmup/PSO 전체. 앞선 UI model 내부는 caller만 재사용. 실제 widget graph/physical focus/DPI 전체 미완료.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR23",
+      "scope_ko": "Base/Player main cpp/header 전체의 이전 지정함수 밖까지 전체 읽기. Camera/Foley component/UI binding·ViewModel/weapon Diagnostics 전체. FoleySubsystem은 Resolve/Prepare/Submit/Execute/Cancel·Stop 진입 지정 범위만.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR24",
+      "scope_ko": "기존presentation migration 지정범위와여섯Experiments 전체본문·inline·실행/cleanup·worker/측정의미 대조. 추가 ValueCompute.usf/Build·Measure-Experiments scripts도 읽었으나 현재 source행과분리. 모든실험실행완료 아님.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR25",
+      "scope_ko": "Foley·PresentationBudget 전체 cpp/header·ComboWindow cpp/header·TwoHandIK header 전체. TwoHandIK cpp CA11은 재사용.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR26",
+      "scope_ko": "backend exact31manifest 중 기존 Build/Targets4 제외27개 전체 본문. graph 노드/pin/selector 및 명시 flag별 제작 경계.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR27",
+      "scope_ko": "Testing exact23개 전체 본문. actual montage/input/notify·manual seam·normal/explicit flag·destructor/취소·저장/컴파일 경계.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR28",
+      "scope_ko": "mount exact13개와 직전 Core3개 전체 본문. Navigation은 CR26 재사용. Build 조건·worker/pool policy·GC/actual montage와 simulation seam.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR29",
+      "scope_ko": "quest 담당 신규48개 전체 본문과 직전5개 재사용. 동료10개 CR28과 분리. native helper/node직접호출·asset load·pose·worker/remote 품질 경계를 대조.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR30",
+      "scope_ko": "backend 담당 이전 전체 본문 읽기의 root module cpp/header 매핑 누락만 연결. 새로운 읽기/실행 아님.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR31",
+      "scope_ko": "backend 이전 whole 실제48/39/95/127행 읽기의 매핑 누락 연결. 재읽기/재실행 없음.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR32",
+      "scope_ko": "기존 지정 검토와 함수 inventory를 대조한 남은 본문/inline만 추가 읽기. Activation Begin/Deactivate/End/Destroy·HasOwned, Action ctor/support/foreign move/target goal·inline, TargetScoring ctor/equipment/manual request/prepare/lifecycle, Decision initialization/server/action registry/stats/lifecycle. 주요 register/commit/resume/timer/batch/callback은 기존 근거 재사용. TwoHandIK cpp33줄은 Begin/End 기존 근거+include/footer 확인으로 전체 연결; Tick 없음.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR33",
+      "scope_ko": "최신 사용자 범위의 실제 구조 정리12묶음. 기본값/상태작성자·공통 mutation·guard·구독/입력 receipt를 원래 소유자에 귀속. 세 담당 읽기 전용 diff 교차 검토. 실행은 주 작업자의 direct UBT 및 집중57개 결과만 연결.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    },
+    {
+      "unit": "CR34",
+      "scope_ko": "범위 변경 전 진행한 MM/Chooser 경계 마무리. 반환 table chain의 동일 engine-evaluation 경로를 한 곳에서 bounded64/visited/pin으로 순회하고 native presentation caller가 재사용. valid Reface pair의 optional ordinary Cycle 접근만 guard. 실제 native fresh feedback과 engine fallback self/cycle/terminal/depth 시험.",
+      "state_ko": "명시 소스 범위 대조·관련 에셋/실행/환경 미완료"
+    }
+  ],
+  "defect_execution_track": [
+    {
+      "id": "D19",
+      "system": "탑승/비행",
+      "issue_ko": "attach retirement·replicated A→B restore·GAS phase tag supersession",
+      "source": [
+        "MountCharacter.TryMountRider/AttachRider/OnRep_Rider",
+        "FlyingMountCharacter.SetFlightState/ApplyFlightStateTags"
+      ],
+      "status_ko": "실제4실패·수정·집중24통과/통합 미완료",
+      "needed_validation_ko": "원본3실패+controller 재배정1실패 재현. 관련24집중 23clean/기존warning1 통과. 후속 실제2rider 복제·중첩restore·GC·Game/Cook/시각은 별도.",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D20",
+      "system": "탑승/비행",
+      "issue_ko": "이전 input clone의 새session 실행·서버protected phase admission·native dead 공급",
+      "source": [
+        "Mount/Flying input binding",
+        "Mount.ServerRequestDismount",
+        "MountAnimInstance.NativeUpdateAnimation"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "old clone/new session·phase별 authority/forced dismount·native dead/owner loss 및 실제 ABP 소비",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D21",
+      "system": "Backend",
+      "issue_ko": "음수 queue 및 비유한 timeout/flush·큰 zero-delay retry",
+      "source": [
+        "Gateway.TrimRemoteLogQueue/DispatchTrackedRequest/Initialize",
+        "Handover.ScheduleRetry/DispatchTransfer"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "잘못된 설정 승인/큐 재삽입·종료·bounded dispatch 깊이. 기본동작 유지",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D22",
+      "system": "지속 상태",
+      "issue_ko": "Progression 존재하지만 Revision0에서 legacy admission·새PS 이관 미설치",
+      "source": [
+        "Base.CanApplyCharacterLevelExactly/TrySetCharacterLevel",
+        "PlayerState/GameMode/Player handover"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "Revision0 cap100+packet101/초기화실패·진짜no-Progression 호환. 동일identity 새PS migration/service는 환경미검증",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D23",
+      "system": "입력/UI/GAS",
+      "issue_ko": "release/availability callback의 map·newlease·avatar/prediction/current epoch",
+      "source": [
+        "PlayerUI.ReleaseAllSkills/ReleaseSkill/UpdateSkills",
+        "SkillInputExecution release/refresh",
+        "ASC.AbilityInputTagPressed/Released"
+      ],
+      "status_ko": "UI receipt/종료 소유권 실제 정리·나머지 source 후보 미재현",
+      "needed_validation_ko": "UI 단일/전체 release·실제 EndPlay callback 새 receipt 소실을 재현/수정하고 집중57 통과. availability BP·ASC activation/avatar/prediction·GC 조합은 미재현으로 유지.",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D24",
+      "system": "제작 숫자/UI",
+      "issue_ko": "Minimap failed UV의 미초기화 결과 사용",
+      "source": [
+        "Minimap.PositionOnMap/WorldToUV/NativePaint"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "NaN/Inf/invalid extent·region/marker 제외와 정상좌표 paint. 현재 authored 오류 주장 아님",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D25",
+      "system": "NPC/ability",
+      "issue_ko": "NPCAttack validation/presentation/hit 뒤 old activation 계속 실행",
+      "source": [
+        "NPCAttack.ActivateAbility/ValidateAttackContext/OnHit/EndAbility"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "기존 actual montage fixture에서 callback cancel/restart+GC·task/notify/hit/end의 원래 epoch만 소비",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D26",
+      "system": "Inventory/Equipment",
+      "issue_ko": "commit 알림 뒤 participant 수명·incoming item ownership·unlock receipt·legacy RPC",
+      "source": [
+        "Inventory.TryUseItem/TryBagChange",
+        "EquipmentManager equip lock/remove/RPC"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "use/split/merge/swap callback 종료/교체/GC·item제거·occupied slot 보존·양API 합산burst",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D27",
+      "system": "grants/layers",
+      "issue_ko": "GAS callback participant·default source basename·linked lifecycle·ASC unregister/register",
+      "source": [
+        "AbilitySet.GiveToAbilitySystem/TakeFromAbilitySystem",
+        "EquipmentRuntime grants",
+        "Base default grant",
+        "AnimationLayerLease"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "다른package 동일basename actual grants·OnGive/end/apply GC/newprovider·linked init replacement·engine re-register 정책",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D28",
+      "system": "무기/리타깃",
+      "issue_ko": "spawn callback 중 profile identity 변경·기본 grip alpha 승인 공백",
+      "source": [
+        "WeaponPresentation.RefreshPresentation/UpdateGripTargets",
+        "WeaponPresentationProfile.IsDataValid"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "World OnActorSpawned profile/class/body교체·unequip·GC, 기본alpha4 NaN/Inf/범위밖과 유효fractional",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D29",
+      "system": "locomotion",
+      "issue_ko": "GAS tag callback 뒤 landing/jump transition·EndPlay timer lease",
+      "source": [
+        "Locomotion.Transitions.StartLanding/HandleJumpStarted",
+        "Locomotion.EndPlay/OnComponentDestroyed/Support"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "tag callback 정상JumpStart·stream EndPlay UObject생존 후 oldtimer·reuse. 원래 authored timer와 physical/presentation revision 보존",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D30",
+      "system": "MM/Chooser",
+      "issue_ko": "nullable 일반 Cycle의 무조건 접근·returned table cycle",
+      "source": [
+        "AnimInstance.Continuity cycle diagnostic",
+        "AnimInstance.Presentation chooser loop",
+        "MotionMatchingAssetSet.FindTurnCycleCompanion"
+      ],
+      "status_ko": "native 참조/순회 경계 실제 수정·집중검증 통과",
+      "needed_validation_ko": "유효 Reface pair/optional ordinary Cycle·fresh native feedback와 returned chooser self/cycle/null/정상64·초과65를 수정 후 검증. 원본 AV/무한루프는 실행하지 않음. 실제 전수 graph/worker/pose 미검증.",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D31",
+      "system": "제작/에디터",
+      "issue_ko": "Escape transaction은 값복원이 아닌 기록제거·migration partial save",
+      "source": [
+        "CharacterEditorModule.InputKey/FinishTransaction",
+        "Foley/EarlyTransition migration"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "실제drag/Escape 값·dirty·undo, 여러package 뒷항목실패 partial-save 명시. 이전완료migration 재실행 금지",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D32",
+      "system": "ability/presentation",
+      "issue_ko": "Sprint effect 후 게시·Melee callback epoch·cue map reference·hit loop",
+      "source": [
+        "Sprint.ActivateAbility/EndAbility",
+        "Melee.StartComboNode",
+        "CombatPresentationCue.NotifyBegin",
+        "MeleeHit.NotifyTick"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "실제GE/apply/movement/presentation/hit callback cancel/restart/GC·source change. forceEnd/reset·timer로 숨기지 않음",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D33",
+      "system": "Significance/운영 설치",
+      "issue_ko": "거리 Update source미연결·near0/far3 다중view 역집계·worker rawUObject callback",
+      "source": [
+        "Base significance registration/callback",
+        "USignificanceManager.Update/FManagedObjectInfo"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "실제observer/actor이동·다중viewer·없음/종료/GC. GT값snapshot→계산→GT apply 설계. 실제CPU원인/개선량은 미검증",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D34",
+      "system": "HUD/widget/interaction",
+      "issue_ko": "press/windowdrag origin·HUD재초기화·dynamicwidget callback·interactorcurrent권위",
+      "source": [
+        "SkillButton press/release/Configure",
+        "HUD Window/menu drag/LayoutIdentity",
+        "InteractionQuery.TryInteract"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "원래source의press/drag·newlease보존·실제dragoperation·focus/capture·CanInteract participant GC",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D35",
+      "system": "실험/숫자",
+      "issue_ko": "GPU Ready/poll admission race·유한거리 제곱 overflow",
+      "source": [
+        "Experiments.GpuTests poll",
+        "Project_JMMOTypes.GetMaxReplicationDistanceSquared"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "강제GT/RT교대 completion/poll·정상shaderCPU참조, largefinite boundary. 기본disabled 실험과runtimeIris 설치여부분리",
+      "whole_system_complete": false
+    },
+    {
+      "id": "D36",
+      "system": "초기화/소환/오디오",
+      "issue_ko": "Base owner/avatar 초기화 chain·summon spawn 게시전 재진입·Foley life gate",
+      "source": [
+        "Base.InitializeAbilitySystem",
+        "Player.ServerRequestUseMountItem",
+        "FoleyComponent/Subsystem.IsDead/Submit/Execute"
+      ],
+      "status_ko": "소스 후보·실행 미재현",
+      "needed_validation_ko": "OnAvatarSet/OnGive/progression publication 교체+GC·spawn callback재요청/종료·FoleyStop/retire. 기존async inventory재검사 재사용",
+      "whole_system_complete": false
+    }
+  ],
+  "remaining_ko": [
+    "정확 manifest에 통합한 native 본문 공백 마감과 향후 변경/범위 밖의 동적 호출은 구분",
+    "모든 실제 BP/ABP/DA/DT/Chooser/IA/IMC graph 대조 및 제작/검증/배포 경계",
+    "원래 CPU 증가·렌더 차이·손/cloth/retarget 품질·200 real connections/live backend",
+    "기존 CoverageLedger의 미검토 행과 범위 밖 함수 전체"
+  ]
+}

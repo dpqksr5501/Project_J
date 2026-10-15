@@ -23,6 +23,7 @@
 #include "Components/Project_JMountedAnimationLayerComponent.h"
 #include "Components/Project_JCombatAnimationLayerComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
 #include "Mount/Project_JMountComponent.h"
 #include "Mount/Project_JMountCharacter.h"
@@ -75,16 +76,16 @@ bool FProjectJEquipmentGrantOwnershipTest::RunTest(const FString&)
 	TestEqual(TEXT("Equipment modifies original ASC"), OldStats->GetMaxHealth(), 150.0f);
 	TestEqual(TEXT("Equipment grants an ability"), Old->GetActivatableAbilities().Num(), 1);
 	Rider->CurrentASC = New;
-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
+	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Unequip after avatar swap restores original stat"), OldStats->GetMaxHealth(), 100.0f);
 	TestEqual(TEXT("Replacement ASC is untouched"), NewStats->GetMaxHealth(), 200.0f);
 	TestEqual(TEXT("Original grant is retired"), Old->GetActivatableAbilities().Num(), 0);
-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
+	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Repeated cleanup is idempotent"), OldStats->GetMaxHealth(), 100.0f);
 	Rider->CurrentASC = Old;
 	Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
 	Rider->CurrentASC = nullptr;
-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
+	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Losing current ASC still retires old grants"), Old->GetActivatableAbilities().Num(), 0);
 	TestEqual(TEXT("Losing current ASC still reverses fallback"), OldStats->GetMaxHealth(), 100.0f);
 	Rider->CurrentASC = Old;
@@ -94,14 +95,14 @@ bool FProjectJEquipmentGrantOwnershipTest::RunTest(const FString&)
 	GE.ModifierOp = EGameplayModOp::Additive; GE.ModifierMagnitude = FScalableFloat(25);
 	Ledger.GrantedEffectHandles.Add(Old->ApplyGameplayEffectToSelf(Buff, 1, Old->MakeEffectContext()));
 	Rider->CurrentASC = New;
-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
+	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Active effects and fallback retire on original ASC together"), OldStats->GetMaxHealth(), 100.0f);
 	Item->StatApplicationPolicy = EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers;
 	Item->EquipmentEffects.Add(UGameplayEffect::StaticClass());
 	Rider->CurrentASC = Old; Runtime->ApplyEquipmentGameplay(*Rider, *Item, Ledger);
-	TestTrue(TEXT("Instant equipment effect is never retained/applied as a removable buff"), Ledger.GrantedEffectHandles.IsEmpty());
+	TestEqual(TEXT("Invalid instant effect yields only one removable native stat fallback"), Ledger.GrantedEffectHandles.Num(), 1);
 	TestEqual(TEXT("Invalid effect uses exactly one stat fallback"), OldStats->GetMaxHealth(), 150.0f);
-	Runtime->RemoveEquipmentGameplay(*Rider, *Item, Ledger);
+	Runtime->RemoveEquipmentGameplay(Ledger);
 	TestEqual(TEXT("Fallback remains reversible"), OldStats->GetMaxHealth(), 100.0f);
 	return true;
 }
@@ -306,6 +307,16 @@ bool FProjectJPlayerVisibilityTest::RunTest(const FString&)
 	TestFalse(TEXT("No visible renderer suspends semantic presentation"), Locomotion->WasRecentlyRendered(0.25f));
 	Leader->SetLastRenderTime(W.World->GetTimeSeconds());
 	TestFalse(TEXT("Hidden leader shadow timestamp cannot override visual demand"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
+	auto* DynamicVisual = NewObject<USkeletalMeshComponent>(Player);
+	DynamicVisual->SetLastRenderTime(W.World->GetTimeSeconds());
+	TestFalse(TEXT("Unregistered recent skeletal component is not demand"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
+	DynamicVisual->RegisterComponent(); DynamicVisual->SetLastRenderTime(W.World->GetTimeSeconds());
+	TestTrue(TEXT("Registration is visible immediately within the same frame"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
+	DynamicVisual->UnregisterComponent();
+	TestFalse(TEXT("Unregistration retires demand immediately within the same frame"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
+	auto* StaticVisual = NewObject<UStaticMeshComponent>(Player); StaticVisual->RegisterComponent();
+	StaticVisual->SetLastRenderTime(W.World->GetTimeSeconds());
+	TestFalse(TEXT("Recently rendered non-skeletal component preserves the existing criterion"), Anim->WasOwnerVisualRecentlyRendered(0.25f));
 	Leader->SetHiddenInGame(false);
 	TestTrue(TEXT("Visible leader remains a supported renderer"), Trajectory->ShouldGenerateTrajectory(*Player));
 	return true;

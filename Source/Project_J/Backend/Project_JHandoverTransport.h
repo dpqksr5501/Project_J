@@ -76,7 +76,8 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	void SetResponseOutcome(EProject_JHandoverTransportOutcome InOutcome) { ResponseOutcome = InOutcome; }
-	void SetResponseDelay(float InSeconds) { ResponseDelaySeconds = FMath::Max(0.0f, InSeconds); }
+	/** Nonfinite input preserves the last valid delay; finite negative input retains the existing immediate-response policy. */
+	void SetResponseDelay(float InSeconds) { if (FMath::IsFinite(InSeconds)) ResponseDelaySeconds = FMath::Max(0.0f, InSeconds); }
 	void SetDropResponses(bool bInDropResponses) { bDropResponses = bInDropResponses; }
 
 private:

@@ -64,6 +64,8 @@ flowchart LR
 
 ## 소유권과 복구
 
+2026-10-14 계속 작업에서는 source fallback의 정책 적용을 follower 대상 수명에 묶는다. 동일 policy라도 새 follower/새 animation 수명에는 다시 적용하고, 종료·대상 교체 때 대여 전 tick을 반환한다. coordinator는 이 대여를 먼저 반환한 뒤 authored tick을 캡처한다. 실제 외부 tick allocator가 소유하는 동안 source는 쓰지 않는다. 설정 활성만으로 메시 소유를 단정하거나 매 frame tick을 재설정하지 않는다. 새 구현과 검증 상태는 [현재 감사 기록](../../Review/Audits/Project_J_Continuation_Audit_2026-10-14.md)에 분리한다.
+
 시각 메시를 약한 참조로 관리하고 구성 변경을 주기적으로 확인한다. 등록 시 URO·tick·visibility와 추가한 의존 관계를 기록한다. 비활성화·파괴·월드 종료 시 복구한다. 다른 external controller가 이미 관리하는 메시, modular 메시, Leader Pose 공유 메시, 자체 전체 루트 모션 메시는 새로 소유하지 않는다. 관리 도중 역할이 바뀌는 메시도 해제한다.
 
 - 전역 비교/복구: `ProjectJ.VisualAnimationBudget.Enabled 0`.

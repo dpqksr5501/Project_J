@@ -1,0 +1,80 @@
+{
+  "scope_ko": "레지스트리 근거로 지정한 class/style/native persistent-owner 및 NPC BP CDO의 공개 속성만 읽음. 전수 BP/DA 인스턴스/그래프·실서비스 검토 아님.",
+  "asset_mutation": false,
+  "asset_save": false,
+  "records": [
+    {
+      "object": "/Game/DataAssetSets/Class/DA_Class_Greatsword.DA_Class_Greatsword",
+      "values": {
+        "class_id": "GreatSword",
+        "schema_version": 1,
+        "starting_level": 1,
+        "ability_sets": [
+          "/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base",
+          "/Game/AS/AS_Humanoid_Core.AS_Humanoid_Core"
+        ],
+        "default_combat_style": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword"
+      },
+      "unverified": []
+    },
+    {
+      "object": "/Game/DataAssetSets/CombatStyle/DA_CombatStyle_Greatsword.DA_CombatStyle_Greatsword",
+      "values": {
+        "combat_style_tag": "<Struct 'GameplayTag' (0x000002BDC76EDD80) {}>",
+        "schema_version": 1,
+        "ability_sets": [
+          "/Game/AS/AS_Greatsword_Base.AS_Greatsword_Base"
+        ],
+        "inline_abilities": [],
+        "inline_effects": [],
+        "attack_set": "/Game/DataAssetSets/AttackSet/DA_AttackSet_Greatsword.DA_AttackSet_Greatsword"
+      },
+      "unverified": [
+        {
+          "property": "b_derive_attack_catalog",
+          "error": "Project_JCombatStyleDefinition: Failed to find property 'b_derive_attack_catalog' for attribute 'b_derive_attack_catalog' on 'Project_JCombatStyleDefinition'",
+          "meaning_ko": "공개 API 조회 제한/환경 미검증; 우회 없음"
+        }
+      ]
+    },
+    {
+      "object": "/Script/Project_J.Default__Project_JPlayerState",
+      "progression": [
+        {
+          "object": "/Script/Project_J.Default__Project_JPlayerState:Progression",
+          "values": {
+            "maximum_level": 100,
+            "experience_requirements": []
+          },
+          "unverified": []
+        }
+      ]
+    },
+    {
+      "object": "/Script/Project_JCharacter.Default__Project_JNPCCharacter",
+      "progression": [
+        {
+          "object": "/Script/Project_JCharacter.Default__Project_JNPCCharacter:Progression",
+          "values": {
+            "maximum_level": 100,
+            "experience_requirements": []
+          },
+          "unverified": []
+        }
+      ]
+    },
+    {
+      "object": "/Game/NPCs/BP_NPC_Test.Default__BP_NPC_Test_C",
+      "progression": [
+        {
+          "object": "/Game/NPCs/BP_NPC_Test.Default__BP_NPC_Test_C:Progression",
+          "values": {
+            "maximum_level": 100,
+            "experience_requirements": []
+          },
+          "unverified": []
+        }
+      ]
+    }
+  ]
+}

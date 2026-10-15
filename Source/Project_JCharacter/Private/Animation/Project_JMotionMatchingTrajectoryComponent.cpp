@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Animation/Project_JMotionMatchingTrajectoryComponent.h"
+#include "Animation/AnimInstance.h"
 #include "Animation/Project_JCombatAnimProfile.h"
 #include "Animation/Project_JLocomotionProfile.h"
 #include "Animation/Project_JTrajectoryQuery.h"

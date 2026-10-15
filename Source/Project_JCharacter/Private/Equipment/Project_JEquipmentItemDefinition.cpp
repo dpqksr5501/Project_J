@@ -60,6 +60,11 @@ EDataValidationResult UProject_JEquipmentItemDefinition::IsDataValid(FDataValida
 				FText::AsNumber(ModifierIndex)));
 		}
 	}
+	FProject_JEquipmentStatValues StatValues;
+	if (!FProject_JEquipmentStatValues::TryResolve(StatModifiers, StatValues))
+	{
+		Project_J::DataValidation::AddError(Context, bHasError, NSLOCTEXT("ProjectJEquipmentItemDefinition", "InvalidStatTuple", "Equipment stats require known stat types, finite values and finite representable per-stat totals."));
+	}
 
 	if (EquipmentSlot == EProject_JEquipmentSlot::Weapon && !CombatStyleDefinition)
 	{

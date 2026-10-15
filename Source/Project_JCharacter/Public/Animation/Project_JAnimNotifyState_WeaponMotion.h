@@ -17,9 +17,13 @@ class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_WeaponMotion : public UAn
 	GENERATED_BODY()
 
 public:
+	virtual void BeginDestroy() override;
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 
 	/** Empty means follow the source montage's drawn weapon socket without an extra offset. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Motion", meta = (TitleProperty = "NormalizedTime"))
@@ -45,6 +49,9 @@ public:
 	float SecondaryGripIKAlpha = 1.0f;
 
 private:
+	friend class FProjectJSharedNotifyGCLifetime;
+	void PruneCollectedMeshes();
+	FDelegateHandle PostGCHandle;
 	struct FRuntimeState
 	{
 		TWeakObjectPtr<class UProject_JWeaponPresentationComponent> Presentation;

@@ -5,11 +5,11 @@
 #include "Components/Project_JModularMeshComponent.h"
 #include "Animation/Project_JPresentationMeshResolver.h"
 #include "Equipment/Project_JEquipmentItemDefinition.h"
+#include "Equipment/Project_JGameplayEffect_EquipmentStats.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "GameplayEffect.h"
-#include "Project_JAttributeSet.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "System/Project_JAssetManager.h"
 #include "System/Project_JVisualAssetSubsystem.h"
@@ -133,7 +133,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentEquipped(EProject_JEquipmen
 	if (bIsEndingPlay || IsBeingDestroyed() || RequestedBindingRevision != BindingRevision ||
 		OwnerCharacter->IsActorBeingDestroyed() || RuntimeItems.Contains(Slot))
 	{
-		RemoveEquipmentGameplay(*OwnerCharacter, *ItemDef, NewRuntimeItem);
+		RemoveEquipmentGameplay(NewRuntimeItem);
 		return;
 	}
 
@@ -153,13 +153,7 @@ void UProject_JEquipmentRuntimeComponent::OnEquipmentUnequipped(EProject_JEquipm
 	FProject_JEquipmentRuntimeItem RuntimeItem;
 	if (!RuntimeItems.RemoveAndCopyValue(Slot, RuntimeItem)) return;
 	if (Slot == EProject_JEquipmentSlot::Weapon) { WeaponRevoked.Broadcast(); }
-	UProject_JEquipmentItemDefinition* RuntimeItemDef = RuntimeItem.ItemDef ? RuntimeItem.ItemDef : ItemDef;
-
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (OwnerCharacter && RuntimeItemDef)
-	{
-		RemoveEquipmentGameplay(*OwnerCharacter, *RuntimeItemDef, RuntimeItem);
-	}
+	RemoveEquipmentGameplay(RuntimeItem);
 
 	DestroyEquipmentVisual(RuntimeItem);
 
@@ -178,7 +172,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	RuntimeItem.GrantedAbilitySystem = ASC;
 	if (ASC && ItemDef.AbilitySet)
 	{
-		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetName()));
+		const FName GrantSource(*FString::Printf(TEXT("Equipment.%d.%s"), static_cast<int32>(ItemDef.EquipmentSlot), *ItemDef.GetPathName()));
 		ItemDef.AbilitySet->GiveToAbilitySystem(ASC, &RuntimeItem.GrantedHandles, const_cast<UProject_JEquipmentItemDefinition*>(&ItemDef), GrantSource);
 	}
 	if (ASC && ItemDef.CombatStyleDefinition)
@@ -202,22 +196,16 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 	}
 }
 
-void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(ACharacter& OwnerCharacter, const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
+void UProject_JEquipmentRuntimeComponent::RemoveEquipmentGameplay(FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
-	if (!OwnerCharacter.HasAuthority())
-	{
-		return;
-	}
-
 	UAbilitySystemComponent* ASC = RuntimeItem.GrantedAbilitySystem.Get();
-	if (ASC)
+	if (ASC && ASC->IsOwnerActorAuthoritative())
 	{
 		GetDefault<UProject_JAbilitySet>()->TakeFromAbilitySystem(ASC, &RuntimeItem.GrantedHandles);
 		RemoveEquipmentEffects(*ASC, RuntimeItem);
 	}
 	RuntimeItem.GrantedHandles = FProject_JAbilitySet_GrantedHandles();
 	RuntimeItem.GrantedEffectHandles.Reset();
-	RuntimeItem.bAppliedStatModifierFallback = false;
 	RuntimeItem.GrantedAbilitySystem.Reset();
 }
 
@@ -417,8 +405,7 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 {
 	if (ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::StatModifiersOnly)
 	{
-		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
-		RuntimeItem.bAppliedStatModifierFallback = true;
+		ApplyEquipmentStatModifiers(ASC, ItemDef, RuntimeItem);
 		return;
 	}
 
@@ -450,19 +437,12 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentEffects(UAbilitySystemCo
 	if (RuntimeItem.GrantedEffectHandles.IsEmpty() &&
 		ItemDef.StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsThenStatModifiers)
 	{
-		ApplyEquipmentStatModifiers(ASC, &ItemDef, 1.0f);
-		RuntimeItem.bAppliedStatModifierFallback = true;
+		ApplyEquipmentStatModifiers(ASC, ItemDef, RuntimeItem);
 	}
 }
 
 void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemComponent& ASC, FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
-	if (RuntimeItem.bAppliedStatModifierFallback)
-	{
-		ApplyEquipmentStatModifiers(ASC, RuntimeItem.ItemDef, -1.0f);
-		RuntimeItem.bAppliedStatModifierFallback = false;
-	}
-
 	for (const FActiveGameplayEffectHandle& EffectHandle : RuntimeItem.GrantedEffectHandles)
 	{
 		if (EffectHandle.IsValid())
@@ -474,40 +454,12 @@ void UProject_JEquipmentRuntimeComponent::RemoveEquipmentEffects(UAbilitySystemC
 	RuntimeItem.GrantedEffectHandles.Reset();
 }
 
-void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(UAbilitySystemComponent& AbilitySystem, const UProject_JEquipmentItemDefinition* ItemDef, float Sign) const
+void UProject_JEquipmentRuntimeComponent::ApplyEquipmentStatModifiers(UAbilitySystemComponent& ASC,
+	const UProject_JEquipmentItemDefinition& ItemDef, FProject_JEquipmentRuntimeItem& RuntimeItem) const
 {
-	AActor* OwnerActor = GetOwner();
-	UAbilitySystemComponent* ASC = &AbilitySystem;
-	if (!ItemDef || !OwnerActor || !OwnerActor->HasAuthority()) return;
-
-	for (const FProject_JEquipmentStatModifier& Modifier : ItemDef->StatModifiers)
+	const auto Handle = UProject_JGameplayEffect_EquipmentStats::ApplyBonuses(ASC, ItemDef.StatModifiers, &ItemDef);
+	if (Handle.IsValid())
 	{
-		if (!FMath::IsFinite(Modifier.Value) || FMath::IsNearlyZero(Modifier.Value)) continue;
-
-		const float SignedValue = Modifier.Value * Sign;
-		switch (Modifier.Stat)
-		{
-		case EProject_JEquipmentStat::MaxHealth:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxHealthAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::MaxMana:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetMaxManaAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::AttackPower:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetAttackPowerAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		case EProject_JEquipmentStat::Defense:
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetDefenseAttribute(), EGameplayModOp::Additive, SignedValue);
-			break;
-		}
-	}
-
-	if (const UProject_JAttributeSet* AttributeSet = Cast<UProject_JAttributeSet>(ASC->GetAttributeSet(UProject_JAttributeSet::StaticClass())))
-	{
-		if (AttributeSet->GetHealth() > AttributeSet->GetMaxHealth())
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetHealthAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxHealth());
-
-		if (AttributeSet->GetMana() > AttributeSet->GetMaxMana())
-			ASC->ApplyModToAttribute(UProject_JAttributeSet::GetManaAttribute(), EGameplayModOp::Override, AttributeSet->GetMaxMana());
+		RuntimeItem.GrantedEffectHandles.Add(Handle);
 	}
 }

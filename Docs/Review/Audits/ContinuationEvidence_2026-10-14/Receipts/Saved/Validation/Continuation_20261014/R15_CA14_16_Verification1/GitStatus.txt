@@ -1,0 +1,93 @@
+M .gitattributes
+ M Docs/Animation/Authoring/Weapon_Hand_Contact_System.md
+ M Docs/Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md
+ M Docs/Gameplay/Authoring/Content_Authoring_System.md
+ M Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Complete_Audit_Continuation_2026-10-14.md
+ M Docs/Maintenance/Document_Catalog.md
+ M Docs/Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md
+ M Docs/README.md
+ M README.md
+ M Scripts/Validation/Export-DTrace.ps1
+ M Scripts/Validation/Measure-AuthoredAnimation.ps1
+ M Scripts/Validation/Measure-CookedCombat.ps1
+ M Scripts/Validation/Measure-Network.ps1
+ M Scripts/Validation/Measure-RenderedCrowd.ps1
+ M Source/Project_J/Backend/Project_JHandoverManager.cpp
+ M Source/Project_J/Backend/Project_JHandoverManager.h
+ M Source/Project_J/Backend/Project_JHandoverTransport.cpp
+ M Source/Project_J/Backend/Project_JHandoverTransport.h
+ M Source/Project_J/Game/Project_JInputLeaseSubsystem.cpp
+ M Source/Project_J/Game/Project_JQuestComponent.cpp
+ M Source/Project_J/Private/Tests/Project_JUIPreferenceTests.cpp
+ M Source/Project_J/Project_J.Build.cs
+ M Source/Project_J/UI/Project_JEquipmentComparison.cpp
+ M Source/Project_JAnimationNodes/Private/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.cpp
+ M Source/Project_JAnimationNodes/Public/Animation/Project_JStrafeUpperBodyFacingEditorLibrary.h
+ M Source/Project_JCharacter/Private/AbilitySystem/Project_JAbilitySet.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_TwoHandIK.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponGroundContact.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JAnimNotifyState_WeaponMotion.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JAnimationProfileValidation.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Budget.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JLocomotionProfile.cpp
+ M Source/Project_JCharacter/Private/Animation/Project_JPresentationMeshResolver.cpp
+ M Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp
+ M Source/Project_JCharacter/Private/Combat/Project_JCombatStyleDefinition.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JAnimationUpdateCoordinatorComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JEquipmentRuntimeComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JPlayerInputBindingComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JSkillInputRouterComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JTargetScoringComponent.cpp
+ M Source/Project_JCharacter/Private/Components/Project_JWeaponPresentationComponent.cpp
+ M Source/Project_JCharacter/Private/Equipment/Project_JEquipmentItemDefinition.cpp
+ M Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp
+ M Source/Project_JCharacter/Private/Project_JPlayerCharacter.cpp
+ M Source/Project_JCharacter/Private/System/Project_JNPCDecisionSubsystem.cpp
+ M Source/Project_JCharacter/Private/Tests/Project_JPlayerMaturityTests.cpp
+ M Source/Project_JCharacter/Public/AbilitySystem/Project_JAbilitySet.h
+ M Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponGroundContact.h
+ M Source/Project_JCharacter/Public/Animation/Project_JAnimNotifyState_WeaponMotion.h
+ M Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h
+ M Source/Project_JCharacter/Public/Animation/Project_JOneShotInputResponse.h
+ M Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JEquipmentRuntimeComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JPlayerInputBindingComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JTargetScoringComponent.h
+ M Source/Project_JCharacter/Public/Components/Project_JWeaponPresentationComponent.h
+ M Source/Project_JCharacter/Public/Equipment/Project_JWeaponMotionTypes.h
+ M Source/Project_JCharacter/Public/Project_JBaseCharacter.h
+ M Source/Project_JCharacter/Public/Project_JPlayerCharacter.h
+ M Source/Project_JCharacterEditor/Private/Project_JCharacterEditorModule.cpp
+ M Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionEditingTests.cpp
+ M Source/Project_JCharacterEditor/Private/WeaponMotionEditing.h
+ M Source/Project_JCharacterEditor/Project_JCharacterEditor.Build.cs
+ M Source/Project_JCore/Private/System/Project_JMessageSubsystem.cpp
+ M Source/Project_JCore/Private/Tests/Project_JMessageRouterTests.cpp
+ M Source/Project_JCore/Private/Tests/Project_JMessageTestReceiver.h
+ M Source/Project_JGAS/Public/Project_JStatTypes.h
+?? Docs/Handoffs/WholeProjectAudit_2026-10-14/Project_J_Continuation_Checkpoint_2026-10-14_2300.md
+?? Docs/Review/Audits/ContinuationEvidence_2026-10-14/
+?? Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-14.md
+?? Docs/Review/Audits/Project_J_Continuation_Audit_2026-10-15.md
+?? Docs/Review/Audits/Project_J_Continuation_Structure_Map_2026-10-14.md
+?? Scripts/Audit/
+?? Source/Project_J/Private/Tests/Project_JHandoverContractActor.h
+?? Source/Project_J/Private/Tests/Project_JHandoverContractTests.cpp
+?? Source/Project_J/Private/Tests/Project_JInputLeaseCallbackFixture.h
+?? Source/Project_J/Private/Tests/Project_JInputLeaseCallbackTests.cpp
+?? Source/Project_J/Private/Tests/Project_JLevelHandoverAdmissionTests.cpp
+?? Source/Project_J/Private/Tests/Project_JNPCRegistrationCallbackTests.cpp
+?? Source/Project_J/Private/Tests/Project_JRewardTransportAdmissionTests.cpp
+?? Source/Project_J/Testing/Project_JSharedNotifyPerformance.cpp
+?? Source/Project_JAnimationNodes/Private/Tests/Project_JFacingFailureTestSchema.h
+?? Source/Project_JAnimationNodes/Private/Tests/Project_JFacingInstallerAtomicTests.cpp
+?? Source/Project_JCharacter/Private/Equipment/Project_JGameplayEffect_EquipmentStats.cpp
+?? Source/Project_JCharacter/Private/Equipment/Project_JGameplayEffect_EquipmentStats.h
+?? Source/Project_JCharacter/Private/Tests/Project_JActiveInputCallbackTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JContinuationContractsTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JEquipmentGrantIdentityTests.cpp
+?? Source/Project_JCharacter/Private/Tests/Project_JEquipmentStatContractTests.cpp
+?? Source/Project_JCharacterEditor/Private/Tests/Project_JWeaponMotionAssetValidationTests.cpp
+?? Source/Project_JCharacterEditor/Private/Validation/

@@ -1,0 +1,18 @@
+{
+  "recorded_utc": "2026-10-15T02:01:39.235524+00:00",
+  "read_only_agents": 3,
+  "mutations_execution_owner": "주 작업자",
+  "native_body_gap_closure_ko": "기존 actual-whole manifest/caller 대조를 재사용하고 NPC4쌍의 남은 scaffold/manual-query/inline과 TwoHandIK33줄의 include/footer/함수목록 공백만 추가 확인. 파일 수·Success로 본문 완료를 추정하지 않음.",
+  "catalog_ko": "JSON canonical→inl/MD generated. id/label/domain/stateOwner/dependencies205개 순서포함 일치·중복/누락0, default validator read-only 통과. 205개 구현/운영 설치 의미 아님.",
+  "manifest": "Docs/Review/Audits/ContinuationEvidence_2026-10-14/AdditionalReadScopes.json",
+  "retained_ko": [
+    "PS authoritative state와 avatar projection/input receipt 분리",
+    "GT cache/frozen snapshot/worker completion/GC pins 분리",
+    "logical 취소와 physical slot·MoveId completion 분리",
+    "GAS press/release 차이·original ASC/alias·public legacy wrappers",
+    "reflected BP TIP entry·socket/alpha/Chooser mirrors·serialized legacy fields",
+    "shared authored notify와 component playback-ID lease",
+    "MMO generated catalog와 공개 service port의 확장 계약"
+  ],
+  "whole_project_audit_complete": false
+}

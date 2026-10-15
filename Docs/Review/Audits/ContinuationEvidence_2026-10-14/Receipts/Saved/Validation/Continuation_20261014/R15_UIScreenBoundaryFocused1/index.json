@@ -1,0 +1,44 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "7BE383754DA41E2E59AD74B933C81657",
+			"instanceName": "DESKTOP-5T07C91-8504",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9711] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.15-01.55.30",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.01108979806303978,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "CreationFailureHasNoSubscriptions",
+			"fullTestPath": "ProjectJ.UI.Screen.CreationFailureHasNoSubscriptions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"7BE383754DA41E2E59AD74B933C81657"
+			],
+			"duration": 0.01108979806303978,
+			"dateTime": "2026.10.15-01.55.30",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

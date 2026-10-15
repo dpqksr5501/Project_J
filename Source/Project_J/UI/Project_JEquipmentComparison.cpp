@@ -16,13 +16,10 @@ EProject_JEquipmentBonusPreview PreviewMode(const UProject_JEquipmentItemDefinit
 	return Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly
 		? EProject_JEquipmentBonusPreview::GameplayEffects : EProject_JEquipmentBonusPreview::ConditionalFallback;
 }
-float FixedBonus(const UProject_JEquipmentItemDefinition *Definition, EProject_JEquipmentStat Stat)
+bool FixedBonuses(const UProject_JEquipmentItemDefinition *Definition, FProject_JEquipmentStatValues& Out)
 {
-	if (!Definition || Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly) return 0;
-	double Value = 0;
-	for (const auto &Modifier : Definition->StatModifiers)
-		if (Modifier.Stat == Stat && FMath::IsFinite(Modifier.Value) && !FMath::IsNearlyZero(Modifier.Value)) Value += Modifier.Value;
-	return static_cast<float>(Value);
+	if (!Definition || Definition->StatApplicationPolicy == EProject_JEquipmentStatApplicationPolicy::GameplayEffectsOnly) return true;
+	return FProject_JEquipmentStatValues::TryResolve(Definition->StatModifiers, Out);
 }
 }
 FProject_JEquipmentComparison FProject_JEquipmentComparison::Build(const UProject_JEquipmentItemDefinition *Candidate,
@@ -33,12 +30,15 @@ FProject_JEquipmentComparison FProject_JEquipmentComparison::Build(const UProjec
 	Result.EquippedMode = PreviewMode(Equipped);
 	Result.bCanCompare = Result.CandidateMode == EProject_JEquipmentBonusPreview::Fixed &&
 		Result.EquippedMode == EProject_JEquipmentBonusPreview::Fixed;
-	for (int32 Index = 0; Index < 4; ++Index)
+	FProject_JEquipmentStatValues CandidateValues, EquippedValues;
+	const bool bValidBonuses = FixedBonuses(Candidate, CandidateValues) && FixedBonuses(Equipped, EquippedValues);
+	Result.bCanCompare &= bValidBonuses;
+	for (int32 Index = 0; bValidBonuses && Index < FProject_JEquipmentStatValues::NumStats; ++Index)
 	{
 		FProject_JEquipmentComparisonRow Row;
 		Row.Stat = static_cast<EProject_JEquipmentStat>(Index);
-		Row.Candidate = FixedBonus(Candidate, Row.Stat);
-		Row.Equipped = FixedBonus(Equipped, Row.Stat);
+		Row.Candidate = CandidateValues.Values[Index];
+		Row.Equipped = EquippedValues.Values[Index];
 		Row.Difference = Row.Candidate - Row.Equipped;
 		if (!FMath::IsFinite(Row.Candidate) || !FMath::IsFinite(Row.Equipped) || !FMath::IsFinite(Row.Difference))
 		{

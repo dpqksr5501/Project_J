@@ -1,0 +1,136 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "576EE777472DCB5BE746DFBA0653EDB2",
+			"instanceName": "DESKTOP-5T07C91-34752",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-20.28.31",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 2,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.075001105666160583,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "NPCCommitSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCCommitSuperseded",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"576EE777472DCB5BE746DFBA0653EDB2"
+			],
+			"duration": 0.056703701615333557,
+			"dateTime": "2026.10.14-20.28.31",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'An older target cannot commit after IsDead switches intent' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp",
+					"lineNumber": 65,
+					"timestamp": "2026.10.14-20.28.31"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCGrantRegistrationSuperseded",
+			"fullTestPath": "ProjectJ.Continuation.NPCGrantRegistrationSuperseded",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"576EE777472DCB5BE746DFBA0653EDB2"
+			],
+			"duration": 0.011005699634552002,
+			"dateTime": "2026.10.14-20.28.31",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Grant callback registration change supersedes old activation' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp",
+					"lineNumber": 99,
+					"timestamp": "2026.10.14-20.28.31"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'Old activation cannot own the new registration's action' to be false.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp",
+					"lineNumber": 102,
+					"timestamp": "2026.10.14-20.28.31"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Expected 'No leaked old activation grant' to be 0, but it was 1.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-20.28.31"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Old activation cannot start pursuit: The two values are not equal.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\I\\Documents\\GitHub\\Project_J\\Source\\Project_J\\Private\\Tests\\Project_JNPCCallbackContractTests.cpp",
+					"lineNumber": 103,
+					"timestamp": "2026.10.14-20.28.31"
+				}
+			],
+			"warnings": 0,
+			"errors": 4,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NPCLifeRetired",
+			"fullTestPath": "ProjectJ.Continuation.NPCLifeRetired",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"576EE777472DCB5BE746DFBA0653EDB2"
+			],
+			"duration": 0.007291700690984726,
+			"dateTime": "2026.10.14-20.28.31",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

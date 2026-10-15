@@ -1,0 +1,251 @@
+[
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Baseline/State.json",
+    "sha256": "d69b9c8d971124739c615568ab389e7b79d9ce02b01656b77199cd171f49cb30",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Baseline/State.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Baseline/Files.json",
+    "sha256": "19f871e15c98ba1e7752e616c4b05adc9184169277f26cfa4076379904d3e94e",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Baseline/Files.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/FinalFocusedSelection.json",
+    "sha256": "b6fe20f2a43dcf263ca002f2a702d30a97394c9dbb52308d454181e05e52c956",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/FinalFocusedSelection.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor1/Query2Parsed.json",
+    "sha256": "d03bd916865f9184894496985d5563eb14e8aaf129ae994f0a392aaf6248ae7e",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor1/Query2Parsed.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor1/Query3Parsed.json",
+    "sha256": "3296ea9a2465ff7db1c944ccc46af9aeac24d94ae4813e89f2dfa71f8fc91b6e",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor1/Query3Parsed.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor1/CombatBeforeParsed.json",
+    "sha256": "ca6a81f622e269f9e5097473da1e5f4ac142f707db82636ee6e3d764ebf9f03c",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor1/CombatBeforeParsed.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor1/IdleEditorStop.json",
+    "sha256": "31c913c5da49a1bf112030b096e3c7c29cc7893cfd0a2e0db922ca340d84d3bf",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor1/IdleEditorStop.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor2/RetirePlaceholders.json",
+    "sha256": "54645a5f264085c8e4d27b44b7661af575bd95ec02c0545bd91adde11f051d83",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor2/RetirePlaceholders.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor2/Exit.json",
+    "sha256": "b75066c21fcb5540bfa4f863338ceebe24bc11643873de293f17f1b31108725f",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor2/Exit.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor3/Nodes1Parsed.json",
+    "sha256": "3a6fdf540dea03652f72f8d7128c8585c815cd19d05874f7f636c7cda9a40216",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor3/Nodes1Parsed.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor3/Exit.json",
+    "sha256": "b75066c21fcb5540bfa4f863338ceebe24bc11643873de293f17f1b31108725f",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor3/Exit.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor4/RetireDuplicateMMWriter4.json",
+    "sha256": "68802f4383102091d4db16489e513649d9926b3ea9e8a92fcee70307424d089b",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor4/RetireDuplicateMMWriter4.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor4/BindingRead.json",
+    "sha256": "ffd2eeed8f9cc0e2dc8054abac013b3f362eae940e32ae20d522c7b07da0ada2",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor4/BindingRead.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor4/Exit.json",
+    "sha256": "b75066c21fcb5540bfa4f863338ceebe24bc11643873de293f17f1b31108725f",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Editor4/Exit.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload1/Verification.json",
+    "sha256": "1f42dc07a8163c3080ba73fbe632386d20143c184302b285f5d3d5b88d5b57d1",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Reload1/Verification.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload1/Process.json",
+    "sha256": "8fe8f973c2c07baee1ee9223c50aa99a4732e30662ef1b1ae37eaea42e99839c",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Reload1/Process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload2/Verification.json",
+    "sha256": "a917b41f0fc13945ca33b5ce739e8d2d63b986003c32c7c15df343d650c4f5a2",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Reload2/Verification.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload2/Process.json",
+    "sha256": "c4cac63a51df6cc7e6867136b984a28f005b1e7b57982e52ed317a769674b3f4",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Reload2/Process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Cook1/Process.json",
+    "sha256": "462ec8326f57dbe37d111c84b7bd72040dd9f27991d3eab5c91a057b9a6b737b",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Cook1/Process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Cook2/Process.json",
+    "sha256": "d1c64bae8dbc2e95aaddffa7e9bd304de7c34575e0a034bbebc01e3a7fb3328d",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Cook2/Process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Cook2/Arguments.json",
+    "sha256": "12ea27ddd6a70a045871467f5d3bc414b0499d8d424204b8ffe4d2aac1144bc2",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/Cook2/Arguments.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/FinalProcesses.json",
+    "sha256": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f",
+    "portable_copy": "Receipts/Validation/AssetCleanup_20261015/FinalProcesses.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceTestBuild1/process.json",
+    "sha256": "b63eb5497e243216272e83155ef2acec44e661c25ab5d61f8f065a89b3069335",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetInterfaceTestBuild1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild1/process.json",
+    "sha256": "949629cbf17248b5f37d1271a128b0ac3596a8ae2422ceb0b3315dfcff87d9cf",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild2/process.json",
+    "sha256": "f2612faf7c0477b50c169ac58a47de284efbfe6eead4417e4e93d83e6ecc5cb4",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild2/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/index.json",
+    "sha256": "4b0143180fb453ce258a399f43a55992482aeb8278bcce350a2e7f816a66bda7",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/index.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceFocused1/index.json",
+    "sha256": "7a370fe6c3243ccdee594e420833aaf96abcf7222b185dfc1dabfa4f9399d89c",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetInterfaceFocused1/index.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceFocused1/process.json",
+    "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetInterfaceFocused1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/index.json",
+    "sha256": "fc0028bf905b9f7dc6e2e95bcb00d8900d96e60e7c83f96ee71b0e2105c6212a",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/index.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/process.json",
+    "sha256": "4f74c57950ef882e4240c377309e20ab77894155eb556509f96c0259070e06ed",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/index.json",
+    "sha256": "0734e05b0b71b1317dac4aba71406c20a8e6b60697080d3dc34e9669c2b4f6c2",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/index.json"
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/process.json",
+    "sha256": "ffbe9d5ff7447289ea7fa84bdeeed1795ebc2511a1d853f20b8c84b1477d61d3",
+    "portable_copy": "Receipts/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/process.json"
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Cook1/Run.log",
+    "sha256": "03b5aa39229c682fbc7dd294092124b48e953a39d337b5442794206cfe0c3a4b",
+    "bytes": 308913,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Cook2/Run.log",
+    "sha256": "caf20dbb7e7ae59597318f2a65aa7f5bc5fc8c4743a6de2dac4524e5c877e85d",
+    "bytes": 309399,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor1/Run.log",
+    "sha256": "7d61a9f73ca9f1f53c5f2c5a207ff0e0fbd970d45519a9dd7e08588b1308dbf4",
+    "bytes": 323356,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor2/Run.log",
+    "sha256": "683d8f4e6b87f87a54002899b9dfd1921be57ef53e1205e16998eb1895510674",
+    "bytes": 326968,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor3/Run.log",
+    "sha256": "d2dc74cd7970702a391c46d952e43f4b3f503d70c0e9279c6cf1c383d0a85a77",
+    "bytes": 316611,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Editor4/Run.log",
+    "sha256": "36a5eac8e5004304af1cfcaae9c7dcdc67fc909cce66eccb3fa1ab6c4428f2df",
+    "bytes": 325571,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload1/Run.log",
+    "sha256": "9bfa6e3e60f5d550b88168315677a721b56cdfa2683b28d7c993b531cc4a9c33",
+    "bytes": 310315,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/AssetCleanup_20261015/Reload2/Run.log",
+    "sha256": "b22048d7aa17ad551ce29455ae301ac482a5f70b4aa53de1192b72293fd07242",
+    "bytes": 310410,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceTestBuild1/UBT.log",
+    "sha256": "f691b5d5c4011f36fd778b95ee7fcafbd440e1c1953789a8d2ce5d34d96e50a4",
+    "bytes": 15215,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild1/UBT.log",
+    "sha256": "35358c74d65efbc311c12f7fb34b2886b676f99cc0d03603870ba87f0b43ea29",
+    "bytes": 29076,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackTestBuild2/UBT.log",
+    "sha256": "ac2b24dcacd9be66ee33449c694d8e066c1364c6433b27d2740ede6d49a889da",
+    "bytes": 12634,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/Run.log",
+    "sha256": "2fb2003d56df0b14e5a49ec30567162b2aa908e17706f54dda678e2cdbf5faf3",
+    "bytes": 318319,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/Run.log",
+    "sha256": "bc34a092965dfd4331b152e1549603aae9bfab2f48a02aab5fcaeb086625cdad",
+    "bytes": 318105,
+    "portable_copy": null
+  },
+  {
+    "raw_path": "Saved/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/Run.log",
+    "sha256": "1a53cbe91fc15928e023cbb8be668c86eb986756248cae2e5a41ca1f0a11ec3e",
+    "bytes": 467756,
+    "portable_copy": null
+  }
+]

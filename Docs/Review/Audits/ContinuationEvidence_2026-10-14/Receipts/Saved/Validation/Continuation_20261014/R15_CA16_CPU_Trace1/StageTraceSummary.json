@@ -1,0 +1,4174 @@
+{
+  "scope_ko": "별도 A/B trace. 200 actor·120 warmup/120 measured ticks·2반복. exclusive thread elapsed duration을 그룹화. CPU profiler timer는 OS 실제 CPU 사용 시간과 다르며 특히 WaitForTasks는 대기 경과시간이다. worker 누적/대기/inclusive 중첩을 world critical path로 더하지 않는다.",
+  "timers": {
+    "gt_preupdate": [
+      "ProjectJ_AnimProxy_PreUpdate_GameThread"
+    ],
+    "gt_animation": [
+      "ProjectJ_AnimProxy_Update_GameThread",
+      "ProjectJ_AnimThreadSafeUpdate_GameThread"
+    ],
+    "worker_animation": [
+      "ProjectJ_AnimProxy_Update_Worker",
+      "ProjectJ_AnimThreadSafeUpdate_Worker"
+    ],
+    "snapshot": [
+      "ProjectJ_AnimProxy_ConsumeSnapshot"
+    ],
+    "mm_playback": [
+      "ProjectJ_UnifiedLocomotion",
+      "ProjectJ_AnimProxy_ApplyDatabase",
+      "ProjectJ_AnimProxy_ApplySearchPolicy"
+    ],
+    "post_selection": [
+      "ProjectJ_AnimProxy_CapturePostSelection",
+      "ProjectJ_AnimProxy_CompleteReselects"
+    ],
+    "retarget": [
+      "ProjectJ_RetargetBody_Snapshot",
+      "ProjectJ_RetargetProfile_PreUpdate",
+      "ProjectJ_RetargetBody_ContactMath"
+    ],
+    "aba_visual": [
+      "ProjectJ_VisualAnimationBudget",
+      "ProjectJ_CharacterABA_Policy"
+    ],
+    "rigid_body": [
+      "FAnimNode_RigidBody::EvaluateSkeletalControl_AnyThread",
+      "RigidBody_PreUpdate"
+    ],
+    "ability": [
+      "TickAbilityTasks",
+      "FindAbilitySpecFromHandle"
+    ],
+    "weapon_spawn": [
+      "ProjectJ_WeaponPresentation_Refresh",
+      "ProjectJ_WeaponPresentation_Spawn",
+      "ProjectJ_WeaponPresentation_Destroy"
+    ],
+    "combat_vfx": [
+      "ProjectJ_CombatPresentation_Spawn",
+      "ProjectJ_CombatVFX_StopCueLocal"
+    ],
+    "worker_wait": [
+      "WaitForTasks"
+    ],
+    "visual_role": [
+      "ProjectJ_VisualFollowerResolve",
+      "ProjectJ_VisualDemandResolve"
+    ],
+    "follower_tick": [
+      "ProjectJ_FollowerTickPolicy"
+    ],
+    "weapon_notify": [
+      "ProjectJ_WeaponMotionNotify_Begin",
+      "ProjectJ_WeaponMotionNotify_Tick",
+      "ProjectJ_WeaponMotionNotify_End"
+    ],
+    "notify_weak_prune": [
+      "ProjectJ_WeaponMotionNotify_WeakMeshPrune",
+      "ProjectJ_GroundContactNotify_WeakMeshPrune"
+    ],
+    "contact_notify": [
+      "ProjectJ_GroundContactNotify_Begin",
+      "ProjectJ_GroundContactNotify_End",
+      "ProjectJ_TwoHandIKNotify_Begin",
+      "ProjectJ_TwoHandIKNotify_End"
+    ]
+  },
+  "query_meaning_ko": "PCA/KNN=실제 database 검색 경로, BuildQuery=실제 query 생성. MM result observations나 node update를 Search 호출로 계산하지 않는다. 개별 notify Begin/Tick/End 방문량은 기존 trace 범위에서 아직 분리되지 않음.",
+  "whole_trace": {
+    "A": {
+      "stages": {
+        "gt_preupdate": {
+          "exclusive_thread_seconds": 0.721236,
+          "calls": 613131
+        },
+        "gt_animation": {
+          "exclusive_thread_seconds": 0.039181,
+          "calls": 9600
+        },
+        "worker_animation": {
+          "exclusive_thread_seconds": 6.563153,
+          "calls": 1557127
+        },
+        "snapshot": {
+          "exclusive_thread_seconds": 0.334403,
+          "calls": 1184662
+        },
+        "mm_playback": {
+          "exclusive_thread_seconds": 0.7004900000000001,
+          "calls": 1433078
+        },
+        "post_selection": {
+          "exclusive_thread_seconds": 0.457812,
+          "calls": 1143062
+        },
+        "retarget": {
+          "exclusive_thread_seconds": 1.372037,
+          "calls": 1167015
+        },
+        "aba_visual": {
+          "exclusive_thread_seconds": 0.657814,
+          "calls": 771856
+        },
+        "rigid_body": {
+          "exclusive_thread_seconds": 9.202242,
+          "calls": 2338830
+        },
+        "ability": {
+          "exclusive_thread_seconds": 0.034,
+          "calls": 64000
+        },
+        "weapon_spawn": {
+          "exclusive_thread_seconds": 0.092278,
+          "calls": 25600
+        },
+        "combat_vfx": {
+          "exclusive_thread_seconds": 0.001155,
+          "calls": 1600
+        },
+        "worker_wait": {
+          "exclusive_thread_seconds": 117.161139,
+          "calls": 70368
+        },
+        "visual_role": {
+          "exclusive_thread_seconds": 2.63584,
+          "calls": 5848341
+        },
+        "follower_tick": {
+          "exclusive_thread_seconds": 0.159937,
+          "calls": 1387161
+        },
+        "weapon_notify": {
+          "exclusive_thread_seconds": 0,
+          "calls": 0
+        },
+        "notify_weak_prune": {
+          "exclusive_thread_seconds": 0,
+          "calls": 0
+        },
+        "contact_notify": {
+          "exclusive_thread_seconds": 0.001373,
+          "calls": 1600
+        }
+      },
+      "database_query_timers": {
+        "PoseSearch PCA/KNN": {
+          "calls": 110846,
+          "exclusive_thread_seconds": 2.33229
+        },
+        "STAT_PoseSearch_BuildQuery": {
+          "calls": 110846,
+          "exclusive_thread_seconds": 0.528771
+        },
+        "STAT_PoseSearch_ContinuingPose": {
+          "calls": 104038,
+          "exclusive_thread_seconds": 0.511747
+        },
+        "STAT_PoseSearch_UpdateAssetPlayer": {
+          "calls": 478398,
+          "exclusive_thread_seconds": 3.840708
+        }
+      },
+      "world_tick": {
+        "Count": "3840",
+        "Incl": "63.143672",
+        "Excl": "0.001352"
+      }
+    },
+    "B": {
+      "stages": {
+        "gt_preupdate": {
+          "exclusive_thread_seconds": 0.722316,
+          "calls": 613290
+        },
+        "gt_animation": {
+          "exclusive_thread_seconds": 0.038857,
+          "calls": 9600
+        },
+        "worker_animation": {
+          "exclusive_thread_seconds": 6.574128,
+          "calls": 1557542
+        },
+        "snapshot": {
+          "exclusive_thread_seconds": 0.33099,
+          "calls": 1184980
+        },
+        "mm_playback": {
+          "exclusive_thread_seconds": 0.684337,
+          "calls": 1433583
+        },
+        "post_selection": {
+          "exclusive_thread_seconds": 0.431551,
+          "calls": 1143380
+        },
+        "retarget": {
+          "exclusive_thread_seconds": 1.35605,
+          "calls": 1166967
+        },
+        "aba_visual": {
+          "exclusive_thread_seconds": 0.6516519999999999,
+          "calls": 771856
+        },
+        "rigid_body": {
+          "exclusive_thread_seconds": 9.153296,
+          "calls": 2338734
+        },
+        "ability": {
+          "exclusive_thread_seconds": 0.030965,
+          "calls": 64000
+        },
+        "weapon_spawn": {
+          "exclusive_thread_seconds": 0.091215,
+          "calls": 25600
+        },
+        "combat_vfx": {
+          "exclusive_thread_seconds": 0.0009670000000000001,
+          "calls": 1600
+        },
+        "worker_wait": {
+          "exclusive_thread_seconds": 118.135716,
+          "calls": 68648
+        },
+        "visual_role": {
+          "exclusive_thread_seconds": 1.908645,
+          "calls": 5849448
+        },
+        "follower_tick": {
+          "exclusive_thread_seconds": 0.158097,
+          "calls": 1387635
+        },
+        "weapon_notify": {
+          "exclusive_thread_seconds": 0,
+          "calls": 0
+        },
+        "notify_weak_prune": {
+          "exclusive_thread_seconds": 0,
+          "calls": 0
+        },
+        "contact_notify": {
+          "exclusive_thread_seconds": 0.001352,
+          "calls": 1600
+        }
+      },
+      "database_query_timers": {
+        "PoseSearch PCA/KNN": {
+          "calls": 110960,
+          "exclusive_thread_seconds": 2.34997
+        },
+        "STAT_PoseSearch_BuildQuery": {
+          "calls": 110960,
+          "exclusive_thread_seconds": 0.533964
+        },
+        "STAT_PoseSearch_ContinuingPose": {
+          "calls": 104152,
+          "exclusive_thread_seconds": 0.519165
+        },
+        "STAT_PoseSearch_UpdateAssetPlayer": {
+          "calls": 478526,
+          "exclusive_thread_seconds": 3.861975
+        }
+      },
+      "world_tick": {
+        "Count": "3840",
+        "Incl": "61.985624",
+        "Excl": "0.001406"
+      }
+    }
+  },
+  "regions": [
+    {
+      "region": "Timers-ProjectJ.AuthoredAttackDispatch_200_ABA0_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.2e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.016736,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.2e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.015909,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredAttackDispatch_200_ABA0_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.016813,
+              "calls": 3
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.8e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.019297,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredAttackDispatch_200_ABA1_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.2e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.017717,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.1e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.017085,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredAttackDispatch_200_ABA1_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.4e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.016115,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 5.8e-05,
+              "calls": 1400
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 0.017808,
+              "calls": 4
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {},
+          "world_tick": null
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.049309,
+              "calls": 48000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.293091,
+              "calls": 75200
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.023023,
+              "calls": 85600
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.031981,
+              "calls": 88800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.024169,
+              "calls": 75200
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.091186,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.025484,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.5536249999999999,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.007961,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000274,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.342446,
+              "calls": 2048
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.09205200000000001,
+              "calls": 256800
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.011132,
+              "calls": 96600
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.000366,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.022136
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.017855
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3200,
+              "exclusive_thread_seconds": 0.012653
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 13600,
+              "exclusive_thread_seconds": 0.093403
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.941680",
+            "Excl": "0.000062"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.04798,
+              "calls": 48000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.287836,
+              "calls": 75200
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.022379,
+              "calls": 85600
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.031543,
+              "calls": 88800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.022775,
+              "calls": 75200
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.087115,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023168,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.537756,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.007071,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000248,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.157993,
+              "calls": 1913
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.066127,
+              "calls": 256800
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010671,
+              "calls": 96600
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.00032399999999999996,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.022559
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.018752
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3200,
+              "exclusive_thread_seconds": 0.012419
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 13600,
+              "exclusive_thread_seconds": 0.094056
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.789092",
+            "Excl": "0.000051"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA0_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.050716,
+              "calls": 48000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.297883,
+              "calls": 75200
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.023346,
+              "calls": 85600
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.032613,
+              "calls": 88800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.02479,
+              "calls": 75200
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.093798,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.027079,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.591923,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.008357999999999999,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000393,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.518377,
+              "calls": 2061
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.09851399999999999,
+              "calls": 256800
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.011248,
+              "calls": 96600
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.000338,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.02161
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.017293
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3200,
+              "exclusive_thread_seconds": 0.01252
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 13600,
+              "exclusive_thread_seconds": 0.093237
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "3.102167",
+            "Excl": "0.000045"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.048689,
+              "calls": 48000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.288646,
+              "calls": 75200
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.022368,
+              "calls": 85600
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.031749,
+              "calls": 88800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.022236,
+              "calls": 75200
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.088178,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.024773999999999997,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.566349,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.007251,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.00023,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.256704,
+              "calls": 1885
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.067854,
+              "calls": 256800
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010607,
+              "calls": 96600
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.000323,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.021479
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3800,
+              "exclusive_thread_seconds": 0.017763
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3200,
+              "exclusive_thread_seconds": 0.012359
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 13600,
+              "exclusive_thread_seconds": 0.093796
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.867221",
+            "Excl": "0.000043"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.046433,
+              "calls": 45132
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.27004,
+              "calls": 69464
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.021638,
+              "calls": 79864
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.02964,
+              "calls": 81630
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.022789999999999998,
+              "calls": 69464
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.08920800000000001,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.027225,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.54876,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.007963,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000235,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.237047,
+              "calls": 2046
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.08647300000000001,
+              "calls": 242460
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010426,
+              "calls": 90864
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.000349,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3403,
+              "exclusive_thread_seconds": 0.021738
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3403,
+              "exclusive_thread_seconds": 0.015908
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2803,
+              "exclusive_thread_seconds": 0.010837
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 12166,
+              "exclusive_thread_seconds": 0.085775
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.854579",
+            "Excl": "0.000053"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.045333,
+              "calls": 45188
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.270645,
+              "calls": 69576
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.021366,
+              "calls": 79976
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.02987,
+              "calls": 81770
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.021502,
+              "calls": 69576
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.08612600000000001,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.025125,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.53523,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.007425,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000255,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.13192,
+              "calls": 1897
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.063232,
+              "calls": 242740
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010034,
+              "calls": 90976
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.00037,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3426,
+              "exclusive_thread_seconds": 0.021808
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3426,
+              "exclusive_thread_seconds": 0.016496
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2826,
+              "exclusive_thread_seconds": 0.01124
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 12194,
+              "exclusive_thread_seconds": 0.086339
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.767422",
+            "Excl": "0.000047"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_AttackBurst_ABA1_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.047167,
+              "calls": 45134
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.276399,
+              "calls": 69468
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.022414,
+              "calls": 79868
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.030432,
+              "calls": 81635
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.022976,
+              "calls": 69468
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.091271,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.029026999999999997,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.599957,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.008725,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.00025299999999999997,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.364336,
+              "calls": 2023
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.088796,
+              "calls": 242470
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010412,
+              "calls": 90868
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.00031999999999999997,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3414,
+              "exclusive_thread_seconds": 0.021874
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3414,
+              "exclusive_thread_seconds": 0.015935
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2814,
+              "exclusive_thread_seconds": 0.011124
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 12167,
+              "exclusive_thread_seconds": 0.087035
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.961627",
+            "Excl": "0.000048"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.047382,
+              "calls": 45140
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.28194400000000003,
+              "calls": 69480
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.022047,
+              "calls": 79880
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.031142,
+              "calls": 81650
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.02215,
+              "calls": 69480
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.091304,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.028617,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.611716,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0.008261,
+              "calls": 13800
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0.000233,
+              "calls": 400
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.325926,
+              "calls": 1951
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.06488000000000001,
+              "calls": 242500
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.010246,
+              "calls": 90880
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0.000335,
+              "calls": 400
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3419,
+              "exclusive_thread_seconds": 0.021905
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3419,
+              "exclusive_thread_seconds": 0.016636
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2819,
+              "exclusive_thread_seconds": 0.01148
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 12170,
+              "exclusive_thread_seconds": 0.088291
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.934064",
+            "Excl": "0.000057"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA0_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.026146,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.284259,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.012767,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.026098000000000003,
+              "calls": 52800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019706,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009809,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.016224,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.15577,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.876631,
+              "calls": 1950
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.10184399999999999,
+              "calls": 225600
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.005994,
+              "calls": 52800
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.108928
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.017014
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.01895
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.182096
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.031473",
+            "Excl": "0.000042"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.026409,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.284018,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.012462,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.025366,
+              "calls": 52800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.017955,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009686,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.016039,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.15421900000000002,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.824777,
+              "calls": 1902
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.071943,
+              "calls": 225600
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.005966,
+              "calls": 52800
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.107343
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.016676
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.018514
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.177798
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.992308",
+            "Excl": "0.000046"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA0_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.028111,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.290533,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.012843,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.027307,
+              "calls": 52800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019531,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009926,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.016839,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.153096,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.405166,
+              "calls": 2157
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.101907,
+              "calls": 225600
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.005934,
+              "calls": 52800
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.105843
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.01733
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.018405
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.177529
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.084903",
+            "Excl": "0.000038"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.028647,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.291069,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.012902,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.025471,
+              "calls": 52800
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.018293,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009729,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.0171,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.151969,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.362068,
+              "calls": 2078
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.072745,
+              "calls": 225600
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.005969,
+              "calls": 52800
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.105656
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.017123
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 4000,
+              "exclusive_thread_seconds": 0.018821
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.177393
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.047667",
+            "Excl": "0.000045"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA1_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009038,
+              "calls": 5634
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.10290099999999999,
+              "calls": 16902
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.004521,
+              "calls": 11268
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.011616,
+              "calls": 15564
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.006695,
+              "calls": 11268
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009739,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.022418,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.153387,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.327515,
+              "calls": 1793
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.062321999999999995,
+              "calls": 132762
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.00195,
+              "calls": 15564
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2187,
+              "exclusive_thread_seconds": 0.076898
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2187,
+              "exclusive_thread_seconds": 0.014588
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2187,
+              "exclusive_thread_seconds": 0.016056
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5634,
+              "exclusive_thread_seconds": 0.076614
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.506462",
+            "Excl": "0.000040"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009243,
+              "calls": 5635
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.104886,
+              "calls": 16905
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.004567,
+              "calls": 11270
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.011505999999999999,
+              "calls": 15575
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.006534,
+              "calls": 11270
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009394,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.022465,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.155272,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.284343,
+              "calls": 1767
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.043834,
+              "calls": 132785
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.001951,
+              "calls": 15575
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2190,
+              "exclusive_thread_seconds": 0.076487
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2190,
+              "exclusive_thread_seconds": 0.01477
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2190,
+              "exclusive_thread_seconds": 0.016437
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5635,
+              "exclusive_thread_seconds": 0.076612
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.485099",
+            "Excl": "0.000034"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Far_ABA1_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009422,
+              "calls": 5550
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.105877,
+              "calls": 16650
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.004516,
+              "calls": 11100
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.011829,
+              "calls": 15334
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.00672,
+              "calls": 11100
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.00983,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023488,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.168981,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.437873,
+              "calls": 1840
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.065206,
+              "calls": 132218
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.001931,
+              "calls": 15334
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2150,
+              "exclusive_thread_seconds": 0.077662
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2150,
+              "exclusive_thread_seconds": 0.01472
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2150,
+              "exclusive_thread_seconds": 0.016067
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5550,
+              "exclusive_thread_seconds": 0.079655
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.547799",
+            "Excl": "0.000035"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009521,
+              "calls": 5511
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.10136700000000001,
+              "calls": 16533
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.004447,
+              "calls": 11022
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.011217,
+              "calls": 15218
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.006216,
+              "calls": 11022
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.009787,
+              "calls": 18000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023806,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.171548,
+              "calls": 36000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.463976,
+              "calls": 1807
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.044830999999999996,
+              "calls": 131947
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.001921,
+              "calls": 15218
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2130,
+              "exclusive_thread_seconds": 0.073697
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2130,
+              "exclusive_thread_seconds": 0.014199
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2130,
+              "exclusive_thread_seconds": 0.0154
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5511,
+              "exclusive_thread_seconds": 0.074456
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.540456",
+            "Excl": "0.000037"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.023191,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.274615,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.01222,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.023659,
+              "calls": 48689
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019183,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.010081,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.294732,
+              "calls": 1623
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.061862,
+              "calls": 129378
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.003272,
+              "calls": 28689
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.091253
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.014164
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.016128
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.168454
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.478129",
+            "Excl": "0.000036"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.023124,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.272822,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.012105,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.022626,
+              "calls": 48689
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.017551999999999998,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.010503,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.290136,
+              "calls": 1575
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.050724,
+              "calls": 129378
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.0032,
+              "calls": 28689
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.090964
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.014293
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.016067
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.170609
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.478695",
+            "Excl": "0.000035"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA0_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.023905,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.273236,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.01238,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.023969999999999998,
+              "calls": 48648
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019076,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.010308,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.32864,
+              "calls": 1575
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.065853,
+              "calls": 129296
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.00323,
+              "calls": 28648
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.090219
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.013984
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.01592
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.169575
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.498421",
+            "Excl": "0.000033"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.02436,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.277661,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.01239,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.023268,
+              "calls": 48648
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.017963,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.010527,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.330298,
+              "calls": 1560
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.051741999999999996,
+              "calls": 129296
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.00318,
+              "calls": 28648
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.091885
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.014547
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 3400,
+              "exclusive_thread_seconds": 0.017295
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.177414
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.494212",
+            "Excl": "0.000034"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.0008,
+              "calls": 480
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.009717,
+              "calls": 1440
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.000376,
+              "calls": 960
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.000973,
+              "calls": 972
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.000676,
+              "calls": 960
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.014558000000000001,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 1.558451,
+              "calls": 1400
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.038437,
+              "calls": 73144
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.00012,
+              "calls": 572
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.002222
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000439
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000574
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 480,
+              "exclusive_thread_seconds": 0.006187
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "0.851625",
+            "Excl": "0.000031"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.000807,
+              "calls": 480
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.010024,
+              "calls": 1440
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.000381,
+              "calls": 960
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.001001,
+              "calls": 972
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.0007019999999999999,
+              "calls": 960
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.014453,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 1.560541,
+              "calls": 1379
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.031454,
+              "calls": 73144
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.000119,
+              "calls": 572
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.002368
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000479
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000595
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 480,
+              "exclusive_thread_seconds": 0.006528
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "0.849755",
+            "Excl": "0.000033"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Hidden_ABA1_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.000826,
+              "calls": 480
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.010048,
+              "calls": 1440
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.00038,
+              "calls": 960
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.000983,
+              "calls": 972
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.000662,
+              "calls": 960
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.015249,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 1.612365,
+              "calls": 1443
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.039791,
+              "calls": 73144
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.000128,
+              "calls": 572
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.002325
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000473
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000591
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 480,
+              "exclusive_thread_seconds": 0.006344
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "0.873309",
+            "Excl": "0.000032"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.000845,
+              "calls": 480
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.010147999999999999,
+              "calls": 1440
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.000395,
+              "calls": 960
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.001041,
+              "calls": 972
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.000699,
+              "calls": 960
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.015465,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 1.597215,
+              "calls": 1409
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.03272,
+              "calls": 73144
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.000127,
+              "calls": 572
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.002282
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000484
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 68,
+              "exclusive_thread_seconds": 0.000594
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 480,
+              "exclusive_thread_seconds": 0.006458
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "0.866867",
+            "Excl": "0.000034"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA0_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.028612,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.29860600000000004,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.013354,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.034187,
+              "calls": 72000
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.01963,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.092257,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.019902999999999997,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.539925,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.305562,
+              "calls": 2082
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.113209,
+              "calls": 264000
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.007937,
+              "calls": 72000
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.156028
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.026407
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.027699
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.19657
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.412840",
+            "Excl": "0.000048"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.029631,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.30131399999999997,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.013925,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.034158,
+              "calls": 72000
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.018457,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.09429,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.020714,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.5456840000000001,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.292119,
+              "calls": 1995
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.08238000000000001,
+              "calls": 264000
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.007897,
+              "calls": 72000
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.158555
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.026202
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.028855
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.196546
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.400999",
+            "Excl": "0.000061"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA0_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.03086,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.30284,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.013926,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.034225,
+              "calls": 72000
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019267,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.093721,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.020897,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.571932,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.437812,
+              "calls": 2113
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.116894,
+              "calls": 264000
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.007954,
+              "calls": 72000
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.155752
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.0255
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.027516
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.193625
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.507815",
+            "Excl": "0.000047"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.030956,
+              "calls": 24000
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.301806,
+              "calls": 72000
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.013356,
+              "calls": 48000
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.033618,
+              "calls": 72000
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.019347,
+              "calls": 48000
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.094465,
+              "calls": 72000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.021749,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.562385,
+              "calls": 144000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 3.43185,
+              "calls": 2031
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.08290299999999999,
+              "calls": 264000
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.007956,
+              "calls": 72000
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.159357
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.025678
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 6000,
+              "exclusive_thread_seconds": 0.02822
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 24000,
+              "exclusive_thread_seconds": 0.195162
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "2.494165",
+            "Excl": "0.000052"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA1_R0",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.00898,
+              "calls": 5612
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.10476,
+              "calls": 16836
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.004478,
+              "calls": 11224
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.012177,
+              "calls": 16836
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.006608,
+              "calls": 11224
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.04697,
+              "calls": 36000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023476999999999998,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.271374,
+              "calls": 72000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.411556,
+              "calls": 1929
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.0639,
+              "calls": 135284
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.002042,
+              "calls": 16836
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2616,
+              "exclusive_thread_seconds": 0.090221
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2616,
+              "exclusive_thread_seconds": 0.016872
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2616,
+              "exclusive_thread_seconds": 0.018348
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5612,
+              "exclusive_thread_seconds": 0.083606
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.605314",
+            "Excl": "0.000040"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009271,
+              "calls": 5633
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.107626,
+              "calls": 16899
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.00459,
+              "calls": 11266
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.01257,
+              "calls": 16899
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.006619,
+              "calls": 11266
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.046875,
+              "calls": 36000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.024175,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.273246,
+              "calls": 72000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.422429,
+              "calls": 1824
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.04519,
+              "calls": 135431
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.002095,
+              "calls": 16899
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2638,
+              "exclusive_thread_seconds": 0.092644
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2638,
+              "exclusive_thread_seconds": 0.017374
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2638,
+              "exclusive_thread_seconds": 0.018889
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5633,
+              "exclusive_thread_seconds": 0.086413
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.606136",
+            "Excl": "0.000041"
+          }
+        }
+      }
+    },
+    {
+      "region": "Timers-ProjectJ.AuthoredCPU_200_Near_ABA1_R1",
+      "variants": {
+        "A": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009315,
+              "calls": 5659
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.10474800000000001,
+              "calls": 16977
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.00459,
+              "calls": 11318
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.012364,
+              "calls": 16977
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.0066949999999999996,
+              "calls": 11318
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.04675,
+              "calls": 36000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023259000000000002,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.28120799999999996,
+              "calls": 72000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.420296,
+              "calls": 1904
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.064279,
+              "calls": 135613
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.002027,
+              "calls": 16977
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2659,
+              "exclusive_thread_seconds": 0.092465
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2659,
+              "exclusive_thread_seconds": 0.017124
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2659,
+              "exclusive_thread_seconds": 0.019217
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5659,
+              "exclusive_thread_seconds": 0.083012
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.609024",
+            "Excl": "0.000036"
+          }
+        },
+        "B": {
+          "stages": {
+            "gt_preupdate": {
+              "exclusive_thread_seconds": 0.009429,
+              "calls": 5635
+            },
+            "gt_animation": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_animation": {
+              "exclusive_thread_seconds": 0.10691500000000001,
+              "calls": 16905
+            },
+            "snapshot": {
+              "exclusive_thread_seconds": 0.00455,
+              "calls": 11270
+            },
+            "mm_playback": {
+              "exclusive_thread_seconds": 0.011965,
+              "calls": 16905
+            },
+            "post_selection": {
+              "exclusive_thread_seconds": 0.0064589999999999995,
+              "calls": 11270
+            },
+            "retarget": {
+              "exclusive_thread_seconds": 0.047037,
+              "calls": 36000
+            },
+            "aba_visual": {
+              "exclusive_thread_seconds": 0.023564,
+              "calls": 24120
+            },
+            "rigid_body": {
+              "exclusive_thread_seconds": 0.27994,
+              "calls": 72000
+            },
+            "ability": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "weapon_spawn": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "combat_vfx": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "worker_wait": {
+              "exclusive_thread_seconds": 2.409924,
+              "calls": 1841
+            },
+            "visual_role": {
+              "exclusive_thread_seconds": 0.044847,
+              "calls": 135445
+            },
+            "follower_tick": {
+              "exclusive_thread_seconds": 0.002103,
+              "calls": 16905
+            },
+            "weapon_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "notify_weak_prune": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            },
+            "contact_notify": {
+              "exclusive_thread_seconds": 0,
+              "calls": 0
+            }
+          },
+          "database_query_timers": {
+            "PoseSearch PCA/KNN": {
+              "calls": 2649,
+              "exclusive_thread_seconds": 0.092661
+            },
+            "STAT_PoseSearch_BuildQuery": {
+              "calls": 2649,
+              "exclusive_thread_seconds": 0.01732
+            },
+            "STAT_PoseSearch_ContinuingPose": {
+              "calls": 2649,
+              "exclusive_thread_seconds": 0.020022
+            },
+            "STAT_PoseSearch_UpdateAssetPlayer": {
+              "calls": 5635,
+              "exclusive_thread_seconds": 0.082261
+            }
+          },
+          "world_tick": {
+            "Count": "120",
+            "Incl": "1.597114",
+            "Excl": "0.000037"
+          }
+        }
+      }
+    }
+  ]
+}

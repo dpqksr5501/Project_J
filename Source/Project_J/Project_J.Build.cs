@@ -42,6 +42,7 @@ public class Project_J : ModuleRules
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
 			PrivateDependencyModuleNames.Add("Project_JMount");
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");
+			PrivateDependencyModuleNames.Add("AnimationBlueprintLibrary"); // Public read-only notify copy API for editor diagnostics.
 			PrivateDependencyModuleNames.AddRange(new string[] { "PoseSearch", "BlendStack", "IKRig", "AnimGraphRuntime" });
 		}
 

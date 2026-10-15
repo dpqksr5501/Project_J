@@ -42,7 +42,7 @@ public:
 	/** Game-thread only: visual body override, character shared profile, then legacy inline calibration. */
 	FProject_JHandGripCalibration GetHandGripCalibration() const;
 
-	UProject_JRetargetAnimInstance();
+	UProject_JRetargetAnimInstance() = default;
 
 	virtual void BeginDestroy() override;
 	virtual void NativeInitializeAnimation() override;

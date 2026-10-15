@@ -1,0 +1,206 @@
+{
+  "scope_ko": "Config global GameMode와 그 Controller/Pawn CDO, actual Greatsword BP CDO의 입력 property 및 기존 registry에서 관련 Sword montage만 public API로 로드. 실제 레벨 WorldSettings override·runtime instance·focus/device/BP graph 전체 완료가 아님.",
+  "asset_mutation": false,
+  "asset_save": false,
+  "game_mode": {
+    "class": "/Game/ThirdPerson/Blueprints/BP_Project_JGameMode.BP_Project_JGameMode_C",
+    "defaults": {
+      "player_controller_class": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C",
+      "default_pawn_class": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C"
+    }
+  },
+  "controller": {
+    "class": "/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C",
+    "defaults": {
+      "default_mapping_contexts": [
+        "/Game/Input/IMC_Default.IMC_Default"
+      ],
+      "mobile_excluded_mapping_contexts": [
+        "/Game/Input/IMC_MouseLook.IMC_MouseLook"
+      ],
+      "force_touch_controls": "False"
+    }
+  },
+  "default_pawn": {
+    "class": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C",
+    "defaults": {
+      "jump_action": "/Game/Input/Actions/IA_Jump.IA_Jump",
+      "move_action": "/Game/Input/Actions/IA_Move.IA_Move",
+      "move_intent_forward_action": "/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward",
+      "move_intent_backward_action": "/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward",
+      "move_intent_left_action": "/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left",
+      "move_intent_right_action": "/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right",
+      "look_action": "/Game/Input/Actions/IA_Look.IA_Look",
+      "mouse_look_action": "/Game/Input/Actions/IA_MouseLook.IA_MouseLook",
+      "sprint_action": "/Game/Input/Actions/IA_Sprint.IA_Sprint",
+      "toggle_combat_action": "/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat",
+      "attack_action": "/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB",
+      "heavy_attack_action": "/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB",
+      "skill_modifier_action": null,
+      "interact_action": "/Game/Input/Actions/IA_Interact.IA_Interact",
+      "prototype_starting_weapon": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip",
+      "sprint_ability_tag": "<Struct 'GameplayTag' (0x000001FF3DCA88E0) {}>"
+    }
+  },
+  "greatsword": {
+    "class": "/Game/Character_BPs/GreatSword/BP_GreatSword.BP_Greatsword_C",
+    "defaults": {
+      "jump_action": "/Game/Input/Actions/IA_Jump.IA_Jump",
+      "move_action": "/Game/Input/Actions/IA_Move.IA_Move",
+      "move_intent_forward_action": "/Game/Input/Actions/IA_MoveIntent_Forward.IA_MoveIntent_Forward",
+      "move_intent_backward_action": "/Game/Input/Actions/IA_MoveIntent_Backward.IA_MoveIntent_Backward",
+      "move_intent_left_action": "/Game/Input/Actions/IA_MoveIntent_Left.IA_MoveIntent_Left",
+      "move_intent_right_action": "/Game/Input/Actions/IA_MoveIntent_Right.IA_MoveIntent_Right",
+      "look_action": "/Game/Input/Actions/IA_Look.IA_Look",
+      "mouse_look_action": "/Game/Input/Actions/IA_MouseLook.IA_MouseLook",
+      "sprint_action": "/Game/Input/Actions/IA_Sprint.IA_Sprint",
+      "toggle_combat_action": "/Game/Input/Actions/IA_ToggleCombat.IA_ToggleCombat",
+      "attack_action": "/Game/Input/Actions/IA_Attack_LMB.IA_Attack_LMB",
+      "heavy_attack_action": "/Game/Input/Actions/IA_Attack_RMB.IA_Attack_RMB",
+      "skill_modifier_action": null,
+      "interact_action": "/Game/Input/Actions/IA_Interact.IA_Interact",
+      "prototype_starting_weapon": "/Game/DataAssetSets/Animation_Profiles/Equip/DA_Greatsword_Equip.DA_Greatsword_Equip",
+      "sprint_ability_tag": "<Struct 'GameplayTag' (0x000001FF3DCA88E0) {}>"
+    }
+  },
+  "montages": [
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/Sword_Equip_Montage",
+      "state_notifies": []
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/Sword_UnEquip_Montage",
+      "state_notifies": []
+    }
+  ],
+  "errors": [
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Equip",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB1",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMB2",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LMBRMB",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR1",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_LR2",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q1_or_LR2",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_Q2",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_R",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB1",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_RMB2",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_T",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_UnEquip",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/Sword_Equip_Montage",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    },
+    {
+      "asset": "/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/Sword_UnEquip_Montage",
+      "property": "notifies",
+      "error": "AnimMontage: Property 'Notifies' for attribute 'notifies' on 'AnimMontage' is protected and cannot be read"
+    }
+  ],
+  "interpretation_ko": "CDO 값은 실제 instance의 현재 연결/소유권과 다르다. inherited IMC DefaultKeyMappings27행을 다시 재검사하지 않는다. notify 존재만으로 montage가 선택·실행되거나 품질이 검증됐다고 표시하지 않는다."
+}

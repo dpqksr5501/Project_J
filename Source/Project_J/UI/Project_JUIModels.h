@@ -5,6 +5,8 @@
 #include "InputCoreTypes.h"
 #include "Project_JUIModels.generated.h"
 
+class UTexture2D;
+
 UENUM(BlueprintType)
 enum class EProject_JQuickSlotKind : uint8
 {

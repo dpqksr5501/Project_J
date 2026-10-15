@@ -1,0 +1,162 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "DESKTOP-5T07C91",
+			"instance": "DBB74FCA43AC40BB45169BB1464F00F4",
+			"instanceName": "DESKTOP-5T07C91-13188",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (26H2) [10.0.26300.9457] ",
+			"model": "Default",
+			"gPU": "AMD Radeon RX 9070 XT",
+			"cPUModel": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+			"rAMInGB": 32,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.14-04.58.04",
+	"succeeded": 7,
+	"succeededWithWarnings": 1,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.19909200072288513,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "FollowerPolicyLifetime",
+			"fullTestPath": "ProjectJ.Continuation.FollowerPolicyLifetime",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.011117700487375259,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OneShotMalformedInput",
+			"fullTestPath": "ProjectJ.Continuation.OneShotMalformedInput",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.004925999790430069,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionNumericAdmission",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionNumericAdmission",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.008190501481294632,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponMotionParentAssetValidation",
+			"fullTestPath": "ProjectJ.Continuation.WeaponMotionParentAssetValidation",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.0083133019506931305,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponSocketFrame",
+			"fullTestPath": "ProjectJ.Maturity.Editor.WeaponSocketFrame",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.0081340000033378601,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrimaryGripAttachment",
+			"fullTestPath": "ProjectJ.Presentation.PrimaryGripAttachment",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.14145669341087341,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StableGripTargetsAndAuthoredAlpha",
+			"fullTestPath": "ProjectJ.Presentation.StableGripTargetsAndAuthoredAlpha",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.0064943991601467133,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogProjectJWeaponPresentation: [ProjectJ][WeaponPresentation] Draw failed: no presentation mesh owns source socket 'None' or visual socket 'None'. Owner=Character_0",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.14-04.58.04"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "VisualMeshOwnership",
+			"fullTestPath": "ProjectJ.Presentation.VisualMeshOwnership",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"DBB74FCA43AC40BB45169BB1464F00F4"
+			],
+			"duration": 0.010459396988153458,
+			"dateTime": "2026.10.14-04.58.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

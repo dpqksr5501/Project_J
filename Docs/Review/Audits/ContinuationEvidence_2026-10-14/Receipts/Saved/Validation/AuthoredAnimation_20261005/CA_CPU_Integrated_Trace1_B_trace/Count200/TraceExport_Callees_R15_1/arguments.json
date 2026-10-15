@@ -1,0 +1,8 @@
+[
+  "-OpenTraceFile=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/CPU.utrace",
+  "-AutoQuit",
+  "-NoUI",
+  "-unattended",
+  "-ExecOnAnalysisCompleteCmd=@=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/Export.rsp",
+  "-ABSLOG=C:/Users/I/Documents/GitHub/Project_J/Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/TraceExport_Callees_R15_1/Insights.log"
+]
