@@ -241,5 +241,7 @@ Source/Config를 좁게 분석한 뒤 작업해줘. BP_Player/ABP_Player는 테�
 생산 휴머노이드 기준은 AProject_JPlayerCharacter → 직업 native class → BP_직업,
 ABP_Humanoid_Master + 직업 Linked Anim Layer 구조다. 플레이어의 장기 상태는 PlayerState 우선,
 서버 권한과 클라이언트 표현을 분리한다. C++ 변경 후에는 Project_JEditor Win64 Development를 빌드해줘.
-기존 사용자 에셋 변경은 건드리지 말고, Unreal MCP는 내가 명시적으로 요청할 때만 사용해줘.
+기존 사용자 코드·에셋 변경을 보존하고 AGENTS.md의 빌드 안전 규칙을 지켜줘.
+작업에 필요하면 MCP·컴퓨터 사용을 별도 도구 사용 허락 없이 활용해줘.
+현재 요청에 필요한 관련 변경·저장은 진행하되 작업 범위 밖으로 확대하거나 접근 제한을 우회하지 마.
 ```
