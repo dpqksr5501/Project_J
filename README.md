@@ -25,14 +25,7 @@
 
 ## 측정으로 확인한 변화
 
-**200명 표시·몸체 LOD 최적화 — 2026-10-15 측정 / 10월 16일 채택:** 기존 예산 subsystem의 거리 관측과 중복 조회를 정리하고, 원격 몸체가 엔진의 화면 크기 LOD를 사용하도록 연결했습니다. 같은 바이너리의 몸체 LOD 교대 비교에서 다음 GPU 시간 감소를 확인했습니다.
-
-| 200개 authored 몸체의 비교 조건 | GPU 시간 적용 전 → 후 | 감소율 |
-| --- | ---: | ---: |
-| 유휴 | 10.526 → 6.188ms | 약 41.2% |
-| 동시 200 montage 공격 구간 | 11.922 → 7.421ms | 약 37.8% |
-
-검토한 GreatSword_Woman의 LOD0/1/2 삼각형은 52,566/26,282/13,140개입니다. 로컬LOD0·200명 전원 표시·기존 물리와 서버 이동·전투 판정 권위를 유지합니다. **위 감소율은 해당 시험의 GPU 시간이며 전체 게임 FPS·CPU 개선율이나 200명 동시 접속 성능을 뜻하지 않습니다.** 망토 물리 연산량은 유지했고, 이득이 입증되지 않은 물리 축소·원격 IK 생략은 채택하지 않았습니다. 다른 캐릭터·의상·장비는 공통 native 제작 설정을 재사용하되 기존 LOD를 보존하며 Cloth·헤어·morph 등은 에셋별로 검수합니다. [측정 조건·해시·한계](Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json) · [공통 LOD 제작](Docs/Animation/Authoring/Mesh_LOD_Authoring.md)
+**200명 표시·몸체 LOD 최적화 — 2026-10-15 측정 / 10월 16일 채택:** 기존 예산의 거리 관측·중복 조회를 정리하고 원격 몸체의 화면 크기 LOD를 적용했습니다. 현재 GreatSword_Woman의 LOD0–2를 채택했으며 로컬LOD0·200명 전원 표시·원본 물리와 서버 판정을 유지합니다. [측정 조건·해시·한계](Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json) · [다른 캐릭터·의상·장비의 공통 LOD 제작과 예외 검수](Docs/Animation/Authoring/Mesh_LOD_Authoring.md)
 
 **실시간 리타깃 프로필 — 2026-10-13:** 공통 Master의 최종 포즈와 기존 리타깃·손 IK·의상 물리를 유지하면서, 골격 쌍의 Family와 몸체별 접촉 Body를 분리했습니다. MCP로 실제 Greatsword 외형 ABP에도 연결하고, 프로필 해제·재초기화·source 불일치의 복구를 검증했습니다. 200명 CPU 비교에서는 일부 구간의 증가가 관찰되어 전체 성능 개선으로 보고하지 않습니다. [적용 구조·검증·측정 한계](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)
 
@@ -46,17 +39,19 @@
 
 **구조 검증 이력 — 2026-09-19:** 직업·전직 기반, 내부 갱신·수명 정리와 에디터 제작 도구를 통합해 Editor/Game Win64 Development 빌드 및 자동화 **81개 통과, 테스트 오류·경고 0개**를 확인했습니다. GAS는 필요한 작업에 따라 갱신하고, 서버 피격 기록은 정해진 주기로 수집하며, 탈것 체력은 GAS로 일원화했습니다. [변경 범위](Docs/Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md) · [검증 기록](Docs/Architecture/Runtime/Reports/Internal_Polish_Validation_2026-09-19.json)
 
-아래 성능 수치는 앞선 A–E 실험의 측정 결과입니다. 이후 구조 변경의 성능 향상률이나 실제 동시 접속 처리량을 의미하지 않습니다. 최근 빌드·자동화·실제 소켓 연결 결과는 [검증 현황](#검증-현황)에서 실행 조건과 함께 구분합니다.
+아래 표는 몸체 LOD 교대 비교와 앞선 A–E 실험의 독립된 결과입니다. 서로 합산하거나 전체 게임 개선율·실제 동시 접속 처리량으로 해석하지 않습니다. 최근 빌드·자동화·실제 소켓 연결 결과는 [검증 현황](#검증-현황)에서 실행 조건과 함께 구분합니다.
 
 | 영역 | 비교 조건 | Before → After | 결과 |
 |---|---|---|---|
+| **몸체 LOD · 유휴** | 같은 바이너리, 200개 authored 몸체, LOD 적용 전 / 후 | GPU 시간 **10.526 → 6.188 ms** | **41.2% 감소** |
+| **몸체 LOD · 공격** | 같은 바이너리, 200개 authored 몸체의 동시 montage 공격 구간, LOD 적용 전 / 후 | GPU 시간 **11.922 → 7.421 ms** | **37.8% 감소** |
 | **Mass 이동·간격 계산** | 2,048 moving agents, 직렬 / 병렬 | CPU 구간 p95 **0.6342 → 0.2409 ms** | **62.0% 감소** |
 | **Niagara 생성** | 100개 동시 생성, 풀 미사용 / 사용 | 생성 CPU p95 **4.5739 → 3.3451 ms** | **26.9% 감소** |
 | **네트워크 관심 영역** | NPC 100개 + client 2개, AllRelevant / Spatial | aggregate **18,786 → 13,223 B/s** | **29.6% 감소** |
 | **Trail PSO coverage** | 같은 packaged binary, 보완 OFF / ON | Full PSO miss **1 → 0** | 누락된 render target 구성 보완 |
 | **조명 PSO coverage** | 같은 main packaged binary, 기본 LightFunction 사전 요청 OFF / ON | Full PSO miss **1 → 0** | PSO 39개 추가 요청 비용까지 기록 |
 
-**측정 범위:** UE 5.8 / Windows 11 / Ryzen 7 9800X3D. GPU 실험은 Radeon RX 9070 XT, D3D12를 사용했습니다. 각각 독립된 workload이며, 전체 게임 FPS 개선율이나 2,048명 동시 접속 성능을 의미하지 않습니다. 표본 수·실행 조건·실패 기록은 [벤치마크 문서](Docs/Benchmarks/SystemsModernization.md), 재계산 가능한 CSV/JSON은 [Data](Docs/Benchmarks/Data)에 공개합니다.
+**측정 범위:** UE 5.8 / Windows 11 / Ryzen 7 9800X3D. GPU 실험은 Radeon RX 9070 XT, D3D12를 사용했습니다. 각각 독립된 workload이며, 전체 게임 FPS 개선율이나 2,048명 동시 접속 성능을 의미하지 않습니다. 몸체 LOD의 전체 frame/CPU 이득은 미확정이며 망토 물리 연산량은 유지했습니다. A–E의 표본 수·실행 조건·실패 기록은 [벤치마크 문서](Docs/Benchmarks/SystemsModernization.md), 재계산 가능한 CSV/JSON은 [Data](Docs/Benchmarks/Data)에 공개합니다.
 
 ## 아티스트·디자이너를 위한 협업 안내
 
