@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3231개, Markdown 233개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3234개, Markdown 234개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -285,6 +285,7 @@
 | [전체 문서 목록](Document_Catalog.md) | 목차·문서 관리 | Maintenance/Document_Catalog.md |
 | [문서 분류·본문 통합 결과 — 2026-10-03](Organization_Result_2026-10-03.md) | 목차·문서 관리 | Maintenance/Organization_Result_2026-10-03.md |
 | [문서 관리와 보존 규칙](README.md) | 목차·문서 관리 | Maintenance/README.md |
+| [로컬 검증 산출물 정리와 최적화 근거 보존 — 2026-10-16](Storage_Cleanup_2026-10-16.md) | 목차·문서 관리 | Maintenance/Storage_Cleanup_2026-10-16.md |
 
 ### 보관 자료
 
@@ -344,7 +345,7 @@
 | [Handoffs/MotionMatchingCrowd_2026-10-05](../Handoffs/MotionMatchingCrowd_2026-10-05) | 1 | 문서 이동·보존 기록 |
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
-| [Maintenance]() | 1 | 문서 이동·보존 기록 |
+| [Maintenance]() | 3 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |

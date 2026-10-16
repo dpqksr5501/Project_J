@@ -1,0 +1,2021 @@
+{
+  "status": "completed_phase1_followed_by_expanded_cleanup",
+  "created_utc": "2026-10-15T16:47:13.711050+00:00",
+  "scope_ko": "검증 캐시·구 백업의 컴파일 중간 파일·정확히 동일한 구 패키지 payload 정리, 거대 오류 로그는 무손실 압축 보존. 실제 source/content/test assets/root build cache/Git와 trace/CSV/결과/캡처 보존.",
+  "before": {
+    "Saved": 131438094850,
+    "Saved/Validation": 115986708637,
+    "Saved/Profiling": 10122278378,
+    "Intermediate": 23123169127,
+    "Binaries": 3240281709,
+    "Content": 4888584719,
+    ".git": 8218876074,
+    "disk_free_bytes": 96820498432
+  },
+  "planned_reclaimed_bytes": 39580585282,
+  "cache_directories": 241,
+  "exact_duplicate_package_files": 104,
+  "protected_evidence_count": 10652,
+  "retained_complete_packages": [
+    "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package",
+    "Saved/Validation/Continuation_20261014/R15_Package5/Package"
+  ],
+  "retired_paths": [
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Cook1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Cook2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Editor1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Editor2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Editor3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Editor4/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Reload1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AssetCleanup_20261015/Reload2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_ABBA1_A1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_ABBA1_A2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_ABBA1_B1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_ABBA1_B2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Historical_ABBA1_A1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Historical_ABBA1_A2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Historical_ABBA1_B1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Historical_ABBA1_B2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_ABBA1_A1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_ABBA1_A2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_ABBA1_B1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_ABBA1_B2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_A_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Integrated_Trace1_B_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_NotifyTrace1_A_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_NotifyTrace1_B_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Trace1_A_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CA_CPU_Trace1_B_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage3_A1/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage3_A2/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage3_B1/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage3_B2/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_A1/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_A2/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_B1/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_B2/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_TraceA/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/CrowdOpt_Stage5_Physics_TraceB/Count50/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_ABBA1_A1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_ABBA1_A2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_ABBA1_B1/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_ABBA1_B2/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_A_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/AuthoredAnimation_20261005/R15_CA16_CPU_Trace1_B_trace/Count200/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/ActiveInputHandoverFixFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/ActiveInputHandoverGCFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/ActiveInputInstallerRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Cook1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_AssetValidation2/Project_JAbilitySet/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_AssetValidation2/Project_JEquipmentItemDefinition/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Cook2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_13_Cook3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CallbackContractRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CallbackFixIdentityRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CallbackIdentityFinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA_AssetValidation1/AnimMontage/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA_AssetValidation1/Project_JLocomotionProfile/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA_NotifyLifecycleAfter1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA_NotifyLifecycleBefore1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/ContractsFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/ContractsFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/EquipmentStatFixFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/EquipmentStatRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/FinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/FollowerRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/InputDefaults1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/InputDefaults2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/IntegratedFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_AnimationBoundaryFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Cook1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Cook2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Cook3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_InputOriginAndOrderFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelAssetFieldRepair1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelAssetRead1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelContractRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelContractRepro2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelContractReproPartial1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelStyleContractRepro4/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_LevelStyleHandoverFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountControllerRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountPlayReuseDiagnostic1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountTransitionFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountTransitionFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountTransitionFocused3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_MountTransitionRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_NPCCallbackFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_NPCCallbackFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_NPCCallbackRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_NPCRegistrationFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_NPCRegistrationRepro1Run/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_ProgressionStyleAndPlayerRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_QueuedInputRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_ReturnedChooserFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_StructureCleanupFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_StructureCleanupFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_StructureCleanupRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_StructureCleanupRepro2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_UIEndPlayRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_UIScreenBoundaryFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_VisualDemandFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_WholeContinuation1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_WholeContinuation2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_WholeContinuation3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R16_AssetArchitectureFinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R16_AssetInterfaceRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R16_AssetMMCallbackRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130940320,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCAuthoredCombatFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCGrantReproAndEditor1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCOwnershipRepro2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCStructureFinalFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCStructureFocused2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCStructureRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R17_PCWidgetOriginRepro3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorCook1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933542,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorCook2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932966,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorIdentityFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933542,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorIdentityRepro3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorLinearFinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932966,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_DoorRepro2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R18_RemainingFinalFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933542,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R19_StandLandApply1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932966,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R19_StandLandCook1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R19_StandLandFinal1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R19_StandLandFinal2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R19_StandLandRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932966,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_ColdTIP1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_Compatibility1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_DiagonalAirBaseline1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_DiagonalWarpBaseline1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase16/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase17/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase36/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase37/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase38/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_FinalCase39/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandCase17/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandCase37/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandCase38/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandCase39/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandRendered16/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_JumpLandRun36/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_WarpRegressionGreen1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R20_WarpRegressionRed1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/RewardTransportRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/RouterInstallerFixHandoverRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/SharedNotifyGCFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/WholeContinuation1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/WholeContinuation2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/WholeContinuation3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/WholeContinuation4/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/WholeContinuation5/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/After50Trace/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Baseline1Trace/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Baseline50Trace/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/FocusedRegression1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/ObserverBefore/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/PlaybackRegressionRHI1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage2_After50_NoTrace1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage2_After50_NoTrace2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage2_Baseline50_NoTrace1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage2_Baseline50_NoTrace2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage2_FocusedRHI1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3/FinalPoseOn/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3/VisualOff/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3/VisualOn/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3_FinalFocusedRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3_LifecycleRHI1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage3_LifecycleRHI2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/ActualBodiesRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/CompactPairRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/CompactPairVerifiedRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/CostAuditRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/DuplicateConstraintPreservedRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/DuplicateControlRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/DuplicateSolverPreservedRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/FinalDiagnosticsRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/FinalDiagnosticsRHI2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/OriginalControlRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage4/ParticipationRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/DuplicateAlignedInitRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/DuplicateInitialStateRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/FinalCompactConsumptionRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/FinalFullEquivalenceRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/FinalRegressionRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/FreshCompactRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage5/FreshFullDuplicateRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/ActualLODAndCompatibilityRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/AssetLoadFinalRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/AuthorBodyMeshLOD/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/CompatibilityAndLayoutRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/ExactLODPreservationRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/FinalAuthoredLODRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/GenericOwnershipFinalRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/LODAndCompatibilityRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/LODSequentialRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/RenderLODOwnershipRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/SingleMeshCook/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/CrowdOptimization_20261015_Execution1/Stage6/SingleMeshCookLoose/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/FinalColdReloadRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/FinalGuardedRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/FinalNativeAndPreservationRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/InitialNativeRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/LocalLifecycleDiagnostics/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/NativeAndLocalQualityRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/NativePreservationDiagnostics/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130934844,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/NativeQualityContractsRHI/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130935459,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODAuthoring_20261015/ReviewProbeRun2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933553,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/CameraSpacing/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131013223,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/CompleteRun/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131013228,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/CorrectLayout/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131009901,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/CreateRun/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933553,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/CreateRun2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933553,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/FinalSceneRun/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131013223,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/ReadyRun/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131013223,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/ReloadRender/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131009901,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/SceneRender/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131009901,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MeshLODReview/StudioLighting/User/Intermediate/CachedAssetRegistry",
+      "bytes": 131013223,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/MirrorResearch_20261015_Native/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/AssetGrantFix1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/AssetRead1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933543,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/AssetRemaining1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/DoorFix1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933622,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/DoorLinear1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130933542,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/R19_Read1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932966,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/PCStructure_20261015/R19_Read2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130932986,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/CallbackGCFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/ForwardIndexFixed1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/ForwardIndexFixed2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/ForwardIndexFixed3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/ForwardIndexRepro1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/LifecycleFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/LifecycleReproContracts2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/LifecycleReproContracts3/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/MassGCFocused1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/WholeLifecycle1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/WholeRefinement1/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/Validation/Reaudit_20261014/WholeRefinement2/User/Intermediate/CachedAssetRegistry",
+      "bytes": 130944633,
+      "reason": "Regenerable per-test Asset Registry cache"
+    },
+    {
+      "path": "Saved/AuditPreRetarget/Intermediate",
+      "bytes": 3764567313,
+      "reason": "Obsolete backup compile intermediates; baseline Binaries preserved"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J.exe",
+      "bytes": 171520,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b70e780b96b782671e6d85f5c23e7bad6fceab950857c1ba237433626fd6b94e",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J.exe"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll",
+      "bytes": 2232688,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6c1484085a1f4223880c059fd093a468702d0ecb224981918336fe847f5af92f",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll",
+      "bytes": 2547080,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "780959f289e380a21fdab0dba7ac468c8dd0606ea43b755865a7989f3c7221e9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
+      "bytes": 5799024,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "e3e777a9644452c2772336c4b35c39ed4d8abeb9b9c0c1dceb9e10bdb378e5a2",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll",
+      "bytes": 59832,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "cf34407ec00248c208aa4b156126a725b79a4bce9f5c8034550c798a9b7a1407",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll",
+      "bytes": 48568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "a00e6b073cec241d85d590ee138906ef9fdf9efef8d0d4989813359cd048a6f9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll",
+      "bytes": 1724856,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1cd0eba3df4915ca6498917b91b78dc1dfda1c9155f2fd5b98dedd5b5ba918f3",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll",
+      "bytes": 8161680,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9505e2c9a30f047eaa0066bb05453f263c478b5e88d01cac7ebf16a47a018dae",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll",
+      "bytes": 2890128,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7282bec52c8edb4b79a635753f46f7c8063b9277b1fad19e5dbea6526799e9df",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll",
+      "bytes": 8166288,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "13c8d7cb4e9bc687c3679435ca391d98854cccb0b76f080d587c4e3796239f2d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll",
+      "bytes": 1485200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "4098135ce3063917f46a9ee97371761b8f1b971bf6c34a94256ffaf022b36457",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll",
+      "bytes": 415632,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6d347c053a2edc506029b8588adc115f2eb0893f5fa86a0197c9ea413e142f72",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll",
+      "bytes": 397200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b35160cea082cfbac48e62e229b8ec9a735f3427f402a293bb354d642eb2811d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll",
+      "bytes": 19509136,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1413d7211cb93a94d28172553cabe1fc609ecacb5cc79e2176d664fd0bbef625",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll",
+      "bytes": 69056,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "132284f41399e0186bb29c6c2655aba5403a42793500518b9ab8bfd0b1336a57",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll",
+      "bytes": 858144,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9d996ba84395c1e56604792a77775b0a7fa957d7b51b4d8b985040bcd80a6fd5",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Content/Renderer/TessellationTable.bin",
+      "bytes": 259568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "edc4f3b628a139c5e185bbaeca661c95c1f427368d3b92892c5cff36c56dd941",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Content/Renderer/TessellationTable.bin"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll",
+      "bytes": 17339384,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9fc1ca0e75480c7805b6d3c4653864eaaee2fca5daa609b5347adf0b4185791a",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Binaries/Win64/tbb12.dll",
+      "bytes": 342456,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7e58ae38fd5d47c72b750dbdcf2978a1f36719663a0a4500a9cc857316612c34",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbb12.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll",
+      "bytes": 117176,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "075ba2869e082ab5f1f159ad06614ce63c31ae51099e18b540822cc758697e56",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll",
+      "bytes": 4831768,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "5d262c97239e1aff8b03a7150abcaa84cc7983d311946708f982227d146fbb37",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll",
+      "bytes": 4943344,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "66afc2d2918191f9b97026e3c630ac6e93f5f83e3bd0eab34349ec2f66a0b4af",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll",
+      "bytes": 18538488,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "579dd89146322ea2567de7db16b8e10f350eb0cf147ecaafe5b129d9fe175a84",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas",
+      "bytes": 334410784,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "339072c0602d1ebb6c072646c83a240295fd47bda86fd7b7d50a39f4796b2f55",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_05_Package2/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc",
+      "bytes": 374457,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "0c7ef1d1121aef8df5fd4fc28aa5635ec17bb2c82f7cd41c21ac550feea439eb",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J.exe",
+      "bytes": 171520,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b70e780b96b782671e6d85f5c23e7bad6fceab950857c1ba237433626fd6b94e",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J.exe"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll",
+      "bytes": 2232688,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6c1484085a1f4223880c059fd093a468702d0ecb224981918336fe847f5af92f",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll",
+      "bytes": 2547080,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "780959f289e380a21fdab0dba7ac468c8dd0606ea43b755865a7989f3c7221e9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
+      "bytes": 5799024,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "e3e777a9644452c2772336c4b35c39ed4d8abeb9b9c0c1dceb9e10bdb378e5a2",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll",
+      "bytes": 59832,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "cf34407ec00248c208aa4b156126a725b79a4bce9f5c8034550c798a9b7a1407",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll",
+      "bytes": 48568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "a00e6b073cec241d85d590ee138906ef9fdf9efef8d0d4989813359cd048a6f9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll",
+      "bytes": 1724856,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1cd0eba3df4915ca6498917b91b78dc1dfda1c9155f2fd5b98dedd5b5ba918f3",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll",
+      "bytes": 8161680,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9505e2c9a30f047eaa0066bb05453f263c478b5e88d01cac7ebf16a47a018dae",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll",
+      "bytes": 2890128,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7282bec52c8edb4b79a635753f46f7c8063b9277b1fad19e5dbea6526799e9df",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll",
+      "bytes": 8166288,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "13c8d7cb4e9bc687c3679435ca391d98854cccb0b76f080d587c4e3796239f2d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll",
+      "bytes": 1485200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "4098135ce3063917f46a9ee97371761b8f1b971bf6c34a94256ffaf022b36457",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll",
+      "bytes": 415632,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6d347c053a2edc506029b8588adc115f2eb0893f5fa86a0197c9ea413e142f72",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll",
+      "bytes": 397200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b35160cea082cfbac48e62e229b8ec9a735f3427f402a293bb354d642eb2811d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll",
+      "bytes": 19509136,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1413d7211cb93a94d28172553cabe1fc609ecacb5cc79e2176d664fd0bbef625",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll",
+      "bytes": 69056,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "132284f41399e0186bb29c6c2655aba5403a42793500518b9ab8bfd0b1336a57",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll",
+      "bytes": 858144,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9d996ba84395c1e56604792a77775b0a7fa957d7b51b4d8b985040bcd80a6fd5",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Content/Renderer/TessellationTable.bin",
+      "bytes": 259568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "edc4f3b628a139c5e185bbaeca661c95c1f427368d3b92892c5cff36c56dd941",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Content/Renderer/TessellationTable.bin"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll",
+      "bytes": 17339384,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9fc1ca0e75480c7805b6d3c4653864eaaee2fca5daa609b5347adf0b4185791a",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Binaries/Win64/tbb12.dll",
+      "bytes": 342456,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7e58ae38fd5d47c72b750dbdcf2978a1f36719663a0a4500a9cc857316612c34",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbb12.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll",
+      "bytes": 117176,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "075ba2869e082ab5f1f159ad06614ce63c31ae51099e18b540822cc758697e56",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll",
+      "bytes": 4831768,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "5d262c97239e1aff8b03a7150abcaa84cc7983d311946708f982227d146fbb37",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll",
+      "bytes": 4943344,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "66afc2d2918191f9b97026e3c630ac6e93f5f83e3bd0eab34349ec2f66a0b4af",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll",
+      "bytes": 18538488,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "579dd89146322ea2567de7db16b8e10f350eb0cf147ecaafe5b129d9fe175a84",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas",
+      "bytes": 334410784,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "339072c0602d1ebb6c072646c83a240295fd47bda86fd7b7d50a39f4796b2f55",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/CA01_07_Package3/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc",
+      "bytes": 374457,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "0c7ef1d1121aef8df5fd4fc28aa5635ec17bb2c82f7cd41c21ac550feea439eb",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J.exe",
+      "bytes": 171520,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b70e780b96b782671e6d85f5c23e7bad6fceab950857c1ba237433626fd6b94e",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J.exe"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll",
+      "bytes": 2232688,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6c1484085a1f4223880c059fd093a468702d0ecb224981918336fe847f5af92f",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll",
+      "bytes": 2547080,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "780959f289e380a21fdab0dba7ac468c8dd0606ea43b755865a7989f3c7221e9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
+      "bytes": 5799024,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "e3e777a9644452c2772336c4b35c39ed4d8abeb9b9c0c1dceb9e10bdb378e5a2",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll",
+      "bytes": 59832,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "cf34407ec00248c208aa4b156126a725b79a4bce9f5c8034550c798a9b7a1407",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll",
+      "bytes": 48568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "a00e6b073cec241d85d590ee138906ef9fdf9efef8d0d4989813359cd048a6f9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll",
+      "bytes": 1724856,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1cd0eba3df4915ca6498917b91b78dc1dfda1c9155f2fd5b98dedd5b5ba918f3",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll",
+      "bytes": 8161680,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9505e2c9a30f047eaa0066bb05453f263c478b5e88d01cac7ebf16a47a018dae",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll",
+      "bytes": 2890128,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7282bec52c8edb4b79a635753f46f7c8063b9277b1fad19e5dbea6526799e9df",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll",
+      "bytes": 8166288,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "13c8d7cb4e9bc687c3679435ca391d98854cccb0b76f080d587c4e3796239f2d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll",
+      "bytes": 1485200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "4098135ce3063917f46a9ee97371761b8f1b971bf6c34a94256ffaf022b36457",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll",
+      "bytes": 415632,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6d347c053a2edc506029b8588adc115f2eb0893f5fa86a0197c9ea413e142f72",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll",
+      "bytes": 397200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b35160cea082cfbac48e62e229b8ec9a735f3427f402a293bb354d642eb2811d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll",
+      "bytes": 19509136,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1413d7211cb93a94d28172553cabe1fc609ecacb5cc79e2176d664fd0bbef625",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll",
+      "bytes": 69056,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "132284f41399e0186bb29c6c2655aba5403a42793500518b9ab8bfd0b1336a57",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll",
+      "bytes": 858144,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9d996ba84395c1e56604792a77775b0a7fa957d7b51b4d8b985040bcd80a6fd5",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Content/Renderer/TessellationTable.bin",
+      "bytes": 259568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "edc4f3b628a139c5e185bbaeca661c95c1f427368d3b92892c5cff36c56dd941",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Content/Renderer/TessellationTable.bin"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll",
+      "bytes": 17339384,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9fc1ca0e75480c7805b6d3c4653864eaaee2fca5daa609b5347adf0b4185791a",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Binaries/Win64/tbb12.dll",
+      "bytes": 342456,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7e58ae38fd5d47c72b750dbdcf2978a1f36719663a0a4500a9cc857316612c34",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbb12.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll",
+      "bytes": 117176,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "075ba2869e082ab5f1f159ad06614ce63c31ae51099e18b540822cc758697e56",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll",
+      "bytes": 4831768,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "5d262c97239e1aff8b03a7150abcaa84cc7983d311946708f982227d146fbb37",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll",
+      "bytes": 4943344,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "66afc2d2918191f9b97026e3c630ac6e93f5f83e3bd0eab34349ec2f66a0b4af",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll",
+      "bytes": 18538488,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "579dd89146322ea2567de7db16b8e10f350eb0cf147ecaafe5b129d9fe175a84",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Content/Paks/global.ucas",
+      "bytes": 3509536,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "864e085401a1980c082b3296a0e86b1f71345de0e191bcecb38bbe371bd181ee",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/global.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Content/Paks/global.utoc",
+      "bytes": 842,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "ddefef860167c5e40fb39868b3aed5e20088c243d9e062af0b01170dc64f143c",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/global.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas",
+      "bytes": 334410784,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "339072c0602d1ebb6c072646c83a240295fd47bda86fd7b7d50a39f4796b2f55",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package2/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc",
+      "bytes": 374457,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "0c7ef1d1121aef8df5fd4fc28aa5635ec17bb2c82f7cd41c21ac550feea439eb",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J.exe",
+      "bytes": 171520,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b70e780b96b782671e6d85f5c23e7bad6fceab950857c1ba237433626fd6b94e",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J.exe"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll",
+      "bytes": 2232688,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6c1484085a1f4223880c059fd093a468702d0ecb224981918336fe847f5af92f",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/DbgHelp/dbghelp.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll",
+      "bytes": 2547080,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "780959f289e380a21fdab0dba7ac468c8dd0606ea43b755865a7989f3c7221e9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/MsQuic/v220/win64/msquic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll",
+      "bytes": 5799024,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "e3e777a9644452c2772336c4b35c39ed4d8abeb9b9c0c1dceb9e10bdb378e5a2",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/NVIDIA/NVaftermath/Win64/GFSDK_Aftermath_Lib.x64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll",
+      "bytes": 59832,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "cf34407ec00248c208aa4b156126a725b79a4bce9f5c8034550c798a9b7a1407",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Ogg/Win64/VS2015/libogg_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll",
+      "bytes": 48568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "a00e6b073cec241d85d590ee138906ef9fdf9efef8d0d4989813359cd048a6f9",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbisfile_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll",
+      "bytes": 1724856,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1cd0eba3df4915ca6498917b91b78dc1dfda1c9155f2fd5b98dedd5b5ba918f3",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vorbis/Win64/VS2015/libvorbis_64.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll",
+      "bytes": 8161680,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9505e2c9a30f047eaa0066bb05453f263c478b5e88d01cac7ebf16a47a018dae",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll",
+      "bytes": 2890128,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7282bec52c8edb4b79a635753f46f7c8063b9277b1fad19e5dbea6526799e9df",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll",
+      "bytes": 8166288,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "13c8d7cb4e9bc687c3679435ca391d98854cccb0b76f080d587c4e3796239f2d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll",
+      "bytes": 1485200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "4098135ce3063917f46a9ee97371761b8f1b971bf6c34a94256ffaf022b36457",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll",
+      "bytes": 415632,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "6d347c053a2edc506029b8588adc115f2eb0893f5fa86a0197c9ea413e142f72",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll",
+      "bytes": 397200,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "b35160cea082cfbac48e62e229b8ec9a735f3427f402a293bb354d642eb2811d",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll",
+      "bytes": 19509136,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "1413d7211cb93a94d28172553cabe1fc609ecacb5cc79e2176d664fd0bbef625",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll",
+      "bytes": 69056,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "132284f41399e0186bb29c6c2655aba5403a42793500518b9ab8bfd0b1336a57",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/WinPixEventRuntime/x64/WinPixEventRuntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll",
+      "bytes": 858144,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9d996ba84395c1e56604792a77775b0a7fa957d7b51b4d8b985040bcd80a6fd5",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Binaries/ThirdParty/Windows/XAudio2_9/x64/xaudio2_9redist.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Content/Renderer/TessellationTable.bin",
+      "bytes": 259568,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "edc4f3b628a139c5e185bbaeca661c95c1f427368d3b92892c5cff36c56dd941",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Content/Renderer/TessellationTable.bin"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll",
+      "bytes": 17339384,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "9fc1ca0e75480c7805b6d3c4653864eaaee2fca5daa609b5347adf0b4185791a",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Engine/Plugins/NNE/NNERuntimeORT/Binaries/ThirdParty/Onnxruntime/Win64/onnxruntime.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/tbb12.dll",
+      "bytes": 342456,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "7e58ae38fd5d47c72b750dbdcf2978a1f36719663a0a4500a9cc857316612c34",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbb12.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll",
+      "bytes": 117176,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "075ba2869e082ab5f1f159ad06614ce63c31ae51099e18b540822cc758697e56",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/tbbmalloc.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll",
+      "bytes": 4831768,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "5d262c97239e1aff8b03a7150abcaa84cc7983d311946708f982227d146fbb37",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/D3D12Core.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll",
+      "bytes": 4943344,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "66afc2d2918191f9b97026e3c630ac6e93f5f83e3bd0eab34349ec2f66a0b4af",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/D3D12/x64/d3d12SDKLayers.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll",
+      "bytes": 18538488,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "579dd89146322ea2567de7db16b8e10f350eb0cf147ecaafe5b129d9fe175a84",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Binaries/Win64/DML/x64/DirectML.dll"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Content/Paks/global.ucas",
+      "bytes": 3509536,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "864e085401a1980c082b3296a0e86b1f71345de0e191bcecb38bbe371bd181ee",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/global.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Content/Paks/global.utoc",
+      "bytes": 842,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "ddefef860167c5e40fb39868b3aed5e20088c243d9e062af0b01170dc64f143c",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/global.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas",
+      "bytes": 334410784,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "339072c0602d1ebb6c072646c83a240295fd47bda86fd7b7d50a39f4796b2f55",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.ucas"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/R15_Package3/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc",
+      "bytes": 374457,
+      "reason": "Byte-identical payload in superseded package; canonical retained",
+      "sha256": "0c7ef1d1121aef8df5fd4fc28aa5635ec17bb2c82f7cd41c21ac550feea439eb",
+      "retained_copy": "Saved/Validation/Continuation_20261014/CA01_13_Package4/Package/Windows/Project_J/Content/Paks/Project_J-Windows.utoc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/FollowerReproBuild1/UBT.json",
+      "bytes": 2021600462,
+      "reason": "Losslessly gzip archived and decompression SHA256 verified",
+      "sha256": "d3e1229d98b35fa392b8d22052b0226f44a7269f65eb725b83bad3a67f35d0e3",
+      "retained_archive": "Saved/Validation/Continuation_20261014/FollowerReproBuild1/UBT.json.gz",
+      "archive_bytes": 58590672,
+      "archive_sha256": "81f1f6b550727836f812ea1a0b03552aea7e629f0211c383ee0e39a9013505ac"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/FollowerReproBuild1/UBT.log",
+      "bytes": 701743994,
+      "reason": "Losslessly gzip archived and decompression SHA256 verified",
+      "sha256": "bef9cf8d2afd1fe6af1d0c8d9ded48b09b5786de5a4880f8ac3d709f0d053070",
+      "retained_archive": "Saved/Validation/Continuation_20261014/FollowerReproBuild1/UBT.log.gz",
+      "archive_bytes": 24400864,
+      "archive_sha256": "667eeb54dac0fc4e8e9ebc781ea137a533a04548fe650397485a7971facbee2f"
+    }
+  ],
+  "completed_utc": "2026-10-15T16:50:57.588775+00:00",
+  "after": {
+    "Saved": 91860143227,
+    "Saved/Validation": 80170690668,
+    "Saved/Profiling": 10122278378,
+    "Intermediate": 23123169127,
+    "Binaries": 3240281709,
+    "Content": 4888584719,
+    ".git": 8218876074,
+    "disk_free_bytes": 100490928128
+  },
+  "removed_entries": 347,
+  "removed_original_bytes": 39663576818,
+  "retained_compressed_log_bytes": 82991536,
+  "disk_free_delta_bytes": 3670429696,
+  "protected_evidence_verified": 10652,
+  "protected_bytes_by_suffix": {
+    ".png": 1913658534,
+    ".json": 696703081,
+    ".csv": 2111454979,
+    ".utrace": 47320624518
+  },
+  "preexisting_modified_files_hash_verified": 56,
+  "retained_counterparts_sha256_verified": 29,
+  "root_content_intermediate_binaries_git_sizes_unchanged": true,
+  "performance_evidence": {
+    "path": "Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json",
+    "sha256": "345efc159e91a8c8a6f5e281a6df3d064eb4ae95ebe84b19b55a664b52379555",
+    "baseline_commit": "ac9e2b5a8a583dee5718f6a7b32e49ee8f6b1868",
+    "recorded_current_head": "418a422e9db2f0354153413ae0c7534879b085de",
+    "runtime_changes_uncommitted": true,
+    "sixth_pass_gpu_ms": {
+      "idle_A": 10.525556982436413,
+      "idle_B": 6.187576534027624,
+      "montage200_A": 11.921910075626394,
+      "montage200_B": 7.420923623188408
+    },
+    "note_ko": "기존 비교 결과 재사용. 새 성능 시험 미실행. GPU 개선 관찰과 전체 Frame/CPU 개선·실제200접속은 구분."
+  },
+  "local_plan": "Saved/StorageCleanup_20261016/Plan.json",
+  "local_deletion_journal": "Saved/StorageCleanup_20261016/Deleted.jsonl",
+  "evidence_note_ko": "원자료·전체trace·CSV·캡처·최신 최적화 JSON 보존. 구 패키지는 일부 공통 payload가 제거되어 완전한 실행 디렉터리가 아님. 각 retained_copy를 같은 위치로 복사하면 원본 SHA의 payload 복원 가능. 거대 오류 로그는 retained_archive를 해제하면 원문 SHA 복원 가능. 과거 영구 hash index는 당시 상태의 기록으로 보존.",
+  "follow_up_manifest": "Storage_Cleanup_2026-10-16_Phase2.json",
+  "net_logical_removed_bytes": 39580585282,
+  "follow_up_note_ko": "1차의 전체 trace 보존 판정은 당시 상태다. 사용자의 추가 정리 요청으로 2차에서 대표 A/B 외 과거 trace와 오래된 실행 산출물을 퇴역했다. 1차 논리 제거량을 실제 확보 용량으로 해석하지 않는다."
+}
