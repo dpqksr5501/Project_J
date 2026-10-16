@@ -35,6 +35,7 @@
 #include "StructUtils/InstancedStruct.h"
 
 #include "Animation/Project_JAnimationQualityPolicy.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 
 
 FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizationPolicy() const
@@ -54,7 +55,9 @@ FProject_JAnimOptimizationPolicy UProject_JCharacterAnimInstance::BuildOptimizat
 			{
 				Input.bRecentlyRendered = WasOwnerRecentlyRendered(RecentlyRenderedTolerance);
 				if (Input.bRecentlyRendered)
-					if (const auto* Base = Cast<AProject_JBaseCharacter>(OwningCharacter))
+					if (const auto* Mesh = Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh()))
+					{ Input.bHasSignificance = true; Input.Significance = Mesh->GetAnimationDistanceTier(); }
+					else if (const auto* Base = Cast<AProject_JBaseCharacter>(OwningCharacter))
 					{ Input.bHasSignificance = true; Input.Significance = Base->GetSignificance(); }
 				if (!Input.bRecentlyRendered || (Input.bHasSignificance && !(Input.Significance <= 0.f)))
 					Settings = GetEffectiveAnimationBudgetSettings();
@@ -75,7 +78,8 @@ void UProject_JCharacterAnimInstance::ApplyOptimizationPolicy(const FProject_JAn
 		ReleaseFollowerTickOverride();
 	}
 	if (!Follower || !Follower->IsRegistered()) return;
-	if (Follower->ComponentTags.Contains(TEXT("NoVisualBudget")) || Follower->IsSimulatingPhysics() || Follower->LeaderPoseComponent.IsValid())
+	if (Follower->ComponentTags.Contains(TEXT("NoVisualBudget")) || Follower->IsSimulatingPhysics() || Follower->LeaderPoseComponent.IsValid() ||
+		Project_J::Animation::UsesIndependentClothSimulation(*Follower))
 	{
 		ReleaseFollowerTickOverride();
 		return;

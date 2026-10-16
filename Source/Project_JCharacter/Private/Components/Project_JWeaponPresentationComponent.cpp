@@ -1024,6 +1024,7 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	GripTargets.bContactRecovery = false;
 	GripTargets.PrimaryHandBoneName = NAME_None;
 	GripTargets.SecondaryGripInPrimaryHandSpace = FTransform::Identity;
+	bool bHandDrivenAttachment = false;
 	if (!bIndependentMotionActive && CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
 	{
 		const ACharacter* Character = Cast<ACharacter>(GetOwner());
@@ -1032,6 +1033,7 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 			? Cast<USkeletalMeshComponent>(WeaponRoot->GetAttachParent()) : nullptr;
 		if (Character && AttachMesh && (AttachMesh != Character->GetMesh() || bPrimaryContactAttachment))
 		{
+			bHandDrivenAttachment = true;
 			GripTargets.DriveMode = EProject_JWeaponGripDriveMode::PrimaryHand;
 			const FName HandBone = AttachMesh->GetSocketBoneName(WeaponRoot->GetAttachSocketName());
 			if (GripTargets.bHasSecondaryGrip && !HandBone.IsNone() && AttachMesh->GetBoneIndex(HandBone) != INDEX_NONE)
@@ -1075,18 +1077,10 @@ void UProject_JWeaponPresentationComponent::UpdateGripTargets()
 	// When the weapon is attached to the rendered hand, solving that same hand
 	// back toward a socket on the weapon creates a feedback loop. Independent
 	// weapon motion has its own authored target and remains unaffected.
-	if (!bIndependentMotionActive && (bPrimaryContactAttachment || !Motion.bAllowPrimaryIKOnVisualAttachment) &&
-		CurrentPresentationSocket == EProject_JWeaponPresentationSocket::Drawn)
+	if (bHandDrivenAttachment && (bPrimaryContactAttachment || !Motion.bAllowPrimaryIKOnVisualAttachment))
 	{
-		const ACharacter* Character = Cast<ACharacter>(GetOwner());
-		const USceneComponent* WeaponRoot = SpawnedWeapon->GetRootComponent();
-		const USkeletalMeshComponent* AttachMesh = WeaponRoot
-			? Cast<USkeletalMeshComponent>(WeaponRoot->GetAttachParent()) : nullptr;
-		if (Character && AttachMesh && (AttachMesh != Character->GetMesh() || bPrimaryContactAttachment))
-		{
-			GripTargets.PrimaryIKAlpha = 0.0f;
-			GripTargets.bPrimaryIKSuppressedByAttachment = true;
-		}
+		GripTargets.PrimaryIKAlpha = 0.0f;
+		GripTargets.bPrimaryIKSuppressedByAttachment = true;
 	}
 	if (bContactRecoveryActive && ContactRecoveryMesh.IsValid())
 	{

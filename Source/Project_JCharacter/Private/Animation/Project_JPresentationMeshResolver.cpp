@@ -7,6 +7,13 @@
 #include "GameFramework/Character.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 
+bool Project_J::Animation::UsesIndependentClothSimulation(const USkeletalMeshComponent& Mesh)
+{
+	const auto* Asset = Mesh.GetSkeletalMeshAsset();
+	// Metadata covers the interval before streamed cloth instances exist.
+	return !Mesh.GetClothingSimulationInstances().IsEmpty() || (Asset && Asset->HasActiveClothingAssets());
+}
+
 bool Project_J::Animation::WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_VisualDemandResolve);
@@ -36,31 +43,43 @@ USkeletalMeshComponent* Project_J::Animation::FindVisualFollower(const ACharacte
 	}
 
 	USkeletalMeshComponent* RetargetFollower = nullptr;
+	USkeletalMeshComponent* ExplicitFollower = nullptr;
+	bool bAmbiguousExplicit = false, bAmbiguousRetarget = false;
 	for (USceneComponent* Child : SourceMesh->GetAttachChildren())
 	{
 		USkeletalMeshComponent* Candidate = Cast<USkeletalMeshComponent>(Child);
-		if (!IsValid(Candidate) || Candidate->IsA<UProject_JModularMeshComponent>() ||
-			(bRequireMeshAsset && !Candidate->GetSkeletalMeshAsset()))
+		if (!IsValid(Candidate) || Candidate->GetOwner() != &Character || !Candidate->IsRegistered() ||
+			Candidate->IsA<UProject_JModularMeshComponent>())
 		{
 			continue;
 		}
 
 		if (Candidate->ComponentTags.Contains(TEXT("VisualFollower")) || Candidate->ComponentTags.Contains(TEXT("RetargetFollower")))
 		{
-			return Candidate;
+			bAmbiguousExplicit |= ExplicitFollower && ExplicitFollower != Candidate;
+			ExplicitFollower = Candidate;
+			continue;
 		}
 
+		if (bRequireMeshAsset && !Candidate->GetSkeletalMeshAsset()) continue;
 		const UAnimInstance* AnimInstance = Candidate->GetAnimInstance();
 		const UClass* AnimClass = Candidate->GetAnimClass();
-		if (!RetargetFollower &&
+		const UAnimInstance* PostProcess = Candidate->GetPostProcessInstance();
+		if (
 			((AnimInstance && AnimInstance->IsA<UProject_JRetargetAnimInstance>()) ||
-				(AnimClass && AnimClass->IsChildOf(UProject_JRetargetAnimInstance::StaticClass()))))
+				(AnimClass && AnimClass->IsChildOf(UProject_JRetargetAnimInstance::StaticClass())) ||
+				(PostProcess && PostProcess->IsA<UProject_JRetargetAnimInstance>())))
 		{
+			bAmbiguousRetarget |= RetargetFollower && RetargetFollower != Candidate;
 			RetargetFollower = Candidate;
 		}
 	}
 
-	return RetargetFollower;
+	if (bAmbiguousExplicit) return nullptr;
+	// An explicit body waiting for its asset keeps the role. Do not let an
+	// already-loaded retargeted garment take its hand/equipment consumers.
+	if (ExplicitFollower) return !bRequireMeshAsset || ExplicitFollower->GetSkeletalMeshAsset() ? ExplicitFollower : nullptr;
+	return bAmbiguousRetarget ? nullptr : RetargetFollower;
 }
 
 USkeletalMeshComponent* Project_J::Animation::ResolveEquipmentPoseSource(const ACharacter& Character,

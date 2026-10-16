@@ -2,6 +2,18 @@
 
 namespace ProjectJ::Animation
 {
+float ResolveAnimationDistanceTier(double DistanceSquared, const FProject_JAnimationBudgetSettings& S)
+{
+	// Malformed configuration preserves quality instead of silently disabling MM.
+	if (!FMath::IsFinite(DistanceSquared) || DistanceSquared < 0 ||
+		!FMath::IsFinite(S.NearDistance) || !FMath::IsFinite(S.MidDistance) || !FMath::IsFinite(S.FarDistance) ||
+		S.NearDistance <= 0 || S.MidDistance <= S.NearDistance || S.FarDistance <= S.MidDistance) return 0.f;
+	if (DistanceSquared < FMath::Square(double(S.NearDistance))) return 0.f;
+	if (DistanceSquared < FMath::Square(double(S.MidDistance))) return 1.f;
+	if (DistanceSquared < FMath::Square(double(S.FarDistance))) return 2.f;
+	return 3.f; // Visible tier 3 still means Far, never actor hiding or network culling.
+}
+
 FProject_JAnimOptimizationPolicy ResolveSourceQuality(const FQualityObservation& I,
 	const FProject_JAnimationBudgetSettings& S)
 {

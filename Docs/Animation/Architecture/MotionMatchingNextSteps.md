@@ -4,6 +4,8 @@ Project J uses a C++ locomotion state component, a thread-safe animation snapsho
 
 ## Current Architecture
 
+2026-10-15 애니메이션 거리 관측은 기존 `CharacterAnimationBudgetSubsystem::Refresh`가 world의 local view를 GT에서 모아 등록 mesh의 가장 가까운 시점 거리와 현재 locomotion profile로 생산한다. budget mesh의 `GetAnimationDistanceTier()`를 source 품질·MM Far 검색 제한·ABA 우선순위·visual Coordinator가 함께 소비한다. local은 즉시 tier0, view 없음/DS는 기존 significance fallback이며 전역 AI/BP significance는 쓰지 않는다. 관측은 ABA on/off와 독립이고 reinit/unregister/cleanup에서 해제한다. [200명 계획의 실제 경로와 검증](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)을 따른다.
+
 2026-10-12 기준 단발과 MM은 [통합 Locomotion](../Planning/Unified_Locomotion_Implementation_2026-10-12.md)의 한 재생 스택을 사용한다. 네이티브 State Controller·Chooser는 의미 상태와 단발 선택을 유지하며, 기존 외부 Blend Stack·Handoff·포즈 State Machine은 현재 Master의 활성 경로에서 제거했다. 플레이어별 보정과 Inertialization·Lean·전투·접지 후단은 유지한다.
 
 [지속 곡선 후속 개선](../Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md)은 단발 복귀와 Strafe 후보군 확장에 같은 실제 이동 증거를 사용한다. Start/Land 보호 구간을 먼저 만족해야 하며, 확인 시간이 지났다는 이유만으로 Arc를 강제하지 않는다. 미세 입력은 안정 Loop 후보군을 유지한다.

@@ -6,6 +6,20 @@
 
 감사별 변경·시험 조건·성능 미해결 범위는 [검토 목차](../Review/README.md)로 모았다. 과거 검사 횟수나 통과 수는 현재 전체 품질의 보증으로 사용하지 않는다.
 
+현재 GreatSword_Woman의 LOD0–2는 사용자 검토 후 채택했으며 LOD3–4 추가는 보류한다. 새 캐릭터·의상·장비는 [공통 LOD 제작](Authoring/Mesh_LOD_Authoring.md)을 사용한다. 기존 체인은 보존하며 LOD가 없는 일반 표면 메시만 명시적으로 생성·검증한다. Cloth·헤어·morph 등은 원본을 유지하고 각 native 제작 경로로 검수한다. [7차 구현·검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-7차--새-캐릭터의상장비의-공통-lod-제작)에 저장 후 재검사와 로컬 무기 품질 보호를 기록했다.
+
+[6차 최적화](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-6차--다른-에셋-호환성과-실제-몸체-lod)는 다른 에셋의 Cloth/외부 제어·역할 충돌을 보호하고 원격 body의 실제 화면 크기 LOD를 사용한다. 기존 body에 LOD1·2를 추가했으며 로컬은 기존LOD0·포즈/물리를 유지한다. 반복 GPU 이득과 미확정인 전체 frame/CPU 이득을 구분한다. 새 캐릭터/망토/헤어의 제작·접촉·LOD 전환 검수는 여전히 에셋별로 필요하다.
+
+최적화의 현재 목표는 **총 200명 전원 표시와 로컬 품질 유지**다. [계획과 첫 적용·검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)은 기존 예산 subsystem의 거리 관측 활성화와 로컬 중복 계산 정리, 200명 렌더·로컬 품질·원격/전투 회귀를 기록한다. 동시 공격의 리타깃·의상 비용과 일부 CPU 증가는 남아 있으며 전체 성능 개선 완료로 판정하지 않는다.
+
+3차에서는 원격 retarget IK 생략을 실제 구현·포즈·교대 CPU로 시험했으나 비용 절감을 입증하지 못해 제거했다. 당시 2차 runtime을 보존했고 실험용 CVar/분기를 남기지 않았다. 이후 6·7차의 공통 경계·몸체 LOD·제작 경로는 별도로 반영했다. [미채택 근거와 후속 범위](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-3차--원격-리타깃-ik-소비)를 확인한다.
+
+4차에서는 op별 비용과 실제 physics actor를 읽는 Editor 진단을 추가했다. 의상 전용 데이터 축소는 단순 복제 대조군의 동등성도 확보되지 않아 보류했고 제작 에셋·runtime은 유지했다. [실제 관측·실패 근거·다음 검증](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-4차--실제-연산-비용과-의상-데이터-분리-검증)을 함께 읽는다.
+
+후속 [5차](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-5차--물리-복제의-초기화-동등성과-비용-판정)에서 시험의 비대칭 초기화 순서를 고쳐 단순 복제와 축소본900표본이 동등성을 통과했다. 91→44 actor 축소는 비계측 비용 이득이 대부분1% 안팎이고 trace의 대조 scope 변동도 남아 미채택했다. 생산 몸체에 강제 reset/새 상태를 추가하지 않고 Editor 회귀만 남겼다.
+
+같은 계획의 2차는 전반적 locomotion 경로의 작은 조회 정리, 비계측 교대 비교와 실제 Body IK/물리/LOD 소비를 추가한다. Far 정책값만으로 리타깃 IK가 비활성화됐다고 판단하지 않는다. 전체 성능 효과가 미확정인 부분과 RHI34개·최종200명/local 품질 검증을 구분해 기록했다.
+
 ## 현재 플레이어 파이프라인
 
 공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.

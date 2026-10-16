@@ -4,6 +4,10 @@
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "Animation/Project_JCharacterAnimInstance.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/AnimClassInterface.h"
+#include "AnimNodes/AnimNode_RetargetPoseFromMesh.h"
+#include "Animation/Project_JCharacterAnimProfile.h"
+#include "Animation/Project_JLocomotionProfile.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -25,6 +29,71 @@
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
 #include "RHI.h"
+#include "Camera/CameraActor.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Misc/ScopeExit.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredObserverProfile, "ProjectJ.Animation.Budget.AuthoredObserverProfile",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJAuthoredObserverProfile::RunTest(const FString&)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    World->InitializeActorsForPlay(FURL());
+    World->GetWorldSettings()->NotifyBeginPlay(); World->GetWorldSettings()->NotifyMatchStarted();
+    ON_SCOPE_EXIT
+    {
+        World->BeginTearingDown(); World->EndPlay(EEndPlayReason::Quit);
+        World->DestroyWorld(false); GEngine->DestroyWorldContext(World);
+    };
+    auto* Controller = World->SpawnActor<AAIController>();
+    auto* State = World->SpawnActor<AProject_JPlayerState>();
+    State->SetOwner(Controller); Controller->SetPlayerState(State);
+    auto* Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector(4000, 0, 1000));
+    if (!TestNotNull(TEXT("Authored production pawn exists"), Player)) return false;
+    Controller->UnPossess(); Player->SetPlayerState(State);
+    auto* Source = CastChecked<UProject_JBudgetedSkeletalMeshComponent>(Player->GetMesh());
+    TestNotNull(TEXT("Production source runs the native Master"), Cast<UProject_JCharacterAnimInstance>(Source->GetAnimInstance()));
+    auto* Viewer = World->SpawnActor<APlayerController>(); Viewer->SetAsLocalPlayerController();
+    auto* Camera = World->SpawnActor<ACameraActor>(); Viewer->SetViewTarget(Camera);
+    Viewer->PlayerCameraManager->UpdateCamera(0.f);
+    auto* Service = World->GetSubsystem<UProject_JCharacterAnimationBudgetSubsystem>();
+    Service->SetEnabledOverride(false);
+    auto* Profile = NewObject<UProject_JCharacterAnimProfile>(Player);
+    auto* Locomotion = NewObject<UProject_JLocomotionProfile>(Player);
+    Profile->LocomotionProfile = Locomotion;
+    const auto* OriginalProfile = Player->GetCharacterAnimProfile();
+    auto* ProfileProperty = FindFProperty<FObjectProperty>(AProject_JPlayerCharacter::StaticClass(), TEXT("CharacterAnimProfile"));
+    if (!TestNotNull(TEXT("Player profile property exists"), ProfileProperty)) return false;
+    ProfileProperty->SetObjectPropertyValue_InContainer(Player, Profile);
+    ON_SCOPE_EXIT { ProfileProperty->SetObjectPropertyValue_InContainer(Player, const_cast<UProject_JCharacterAnimProfile*>(OriginalProfile)); };
+    Locomotion->NearMotionMatchingDistance = 10000; Locomotion->MidMotionMatchingDistance = 20000; Locomotion->FarMotionMatchingDistance = 30000;
+    Service->Refresh();
+    TestEqual(TEXT("Authored profile's Near distance owns observer classification"), Source->GetAnimationDistanceTier(), 0.f);
+    Locomotion->NearMotionMatchingDistance = 1000; Locomotion->MidMotionMatchingDistance = 2000; Locomotion->FarMotionMatchingDistance = 3000;
+    Service->Refresh();
+    TestEqual(TEXT("Runtime profile changes are observed without a stale settings cache"), Source->GetAnimationDistanceTier(), 3.f);
+    Source->InitAnim(true);
+    TestEqual(TEXT("Animation reinitialization clears the observation"), Source->GetAnimationDistanceTier(), Player->GetSignificance());
+    Service->Refresh();
+    TestEqual(TEXT("Reinitialized Master resolves its current profile again"), Source->GetAnimationDistanceTier(), 3.f);
+    Locomotion->MidMotionMatchingDistance = 500;
+    Service->Refresh();
+    TestEqual(TEXT("Invalid authored distance ordering preserves Near"), Source->GetAnimationDistanceTier(), 0.f);
+    Source->EnableExternalTickRateControl(true);
+    Source->SetExternalTickRate(7);
+    Service->SetEnabledOverride(true);
+    TestFalse(TEXT("Project ABA cannot claim a mesh controlled by another allocator"),Source->IsManagedByBudget());
+    TestTrue(TEXT("Foreign external control remains installed"),Source->IsUsingExternalTickRateControl());
+    TestEqual(TEXT("Foreign external cadence is not overwritten"),Source->GetExternalTickRate(),7);
+    Source->EnableExternalTickRateControl(false);
+    Service->Refresh();
+    TestTrue(TEXT("Project ABA can acquire after the external owner releases"),Source->IsManagedByBudget());
+    Service->Refresh();
+    TestTrue(TEXT("Project ABA does not reject its own external control"),Source->IsManagedByBudget());
+    Service->SetEnabledOverride(false);
+    return true;
+}
 
 namespace
 {
@@ -105,6 +174,19 @@ public:
 		const int16 Before = Body->GetAnimInstance()->GetUpdateCounter().Get();
 		World->Tick(LEVELTICK_All, 1.f / 60);
 		const bool bUpdated = Body->GetAnimInstance()->GetUpdateCounter().Get() != Before;
+		if (Frame == 140 || Frame == 300 || Frame == 620)
+		{
+			const auto* BodyAnim = CastChecked<UProject_JRetargetAnimInstance>(Body->GetAnimInstance());
+			if (const auto* Interface = IAnimClassInterface::GetFromClass(BodyAnim->GetClass()))
+				for (const auto* Property : Interface->GetAnimNodeProperties())
+					if (Property->Struct == FAnimNode_RetargetPoseFromMesh::StaticStruct())
+					{
+						const auto* Node = Property->ContainerPtrToValuePtr<FAnimNode_RetargetPoseFromMesh>(BodyAnim);
+						Test->AddInfo(FString::Printf(TEXT("BodyPolicy Frame=%d Tier=%d PolicyIK=%d BodyLOD=%d NodeLOD=%d NodeIKLOD=%d CustomForceIKOff=%d"),
+							Frame, int32(BodyAnim->CurrentQualityTier), BodyAnim->bTierAllowsRetargetIK, Body->GetPredictedLODLevel(),
+							Node->LODThreshold, Node->LODThresholdForIK, Node->CustomRetargetProfile.bForceAllIKOff));
+					}
+		}
 		if (Frame >= 60 && Frame < 180) FullUpdates += bUpdated;
 		if (Frame >= 240 && Frame < 360) FarUpdates += bUpdated;
 		const auto& Bones = Body->GetComponentSpaceTransforms();

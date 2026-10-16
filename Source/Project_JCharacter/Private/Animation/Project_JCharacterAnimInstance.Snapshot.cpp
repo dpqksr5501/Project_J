@@ -286,10 +286,8 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 	}
 	else if (OneShot.RotationMode == EProject_JLocomotionRotationMode::OrientToMovement)
 	{
-		const UProject_JLocomotionProfile* CurrentProfile = GetLocomotionProfile();
-		const FProject_JMotionMatchingSearchPolicy& SearchPolicy = CurrentProfile
-			? CurrentProfile->MotionMatchingSearchPolicy
-			: FProject_JMotionMatchingSearchPolicy();
+		// Use the policy captured for this snapshot, including the no-profile default.
+		const auto& SearchPolicy = Data.MotionMatchingSearchPolicy;
 
 		const bool bIsEnteringJump = (Data.Air.bIsJumping || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart);
 		if (bIsJumpAirReselecting)
@@ -442,9 +440,9 @@ bool UProject_JCharacterAnimInstance::FillPlayerThreadSafeData(FProject_JAnimThr
 		return false;
 	}
 
-	Data.Ground.bWantsSprint =
-		(Data.Ground.bWantsSprint || OwningPlayerCharacter->IsSprintLocomotionAllowed()) &&
-		OwningPlayerCharacter->IsSprintLocomotionAllowed();
+	// The effective Sprint state is authoritative here: (intent || allowed) &&
+	// allowed equals allowed. Resolve the same combat/tag policy only once.
+	Data.Ground.bWantsSprint = OwningPlayerCharacter->IsSprintLocomotionAllowed();
 	if (OwningPlayerCharacter->IsLocallyControlled())
 	{
 		Data.Ground.bStartWasSprinting =

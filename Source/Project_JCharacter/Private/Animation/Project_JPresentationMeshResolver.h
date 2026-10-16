@@ -8,9 +8,11 @@ class USkeletalMeshComponent;
 
 namespace Project_J::Animation
 {
+    /** Cloth has a separate engine tick, independent of anim graph cadence. */
+    bool UsesIndependentClothSimulation(const USkeletalMeshComponent& Mesh);
 	/** Visual demand only. Gameplay pose/authority demand is evaluated separately. */
 	bool WasCharacterVisualRecentlyRendered(const ACharacter& Character, float Tolerance);
-	/** Attached follower role. Bone consumers require a loaded mesh; quality control may resolve the role before load. */
+	/** Unique explicit role, otherwise a unique native main/PP retargeter. Ambiguity never picks an arbitrary garment. */
 	USkeletalMeshComponent* FindVisualFollower(const ACharacter& Character, bool bRequireMeshAsset = true);
 
 	/** A modular part may copy bones only from a mesh using its actual skeleton. */

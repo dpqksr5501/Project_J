@@ -13,4 +13,5 @@ struct FQualityObservation
 FProject_JAnimOptimizationPolicy ResolveSourceQuality(const FQualityObservation& Input,
 	const FProject_JAnimationBudgetSettings& Settings);
 float ResolveVisualInterval(bool bProtected, bool bHidden, float Significance, bool bSourceThrottled);
+float ResolveAnimationDistanceTier(double DistanceSquared, const FProject_JAnimationBudgetSettings& Settings);
 }

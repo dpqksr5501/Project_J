@@ -66,24 +66,19 @@ void UProject_JAnimNotifyState_MeleeHit::NotifyTick(USkeletalMeshComponent* Mesh
 		return;
 	}
 
-	const FVector TraceLocation = ResolveTraceLocation(MeshComp);
+	// Resolve once before event delivery, which may synchronously cancel/change
+	// equipment. Never carry this call-local observation across a gameplay event.
+	auto* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>();
+	const auto* AttackDefinition = HitValidation ? HitValidation->GetActiveAttackDefinition() : nullptr;
+	const FVector TraceLocation = ResolveTraceLocation(MeshComp, AttackDefinition);
 	const FVector TraceStart = State->PreviousLocation;
 	State->PreviousLocation = TraceLocation;
 	float EffectiveTraceRadius = TraceRadius;
-	if (const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
-	{
-		if (const UProject_JAttackDefinition* AttackDefinition = HitValidation->GetActiveAttackDefinition())
-		{
-			EffectiveTraceRadius = AttackDefinition->HitSpec.TraceRadius;
-		}
-	}
+	if (AttackDefinition) { EffectiveTraceRadius = AttackDefinition->HitSpec.TraceRadius; }
 
-	if (OwnerActor->HasAuthority())
+	if (OwnerActor->HasAuthority() && HitValidation)
 	{
-		if (UProject_JCombatHitValidationComponent* HitValidation = OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>())
-		{
-			HitValidation->RecordAuthoritativeTrace(TraceStart, TraceLocation);
-		}
+		HitValidation->RecordAuthoritativeTrace(TraceStart, TraceLocation);
 	}
 
 	TArray<AActor*> ActorsToIgnore;
@@ -136,6 +131,12 @@ FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshCo
 	const UProject_JCombatHitValidationComponent* HitValidation = OwnerActor
 		? OwnerActor->FindComponentByClass<UProject_JCombatHitValidationComponent>() : nullptr;
 	const UProject_JAttackDefinition* AttackDefinition = HitValidation ? HitValidation->GetActiveAttackDefinition() : nullptr;
+	return ResolveTraceLocation(MeshComp, AttackDefinition);
+}
+
+FVector UProject_JAnimNotifyState_MeleeHit::ResolveTraceLocation(USkeletalMeshComponent* MeshComp, const UProject_JAttackDefinition* AttackDefinition) const
+{
+	if (!MeshComp) return FVector::ZeroVector;
 	const FVector LocalTip = AttackDefinition && AttackDefinition->HitSpec.bUseCanonicalBladeTipOffset
 		? AttackDefinition->HitSpec.CanonicalBladeTipOffset : FVector::ZeroVector;
 	return MeshComp->GetSocketTransform(SocketName, RTS_World).TransformPosition(LocalTip);

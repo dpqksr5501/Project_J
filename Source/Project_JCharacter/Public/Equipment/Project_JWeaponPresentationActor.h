@@ -22,6 +22,9 @@ class PROJECT_JCHARACTER_API AProject_JWeaponPresentationActor : public AActor
 
 public:
 	AProject_JWeaponPresentationActor();
+	virtual void SetOwner(AActor* NewOwner) override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 	UFUNCTION(BlueprintPure, Category = "Weapon Presentation")
 	UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
@@ -34,4 +37,11 @@ protected:
 	/** Add WeaponGrip_* and WeaponGroundProbe_* sockets to the selected mesh asset. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Presentation")
 	TObjectPtr<UStaticMeshComponent> WeaponMesh = nullptr;
+private:
+	void BindLODOwner();
+	void ReleaseLocalLOD();
+	void RefreshLocalLOD();
+	UFUNCTION() void HandleLODControllerChanged(APawn* Pawn,AController* OldController,AController* NewController);
+	TWeakObjectPtr<APawn> LODOwner;
+	bool bOwnsLocalLOD0 = false;
 };

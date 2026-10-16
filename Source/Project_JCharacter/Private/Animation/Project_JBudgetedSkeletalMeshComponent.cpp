@@ -1,6 +1,7 @@
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Animation/AnimInstance.h"
+#include "Project_JBaseCharacter.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
@@ -62,11 +63,24 @@ void UProject_JBudgetedSkeletalMeshComponent::BeginPlay()
 
 void UProject_JBudgetedSkeletalMeshComponent::BindAnimationEvents()
 {
+	ObservedDistanceTier.Reset();
 	LeaveBudget(); // Reinitialization cannot retain old external tick-rate state.
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.RemoveDynamic(this, &ThisClass::OnMontageStarted); }
 	BoundAnimation = GetAnimInstance();
 	if (BoundAnimation.IsValid()) { BoundAnimation->OnMontageStarted.AddUniqueDynamic(this, &ThisClass::OnMontageStarted); }
 	RefreshMontageUpdateRequirement();
+}
+
+float UProject_JBudgetedSkeletalMeshComponent::GetAnimationDistanceTier() const
+{
+	check(IsInGameThread());
+	const auto* Pawn = Cast<APawn>(GetOwner());
+	if (Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled()) return 0.f;
+	// No local view (including isolated fixtures and dedicated servers) retains
+	// the existing caller-provided tier without creating a second global writer.
+	const auto* Character = Cast<AProject_JBaseCharacter>(GetOwner());
+	const float Tier = ObservedDistanceTier.Get(Character ? Character->GetSignificance() : 0.f);
+	return FMath::IsFinite(Tier) ? FMath::Max(0.f, Tier) : 0.f;
 }
 
 void UProject_JBudgetedSkeletalMeshComponent::OnMontageStarted(UAnimMontage*)
@@ -96,6 +110,9 @@ bool UProject_JBudgetedSkeletalMeshComponent::CanUseBudget() const
 	const auto* Anim = GetAnimInstance();
 	const bool bLocalPlayer = Pawn && Cast<APlayerController>(Pawn->GetController()) && Pawn->IsLocallyControlled();
 	return !bEnding && bAllowProjectBudget && !IsCombatCritical() && !bUpdateOverride && bRequestedTick && IsRegistered() && HasBegunPlay()
+		// ABA enables external control itself. A pre-existing foreign controller
+		// must retain ownership; do not reject our own active ABA registration.
+		&& (bManaged || !IsUsingExternalTickRateControl())
 		&& World && World->IsGameWorld() && !World->bIsTearingDown && World->GetNetMode() != NM_DedicatedServer
 		&& GetOwner() && !GetOwner()->IsActorBeingDestroyed() && !bLocalPlayer && !IsSimulatingPhysics()
 		&& !LeaderPoseComponent.IsValid() && Anim && Anim->RootMotionMode != ERootMotionMode::RootMotionFromEverything
@@ -205,6 +222,7 @@ void UProject_JBudgetedSkeletalMeshComponent::SetComponentTickEnabled(bool bEnab
 void UProject_JBudgetedSkeletalMeshComponent::DetachService()
 {
 	bEnding = true;
+	ObservedDistanceTier.Reset();
 	LeaveBudget();
 	UpdateRequirements.Reset();
 	bMontageUpdateRequirement = false;

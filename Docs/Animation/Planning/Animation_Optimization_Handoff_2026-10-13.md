@@ -1,5 +1,11 @@
 # 200명 애니메이션 최적화 인계 — 2026-10-13
 
+> 현재 후속 계획: [총 200명 전원 표시와 로컬 품질 보존](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md). 현재 소스의 고비용 후보, 네트워크·전투 영향과 검증 순서는 이 계획을 따른다. 아래 측정·실행 예시는 당시 이력이며 현재 빌드 결과로 대체하지 않는다.
+
+> 최신7차는 [공통 LOD 제작](../Authoring/Mesh_LOD_Authoring.md)과 기존 설정 보존·예외 검수 경로다. 2026-10-16 현재 몸체의 LOD0–2를 사용자 검토 후 채택했으며 LOD3–4 추가는 보류한다. 다른 에셋을 자동 승인하거나 물리 CPU 절감을 입증한 작업은 아니다. 현재 결정과 유지/제거 이유는 위 계획의 첫 절을 따른다.
+
+> 6차 기록은 같은 계획의 [다른 에셋 호환성과 실제 몸체 LOD](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-6차--다른-에셋-호환성과-실제-몸체-lod)를 따른다. 공통 제어와 Cloth/역할 경계를 보완하고 기존 body에 LOD1·2를 적용했다. GPU 감소와 미확정 frame/CPU 개선, 새 에셋별 제작 검수를 구분한다. 현재 raw/forced LOD writer를 늘리거나 미채택 physics 축소를 재개하지 않는다. 제한 Cook의 공유 Zen 저장소 갱신 영향과 향후 `-SkipZenStore` 분리 조건도 해당 절을 읽는다.
+
 > 후속 구현: MM 캐시 재사용은 `8485562c`와 [런타임 최적화 기록](Animation_Runtime_Optimization_2026-10-13.md), 골격·몸체 프로필은 [실시간 리타깃 프로필](../Architecture/Runtime_Retarget_Profiles_2026-10-13.md)을 함께 확인한다. 후자는 `8485562c` 기반 `codex/runtime-retarget-profiles`의 미커밋 변경으로 작성·검증했다. 아래 Git 표와 측정은 최초 인계 시점의 이력이다. 새 프로필의 200명 CPU 증가는 해결 완료로 취급하지 않으며, 최신 실제 HEAD·변경 소스·에셋 해시부터 확인한다.
 
 ## 1. 이 문서의 용도와 출발 상태

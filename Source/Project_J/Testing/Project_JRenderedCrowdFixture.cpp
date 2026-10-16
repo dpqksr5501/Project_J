@@ -2,6 +2,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Testing/Project_JAuthoredAnimationFixture.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Components/Project_JAnimationUpdateCoordinatorComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Camera/CameraActor.h"
@@ -23,6 +25,7 @@ void UProject_JRenderedCrowdFixture::Initialize(FSubsystemCollectionBase& Collec
 #if !UE_BUILD_SHIPPING
 	if (!FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdFixture"))) { return; }
 	Started = FPlatformTime::Seconds();
+	bWithLocalPlayer = FParse::Param(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdLocalPlayer"));
 	FParse::Value(FCommandLine::Get(), TEXT("ProjectJRenderedCrowdOutput="), Output);
 	if (Output.IsEmpty()) { Output = FPaths::ProjectSavedDir() / TEXT("Validation/RenderedCrowd"); }
 	IFileManager::Get().MakeDirectory(*Output, true);
@@ -43,6 +46,15 @@ bool UProject_JRenderedCrowdFixture::Setup()
 		auto* Player = ProjectJAuthoredAnimationFixture::Spawn(World, Controller, State, FVector((I % 20) * 180, (I / 20) * 200, 100));
 		if (!Player) { return false; }
 		Controller->UnPossess(); Player->SetPlayerState(State);
+		if (I == 0 && bWithLocalPlayer)
+		{
+			// Keep the existing controlled-kinematics fixture, but exercise actual
+			// local ownership in the same 200-body scene rather than faking a role.
+			auto* Local = World->GetFirstPlayerController();
+			if (!Local) return false;
+			Controller->SetPlayerState(nullptr);
+			State->SetOwner(Local); Local->SetPlayerState(State); Local->Possess(Player);
+		}
 		CastChecked<UProject_JAbilitySystemComponent>(Player->GetAbilitySystemComponent())->AddLooseGameplayTag(FProject_JGameplayTags::Get().State_CombatMode);
 		Players.Add(Player);
 	}
@@ -70,20 +82,39 @@ bool UProject_JRenderedCrowdFixture::Tick(float Delta)
 		return true;
 	}
 	int32 Visible = 0, Montages = 0;
+	int32 BodyLODs[3]={}, LocalLOD=INDEX_NONE;
 	for (AProject_JPlayerCharacter* Player : Players)
 	{
 		if (!IsValid(Player)) { Finish(false, TEXT("Authored actor disappeared")); return false; }
 		TInlineComponentArray<USkeletalMeshComponent*> Meshes(Player);
 		bool bVisible = false;
 		for (auto* Mesh : Meshes)
-			if (Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance())) bVisible |= Mesh->WasRecentlyRendered(.2f);
+			if (Cast<UProject_JRetargetAnimInstance>(Mesh->GetAnimInstance()))
+			{
+				bVisible |= Mesh->WasRecentlyRendered(.2f);
+				const int32 LOD=Mesh->GetPredictedLODLevel();
+				if(LOD>=0 && LOD<3) ++BodyLODs[LOD];
+				if(bWithLocalPlayer && Player==Players[0]) LocalLOD=LOD;
+			}
 		Visible += bVisible;
 		Montages += Player->GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
 	}
 	const bool bCapture = Phase > 1 && !bShot && Now - PhaseAt > 1;
-	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
-		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture);
+	Rows += FString::Printf(TEXT("%d,%.5f,%.6f,%.6f,%d,%d,%d,%d,%d,%d,%d,%d\n"), Phase, Now - Started, Delta * 1000,
+		FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()), Players.Num(), Visible, Montages, bCapture,BodyLODs[0],BodyLODs[1],BodyLODs[2],LocalLOD);
 	if (Phase > 1) { ++Samples; VisibleSamples += Visible == 200; }
+	if (Phase > 1 && bWithLocalPlayer)
+	{
+		const auto* Local = Players[0].Get();
+		const auto* Anim = Cast<UProject_JCharacterAnimInstance>(Local->GetMesh()->GetAnimInstance());
+		const auto* Coordinator = Local->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
+		if (LocalLOD!=0 || !Local->IsPlayerControlled() || !Local->IsLocallyControlled() || !Anim ||
+			Anim->GetCurrentOptimizationPolicy().Tier != EProject_JAnimBudgetTier::Local ||
+			!Anim->GetCurrentOptimizationPolicy().bEnableHandIK || !Anim->GetCurrentOptimizationPolicy().bEnableFootIK ||
+			!Coordinator || Coordinator->GetVisualEvaluationInterval() != 0.f)
+		{ Finish(false, TEXT("Local source/visual quality was reduced in the 200-body scene")); return false; }
+		++LocalQualitySamples;
+	}
 	if (bCapture)
 	{
 		bShot = true; FScreenshotRequest::RequestScreenshot(Output / FString::Printf(TEXT("phase%d.png"), Phase), false, false);
@@ -107,8 +138,8 @@ void UProject_JRenderedCrowdFixture::Finish(bool bSuccess, const TCHAR* Reason)
 {
 	bFinished = true;
 	FFileHelper::SaveStringToFile(Rows, *(Output / TEXT("frames.csv")));
-	FFileHelper::SaveStringToFile(FString::Printf(TEXT("success=%d\ncooked=%d\nactors=%d\nreason=%s\n"), bSuccess,
-		FPlatformProperties::RequiresCookedData(), Players.Num(), Reason), *(Output / TEXT("result.txt")));
+	FFileHelper::SaveStringToFile(FString::Printf(TEXT("success=%d\ncooked=%d\nactors=%d\nlocal_player=%d\nlocal_quality_samples=%d\nreason=%s\n"), bSuccess,
+		FPlatformProperties::RequiresCookedData(), Players.Num(), bWithLocalPlayer, LocalQualitySamples, Reason), *(Output / TEXT("result.txt")));
 	FPlatformMisc::RequestExit(false);
 }
 void UProject_JRenderedCrowdFixture::Deinitialize()

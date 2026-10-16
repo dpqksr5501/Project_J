@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3228개, Markdown 231개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3231개, Markdown 233개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -67,6 +67,7 @@
 | [데이터 주도형 이동 컨텍스트 확장 가이드](../Animation/Authoring/DataDrivenLocomotionExtensionGuide.md) | 제작 가이드 | Animation/Authoring/DataDrivenLocomotionExtensionGuide.md |
 | [손바닥 접촉 기준과 Guided Hand IK](../Animation/Authoring/Guided_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Guided_Hand_Contact.md |
 | [휴머노이드 스켈레톤 리타기팅 표준 및 MMORPG 에셋 확장 가이드](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
+| [캐릭터·의상·장비 LOD 제작](../Animation/Authoring/Mesh_LOD_Authoring.md) | 제작 가이드 | Animation/Authoring/Mesh_LOD_Authoring.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
@@ -179,6 +180,7 @@
 | [Performance Optimization Foundation](../Performance/Architecture/PerformanceOptimizationFoundation.md) | 구조·계약 | Performance/Architecture/PerformanceOptimizationFoundation.md |
 | [Project_J Baseline Capture Guide](../Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md) | 자료 수집 절차 | Performance/CaptureGuides/ProjectJ_Baseline_Capture_Guide_2026-09-03.md |
 | [Deferred Optimization Architecture](../Performance/Planning/DeferredOptimizationArchitecture.md) | 계획·제안 | Performance/Planning/DeferredOptimizationArchitecture.md |
+| [200명 전원 표시와 로컬 품질 보존 최적화 계획](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md) | 계획·제안 | Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md |
 | [Project_J Scalability Profiling & Validation Plan](../Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md) | 계획·제안 | Performance/Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md |
 | [성능 설계·수집·결과](../Performance/README.md) | 목차·문서 관리 | Performance/README.md |
 | [Project_J Profiling Baseline Results](../Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md) | 시점별 결과 | Performance/Reports/ProjectJ_Profiling_Baseline_Results_2026-09-03.md |
@@ -343,6 +345,7 @@
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
 | [Maintenance]() | 1 | 문서 이동·보존 기록 |
+| [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
 | [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |
 | [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |

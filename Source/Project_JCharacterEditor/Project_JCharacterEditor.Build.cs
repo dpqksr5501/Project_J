@@ -10,7 +10,8 @@ public class Project_JCharacterEditor : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"Project_JCharacter"
+			"Project_JCharacter",
+			"StaticMeshEditor" // Native reduction options appear in the public recipe type.
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
@@ -40,7 +41,8 @@ public class Project_JCharacterEditor : ModuleRules
 			"InputCore",
 			"Slate",
 			"SlateCore",
-			"UnrealEd"
+			"UnrealEd",
+			"SkeletalMeshUtilitiesCommon", "TargetPlatform", "ContentBrowser"
 		});
 	}
 }

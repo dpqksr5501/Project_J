@@ -109,14 +109,25 @@ bool FProjectJCanonicalBladeTrajectoryTest::RunTest(const FString&)
 	TestTrue(TEXT("Leader pose rotates the canonical blade tip"), SecondTip.Equals(Root + FVector(0.0, 200.0, 0.0)));
 	TestTrue(TEXT("Sweep ends at the tip instead of the hand"), !SecondTip.Equals(LeaderMesh->GetSocketLocation(Notify->SocketName)));
 
-	HitValidation->SetHitWindowOpen(true);
-	HitValidation->RecordAuthoritativeTrace(FirstTip, SecondTip);
+	// Exercise the real notify Tick path with an asset-free canonical socket.
+	// Begin normally requires an authored mesh socket; seed only that boundary.
+	FAnimNotifyEventReference EventReference;
+	const uint64 WindowToken = HitValidation->BeginHitWindow();
+	Notify->HitEventTag = AttackTag;
+	Notify->TraceStates.FindOrAdd(LeaderMesh).Add(EventReference.GetNotifyInstanceID(), {FirstTip, HitValidation, WindowToken});
+	Notify->NotifyTick(LeaderMesh, nullptr, 1.f / 60, EventReference);
 	FVector HistoricalStart = FVector::ZeroVector;
 	FVector HistoricalEnd = FVector::ZeroVector;
 	bool bHistoricalWindowOpen = false;
 	TestTrue(TEXT("Canonical sweep enters SSR history"), HitValidation->FindAuthoritativeTraceAtTime(World->GetTimeSeconds() + 0.01f, 43, AttackTag, HistoricalStart, HistoricalEnd, bHistoricalWindowOpen));
 	TestTrue(TEXT("SSR records the canonical blade endpoints"), HistoricalStart.Equals(FirstTip) && HistoricalEnd.Equals(SecondTip) && bHistoricalWindowOpen);
 	HitValidation->EndAttack();
+	LeaderMesh->SetWorldLocation(FVector(500, 0, 0));
+	Notify->NotifyTick(LeaderMesh, nullptr, 1.f / 60, EventReference);
+	TestTrue(TEXT("A canceled window cannot advance its notify trace"),
+		Notify->TraceStates.FindChecked(LeaderMesh).FindChecked(EventReference.GetNotifyInstanceID()).PreviousLocation.Equals(SecondTip));
+	Notify->NotifyEnd(LeaderMesh, nullptr, EventReference);
+	TestTrue(TEXT("Notify end releases its execution state"), Notify->TraceStates.IsEmpty());
 	World->DestroyWorld(false);
 	return true;
 }

@@ -1,5 +1,11 @@
 # 네트워크
 
+[200명 전원 표시·로컬 품질 보존 계획](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)은 시각 예산과 복제 필요성을 별도로 판단하고, 서버 판정·예측·SSR·재관련 검증을 포함한다. 200개 몸체 표시와 실제 200개 연결은 별도 목표/측정이며, 현재 Iris 정책 계산기를 live adapter로 해석하지 않는다.
+
+같은 계획의6차는 원격 시각 몸체LOD와 에셋 호환 경계만 바꾸고 canonical 판정 pose/socket·CMC/SavedMove·GAS/SSR·복제 빈도/AOI를 유지했다. 최종 서버+client2/NPC200/lag50ms/loss3%의 기존 animation/combat 회귀를 새로 통과했다. 200표시 몸체 GPU 절감은 서버 성능/200소켓 달성의 근거로 사용하지 않는다.
+
+10월 15일 첫 적용은 애니메이션 관측만 보완하고 전역 significance·이동 권위·복제 payload·판정을 변경하지 않았다. 실제 Iris 서버+client2·NPC200·50ms/3% loss·parallel net에서 원격 의미 이벤트와 R→RMB authority/owner prediction/remote target/end 3 trial이 통과했다. [현재 결과와 범위](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-첫-적용과-검증)를 참고한다. WAN·200접속 검증은 아니다.
+
 현재 후속 구조·수명·실제 데이터 조사는 [심화 감사](../Review/Audits/Project_J_Deep_Structure_Audit_2026-10-13.md)와 [시스템 지도](../Review/Audits/Project_J_Deep_Structure_Map_2026-10-13.md)에 기록한다. DS01–18의 실제 변경·계약 검토·미검증을 구분한다. 최종 전체 회귀 332개·Game/Cook과 기록한 통합 검증을 수행했으며, CPU 일부 증가와 packaged RHI trace 종료 실패는 남아 있다.
 
 [전체 감사](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)의 `Measure-Network.ps1 -Animation -CombatInput`은 실제 데이터의 R→RMB를 소유 예측·서버·simulated proxy에서 대조한다. 200 native NPC, 200 표시 몸체와 실제 소켓 접속 수를 각각 기록한다. Party/Guild 거리 정책 객체는 현재 실제 Iris filter adapter로 설치돼 있지 않다.

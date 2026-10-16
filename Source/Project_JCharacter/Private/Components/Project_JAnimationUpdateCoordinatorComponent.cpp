@@ -142,16 +142,26 @@ void UProject_JAnimationUpdateCoordinatorComponent::TickComponent(float DeltaTim
 	RefreshVisualBudget(DeltaTime);
 }
 
+bool UProject_JAnimationUpdateCoordinatorComponent::CanManageVisualMesh(const USkeletalMeshComponent* Mesh) const
+{
+	if (!IsValid(Mesh) || Mesh->GetOwner() != GetOwner() || Mesh == VisualSource.Get() || !Mesh->IsRegistered() ||
+		!Mesh->GetSkeletalMeshAsset() || Mesh->IsA<UProject_JModularMeshComponent>() || Mesh->LeaderPoseComponent.IsValid() ||
+		Mesh->IsSimulatingPhysics() || Mesh->ComponentTags.Contains(TEXT("NoVisualBudget"))) return false;
+	// Chaos Cloth has its own tick/visibility contract. Animation's external
+	// cadence does not throttle it, and forcing AlwaysTick can wake hidden cloth.
+	if (Project_J::Animation::UsesIndependentClothSimulation(*Mesh)) return false;
+	const auto* Anim = Mesh->GetAnimInstance();
+	const auto* PostProcess = Mesh->GetPostProcessInstance();
+	return (Anim || PostProcess) && (!Anim || Anim->RootMotionMode != ERootMotionMode::RootMotionFromEverything) &&
+		(!PostProcess || PostProcess->RootMotionMode != ERootMotionMode::RootMotionFromEverything);
+}
+
 void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
 {
 	TInlineComponentArray<USkeletalMeshComponent*> Meshes(GetOwner());
 	for (auto* Mesh : Meshes)
 	{
-		if (Mesh == VisualSource.Get() || !Mesh->IsRegistered() || !Mesh->GetSkeletalMeshAsset() ||
-			Mesh->IsA<UProject_JModularMeshComponent>() || Mesh->LeaderPoseComponent.IsValid() || Mesh->IsSimulatingPhysics() ||
-			Mesh->ComponentTags.Contains(TEXT("NoVisualBudget")) ||
-			(Mesh->GetAnimInstance() && Mesh->GetAnimInstance()->RootMotionMode == ERootMotionMode::RootMotionFromEverything) ||
-			(!Mesh->GetAnimInstance() && !Mesh->GetPostProcessInstance())) continue;
+		if (!CanManageVisualMesh(Mesh)) continue;
 		if (Visuals.ContainsByPredicate([Mesh](const FVisualMesh& Entry) { return Entry.Mesh.Get() == Mesh; })) continue;
 		if (Mesh->IsUsingExternalTickRateControl()) continue; // A different allocator owns it.
 		if (auto* Native = Cast<UProject_JCharacterAnimInstance>(VisualSource->GetAnimInstance());
@@ -173,8 +183,22 @@ void UProject_JAnimationUpdateCoordinatorComponent::DiscoverVisualMeshes()
 	}
 }
 
+void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::RefreshRenderLOD(bool bIndependent)
+{
+	if (auto* Component=Mesh.Get())
+	{
+		if (bIndependent && Component->bSyncAttachParentLOD)
+		{ Component->bSyncAttachParentLOD=false; bDisabledParentLODSync=true; }
+		else if (!bIndependent && bDisabledParentLODSync)
+		{ if (!Component->bSyncAttachParentLOD) Component->bSyncAttachParentLOD=true; bDisabledParentLODSync=false; }
+		// Local keeps its authored parent/LOD contract. Never write forced render
+		// or streaming LODs: LODSync and asset/platform overrides own those values.
+	}
+}
+
 void UProject_JAnimationUpdateCoordinatorComponent::FVisualMesh::Restore(UActorComponent* Coordinator, USkeletalMeshComponent* Source)
 {
+	RefreshRenderLOD(false);
 	if (auto* Component = Mesh.Get())
 	{
 		Component->EnableExternalTickRateControl(false); Component->EnableExternalInterpolation(false);
@@ -193,6 +217,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RestoreVisualBudget()
 	for (auto& Entry : Visuals) Entry.Restore(this, VisualSource.Get());
 	Visuals.Reset(); VisualSchedule = {}; AccumulatedVisualDelta = VisualInterval = 0;
 	bVisualHidden = bSawAuthoredPresentation = false; AuthoredReturnUntil = 0; DiscoveryElapsed = .5f;
+	DowngradeSince = -1; bEvaluateVisuals = true;
 	if (bVisualWakeActive)
 	{
 		bVisualWakeActive = false;
@@ -236,8 +261,12 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 		Source->GetAnimInstance()->IsAnyMontagePlaying() || Character->GetCharacterMovement()->HasAnimRootMotion() ||
 		Character->GetCharacterMovement()->CurrentRootMotion.HasActiveRootMotionSources() ||
 		bAuthored || Now < AuthoredReturnUntil;
-	for (const auto& Entry : Visuals) if (const auto* Mesh = Entry.Mesh.Get())
-		bProtected |= Mesh->IsSimulatingPhysics() || (Mesh->GetAnimInstance() && Mesh->GetAnimInstance()->IsAnyMontagePlaying());
+	if (!bProtected) for (const auto& Entry : Visuals) if (const auto* Mesh = Entry.Mesh.Get())
+	{
+		if (Mesh->IsSimulatingPhysics() || (Mesh->GetAnimInstance() && Mesh->GetAnimInstance()->IsAnyMontagePlaying()) ||
+			(Mesh->GetPostProcessInstance() && Mesh->GetPostProcessInstance()->IsAnyMontagePlaying()))
+		{ bProtected = true; break; }
+	}
 	const bool bHidden = !bProtected && !Project_J::Animation::WasCharacterVisualRecentlyRendered(*Character, .25f);
 	const bool bWake = bVisualHidden && !bHidden;
 	if (bWake)
@@ -251,7 +280,7 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 		}
 	}
 	const float DesiredInterval = ProjectJ::Animation::ResolveVisualInterval(bProtected, bHidden,
-		Character->GetSignificance(), Source->IsManagedByBudget() && Source->GetExternalTickRate() > 1);
+		Source->GetAnimationDistanceTier(), Source->IsManagedByBudget() && Source->GetExternalTickRate() > 1);
 	// Upgrade immediately; downgrade only after a short quiet period. The schedule
 	// phases periodic evaluation per owner so a 200-character arrival does not lockstep.
 	if (DesiredInterval > VisualInterval)
@@ -267,14 +296,20 @@ void UProject_JAnimationUpdateCoordinatorComponent::RefreshVisualBudget(float De
 	// blend the current pose toward that target until the next evaluation.
 	const float InterpolationElapsed = bEvaluateVisuals ? 0 : AccumulatedVisualDelta;
 	const float Alpha = VisualInterval > 0 ? FMath::Clamp(DeltaTime / FMath::Max(VisualInterval - InterpolationElapsed, DeltaTime), 0.f, 1.f) : 1;
+	// The render body owns screen-size LOD. An invisible canonical pose source
+	// has no renderer demand and otherwise pins a retarget body to LOD0 forever.
+	const bool bHasRenderLODs=Visuals.ContainsByPredicate([](const FVisualMesh& Entry)
+	{ const auto* Mesh=Entry.Mesh.Get(); return Mesh && Mesh->GetNumLODs()>1; });
+	const auto* RenderBody=bHasRenderLODs ? Native->GetRuntimeRetargetFollowerMesh() : nullptr;
+	const bool bHiddenSource=Source->bHiddenInGame || !Source->GetVisibleFlag();
 	for (int32 Index = Visuals.Num() - 1; Index >= 0; --Index)
 	{
 		auto& Entry = Visuals[Index]; auto* Mesh = Entry.Mesh.Get();
 		if (!Mesh) { Visuals.RemoveAtSwap(Index); continue; }
-		if (Mesh->LeaderPoseComponent.IsValid() || Mesh->IsSimulatingPhysics() || Mesh->ComponentTags.Contains(TEXT("NoVisualBudget")) ||
-			!Mesh->IsRegistered() || !Mesh->GetSkeletalMeshAsset() ||
-			(Mesh->GetAnimInstance() && Mesh->GetAnimInstance()->RootMotionMode == ERootMotionMode::RootMotionFromEverything))
+		if (!CanManageVisualMesh(Mesh))
 		{ Entry.Restore(this, VisualSource.Get()); Visuals.RemoveAtSwap(Index); continue; }
+		const bool bRenderBody=Mesh==RenderBody && Mesh->GetNumLODs()>1;
+		Entry.RefreshRenderLOD(bRenderBody && bHiddenSource && !bLocal);
 		const bool bDisable = bHidden || Mesh->bHiddenInGame || !Mesh->GetVisibleFlag();
 		if (bDisable && !Entry.bDisabledTick) { Entry.bSavedTick = Mesh->IsComponentTickEnabled(); Mesh->SetComponentTickEnabled(false); Entry.bDisabledTick = true; }
 		else if (!bDisable && Entry.bDisabledTick) { Mesh->SetComponentTickEnabled(Entry.bSavedTick); Entry.bDisabledTick = false; }

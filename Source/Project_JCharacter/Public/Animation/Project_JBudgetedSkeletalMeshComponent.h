@@ -27,6 +27,8 @@ public:
 	bool IsManagedByBudget() const { return bManaged; }
 	bool IsCombatCritical() const { return bCombatCritical || bGameplayPoseOverride; }
 	bool HasAnimationUpdateRequirement() const { return bUpdateOverride; }
+	/** GT observation shared by animation consumers; never writes gameplay/AI significance. */
+	float GetAnimationDistanceTier() const;
 	/** Requested tick state is distinct from the allocator's current scheduled tick. */
 	bool GetRequestedTickEnabled() const { return bRequestedTick; }
 	bool CanUseBudget() const;
@@ -58,6 +60,7 @@ private:
 	UFUNCTION() void OnMontageStarted(UAnimMontage* Montage);
 	TWeakObjectPtr<UAnimInstance> BoundAnimation;
 	TWeakObjectPtr<UProject_JCharacterAnimationBudgetSubsystem> Service;
+	TOptional<float> ObservedDistanceTier;
 	bool bManaged = false, bCombatCritical = false, bEnding = false;
 	bool bSavedURO = false, bRequestedTick = true;
 };

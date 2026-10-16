@@ -6,6 +6,7 @@
 #include "Project_JAnimNotifyState_MeleeHit.generated.h"
 
 class USkeletalMeshComponent;
+class UProject_JAttackDefinition;
 
 UCLASS(Blueprintable, meta = (DisplayName = "Melee Hit Trace"))
 class PROJECT_JCHARACTER_API UProject_JAnimNotifyState_MeleeHit : public UAnimNotifyState
@@ -54,4 +55,5 @@ protected:
 	TMap<TWeakObjectPtr<USkeletalMeshComponent>, TMap<int32, FTraceState>> TraceStates;
 
 	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp) const;
+	FVector ResolveTraceLocation(USkeletalMeshComponent* MeshComp, const UProject_JAttackDefinition* AttackDefinition) const;
 };

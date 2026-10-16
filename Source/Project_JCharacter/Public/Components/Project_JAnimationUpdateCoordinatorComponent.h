@@ -41,14 +41,17 @@ private:
 	void RestoreRemoteAnimationUpdateRateOptimization();
 	void RestoreVisualBudget();
 	void DiscoverVisualMeshes();
+	bool CanManageVisualMesh(const class USkeletalMeshComponent* Mesh) const;
 	void RefreshSourceRequirement();
 	struct FVisualMesh
 	{
 		TWeakObjectPtr<class USkeletalMeshComponent> Mesh;
 		bool bSavedURO = false, bSavedTick = true, bDisabledTick = false;
 		bool bAddedSourcePrerequisite = false;
+		bool bDisabledParentLODSync = false;
 		EVisibilityBasedAnimTickOption SavedVisibility = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		void Restore(UActorComponent* Coordinator, USkeletalMeshComponent* Source);
+		void RefreshRenderLOD(bool bIndependent);
 	};
 	TArray<FVisualMesh> Visuals;
 	TWeakObjectPtr<class USkeletalMeshComponent> VisualSource;

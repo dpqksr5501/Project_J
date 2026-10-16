@@ -1,4 +1,5 @@
 #include "Authoring/Project_JContentBundleAuthoring.h"
+#include "Authoring/Project_JMeshLODAuthoring.h"
 
 #include "Editor.h"
 #include "Framework/Application/SlateApplication.h"
@@ -118,6 +119,7 @@ private:
 
 void RegisterMenus()
 {
+	ProjectJ::MeshLODAuthoring::RegisterMenus();
 	FToolMenuOwnerScoped Owner(TEXT("ProjectJContentAuthoring"));
 	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Tools"));
 	FToolMenuSection& Section = Menu->FindOrAddSection(TEXT("ProjectJ"), LOCTEXT("Section", "Project J"));

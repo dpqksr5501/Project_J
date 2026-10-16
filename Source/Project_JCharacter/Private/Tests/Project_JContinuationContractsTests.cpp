@@ -13,8 +13,109 @@
 #include "Components/Project_JWeaponPresentationComponent.h"
 #include "Animation/Project_JAnimNotifyState_WeaponMotion.h"
 #include "Animation/Project_JOneShotInputResponse.h"
+#include "Animation/Project_JPresentationMeshResolver.h"
 #include "Misc/DataValidation.h"
 #include <limits>
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJVisualAssetAdmissions,
+    "ProjectJ.Continuation.VisualAssetAdmissions", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJVisualAssetAdmissions::RunTest(const FString&)
+{
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    ON_SCOPE_EXIT { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); };
+    auto* Character=World->SpawnActor<AProject_JCombatFacingFixture>();
+    auto* Source=Character->GetMesh();
+    auto* Coordinator=Character->FindComponentByClass<UProject_JAnimationUpdateCoordinatorComponent>();
+    auto* Quinn=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
+    auto* Manny=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+    if(!TestNotNull(TEXT("Quinn asset"),Quinn)||!TestNotNull(TEXT("Distinct Manny asset"),Manny)) return false;
+    Source->SetSkeletalMeshAsset(Quinn);
+    Source->AnimScriptInstance=NewObject<UProject_JCharacterAnimInstance>(Source);
+    Source->GetAnimInstance()->NativeInitializeAnimation();
+    auto MakePart=[&](USkeletalMesh* Asset)
+    {
+        auto* Part=NewObject<USkeletalMeshComponent>(Character);
+        Part->SetupAttachment(Source); Part->SetSkeletalMeshAsset(Asset);
+        Character->AddInstanceComponent(Part); Part->RegisterComponent();
+        Part->AnimScriptInstance=NewObject<UAnimInstance>(Part);
+        Part->VisibilityBasedAnimTickOption=EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+        Part->SetLastRenderTime(0);
+        return Part;
+    };
+    auto* Part=MakePart(Quinn);
+    Coordinator->RefreshVisualBudget(.5f);
+    TestTrue(TEXT("Generic animated part is eligible without asset-name or retarget-class matching"),Part->IsUsingExternalTickRateControl());
+    Part->AnimScriptInstance=nullptr;
+    Coordinator->RefreshVisualBudget(1.f/60);
+    TestFalse(TEXT("Removing the last animation instance releases previous external ownership"),Part->IsUsingExternalTickRateControl());
+    TestEqual(TEXT("Released part receives its original visibility policy"),Part->VisibilityBasedAnimTickOption,EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered);
+    Part->SetSkeletalMeshAsset(Manny);
+    Part->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Part);
+    Source->SetVisibility(false,false);
+    Coordinator->RefreshVisualBudget(.5f);
+    TestTrue(TEXT("Different mesh and animation class can acquire the existing coordinator"),Part->IsUsingExternalTickRateControl());
+    TestFalse(TEXT("Visible render body is not pinned to an invisible pose source's LOD"),Part->bSyncAttachParentLOD);
+    auto* Local=World->SpawnActor<APlayerController>(); Local->SetAsLocalPlayerController(); Local->Possess(Character);
+    Coordinator->RefreshVisualBudget(1.f/60);
+    TestTrue(TEXT("Local retains its original parent LOD policy"),Part->bSyncAttachParentLOD);
+    TestEqual(TEXT("Local never overwrites forced render or streaming LOD policy"),Part->GetForcedLOD(),0);
+    Local->UnPossess(); Coordinator->RefreshVisualBudget(1.f/60);
+    TestEqual(TEXT("Remote body regains engine screen-size LOD after local ownership ends"),Part->GetForcedLOD(),0);
+    Part->SetForcedLOD(2); Local->Possess(Character); Coordinator->RefreshVisualBudget(1.f/60);
+    TestEqual(TEXT("Explicit authored forced LOD is preserved"),Part->GetForcedLOD(),2);
+    Local->UnPossess(); Part->SetForcedLOD(0); Coordinator->RefreshVisualBudget(1.f/60);
+    auto* AdditionalRetarget=MakePart(Quinn);
+    AdditionalRetarget->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(AdditionalRetarget);
+    TestNull(TEXT("Two implicit retarget parts cannot select an arbitrary body for hand/equipment consumers"),Project_J::Animation::FindVisualFollower(*Character));
+    Part->ComponentTags.Add(TEXT("VisualFollower"));
+    TestEqual(TEXT("Explicit body role disambiguates additional retargeted garments"),Project_J::Animation::FindVisualFollower(*Character),Part);
+    Part->SetSkeletalMeshAsset(nullptr);
+    TestNull(TEXT("A body waiting for its asset cannot transfer its role to a loaded retargeted garment"),Project_J::Animation::FindVisualFollower(*Character));
+    TestEqual(TEXT("Role-only consumers still resolve the explicitly declared unloaded body"),Project_J::Animation::FindVisualFollower(*Character,false),Part);
+    Part->SetSkeletalMeshAsset(Manny); Part->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Part);
+    AdditionalRetarget->ComponentTags.Add(TEXT("RetargetFollower"));
+    TestNull(TEXT("Conflicting explicit body roles also fail closed"),Project_J::Animation::FindVisualFollower(*Character));
+    AdditionalRetarget->DestroyComponent();
+    auto* OtherOwner=World->SpawnActor<AActor>();
+    auto* OtherPart=NewObject<USkeletalMeshComponent>(OtherOwner);
+    OtherOwner->AddInstanceComponent(OtherPart); OtherPart->SetupAttachment(Source);
+    OtherPart->ComponentTags.Add(TEXT("VisualFollower")); OtherPart->SetSkeletalMeshAsset(Quinn); OtherPart->RegisterComponent();
+    TestEqual(TEXT("Another actor's attached mesh cannot claim this actor's body role"),Project_J::Animation::FindVisualFollower(*Character),Part);
+    OtherPart->DestroyComponent(); OtherOwner->Destroy();
+    auto* Placeholder=MakePart(Quinn); Placeholder->ComponentTags.Add(TEXT("VisualFollower")); Placeholder->UnregisterComponent();
+    TestEqual(TEXT("Unregistered placeholder cannot claim the active body role"),Project_J::Animation::FindVisualFollower(*Character),Part);
+    Placeholder->DestroyComponent();
+    auto* Foreign=MakePart(Quinn);
+    Foreign->EnableExternalTickRateControl(true); Foreign->SetExternalTickRate(9);
+    Coordinator->RefreshVisualBudget(.5f);
+    TestEqual(TEXT("Pre-existing external owner is not added to this group"),Coordinator->GetManagedVisualCount(),1);
+    TestEqual(TEXT("Pre-existing external cadence is preserved"),int32(Foreign->GetExternalTickRate()),9);
+    Part->GetAnimInstance()->RootMotionMode=ERootMotionMode::RootMotionFromEverything;
+    Coordinator->RefreshVisualBudget(1.f/60);
+    TestFalse(TEXT("Changed graph root-motion ownership releases the visual lease"),Part->IsUsingExternalTickRateControl());
+    TestTrue(TEXT("Lease release restores the authored parent LOD synchronization"),Part->bSyncAttachParentLOD);
+    Part->GetAnimInstance()->RootMotionMode=ERootMotionMode::RootMotionFromMontagesOnly;
+    Coordinator->RefreshVisualBudget(.5f);
+    TestTrue(TEXT("Eligible replacement graph can rejoin"),Part->IsUsingExternalTickRateControl());
+    Part->SetLeaderPoseComponent(Source);
+    Coordinator->RefreshVisualBudget(1.f/60);
+    TestFalse(TEXT("Switching to engine LeaderPose releases independent graph budgeting"),Part->IsUsingExternalTickRateControl());
+    Part->SetLeaderPoseComponent(nullptr);
+    auto* Clothed=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/Clothes/cloak.cloak"));
+    if(!TestNotNull(TEXT("Real mesh with independent cloth bindings"),Clothed)) return false;
+    Part->SetSkeletalMeshAsset(Clothed);
+    Part->AnimScriptInstance=NewObject<UProject_JRetargetAnimInstance>(Part);
+    TestTrue(TEXT("Independent cloth bindings or resources are recognized"),Project_J::Animation::UsesIndependentClothSimulation(*Part));
+    Coordinator->RefreshVisualBudget(.5f);
+    TestFalse(TEXT("Cloth retains engine tick and visibility ownership"),Part->IsUsingExternalTickRateControl());
+    Coordinator->bAllowVisualBudget=false;
+    Coordinator->RefreshVisualBudget(1.f/60);
+    TestTrue(TEXT("Disabling the project coordinator cannot release a foreign allocator"),Foreign->IsUsingExternalTickRateControl());
+    TestTrue(TEXT("Restore reports ordinary full update permission"),Coordinator->DidRequestVisualEvaluation());
+    Foreign->EnableExternalTickRateControl(false);
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJFollowerPolicyLifetimeTest,
     "ProjectJ.Continuation.FollowerPolicyLifetime", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

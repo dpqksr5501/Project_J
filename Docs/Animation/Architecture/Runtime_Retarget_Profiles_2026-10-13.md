@@ -8,6 +8,8 @@
 
 ## 실행 흐름과 책임
 
+2026-10-15 2차의 현재 에셋/생산 노드 진단은 [200명 계획](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-2차--공통-비용과-실제-소비-확인)을 따른다. 표시 몸체는 LOD1개이며, Far에서 native 정책의 retarget IK가 off여도 실제 node의 IK LOD는−1로 남았다. 공개 품질 필드와 실제 solver 생략을 구분한다. 물리3개의 명시적 Simulated 뼈도 겹치지 않아 단순 중복으로 제거하지 않았다. 여기의 과거 성능 표를 새 노드 소비 변경이나 성능 회복의 근거로 사용하지 않는다.
+
 2026-10-15 갱신 정책 소유권: retarget AnimInstance 초기화는 external tick-rate control이 없는 standalone mesh에만 기본 visibility tick 정책을 쓴다. coordinator나 다른 외부 allocator가 이미 제어 중이면 그 정책을 보존한다. coordinator 해제는 자신이 취득한 authored 값을 복원한다. [재초기화·해제·standalone 집중 회귀](../../Review/Audits/Project_J_PC_Structure_Cleanup_2026-10-15.md)를 확인한다.
 
 ```mermaid
@@ -126,6 +128,12 @@ CPU 원자료는 `Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetBef
 
 ## 후속 성능·품질 범위
 
+7차의 [공통 LOD 제작](../Authoring/Mesh_LOD_Authoring.md)은 기존 체인을 보존하고 누락된 일반 표면 LOD를 native 설정으로 생성·검증하는 Editor 경로다. 기본 LOD0–2 설정은 재사용 가능하지만 체형·Cloth·헤어·morph 및 실제 retarget/물리 노드의 소비 검수는 에셋별로 필요하다. 2026-10-16 현재 몸체의 LOD1/2는 사용자 검토 후 채택했고 LOD3–4 추가는 보류했다.
+
+[2026-10-15 6차](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-6차--다른-에셋-호환성과-실제-몸체-lod)에서 공통 에셋 경계를 보완했다. 몸체 역할은 같은 owner의 등록된 direct child 중 고유한 명시 tag, 없으면 고유한 native main/PP retargeter로 정한다. 여러 retargeted garment/hair는 몸체 역할을 명시해 구분하고 충돌 시 임의로 선택하지 않는다. 명시 body의 asset 로딩 중에도 역할을 다른 의상으로 넘기지 않고 bone 소비를 대기한다. 독립 Cloth는 기존 시각 예산/follower fallback에서 제외해 엔진 tick 계약을 유지한다. 외부 제어·RootMotionFromEverything·LeaderPose 등 기존 소유권도 보존한다.
+
+보이지 않는 canonical source 아래 원격 다중LOD body는 기존 조정기가 parent LOD 동기화를 해제하여 엔진의 화면 크기 LOD를 사용하고 해제 시 반환한다. 로컬과 explicit forced/streaming/MinLOD 값은 덮어쓰지 않는다. 현재 GreatSword_Woman만 기본 reduction으로 LOD1·2를 제작했으며 LOD0·section BoneMap·정확한 required bone 배열·skeleton·PA·재질은 원본 백업과 읽기 전용 비교했다. 새 에셋의 LOD·Cloth/Groom 바인딩·morph/체형/접촉 검수까지 자동 수행하는 구조는 아니다. `ProjectJ.Retarget.SecondaryPhysicsEquivalence`는 현재 설치된 body의 LOD별 실제 포즈와 물리 참여를 검사하며, `ProjectJ.Retarget.MeshLODPreservation`은 명시한 backup directory/asset을 읽기 전용 비교한다. 시험에 생성·저장 경로는 남기지 않았다.
+
 외형 ABP가 Body를 명시하면 해당 참조를 먼저 사용하고, 없을 때만 Pawn/archetype fallback을 조회한다. 새 캐시·무효화 상태를 추가하지 않으며 기존 Body/Family 우선순위와 skeleton 호환 검사를 유지한다. [전체 감사의 교대 측정](../../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md)에서 일부 CPU 증가가 남았으므로 이 조회 생략을 전체 성능 회귀 해결로 해석하지 않는다.
 
 이 구조는 설정 공유·소유권·호환을 개선한다. ABP 분리만으로 retarget op/IK/물리 비용이 사라지는 것은 아니다. 다음 선택적 비용 조정은 기존 200명 v2 fixture, 실제 RHI timer와 접촉/의상 품질을 함께 확인한다. 특히 retarget FK/IK, Guided solve, 물리 3개와 렌더 section/draw/skin 비용을 분리한다. 원본 판정 포즈·소켓·게임플레이 요구와 시각 몸체의 비용을 혼동하지 않는다.
@@ -137,3 +145,25 @@ CPU 원자료는 `Saved/Validation/AuthoredAnimation_20261005/RuntimeRetargetBef
 [RA08 재점검](../../Review/Audits/Project_J_Reaudit_2026-10-14.md)에서 AnimInstanceBase의 별도 follower 탐색/이름 heuristic/캐시를 기존 공통 resolver로 통합했다. 현재 source에 attached된 명시적 tag 또는 native retarget class가 역할을 결정한다. bone 소비자는 loaded mesh asset을 요구하고 quality 조회는 load 전 role도 확인할 수 있다. 분리됐지만 살아 있는 이전 component가 역할을 계속 소유하지 않는다.
 
 MCP의 실제 source/body profile 연결, public subobject template, actual Blueprint construction을 별도 증거로 대조했다. CDO의 None 또는 template parent null은 runtime 부재를 뜻하지 않는다. 이 정리가 모든 체형/clip/LOD/cloth 품질이나 남은 CPU 증가 해결을 입증하지 않는다.
+
+## 2026-10-15 원격 리타깃 IK의 소비 실험 — 미채택
+
+기존 native quality policy의 `bEnableRetargetIK=false`는 실제 Body의 Run IK Rig op를 끄지 못한다. 3차 당시 생산 Body는 LOD가 1개였고 retarget node의 IK LOD 제한도 -1이었다. 이를 실제로 소비하는 후보를 기존 RetargetAnimInstanceProxy·Coordinator 안에서 구현해 시험했지만, **비계측 off/on/on/off 64행에서 비용 절감을 입증하지 못해 채택하지 않았다.** 해당 후보를 제거해 당시 2차 runtime을 유지했다. 이후 6·7차의 몸체 LOD와 공통 제작 경로는 별도 변경이다. 설정의 false를 실제 solver 생략으로 해석하지 않는다.
+
+실험은 원격 비보호 평가에만 완전한 유효 Run IK Rig 설정을 복사해 해당 op의 `bEnabled`만 false로 적용했다. exposed input 뒤 기존 그래프 한 번 평가를 scope로 감싸고 profile을 복원해 다른 writer를 보호했다. GT의 임시 custom profile은 graph input이 덮어쓸 수 있고 `bForceAllIKOff`는 엔진 LOD 병합이 덮어쓴다. partial bool profile도 settings 전체 복사 때문에 chain 설정을 잃을 수 있다. 같은 주소/version의 런타임 설정 수정, GC·재초기화·override 수명까지 확인했다. 향후 재실험 때 이 엔진 계약을 재사용한다.
+
+Family·canonical source·Coordinator 소유권과 기존 로컬/전투/단발/착지/wake 보호를 지킨 시험이었다. 같은 이동 입력 40개에서 발·손·루트 위치 차이는 0cm, 전체 뼈 최대 회전 차이는 약 0.000003도였지만 모든 체형·clip의 접지 승인은 아니다. Far 평균 World tick은 ABA off에서 3.672→3.827ms, on에서 3.711→3.725ms였다. 스케줄/편차와 국소 op 비용을 분리하지 못했으므로 증가의 인과도 확정하지 않는다.
+
+실험 전용 proxy/Coordinator 변경·CVar·시험·wrapper 옵션은 최종 Source/Scripts에서 제거했고 기존 기능·시험은 보존했다. [200명 계획의 3차 기록](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-3차--원격-리타깃-ik-소비)에 실제 소비·수명·포즈·성능 근거와 다음 단계를 남겼다. 의상 분리와 200명 지속 전투 성능은 남아 있다.
+
+## 2026-10-15 의상 물리 분리의 사전 검증
+
+[4차 기록](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-4차--실제-연산-비용과-의상-데이터-분리-검증)에서 엔진 op 타이머와 실제 physics actor를 읽는 진단을 추가했다. 에디터 실행 인자 `-ProjectJRetargetCostAudit`와 Automation 시험 `ProjectJ.Retarget.ProductionRuntime`을 함께 사용하며 runtime 품질 정책을 바꾸지 않는다. 세 RigidBody의 실제 LOD0 구성은 35(24dynamic/11kinematic), 49(4/45), 7(2/5)였다. 직접 충돌/동적 제약 역할이 없어 보여도 부모 body·scale·초기화·다른 PA 소비가 있을 수 있어 삭제 근거로 사용하지 않는다.
+
+의상 전용 transient 축소본은 원본/원본 비교 뒤에도 포즈 동등성을 통과하지 못했다. body를 제거하지 않은 단순 복제도 차이가 있어 physics 초기화/내부 데이터의 동등성을 먼저 확보해야 한다. 제작 PA·Body ABP를 교체하지 않았고 실험 helper·추가 의존성은 제거했다. 원본 및 별도 래그돌/충돌 역할을 유지하며, 진단 결과를 전체 성능 향상으로 해석하지 않는다.
+
+### 후속5차 — 초기화 비교 원인 해결·축소 미채택
+
+위 실패는4차 당시 근거다. [5차](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md#10월-15일-5차--물리-복제의-초기화-동등성과-비용-판정)에서 클래스 설치 중0초 평가 뒤 복제본에만 PA를 교체한 비대칭 초기화 이력을 확인했다. 기본 관절 프로필·생성 질량/관성/COM/감쇠는 같았다. 영구 `ProjectJ.Retarget.SecondaryPhysicsEquivalence`는 두 시험 메시의 첫 평가 전 구성을 완료하고 같은0초 평가부터 시작한다. 생산 몸체의 초기화·PA를 바꾸거나 매 프레임 reset하지 않는다.
+
+단순 복제·축소본900표본은 위치0cm·최대회전약0.000003도·scale차이0이었다. 실제 actor91→44 후보를 같은 바이너리64행으로 비교했지만 비용 변화가 대부분1% 안팎이고 별도 trace의 retarget 대조 scope도 변했다. 제작 PA·ABP는 유지하며 축소 helper/벤치 옵션/의존성은 제거했다. 최종 Editor/Game·RHI4개가 통과했고 새 시험은 physics 부재를 통과시키지 않는다. 전체 clip/LOD/체형·지면 접촉·wake 품질 승인이나200명 성능 개선으로 확대하지 않는다.

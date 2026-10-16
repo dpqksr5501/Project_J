@@ -1,6 +1,8 @@
 #include "System/Project_JCharacterAnimationBudgetSubsystem.h"
 #include "Animation/Project_JBudgetedSkeletalMeshComponent.h"
-#include "Project_JBaseCharacter.h"
+#include "Animation/Project_JCharacterAnimInstance.h"
+#include "Animation/Project_JAnimationQualityPolicy.h"
+#include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 #include "IAnimationBudgetAllocator.h"
@@ -27,6 +29,7 @@ FAutoConsoleCommandWithWorld StatusCommand(TEXT("ProjectJ.AnimationBudget.Status
 }
 TRACE_DECLARE_INT_COUNTER(CharacterABAManaged, TEXT("ProjectJ/CharacterABA/Managed"));
 TRACE_DECLARE_INT_COUNTER(CharacterABAProtected, TEXT("ProjectJ/CharacterABA/CombatProtected"));
+TRACE_DECLARE_INT_COUNTER(AnimationObserverViews, TEXT("ProjectJ/Animation/LocalObserverViews"));
 
 bool UProject_JCharacterAnimationBudgetSubsystem::DoesSupportWorldType(EWorldType::Type Type) const
 { return Type == EWorldType::Game || Type == EWorldType::PIE; }
@@ -55,7 +58,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::RegisterMesh(UProject_JBudgete
 }
 void UProject_JCharacterAnimationBudgetSubsystem::UnregisterMesh(UProject_JBudgetedSkeletalMeshComponent* Mesh)
 {
-	if (Mesh) { Mesh->LeaveBudget(); }
+	if (Mesh) { Mesh->ObservedDistanceTier.Reset(); Mesh->LeaveBudget(); }
 	Meshes.RemoveAllSwap([Mesh](const auto& Entry) { return !Entry.IsValid() || Entry.Get() == Mesh; });
 }
 int32 UProject_JCharacterAnimationBudgetSubsystem::GetManagedCount() const
@@ -71,24 +74,54 @@ void UProject_JCharacterAnimationBudgetSubsystem::Refresh()
 	check(IsInGameThread());
 	TRACE_CPUPROFILER_EVENT_SCOPE(ProjectJ_CharacterABA_Policy);
 	const bool bEnabled = IsEnabledForWorld();
+	auto* Allocator = bEnabled ? IAnimationBudgetAllocator::Get(GetWorld()) : nullptr;
+	const bool bTickWhenNotRendered = Project_J::Anim::GetBudgetTickWhenNotRendered();
+	// Reuse this world's existing GT pass even when ABA is disabled: MM and
+	// visual cadence also consume observation. No Actor reads run on workers.
+	TArray<FVector, TInlineAllocator<2>> Views;
+	if (!Meshes.IsEmpty() && !bEnding && GetWorld() && !GetWorld()->bIsTearingDown && GetWorld()->GetNetMode() != NM_DedicatedServer)
+	{
+		for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			const auto* Controller = It->Get();
+			if (!IsValid(Controller) || !Controller->IsLocalPlayerController()) continue;
+			FVector Location; FRotator Rotation;
+			Controller->GetPlayerViewPoint(Location, Rotation);
+			if (!Location.ContainsNaN()) Views.Add(Location);
+		}
+	}
+	TRACE_COUNTER_SET(AnimationObserverViews, Views.Num());
 	int32 Managed = 0, Protected = 0;
 	for (int32 Index = Meshes.Num() - 1; Index >= 0; --Index)
 	{
 		auto* Mesh = Meshes[Index].Get();
 		if (!Mesh) { Meshes.RemoveAtSwap(Index); continue; }
+		Mesh->ObservedDistanceTier.Reset();
+		if (!Views.IsEmpty() && IsValid(Mesh->GetOwner()))
+		{
+			const FVector Position = Mesh->GetOwner()->GetActorLocation();
+			double NearestSquared = TNumericLimits<double>::Max();
+			bool bHasFiniteDistance = false;
+			for (const FVector& View : Views)
+			{
+				const double Squared = FVector::DistSquared(Position, View);
+				if (FMath::IsFinite(Squared)) { NearestSquared = FMath::Min(NearestSquared, Squared); bHasFiniteDistance = true; }
+			}
+			const auto* Native = Cast<UProject_JCharacterAnimInstance>(Mesh->GetAnimInstance());
+			const auto Settings = Native ? Native->GetEffectiveAnimationBudgetSettings() : FProject_JAnimationBudgetSettings();
+			Mesh->ObservedDistanceTier = !bHasFiniteDistance ? 0.f : ProjectJ::Animation::ResolveAnimationDistanceTier(NearestSquared, Settings);
+		}
 		Mesh->RefreshAnimationUpdateRequirements();
 		Mesh->RefreshMontageUpdateRequirement();
 		Protected += Mesh->IsCombatCritical();
 		if (!bEnabled || !Mesh->CanUseBudget()) { Mesh->LeaveBudget(); continue; }
-		auto* Allocator = IAnimationBudgetAllocator::Get(GetWorld());
 		if (!Allocator) { continue; }
 		if (!Allocator->GetEnabled()) { Allocator->SetEnabled(true); bOwnAllocatorEnable = true; }
 		Mesh->EnterBudget();
 		if (Mesh->IsManagedByBudget())
 		{
-			const auto* Character = Cast<AProject_JBaseCharacter>(Mesh->GetOwner());
-			const float Tier = Character ? FMath::Max(0.0f, Character->GetSignificance()) : 0.0f;
-			Mesh->bBudgetTickWhenNotRendered = Project_J::Anim::GetBudgetTickWhenNotRendered();
+			const float Tier = Mesh->GetAnimationDistanceTier();
+			Mesh->bBudgetTickWhenNotRendered = bTickWhenNotRendered;
 			Allocator->SetComponentSignificance(Mesh, 1.0f / (1.0f + Tier), false, Mesh->bBudgetTickWhenNotRendered, false, false);
 			++Managed;
 		}
@@ -116,7 +149,7 @@ void UProject_JCharacterAnimationBudgetSubsystem::OnWorldCleanup(UWorld* World, 
 {
 	if (World != GetWorld() || bEnding) { return; }
 	bEnding = true;
-	for (const auto& Entry : Meshes) { if (Entry.IsValid()) { Entry->LeaveBudget(); } }
+	for (const auto& Entry : Meshes) { if (Entry.IsValid()) { Entry->ObservedDistanceTier.Reset(); Entry->LeaveBudget(); } }
 	RestoreAllocatorIfUnused();
 	Meshes.Reset();
 }

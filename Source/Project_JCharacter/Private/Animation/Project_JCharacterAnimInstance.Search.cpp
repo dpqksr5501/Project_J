@@ -345,9 +345,13 @@ UPoseSearchDatabase* UProject_JCharacterAnimInstance::EvaluatePoseSearchDatabase
 		: MotionMatchingChooserTable.Get();
 
 	bool bIsFarDistance = false;
-	if (AProject_JBaseCharacter* BaseChar = Cast<AProject_JBaseCharacter>(OwningCharacter))
+	if (const auto* Mesh = OwningCharacter ? Cast<UProject_JBudgetedSkeletalMeshComponent>(OwningCharacter->GetMesh()) : nullptr)
 	{
-		bIsFarDistance = BaseChar->GetSignificance() >= 2.0f;
+		bIsFarDistance = Mesh->GetAnimationDistanceTier() >= 2.0f;
+	}
+	else if (const auto* Base = Cast<AProject_JBaseCharacter>(OwningCharacter))
+	{
+		bIsFarDistance = Base->GetSignificance() >= 2.0f;
 	}
 
 	if (ShouldDisableMotionMatchingBeyondFarDistance() && bIsFarDistance)

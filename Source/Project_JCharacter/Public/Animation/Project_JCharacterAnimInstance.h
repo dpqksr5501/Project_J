@@ -62,6 +62,7 @@ public:
 
 private:
 	friend class UProject_JAnimationUpdateCoordinatorComponent;
+	friend class UProject_JCharacterAnimationBudgetSubsystem;
 	/** GT-only fallback tick lease. The coordinator returns it before capturing authored controls. */
 	void ReleaseFollowerTickOverride(bool bRestoreTick = true);
 	TWeakObjectPtr<USkeletalMeshComponent> FallbackFollowerTickMesh;

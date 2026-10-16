@@ -5,6 +5,7 @@
 #include "Animation/Project_JMotionMatchingEngineAdapter.h"
 #include "Animation/Project_JPlaybackReturnPolicy.h"
 #include "UObject/UnrealType.h"
+#include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJPipelineContracts, "ProjectJ.Animation.Pipeline.PolicyContracts",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -32,6 +33,12 @@ bool FProjectJPipelineContracts::RunTest(const FString&)
 	TestTrue(TEXT("Disabled MM clears pending search ownership"), ResolveSearchBoundary(Publication).bClear);
 
 	FQualityObservation Quality; FProject_JAnimationBudgetSettings Settings;
+	TestEqual(TEXT("Authored Near boundary enters Mid"), ResolveAnimationDistanceTier(FMath::Square(double(Settings.NearDistance)), Settings), 1.f);
+	TestEqual(TEXT("Authored Mid boundary enters Far"), ResolveAnimationDistanceTier(FMath::Square(double(Settings.MidDistance)), Settings), 2.f);
+	TestEqual(TEXT("Beyond Far retains a visible animation distance bucket"), ResolveAnimationDistanceTier(FMath::Square(double(Settings.FarDistance)), Settings), 3.f);
+	auto InvalidDistanceSettings = Settings; InvalidDistanceSettings.MidDistance = Settings.NearDistance;
+	TestEqual(TEXT("Conflicting distance thresholds preserve Near quality"), ResolveAnimationDistanceTier(1.e12, InvalidDistanceSettings), 0.f);
+	TestEqual(TEXT("Nonfinite distance cannot disable a character's MM"), ResolveAnimationDistanceTier(std::numeric_limits<double>::infinity(), Settings), 0.f);
 	TestEqual(TEXT("No owner hides animation data"), ResolveSourceQuality(Quality, Settings).Tier, EProject_JAnimBudgetTier::Hidden);
 	Quality.bHasOwner = Quality.bLocal = true;
 	TestEqual(TEXT("Local owner preserves full presentation"), ResolveSourceQuality(Quality, Settings).Tier, EProject_JAnimBudgetTier::Local);

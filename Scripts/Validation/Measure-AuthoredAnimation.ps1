@@ -6,6 +6,7 @@ param(
     [ValidateRange(1,3600)][int]$MeasuredTicks = 120,
     [switch]$Trace,
     [switch]$NoDDCCleanup,
+    [switch]$DisableEditorPython,
     [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
 )
 $ErrorActionPreference = 'Stop'
@@ -29,7 +30,7 @@ $artifactPaths = @('Project_J.uproject','Binaries/Win64/UnrealEditor-Project_J.d
     'Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset','Content/Animation_Logic/PSS/PSS_Combat_Run_ForwardTrajectory.uasset',
     'Content/Animation_Logic/PSD/PSD_Player_Combat_Locomotion/PSD_Combat_Run_ForwardCycle.uasset','Content/DataAssetSets/Animation_Profiles/LocomotionProfiles/DA_Player_Profile.uasset')
 $artifactHashes = @($artifactPaths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $projectRoot $_) -Algorithm SHA256).Hash} })
-[ordered]@{head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;counts=$Counts;repeats=$Repeats;warmupTicks=$WarmupTicks;measuredTicks=$MeasuredTicks;simulationHz=60;trace=[bool]$Trace;noDDCCleanup=[bool]$NoDDCCleanup;nullRHI=$true;budgetMs=2;sourceFiles=$hashes;artifacts=$artifactHashes} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
+[ordered]@{head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;counts=$Counts;repeats=$Repeats;warmupTicks=$WarmupTicks;measuredTicks=$MeasuredTicks;simulationHz=60;trace=[bool]$Trace;noDDCCleanup=[bool]$NoDDCCleanup;disableEditorPython=[bool]$DisableEditorPython;nullRHI=$true;budgetMs=2;sourceFiles=$hashes;artifacts=$artifactHashes} | ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 foreach ($count in $Counts) {
     if (@(Get-Process UnrealEditor*,Project_J,UnrealBuildTool,dotnet,LiveCodingConsole,MSBuild,ShaderCompileWorker -ErrorAction SilentlyContinue).Count) { throw 'An engine/build process is still active. Wait for normal completion.' }
     $output = "$runRoot/Count$count"
@@ -42,6 +43,7 @@ foreach ($count in $Counts) {
         '-ExecCmds=t.MaxFPS 0,Automation RunTests ProjectJ.Animation.AuthoredCPU; Quit')
     if ($Trace -and $count -eq ($Counts | Measure-Object -Maximum).Maximum) { $arguments += @('-trace=cpu,frame,bookmark,region,counters',"-tracefile=$output/CPU.utrace",'-statnamedevents') }
     if ($NoDDCCleanup) { $arguments += '-NoDDCCleanup' }
+    if ($DisableEditorPython) { $arguments += '-DisablePython' }
     $arguments | ConvertTo-Json | Set-Content "$output/arguments.json" -Encoding utf8
     $quoted = @($arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
     $processWatch = [Diagnostics.Stopwatch]::StartNew()

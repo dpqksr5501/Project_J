@@ -1,5 +1,7 @@
 # 직업·전직·콘텐츠 데이터 제작 통합 가이드
 
+새 캐릭터·의상·장비 메시를 추가할 때의 기존 LOD 보존·공통 설정 생성·Cloth/헤어/모프 예외는 [메시 LOD 제작](../../Animation/Authoring/Mesh_LOD_Authoring.md)을 따른다. 직업/아이템 DA 생성과 메시 geometry 제작은 별도 책임이며, 기존 장착·리타깃 경로에 연결한 뒤 실제 품질을 검수한다.
+
 2026-10-15 BP·DA 정리: [실제 연결·유지 이유와 MMORPG 경계](../../Review/Audits/Project_J_Asset_Architecture_Cleanup_2026-10-15.md)를 함께 확인한다. 시험/제작 에셋을 참조0이나 이름만으로 제거하지 않는다. 기본값은 native CDO에서 상속하고 생성 script에는 콘텐츠 override를 기록한다. ItemId/ClassId/ProfileId·PrimaryAssetId·asset path는 서로 다른 계약이며 이름 정리로 저장/서버 승인 범위를 바꾸지 않는다.
 
 정리일: 2026-10-03. 스탯·직업·전직·스킬·장비 확장, DA 역할과 제작 도구를 한 문서에서 찾는다. 기존 세 가이드의 코드 진입점·상세 순서·예외·태그·검수 내용을 유지한다.
