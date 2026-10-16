@@ -16,13 +16,23 @@
 | 현재 이동·리타깃·손 접촉 | [애니메이션](Docs/Animation/README.md). 단발/MM 통합과 기존 동작을 유지합니다. |
 | Mirror Data 결정 | [도입 보류](Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 특정 동작 연결이 어색해졌을 때만 해당 구간을 다시 검토합니다. |
 | 감사 단계별 변경·검증·남은 경계 | [검토 목차](Docs/Review/README.md). 전체 함수·에셋 정밀 감사 완료와 명시 범위의 구조 정리 마감을 구분합니다. |
-| CPU·렌더 차이와 측정 조건 | [성능](Docs/Performance/README.md). 원인 분석·반복 비교·대규모 부하는 보류하며, 기존 증가와 차이가 해결됐다고 하지 않습니다. |
+| 200명 최적화와 현재 LOD 결정 | [계획·단계별 결과](Docs/Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md). `7b2ee72e`에 반영했으며 현재 몸체 LOD0–2 채택·LOD3–4 추가 보류입니다. |
+| CPU·렌더 차이와 측정 조건 | [성능](Docs/Performance/README.md). 확인된 GPU 감소와 미확정인 전체 CPU·프레임 효과를 구분합니다. |
 
 [아티스트·디자이너 협업](#아티스트디자이너를-위한-협업-안내) · [MMORPG 확장 기반](Docs/Architecture/Extensions/MMO_Foundation_2026-09-12.md) · [콘텐츠 확장 목록](Docs/Architecture/Extensions/MMO_Content_Catalog.md) · [멀티스레드 구조](#멀티스레드-구조) · [검증 현황](#검증-현황) · [측정 결과](Docs/Benchmarks/SystemsModernization.md) · [검증 데이터](Docs/Benchmarks/Data) · [직업 제작 도구](Docs/Gameplay/Authoring/Content_Authoring_System.md#tool)
 
 누적된 감사 안내는 검토 목차로 모았습니다. 아래 측정·구현·검증 내용은 각각 명시한 시점의 기록이며, 통합 전 안내의 고유 수치와 문장은 [원문 보관소](Docs/Archive/README.md)에도 유지합니다.
 
 ## 측정으로 확인한 변화
+
+**200명 표시·몸체 LOD 최적화 — 2026-10-15 측정 / 10월 16일 채택:** 기존 예산 subsystem의 거리 관측과 중복 조회를 정리하고, 원격 몸체가 엔진의 화면 크기 LOD를 사용하도록 연결했습니다. 같은 바이너리의 몸체 LOD 교대 비교에서 다음 GPU 시간 감소를 확인했습니다.
+
+| 200개 authored 몸체의 비교 조건 | GPU 시간 적용 전 → 후 | 감소율 |
+| --- | ---: | ---: |
+| 유휴 | 10.526 → 6.188ms | 약 41.2% |
+| 동시 200 montage 공격 구간 | 11.922 → 7.421ms | 약 37.8% |
+
+검토한 GreatSword_Woman의 LOD0/1/2 삼각형은 52,566/26,282/13,140개입니다. 로컬LOD0·200명 전원 표시·기존 물리와 서버 이동·전투 판정 권위를 유지합니다. **위 감소율은 해당 시험의 GPU 시간이며 전체 게임 FPS·CPU 개선율이나 200명 동시 접속 성능을 뜻하지 않습니다.** 망토 물리 연산량은 유지했고, 이득이 입증되지 않은 물리 축소·원격 IK 생략은 채택하지 않았습니다. 다른 캐릭터·의상·장비는 공통 native 제작 설정을 재사용하되 기존 LOD를 보존하며 Cloth·헤어·morph 등은 에셋별로 검수합니다. [측정 조건·해시·한계](Docs/Performance/Reports/ProjectJ_200_Player_Optimization_2026-10-15.json) · [공통 LOD 제작](Docs/Animation/Authoring/Mesh_LOD_Authoring.md)
 
 **실시간 리타깃 프로필 — 2026-10-13:** 공통 Master의 최종 포즈와 기존 리타깃·손 IK·의상 물리를 유지하면서, 골격 쌍의 Family와 몸체별 접촉 Body를 분리했습니다. MCP로 실제 Greatsword 외형 ABP에도 연결하고, 프로필 해제·재초기화·source 불일치의 복구를 검증했습니다. 200명 CPU 비교에서는 일부 구간의 증가가 관찰되어 전체 성능 개선으로 보고하지 않습니다. [적용 구조·검증·측정 한계](Docs/Animation/Architecture/Runtime_Retarget_Profiles_2026-10-13.md)
 
