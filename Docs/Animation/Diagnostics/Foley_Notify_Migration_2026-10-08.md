@@ -30,7 +30,7 @@ Jump/Land 노티파이도 원래 위치와 태그를 유지한다. 플레이어�
 ## 도구와 실행 절차
 
 - `UProject_JFoleyMigrationLibrary`: Editor 모듈에만 있는 C++ 편집 도구. 명시한 패키지 목록만 처리하며 dirty 패키지·프로젝트 밖 경로·예상하지 못한 BP 스키마·루프 이벤트를 거부한다. 이미 native인 노티파이는 다시 추가하지 않는다.
-- `Scripts/Editor/Migrate-GaspFoley.py`: 백업 hash 확인 → 전체 dry-run → apply → persisted verify를 구분한다. 24개씩 처리하고 배치마다 JSON 기록을 남긴다. 첫 오류에서 중단한다. Windows에서 기록 파일을 읽는 동안 atomic rename이 잠기면 재시도한다. 중단 후 resume은 완료 prefix의 native 클래스·metadata와 나머지 파일의 원본 hash를 확인하고 이어서 처리한다.
+- 당시 실행기 `Scripts/Editor/Migrate-GaspFoley.py`(2026-10-19 퇴역): 백업 hash 확인 → 전체 dry-run → apply → persisted verify를 구분한다. 24개씩 처리하고 배치마다 JSON 기록을 남긴다. 첫 오류에서 중단한다. Windows에서 기록 파일을 읽는 동안 atomic rename이 잠기면 재시도한다. 중단 후 resume은 완료 prefix의 native 클래스·metadata와 나머지 파일의 원본 hash를 확인하고 이어서 처리한다.
 - Unreal MCP로 실행 에디터를 연결하고 loopback-only Python 세션을 잠시 켜 엔진 편집 API를 호출한다. 설정은 저장하지 않고 작업 후 복원한다.
 
 실행 근거는 `Saved/Validation/FoleyMigration_20261008/`에 보관한다. Candidates.json은 실제 참조 목록, BackupManifest.json은 원본/백업 SHA-256, OriginalNamedEvents.json은 원본 GASP 명명 이벤트, dry-run.json과 apply.json은 이벤트별 타이밍·GUID·설정·전체 metadata, verify.json은 저장 후 검증이다. 백업은 `Backup/Content/` 아래 원래 경로 구조로 남긴다. 재실행 전에는 해당 작업의 목록·백업·사전 검사 기록을 다시 준비해야 한다. 이미 변경된 파일을 이전 백업 기준으로 덮어쓰는 호출은 Python 드라이버가 거부한다.
@@ -51,3 +51,5 @@ Jump/Land 노티파이도 원래 위치와 태그를 유지한다. 플레이어�
 원래 Project_J에 없는 `BP_NotifyState_EarlyTransition` 참조도 일부 시퀀스에 남아 있다. 이 객체는 원본을 연결하지 않은 문맥에서 None으로 읽혀 비-Foley의 전체 문자열 비교를 막았다. Foley 독립 검증과 전체 배열 검증을 별도로 실행한 이유이며, 기존 참조·타이밍·GUID는 보존했다. 이 작업은 EarlyTransition을 native로 바꾸거나 누락 의존성을 복구한 것으로 주장하지 않는다. 후속 작업에서는 기존 native locomotion early-transition 정책과 대응을 별도로 확인해야 한다.
 
 배치 672개 완료 시 진행 기록 파일의 일시적인 Windows 잠금으로 멈춘 적이 있다. 완전히 작성된 다음 배치 기록을 복구하고 저장 prefix를 검증해 이어서 처리했으며 최종 apply 오류 수는 0이다. 레벨·음원·재질·음원 프로필·다른 캐릭터 에셋은 저장하지 않았다. 구체적인 숫자와 근거 hash는 [교체 검증 기록](Foley_Notify_Migration_Validation_2026-10-08.json)에 보관한다.
+
+2026-10-19 실행기 정리: 완료된 후보·백업에 종속된 위 Python 이행 래퍼는 퇴역했다. 기존 이행 결과·검증 JSON·native Foley 구현과 영구 회귀 테스트는 유지한다. 원형은 Git `e8fe6d0d`의 해당 경로와 로컬 `Saved/Maintenance/ScriptRetirement_2026-10-19`에 보존한다. 새 애니메이션 제작은 현행 native 계약과 validator를 사용하며 이 과거 후보 목록을 재실행하지 않는다.

@@ -68,3 +68,5 @@ Foley, PoseSearch Notify, 애니메이션 데이터, 트랙, GUID, 필터, 서�
 commandlet exit 1이었다. 이는 무오류 실행으로 분류하지 않는다.
 별도 새 프로세스의 native 재로드 검증은 해당 원본을 로드하지 않고 exit 0으로 완료했다.
 이 원본 의존성 문제를 이유로 GASP 함수/BP를 수정하거나 Project J에 복사하지 않았다.
+
+2026-10-19 실행기 정리: 고정된 Run 클립 6개를 대상으로 한 `Audit-GaspEarlyTransition.py`와 `Repair-GaspEarlyTransition.py`는 완료된 일회성 감사·복구 래퍼로 퇴역했다. native NotifyState·애니메이션·영구 EarlyTransition 테스트와 위 결과는 유지한다. 원형은 Git `e8fe6d0d`의 `Scripts/Editor` 경로와 로컬 `Saved/Maintenance/ScriptRetirement_2026-10-19`에서 복구할 수 있다.

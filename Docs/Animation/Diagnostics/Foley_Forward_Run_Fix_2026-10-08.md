@@ -16,7 +16,7 @@ UEFN 애니메이션 루트 감사에서 154개 애니메이션/895개 객체 �
 
 Notify 포인터와 dedicated-server 실행 플래그만 변경한다. 타이밍·offset·GUID·track·weight·filter·chance·좌우 발·tag·볼륨·pitch를 보존했다. 전체 이벤트 메타데이터와 복구 payload를 적용 직후와 새 에디터의 디스크 재로드 후 검증했다. 포즈·곡선, PSD, Blueprint, 맵, 음원, 런타임 네트워크 경로는 이번 수정 대상이 아니다.
 
-[복구 스크립트](../../../Scripts/Editor/Repair-MissingGaspFoley.py)는 명시적 후보 목록과 dry-run/apply/verify를 사용한다. 전체 dry-run 오류 0 이후에만 적용하고, 먼저 대상 파일을 해시 검증한 백업으로 보관한다. 미저장 대상·GUID 불일치·원본과 다른 메타데이터는 중단 조건이다. GASP 일회성 콘텐츠 복구 도구이며 앞으로 추가될 음원·애니메이션의 런타임 규격을 제한하지 않는다.
+당시 복구 스크립트 `Scripts/Editor/Repair-MissingGaspFoley.py`는 명시적 후보 목록과 dry-run/apply/verify를 사용한다. 전체 dry-run 오류 0 이후에만 적용하고, 먼저 대상 파일을 해시 검증한 백업으로 보관한다. 미저장 대상·GUID 불일치·원본과 다른 메타데이터는 중단 조건이다. GASP 일회성 콘텐츠 복구 도구이며 앞으로 추가될 음원·애니메이션의 런타임 규격을 제한하지 않는다.
 
 ## 검증
 
@@ -33,3 +33,5 @@ Played는 PlaySoundAtLocation 제출 횟수다. 사람이 들은 음질·실제 
 최초 헤드리스 원본 대조는 오류 0이었지만 종료가 지연되어 해당 임시 읽기 프로세스를 정리했다. 이를 깨끗한 프로세스 검증으로 계산하지 않는다. 이후 실제 에디터 대조·복구·재검증과 별도 자동화 프로세스 종료 결과로 검증했다. 기존 GASP BP 버전 차이·누락 dependency 진단은 native 런타임 테스트 결과와 구분한다.
 
 전체 감사·백업·apply·verify·MM 샘플은 `Saved/Validation/FoleyForwardFix_20261008/`에 있다. [기계 판독 기록](Foley_Forward_Run_Validation_2026-10-08.json)에 요약과 해시를 보관한다.
+
+2026-10-19 실행기 정리: 완료된 152개 후보 복구 래퍼는 퇴역했다. 위 native 복구 API·실제 콘텐츠·영구 접촉 회귀 테스트와 검증 결과는 변경하지 않았다. 복구 도구 원형은 Git `e8fe6d0d`의 해당 경로와 로컬 `Saved/Maintenance/ScriptRetirement_2026-10-19`에 보존한다. 새 복구가 필요하면 현재 후보·payload·의존성을 다시 조사해야 하며 과거 Missing.json을 그대로 실행하지 않는다.
