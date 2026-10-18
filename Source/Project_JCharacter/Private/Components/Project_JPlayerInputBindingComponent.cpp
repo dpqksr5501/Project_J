@@ -204,7 +204,7 @@ void UProject_JPlayerInputBindingComponent::UnbindInput()
 	}
 	if (PreviousPlayer.IsValid())
 	{
-		for (const auto& Entry : ReleasedInputs) PreviousPlayer->HandleSkillInputTagReleased(Entry.Value);
+		for (const auto& Entry : ReleasedInputs) PreviousPlayer->HandleSkillInputTagReleasedFromSource(Entry.Value.InputTag, this, Entry.Value.Receipt);
 		// A callback may acquire a new device for this pawn. Its logical state now
 		// belongs to that binding; old teardown must not reset the new router/move.
 		if (!MayRetirePlayerState(PreviousPlayer.Get(), ReleaseRevision)) { return; }
@@ -570,7 +570,7 @@ void UProject_JPlayerInputBindingComponent::HandleSkillModifierReleased()
 
 void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed(UInputAction* InputAction)
 {
-	if (!InputAction || !BoundPlayerCharacter || !BoundPlayerCharacter->SkillInputRouterComponent || !ActiveSkillInputMappingData)
+	if (!InputAction || !BoundPlayerCharacter || !BoundPlayerCharacter->SkillInputRouterComponent || !ActiveSkillInputMappingData || ActiveDirectInputTags.Contains(InputAction))
 	{
 		return;
 	}
@@ -591,8 +591,9 @@ void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionPressed(UInpu
 
 	if (BestBinding)
 	{
-		ActiveDirectInputTags.Add(InputAction, BestBinding->InputTag);
-		BoundPlayerCharacter->HandleSkillInputTagPressed(BestBinding->InputTag);
+		if (++NextDirectInputReceipt == 0) ++NextDirectInputReceipt;
+		ActiveDirectInputTags.Add(InputAction, {BestBinding->InputTag, NextDirectInputReceipt});
+		BoundPlayerCharacter->HandleSkillInputTagPressedFromSource(BestBinding->InputTag, this, NextDirectInputReceipt);
 	}
 }
 
@@ -603,9 +604,9 @@ void UProject_JPlayerInputBindingComponent::HandleDirectSkillActionReleased(UInp
 		return;
 	}
 
-	FGameplayTag ReleasedTag;
-	if (ActiveDirectInputTags.RemoveAndCopyValue(InputAction, ReleasedTag))
+	FDirectInputPress Released;
+	if (ActiveDirectInputTags.RemoveAndCopyValue(InputAction, Released))
 	{
-		BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
+		BoundPlayerCharacter->HandleSkillInputTagReleasedFromSource(Released.InputTag, this, Released.Receipt);
 	}
 }

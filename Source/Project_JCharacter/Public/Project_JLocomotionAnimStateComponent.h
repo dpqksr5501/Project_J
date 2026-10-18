@@ -225,6 +225,8 @@ class PROJECT_JCHARACTER_API UProject_JLocomotionAnimStateComponent : public UPr
 	friend class FProjectJStrafePivotConsecutiveTest;
 	friend class FProjectJLandingReturnContextTest;
 	friend class FProjectJLocomotionTagOwnershipTest;
+	friend class FProjectJAudit2RemoteJumpTest;
+	friend class FProjectJAudit2AirReselectionTest;
 
 public:
 	UProject_JLocomotionAnimStateComponent();
@@ -306,6 +308,8 @@ public:
 	void ResetJumpStartLandingDebugState();
 
 private:
+	friend class FProjectJAudit3MovementOwnerTest;
+	friend class AProject_JAuditNetworkController;
 	virtual void OnCachedAbilitySystemChanged() override;
 	bool RefreshOwnerReferencesForUpdate(AProject_JPlayerCharacter*& OutPlayerOwner);
 	bool ShouldSkipUpdateForCurrentContext(float& DeltaTime);
@@ -902,6 +906,7 @@ private:
 	bool bSprintInputHeld = false;
 	float GroundMotionModeElapsedTime = 0.0f;
 	float JumpStartElapsedTime = 0.0f;
+	float JumpStartTimeoutElapsedTime = 0.0f;
 	bool bIgnoreNextLandingForJumpStart = false;
 	bool bResolvedMoveInputLastUpdate = false;
 	float HiddenRemoteUpdateAccumulator = 0.0f;

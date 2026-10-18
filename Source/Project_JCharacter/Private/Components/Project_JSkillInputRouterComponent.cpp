@@ -134,10 +134,10 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
 	TStrongObjectPtr<ThisClass> PinnedThis(this);
 	TStrongObjectPtr<AProject_JPlayerCharacter> PreviousPlayer(BoundPlayerCharacter.Get());
 	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(PendingChordTimerHandle);
-	FGameplayTagContainer ReleasedTags;
-	if (ActiveLMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveLMBInputTag);
-	if (ActiveRMBInputTag.IsValid()) ReleasedTags.AddTag(ActiveRMBInputTag);
-	if (ActiveCombinedInputTag.IsValid()) ReleasedTags.AddTag(ActiveCombinedInputTag);
+	// Mouse channels are independent sources even when modifier mappings return
+	// the same raw tag. Capture each channel before any synchronous release.
+	const TPair<FGameplayTag, uint64> Released[] = {
+		{ActiveLMBInputTag, 1}, {ActiveRMBInputTag, 2}, {ActiveCombinedInputTag, 3}};
 	bLMBHeld = bRMBHeld = bHasPendingChordButton = false;
 	++LMBInputRevision;
 	++RMBInputRevision;
@@ -145,13 +145,15 @@ void UProject_JSkillInputRouterComponent::CancelMouseInput()
 	// Clear before dispatch so a release callback cannot observe stale held state.
 	if (PreviousPlayer.IsValid())
 	{
-		for (const FGameplayTag& Tag : ReleasedTags)
+		for (const auto& Press : Released)
 		{
+			const FGameplayTag Tag = Press.Key;
+			if (!Tag.IsValid()) continue;
 			// Return this cancellation's inputs to their original receiver. A callback
 			// can reinitialize the router and press the same tag on the same pawn.
-			if (BoundPlayerCharacter == PreviousPlayer.Get() &&
-				(Tag == ActiveLMBInputTag || Tag == ActiveRMBInputTag || Tag == ActiveCombinedInputTag)) { continue; }
-			PreviousPlayer->HandleSkillInputTagReleased(Tag);
+			const FGameplayTag CurrentTag = Press.Value == 1 ? ActiveLMBInputTag : Press.Value == 2 ? ActiveRMBInputTag : ActiveCombinedInputTag;
+			if (BoundPlayerCharacter == PreviousPlayer.Get() && Tag == CurrentTag) { continue; }
+			PreviousPlayer->HandleSkillInputTagReleasedFromSource(Tag, this, Press.Value);
 		}
 	}
 }
@@ -237,7 +239,7 @@ void UProject_JSkillInputRouterComponent::HandleButtonPressed(EProject_JSkillInp
 				}
 				bHasPendingChordButton = false;
 				ActiveCombinedInputTag = CombinedInputTag;
-				BoundPlayerCharacter->HandleSkillInputTagPressed(CombinedInputTag);
+				BoundPlayerCharacter->HandleSkillInputTagPressedFromSource(CombinedInputTag, this, 3);
 				return;
 			}
 		}
@@ -470,7 +472,7 @@ void UProject_JSkillInputRouterComponent::DispatchButtonInputTag(const EProject_
 		ActiveRMBInputTag = InputTag;
 	}
 
-	BoundPlayerCharacter->HandleSkillInputTagPressed(InputTag);
+	BoundPlayerCharacter->HandleSkillInputTagPressedFromSource(InputTag, this, Button == EProject_JSkillInputButton::LMB ? 1 : 2);
 }
 
 void UProject_JSkillInputRouterComponent::ReleaseActiveChordIfReady()
@@ -482,7 +484,7 @@ void UProject_JSkillInputRouterComponent::ReleaseActiveChordIfReady()
 
 	const FGameplayTag ReleasedTag = ActiveCombinedInputTag;
 	ActiveCombinedInputTag = FGameplayTag();
-	BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
+	BoundPlayerCharacter->HandleSkillInputTagReleasedFromSource(ReleasedTag, this, 3);
 }
 
 bool UProject_JSkillInputRouterComponent::DoesChordMatchButton(const FProject_JSkillInputChord& Chord, EProject_JSkillInputButton Button) const
@@ -518,6 +520,6 @@ void UProject_JSkillInputRouterComponent::ReleaseActiveTagForButton(EProject_JSk
 	{
 		const FGameplayTag ReleasedTag = ActiveInputTag;
 		ActiveInputTag = FGameplayTag();
-		BoundPlayerCharacter->HandleSkillInputTagReleased(ReleasedTag);
+		BoundPlayerCharacter->HandleSkillInputTagReleasedFromSource(ReleasedTag, this, Button == EProject_JSkillInputButton::LMB ? 1 : 2);
 	}
 }

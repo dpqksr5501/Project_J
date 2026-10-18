@@ -1,6 +1,6 @@
 # 메인 오픈 월드 제작
 
-약8×8km의 기존 제작 월드를 앞으로 확장할 메인 월드로 전환 중이다. 목표 맵 `/Game/World/MainWorld/Maps/L_MainWorld` 복제와 관련 비맵 에셋45개 이름 변경은 저장됐으나, 이전 Starter 경로의 Source·도구·Cook 설정과 구 맵 정리는 남아 있다. **전체20곳의 초기 공간 배치는 있지만 최종 환경 아트·도시·마을·물·성능과 전환 검증은 미완이다.**
+약8×8km의 기존 제작 월드를 앞으로 확장할 메인 월드로 전환 중이다. 목표 맵 `/Game/World/MainWorld/Maps/L_MainWorld` 복제와 관련 비맵 에셋45개 이름 변경은 저장됐고, 현행 manifest·검증 도구·AssetManager 스캔·Cook 설정도 MainWorld를 따른다. 물리적 Source 폴더는 Starter에 보존하며 구 맵과 redirector 정리는 수행하지 않았다. **전체20곳의 초기 공간 배치는 있지만 최종 환경 아트·도시·마을·물·성능은 미완이다.** 전환의 기술 검증과 제한은 아래 감사 기록과 실행 영수증을 따른다.
 
 레벨 디자이너는 [제작 인계 가이드](LEVEL_DESIGNER_GUIDE.md)를 먼저 읽는다. 맵 선택, C++와 저작의 경계, 보존 ID·좌표, 편집 순서, 알려진 문제와 다음 제작 방향을 설명한다.
 
@@ -12,3 +12,5 @@
 - 도구: [현재 월드 제작 도구](../../Scripts/World/README.md). 적용 완료한 일회성 보정·반복 조회·철회한 시험·퇴역 Region A 제작 스크립트는 삭제했다. Unreal 런타임은 해당 Python 파일로 생성되는 구조가 아니며 이미 저장된 월드/에셋을 사용한다.
 
 현재 [구현 상태표](../WorldGen/03_IMPLEMENTATION_STATUS.md)는 Source 레지스트리 기준이다. 이전 [기반 감사](Build/01_AUDIT.md)와 [제작 구조](Build/02_ARCHITECTURE.md)는 당시 계약을 설명한다. 장문 초기 제작 일지는 최신 인수인계·상태표로 통합했다. 실제 Water 플러그인 구현은 보류 상태다.
+
+2026-10-18 소스 감사: manifest의 현행 월드/데이터/외부 패키지 루트와 AssetManager 스캔·MapsToCook을 실제 저장된 MainWorld에 맞췄다. 안정 지역 ID `Starter.Lv1_30`와 물리적 Source 폴더는 유지한다. 기본 시작 맵 ThirdPerson은 변경하지 않았다. 기존 Starter 맵은 별개 사본이며 삭제하지 않았다. 이전 HLOD 실물과 redirector를 통한 참조는 남아 있어 기존 에셋 재저장·이동·redirector 정리는 수행하지 않는다. Cook/패키지 결과는 감사 영수증을 따른다.

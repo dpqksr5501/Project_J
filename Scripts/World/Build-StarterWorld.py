@@ -8,6 +8,7 @@ import array
 import hashlib
 import json
 import math
+import runpy
 import traceback
 from pathlib import Path
 import unreal
@@ -41,14 +42,17 @@ def build():
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     assert not library.does_asset_exist(MAP),'Preserve the existing authored world; use explicit bounded edits.'
+    save_scope=runpy.run_path(str(Path(__file__).with_name('Starter-OwnedSave.py')))['OwnedSaveScope'](new_world_package=MAP)
     for folder in ['Maps','Data','Materials','HLOD','Review']:library.make_directory(BASE+'/'+folder)
     assert levels.new_level_from_template(MAP,'/Engine/Maps/Templates/OpenWorld')
+    save_scope.own(unreal.EditorLevelLibrary.get_editor_world())
     for actor in actors.get_all_level_actors():
         if isinstance(actor,(unreal.LandscapeProxy,unreal.PlayerStart)):actors.destroy_actor(actor)
     edit=unreal.MaterialEditingLibrary
     def material(name,color,roughness=.9):
         path=BASE+'/Materials/'+name
         obj=unreal.load_asset(path) or tools.create_asset(name,BASE+'/Materials',unreal.Material,unreal.MaterialFactoryNew())
+        save_scope.own(obj)
         assert edit.get_num_material_expressions(obj)==0,'Do not overwrite edited materials '+path
         c=edit.create_material_expression(obj,unreal.MaterialExpressionConstant3Vector,-250,0);c.set_editor_property('constant',unreal.LinearColor(*color,1));edit.connect_material_property(c,'',unreal.MaterialProperty.MP_BASE_COLOR)
         r=edit.create_material_expression(obj,unreal.MaterialExpressionConstant,-250,160);r.set_editor_property('r',roughness);edit.connect_material_property(r,'',unreal.MaterialProperty.MP_ROUGHNESS)
@@ -59,9 +63,10 @@ def build():
         value=unreal.load_asset(path);assert isinstance(value,unreal.Texture),path
         return value
     task=unreal.AssetImportTask()
-    for key,value in dict(filename=str(SOURCE/'T_StarterBiomeMasks.png'),destination_path=BASE+'/Materials',destination_name='T_StarterBiomeMasks',automated=True,save=True).items():task.set_editor_property(key,value)
+    for key,value in dict(filename=str(SOURCE/'T_StarterBiomeMasks.png'),destination_path=BASE+'/Materials',destination_name='T_StarterBiomeMasks',automated=True,save=False).items():task.set_editor_property(key,value)
     tools.import_asset_tasks([task]);mask=unreal.load_asset(BASE+'/Materials/T_StarterBiomeMasks');assert mask
-    mask.set_editor_property('srgb',False);mask.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS);library.save_loaded_asset(mask)
+    save_scope.own(mask)
+    mask.set_editor_property('srgb',False);mask.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
     def custom(mat,code,inputs,kind=unreal.CustomMaterialOutputType.CMOT_FLOAT3):
         node=edit.create_material_expression(mat,unreal.MaterialExpressionCustom,-100,0);node.set_editor_property('code',code);node.set_editor_property('output_type',kind)
         descriptors=[]
@@ -86,7 +91,7 @@ def build():
     color=custom(terrain,'float2 uv=P.xy/320; float4 m=Texture2DSample(Mask,MaskSampler,(P.xy/100+4032)/8064); float3 grass=Texture2DSample(Grass,GrassSampler,uv).rgb; float3 forest=Texture2DSample(Forest,ForestSampler,uv*.7).rgb; float3 rock=Texture2DSample(Rock,RockSampler,uv*.55).rgb; float cliff=saturate((.80-N.z)*3); float3 base=lerp(grass,forest,m.r*.8); base=lerp(base,rock,max(cliff,m.a*.65)); return base*(.83+.17*sin(P.x/19100+sin(P.y/13500)));',inputs)
     edit.connect_material_property(color,'',unreal.MaterialProperty.MP_BASE_COLOR)
     terrain.set_editor_property('tangent_space_normal',False)
-    for mat in [terrain]:edit.recompile_material(mat);library.save_loaded_asset(mat)
+    for mat in [terrain]:edit.recompile_material(mat)
     landscape=unreal.Project_JWorldAuthoringLibrary.import_region_landscape(str(SOURCE/'HM_StarterRegion.r16'),N,PLAN['xy_scale_cm'],PLAN['z_scale'],terrain)
     assert landscape,'Landscape import failed'
     landscape.set_actor_label('StarterRegion_Landscape_8064m_2m')
@@ -99,6 +104,7 @@ def build():
         return actor
     factory=unreal.DataAssetFactory();factory.set_editor_property('data_asset_class',unreal.Project_JWorldDefinition)
     definition=tools.create_asset('DA_StarterRegion',BASE+'/Data',unreal.Project_JWorldDefinition,factory);assert definition
+    save_scope.own(definition)
     for key,value in dict(region_id=PLAN['region_id'],generation_seed=PLAN['seed'],authoring_version=1,source_plan_hash=hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest()).items():definition.set_editor_property(key,value)
     definition.set_editor_property('authoring_bounds',unreal.Box(min=point(0,0,PLAN['min_height_m']),max=point(EXTENT,EXTENT,PLAN['max_height_m'])))
     places=[]
@@ -114,7 +120,7 @@ def build():
         item=unreal.Project_JWorldConnection()
         for key,value in dict(connection_id=entry['id'],boundary_side=entry['side'],connection_type=entry['kind'],location=point(*entry['position_m']),outward_direction=unreal.Vector(*entry['outward']),width_cm=entry['width_m']*100).items():item.set_editor_property(key,value)
         connections.append(item)
-    definition.set_editor_property('connections',connections);library.save_loaded_asset(definition)
+    definition.set_editor_property('connections',connections)
     state=spawn(unreal.Project_JWorldState,'StarterRegion_WorldState',unreal.Vector(),'Systems');state.set_editor_property('definition',definition)
     # Preserve the native server state contract. Full weather art is a later,
     # measured pass; do not silently substitute a second state writer.
@@ -129,7 +135,7 @@ def build():
             light.set_editor_property('intensity',60000)
         if isinstance(actor,unreal.ExponentialHeightFog):environment.set_editor_property('fog',actor)
     road=material('M_StarterRouteReview',(.25,.19,.11));water=material('M_StarterWaterReview',(.025,.13,.18),.18)
-    for mat in [road,water]:edit.recompile_material(mat);library.save_loaded_asset(mat)
+    for mat in [road,water]:edit.recompile_material(mat)
     route_count=0
     for entry in PLAN['roads']:
         points=[]
@@ -158,8 +164,8 @@ def build():
     player_start=spawn(unreal.PlayerStart,'StarterRegion_PlayerStart',point(start[0],start[1],start[2]+1.3),'Systems')
     player_start.set_editor_property('is_spatially_loaded',False)
     unreal.EditorLevelLibrary.set_level_viewport_camera_info(point(3900,1700,1700),unreal.Rotator(pitch=-26,yaw=90,roll=0))
-    assert levels.save_current_level()
-    assert unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True)
+    for actor in actors.get_all_level_actors():save_scope.own(actor)
+    save_scope.save()
     report=dict(map=MAP,extent_m=EXTENT,resolution=N,places=len(places),hunting_grounds=sum(p['kind']=='hunting_ground' for p in PLAN['places']),boss_candidates=sum(p['kind']=='field_boss' for p in PLAN['places']),connections=len(connections),route_review_chunks=route_count,phase='FULL_REGION_AUTHORING_SKELETON',visual_quality='NOT_APPROVED',navigation='UNVERIFIED',packaging='UNVERIFIED',performance='UNMEASURED',old_map_deleted=False)
     (OUT/'world-build.json').write_text(json.dumps(report,indent=2),encoding='utf-8');unreal.log('STARTER_WORLD_BUILD_COMPLETE '+json.dumps(report))
 

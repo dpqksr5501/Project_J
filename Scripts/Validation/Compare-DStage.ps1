@@ -6,6 +6,7 @@ param(
     [string]$ParallelRun = 'NetworkParallel02'
 )
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/Source-Provenance.ps1"
 if (!$Root) { $Root = Join-Path $PSScriptRoot '../../Saved/Validation/GroupD_20260910' }
 $Root = (Resolve-Path -LiteralPath $Root).Path.Replace('\','/')
 $destination = "$Root/Comparison"
@@ -16,13 +17,15 @@ function Percentile($values, [double]$fraction) {
     return [math]::Round([double]$sorted[[math]::Max(0, [math]::Ceiling($sorted.Count * $fraction) - 1)], 6)
 }
 function Milliseconds($events) { @($events | ForEach-Object { ([double]$_.EndTime - [double]$_.StartTime) * 1000 }) }
-$sourceSignatures = @()
+$manifests=@{}
+foreach($run in @($AllRelevantRun,$SpatialRun,$ParallelRun)){
+ $manifests[$run]=Get-Content "$Root/$run/manifest.json" -Raw|ConvertFrom-Json
+}
+Assert-ProjectJMatchingProvenance -Provenance @($AllRelevantRun,$SpatialRun,$ParallelRun|ForEach-Object{$manifests[$_].sourceProvenance})
 $network = @(foreach ($run in @($AllRelevantRun,$SpatialRun,$ParallelRun)) {
     $runRoot = "$Root/$run"
     $verification = Get-Content "$runRoot/verification.json" -Raw | ConvertFrom-Json
     if (!$verification.passed) { throw "Run did not pass: $run" }
-    $manifest = Get-Content "$runRoot/manifest.json" -Raw | ConvertFrom-Json
-    $sourceSignatures += (@($manifest.sourceFiles | Where-Object {$_.path -like 'Source/*'} | Sort-Object path | ForEach-Object {$_.path + ':' + $_.sha256}) -join '|')
     $threads = Import-Csv "$runRoot/TraceExportFinal/Threads.csv"
     $gameThread = ($threads | Where-Object Name -eq 'GameThread').Id
     $phases = Import-Csv "$runRoot/Server/network-phases.csv"
@@ -48,7 +51,6 @@ $network = @(foreach ($run in @($AllRelevantRun,$SpatialRun,$ParallelRun)) {
         }
     }
 })
-if (@($sourceSignatures | Sort-Object -Unique).Count -ne 1) { throw 'Network comparisons used different Source snapshots.' }
 $massVerification = Get-Content "$Root/$MassRun/verification.json" -Raw | ConvertFrom-Json
 if (!$massVerification.passed) { throw 'Mass run did not pass.' }
 $mass = @(Import-Csv "$Root/$MassRun/Metrics/mass-values.csv" | Group-Object count,mode | ForEach-Object {

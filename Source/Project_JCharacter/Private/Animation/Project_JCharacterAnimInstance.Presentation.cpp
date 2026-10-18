@@ -305,18 +305,21 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 		!Data.Air.bIsFallOffStart &&
 		EffectivePlayableLength > 0.05f)
 	{
+		// A new snapshot still classifies the launch with its four-sector policy.
+		// Keep the committed air sector until another live direction is approved.
+		InOutOneShot.StrafeDirection = CachedStateControllerStrafeDirection;
 		// 1. 진행률 가드: 모션의 AirJumpMaxProgressRatio(기본 85%) 이전까지만 재선택 허용
 		const bool bWithinReselectProgressWindow =
-			Elapsed < (EffectivePlayableLength * FMath::Clamp(SearchPolicy.AirJumpMaxProgressRatio, 0.1f, 1.0f));
+			StartTime + Elapsed < (AssetLength * FMath::Clamp(SearchPolicy.AirJumpMaxProgressRatio, 0.1f, 1.0f));
 
 		// 2. 블렌드 진행률 동기화 가드: 이전 재선택 블렌드가 MinBlendProgressRatio(기본 70%) 이상 진행되었는지 확인 (블렌드 중첩 및 팝핑 원천 방지)
 		const float ActiveBlendDuration = LastJumpAirBlendDuration > 0.0f
 			? LastJumpAirBlendDuration
 			: (SearchPolicy.AirJumpBlendTime > 0.0f ? SearchPolicy.AirJumpBlendTime : 0.15f);
 		const float RequiredBlendWaitTime = ActiveBlendDuration * FMath::Clamp(SearchPolicy.AirJumpMinBlendProgressRatio, 0.3f, 1.0f);
-		const bool bCooldownPassed = (LastJumpAirReselectElapsed <= 0.0f)
+		const bool bCooldownPassed = (LastJumpAirReselectTimeSeconds < 0.0)
 			? (Elapsed >= 0.05f)
-			: ((Elapsed - LastJumpAirReselectElapsed) >= RequiredBlendWaitTime);
+			: ((NowSeconds - LastJumpAirReselectTimeSeconds) >= RequiredBlendWaitTime);
 
 		if (bWithinReselectProgressWindow && bCooldownPassed && OwningCharacter)
 		{
@@ -359,7 +362,11 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 				}
 				else if (LiveAirDirection != CachedStateControllerStrafeDirection)
 				{
-					PendingJumpAirDirection = LiveAirDirection;
+					// Approval happens after the launch snapshot. Publish the live air
+					// sector and angle in this same selection command.
+					InOutOneShot.StrafeDirection = LiveAirDirection;
+					InOutOneShot.StrafeDirectionAngle = AirDirectionDegrees;
+					InOutOneShot.bHasStrafeDirectionAngle = true;
 					bJumpAirInputReselectDue = true;
 				}
 			}
@@ -368,8 +375,8 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 
 	if (bJumpAirInputReselectDue)
 	{
-		SavedJumpAirElapsed = Elapsed;
-		LastJumpAirReselectElapsed = Elapsed;
+		SavedJumpAirElapsed = StartTime + Elapsed;
+		LastJumpAirReselectTimeSeconds = NowSeconds;
 		bIsJumpAirReselecting = true;
 		InOutOneShot.PresentationState = EProject_JStateControllerPresentationState::TransitionToInAir;
 		InOutOneShot.TransitionElapsedTime = Elapsed;
@@ -444,7 +451,7 @@ void UProject_JCharacterAnimInstance::ResolveStateControllerPresentationStateWit
 	if (DesiredState != EProject_JStateControllerPresentationState::TransitionToInAir)
 	{
 		bIsJumpAirReselecting = false;
-		LastJumpAirReselectElapsed = 0.0f;
+		LastJumpAirReselectTimeSeconds = -1.0;
 		LastJumpAirBlendDuration = 0.15f;
 		SavedJumpAirElapsed = 0.0f;
 	}
@@ -562,6 +569,12 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 		// valid Land row). This remains event-driven because it only runs when the
 		// State Controller cache key changed.
 		PublishChooserProperties(Data);
+		if (bIsJumpAirReselecting)
+		{
+			StateControllerStrafeDirectionForChooser = OneShot.StrafeDirection;
+			StateControllerStrafeDirectionAngleForChooser = OneShot.StrafeDirectionAngle;
+			bStateControllerHasStrafeDirectionAngleForChooser = OneShot.bHasStrafeDirectionAngle;
+		}
 
 		FChooserEvaluationContext ChooserContext;
 		ChooserContext.AddObjectParam(this);
@@ -666,8 +679,10 @@ void UProject_JCharacterAnimInstance::EvaluateStateControllerAnimationChooserOnG
 				ChooserOutput.StartTime = PreservedStartTime;
 
 				const double NowSeconds = AnimationClock.Seconds;
-				StateControllerRuntime.AlignHoldToAssetTime(NowSeconds, PreservedStartTime);
-				OneShot.TransitionElapsedTime = PreservedStartTime;
+				// StartTime already removes the consumed part of the asset. The new
+				// playback hold measures only time since this selection.
+				StateControllerRuntime.RestartHoldClock(NowSeconds);
+				OneShot.TransitionElapsedTime = 0.0f;
 				OneShot.TransitionTimeRemaining = FMath::Max(SelectedAsset->GetPlayLength() - PreservedStartTime, 0.0f);
 
 				const UProject_JLocomotionProfile* CurrentProfile = GetLocomotionProfile();

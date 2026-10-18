@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3306개, Markdown 255개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3307개, Markdown 256개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -243,6 +243,7 @@
 | [Project_J 재감사 — 현재 변경·검증 결과](../Review/Audits/Project_J_Reaudit_Verification_2026-10-14.md) | 검토 기록 | Review/Audits/Project_J_Reaudit_Verification_2026-10-14.md |
 | [런타임 소유권·객체 수명 감사 — 2026-10-08](../Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md) | 검토 기록 | Review/Audits/Project_J_Runtime_Ownership_Audit_2026-10-08.md |
 | [소스·아키텍처 정리 — 2026-10-15 범위 변경](../Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Source_Architecture_Cleanup_2026-10-15.md |
+| [6850ed45 소스 감사 수정·검증 마감](../Review/Audits/Project_J_Source_Audit_6850ed45_Closure_2026-10-19.md) | 검토 기록 | Review/Audits/Project_J_Source_Audit_6850ed45_Closure_2026-10-19.md |
 | [Strafe 대각 점프·착지의 보정 분기 복구 — R20](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md) | 검토 기록 | Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md |
 | [Project_J 구조 개선 — 2026-10-13](../Review/Audits/Project_J_Structural_Improvement_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Structural_Improvement_2026-10-13.md |
 | [Project_J 전체 구조·동작·병렬·네트워크·성능 감사 — 2026-10-13](../Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md) | 검토 기록 | Review/Audits/Project_J_Whole_Project_Audit_2026-10-13.md |

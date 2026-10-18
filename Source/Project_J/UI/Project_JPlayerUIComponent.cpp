@@ -213,7 +213,7 @@ void UProject_JPlayerUIComponent::ReleaseAllSkills()
 	// and pawn; this operation only releases its captured original inputs.
 	for (const auto& Press : Released)
 		if (IsValid(OriginalPawn.Get()) && !OriginalPawn->IsActorBeingDestroyed())
-			OriginalPawn->HandleSkillInputTagReleased(Press.Value.InputTag);
+			OriginalPawn->HandleSkillInputTagReleasedFromSource(Press.Value.InputTag, this, Press.Value.Receipt);
 }
 void UProject_JPlayerUIComponent::BindResourceAttributes()
 {
@@ -558,7 +558,7 @@ void UProject_JPlayerUIComponent::PressSkillWithReceipt(int32 Index, uint64* Out
 			// Publish the source's receipt before activation can recycle its widget
 			// or key binding. Never write into that source again after callbacks.
 			if (OutReceipt) *OutReceipt = NextSkillReceipt;
-			Pawn->HandleSkillInputTagPressed(Binding.InputTag);
+			Pawn->HandleSkillInputTagPressedFromSource(Binding.InputTag, this, NextSkillReceipt);
 			QueueSkillRefresh();
 		}
 	}
@@ -579,11 +579,12 @@ void UProject_JPlayerUIComponent::ReleaseSkillReceipt(int32 Index, uint64 Expect
 	{
 		if (ExpectedReceipt && Press->Receipt != ExpectedReceipt) return;
 		const FGameplayTag ReleasedTag = Press->InputTag;
+		const uint64 ReleasedReceipt = Press->Receipt;
 		const TStrongObjectPtr<AProject_JPlayerCharacter> OriginalPawn(PressedPawn.Get());
 		PressedSkills.Remove(Index);
 		if (PressedSkills.IsEmpty()) { PressedPawn.Reset(); }
 		if (IsValid(OriginalPawn.Get()) && !OriginalPawn->IsActorBeingDestroyed())
-			OriginalPawn->HandleSkillInputTagReleased(ReleasedTag);
+			OriginalPawn->HandleSkillInputTagReleasedFromSource(ReleasedTag, this, ReleasedReceipt);
 	}
 	UpdateSkills();
 }

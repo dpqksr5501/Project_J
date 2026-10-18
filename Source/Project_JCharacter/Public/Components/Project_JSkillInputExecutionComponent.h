@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/ObjectKey.h"
 #include "Combat/Project_JCombatCommandSet.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
@@ -33,6 +34,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleInputTagReleased(FGameplayTag InputTag);
+	/** Each local UI/device source releases only its own captured press. */
+	void HandleInputTagPressedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt);
+	void HandleInputTagReleasedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt);
 
 	/** Validates/replays raw authority intent received through the ASC's ordered channel. */
 	void ReceiveAuthorityCombatInput(FGameplayTag InputTag, float ClientTimestamp, uint32 InputSequence);
@@ -49,8 +53,19 @@ private:
 	bool bEnding = false;
 	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UProject_JAbilitySystemComponent> InputAbilitySystem;
-	// One physical input may activate a command alias as well as its raw tag.
-	TMap<FGameplayTag, FGameplayTagContainer> ActiveDispatchTags;
+	struct FInputSourceKey
+	{
+		FGameplayTag RawTag;
+		FObjectKey Source;
+		uint64 Receipt = 0;
+		bool operator==(const FInputSourceKey& Other) const { return RawTag == Other.RawTag && Source == Other.Source && Receipt == Other.Receipt; }
+		friend uint32 GetTypeHash(const FInputSourceKey& Key)
+		{ return HashCombineFast(HashCombineFast(GetTypeHash(Key.RawTag), GetTypeHash(Key.Source)), GetTypeHash(Key.Receipt)); }
+	};
+	// Aliases are captured per source, including independent sources of the same raw tag.
+	TMap<FInputSourceKey, FGameplayTagContainer> ActiveDispatchTags;
+	bool IsDispatchTagHeld(FGameplayTag Tag) const;
+	void ReleaseInputTagSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt, bool bLegacyFallback);
 	FGameplayTag ResolveDispatchInputTag(FGameplayTag RawInputTag, double TimestampSeconds, bool& bOutConsumeRawInput);
 	void DispatchInputTag(FGameplayTag InputTag, bool bAllowAbilityActivation = true);
 	/**

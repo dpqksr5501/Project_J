@@ -3,8 +3,12 @@ import array,datetime,json,time,traceback,runpy
 from pathlib import Path
 import unreal
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld'
-SOURCE=ROOT/'Content/World/Starter/Source';MAP='/Game/World/Starter/Maps/L_StarterRegion'
+SOURCE=ROOT/'Content/World/Starter/Source'
 plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
+manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text(encoding='utf-8'))
+MAP=manifest['world_asset']
+MAP=manifest['world_asset']
+CONTRACT=runpy.run_path(str(ROOT/'Scripts/World/Starter-WorldDefinitionContract.py'))
 unreal.EditorPythonScripting.set_keep_python_script_alive(True)
 levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 assert levels.load_level(MAP)
@@ -22,16 +26,8 @@ def verify(dt):
         states=[a for a in actors if isinstance(a,unreal.Project_JWorldState)];assert len(states)==1
         definition=states[0].get_editor_property('definition');assert definition
         places=definition.get_editor_property('places');ids=[str(p.get_editor_property('place_id')) for p in places]
-        assert len(ids)==len(set(ids))==18
-        actual={str(p.get_editor_property('place_id')):p for p in places}
-        for entry in plan['places']:
-            p=actual[entry['id']]
-            assert p.get_editor_property('recommended_min_level')==entry['levels'][0]
-            assert p.get_editor_property('recommended_max_level')==entry['levels'][1]
-            assert len(p.get_editor_property('boundary'))==8
-            x,y,z=entry['center_m']
-            expected=unreal.Vector((x-4032)*100,(y-4032)*100,z*100)
-            assert (p.get_editor_property('location')-expected).length()<1,entry['id']
+        CONTRACT['validate_places'](plan,[CONTRACT['snapshot_place'](p) for p in places],
+            manifest['world_grid']['unreal_origin_cm'],manifest['world_grid']['centimetres_per_source_metre'])
         connections=definition.get_editor_property('connections');assert len(connections)==7
         proxies=[a for a in actors if isinstance(a,unreal.LandscapeProxy)]
         component_count=sum(len(a.get_components_by_class(unreal.LandscapeComponent)) for a in proxies)
@@ -56,7 +52,7 @@ def verify(dt):
         assert max(errors)<100,errors
         runtime_hash=unreal.Project_JWorldAuthoringLibrary.get_region_runtime_hash_name()
         assert runtime_hash=='WorldPartitionRuntimeHashSet',runtime_hash
-        report=dict(passed=True,map=MAP,place_count=18,hunting_candidates=9,boss_candidates=2,connections=len(connections),world_state_actors=1,landscape_components=component_count,landscape_extent_cm=extent,terrain_collision_samples=len(errors),maximum_collision_source_error_cm=max(errors),runtime_hash=runtime_hash,nav_unverified=True,performance_measured=False,packaging_verified=False,visual_quality_approved=False)
+        report=dict(passed=True,map=MAP,place_count=len(ids),hunting_candidates=9,boss_candidates=2,connections=len(connections),world_state_actors=1,landscape_components=component_count,landscape_extent_cm=extent,terrain_collision_samples=len(errors),maximum_collision_source_error_cm=max(errors),runtime_hash=runtime_hash,nav_unverified=True,performance_measured=False,packaging_verified=False,visual_quality_approved=False)
         # Inspect persisted content before any repair or PIE. Running preparation
         # here masked a runtime-only light setter that had never dirtied its asset.
         refreshed=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()

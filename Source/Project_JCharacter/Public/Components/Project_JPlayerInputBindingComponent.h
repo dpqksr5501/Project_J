@@ -82,6 +82,7 @@ public:
 
 private:
 	friend class FProjectJActiveMoveReentryTest;
+	friend class FProjectJAudit2SharedSkillHoldTest;
 	bool bEnding = false;
 	uint64 BindingRevision = 0;
 	TWeakObjectPtr<UEnhancedInputComponent> BoundEnhancedInputComponent;
@@ -134,5 +135,7 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UProject_JSkillInputMappingData> ActiveSkillInputMappingData = nullptr;
-	TMap<UInputAction*, FGameplayTag> ActiveDirectInputTags;
+	struct FDirectInputPress { FGameplayTag InputTag; uint64 Receipt = 0; };
+	TMap<UInputAction*, FDirectInputPress> ActiveDirectInputTags;
+	uint64 NextDirectInputReceipt = 0;
 };

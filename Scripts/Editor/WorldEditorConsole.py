@@ -26,4 +26,4 @@ def console(command):
         if observer:call('Unobserve',dict(identifier=observer),ts)
 def script(path,variables=None):
     path=Path(path).resolve();assert path.is_relative_to(ROOT)
-    console('py import runpy; runpy.run_path('+repr(path.as_posix())+', init_globals='+repr(variables or {})+')')
+    console('py import runpy; runpy.run_path('+repr(path.as_posix())+', run_name="__main__", init_globals='+repr(variables or {})+')')

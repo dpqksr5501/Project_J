@@ -136,6 +136,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	friend class FProjectJAuditEquipmentNetworkTest;
 	bool bEnding = false;
 	bool CanPublishState() const;
 	bool HasMutationAuthority() const;

@@ -11,6 +11,7 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Project_JPlayerCharacter.h"
+#include "UObject/StrongObjectPtr.h"
 
 void UProject_JSkillInputExecutionComponent::BeginPlay()
 {
@@ -52,12 +53,19 @@ void UProject_JSkillInputExecutionComponent::RefreshInputAbilitySystem()
 
 void UProject_JSkillInputExecutionComponent::ReleaseAllDispatchedInputs()
 {
+	const TStrongObjectPtr<UProject_JAbilitySystemComponent> PreviousASC(InputAbilitySystem.Get());
+	const TWeakObjectPtr<AProject_JPlayerCharacter> PreviousAvatar(BoundPlayerCharacter);
 	const auto Released = MoveTemp(ActiveDispatchTags);
 	FGameplayTagContainer Tags;
 	for (const auto& Entry : Released) Tags.AppendTags(Entry.Value);
-	if (UProject_JAbilitySystemComponent* ASC = InputAbilitySystem.Get(); ASC && ASC->GetAvatarActor() == BoundPlayerCharacter)
+	if (PreviousASC.IsValid())
 	{
-		for (const FGameplayTag& Tag : Tags) ASC->AbilityInputTagReleased(Tag);
+		for (const FGameplayTag& Tag : Tags)
+		{
+			if (!PreviousAvatar.IsValid() || PreviousASC->GetAvatarActor() != PreviousAvatar.Get()) { break; }
+			if (InputAbilitySystem.Get() == PreviousASC.Get() && IsDispatchTagHeld(Tag)) { continue; }
+			PreviousASC->AbilityInputTagReleased(Tag);
+		}
 	}
 }
 
@@ -83,7 +91,12 @@ void UProject_JSkillInputExecutionComponent::RetireInput()
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag InputTag)
 {
-	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !BoundPlayerCharacter)
+	HandleInputTagPressedFromSource(InputTag, this, 0);
+}
+
+void UProject_JSkillInputExecutionComponent::HandleInputTagPressedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt)
+{
+	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid() || !BoundPlayerCharacter || !IsValid(Source))
 	{
 		return;
 	}
@@ -98,7 +111,7 @@ void UProject_JSkillInputExecutionComponent::HandleInputTagPressed(FGameplayTag 
 	if (DispatchTag.IsValid())
 	{
 		// Capture aliases before dispatch: activation may synchronously change equipment/style.
-		FGameplayTagContainer& Tags = ActiveDispatchTags.FindOrAdd(InputTag);
+		FGameplayTagContainer& Tags = ActiveDispatchTags.FindOrAdd({InputTag, FObjectKey(Source), Receipt});
 		Tags.AddTag(DispatchTag);
 		if (!bConsumeRawInput) Tags.AddTag(InputTag);
 		DispatchInputTag(DispatchTag);
@@ -325,18 +338,36 @@ FGameplayTagContainer UProject_JSkillInputExecutionComponent::GetOwnerGameplayTa
 
 void UProject_JSkillInputExecutionComponent::HandleInputTagReleased(FGameplayTag InputTag)
 {
+	ReleaseInputTagSource(InputTag, this, 0, true);
+}
+
+void UProject_JSkillInputExecutionComponent::HandleInputTagReleasedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt)
+{
+	ReleaseInputTagSource(InputTag, Source, Receipt, false);
+}
+
+bool UProject_JSkillInputExecutionComponent::IsDispatchTagHeld(FGameplayTag Tag) const
+{
+	for (const auto& Entry : ActiveDispatchTags) if (Entry.Value.HasTagExact(Tag)) return true;
+	return false;
+}
+
+void UProject_JSkillInputExecutionComponent::ReleaseInputTagSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt, bool bLegacyFallback)
+{
 	if (bEnding || IsBeingDestroyed() || !InputTag.IsValid()) return;
 	RefreshInputAbilitySystem();
 	FGameplayTagContainer ReleasedTags;
-	ActiveDispatchTags.RemoveAndCopyValue(InputTag, ReleasedTags);
-	ReleasedTags.AddTag(InputTag); // Retain compatibility with direct GAS input callers.
-	if (UProject_JAbilitySystemComponent* ASC = InputAbilitySystem.Get())
+	const bool bHadSource = ActiveDispatchTags.RemoveAndCopyValue({InputTag, FObjectKey(Source), Receipt}, ReleasedTags);
+	if (!bHadSource && !bLegacyFallback) return;
+	if (bLegacyFallback) ReleasedTags.AddTag(InputTag); // Direct GAS facade compatibility.
+	const TStrongObjectPtr<UProject_JAbilitySystemComponent> ASC(InputAbilitySystem.Get());
+	const TWeakObjectPtr<AProject_JPlayerCharacter> Avatar(BoundPlayerCharacter);
+	if (ASC.IsValid())
 	{
 		for (const FGameplayTag& Tag : ReleasedTags)
 		{
-			bool bStillHeld = false;
-			for (const auto& Entry : ActiveDispatchTags) bStillHeld |= Entry.Value.HasTagExact(Tag);
-			if (!bStillHeld) ASC->AbilityInputTagReleased(Tag);
+			if (!Avatar.IsValid() || ASC->GetAvatarActor() != Avatar.Get()) break;
+			if (InputAbilitySystem.Get() != ASC.Get() || !IsDispatchTagHeld(Tag)) ASC->AbilityInputTagReleased(Tag);
 		}
 	}
 }

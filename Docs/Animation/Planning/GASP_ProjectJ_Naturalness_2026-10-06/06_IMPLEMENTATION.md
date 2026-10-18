@@ -272,3 +272,6 @@ production 변경은 AnimInstance, LocomotionAnimStateComponent, MovingTurnPolic
 Master 원본: `Saved/Validation/Naturalness_20261006/Baseline/SourceSnapshot/Content/Animation_Logic/ABPs/ABP_Humanoid_Master.uasset`. 현재 에디터 정상 종료와 이후 수정 여부를 확인한 뒤 선택적으로 복원해야 한다. rollback 뒤에는 direct UBT와 관련 자동화 재검증이 필요하다. 이번 작업에서 rollback 자체는 실행하지 않았다.
 
 남은 우선 작업은 동일 pawn/장비의 렌더링된 N1–N6 전후 비교, 실제 CMC/input-to-output 지연 측정, plant/contact 기준의 source·follower foot drift, S13 환경 충돌·접지, 170/190·연속 반전의 실제 영상이다. 증거를 얻은 다음에만 일반 MM의 per-player 보정, root recovery, PSS/coverage/stride 조정을 선택한다. CPU는 local/remote와 mid 중요도·실제 renderer·다중 반복을 추가하고, 필요하다면 Insights로 foot/retarget/search 실행 비용을 분리한다.
+
+
+2026-10-18 소스 감사: 위 ExternalWarpingRepair는 당시 외부 BlendStack 전용 이력이다. 현재 Unified Locomotion 그래프용 복구 경로가 아니며 실행 플래그는 에셋 로드 전 오류로 종료한다. 재사용하려면 격리된 작업 사본에서 현재 토폴로지에 맞는 별도 마이그레이션과 실패 복구를 검토해야 한다.

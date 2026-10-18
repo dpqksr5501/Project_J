@@ -1279,7 +1279,6 @@ void AProject_JPlayerCharacter::ServerSetTurnInPlaceRotation_Implementation(bool
 	UCharacterMovementComponent* Movement = GetCharacterMovement();
 	if (!IsCombatModeActive() || !Movement || !Movement->IsMovingOnGround() || GetVelocity().Size2D() > 20.0f)
 	{
-		bServerTurnInPlaceRotationActive = false;
 		return;
 	}
 
@@ -1289,34 +1288,32 @@ void AProject_JPlayerCharacter::ServerSetTurnInPlaceRotation_Implementation(bool
 	const float RequestedYaw = FRotator::NormalizeAxis(InTargetActorYaw);
 
 	// A 180 degree authored TIP can legitimately rotate at about 180 deg/s.
-	// Permit a conservative burst for an initial packet/hitch, but clamp every
-	// server-side step so a client cannot instantly set arbitrary facing.
+	// The server clock owns admission and the yaw budget, including stop packets.
+	// Client active/stop flags must never replenish the initial burst.
 	constexpr double MinServerTurnInPlaceUpdateInterval = 1.0 / 30.0;
 	constexpr float MaxTurnInPlaceYawRateDegreesPerSecond = 240.0f;
-	constexpr float InitialTurnInPlaceYawBurstDegrees = 15.0f;
 	constexpr float MaxTurnInPlaceYawBurstDegrees = 35.0f;
-	if (bServerTurnInPlaceRotationActive &&
+	if (LastServerTurnInPlaceRotationTime >= 0.0 &&
 		(Now - LastServerTurnInPlaceRotationTime) < MinServerTurnInPlaceUpdateInterval)
 	{
 		return;
 	}
 
-	const double Elapsed = bServerTurnInPlaceRotationActive
+	const double Elapsed = LastServerTurnInPlaceRotationTime >= 0.0
 		? FMath::Max(0.0, Now - LastServerTurnInPlaceRotationTime)
 		: 0.0;
-	const float MaxAcceptedDelta = bServerTurnInPlaceRotationActive
-		? FMath::Clamp(MaxTurnInPlaceYawRateDegreesPerSecond * static_cast<float>(Elapsed) + 4.0f,
-			4.0f, MaxTurnInPlaceYawBurstDegrees)
-		: InitialTurnInPlaceYawBurstDegrees;
+	ServerTurnInPlaceYawBudget = FMath::Min(MaxTurnInPlaceYawBurstDegrees,
+		ServerTurnInPlaceYawBudget + MaxTurnInPlaceYawRateDegreesPerSecond * static_cast<float>(Elapsed));
 	const float RequestedDelta = FMath::FindDeltaAngleDegrees(CurrentYaw, RequestedYaw);
-	const float AcceptedDelta = FMath::Clamp(RequestedDelta, -MaxAcceptedDelta, MaxAcceptedDelta);
+	const float AcceptedDelta = FMath::Clamp(RequestedDelta, -ServerTurnInPlaceYawBudget, ServerTurnInPlaceYawBudget);
 	if (!FMath::IsNearlyZero(AcceptedDelta, 0.01f))
 	{
 		SetActorRotation(FRotator(0.0f, FRotator::NormalizeAxis(CurrentYaw + AcceptedDelta), 0.0f));
+		ServerTurnInPlaceYawBudget = FMath::Max(0.0f, ServerTurnInPlaceYawBudget - FMath::Abs(AcceptedDelta));
 	}
 
 	LastServerTurnInPlaceRotationTime = Now;
-	bServerTurnInPlaceRotationActive = bInTurnInPlace;
+	// Retain the RPC payload for wire compatibility; active/stop owns no budget.
 }
 
 void AProject_JPlayerCharacter::SetCombatTransitionState(bool bTransitionActive)
@@ -1615,6 +1612,16 @@ void AProject_JPlayerCharacter::HandleSkillInputTagReleased(FGameplayTag InputTa
 	{
 		SkillInputExecutionComponent->HandleInputTagReleased(InputTag);
 	}
+}
+
+void AProject_JPlayerCharacter::HandleSkillInputTagPressedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt)
+{
+	if (SkillInputExecutionComponent) SkillInputExecutionComponent->HandleInputTagPressedFromSource(InputTag, Source, Receipt);
+}
+
+void AProject_JPlayerCharacter::HandleSkillInputTagReleasedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt)
+{
+	if (SkillInputExecutionComponent) SkillInputExecutionComponent->HandleInputTagReleasedFromSource(InputTag, Source, Receipt);
 }
 
 void AProject_JPlayerCharacter::SerializeForHandover(TArray<uint8>& OutData)

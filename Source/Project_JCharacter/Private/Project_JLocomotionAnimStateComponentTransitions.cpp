@@ -370,19 +370,24 @@ void UProject_JLocomotionAnimStateComponent::BeginJumpStartState()
 	bSuppressFallOffStart = true;
 	bIsJumping = true;
 	JumpStartElapsedTime = 0.0f;
+	JumpStartTimeoutElapsedTime = 0.0f;
 	bIgnoreNextLandingForJumpStart = true;
 	bLandingFinishPendingExit = false;
 }
 
 void UProject_JLocomotionAnimStateComponent::ScheduleJumpStartTimeout(float Duration)
 {
+	// Keep the deadline chosen by this execution, including a remote confirmation
+	// that clears prediction. The shared callback must not extend it to the local watchdog.
+	const float Remaining = FMath::Max(Duration, 0.01f);
+	JumpStartTimeoutElapsedTime = JumpStartElapsedTime + Remaining;
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
 			JumpTimerHandle,
 			this,
 			&UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished,
-			Duration,
+			Remaining,
 			false);
 	}
 }
@@ -536,13 +541,11 @@ void UProject_JLocomotionAnimStateComponent::StartLanding(float ImpactFallSpeed,
 		}
 	}
 
+	// A replicated landing does not acquire a new local landing contribution,
+	// but it must still release any fall-off contribution this owner acquired.
+	if (bHadInAirState) { RemoveOwnedInAirGameplayTag(); }
 	if (bUpdateGameplayTags)
 	{
-		if (bHadInAirState)
-		{
-			RemoveOwnedInAirGameplayTag();
-		}
-
 		AddOwnedLandingGameplayTag();
 	}
 
@@ -671,7 +674,7 @@ void UProject_JLocomotionAnimStateComponent::OnLandingTimerFinished()
 
 void UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished()
 {
-	if (bIsJumping && JumpStartElapsedTime < JumpStartMaxDuration)
+	if (bIsJumping && JumpStartElapsedTime < JumpStartTimeoutElapsedTime)
 	{
 		if (UWorld* World = GetWorld())
 		{
@@ -679,7 +682,7 @@ void UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished()
 				JumpTimerHandle,
 				this,
 				&UProject_JLocomotionAnimStateComponent::OnJumpTimerFinished,
-				FMath::Max(0.01f, JumpStartMaxDuration - JumpStartElapsedTime),
+				FMath::Max(0.01f, JumpStartTimeoutElapsedTime - JumpStartElapsedTime),
 				false);
 		}
 		return;

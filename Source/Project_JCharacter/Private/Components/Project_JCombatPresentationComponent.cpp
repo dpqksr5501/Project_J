@@ -207,7 +207,7 @@ void UProject_JCombatPresentationComponent::PlayCue(const FGameplayTag CueTag)
 		// handler deliberately skips authority to avoid duplicate effects, so play
 		// the cosmetic locally before notifying remote clients.
 		PlayCueLocal(CueTag);
-		MulticastPlayPresentationCue(ActiveAttackTag, CueTag, true, ++NextPresentationEventOrder, ActiveAttackInstance);
+		MulticastPlayPresentationCue(ActiveAttackTag, CueTag, true, ++NextPresentationEventOrder, ActiveAttackInstance, ReplicatedPresentationState);
 		return;
 	}
 
@@ -348,7 +348,7 @@ void UProject_JCombatPresentationComponent::StopCue(const FGameplayTag CueTag)
 		if (bWasActiveLoop)
 		{
 			PublishRecoveryState();
-			MulticastPlayPresentationCue(ActiveAttackTag, CueTag, false, ++NextPresentationEventOrder, ActiveAttackInstance);
+			MulticastPlayPresentationCue(ActiveAttackTag, CueTag, false, ++NextPresentationEventOrder, ActiveAttackInstance, ReplicatedPresentationState);
 		}
 		return;
 	}
@@ -471,7 +471,8 @@ void UProject_JCombatPresentationComponent::OnRep_PresentationState(FProject_JRe
 }
 
 void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Implementation(
-	const FGameplayTag AttackTag, const FGameplayTag CueTag, const bool bStart, const int32 EventOrder, const uint32 AttackInstance)
+	const FGameplayTag AttackTag, const FGameplayTag CueTag, const bool bStart, const int32 EventOrder, const uint32 AttackInstance,
+	const FProject_JReplicatedCombatPresentationState& RecoveryState)
 {
 	if (!CanAcceptPresentation() || GetNetMode() == NM_DedicatedServer || (GetOwner() && GetOwner()->HasAuthority()) ||
 		EventOrder <= LastAppliedPresentationEventOrder)
@@ -479,7 +480,17 @@ void UProject_JCombatPresentationComponent::MulticastPlayPresentationCue_Impleme
 		return;
 	}
 
-	LastAppliedPresentationEventOrder = EventOrder;
+    // A cue delta cannot certify that every other persistent cue was seen.
+    // Carry the existing complete recovery snapshot with the event, so advancing
+    // its ordering boundary also recovers lost starts/stops of other cues.
+    if (RecoveryState.Revision > LastAppliedPresentationRevision &&
+        RecoveryState.EventOrder > LastAppliedRecoveryEventOrder)
+    {
+        ReplicatedPresentationState = RecoveryState;
+        ApplyReplicatedState();
+    }
+    if (!CanAcceptPresentation()) { return; }
+	LastAppliedPresentationEventOrder = FMath::Max(LastAppliedPresentationEventOrder, EventOrder);
 	if (bStart)
 	{
 		if (ActiveAttackTag != AttackTag || ActiveAttackInstance != AttackInstance)

@@ -422,6 +422,7 @@ bool AProject_JMountCharacter::DismountRider(bool bForce, bool bRestorePossessio
 		return !Component || !Component->IsMounted();
 	};
 	if (bRestorePossession && IsValid(RiderController) && IsValid(PreviousRider) && !PreviousRider->IsActorBeingDestroyed()
+		&& (RiderController->GetPawn() == this || (!RiderController->GetPawn() && SessionController.Get() == RiderController))
 		&& GetWorld() && !GetWorld()->bIsTearingDown && (!bEndingPlay || bRestoreRiderOnEndPlay) && StillOwnsRiderRestore())
 	{
 		RiderController->Possess(PreviousRider);

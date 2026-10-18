@@ -364,6 +364,9 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 	case EProject_JItemUseResult::Locked:
 		Status = NSLOCTEXT("ProjectJUI", "UseLocked", "잠긴 아이템입니다.");
 		break;
+	case EProject_JItemUseResult::Unavailable:
+		Status = NSLOCTEXT("ProjectJUI", "UseUnavailableCheckQuantity", "사용을 완료하지 못했습니다. 아이템이 이미 소모되었을 수 있으니 현재 수량을 확인하세요.");
+		break;
 	default:
 		Status = NSLOCTEXT("ProjectJUI", "UseUnavailable", "현재 사용할 수 없습니다.");
 		break;

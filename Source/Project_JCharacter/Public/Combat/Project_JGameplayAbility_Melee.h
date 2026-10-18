@@ -69,6 +69,8 @@ protected:
 	FGameplayTag MeleeHitEventTag;
 
 private:
+	friend class FProjectJAudit3MontageRateTest;
+	friend class AProject_JAuditNetworkController;
 	friend class FProjectJComboWindowOwnershipTest;
 	friend class FProjectJComboInputSubscriptionTest;
 	friend class FProjectJComboBlendOutTest;

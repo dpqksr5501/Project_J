@@ -189,7 +189,34 @@ void UProject_JEquipmentRuntimeComponent::ApplyEquipmentGameplay(ACharacter& Own
 
 	if (ASC)
 	{
-		ApplyEquipmentEffects(*ASC, ItemDef, RuntimeItem);
+        // Two retained avatars can represent the same persistent slot. Reuse
+        // the ASC's existing provider lease: gameplay effects belong to that
+        // manager/slot/definition, while each avatar still owns its visuals.
+        auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC);
+        bool bNeedsEffects = true;
+        uint64 EffectGeneration = 0;
+        const FName EffectSource(*FString::Printf(TEXT("EquipmentEffects.%s.%d.%s"),
+            *GetPathNameSafe(BoundEquipmentManager), int32(ItemDef.EquipmentSlot), *ItemDef.GetPathName()));
+        if (ProjectJASC)
+        {
+            if (!ProjectJASC->AcquireAbilityGrantSource(EffectSource, bNeedsEffects, EffectGeneration)) { return; }
+            RuntimeItem.GrantedHandles.GrantSourceGenerations.Add(EffectSource, EffectGeneration);
+        }
+        if (bNeedsEffects)
+        {
+            ApplyEquipmentEffects(*ASC, ItemDef, RuntimeItem);
+            if (ProjectJASC)
+            {
+                // Detach local handles before callbacks. A retired generation
+                // cannot register effects into a newer provider's lease.
+                const auto Effects = MoveTemp(RuntimeItem.GrantedEffectHandles);
+                for (const auto Handle : Effects)
+                {
+                    if (!ProjectJASC->RegisterGrantedEffect(EffectSource, EffectGeneration, Handle))
+                    { ASC->RemoveActiveGameplayEffect(Handle); }
+                }
+            }
+        }
 		TArray<FText> Conflicts;
 		FProject_JCombatConfiguration::FindInputGrantConflicts(*ASC, Conflicts);
 		for (const FText& Conflict : Conflicts) { UE_LOG(LogProjectJEquipmentRuntime, Verbose, TEXT("%s"), *Conflict.ToString()); }

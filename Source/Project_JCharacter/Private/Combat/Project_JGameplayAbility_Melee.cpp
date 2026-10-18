@@ -310,9 +310,15 @@ void UProject_JGameplayAbility_Melee::OnComboInputReceived(FGameplayEventData Pa
 			}
 			StartComboNode(*StartNode);
 		}
-		else if (IsComboDebugEnabled())
+		else
 		{
-			UE_LOG(LogProjectJCombatCombo, Warning, TEXT("No Start Node for Input=%s"), *Payload.EventTag.ToString());
+			if (IsComboDebugEnabled())
+			{
+				UE_LOG(LogProjectJCombatCombo, Warning, TEXT("No Start Node for Input=%s"), *Payload.EventTag.ToString());
+			}
+			// Initial activation waits for its first input event. A rejected event
+			// has no montage completion to retire the activation or attacking tag.
+			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		}
 		return;
 	}
@@ -534,6 +540,12 @@ void UProject_JGameplayAbility_Melee::StartComboNode(const FProject_JComboNode& 
 	}
 	if (MontageTask && ActiveComboMontage == NodeMontage)
 	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo(); ASC && ASC->GetAnimatingAbility() == this)
+		{
+			// Update GAS's replicated montage state as well as the local player;
+			// section reuse must retain the next node's authored timing.
+			ASC->CurrentMontageSetPlayRate(NodePlayRate);
+		}
 		if (!NodeSection.IsNone())
 		{
 			if (IsComboDebugEnabled())

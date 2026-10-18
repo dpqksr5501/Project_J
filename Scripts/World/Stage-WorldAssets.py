@@ -62,6 +62,15 @@ if __name__=='__main__':
         if isinstance(payload,str):payload=json.loads(payload)
         payload['source_mcp_checked']=True
     assert not payload['unresolved_external_game_dependencies'],payload
+    assert not payload.get('missing_source_packages'),payload
+    packages=set(payload['packages'])
+    assert packages and set(seeds)<=packages,'Requested seed missing from resolved packages'
+    assert all(isinstance(p,str) and p.startswith('/Game/') for p in packages),'Expected /Game package paths'
+    if not args.local_packages or args.resolved_manifest:
+        edges=payload['dependency_edges']
+        assert packages==set(edges),'Incomplete dependency graph'
+        assert all(dependency in packages for dependencies in edges.values() for dependency in dependencies
+                   if dependency.startswith('/Game/')),'Missing /Game dependency in resolved closure'
     files=[]
     # Resolve and validate every source/destination before any copy occurs.
     for package in payload['packages']:

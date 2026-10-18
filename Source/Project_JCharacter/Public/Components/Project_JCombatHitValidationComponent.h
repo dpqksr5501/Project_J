@@ -96,6 +96,7 @@ private:
 	TWeakObjectPtr<class UProject_JEquipmentRuntimeComponent> AttackEquipment;
 	uint64 AttackWeaponRevision = 0;
 	int32 ActivePredictionKey = 0;
+	float ActiveAttackStartTimestamp = 0.0f;
 	bool bRequiresWeapon = false;
 	UAbilitySystemComponent* ResolveOwnerAbilitySystemComponent() const;
 	bool ApplyConfirmedHit(AActor* HitActor);

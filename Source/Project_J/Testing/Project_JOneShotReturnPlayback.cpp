@@ -74,6 +74,8 @@ class FPlayback : public IAutomationLatentCommand
 	USceneCaptureComponent2D* Capture = nullptr;
 	bool bDirectionCoverage = false, bRender = false;
 	FString CaptureDirectory;
+	FString EvidenceOutput;
+	bool bEvidenceWritable = true;
 	int32 PlaybackHz = 60;
 	int32 At(int32 FrameAt60Hz) const { return FMath::RoundToInt(FrameAt60Hz * PlaybackHz / 60.f); }
 	int32 Scenario = 0, Frame = 0, Returns = 0, WindowFrames = 0, ReturnFrame = -1000;
@@ -209,15 +211,25 @@ public:
 		}
 		else if (!bRecorded && bCurveResponse && FParse::Param(FCommandLine::Get(), TEXT("ProjectJCurveRefinementOnly"))) Scenario = 24;
 		Report = FString::Printf(TEXT("Authored Blueprint/GAS/CMC playback on collision floor; NullRHI=%d Hz=%d. FootStepCm is component-space displacement per fixed step, not world foot sliding.\n"), GUsingNullRHI, PlaybackHz);
-		FString Output;
 		FParse::Value(FCommandLine::Get(), bDirections ? TEXT("ProjectJOneShotDirectionOutput=") :
-			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);
-		CaptureDirectory = (Output.IsEmpty() ? FPaths::ProjectSavedDir() / TEXT("Validation/OneShotReturn") : FPaths::GetPath(Output)) /
+			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : bInputResponse ? TEXT("ProjectJOneShotInputOutput=") : TEXT("ProjectJOneShotReturnOutput="), EvidenceOutput);
+		if (EvidenceOutput.IsEmpty())
+		{
+			EvidenceOutput = FPaths::ProjectSavedDir() / TEXT("Validation/OneShotReturn") /
+				FPaths::MakeValidFileName(Test->GetTestFullName()) / FGuid::NewGuid().ToString(EGuidFormats::Digits) / TEXT("Playback.txt");
+		}
+		// Explicit paths are single-run receipts too. Do not silently replace
+		// another fixture's or an earlier run's evidence.
+		bEvidenceWritable = Test->TestFalse(TEXT("Evidence output must be new"), IFileManager::Get().FileExists(*EvidenceOutput));
+		const FString OutputParent = FPaths::GetPath(EvidenceOutput);
+		bEvidenceWritable &= OutputParent.IsEmpty() || Test->TestTrue(TEXT("Evidence parent is available"), IFileManager::Get().MakeDirectory(*OutputParent, true));
+		CaptureDirectory = FPaths::GetPath(EvidenceOutput) /
 			(bDirections ? TEXT("DirectionFrames") : TEXT("Frames"));
 	}
 	~FPlayback() { Cleanup(); }
 	virtual bool Update() override
 	{
+		if (!bEvidenceWritable) { Cleanup(); return true; }
 		if (!World && !Setup()) { Test->AddError(TEXT("One-shot return fixture setup failed")); Cleanup(); return true; }
 		auto* Locomotion = Player->GetLocomotionAnimStateComponent();
 		const bool bSprint = IsSprint();
@@ -627,13 +639,8 @@ public:
 		CurveReturns = MicroSettledFrames = 0;
 		JumpWarpFrames = LandWarpFrames = 0;
 		if (++Scenario < (bDirectionCoverage ? 16 : bCurveResponse ? CurveCases().Num() : bInputResponse ? 16 : 8) && SingleScenario == INDEX_NONE) return false;
-		FString Output; FParse::Value(FCommandLine::Get(), bDirectionCoverage ? TEXT("ProjectJOneShotDirectionOutput=") :
-			bCurveResponse ? TEXT("ProjectJOneShotCurveOutput=") : bInputResponse ? TEXT("ProjectJOneShotInputOutput=") : TEXT("ProjectJOneShotReturnOutput="), Output);
-		if (Output.IsEmpty()) Output = FPaths::ProjectSavedDir() / (bDirectionCoverage ? TEXT("Validation/OneShotReturn/DirectionPlayback.txt") :
-			bCurveResponse ? TEXT("Validation/OneShotReturn/CurvePlayback.txt") :
-			bInputResponse ? TEXT("Validation/OneShotReturn/InputPlayback.txt") : TEXT("Validation/OneShotReturn/Playback.txt"));
-		Test->TestTrue(TEXT("Saved frame-by-frame return evidence"), FFileHelper::SaveStringToFile(Report, *Output));
-		Test->AddInfo(TEXT("One-shot return evidence: ") + Output); return true;
+		Test->TestTrue(TEXT("Saved frame-by-frame return evidence"), FFileHelper::SaveStringToFile(Report, *EvidenceOutput));
+		Test->AddInfo(TEXT("One-shot return evidence: ") + EvidenceOutput); return true;
 	}
 };
 }

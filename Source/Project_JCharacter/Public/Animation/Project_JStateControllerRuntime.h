@@ -344,7 +344,7 @@ public:
 	const FPivotPlayback& GetPivot() const { return Pivot; }
 	EProject_JStateControllerPresentationState GetHeldState() const { return PlaybackHoldState; }
 	float GetHoldElapsed(double NowSeconds) const { return FMath::Max(static_cast<float>(NowSeconds - PlaybackHoldStartedAtSeconds), 0.0f); }
-	void AlignHoldToAssetTime(double NowSeconds, float AssetTime) { PlaybackHoldStartedAtSeconds = NowSeconds - AssetTime; }
+	void RestartHoldClock(double NowSeconds) { PlaybackHoldStartedAtSeconds = NowSeconds; }
 	bool IsTurnReselectRequested() const { return bForceTurnInPlaceReselect; }
 	void ClearTurnReselect() { bForceTurnInPlaceReselect = false; }
 	bool IsGroundStopConsumed() const { return bGroundStopConsumed; }

@@ -87,6 +87,7 @@ class PROJECT_J_API UProject_JPlayerUIComponent : public UActorComponent
   private:
 	friend class FProjectJUIScreenFailureLifetimeTest;
 	friend class FProjectJUISkillReleaseOwnershipTest;
+	friend class FProjectJAudit2SharedSkillHoldTest;
 	friend class FProjectJSkillButtonOriginTest;
 	friend class UProject_JSkillButton;
 	void PressSkillWithReceipt(int32 Index, uint64* OutReceipt);

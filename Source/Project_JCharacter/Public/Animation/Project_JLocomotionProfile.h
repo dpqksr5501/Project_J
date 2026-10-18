@@ -618,7 +618,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Anim Instance", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float AnimInstanceHiddenRemoteUpdateInterval = 0.10f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization")
+	/** Serialized compatibility payload only. The seven flat fields below remain
+	 * the authoring/runtime authority; changing old asset precedence is not a UI fix. */
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion|Optimization", meta = (DeprecatedProperty, DeprecationMessage = "Use the flat Motion Matching/Anim Instance budget fields and GetResolvedAnimationBudgetSettings."))
 	FProject_JAnimationBudgetSettings AnimationBudget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Optimization|Motion Matching", meta = (ClampMin = "0.0", UIMin = "0.0"))

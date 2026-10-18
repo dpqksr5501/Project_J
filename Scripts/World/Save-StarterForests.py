@@ -1,10 +1,12 @@
 """Explicit PCG forest batch validation/save; no generation or height changes."""
-import array,json,math,time
+import array,json,math,time,runpy
 from pathlib import Path
 import unreal
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/Starter'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
 assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+SAVE=runpy.run_path(str(Path(__file__).with_name('Starter-OwnedSave.py')))
+save_scope=SAVE['OwnedSaveScope']()
 graph=unreal.load_asset(BASE+'/PCG/PCG_StarterForest');assert graph
 streaming=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.forest-streaming.json').read_text())
 forest_layer=unreal.load_asset(streaming['forest_hlod_layer']) if streaming.get('forest_hlod_layer') else None
@@ -23,6 +25,7 @@ settlements=[p for p in places if p['id'].startswith('S')]
 records=[];errors=[];minimum_margin=1e9
 for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
     if not isinstance(actor,unreal.PCGVolume) or not actor.get_actor_label().startswith('PCG_Forest_'):continue
+    save_scope.own(actor)
     component=actor.get_component_by_class(unreal.PCGComponent)
     assert component and component.get_graph()==graph
     if forest_layer:
@@ -54,10 +57,9 @@ for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_le
 assert records
 assert max(errors,default=0)<30,('PCG projection differs from saved height',max(errors))
 assert minimum_margin>-12,('Forest entered reserved settlement core',minimum_margin)
-dirty=list(unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages())+list(unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages())
-owned=[p for p in dirty if p.get_name()==BASE+'/Maps/L_StarterRegion' or p.get_name().startswith((BASE+'/PCG/','/Game/__ExternalActors__/World/Starter/','/Game/__ExternalObjects__/World/Starter/'))]
-if owned:assert unreal.EditorLoadingAndSavingUtils.save_packages(owned,True)
+dirty=list(SAVE['dirty_packages']().values())
+saved_packages=save_scope.save()
 report=dict(saved_at=time.time(),tiles=records,total_trees=sum(r['trees'] for r in records),total_shrubs=sum(r['shrubs'] for r in records),
             maximum_height_sample_error_cm=max(errors,default=0),minimum_settlement_core_margin_m=minimum_margin,runtime_generation=False,height_modified=False,
-            unrelated_dirty_preserved=[p.get_name() for p in dirty if p not in owned])
+            saved_packages=saved_packages,unrelated_dirty_preserved=[])
 (OUT/'forest-save.json').write_text(json.dumps(report,indent=2),encoding='utf-8')

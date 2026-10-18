@@ -117,7 +117,11 @@ void UProject_JMountComponent::ReleaseMountedTag()
 
 void UProject_JMountComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	RetireMount(false);
+	// DestroyComponent routes EndPlay before OnComponentDestroyed. Preserve that
+	// callback's intended restoration only while the rider/world are still live.
+	const bool bLiveComponentRemoval = EndPlayReason == EEndPlayReason::Destroyed &&
+		IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
+	RetireMount(bLiveComponentRemoval);
 	Super::EndPlay(EndPlayReason);
 }
 

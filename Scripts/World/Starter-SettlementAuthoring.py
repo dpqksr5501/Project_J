@@ -1,5 +1,5 @@
 """Shared native static placement for authored settlements; no startup hooks."""
-import hashlib,importlib.util,json,math
+import hashlib,importlib.util,json,math,runpy
 from pathlib import Path
 import unreal
 class SettlementAuthoring:
@@ -11,13 +11,15 @@ class SettlementAuthoring:
         if copy is None:
             lib.make_directory(self.base+'/Materials/SettlementInstancing')
             copy=lib.duplicate_asset(interface.get_path_name().split('.')[0],path);assert copy
+            self._owned_objects.append(copy)
             lib.set_metadata_tag(copy,'ProjectJ.Authoring','ProjectJ.Starter.SettlementInstancing.v1')
             if isinstance(copy,unreal.Material):edit.set_material_usage(copy,unreal.MaterialUsage.MATUSAGE_INSTANCED_STATIC_MESHES)
             else:edit.set_material_instance_parent(copy,self.instanced_material(interface.get_editor_property('parent')))
-            assert lib.save_loaded_asset(copy)
         assert lib.get_metadata_tag(copy,'ProjectJ.Authoring')=='ProjectJ.Starter.SettlementInstancing.v1'
         return copy
     def __init__(self,tag,folder,manifest=None):
+        self._save_scope=runpy.run_path(str(Path(__file__).with_name('Starter-OwnedSave.py')))['OwnedSaveScope']()
+        self._owned_objects=[]
         if manifest is None:
             manifest=json.loads((Path(__file__).resolve().parents[2]/'Content/World/Starter/Source/StarterRegion.manifest.json').read_text(encoding='utf-8'))
         self.manifest=manifest;self.base=manifest['owned_content_root'];self.world_asset=manifest['world_asset']
@@ -48,6 +50,7 @@ class SettlementAuthoring:
         return actor,dict(id=house['id'],label=label,center_m=[x,y,floor],yaw=yaw,width=w,depth=d,storeys=house.get('storeys',1),foundation_bottom_m=bottom)
     def add_access_stairs(self,actor,placement,height,construction,stone):
         """Fit a short exterior stair to the existing sill and preserved terrain."""
+        self._owned_objects.append(actor)
         assert not any(c.get_name()=='EntryStairs' for c in actor.get_components_by_class(unreal.HierarchicalInstancedStaticMeshComponent))
         spec=importlib.util.spec_from_file_location('settlement_support',Path(__file__).with_name('Starter-SettlementSupport.py'));support=importlib.util.module_from_spec(spec);spec.loader.exec_module(support)
         planned=support.plan_access_stairs(placement,height);pieces=planned.pop('pieces');floor=placement['center_m'][2];cube=construction.mesh('/Engine/BasicShapes/Cube')
@@ -62,6 +65,7 @@ class SettlementAuthoring:
         b=mesh.get_bounds();o,e=b.origin,b.box_extent;a=math.radians(yaw);c,s=math.cos(a),math.sin(a)
         p=self.point(x,y,z)-unreal.Vector(c*o.x*scale[0]-s*o.y*scale[1],s*o.x*scale[0]+c*o.y*scale[1],(o.z-e.z)*scale[2])
         actor=self.subsystem.spawn_actor_from_class(unreal.StaticMeshActor,p);assert actor
+        self._owned_objects.append(actor)
         actor.modify();actor.set_actor_label(label);actor.set_folder_path(self.folder)
         actor.set_editor_property('tags',[unreal.Name(self.tag)])
         actor.set_editor_property('is_spatially_loaded',True)
@@ -86,6 +90,5 @@ class SettlementAuthoring:
         component.set_relative_transform(unreal.Transform(),False,False)
         return component
     def save(self):
-        dirty=list(unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages())+list(unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages())
-        owned=[p for p in dirty if p.get_name()==self.world_asset or p.get_name().startswith((self.manifest['external_actor_root'],self.manifest['external_object_root']))]
-        if owned:assert unreal.EditorLoadingAndSavingUtils.save_packages(owned,True)
+        for obj in self._owned_objects:self._save_scope.own(obj)
+        return self._save_scope.save()

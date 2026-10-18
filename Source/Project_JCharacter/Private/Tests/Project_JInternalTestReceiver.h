@@ -22,6 +22,8 @@ public:
 	int32 AddedCount = 0;
 	int32 ChangedCount = 0;
 	int32 RemovedCount = 0;
+	TFunction<void()> OnInventoryChanged;
+	TFunction<void()> OnInventoryRemoved;
 	FGuid OtherItem;
 	FGuid ReentrantEquipmentItem;
 	EProject_JEquipmentOperationFailure ReentrantFailure = EProject_JEquipmentOperationFailure::None;
@@ -39,13 +41,18 @@ public:
 	UFUNCTION() void OnRemoved(const FProject_JItemInstanceData& Item)
 	{
 		++RemovedCount;
+		if (OnInventoryRemoved) OnInventoryRemoved();
 		if (!bMutate) return;
 		bMutate = false;
 		bRemovalCommitted = !Inventory->HasItemInstance(Item.InstanceId);
 		bRecursiveRemovalRejected = !Inventory->RemoveItemInstance(Item.InstanceId);
 		Inventory->RemoveItemInstance(OtherItem);
 	}
-	UFUNCTION() void OnChanged(const FProject_JItemInstanceData& Item) { ++ChangedCount; }
+	UFUNCTION() void OnChanged(const FProject_JItemInstanceData& Item)
+	{
+		++ChangedCount;
+		if (OnInventoryChanged) OnInventoryChanged();
+	}
 	UFUNCTION() void OnUnequipped(EProject_JEquipmentSlot Slot, UProject_JEquipmentItemDefinition* Definition)
 	{
 		bRemovalCommitted = Equipment->GetEquippedItemInSlot(Slot) == nullptr;

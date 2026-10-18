@@ -290,12 +290,7 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 		const auto& SearchPolicy = Data.MotionMatchingSearchPolicy;
 
 		const bool bIsEnteringJump = (Data.Air.bIsJumping || OneShot.PhaseFamily == EProject_JLocomotionPhaseFamily::JumpStart);
-		if (bIsJumpAirReselecting)
-		{
-			// 공중에서 마우스/입력 회전으로 인한 재선택 시 실시간 꺾인 방향 적용
-			OneShot.StrafeDirection = PendingJumpAirDirection;
-		}
-		else if (bIsEnteringJump)
+		if (bIsEnteringJump)
 		{
 			// OTM 지상 점프 진입 순간: [Actor Facing vs Velocity] 각도 오차 확인
 			const float GroundSpeed = Data.Movement.GroundSpeed;
@@ -337,11 +332,6 @@ void UProject_JCharacterAnimInstance::FillLocomotionStateThreadSafeData(FProject
 		{
 			OneShot.StrafeDirection = EProject_JStateControllerStrafeDirection::Forward;
 		}
-	}
-	else if (bIsJumpAirReselecting)
-	{
-		// Strafe 모드 공중 재선택 시
-		OneShot.StrafeDirection = PendingJumpAirDirection;
 	}
 	OneShot.Stance = OwningCharacter && OwningCharacter->bIsCrouched
 		? EProject_JStateControllerStance::Crouch

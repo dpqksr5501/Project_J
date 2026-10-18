@@ -24,6 +24,13 @@ UProject_JCombatHitValidationComponent::UProject_JCombatHitValidationComponent()
 
 void UProject_JCombatHitValidationComponent::BeginAttackNode(const FGameplayTag AttackNodeTag, UProject_JAttackDefinition* AttackDefinition, const int32 PredictionKey)
 {
+	// Damage context and duplicate suppression belong to this execution only.
+	// A repeated node tag/key cannot reuse a previous visit's canonical sweep.
+	SweepHistoryStartIndex = 0;
+	SweepHistoryCount = 0;
+	const UWorld* World = GetWorld();
+	const AGameStateBase* GameState = World ? World->GetGameState() : nullptr;
+	ActiveAttackStartTimestamp = GameState ? GameState->GetServerWorldTimeSeconds() : (World ? World->GetTimeSeconds() : 0.0f);
 	ProtectAttackPose();
 	bRequiresWeapon = Cast<AProject_JPlayerCharacter>(GetOwner()) != nullptr;
 	AttackEquipment = GetOwner() ? GetOwner()->FindComponentByClass<UProject_JEquipmentRuntimeComponent>() : nullptr;
@@ -42,6 +49,9 @@ void UProject_JCombatHitValidationComponent::EndAttack()
 {
 	HitWindowTokens.Reset();
 	SetHitWindowOpen(false);
+	// Closing a live window may append a final state; retire it afterwards.
+	SweepHistoryStartIndex = 0;
+	SweepHistoryCount = 0;
 	AttackEquipment.Reset();
 	AttackWeaponRevision = 0;
 	ActivePredictionKey = 0;
@@ -232,7 +242,7 @@ bool UProject_JCombatHitValidationComponent::FindAuthoritativeTraceAtTime(
 	OutEnd = FVector::ZeroVector;
 	OutHitWindowOpen = false;
 
-	if (SweepHistoryCount == 0 || !FMath::IsFinite(TargetTimestamp))
+	if (SweepHistoryCount == 0 || !FMath::IsFinite(TargetTimestamp) || TargetTimestamp < ActiveAttackStartTimestamp)
 	{
 		return false;
 	}

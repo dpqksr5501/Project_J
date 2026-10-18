@@ -691,6 +691,7 @@ public:
 	bool bAnimationFlowEvaluationPending = false;
 
 	friend class FProjectJAuthoredEarlyTransitionTest;
+	friend class FProjectJAudit2AirReselectionTest;
 	bool IsAuthoredEarlyTransitionAllowed(EProject_JLocomotionGaitIntent CurrentGait) const;
 	TWeakObjectPtr<UAnimSequenceBase> AuthoredEarlyTransitionAsset;
 	uint64 EarlyTransitionSnapshotRevision = 0;
@@ -763,11 +764,10 @@ public:
 	double CombatStopTraceNextSampleSeconds = 0.0;
 
 	/** 공중 점프 재선택 상태 변수 */
-	mutable float LastJumpAirReselectElapsed = 0.0f;
+	mutable double LastJumpAirReselectTimeSeconds = -1.0;
 	mutable float LastJumpAirBlendDuration = 0.15f;
 	mutable bool bIsJumpAirReselecting = false;
 	mutable float SavedJumpAirElapsed = 0.0f;
-	mutable EProject_JStateControllerStrafeDirection PendingJumpAirDirection = EProject_JStateControllerStrafeDirection::Forward;
 
 	/** 스프린트 곡선 주행(Diamond) 시 린 차단 히스테리시스 상태 플래그 */
 	mutable bool bSprintCurvatureLeanSuppressed = false;

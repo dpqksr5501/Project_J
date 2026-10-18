@@ -8,11 +8,14 @@
 #include "Misc/ScopeExit.h"
 #include "UObject/StrongObjectPtr.h"
 
+namespace { constexpr double AllowedEnvelopeFutureSkewSeconds = 3.0; }
+
 bool UProject_JHandoverManager::HasValidTimingConfiguration() const
 {
 	// Config metadata is authoring guidance; ini/native input still needs the
-	// same admission contract. Finite zero explicitly disables the age limit.
-	return FMath::IsFinite(MaxEnvelopeAgeSeconds) && MaxEnvelopeAgeSeconds >= 0.0f &&
+	// same bounded replay contract. An unlimited envelope cannot outlive a
+	// bounded in-memory receipt and still promise idempotency.
+	return FMath::IsFinite(MaxEnvelopeAgeSeconds) && MaxEnvelopeAgeSeconds > 0.0f &&
 		FMath::IsFinite(AckTimeoutSeconds) && AckTimeoutSeconds >= 0.05f &&
 		FMath::IsFinite(RetryDelaySeconds) && RetryDelaySeconds >= 0.0f &&
 		FMath::IsFinite(TerminalRecordTtlSeconds) && TerminalRecordTtlSeconds >= 1.0f;
@@ -273,7 +276,7 @@ EProject_JHandoverValidationFailure UProject_JHandoverManager::ValidateEnvelope(
 	}
 
 	const FTimespan EnvelopeAge = FDateTime::UtcNow() - Envelope.Timestamp;
-	if (EnvelopeAge.GetTotalSeconds() < -3.0 ||
+	if (EnvelopeAge.GetTotalSeconds() < -AllowedEnvelopeFutureSkewSeconds ||
 		(MaxEnvelopeAgeSeconds > 0.0f && EnvelopeAge.GetTotalSeconds() > MaxEnvelopeAgeSeconds))
 	{
 		return EProject_JHandoverValidationFailure::InvalidTimestamp;
@@ -640,7 +643,7 @@ bool UProject_JHandoverManager::HasActiveTransferForActor(const AActor* Actor) c
 void UProject_JHandoverManager::PruneReplayWindow()
 {
 	const FDateTime ReplayCutoff = FDateTime::UtcNow() - FTimespan::FromSeconds(
-		FMath::Max(60.0, static_cast<double>(MaxEnvelopeAgeSeconds)));
+		FMath::Max(60.0, static_cast<double>(MaxEnvelopeAgeSeconds) + AllowedEnvelopeFutureSkewSeconds));
 	for (auto It = AppliedTransferIds.CreateIterator(); It; ++It)
 	{
 		if (It.Value().AppliedAt < ReplayCutoff)

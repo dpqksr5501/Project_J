@@ -1,6 +1,7 @@
 param([Parameter(Mandatory)][ValidateSet('Cook','Stage')][string]$Mode,
  [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9_-]+$')][string]$Name,
- [string]$CookDirectory)
+ [string]$CookDirectory,
+ [ValidatePattern('^/(Game|Engine)/[A-Za-z0-9_/-]+$')][string[]]$Maps=@('/Game/ThirdPerson/Lvl_ThirdPerson','/Engine/Maps/Entry'))
 $ErrorActionPreference='Stop'
 $projectRoot=(Resolve-Path "$PSScriptRoot/../..").Path.Replace('\','/')
 $active=@(Get-CimInstance Win32_Process -ErrorAction Stop|Where-Object {$_.Name -match '^(UnrealEditor|Project_J|UnrealBuildTool|dotnet|LiveCoding|MSBuild|ShaderCompileWorker|UnrealInsights|Uba).*'})
@@ -9,12 +10,13 @@ $out="$projectRoot/Saved/Validation/Continuation_20261014/$Name"
 if(Test-Path -LiteralPath $out){throw 'Preserve prior evidence.'}
 New-Item -ItemType Directory -Path $out | Out-Null
 if($Mode -eq 'Cook'){
- $arguments=@("$projectRoot/Project_J.uproject",'-run=Cook','-TargetPlatform=Windows','-Map=/Game/ThirdPerson/Lvl_ThirdPerson+/Engine/Maps/Entry',"-OutputDir=$out/Cooked/[Platform]",'-unattended','-nop4','-NoDDCCleanup','-NoLiveCoding',"-UserDir=$out/User","-ABSLOG=$out/Cook.log",'-UTF8Output')
+ if(!$Maps.Count){throw 'Cook requires explicit nonempty map targets.'}
+ $arguments=@("$projectRoot/Project_J.uproject",'-run=Cook','-TargetPlatform=Windows',"-Map=$($Maps -join '+')","-OutputDir=$out/Cooked/[Platform]",'-unattended','-nop4','-NoDDCCleanup','-NoLiveCoding',"-UserDir=$out/User","-ABSLOG=$out/Cook.log",'-UTF8Output')
  $arguments|ConvertTo-Json|Set-Content "$out/arguments.json" -Encoding utf8
  $process=Start-Process 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe' -ArgumentList (($arguments|ForEach-Object {'"'+$_+'"'}) -join ' ') -WindowStyle Hidden -PassThru
  $nativeHandle=$process.Handle
  $process.WaitForExit()
- [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;output="$out/Cooked";scope='Windows default map + Entry + configured AssetManager/AlwaysCook closure. Prior Saved/Cooked and packages are preserved. Not CookAll unused assets.'}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8
+ [ordered]@{exitCode=$process.ExitCode;hasExited=$process.HasExited;output="$out/Cooked";scope='Windows explicit maps + configured AssetManager/AlwaysCook closure; previous outputs preserved.';maps=$Maps}|ConvertTo-Json|Set-Content "$out/process.json" -Encoding utf8
  if($null -eq $process.ExitCode -or $process.ExitCode -ne 0){throw 'Cook completed with failure; retain first error.'}
 }else{
  $CookDirectory=(Resolve-Path -LiteralPath $CookDirectory).Path

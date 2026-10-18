@@ -78,6 +78,8 @@ public:
 
 private:
 	friend class FProjectJPresentationRecoveryTest;
+	friend class FProjectJAudit3CueDeltaRecoveryTest;
+	friend class AProject_JAuditNetworkController;
 	friend class FProjectJCrowdEffectsTest;
 	friend class FProjectJCueLeaseOwnershipTest;
 	uint64 NextCueLeaseToken = 0;
@@ -93,7 +95,7 @@ private:
 	void ApplyReplicatedState();
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastPlayPresentationCue(FGameplayTag AttackTag, FGameplayTag CueTag, bool bStart, int32 EventOrder, uint32 AttackInstance);
+	void MulticastPlayPresentationCue(FGameplayTag AttackTag, FGameplayTag CueTag, bool bStart, int32 EventOrder, uint32 AttackInstance, const FProject_JReplicatedCombatPresentationState& RecoveryState);
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastEndAttackPresentation(int32 EventOrder);

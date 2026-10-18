@@ -259,7 +259,11 @@ void UProject_JEquipmentManagerComponent::RequestUnequipSlot(EProject_JEquipment
 		return;
 	}
 
-	ServerRequestUnequipSlot(Slot);
+	FProject_JItemInstanceData Item;
+	if (GetEquippedItemInstance(Slot, Item))
+	{
+		RequestEquipmentChange(FGuid::NewGuid(), Item.InstanceId, Slot, true);
+	}
 }
 
 UProject_JEquipmentItemDefinition* UProject_JEquipmentManagerComponent::GetEquippedItemInSlot(EProject_JEquipmentSlot Slot) const
@@ -324,7 +328,12 @@ void UProject_JEquipmentManagerComponent::ResetReplicationDiagnosticDeltaCounter
 
 void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstanceById_Implementation(FGuid InstanceId)
 {
-	const FProject_JEquipmentOperationResult Result = TryEquipItemInstanceById(InstanceId);
+	FProject_JItemInstanceData Item;
+	auto* Inventory = GetOwnerInventoryComponent();
+	const auto* Definition = Inventory && Inventory->FindItemInstance(InstanceId, Item)
+		? Cast<UProject_JEquipmentItemDefinition>(Item.ItemDef) : nullptr;
+	const FProject_JEquipmentOperationResult Result = ExecuteEquipmentRequest(InstanceId,
+		Definition ? Definition->EquipmentSlot : EProject_JEquipmentSlot::None, false);
 	if (!Result.bSucceeded)
 	{
 		UE_LOG(
@@ -340,7 +349,10 @@ void UProject_JEquipmentManagerComponent::ServerRequestEquipItemInstanceById_Imp
 
 void UProject_JEquipmentManagerComponent::ServerRequestUnequipSlot_Implementation(EProject_JEquipmentSlot Slot)
 {
-	UnequipSlot(Slot);
+	// Kept as a reflected compatibility sink. A slot-only packet cannot establish
+	// which instance the sender saw, so it shares admission but fails closed.
+	// RequestUnequipSlot now captures the instance and uses the correlated RPC.
+	ExecuteEquipmentRequest(FGuid(), Slot, true);
 }
 
 bool UProject_JEquipmentManagerComponent::CanCommitEquipItemInstance(const FProject_JItemInstanceData& ItemInstance) const
@@ -518,6 +530,10 @@ FProject_JEquipmentOperationResult UProject_JEquipmentManagerComponent::CommitEq
 	FProject_JEquipmentArrayItem& NewItem = EquipmentArray.Items.Add_GetRef(FProject_JEquipmentArrayItem());
 	NewItem.ItemDef = ItemDef;
 	NewItem.ItemInstance = ItemInstance;
+	// Preserve the committed inventory lock contract in the slot snapshot.
+	// Definition-only prototype equipment owns no inventory lock.
+	NewItem.ItemInstance.bIsLocked = bIncomingItemLocked;
+	NewItem.ItemInstance.bIsEquipped = bIncomingItemLocked;
 	NewItem.Slot = Slot;
 
 	EquipmentArray.MarkItemDirty(NewItem);
@@ -586,9 +602,14 @@ bool UProject_JEquipmentManagerComponent::RemoveEquipmentAt(int32 Index)
 	}
 
 	const FProject_JEquipmentArrayItem RemovedItem = EquipmentArray.Items[Index];
+	if (RemovedItem.ItemInstance.bIsEquipped && !SetInventoryEquipmentLock(RemovedItem.ItemInstance, false))
+	{
+		return false;
+	}
+	// Unlock notifies synchronously; a retired manager cannot continue commit.
+	if (!HasMutationAuthority()) { return false; }
 	EquipmentArray.Items.RemoveAt(Index);
 	EquipmentArray.MarkArrayDirty();
-	SetInventoryEquipmentLock(RemovedItem.ItemInstance, false);
 	BroadcastEquipmentUnequipped(RemovedItem);
 	return true;
 }

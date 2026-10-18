@@ -201,13 +201,15 @@ void UProject_JLocomotionAnimStateComponent::OnCachedAbilitySystemChanged()
 void UProject_JLocomotionAnimStateComponent::ReconcileMovementGameplayTag(
     const FGameplayTag& Tag, TWeakObjectPtr<UAbilitySystemComponent>& Lease, const bool& bRequested)
 {
-    if (Lease.Get() != GetCachedAbilitySystemComponent() || !bRequested || bMovementTagOwnershipEnding)
+    UAbilitySystemComponent* DesiredASC = GetCachedAbilitySystemComponent();
+    if (DesiredASC && DesiredASC->GetAvatarActor() != GetPlayerOwner()) { DesiredASC = nullptr; }
+    if (Lease.Get() != DesiredASC || !bRequested || bMovementTagOwnershipEnding)
     { ReleaseMovementGameplayTag(Tag, Lease); }
     // Release delegates can rebind the ASC, change demand, or end this owner.
     // Read live demand and cache again; never overwrite a nested acquired lease.
     if (bMovementTagOwnershipEnding || !bRequested || Lease.IsValid()) { return; }
     UAbilitySystemComponent* ASC = GetCachedAbilitySystemComponent();
-    if (!IsValid(ASC)) { return; }
+    if (!IsValid(ASC) || ASC->GetAvatarActor() != GetPlayerOwner()) { return; }
     Lease = ASC; // Publish before the synchronous gameplay-tag callbacks.
     if (auto* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC)) { ProjectJASC->AddProjectJLooseGameplayTag(Tag); }
     else { ASC->AddLooseGameplayTag(Tag); }

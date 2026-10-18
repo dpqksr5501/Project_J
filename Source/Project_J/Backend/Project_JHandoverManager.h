@@ -167,6 +167,7 @@ public:
 	FProject_JHandoverStateChanged OnHandoverStateChanged;
 
 private:
+	friend class FProjectJAudit3HandoverAgeTest;
 	friend class FProjectJHandoverConfigurationTest;
 	bool HasValidTimingConfiguration() const;
 	bool Tick(float DeltaSeconds);
@@ -213,7 +214,7 @@ private:
 	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "1"))
 	int32 MaxApplyReceipts = 4096;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "0.0", Units = "s"))
+	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "0.01", Units = "s"))
 	float MaxEnvelopeAgeSeconds = 30.0f;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Handover", meta = (ClampMin = "0.05", Units = "s"))

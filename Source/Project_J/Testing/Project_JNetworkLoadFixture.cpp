@@ -1,4 +1,8 @@
 #include "Testing/Project_JNetworkLoadFixture.h"
+#include "Testing/Project_JAuditNetworkFixture.h"
+#include "World/Project_JWorldState.h"
+#include "Engine/AssetManager.h"
+#include "UObject/Package.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Game/Project_JPlayerState.h"
 #include "Components/Project_JInventoryComponent.h"
@@ -121,7 +125,66 @@ void WriteResult(const TCHAR* Name, bool bSuccess, const FString& Reason, int32 
 void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	if (!Enabled()) { return; }
+	const bool bAudit = !UE_BUILD_SHIPPING && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAuditNetwork"));
+    const bool bWorldSmoke = !UE_BUILD_SHIPPING && FParse::Param(FCommandLine::Get(), TEXT("ProjectJAuditWorldSmoke"));
+    if (!Enabled() && !bAudit && !bWorldSmoke) { return; }
+    if (bWorldSmoke)
+    {
+        const double Started = FPlatformTime::Seconds();
+        TWeakObjectPtr<UProject_JNetworkFixtureLifetime> WeakThis(this);
+        Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis, Started](float)
+        {
+            auto* Self = WeakThis.Get();
+            UWorld* World = Self ? Self->GetWorld() : nullptr;
+            const double Elapsed = FPlatformTime::Seconds() - Started;
+            if (Elapsed < 3.0) { return true; }
+            FString ExpectedMap, ExpectedDefinition;
+            int32 ExpectedPlaces = 0;
+            FParse::Value(FCommandLine::Get(), TEXT("ProjectJAuditWorldMap="), ExpectedMap);
+            FParse::Value(FCommandLine::Get(), TEXT("ProjectJAuditWorldDefinition="), ExpectedDefinition);
+            FParse::Value(FCommandLine::Get(), TEXT("ProjectJAuditWorldPlaces="), ExpectedPlaces);
+            if (!World || !World->HasBegunPlay())
+            {
+                if (Elapsed < 120.0) { return true; }
+                WriteResult(TEXT("world-smoke.json"), false, TEXT("No begun game world before deadline"));
+                FPlatformMisc::RequestExitWithStatus(false, 1); return false;
+            }
+            int32 States = 0; UProject_JWorldDefinition* Definition = nullptr;
+            for (TActorIterator<AProject_JWorldState> It(World); It; ++It) { ++States; Definition = It->Definition; }
+            TArray<FPrimaryAssetId> Ids;
+            UAssetManager::Get().GetPrimaryAssetIdList(FPrimaryAssetType(TEXT("Project_JWorldDefinition")), Ids);
+            bool bRegistered = false;
+            for (const auto& Id : Ids)
+            { bRegistered |= UAssetManager::Get().GetPrimaryAssetPath(Id).GetLongPackageName() == ExpectedDefinition; }
+            const FString ActualMap = World->GetOutermost()->GetName();
+            const FString ActualDefinition = Definition ? Definition->GetOutermost()->GetName() : FString();
+            const bool bPassed = !ExpectedMap.IsEmpty() && !ExpectedDefinition.IsEmpty() && ExpectedPlaces > 0 &&
+                ActualMap == ExpectedMap && States == 1 && ActualDefinition == ExpectedDefinition &&
+                Definition && Definition->Places.Num() == ExpectedPlaces && bRegistered && World->GetWorldPartition();
+            WriteResult(TEXT("world-smoke.json"), bPassed, FString::Printf(
+                TEXT("map=%s definition=%s states=%d places=%d registered=%d partition=%d netmode=%d"),
+                *ActualMap, *ActualDefinition, States, Definition ? Definition->Places.Num() : 0,
+                bRegistered, World->GetWorldPartition() != nullptr, int32(World->GetNetMode())));
+            FPlatformMisc::RequestExitWithStatus(false, bPassed ? 0 : 1); return false;
+        }));
+        return;
+    }
+    if (bAudit)
+    {
+        // Possession/Restart and replicated movement can re-enable a character's
+        // movement after BeginPlay. Hold only this explicit static-geometry audit
+        // fixture before each actor tick; production CMC/SSR limits are unchanged.
+        AnimationKinematicsTick = FWorldDelegates::OnWorldPreActorTick.AddLambda([](UWorld* World, ELevelTick, float)
+        {
+            if (!World || !World->IsGameWorld()) { return; }
+            for (TActorIterator<AProject_JAuditNetworkPlayer> It(World); It; ++It)
+            {
+                auto* Movement = It->GetCharacterMovement();
+                Movement->SetComponentTickEnabled(false); Movement->SetMovementMode(MOVE_Flying);
+                Movement->Velocity = FVector::ZeroVector;
+            }
+        });
+    }
 	if (AnimationEnabled())
 	{
 		FloorWorldInit = FWorldDelegates::OnPostWorldInitialization.AddLambda([](UWorld* World, const UWorld::InitializationValues)
@@ -148,11 +211,12 @@ void UProject_JNetworkFixtureLifetime::Initialize(FSubsystemCollectionBase& Coll
 		});
 	}
 	const double Started = FPlatformTime::Seconds();
-	Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Started](float)
+	Timeout = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Started, bAudit](float)
 	{
 		if (FPlatformTime::Seconds() - Started < 180) { return true; }
-		WriteResult(TEXT("timeout.json"), false, TEXT("Bounded fixture lifetime expired, including connection failure"));
-		FPlatformMisc::RequestExit(false); return false;
+		WriteResult(bAudit ? *FString::Printf(TEXT("timeout_%u.json"), FPlatformProcess::GetCurrentProcessId()) : TEXT("timeout.json"), false, TEXT("Bounded fixture lifetime expired, including connection failure"));
+		if (bAudit) { FPlatformMisc::RequestExitWithStatus(false, 1); }
+		else { FPlatformMisc::RequestExit(false); } return false;
 	}));
 }
 void UProject_JNetworkFixtureLifetime::Deinitialize()

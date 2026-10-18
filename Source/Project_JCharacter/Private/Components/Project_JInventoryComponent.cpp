@@ -10,6 +10,7 @@
 #include "GameplayEffect.h"
 #include "GameFramework/GameStateBase.h"
 #include "Engine/World.h"
+#include "UObject/StrongObjectPtr.h"
 
 void FProject_JInventoryArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)
 {
@@ -458,13 +459,30 @@ EProject_JItemUseResult UProject_JInventoryComponent::TryUseItem(FGuid InstanceI
  const float Mana = FMath::Clamp(ASC->GetNumericAttribute(UProject_JAttributeSet::GetMaxManaAttribute()) - ASC->GetNumericAttribute(UProject_JAttributeSet::GetManaAttribute()), 0.f, Def->RestoreMana);
  if (!FMath::IsFinite(Health) || !FMath::IsFinite(Mana) || (Health <= 0 && Mana <= 0)) return EProject_JItemUseResult::NoEffect;
  TGuardValue<bool> Guard(bUsingItem, true);
+ const TStrongObjectPtr<UProject_JInventoryComponent> KeepSelf(this);
+ const TStrongObjectPtr<AActor> KeepOwner(GetOwner());
+ const TStrongObjectPtr<UAbilitySystemComponent> KeepASC(ASC);
+ const TStrongObjectPtr<AActor> OriginalAvatar(ASC->GetAvatarActor());
+ const TStrongObjectPtr<AActor> OriginalASCOwner(ASC->GetOwnerActor());
+ const float CooldownSeconds = Def->CooldownSeconds;
  auto* Effect = NewObject<UGameplayEffect>(); Effect->DurationPolicy = EGameplayEffectDurationType::Instant;
+ const TStrongObjectPtr<UGameplayEffect> KeepEffect(Effect);
  auto Add = [Effect](FGameplayAttribute Attribute, float Amount) { if (Amount > 0) { FGameplayModifierInfo Modifier; Modifier.Attribute = Attribute; Modifier.ModifierOp = EGameplayModOp::Additive; Modifier.ModifierMagnitude = FScalableFloat(Amount); Effect->Modifiers.Add(Modifier); } };
  Add(UProject_JAttributeSet::GetHealthAttribute(), Health); Add(UProject_JAttributeSet::GetManaAttribute(), Mana);
  FGameplayEffectSpec Spec(Effect, ASC->MakeEffectContext(), 1.f);
  if (!CanRemoveItemInstance(InstanceId, 1) || !ConsumeItemStack(InstanceId, 1)) return EProject_JItemUseResult::Unavailable;
+ // Consumption was already published. Do not recreate an observed item when
+ // its recipient retires; report Unavailable without healing or a cooldown.
+ const auto* CurrentInterface = Cast<IAbilitySystemInterface>(GetOwner());
+ if (!HasMutationAuthority() || GetOwner() != KeepOwner.Get() || !CurrentInterface ||
+  CurrentInterface->GetAbilitySystemComponent() != KeepASC.Get() || !IsValid(ASC) || ASC->IsBeingDestroyed() ||
+  ASC->GetAvatarActor() != OriginalAvatar.Get() || ASC->GetOwnerActor() != OriginalASCOwner.Get()) return EProject_JItemUseResult::Unavailable;
+ if ((OriginalAvatar.Get() && (!IsValid(OriginalAvatar.Get()) || OriginalAvatar->IsActorBeingDestroyed())) ||
+  (OriginalASCOwner.Get() && (!IsValid(OriginalASCOwner.Get()) || OriginalASCOwner->IsActorBeingDestroyed()))) return EProject_JItemUseResult::Unavailable;
+ const float CurrentHealth = ASC->GetNumericAttribute(UProject_JAttributeSet::GetHealthAttribute());
+ if (!FMath::IsFinite(CurrentHealth) || CurrentHealth <= 0) return EProject_JItemUseResult::Unavailable;
  // Reserve shared recovery cooldown before broadcasting GAS attribute events (reentrancy).
- NextUseTime = GetWorld()->GetTimeSeconds() + Def->CooldownSeconds;
+ NextUseTime = GetWorld()->GetTimeSeconds() + CooldownSeconds;
  ASC->ApplyGameplayEffectSpecToSelf(Spec); if (CanPublishState()) GetOwner()->ForceNetUpdate();
  return EProject_JItemUseResult::Success;
 }

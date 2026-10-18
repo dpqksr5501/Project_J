@@ -99,14 +99,16 @@ bool FProjectJHandoverConfigurationTest::RunTest(const FString&)
         }
     }
     TStrongObjectPtr<UProject_JHandoverManager> Manager(NewObject<UProject_JHandoverManager>(GI.Get()));
-    Manager->MaxEnvelopeAgeSeconds = 0; // Existing explicit unlimited-age policy is valid.
+    Manager->MaxEnvelopeAgeSeconds = 0; // Audit closure now requires bounded envelope validity.
     Manager->AckTimeoutSeconds = 0.05f; Manager->RetryDelaySeconds = 0; Manager->TerminalRecordTtlSeconds = 1;
     FProject_JHandoverEnvelope Envelope;
     Envelope.TransferId = FGuid::NewGuid(); Envelope.Timestamp = FDateTime::UtcNow() - FTimespan::FromHours(1);
     Envelope.ActorClassPath = TEXT("/Script/Engine.Actor"); Envelope.SourceNodeId = TEXT("Source"); Envelope.TargetNodeId = TEXT("Target");
     Envelope.PayloadChecksum = Manager->CalculatePayloadChecksum(Envelope.Payload);
-    TestEqual(TEXT("Explicit finite zero keeps the existing age-disable contract"),
+    TestNotEqual(TEXT("Zero age cannot publish an envelope without persistent replay protection"),
         Manager->ValidateEnvelope(Envelope), EProject_JHandoverValidationFailure::None);
+    Manager->MaxEnvelopeAgeSeconds = 30;
+    Envelope.Timestamp = FDateTime::UtcNow();
     auto Transport = MakeShared<FProject_JLoopbackHandoverTransport>(); Transport->SetDropResponses(true);
     Manager->SetTransport(Transport);
     TestTrue(TEXT("Valid boundary configuration can publish"), Manager->StartEnvelopeTransfer(Envelope));

@@ -86,6 +86,7 @@ private:
 
 	friend class UProject_JPlayerInputBindingComponent;
 	friend class FProjectJActiveMoveReentryTest;
+	friend class FProjectJAuditTIPBudgetTest;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -375,6 +376,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Input")
 	void HandleSkillInputTagReleased(FGameplayTag InputTag);
+	void HandleSkillInputTagPressedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt);
+	void HandleSkillInputTagReleasedFromSource(FGameplayTag InputTag, const UObject* Source, uint64 Receipt);
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartSprint();
@@ -668,6 +671,6 @@ private:
 	// Server-side acceptance state for client-sampled cosmetic TIP yaw.  These
 	// bounds prevent the RPC from being used as an unrestricted actor-rotation
 	// path while still tolerating ordinary packet jitter and frame hitches.
-	bool bServerTurnInPlaceRotationActive = false;
-	double LastServerTurnInPlaceRotationTime = 0.0;
+	double LastServerTurnInPlaceRotationTime = -1.0;
+	float ServerTurnInPlaceYawBudget = 15.0f;
 };

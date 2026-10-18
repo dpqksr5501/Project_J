@@ -10,23 +10,17 @@
 #include "EdGraph/EdGraph.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraph/EdGraphPin.h"
-#include "EdGraph/EdGraphSchema.h"
 #include "AnimGraphNode_Base.h"
 #include "K2Node_CallFunction.h"
 #include "UObject/UnrealType.h"
-#include "Kismet2/BlueprintEditorUtils.h"
-#include "Kismet2/KismetEditorUtilities.h"
-#include "Kismet2/CompilerResultsLog.h"
 #include "PoseSearch/PoseSearchDatabase.h"
 #include "PoseSearch/PoseSearchSchema.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
-#include "Misc/PackageName.h"
 #include "HAL/FileManager.h"
 #include "UObject/Package.h"
-#include "UObject/SavePackage.h"
 #include "UObject/UObjectIterator.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNaturalnessActiveGraphAudit, "ProjectJ.Animation.Naturalness.ActiveGraphAudit",
@@ -135,63 +129,18 @@ bool FProjectJNaturalnessActiveGraphAudit::RunTest(const FString&)
 	return true;
 }
 
-// Explicit one-asset repair. Ordinary test runs never compile or save assets.
+// Retained name/flag for historical command compatibility. The 2026-10-06
+// external BlendStack repair is not a migration for the current unified graph.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJNaturalnessExternalWarpingRepair, "ProjectJ.Authoring.Naturalness.ExternalWarpingRepair",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJNaturalnessExternalWarpingRepair::RunTest(const FString&)
 {
-	if (!FParse::Param(FCommandLine::Get(), TEXT("ProjectJRepairExternalWarping")))
-	{
-		AddInfo(TEXT("Repair skipped: explicit -ProjectJRepairExternalWarping required."));
-		return true;
-	}
-	auto* Blueprint = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Animation_Logic/ABPs/ABP_Humanoid_Master.ABP_Humanoid_Master"));
-	if (!TestNotNull(TEXT("Repair target"), Blueprint) ||
-		!TestFalse(TEXT("Refuse to overwrite an already dirty Master"), Blueprint->GetOutermost()->IsDirty())) return false;
-	TArray<UEdGraph*> Graphs; Blueprint->GetAllGraphs(Graphs);
-	UEdGraphNode* Warping = nullptr;
-	UEdGraphNode* Steering = nullptr;
-	for (auto* Graph : Graphs)
-	{
-		if (!Graph->GetPathName().Contains(TEXT("AnimGraphNode_BlendStack_0.AnimationBlendStackGraph_0"))) continue;
-		for (UEdGraphNode* Node : Graph->Nodes)
-		{
-			if (Node->GetClass()->GetName() == TEXT("AnimGraphNode_OrientationWarping")) Warping = Node;
-			if (Node->GetClass()->GetName() == TEXT("AnimGraphNode_Steering")) Steering = Node;
-		}
-	}
-	if (!TestNotNull(TEXT("External stack OW"), Warping) || !TestNotNull(TEXT("Same player's Steering"), Steering)) return false;
-	auto* Alpha = Warping->FindPin(TEXT("Alpha"));
-	auto* Time = Warping->FindPin(TEXT("CurrentAnimAssetTime"));
-	auto* PlayerTime = Steering->FindPin(TEXT("CurrentAnimAssetTime"));
-	if (!Alpha || !Time || !PlayerTime || Alpha->LinkedTo.Num() != 1 || Time->LinkedTo.Num() != 1 || PlayerTime->LinkedTo.Num() != 1)
-	{
-		AddError(TEXT("Unexpected pin topology; no change made.")); return false;
-	}
-	auto* CurveProduct = Time->LinkedTo[0];
-	auto* ActualTime = PlayerTime->LinkedTo[0];
-	if (Alpha->LinkedTo[0]->GetOwningNode()->GetName() == TEXT("K2Node_PromotableOperator_0") &&
-		Time->LinkedTo[0] == ActualTime)
-	{
-		AddInfo(TEXT("External warp contract already repaired; nothing saved.")); return true;
-	}
-	if (!TestEqual(TEXT("Before: curve product incorrectly feeds time"), CurveProduct->GetOwningNode()->GetName(), FString(TEXT("K2Node_PromotableOperator_0"))) ||
-		!TestEqual(TEXT("Before: Alpha only has native eligibility"), Alpha->LinkedTo[0]->GetOwningNode()->GetName(), FString(TEXT("K2Node_Knot_0"))) ||
-		!TestEqual(TEXT("Actual per-player time source"), ActualTime->GetOwningNode()->GetName(), FString(TEXT("K2Node_Knot_3")))) return false;
-	AddInfo(TEXT("Before: Alpha=native gate; CurrentAnimAssetTime=enable_warping(asset, player time)*native gate; TargetTime=0. After: Alpha=curve*gate; CurrentAnimAssetTime=player time. Only Master will be compiled/saved."));
-	Blueprint->Modify(); Warping->Modify();
-	const UEdGraphSchema* Schema = Warping->GetGraph()->GetSchema();
-	Schema->BreakPinLinks(*Alpha, true);
-	Schema->BreakPinLinks(*Time, true);
-	if (!TestTrue(TEXT("Connect authored curve product to Alpha"), Schema->TryCreateConnection(CurveProduct, Alpha)) ||
-		!TestTrue(TEXT("Connect actual player time to extraction time"), Schema->TryCreateConnection(ActualTime, Time))) return false;
-	FBlueprintEditorUtils::MarkBlueprintAsModified(Blueprint);
-	FCompilerResultsLog Results;
-	FKismetEditorUtilities::CompileBlueprint(Blueprint, EBlueprintCompileOptions::SkipGarbageCollection, &Results);
-	if (!TestEqual(TEXT("Changed Master compiles without errors"), Results.NumErrors, 0)) return false;
-	const FString Filename = FPackageName::LongPackageNameToFilename(Blueprint->GetOutermost()->GetName(), FPackageName::GetAssetPackageExtension());
-	FSavePackageArgs SaveArgs; SaveArgs.TopLevelFlags = RF_Public | RF_Standalone; SaveArgs.SaveFlags = SAVE_NoError;
-	TestTrue(TEXT("Saved only the changed Master"), UPackage::SavePackage(Blueprint->GetOutermost(), Blueprint, *Filename, SaveArgs));
-	return true;
+    if (!FParse::Param(FCommandLine::Get(), TEXT("ProjectJRepairExternalWarping")))
+    {
+        AddInfo(TEXT("Not applicable: historical external-stack repair is retired; no asset loaded or saved."));
+        return true;
+    }
+    AddError(TEXT("Retired external-stack repair cannot modify the current unified locomotion graph. Reuse requires a reviewed migration on an isolated asset copy."));
+    return false;
 }
 #endif

@@ -12,6 +12,7 @@
     [string]$EngineRoot = 'C:/Program Files/Epic Games/UE_5.8'
 )
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/Source-Provenance.ps1"
 if ($CombatInput -and !$Animation) { throw 'CombatInput requires the authored Animation fixture.' }
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path.Replace('\','/')
 Set-Location -LiteralPath $projectRoot
@@ -31,7 +32,8 @@ $snapshot = @($files | Sort-Object -Unique | ForEach-Object {
         [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash}
     }
 })
-[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot} |
+$provenance=Get-ProjectJSourceProvenance -ProjectRoot $projectRoot -RuntimePaths @("$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe")
+[ordered]@{run=$RunName;allRelevant=[bool]$AllRelevant;parallelNet=[bool]$ParallelNet;animation=[bool]$Animation;combatInput=[bool]$CombatInput;packetLag=$PacketLag;packetLoss=$PacketLoss;port=$Port;head=(& git -c core.fsmonitor=false rev-parse HEAD);cpu=(Get-CimInstance Win32_Processor).Name;clientCount=$ClientCount;npcCount=$NPCCount;scenario='Dedicated server plus separate real socket clients and native NPCs, NullRHI. Includes production PlayerState owner-only inventory and equipment FastArrays. Optional authored player animation: Start, Stop, landing, hidden cancellation, coalesced boundaries; simulated proxies, no fake roles. Total driver bytes include fixture control traffic.';sourceFiles=$snapshot;sourceProvenance=$provenance} |
     ConvertTo-Json -Depth 5 | Set-Content "$runRoot/manifest.json" -Encoding utf8
 $exe = "$EngineRoot/Engine/Binaries/Win64/UnrealEditor-Cmd.exe"
 $common = @("$projectRoot/Project_J.uproject",'-game','-unattended','-nop4','-nosplash','-NullRHI','-nosound','-NoLiveCoding','-NoDDCCleanup','-SaveToUserDir','-ProjectJNetworkFixture',"-ProjectJFixtureClients=$ClientCount","-ProjectJFixtureNPCs=$NPCCount",'-statnamedevents','-trace=cpu,frame,bookmark,region,counters,net','-NetTrace=1','-ExecCmds=t.MaxFPS 30')
