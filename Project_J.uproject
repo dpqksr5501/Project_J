@@ -51,6 +51,14 @@
 	],
 	"Plugins": [
 		{
+			"Name": "Volumetrics",
+			"Enabled": true
+		},
+		{
+			"Name": "Water",
+			"Enabled": true
+		},
+		{
 			"Name": "PCG",
 			"Enabled": true
 		},

@@ -4,6 +4,8 @@
 
 레벨 디자이너는 [제작 인계 가이드](LEVEL_DESIGNER_GUIDE.md)를 먼저 읽는다. 맵 선택, C++와 저작의 경계, 보존 ID·좌표, 편집 순서, 알려진 문제와 다음 제작 방향을 설명한다.
 
+2026-10-19 환경 라이브러리: 세 원본의 제작 자산7,556개를 분류해 신규5,282개를 반입하고2,274개는 재사용했다. `/Game/Map_Resource`와 공유 컬렉션 `Env_All`에서 찾는다.543개 변형,54개 제작용 프리팹 원본 레벨,12개 구형 PCG의 호환성 보류와49개 범위 밖 보존 자료는 가이드·인수인계를 따른다. GameAnimationSample/GASP는 제외했고 이번 작업에서 월드 아트·높이·StableID·C++를 바꾸지 않았다. 재점검에서 환경 조립·구름 자산 8개를 보완하고 빈 충돌체와 Nanite 식생 설정 경고를 해결했다. 최종 자산/참조·대상 재로드 검사는 오류 0·경고 0이며, 전체 셰이더·PIE·성능 합격을 뜻하지 않는다.
+
 재개 전 [최신 인수인계](WORLD_HANDOFF_2026-10-18.md)를 먼저 읽는다. 이전 WorldQuality 진단·제작 기록과 WorldGen/WORK_CONTINUATION은 커밋 전 정리하면서 이 문서에 통합했다. 과거 실행 예시를 새 제작 지시로 사용하지 않는다.
 
 - 목표: [v5 비주얼 복구 지시서](Project_J_World_Visual_Quality_Recovery_Codex_v5.md), [v4 공간·확장 기획](Project_J_8x8km_WorldGen_Completion_Expansion_v4.md), [목표 월드맵](초반%20지역%208×8km%20판타지%20월드맵.png). 기존 [v3 기획](MMORPG_8x8km_Starter_Lv1-30_Codex_Prompt_v3.md)과 레퍼런스도 보존한다.
