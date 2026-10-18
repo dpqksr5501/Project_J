@@ -1,0 +1,141 @@
+<div id="pj-world-overview">
+  <style>
+    #pj-world-overview { color:var(--foreground); }
+    #pj-world-overview h3 { margin:0 0 6px; padding-right:90px; }
+    #pj-world-overview .pj-sub { margin:0 0 12px; }
+    #pj-world-overview .pj-world-map { display:block; width:100%; }
+    #pj-world-overview .pj-map-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin:12px 0; }
+    #pj-world-overview .pj-map-legend span { display:inline-flex; gap:6px; align-items:center; }
+    #pj-world-overview .pj-swatch { display:inline-block; width:20px; height:3px; }
+    #pj-world-overview .pj-square { display:inline-block; width:10px; height:10px; background:var(--foreground); }
+    #pj-world-overview .pj-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--foreground); }
+    #pj-world-overview .pj-description { min-height:3em; margin:10px 0 0; }
+    #pj-world-overview svg text { fill:var(--foreground); font-size:12px; font-weight:400; }
+    #pj-world-overview svg .pj-label { paint-order:stroke; stroke:var(--background); stroke-width:4px; stroke-linejoin:round; }
+    #pj-world-overview svg .pj-city-label { font-weight:500; }
+    #pj-world-overview svg .pj-minor { fill:var(--muted-foreground); }
+  </style>
+  <h3>대도시를 중심으로 이어지는 월드</h3>
+  <p class="text-small pj-sub">위에서 본 대륙 일부 · 권역마다 대도시 1곳 · 지명·경계·거리·면적 가안</p>
+  <svg class="pj-world-map" role="img" aria-label="북부 고원권, 서부 삼림권, 동부 구릉권, 첫 해안권에 대도시가 하나씩 있다. 도시 주변 작은 마을과 던전, 필드 보스가 배치된다. 도시들은 넓은 계곡과 평야의 간선도로 및 우회로로 연결되고 강은 북부에서 중앙 호수를 지나 남쪽 바다로 흐른다. 산은 일부 구간에 모여 있으며 권역 전체를 둘러싸지 않는다."></svg>
+  <div class="pj-map-legend text-small">
+    <span><i class="pj-square"></i>대도시</span>
+    <span><i class="pj-dot"></i>작은 마을</span>
+    <span><i class="pj-swatch" style="background:var(--viz-series-3)"></i>간선·연결 도로</span>
+    <span><i class="pj-swatch" style="background:repeating-linear-gradient(90deg,var(--viz-series-3) 0 5px,transparent 5px 9px)"></i>우회로</span>
+    <span><i class="pj-swatch" style="background:var(--viz-series-1)"></i>강·호수·바다</span>
+    <span>◇ 던전 / ◎ 보스</span>
+    <span>비행: 야외 전역 자유</span>
+  </div>
+  <div class="viz-controls">
+    <label class="form-label" for="pj-world-region">권역</label>
+    <select id="pj-world-region" class="form-select" aria-describedby="pj-world-description">
+      <option value="coast">첫 해안·강 유역권</option>
+      <option value="west">서부 삼림권</option>
+      <option value="north">북부 고원권</option>
+      <option value="east">동부 구릉권</option>
+    </select>
+  </div>
+  <p class="text-small pj-description" id="pj-world-description" aria-live="polite"></p>
+  <script>
+  (() => {
+    const root=document.getElementById('pj-world-overview');
+    const svg=root.querySelector('.pj-world-map');
+    const select=root.querySelector('#pj-world-region');
+    const description=root.querySelector('#pj-world-description');
+    const ns='http://www.w3.org/2000/svg';
+    const regions=[
+      {id:'coast',x:490,y:660,label:'해안권 · 강변 대도시',short:'해안권 대도시',description:'첫 제작 권역 · 강변 대도시 + 하류 항구 마을 + 평야·숲·유적·보스. 초기 제작 영역 약 8 × 8km 가안.'},
+      {id:'west',x:220,y:385,label:'삼림권 · 숲의 대도시',short:'삼림권 대도시',description:'삼림 대도시 + 숲 마을·강 지류·유적. 완만한 구릉과 외곽 길로 해안권·고원권에 연결.'},
+      {id:'north',x:520,y:170,label:'고원권 · 북부 대도시',short:'고원권 대도시',description:'고원 대도시 + 광산 마을·고산 필드·던전. 넓은 중앙 계곡과 동서 연결로 육로·비행 왕복.'},
+      {id:'east',x:815,y:410,label:'구릉권 · 동부 대도시',short:'구릉권 대도시',description:'구릉 대도시 + 농촌·고원 필드·보스. 평야와 강변 연결, 북부 고원과 첫 해안권으로 여행.'}
+    ];
+    let selected='coast';
+    function applyState(s){const id=s&&s.modelContent&&s.modelContent.region;if(regions.some(r=>r.id===id))selected=id;}
+    applyState(window.openai&&window.openai.widgetState);
+    function add(parent,name,attrs,text){const e=document.createElementNS(ns,name);Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,String(v)));if(text!==undefined)e.textContent=text;parent.appendChild(e);return e;}
+    function draw(){
+      const w=Math.max(280,root.clientWidth),pad=8,s=(w-pad*2)/1000,h=905*s+24,small=w<520;
+      svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.style.height=h+'px';svg.replaceChildren();
+      const ground=add(svg,'g',{transform:`translate(${pad},10) scale(${s})`});
+      function path(d,attrs){return add(ground,'path',{d,...attrs});}
+      function label(x,y,text,attrs={}){return add(svg,'text',{x:pad+x*s,y:10+y*s,class:'pj-label','text-anchor':'middle',...attrs},text);}
+      add(ground,'rect',{x:0,y:0,width:1000,height:905,fill:'var(--viz-series-1)','fill-opacity':'.10'});
+      path('M0 0H1000V720Q940 775 880 745Q810 780 770 825Q710 845 650 805Q610 780 570 810Q510 835 450 800Q410 775 365 808Q300 840 245 785Q180 760 135 780Q55 745 0 775Z',{fill:'var(--muted)'});
+      path('M0 250Q130 185 295 260Q390 340 340 475Q250 540 90 495L0 545Z',{fill:'var(--viz-series-2)','fill-opacity':'.11'});
+      path('M650 300Q800 255 1000 340V675Q880 625 780 650Q690 575 650 480Z',{fill:'var(--viz-series-3)','fill-opacity':'.055'});
+      path('M245 590Q380 520 570 550Q680 635 720 745L650 805Q525 840 450 800Q350 780 245 785Z',{fill:'var(--viz-series-2)','fill-opacity':'.055'});
+      // Local mountain masses leave broad lowland corridors between regions.
+      const mountains=[{x:165,y:105,rx:135,ry:105},{x:805,y:115,rx:110,ry:80},{x:655,y:535,rx:76,ry:80}];
+      mountains.forEach(m=>{
+        add(ground,'ellipse',{cx:m.x,cy:m.y,rx:m.rx,ry:m.ry,fill:'var(--foreground)','fill-opacity':'.07'});
+        [0.78,0.54,0.3].forEach(k=>add(ground,'ellipse',{cx:m.x+8*(1-k),cy:m.y-8*(1-k),rx:m.rx*k,ry:m.ry*k,fill:'none',stroke:'var(--foreground)','stroke-opacity':'.12','stroke-width':1.5}));
+      });
+      // Tree clusters encode wooded ground, not impassable region boundaries.
+      for(let i=0;i<48;i++){
+        const x=35+(i*61)%305,y=258+(i*47)%245;
+        if(Math.hypot(x-220,y-385)<75)continue;
+        add(ground,'circle',{cx:x,cy:y,r:9+(i%4)*3,fill:'var(--viz-series-2)','fill-opacity':'.2'});
+      }
+      for(let i=0;i<17;i++)add(ground,'circle',{cx:355+(i*39)%160,cy:502+(i*29)%82,r:8+(i%3)*3,fill:'var(--viz-series-2)','fill-opacity':'.15'});
+      const river={fill:'none',stroke:'var(--viz-series-1)','stroke-linecap':'round','stroke-linejoin':'round'};
+      path('M750 38Q700 100 655 160Q620 215 645 260',{...river,'stroke-width':7});
+      path('M608 252Q656 238 679 273Q701 310 663 334Q620 357 593 318Q580 287 608 252Z',{fill:'var(--viz-series-1)','fill-opacity':'.3'});
+      path('M635 332Q600 383 577 428Q550 468 564 516Q580 562 556 600Q543 645 575 690Q604 730 612 776Q618 811 654 841',{...river,'stroke-width':10});
+      path('M302 350Q368 378 399 432Q448 490 564 516',{...river,'stroke-width':5});
+      path('M923 530Q830 516 772 558Q683 620 556 600',{...river,'stroke-width':5});
+      // Multiple city connections and outer detours form travel loops.
+      const road={fill:'none',stroke:'var(--viz-series-3)','stroke-width':5.5,'stroke-linecap':'round','stroke-linejoin':'round'};
+      path('M490 660Q445 558 477 475Q510 402 461 325Q458 251 520 170',road);
+      path('M490 660Q355 640 289 555Q216 496 220 385',road);
+      path('M220 385Q284 294 348 261Q424 217 520 170',road);
+      path('M520 170Q665 175 738 281Q787 328 815 410',road);
+      path('M815 410Q850 519 785 601Q663 716 490 660',road);
+      path('M220 385Q365 394 477 423Q640 395 815 410',road);
+      path('M490 660Q554 724 640 795',road);
+      path('M220 385Q105 514 189 666Q244 749 353 758Q492 756 640 795',{...road,'stroke-width':3,'stroke-dasharray':'11 9'});
+      path('M815 410Q948 471 922 651Q841 765 640 795',{...road,'stroke-width':3,'stroke-dasharray':'11 9'});
+      // Bridges share the road alignment at river crossings.
+      path('M550 410L606 407M556 699L600 715',{fill:'none',stroke:'var(--foreground)','stroke-width':9,'stroke-opacity':'.55'});
+      const villages=[{x:355,y:260,name:'광산 마을',dy:-19},{x:335,y:474,name:'숲 마을',dy:28},{x:900,y:580,name:'농촌 마을',dy:28},{x:333,y:690,name:'강변 마을',dy:28},{x:640,y:795,name:'항구 마을',dy:29}];
+      villages.forEach(v=>{
+        add(ground,'circle',{cx:v.x,cy:v.y,r:7,fill:'var(--foreground)'});
+        if(!small||v.name==='항구 마을')label(v.x,v.y+v.dy/s*.65,v.name,{'font-size':12});
+      });
+      const sites=[{x:77,y:376,type:'dungeon',name:'숲 유적'},{x:736,y:215,type:'dungeon',name:'고산 던전'},{x:886,y:292,type:'boss',name:'고원 보스'},{x:720,y:700,type:'boss',name:'필드 보스'},{x:720,y:540,type:'dungeon',name:'유적·지하'}];
+      sites.forEach(p=>{
+        if(p.type==='dungeon')add(ground,'rect',{x:p.x-8,y:p.y-8,width:16,height:16,transform:`rotate(45 ${p.x} ${p.y})`,fill:'none',stroke:'var(--viz-series-4)','stroke-width':3});
+        else {add(ground,'circle',{cx:p.x,cy:p.y,r:12,fill:'none',stroke:'var(--viz-series-4)','stroke-width':2.5});add(ground,'circle',{cx:p.x,cy:p.y,r:5,fill:'var(--viz-series-4)'});}
+        if(!small)label(p.x,p.y+32,p.name);
+      });
+      regions.forEach(r=>{
+        const active=r.id===selected;
+        add(ground,'ellipse',{cx:r.x,cy:r.y,rx:68,ry:48,fill:active?'var(--primary)':'var(--foreground)','fill-opacity':active?'.12':'.045'});
+        add(ground,'rect',{x:r.x-42,y:r.y-27,width:84,height:54,rx:7,fill:'var(--background)',stroke:'var(--foreground)','stroke-width':active?3:1.5,'stroke-opacity':'.7'});
+        for(let i=0;i<3;i++)for(let j=0;j<2;j++)add(ground,'rect',{x:r.x-31+i*23,y:r.y-18+j*22,width:16,height:14,fill:active?'var(--primary)':'var(--foreground)','fill-opacity':active?'.85':'.55'});
+        const cx=pad+r.x*s,cy=10+r.y*s;
+        add(svg,'text',{x:cx,y:cy+Math.max(30,58*s),'text-anchor':'middle',class:'pj-label pj-city-label'},small?r.short:r.label);
+      });
+      label(505,370,small?'넓은 계곡':'도시를 잇는 넓은 계곡');
+      if(!small){
+        label(160,105,'고산·수원');
+        label(805,115,'분리된 산지');
+        label(650,535,'유적 산지');
+        label(640,300,'중앙 호수');
+        label(805,635,'완만한 구릉·평야');
+        label(126,624,'해안 우회로');
+        label(425,31,'다음 지역으로 ↑',{class:'pj-minor'});
+        label(55,580,'← 확장',{class:'pj-minor'});
+        label(934,705,'확장 →',{class:'pj-minor'});
+      }
+      label(small?330:360,small?930:866,small?'바다 · 섬·다른 항구':'바다 · 다른 항구와 섬으로');
+      add(svg,'text',{x:14,y:27,class:'pj-label'},'N ↑');
+      select.value=selected;
+      description.textContent=regions.find(r=>r.id===selected).description;
+    }
+    select.addEventListener('change',()=>{selected=select.value;draw();if(window.openai&&window.openai.setWidgetState)window.openai.setWidgetState({modelContent:{region:selected},privateContent:null}).catch(()=>{});});
+    window.addEventListener('openai:set_globals',e=>{applyState(e.detail&&e.detail.globals&&e.detail.globals.widgetState);draw();});
+    new ResizeObserver(draw).observe(root);draw();
+  })();
+  </script>
+</div>

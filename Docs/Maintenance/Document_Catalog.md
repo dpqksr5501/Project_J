@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3234개, Markdown 234개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3306개, Markdown 255개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -146,6 +146,8 @@
 | [Project J 콘텐츠 확장 구현 가이드](../Gameplay/Authoring/ContentExpansionGuide.md) | 통합 문서 안내 | Gameplay/Authoring/ContentExpansionGuide.md |
 | [Project J 데이터 에셋 빠른 참조](../Gameplay/Authoring/DataAssetQuickReference.md) | 통합 문서 안내 | Gameplay/Authoring/DataAssetQuickReference.md |
 | [모듈러 캐릭터 및 의상 파이프라인 가이드 (Modular Character & Equipment Guide)](../Gameplay/Authoring/ModularCharacterEquipmentGuide.md) | 제작 가이드 | Gameplay/Authoring/ModularCharacterEquipmentGuide.md |
+| [오픈 월드 레벨 설계와 확장 계획](../Gameplay/Planning/Open_World_Level_Design.md) | 계획·제안 | Gameplay/Planning/Open_World_Level_Design.md |
+| [오픈 월드 레벨 디자인과 최적화 조사 자료](../Gameplay/Planning/Open_World_Research_References.md) | 계획·제안 | Gameplay/Planning/Open_World_Research_References.md |
 | [게임플레이와 콘텐츠 제작](../Gameplay/README.md) | 목차·문서 관리 | Gameplay/README.md |
 
 ### 플레이어 UI
@@ -342,6 +344,7 @@
 | [Benchmarks/Data](../Benchmarks/Data) | 10 | CSV·JSON·재계산 원본 |
 | [Benchmarks/ExecutionExperiments_2026-09-12](../Benchmarks/ExecutionExperiments_2026-09-12) | 1 | CSV·JSON·재계산 원본 |
 | [Benchmarks/ExecutionExperiments_2026-09-12/Data](../Benchmarks/ExecutionExperiments_2026-09-12/Data) | 18 | CSV·JSON·재계산 원본 |
+| [Gameplay/Planning/Assets](../Gameplay/Planning/Assets) | 34 | 문서 이동·보존 기록 |
 | [Handoffs/MotionMatchingCrowd_2026-10-05](../Handoffs/MotionMatchingCrowd_2026-10-05) | 1 | 문서 이동·보존 기록 |
 | [Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots](../Handoffs/MotionMatchingCrowd_2026-10-05/Screenshots) | 15 | 문서 이동·보존 기록 |
 | [Handoffs/WholeProjectAudit_2026-10-14](../Handoffs/WholeProjectAudit_2026-10-14) | 1 | 문서 이동·보존 기록 |
@@ -945,3 +948,8 @@
 | [Review/Audits/StructuralEvidence_2026-10-13/StructuralCookedCrowd200](../Review/Audits/StructuralEvidence_2026-10-13/StructuralCookedCrowd200) | 6 | 문서 이동·보존 기록 |
 | [Review/Audits/StructuralEvidence_2026-10-13/StructuralFinalCombat](../Review/Audits/StructuralEvidence_2026-10-13/StructuralFinalCombat) | 5 | 문서 이동·보존 기록 |
 | [Review/Audits/StructuralEvidence_2026-10-13/StructuralFinalCrowd200](../Review/Audits/StructuralEvidence_2026-10-13/StructuralFinalCrowd200) | 6 | 문서 이동·보존 기록 |
+| [World](../World) | 2 | 문서 이동·보존 기록 |
+| [World/Build](../World/Build) | 1 | 문서 이동·보존 기록 |
+| [World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3](../World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3) | 1 | 문서 이동·보존 기록 |
+| [World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/References](../World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/References) | 12 | 문서 이동·보존 기록 |
+| [WorldGen](../WorldGen) | 1 | 문서 이동·보존 기록 |

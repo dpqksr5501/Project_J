@@ -22,6 +22,8 @@
 | 200명 시각 예산·기존 병렬 구조·성능 비교 | [2026-10-12 구현과 검증](Animation/Planning/Crowd_Visual_Presentation_Budget_2026-10-12.md) |
 | 공격·콤보·전투 VFX 제작 | [전투](Combat/README.md) |
 | 직업·스킬·장비·탈것 확장 | [게임플레이](Gameplay/README.md) |
+| 시작 권역 8×8km 재제작·MCP 에셋 조사 | [현재 월드 제작](World/README.md) → [최신 중단·인수인계](World/WORLD_HANDOFF_2026-10-18.md) |
+| 자유 비행 오픈 월드·강·마을·이전 A 지역 이력 | [레벨 설계와 확장 계획](Gameplay/Planning/Open_World_Level_Design.md) → [조사 자료](Gameplay/Planning/Open_World_Research_References.md) |
 | HUD·가방·장비 조작과 UI 아트 교체 | [UI](UI/README.md) |
 | 런타임 책임과 MMO 확장 기반 확인 | [아키텍처](Architecture/README.md) |
 | 현재 소스·BP·DA 정리와 유지 이유 | [검토 목차의 현재 통합 기준](Review/README.md#현재-통합-기준과-결정) |

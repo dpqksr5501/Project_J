@@ -1,0 +1,34 @@
+{
+  "id": "LakeShore.Review.v1",
+  "stage": "REVIEW_NOT_PRODUCTION",
+  "original_height_source": "HM_StarterRegion.r16",
+  "original_height_sha256": "bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8",
+  "derived_height_sha256": "cee34af408e6dd5755293c33a00d6b3bbe9a26c5bf590c609ec633c529dd5f7e",
+  "delta_source": "LakeShoreDelta.png",
+  "delta_sha256": "54c0084603a107c0bf38f8d32a24024ad7ccdee1d853b03763150b7f4999ff2e",
+  "delta_encoding": "RG16 unsigned, 32768 neutral, additive to original layer",
+  "edit_layer_name": "ProjectJ_LakeShore",
+  "texture_asset": "/Game/World/Starter/Generated/Review/T_LakeShoreDelta",
+  "water_geometry": "LakeOutfall.geometry.json",
+  "water_geometry_sha256": "e5c373fa0c11af5314921612651e633a42e27612c4ac291afee0a090938048b0",
+  "water_mesh_asset": "/Game/World/Starter/Generated/Review/SM_LakeOutfall",
+  "water_material": "/Game/World/Starter/Materials/M_StarterWater",
+  "validation": {
+    "shore_endpoints": 9928,
+    "maximum_shore_terrain_error_m": 1.2499242529884214e-08,
+    "triangle_centers": 50047,
+    "minimum_water_over_terrain_m": 0.0019450978124666563,
+    "original_base_lowered_vertices": 0,
+    "changed_vertices": 32396,
+    "maximum_raise_m": 12.5,
+    "global_peak_preserved": true
+  },
+  "pending": [
+    "Native transfer roundtrip",
+    "Native candidate layer/water visual and support review",
+    "Local foliage adjustment before production adoption",
+    "Inlet and downstream water mesh joins",
+    "Natural banks, water shading and final art"
+  ],
+  "production_manifest_modified": false
+}

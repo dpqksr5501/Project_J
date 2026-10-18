@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "settle_seconds": 4,
+  "mode": "Editor perspective / unchanged live quality recorded by native sensor",
+  "cameras": {
+    "panorama": {
+      "location": {
+        "x": 0,
+        "y": -103200,
+        "z": 29787.5
+      },
+      "rotation": {
+        "pitch": 1,
+        "yaw": 90,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "meadow_eye": {
+      "location": {
+        "x": -58200,
+        "y": -55200,
+        "z": 3945.0000000000005
+      },
+      "rotation": {
+        "pitch": 1.4421137558468842,
+        "yaw": 57.9946167919165,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "meadow_mid": {
+      "location": {
+        "x": -63200,
+        "y": -61200,
+        "z": 5856.25
+      },
+      "rotation": {
+        "pitch": -1.5802866943000855,
+        "yaw": 64.88516511385544,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "montane": {
+      "location": {
+        "x": 168688.06225319585,
+        "y": 201468.9641636147,
+        "z": 75787.14159540042
+      },
+      "rotation": {
+        "pitch": -4.787225868685119,
+        "yaw": 42.87890360333855,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "lake_valley": {
+      "location": {
+        "x": -163200,
+        "y": 6800,
+        "z": 28600.0
+      },
+      "rotation": {
+        "pitch": -3.714792637205062,
+        "yaw": 128.04704253182607,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "user_far": {
+      "location": {
+        "x": -186390.44907445012,
+        "y": 30538.10761728668,
+        "z": 63835.10697402171
+      },
+      "rotation": {
+        "pitch": -1.199999719858166,
+        "yaw": 56.199992224573734,
+        "roll": 6.7601613125063045e-15
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    }
+  },
+  "visual_acceptance": {
+    "tree_horizon_continuity": "No abrupt blank forest band caused by culling at the captured range",
+    "grass_midfield_transition": "Ground keeps a vegetation-covered appearance beyond individual blade range",
+    "terrain_surface": "Organic variation without large repeated stamped shapes or distracting tiling",
+    "rock_integration": "No pasted rock boxes, floating cliff slabs, or artificial shadow cutouts",
+    "preservation": "Original source height, stable 20 places and gameplay contracts retained"
+  }
+}

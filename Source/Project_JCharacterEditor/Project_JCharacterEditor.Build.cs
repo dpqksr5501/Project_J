@@ -16,6 +16,8 @@ public class Project_JCharacterEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"DataValidation",
+			"Landscape",
+			"Foliage", // LandscapeEdit's public editing interface includes foliage snapping types.
 			"Project_JAnimationNodes",
 			"Json",
 			"AssetRegistry",

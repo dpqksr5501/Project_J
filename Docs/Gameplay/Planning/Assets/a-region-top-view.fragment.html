@@ -1,0 +1,132 @@
+<div id="pj-a-region">
+  <style>
+    #pj-a-region { color:var(--foreground); }
+    #pj-a-region h3 { margin:0 0 6px; padding-right:90px; }
+    #pj-a-region .a-caption { margin:0 0 12px; }
+    #pj-a-region .a-map { display:block; width:100%; }
+    #pj-a-region .a-legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin:12px 0 6px; }
+    #pj-a-region .a-legend span { display:inline-flex; align-items:center; gap:6px; }
+    #pj-a-region .a-key { display:inline-block; width:20px; height:3px; }
+    #pj-a-region .a-note { margin:8px 0 0; }
+    #pj-a-region svg text { fill:var(--foreground); font-size:12px; font-weight:400; }
+    #pj-a-region svg .a-label { paint-order:stroke; stroke:var(--background); stroke-width:4px; stroke-linejoin:round; }
+    #pj-a-region svg .a-strong { font-weight:500; }
+    #pj-a-region svg .a-muted { fill:var(--muted-foreground); }
+  </style>
+  <h3>A 지역 · 중앙 대도시와 주변 마을</h3>
+  <p class="a-caption text-small">초반 해안·강 유역 / 약 8 × 8km 제작 가안 · 지명·고도·거리 비례 미확정</p>
+  <svg class="a-map" role="img" aria-label="A 초반 지역을 위에서 본 배치도. 중앙 강변 평야에 큰 도시가 있고 북쪽 호숫가 마을, 북동쪽 광산 마을과 고산 전망대, 서쪽 숲 마을, 남동쪽 농촌, 남서쪽 어촌, 남쪽 항구가 있다. 강은 고산 수원에서 호수·폭포를 지나 중앙 도시 옆과 농지를 거쳐 바다로 흐른다. 여러 도로와 우회로, 지하 던전, 필드 보스, 다음 지역으로 이어지는 열린 계곡을 표시한다."></svg>
+  <div class="a-legend text-small">
+    <span>▦ 대도시 / ● 작은 마을</span>
+    <span><i class="a-key" style="background:var(--blue)"></i>강·호수·바다</span>
+    <span><i class="a-key" style="background:var(--orange)"></i>주요 길</span>
+    <span><i class="a-key" style="background:repeating-linear-gradient(90deg,var(--orange) 0 5px,transparent 5px 9px)"></i>우회로</span>
+    <span><i class="a-key" style="background:repeating-linear-gradient(90deg,var(--purple) 0 3px,transparent 3px 7px)"></i>지하 연결</span>
+    <span>◇ 던전 / ◎ 보스 · 야외 자유 비행</span>
+  </div>
+  <p class="a-note text-small">고도는 해수면 0m 기준 가안 · 후속 지역은 각 지형·배경에 맞는 정주 구조로 확장</p>
+  <script>
+  (()=>{
+    const root=document.getElementById('pj-a-region');
+    const svg=root.querySelector('.a-map');
+    const ns='http://www.w3.org/2000/svg';
+    function make(parent,tag,attrs,text){const e=document.createElementNS(ns,tag);Object.entries(attrs||{}).forEach(([k,v])=>e.setAttribute(k,String(v)));if(text!==undefined)e.textContent=text;parent.appendChild(e);return e;}
+    function draw(){
+      const w=Math.max(280,root.clientWidth),pad=9,s=(w-2*pad)/1000,small=w<560,h=955*s+20;
+      svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.style.height=h+'px';svg.replaceChildren();
+      const g=make(svg,'g',{transform:`translate(${pad},10) scale(${s})`});
+      function path(d,attrs){return make(g,'path',{d,...attrs});}
+      function label(x,y,title,subtitle,opts={}){
+        const t=make(svg,'text',{x:pad+x*s,y:10+y*s,class:'a-label'+(opts.strong?' a-strong':''),'text-anchor':opts.anchor||'middle'},title);
+        if(subtitle&&!small)make(t,'tspan',{x:pad+x*s,dy:16},subtitle);
+        return t;
+      }
+      make(g,'rect',{x:0,y:0,width:1000,height:955,fill:'var(--blue)','fill-opacity':'.08'});
+      path('M0 0H1000V770Q945 750 900 790Q848 830 780 815Q720 825 665 860Q600 890 535 847Q480 823 430 853Q365 880 300 830Q248 800 175 822Q85 815 0 790Z',{fill:'var(--muted)'});
+      // Broad plains and individual mountain masses keep regional access open.
+      path('M300 240Q450 170 580 280Q660 380 594 540Q680 680 580 770Q425 790 305 690Q230 562 307 425Z',{fill:'var(--green)','fill-opacity':'.055'});
+      path('M38 255Q170 210 278 270Q343 345 292 458Q210 550 70 490L0 412Z',{fill:'var(--green)','fill-opacity':'.12'});
+      path('M598 605Q710 570 810 641Q853 715 774 780Q666 800 570 730Z',{fill:'var(--yellow)','fill-opacity':'.13'});
+      const masses=[{x:820,y:125,rx:154,ry:106},{x:850,y:469,rx:112,ry:103},{x:143,y:586,rx:110,ry:80}];
+      masses.forEach(m=>{
+        make(g,'ellipse',{cx:m.x,cy:m.y,rx:m.rx,ry:m.ry,fill:'var(--foreground)','fill-opacity':'.065'});
+        [0.8,0.6,0.4,0.2].forEach(k=>make(g,'ellipse',{cx:m.x+12*(1-k),cy:m.y-10*(1-k),rx:m.rx*k,ry:m.ry*k,fill:'none',stroke:'var(--foreground)','stroke-width':1.4,'stroke-opacity':'.14'}));
+      });
+      // Forest clusters and farmland represent distinct land uses.
+      for(let i=0;i<45;i++){
+        const x=55+(i*61)%235,y=272+(i*43)%230;
+        if(Math.hypot(x-215,y-365)<63)continue;
+        make(g,'circle',{cx:x,cy:y,r:8+(i%5)*3,fill:'var(--green)','fill-opacity':'.2'});
+      }
+      for(let i=0;i<3;i++)for(let j=0;j<3;j++)make(g,'rect',{x:603+i*54,y:638+j*35,width:43,height:24,rx:2,fill:'var(--green)','fill-opacity':.09+(i+j)%3*.025,transform:'rotate(12 680 680)'});
+      const water={fill:'none',stroke:'var(--blue)','stroke-linecap':'round','stroke-linejoin':'round'};
+      path('M807 89Q729 90 698 145Q674 182 635 192',{...water,'stroke-width':6});
+      path('M575 178Q644 158 680 204Q713 250 663 281Q614 307 565 273Q531 231 575 178Z',{fill:'var(--blue)','fill-opacity':'.3'});
+      path('M616 286Q594 335 578 356Q545 385 552 430Q565 475 551 516Q532 556 565 596Q610 645 573 693Q541 730 548 784Q559 824 566 858Q576 895 618 913',{...water,'stroke-width':10});
+      path('M275 335Q324 357 337 405Q352 451 413 461Q484 469 552 490',{...water,'stroke-width':4.5});
+      path('M942 590Q847 565 769 607Q700 638 588 641',{...water,'stroke-width':4});
+      // Interconnected roads: a city hub plus an outer loop and regional exits.
+      const road={fill:'none',stroke:'var(--orange)','stroke-width':5,'stroke-linecap':'round','stroke-linejoin':'round'};
+      path('M450 499Q419 418 445 346Q477 290 472 220Q466 139 465 0',road);
+      path('M450 499Q320 507 269 446Q220 412 215 365Q155 330 0 350',road);
+      path('M450 499Q595 481 651 408Q711 328 790 270Q851 253 1000 271',road);
+      path('M450 499Q519 553 585 593Q629 625 660 643',road);
+      path('M450 499Q416 618 440 702Q482 756 470 811',road);
+      path('M450 499Q313 586 264 648Q219 693 235 740',road);
+      path('M215 365Q300 274 472 220Q500 115 605 130Q721 150 790 270Q859 351 817 437Q795 529 833 589Q815 644 660 643Q623 755 470 811Q344 844 235 740Q127 588 215 365',{...road,'stroke-width':3,'stroke-dasharray':'12 10'});
+      path('M660 643Q811 685 1000 650',road);
+      path('M790 270Q839 229 820 145',{...road,'stroke-width':2.5});
+      path('M817 437L833 505',{...road,'stroke-width':2.5});
+      // Main river crossings occur on actual travel lines.
+      path('M536 482L578 468M551 576L582 599',{fill:'none',stroke:'var(--foreground)','stroke-width':9,'stroke-opacity':'.55'});
+      // The city's footprint follows the river terrace, with a central plaza.
+      path('M363 441L421 419L493 427L530 460L527 523L486 561L407 567L361 539L345 493Z',{fill:'var(--primary)','fill-opacity':'.13',stroke:'var(--foreground)','stroke-width':1.8,'stroke-opacity':'.55'});
+      const blocks=[[380,450,26,20],[416,439,30,23],[458,446,37,19],[374,480,29,27],[476,478,31,30],[374,521,35,21],[423,530,28,20],[467,524,29,18]];
+      blocks.forEach(([x,y,width,height])=>make(g,'rect',{x,y,width,height,rx:2,fill:'var(--foreground)','fill-opacity':'.48'}));
+      make(g,'rect',{x:424,y:478,width:34,height:32,rx:3,fill:'var(--primary)','fill-opacity':'.8'});
+      const villages=[
+        {x:472,y:220,name:'호숫가 마을',z:'+440m',dx:-50,dy:small?-25:-32},
+        {x:790,y:270,name:'광산 마을',z:'+680m',dx:0,dy:small?35:40},
+        {x:215,y:365,name:'숲 마을',z:'+260m',dx:0,dy:small?34:40},
+        {x:660,y:643,name:'농촌 마을',z:'+90m',dx:0,dy:small?34:40},
+        {x:235,y:740,name:'어촌',z:'+20m',dx:-18,dy:small?35:42},
+        {x:470,y:811,name:'항구 마을',z:'+15m',dx:0,dy:small?34:42}
+      ];
+      villages.forEach(v=>{
+        make(g,'circle',{cx:v.x,cy:v.y,r:8,fill:'var(--foreground)'});
+        [[-14,8],[7,10],[-7,-18]].forEach(([dx,dy])=>make(g,'rect',{x:v.x+dx,y:v.y+dy,width:9,height:7,fill:'var(--foreground)','fill-opacity':'.35'}));
+        const y=v.y+(small?v.dy/s*.6:v.dy);
+        label(v.x+v.dx,y,v.name,v.z);
+      });
+      // Ruins are above a lower underground chamber, with a second exit.
+      const sites=[{x:833,y:505,name:'고대 유적',z:'+520m',type:'dungeon'},{x:867,y:350,name:'광산 던전',z:'+720m',type:'dungeon'},{x:753,y:747,name:'필드 보스',z:'+120m',type:'boss'}];
+      sites.forEach(p=>{
+        if(p.type==='dungeon')make(g,'rect',{x:p.x-10,y:p.y-10,width:20,height:20,transform:`rotate(45 ${p.x} ${p.y})`,fill:'none',stroke:'var(--purple)','stroke-width':3});
+        else{make(g,'circle',{cx:p.x,cy:p.y,r:16,fill:'none',stroke:'var(--purple)','stroke-width':3});make(g,'circle',{cx:p.x,cy:p.y,r:7,fill:'var(--purple)','fill-opacity':'.6'});}
+        if(!small)label(p.x,p.y+34,p.name,p.z);
+      });
+      path('M833 505Q742 513 699 448Q650 386 584 359',{fill:'none',stroke:'var(--purple)','stroke-width':3,'stroke-dasharray':'4 8'});
+      make(g,'ellipse',{cx:704,cy:448,rx:28,ry:15,fill:'var(--purple)','fill-opacity':'.13',stroke:'var(--purple)','stroke-width':1.5,'stroke-dasharray':'4 5'});
+      path('M452 828L441 875M469 832L464 886M485 835L487 878',{fill:'none',stroke:'var(--foreground)','stroke-width':4,'stroke-opacity':'.5'});
+      const cityLabel=label(443,small?475:487,'중앙 대도시',small?null:'+160m · 강변 평야',{strong:true});
+      if(!small){
+        label(820,123,'고산 전망대','+1,150m');
+        label(625,236,'호수','+440m');
+        label(611,344,'폭포·계곡','+300m 전후');
+        label(704,448,'지하 던전','바닥 +240m');
+        label(140,585,'해안 구릉','+350m');
+        label(351,104,'넓은 계곡',null);
+        label(659,84,'수원',null);
+        label(461,31,'북쪽 후속 지역 ↑',null);
+        label(10,319,'← 서쪽 연결',null,{anchor:'start'});
+        label(990,620,'동쪽 후속 지역 →',null,{anchor:'end'});
+        label(729,650,'농지',null);
+        label(935,432,'능선·절벽',null);
+      }
+      label(360,small?945:931,'바다 · 다른 항구·섬으로',null);
+      make(svg,'text',{x:14,y:27,class:'a-label'},'N ↑');
+    }
+    new ResizeObserver(draw).observe(root);draw();
+  })();
+  </script>
+</div>

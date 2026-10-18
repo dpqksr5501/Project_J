@@ -28,6 +28,7 @@
 #include "UI/Project_JPlayerUIComponent.h"
 #include "InputKeyEventArgs.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "World/Project_JWorldStreamingComponent.h"
 
 namespace
 {
@@ -88,6 +89,7 @@ int32 GetBudgetTierIndex(EProject_JAnimBudgetTier Tier)
 
 AProject_JPlayerController::AProject_JPlayerController()
 {
+	WorldStreamingPreparation = CreateDefaultSubobject<UProject_JWorldStreamingComponent>(TEXT("WorldStreamingPreparation"));
 	PlayerUI = CreateDefaultSubobject<UProject_JPlayerUIComponent>(TEXT("PlayerUI"));
 #if WITH_EDITOR
 	EquipmentClientTestComponent = CreateEditorOnlyDefaultSubobject<UProject_JEquipmentClientTestComponent>(TEXT("EquipmentClientTest"), true);

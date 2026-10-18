@@ -1,0 +1,217 @@
+{
+  "schema": 1,
+  "source_library_modified": false,
+  "provider": "MedCastle",
+  "meshes": [
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_Gate",
+      "size_cm": [
+        919.2213134765625,
+        528.25244140625,
+        909.6478351950645
+      ],
+      "origin_cm": [
+        -0.399993896484375,
+        -9.1552734375e-05,
+        454.2355916798115
+      ],
+      "lods": 4,
+      "triangles_lod0": 5232,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_GateMiddle.MI_GateMiddle",
+        "/Game/Map_Resource/MedCastle/Materials/MI_GateUpper.MI_GateUpper",
+        "/Game/Map_Resource/MedCastle/Materials/MI_GateBottom.MI_GateBottom",
+        "/Game/Map_Resource/MedCastle/Materials/MI_GateTop.MI_GateTop"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_CastleGate_B",
+      "size_cm": [
+        530.4882507324219,
+        198.13916015625,
+        321.8494567871094
+      ],
+      "origin_cm": [
+        -0.020050048828125,
+        5.47576904296875,
+        160.5731658935547
+      ],
+      "lods": 4,
+      "triangles_lod0": 2664,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_Middle.MI_Middle",
+        "/Game/Map_Resource/MedCastle/Materials/MI_Bottom.MI_Bottom",
+        "/Game/Map_Resource/MedCastle/Materials/MI_BalconyC1.MI_BalconyC1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_BalconCroof.MI_BalconCroof"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MainTower2Doors",
+      "size_cm": [
+        1584.7546997070312,
+        1584.7549438476562,
+        1404.0266956090927
+      ],
+      "origin_cm": [
+        -9.207916259765625,
+        -2.173797607421875,
+        700.6208074688911
+      ],
+      "lods": 4,
+      "triangles_lod0": 6486,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_CLHStairs.MI_CLHStairs",
+        "/Game/Map_Resource/MedCastle/Materials/MI_TowerMainB.MI_TowerMainB",
+        "/Game/Map_Resource/MedCastle/Materials/MI_TowerMain.MI_TowerMain",
+        "/Game/Map_Resource/MedCastle/Materials/MI_TowerMainC.MI_TowerMainC"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_CastleTowerTall",
+      "size_cm": [
+        380.26776123046875,
+        378.5408477783203,
+        2008.4083638191223
+      ],
+      "origin_cm": [
+        1.1321258544921875,
+        2.3873825073242188,
+        1001.6246755123138
+      ],
+      "lods": 4,
+      "triangles_lod0": 1690,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_CastleTowerTall1.MI_CastleTowerTall1"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_SmallHouse",
+      "size_cm": [
+        579.9940185546875,
+        682.6649780273438,
+        1221.929443359375
+      ],
+      "origin_cm": [
+        0.0,
+        0.0,
+        610.9647216796875
+      ],
+      "lods": 4,
+      "triangles_lod0": 856,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_Concrete.MI_Concrete",
+        "/Game/Map_Resource/MedCastle/Materials/MI_Wall5.MI_Wall5",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodOrnate1.MI_WoodOrnate1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2.MI_WoodenPlanks2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_RoofingTiles.MI_RoofingTiles"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MiddleHouse",
+      "size_cm": [
+        1129.7606201171875,
+        699.0028686523438,
+        1251.173145532608
+      ],
+      "origin_cm": [
+        97.95556640625,
+        -25.477996826171875,
+        628.0483149290085
+      ],
+      "lods": 4,
+      "triangles_lod0": 1216,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_Concrete.MI_Concrete",
+        "/Game/Map_Resource/MedCastle/Materials/MI_Wall5.MI_Wall5",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodOrnate1.MI_WoodOrnate1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2.MI_WoodenPlanks2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_RoofingTiles.MI_RoofingTiles"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_MainHouse",
+      "size_cm": [
+        1422.764892578125,
+        887.5370483398438,
+        1552.489616394043
+      ],
+      "origin_cm": [
+        -0.6494140625,
+        -3.0517578125e-05,
+        827.8943519592285
+      ],
+      "lods": 3,
+      "triangles_lod0": 644,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_MainHouseWoodOrnate1.MI_MainHouseWoodOrnate1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2.MI_WoodenPlanks2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_MainHouseRoofingTiles.MI_MainHouseRoofingTiles",
+        "/Game/Map_Resource/MedCastle/Materials/MI_MainHouseWall1.MI_MainHouseWall1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_MainHouseWall1.MI_MainHouseWall1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_PavingStones.MI_PavingStones",
+        "/Game/Map_Resource/MedCastle/Materials/MI_MainHouseWall2.MI_MainHouseWall2"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/SM_BigHouse",
+      "size_cm": [
+        2108.3685913085938,
+        915.228515625,
+        2023.31471824646
+      ],
+      "origin_cm": [
+        89.28359985351562,
+        -33.359222412109375,
+        1025.7658586502075
+      ],
+      "lods": 4,
+      "triangles_lod0": 1918,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_Concrete.MI_Concrete",
+        "/Game/Map_Resource/MedCastle/Materials/MI_Wall5.MI_Wall5",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodOrnate1.MI_WoodOrnate1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2.MI_WoodenPlanks2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_RoofingTiles.MI_RoofingTiles"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/HouseParts/SM_CastleWall",
+      "size_cm": [
+        418.11255264282227,
+        1423.0115585327148,
+        590.0934524536133
+      ],
+      "origin_cm": [
+        194.069486618042,
+        -709.2011299133301,
+        290.81069564819336
+      ],
+      "lods": 4,
+      "triangles_lod0": 3493,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_CastleWall2.MI_CastleWall2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_CastleWall1.MI_CastleWall1"
+      ]
+    },
+    {
+      "path": "/Game/Map_Resource/MedCastle/Mesh/Bridges/SM_ArchedBridge",
+      "size_cm": [
+        2489.3247680664062,
+        911.3141021728516,
+        602.933837890625
+      ],
+      "origin_cm": [
+        33.139862060546875,
+        49.98754119873047,
+        275.8958740234375
+      ],
+      "lods": 4,
+      "triangles_lod0": 9206,
+      "materials": [
+        "/Game/Map_Resource/MedCastle/Materials/MI_ArchedBridge_2.MI_ArchedBridge_2",
+        "/Game/Map_Resource/MedCastle/Materials/MI_ArchedBridge_1.MI_ArchedBridge_1",
+        "/Game/Map_Resource/MedCastle/Materials/MI_ArchedBridge_3.MI_ArchedBridge_3"
+      ]
+    }
+  ]
+}

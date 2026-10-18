@@ -1,0 +1,2054 @@
+{
+  "schema": 1,
+  "height_sha256": "bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8",
+  "height_modified": false,
+  "policy": "Full XY tile terrain extrema plus -5/+85m safety; baked world transforms preserved; manual editor regeneration",
+  "tiles": {
+    "PCG_Forest_0_1": {
+      "xy_bounds_m": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "bottom_m": -37.4375,
+      "top_m": 141.25,
+      "center_z_cm": 5190.625,
+      "half_height_m": 89.34375
+    },
+    "PCG_Forest_1_1": {
+      "xy_bounds_m": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "bottom_m": -28.75,
+      "top_m": 163.1875,
+      "center_z_cm": 6721.875,
+      "half_height_m": 95.96875
+    },
+    "PCG_Forest_2_1": {
+      "xy_bounds_m": [
+        1024,
+        512,
+        1536,
+        1024
+      ],
+      "bottom_m": -20.5625,
+      "top_m": 159.0625,
+      "center_z_cm": 6925.0,
+      "half_height_m": 89.8125
+    },
+    "PCG_Forest_3_1": {
+      "xy_bounds_m": [
+        1536,
+        512,
+        2048,
+        1024
+      ],
+      "bottom_m": -20.25,
+      "top_m": 142.75,
+      "center_z_cm": 6125.0,
+      "half_height_m": 81.5
+    },
+    "PCG_Forest_6_1": {
+      "xy_bounds_m": [
+        3072,
+        512,
+        3584,
+        1024
+      ],
+      "bottom_m": -49.0625,
+      "top_m": 163.625,
+      "center_z_cm": 5728.125,
+      "half_height_m": 106.34375
+    },
+    "PCG_Forest_9_1": {
+      "xy_bounds_m": [
+        4608,
+        512,
+        5120,
+        1024
+      ],
+      "bottom_m": -32.375,
+      "top_m": 141.6875,
+      "center_z_cm": 5465.625,
+      "half_height_m": 87.03125
+    },
+    "PCG_Forest_0_2": {
+      "xy_bounds_m": [
+        0,
+        1024,
+        512,
+        1536
+      ],
+      "bottom_m": 17.75,
+      "top_m": 169.625,
+      "center_z_cm": 9368.75,
+      "half_height_m": 75.9375
+    },
+    "PCG_Forest_1_2": {
+      "xy_bounds_m": [
+        512,
+        1024,
+        1024,
+        1536
+      ],
+      "bottom_m": 22.9375,
+      "top_m": 168.8125,
+      "center_z_cm": 9587.5,
+      "half_height_m": 72.9375
+    },
+    "PCG_Forest_2_2": {
+      "xy_bounds_m": [
+        1024,
+        1024,
+        1536,
+        1536
+      ],
+      "bottom_m": 12.5,
+      "top_m": 159.4375,
+      "center_z_cm": 8596.875,
+      "half_height_m": 73.46875
+    },
+    "PCG_Forest_3_2": {
+      "xy_bounds_m": [
+        1536,
+        1024,
+        2048,
+        1536
+      ],
+      "bottom_m": 12.6875,
+      "top_m": 163.9375,
+      "center_z_cm": 8831.25,
+      "half_height_m": 75.625
+    },
+    "PCG_Forest_4_2": {
+      "xy_bounds_m": [
+        2048,
+        1024,
+        2560,
+        1536
+      ],
+      "bottom_m": -6.1875,
+      "top_m": 149.6875,
+      "center_z_cm": 7175.0,
+      "half_height_m": 77.9375
+    },
+    "PCG_Forest_5_2": {
+      "xy_bounds_m": [
+        2560,
+        1024,
+        3072,
+        1536
+      ],
+      "bottom_m": -6.1875,
+      "top_m": 215.625,
+      "center_z_cm": 10471.875,
+      "half_height_m": 110.90625
+    },
+    "PCG_Forest_6_2": {
+      "xy_bounds_m": [
+        3072,
+        1024,
+        3584,
+        1536
+      ],
+      "bottom_m": 31.0625,
+      "top_m": 241.0,
+      "center_z_cm": 13603.125,
+      "half_height_m": 104.96875
+    },
+    "PCG_Forest_7_2": {
+      "xy_bounds_m": [
+        3584,
+        1024,
+        4096,
+        1536
+      ],
+      "bottom_m": 26.375,
+      "top_m": 218.875,
+      "center_z_cm": 12262.5,
+      "half_height_m": 96.25
+    },
+    "PCG_Forest_8_2": {
+      "xy_bounds_m": [
+        4096,
+        1024,
+        4608,
+        1536
+      ],
+      "bottom_m": 14.75,
+      "top_m": 156.6875,
+      "center_z_cm": 8571.875,
+      "half_height_m": 70.96875
+    },
+    "PCG_Forest_9_2": {
+      "xy_bounds_m": [
+        4608,
+        1024,
+        5120,
+        1536
+      ],
+      "bottom_m": 2.4375,
+      "top_m": 136.3125,
+      "center_z_cm": 6937.5,
+      "half_height_m": 66.9375
+    },
+    "PCG_Forest_13_2": {
+      "xy_bounds_m": [
+        6656,
+        1024,
+        7168,
+        1536
+      ],
+      "bottom_m": -2.125,
+      "top_m": 139.3125,
+      "center_z_cm": 6859.375,
+      "half_height_m": 70.71875
+    },
+    "PCG_Forest_14_2": {
+      "xy_bounds_m": [
+        7168,
+        1024,
+        7680,
+        1536
+      ],
+      "bottom_m": -2.25,
+      "top_m": 139.9375,
+      "center_z_cm": 6884.375,
+      "half_height_m": 71.09375
+    },
+    "PCG_Forest_15_2": {
+      "xy_bounds_m": [
+        7680,
+        1024,
+        8064,
+        1536
+      ],
+      "bottom_m": -5.875,
+      "top_m": 146.375,
+      "center_z_cm": 7025.0,
+      "half_height_m": 76.125
+    },
+    "PCG_Forest_0_3": {
+      "xy_bounds_m": [
+        0,
+        1536,
+        512,
+        2048
+      ],
+      "bottom_m": 14.6875,
+      "top_m": 167.1875,
+      "center_z_cm": 9093.75,
+      "half_height_m": 76.25
+    },
+    "PCG_Forest_1_3": {
+      "xy_bounds_m": [
+        512,
+        1536,
+        1024,
+        2048
+      ],
+      "bottom_m": 24.0625,
+      "top_m": 167.3125,
+      "center_z_cm": 9568.75,
+      "half_height_m": 71.625
+    },
+    "PCG_Forest_2_3": {
+      "xy_bounds_m": [
+        1024,
+        1536,
+        1536,
+        2048
+      ],
+      "bottom_m": 15.375,
+      "top_m": 162.375,
+      "center_z_cm": 8887.5,
+      "half_height_m": 73.5
+    },
+    "PCG_Forest_3_3": {
+      "xy_bounds_m": [
+        1536,
+        1536,
+        2048,
+        2048
+      ],
+      "bottom_m": 21.5,
+      "top_m": 155.4375,
+      "center_z_cm": 8846.875,
+      "half_height_m": 66.96875
+    },
+    "PCG_Forest_4_3": {
+      "xy_bounds_m": [
+        2048,
+        1536,
+        2560,
+        2048
+      ],
+      "bottom_m": 3.125,
+      "top_m": 153.3125,
+      "center_z_cm": 7821.875,
+      "half_height_m": 75.09375
+    },
+    "PCG_Forest_5_3": {
+      "xy_bounds_m": [
+        2560,
+        1536,
+        3072,
+        2048
+      ],
+      "bottom_m": 1.875,
+      "top_m": 210.0625,
+      "center_z_cm": 10596.875,
+      "half_height_m": 104.09375
+    },
+    "PCG_Forest_6_3": {
+      "xy_bounds_m": [
+        3072,
+        1536,
+        3584,
+        2048
+      ],
+      "bottom_m": 54.6875,
+      "top_m": 267.8125,
+      "center_z_cm": 16125.0,
+      "half_height_m": 106.5625
+    },
+    "PCG_Forest_7_3": {
+      "xy_bounds_m": [
+        3584,
+        1536,
+        4096,
+        2048
+      ],
+      "bottom_m": 39.5,
+      "top_m": 241.4375,
+      "center_z_cm": 14046.875,
+      "half_height_m": 100.96875
+    },
+    "PCG_Forest_8_3": {
+      "xy_bounds_m": [
+        4096,
+        1536,
+        4608,
+        2048
+      ],
+      "bottom_m": 18.0,
+      "top_m": 176.5,
+      "center_z_cm": 9725.0,
+      "half_height_m": 79.25
+    },
+    "PCG_Forest_11_3": {
+      "xy_bounds_m": [
+        5632,
+        1536,
+        6144,
+        2048
+      ],
+      "bottom_m": -2.75,
+      "top_m": 152.125,
+      "center_z_cm": 7468.75,
+      "half_height_m": 77.4375
+    },
+    "PCG_Forest_12_3": {
+      "xy_bounds_m": [
+        6144,
+        1536,
+        6656,
+        2048
+      ],
+      "bottom_m": -0.375,
+      "top_m": 142.8125,
+      "center_z_cm": 7121.875,
+      "half_height_m": 71.59375
+    },
+    "PCG_Forest_13_3": {
+      "xy_bounds_m": [
+        6656,
+        1536,
+        7168,
+        2048
+      ],
+      "bottom_m": 0.375,
+      "top_m": 138.1875,
+      "center_z_cm": 6928.125,
+      "half_height_m": 68.90625
+    },
+    "PCG_Forest_14_3": {
+      "xy_bounds_m": [
+        7168,
+        1536,
+        7680,
+        2048
+      ],
+      "bottom_m": 2.0,
+      "top_m": 132.5,
+      "center_z_cm": 6725.0,
+      "half_height_m": 65.25
+    },
+    "PCG_Forest_15_3": {
+      "xy_bounds_m": [
+        7680,
+        1536,
+        8064,
+        2048
+      ],
+      "bottom_m": 5.625,
+      "top_m": 158.1875,
+      "center_z_cm": 8190.625,
+      "half_height_m": 76.28125
+    },
+    "PCG_Forest_0_4": {
+      "xy_bounds_m": [
+        0,
+        2048,
+        512,
+        2560
+      ],
+      "bottom_m": 14.625,
+      "top_m": 159.625,
+      "center_z_cm": 8712.5,
+      "half_height_m": 72.5
+    },
+    "PCG_Forest_1_4": {
+      "xy_bounds_m": [
+        512,
+        2048,
+        1024,
+        2560
+      ],
+      "bottom_m": 24.3125,
+      "top_m": 230.4375,
+      "center_z_cm": 12737.5,
+      "half_height_m": 103.0625
+    },
+    "PCG_Forest_2_4": {
+      "xy_bounds_m": [
+        1024,
+        2048,
+        1536,
+        2560
+      ],
+      "bottom_m": 31.875,
+      "top_m": 252.75,
+      "center_z_cm": 14231.25,
+      "half_height_m": 110.4375
+    },
+    "PCG_Forest_3_4": {
+      "xy_bounds_m": [
+        1536,
+        2048,
+        2048,
+        2560
+      ],
+      "bottom_m": -1.3125,
+      "top_m": 202.0625,
+      "center_z_cm": 10037.5,
+      "half_height_m": 101.6875
+    },
+    "PCG_Forest_5_4": {
+      "xy_bounds_m": [
+        2560,
+        2048,
+        3072,
+        2560
+      ],
+      "bottom_m": -11.5,
+      "top_m": 147.5625,
+      "center_z_cm": 6803.125,
+      "half_height_m": 79.53125
+    },
+    "PCG_Forest_6_4": {
+      "xy_bounds_m": [
+        3072,
+        2048,
+        3584,
+        2560
+      ],
+      "bottom_m": 22.75,
+      "top_m": 232.8125,
+      "center_z_cm": 12778.125,
+      "half_height_m": 105.03125
+    },
+    "PCG_Forest_7_4": {
+      "xy_bounds_m": [
+        3584,
+        2048,
+        4096,
+        2560
+      ],
+      "bottom_m": 37.8125,
+      "top_m": 237.25,
+      "center_z_cm": 13753.125,
+      "half_height_m": 99.71875
+    },
+    "PCG_Forest_8_4": {
+      "xy_bounds_m": [
+        4096,
+        2048,
+        4608,
+        2560
+      ],
+      "bottom_m": 32.0625,
+      "top_m": 206.3125,
+      "center_z_cm": 11918.75,
+      "half_height_m": 87.125
+    },
+    "PCG_Forest_9_4": {
+      "xy_bounds_m": [
+        4608,
+        2048,
+        5120,
+        2560
+      ],
+      "bottom_m": 11.25,
+      "top_m": 157.4375,
+      "center_z_cm": 8434.375,
+      "half_height_m": 73.09375
+    },
+    "PCG_Forest_10_4": {
+      "xy_bounds_m": [
+        5120,
+        2048,
+        5632,
+        2560
+      ],
+      "bottom_m": 5.3125,
+      "top_m": 143.125,
+      "center_z_cm": 7421.875,
+      "half_height_m": 68.90625
+    },
+    "PCG_Forest_11_4": {
+      "xy_bounds_m": [
+        5632,
+        2048,
+        6144,
+        2560
+      ],
+      "bottom_m": 27.375,
+      "top_m": 151.6875,
+      "center_z_cm": 8953.125,
+      "half_height_m": 62.15625
+    },
+    "PCG_Forest_12_4": {
+      "xy_bounds_m": [
+        6144,
+        2048,
+        6656,
+        2560
+      ],
+      "bottom_m": 14.25,
+      "top_m": 158.3125,
+      "center_z_cm": 8628.125,
+      "half_height_m": 72.03125
+    },
+    "PCG_Forest_13_4": {
+      "xy_bounds_m": [
+        6656,
+        2048,
+        7168,
+        2560
+      ],
+      "bottom_m": -2.4375,
+      "top_m": 144.5625,
+      "center_z_cm": 7106.25,
+      "half_height_m": 73.5
+    },
+    "PCG_Forest_14_4": {
+      "xy_bounds_m": [
+        7168,
+        2048,
+        7680,
+        2560
+      ],
+      "bottom_m": -7.1875,
+      "top_m": 129.1875,
+      "center_z_cm": 6100.0,
+      "half_height_m": 68.1875
+    },
+    "PCG_Forest_15_4": {
+      "xy_bounds_m": [
+        7680,
+        2048,
+        8064,
+        2560
+      ],
+      "bottom_m": -12.125,
+      "top_m": 143.875,
+      "center_z_cm": 6587.5,
+      "half_height_m": 78.0
+    },
+    "PCG_Forest_0_5": {
+      "xy_bounds_m": [
+        0,
+        2560,
+        512,
+        3072
+      ],
+      "bottom_m": 35.25,
+      "top_m": 304.875,
+      "center_z_cm": 17006.25,
+      "half_height_m": 134.8125
+    },
+    "PCG_Forest_1_5": {
+      "xy_bounds_m": [
+        512,
+        2560,
+        1024,
+        3072
+      ],
+      "bottom_m": 41.0625,
+      "top_m": 299.0,
+      "center_z_cm": 17003.125,
+      "half_height_m": 128.96875
+    },
+    "PCG_Forest_2_5": {
+      "xy_bounds_m": [
+        1024,
+        2560,
+        1536,
+        3072
+      ],
+      "bottom_m": 102.1875,
+      "top_m": 307.6875,
+      "center_z_cm": 20493.75,
+      "half_height_m": 102.75
+    },
+    "PCG_Forest_3_5": {
+      "xy_bounds_m": [
+        1536,
+        2560,
+        2048,
+        3072
+      ],
+      "bottom_m": 3.75,
+      "top_m": 251.1875,
+      "center_z_cm": 12746.875,
+      "half_height_m": 123.71875
+    },
+    "PCG_Forest_4_5": {
+      "xy_bounds_m": [
+        2048,
+        2560,
+        2560,
+        3072
+      ],
+      "bottom_m": -15.8125,
+      "top_m": 132.8125,
+      "center_z_cm": 5850.0,
+      "half_height_m": 74.3125
+    },
+    "PCG_Forest_7_5": {
+      "xy_bounds_m": [
+        3584,
+        2560,
+        4096,
+        3072
+      ],
+      "bottom_m": 30.5,
+      "top_m": 221.0625,
+      "center_z_cm": 12578.125,
+      "half_height_m": 95.28125
+    },
+    "PCG_Forest_8_5": {
+      "xy_bounds_m": [
+        4096,
+        2560,
+        4608,
+        3072
+      ],
+      "bottom_m": 26.375,
+      "top_m": 206.4375,
+      "center_z_cm": 11640.625,
+      "half_height_m": 90.03125
+    },
+    "PCG_Forest_9_5": {
+      "xy_bounds_m": [
+        4608,
+        2560,
+        5120,
+        3072
+      ],
+      "bottom_m": 15.0,
+      "top_m": 147.875,
+      "center_z_cm": 8143.75,
+      "half_height_m": 66.4375
+    },
+    "PCG_Forest_10_5": {
+      "xy_bounds_m": [
+        5120,
+        2560,
+        5632,
+        3072
+      ],
+      "bottom_m": 8.8125,
+      "top_m": 158.0,
+      "center_z_cm": 8340.625,
+      "half_height_m": 74.59375
+    },
+    "PCG_Forest_11_5": {
+      "xy_bounds_m": [
+        5632,
+        2560,
+        6144,
+        3072
+      ],
+      "bottom_m": 8.0625,
+      "top_m": 151.0,
+      "center_z_cm": 7953.125,
+      "half_height_m": 71.46875
+    },
+    "PCG_Forest_12_5": {
+      "xy_bounds_m": [
+        6144,
+        2560,
+        6656,
+        3072
+      ],
+      "bottom_m": 8.0,
+      "top_m": 155.5625,
+      "center_z_cm": 8178.125,
+      "half_height_m": 73.78125
+    },
+    "PCG_Forest_13_5": {
+      "xy_bounds_m": [
+        6656,
+        2560,
+        7168,
+        3072
+      ],
+      "bottom_m": -1.125,
+      "top_m": 151.0625,
+      "center_z_cm": 7496.875,
+      "half_height_m": 76.09375
+    },
+    "PCG_Forest_14_5": {
+      "xy_bounds_m": [
+        7168,
+        2560,
+        7680,
+        3072
+      ],
+      "bottom_m": -6.6875,
+      "top_m": 135.875,
+      "center_z_cm": 6459.375,
+      "half_height_m": 71.28125
+    },
+    "PCG_Forest_0_6": {
+      "xy_bounds_m": [
+        0,
+        3072,
+        512,
+        3584
+      ],
+      "bottom_m": 117.5625,
+      "top_m": 313.9375,
+      "center_z_cm": 21575.0,
+      "half_height_m": 98.1875
+    },
+    "PCG_Forest_1_6": {
+      "xy_bounds_m": [
+        512,
+        3072,
+        1024,
+        3584
+      ],
+      "bottom_m": 139.25,
+      "top_m": 304.5,
+      "center_z_cm": 22187.5,
+      "half_height_m": 82.625
+    },
+    "PCG_Forest_2_6": {
+      "xy_bounds_m": [
+        1024,
+        3072,
+        1536,
+        3584
+      ],
+      "bottom_m": 39.1875,
+      "top_m": 278.875,
+      "center_z_cm": 15903.125,
+      "half_height_m": 119.84375
+    },
+    "PCG_Forest_3_6": {
+      "xy_bounds_m": [
+        1536,
+        3072,
+        2048,
+        3584
+      ],
+      "bottom_m": 16.3125,
+      "top_m": 194.375,
+      "center_z_cm": 10534.375,
+      "half_height_m": 89.03125
+    },
+    "PCG_Forest_4_6": {
+      "xy_bounds_m": [
+        2048,
+        3072,
+        2560,
+        3584
+      ],
+      "bottom_m": 13.3125,
+      "top_m": 157.0625,
+      "center_z_cm": 8518.75,
+      "half_height_m": 71.875
+    },
+    "PCG_Forest_5_6": {
+      "xy_bounds_m": [
+        2560,
+        3072,
+        3072,
+        3584
+      ],
+      "bottom_m": -0.375,
+      "top_m": 148.875,
+      "center_z_cm": 7425.0,
+      "half_height_m": 74.625
+    },
+    "PCG_Forest_7_6": {
+      "xy_bounds_m": [
+        3584,
+        3072,
+        4096,
+        3584
+      ],
+      "bottom_m": 3.1875,
+      "top_m": 150.5,
+      "center_z_cm": 7684.375,
+      "half_height_m": 73.65625
+    },
+    "PCG_Forest_8_6": {
+      "xy_bounds_m": [
+        4096,
+        3072,
+        4608,
+        3584
+      ],
+      "bottom_m": 3.9375,
+      "top_m": 145.1875,
+      "center_z_cm": 7456.25,
+      "half_height_m": 70.625
+    },
+    "PCG_Forest_9_6": {
+      "xy_bounds_m": [
+        4608,
+        3072,
+        5120,
+        3584
+      ],
+      "bottom_m": 11.0625,
+      "top_m": 150.9375,
+      "center_z_cm": 8100.0,
+      "half_height_m": 69.9375
+    },
+    "PCG_Forest_10_6": {
+      "xy_bounds_m": [
+        5120,
+        3072,
+        5632,
+        3584
+      ],
+      "bottom_m": 3.75,
+      "top_m": 144.5625,
+      "center_z_cm": 7415.625,
+      "half_height_m": 70.40625
+    },
+    "PCG_Forest_11_6": {
+      "xy_bounds_m": [
+        5632,
+        3072,
+        6144,
+        3584
+      ],
+      "bottom_m": 2.25,
+      "top_m": 140.875,
+      "center_z_cm": 7156.25,
+      "half_height_m": 69.3125
+    },
+    "PCG_Forest_12_6": {
+      "xy_bounds_m": [
+        6144,
+        3072,
+        6656,
+        3584
+      ],
+      "bottom_m": 7.375,
+      "top_m": 153.875,
+      "center_z_cm": 8062.5,
+      "half_height_m": 73.25
+    },
+    "PCG_Forest_13_6": {
+      "xy_bounds_m": [
+        6656,
+        3072,
+        7168,
+        3584
+      ],
+      "bottom_m": 2.8125,
+      "top_m": 143.875,
+      "center_z_cm": 7334.375,
+      "half_height_m": 70.53125
+    },
+    "PCG_Forest_14_6": {
+      "xy_bounds_m": [
+        7168,
+        3072,
+        7680,
+        3584
+      ],
+      "bottom_m": 4.3125,
+      "top_m": 145.5625,
+      "center_z_cm": 7493.75,
+      "half_height_m": 70.625
+    },
+    "PCG_Forest_15_6": {
+      "xy_bounds_m": [
+        7680,
+        3072,
+        8064,
+        3584
+      ],
+      "bottom_m": 9.25,
+      "top_m": 149.625,
+      "center_z_cm": 7943.75,
+      "half_height_m": 70.1875
+    },
+    "PCG_Forest_0_7": {
+      "xy_bounds_m": [
+        0,
+        3584,
+        512,
+        4096
+      ],
+      "bottom_m": 45.0625,
+      "top_m": 242.9375,
+      "center_z_cm": 14400.0,
+      "half_height_m": 98.9375
+    },
+    "PCG_Forest_1_7": {
+      "xy_bounds_m": [
+        512,
+        3584,
+        1024,
+        4096
+      ],
+      "bottom_m": 45.0,
+      "top_m": 274.6875,
+      "center_z_cm": 15984.375,
+      "half_height_m": 114.84375
+    },
+    "PCG_Forest_2_7": {
+      "xy_bounds_m": [
+        1024,
+        3584,
+        1536,
+        4096
+      ],
+      "bottom_m": 53.125,
+      "top_m": 257.375,
+      "center_z_cm": 15525.0,
+      "half_height_m": 102.125
+    },
+    "PCG_Forest_3_7": {
+      "xy_bounds_m": [
+        1536,
+        3584,
+        2048,
+        4096
+      ],
+      "bottom_m": 11.125,
+      "top_m": 214.625,
+      "center_z_cm": 11287.5,
+      "half_height_m": 101.75
+    },
+    "PCG_Forest_4_7": {
+      "xy_bounds_m": [
+        2048,
+        3584,
+        2560,
+        4096
+      ],
+      "bottom_m": 2.875,
+      "top_m": 149.25,
+      "center_z_cm": 7606.25,
+      "half_height_m": 73.1875
+    },
+    "PCG_Forest_5_7": {
+      "xy_bounds_m": [
+        2560,
+        3584,
+        3072,
+        4096
+      ],
+      "bottom_m": 24.9375,
+      "top_m": 145.6875,
+      "center_z_cm": 8531.25,
+      "half_height_m": 60.375
+    },
+    "PCG_Forest_6_7": {
+      "xy_bounds_m": [
+        3072,
+        3584,
+        3584,
+        4096
+      ],
+      "bottom_m": 11.3125,
+      "top_m": 167.0625,
+      "center_z_cm": 8918.75,
+      "half_height_m": 77.875
+    },
+    "PCG_Forest_7_7": {
+      "xy_bounds_m": [
+        3584,
+        3584,
+        4096,
+        4096
+      ],
+      "bottom_m": -3.5,
+      "top_m": 167.75,
+      "center_z_cm": 8212.5,
+      "half_height_m": 85.625
+    },
+    "PCG_Forest_8_7": {
+      "xy_bounds_m": [
+        4096,
+        3584,
+        4608,
+        4096
+      ],
+      "bottom_m": -3.125,
+      "top_m": 163.125,
+      "center_z_cm": 8000.0,
+      "half_height_m": 83.125
+    },
+    "PCG_Forest_9_7": {
+      "xy_bounds_m": [
+        4608,
+        3584,
+        5120,
+        4096
+      ],
+      "bottom_m": 6.5625,
+      "top_m": 159.6875,
+      "center_z_cm": 8312.5,
+      "half_height_m": 76.5625
+    },
+    "PCG_Forest_10_7": {
+      "xy_bounds_m": [
+        5120,
+        3584,
+        5632,
+        4096
+      ],
+      "bottom_m": 5.8125,
+      "top_m": 184.3125,
+      "center_z_cm": 9506.25,
+      "half_height_m": 89.25
+    },
+    "PCG_Forest_11_7": {
+      "xy_bounds_m": [
+        5632,
+        3584,
+        6144,
+        4096
+      ],
+      "bottom_m": 12.625,
+      "top_m": 190.375,
+      "center_z_cm": 10150.0,
+      "half_height_m": 88.875
+    },
+    "PCG_Forest_12_7": {
+      "xy_bounds_m": [
+        6144,
+        3584,
+        6656,
+        4096
+      ],
+      "bottom_m": 8.4375,
+      "top_m": 141.25,
+      "center_z_cm": 7484.375,
+      "half_height_m": 66.40625
+    },
+    "PCG_Forest_13_7": {
+      "xy_bounds_m": [
+        6656,
+        3584,
+        7168,
+        4096
+      ],
+      "bottom_m": 12.8125,
+      "top_m": 143.75,
+      "center_z_cm": 7828.125,
+      "half_height_m": 65.46875
+    },
+    "PCG_Forest_14_7": {
+      "xy_bounds_m": [
+        7168,
+        3584,
+        7680,
+        4096
+      ],
+      "bottom_m": 13.0,
+      "top_m": 215.25,
+      "center_z_cm": 11412.5,
+      "half_height_m": 101.125
+    },
+    "PCG_Forest_15_7": {
+      "xy_bounds_m": [
+        7680,
+        3584,
+        8064,
+        4096
+      ],
+      "bottom_m": 16.8125,
+      "top_m": 239.8125,
+      "center_z_cm": 12831.25,
+      "half_height_m": 111.5
+    },
+    "PCG_Forest_0_8": {
+      "xy_bounds_m": [
+        0,
+        4096,
+        512,
+        4608
+      ],
+      "bottom_m": 1.375,
+      "top_m": 165.625,
+      "center_z_cm": 8350.0,
+      "half_height_m": 82.125
+    },
+    "PCG_Forest_1_8": {
+      "xy_bounds_m": [
+        512,
+        4096,
+        1024,
+        4608
+      ],
+      "bottom_m": 21.625,
+      "top_m": 227.0625,
+      "center_z_cm": 12434.375,
+      "half_height_m": 102.71875
+    },
+    "PCG_Forest_2_8": {
+      "xy_bounds_m": [
+        1024,
+        4096,
+        1536,
+        4608
+      ],
+      "bottom_m": 105.9375,
+      "top_m": 227.0625,
+      "center_z_cm": 16650.0,
+      "half_height_m": 60.5625
+    },
+    "PCG_Forest_3_8": {
+      "xy_bounds_m": [
+        1536,
+        4096,
+        2048,
+        4608
+      ],
+      "bottom_m": 28.9375,
+      "top_m": 233.9375,
+      "center_z_cm": 13143.75,
+      "half_height_m": 102.5
+    },
+    "PCG_Forest_4_8": {
+      "xy_bounds_m": [
+        2048,
+        4096,
+        2560,
+        4608
+      ],
+      "bottom_m": -0.125,
+      "top_m": 232.6875,
+      "center_z_cm": 11628.125,
+      "half_height_m": 116.40625
+    },
+    "PCG_Forest_5_8": {
+      "xy_bounds_m": [
+        2560,
+        4096,
+        3072,
+        4608
+      ],
+      "bottom_m": 30.0,
+      "top_m": 204.5,
+      "center_z_cm": 11725.0,
+      "half_height_m": 87.25
+    },
+    "PCG_Forest_6_8": {
+      "xy_bounds_m": [
+        3072,
+        4096,
+        3584,
+        4608
+      ],
+      "bottom_m": 20.625,
+      "top_m": 190.1875,
+      "center_z_cm": 10540.625,
+      "half_height_m": 84.78125
+    },
+    "PCG_Forest_7_8": {
+      "xy_bounds_m": [
+        3584,
+        4096,
+        4096,
+        4608
+      ],
+      "bottom_m": 20.625,
+      "top_m": 174.8125,
+      "center_z_cm": 9771.875,
+      "half_height_m": 77.09375
+    },
+    "PCG_Forest_8_8": {
+      "xy_bounds_m": [
+        4096,
+        4096,
+        4608,
+        4608
+      ],
+      "bottom_m": 23.8125,
+      "top_m": 171.0625,
+      "center_z_cm": 9743.75,
+      "half_height_m": 73.625
+    },
+    "PCG_Forest_9_8": {
+      "xy_bounds_m": [
+        4608,
+        4096,
+        5120,
+        4608
+      ],
+      "bottom_m": 8.75,
+      "top_m": 158.1875,
+      "center_z_cm": 8346.875,
+      "half_height_m": 74.71875
+    },
+    "PCG_Forest_10_8": {
+      "xy_bounds_m": [
+        5120,
+        4096,
+        5632,
+        4608
+      ],
+      "bottom_m": 7.375,
+      "top_m": 187.3125,
+      "center_z_cm": 9734.375,
+      "half_height_m": 89.96875
+    },
+    "PCG_Forest_11_8": {
+      "xy_bounds_m": [
+        5632,
+        4096,
+        6144,
+        4608
+      ],
+      "bottom_m": 19.0,
+      "top_m": 237.375,
+      "center_z_cm": 12818.75,
+      "half_height_m": 109.1875
+    },
+    "PCG_Forest_12_8": {
+      "xy_bounds_m": [
+        6144,
+        4096,
+        6656,
+        4608
+      ],
+      "bottom_m": 6.1875,
+      "top_m": 228.625,
+      "center_z_cm": 11740.625,
+      "half_height_m": 111.21875
+    },
+    "PCG_Forest_13_8": {
+      "xy_bounds_m": [
+        6656,
+        4096,
+        7168,
+        4608
+      ],
+      "bottom_m": 8.125,
+      "top_m": 188.0625,
+      "center_z_cm": 9809.375,
+      "half_height_m": 89.96875
+    },
+    "PCG_Forest_14_8": {
+      "xy_bounds_m": [
+        7168,
+        4096,
+        7680,
+        4608
+      ],
+      "bottom_m": 14.6875,
+      "top_m": 412.5,
+      "center_z_cm": 21359.375,
+      "half_height_m": 198.90625
+    },
+    "PCG_Forest_0_9": {
+      "xy_bounds_m": [
+        0,
+        4608,
+        512,
+        5120
+      ],
+      "bottom_m": -16.3125,
+      "top_m": 146.6875,
+      "center_z_cm": 6518.75,
+      "half_height_m": 81.5
+    },
+    "PCG_Forest_1_9": {
+      "xy_bounds_m": [
+        512,
+        4608,
+        1024,
+        5120
+      ],
+      "bottom_m": 46.4375,
+      "top_m": 227.0625,
+      "center_z_cm": 13675.0,
+      "half_height_m": 90.3125
+    },
+    "PCG_Forest_4_9": {
+      "xy_bounds_m": [
+        2048,
+        4608,
+        2560,
+        5120
+      ],
+      "bottom_m": 26.8125,
+      "top_m": 277.875,
+      "center_z_cm": 15234.375,
+      "half_height_m": 125.53125
+    },
+    "PCG_Forest_5_9": {
+      "xy_bounds_m": [
+        2560,
+        4608,
+        3072,
+        5120
+      ],
+      "bottom_m": 37.5,
+      "top_m": 396.8125,
+      "center_z_cm": 21715.625,
+      "half_height_m": 179.65625
+    },
+    "PCG_Forest_6_9": {
+      "xy_bounds_m": [
+        3072,
+        4608,
+        3584,
+        5120
+      ],
+      "bottom_m": 25.0,
+      "top_m": 299.0625,
+      "center_z_cm": 16203.125,
+      "half_height_m": 137.03125
+    },
+    "PCG_Forest_7_9": {
+      "xy_bounds_m": [
+        3584,
+        4608,
+        4096,
+        5120
+      ],
+      "bottom_m": 4.875,
+      "top_m": 179.9375,
+      "center_z_cm": 9240.625,
+      "half_height_m": 87.53125
+    },
+    "PCG_Forest_8_9": {
+      "xy_bounds_m": [
+        4096,
+        4608,
+        4608,
+        5120
+      ],
+      "bottom_m": 19.5,
+      "top_m": 179.9375,
+      "center_z_cm": 9971.875,
+      "half_height_m": 80.21875
+    },
+    "PCG_Forest_9_9": {
+      "xy_bounds_m": [
+        4608,
+        4608,
+        5120,
+        5120
+      ],
+      "bottom_m": 30.6875,
+      "top_m": 173.25,
+      "center_z_cm": 10196.875,
+      "half_height_m": 71.28125
+    },
+    "PCG_Forest_10_9": {
+      "xy_bounds_m": [
+        5120,
+        4608,
+        5632,
+        5120
+      ],
+      "bottom_m": 17.0625,
+      "top_m": 272.6875,
+      "center_z_cm": 14487.5,
+      "half_height_m": 127.8125
+    },
+    "PCG_Forest_11_9": {
+      "xy_bounds_m": [
+        5632,
+        4608,
+        6144,
+        5120
+      ],
+      "bottom_m": 31.0625,
+      "top_m": 336.75,
+      "center_z_cm": 18390.625,
+      "half_height_m": 152.84375
+    },
+    "PCG_Forest_13_9": {
+      "xy_bounds_m": [
+        6656,
+        4608,
+        7168,
+        5120
+      ],
+      "bottom_m": 8.0625,
+      "top_m": 442.3125,
+      "center_z_cm": 22518.75,
+      "half_height_m": 217.125
+    },
+    "PCG_Forest_15_9": {
+      "xy_bounds_m": [
+        7680,
+        4608,
+        8064,
+        5120
+      ],
+      "bottom_m": 221.0625,
+      "top_m": 610.0,
+      "center_z_cm": 41553.125,
+      "half_height_m": 194.46875
+    },
+    "PCG_Forest_0_10": {
+      "xy_bounds_m": [
+        0,
+        5120,
+        512,
+        5632
+      ],
+      "bottom_m": -1.0,
+      "top_m": 154.4375,
+      "center_z_cm": 7671.875,
+      "half_height_m": 77.71875
+    },
+    "PCG_Forest_1_10": {
+      "xy_bounds_m": [
+        512,
+        5120,
+        1024,
+        5632
+      ],
+      "bottom_m": 11.0625,
+      "top_m": 227.0625,
+      "center_z_cm": 11906.25,
+      "half_height_m": 108.0
+    },
+    "PCG_Forest_4_10": {
+      "xy_bounds_m": [
+        2048,
+        5120,
+        2560,
+        5632
+      ],
+      "bottom_m": 109.4375,
+      "top_m": 658.3125,
+      "center_z_cm": 38387.5,
+      "half_height_m": 274.4375
+    },
+    "PCG_Forest_6_10": {
+      "xy_bounds_m": [
+        3072,
+        5120,
+        3584,
+        5632
+      ],
+      "bottom_m": 80.4375,
+      "top_m": 626.625,
+      "center_z_cm": 35353.125,
+      "half_height_m": 273.09375
+    },
+    "PCG_Forest_7_10": {
+      "xy_bounds_m": [
+        3584,
+        5120,
+        4096,
+        5632
+      ],
+      "bottom_m": 41.625,
+      "top_m": 201.625,
+      "center_z_cm": 12162.5,
+      "half_height_m": 80.0
+    },
+    "PCG_Forest_8_10": {
+      "xy_bounds_m": [
+        4096,
+        5120,
+        4608,
+        5632
+      ],
+      "bottom_m": 22.125,
+      "top_m": 188.1875,
+      "center_z_cm": 10515.625,
+      "half_height_m": 83.03125
+    },
+    "PCG_Forest_9_10": {
+      "xy_bounds_m": [
+        4608,
+        5120,
+        5120,
+        5632
+      ],
+      "bottom_m": 30.375,
+      "top_m": 212.625,
+      "center_z_cm": 12150.0,
+      "half_height_m": 91.125
+    },
+    "PCG_Forest_10_10": {
+      "xy_bounds_m": [
+        5120,
+        5120,
+        5632,
+        5632
+      ],
+      "bottom_m": 74.125,
+      "top_m": 498.6875,
+      "center_z_cm": 28640.625,
+      "half_height_m": 212.28125
+    },
+    "PCG_Forest_11_10": {
+      "xy_bounds_m": [
+        5632,
+        5120,
+        6144,
+        5632
+      ],
+      "bottom_m": 182.6875,
+      "top_m": 744.3125,
+      "center_z_cm": 46350.0,
+      "half_height_m": 280.8125
+    },
+    "PCG_Forest_12_10": {
+      "xy_bounds_m": [
+        6144,
+        5120,
+        6656,
+        5632
+      ],
+      "bottom_m": 224.9375,
+      "top_m": 701.4375,
+      "center_z_cm": 46318.75,
+      "half_height_m": 238.25
+    },
+    "PCG_Forest_13_10": {
+      "xy_bounds_m": [
+        6656,
+        5120,
+        7168,
+        5632
+      ],
+      "bottom_m": 236.625,
+      "top_m": 725.4375,
+      "center_z_cm": 48103.125,
+      "half_height_m": 244.40625
+    },
+    "PCG_Forest_15_10": {
+      "xy_bounds_m": [
+        7680,
+        5120,
+        8064,
+        5632
+      ],
+      "bottom_m": 191.6875,
+      "top_m": 613.0,
+      "center_z_cm": 40234.375,
+      "half_height_m": 210.65625
+    },
+    "PCG_Forest_0_11": {
+      "xy_bounds_m": [
+        0,
+        5632,
+        512,
+        6144
+      ],
+      "bottom_m": 0.5625,
+      "top_m": 186.375,
+      "center_z_cm": 9346.875,
+      "half_height_m": 92.90625
+    },
+    "PCG_Forest_1_11": {
+      "xy_bounds_m": [
+        512,
+        5632,
+        1024,
+        6144
+      ],
+      "bottom_m": 24.375,
+      "top_m": 211.625,
+      "center_z_cm": 11800.0,
+      "half_height_m": 93.625
+    },
+    "PCG_Forest_2_11": {
+      "xy_bounds_m": [
+        1024,
+        5632,
+        1536,
+        6144
+      ],
+      "bottom_m": 76.375,
+      "top_m": 426.625,
+      "center_z_cm": 25150.0,
+      "half_height_m": 175.125
+    },
+    "PCG_Forest_6_11": {
+      "xy_bounds_m": [
+        3072,
+        5632,
+        3584,
+        6144
+      ],
+      "bottom_m": 111.625,
+      "top_m": 820.75,
+      "center_z_cm": 46618.75,
+      "half_height_m": 354.5625
+    },
+    "PCG_Forest_7_11": {
+      "xy_bounds_m": [
+        3584,
+        5632,
+        4096,
+        6144
+      ],
+      "bottom_m": 55.8125,
+      "top_m": 271.6875,
+      "center_z_cm": 16375.0,
+      "half_height_m": 107.9375
+    },
+    "PCG_Forest_8_11": {
+      "xy_bounds_m": [
+        4096,
+        5632,
+        4608,
+        6144
+      ],
+      "bottom_m": 24.3125,
+      "top_m": 199.625,
+      "center_z_cm": 11196.875,
+      "half_height_m": 87.65625
+    },
+    "PCG_Forest_9_11": {
+      "xy_bounds_m": [
+        4608,
+        5632,
+        5120,
+        6144
+      ],
+      "bottom_m": 30.25,
+      "top_m": 274.8125,
+      "center_z_cm": 15253.125,
+      "half_height_m": 122.28125
+    },
+    "PCG_Forest_10_11": {
+      "xy_bounds_m": [
+        5120,
+        5632,
+        5632,
+        6144
+      ],
+      "bottom_m": 122.625,
+      "top_m": 727.8125,
+      "center_z_cm": 42521.875,
+      "half_height_m": 302.59375
+    },
+    "PCG_Forest_11_11": {
+      "xy_bounds_m": [
+        5632,
+        5632,
+        6144,
+        6144
+      ],
+      "bottom_m": 408.6875,
+      "top_m": 811.5625,
+      "center_z_cm": 61012.5,
+      "half_height_m": 201.4375
+    },
+    "PCG_Forest_12_11": {
+      "xy_bounds_m": [
+        6144,
+        5632,
+        6656,
+        6144
+      ],
+      "bottom_m": 449.625,
+      "top_m": 733.0625,
+      "center_z_cm": 59134.375,
+      "half_height_m": 141.71875
+    },
+    "PCG_Forest_13_11": {
+      "xy_bounds_m": [
+        6656,
+        5632,
+        7168,
+        6144
+      ],
+      "bottom_m": 339.0625,
+      "top_m": 853.5,
+      "center_z_cm": 59628.125,
+      "half_height_m": 257.21875
+    },
+    "PCG_Forest_15_11": {
+      "xy_bounds_m": [
+        7680,
+        5632,
+        8064,
+        6144
+      ],
+      "bottom_m": 190.125,
+      "top_m": 592.875,
+      "center_z_cm": 39150.0,
+      "half_height_m": 201.375
+    },
+    "PCG_Forest_0_12": {
+      "xy_bounds_m": [
+        0,
+        6144,
+        512,
+        6656
+      ],
+      "bottom_m": 58.75,
+      "top_m": 360.5625,
+      "center_z_cm": 20965.625,
+      "half_height_m": 150.90625
+    },
+    "PCG_Forest_1_12": {
+      "xy_bounds_m": [
+        512,
+        6144,
+        1024,
+        6656
+      ],
+      "bottom_m": 62.6875,
+      "top_m": 535.25,
+      "center_z_cm": 29896.875,
+      "half_height_m": 236.28125
+    },
+    "PCG_Forest_2_12": {
+      "xy_bounds_m": [
+        1024,
+        6144,
+        1536,
+        6656
+      ],
+      "bottom_m": 121.625,
+      "top_m": 777.8125,
+      "center_z_cm": 44971.875,
+      "half_height_m": 328.09375
+    },
+    "PCG_Forest_4_12": {
+      "xy_bounds_m": [
+        2048,
+        6144,
+        2560,
+        6656
+      ],
+      "bottom_m": 295.75,
+      "top_m": 651.625,
+      "center_z_cm": 47368.75,
+      "half_height_m": 177.9375
+    },
+    "PCG_Forest_5_12": {
+      "xy_bounds_m": [
+        2560,
+        6144,
+        3072,
+        6656
+      ],
+      "bottom_m": 308.875,
+      "top_m": 815.75,
+      "center_z_cm": 56231.25,
+      "half_height_m": 253.4375
+    },
+    "PCG_Forest_6_12": {
+      "xy_bounds_m": [
+        3072,
+        6144,
+        3584,
+        6656
+      ],
+      "bottom_m": 181.6875,
+      "top_m": 817.25,
+      "center_z_cm": 49946.875,
+      "half_height_m": 317.78125
+    },
+    "PCG_Forest_7_12": {
+      "xy_bounds_m": [
+        3584,
+        6144,
+        4096,
+        6656
+      ],
+      "bottom_m": 61.9375,
+      "top_m": 424.375,
+      "center_z_cm": 24315.625,
+      "half_height_m": 181.21875
+    },
+    "PCG_Forest_8_12": {
+      "xy_bounds_m": [
+        4096,
+        6144,
+        4608,
+        6656
+      ],
+      "bottom_m": 24.5625,
+      "top_m": 211.6875,
+      "center_z_cm": 11812.5,
+      "half_height_m": 93.5625
+    },
+    "PCG_Forest_9_12": {
+      "xy_bounds_m": [
+        4608,
+        6144,
+        5120,
+        6656
+      ],
+      "bottom_m": 32.4375,
+      "top_m": 358.75,
+      "center_z_cm": 19559.375,
+      "half_height_m": 163.15625
+    },
+    "PCG_Forest_15_12": {
+      "xy_bounds_m": [
+        7680,
+        6144,
+        8064,
+        6656
+      ],
+      "bottom_m": 224.1875,
+      "top_m": 713.8125,
+      "center_z_cm": 46900.0,
+      "half_height_m": 244.8125
+    },
+    "PCG_Forest_5_13": {
+      "xy_bounds_m": [
+        2560,
+        6656,
+        3072,
+        7168
+      ],
+      "bottom_m": 347.75,
+      "top_m": 985.0,
+      "center_z_cm": 66637.5,
+      "half_height_m": 318.625
+    },
+    "PCG_Forest_7_13": {
+      "xy_bounds_m": [
+        3584,
+        6656,
+        4096,
+        7168
+      ],
+      "bottom_m": 90.75,
+      "top_m": 502.5625,
+      "center_z_cm": 29665.625,
+      "half_height_m": 205.90625
+    },
+    "PCG_Forest_8_13": {
+      "xy_bounds_m": [
+        4096,
+        6656,
+        4608,
+        7168
+      ],
+      "bottom_m": 34.875,
+      "top_m": 226.6875,
+      "center_z_cm": 13078.125,
+      "half_height_m": 95.90625
+    },
+    "PCG_Forest_9_13": {
+      "xy_bounds_m": [
+        4608,
+        6656,
+        5120,
+        7168
+      ],
+      "bottom_m": 54.125,
+      "top_m": 348.75,
+      "center_z_cm": 20143.75,
+      "half_height_m": 147.3125
+    },
+    "PCG_Forest_15_13": {
+      "xy_bounds_m": [
+        7680,
+        6656,
+        8064,
+        7168
+      ],
+      "bottom_m": 365.1875,
+      "top_m": 940.25,
+      "center_z_cm": 65271.875,
+      "half_height_m": 287.53125
+    },
+    "PCG_Forest_8_14": {
+      "xy_bounds_m": [
+        4096,
+        7168,
+        4608,
+        7680
+      ],
+      "bottom_m": 36.6875,
+      "top_m": 283.3125,
+      "center_z_cm": 16000.0,
+      "half_height_m": 123.3125
+    },
+    "PCG_Forest_9_14": {
+      "xy_bounds_m": [
+        4608,
+        7168,
+        5120,
+        7680
+      ],
+      "bottom_m": 48.3125,
+      "top_m": 352.6875,
+      "center_z_cm": 20050.0,
+      "half_height_m": 152.1875
+    },
+    "PCG_Forest_14_14": {
+      "xy_bounds_m": [
+        7168,
+        7168,
+        7680,
+        7680
+      ],
+      "bottom_m": 495.25,
+      "top_m": 1119.3125,
+      "center_z_cm": 80728.125,
+      "half_height_m": 312.03125
+    },
+    "PCG_Forest_15_14": {
+      "xy_bounds_m": [
+        7680,
+        7168,
+        8064,
+        7680
+      ],
+      "bottom_m": 502.4375,
+      "top_m": 965.5625,
+      "center_z_cm": 73400.0,
+      "half_height_m": 231.5625
+    },
+    "PCG_Forest_0_15": {
+      "xy_bounds_m": [
+        0,
+        7680,
+        512,
+        8064
+      ],
+      "bottom_m": 94.1875,
+      "top_m": 488.875,
+      "center_z_cm": 29153.125,
+      "half_height_m": 197.34375
+    },
+    "PCG_Forest_1_15": {
+      "xy_bounds_m": [
+        512,
+        7680,
+        1024,
+        8064
+      ],
+      "bottom_m": 67.3125,
+      "top_m": 563.8125,
+      "center_z_cm": 31556.25,
+      "half_height_m": 248.25
+    },
+    "PCG_Forest_3_15": {
+      "xy_bounds_m": [
+        1536,
+        7680,
+        2048,
+        8064
+      ],
+      "bottom_m": 203.875,
+      "top_m": 878.5625,
+      "center_z_cm": 54121.875,
+      "half_height_m": 337.34375
+    },
+    "PCG_Forest_8_15": {
+      "xy_bounds_m": [
+        4096,
+        7680,
+        4608,
+        8064
+      ],
+      "bottom_m": 79.0,
+      "top_m": 362.3125,
+      "center_z_cm": 22065.625,
+      "half_height_m": 141.65625
+    },
+    "PCG_Forest_9_15": {
+      "xy_bounds_m": [
+        4608,
+        7680,
+        5120,
+        8064
+      ],
+      "bottom_m": 74.25,
+      "top_m": 412.75,
+      "center_z_cm": 24350.0,
+      "half_height_m": 169.25
+    },
+    "PCG_Forest_10_15": {
+      "xy_bounds_m": [
+        5120,
+        7680,
+        5632,
+        8064
+      ],
+      "bottom_m": 230.25,
+      "top_m": 803.4375,
+      "center_z_cm": 51684.375,
+      "half_height_m": 286.59375
+    },
+    "PCG_Forest_15_15": {
+      "xy_bounds_m": [
+        7680,
+        7680,
+        8064,
+        8064
+      ],
+      "bottom_m": 198.5625,
+      "top_m": 658.5,
+      "center_z_cm": 42853.125,
+      "half_height_m": 229.96875
+    },
+    "PCG_Forest_12_9": {
+      "xy_bounds_m": [
+        6144,
+        4608,
+        6656,
+        5120
+      ],
+      "bottom_m": 6.1875,
+      "top_m": 336.5,
+      "center_z_cm": 17134.375,
+      "half_height_m": 165.15625
+    }
+  },
+  "forest_hlod_layer": "/Game/World/Starter/HLOD/HLOD_StarterForest",
+  "tree_instance_cull_cm": [
+    0,
+    0
+  ],
+  "tree_visibility_policy": "Mesh LOD and WP source streaming; no additional fixed component-distance cutoff. Persistent HLOD registration retained."
+}

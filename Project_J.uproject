@@ -51,6 +51,17 @@
 	],
 	"Plugins": [
 		{
+			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
 			"Name": "AnimationBudgetAllocator",
 			"Enabled": true
 		},
@@ -119,7 +130,10 @@
 		},
 		{
 			"Name": "ModelContextProtocol",
-			"Enabled": true
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		},
 		{
 			"Name": "EditorToolset",
@@ -128,6 +142,13 @@
 		{
 			"Name": "AutomationTestToolset",
 			"Enabled": true
+		},
+		{
+			"Name": "AllToolsets",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		}
 	]
 }

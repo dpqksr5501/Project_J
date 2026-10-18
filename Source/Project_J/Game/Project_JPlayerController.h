@@ -12,6 +12,7 @@ class UProject_JProfilingCrowdComponent;
 class UProject_JEquipmentClientTestComponent;
 class UProject_JInputLeaseSubsystem;
 class UProject_JPlayerUIComponent;
+class UProject_JWorldStreamingComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -24,6 +25,8 @@ class AProject_JPlayerController : public APlayerController
 	
 protected:
 	AProject_JPlayerController();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="World")
+	TObjectPtr<UProject_JWorldStreamingComponent> WorldStreamingPreparation;
 
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")

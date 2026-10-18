@@ -1,0 +1,249 @@
+{
+  "schema": "starter-zone-v3-concept",
+  "game_world_position": "FIRST_STARTING_REGION_OF_LARGER_FUTURE_MMO_WORLD",
+  "current_max_level_assumption": 100,
+  "starter_region_character_levels": [
+    1,
+    30
+  ],
+  "dimensions_km": [
+    8,
+    8
+  ],
+  "coordinate_system": "concept only; origin southwest, x east y north; actual UE origin/height after audit",
+  "asset_status": "all concept, NO actual assets implied",
+  "required_entire_region_initial_build": true,
+  "theme": "grounded medieval fantasy realistic terrain and settlements; BDO-like density but original designs",
+  "settlements": [
+    {
+      "id": "S00",
+      "type": "starting_hamlet",
+      "x_km": 3.1,
+      "y_km": 3.1,
+      "suggested_level": [
+        1,
+        5
+      ],
+      "design": "초기 튜토리얼, 왕도 외곽, 초원과 강변 연결"
+    },
+    {
+      "id": "S01",
+      "type": "capital_city",
+      "x_km": 4.1,
+      "y_km": 4.2,
+      "suggested_level": [
+        1,
+        30
+      ],
+      "design": "상업, 길드, 제작, 메인 퀘스트, 성곽, 시장, 다층 건축과 주변 농경지"
+    },
+    {
+      "id": "S02",
+      "type": "farm_village",
+      "x_km": 2.1,
+      "y_km": 2.1,
+      "suggested_level": [
+        3,
+        15
+      ],
+      "design": "가축, 방앗간, 논밭, 농로"
+    },
+    {
+      "id": "S03",
+      "type": "lake_village",
+      "x_km": 1.4,
+      "y_km": 4.9,
+      "suggested_level": [
+        8,
+        20
+      ],
+      "design": "호안 계단, 부두, 호수와 서쪽 구릉 연결"
+    },
+    {
+      "id": "S04",
+      "type": "forest_village",
+      "x_km": 6.4,
+      "y_km": 4.8,
+      "suggested_level": [
+        10,
+        25
+      ],
+      "design": "벌목로, 수목 밀도 차별화, 숲 사이 개간지"
+    },
+    {
+      "id": "S05",
+      "type": "mountain_village",
+      "x_km": 2.6,
+      "y_km": 6.0,
+      "suggested_level": [
+        18,
+        30
+      ],
+      "design": "헤어핀 커브, 계단식 건축, 채석장"
+    },
+    {
+      "id": "S06",
+      "type": "harbor_village",
+      "x_km": 6.6,
+      "y_km": 1.25,
+      "suggested_level": [
+        12,
+        30
+      ],
+      "design": "수로 하구, 항구, 장거리 경로 및 미래 해상 콘텐츠"
+    }
+  ],
+  "hunting_grounds": [
+    {
+      "id": "H01",
+      "name": "초원·완만한 구릉",
+      "levels": [
+        1,
+        5
+      ],
+      "x_km": 3.2,
+      "y_km": 2.7
+    },
+    {
+      "id": "H02",
+      "name": "농지 외곽 소굴",
+      "levels": [
+        4,
+        9
+      ],
+      "x_km": 1.95,
+      "y_km": 2.7
+    },
+    {
+      "id": "H03",
+      "name": "동부 숲 가장자리",
+      "levels": [
+        7,
+        12
+      ],
+      "x_km": 5.55,
+      "y_km": 3.85
+    },
+    {
+      "id": "H04",
+      "name": "서부 호안",
+      "levels": [
+        10,
+        15
+      ],
+      "x_km": 1.6,
+      "y_km": 4.2
+    },
+    {
+      "id": "H05",
+      "name": "깊은 벌목림·숲 유적",
+      "levels": [
+        12,
+        18
+      ],
+      "x_km": 6.25,
+      "y_km": 5.0
+    },
+    {
+      "id": "H06",
+      "name": "남부 하류·습지",
+      "levels": [
+        15,
+        21
+      ],
+      "x_km": 4.75,
+      "y_km": 1.7
+    },
+    {
+      "id": "H07",
+      "name": "해안 절벽·밀수꾼",
+      "levels": [
+        18,
+        24
+      ],
+      "x_km": 7.05,
+      "y_km": 2.6
+    },
+    {
+      "id": "H08",
+      "name": "북서 폐광·산길",
+      "levels": [
+        22,
+        27
+      ],
+      "x_km": 2.15,
+      "y_km": 6.0
+    },
+    {
+      "id": "H09",
+      "name": "북동 유적·고원",
+      "levels": [
+        25,
+        30
+      ],
+      "x_km": 6.5,
+      "y_km": 6.25
+    }
+  ],
+  "field_bosses": [
+    {
+      "id": "B01",
+      "name": "암릉의 수호자",
+      "level_region": [
+        25,
+        30
+      ],
+      "x_km": 2.0,
+      "y_km": 6.85,
+      "design": "북서 고산 능선 전투 테라스; nonmandatory"
+    },
+    {
+      "id": "B02",
+      "name": "고목의 파수자",
+      "level_region": [
+        28,
+        30
+      ],
+      "x_km": 6.85,
+      "y_km": 5.75,
+      "design": "동부 고목 유적 보스 공터; nonmandatory"
+    }
+  ],
+  "future_expansion_gate_candidates": [
+    {
+      "id": "E_N",
+      "boundary": "north",
+      "theme": "계속되는 산맥/고원",
+      "possible_future_levels": "31+",
+      "road_or_path": "산악 고개 및 수계 상류 연결"
+    },
+    {
+      "id": "E_E",
+      "boundary": "east",
+      "theme": "더 넓은 숲과 내륙 왕국",
+      "possible_future_levels": "31+",
+      "road_or_path": "간선 도로와 지류"
+    },
+    {
+      "id": "E_W",
+      "boundary": "west",
+      "theme": "호수 외곽·완만한 구릉",
+      "possible_future_levels": "31+",
+      "road_or_path": "옛 교역로"
+    },
+    {
+      "id": "E_S",
+      "boundary": "south coast",
+      "theme": "추후 해양과 섬",
+      "possible_future_levels": "unplanned",
+      "road_or_path": "항구/해로, 해안 경계 처리"
+    }
+  ],
+  "do_not_treat_concept_image_as_ground_truth": true,
+  "source_of_truth_priority": [
+    "this JSON gameplay levels and rough coordinates",
+    "master prompt technical requirements",
+    "reference screenshots for art heuristics",
+    "AI generated top-down for mood and macro silhouettes"
+  ]
+}

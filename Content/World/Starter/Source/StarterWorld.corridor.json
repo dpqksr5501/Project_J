@@ -1,0 +1,270 @@
+{
+  "revision": 1,
+  "region": "S00_S01",
+  "houses": [
+    {
+      "id": "Inn",
+      "x": 3077,
+      "y": 3128,
+      "yaw": 39.40066066347943,
+      "width": 15,
+      "depth": 8,
+      "style": "inn",
+      "ground_m": 21.96875,
+      "architecture_style": "scanned_modular",
+      "roof_style": "intact_thatch_gable",
+      "storeys": 2
+    },
+    {
+      "id": "Smith",
+      "x": 3128,
+      "y": 3084,
+      "yaw": -119.74488129694222,
+      "width": 8,
+      "depth": 10,
+      "style": "workshop",
+      "ground_m": 22.3125,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    },
+    {
+      "id": "CottageWest",
+      "x": 3066,
+      "y": 3080,
+      "yaw": 120.46554491945989,
+      "width": 6,
+      "depth": 8,
+      "style": "cottage",
+      "ground_m": 21.625,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    },
+    {
+      "id": "Barn",
+      "x": 3038,
+      "y": 3048,
+      "yaw": 129.98688624496418,
+      "width": 8,
+      "depth": 14,
+      "style": "barn",
+      "ground_m": 21.4375,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    },
+    {
+      "id": "CottageSouth",
+      "x": 3090,
+      "y": 3056,
+      "yaw": 167.19573393471325,
+      "width": 6,
+      "depth": 8,
+      "style": "cottage",
+      "ground_m": 21.875,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    },
+    {
+      "id": "Granary",
+      "x": 3141,
+      "y": 3120,
+      "yaw": -63.99665415548856,
+      "width": 10.5,
+      "depth": 9.6,
+      "style": "store",
+      "ground_m": 23.03125,
+      "architecture_style": "scanned_modular",
+      "roof_style": "intact_thatch_gable",
+      "storeys": 2
+    },
+    {
+      "id": "CottageNorth",
+      "x": 3148,
+      "y": 3158,
+      "yaw": -39.61068824002659,
+      "width": 6,
+      "depth": 8,
+      "style": "cottage",
+      "ground_m": 24.9375,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    },
+    {
+      "id": "Weaver",
+      "x": 3080,
+      "y": 3162,
+      "yaw": 17.87869659584134,
+      "width": 8,
+      "depth": 8,
+      "style": "workshop",
+      "ground_m": 22.5625,
+      "roof_style": "intact_thatch_gable",
+      "architecture_style": "scanned_modular"
+    }
+  ],
+  "fields": [
+    {
+      "x": 3210,
+      "y": 3025,
+      "width": 44,
+      "depth": 65,
+      "yaw": -15
+    },
+    {
+      "x": 2980,
+      "y": 3125,
+      "width": 38,
+      "depth": 50,
+      "yaw": 15
+    },
+    {
+      "x": 3175,
+      "y": 2950,
+      "width": 55,
+      "depth": 38,
+      "yaw": -15
+    }
+  ],
+  "footpaths": [
+    [
+      [
+        3080.80843654016,
+        3123.3636424728484
+      ],
+      [
+        3088.40421827008,
+        3111.681821236424
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3121.9222980051286,
+        3087.472972568498
+      ],
+      [
+        3112.9611490025645,
+        3093.7364862842487
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3071.1716052909464,
+        3083.0421207593804
+      ],
+      [
+        3083.5858026454734,
+        3091.5210603796904
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3044.895723888132,
+        3053.783510357788
+      ],
+      [
+        3070.447861944066,
+        3076.891755178894
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3091.3297266215336,
+        3061.850797134749
+      ],
+      [
+        3093.664863310767,
+        3080.9253985673745
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3134.8883745696216,
+        3117.0187193022543
+      ],
+      [
+        3119.444187284811,
+        3108.509359651127
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3144.174593715795,
+        3153.377634073252
+      ],
+      [
+        3124.0872968578974,
+        3126.688817036626
+      ],
+      [
+        3100,
+        3100
+      ]
+    ],
+    [
+      [
+        3081.8420166795368,
+        3156.289748293437
+      ],
+      [
+        3088.9210083397684,
+        3128.1448741467184
+      ],
+      [
+        3100,
+        3100
+      ]
+    ]
+  ],
+  "graded_roads": [
+    "Road_Capital_Start",
+    "Road_Start_Farm"
+  ],
+  "plaza_center_m": [
+    3100,
+    3100,
+    22.1875
+  ],
+  "weather_changed": false,
+  "composition_revision": 2,
+  "capital_gate_center_m": [
+    4124.08,
+    4217.91
+  ],
+  "capital_approach": [
+    [
+      4086.314,
+      4189.8,
+      77.93457584
+    ],
+    [
+      4124.08,
+      4217.91,
+      78.2
+    ]
+  ],
+  "player_start_yaw": 125,
+  "architecture_revision": 2
+}

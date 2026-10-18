@@ -43,6 +43,7 @@
 
 ## 계획과 변경 기록
 
+- [오픈 월드 레벨 설계와 확장 계획](../Gameplay/Planning/Open_World_Level_Design.md): 고속 비행·팝인·원경·식생 검증 계획과 16절의 에디터 숲 고정 시점 CSV 비교. 패키지·전체 월드·원격 MMO 성능 합격이나 기존 200명 최적화 완료를 뜻하지 않는다.
 - [확장성 검증 계획](Planning/ProjectJ_Scalability_Profiling_Validation_Plan_2026-09-03.md): 인원 단계와 CPU/GPU/메모리/네트워크 회귀 게이트.
 - [보류된 최적화](Planning/DeferredOptimizationArchitecture.md): 도입 조건과 후속 계약.
 - [시스템 현대화 작업 기록](Reports/ProjectJ_Systems_Modernization_Refactor_2026-09-08.md): 초기 진단부터 적용·측정·병합까지의 원본 이력.

@@ -1,0 +1,30 @@
+"""Read a reloaded sea reach, its natural shore and the relocated H07 contract."""
+import hashlib,importlib.util,json,math,time,traceback
+from pathlib import Path
+import unreal
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'H07-coastal-reach-build.json').read_text());MOVE=json.loads((OUT/'H07-coastal-relocation.json').read_text());assert B['phase']==MOVE['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+def module(name,file):
+    s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');manifest=T.manifest;profile=json.loads((SOURCE/manifest['coastal_surface_profile']).read_text());q=profile['reaches'][0];file=SOURCE/q['geometry_source'];assert hashlib.sha256(file.read_bytes()).hexdigest()==q['geometry_sha256'];geo=json.loads(file.read_text());origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
+descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
+def verify(dt):
+    if time.perf_counter()-started<8:return
+    unreal.unregister_slate_post_tick_callback(handle);R=dict(passed=False,read_only=True)
+    try:
+        actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors();paths={a.get_path_name():a for a in actors};world=unreal.EditorLevelLibrary.get_editor_world();definition=next(a for a in actors if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');places=[C.snapshot_place(v) for v in definition.get_editor_property('places')];connections=[C.snapshot_connection(v) for v in definition.get_editor_property('connections')];assert places==B['previous_places']==MOVE['current_places'] and connections==B['previous_connections']==MOVE['previous_connections'];assert [v for v in places if v['id']!='H07']==[v for v in MOVE['previous_places'] if v['id']!='H07'];plan_hash=hashlib.sha256((SOURCE/manifest['layout_source']).read_bytes()).hexdigest();assert definition.get_editor_property('source_plan_hash')==B['source_plan_hash']==MOVE['source_plan_hash']==plan_hash;assert (paths[MOVE['marker_path']].get_actor_location()-unreal.Vector(*MOVE['marker_location_cm'])).length()<.01
+        sea=paths[B['base_sea_snapshot']['actor_path']];assert list(sea.get_actor_location().to_tuple())==B['base_sea_snapshot']['location_cm'] and list(sea.get_actor_scale3d().to_tuple())==B['base_sea_snapshot']['scale'] and sea.static_mesh_component.static_mesh.get_path_name()==B['base_sea_snapshot']['mesh'];center,extent=sea.get_actor_bounds(False);base_north=(center.y+extent.y-origin[1])/units;assert abs(base_north-q['base_seam_y_m'])<.001
+        assert len(B['actors'])==1;a=paths[B['actors'][0]['path']];c=a.static_mesh_component;mesh=c.static_mesh;assert mesh.get_path_name()==B['mesh'] and mesh.get_num_triangles(0)==len(geo['triangles'])==B['triangles'];assert unreal.EditorAssetLibrary.get_metadata_tag(mesh,'ProjectJ.SourceHash')==q['geometry_sha256'] and unreal.EditorAssetLibrary.get_metadata_tag(mesh,'ProjectJ.GeometryID')==q['id'];assert c.get_collision_enabled()==unreal.CollisionEnabled.QUERY_ONLY and c.get_collision_response_to_channel(unreal.CollisionChannel.ECC_PAWN)==unreal.CollisionResponseType.ECR_IGNORE;assert a.get_editor_property('is_spatially_loaded') and not a.get_editor_property('replicates');center,extent=a.get_actor_bounds(False);actual_south=(center.y-extent.y-origin[1])/units;assert abs(actual_south-base_north)<.001 and abs(center.z-origin[2])<.001
+        errors=[]
+        for first,last in geo['shore_segments_m']:
+            x,y=(first[0]+last[0])/2,(first[1]+last[1])/2;p=point(x,y,0);hit=unreal.SystemLibrary.line_trace_single(world,p+unreal.Vector(0,0,150),p-unreal.Vector(0,0,150),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[a,sea],unreal.DrawDebugTrace.NONE,True);v=hit.to_tuple() if hit else None;assert v and v[0],('Coastal shore ground absent',x,y);error=abs(v[4].z-p.z);assert error<10,('Coastal shore ground mismatch',x,y,error);errors.append(error)
+        wet=0
+        for indices in geo['triangles'][::max(1,len(geo['triangles'])//100)]:
+            x,y=[sum(geo['vertices_m'][i][axis] for i in indices)/3 for axis in [0,1]]
+            if T.height(x,y)>-.3:continue
+            p=point(x,y,0);hit=unreal.SystemLibrary.line_trace_single(world,p+unreal.Vector(0,0,20),p-unreal.Vector(0,0,20),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[],unreal.DrawDebugTrace.NONE,True);v=hit.to_tuple() if hit else None;assert v and v[0] and v[10]==c and abs(v[4].z-p.z)<.1,('Coastal water query absent',x,y);wet+=1
+        assert wet>=50;assert geo['connected_to_south_edge'];dirty=[p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()];assert not dirty
+        R.update(passed=True,saved_reload=True,triangles=mesh.get_num_triangles(0),shore_samples=len(errors),maximum_shore_ground_error_cm=max(errors),wet_queries=wet,base_sea_transform_mesh_preserved=True,seam_y_m=base_north,seam_height_difference_cm=abs(center.z-origin[2]),other19_places_preserved=True,all7_connections_preserved=True,h07_marker_path_preserved=True,h07_current_center_m=MOVE['new_center_m'],height_sha256=T.manifest['terrain_profile']['sha256'],dirty_maps=dirty,art_complete=False,swimming_bound=False,scope='Southeast sea-connected surface and H07 relocation only; camp/cliff gameplay/remaining coast unfinished')
+    except Exception:R['error']=traceback.format_exc();unreal.log_error(R['error'])
+    (OUT/'H07-coastal-reach-saved-verification.json').write_text(json.dumps(R,indent=2),encoding='utf-8')
+handle=unreal.register_slate_post_tick_callback(verify)
