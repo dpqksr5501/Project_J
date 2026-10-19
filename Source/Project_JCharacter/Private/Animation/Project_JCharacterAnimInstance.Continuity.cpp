@@ -101,7 +101,7 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && Data.OneShotPresentation.bShouldOverrideMotionMatching &&
 		IsMovingOneShotInputOwner(Data);
 	Input.bObserveOnly = bObserveShot;
-	const bool bReleasedAcuteReady = !bOneShotCurveReleasedThisUpdate && Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
+	const bool bReleasedAcuteReady = Profile && Profile->TransitionPolicy.bEnableOneShotInputResponse &&
 		Project_J::MotionMatchingCVars::ShouldUseOneShotInputResponse() && !Data.OneShotPresentation.bShouldOverrideMotionMatching &&
 		Data.bLocomotionSteeringEnabled && Data.TurnRequest.bAcuteReturnReady &&
 		Data.TurnRequest.IsUsable(GFrameCounter, GetWorld() ? GetWorld()->GetTimeSeconds() : 0,
@@ -111,7 +111,7 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 		Context.bMovingTurn180 = true; Context.bUseSettledCycle = false;
 		Context.PhaseFamily = Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Turn;
 	}
-	Input.bEligible = !bOneShotCurveReleasedThisUpdate && Profile && Profile->bEnableGeneralTurnCandidates && CVarGeneralTurnCandidates.GetValueOnGameThread() != 0 &&
+	Input.bEligible = Profile && Profile->bEnableGeneralTurnCandidates && CVarGeneralTurnCandidates.GetValueOnGameThread() != 0 &&
 		Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() &&
 		Data.bLocomotionSteeringEnabled && bSupportedMode && !Context.bMovingTurn180 &&
 		(Data.LocomotionContext.GaitIntent == EProject_JLocomotionGaitIntent::Run || bSprint) &&
@@ -189,10 +189,6 @@ void UProject_JCharacterAnimInstance::UpdateGeneralTurnData(FProject_JAnimThread
 	Data.bGeneralTurnCycleHandoff = GeneralTurnPolicy.IsCycleHandoffHeld();
 	Data.GeneralTurnDemand = FName(GeneralTurnPolicy.GetDemand());
 	Data.GeneralTurnReason = FName(bCandidateDataUnavailable ? TEXT("CandidateDataUnavailable") : GeneralTurnPolicy.GetReason());
-	// A compatible curve yields to rich directional locomotion, not a new Turn
-	// event or the Strafe straight-only settled pool. Later MM samples retain
-	// the existing physical Turn policy and dynamic-Cycle observation.
-	if (bOneShotCurveReleasedThisUpdate) Context.bUseSettledCycle = false;
 }
 
 void UProject_JCharacterAnimInstance::UpdateBackwardRefaceData(FProject_JAnimThreadSafeData& Data)
@@ -214,7 +210,7 @@ void UProject_JCharacterAnimInstance::UpdateBackwardRefaceData(FProject_JAnimThr
 		Project_J::MotionMatchingCVars::ShouldUseTurnCycleCandidates() && Data.bLocomotionSteeringEnabled &&
 		Data.Combat.bIsCombatMode && Context.RotationMode == EProject_JLocomotionRotationMode::Strafe &&
 		Context.GaitIntent == EProject_JLocomotionGaitIntent::Run && Context.PhaseFamily == EProject_JLocomotionPhaseFamily::Cycle &&
-		!Data.OneShotPresentation.bShouldOverrideMotionMatching && !bOneShotCurveReleasedThisUpdate &&
+		!Data.OneShotPresentation.bShouldOverrideMotionMatching &&
 		!Context.bMovingTurn180 && !Context.bGeneralTurnCandidates && !Move.ContainsNaN() && !Move.IsNearlyZero() &&
 		FMath::Abs(FMath::FindDeltaAngleDegrees(Input.FacingYaw + 180, Input.MoveYaw)) <= 30;
 	if (Input.bEligible)

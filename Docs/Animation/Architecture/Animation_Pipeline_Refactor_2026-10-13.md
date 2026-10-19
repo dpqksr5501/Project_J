@@ -1,5 +1,7 @@
 # 애니메이션 파이프라인 리팩토링 — 2026-10-13
 
+2026-10-19 후속 [GASP 5.8 전환 책임 정리](GASP58_Locomotion_Migration_2026-10-19.md): 공통 스택·snapshot·전투·retarget 경계는 유지하면서, 호환되는 곡선 입력의 단발 조기 해제와 물리 착지 타이머의 시각 클립 종료 권한을 제거하고 기존 대각 Pivot 데이터를 연결한다. 아래 검증은 당시 기준이다.
+
 후속 [R20 Strafe 대각 보정 복구](../../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md): sample selector의 소유권은 아직 Update되지 않은 Input.Player의 lazy 연결에 의존하면 안 된다. 엔진이 graph 진입 전에 설치한 현재 helper Player를 compiled allocation/sample index로 확인하고, 정확한 authored pose index/asset 검사를 유지한다.
 
 ## 목적과 기준선

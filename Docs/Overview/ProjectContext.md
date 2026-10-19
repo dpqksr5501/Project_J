@@ -6,6 +6,8 @@
 
 2026-10-19의 [MMORPG 아키텍처 대조](../Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 앞 단계 이력이며, [현재 잔여 작업 상태](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)가 ZIP 전체 권고와 후속 구현·검증의 현재 판정 기준이다. 장비 상세/공개 복제 분리, PS 명령 예산, 요청 payload와 receipt 결합, 소셜 접속 교체 후 쓰기 철회와 Gateway byte 경계를 적용했다. 운영 인증·네트워크/Shipping 영속 저장·실제 존 이전·미래 카탈로그 기능은 구현 완료와 구분한다.
 
+2026-10-19 애니메이션 후속은 [GASP 5.8 전환 책임 정리](../Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md)다. 설치본의 기본 Mover 경로와 이전 5.7 CMC 분석을 구분한다. CMC·GAS·공통 스택을 유지하면서 authored 단발의 완료 권한과 기존 8방향 Pivot 도달 경로를 정리한다. 2026-10-20 사용자 실행에서 Strafe Pivot은 여전히4방향이며 대각 연결의 실제 동작은 미해결이다.
+
 2026-10-15의 main 통합·R19/R20·소스/BP/DA 정리와 보류 범위는 [검토 목차](../Review/README.md)를 따른다. 애니메이션의 현재 계약은 [주제 목차](../Animation/README.md)에 모으며, Mirror Data는 새로 도입하지 않고 특정 연결 문제가 확인될 때만 재검토한다. 이전 인계의 전체 감사 요청을 현재 작업 지시로 자동 재개하지 않는다.
 
 2026-09-19의 기반 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)에 기록했다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.

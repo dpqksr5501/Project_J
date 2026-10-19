@@ -3,51 +3,25 @@
 #include "Animation/Project_JOneShotInputResponse.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
 #include "Animation/Project_JMovingTurnPolicy.h"
-#include "Animation/Project_JOneShotCurvePolicy.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJOneShotCurveTest, "ProjectJ.Animation.OneShotInput.ContinuousCurve",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJOneShotCurveTest::RunTest(const FString&)
 {
-	using P = FProject_JOneShotCurvePolicy;
+	using P = FProject_JOneShotInputResponse;
 	for (int32 Mode : {0, 1}) for (float Sign : {-1.f, 1.f}) for (float Rate : {5.f, 30.f, 60.f})
 	{
-		P Policy; P::FInput I; I.bEligible = true; I.Mode = Mode;
-		bool bYielded = false;
+		P::FInput I; I.bCanSteer = I.bHasMoveReference = I.bHasMoveInput = true;
 		for (int32 N = 0; N < 360; ++N)
 		{
-			I.Now = N / 60.; const float Yaw = Sign * Rate * I.Now;
-			I.Velocity = FRotator(0, Yaw, 0).RotateVector(FVector(400, 0, 0));
-			I.FutureVelocity = FRotator(0, Sign * 2, 0).RotateVector(I.Velocity);
-			I.Position += I.Velocity / 60;
-			I.bCanExit = N >= 30;
-			const auto R = Policy.Update(I, {});
-			if (!I.bCanExit) TestFalse(TEXT("Curve cannot bypass protected Start/Land phase"), R.bYield);
-			bYielded |= R.bYield;
+			I.ControlYaw = I.MoveYaw = FMath::UnwindDegrees(Sign * Rate * N / 60.f);
+			I.FacingError = 3; I.PathError = 2;
+			TestFalse(TEXT("A compatible held key stays in its authored phase through accumulated curves and yaw wrap"), P::Resolve(I).bRelease);
 		}
-		TestTrue(TEXT("Actual consistent curve yields at fast and slow rates, in both modes and directions"), bYielded);
+		I.FacingError = 90;
+		TestTrue(TEXT("Real steering demand beyond capacity still releases immediately"), P::Resolve(I).bRelease);
 	}
-	for (int32 Case = 0; Case < 7; ++Case)
-	{
-		P Policy; P::FInput I; I.bEligible = I.bCanExit = true;
-		for (int32 N = 0; N < 180; ++N)
-		{
-			I.Now = N / 60.;
-			const float Yaw = Case == 0 ? 0.f : Case == 1 ? (N % 2 ? 2.f : -2.f) :
-				Case == 2 ? FMath::Min(N * .5f, 5.f) : N * .5f;
-			I.Velocity = FRotator(0, Yaw, 0).RotateVector(FVector(400, 0, 0));
-			I.FutureVelocity = Case == 3 ? FRotator(0, -5, 0).RotateVector(I.Velocity) : I.Velocity;
-			if (Case != 4) I.Position += I.Velocity / 60; // blocked motion
-			if (Case == 5) ++I.OwnerRevision;
-			if (Case == 6) ++I.TrajectoryRevision;
-			TestFalse(TEXT("Camera-only/straight, alternating noise, transient, opposite forecast, blocked motion and new owner/history do not yield"), Policy.Update(I, {}).bYield);
-		}
-	}
-	P Policy; P::FInput I; I.bEligible = I.bCanExit = true; I.Velocity = I.FutureVelocity = FVector(400, 0, 0);
-	Policy.Update(I, {}); I.Now = .016; I.Position.X = 10000;
-	TestFalse(TEXT("Teleport cannot create curved travel evidence"), Policy.Update(I, {}).bYield);
-	I.bEligible = false;
-	TestFalse(TEXT("Air, action, unsupported direction and stale trajectory discard evidence"), Policy.Update(I, {}).bYield);
+
 	return true;
 }
 

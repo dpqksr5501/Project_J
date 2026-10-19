@@ -48,11 +48,13 @@ bool FProjectJStrafePivotCardinalTest::RunTest(const FString&)
 	Locomotion->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable = LoadObject<UChooserTable>(nullptr,
 		TEXT("/Game/Animation_Logic/Chooser/CHT_Player_StateControllerAnimations.CHT_Player_StateControllerAnimations"));
 	if (!TestNotNull(TEXT("Authored State Controller root chooser"), Locomotion->MotionMatchingSearchPolicy.StateControllerAnimationChooserTable.Get())) { return false; }
-	const FVector2D Inputs[] = {FVector2D(-1,0), FVector2D(1,0), FVector2D(0,1), FVector2D(0,-1)};
+	const FVector2D Inputs[] = {FVector2D(-1,0), FVector2D(1,0), FVector2D(0,1), FVector2D(0,-1), FVector2D(-1,1).GetSafeNormal(), FVector2D(1,-1).GetSafeNormal(), FVector2D(1,1).GetSafeNormal(), FVector2D(-1,-1).GetSafeNormal()};
 	const EProject_JStateControllerStrafeDirection Directions[] = {
 		EProject_JStateControllerStrafeDirection::Left, EProject_JStateControllerStrafeDirection::Right,
-		EProject_JStateControllerStrafeDirection::Forward, EProject_JStateControllerStrafeDirection::Backward};
-	for (float Yaw : {0.0f, 90.0f, 179.0f})
+		EProject_JStateControllerStrafeDirection::Forward, EProject_JStateControllerStrafeDirection::Backward,
+		EProject_JStateControllerStrafeDirection::ForwardLeft, EProject_JStateControllerStrafeDirection::BackwardRight,
+		EProject_JStateControllerStrafeDirection::ForwardRight, EProject_JStateControllerStrafeDirection::BackwardLeft};
+	for (float Yaw : {-179.0f, 0.0f, 90.0f, 179.0f, 180.0f})
 	{
 		W.Controller->SetControlRotation(FRotator(0,Yaw,0)); W.Player->SetActorRotation(FRotator(0,Yaw,0));
 		for (int32 Index = 0; Index < UE_ARRAY_COUNT(Inputs); ++Index)
@@ -340,6 +342,57 @@ bool FProjectJOneShotModeContinuityTest::RunTest(const FString&)
 	Anim->StateControllerRuntime.OnCombatPresentationBoundary(Anim->AnimationClock.Seconds, Land.Landing.PresentationRevision, true);
 	EvaluateLand();
 	TestTrue(TEXT("Discarded landing cannot re-enter after a full-body boundary"), Land.OneShotPresentation.PresentationState != EProject_JStateControllerPresentationState::TransitionToLand);
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredPhaseLifetimeTest, "ProjectJ.Animation.AuthoredPhase.Lifetime",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJAuthoredPhaseLifetimeTest::RunTest(const FString&)
+{
+	FPivotWorld W;
+	auto* Profile = NewObject<UProject_JCharacterAnimProfile>();
+	auto* Locomotion = NewObject<UProject_JLocomotionProfile>();
+	Profile->LocomotionProfile = Locomotion; W.Player->CharacterAnimProfile = Profile;
+	Locomotion->MotionMatchingSearchPolicy.bEnableExperimentalOneShotPresentation = true;
+	for (auto Mode : {EProject_JLocomotionRotationMode::OrientToMovement, EProject_JLocomotionRotationMode::Strafe})
+	for (bool bLand : {false, true})
+	{
+		auto* Anim = NewObject<UProject_JCharacterAnimInstance>(W.Player->GetMesh());
+		Anim->OwningCharacter = W.Player; Anim->OwningPlayerCharacter = W.Player;
+		const auto Held = bLand ? EProject_JStateControllerPresentationState::TransitionToLand :
+			EProject_JStateControllerPresentationState::TransitionToLocomotion;
+		auto* Clip = LoadObject<UAnimSequence>(nullptr, bLand ?
+			TEXT("/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Land_Run_Light_Lfoot.M_Neutral_Jump_F_Land_Run_Light_Lfoot") :
+			TEXT("/Game/Characters/UEFN_Mannequin/Animations/Run/M_Neutral_Run_Start_F_Lfoot.M_Neutral_Run_Start_F_Lfoot"));
+		if (!TestNotNull(TEXT("Actual authored transition"), Clip)) return false;
+		Anim->CachedStateControllerSelectedAnimation = Clip;
+		Anim->bCachedStateControllerHasSelectedAnimation = true;
+		Anim->CachedStateControllerSelectedAnimationOutput.StartTime = 0.2f;
+		Anim->CachedStateControllerPresentationState = Held;
+		Anim->StateControllerRuntime.BeginHold(Held, 0);
+		Anim->AnimationClock.Advance(0.6f, false);
+		FProject_JAnimThreadSafeData Data;
+		Data.LocomotionMode = EProject_JAnimationLocomotionMode::OnFoot;
+		Data.MotionMatchingSearchPolicy = Locomotion->MotionMatchingSearchPolicy;
+		Data.Input.bHasMoveInput = true;
+		Data.LocomotionContext.bIsMotionMatchingMoving = true;
+		Data.LocomotionContext.PhaseFamily = EProject_JLocomotionPhaseFamily::Cycle;
+		Data.LocomotionContext.RotationMode = Mode;
+		Data.Ground.GroundMotionMode = EProject_JGroundMotionMode::Locomotion;
+		Data.OneShotPresentation.bEnabled = true;
+		Data.OneShotPresentation.PresentationState = Held;
+		Data.OneShotPresentation.PhaseFamily = bLand ? EProject_JLocomotionPhaseFamily::Landing : EProject_JLocomotionPhaseFamily::Start;
+		Data.Landing.bIsLanding = false; // Physical admission has already ended.
+		Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
+		TestEqual(TEXT("Physical Start/Cycle and landing admission do not cut an authored pose phase"), Data.OneShotPresentation.PresentationState, Held);
+		TestTrue(TEXT("The same command clock keeps advancing"), Data.OneShotPresentation.TransitionElapsedTime >= 0.59f);
+		Anim->AnimationClock.Advance(Clip->GetPlayLength() + 1.f, false);
+		Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
+		TestEqual(TEXT("Authored completion still returns to locomotion"), Data.OneShotPresentation.PresentationState, EProject_JStateControllerPresentationState::LocomotionLoop);
+		Anim->StateControllerRuntime.BeginHold(Held, Anim->AnimationClock.Seconds);
+		Data.OneShotPresentation.bEarlyTransitionWindowOpen = true;
+		Anim->ResolveStateControllerPresentationStateWithPlaybackHold(Data, Data.OneShotPresentation);
+		TestEqual(TEXT("An authored early-transition window remains authoritative"), Data.OneShotPresentation.PresentationState, EProject_JStateControllerPresentationState::LocomotionLoop);
+	}
 	return true;
 }
 #endif

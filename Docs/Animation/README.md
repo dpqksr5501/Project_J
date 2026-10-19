@@ -24,10 +24,11 @@
 
 공용 소스 포즈에서 이동 Motion Matching과 전투 상체·몽타주를 합성한다. 임포트 몸체는 런타임 리타깃 뒤 몸체 비율에 맞는 Guided Hand IK를 적용하고 의상 물리를 평가한다. 무기 구동과 손 접촉의 책임은 별도로 설정한다.
 
-2026-10-12 기준 Master는 `Project Unified Locomotion`에서 단발과 MM을 같은 재생 스택으로 실행한다. 네이티브 State Controller·Chooser는 계속 사용하며, 이전 ABP State Machine·외부 Blend Stack·Handoff 경로와 미사용 함수 그래프 9개는 제거했다. Inertialization·Lean과 플레이어별 보정·전투·접지 후단은 유지한다. 실제 이동 증거로 지속 곡선을 판정하며, 리타깃 몸체와 의상 물리는 보호 조건을 포함한 시각 예산으로 함께 관리한다.
+2026-10-12 기준 Master는 `Project Unified Locomotion`에서 단발과 MM을 같은 재생 스택으로 실행한다. 네이티브 State Controller·Chooser는 계속 사용하며, 이전 ABP State Machine·외부 Blend Stack·Handoff 경로와 미사용 함수 그래프 9개는 제거했다. Inertialization·Lean과 플레이어별 보정·전투·접지 후단은 유지한다. 일반 MM에서는 실제 이동 증거로 지속 곡선을 판정하되 호환되는 authored 단발을 곡선 누적만으로 해제하지 않으며, 리타깃 몸체와 의상 물리는 보호 조건을 포함한 시각 예산으로 함께 관리한다.
 
 | 목적 | 기준 문서 |
 | --- | --- |
+| GASP 5.8 조사·단발 수명 정리·대각 Pivot 연결 시도(실제 Strafe 4방향 제한 미해결) | [GASP 5.8 전환 책임 정리](Architecture/GASP58_Locomotion_Migration_2026-10-19.md) |
 | 대각 점프·착지의 실제 sample 보정 초기화 | [R20 보정 복구](../Review/Audits/Project_J_Strafe_Diagonal_Warp_Repair_2026-10-15.md) |
 | 대각 Stand 착지 선택과 현재 Chooser·입력 대조 | [R19 소스·데이터 대조](../Review/Audits/Project_J_PC_Source_Data_Reconciliation_2026-10-15.md) |
 | 후진 중 몸 방향 전환과 Cycle 복귀 | [후진 Reface 구현](Planning/GASP_Backward_Reface_Implementation_2026-10-12.md) |

@@ -1,0 +1,579 @@
+{
+  "status": "Implementation and automated/scripted validation recorded; user reports Strafe pivot remains four-direction only; eight-direction runtime issue unresolved",
+  "started_kst": "2026-10-19",
+  "baseline_head": "57575b1a1b0469bec1ebdca340cebf0db1a3b865",
+  "engine": "5.8.3 CL58210709",
+  "scope": "CMC retained; authored phase exit ownership and existing eight-direction pivot coverage; native PoseMatch/Mover not migrated",
+  "changes": [
+    {
+      "path": "Source/Project_JCharacter/Private/Project_JLocomotionAnimStateComponent.cpp",
+      "change": "modify",
+      "before_sha256": "9f307a57b86026e1ea5acac2f966b57e0b98bedd7b19edbec0810400a5396741",
+      "after_sha256": "30942ada89e1563a33fefe05b5f785020c81aa606de93d4648034e97a39dfbc4"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JCharacterAnimInstance.h",
+      "change": "modify",
+      "before_sha256": "edee9021c17d437d7c80cb3690a2e597af1426777e4aa39351ca04f037b9f553",
+      "after_sha256": "7661c8c7e0b13cb1b2ea95c922b4f1e23a59e9fb560fc13c065d3d7a7b24c17b"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JLocomotionProfile.h",
+      "change": "modify",
+      "before_sha256": "d03b525555873c8e27a10399a94001f6f8122a09539e36d11f920bad4d347187",
+      "after_sha256": "f4423694ec8fc688f4bc6b0870f836bca10aaf2821ee398e958ad54223333b96"
+    },
+    {
+      "path": "Source/Project_JCharacter/Public/Animation/Project_JOneShotCurvePolicy.h",
+      "change": "delete",
+      "before_sha256": "18505d94d11770da2ca83d5087a02c40d77ab6100f3d054b52a2bcabfe2816b2",
+      "after_sha256": null
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Continuity.cpp",
+      "change": "modify",
+      "before_sha256": "a29cebd65188383047e2b4064c255d7227fdc7b6cf581c75fc231c0d29fa2e92",
+      "after_sha256": "064a75be7907e4df9341dcbe6c5c25d06588e9843a82cebe32deaafa4581a863"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.Presentation.cpp",
+      "change": "modify",
+      "before_sha256": "22344c5f0e33d5d0c2e1ce5304a7976edb881a9d6231a1dc783d285527ba2893",
+      "after_sha256": "cd42061b4bd20f38a68d0e44d782b78ea64d720125c1b6dc7a6d4929ee0cda7e"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Animation/Project_JCharacterAnimInstance.PresentationUpdate.cpp",
+      "change": "modify",
+      "before_sha256": "61c1e76e1a371d542a96286c4cfa32abbc16fc280bdd58171ef1c3bdad449862",
+      "after_sha256": "30aa9e049e4f8e38544567e9c97891e0d18aaf248daca353f8d1d0c6e873f59f"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JContinuousCurveTests.cpp",
+      "change": "modify",
+      "before_sha256": "27d53ab7cd2cd2f3f5133b127d288cf9fe9bb5267beb20e844bf075d7047d6e6",
+      "after_sha256": "acc2096cb43299d0407d7c7ce67cd68138b7a25f19f47e395070102c412ec743"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JOneShotInputResponseTests.cpp",
+      "change": "modify",
+      "before_sha256": "b02e423ebf5c203337926436c9934f23fc0cfb607491d367c61a68e7a9d65c0e",
+      "after_sha256": "9ade80122d7dfb66068b71a9dd4581736d6a645bdb669e2baf82e6f7edb6c1d1"
+    },
+    {
+      "path": "Source/Project_JCharacter/Private/Tests/Project_JStrafePivotTests.cpp",
+      "change": "modify",
+      "before_sha256": "9e06385f007130755f3c891dbe30590d31cffda7effc66cee4c7cd2d39b26eda",
+      "after_sha256": "61a363e5b8f096fac8502fce56cb23e3341f1dbfdbd58390bf0b5f88cfec8ed2"
+    },
+    {
+      "path": "Source/Project_J/Testing/Project_JOneShotReturnPlayback.cpp",
+      "change": "modify",
+      "before_sha256": "7dc77df5a3105e10bcb072d8ba85443c6b6212d5b18b8c75c20a2e68debc8530",
+      "after_sha256": "3656cccc07bb8aee149cc75b5f2d9a3151c5ae75f491bd9e155f9c9a10281035"
+    },
+    {
+      "path": "Content/Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Pivot.uasset",
+      "change": "modify",
+      "before_sha256": "73958277e22c27fe8d8f3e82478241adde131dd1ab55269fc1fea2f98580723a",
+      "after_sha256": "59b93f1f9476a1ff5632ae939b337bb7d8669c50c14cf266fef29c588313f739"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JMMOArchitectureTests.cpp",
+      "change": "modify",
+      "reason": "Existing unity-build file-scope Flags collision; identifiers only",
+      "before_sha256": "d8efa590a777eaa5c55b907d92005bfc1923b98b79593889d9345f9db27cfd1b",
+      "after_sha256": "fd7dad674a0296ab577fbb389c035c7e0dacf965f75abfd984a2ad7755b56dfa"
+    },
+    {
+      "path": "Source/Project_J/Private/Tests/Project_JPersistenceTests.cpp",
+      "change": "modify",
+      "reason": "Existing unity-build file-scope Flags collision; identifiers only",
+      "before_sha256": "ad29dafa03a3edaf379d715ead6802f9ba98da274f704badf956c7bed83cc547",
+      "after_sha256": "16d9593dc61a8c5a0439de66c004c9783132f8dc5e41a39f175ae5d596a6c942"
+    },
+    {
+      "path": "Source/Project_JCharacterEditor/Private/Tests/Project_JMeshLODAuthoringTests.cpp",
+      "change": "modify",
+      "reason": "Existing unity-build file-scope Flags collision; identifiers only",
+      "before_sha256": "fa4f53a653d40bc1e2342571e76fe572d9fc5104b66f2b4a3b767f5b5d1911f9",
+      "after_sha256": "6fecc79f5335d4af5e2347b1c6511e0da355d19764c213528fdce049b27ed506"
+    },
+    {
+      "path": "Content/Developers/GASP58POC/L_BasicLocomotion.umap",
+      "change": "add",
+      "reason": "Engine-shape-only developer fixture: flat floor,12-degree ramp,two safe PlayerStarts",
+      "after_sha256": "775f788401bdbb609e411edcdcd55278f7c2b2cd7692f5e67b65b7b8ce30ad8b"
+    }
+  ],
+  "source_and_asset_originals_backup": "Saved/GASP58Migration_20261019/BeforeIntegration",
+  "original_build": {
+    "direct_ubt": true,
+    "result": "Succeeded",
+    "actions": 11,
+    "seconds": 19.18,
+    "earlier_failure": "Existing unity-file Flags identifier collision;three test constants renamed without behavior changes"
+  },
+  "original_automation": {
+    "succeeded": 38,
+    "succeeded_with_warnings": 3,
+    "failed": 0,
+    "not_run": 0,
+    "playback_scenarios": 80,
+    "pivot_selection_cases": 80,
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.AuthoredPhase.Lifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.EarlyTransition.AuthoredConditionAndOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.AuthoredCurvePlayback",
+        "state": "Success",
+        "warnings": 5,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.AuthoredPlayback",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.Compatibility",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.ContinuousCurve",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.CurveRoutingReversal",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.ObservedAcuteTurn",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.ObservedGeneralTurn",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotInput.SustainedEvidence",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotReturn.AuthoredPlayback",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotReturn.DirectionPlayback",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.Pipeline.EngineAdapterScopes",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.Pipeline.PolicyContracts",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StateOwnership.GroundModeSource",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StateOwnership.RemoteJumpFreshness",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.HiddenToVisibleFollowerRestore",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.LandingReturnContext",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.StopIdleInterrupt",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.TurnInPlaceAndCombatStop",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Animation.TwoHandIKTransitionAndCurve",
+        "state": "Success",
+        "warnings": 1,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHitWindowProductionTransition",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.Combat.WeaponAttackLifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.LocomotionContinuity.CandidatesAndLifetime",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.LocomotionContinuity.ProductionCandidates",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.LocomotionContinuity.ProductionGraph",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.LocomotionContinuity.SteeringOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.EquipmentProjection",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.GatewayBounds",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.GatewayRealHTTP",
+        "state": "Success",
+        "warnings": 18,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.InventoryCommandIdentity",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.SharedCommandBudget",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.SocialSessionRevocation",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.ProfileCodec",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Mount.InteractDispatchRoundTrip",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.MountStrafeFix.Mount.InteractInputOwnership",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      },
+      {
+        "name": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success",
+        "warnings": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "final_pie": [
+    {
+      "receipt": "Original_Final_Scenario.json",
+      "completed": true,
+      "samples": 640
+    },
+    {
+      "receipt": "Original_DiagonalPivot_PIE.json",
+      "completed": true,
+      "samples": 520
+    },
+    {
+      "receipt": "Original_Surface_PIE.json",
+      "completed": true,
+      "samples": 188
+    },
+    {
+      "receipt": "Original_TwoPlayer_PIE.json",
+      "completed": true,
+      "samples": 148
+    }
+  ],
+  "network": {
+    "worlds": 2,
+    "players": 2,
+    "actors_per_sample": 4,
+    "actual_role_pairs": [
+      [
+        "<NetRole.ROLE_AUTHORITY: 3>",
+        false
+      ],
+      [
+        "<NetRole.ROLE_AUTHORITY: 3>",
+        true
+      ],
+      [
+        "<NetRole.ROLE_AUTONOMOUS_PROXY: 2>",
+        true
+      ],
+      [
+        "<NetRole.ROLE_SIMULATED_PROXY: 1>",
+        false
+      ]
+    ],
+    "final_settled_comparison": [
+      {
+        "player_id": 256,
+        "final_world_position_difference_cm": 0.00363295852290904
+      },
+      {
+        "player_id": 257,
+        "final_world_position_difference_cm": 5.917853580094719e-05
+      }
+    ],
+    "impairment_latency_matrix": false
+  },
+  "references": {
+    "compiled_blueprints": 4,
+    "directly_inspected_assets": 6,
+    "direct_dependency_entries": 66,
+    "missing": 0
+  },
+  "content_preservation": [
+    {
+      "scope": "sample_content",
+      "baseline_files": 3898,
+      "changed_or_missing": [],
+      "added": []
+    },
+    {
+      "scope": "project_content",
+      "baseline_files": 14409,
+      "changed_or_missing": [
+        "Animation_Logic/Chooser/strafe/CHT_Player_Strafe_Run_Pivot.uasset"
+      ],
+      "added": [
+        "Developers/GASP58POC/L_BasicLocomotion.umap"
+      ]
+    }
+  ],
+  "original_pie_settings_restored": {
+    "bLaunchSeparateServer": "False",
+    "PlayNetMode": "PIE_Client",
+    "RunUnderOneProcess": "True",
+    "PlayNumberOfClients": "1"
+  },
+  "not_executed": [
+    "Crowd/CCU benchmarks",
+    "FPS/latency/loss matrices",
+    "Full Cook/Shipping/package",
+    "Quantitative foot sliding or animation cost measurements",
+    "User subjective feel approval"
+  ],
+  "local_evidence_root": "Saved/GASP58Migration_20261019",
+  "evidence": [
+    {
+      "local_receipt": "Original_Final_BuildConsole.log",
+      "bytes": 3857,
+      "sha256": "d8aa9509d8420bba4640713490137b2f98d2b70b0e49b1f5ef5ea97b0f2594d7"
+    },
+    {
+      "local_receipt": "Original_Final_UBT.log",
+      "bytes": 14702,
+      "sha256": "046e8f6e2ce4eaf345b4833f193e3f6fdf3d975876767fca5691f6cc5609848a"
+    },
+    {
+      "local_receipt": "Original_Final_Automation/index.json",
+      "bytes": 34028,
+      "sha256": "e67531c4e40d6adca12de36f3a363ec69c2277c59b34ba2acc5336cfa84d63c4"
+    },
+    {
+      "local_receipt": "8000_FinalCompile_Master.json",
+      "bytes": 167,
+      "sha256": "5d5fa076d12fdf919b5d416ce476ab154c8f0aaac2c951257a3adbd58656af4c"
+    },
+    {
+      "local_receipt": "8000_FinalCompile_Layers.json",
+      "bytes": 167,
+      "sha256": "5d5fa076d12fdf919b5d416ce476ab154c8f0aaac2c951257a3adbd58656af4c"
+    },
+    {
+      "local_receipt": "8000_FinalCompile_Body.json",
+      "bytes": 167,
+      "sha256": "5d5fa076d12fdf919b5d416ce476ab154c8f0aaac2c951257a3adbd58656af4c"
+    },
+    {
+      "local_receipt": "8000_FinalCompile_Post.json",
+      "bytes": 167,
+      "sha256": "5d5fa076d12fdf919b5d416ce476ab154c8f0aaac2c951257a3adbd58656af4c"
+    },
+    {
+      "local_receipt": "Original_ReferenceAudit.json",
+      "bytes": 5113,
+      "sha256": "e62597f57de15cd3d2a1f569b5f4d9f747cbec3b3e8221d4b5391d6df2704cbb"
+    },
+    {
+      "local_receipt": "Original_RuntimeInventory.json",
+      "bytes": 5510,
+      "sha256": "cb152c1eb60cdcfbafb6e0a612f1e094943e82b7d2043ef8a860e7701083a5de"
+    },
+    {
+      "local_receipt": "Original_FreshMap.json",
+      "bytes": 522,
+      "sha256": "5a8c59bb0bc799b649a3974fec95cb98ada0739ca26bc2698ddae878effbb157"
+    },
+    {
+      "local_receipt": "RestoredPIESettings.json",
+      "bytes": 136,
+      "sha256": "98ad1ca4324b564ad6b194ddcc2ef6bd3445454d7b200bd4f6a73c83897aca50"
+    },
+    {
+      "local_receipt": "GASP_DefaultOTM_Scenario_Corrected.json",
+      "bytes": 727711,
+      "sha256": "871d4ca68ddd0d81dd9d72f9aee6b62b2de1022171d2a00f75aaea8ae4de5b40"
+    },
+    {
+      "local_receipt": "Original_Final_Scenario.json",
+      "bytes": 686123,
+      "sha256": "fe70097e0d4dab127e72903e3dbdf41cca794d32ff75e25fe709445ddf126738"
+    },
+    {
+      "local_receipt": "Original_DiagonalPivot_PIE.json",
+      "bytes": 244375,
+      "sha256": "6ebf17fe62f3197d3300ca42096e0a205fefb4270e4f59bce39bb49916fdd0c4"
+    },
+    {
+      "local_receipt": "Original_Surface_PIE.json",
+      "bytes": 135246,
+      "sha256": "2bce57b0f89242138f90e77998f0215dcf4d5d7ea984d88217e9dd765e2926d0"
+    },
+    {
+      "local_receipt": "Original_TwoPlayer_PIE.json",
+      "bytes": 597237,
+      "sha256": "7aded361efbe1db12225497ed1ea7d6a42c85e7c9b8c4b228e774ad754881ebf"
+    }
+  ],
+  "documentation_changes": [
+    "Docs/Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md",
+    "Docs/Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md",
+    "Docs/Animation/Architecture/MotionMatchingNextSteps.md",
+    "Docs/Animation/Architecture/OneShot_Input_Response_2026-10-11.md",
+    "Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/02_GASP.md",
+    "Docs/Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/README.md",
+    "Docs/Animation/Planning/GASP_ProjectJ_Naturalness_Comparison_2026-10-12.md",
+    "Docs/Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md",
+    "Docs/Animation/Planning/README.md",
+    "Docs/Animation/Planning/Strafe_Land_Return_2026-10-13.md",
+    "Docs/Animation/Planning/Sustained_Curve_And_Master_Cleanup_2026-10-12.md",
+    "Docs/Animation/README.md",
+    "Docs/Maintenance/Document_Catalog.md",
+    "Docs/Overview/ProjectContext.md"
+  ],
+  "documentation_validation": {
+    "changed_markdown_files": 14,
+    "checked_links": 1058,
+    "missing": [],
+    "whole_repository_broken_links": 54,
+    "baseline_same_broken_links": 54
+  },
+  "git_diff_check": "Passed",
+  "implementation_recorded_kst": "2026-10-20",
+  "user_report": {
+    "date_kst": "2026-10-20",
+    "issue": "Actual Strafe gameplay still supports only four-direction pivot",
+    "resolution": "Unresolved; no new reproduction or fix performed after this report",
+    "interpretation": "Prior automated selection and scripted PIE results do not establish resolution in actual user gameplay"
+  }
+}

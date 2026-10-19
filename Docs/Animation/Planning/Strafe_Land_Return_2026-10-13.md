@@ -1,5 +1,7 @@
 # Strafe Land 복귀 연속성 보완 — 2026-10-13
 
+2026-10-19 후속 [GASP 5.8 전환 책임 정리](../Architecture/GASP58_Locomotion_Migration_2026-10-19.md)는 누적 곡선에 의한 단발 조기 양보를 제거하고 실제 authored 종료를 사용한다. 일반 MM의 곡선·방향별 후보와 공통 스택은 유지한다. 아래 사용자 로그·수치·검증은 당시 구현 이력이다.
+
 ## 10:02 착지 이후 Arc/Loop 전환 후속
 
 09:26 수정 이후에도 사용자는 Land→약한 마우스 회전에서 비슷한 방향의 모션으로 순간적으로 튄다고 보고했다. 새 로그는 `Saved/Validation/LandCandidateHandoff_20261013_1002/User.log`에 보존했다. SHA256은 `73473CDA95E39987A088103A38E8E68B7800E02A8DE58D3090F1952412338CAC`이다. 착지 복귀 11회가 모두 `ContinuousCurveToCycle` 및 ForwardCycle을 사용했다.

@@ -305,7 +305,6 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 		? LocomotionProfile->TransitionPolicy.StartMoveInputCancelAngle
 		: 30.0f;
 
-	bOneShotCurveReleasedThisUpdate = false;
 	bool bShouldCancelOneShot = bIsTurnCancellableOneShot &&
 		OwningPlayerCharacter && OwningPlayerCharacter->IsLocallyControlled() &&
 		ShouldCancelLocalOneShotForInput(bIsCommittedPivotOneShot, EffectiveMouseTurnCancelAngle, EffectiveMoveInputCancelAngle);
@@ -411,7 +410,7 @@ void UProject_JCharacterAnimInstance::UpdatePresentationFromSnapshot()
 	}
 	else if (!bIsTurnCancellableOneShot)
 	{
-		OneShotCurvePolicy.Reset();
+
 		ClearStateControllerInputReferences();
 	}
 	// Chooser columns require a reflected property rather than a BlueprintPure

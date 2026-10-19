@@ -1,5 +1,7 @@
 # Start·Land의 입력 반응과 첫 MM 검색
 
+**2026-10-19 현재 계약:** [GASP 5.8 전환 책임 정리](GASP58_Locomotion_Migration_2026-10-19.md)가 아래의 단발 곡선 양보 정책을 대체한다. 작은 호환 입력은 동일 authored 클립·revision을 유지한다. 실제 입력 부적합·gait/owner 변화·authored 종료는 기존 경계로 처리한다. `FProject_JOneShotCurvePolicy`와 강제 양보 상태는 퇴역하며 일반 MM의 지속 곡선 후보 판정은 유지한다. 물리 착지 입장 종료만으로 시각 Land를 자르지 않는다. 아래 수치·로그·검증은 당시 구현 이력이다.
+
 ## 목적과 근거
 
 단발과 지속 모션의 구분은 유지한다. [Live Return](OneShot_Live_Return_2026-10-11.md)은 실제 두 포즈를 겹치는 연결 수단이며, 이번 변경은 그 앞의 입력 적합성·후보 판단을 개선한다. 작은 카메라 입력마다 진입 각도 임계값으로 단발을 끊거나, 복귀 직전에 있었던 회전 요구를 잊고 새 Cycle 관측을 시작하는 문제를 줄인다.
@@ -10,7 +12,7 @@
 
 로컬 Start·Land에는 `bEnableOneShotInputResponse`를 기본 활성화한다. 동일 키의 world 방향은 카메라가 돌면 같이 변하므로, 키 변경은 진입 당시와 현재 입력을 각각 camera frame에서 비교한다. W를 유지한 카메라 곡선을 W→A/S 변경과 혼동하지 않는다. 옆/뒤 키를 유지한 Strafe도 같은 원리를 쓴다.
 
-실제 Steering이 활성화되어 있고 현재 시각 몸체·이동 관성의 잔여 오차가 프로필의 `SteeringMaxVisualYawError` 안이면 작은 입력을 보정하며 단발을 유지한다. 지속적인 실제 곡선 이동에는 아래 Cycle 양보 정책을 적용한다. 총 카메라 회전량만으로 취소하지 않는다. 다른 방향 키로 바뀌거나 보정 범위를 넘으면 즉시 MM으로 넘긴다. Steering 비활성·stale trajectory·지원하지 않는 소유권은 기존 Start/Land 각도 취소 정책으로 돌아간다. Pivot은 기존 의미 입력 reconciliation과 camera 취소 정책을 그대로 쓴다.
+실제 Steering이 활성화되어 있고 현재 시각 몸체·이동 관성의 잔여 오차가 프로필의 `SteeringMaxVisualYawError` 안이면 작은 입력을 보정하며 단발을 유지한다. 10월 19일 이후 누적 곡선 자체로 단발을 취소하지 않는다. 총 카메라 회전량만으로 취소하지 않는다. 다른 방향 키로 바뀌거나 보정 범위를 넘으면 즉시 MM으로 넘긴다. Steering 비활성·stale trajectory·지원하지 않는 소유권은 기존 Start/Land 각도 취소 정책으로 돌아간다. Pivot은 기존 의미 입력 reconciliation과 camera 취소 정책을 그대로 쓴다.
 
 Start의 실제 presentation은 의미 상태가 Cycle로 바뀐 뒤에도 클립을 유지할 수 있다. `IsMovingOneShotInputOwner`는 실제 TransitionToLocomotion/TransitionToLand 소유권을 보정·관측의 공통 기준으로 사용한다. 같은 presentation enum을 사용하는 committed Pivot은 명시적으로 제외한다. 의미 상태가 Cycle이라는 이유만으로 살아 있는 Start의 Steering이나 회전 관측을 중단하지 않는다.
 
@@ -30,14 +32,14 @@ AnimInstance NativeUpdate가 locomotion component tick보다 먼저 실행될 �
 
 ## 활용하는 노드와 엔진 함수
 
-- Pose History: 최종 출력 collector를 계속 평가하며 복귀에서 reset하지 않는다. 기존 pose-history 기반 invalidate-continuing 검색을 유지한다. `GetPoseHistoryPtr`, `GetNumEntries`, `GetTransformAtTime`으로 실제 이력의 유지 여부를 검사·진단한다.
+- Pose History: source 후단 collector를 계속 평가하며 복귀에서 reset하지 않는다. 기존 pose-history 기반 invalidate-continuing 검색을 유지한다. `GetPoseHistoryPtr`, `GetNumEntries`, `GetTransformAtTime`으로 실제 이력의 유지 여부를 검사·진단한다.
 - MM: 기존 `SetDatabasesToSearch` / `SetInterruptMode` 엔진 경로로 호환 후보를 전달한다. 첫 복귀 검색 요청은 실제 검색까지 유지하고 한 번 처리한 노드는 반복 강제 검색하지 않는다. 입력 하나가 특정 clip/time을 강제하지 않는다.
 - MM 내부·외부 Blend Stack: 기존 `GetCurrentBlendStackAnimAsset/Time/Mirrored/MirrorTable` 연결과 플레이어별 ResetRoot·Steering을 활용한다. outgoing 단발은 자기 재생 시계를 진행하고 목표 방향은 최신 snapshot을 사용한다.
 - OffsetRoot·FootPlacement·LegIK: 기존 그래프 순서와 소유권을 보존한다. 임의의 새로운 IK나 전체 몸체 보정 노드를 추가하지 않는다.
 
 Pose History의 `SetPoseHistoryNodeTransformTrajectory`와 MM의 `OverrideMotionMatchingBlendSettings` API도 설치 엔진에서 확인했다. 이미 trajectory 핀이 native getter로 연결된 collector를 별도 override하거나, 핀에 덮어써질 BlendSettings 요청을 추가하지 않았다. 과거 자세를 현재 입력으로 새로 생성하거나, 전환 때 history를 지우는 것은 이 설계의 목적에 맞지 않는다.
 
-## 지속 곡선 이동의 Cycle 양보
+## 당시 지속 곡선 이동의 Cycle 양보 — 10월 19일 퇴역
 
 Steering으로 따라갈 수 있다는 사실만으로 현재 Start/Land가 계속 적합하다고 판단하지 않는다. Run/Sprint의 이동 중 단발에 적용하는 `FProject_JOneShotCurvePolicy`는 실제 actor의 planar 이동 거리와 실제 velocity heading의 일관된 변화를 관측한다. 기본값은 곡선 이동 100cm, 순 heading 변화 20도, 순/절대 heading 변화 비율 0.85이며 모두 TransitionPolicy에서 조정한다. 새 만료 타이머나 누적 camera-angle 취소 조건은 없다.
 

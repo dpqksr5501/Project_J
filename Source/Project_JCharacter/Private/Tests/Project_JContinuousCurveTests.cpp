@@ -2,7 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Animation/Project_JContinuousCurvePolicy.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
-#include "Animation/Project_JOneShotCurvePolicy.h"
+#include "Animation/Project_JOneShotInputResponse.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJContinuousCurveEvidenceTest, "ProjectJ.Animation.OneShotInput.SustainedEvidence",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -48,17 +48,15 @@ bool FProjectJContinuousCurveEvidenceTest::RunTest(const FString&)
 		TestFalse(TEXT("Tiny nudge, jitter, camera-only, blocked and straight travel do not prove a curve"), bActive);
 		TestFalse(TEXT("Tiny rapid samples cannot bypass Strafe routing through raw yaw rate"), bDynamic);
 	}
-	FProject_JOneShotCurvePolicy Shot; FProject_JOneShotCurvePolicy::FInput I;
-	I.bEligible = I.bHasRequestedHeading = true;
+	FProject_JOneShotInputResponse::FInput Shot;
+	Shot.bCanSteer = Shot.bHasMoveReference = Shot.bHasMoveInput = true;
 	for (int32 N = 0; N < 120; ++N)
 	{
-		I.Now = N / 60.; I.RequestedHeading = N / 12.f;
-		I.Velocity = I.FutureVelocity = FRotator(0, I.RequestedHeading, 0).Vector() * 400;
-		I.Position += I.Velocity / 60;
-		TestFalse(TEXT("Confirmed slow curve cannot bypass a protected Start or Land"), Shot.Update(I, {}).bYield);
+		Shot.ControlYaw = Shot.MoveYaw = N / 12.f;
+		Shot.FacingError = 2; Shot.PathError = 2;
+		TestFalse(TEXT("Confirmed curve evidence does not independently cancel an authored phase"), FProject_JOneShotInputResponse::Resolve(Shot).bRelease);
 	}
-	I.Now += 1. / 60; I.Position += I.Velocity / 60; I.bCanExit = true;
-	TestTrue(TEXT("Protected shot can yield as soon as its semantic exit becomes ready"), Shot.Update(I, {}).bYield);
+
 	return true;
 }
 

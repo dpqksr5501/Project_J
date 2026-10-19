@@ -27,7 +27,7 @@
 using namespace ProjectJ::MMO;
 namespace
 {
-constexpr auto Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+constexpr auto PersistenceTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 FString TestDirectory()
 {
 	return FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir() / TEXT("Validation/LocalProfileTests") /
@@ -62,7 +62,7 @@ class FRepositoryFinished : public IAutomationLatentCommand
 };
 } // namespace
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSQLiteContractTest, "ProjectJ.MMO.Persistence.SQLiteContract", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSQLiteContractTest, "ProjectJ.MMO.Persistence.SQLiteContract", PersistenceTestFlags)
 bool FProjectJSQLiteContractTest::RunTest(const FString &)
 {
 	AddExpectedError(TEXT("Local database has a journal/WAL sidecar."), EAutomationExpectedErrorFlags::Contains, 1);
@@ -251,7 +251,7 @@ bool FProjectJSQLiteContractTest::RunTest(const FString &)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProfileCodecTest, "ProjectJ.MMO.Persistence.ProfileCodec", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJProfileCodecTest, "ProjectJ.MMO.Persistence.ProfileCodec", PersistenceTestFlags)
 bool FProjectJProfileCodecTest::RunTest(const FString &)
 {
 	FGuid A, C, A2, C2;
@@ -720,7 +720,7 @@ struct FProfileLifecycle : IAutomationLatentCommand
 };
 } // namespace
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJLocalProfileLifecycleTest, "ProjectJ.MMO.Persistence.LocalProfileLifecycle",
-								 Flags)
+								 PersistenceTestFlags)
 bool FProjectJLocalProfileLifecycleTest::RunTest(const FString &)
 {
 	FString Phase;

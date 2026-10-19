@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3310개, Markdown 258개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3316개, Markdown 259개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -42,6 +42,7 @@
 | [애니메이션 파이프라인 리팩토링 — 2026-10-13](../Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md) | 구조·계약 | Animation/Architecture/Animation_Pipeline_Refactor_2026-10-13.md |
 | [실제 캐릭터 애니메이션 CPU·소켓 검증 — 2026-10-05](../Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md) | 구조·계약 | Animation/Architecture/Authored_Animation_Crowd_Network_2026-10-05.md |
 | [캐릭터 Foley 기반과 군중 재생 정책](../Animation/Architecture/Foley_Audio_System.md) | 통합 상세 가이드 | Animation/Architecture/Foley_Audio_System.md |
+| [GASP 5.8 기반 locomotion 전환 책임 정리](../Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md) | 구조·계약 | Animation/Architecture/GASP58_Locomotion_Migration_2026-10-19.md |
 | [일반 이동 회전 후보와 수명](../Animation/Architecture/General_Turning_2026-10-06.md) | 구조·계약 | Animation/Architecture/General_Turning_2026-10-06.md |
 | [이동 착지의 MM 복귀와 연결 레이어 검색 완료 — 2026-10-05](../Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md) | 구조·계약 | Animation/Architecture/Landing_Return_Linked_Search_2026-10-05.md |
 | [Motion Matching 복귀 검색과 군중 검색 예산 — 2026-10-05](../Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md) | 구조·계약 | Animation/Architecture/MotionMatching_Return_Crowd_2026-10-05.md |
@@ -320,7 +321,8 @@
 
 | 위치 | 파일 수 | 내용 |
 | --- | --- | --- |
-| [Animation/Architecture](../Animation/Architecture) | 6 | 문서 이동·보존 기록 |
+| [Animation/Architecture](../Animation/Architecture) | 7 | 문서 이동·보존 기록 |
+| [Animation/Architecture/Evidence/GASP58_2026-10-19](../Animation/Architecture/Evidence/GASP58_2026-10-19) | 4 | 문서 이동·보존 기록 |
 | [Animation/Diagnostics](../Animation/Diagnostics) | 4 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence](../Animation/Planning/GASP_Backward_Reface_2026-10-12_Evidence) | 6 | 문서 이동·보존 기록 |
 | [Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence](../Animation/Planning/GASP_ProjectJ_Naturalness_2026-10-06/Evidence) | 5 | 문서 이동·보존 기록 |

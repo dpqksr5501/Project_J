@@ -43,7 +43,6 @@ struct PROJECT_JCHARACTER_API FProject_JStateControllerChooserOutput
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation|One Shot Return", meta = (ClampMin = "-1.0", Units = "s"))
 	float ReturnBlendTime = -1.f;
 
-
 	/**
 	 * Keep this as an asset reference rather than an FName so a Chooser output
 	 * can connect directly to the Blend Stack's Blend Profile input. The former
@@ -318,16 +317,16 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response")
 	FProject_JContinuousCurveSettings ContinuousCurve;
 
-	/** Actual curved travel required before a compatible Start/Land may yield to Cycle. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "10.0", ClampMax = "1000.0", Units = "cm"))
+	/** Legacy serialized value; authored phase/input compatibility now owns the exit. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Transition|Legacy", meta=(DeprecatedProperty, DeprecationMessage="Authored transition phase no longer exits from accumulated curvature"))
 	float OneShotCurveTravelDistance = 100.0f;
 
-	/** Coherent actual travel heading sweep, independent of accumulated camera rotation. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "5.0", ClampMax = "90.0", Units = "deg"))
+	/** Legacy serialized value; authored phase/input compatibility now owns the exit. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Transition|Legacy", meta=(DeprecatedProperty, DeprecationMessage="Authored transition phase no longer exits from accumulated curvature"))
 	float OneShotCurveHeadingSweep = 20.0f;
 
-	/** Net / absolute heading change; rejects alternating left/right noise. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Input Response", meta = (ClampMin = "0.5", ClampMax = "1.0"))
+	/** Legacy serialized value; authored phase/input compatibility now owns the exit. */
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion|Transition|Legacy", meta=(DeprecatedProperty, DeprecationMessage="Authored transition phase no longer exits from accumulated curvature"))
 	float OneShotCurveDirectionConsistency = 0.85f;
 
 	/** Movement input yaw delta threshold to cancel Start one-shot and blend to Motion Matching (e.g. W -> WA/A/S/D). */
@@ -337,7 +336,6 @@ struct PROJECT_JCHARACTER_API FProject_JLocomotionTransitionPolicy
 	/** Mouse/camera yaw delta threshold to cancel Land one-shot and blend to Motion Matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Land", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float LandMouseTurnCancelAngle = 25.0f;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Transition|Turn", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SharpTurnAngleThreshold = 60.0f;

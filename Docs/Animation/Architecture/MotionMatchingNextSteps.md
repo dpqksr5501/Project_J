@@ -240,7 +240,7 @@ changing ordinary locomotion or remote-proxy budgeting.
 ### Why Combat Strafe leaves `TurnRedirect` empty
 
 Combat Strafe does **not** use moving `TurnRedirect` assets. Leave those slots
-empty: ordinary input direction changes stay in `Cycle`, while cardinal-only
+empty: ordinary input direction changes stay in `Cycle`, while the authored eight-direction
 reversals may still enter the separate direct Pivot path.
 
 The moving Run Turn assets are authored for OTM: their body-facing direction
@@ -257,8 +257,10 @@ The resolution is deliberately structural rather than a search-cost tweak:
 - OTM keeps its moving `TurnRedirect` PSD and its authored turn assets.
 - Combat Strafe keeps `TurnRedirect` empty and handles ordinary direction
   corrections in its continuous Dynamic Cycle PSD.
-- The existing direct Pivot path remains cardinal-only (`F`, `B`, `L`, `R`);
-  there are no diagonal pivot assets.
+- The previous direct Pivot restriction was cardinal-only. The current table
+  contains eight directions with both feet, including real diagonal assets.
+  [The GASP 5.8 follow-up](GASP58_Locomotion_Migration_2026-10-19.md) removes the cardinal gate and enables the existing eight diagonal rows.
+  The former claim that diagonal pivot assets did not exist was incorrect for the current data.
 - Phase-stability holds are never carried from OTM into Combat Strafe, or in the
   reverse direction.
 

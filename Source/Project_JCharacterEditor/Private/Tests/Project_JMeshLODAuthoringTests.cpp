@@ -28,7 +28,7 @@
 
 namespace
 {
-constexpr auto Flags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
+constexpr auto MeshLODAuthoringTestFlags=EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter;
 USkeletalMesh* SingleBody(const TCHAR* Path=TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"))
 {
     auto* Source=LoadObject<USkeletalMesh>(nullptr,Path);
@@ -45,7 +45,7 @@ USkeletalMesh* SingleBody(const TCHAR* Path=TEXT("/Game/Characters/GreatSword/Gr
     return Copy;
 }
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODContracts,"ProjectJ.Authoring.MeshLOD.Contracts",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODContracts,"ProjectJ.Authoring.MeshLOD.Contracts",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODContracts::RunTest(const FString&)
 {
     using namespace ProjectJ::MeshLODAuthoring;
@@ -61,7 +61,7 @@ bool FProjectJMeshLODContracts::RunTest(const FString&)
     TestFalse(TEXT("Shared bone-removal recipe rejected"),ValidatePolicy(*Policy,Error));
     return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODGeneration,"ProjectJ.Authoring.MeshLOD.NativeGeneration",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODGeneration,"ProjectJ.Authoring.MeshLOD.NativeGeneration",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODGeneration::RunTest(const FString&)
 {
     using namespace ProjectJ::MeshLODAuthoring;
@@ -83,7 +83,7 @@ bool FProjectJMeshLODGeneration::RunTest(const FString&)
     }
     return true;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODExceptions,"ProjectJ.Authoring.MeshLOD.Exceptions",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODExceptions,"ProjectJ.Authoring.MeshLOD.Exceptions",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODExceptions::RunTest(const FString&)
 {
     using namespace ProjectJ::MeshLODAuthoring;
@@ -111,7 +111,7 @@ bool FProjectJMeshLODExceptions::RunTest(const FString&)
 
 // Explicit one-off integration input preparation. Only new UUID packages are
 // created; ordinary automation never saves a content asset.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODIntegrationInputs,"ProjectJ.Authoring.MeshLOD.IntegrationInputs",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODIntegrationInputs,"ProjectJ.Authoring.MeshLOD.IntegrationInputs",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODIntegrationInputs::RunTest(const FString&)
 {
     FString Folder;if(!FParse::Value(FCommandLine::Get(),TEXT("ProjectJMeshLODIntegrationFolder="),Folder))return true;
@@ -133,7 +133,7 @@ bool FProjectJMeshLODIntegrationInputs::RunTest(const FString&)
     TestTrue(TEXT("Integration paths recorded"),FFileHelper::SaveStringToFile(Paths,*Out));return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODLocalWeapon,"ProjectJ.Authoring.MeshLOD.LocalWeaponLifecycle",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODLocalWeapon,"ProjectJ.Authoring.MeshLOD.LocalWeaponLifecycle",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODLocalWeapon::RunTest(const FString&)
 {
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
@@ -161,7 +161,7 @@ bool FProjectJMeshLODLocalWeapon::RunTest(const FString&)
     Weapon->Destroy();return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODValidator,"ProjectJ.Authoring.MeshLOD.AssetValidation",Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMeshLODValidator,"ProjectJ.Authoring.MeshLOD.AssetValidation",MeshLODAuthoringTestFlags)
 bool FProjectJMeshLODValidator::RunTest(const FString&)
 {
     auto* Body=LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Characters/GreatSword/GreatSword_Woman.GreatSword_Woman"));

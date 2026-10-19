@@ -13,7 +13,6 @@
 #include "Animation/Project_JAnimationClock.h"
 #include "Animation/Project_JGeneralTurnPolicy.h"
 #include "Animation/Project_JBackwardRefacePolicy.h"
-#include "Animation/Project_JOneShotCurvePolicy.h"
 #include "Animation/Project_JTurnRequestSample.h"
 #include "Animation/Project_JAnimationFlowTrace.h"
 #include "Animation/Project_JAnimationLocomotionMode.h"
@@ -220,7 +219,7 @@ public:
 		check(IsInGameThread());
 		return ThreadSafeData.OneShotPresentation.bShouldOverrideMotionMatching && IsMovingOneShotInputOwner(ThreadSafeData);
 	}
-	bool DidYieldOneShotForCurveOnGameThread() const { check(IsInGameThread()); return bOneShotCurveReleasedThisUpdate; }
+
 	bool CanSteerOneShotInputOnGameThread() const
 	{
 		check(IsInGameThread());
@@ -629,8 +628,7 @@ protected:
 	bool IsMovingOneShotInputOwner(const FProject_JAnimThreadSafeData& Data) const;
 	FProject_JGeneralTurnPolicy GeneralTurnPolicy;
 	FProject_JBackwardRefacePolicy BackwardRefacePolicy;
-	FProject_JOneShotCurvePolicy OneShotCurvePolicy;
-	bool bOneShotCurveReleasedThisUpdate = false;
+
 	FProject_JTurnSelectionFeedback CompletedTurnFeedback;
 	void RecordAnimationFlowPublication(const FProject_JAnimThreadSafeData& Data, bool bChooserUpdate, bool bFreshSnapshot);
 	void RecordAnimationFlowEvaluation();
@@ -788,8 +786,6 @@ public:
 	double LastFullBodyMontageEndedAtSeconds = -100.0;
 	/** 탑승 경계에서 이전 지상 일회성 애니메이션이 다시 선택되지 않도록 한다. */
 	bool bWasMountedForStateController = false;
-
-
 
 	// --- Chooser Variables (read by Chooser Table rows on Game Thread) ---
 
@@ -1039,6 +1035,7 @@ private:
 	friend class FProjectJStrafePivotRedirectBasisTest;
 	friend class FProjectJStrafePivotConsecutiveTest;
 	friend class FProjectJOneShotModeContinuityTest;
+	friend class FProjectJAuthoredPhaseLifetimeTest;
 	friend class FProjectJAirLoopOutputTest;
 	friend class FProjectJLocomotionSteeringOwnershipTest;
 	friend class FProjectJAnimationClockTest;

@@ -23,7 +23,7 @@
 
 namespace
 {
-constexpr auto Flags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
+constexpr auto MMOArchitectureTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter;
 struct FArchitectureWorld
 {
 	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
@@ -37,7 +37,7 @@ struct FArchitectureWorld
 };
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSharedBudgetTest, "ProjectJ.MMO.Architecture.SharedCommandBudget", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSharedBudgetTest, "ProjectJ.MMO.Architecture.SharedCommandBudget", MMOArchitectureTestFlags)
 bool FProjectJSharedBudgetTest::RunTest(const FString&)
 {
 	FArchitectureWorld Scope;
@@ -69,7 +69,7 @@ bool FProjectJSharedBudgetTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReplayTest, "ProjectJ.MMO.Architecture.InventoryCommandIdentity", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJCommandReplayTest, "ProjectJ.MMO.Architecture.InventoryCommandIdentity", MMOArchitectureTestFlags)
 bool FProjectJCommandReplayTest::RunTest(const FString&)
 {
 	FArchitectureWorld Scope;
@@ -106,7 +106,7 @@ bool FProjectJCommandReplayTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentPrivacyTest, "ProjectJ.MMO.Architecture.EquipmentProjection", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJEquipmentPrivacyTest, "ProjectJ.MMO.Architecture.EquipmentProjection", MMOArchitectureTestFlags)
 bool FProjectJEquipmentPrivacyTest::RunTest(const FString&)
 {
 	FArchitectureWorld Scope;
@@ -141,7 +141,7 @@ bool FProjectJEquipmentPrivacyTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSocialSessionTest, "ProjectJ.MMO.Architecture.SocialSessionRevocation", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJSocialSessionTest, "ProjectJ.MMO.Architecture.SocialSessionRevocation", MMOArchitectureTestFlags)
 bool FProjectJSocialSessionTest::RunTest(const FString&)
 {
 	TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>(GEngine));
@@ -168,7 +168,7 @@ bool FProjectJSocialSessionTest::RunTest(const FString&)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGatewayBoundsTest, "ProjectJ.MMO.Architecture.GatewayBounds", Flags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGatewayBoundsTest, "ProjectJ.MMO.Architecture.GatewayBounds", MMOArchitectureTestFlags)
 bool FProjectJGatewayBoundsTest::RunTest(const FString&)
 {
 	TStrongObjectPtr<UGameInstance> GI(NewObject<UGameInstance>(GEngine));

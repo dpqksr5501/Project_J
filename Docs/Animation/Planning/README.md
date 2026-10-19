@@ -4,8 +4,10 @@
 
 ## 현재 결정
 
+- [GASP 5.8 전환 책임 정리](../Architecture/GASP58_Locomotion_Migration_2026-10-19.md): 실제 기본 Mover 경로를 조사하고, CMC·공통 스택을 유지하며 단발 수명·대각 Pivot을 적용한다. 사용자 실제 Strafe 실행의 4방향 제한은 미해결이며, 선택 테스트 성공과 구분한다.
+
 - [200명 전원 표시와 로컬 품질 보존 계획·첫 적용](../../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md): 거리 관측 활성화와 로컬 중복 계산 정리, 실제 렌더·원격·판정 검증. 동시 공격 비용·CPU 증가 미해결과 후속 제안을 구분한다.
-- [Mirror Data 도입 보류](Mirror_Data_Adoption_Decision_2026-10-15.md): 현재 locomotion을 유지한다. 특정 연결의 발·자세 후보 공백이 확인될 때만 해당 구간을 재검토한다.
+- [Mirror Data 도입 보류](Mirror_Data_Adoption_Decision_2026-10-15.md): Mirror용 데이터는 추가하지 않는다. 특정 연결의 발·자세 후보 공백이 확인될 때만 해당 구간을 재검토한다.
 
 ## 이미 구현한 기능과 검증 기록
 

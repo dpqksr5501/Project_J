@@ -29,17 +29,6 @@ namespace
 		TEXT("Use the optional curated Loop/Arc pool for aligned local forward Strafe Run. 0 restores prior routing."));
 	TAutoConsoleVariable<int32> CVarStrafeCurveRoutingContinuity(TEXT("p.ProjectJ.StrafeCurveRoutingContinuity"), 1,
 		TEXT("Preserve confirmed Strafe curve candidates across direction reversals. 0 compares the previous strict-proof routing."));
-	// Combat-Strafe Run Pivot has authored cardinal pairs only. A generous axis
-	// tolerance keeps an analog stick near a cardinal direction eligible, while
-	// rejecting the normalized keyboard diagonals (~0.707/0.707).
-	bool IsCardinalPivotIntent(const FVector2D& Intent)
-	{
-		const FVector2D Direction = Intent.GetSafeNormal();
-		const float AbsX = FMath::Abs(Direction.X);
-		const float AbsY = FMath::Abs(Direction.Y);
-		return (AbsX <= 0.25f && AbsY >= 0.75f) ||
-			(AbsY <= 0.25f && AbsX >= 0.75f);
-	}
 
 	float GetTurnInPlaceBucketYaw(const uint8 DirectionBucket)
 	{
@@ -98,7 +87,6 @@ void UProject_JLocomotionAnimStateComponent::ApplyTransitionPolicy(const FProjec
 	TurnRedirectReselectCooldown = InPolicy.TurnRedirectReselectCooldown;
 	SprintStopMemoryDuration = InPolicy.SprintStopMemoryDuration;
 }
-
 
 void UProject_JLocomotionAnimStateComponent::BeginPlay()
 {
@@ -1117,7 +1105,8 @@ FProject_JMovingTurnPolicy::FInput UProject_JLocomotionAnimStateComponent::Build
 bool UProject_JLocomotionAnimStateComponent::UpdateMovingTurnPolicy(
 	const FProject_JLocomotionAuthoritativeContext& AuthContext,
 	const FProject_JLocomotionKinematicContext& Motion,
-	const FProject_JDerivedLocomotionContext& Derived){
+	const FProject_JDerivedLocomotionContext& Derived)
+{
 	const auto* Player = GetPlayerOwner();
 	FProject_JTurnEventSettings Settings;
 	const TCHAR* Guard = nullptr;
@@ -1414,14 +1403,10 @@ bool UProject_JLocomotionAnimStateComponent::IsPivotingForContext(
 		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
-	const FVector2D CurrentPivotIntent = bHasSemanticMoveIntentInput
-		? CachedSemanticMoveIntentInput
-		: CachedMoveInput;
-	if (!IsCardinalPivotIntent(CurrentPivotIntent) ||
-		!bHasPreviousStableMoveInputDirection ||
-		!IsCardinalPivotIntent(PreviousStableMoveInputDirection))
+
+	if (!bHasPreviousStableMoveInputDirection)
 	{
-		LogRejectedPivot(TEXT("DiagonalIntentUnsupported"));
+		LogRejectedPivot(TEXT("NoPreviousStableIntent"));
 		ConsumeSemanticPivotKinematicCapture();
 		return false;
 	}
