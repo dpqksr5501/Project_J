@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','H01');B=json.loads((OUT/(target+'-hunting-build.json')).read_text());PRE=json.loads((OUT/(target+'-hunting-preflight.json')).read_text());manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text());P=next(p for p in json.loads((SOURCE/manifest['hunting_profiles']).read_text())['hunting_grounds'] if p['target_id']==target);assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','H01');B=json.loads((OUT/(target+'-hunting-build.json')).read_text());PRE=json.loads((OUT/(target+'-hunting-preflight.json')).read_text());manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text());P=next(p for p in json.loads((SOURCE/manifest['hunting_profiles']).read_text())['hunting_grounds'] if p['target_id']==target);assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 SURFACE=module('surface','Starter-HuntingSurface.py').HuntingSurface(SOURCE,T,P['authored_surfaces']) if P.get('authored_surfaces') else None
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
@@ -84,12 +84,12 @@ def verify(dt):
             row=next(v for v in B['props'] if v['id']==q['id']);a=bylabel[row['label']];c=a.static_mesh_component;assert c.static_mesh.get_path_name().split('.')[0]==q['mesh'];assert str(c.get_collision_profile_name())=='BlockAll';center,extent=a.get_actor_bounds(False);normal=a.get_actor_right_vector();hit=unreal.SystemLibrary.line_trace_single(world,center-normal*500,center+normal*500,unreal.TraceTypeQuery.ECC_VISIBILITY,False,[v for v in actors if v!=a],unreal.DrawDebugTrace.NONE,True);values=hit.to_tuple() if hit else None;assert values and values[0] and values[10]==c,('Ruin fragment simple collision missing',q['id']);ruin_cover_checks.append(dict(id=q['id'],simple_visibility_blocked=True,scope='Fragment collider only, no AI/projectile profile approval'))
         water_checks=None
         if P.get('water_separation'):
-            separation=P['water_separation'];inspection=json.loads((OUT/separation['native_inspection']).read_text());water=actor_labels['StarterRegion_LakePrototype'];c=water.static_mesh_component;E=module('hunting_routes','Starter-HuntingRoutes.py')
+            separation=P['water_separation'];inspection=json.loads((OUT/separation['native_inspection']).read_text());water=actor_labels['MainWorld_LakePrototype'];c=water.static_mesh_component;E=module('hunting_routes','Starter-HuntingRoutes.py')
             assert water.get_path_name()==inspection['actor_path'] and c.static_mesh.get_path_name()==inspection['mesh']
             assert (water.get_actor_location()-unreal.Vector(*inspection['location_cm'])).length()<.01 and (water.get_actor_scale3d()-unreal.Vector(*inspection['scale'])).length()<.01
             assert all(abs(a-b)<.001 for a,b in zip(water.get_actor_rotation().to_tuple(),inspection['rotation']))
             assert str(c.get_collision_profile_name())==inspection['collision_profile'] and str(c.get_collision_enabled())==inspection['collision_enabled']
-            ellipse=separation['ellipse'];assert ellipse==json.loads((SOURCE/'StarterWorld.plan.json').read_text())['lake']==inspection['ellipse']
+            ellipse=separation['ellipse'];assert ellipse==json.loads((SOURCE/'MainWorld.plan.json').read_text())['lake']==inspection['ellipse']
             trail_clearances=[E.ellipse_clearance_lower_bound(*q,ellipse)-trail['width_m']/2 for trail in P['trails'] for q in trail['points_m']]
             combat_clearances=[E.ellipse_clearance_lower_bound(*q['center_m'][:2],ellipse)-q['radius_m'] for q in P['clusters']]
             assert min(trail_clearances)>=separation['trail_minimum_clearance_m'] and min(combat_clearances)>=separation['combat_minimum_clearance_m']

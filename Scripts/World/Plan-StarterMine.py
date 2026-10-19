@@ -1,11 +1,11 @@
 """H08's owned, hollow ridge adit; leaves the preserved Landscape untouched."""
 import hashlib,importlib.util,json,math
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
-FILE=SOURCE/'StarterWorld.H08.mine.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
+FILE=SOURCE/'MainWorld.H08.mine.json'
 assert not FILE.exists(),'Do not overwrite a published mine survey'
 s=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
-T=m.TerrainProfile(SOURCE/'StarterRegion.manifest.json')
+T=m.TerrainProfile(SOURCE/'MainWorld.manifest.json')
 cx,cy=2300.,5950.;yaw=140.;co,si=math.cos(math.radians(yaw)),math.sin(math.radians(yaw))
 def xy(u,v):return cx+co*u-si*v,cy+si*u+co*v
 # This narrow natural ridge shelf is not a replacement for the large outdoor
@@ -48,5 +48,5 @@ for u in range(-8,19):
         clearance.append(floor-h)
 entry=xy(-8,0);outside=xy(-13,0);outside_ground=T.height(*outside)
 assert 0<floor-outside_ground<3
-plan=dict(id='H08.RidgeMine',target_id='H08',stage='STRUCTURE_DRAFT',owner='ProjectJ.Starter.H08.Mine.v1',center_m=[cx,cy,floor],yaw_degrees=yaw,mesh_asset='/Game/World/Starter/Geometry/SM_H08_RidgeMine',height_sha256=T.manifest['terrain_profile']['sha256'],local_axis_m=[-8,18],gallery_length_m=26,clear_width_m=4.8,chamber_width_m=7.2,clear_height_m=3.9,terrain_floor_clearance_m=[min(clearance),max(clearance)],terrain_modified=False,vertices_m=vertices,triangles=triangles,uv0=uvs,entrance_m=[*entry,floor],outside_m=[*outside,outside_ground],timber_frame_stations_m=[-7.5,-3,2,7,12,16],art_complete=False,gameplay_bound=False,scope='Physical interior and entry draft only; whole H08 layout, approaches and final art pending')
+plan=dict(id='H08.RidgeMine',target_id='H08',stage='STRUCTURE_DRAFT',owner='ProjectJ.Starter.H08.Mine.v1',center_m=[cx,cy,floor],yaw_degrees=yaw,mesh_asset='/Game/Map_Resource/MainWorld/Geometry/SM_H08_RidgeMine',height_sha256=T.manifest['terrain_profile']['sha256'],local_axis_m=[-8,18],gallery_length_m=26,clear_width_m=4.8,chamber_width_m=7.2,clear_height_m=3.9,terrain_floor_clearance_m=[min(clearance),max(clearance)],terrain_modified=False,vertices_m=vertices,triangles=triangles,uv0=uvs,entrance_m=[*entry,floor],outside_m=[*outside,outside_ground],timber_frame_stations_m=[-7.5,-3,2,7,12,16],art_complete=False,gameplay_bound=False,scope='Physical interior and entry draft only; whole H08 layout, approaches and final art pending')
 FILE.write_text(json.dumps(plan,indent=2),encoding='utf-8');print('Mine floor',floor,'terrain clearance',plan['terrain_floor_clearance_m'],'entrance',plan['entrance_m'])

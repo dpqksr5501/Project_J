@@ -1,12 +1,12 @@
 """Fit the forestry settlement to preserved contours before native authoring."""
 import array,hashlib,json,math,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
-FILE=SOURCE/'StarterWorld.settlements.json';REPORT=OUT/'forest-village-layout.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+FILE=SOURCE/'MainWorld.settlements.json';REPORT=OUT/'forest-village-layout.json'
 assert not REPORT.exists(),'Inspect the existing forestry plan before replacing it'
 data=json.loads(FILE.read_text(encoding='utf-8'));assert not any(p['target_id']=='S03' for p in data['settlements'])
-place=next(p for p in json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))['places'] if p['id']=='S04')
-cx,cy=place['center_m'][:2];raw=array.array('H');raw.frombytes((SOURCE/'HM_StarterRegion.r16').read_bytes())
+place=next(p for p in json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))['places'] if p['id']=='S04')
+cx,cy=place['center_m'][:2];raw=array.array('H');raw.frombytes((SOURCE/'HM_MainWorld.r16').read_bytes())
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*.0625
@@ -40,10 +40,10 @@ for name,w,d,storeys,preferred in specs:
     assert candidates,('No supported natural plot',name)
     _,x,y,relief=min(candidates);houses.append(dict(id=name,offset_m=[x,y],width=w,depth=d,storeys=storeys))
     evidence.append(dict(id=name,footprint_relief_m=relief,offset_m=[x,y]))
-p=dict(stable_id='S04',target_id='S03',archetype='forestry_village',seed=103103,center_source='StarterWorld.plan.json#places/S04',stage='PLANNED',houses=houses,streets=streets,fields=[],work_yards=yards,
+p=dict(stable_id='S04',target_id='S03',archetype='forestry_village',seed=103103,center_source='MainWorld.plan.json#places/S04',stage='PLANNED',houses=houses,streets=streets,fields=[],work_yards=yards,
        roof_contact_profile=data['settlements'][0]['roof_contact_profile'],terrain_policy='No height edits; supported individual contour plots',
        purpose='Timber work yard separated from housing; loop woodland trail joins two through-road approaches')
 backup=ROOT/'Saved/StarterWorld/BeforeForestVillage';backup.mkdir(parents=True,exist_ok=True);assert not (backup/FILE.name).exists();shutil.copy2(FILE,backup/FILE.name)
 data['settlements'].append(p);FILE.write_text(json.dumps(data,indent=2),encoding='utf-8')
-REPORT.write_text(json.dumps(dict(stable_id='S04',target_id='S03',houses=evidence,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8')
+REPORT.write_text(json.dumps(dict(stable_id='S04',target_id='S03',houses=evidence,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8')
 print(json.dumps(evidence))

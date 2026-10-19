@@ -10,8 +10,8 @@ import numpy as np
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
 SPEC=importlib.util.spec_from_file_location('mcp',ROOT/'Scripts/Editor/World-MCP.py')
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
-GRAPH={'refPath':'/Game/World/Starter/PCG/PCG_StarterForest.PCG_StarterForest'}
-VOLUME_BOUNDS=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.forest-streaming.json').read_text())['tiles']
+GRAPH={'refPath':'/Game/World/MainWorld/PCG/PCG_MainWorldForest.PCG_MainWorldForest'}
+VOLUME_BOUNDS=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.forest-streaming.json').read_text())['tiles']
 CHECKPOINT=OUT/'forest-rollout.json';SAVE=OUT/'forest-save.json'
 
 
@@ -23,13 +23,13 @@ def call(toolset,name,args):
 
 def main():
     assert not call('EditorToolset.EditorAppToolset','IsPIERunning',{})
-    assert call('editor_toolset.toolsets.scene.SceneTools','get_current_level',{})=='/Game/World/Starter/Maps/L_StarterRegion'
+    assert call('editor_toolset.toolsets.scene.SceneTools','get_current_level',{})=='/Game/World/MainWorld/Legacy/Maps/L_StarterRegion'
     if CHECKPOINT.exists():
         state=json.loads(CHECKPOINT.read_text(encoding='utf-8'))
         assert state['phase'] not in ['ERROR','CREATE_UNKNOWN','EXECUTE_UNKNOWN'],'Inspect editor and checkpoint before resuming unknown mutations'
     else:
         saved=json.loads(SAVE.read_text(encoding='utf-8'));existing={r['label']:r for r in saved['tiles']}
-        density=np.asarray(Image.open(ROOT/'Content/World/Starter/Source/T_StarterForestPlacement.png'))[:,:,0]/255.
+        density=np.asarray(Image.open(ROOT/'Content/World/MainWorld/Source/T_MainWorldForestPlacement.png'))[:,:,0]/255.
         tiles=[]
         for j in range(16):
             for i in range(16):

@@ -2,13 +2,13 @@
 import array,hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'capital-details.json'
 assert not FILE.exists(),'Review completed/partial authoring before explicit recovery'
-PLAN=json.loads((SOURCE/'StarterWorld.capital.json').read_text(encoding='utf-8'))
-assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==PLAN['height_sha256']
+PLAN=json.loads((SOURCE/'MainWorld.capital.json').read_text(encoding='utf-8'))
+assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==PLAN['height_sha256']
 raw=array.array('H')
-with (SOURCE/'HM_StarterRegion.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
+with (SOURCE/'HM_MainWorld.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*.0625
@@ -18,7 +18,7 @@ A=M.SettlementAuthoring('ProjectJ.Starter.CapitalDetails.v1','StarterRegion/Sett
 REPORT=dict(phase='READY',height_modified=False,completed=[])
 def record(phase):
     REPORT.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(REPORT,indent=2),encoding='utf-8')
-STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone')
+STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone')
 CASTLE='/Game/Map_Resource/MedCastle/Mesh/Houses_Towers/'
 VILLAGE='/Game/Map_Resource/MedievalVillage/Meshes/'
 tasks=[]

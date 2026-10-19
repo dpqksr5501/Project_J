@@ -535,7 +535,7 @@
 
 **변경·유지 판단:** 실물 map/definition, redirector와 남은 HLOD 실물을 먼저 조사한 뒤 manifest의 현재 package roots, WorldDefinition scan, MapsToCook/검증기와 문서를 MainWorld에 맞췄다.
 
-**관련 파일:** [Config/DefaultGame.ini](../../../Config/DefaultGame.ini), [Content/World/Starter/Source/StarterRegion.manifest.json](../../../Content/World/Starter/Source/StarterRegion.manifest.json), [Scripts/World/Verify-StarterWorld.py](../../../Scripts/World/Verify-StarterWorld.py), [Scripts/Audit/Run-ContinuationPackaging.ps1](../../../Scripts/Audit/Run-ContinuationPackaging.ps1), [Docs/World/README.md](../../../Docs/World/README.md), [Scripts/World/README.md](../../../Scripts/World/README.md).
+**관련 파일:** [Config/DefaultGame.ini](../../../Config/DefaultGame.ini), [Content/World/MainWorld/Source/MainWorld.manifest.json](../../../Content/World/MainWorld/Source/MainWorld.manifest.json), [Scripts/World/Verify-StarterWorld.py](../../../Scripts/World/Verify-StarterWorld.py), [Scripts/Audit/Run-ContinuationPackaging.ps1](../../../Scripts/Audit/Run-ContinuationPackaging.ps1), [Docs/World/README.md](../../../Docs/World/README.md), [Scripts/World/README.md](../../../Scripts/World/README.md).
 
 **테스트:** `WorldReadOnly2 actual registry49/dependencies/referencers`, `WorldContracts2 primary asset path + Source20`, `WorldDefinition actual DataValidation1/1`, `MainWorld Cook / package / smoke 결과는 아래 실행 상태`.
 

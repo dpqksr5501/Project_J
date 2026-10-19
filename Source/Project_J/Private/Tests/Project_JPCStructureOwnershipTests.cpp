@@ -33,7 +33,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJAuthoredDoorOptionsTest, "ProjectJ.PCS
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJAuthoredDoorOptionsTest::RunTest(const FString&)
 {
-    UClass* Class = LoadClass<AActor>(nullptr, TEXT("/Game/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame_C"));
+    UClass* Class = LoadClass<AActor>(nullptr, TEXT("/Game/Map_Resource/Variants/ProjectExisting/LevelPrototyping/Interactable/Door/BP_DoorFrame.BP_DoorFrame_C"));
     if (!TestNotNull(TEXT("Actual prototype door class"), Class)) return false;
     auto* AddDoor = FindFProperty<FBoolProperty>(Class, TEXT("add Door"));
     auto* SplitDoor = FindFProperty<FBoolProperty>(Class, TEXT("split Door"));

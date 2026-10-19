@@ -1,10 +1,10 @@
 """Fit lake-bank homes and a small pier to the existing water/height contract."""
 import array,hashlib,json,math,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=SOURCE/'StarterWorld.settlements.json';REPORT=OUT/'lake-village-layout.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=SOURCE/'MainWorld.settlements.json';REPORT=OUT/'lake-village-layout.json'
 assert not REPORT.exists();data=json.loads(FILE.read_text(encoding='utf-8'));assert not any(p['target_id']=='S04' for p in data['settlements'])
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'));cx,cy=next(p['center_m'][:2] for p in plan['places'] if p['id']=='S03');water=plan['lake']['water_level_m']
-raw=array.array('H');raw.frombytes((SOURCE/'HM_StarterRegion.r16').read_bytes())
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'));cx,cy=next(p['center_m'][:2] for p in plan['places'] if p['id']=='S03');water=plan['lake']['water_level_m']
+raw=array.array('H');raw.frombytes((SOURCE/'HM_MainWorld.r16').read_bytes())
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*.0625
@@ -38,6 +38,6 @@ dock=dict(id='FishingLanding',axis_x_m=cx,land_y_m=cy-120,ramp_end_y_m=cy-148,he
 samples=[dict(x_m=cx,y_m=y,bed_m=height(cx,y),water_depth_m=water-height(cx,y)) for y in range(int(dock['head_y_m']-2),int(dock['ramp_end_y_m'])+1,4)]
 assert all(s['water_depth_m']>2 for s in samples if s['y_m']<=cy-166)
 assert math.hypot(dock['head_width_m']/2,182+3)<190
-p=dict(stable_id='S03',target_id='S04',archetype='lake_fishing_village',seed=103104,stage='PLANNED',center_source='StarterWorld.plan.json#places/S03',houses=houses,streets=streets,fields=[],dock=dock,roof_contact_profile=data['settlements'][0]['roof_contact_profile'],terrain_policy='Dry natural plots; supported pier/ramp, no height or existing water edits')
+p=dict(stable_id='S03',target_id='S04',archetype='lake_fishing_village',seed=103104,stage='PLANNED',center_source='MainWorld.plan.json#places/S03',houses=houses,streets=streets,fields=[],dock=dock,roof_contact_profile=data['settlements'][0]['roof_contact_profile'],terrain_policy='Dry natural plots; supported pier/ramp, no height or existing water edits')
 backup=ROOT/'Saved/StarterWorld/BeforeLakeVillage';backup.mkdir(parents=True,exist_ok=True);assert not (backup/FILE.name).exists();shutil.copy2(FILE,backup/FILE.name)
-data['settlements'].append(p);FILE.write_text(json.dumps(data,indent=2),encoding='utf-8');REPORT.write_text(json.dumps(dict(houses=evidence,dock_bed_samples=samples,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8');print(json.dumps(evidence))
+data['settlements'].append(p);FILE.write_text(json.dumps(data,indent=2),encoding='utf-8');REPORT.write_text(json.dumps(dict(houses=evidence,dock_bed_samples=samples,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8');print(json.dumps(evidence))

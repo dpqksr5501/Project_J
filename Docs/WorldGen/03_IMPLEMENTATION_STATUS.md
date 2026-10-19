@@ -29,4 +29,4 @@
 
 현재 수도는43필지·7도로의 초기 구도이며 대규모 성곽 도시가 아니다. 마을 배치·건물 접합·생활 밀도와 산림·지피·물은 개선 대상이다. 수목 레이어 등록을 저장했지만 전역 HLOD 빌드와 PIE 전환은 미검증이다. 수량·저장 확인이나 이전 도보 통과를 최종 품질 판정으로 쓰지 않는다.
 
-실제 입력은 [장소 레지스트리](../../Content/World/Starter/Source/StarterWorld.locations.json), [생성 기록](../../Content/World/Starter/Source/StarterWorld.generation.json), [ID 대응표](01_EXISTING_TO_TARGET_MAPPING.csv)다. 현재 배치와 상태를 바꿀 때 Source·Native 정의·기존 안정 ID의 연결을 함께 확인한다. 생성 기록의 예전 로컬 report 경로 중 정리된 자료는 재검증 증거로 재사용할 수 없다.
+실제 입력은 [장소 레지스트리](../../Content/World/MainWorld/Source/MainWorld.locations.json), [생성 기록](../../Content/World/MainWorld/Source/MainWorld.generation.json), [ID 대응표](01_EXISTING_TO_TARGET_MAPPING.csv)다. 현재 배치와 상태를 바꿀 때 Source·Native 정의·기존 안정 ID의 연결을 함께 확인한다. 생성 기록의 예전 로컬 report 경로 중 정리된 자료는 재검증 증거로 재사용할 수 없다.

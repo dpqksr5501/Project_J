@@ -2,14 +2,14 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'harbor-build.json';assert not FILE.exists(),'Inspect completed/unknown native results before retrying'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'harbor-build.json';assert not FILE.exists(),'Inspect completed/unknown native results before retrying'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json')
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S05');assert P['stable_id']=='S06';Q=P['quay'];cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S06')
+C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json')
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S05');assert P['stable_id']=='S06';Q=P['quay'];cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S06')
 TAG='ProjectJ.Starter.V4.Harbor.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S06/HarborBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
-R=dict(phase='QUEUED',target_id='S05',stable_id='S06',completed=[],houses=[],access=[],pending_access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
+R=dict(phase='QUEUED',target_id='S05',stable_id='S06',completed=[],houses=[],access=[],pending_access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):R.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 def tag(a):a.set_editor_property('tags',[unreal.Name(TAG),unreal.Name('ProjectJ.Location.S06'),unreal.Name('ProjectJ.Target.S05')]);return a
 def empty(label,x,y,z):

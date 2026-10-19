@@ -11,6 +11,8 @@
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JGameplayTags.h"
 #include "Engine/Engine.h"
+#include "Engine/SkeletalMesh.h"
+#include "UObject/Package.h"
 #include "GameFramework/WorldSettings.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/Paths.h"

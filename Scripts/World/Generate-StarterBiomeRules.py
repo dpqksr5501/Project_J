@@ -7,7 +7,7 @@ import hashlib,importlib.util,json,math
 from pathlib import Path
 import numpy as np
 from PIL import Image
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
 spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Generate-StarterWorld.py')
 T=importlib.util.module_from_spec(spec);spec.loader.exec_module(T)
@@ -35,7 +35,7 @@ def exclusion_fields(x,y,plan,layout):
     clear*=T.smooth((np.hypot(x-3100,y-3100)-13)/5)*T.smooth((water-6)/9)
     # Reserve the complete gate/bridge approach; not just the plan centerline.
     gate=layout['capital_gate_center_m'];d=np.hypot(x-gate[0],y-gate[1]);clear*=T.smooth((d-65)/20)
-    capital_path=SOURCE/'StarterWorld.capital.json'
+    capital_path=SOURCE/'MainWorld.capital.json'
     if capital_path.exists():
         capital=json.loads(capital_path.read_text(encoding='utf-8'))
         for road in capital['streets']:
@@ -46,7 +46,7 @@ def exclusion_fields(x,y,plan,layout):
             a=math.radians(plot['yaw']);dx=x-plot['center_m'][0];dy=y-plot['center_m'][1]
             u=dx*math.cos(a)+dy*math.sin(a);v=-dx*math.sin(a)+dy*math.cos(a)
             clear*=T.smooth(np.maximum(np.abs(u)-plot['width_m']/2-1,np.abs(v)-plot['depth_m']/2-1)/2)
-    settlements_path=SOURCE/'StarterWorld.settlements.json'
+    settlements_path=SOURCE/'MainWorld.settlements.json'
     if settlements_path.exists():
         raster_spec=importlib.util.spec_from_file_location('settlement_raster',ROOT/'Scripts/World/Bake-StarterSettlementSurfaces.py')
         raster_module=importlib.util.module_from_spec(raster_spec);raster_spec.loader.exec_module(raster_module)
@@ -57,7 +57,7 @@ def exclusion_fields(x,y,plan,layout):
 
 
 def generate():
-    preset_path=SOURCE/'StarterWorld.biomes.json'
+    preset_path=SOURCE/'MainWorld.biomes.json'
     if not preset_path.exists():
         preset=dict(schema=1,seed=103031,height_editing=False,
                     regions=[dict(id='S00_forest_edge',bounds_m=[2790,2940,3670,3800],blend_m=85),dict(id='S01_river_approach',bounds_m=[3850,3930,4330,4440],blend_m=60)],
@@ -71,9 +71,9 @@ def generate():
                     description='Preserve height and manual placement. Surface and understory share authored exclusion fields.')
         preset_path.write_text(json.dumps(preset,indent=2),encoding='utf-8')
     preset=json.loads(preset_path.read_text(encoding='utf-8'));assert not preset['height_editing']
-    height_file=SOURCE/'HM_StarterRegion.r16';fingerprint=hashlib.sha256(height_file.read_bytes()).hexdigest()
-    plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-    layout=json.loads((SOURCE/'StarterWorld.corridor.json').read_text(encoding='utf-8'))
+    height_file=SOURCE/'HM_MainWorld.r16';fingerprint=hashlib.sha256(height_file.read_bytes()).hexdigest()
+    plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+    layout=json.loads((SOURCE/'MainWorld.corridor.json').read_text(encoding='utf-8'))
     palette=json.loads((OUT/'biome-palette.json').read_text(encoding='utf-8'))
     h=(np.fromfile(height_file,dtype='<u2').reshape(4033,4033)[::4,::4].astype('f4')-32768)*.0625
     y,x=np.mgrid[:1009,:1009].astype('f4')*8
@@ -107,7 +107,7 @@ def generate():
     moist=(1-T.smooth((water-5)/28))*(1-T.smooth((slope-.35)/.3))
     veg=clear*(1-T.smooth((slope-.42)/.23))
     # Both PNGs have opaque alpha: importers must not discard meaningful RGB.
-    masks=[('T_StarterEcology',[forest,stony,moist,np.ones_like(h)]),('T_StarterPlacement',[coverage,veg,canopy,np.ones_like(h)])]
+    masks=[('T_MainWorldEcology',[forest,stony,moist,np.ones_like(h)]),('T_MainWorldPlacement',[coverage,veg,canopy,np.ones_like(h)])]
     if preset['schema']>=2:
         tree=forest*veg*coverage*T.smooth((h-18)/25)*(1-T.smooth((h-900)/130))
         for place in plan['places']:
@@ -121,7 +121,7 @@ def generate():
             i,j=round(p['x_m']/8),round(p['y_m']/8);i0,i1=max(0,i-2),min(1009,i+3);j0,j1=max(0,j-2),min(1009,j+3)
             distance=np.hypot(x[j0:j1,i0:i1]-p['x_m'],y[j0:j1,i0:i1]-p['y_m'])
             shrubs[j0:j1,i0:i1]*=T.smooth((distance-7)/6)
-        masks.append(('T_StarterForestPlacement',[tree,shrubs,stony,np.ones_like(h)]))
+        masks.append(('T_MainWorldForestPlacement',[tree,shrubs,stony,np.ones_like(h)]))
     for name,channels in masks:
         image=np.uint8(np.clip(np.stack(channels,axis=-1),0,1)*255)
         Image.fromarray(image).resize((2048,2048),Image.Resampling.BILINEAR).save(SOURCE/(name+'.png'))

@@ -3,13 +3,13 @@ import hashlib,importlib.util,json,math,shutil
 from pathlib import Path
 import numpy as np
 from PIL import Image
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Generate-StarterWorld.py')
 T=importlib.util.module_from_spec(spec);spec.loader.exec_module(T)
 
 def load_surface_profiles(source,places):
     """Derive surfaces from authored locations; trails keep a single source writer."""
-    manifest=json.loads((source/'StarterRegion.manifest.json').read_text(encoding='utf-8'))
+    manifest=json.loads((source/'MainWorld.manifest.json').read_text(encoding='utf-8'))
     profiles=json.loads((source/manifest['settlement_profiles']).read_text(encoding='utf-8'))['settlements']
     for p in profiles:
         dock=p.get('dock')
@@ -117,18 +117,18 @@ def apply_capital_infill(data,name,capital):
     n=data.shape[0];bounds=[min(p[0] for p in points)-margin,min(p[1] for p in points)-margin,max(p[0] for p in points)+margin,max(p[1] for p in points)+margin]
     i0,j0=[max(0,int(v/8064*(n-1))) for v in bounds[:2]];i1,j1=[min(n,int(v/8064*(n-1))+2) for v in bounds[2:]]
     y,x=np.mgrid[j0:j1,i0:i1].astype('f4')*8064/(n-1);street,clear=capital_infill_raster(capital,x,y);crop=data[j0:j1,i0:i1]
-    if name=='T_StarterSurfaceMasks':crop[:,:,0]=np.maximum(crop[:,:,0],np.uint8(np.clip(street,0,1)*255))
+    if name=='T_MainWorldSurfaceMasks':crop[:,:,0]=np.maximum(crop[:,:,0],np.uint8(np.clip(street,0,1)*255))
     else:crop[:,:,1]=np.uint8(crop[:,:,1]*np.clip(clear,0,1))
     return [i0,j0,i1,j1]
 
 def bake():
-    plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'));places={p['id']:p for p in plan['places']}
+    plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'));places={p['id']:p for p in plan['places']}
     profiles=load_surface_profiles(SOURCE,places)
     backup=ROOT/'Saved/StarterWorld/BeforeV4SettlementMasks';backup.mkdir(parents=True,exist_ok=True)
     record=ROOT/'Saved/Validation/StarterWorld/Phase2/settlement-mask-bake.json'
     previous=json.loads(record.read_text(encoding='utf-8')) if record.exists() else None
     hashes={}
-    for name in ['T_StarterSurfaceMasks','T_StarterPlacement']:
+    for name in ['T_MainWorldSurfaceMasks','T_MainWorldPlacement']:
         path=SOURCE/(name+'.png');base=backup/path.name
         if previous:assert hashlib.sha256(path.read_bytes()).hexdigest()==previous['outputs'][name],'Preserve unrecognized mask edits'
         if not base.exists():shutil.copy2(path,base)
@@ -138,12 +138,12 @@ def bake():
             i0,i1=max(0,int((cx-extent)/8064*(n-1))),min(n,int((cx+extent)/8064*(n-1))+1)
             j0,j1=max(0,int((cy-extent)/8064*(n-1))),min(n,int((cy+extent)/8064*(n-1))+1)
             y,x=np.mgrid[j0:j1,i0:i1].astype('f4')*8064/(n-1);street,field,plaza,clear=raster(p,[cx,cy],x,y);crop=data[j0:j1,i0:i1]
-            if name=='T_StarterSurfaceMasks':
+            if name=='T_MainWorldSurfaceMasks':
                 for channel,mask in enumerate([street,field,plaza]):crop[:,:,channel]=np.maximum(crop[:,:,channel],np.uint8(np.clip(mask,0,1)*255))
             else:crop[:,:,1]=np.uint8(crop[:,:,1]*np.clip(clear,0,1))
         # Keep the same order as the incremental capital amendment: other
         # settlement surfaces first, then later capital frontage exclusions.
-        apply_capital_infill(data,name,json.loads((SOURCE/'StarterWorld.capital.json').read_text()))
+        apply_capital_infill(data,name,json.loads((SOURCE/'MainWorld.capital.json').read_text()))
         data[:,:,3]=255;Image.fromarray(data).save(path);hashes[name]=hashlib.sha256(path.read_bytes()).hexdigest()
     record.write_text(json.dumps(dict(outputs=hashes,height_modified=False,settlements=[p['stable_id'] for p in profiles]),indent=2),encoding='utf-8')
     print('Settlement roads/fields/plaza masks baked; height unchanged')

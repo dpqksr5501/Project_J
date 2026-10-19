@@ -7,8 +7,8 @@
 | 대상 | 제작 원천 | 현재 실제 소비 | 아직 연결하지 않은 기능 |
 |---|---|---|---|
 | 장소 | Manifest/layout/Location Registry | Native WorldDefinition의 Place·마커·WorldState | 퀘스트의 장소 조건, 서버 간 지역 이동 |
-| 사냥터 | `StarterWorld.hunting.json` | 정적 전투 경계·진입/스폰/순찰 후보·환경 기하·저장본/보행 검사 | 군집 AI, 리스폰/리셋, Nav, 드롭·퀘스트 |
-| 보스 | `StarterWorld.bosses.json` | Arena/집결 미리보기·접근/우회/전투길·기존 Native WorldEncounter | 실제 NPCClass, 능력/AI/추적·리셋·보상 |
+| 사냥터 | `MainWorld.hunting.json` | 정적 전투 경계·진입/스폰/순찰 후보·환경 기하·저장본/보행 검사 | 군집 AI, 리스폰/리셋, Nav, 드롭·퀘스트 |
+| 보스 | `MainWorld.bosses.json` | Arena/집결 미리보기·접근/우회/전투길·기존 Native WorldEncounter | 실제 NPCClass, 능력/AI/추적·리셋·보상 |
 | 지면 | 원본 R16와 명시적 `authored_surfaces` | Native Landscape/광산·계단·부두 기하, 검사의 기대 지지면 | 전체 Nav/탈것·낙하 피해·수영 |
 
 JSON과 Python은 오프라인 제작 원천이다. 현재 게임이 이 JSON을 직접 읽어 스폰하는 구조는 아니다. Runtime은 저장된 Native DA/Actor를 소비한다. Source 원형 경계와 Native Box는 같지 않으며, Box는 NoCollision/OverlapFalse의 저작 미리보기다. 자동 스폰 Trigger나 전투 봉쇄벽이 아니다.

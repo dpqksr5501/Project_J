@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'Content/World/Starter/Source'
+SOURCE = ROOT / 'Content/World/MainWorld/Source'
 OUT = ROOT / 'Saved/Validation/StarterWorld/Phase2'
 SPEC = importlib.util.spec_from_file_location('terrain', ROOT / 'Scripts/World/Generate-StarterWorld.py')
 T = importlib.util.module_from_spec(SPEC)
@@ -47,9 +47,9 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     protected = [p for p in SOURCE.iterdir() if p.is_file()]
     hashes = {p.name: digest(p) for p in protected}
-    plan = json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-    layout = json.loads((SOURCE/'StarterWorld.corridor.json').read_text(encoding='utf-8'))
-    raw = np.fromfile(SOURCE/'HM_StarterRegion.r16', dtype='<u2').reshape(4033, 4033)
+    plan = json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+    layout = json.loads((SOURCE/'MainWorld.corridor.json').read_text(encoding='utf-8'))
+    raw = np.fromfile(SOURCE/'HM_MainWorld.r16', dtype='<u2').reshape(4033, 4033)
     height = (raw.astype('f4')-32768)*.0625
     h = height[::4, ::4].copy()
     y, x = np.mgrid[0:1009, 0:1009].astype('f4')*8

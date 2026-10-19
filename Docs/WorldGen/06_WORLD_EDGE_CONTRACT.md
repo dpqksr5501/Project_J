@@ -2,7 +2,7 @@
 
 상태: 기존 7개 포트의 Source/Native 계약 유지. 인접 Realm 생성·연속 지형/원경·서버 이동 증명은 미완료다. 연결 ID는 장소 ID·WP cell ID·서버 zone ID와 별개다.
 
-원천은 `Content/World/Starter/Source/StarterWorld.plan.json`의 connections이며 `StarterWorld.edges.json`의 connections와 Native `DA_StarterRegion.Connections`에 반영한다. Source는 남서 원점의 m, Native는 Manifest의 origin/units를 적용한 cm다. 높이 경계 배열은 보존한 R16의 샘플 계약이며 포트를 옮겼다고 배열을 재생성하지 않는다.
+원천은 `Content/World/MainWorld/Source/MainWorld.plan.json`의 connections이며 `MainWorld.edges.json`의 connections와 Native `DA_StarterRegion.Connections`에 반영한다. Source는 남서 원점의 m, Native는 Manifest의 origin/units를 적용한 cm다. 높이 경계 배열은 보존한 R16의 샘플 계약이며 포트를 옮겼다고 배열을 재생성하지 않는다.
 
 | 안정 연결 ID | 경계 / 종류 | Source XY(m) | 폭(m) | 현재 상태 |
 |---|---|---|---:|---|

@@ -2,9 +2,9 @@
 import importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'harbor-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'harbor-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'StarterRegion.manifest.json');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'MainWorld.manifest.json');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):

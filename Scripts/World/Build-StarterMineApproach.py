@@ -2,19 +2,19 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'H08-mine-approach-build.json';assert not FILE.exists()
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'H08-mine-approach-build.json';assert not FILE.exists()
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-P=json.loads((SOURCE/'StarterWorld.H08.approach.json').read_text());A=module('authoring','Starter-SettlementAuthoring.py').SettlementAuthoring(P['owner'],'Starter/V4/Hunting/H08/Approach');G=module('geometry','Build-StarterCorridor.py');C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');assert not any(P['owner'] in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-definition=next(a for a in A.subsystem.get_all_level_actors() if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');R=dict(phase='STARTED',source_sha256=hashlib.sha256((SOURCE/'StarterWorld.H08.approach.json').read_bytes()).hexdigest(),previous_places=[C.snapshot_place(v) for v in definition.places],previous_connections=[C.snapshot_connection(v) for v in definition.connections],source_plan_hash=definition.source_plan_hash,art_complete=False,terrain_modified=False)
+P=json.loads((SOURCE/'MainWorld.H08.approach.json').read_text());A=module('authoring','Starter-SettlementAuthoring.py').SettlementAuthoring(P['owner'],'Starter/V4/Hunting/H08/Approach');G=module('geometry','Build-StarterCorridor.py');C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');assert not any(P['owner'] in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
+definition=next(a for a in A.subsystem.get_all_level_actors() if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');R=dict(phase='STARTED',source_sha256=hashlib.sha256((SOURCE/'MainWorld.H08.approach.json').read_bytes()).hexdigest(),previous_places=[C.snapshot_place(v) for v in definition.places],previous_connections=[C.snapshot_connection(v) for v in definition.connections],source_plan_hash=definition.source_plan_hash,art_complete=False,terrain_modified=False)
 FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 try:
     x0,y0,z0=P['route_points_m'][0];a=A.spawn('H08_MineApproach','/Engine/BasicShapes/Cube',x0,y0,z0);a.static_mesh_component.set_static_mesh(None);a.set_actor_location(A.point(x0,y0,z0),False,False);A.created[-1].update(mesh=None,location_cm=list(a.get_actor_location().to_tuple()));a.tags=[unreal.Name(P['owner']),unreal.Name('ProjectJ.Location.H08')]
-    cube=unreal.load_asset('/Engine/BasicShapes/Cube');stone=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');assert stone
+    cube=unreal.load_asset('/Engine/BasicShapes/Cube');stone=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');assert stone
     c=G.component(a,unreal.HierarchicalInstancedStaticMeshComponent,'StoneTreads');c.set_static_mesh(cube);c.set_material(0,A.instanced_material(stone));c.set_collision_profile_name('BlockAll')
     for p in P['pieces']:
         x,y=p['center_xy_m'];depth=p['top_m']-p['bottom_m'];c.add_instance(G.centered_transform(cube,unreal.Vector((x-x0)*100,(y-y0)*100,(p['bottom_m']-z0)*100),p['yaw_degrees'],(p['length_m'],p['width_m'],depth)),False)
-    timber=unreal.load_asset('/Game/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3');assert timber;bounds=timber.get_bounds();frames=G.component(a,unreal.HierarchicalInstancedStaticMeshComponent,'TimberGuardrails');frames.set_static_mesh(timber);frames.set_collision_profile_name('BlockAll')
+    timber=unreal.load_asset('/Game/Map_Resource/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3');assert timber;bounds=timber.get_bounds();frames=G.component(a,unreal.HierarchicalInstancedStaticMeshComponent,'TimberGuardrails');frames.set_static_mesh(timber);frames.set_collision_profile_name('BlockAll')
     for i,s in enumerate(timber.static_materials):frames.set_material(i,A.instanced_material(s.material_interface))
     beams=[]
     def beam(start,end):

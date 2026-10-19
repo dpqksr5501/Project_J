@@ -3,9 +3,9 @@ import array,datetime,json,time,traceback,runpy
 from pathlib import Path
 import unreal
 ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld'
-SOURCE=ROOT/'Content/World/Starter/Source'
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text(encoding='utf-8'))
+SOURCE=ROOT/'Content/World/MainWorld/Source'
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text(encoding='utf-8'))
 MAP=manifest['world_asset']
 MAP=manifest['world_asset']
 CONTRACT=runpy.run_path(str(ROOT/'Scripts/World/Starter-WorldDefinitionContract.py'))
@@ -38,7 +38,7 @@ def verify(dt):
         extent=[maximum[i]-minimum[i] for i in (0,1)]
         assert all(abs(v-806400)<100 for v in extent),extent
         raw=array.array('H')
-        with (SOURCE/'HM_StarterRegion.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
+        with (SOURCE/'HM_MainWorld.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
         ignore=[a for a in actors if not isinstance(a,unreal.LandscapeProxy)]
         errors=[]
         for entry in plan['places']:
@@ -65,7 +65,7 @@ def verify(dt):
         sun=environment.get_editor_property('sun')
         saved_lux=sun.get_component_by_class(unreal.DirectionalLightComponent).get_editor_property('intensity')
         assert saved_lux==60000,('Persisted editor light differs from runtime clear light',saved_lux)
-        exposure=next(a for a in refreshed if a.get_actor_label()=='StarterRegion_Exposure')
+        exposure=next(a for a in refreshed if a.get_actor_label()=='MainWorld_Exposure')
         assert all(not a.get_editor_property('is_spatially_loaded') for a in [states[0],environment,exposure])
         starts=[a for a in refreshed if isinstance(a,unreal.PlayerStart)]
         assert len(starts)==1,'Unexpected duplicate PlayerStart'

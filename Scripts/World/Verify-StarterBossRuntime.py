@@ -2,7 +2,7 @@
 import hashlib,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','B01');FILE=OUT/(target+'-boss-runtime-verification.json');assert not FILE.exists();manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text());f=SOURCE/manifest['boss_profiles'];P=next(p for p in json.loads(f.read_text())['bosses'] if p['target_id']==target);assert P['encounter']['npc_class'] is None;started=time.perf_counter()
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','B01');FILE=OUT/(target+'-boss-runtime-verification.json');assert not FILE.exists();manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text());f=SOURCE/manifest['boss_profiles'];P=next(p for p in json.loads(f.read_text())['bosses'] if p['target_id']==target);assert P['encounter']['npc_class'] is None;started=time.perf_counter()
 def tick(dt):
     if time.perf_counter()-started>120:
         unreal.unregister_slate_post_tick_callback(handle);FILE.write_text(json.dumps(dict(passed=False,error='No ready PIE game clock observed')),encoding='utf-8');return

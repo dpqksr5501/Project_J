@@ -2,13 +2,13 @@
 import array,hashlib,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';SOURCE=ROOT/'Content/World/MainWorld/Source'
 STATE=json.loads((OUT/'forest-village-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE'
 ACCESS=json.loads((OUT/'forest-village-access.json').read_text(encoding='utf-8'));assert ACCESS['phase']=='COMPLETE'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
 unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
-raw=array.array('H');raw.frombytes((SOURCE/'HM_StarterRegion.r16').read_bytes())
+raw=array.array('H');raw.frombytes((SOURCE/'HM_MainWorld.r16').read_bytes())
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*6.25
@@ -52,7 +52,7 @@ def verify(dt):
         for row in STATE['entries']:
             a=bylabel[row['label']];assert not a.get_editor_property('replicates') and isinstance(a,unreal.TargetPoint)
         assert max(support)<.1 and max(ground)<.1 and max(stair_errors)<.1
-        digest=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
+        digest=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
         report.update(passed=True,actors=len(owned),buildings=len(STATE['houses']),entries=len(STATE['entries']),instance_counts=counts,exterior_accesses=len(stairs_bylabel),stairs_threshold_instances=len(stair_errors),maximum_stair_top_collision_error_cm=max(stair_errors),maximum_foundation_collision_error_cm=max(support),maximum_grounding_error_cm=max(ground),height_sha256=digest,art_complete=False,navigation_verified=False,performance_measured=False,dirty_maps=[p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()])
     except Exception:report['error']=traceback.format_exc();unreal.log_error(report['error'])
     (OUT/'forest-village-saved-verification.json').write_text(json.dumps(report,indent=2),encoding='utf-8')

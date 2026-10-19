@@ -7,12 +7,12 @@ import array,importlib.util,json,math
 from pathlib import Path
 import numpy as np
 from PIL import Image
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Generate-StarterWorld.py');terrain=importlib.util.module_from_spec(spec);spec.loader.exec_module(terrain)
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-layout=json.loads((SOURCE/'StarterWorld.corridor.json').read_text(encoding='utf-8'))
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+layout=json.loads((SOURCE/'MainWorld.corridor.json').read_text(encoding='utf-8'))
 assert layout['revision']==1 and plan['corridor_revision']==1
-raw=np.fromfile(SOURCE/'HM_StarterRegion.r16',dtype='<u2').reshape(4033,4033).astype('f4')
+raw=np.fromfile(SOURCE/'HM_MainWorld.r16',dtype='<u2').reshape(4033,4033).astype('f4')
 def height(x,y):
     u=x/2;v=y/2;i,j=int(u),int(v);s,t=u-i,v-j
     q=(raw[j,i]*(1-s)+raw[j,i+1]*s)*(1-t)+(raw[j+1,i]*(1-s)+raw[j+1,i+1]*s)*t
@@ -29,7 +29,7 @@ for house in layout['houses']:
     door=[house['x']+s*(house['depth']/2+2),house['y']-c*(house['depth']/2+2)]
     paths.append([door,[(door[0]+3100)/2+(2 if house['x']>3100 else -2),(door[1]+3100)/2],[3100,3100]])
 layout['footpaths']=paths;layout['composition_revision']=2;layout.setdefault('player_start_yaw',125)
-(SOURCE/'StarterWorld.corridor.json').write_text(json.dumps(layout,indent=2),encoding='utf-8')
+(SOURCE/'MainWorld.corridor.json').write_text(json.dumps(layout,indent=2),encoding='utf-8')
 axis=np.arange(2017,dtype='f4')*4;x,y=np.meshgrid(axis,axis)
 road_mask=np.zeros(x.shape,dtype='f4')
 for road in plan['roads']:
@@ -52,5 +52,5 @@ plaza=1-terrain.smooth((village-9)/3)
 # Opaque alpha: this mask carries data in RGB. Transparent PNG pixels can lose
 # their colour during texture import/compression and make every path disappear.
 mask=np.stack([road_mask,field_mask,plaza,np.ones_like(x)],axis=-1)
-Image.fromarray(np.uint8(np.clip(mask,0,1)*255)).resize((4096,4096),Image.Resampling.BILINEAR).save(SOURCE/'T_StarterSurfaceMasks.png')
+Image.fromarray(np.uint8(np.clip(mask,0,1)*255)).resize((4096,4096),Image.Resampling.BILINEAR).save(SOURCE/'T_MainWorldSurfaceMasks.png')
 print(json.dumps(dict(composition_revision=2,houses=len(slots),terrain_changed=False)))

@@ -2,13 +2,13 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'north-camp-build.json';assert not FILE.exists()
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'north-camp-build.json';assert not FILE.exists()
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');assert json.loads((OUT/'north-camp-registration.json').read_text())['phase']=='COMPLETE'
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text())['settlements'] if p['target_id']=='S09');place=next(v for v in C.PLAN['places'] if v['id']=='S08');cx,cy=place['center_m'][:2];TAG='ProjectJ.Starter.V4.NorthCamp.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S09/NorthCampBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
-R=dict(phase='QUEUED',target_id='S09',stable_id='S08',completed=[],houses=[],tents=[],towers=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');assert json.loads((OUT/'north-camp-registration.json').read_text())['phase']=='COMPLETE'
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text())['settlements'] if p['target_id']=='S09');place=next(v for v in C.PLAN['places'] if v['id']=='S08');cx,cy=place['center_m'][:2];TAG='ProjectJ.Starter.V4.NorthCamp.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S09/NorthCampBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
+CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
+R=dict(phase='QUEUED',target_id='S09',stable_id='S08',completed=[],houses=[],tents=[],towers=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):R.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 def tag(a):a.tags=[unreal.Name(TAG),unreal.Name('ProjectJ.Location.S08'),unreal.Name('ProjectJ.Target.S09')];return a
 def foundation(a,q):
@@ -31,7 +31,7 @@ def gate():
         # Root has non-unit scale; compensate to keep a 0.45-scale hanging banner.
         world=C.centered_transform(m,A.point(q['center_m'][0],y-4.1,q['center_m'][2]+2),0,(.45,.45,.45));c.set_world_transform(world,False,False)
 def supplies():
-    for name,path,x,y in [('SupplyCrate','/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01',3412,8033),('WaterBarrel','/Game/ElderboomVillage/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3',3414,8033)]:tag(A.spawn('S09_North_'+name,path,x,y,T.height(x,y),collision=False))
+    for name,path,x,y in [('SupplyCrate','/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01',3412,8033),('WaterBarrel','/Game/Map_Resource/ElderboomVillage/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3',3414,8033)]:tag(A.spawn('S09_North_'+name,path,x,y,T.height(x,y),collision=False))
 def entries():
     for name,q in [('SouthApproach',P['walk_route_points_m'][0]),('NorthBoundary',[P['gate']['port_position_m'][0],8058])]:
         x,y=q;label='Entry_S09_'+name;assert label not in A.labels;a=A.subsystem.spawn_actor_from_class(unreal.TargetPoint,A.point(x,y,T.height(x,y)+.1));assert a;a.set_actor_label(label);a.set_folder_path(A.folder);tag(a);a.set_editor_property('is_spatially_loaded',True);a.set_editor_property('is_editor_only_actor',False);R['entries'].append(dict(label=label,path=a.get_path_name(),location_cm=list(a.get_actor_location().to_tuple())))

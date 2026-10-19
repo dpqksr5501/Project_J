@@ -1,9 +1,9 @@
 """Terrain-preserving H08 mine stairs and ridge path, with bounded local fill."""
 import importlib.util,json,math
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';FILE=SOURCE/'StarterWorld.H08.approach.json';assert not FILE.exists()
-s=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'StarterRegion.manifest.json')
-mine=json.loads((SOURCE/'StarterWorld.H08.mine.json').read_text());control=[[2400,5900],[2400,5880],[2420,5840],[2400,5840],[2360,5870],[2320,5936],mine['outside_m'][:2]]
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';FILE=SOURCE/'MainWorld.H08.approach.json';assert not FILE.exists()
+s=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'MainWorld.manifest.json')
+mine=json.loads((SOURCE/'MainWorld.H08.mine.json').read_text());control=[[2400,5900],[2400,5880],[2420,5840],[2400,5840],[2360,5870],[2320,5936],mine['outside_m'][:2]]
 width=2.4;pieces=[];route=[];index=0
 for a,b in zip(control,control[1:]):
     length=math.dist(a,b);count=math.ceil(length/.32);dx,dy=(b[0]-a[0])/length,(b[1]-a[1])/length;yaw=math.degrees(math.atan2(dy,dx));tread=length/count+.035

@@ -24,7 +24,7 @@ class Prop:
     def get_editor_property(self, name): return self.properties[name]
 
 class WorldPlanTests(unittest.TestCase):
-    def setUp(self): self.plan=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.plan.json').read_text(encoding='utf-8'))
+    def setUp(self): self.plan=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.plan.json').read_text(encoding='utf-8'))
     def native(self, plan):
         return [Prop(place_id=p['id'], display_name=p['name'], location=Vec((p['center_m'][0]-4032)*100,(p['center_m'][1]-4032)*100,p['center_m'][2]*100),
             radius=p['radius_m']*100,environment_id=p['kind'],place_type=p['kind'],recommended_min_level=p['levels'][0],recommended_max_level=p['levels'][1],
@@ -43,7 +43,7 @@ class WorldPlanTests(unittest.TestCase):
         state=state_type(definition=Prop(places=places))
         fake=SimpleNamespace(EditorActorSubsystem='Actors',Project_JWorldState=state_type,Vector=Vec,
             get_editor_subsystem=lambda _:SimpleNamespace(get_all_level_actors=lambda:[state]))
-        manifest=json.loads((ROOT/'Content/World/Starter/Source/StarterRegion.manifest.json').read_text(encoding='utf-8'))
+        manifest=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.manifest.json').read_text(encoding='utf-8'))
         scope=dict(unreal=fake,plan=plan,manifest=manifest,CONTRACT=runpy.run_path(str(ROOT/'Scripts/World/Starter-WorldDefinitionContract.py')))
         exec(compile(ast.Module(body=prefix,type_ignores=[]),'actual-verifier-prefix','exec'),scope)
     def test_current_twenty_places_and_four_point_boundary(self):
@@ -61,7 +61,7 @@ class WorldPlanTests(unittest.TestCase):
 class OwnedSaveTests(unittest.TestCase):
     def setUp(self):
         self.dirty=[];self.saved=[];self.save_ok=True
-        self.manifest=dict(owned_content_root='/Game/World/Starter',world_asset='/Game/World/Starter/Maps/L_StarterRegion',
+        self.manifest=dict(owned_content_root='/Game/World/Starter',resource_content_root='/Game/Map_Resource/TestRegion',world_asset='/Game/World/Starter/Maps/L_StarterRegion',
             external_actor_root='/Game/__ExternalActors__/World/Starter/',external_object_root='/Game/__ExternalObjects__/World/Starter/',
             world_grid=dict(unreal_origin_cm=[0,0,0],centimetres_per_source_metre=100))
         self.actor_type=type('Actor',(),{})

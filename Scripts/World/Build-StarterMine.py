@@ -2,18 +2,18 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'H08-mine-build.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'H08-mine-build.json'
 assert not FILE.exists(),'Inspect the existing build before attempting another'
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-P=json.loads((SOURCE/'StarterWorld.H08.mine.json').read_text());A=module('authoring','Starter-SettlementAuthoring.py').SettlementAuthoring(P['owner'],'Starter/V4/Hunting/H08/Mine');G=module('geometry','Build-StarterCorridor.py');C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json')
+P=json.loads((SOURCE/'MainWorld.H08.mine.json').read_text());A=module('authoring','Starter-SettlementAuthoring.py').SettlementAuthoring(P['owner'],'Starter/V4/Hunting/H08/Mine');G=module('geometry','Build-StarterCorridor.py');C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json')
 assert not any(P['owner'] in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
 assert not unreal.EditorAssetLibrary.does_asset_exist(P['mesh_asset'])
 definition=next(a for a in A.subsystem.get_all_level_actors() if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition')
-R=dict(phase='STARTED',source_sha256=hashlib.sha256((SOURCE/'StarterWorld.H08.mine.json').read_bytes()).hexdigest(),previous_places=[C.snapshot_place(v) for v in definition.places],previous_connections=[C.snapshot_connection(v) for v in definition.connections],source_plan_hash=definition.source_plan_hash,art_complete=False,terrain_modified=False)
+R=dict(phase='STARTED',source_sha256=hashlib.sha256((SOURCE/'MainWorld.H08.mine.json').read_bytes()).hexdigest(),previous_places=[C.snapshot_place(v) for v in definition.places],previous_connections=[C.snapshot_connection(v) for v in definition.connections],source_plan_hash=definition.source_plan_hash,art_complete=False,terrain_modified=False)
 FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 try:
-    lib=unreal.EditorAssetLibrary;edit=unreal.MaterialEditingLibrary;material_path='/Game/World/Starter/Materials/M_H08_MineRock';assert not lib.does_asset_exist(material_path)
+    lib=unreal.EditorAssetLibrary;edit=unreal.MaterialEditingLibrary;material_path='/Game/Map_Resource/MainWorld/Materials/M_H08_MineRock';assert not lib.does_asset_exist(material_path)
     material=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_H08_MineRock','/Game/World/Starter/Materials',unreal.Material,unreal.MaterialFactoryNew());assert material
     for suffix,prop in [('D',unreal.MaterialProperty.MP_BASE_COLOR),('N',unreal.MaterialProperty.MP_NORMAL)]:
         tex=unreal.load_asset('/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Cliffs/T_CliffSurface_'+suffix);assert tex
@@ -28,7 +28,7 @@ try:
     mesh=unreal.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(dynamic,P['mesh_asset'],options)[0];assert mesh;mesh.set_material(0,material);lib.set_metadata_tag(mesh,'ProjectJ.Authoring',P['owner']);lib.set_metadata_tag(mesh,'ProjectJ.SourceHash',R['source_sha256']);assert lib.save_loaded_asset(mesh)
     cx,cy,floor=P['center_m'];actor=A.spawn('H08_RidgeMine',P['mesh_asset'],cx,cy,floor,P['yaw_degrees']);actor.set_actor_transform(unreal.Transform(location=A.point(cx,cy,floor),rotation=unreal.Rotator(pitch=0,yaw=P['yaw_degrees'],roll=0),scale=unreal.Vector(1,1,1)),False,False);A.created[-1]['location_cm']=list(actor.get_actor_location().to_tuple())
     actor.tags=[unreal.Name(P['owner']),unreal.Name('ProjectJ.Location.H08')]
-    timber=unreal.load_asset('/Game/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3');assert timber
+    timber=unreal.load_asset('/Game/Map_Resource/ElderboomVillage/Meshes/SM_Worn_Wooden_Beam_tgmsdc0fa_lod3');assert timber
     frames=G.component(actor,unreal.HierarchicalInstancedStaticMeshComponent,'TimberFrames');frames.set_static_mesh(timber);frames.set_collision_profile_name('BlockAll')
     for i,s in enumerate(timber.static_materials):frames.set_material(i,A.instanced_material(s.material_interface))
     b=timber.get_bounds();length=b.box_extent.z*2;beam_transforms=[]

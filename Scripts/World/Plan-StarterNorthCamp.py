@@ -1,11 +1,11 @@
 """Survey a small boundary garrison without changing the source mountains."""
 import functools,heapq,importlib.util,json,math,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';REPORT=OUT/'north-camp-layout.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';REPORT=OUT/'north-camp-layout.json'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');support=module('support','Starter-SettlementSupport.py')
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'));profiles=json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'));edges=json.loads((SOURCE/'StarterWorld.edges.json').read_text(encoding='utf-8'))
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');support=module('support','Starter-SettlementSupport.py')
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'));profiles=json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'));edges=json.loads((SOURCE/'MainWorld.edges.json').read_text(encoding='utf-8'))
 assert not REPORT.exists() and len(plan['places'])==19 and not any(p['id']=='S08' for p in plan['places'])
 cx,cy=3440,8030;gate=[3352,8048];port=[3352,8064];start=[3500,8040];step=2
 offsets=[(i,j) for i in range(-3,4) for j in range(-3,4) if (i or j) and math.gcd(abs(i),abs(j))==1]
@@ -77,7 +77,7 @@ for name,x in [('WestTower',3343),('EastTower',3361)]:
     samples=[T.height(x+u,y+v) for u in [-half,0,half] for v in [-half,0,half]];assert max(samples)-min(samples)<2.5
     towers.append(dict(id=name,center_m=[x,y,max(samples)+.06],width=half*2,depth=half*2,foundation_bottom_m=min(samples)-.25,scale=.5))
 place=dict(id='S08',name='north_gateway_camp',kind='border_camp',levels=[25,30],center_m=[cx,cy,T.height(cx,cy)],radius_m=150,boundary_m=[[3290,7910],[3590,7910],[3590,8064],[3290,8064]])
-profile=dict(stable_id='S08',target_id='S09',archetype='north_gateway_camp',seed=103109,stage='PLANNED',center_source='StarterWorld.plan.json#places/S08',houses=[q for q in buildings if 'mesh' not in q],tents=[q for q in buildings if 'mesh' in q],streets=streets,fields=[],gate=dict(center_m=[*gate,T.height(*gate)],towers=towers,clear_width_m=10.075,connection_id='E_N_Road'),walk_route_points_m=route[:-1]+[[port[0],8058]],functional_walk_timeout_s=120,roof_contact_profile=profiles['settlements'][0]['roof_contact_profile'],terrain_policy='Natural ridge, individual foundations, unchanged original height',regional_road_connection='E_N_Road; southern regional approach remains a review candidate')
+profile=dict(stable_id='S08',target_id='S09',archetype='north_gateway_camp',seed=103109,stage='PLANNED',center_source='MainWorld.plan.json#places/S08',houses=[q for q in buildings if 'mesh' not in q],tents=[q for q in buildings if 'mesh' in q],streets=streets,fields=[],gate=dict(center_m=[*gate,T.height(*gate)],towers=towers,clear_width_m=10.075,connection_id='E_N_Road'),walk_route_points_m=route[:-1]+[[port[0],8058]],functional_walk_timeout_s=120,roof_contact_profile=profiles['settlements'][0]['roof_contact_profile'],terrain_policy='Natural ridge, individual foundations, unchanged original height',regional_road_connection='E_N_Road; southern regional approach remains a review candidate')
 previous=next(p for p in plan['connections'] if p['id']=='E_N_Road').copy();new_port=[*port,T.height(*port)]
 for document in [plan,edges]:
     c=next(p for p in document['connections'] if p['id']=='E_N_Road');c['position_m']=new_port
@@ -86,8 +86,8 @@ profile['gate']['port_position_m']=new_port
 plan['places'].append(place);profiles['settlements'].append(profile)
 report=dict(place=place,buildings=evidence,gate=profile['gate'],route_points_m=route,local_centerline_grade_limit=.22,lateral_height_difference_limit_m=1.6,route_scope='source samples only; riding/Nav and regional southern approach unverified',previous_connection=previous,connection=next(p for p in plan['connections'] if p['id']=='E_N_Road'),previous_road=oldroad,height_sha256=T.manifest['terrain_profile']['sha256'],height_modified=False,native_registered=False)
 backup=ROOT/'Saved/StarterWorld/BeforeNorthCamp';backup.mkdir(parents=True,exist_ok=True)
-for name in ['StarterWorld.plan.json','StarterWorld.settlements.json','StarterWorld.edges.json']:
+for name in ['MainWorld.plan.json','MainWorld.settlements.json','MainWorld.edges.json']:
     assert not (backup/name).exists();shutil.copy2(SOURCE/name,backup/name)
-for name,value in [('StarterWorld.plan.json',plan),('StarterWorld.settlements.json',profiles),('StarterWorld.edges.json',edges)]:
+for name,value in [('MainWorld.plan.json',plan),('MainWorld.settlements.json',profiles),('MainWorld.edges.json',edges)]:
     (SOURCE/name).write_text(json.dumps(value,indent=2),encoding='utf-8')
 REPORT.write_text(json.dumps(report,indent=2),encoding='utf-8');print('North camp planned:',len(buildings),'buildings;',len(route),'route points;',new_port)

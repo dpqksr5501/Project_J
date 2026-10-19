@@ -6,10 +6,10 @@ quality while capturing. A run is immutable and requires visual inspection.
 """
 import argparse,base64,importlib.util,json,time
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 spec=importlib.util.spec_from_file_location('console',ROOT/'Scripts/Editor/WorldEditorConsole.py');C=importlib.util.module_from_spec(spec);spec.loader.exec_module(C)
 parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('label');parser.add_argument('--cameras',nargs='+');args=parser.parse_args();assert args.label.replace('-','').replace('_','').isalnum()
-settings=json.loads((SOURCE/'StarterWorld.visual-harness.json').read_text());out=ROOT/'Saved/Validation/StarterWorld/VisualHarness'/args.label;assert not out.exists(),'Preserve previous captures; use a new iteration label';out.mkdir(parents=True)
+settings=json.loads((SOURCE/'MainWorld.visual-harness.json').read_text());out=ROOT/'Saved/Validation/StarterWorld/VisualHarness'/args.label;assert not out.exists(),'Preserve previous captures; use a new iteration label';out.mkdir(parents=True)
 assert not C.call('IsPIERunning')
 previous=C.call('GetCameraTransform');(out/'original-camera.json').write_text(json.dumps(previous,indent=2))
 try:

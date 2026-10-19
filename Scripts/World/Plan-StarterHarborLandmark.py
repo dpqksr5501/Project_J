@@ -1,10 +1,10 @@
 """Fit a native watchtower kit on dry upper-bank terrain, preserving all plots."""
 import importlib.util,json,math
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';FILE=SOURCE/'StarterWorld.settlements.json'
-spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'StarterRegion.manifest.json')
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';FILE=SOURCE/'MainWorld.settlements.json'
+spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'MainWorld.manifest.json')
 data=json.loads(FILE.read_text(encoding='utf-8'));p=next(p for p in data['settlements'] if p['target_id']=='S05');assert p['stage']=='PLANNED' and 'watchtower' not in p
-cx,cy=next(v['center_m'][:2] for v in json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))['places'] if v['id']==p['stable_id']);size=11.1;candidates=[]
+cx,cy=next(v['center_m'][:2] for v in json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))['places'] if v['id']==p['stable_id']);size=11.1;candidates=[]
 for dx in range(70,151,3):
     for dy in range(-100,11,3):
         if math.hypot(dx,dy)>170:continue

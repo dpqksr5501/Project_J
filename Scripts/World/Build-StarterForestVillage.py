@@ -2,17 +2,17 @@
 import hashlib,importlib.util,json,math,random,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'forest-village-build.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'forest-village-build.json'
 assert not FILE.exists(),'Inspect existing native authoring; never duplicate a pass'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py')
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S03');assert P['stable_id']=='S04'
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S03');assert P['stable_id']=='S04'
 cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S04')
 TAG='ProjectJ.Starter.V4.Forestry.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S04/ForestryBlockout')
 assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');assert STONE
-REPORT=dict(phase='QUEUED',stable_id='S04',target_id='S03',houses=[],groups=[],entries=[],completed=[],height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest(),profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');assert STONE
+REPORT=dict(phase='QUEUED',stable_id='S04',target_id='S03',houses=[],groups=[],entries=[],completed=[],height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest(),profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):
     REPORT.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(REPORT,indent=2),encoding='utf-8')
 def tag(a):
@@ -38,7 +38,7 @@ def yard(yard):
     x,y=cx+yard['offset_m'][0],cy+yard['offset_m'][1];rng=random.Random(P['seed']+len(yard['id']))
     logs=[(x-10+i*4,y-4+j*5,rng.uniform(-10,10),rng.uniform(.8,1.1)) for i in range(5) for j in range(2)]
     stumps=[(x-10+i*4,y+7,rng.uniform(0,360),rng.uniform(.7,1.05)) for i in range(5)]
-    group(yard['id'],x,y,[('FirewoodStacks','/Game/Map_Resource/SkyTown/Meshes/SM_Firewood01_Item01',logs),('Stumps','/Game/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00',stumps)])
+    group(yard['id'],x,y,[('FirewoodStacks','/Game/Map_Resource/SkyTown/Meshes/SM_Firewood01_Item01',logs),('Stumps','/Game/Map_Resource/Megascans/3D_Assets/TreeStumpA/SM_TreeStumpA_00',stumps)])
     tag(A.spawn('S04_Forestry_'+yard['id']+'_Cart','/Game/Map_Resource/SkyTown/Meshes/SM_Cart01',x+8,y-9,C.height(x+8,y-9),25))
 def trees():
     rng=random.Random(P['seed']);points=[]
@@ -51,7 +51,7 @@ def trees():
         if any(math.hypot(x-p[0],y-p[1])<11 for p in points):continue
         points.append((x,y,rng.uniform(0,360),rng.uniform(.65,1.1)))
         if len(points)==120:break
-    paths=['/Game/ElderboomVillage/Meshes/SM_BlackAlder_Forest_01','/Game/ElderboomVillage/Meshes/SM_BlackAlder_Forest_05_PP','/Game/ElderboomVillage/Meshes/SM_BlackAlder_Field_04']
+    paths=['/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Forest_01','/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Forest_05_PP','/Game/Map_Resource/ElderboomVillage/Meshes/SM_BlackAlder_Field_04']
     group('RetainedCanopy',cx,cy,[('Canopy'+str(i),path,[(cx+x,cy+y,yaw,scale) for x,y,yaw,scale in points[i::3]]) for i,path in enumerate(paths)],True)
 def entries():
     for name,offset in [('West',P['streets'][0]['points_relative_m'][0]),('East',P['streets'][0]['points_relative_m'][-1])]:
@@ -67,7 +67,7 @@ def tick(dt):
     busy=True
     try:
         if index==len(tasks):
-            A.save();assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==REPORT['height_sha256'];record('COMPLETE');unreal.unregister_slate_post_tick_callback(handle);return
+            A.save();assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==REPORT['height_sha256'];record('COMPLETE');unreal.unregister_slate_post_tick_callback(handle);return
         key,action=tasks[index];record('APPLYING_'+key);action();REPORT['completed'].append(key);index+=1
         if index%2==0 or index==len(tasks):A.save()
         record('READY')

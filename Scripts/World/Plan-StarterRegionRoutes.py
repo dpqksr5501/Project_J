@@ -7,14 +7,14 @@ No plan, DA, height or Unreal Actor is changed by this survey.
 import hashlib,heapq,json,math,time
 from pathlib import Path
 import numpy as np
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
 OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'world-structure-routes.json'
 survey=json.loads((OUT/'world-structure-sites.json').read_text(encoding='utf-8'))
-height_file=SOURCE/'HM_StarterRegion.r16';digest=hashlib.sha256(height_file.read_bytes()).hexdigest()
+height_file=SOURCE/'HM_MainWorld.r16';digest=hashlib.sha256(height_file.read_bytes()).hexdigest()
 assert digest==survey['height_sha256']
 full=(np.fromfile(height_file,dtype='<u2').reshape(4033,4033).astype('f4')-32768)*.0625
 cache=np.load(OUT/'world-structure-grid.npz');h,slope,water=(cache[n] for n in ['height','slope','water'])
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
 step=8;size=h.shape[0];allowed=(h>2)&(water>8)&(slope<.75)
 nodes={p['id']:p for p in survey['sites'] if 'center_m' in p}
 assert len(nodes)==20,'Resolve missing sites before global routing'

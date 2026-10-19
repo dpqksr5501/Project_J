@@ -7,7 +7,7 @@ import hashlib,heapq,importlib.util,json,math
 from pathlib import Path
 import numpy as np
 from PIL import Image,ImageDraw
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
 spec=importlib.util.spec_from_file_location('diagnosis',ROOT/'Scripts/World/Diagnose-StarterTerrain.py')
 D=importlib.util.module_from_spec(spec);spec.loader.exec_module(D)
 
@@ -26,7 +26,7 @@ def solve(h,plan,road):
     allowed&=((x-cx)/rx)**2+((y-cy)/ry)**2>1.08**2
     goal=(np.hypot(x-b[0],y-b[1])<=radius)&allowed&(side<.38)
     start=(round((a[1]-low[1])/step),round((a[0]-low[0])/step))
-    result=dict(id=road['id'],source_height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest(),
+    result=dict(id=road['id'],source_height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest(),
                 grid_m=step,search_margin_m=margin,goal_approach_radius_m=radius,max_segment_grade_pct=25,
                 status='NO_ROUTE_WITHIN_CONSTRAINTS',height_modified=False,navigation_verified=False)
     if not allowed[start] or not goal.any():return result
@@ -74,9 +74,9 @@ def solve(h,plan,road):
 
 
 def main():
-    file=SOURCE/'HM_StarterRegion.r16';fingerprint=hashlib.sha256(file.read_bytes()).hexdigest()
+    file=SOURCE/'HM_MainWorld.r16';fingerprint=hashlib.sha256(file.read_bytes()).hexdigest()
     h=(np.fromfile(file,dtype='<u2').reshape(4033,4033).astype('f4')-32768)*.0625
-    plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
+    plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
     results=[solve(h,plan,r) for r in plan['roads'] if r['id'] in ['Road_Lake_Mountain','Road_Mountain_Boss']]
     assert hashlib.sha256(file.read_bytes()).hexdigest()==fingerprint
     (OUT/'mountain-trail-candidates.json').write_text(json.dumps(dict(height_unchanged=True,routes=results),indent=2),encoding='utf-8')

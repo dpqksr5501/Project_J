@@ -6,14 +6,14 @@ archiving its exact instances; never removes trees, wheat, rocks or buildings.
 import hashlib,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
-OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/Starter'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
+OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/MainWorld'
 TAG='ProjectJ.Starter.Biome.v1';OWNER='ProjectJ.Starter.WorldBiome.v2'
-PRESET_PATH=SOURCE/'StarterWorld.biomes.json';PRESET=json.loads(PRESET_PATH.read_text(encoding='utf-8'))
+PRESET_PATH=SOURCE/'MainWorld.biomes.json';PRESET=json.loads(PRESET_PATH.read_text(encoding='utf-8'))
 assert PRESET['schema']==2 and not PRESET['height_editing']
 assert Path(unreal.Paths.project_dir()).resolve()==ROOT
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
 assert (ROOT/'Saved/StarterWorld/BeforeWorldBiome/Materials').exists()
 LIB=unreal.EditorAssetLibrary;EDIT=unreal.MaterialEditingLibrary;TOOLS=unreal.AssetToolsHelpers.get_asset_tools()
 ACTORS=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -21,7 +21,7 @@ REPORT_PATH=OUT/'world-biome-build.json'
 REPORT=json.loads(REPORT_PATH.read_text(encoding='utf-8')) if REPORT_PATH.exists() else dict(completed=[],phase='QUEUED',height_modified=False)
 assert REPORT['phase']!='COMPLETE','Inspect saved output; do not overwrite completed authoring automatically'
 assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages(),'Preserve unsaved map edits'
-HEIGHT_HASH=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()
+HEIGHT_HASH=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()
 assert HEIGHT_HASH=='bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8'
 TOUCHED=set()
 
@@ -32,7 +32,7 @@ def record(phase):
 
 def save():
     dirty=list(unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages())+list(unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages())
-    packages=[p for p in dirty if p.get_name() in TOUCHED or p.get_name()==BASE+'/Maps/L_StarterRegion' or p.get_name().startswith('/Game/__ExternalActors__/World/Starter/')]
+    packages=[p for p in dirty if p.get_name() in TOUCHED or p.get_name()=='/Game/World/MainWorld/Legacy/Maps/L_StarterRegion' or p.get_name().startswith('/Game/__ExternalActors__/World/MainWorld/Legacy/')]
     if packages:assert unreal.EditorLoadingAndSavingUtils.save_packages(packages,True)
     REPORT['unrelated_dirty_preserved']=[p.get_name() for p in dirty if p not in packages]
 
@@ -44,10 +44,10 @@ def struct(cls,**values):
 
 
 def mask_stage():
-    for name in ['T_StarterEcology','T_StarterPlacement']:
-        path=BASE+'/Materials/'+name;obj=unreal.load_asset(path);assert obj and LIB.get_metadata_tag(obj,'ProjectJ.Authoring')==TAG
+    for name in ['T_MainWorldEcology','T_MainWorldPlacement']:
+        path='/Game/Map_Resource/MainWorld/Materials/'+name;obj=unreal.load_asset(path);assert obj and LIB.get_metadata_tag(obj,'ProjectJ.Authoring')==TAG
         task=unreal.AssetImportTask()
-        for k,v in dict(filename=str(SOURCE/(name+'.png')),destination_path=BASE+'/Materials',destination_name=name,automated=True,save=False,replace_existing=True,replace_existing_settings=False).items():task.set_editor_property(k,v)
+        for k,v in dict(filename=str(SOURCE/(name+'.png')),destination_path='/Game/Map_Resource/MainWorld/Materials',destination_name=name,automated=True,save=False,replace_existing=True,replace_existing_settings=False).items():task.set_editor_property(k,v)
         TOOLS.import_asset_tasks([task]);obj=unreal.load_asset(path)
         obj.set_editor_property('srgb',False);obj.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
         obj.set_editor_property('address_x',unreal.TextureAddress.TA_CLAMP);obj.set_editor_property('address_y',unreal.TextureAddress.TA_CLAMP)
@@ -60,7 +60,7 @@ def instancing_material(interface):
     # Preserve every inherited instance layer if an unprepared provider material
     # needs instancing. Overrides reference owned copies, not a changed provider.
     suffix=hashlib.sha256(interface.get_path_name().encode()).hexdigest()[:8]
-    path=BASE+'/Materials/Biome/'+interface.get_name()+'_'+suffix
+    path='/Game/Map_Resource/MainWorld/Materials/Biome/'+interface.get_name()+'_'+suffix
     copy=unreal.load_asset(path)
     if copy is None:
         copy=LIB.duplicate_asset(interface.get_path_name().split('.')[0],path);assert copy
@@ -72,9 +72,9 @@ def instancing_material(interface):
 
 
 def palette_stage():
-    LIB.make_directory(BASE+'/Materials/Biome');paths={};counts={}
+    LIB.make_directory('/Game/Map_Resource/MainWorld/Materials/Biome');paths={};counts={}
     for palette,species in PRESET['groundcover_palettes'].items():
-        path=BASE+'/Materials/'+('LG_StarterUnderstory' if palette=='Meadow' else 'LG_Starter'+palette)
+        path='/Game/Map_Resource/MainWorld/Materials/'+('LG_MainWorldUnderstory' if palette=='Meadow' else 'LG_MainWorld'+palette)
         obj=unreal.load_asset(path)
         if obj is None:
             obj=LIB.duplicate_asset(PRESET['groundcover_source'],path);assert obj
@@ -102,14 +102,14 @@ def palette_stage():
 
 
 def output_stage():
-    mat=unreal.load_asset(BASE+'/Materials/M_StarterTerrain_Biome');assert LIB.get_metadata_tag(mat,'ProjectJ.Authoring')==TAG
+    mat=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain_Biome');assert LIB.get_metadata_tag(mat,'ProjectJ.Authoring')==TAG
     expressions=list(EDIT.get_material_expressions(mat))
     output=next(e for e in expressions if isinstance(e,unreal.MaterialExpressionLandscapeGrassOutput))
     inputs={'P':next(e for e in expressions if isinstance(e,unreal.MaterialExpressionWorldPosition))}
     for expr in expressions:
         if isinstance(expr,unreal.MaterialExpressionTextureObject):
             tex=expr.get_editor_property('texture')
-            if tex.get_name() in ['T_StarterEcology','T_StarterPlacement']:inputs['Ecology' if tex.get_name()=='T_StarterEcology' else 'Placement']=expr
+            if tex.get_name() in ['T_MainWorldEcology','T_MainWorldPlacement']:inputs['Ecology' if tex.get_name()=='T_MainWorldEcology' else 'Placement']=expr
     assert len(inputs)==3
     # Delete only the previous generated grass expression, keeping all surface logic.
     for expr in expressions:
@@ -126,7 +126,7 @@ def output_stage():
         for key,value in inputs.items():assert EDIT.connect_material_expressions(value,'',node,key)
         assert EDIT.connect_material_expressions(node,'',output,name)
     errors=EDIT.recompile_material(mat);assert not errors,list(errors)
-    LIB.set_metadata_tag(mat,'ProjectJ.GroundcoverOwner',OWNER);TOUCHED.add(BASE+'/Materials/M_StarterTerrain_Biome')
+    LIB.set_metadata_tag(mat,'ProjectJ.GroundcoverOwner',OWNER);TOUCHED.add('/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain_Biome')
     REPORT['material_expressions']=len(EDIT.get_material_expressions(mat))
 
 
@@ -152,7 +152,7 @@ def retire_stage():
     PRESET['retired_legacy_grass_actors']=len(owned);PRESET['retired_legacy_grass_instances']=expected
     PRESET_PATH.write_text(json.dumps(PRESET,indent=2),encoding='utf-8')
     REPORT.update(retired_legacy_grass_actors=len(owned),retired_legacy_grass_instances=expected)
-    assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==HEIGHT_HASH
+    assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==HEIGHT_HASH
     REPORT['height_sha256']=HEIGHT_HASH
 
 

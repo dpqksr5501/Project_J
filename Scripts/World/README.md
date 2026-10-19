@@ -1,6 +1,6 @@
 # 월드 제작 도구
 
-`Content/World/Starter/Source`를 보존하고 현행 읽기 전용 검증은 manifest의 `L_MainWorld`를 따른다. 초기 `L_StarterRegion` 제작 도구는 아래에 명시한 단계별 이력과 지원 제한을 따른다. 시작점과 미완료 상태는 [인수인계](../../Docs/World/WORLD_HANDOFF_2026-10-18.md)를 따른다. Python 파일은 게임 런타임의 시작 훅이 아니다.
+`Content/World/MainWorld/Source`를 보존하고 현행 읽기 전용 검증은 manifest의 `L_MainWorld`를 따른다. 초기 `L_StarterRegion` 제작 도구는 아래에 명시한 단계별 이력과 지원 제한을 따른다. 시작점과 미완료 상태는 [인수인계](../../Docs/World/WORLD_HANDOFF_2026-10-18.md)를 따른다. Python 파일은 게임 런타임의 시작 훅이 아니다.
 
 - `Generate-*` / `Plan-*`: 높이·도로·장소·배치 입력 작성. 기존 Source를 덮지 않는지 각 파일의 조건을 먼저 확인한다.
 - `Build-*` / `Apply-StarterWorldBiomes.py` / `Save-StarterForests.py`: Source를 에디터의 실제 에셋·액터로 작성한다. 이미 배치된 월드를 일괄 재생성하는 용도로 실행하지 않는다.
@@ -16,3 +16,5 @@
 WP에서 새 액터 폴더를 만들면 폴더의 외부 오브젝트와 공유 맵도 dirty가 될 수 있다. 액터 소유권은 이 패키지들의 저장 권한을 포함하지 않으므로 저장은 중단된다. 기존 맵의 폴더·맵 메타데이터 변경은 별도의 명시적 저작 작업으로 검토하고 저장해야 한다. dirty 상태를 지우거나 경로 전체를 소유 목록에 추가해서 재시도하지 않는다. 새 월드 bootstrap만 자신이 새로 만든 맵 패키지를 명시적으로 소유할 수 있다.
 
 2026-10-19 정리: 미커밋 `Build-StarterMountainHLOD.py`는 Starter 전용 산악 시험 경계·저장 경로를 사용하는 일회성 파일이므로 로컬 원형과 SHA를 보관한 뒤 퇴역했다. 자동 실행·다른 제작기의 호출은 없으며, 현재 MainWorld의 지원 HLOD 빌더로 사용하지 않는다. 이 정리는 HLOD 품질·스트리밍 문제 해결이나 빌드 성공을 뜻하지 않는다.
+
+2026-10-19 최종 폴더 정리: 제작 입력은 `Content/World/MainWorld/Source`의 `MainWorld.*`·`HM_MainWorld.r16`·`T_MainWorld*.png`다. Source의 수치·안정 ID·높이 픽셀은 보존했다. manifest의 `owned_content_root`는 월드/DA/설정을 소유하고, `resource_content_root=/Game/Map_Resource/MainWorld`는 월드 전용 환경 자원을 소유한다. Settlement 공용 도구와 자원 경로 생성 계획도 이 구분을 따른다. 초기 생성기의 삭제된 Legacy 대상 guard와 단계별 실행/저장 제한은 유지하므로 MainWorld 재생성기로 실행하지 않는다. `Build-StarterCorridor.py`는 다른 제작기의 공통 함수 호출 때문에 유지한다. 완료된 일회성 bootstrap `Build-StarterWorld.py`와 이번 이행 실행기는 검증 후 퇴역했고 원형·지문은 로컬 실행 기록에 보관한다. 지원 도구의 `Starter-` 파일명, 제작 소유 태그와 안정 ID는 에셋 표시 이름과 별개다.

@@ -2,10 +2,10 @@
 import hashlib,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/Starter'
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/MainWorld'
 EXPECTED=json.loads((OUT/'forest-save.json').read_text(encoding='utf-8'))
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
 unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
 started=time.perf_counter()
@@ -39,7 +39,7 @@ def verify(dt):
             assert (nt,ns)==(expected[a.get_actor_label()]['trees'],expected[a.get_actor_label()]['shrubs']),a.get_actor_label()
             trees+=nt;shrubs+=ns
         assert trees==EXPECTED['total_trees'] and shrubs==EXPECTED['total_shrubs']
-        height=hashlib.sha256((ROOT/'Content/World/Starter/Source/HM_StarterRegion.r16').read_bytes()).hexdigest()
+        height=hashlib.sha256((ROOT/'Content/World/MainWorld/Source/HM_MainWorld.r16').read_bytes()).hexdigest()
         assert height=='bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8'
         report.update(passed=True,tiles=len(volumes),trees=trees,shrubs=shrubs,tree_collision_modes=profiles,height_sha256=height,
                       dirty_maps=[p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()],performance_measured=False)

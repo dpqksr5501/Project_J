@@ -2,10 +2,10 @@
 import json
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];BASE='/Game/World/Starter';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
-TREE_CULL=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.forest-streaming.json').read_text()).get('tree_instance_cull_cm',[0,0])
+ROOT=Path(__file__).resolve().parents[2];BASE='/Game/World/MainWorld';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+TREE_CULL=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.forest-streaming.json').read_text()).get('tree_instance_cull_cm',[0,0])
 assert not (OUT/'forest-rollout.json').exists(),'Initial palette setup is retired after rollout; edit the owned graph explicitly'
-graph=unreal.load_asset(BASE+'/PCG/PCG_StarterForest');assert graph
+graph=unreal.load_asset(BASE+'/PCG/PCG_MainWorldForest');assert graph
 lib=unreal.EditorAssetLibrary
 assert lib.get_metadata_tag(graph,'ProjectJ.Authoring')=='ProjectJ.Starter.WorldBiome.v2'
 node=unreal.load_object(None,graph.get_path_name()+':Trees');assert node
@@ -13,7 +13,7 @@ settings=node.get_settings();selector=settings.get_editor_property('mesh_selecto
 assert isinstance(selector,unreal.PCGMeshSelectorWeighted)
 entries=[];report=[]
 for name,weight in [('SM_BlackAlder_Field_02',3),('SM_BlackAlder_Field_04',2),('SM_BlackAlder_Forest_01',5)]:
-    mesh=unreal.load_asset('/Game/ElderboomVillage/Meshes/'+name);assert mesh
+    mesh=unreal.load_asset('/Game/Map_Resource/ElderboomVillage/Meshes/'+name);assert mesh
     assert all(s.material_interface.get_base_material().get_editor_property('used_with_instanced_static_meshes') for s in mesh.static_materials if s.material_interface)
     entry=unreal.PCGMeshSelectorWeightedEntry();descriptor=entry.get_editor_property('descriptor')
     descriptor.set_editor_property('static_mesh',mesh)

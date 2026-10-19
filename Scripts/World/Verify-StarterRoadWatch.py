@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'road-watch-build.json').read_text());PRE=json.loads((OUT/'road-watch-preflight.json').read_text());assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'road-watch-build.json').read_text());PRE=json.loads((OUT/'road-watch-preflight.json').read_text());assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):
@@ -17,8 +17,8 @@ def verify(dt):
             a=bylabel[row['label']];assert a.get_path_name()==row['path'] and (a.get_actor_location()-unreal.Vector(*row['location_cm'])).length()<.01;assert a.get_editor_property('is_spatially_loaded') and not a.get_editor_property('is_editor_only_actor')
         for row in PRE['actors']:
             a=next(a for a in actors if a.get_path_name()==row['path']);t=a.get_actor_transform();actual=dict(label=a.get_actor_label(),path=a.get_path_name(),location_cm=list(t.translation.to_tuple()),rotation=list(t.rotation.rotator().to_tuple()),scale=list(t.scale3d.to_tuple()),components=[dict(name=c.get_name(),mesh=c.static_mesh.get_path_name() if c.static_mesh else None) for c in a.get_components_by_class(unreal.StaticMeshComponent)]);assert actual==row,('Existing village changed',row['label'])
-        definition=next(a for a in actors if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');assert [C.snapshot_place(v) for v in definition.get_editor_property('places')]==PRE['places'] and [C.snapshot_connection(v) for v in definition.get_editor_property('connections')]==PRE['connections'];assert definition.get_editor_property('source_plan_hash')==PRE['source_plan_hash']==hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest()
-        assert (SOURCE/'StarterWorld.corridor.json').read_bytes()==(ROOT/'Saved/StarterWorld/BeforeRoadWatch/StarterWorld.corridor.json').read_bytes()
+        definition=next(a for a in actors if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');assert [C.snapshot_place(v) for v in definition.get_editor_property('places')]==PRE['places'] and [C.snapshot_connection(v) for v in definition.get_editor_property('connections')]==PRE['connections'];assert definition.get_editor_property('source_plan_hash')==PRE['source_plan_hash']==hashlib.sha256((SOURCE/'MainWorld.plan.json').read_bytes()).hexdigest()
+        assert (SOURCE/'MainWorld.corridor.json').read_bytes()==(ROOT/'Saved/StarterWorld/BeforeRoadWatch/MainWorld.corridor.json').read_bytes()
         def trace(a,p,half=10):
             hit=unreal.SystemLibrary.line_trace_single(world,p+unreal.Vector(0,0,half),p-unreal.Vector(0,0,half),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[v for v in actors if v!=a],unreal.DrawDebugTrace.NONE,True);values=hit.to_tuple() if hit else None;assert values and values[0],(a.get_actor_label(),p);return values[4].z
         floors=[];stairs=[];deck=[];access={q['label']:q for q in B['access']}

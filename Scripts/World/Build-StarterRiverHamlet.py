@@ -2,13 +2,13 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'river-hamlet-build.json';assert not FILE.exists()
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'river-hamlet-build.json';assert not FILE.exists()
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');assert json.loads((OUT/'river-hamlet-registration.json').read_text())['phase']=='COMPLETE' and json.loads((OUT/'river-forest-regeneration.json').read_text())['phase']=='COMPLETE'
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S07');B=P['bridge'];place=next(p for p in C.PLAN['places'] if p['id']=='S07');cx,cy=place['center_m'][:2];TAG='ProjectJ.Starter.V4.RiverHamlet.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S07/RiverHamletBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
-R=dict(phase='QUEUED',target_id='S07',stable_id='S07',completed=[],houses=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');assert json.loads((OUT/'river-hamlet-registration.json').read_text())['phase']=='COMPLETE' and json.loads((OUT/'river-forest-regeneration.json').read_text())['phase']=='COMPLETE'
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S07');B=P['bridge'];place=next(p for p in C.PLAN['places'] if p['id']=='S07');cx,cy=place['center_m'][:2];TAG='ProjectJ.Starter.V4.RiverHamlet.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S07/RiverHamletBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
+CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
+R=dict(phase='QUEUED',target_id='S07',stable_id='S07',completed=[],houses=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):R.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 def tag(a):a.set_editor_property('tags',[unreal.Name(TAG),unreal.Name('ProjectJ.Location.S07'),unreal.Name('ProjectJ.Target.S07')]);return a
 def empty(label,x,y,z):
@@ -47,11 +47,11 @@ def bridge():
             rail_start=[start[0]+normal[0]*side*2.35,start[1]+normal[1]*side*2.35,start[2]+1.09];rail_end=[end[0]+normal[0]*side*2.35,end[1]+normal[1]*side*2.35,end[2]+1.09];segment('Rails',rail_start,rail_end,.14,.14)
     R['bridge']=dict(label=a.get_actor_label(),points_m=B['points_m'],bank_points_m=B['bank_points_m'],deck_top_m=z,width_m=B['width_m'],ramps=ramps,components={n:c.get_instance_count() for n,c in groups.items()})
 def well():
-    x,y=cx+8,cy-4;a=tag(A.spawn('S07_River_Well','/Game/Meshes/Well/SM_MainWell',x,y,T.height(x,y),15))
-    for name,path in [('StoneBase','/Game/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Meshes/Well/SM_WellShingles'),('Crank','/Game/Meshes/Well/SM_WellDetailPieces')]:A.add_static_component(a,path,name)
+    x,y=cx+8,cy-4;a=tag(A.spawn('S07_River_Well','/Game/Map_Resource/Meshes/Well/SM_MainWell',x,y,T.height(x,y),15))
+    for name,path in [('StoneBase','/Game/Map_Resource/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Map_Resource/Meshes/Well/SM_WellShingles'),('Crank','/Game/Map_Resource/Meshes/Well/SM_WellDetailPieces')]:A.add_static_component(a,path,name)
 def goods():
     x,y=cx+16,cy-8;z=T.height(x,y);a=empty('MerchantGoods',x,y,z);counts={}
-    for name,path,count in [('Barrels','/Game/ElderboomVillage/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3',4),('Crates','/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01',6)]:
+    for name,path,count in [('Barrels','/Game/Map_Resource/ElderboomVillage/Meshes/SM_Wooden_Barrel_uc2ichvqx_lod3',4),('Crates','/Game/Map_Resource/SkyTown/Meshes/SM_FruitCrate01',6)]:
         mesh=C.mesh(path);c=hism(a,name,mesh,collision=False)
         for i in range(count):
             u=(i%3-1)*1.3;v=(i//3)*1.3+(3 if name=='Crates' else 0);c.add_instance(C.centered_transform(mesh,unreal.Vector(u*100,v*100,(T.height(x+u,y+v)-z)*100),i*37),False)

@@ -2,8 +2,8 @@
 import hashlib,importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';SOURCE=ROOT/'Content/World/Starter/Source';STATE=json.loads((OUT/'lake-village-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE'
-manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text(encoding='utf-8'));grid=manifest['world_grid'];origin=grid['unreal_origin_cm'];units=grid['centimetres_per_source_metre']
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';SOURCE=ROOT/'Content/World/MainWorld/Source';STATE=json.loads((OUT/'lake-village-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE'
+manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text(encoding='utf-8'));grid=manifest['world_grid'];origin=grid['unreal_origin_cm'];units=grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
@@ -37,9 +37,9 @@ def verify(dt):
             p=point(x,y,dock['deck_top_m']);deck.append(abs(trace(a,p)-p.z))
         for dx in [-9,-4,4,9]:
             p=point(x+dx,dock['head_m'][1]+.125,dock['deck_top_m']);deck.append(abs(trace(a,p)-p.z))
-        lake=next(a for a in actors if a.get_actor_label()=='StarterRegion_LakePrototype');center,extent=lake.get_actor_bounds(False,False);assert abs(center.z+extent.z-(origin[2]+dock['water_level_m']*units))<.01
+        lake=next(a for a in actors if a.get_actor_label()=='MainWorld_LakePrototype');center,extent=lake.get_actor_bounds(False,False);assert abs(center.z+extent.z-(origin[2]+dock['water_level_m']*units))<.01
         for row in STATE['entries']:assert not bylabel[row['label']].get_editor_property('replicates')
-        digest=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
+        digest=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
         assert max(foundations+steps+deck+ramp)<.1,(max(foundations),max(steps),max(deck),max(ramp))
         report.update(passed=True,actors=20,buildings=10,exterior_accesses=len(access),stairs_threshold_instances=len(steps),deck_collision_samples=len(deck),ramp_collision_samples=len(ramp),ramp_grade=dock['ramp_grade'],maximum_foundation_collision_error_cm=max(foundations),maximum_stair_collision_error_cm=max(steps),maximum_deck_collision_error_cm=max(deck),maximum_ramp_collision_error_cm=max(ramp),water_surface_m=(center.z+extent.z)/100,height_sha256=digest,water_navigation_or_swimming_verified=False,art_complete=False,navigation_verified=False,performance_measured=False,dirty_maps=[p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()])
     except Exception:report['error']=traceback.format_exc();unreal.log_error(report['error'])

@@ -2,8 +2,8 @@
 import importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'mountain-village-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
-spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'StarterRegion.manifest.json');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'mountain-village-build.json').read_text(encoding='utf-8'));assert STATE['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+spec=importlib.util.spec_from_file_location('terrain',ROOT/'Scripts/World/Starter-TerrainProfile.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);T=m.TerrainProfile(SOURCE/'MainWorld.manifest.json');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):
@@ -35,7 +35,7 @@ def verify(dt):
             c=parts[name];assert c.get_instance_count()==count;b=c.static_mesh.get_bounds()
             for i in [0,count//2,count-1]:
                 foot=c.get_instance_transform(i,True).transform_location(unreal.Vector(b.origin.x,b.origin.y,b.origin.z-b.box_extent.z));ground.append(abs(foot.z-(origin[2]+T.height((foot.x-origin[0])/units,(foot.y-origin[1])/units)*units)))
-        state=next(a for a in actors if isinstance(a,unreal.Project_JWorldState));places=state.get_editor_property('definition').get_editor_property('places');plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'));assert {str(p.get_editor_property('place_id')) for p in places}=={p['id'] for p in plan['places']};legacy=next(p for p in places if str(p.get_editor_property('place_id'))=='S05');assert (legacy.get_editor_property('location')-point(2600,6000,580.75)).length()<.01
+        state=next(a for a in actors if isinstance(a,unreal.Project_JWorldState));places=state.get_editor_property('definition').get_editor_property('places');plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'));assert {str(p.get_editor_property('place_id')) for p in places}=={p['id'] for p in plan['places']};legacy=next(p for p in places if str(p.get_editor_property('place_id'))=='S05');assert (legacy.get_editor_property('location')-point(2600,6000,580.75)).length()<.01
         for row in STATE['entries']:assert not bylabel[row['label']].get_editor_property('replicates')
         assert max(foundations+steps+deck+ground)<.1
         floors=[h['center_m'][2] for h in STATE['houses']];report.update(passed=True,actors=17,buildings=11,lookouts=1,exterior_accesses=12,stairs_threshold_instances=len(steps),lookout_floor_m=p['center_m'][2],house_floor_range_m=[min(floors),max(floors)],lookout_deck_collision_samples=len(deck),maximum_collision_or_ground_error_cm=max(foundations+steps+deck+ground),height_sha256=T.manifest['terrain_profile']['sha256'],native_place_count=len(places),original_place_identity_preserved=True,art_complete=False,navigation_verified=False,mount_verified=False,performance_measured=False,dirty_maps=[p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()])

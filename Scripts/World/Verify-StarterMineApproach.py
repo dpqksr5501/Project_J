@@ -2,11 +2,11 @@
 import hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';P=json.loads((SOURCE/'StarterWorld.H08.approach.json').read_text());B=json.loads((OUT/'H08-mine-approach-build.json').read_text());assert B['phase']=='COMPLETE'
-assert hashlib.sha256((SOURCE/'StarterWorld.H08.approach.json').read_bytes()).hexdigest()==B['source_sha256'],'Native build is from a different authored path'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';P=json.loads((SOURCE/'MainWorld.H08.approach.json').read_text());B=json.loads((OUT/'H08-mine-approach-build.json').read_text());assert B['phase']=='COMPLETE'
+assert hashlib.sha256((SOURCE/'MainWorld.H08.approach.json').read_bytes()).hexdigest()==B['source_sha256'],'Native build is from a different authored path'
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-S=module('support','Starter-SettlementSupport.py').AuthoredPathSupport(P['pieces']);C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');grid=T.manifest['world_grid'];origin=grid['unreal_origin_cm']
+S=module('support','Starter-SettlementSupport.py').AuthoredPathSupport(P['pieces']);C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');grid=T.manifest['world_grid'];origin=grid['unreal_origin_cm']
 def point(x,y,z):return unreal.Vector(origin[0]+x*100,origin[1]+y*100,origin[2]+z*100)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):

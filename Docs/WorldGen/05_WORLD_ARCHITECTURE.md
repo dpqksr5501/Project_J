@@ -4,15 +4,15 @@
 
 | v4 계약 | 현재 실제 자원·소비자 | 남은 작업 |
 |---|---|---|
-| RegionManifest / WorldGridSpec | `StarterRegion.manifest.json`; SettlementAuthoring의 좌표 변환·저장 루트, 입구 등록, 캡처가 소비 | 다른 저작 경로의 고정 좌표 제거·새 Region 시연 |
+| RegionManifest / WorldGridSpec | `MainWorld.manifest.json`; SettlementAuthoring의 좌표 변환·저장 루트, 입구 등록, 캡처가 소비 | 다른 저작 경로의 고정 좌표 제거·새 Region 시연 |
 | TerrainProfile | manifest의 보존 높이/해시/고도/샘플 규격과 기존 plan | 비파괴 Edit Layer·곡률/유역 파생의 공통화 |
-| BiomeProfile | `StarterWorld.biomes.json`, 실제 Landscape/Grass/PCG | 지피 표시 결함·바이옴별 서브그래프/자산 주입·원경 검증 |
-| LocationRegistry | `StarterWorld.locations.json`; v4 alias→기존 안정 ID, 실제 Native 태그/입구 참조 | 모든 20곳의 실제 등록·전체 입력 참조 검사 |
-| SettlementArchetype | `StarterWorld.settlements.json`; S02 농업/S03 임업/S04 호반/S05 하구항/S06 산악 프로필·공통 scanned shell/기초/외부 계단 | 소취락의 다른 공간 알고리즘 |
+| BiomeProfile | `MainWorld.biomes.json`, 실제 Landscape/Grass/PCG | 지피 표시 결함·바이옴별 서브그래프/자산 주입·원경 검증 |
+| LocationRegistry | `MainWorld.locations.json`; v4 alias→기존 안정 ID, 실제 Native 태그/입구 참조 | 모든 20곳의 실제 등록·전체 입력 참조 검사 |
+| SettlementArchetype | `MainWorld.settlements.json`; S02 농업/S03 임업/S04 호반/S05 하구항/S06 산악 프로필·공통 scanned shell/기초/외부 계단 | 소취락의 다른 공간 알고리즘 |
 | RoadNetworkData | 기존 plan 도로, 실제 S00/S01 접근부, S02 프로필 농로 | 전역 실제 교량/계단·우회로·폭/이동 검증. 후보 A*를 실제 도로로 취급하지 않음 |
 | HuntingGroundProfile / BossEncounterProfile | DA의 ID/경계/레벨 + Manifest의 hunting_profiles → H01/H02의 실제 군집 공간/입출구·스폰/순찰 후보·안전/리스폰/리셋·퀘스트/서버 상태, 선택적 목책/천막 | 나머지 H/B 아레나·환경/AI·실제 서버 군집/리스폰/리셋/보상 연결 |
-| WorldEdgeContract | `StarterWorld.edges.json`의 네 방향 높이 표본과 7개 포트 | 기울기/재질/바이옴·인접 영역 이음과 통행 증명 |
-| GenerationRecord | `StarterWorld.generation.json`의 S02~S09 실제 Actor manifest·입력/높이 지문·검증 범위 | 나머지 저작 패스의 공유 기록·안전한 선택 재빌드/롤백 |
+| WorldEdgeContract | `MainWorld.edges.json`의 네 방향 높이 표본과 7개 포트 | 기울기/재질/바이옴·인접 영역 이음과 통행 증명 |
+| GenerationRecord | `MainWorld.generation.json`의 S02~S09 실제 Actor manifest·입력/높이 지문·검증 범위 | 나머지 저작 패스의 공유 기록·안전한 선택 재빌드/롤백 |
 
 완료된 pass는 자동 덮어쓰기를 거부한다. 실패 재개는 실제 소유 Actor 집합·좌표와 완료 task가 일치하며 실패 task의 부분 Actor가 없을 때만 허용했다. 수동 편집을 없애기 위해 전역 생성기를 다시 돌리지 않는다. 마스크 raster 함수는 지표면 합성과 바이옴 제외가 함께 소비하고, 공급자 instancing 재질이 준비되지 않으면 소유 복사본의 부모 체인을 구성한다.
 
@@ -40,7 +40,7 @@ H05의 선택적 `instance_groups`는 사냥터 프로필의 단일 저작 입�
 
 사냥터의 경사면 이동 공간 검사는 Native 바닥 법선과 수직 capsule의 하반구 지지를 고려한다. 반지름r에 필요한 지지 상승량은 `r*(1/normal.z-1)`이며 그 위에15cm의 질의 여유를 둔다. 고정된 지면+15cm만 쓰면 약37도 횡경사에서 검사 capsule이 지면에 미세하게 겹친다. 바닥 각도는 별도로 제한하고 실제 CharacterMovement 보행은 별도 수행한다. H05 모든 트레일 표본 최대39.55도는 현재 플레이어의44.765도 설정 아래지만 최종 길 폭/탈것/Nav 통행 합격은 아니다.
 
-H06는 원본2m 지형 격자의 연결된 저지대를 일정 수면으로 잘라 만든 `StarterWorld.H06.wetland.json`을 사냥터 프로필의 `water_surfaces`에서 참조한다. Geometry SHA·기하 ID는 Native StaticMesh의 소유/입력 메타데이터와 대조하며 Native 저작·저장본 검사·공통 지피 제외가 같은 경계 입력을 소비한다. GeometryScript/Chaos의 앞면 방향은 실제 상/하향 trace로 확인했다. 최종 Native 수면은 위에서 조회되고 Pawn 충돌을 무시한다. 큰 강과 연결된 흐름/수영/전체 수계 아트의 대체물이 아니다.
+H06는 원본2m 지형 격자의 연결된 저지대를 일정 수면으로 잘라 만든 `MainWorld.H06.wetland.json`을 사냥터 프로필의 `water_surfaces`에서 참조한다. Geometry SHA·기하 ID는 Native StaticMesh의 소유/입력 메타데이터와 대조하며 Native 저작·저장본 검사·공통 지피 제외가 같은 경계 입력을 소비한다. GeometryScript/Chaos의 앞면 방향은 실제 상/하향 trace로 확인했다. 최종 Native 수면은 위에서 조회되고 Pawn 충돌을 무시한다. 큰 강과 연결된 흐름/수영/전체 수계 아트의 대체물이 아니다.
 
 신규 물의 영역 안/바로 가장자리에서는 공통 surface raster가 기존 Landscape Grass를 제외한다. 손으로 저작한 물가 풀/고사리 HISM은 그 경계 밖의 단일 저작 소유자다. 이 저작은 기존 PCG 수목/관목을 재생성하지 않으며 실제 기존 식생551개 위치를 별도로 보호했다. 원본 R16은 변경하지 않았다. H04 기존 호수의 큰 경계 높이 결함은 여전히 별도 수계 수정 대상이다.
 
@@ -50,13 +50,13 @@ H07의 암벽은 일반 환경 소품의 선택적 vertical_anchor(kind=top,heig
 
 ### 사냥터의 저장된 바닥 참조
 
-`StarterWorld.hunting.json.authored_surfaces`는 기존 소유 Actor 경로/태그와 Source SHA를 선언한다. H08의 mine_gallery/stair_path가 첫 소비자이며 `Starter-HuntingSurface.py`가 원본 지면·광산 바닥/입구 계단·회전 디딤면의 실제 최고 상면을 합친다. 새 Actor 생성자는 없고 기존 광산/접근로 소유자가 각각 구조를 저장한다. 공통 hunting builder는 참조가 존재하는지만 확인하며 같은 구조를 재생성하지 않는다. 저장본 verifier와 실제 보행 기대 지지면은 이 참조를 소비하고, 근접 바닥 trace로 천장을 땅으로 오인하지 않는다. 입구 계단의 생성 규칙은 Starter-SettlementSupport.plan_mine_entry_steps로 기존 mine builder와 공유한다. 마스크 baker는 같은 광산 Source의 외피 면적을 지피 제외로 소비한다.
+`MainWorld.hunting.json.authored_surfaces`는 기존 소유 Actor 경로/태그와 Source SHA를 선언한다. H08의 mine_gallery/stair_path가 첫 소비자이며 `Starter-HuntingSurface.py`가 원본 지면·광산 바닥/입구 계단·회전 디딤면의 실제 최고 상면을 합친다. 새 Actor 생성자는 없고 기존 광산/접근로 소유자가 각각 구조를 저장한다. 공통 hunting builder는 참조가 존재하는지만 확인하며 같은 구조를 재생성하지 않는다. 저장본 verifier와 실제 보행 기대 지지면은 이 참조를 소비하고, 근접 바닥 trace로 천장을 땅으로 오인하지 않는다. 입구 계단의 생성 규칙은 Starter-SettlementSupport.plan_mine_entry_steps로 기존 mine builder와 공유한다. 마스크 baker는 같은 광산 Source의 외피 면적을 지피 제외로 소비한다.
 
 이 계약은 오프라인 레벨 제작/검증용이다. Runtime NPC/몬스터 관리나 WorldState의 새 writer가 아니며, Nav·탈것·서버 군집/보상 통합을 대신하지 않는다. authored_surfaces가 없는 기존 H01~H07은 원래 지면 계약을 유지한다. H08의 실제 계단/갱실 충돌과 플레이어 이동을 각각 확인한 뒤 첫 공간을 발행한다.
 
 ### 보스 공간과 서버 이벤트 소유권
 
-Manifest.boss_profiles→StarterWorld.bosses.json은 Arena/접근·우회/SafeStaging/Encounter/QuestHook의 제작 원천이다. 공간 builder는 기존 AProject_JWorldEncounter를 한 번만 배치하며 동일 EncounterId 소유자가 있으면 중복 생성하지 않는다. 단일 NPC/비동기 class 로드/서버 단계/종료 취소·레지스트리 해제는 기존 C++ 클래스가 소유한다. 리셋 반경과 NPC/퀘스트 후보는 실제 AI 바인딩과 구분한다. Source상의 활성 반경과 전투/추적/리셋 원은 서로 다른 역할이다.
+Manifest.boss_profiles→MainWorld.bosses.json은 Arena/접근·우회/SafeStaging/Encounter/QuestHook의 제작 원천이다. 공간 builder는 기존 AProject_JWorldEncounter를 한 번만 배치하며 동일 EncounterId 소유자가 있으면 중복 생성하지 않는다. 단일 NPC/비동기 class 로드/서버 단계/종료 취소·레지스트리 해제는 기존 C++ 클래스가 소유한다. 리셋 반경과 NPC/퀘스트 후보는 실제 AI 바인딩과 구분한다. Source상의 활성 반경과 전투/추적/리셋 원은 서로 다른 역할이다.
 
 이벤트 ID는 WorldBoss.<RegionID>.<StableBossID>로 지역을 포함해 월드 공용 Registry의 FName 키와 다음 Region의 지역 B01 이름이 충돌하지 않게 한다. 지역 StableID/마커는 B01로 유지한다. 신규 B01의 이전 비지역 ID만 Source/Actor 패키지 백업 뒤 정리했으며 실제 PIE에서 현재 ID의 한 owner/Disabled(NPC 미지정) 상태를 확인했다. 활성 보스/리스폰·보상/멀티플레이 구현을 의미하지 않는다. 바닥/공간 이동 검증과 네이티브 이벤트 인터페이스 검증을 별도 기록한다.
 

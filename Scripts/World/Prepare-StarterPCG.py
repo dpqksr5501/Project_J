@@ -2,19 +2,19 @@
 import json
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];BASE='/Game/World/Starter';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
-world=unreal.EditorLevelLibrary.get_editor_world();assert world.get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+ROOT=Path(__file__).resolve().parents[2];BASE='/Game/World/MainWorld';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+world=unreal.EditorLevelLibrary.get_editor_world();assert world.get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-lib=unreal.EditorAssetLibrary;path=BASE+'/Materials/T_StarterForestPlacement';texture=unreal.load_asset(path)
+lib=unreal.EditorAssetLibrary;path='/Game/Map_Resource/MainWorld/Materials/T_MainWorldForestPlacement';texture=unreal.load_asset(path)
 if texture is None:
     task=unreal.AssetImportTask()
-    for k,v in dict(filename=str(ROOT/'Content/World/Starter/Source/T_StarterForestPlacement.png'),destination_path=BASE+'/Materials',destination_name='T_StarterForestPlacement',automated=True,save=False).items():task.set_editor_property(k,v)
+    for k,v in dict(filename=str(ROOT/'Content/World/MainWorld/Source/T_MainWorldForestPlacement.png'),destination_path='/Game/Map_Resource/MainWorld/Materials',destination_name='T_MainWorldForestPlacement',automated=True,save=False).items():task.set_editor_property(k,v)
     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task]);texture=unreal.load_asset(path);assert texture
     lib.set_metadata_tag(texture,'ProjectJ.Authoring','ProjectJ.Starter.WorldBiome.v2')
 assert lib.get_metadata_tag(texture,'ProjectJ.Authoring')=='ProjectJ.Starter.WorldBiome.v2'
 texture.set_editor_property('srgb',False);texture.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS)
 lib.save_loaded_asset(texture)
-graph=unreal.load_asset(BASE+'/PCG/PCG_StarterForest');assert graph
+graph=unreal.load_asset(BASE+'/PCG/PCG_MainWorldForest');assert graph
 lib.set_metadata_tag(graph,'ProjectJ.Authoring','ProjectJ.Starter.WorldBiome.v2');lib.save_loaded_asset(graph)
 keys=['sg.ViewDistanceQuality','sg.AntiAliasingQuality','sg.ShadowQuality','sg.GlobalIlluminationQuality','sg.ReflectionQuality','sg.TextureQuality','sg.EffectsQuality','sg.FoliageQuality']
 report=OUT/'art-preview-settings.json'

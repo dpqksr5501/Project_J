@@ -9,14 +9,14 @@ from pathlib import Path
 import unreal
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/'Content/World/Starter/Source'
+SOURCE=ROOT/'Content/World/MainWorld/Source'
 OUT=ROOT/'Saved/Validation/StarterWorld'
-BASE='/Game/World/Starter';MAP=BASE+'/Maps/L_StarterRegion'
+BASE='/Game/World/MainWorld';MAP='/Game/World/MainWorld/Legacy/Maps/L_StarterRegion'
 TAG='ProjectJ.Starter.Corridor.v1'
-PLAN=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-LAYOUT=json.loads((SOURCE/'StarterWorld.corridor.json').read_text(encoding='utf-8'))
+PLAN=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+LAYOUT=json.loads((SOURCE/'MainWorld.corridor.json').read_text(encoding='utf-8'))
 RAW=array.array('H')
-with (SOURCE/'HM_StarterRegion.r16').open('rb') as stream:RAW.fromfile(stream,4033**2)
+with (SOURCE/'HM_MainWorld.r16').open('rb') as stream:RAW.fromfile(stream,4033**2)
 ACTORS=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 LEVELS=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 LIB=unreal.EditorAssetLibrary;EDIT=unreal.MaterialEditingLibrary
@@ -49,7 +49,7 @@ def point(x,y,z=None):return unreal.Vector((x-4032)*100,(y-4032)*100,(height(x,y
 
 def mesh(path):
     if path not in MESHES:
-        if path.startswith(('/Game/Megascans/','/Game/Meshes/','/Game/ThirdParty/')):
+        if path.startswith(('/Game/Map_Resource/Megascans/','/Game/Map_Resource/Meshes/','/Game/Map_Resource/ThirdParty/')):
             seen=set();pending=[path];missing=set(TRANSFER['missing_source_packages'])
             while pending:
                 p=pending.pop()
@@ -115,7 +115,7 @@ def save_owned():
     owned=[];preserved=[]
     for package in packages:
         name=package.get_name()
-        if name.startswith((BASE+'/', '/Game/__ExternalActors__/World/Starter/','/Game/__ExternalObjects__/World/Starter/')) or name in TOUCHED_MATERIALS:owned.append(package)
+        if name.startswith((BASE+'/', '/Game/Map_Resource/MainWorld/', '/Game/__ExternalActors__/World/MainWorld/Legacy/','/Game/__ExternalObjects__/World/MainWorld/Legacy/')) or name in TOUCHED_MATERIALS:owned.append(package)
         else:preserved.append(name)
     if owned:assert unreal.EditorLoadingAndSavingUtils.save_packages(owned,True)
     REPORT['unrelated_dirty_packages_preserved']=preserved
@@ -125,23 +125,23 @@ def terrain_stage():
     descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
     unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
     current=ACTORS.get_all_level_actors();landscape=next(a for a in current if isinstance(a,unreal.Landscape))
-    terrain_hash=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()
+    terrain_hash=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()
     if REPORT.get('terrain_sha256')!=terrain_hash:
-        assert unreal.Project_JWorldAuthoringLibrary.reimport_region_heightmap(landscape,str(SOURCE/'HM_StarterRegion.r16'),4033)
-    definition=unreal.load_asset(BASE+'/Data/DA_StarterRegion');definition.modify()
+        assert unreal.Project_JWorldAuthoringLibrary.reimport_region_heightmap(landscape,str(SOURCE/'HM_MainWorld.r16'),4033)
+    definition=unreal.load_asset(BASE+'/Data/DA_MainWorld');definition.modify()
     places=list(definition.get_editor_property('places'));entries={p['id']:p for p in PLAN['places']}
     for place in places:
         entry=entries[str(place.get_editor_property('place_id'))]
         place.set_editor_property('location',point(*entry['center_m']))
         place.set_editor_property('boundary',[point(*p[:2]) for p in entry['boundary_m']])
     definition.set_editor_property('places',places)
-    definition.set_editor_property('source_plan_hash',hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest())
+    definition.set_editor_property('source_plan_hash',hashlib.sha256((SOURCE/'MainWorld.plan.json').read_bytes()).hexdigest())
     definition.set_editor_property('authoring_bounds',unreal.Box(min=point(0,0,PLAN['min_height_m']),max=point(8064,8064,PLAN['max_height_m'])))
     for actor in current:
         label=actor.get_actor_label()
         if isinstance(actor,unreal.TargetPoint) and label.split('__')[0] in entries:
             entry=entries[label.split('__')[0]];x,y,z=entry['center_m'];actor.modify();actor.set_actor_location(point(x,y,z+2),False,False)
-        if label=='StarterRegion_PlayerStart':
+        if label=='MainWorld_PlayerStart':
             x,y,z=entries['S00']['center_m'];actor.modify();actor.set_actor_location(point(x,y,z+1.3),False,False)
             actor.set_actor_rotation(unreal.Rotator(pitch=0,yaw=LAYOUT.get('player_start_yaw',125),roll=0),False)
         # Keep editable candidate splines, retire their obsolete floating ribbons.
@@ -153,10 +153,10 @@ def terrain_stage():
 
 def surface_stage():
     task=unreal.AssetImportTask()
-    for key,value in dict(filename=str(SOURCE/'T_StarterSurfaceMasks.png'),destination_path=BASE+'/Materials',destination_name='T_StarterSurfaceMasks',automated=True,replace_existing=True,save=True).items():task.set_editor_property(key,value)
-    TOOLS.import_asset_tasks([task]);mask=unreal.load_asset(BASE+'/Materials/T_StarterSurfaceMasks');assert mask
+    for key,value in dict(filename=str(SOURCE/'T_MainWorldSurfaceMasks.png'),destination_path='/Game/Map_Resource/MainWorld/Materials',destination_name='T_MainWorldSurfaceMasks',automated=True,replace_existing=True,save=True).items():task.set_editor_property(key,value)
+    TOOLS.import_asset_tasks([task]);mask=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/T_MainWorldSurfaceMasks');assert mask
     mask.modify();mask.set_editor_property('srgb',False);mask.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_MASKS);LIB.save_loaded_asset(mask)
-    mat=unreal.load_asset(BASE+'/Materials/M_StarterTerrain');mat.modify()
+    mat=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain');mat.modify()
     # The engine's DeleteAll loop removes entries while iterating its live array;
     # use a snapshot so no disconnected expressions survive repeated revisions.
     for expr in list(EDIT.get_material_expressions(mat)):EDIT.delete_material_expression(mat,expr)
@@ -164,14 +164,14 @@ def surface_stage():
     def node(cls,x=-600,y=0):return EDIT.create_material_expression(mat,cls,x,y)
     pos=node(unreal.MaterialExpressionWorldPosition,-900);normal=node(unreal.MaterialExpressionVertexNormalWS,-900,180)
     inputs={'P':pos,'N':normal}
-    paths={'Mask':BASE+'/Materials/T_StarterBiomeMasks','Surface':BASE+'/Materials/T_StarterSurfaceMasks',
+    paths={'Mask':'/Game/Map_Resource/MainWorld/Materials/T_MainWorldBiomeMasks','Surface':'/Game/Map_Resource/MainWorld/Materials/T_MainWorldSurfaceMasks',
            'Grass':'/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Grass/T_Grass_Detail_D',
            'Forest':'/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Forest/T_Forest_Detail_D',
            'Rock':'/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Rock/T_Rock_D',
            'Mud':'/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Mud/T_Mud_D',
            'DetailN':'/Game/Map_Resource/Brushify/Materials/Landscape/Textures/Grass/T_Grass_Detail_N',
-           'Cobble':'/Game/Megascans/Surfaces/Cobblestone/T_Cobblestone_A',
-           'CobbleN':'/Game/Megascans/Surfaces/Cobblestone/T_Cobblestone_N'}
+           'Cobble':'/Game/Map_Resource/Megascans/Surfaces/Cobblestone/T_Cobblestone_A',
+           'CobbleN':'/Game/Map_Resource/Megascans/Surfaces/Cobblestone/T_Cobblestone_N'}
     for i,(key,path) in enumerate(paths.items()):
         value=unreal.load_asset(path);assert value,path
         obj=node(unreal.MaterialExpressionTextureObject,-650,i*100);obj.set_editor_property('texture',value);inputs[key]=obj
@@ -212,12 +212,12 @@ return base;''',unreal.CustomMaterialOutputType.CMOT_FLOAT3)
     LIB.save_loaded_asset(mat)
 
 
-ELDER='/Game/ElderboomVillage/Meshes/'
+ELDER='/Game/Map_Resource/ElderboomVillage/Meshes/'
 SKY='/Game/Map_Resource/SkyTown/Meshes/'
 WALL=ELDER+'SM_Medieval_Modular_Wall_uewibaydw_lod3_Var1'
 WINDOW=ELDER+'SM_Medieval_Modular_Wall_uewibagdw_lod3_Var1'
 DOOR=ELDER+'SM_Modular_Building_Door_xd4ffcpdw_lod3_Var1'
-ROOF='/Game/Meshes/Houses/Roofs/House08_Roof/SM_House08_Roof'
+ROOF='/Game/Map_Resource/Meshes/Houses/Roofs/House08_Roof/SM_House08_Roof'
 
 
 def apply_modular_roof(owner,house):
@@ -230,7 +230,7 @@ def apply_modular_roof(owner,house):
         c.modify();c.set_static_mesh(obj)
         c.set_relative_transform(centered_transform(obj,unreal.Vector(0,0,285),0,((w+90)/size.x,(d+90)/size.y,1 if house['id']!='Barn' else 1.15)),False,False)
         return
-    obj=mesh('/Game/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof');size=obj.get_bounds().box_extent*2
+    obj=mesh('/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof');size=obj.get_bounds().box_extent*2
     ridge_x=w>d
     cross,long=(d,w) if ridge_x else (w,d)
     scale=((cross+90)/size.x,(long+90)/size.y,(cross+90)/size.x)
@@ -290,17 +290,17 @@ def buildings_stage():
 
 def details_stage():
     clear_category('Details')
-    well=static('PlazaWell','/Game/Meshes/Well/SM_MainWell',3106,3096,yaw=28)
+    well=static('PlazaWell','/Game/Map_Resource/Meshes/Well/SM_MainWell',3106,3096,yaw=28)
     # These source pieces share the main frame's origin; do not bottom-align
     # each piece (the shingles' authored bottom is 171 cm above the origin).
-    for name,path in [('StoneBase','/Game/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Meshes/Well/SM_WellShingles'),('CrankDetails','/Game/Meshes/Well/SM_WellDetailPieces')]:
+    for name,path in [('StoneBase','/Game/Map_Resource/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Map_Resource/Meshes/Well/SM_WellShingles'),('CrankDetails','/Game/Map_Resource/Meshes/Well/SM_WellDetailPieces')]:
         c=component(well,unreal.StaticMeshComponent,name);c.set_static_mesh(mesh(path));c.set_relative_transform(unreal.Transform(),False,False)
     static('InnCart',SKY+'SM_Cart01',3070,3117,yaw=-25)
     static('PlazaBenchWest',SKY+'SM_Furniture01_Bench01',3090,3105,yaw=75)
     static('PlazaBenchEast',SKY+'SM_Furniture01_Bench01',3112,3102,yaw=-80)
     static('BarnHay01',SKY+'SM_HayPile01',3035,3059,yaw=65)
     static('BarnHay02',SKY+'SM_HayBale01',3044,3059,yaw=-20)
-    static('SmithAnvil','/Game/Megascans/3D_Assets/BlacksmithAnvilA/SM_BlacksmithAnvilA',3121,3080,yaw=30)
+    static('SmithAnvil','/Game/Map_Resource/Megascans/3D_Assets/BlacksmithAnvilA/SM_BlacksmithAnvilA',3121,3080,yaw=30)
     static('InnFirewood',SKY+'SM_Firewood01_Item01',3070,3133,yaw=65)
     rng=random.Random(5201)
     for i,house in enumerate(LAYOUT['houses']):
@@ -343,11 +343,11 @@ def clearance(x,y):
 def foliage_stage():
     clear_category('Nature')
     rng=random.Random(103017);groups=collections.defaultdict(list)
-    trees=[ELDER+'SM_BlackAlder_Field_02',ELDER+'SM_BlackAlder_Field_04',ELDER+'SM_BlackAlder_Forest_01','/Game/ThirdParty/PN_interactiveSpruceForest/Meshes/full/high/spruce_full_01']
-    grass='/Game/Megascans/3D_Plants/ThatchingGrass/SM_ThatchingGrass00_V2'
+    trees=[ELDER+'SM_BlackAlder_Field_02',ELDER+'SM_BlackAlder_Field_04',ELDER+'SM_BlackAlder_Forest_01','/Game/Map_Resource/ThirdParty/PN_interactiveSpruceForest/Meshes/full/high/spruce_full_01']
+    grass='/Game/Map_Resource/Megascans/3D_Plants/ThatchingGrass/SM_ThatchingGrass00_V2'
     green_grass='/Game/Map_Resource/Brushify/Materials/Landscape/ProceduralMeshes/Foliage/Grass/S_Grass'
-    wheat='/Game/Megascans/3D_Plants/WheatGrassB/SM_WheatGrass01_V1'
-    rock='/Game/Megascans/3D_Assets/GraniteRockAssembly/SM_GraniteRockAssembly'
+    wheat='/Game/Map_Resource/Megascans/3D_Plants/WheatGrassB/SM_WheatGrass01_V1'
+    rock='/Game/Map_Resource/Megascans/3D_Assets/GraniteRockAssembly/SM_GraniteRockAssembly'
     def add(path,kind,x,y,scale=1):
         obj=mesh(path);tile=(int(x//128),int(y//128));z=height(x,y)-(.12 if kind=='Tree' else .035)
         groups[(path,kind,*tile)].append(centered_transform(obj,point(x,y,z),rng.uniform(0,360),(scale,scale,scale)))
@@ -367,7 +367,7 @@ def foliage_stage():
         if rng.random()>.28 or not clearance(x,y):continue
         if math.hypot(x-3100,y-3100)<115:continue
         add(rock,'Rock',x,y,rng.uniform(.45,1.9))
-    biome_preset=SOURCE/'StarterWorld.biomes.json'
+    biome_preset=SOURCE/'MainWorld.biomes.json'
     landscape_owns_grass=biome_preset.exists() and json.loads(biome_preset.read_text(encoding='utf-8')).get('groundcover_owner')=='LandscapeGrass'
     for i in range(0 if landscape_owns_grass else 30000):
         x=rng.uniform(2960,3310);y=rng.uniform(2930,3330)

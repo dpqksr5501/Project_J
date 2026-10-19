@@ -16,7 +16,7 @@ seeds = [
     '/Game/SkyTown/Meshes/SM_RopeBridge01_40m', '/Game/SkyTown/Meshes/SM_Rock01',
     '/Game/SkyTown/Meshes/SM_AutumnTree01', '/Game/SkyTown/Meshes/SM_AutumnTree02',
     '/Game/ProceduralNaturePack/Meshes/trees_w_roots/large_tree_w_roots_a',
-    '/Game/ProceduralNaturePack/Meshes/rocks_boulders/rock_boulder_a',
+    '/Game/Map_Resource/Variants/ProjectExisting/ProceduralNaturePack/Meshes/rocks_boulders/rock_boulder_a',
     '/Game/ProceduralNaturePack/Meshes/rocks_boulders/rock_boulder_b1',
     '/Game/ProceduralNaturePack/Meshes/grass/grass_small_01',
     '/Game/AncientTempleRuins/Environment/Rock/Rock01/SM_Rock01',

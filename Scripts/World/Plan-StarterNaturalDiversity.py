@@ -8,11 +8,11 @@ import argparse,collections,hashlib,importlib.util,json,math
 from pathlib import Path
 import numpy as np
 from PIL import Image
-ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Structure';FILE=SRC/'StarterWorld.natural-diversity.json'
+ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Structure';FILE=SRC/'MainWorld.natural-diversity.json'
 parser=argparse.ArgumentParser();parser.add_argument('--replace-plan',action='store_true');args=parser.parse_args()
 if FILE.exists():assert args.replace_plan and json.loads(FILE.read_text())['status']=='PLANNED' and not (OUT/'natural-diversity-build.json').exists(),'Inspect the existing authored pass; never regenerate silently'
-spec=importlib.util.spec_from_file_location('terrain',Path(__file__).with_name('Starter-TerrainProfile.py'));T=importlib.util.module_from_spec(spec);spec.loader.exec_module(T);terrain=T.TerrainProfile(SRC/'StarterRegion.manifest.json')
-rng=np.random.default_rng(103180);plan=json.loads((SRC/'StarterWorld.plan.json').read_text());layout=json.loads((SRC/'StarterWorld.corridor.json').read_text())
+spec=importlib.util.spec_from_file_location('terrain',Path(__file__).with_name('Starter-TerrainProfile.py'));T=importlib.util.module_from_spec(spec);spec.loader.exec_module(T);terrain=T.TerrainProfile(SRC/'MainWorld.manifest.json')
+rng=np.random.default_rng(103180);plan=json.loads((SRC/'MainWorld.plan.json').read_text());layout=json.loads((SRC/'MainWorld.corridor.json').read_text())
 spec=importlib.util.spec_from_file_location('biomes',Path(__file__).with_name('Generate-StarterBiomeRules.py'));B=importlib.util.module_from_spec(spec);spec.loader.exec_module(B)
 trees=json.loads((ROOT/'Saved/Validation/StarterWorld/Quality/final-restored-trees.json').read_text());occupied=collections.defaultdict(list)
 for t in trees:
@@ -31,8 +31,8 @@ def river_clear(x,y,radius):
             dx,dy=b[0]-a[0],b[1]-a[1];t=max(0,min(1,((x-a[0])*dx+(y-a[1])*dy)/max(dx*dx+dy*dy,1e-8)))
             if math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)<river['width_m']/2+radius:return False
     return True
-sky='/Game/Map_Resource/SkyTown/Meshes/';new='/Game/ProceduralNaturePack/Meshes/rocks_boulders/'
-montane=json.loads((SRC/'StarterWorld.montane-palette.json').read_text())
+sky='/Game/Map_Resource/SkyTown/Meshes/';new='/Game/Map_Resource/ProceduralNaturePack/Meshes/rocks_boulders/'
+montane=json.loads((SRC/'MainWorld.montane-palette.json').read_text())
 instances=[];candidates=[]
 for y0 in np.arange(32,8032,23):
     for x0 in np.arange(32,8032,23):
@@ -75,6 +75,6 @@ for p in instances:
     x,y,z=p['position_m'];chunks[f'{int(x//256)}_{int(y//256)}'].append(p)
 result=dict(schema=1,pass_id='Environment.NaturalDiversity.v1',seed=103180,height_sha256=terrain.manifest['terrain_profile']['sha256'],height_modified=False,status='PLANNED',native_tag='ProjectJ.Starter.NaturalDiversity.v1',chunk_m=256,preserve_existing_tree_instances=69692,counts=dict(collections.Counter(q['kind'] for q in instances)),species_counts=dict(collections.Counter(q['mesh'] for q in instances)),chunks=dict(chunks),description='Lowland canopy preserved; mixed foothills, montane spruce, exposed alpine ridges and cliff bands. Groundcover remains LandscapeGrass-owned.')
 result['mesh_material_overrides']=montane['material_overrides']
-result['forest_hlod_layer']=json.loads((SRC/'StarterWorld.forest-streaming.json').read_text())['forest_hlod_layer']
+result['forest_hlod_layer']=json.loads((SRC/'MainWorld.forest-streaming.json').read_text())['forest_hlod_layer']
 FILE.write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(dict(counts=result['counts'],chunks=len(chunks),species=len(result['species_counts']))))

@@ -6,23 +6,23 @@
 
 | 항목 | 현재 상태 / 사용 방법 |
 |---|---|
-| 목표 제작 맵 | `/Game/World/MainWorld/Maps/L_MainWorld`. 앞으로 확장할 메인 월드 이름이다. 저장된 복제본은 있지만 전환 검증 전이며, 구 맵과 동시에 제작하지 않는다. |
+| 목표 제작 맵 | `/Game/World/MainWorld/Maps/L_MainWorld`. 액터 2,717개와 인스턴스 414,311개 배치의 저장·재로드 대조가 일치했다. 전체 플레이/Cook 검증은 별도다. |
 | 목표 월드 정의 | `/Game/World/MainWorld/Data/DA_MainWorld`. 월드 관련 비맵 에셋 45개의 엔진 이름 변경·저장 기록을 확인했다. 모든 참조의 재로드·Cook 합격을 뜻하지 않는다. |
-| 이전 제작 맵 | `/Game/World/Starter/Maps/L_StarterRegion`. 아직 디스크에 남아 있다. 이전 경로를 사용하는 도구와 Source가 있으므로 새 맵에서 생성기를 바로 실행하지 않는다. |
+| 이전 제작 맵 | Legacy는 현재 월드와의 배치/참조 대조 및 백업 후 엔진에서 삭제했다. 복구용 원형은 로컬 `Saved/Maintenance/AssetCleanup_20261019/LegacyRetired.zip`이며 일반 제작 대상으로 열지 않는다. 초기 생성기는 삭제된 Legacy 대상 guard와 지원 제한을 유지한다. |
 | 이전 미사용 맵 | `/Game/Level/Main_World`, `/Game/Level/Main_World_WP`. 사용자 삭제 승인은 받았으나 아직 삭제되지 않았다. 이름이 비슷해도 현재 제작할 메인 월드로 선택하지 않는다. |
 | 기본 진입점 | 현재 `Config/DefaultEngine.ini`의 GameDefaultMap/EditorStartupMap은 ThirdPerson이다. 프로젝트를 열었을 때 메인 월드가 자동으로 열리는 상태가 아니다. |
 | Cook·DA 검색 | 소스 감사에서 `Config/DefaultGame.ini`의 MapsToCook과 WorldDefinition 검색 폴더를 MainWorld로 갱신했다. 기본 시작 맵은 ThirdPerson이다. 감사 검증과 이후 에셋 반입 검증은 구분한다. |
-| 제작 원천 | 현재 `Content/World/Starter/Source`. manifest·배치 JSON·도구의 새 경로 전환은 남아 있다. |
-| 환경 라이브러리 | 세 원본의 환경 제작 자산 7,556개를 분류했다. 신규 5,282개는 `/Game/Map_Resource`에 반입했고 2,274개는 재사용한다. 기존 공유 경로 1,710개는 참조 보존을 위해 이동하지 않았으며 `Env_All`에서 함께 찾는다. |
+| 제작 원천 | `Content/World/MainWorld/Source`. 입력 파일명은 `MainWorld.*`·`HM_MainWorld.r16`·`T_MainWorld*.png`이며 높이/수치와 `Starter.Lv1_30` 등 안정 식별자는 유지한다. |
+| 환경 라이브러리 | 기존 흩어진 환경 자원과 MainWorld 전용 렌더 자원 41개를 `/Game/Map_Resource`에 통합했다. 최초 충돌 59개 중 동일한 48개는 재사용하고 다른 11개는 `Variants/ProjectExisting`에 유지한다. 추가 Door Blueprint 변형도 별도 보존한다. 실제 맵·DA·HLOD 설정·PCG 그래프·제작 원천은 `World/MainWorld`에 둔다. |
 
 WP 전용 엔진 복제 도구의 복구 후 실행 로그는 `Success - 0 error(s), 4 warning(s)`이며, 새 맵과 이전 맵의 외부 액터 패키지는 각각 2,717개다. **패키지 수 일치는 액터 내용·인스턴스 수·참조 무결성·PIE 동작의 동등성 증명이 아니다.** 전환 담당자가 새 맵의 재로드와 아래 계약을 확인한 뒤 편집 기준 맵을 확정한다.
 
-전환 완료 조건은 새 맵 재로드, WorldState→DA 연결, 장소·이벤트 ID와 식생 보존, Source·도구·Config 참조 갱신, 승인된 구 맵 삭제 및 redirector 정리, 누락 참조 검사와 PIE 확인이다. 이 조건 전에는 “구 맵을 지우고 새 맵만 편집하면 된다”고 인계하지 않는다.
+최신 폴더 정리는 새 맵 재로드·액터/인스턴스 배치 보존·Source/도구 참조 갱신·Legacy 삭제·옛 경로 정리를 확인했다. 이후 실제 제작은 MainWorld에서 이어가되, 기존 HLOD 전환·전체 PIE·Cook·성능과 최종 아트의 보류 항목은 별도로 검증한다.
 
 ## 2. 월드의 규모와 보존해야 할 기준
 
 - 약 8×8km이며 실제 저작 범위는 8,064×8,064m다. 현재 범위를 대륙 전체의 완성 크기로 고정하지 않는다.
-- 높이 원본은 4033×4033 표본, 간격 2m의 R16이다. 원본 파일은 `Content/World/Starter/Source/HM_StarterRegion.r16`이며, 이번 문서 작성 시 SHA256 `bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8`을 재확인했다.
+- 높이 원본은 4033×4033 표본, 간격 2m의 R16이다. 원본 파일은 `Content/World/MainWorld/Source/HM_MainWorld.r16`이며, 이번 문서 작성 시 SHA256 `bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8`을 재확인했다.
 - Source 평면 좌표는 남서쪽 원점에서 동/북 방향의 m 단위다. manifest 기준 Unreal 평면 좌표 변환은 `Xcm=-403200+100×Xm`, `Ycm=-403200+100×Ym`다. 높이는 별도 R16/지형 규격을 따른다. Source 수치를 그대로 cm 위치로 붙여 넣지 않는다.
 - 주요 장소는 정착지 9·사냥터 9·보스 2로 총 20곳이다. [ID 대응표](../WorldGen/01_EXISTING_TO_TARGET_MAPPING.csv)의 target_id와 stable_id가 다를 수 있다. 예를 들어 기획 S03 임업 마을의 StableID는 S04, 기획 S08 시작 취락의 StableID는 S00이다.
 - 장소 이름·외형을 바꿀 때 기존 StableID를 재번호화하지 않는다. 폴더 이름 변경과 `RegionId`/`EncounterId` 변경도 별개다. 현재 `Starter.Lv1_30` 같은 내부 식별자는 남아 있으며 별도 참조 이행 없이 일괄 치환하지 않는다.
@@ -41,7 +41,7 @@ Python/JSON은 **오프라인 제작 입력과 도구**다. 게임은 이미 저
 | [WorldEncounter](../../Source/Project_J/World/Project_JWorldEncounter.h) | 항상 로드되는 서버 보스 이벤트 소유자. NPCClass 비동기 로드·스폰과 단계·종료 정리를 담당한다. | 같은 EncounterId 소유자를 복제 배치하지 않는다. 보스 전투 자체는 NPC의 기존 GAS/AI가 담당한다. |
 | [WorldAuthoringLibrary](../../Source/Project_JCharacterEditor/Public/Project_JWorldAuthoringLibrary.h) | 에디터 전용 Landscape 가져오기·높이 재가져오기·visibility patch·스플라인 리본 제작 보조다. | 게임 중 지형 생성기가 아니다. `ReimportRegionHeightmap`은 base edit layer 교체이므로 독립 레이어 편집으로 오인하지 않는다. |
 
-보스 두 곳은 기존 인계 기준 NPCClass 미지정 상태이며 활성 전투·보상 완료가 아니다. 사냥터의 스폰·순찰 후보와 NoCollision 미리보기 경계도 실제 AI/리스폰/전투 봉쇄벽이 아니다. 연결 세부 사항은 [게임플레이 공간 통합](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)을 따른다. 이 문서 작성에서는 C++를 변경하거나 새 빌드를 실행하지 않았다.
+보스 두 곳은 기존 인계 기준 NPCClass 미지정 상태이며 활성 전투·보상 완료가 아니다. 사냥터의 스폰·순찰 후보와 NoCollision 미리보기 경계도 실제 AI/리스폰/전투 봉쇄벽이 아니다. 연결 세부 사항은 [게임플레이 공간 통합](../WorldGen/07_GAMEPLAY_SPATIAL_INTEGRATION.md)을 따른다. 이번 폴더 정리에서는 게임 동작을 바꾸지 않았고, 이동한 Door Blueprint의 C++ 테스트 경로와 기존 테스트의 누락 include만 갱신해 에디터 빌드·집중 회귀를 통과했다.
 
 ## 4. 안전하게 편집하는 순서
 
@@ -96,7 +96,7 @@ MMORPG 관점에서는 초행자의 랜드마크, 복귀 동선, 사냥터 우�
 
 원본을 보존하고 격리한 5.8 작업 프로젝트에서 엔진 API로 이동·참조 갱신·마이그레이션한다. 공급자 Config·C++·플러그인 코드를 함께 가져오지 않는다. 중복은 텍스처 픽셀·편집 속성, 메시 렌더 LOD/고해상도 원본/충돌, 재질·Blueprint 그래프 및 의존 경로를 비교한다. 동일 이름이나 경로 변경 후 파일 바이트 차이만으로 중복 여부를 결정하지 않는다. 기존 튜닝과 다른 자원은 `/Game/Map_Resource/Variants`에 보존한다.
 
-기존 월드와 다른 제작 자원이 공유하는 원본 경로는 재사용한다. 특히 `/Game/Meshes`, `/Game/Materials`, `/Game/Megascans`, `/Game/ThirdParty`의 기존 참조를 대량 재저장하거나 redirector를 일괄 제거하지 않는다. 새로 반입하는 라이브러리는 `/Game/Map_Resource`의 공급자별 폴더를 사용한다. 환경 재질이 요구하는 설치 엔진의 `Water`, `Volumetrics` 콘텐츠 플러그인을 활성화했다. 이는 강·호수·바다 구현 완료를 의미하지 않는다.
+환경 라이브러리는 `/Game/Map_Resource`의 공급자별 폴더를 사용한다. 후속 사용자 요청으로 기존 `/Game/Meshes`, `/Game/Materials`, `/Game/Megascans`, `/Game/ThirdParty`의 환경 자원도 엔진에서 이동·참조 재저장했다. 월드 전용 렌더 자원은 `/Game/Map_Resource/MainWorld`에 두고 manifest의 `resource_content_root`를 따른다. 환경 재질이 요구하는 설치 엔진의 `Water`, `Volumetrics` 콘텐츠 플러그인을 활성화했다. 이는 강·호수·바다 구현 완료를 의미하지 않는다.
 
 검증을 마친 제작 대상 분류는 다음과 같다. 이 수는 조사한 전체 원본 파일 수나 데모 콘텐츠 수가 아니다. 세부 근거와 호환성 제한은 최신 인수인계의 마감 기록을 따른다.
 
@@ -107,17 +107,21 @@ MMORPG 관점에서는 초행자의 랜드마크, 복귀 동선, 사냥터 우�
 | MedievalVillageMegascansS | 2,080 | 404 | 1,676 |
 | 합계 | 7,556 | 5,282 | 2,274 |
 
-환경 구름용 StaticSparseVolumeTexture 3개, StaticMesh 2,213개, Texture2D 2,947개, MaterialInstance 1,346개, Material 262개, FoliageType 254개, Blueprint 126개 등이 포함된다. 신규 중 543개는 기존 튜닝과 다른 변형이다. 기존 공유 경로 1,710개는 물리적으로 Map_Resource로 옮기지 않고 재사용한다. 독립된 이름·경로·튜닝을 모두 합쳤다는 의미가 아니다.
+반입 당시에는 환경 구름용 StaticSparseVolumeTexture 3개, StaticMesh 2,213개, Texture2D 2,947개, MaterialInstance 1,346개, Material 262개, FoliageType 254개, Blueprint 126개 등이 포함됐다. 신규 중 543개는 기존 튜닝과 다른 변형이다. 이후 기존 환경 자원 2,195개와 별도로 남아 있던 효과 공유 노이즈·상호작용 자원도 Map_Resource로 모았다. 이 표와 수는 원본 반입 당시의 선정 집계이며 후속 통합·중복 재사용 이후 현재 파일 수와 같지 않다.
 
 Packed Blueprint 56개가 사용하는 제작용 원본 레벨은 54개이며 외부 액터 453개를 함께 보존했다. 이 레벨은 편집·재조립용이므로 기본 플레이 맵이나 데모 맵으로 취급하지 않는다. 실제 배치에는 Blueprint를 사용하고, 원본 조립 레벨은 해당 프리팹을 수정할 때만 연다.
 
 구형 `MeshToPoints`를 사용하는 PCG 그래프 12개는 원본을 UE5.8에서 읽어도 메시 입력이 남지 않는 호환성 제한이 있다. 기존 그래프·기본 메시 자원은 보존하며, PCG 재생성은 현대 노드로 변환·검증하기 전까지 보류한다. 베이크된 Packed Blueprint의 사용과 이 구형 PCG 생성기의 재실행을 혼동하지 않는다.
 
-Content Browser의 공유 컬렉션에서 `Env_All`을 열면 기존 공유 경로의 자산도 함께 찾는다. 원본별 모음은 `Env_Assets`/`Env_Village`/`Env_Mega`, 프리팹과 편집용 레벨은 `Env_Prefabs`다. `Env_LegacyPCG`는 위 호환성 보류 자료이며 기본 모음에서 제외했다. 컬렉션은 경로 목록이므로 메시·텍스처를 다시 복제하지 않는다.
+Content Browser의 공유 컬렉션 `Env_All`은 후속 통합을 반영한 환경 자원 7,647개를 찾으며 경로 유효성 검사를 통과했다. 월드 전용 환경 자원도 포함한다. 원본별 모음은 `Env_Assets`/`Env_Village`/`Env_Mega`, 프리팹과 편집용 레벨은 `Env_Prefabs`다. `Env_LegacyPCG`는 위 호환성 보류 자료이며 기본 모음에서 제외했다. 컬렉션은 경로 목록이므로 메시·텍스처를 다시 복제하지 않는다.
 
 실제 소비자가 효과 시스템에만 한정된 재질·텍스처 등 48개와 EQS 샘플 표식 1개는 제작 목록에서 제외하고 `/Game/Developers/IntakeHold`에 보존했다. 원래 프로젝트에 있던 효과 자산은 건드리지 않았다. 환경 재질에도 쓰이는 공유 노이즈는 제외하지 않았다. 격리 자료는 로컬 보관하며 이번 커밋에서 제외한다. 제작용 라이브러리나 게임 진입점에 연결하지 않는다.
 
 성채 부품의 빈 convex 충돌체를 엔진 Auto Convex로 복구했다. 식생의 Voxelize 형상 보존에는 `Config/DefaultEngine.ini`의 `r.Nanite.Foliage=1`이 필요하다. UE5.8 실험 기능이며 재시작 후 적용된다. 전체 자산 7,556개 등록·필수 참조와 경고 대상 19개 식생·수정 충돌체의 새 프로세스 검사는 오류 0·경고 0이었다. 전체 셰이더·실제 시각 품질·성능 합격을 뜻하지 않는다. 효과·소리 결합 Blueprint, 원본 필수 의존성이 없는 도로 재질과 데모 자산은 채택 범위에서 제외한다. 해당 건물·소품 메시 자체는 보존했다.
+
+### Elderboom 원본 대조 — 2026-10-19
+
+`Content/Map_Resource/ElderboomVillage`의 기존 자산을 원본 ElderBoomHollowMassiveMed와 대조했다. 환경 제작 자산380개는 모두 기존 반입분과 속성·필수 참조가 일치하며, 신규 반입0·신규 변형0·환경 누락0이다. 메시56개의 렌더/원본 LOD·충돌 형상과 전체 텍스처205개(환경192+효과13)의 원본 픽셀도 일치했다. 원본과 실제 프로젝트 파일은 변경하지 않았다. `Env_Elderboom`에서 환경380개를 찾으며 `Env_All`에도 기존 항목을 보존해 추가했다. 기존 효과29개와 데모 맵2개도 보존했지만 이번 환경 제작 범위의 합격 집계에는 넣지 않는다. 에셋 동등성 검사가 전체 셰이더·Niagara 동작·PIE·Cook·성능 합격을 의미하지는 않는다. 이전 세 원본의7,556개 반입 집계와 이번 기존380개 재사용을 구분한다.
 
 ## 8. 디자이너의 완료 확인과 기술 담당 인계
 

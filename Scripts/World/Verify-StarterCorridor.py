@@ -6,13 +6,13 @@ Loading WP actors here is an inspection scope, not runtime residency policy.
 import array,collections,datetime,hashlib,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld'
-PLAN=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
-LAYOUT=json.loads((SOURCE/'StarterWorld.corridor.json').read_text(encoding='utf-8'))
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld'
+PLAN=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
+LAYOUT=json.loads((SOURCE/'MainWorld.corridor.json').read_text(encoding='utf-8'))
 BUILD=json.loads((OUT/'corridor-build.json').read_text(encoding='utf-8'))
-BIOMES=json.loads((SOURCE/'StarterWorld.biomes.json').read_text(encoding='utf-8')) if (SOURCE/'StarterWorld.biomes.json').exists() else {}
+BIOMES=json.loads((SOURCE/'MainWorld.biomes.json').read_text(encoding='utf-8')) if (SOURCE/'MainWorld.biomes.json').exists() else {}
 RETIRED_GRASS_GROUPS=BIOMES.get('retired_legacy_grass_actors',0)
-TAG='ProjectJ.Starter.Corridor.v1';MAP='/Game/World/Starter/Maps/L_StarterRegion'
+TAG='ProjectJ.Starter.Corridor.v1';MAP='/Game/World/MainWorld/Legacy/Maps/L_StarterRegion'
 world=unreal.EditorLevelLibrary.get_editor_world();assert world.get_path_name().startswith(MAP+'.')
 subsystem=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 ordinary_loaded=subsystem.get_all_level_actors()
@@ -20,7 +20,7 @@ ordinary_labels=[a.get_actor_label() for a in ordinary_loaded]
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
 unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
 raw=array.array('H')
-with (SOURCE/'HM_StarterRegion.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
+with (SOURCE/'HM_MainWorld.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
 def height(x,y):
     u=x/2;v=y/2;i,j=int(u),int(v);s,t=u-i,v-j
     q=(raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t
@@ -46,7 +46,7 @@ def verify(dt):
         sun=envs[0].get_editor_property('sun');lux=sun.get_component_by_class(unreal.DirectionalLightComponent).get_editor_property('intensity')
         assert lux==60000,lux
         definition=states[0].get_editor_property('definition')
-        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest()
+        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'MainWorld.plan.json').read_bytes()).hexdigest()
         places=definition.get_editor_property('places');assert len(places)==len(PLAN['places'])
         actual={str(p.get_editor_property('place_id')):p for p in places};assert set(actual)=={p['id'] for p in PLAN['places']}
         for p in PLAN['places']:
@@ -87,9 +87,9 @@ def verify(dt):
             assert a.get_editor_property('is_spatially_loaded'),label
             if h.get('roof_style')=='intact_thatch_gable':
                 parts={c.get_name():c for c in mesh_components}
-                assert parts['HipRoof'].static_mesh.get_path_name().split('.')[0]=='/Game/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof'
+                assert parts['HipRoof'].static_mesh.get_path_name().split('.')[0]=='/Game/Map_Resource/Meshes/Houses/Roofs/House02_Roof/SM_House02_Roof'
                 assert {'GableNorth','GableSouth'}<=parts.keys()
-                assert all(parts[n].static_mesh.get_path_name().split('.')[0]=='/Game/ElderboomVillage/Meshes/SM_Medieval_Modular_Gable_udsreiudw_lod3_Var1' for n in ['GableNorth','GableSouth'])
+                assert all(parts[n].static_mesh.get_path_name().split('.')[0]=='/Game/Map_Resource/ElderboomVillage/Meshes/SM_Medieval_Modular_Gable_udsreiudw_lod3_Var1' for n in ['GableNorth','GableSouth'])
             if label in ordinary_labels:ordinary_house_labels.append(label)
             for c in a.get_components_by_class(unreal.StaticMeshComponent):
                 rr=c.get_world_rotation();assert abs(rr.pitch)<.01 and abs(rr.roll)<.01,(label,c.get_name(),str(rr))
@@ -136,7 +136,7 @@ def verify(dt):
         material=proxies[0].get_editor_property('landscape_material');assert material
         assert all(p.get_editor_property('landscape_material')==material for p in proxies)
         material_path=material.get_path_name().split('.')[0]
-        assert material_path in ['/Game/World/Starter/Materials/M_StarterTerrain','/Game/World/Starter/Materials/M_StarterTerrain_Biome']
+        assert material_path in ['/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain','/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain_Biome']
         expressions=unreal.MaterialEditingLibrary.get_material_expressions(material)
         expected_nodes=(23 if RETIRED_GRASS_GROUPS else 20) if material_path.endswith('_Biome') else 14
         assert len(expressions)==expected_nodes,[(e.get_name(),e.get_class().get_name()) for e in expressions]
@@ -144,7 +144,7 @@ def verify(dt):
         assert isinstance(color,unreal.MaterialExpressionCustom) and 'Cobble' in color.get_editor_property('code')
         dirty_names={p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()}
         assert material_path not in dirty_names
-        assert '/Game/World/Starter/Materials/M_StarterBridgeStone' not in dirty_names
+        assert '/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone' not in dirty_names
         report.update(passed=True,world_state_actors=1,environment_actors=1,saved_sun_lux=lux,places=len(PLAN['places']),connections=7,landscape_components=component_count,terrain_collision_samples=len(errors),maximum_collision_error_cm=max(errors),player_starts=1,buildings=8,ordinary_editor_loaded_buildings=len(ordinary_house_labels),ordinary_editor_loaded_actors=len(ordinary_loaded),authored_actors=len(owned),duplicate_authored_labels=False,nature_counts=dict(counts),nature_spatial_groups=groups,instance_rotation_samples=checked_instances,well_mesh_components=4,capital_entrance_actors=6,bridge_collision_samples=len(bridge_errors),bridge_collision_reload_error_cm=max(bridge_errors),terrain_material_expression_count=len(expressions),obsolete_route_rendering_retired=True,weather_deferred=True,nav_verified=False,hlod_built=False,performance_measured=False,packaging_verified=False,visual_quality_approved=False)
     except Exception:report['error']=traceback.format_exc();unreal.log_error(report['error'])
     (OUT/'corridor-saved-verification.json').write_text(json.dumps(report,indent=2),encoding='utf-8')

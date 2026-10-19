@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'H07-coastal-reach-build.json').read_text());MOVE=json.loads((OUT/'H07-coastal-relocation.json').read_text());assert B['phase']==MOVE['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'H07-coastal-reach-build.json').read_text());MOVE=json.loads((OUT/'H07-coastal-relocation.json').read_text());assert B['phase']==MOVE['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');manifest=T.manifest;profile=json.loads((SOURCE/manifest['coastal_surface_profile']).read_text());q=profile['reaches'][0];file=SOURCE/q['geometry_source'];assert hashlib.sha256(file.read_bytes()).hexdigest()==q['geometry_sha256'];geo=json.loads(file.read_text());origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');manifest=T.manifest;profile=json.loads((SOURCE/manifest['coastal_surface_profile']).read_text());q=profile['reaches'][0];file=SOURCE/q['geometry_source'];assert hashlib.sha256(file.read_bytes()).hexdigest()==q['geometry_sha256'];geo=json.loads(file.read_text());origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):

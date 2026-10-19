@@ -2,14 +2,14 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'mountain-village-build.json';assert not FILE.exists(),'Inspect native results before another authoring pass'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'mountain-village-build.json';assert not FILE.exists(),'Inspect native results before another authoring pass'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json')
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S06');assert P['stable_id']=='S05';cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S05');TAG='ProjectJ.Starter.V4.Mountain.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S05/MountainBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
+C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json')
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S06');assert P['stable_id']=='S05';cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S05');TAG='ProjectJ.Starter.V4.Mountain.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S05/MountainBlockout');assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
+CUBE=C.mesh('/Engine/BasicShapes/Cube');STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert STONE and WOOD
 preflight=json.loads((OUT/'mountain-village-preflight.json').read_text(encoding='utf-8'));assert not any('error' in p for p in preflight['plots'])
-R=dict(phase='QUEUED',target_id='S06',stable_id='S05',completed=[],houses=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+R=dict(phase='QUEUED',target_id='S06',stable_id='S05',completed=[],houses=[],access=[],entries=[],height_sha256=T.manifest['terrain_profile']['sha256'],profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):R.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(R,indent=2),encoding='utf-8')
 def tag(a):a.set_editor_property('tags',[unreal.Name(TAG),unreal.Name('ProjectJ.Location.S05'),unreal.Name('ProjectJ.Target.S06')]);return a
 def empty(label,x,y,z,yaw=0):
@@ -40,13 +40,13 @@ def lookout():
     placement=dict(id='Lookout',label=a.get_actor_label(),center_m=[x,y,floor],yaw=p['yaw_degrees'],width=w,depth=d);access=A.add_access_stairs(a,placement,T.height,C,STONE);R['lookout']=dict(placement,components={n:c.get_instance_count() for n,c in groups.items()},access=access)
 def workyard():
     p=P['work_yards'][0];x,y=cx+p['offset_m'][0],cy+p['offset_m'][1];z=T.height(x,y);a=empty('OreSortingCourt',x,y,z);counts={}
-    for name,path,count,scale in [('Granite','/Game/Megascans/3D_Assets/GraniteRockAssembly/SM_GraniteRockAssembly',8,.6),('SmallStone','/Game/Megascans/3D_Assets/HovsBeachRock/SM_HovsBeachRock',8,.5)]:
+    for name,path,count,scale in [('Granite','/Game/Map_Resource/Megascans/3D_Assets/GraniteRockAssembly/SM_GraniteRockAssembly',8,.6),('SmallStone','/Game/Map_Resource/Megascans/3D_Assets/HovsBeachRock/SM_HovsBeachRock',8,.5)]:
         mesh=C.mesh(path);c=hism(a,name,mesh,collision=False)
         for i in range(count):
             u=(i%4-1.5)*2.2;v=(i//4-1)*2.2+(2 if name=='SmallStone' else -1);c.add_instance(C.centered_transform(mesh,unreal.Vector(u*100,v*100,(T.height(x+u,y+v)-z)*100),i*47,(scale,)*3),False)
         counts[name]=count
     # A pedestal puts the existing anvil at working height.
-    ax,ay=x+4,y+4;base=T.height(ax,ay);stand=tag(A.spawn('S05_Mountain_AnvilStand','/Engine/BasicShapes/Cube',ax,ay,base,0,(.8,.8,.6),STONE));comp=C.component(stand,unreal.StaticMeshComponent,'Anvil');obj=C.mesh('/Game/Megascans/3D_Assets/BlacksmithAnvilA/SM_BlacksmithAnvilA');comp.set_static_mesh(obj);comp.set_relative_transform(C.centered_transform(obj,unreal.Vector(0,0,30)),False,False);comp.set_collision_profile_name('BlockAll')
+    ax,ay=x+4,y+4;base=T.height(ax,ay);stand=tag(A.spawn('S05_Mountain_AnvilStand','/Engine/BasicShapes/Cube',ax,ay,base,0,(.8,.8,.6),STONE));comp=C.component(stand,unreal.StaticMeshComponent,'Anvil');obj=C.mesh('/Game/Map_Resource/Megascans/3D_Assets/BlacksmithAnvilA/SM_BlacksmithAnvilA');comp.set_static_mesh(obj);comp.set_relative_transform(C.centered_transform(obj,unreal.Vector(0,0,30)),False,False);comp.set_collision_profile_name('BlockAll')
     tag(A.spawn('S05_Mountain_OreCart','/Game/Map_Resource/SkyTown/Meshes/SM_Cart01',x+4,y-4,T.height(x+4,y-4),10));R['workyard']=dict(label=a.get_actor_label(),components=counts,gameplay_mining=False)
 def entries():
     for name,street in [('West','WestContour'),('North','NorthHairpins')]:

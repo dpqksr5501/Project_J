@@ -2,8 +2,8 @@
 import importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Structure';FILE=OUT/'natural-diversity-build.json';P=json.loads((SRC/'StarterWorld.natural-diversity.json').read_text());TAG=P['native_tag']
-TREE_CULL=json.loads((SRC/'StarterWorld.forest-streaming.json').read_text()).get('tree_instance_cull_cm',[0,0])
+ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Structure';FILE=OUT/'natural-diversity-build.json';P=json.loads((SRC/'MainWorld.natural-diversity.json').read_text());TAG=P['native_tag']
+TREE_CULL=json.loads((SRC/'MainWorld.forest-streaming.json').read_text()).get('tree_instance_cull_cm',[0,0])
 assert not FILE.exists(),'Inspect checkpoint and scene before any recovery'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
 assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages() and not unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()

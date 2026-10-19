@@ -2,16 +2,16 @@
 import array,json,math,time,runpy
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/Starter'
+ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/MainWorld'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
 SAVE=runpy.run_path(str(Path(__file__).with_name('Starter-OwnedSave.py')))
 save_scope=SAVE['OwnedSaveScope']()
-graph=unreal.load_asset(BASE+'/PCG/PCG_StarterForest');assert graph
-streaming=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.forest-streaming.json').read_text())
+graph=unreal.load_asset(BASE+'/PCG/PCG_MainWorldForest');assert graph
+streaming=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.forest-streaming.json').read_text())
 forest_layer=unreal.load_asset(streaming['forest_hlod_layer']) if streaming.get('forest_hlod_layer') else None
 raw=array.array('H')
-with (ROOT/'Content/World/Starter/Source/HM_StarterRegion.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
+with (ROOT/'Content/World/MainWorld/Source/HM_MainWorld.r16').open('rb') as stream:raw.fromfile(stream,4033**2)
 
 
 def height(x,y):
@@ -20,7 +20,7 @@ def height(x,y):
     return (value-32768)*6.25
 
 
-places=json.loads((ROOT/'Content/World/Starter/Source/StarterWorld.plan.json').read_text(encoding='utf-8'))['places']
+places=json.loads((ROOT/'Content/World/MainWorld/Source/MainWorld.plan.json').read_text(encoding='utf-8'))['places']
 settlements=[p for p in places if p['id'].startswith('S')]
 records=[];errors=[];minimum_margin=1e9
 for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():

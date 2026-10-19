@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'north-camp-build.json').read_text());REG=json.loads((OUT/'north-camp-registration.json').read_text());assert B['phase']==REG['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';B=json.loads((OUT/'north-camp-build.json').read_text());REG=json.loads((OUT/'north-camp-registration.json').read_text());assert B['phase']==REG['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');C=module('contract','Starter-WorldDefinitionContract.py');origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):
@@ -28,9 +28,9 @@ def verify(dt):
         definition=next(a for a in actors if isinstance(a,unreal.Project_JWorldState)).get_editor_property('definition');places=[C.snapshot_place(p) for p in definition.get_editor_property('places')];assert len(places)==20 and places[:19]==REG['previous_places'] and places[-1]['id']=='S08'
         connections=[C.snapshot_connection(v) for v in definition.get_editor_property('connections')];assert len(connections)==7
         assert [v for v in connections if v['id']!='E_N_Road']==[v for v in REG['previous_connections'] if v['id']!='E_N_Road'];connection=next(v for v in connections if v['id']=='E_N_Road');assert connection==REG['connection']
-        plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text());edges=json.loads((SOURCE/'StarterWorld.edges.json').read_text());port=next(v for v in plan['connections'] if v['id']=='E_N_Road');assert port==next(v for v in edges['connections'] if v['id']=='E_N_Road');assert list(point(*port['position_m']).to_tuple())==connection['location_cm']==B['port_marker']['location_cm']
-        oldedges=json.loads((ROOT/'Saved/StarterWorld/BeforeNorthCamp/StarterWorld.edges.json').read_text());assert edges['edges']==oldedges['edges']
-        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest()
+        plan=json.loads((SOURCE/'MainWorld.plan.json').read_text());edges=json.loads((SOURCE/'MainWorld.edges.json').read_text());port=next(v for v in plan['connections'] if v['id']=='E_N_Road');assert port==next(v for v in edges['connections'] if v['id']=='E_N_Road');assert list(point(*port['position_m']).to_tuple())==connection['location_cm']==B['port_marker']['location_cm']
+        oldedges=json.loads((ROOT/'Saved/StarterWorld/BeforeNorthCamp/MainWorld.edges.json').read_text());assert edges['edges']==oldedges['edges']
+        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'MainWorld.plan.json').read_bytes()).hexdigest()
         assert all(any(a.get_path_name()==row['path'] for a in actors) for row in REG['review']);assert max(floors+stairs)<.1
         gate=B['gate'];x,y,z=gate['passage_center_m'];assert gate['lintel_bottom_m']-z>5
         # No gate mesh blocks the capsule corridor below the lintel.

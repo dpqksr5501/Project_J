@@ -2,8 +2,8 @@
 import hashlib,json
 from pathlib import Path
 import numpy as np
-ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/Starter/Source'
-raw=SRC/'HM_StarterRegion.r16';sha=hashlib.sha256(raw.read_bytes()).hexdigest()
+ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'Content/World/MainWorld/Source'
+raw=SRC/'HM_MainWorld.r16';sha=hashlib.sha256(raw.read_bytes()).hexdigest()
 assert sha=='bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8'
 h=(np.fromfile(raw,dtype='<u2').reshape(4033,4033).astype('f4')-32768)*.0625
 rollout=json.loads((ROOT/'Saved/Validation/StarterWorld/Phase2/forest-rollout.json').read_text())
@@ -19,5 +19,5 @@ for t in rollout['tiles']:
     low=float(q.min())-5;high=float(q.max())+85
     tiles[t['label']]=dict(xy_bounds_m=t['bounds_m'],bottom_m=low,top_m=high,center_z_cm=(low+high)*50,half_height_m=(high-low)/2)
 p=dict(schema=1,height_sha256=sha,height_modified=False,policy='Full XY tile terrain extrema plus -5/+85m safety; baked world transforms preserved; manual editor regeneration',tiles=tiles)
-(SRC/'StarterWorld.forest-streaming.json').write_text(json.dumps(p,indent=2)+'\n')
+(SRC/'MainWorld.forest-streaming.json').write_text(json.dumps(p,indent=2)+'\n')
 print('Planned',len(tiles),'bounded forest volumes')

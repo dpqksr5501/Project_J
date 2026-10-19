@@ -6,12 +6,12 @@ remain separate from this offline footprint/grade screening.
 import hashlib,heapq,json,math,random
 from pathlib import Path
 import numpy as np
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
-DEST=SOURCE/'StarterWorld.capital.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
+DEST=SOURCE/'MainWorld.capital.json'
 assert not DEST.exists(),'Preserve designer edits; explicitly revise the existing capital plan'
-HFILE=SOURCE/'HM_StarterRegion.r16';digest=hashlib.sha256(HFILE.read_bytes()).hexdigest()
+HFILE=SOURCE/'HM_MainWorld.r16';digest=hashlib.sha256(HFILE.read_bytes()).hexdigest()
 H=(np.fromfile(HFILE,dtype='<u2').reshape(4033,4033).astype(float)-32768)*.0625
-PLAN=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'))
+PLAN=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
 PAL=json.loads((ROOT/'Saved/Validation/StarterWorld/Phase2/architecture-palette.json').read_text(encoding='utf-8'))
 PALETTE={Path(r['path']).name:r for r in PAL if r['available']}
 def height(x,y):

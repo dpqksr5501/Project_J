@@ -26,6 +26,8 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/SkeletalMesh.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "UObject/Package.h"
 #include "TimerManager.h"
 #include "UObject/UnrealType.h"
 

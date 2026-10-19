@@ -1,13 +1,13 @@
 """B02 forest arena: retained trees, rooted ruins, boss movement and public bypass."""
 import hashlib,importlib.util,json,math,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'B02-boss-layout.json';assert not FILE.exists()
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'B02-boss-layout.json';assert not FILE.exists()
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');routes=module('routes','Starter-HuntingRoutes.py')
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');routes=module('routes','Starter-HuntingRoutes.py')
 plan=json.loads((SOURCE/T.manifest['layout_source']).read_text());place=next(p for p in plan['places'] if p['id']=='B02');assert place['center_m']==[6472,5630,455.5]
 pre=json.loads((OUT/'B02-southern-forest-preflight.json').read_text());assets={m['path']:m for m in json.loads((OUT/'B02-forest-asset-preflight.json').read_text())['meshes']};assets.update({m['path']:m for m in json.loads((OUT/'H09-ruins-asset-preflight.json').read_text())['meshes']})
-base='/Game/AncientTempleRuins/Environment/';props=[]
+base='/Game/Map_Resource/AncientTempleRuins/Environment/';props=[]
 for name,mesh,xy,scale,yaw,role in [
     ('OldCanopyTree',base+'Foliage/Ceiba_Tree_01/SM_Ceiba_Tree_01_A',[6506,5660],1.1,35,'hero_tree_outside_open_combat_pockets'),
     ('NorthernRootCover',base+'Foliage/CeibaRoots_01/SM_Ceiba_Roots_01_B',[6492,5650],.25,190,'exposed_root_cover'),

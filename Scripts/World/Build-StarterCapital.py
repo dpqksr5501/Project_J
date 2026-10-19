@@ -6,13 +6,13 @@ Checkpointed creation prevents an unknown MCP result from duplicating buildings.
 import hashlib,importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source'
-OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/Starter'
-PLAN=json.loads((SOURCE/'StarterWorld.capital.json').read_text(encoding='utf-8'))
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source'
+OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';BASE='/Game/World/MainWorld'
+PLAN=json.loads((SOURCE/'MainWorld.capital.json').read_text(encoding='utf-8'))
 TAG='ProjectJ.Starter.Capital.v1';FILE=OUT/'capital-build.json'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
-assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==PLAN['height_sha256']
+assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
+assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==PLAN['height_sha256']
 ACTORS=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 STATE=json.loads(FILE.read_text(encoding='utf-8')) if FILE.exists() else dict(phase='READY',completed=[],actors=[])
 assert STATE['phase']=='READY','Inspect existing result before explicit recovery: '+STATE['phase']
@@ -20,7 +20,7 @@ assert not any(TAG in [str(t) for t in a.tags] for a in ACTORS.get_all_level_act
 spec=importlib.util.spec_from_file_location('settlement',ROOT/'Scripts/World/Starter-SettlementAuthoring.py')
 shared=importlib.util.module_from_spec(spec);spec.loader.exec_module(shared)
 AUTHOR=shared.SettlementAuthoring(TAG,'StarterRegion/Settlements/S01/Capital')
-STONE=unreal.load_asset(BASE+'/Materials/M_StarterBridgeStone');assert STONE
+STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');assert STONE
 def record(phase):
     STATE.update(phase=phase,updated_at=time.time());FILE.write_text(json.dumps(STATE,indent=2),encoding='utf-8')
 def save():

@@ -6,16 +6,16 @@ WorldDefinition and every terrain sample. No runtime construction or new manager
 import hashlib,importlib.util,json,math,random,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
 FILE=OUT/'farm-village-build.json'
 OLD=json.loads(FILE.read_text(encoding='utf-8')) if FILE.exists() else None
 if OLD:assert OLD['phase']=='ERROR' and (OUT/'farm-plot-layout.json').exists(),'Inspect unknown or completed authoring before recovery'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py')
-profiles=json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))
+profiles=json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))
 P=next(p for p in profiles['settlements'] if p['target_id']=='S02')
-registry=json.loads((SOURCE/'StarterWorld.locations.json').read_text(encoding='utf-8'))
+registry=json.loads((SOURCE/'MainWorld.locations.json').read_text(encoding='utf-8'))
 assert next(p for p in registry['locations'] if p['target_id']=='S02')['stable_id']==P['stable_id']=='S02'
 place=next(p for p in C.PLAN['places'] if p['id']==P['stable_id']);cx,cy=place['center_m'][:2]
 TAG='ProjectJ.Starter.V4.Farm.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S02/FarmBlockout')
@@ -28,13 +28,13 @@ if OLD:
         actor=owned[r['label']];assert actor.get_path_name()==r['path']
         assert (actor.get_actor_location()-unreal.Vector(*r['location_cm'])).length()<.01,'Preserve unexpected manual placement'
 else:assert not owned
-STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');CUBE=C.mesh('/Engine/BasicShapes/Cube')
+STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');CUBE=C.mesh('/Engine/BasicShapes/Cube')
 WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');assert WOOD
-REPORT=dict(phase='QUEUED',stable_id='S02',target_id='S02',completed=[],actors=[],houses=[],fields=[],height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest(),
-            profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+REPORT=dict(phase='QUEUED',stable_id='S02',target_id='S02',completed=[],actors=[],houses=[],fields=[],height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest(),
+            profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 if OLD:
     REPORT=OLD;REPORT.setdefault('recovery_history',[]).append(dict(error=REPORT.pop('error'),previous_profile=REPORT['profile_sha256']))
-    REPORT['profile_sha256']=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest()
+    REPORT['profile_sha256']=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest()
     A.created=REPORT['actors']
 def record(phase):
     REPORT.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(REPORT,indent=2),encoding='utf-8')
@@ -75,7 +75,7 @@ def build_house(data):
 def build_field(data):
     x,y=cx+data['offset_m'][0],cy+data['offset_m'][1];z=C.height(x,y);w,d=data['width_m'],data['depth_m']
     actor=empty('S02_Field_'+data['id'],x,y,z)
-    wheat=C.mesh('/Game/Megascans/3D_Plants/WheatGrassB/SM_WheatGrass01_V1');c=instances(actor,'Wheat',wheat)
+    wheat=C.mesh('/Game/Map_Resource/Megascans/3D_Plants/WheatGrassB/SM_WheatGrass01_V1');c=instances(actor,'Wheat',wheat)
     rng=random.Random(P['seed']+sum(map(ord,data['id'])));count=0
     for i in range(int(w/1.5)):
         for j in range(int(d/1.5)):
@@ -86,8 +86,8 @@ def build_field(data):
             c.add_instance(t,False);count+=1
     REPORT['fields'].append(dict(id=data['id'],label=actor.get_actor_label(),instances=count))
 def build_well():
-    actor=tagged(A.spawn('S02_Farm_Well','/Game/Meshes/Well/SM_MainWell',cx+8,cy-5,C.height(cx+8,cy-5),25))
-    for name,path in [('StoneBase','/Game/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Meshes/Well/SM_WellShingles'),('Crank','/Game/Meshes/Well/SM_WellDetailPieces')]:A.add_static_component(actor,path,name)
+    actor=tagged(A.spawn('S02_Farm_Well','/Game/Map_Resource/Meshes/Well/SM_MainWell',cx+8,cy-5,C.height(cx+8,cy-5),25))
+    for name,path in [('StoneBase','/Game/Map_Resource/Meshes/Well/WellBase/SM_WellBase'),('Shingles','/Game/Map_Resource/Meshes/Well/SM_WellShingles'),('Crank','/Game/Map_Resource/Meshes/Well/SM_WellDetailPieces')]:A.add_static_component(actor,path,name)
 tasks=[(h['id'],lambda h=h:build_house(h)) for h in P['houses']]+[(f['id'],lambda f=f:build_field(f)) for f in P['fields']]+[('Well',build_well)]
 tasks=[(key,action) for key,action in tasks if key not in REPORT['completed']]
 index=0;busy=False
@@ -97,7 +97,7 @@ def tick(dt):
     busy=True
     try:
         if index==len(tasks):
-            A.save();assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==REPORT['height_sha256']
+            A.save();assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==REPORT['height_sha256']
             REPORT.update(height_modified=False,existing_actors_modified=False,provider_modified=False);record('COMPLETE')
             unreal.unregister_slate_post_tick_callback(handle);return
         key,action=tasks[index];record('APPLYING_'+key);action();REPORT['completed'].append(key);index+=1

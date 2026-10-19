@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';P=json.loads((SOURCE/'StarterWorld.H08.mine.json').read_text());B=json.loads((OUT/'H08-mine-build.json').read_text());assert B['phase']=='COMPLETE'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';P=json.loads((SOURCE/'MainWorld.H08.mine.json').read_text());B=json.loads((OUT/'H08-mine-build.json').read_text());assert B['phase']=='COMPLETE'
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');grid=T.grid if hasattr(T,'grid') else T.manifest['world_grid'];origin=grid['unreal_origin_cm'];cx,cy,floor=P['center_m'];co,si=math.cos(math.radians(P['yaw_degrees'])),math.sin(math.radians(P['yaw_degrees']))
+C=module('contract','Starter-WorldDefinitionContract.py');T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');grid=T.grid if hasattr(T,'grid') else T.manifest['world_grid'];origin=grid['unreal_origin_cm'];cx,cy,floor=P['center_m'];co,si=math.cos(math.radians(P['yaw_degrees'])),math.sin(math.radians(P['yaw_degrees']))
 assert module('support','Starter-SettlementSupport.py').plan_mine_entry_steps(P,T.height)==B['stairs'],'Saved entry steps differ from the shared source contract'
 def pt(u,v,z):return unreal.Vector(origin[0]+(cx+co*u-si*v)*100,origin[1]+(cy+si*u+co*v)*100,(floor+z)*100+origin[2])
 def trace(world,a,b):
@@ -15,7 +15,7 @@ def verify(dt):
     if time.perf_counter()-started<8:return
     unreal.unregister_slate_post_tick_callback(handle);R=dict(passed=False,read_only=True,art_complete=False)
     try:
-        actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors();a=next(a for a in actors if a.get_path_name()==B['actor_path']);world=a.get_world();assert a.static_mesh_component.static_mesh.get_path_name().split('.')[0]==P['mesh_asset'];assert unreal.EditorAssetLibrary.get_metadata_tag(a.static_mesh_component.static_mesh,'ProjectJ.SourceHash')==hashlib.sha256((SOURCE/'StarterWorld.H08.mine.json').read_bytes()).hexdigest()
+        actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors();a=next(a for a in actors if a.get_path_name()==B['actor_path']);world=a.get_world();assert a.static_mesh_component.static_mesh.get_path_name().split('.')[0]==P['mesh_asset'];assert unreal.EditorAssetLibrary.get_metadata_tag(a.static_mesh_component.static_mesh,'ProjectJ.SourceHash')==hashlib.sha256((SOURCE/'MainWorld.H08.mine.json').read_bytes()).hexdigest()
         assert not a.get_editor_property('replicates') and a.get_editor_property('is_spatially_loaded');body=a.static_mesh_component.static_mesh.get_editor_property('body_setup');assert body.get_editor_property('collision_trace_flag')==unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE
         floors=[];capsules=[];walls=[];ceilings=[]
         for u in range(-7,18):

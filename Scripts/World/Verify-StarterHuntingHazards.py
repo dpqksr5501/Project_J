@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','H07');manifest=json.loads((SOURCE/'StarterRegion.manifest.json').read_text());P=next(v for v in json.loads((SOURCE/manifest['hunting_profiles']).read_text())['hunting_grounds'] if v['target_id']==target);B=json.loads((OUT/(target+'-hunting-build.json')).read_text());assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False);origin=manifest['world_grid']['unreal_origin_cm'];units=manifest['world_grid']['centimetres_per_source_metre']
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';target=globals().get('TARGET_ID','H07');manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text());P=next(v for v in json.loads((SOURCE/manifest['hunting_profiles']).read_text())['hunting_grounds'] if v['target_id']==target);B=json.loads((OUT/(target+'-hunting-build.json')).read_text());assert B['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False);origin=manifest['world_grid']['unreal_origin_cm'];units=manifest['world_grid']['centimetres_per_source_metre']
 def module(name,file):
     s=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');W=module('water','Starter-WetlandGeometry.py')
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');W=module('water','Starter-WetlandGeometry.py')
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 def source(p):return [(p.x-origin[0])/units,(p.y-origin[1])/units,(p.z-origin[2])/units]
 def line(world,x,y,top,bottom,ignore=()):

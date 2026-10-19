@@ -2,10 +2,10 @@
 import hashlib,importlib.util,json,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'river-hamlet-build.json').read_text());REG=json.loads((OUT/'river-hamlet-registration.json').read_text());assert STATE['phase']==REG['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';STATE=json.loads((OUT/'river-hamlet-build.json').read_text());REG=json.loads((OUT/'river-hamlet-registration.json').read_text());assert STATE['phase']==REG['phase']=='COMPLETE' and not unreal.EditorLevelLibrary.get_pie_worlds(False)
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'StarterRegion.manifest.json');snapshot=module('contract','Starter-WorldDefinitionContract.py').snapshot_place;origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
+T=module('terrain','Starter-TerrainProfile.py').TerrainProfile(SOURCE/'MainWorld.manifest.json');snapshot=module('contract','Starter-WorldDefinitionContract.py').snapshot_place;origin=T.grid['unreal_origin_cm'];units=T.grid['centimetres_per_source_metre']
 def point(x,y,z):return unreal.Vector(origin[0]+x*units,origin[1]+y*units,origin[2]+z*units)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs;unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs]);started=time.perf_counter()
 def verify(dt):
@@ -33,7 +33,7 @@ def verify(dt):
             for i in range(1,6):
                 t=i/6;p=point(*[ramp['start_m'][k]*(1-t)+ramp['end_m'][k]*t for k in range(3)]);ramps.append(abs(trace(a,p,20)-p.z))
         state=next(a for a in actors if isinstance(a,unreal.Project_JWorldState));definition=state.get_editor_property('definition');places=[snapshot(p) for p in definition.get_editor_property('places')];assert len(places)==19 and places[:18]==REG['previous_places'];new=places[-1];assert new['id']=='S07' and new['radius']==17000
-        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'StarterWorld.plan.json').read_bytes()).hexdigest()
+        assert definition.get_editor_property('source_plan_hash')==hashlib.sha256((SOURCE/'MainWorld.plan.json').read_bytes()).hexdigest()
         marker=next(a for a in actors if a.get_path_name()==REG['marker']['path']);assert (marker.get_actor_location()-unreal.Vector(*REG['marker']['location_cm'])).length()<.01 and not marker.get_editor_property('is_editor_only_actor')
         for row in STATE['entries']:assert not bylabel[row['label']].get_editor_property('replicates')
         assert len(bylabel['S07_River_Well'].get_components_by_class(unreal.StaticMeshComponent))==4

@@ -16,7 +16,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / 'Docs/World/MMORPG_Starter_8x8km_Lv1-30_Codex_Pack_v3/ZONE_LAYOUT_LV1_30.json'
-OUT = ROOT / 'Content/World/Starter/Source'
+OUT = ROOT / 'Content/World/MainWorld/Source'
 SEED = 103017
 EXTENT = 8064.0
 RESOLUTION = 4033
@@ -203,13 +203,13 @@ def generate():
     if raw_float.min() < 0 or raw_float.max() > 65535:
         raise ValueError(f'Height range {hi.min()}..{hi.max()} exceeds Z scale; never silently clip terrain')
     raw = np.rint(raw_float).astype('<u2')
-    (OUT/'HM_StarterRegion.r16').write_bytes(raw.tobytes())
+    (OUT/'HM_MainWorld.r16').write_bytes(raw.tobytes())
     gy, gx = np.gradient(h, EXTENT/(n-1))
     slope = np.hypot(gx, gy)
     forest = np.clip((noise(x,y,620,SEED+71)+.4)*.8,0,1)*(1-smooth((slope-.5)/.5))
     forest *= smooth((h-8)/40)*(1-smooth((h-650)/230))
     mask = np.stack([forest, np.clip(slope/.95,0,1), 1-smooth(water_distance/95), np.clip((h-600)/300,0,1)], axis=-1)
-    Image.fromarray(np.uint8(np.clip(mask,0,1)*255),'RGBA').resize((2048,2048), Image.Resampling.BILINEAR).save(OUT/'T_StarterBiomeMasks.png')
+    Image.fromarray(np.uint8(np.clip(mask,0,1)*255),'RGBA').resize((2048,2048), Image.Resampling.BILINEAR).save(OUT/'T_MainWorldBiomeMasks.png')
     def sample(px, py):
         return float(hi[round(py/EXTENT*(RESOLUTION-1)),round(px/EXTENT*(RESOLUTION-1))])
     places=[]
@@ -246,16 +246,16 @@ def generate():
         first=river['points'][0];side='north' if first[1]==EXTENT else 'east'
         connections.append(dict(id='E_'+river['id'],side=side,kind='river',position_m=first,outward=[0,1,0] if side=='north' else [1,0,0],width_m=river['width_m'])) if first[0]==EXTENT or first[1]==EXTENT else None
     plan=dict(schema='project-j-starter-world-1',region_id='Starter.Lv1_30',seed=SEED,resolution=RESOLUTION,xy_scale_cm=200,z_scale=Z_SCALE,extent_m=EXTENT,min_height_m=float(hi.min()),max_height_m=float(hi.max()),coordinate_system='SW metres east/north -> centred Unreal centimetres; rows +Y',source_json=str(SOURCE.relative_to(ROOT)).replace('\\','/'),source_sha256=hashlib.sha256(SOURCE.read_bytes()).hexdigest(),places=places,rivers=RIVERS,lake=dict(center_m=lake_center,radius_m=lake_radius,water_level_m=145),roads=roads,connections=connections,phase='FULL_REGION_TERRAIN_AND_CONTENT_CANDIDATES',terrain_method='authored branching ridges, drainage accumulation incision, conservative talus relaxation; final river valleys authored',performance_status='UNMEASURED')
-    (OUT/'StarterWorld.plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2),encoding='utf-8')
+    (OUT/'MainWorld.plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2),encoding='utf-8')
     edges={side:{'height_m':values.tolist(),'spacing_m':EXTENT/(RESOLUTION-1)} for side,values in [('west',hi[:,0]),('east',hi[:,-1]),('south',hi[0,:]),('north',hi[-1,:])]}
-    (OUT/'StarterWorld.edges.json').write_text(json.dumps({'schema':1,'seed':SEED,'coordinate_system':plan['coordinate_system'],'edges':edges,'connections':connections}),encoding='utf-8')
+    (OUT/'MainWorld.edges.json').write_text(json.dumps({'schema':1,'seed':SEED,'coordinate_system':plan['coordinate_system'],'edges':edges,'connections':connections}),encoding='utf-8')
     # Offline review image, explicitly not a screenshot of the final Unreal world.
     shade=np.clip(.65+(-gx*.6-gy*.3)/np.sqrt(1+gx*gx+gy*gy),.25,1)
     base=np.stack([.27+.18*(1-forest),.36+.12*forest,.20+.12*(h>650)],axis=-1)
     base=np.where((h<0)[...,None],np.array([.08,.22,.31]),base)
     base=np.where(((lr<1)|(water_distance<0))[...,None],np.array([.12,.33,.39]),base)
     preview=np.uint8(np.clip(base*shade[...,None],0,1)*255)
-    Image.fromarray(preview[::-1]).save(OUT/'StarterWorld_TerrainReview.png')
+    Image.fromarray(preview[::-1]).save(OUT/'MainWorld_TerrainReview.png')
     print(json.dumps({k:plan[k] for k in ['extent_m','resolution','min_height_m','max_height_m','phase']}) )
 
 

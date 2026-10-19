@@ -2,10 +2,10 @@
 import collections,hashlib,json,math,time,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
-BASE='/Game/World/Starter';TAG='ProjectJ.Starter.Biome.v1'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2'
+BASE='/Game/World/MainWorld';TAG='ProjectJ.Starter.Biome.v1'
 assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(BASE+'/Maps/L_StarterRegion.')
+assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith('/Game/World/MainWorld/Legacy/Maps/L_StarterRegion.')
 subsystem=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
 unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
@@ -22,14 +22,14 @@ def verify(dt):
         groups=[c for a in owned for c in a.get_components_by_class(unreal.HierarchicalInstancedStaticMeshComponent)]
         total=sum(c.get_instance_count() for c in groups);assert total==700
         assert all(a.get_editor_property('is_spatially_loaded') for a in owned)
-        target=BASE+'/Materials/M_StarterTerrain_Biome.M_StarterTerrain_Biome'
+        target='/Game/Map_Resource/MainWorld/Materials/M_MainWorldTerrain_Biome.M_MainWorldTerrain_Biome'
         landscapes=[a for a in actors if isinstance(a,unreal.LandscapeProxy)]
         assert len(landscapes)==257
         assert all(a.get_editor_property('landscape_material').get_path_name()==target for a in landscapes)
         mat=unreal.load_asset(target);expressions=list(unreal.MaterialEditingLibrary.get_material_expressions(mat))
         outputs=[e for e in expressions if isinstance(e,unreal.MaterialExpressionLandscapeGrassOutput)];assert len(outputs)==1
-        grass=unreal.load_asset(BASE+'/Materials/LG_StarterUnderstory');varieties=list(grass.get_editor_property('grass_varieties'))
-        preset=json.loads((SOURCE/'StarterWorld.biomes.json').read_text(encoding='utf-8'))
+        grass=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/LG_MainWorldUnderstory');varieties=list(grass.get_editor_property('grass_varieties'))
+        preset=json.loads((SOURCE/'MainWorld.biomes.json').read_text(encoding='utf-8'))
         assert len(varieties)==(len(preset['groundcover_palettes']['Meadow']) if preset['schema']>=2 else 2)
         expected={}
         data=json.loads((OUT/'biome-placement.json').read_text(encoding='utf-8'))
@@ -47,7 +47,7 @@ def verify(dt):
                 errors.append(abs(bottom-(row['z_m']*100-4)))
                 r=t.rotation.rotator();assert abs(r.pitch)<.001 and abs(r.roll)<.001;upright+=1
         assert max(errors)<.05
-        fingerprint=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()
+        fingerprint=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()
         assert fingerprint==data['height_sha256']
         old=[a for a in actors if 'ProjectJ.Starter.Corridor.v1' in [str(t) for t in a.tags]];assert len(old)==390-preset.get('retired_legacy_grass_actors',0)
         stats=unreal.MaterialEditingLibrary.get_statistics(mat)

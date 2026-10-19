@@ -6,10 +6,10 @@ class SettlementAuthoring:
     def instanced_material(self,interface):
         if interface.get_base_material().get_editor_property('used_with_instanced_static_meshes'):return interface
         lib=unreal.EditorAssetLibrary;edit=unreal.MaterialEditingLibrary
-        path=self.base+'/Materials/SettlementInstancing/'+interface.get_name()+'_'+hashlib.sha256(interface.get_path_name().encode()).hexdigest()[:8]
+        path=self.resource_base+'/Materials/SettlementInstancing/'+interface.get_name()+'_'+hashlib.sha256(interface.get_path_name().encode()).hexdigest()[:8]
         copy=unreal.load_asset(path)
         if copy is None:
-            lib.make_directory(self.base+'/Materials/SettlementInstancing')
+            lib.make_directory(self.resource_base+'/Materials/SettlementInstancing')
             copy=lib.duplicate_asset(interface.get_path_name().split('.')[0],path);assert copy
             self._owned_objects.append(copy)
             lib.set_metadata_tag(copy,'ProjectJ.Authoring','ProjectJ.Starter.SettlementInstancing.v1')
@@ -21,8 +21,8 @@ class SettlementAuthoring:
         self._save_scope=runpy.run_path(str(Path(__file__).with_name('Starter-OwnedSave.py')))['OwnedSaveScope']()
         self._owned_objects=[]
         if manifest is None:
-            manifest=json.loads((Path(__file__).resolve().parents[2]/'Content/World/Starter/Source/StarterRegion.manifest.json').read_text(encoding='utf-8'))
-        self.manifest=manifest;self.base=manifest['owned_content_root'];self.world_asset=manifest['world_asset']
+            manifest=json.loads((Path(__file__).resolve().parents[2]/'Content/World/MainWorld/Source/MainWorld.manifest.json').read_text(encoding='utf-8'))
+        self.manifest=manifest;self.base=manifest['owned_content_root'];self.resource_base=manifest['resource_content_root'];self.world_asset=manifest['world_asset']
         self.origin=manifest['world_grid']['unreal_origin_cm'];self.units=manifest['world_grid']['centimetres_per_source_metre']
         assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
         assert unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(self.world_asset+'.')

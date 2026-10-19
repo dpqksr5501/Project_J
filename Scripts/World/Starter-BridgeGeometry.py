@@ -6,22 +6,22 @@ is an editable saved StaticMesh, not runtime construction or scaled road planes.
 import hashlib,json,math
 from pathlib import Path
 import unreal
-BASE='/Game/World/Starter';OWNER='ProjectJ.Starter.Corridor.v1'
+BASE='/Game/World/MainWorld';OWNER='ProjectJ.Starter.Corridor.v1'
 
 
 def build(height,bx,by,heading):
     library=unreal.EditorAssetLibrary;edit=unreal.MaterialEditingLibrary
     tools=unreal.AssetToolsHelpers.get_asset_tools()
-    library.make_directory(BASE+'/Geometry')
-    mat_path=BASE+'/Materials/M_StarterBridgeStone'
+    library.make_directory('/Game/Map_Resource/MainWorld/Geometry')
+    mat_path='/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone'
     material=unreal.load_asset(mat_path)
     if material is None:
-        material=tools.create_asset('M_StarterBridgeStone',BASE+'/Materials',unreal.Material,unreal.MaterialFactoryNew());assert material
+        material=tools.create_asset('M_MainWorldBridgeStone','/Game/Map_Resource/MainWorld/Materials',unreal.Material,unreal.MaterialFactoryNew());assert material
         library.set_metadata_tag(material,'ProjectJ.Authoring',OWNER)
     # A failed first compilation may leave this new, unsaved material in memory.
     # Never adopt an existing untagged file from somebody else's authoring.
     if not library.get_metadata_tag(material,'ProjectJ.Authoring'):
-        assert not (Path(unreal.Paths.project_content_dir())/'World/Starter/Materials/M_StarterBridgeStone.uasset').exists()
+        assert not (Path(unreal.Paths.project_content_dir())/'World/Starter/Materials/M_MainWorldBridgeStone.uasset').exists()
         library.set_metadata_tag(material,'ProjectJ.Authoring',OWNER)
     assert library.get_metadata_tag(material,'ProjectJ.Authoring')==OWNER
     material.modify()
@@ -93,7 +93,7 @@ def build(height,bx,by,heading):
     for x in range(-48,49,8):
         for sign in [-1,1]:strip(x-.48,x+.48,sign*4.25-.48,sign*4.25+.48,deck(x)+.92,deck(x)+.92,deck(x)+1.2,deck(x)+1.2)
     fingerprint=hashlib.sha256(json.dumps(dict(vertices=[list(p.to_tuple()) for p in vertices],triangles=[list(t.to_tuple()) for t in triangles],material=mat_path),separators=(',',':')).encode()).hexdigest()
-    path=BASE+'/Geometry/SM_S01_StoneBridge';mesh=unreal.load_asset(path)
+    path='/Game/Map_Resource/MainWorld/Geometry/SM_S01_StoneBridge';mesh=unreal.load_asset(path)
     if mesh:
         assert library.get_metadata_tag(mesh,'ProjectJ.Authoring')==OWNER
         if library.get_metadata_tag(mesh,'ProjectJ.SourceHash')==fingerprint:return mesh,dict(center_m=[bx,by],heading=heading,span_m=length,bank_heights_m=[left,right],base_m=base,triangles=len(triangles),arches=6)

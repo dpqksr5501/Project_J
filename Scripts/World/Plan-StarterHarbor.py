@@ -1,10 +1,10 @@
 """Plan an estuary trading harbor inside the preserved S06 location reservation."""
 import array,hashlib,json,math,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=SOURCE/'StarterWorld.settlements.json';REPORT=OUT/'harbor-layout.json'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=SOURCE/'MainWorld.settlements.json';REPORT=OUT/'harbor-layout.json'
 assert not REPORT.exists();data=json.loads(FILE.read_text(encoding='utf-8'));assert not any(p['target_id']=='S05' for p in data['settlements'])
-plan=json.loads((SOURCE/'StarterWorld.plan.json').read_text(encoding='utf-8'));place=next(p for p in plan['places'] if p['id']=='S06');cx,cy=place['center_m'][:2];river=next(r for r in plan['rivers'] if r['id']=='R_Main')
-raw=array.array('H');raw.frombytes((SOURCE/'HM_StarterRegion.r16').read_bytes())
+plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'));place=next(p for p in plan['places'] if p['id']=='S06');cx,cy=place['center_m'][:2];river=next(r for r in plan['rivers'] if r['id']=='R_Main')
+raw=array.array('H');raw.frombytes((SOURCE/'HM_MainWorld.r16').read_bytes())
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*.0625
@@ -46,5 +46,5 @@ for i in range(25):
     for lateral in [-3,0,3]:
         x,y=q[0]+normal[0]*lateral,q[1]+normal[1]*lateral;h=height(x,y);assert h<deck-.4;bed.append(dict(position_m=[x,y],bed_m=h,estimated_water_m=water,estimated_depth_m=water-h))
 quay=dict(points_m=quay_points,deck_top_m=deck,width_m=6,thickness_m=.22,bank_point_m=[*bank,bank_top],ramp_attach_m=[*attach,deck],ramp_grade=grade,river_id='R_Main',reference_water_levels_m=[first[2],last[2]],normal_to_land=normal,boat_navigation_verified=False)
-p=dict(stable_id='S06',target_id='S05',archetype='estuary_trading_harbor',seed=103105,stage='PLANNED',center_source='StarterWorld.plan.json#places/S06',houses=houses,streets=streets,fields=[],quay=quay,roof_contact_profile=data['settlements'][0]['roof_contact_profile'],terrain_policy='Natural upper-bank plots and supported estuary quay; original heights/marker/river preserved')
-backup=ROOT/'Saved/StarterWorld/BeforeHarbor';backup.mkdir(parents=True,exist_ok=True);assert not (backup/FILE.name).exists();shutil.copy2(FILE,backup/FILE.name);data['settlements'].append(p);FILE.write_text(json.dumps(data,indent=2),encoding='utf-8');REPORT.write_text(json.dumps(dict(houses=evidence,quay_bed_samples=bed,ramp_grade=grade,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8');print('Harbor plots',len(houses),'quay length',length,'ramp grade',grade)
+p=dict(stable_id='S06',target_id='S05',archetype='estuary_trading_harbor',seed=103105,stage='PLANNED',center_source='MainWorld.plan.json#places/S06',houses=houses,streets=streets,fields=[],quay=quay,roof_contact_profile=data['settlements'][0]['roof_contact_profile'],terrain_policy='Natural upper-bank plots and supported estuary quay; original heights/marker/river preserved')
+backup=ROOT/'Saved/StarterWorld/BeforeHarbor';backup.mkdir(parents=True,exist_ok=True);assert not (backup/FILE.name).exists();shutil.copy2(FILE,backup/FILE.name);data['settlements'].append(p);FILE.write_text(json.dumps(data,indent=2),encoding='utf-8');REPORT.write_text(json.dumps(dict(houses=evidence,quay_bed_samples=bed,ramp_grade=grade,height_modified=False,height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()),indent=2),encoding='utf-8');print('Harbor plots',len(houses),'quay length',length,'ramp grade',grade)

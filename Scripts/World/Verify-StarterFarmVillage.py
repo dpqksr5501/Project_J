@@ -9,7 +9,7 @@ assert not unreal.EditorLevelLibrary.get_pie_worlds(False)
 descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs();descs=descs[-1] if isinstance(descs,tuple) else descs
 unreal.WorldPartitionBlueprintLibrary.load_actors([d.get_editor_property('guid') for d in descs])
 raw=array.array('H')
-with (ROOT/'Content/World/Starter/Source/HM_StarterRegion.r16').open('rb') as f:raw.fromfile(f,4033**2)
+with (ROOT/'Content/World/MainWorld/Source/HM_MainWorld.r16').open('rb') as f:raw.fromfile(f,4033**2)
 def height(x,y):
     u,v=x/2,y/2;i,j=int(u),int(v);s,t=u-i,v-j
     return ((raw[j*4033+i]*(1-s)+raw[j*4033+i+1]*s)*(1-t)+(raw[(j+1)*4033+i]*(1-s)+raw[(j+1)*4033+i+1]*s)*t-32768)*6.25
@@ -51,7 +51,7 @@ def verify(dt):
         assert entry.get_editor_property('is_spatially_loaded') and not entry.get_editor_property('is_editor_only_actor')
         assert not entry.get_editor_property('replicates') and 'ProjectJ.Entry.S02.Main' in [str(t) for t in entry.tags]
         assert max(support)<.1 and max(errors)<.1,(max(support),max(errors))
-        digest=hashlib.sha256((ROOT/'Content/World/Starter/Source/HM_StarterRegion.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
+        digest=hashlib.sha256((ROOT/'Content/World/MainWorld/Source/HM_MainWorld.r16').read_bytes()).hexdigest();assert digest==STATE['height_sha256']
         report.update(passed=True,actors=17,buildings=13,crop_fields=3,wheat_instances=sum(fields),mill_rotor_instances=92,
                       maximum_foundation_top_collision_error_cm=max(support),maximum_crop_grounding_error_cm=max(errors),height_sha256=digest,
                       entry_actor=entry.get_path_name(),entry_registered=True,

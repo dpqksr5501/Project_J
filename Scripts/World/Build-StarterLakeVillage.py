@@ -2,15 +2,15 @@
 import hashlib,importlib.util,json,math,traceback
 from pathlib import Path
 import unreal
-ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/Starter/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'lake-village-build.json';assert not FILE.exists(),'Inspect previous native results before retrying'
+ROOT=Path(__file__).resolve().parents[2];SOURCE=ROOT/'Content/World/MainWorld/Source';OUT=ROOT/'Saved/Validation/StarterWorld/Phase2';FILE=OUT/'lake-village-build.json';assert not FILE.exists(),'Inspect previous native results before retrying'
 def module(name,file):
     spec=importlib.util.spec_from_file_location(name,ROOT/'Scripts/World'/file);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 C=module('corridor','Build-StarterCorridor.py');S=module('settlement','Starter-SettlementAuthoring.py')
-P=next(p for p in json.loads((SOURCE/'StarterWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S04');assert P['stable_id']=='S03'
+P=next(p for p in json.loads((SOURCE/'MainWorld.settlements.json').read_text(encoding='utf-8'))['settlements'] if p['target_id']=='S04');assert P['stable_id']=='S03'
 cx,cy=next(p['center_m'][:2] for p in C.PLAN['places'] if p['id']=='S03');D=P['dock'];TAG='ProjectJ.Starter.V4.Lake.v1';A=S.SettlementAuthoring(TAG,'StarterRegion/Settlements/S03/LakeBlockout')
 assert not any(TAG in [str(t) for t in a.tags] for a in A.subsystem.get_all_level_actors())
-STONE=unreal.load_asset('/Game/World/Starter/Materials/M_StarterBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');CUBE=C.mesh('/Engine/BasicShapes/Cube');assert STONE and WOOD
-REPORT=dict(phase='QUEUED',target_id='S04',stable_id='S03',completed=[],houses=[],access=[],pending_access=[],entries=[],groups=[],height_sha256=hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest(),profile_sha256=hashlib.sha256((SOURCE/'StarterWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
+STONE=unreal.load_asset('/Game/Map_Resource/MainWorld/Materials/M_MainWorldBridgeStone');WOOD=unreal.load_asset('/Game/Map_Resource/MedCastle/Materials/MI_WoodenPlanks2');CUBE=C.mesh('/Engine/BasicShapes/Cube');assert STONE and WOOD
+REPORT=dict(phase='QUEUED',target_id='S04',stable_id='S03',completed=[],houses=[],access=[],pending_access=[],entries=[],groups=[],height_sha256=hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest(),profile_sha256=hashlib.sha256((SOURCE/'MainWorld.settlements.json').read_bytes()).hexdigest(),art_complete=False,navigation_verified=False,performance_measured=False)
 def record(phase):
     REPORT.update(phase=phase,actors=A.created);FILE.write_text(json.dumps(REPORT,indent=2),encoding='utf-8')
 def tag(a):
@@ -77,7 +77,7 @@ def tick(dt):
     busy=True
     try:
         if index==len(tasks):
-            A.save();assert hashlib.sha256((SOURCE/'HM_StarterRegion.r16').read_bytes()).hexdigest()==REPORT['height_sha256'];record('COMPLETE');unreal.unregister_slate_post_tick_callback(handle);return
+            A.save();assert hashlib.sha256((SOURCE/'HM_MainWorld.r16').read_bytes()).hexdigest()==REPORT['height_sha256'];record('COMPLETE');unreal.unregister_slate_post_tick_callback(handle);return
         key,action=tasks[index];record('APPLYING_'+key);action();REPORT['completed'].append(key);index+=1
         if index%2==0 or index==len(tasks):A.save()
         record('READY')
