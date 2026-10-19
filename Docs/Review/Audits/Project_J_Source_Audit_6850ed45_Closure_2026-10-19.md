@@ -421,7 +421,7 @@
 
 **변경·유지 판단:** clean-start를 요구하고 명시 객체의 정확한 GetOutermost 외부 package만 소유한다. 외부 dirty 발견 시 저장 전 거절하며 save 실패 뒤 broad-save fallback을 하지 않는다.
 
-**관련 파일:** [Scripts/World/Starter-OwnedSave.py](../../../Scripts/World/Starter-OwnedSave.py), [Scripts/World/Starter-SettlementAuthoring.py](../../../Scripts/World/Starter-SettlementAuthoring.py), [Scripts/World/Save-StarterForests.py](../../../Scripts/World/Save-StarterForests.py), [Scripts/World/Prepare-StarterLighting.py](../../../Scripts/World/Prepare-StarterLighting.py), [Scripts/World/Build-StarterWorld.py](../../../Scripts/World/Build-StarterWorld.py), [Scripts/World/README.md](../../../Scripts/World/README.md), [Scripts/Tests/test_source_audit_remaining_tools.py](../../../Scripts/Tests/test_source_audit_remaining_tools.py), [Source/Project_JCharacterEditor/Private/Tests/Project_JSourceAuditSaveTests.cpp](../../../Source/Project_JCharacterEditor/Private/Tests/Project_JSourceAuditSaveTests.cpp).
+**관련 파일:** [Scripts/World/Starter-OwnedSave.py](../../../Scripts/World/Starter-OwnedSave.py), [Scripts/World/Starter-SettlementAuthoring.py](../../../Scripts/World/Starter-SettlementAuthoring.py), [Scripts/World/Save-StarterForests.py](../../../Scripts/World/Save-StarterForests.py), [Scripts/World/Prepare-StarterLighting.py](../../../Scripts/World/Prepare-StarterLighting.py), `Scripts/World/Build-StarterWorld.py` (감사 당시 경로이며 후속 이행에서 퇴역; [현행 제작 인계](../../World/WORLD_HANDOFF_2026-10-18.md)), [Scripts/World/README.md](../../../Scripts/World/README.md), [Scripts/Tests/test_source_audit_remaining_tools.py](../../../Scripts/Tests/test_source_audit_remaining_tools.py), [Source/Project_JCharacterEditor/Private/Tests/Project_JSourceAuditSaveTests.cpp](../../../Source/Project_JCharacterEditor/Private/Tests/Project_JSourceAuditSaveTests.cpp).
 
 **테스트:** `OwnedSaveTests 4개`, `ProjectJ.SourceAudit3.ExternalActorPackageOwnership`, `실제 신규 Material 저장/foreign dirty/preexisting dirty/실제 I/O 실패 전파`, `승인된 격리 WP 맵 + owned actor 저장/두 번째 actor dirty 거절`.
 
@@ -565,11 +565,19 @@
 
 ## 검증 산출물 정리
 
+### 감사 전용 정리
+
 사용자 요청에 따라 실행이 끝난 감사 전용 산출물 63개 대상 / 481개 파일을 삭제했다. 논리 크기는 **7.06GiB**, 드라이브 여유 공간의 실제 관측 증가는 **2.80GiB**다. 전후 여유 공간은 97,749,327,872 → 100,755,898,368 bytes이며 정리 후 약 93.84GiB다. 공유 데이터·하드링크와 다른 디스크 작업 때문에 논리 크기 합계가 실제 확보 용량을 뜻하지 않는다.
 
 삭제 범위는 `Saved/Validation/Continuation_20261014/Audit6850Phase3MainWorldPackage/Package`, `Audit6850Phase3MainWorldCook/Cooked` 및 감사 실행별 `Intermediate`·Cook shader 출력이다. 각 절대 경로가 감사 전용 범위 안인지, reparse point가 없는지, 사용 중인 Unreal·빌드 프로세스가 없는지 확인했다. 현재 프로젝트 `Binaries`·`Intermediate`, 공용 DDC·Zen 저장소, 소스·실제 에셋·영구 테스트와 관련 없는 작업은 보존했다. 현재 주요 바이너리의 정리 전후 해시가 모두 같았다.
 
 **퇴역 제한:** Cook·패키지 payload는 삭제했으므로 보존된 패키지를 즉시 다시 실행하거나 payload 자체를 재분석할 수 없다. 다시 Cook·Stage해야 한다. 실행 성공 영수증·로그·지문·hit CSV와 원본 감사 입력은 남아 있다. `Saved/StorageCleanup_20261018/Plan.json`, `RemovedFileHashes.json`, `PrimaryBinariesBefore.json`, `Result.json`에서 대상·삭제 파일 SHA-256·전후 여유 공간·바이너리 보존을 확인한다. 이 원자료도 로컬 자료이며 Git에는 이 요약을 보존한다.
+
+### 2026-10-19 이전 검증 자료 추가 정리
+
+이후 사용자 요청으로 이전 검증·Cook 출력과 Region A의 검증된 중복 사본을 별도로 정리했다. 실제 여유 공간은 **10.01GiB 증가**했고 논리 순감소는 **10.02GiB**다. 오래된 Cook·패키지·캐시 1.82GiB, 현재 `Content`와 SHA-256이 같은 Region A 임시 사본 4.70GiB를 제거했다. 큰 로그·CSV·JSON·대표 trace 111개는 원문 6.65GiB를 인접 `.gz` 3.15GiB로 무손실 보존했으며 해제 후 원문 해시·크기가 모두 일치했다.
+
+월드 백업·고유 에셋과 현재 빌드는 보존했다. 정리 당시 Region A에는 백업·작업 메타데이터 1.92GiB와 별도 원본을 확인하지 못한 staging 콘텐츠 13.74GiB를 남겼다. 이후 작업을 알린 사용자 요청으로 2026-10-19 22:08 KST에 실물·용량을 재조회했고 경로는 존재하며 총 15.65GiB다. 이후 이행으로 늘어난 중복 여부는 새 해시 대조를 하지 않았으므로 당시 판단과 구분한다. 과거 R15 완전 패키지도 퇴역했으므로 재실행은 Cook·Stage가 필요하고, 압축 원자료를 원래 경로로 읽는 도구는 먼저 압축을 해제해야 한다. 이는 감사 테스트를 다시 실행한 결과가 아니며 위 감사 시점의 소스·바이너리 지문을 갱신하지 않는다. 상세 보존 범위·재사용 제한은 [정리 기록의 10월 19일 추가분](../../Maintenance/Storage_Cleanup_2026-10-16.md#2026-10-19-추가-정리), 로컬 증거는 `Saved/StorageCleanup_20261019/Result.json`과 `Archives.json`을 따른다.
 
 ## 커밋 준비 문서 검증
 
