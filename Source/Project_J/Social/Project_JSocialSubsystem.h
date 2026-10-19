@@ -31,7 +31,8 @@ enum class EProject_JSocialOperationFailure : uint8
 	NotMember,
 	GroupNotFound,
 	GroupFull,
-	RevisionExhausted
+	RevisionExhausted,
+	StaleSession
 };
 
 USTRUCT(BlueprintType)
@@ -123,7 +124,7 @@ private:
 	using FMembershipMap = TMap<FGuid, FName>;
 
 	static FName CreateGroupId(const TCHAR* Prefix);
-	EProject_JSocialOperationFailure ResolveAuthoritativeCharacter(AProject_JPlayerState* Player, FGuid& OutCharacterId) const;
+	EProject_JSocialOperationFailure ResolveAuthoritativeCharacter(AProject_JPlayerState* Player, FGuid& OutCharacterId, bool bCheckSession = true) const;
 	FProject_JSocialOperationResult CreateGroup(
 		AProject_JPlayerState* Leader,
 		const TCHAR* Prefix,
@@ -164,6 +165,8 @@ private:
 	int32 MaxGuildMembers = 100;
 
 	TMap<FGuid, TWeakObjectPtr<AProject_JPlayerState>> OnlinePlayers;
+	// Weak revocations prevent a detached PlayerState regaining writes when its replacement logs out.
+	TSet<TWeakObjectPtr<AProject_JPlayerState>> RevokedPlayers;
 	FGroupMap Parties;
 	FGroupMap Guilds;
 	FMembershipMap CharacterParties;

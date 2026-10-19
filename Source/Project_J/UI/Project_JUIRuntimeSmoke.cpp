@@ -25,6 +25,7 @@ void UProject_JPlayerUIComponent::PrepareRuntimeProfile()
 	auto *PC = Cast<APlayerController>(GetOwner());
 	if (!PC || !PC->IsLocalPlayerController() || !PC->HasAuthority() || GetNetMode() != NM_Standalone) return;
 	RefreshSources();
+	if(BoundState.IsValid()&&BoundState->GetInventoryComponent()->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI workload fixture is disabled for persistent profiles; no persistent items changed."));return;}
 	const bool bHeavy = FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIWorkload"));
 	if (bHeavy && BoundState.IsValid() && Screen && BoundASC.IsValid())
 	{
@@ -95,6 +96,7 @@ void UProject_JPlayerUIComponent::RunRuntimeSmoke()
 	auto *PC = Cast<APlayerController>(GetOwner());
 	if (!PC || !PC->IsLocalPlayerController() || !PC->HasAuthority() || GetNetMode() != NM_Standalone) return;
 	RefreshSources();
+	if(BoundState.IsValid()&&BoundState->GetInventoryComponent()->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI runtime mint/use fixture is disabled for persistent profiles; no persistent items changed."));return;}
 	bool bSuccess = FPlatformProperties::RequiresCookedData() && Screen && Screen->ValidateRuntimeLayout() && BoundState.IsValid();
 	if (FParse::Param(FCommandLine::Get(), TEXT("ProjectJUIDynamicWorkload")))
 		bSuccess &= DynamicProfileSteps == 50 && InventoryModel && InventoryModel->InventoryEntries.Num() == 1000;

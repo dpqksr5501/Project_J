@@ -1,4 +1,5 @@
 #include "Components/Project_JCombatHitValidationComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -446,6 +447,7 @@ bool UProject_JCombatHitValidationComponent::ProcessAuthorityHit(AActor* HitActo
 
 void UProject_JCombatHitValidationComponent::ServerRequestSSRHit_Implementation(AActor* HitActor, float ClientTimestamp, FVector TraceStart, FVector TraceEnd, FGameplayTag AttackNodeTag, int32 RequestSequence, int32 PredictionKey)
 {
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner())) return;
 	FProject_JCombatHitRequest Request;
 	Request.Target = HitActor;
 	Request.ClientTimestamp = ClientTimestamp;

@@ -2,6 +2,8 @@
 
 2026-09-12, 실제 main 작업 디렉터리. 목적은 콘텐츠 전체를 지금 구현하는 것이 아니라 이후 구현에서 공유할 계약·동시성·저장 경계를 마련하는 것이다. **205개 항목은 구현된 콘텐츠 수가 아니다.** [전체 카탈로그](MMO_Content_Catalog.md)는 20개 영역의 콘텐츠·운영 기능·기반 계약을 담는다. 카탈로그는 기능을 활성화하거나 서버에 접속하지 않는다.
 
+후속 로컬 개발 저장의 현재 구현·실행 결과와 제약은 [2026-10-19 잔여 작업](../../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)을 따른다. 이 문서의 foundation 계약·운영 미연결 설명과 당시 검증은 이력이며, 로컬 v2 아이템/보상 저장을 운영 경제 서비스로 확대하지 않는다.
+
 ## 조사와 적용 범위
 
 현재 서비스의 공식 콘텐츠 설명을 참고했다. 아래 게임의 서버 내부 구조를 알 수 있다는 뜻은 아니며, 프로젝트 모듈 설계는 코드 분석을 바탕으로 한 자체 설계다.
@@ -61,7 +63,7 @@ flowchart TD
 | MMOFoundationSubsystem | GameInstance에서 카탈로그 검증·공개, BP/C++ 의존성 조회 | 권한 부여·기능 활성화·네트워크 연결 없음 |
 | AggregateGate | 여러 aggregate의 원자적 예약, Busy/Capacity 응답, 독립 소유자 동시 처리 허용, 중복·오래된 ticket 해제 거부 | 프로세스 내부 조정. 분산 lock, 작업 큐, 순서 보장 scheduler가 아님 |
 | RequestTracker | 동시 요청 상한, 완료 1회, 종료 이후 응답 차단 | 비즈니스 명령의 영구 중복 방지와는 별개 |
-| IRepository | expected revision과 idempotency receipt를 포함한 다중 레코드 commit 계약 | 실제 DB provider 미구현 |
+| IRepository | expected revision과 idempotency receipt를 포함한 다중 레코드 commit 계약 | 후속 SQLite provider는 로컬 개발용. 운영 DB/인증 서비스는 미연결 |
 | MemoryRepository | 전체 버전 검사 후 원자적 쓰기·receipt 저장, 재시도 결과 재생, key 재사용 거부, tombstone 버전 보존, 크기·개수 제한 | 개발·테스트용. 재시작 내구성이나 분산 원자성 없음. 자동 인스턴스화하지 않음 |
 | IServicePort / DomainEvent | transport와 UObject에 의존하지 않는 버전·상관 ID·값 payload 계약 | 서비스 adapter, outbox relay, durable consumer는 후속 구현 |
 | 기존 Gateway / MessageRouter | 실제 요청 수명·상한 및 로컬 구독 변경 안전성 보강 | 인증·권한 검증·서버 운영 제품까지 구현한 것은 아님 |
@@ -69,6 +71,12 @@ flowchart TD
 Foundation.Access/Events/Clock/Observability 등의 카탈로그 항목은 필요한 계약의 이름이다. 이 이름이 존재한다는 이유로 인증 서버, 내구성 이벤트 버스, 전역 일정 실행기, 모니터링 서비스가 구현됐다고 해석하지 않는다.
 
 ## 권한·소유권·저장 규칙
+
+2026-10-19의 [아키텍처 대조](../../Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 기존 계약을 유지하면서 실제 Gateway의 route/intent·요청 UTF-8 크기·수신 stream 크기 제한을 추가했다. 발송된 mutation의 응답 초과도 UnknownOutcome으로 처리한다. Inventory의 최근 요청 receipt는 원래 명령과 결합하며 내구성 저장을 대신하지 않는다. Social의 명시적 서버 Bind는 이전 PS의 쓰기를 철회하지만 인증/분산 fencing을 제공하지 않는다.
+
+현재 로컬 개발 저장은 같은 `IRepository` 기반의 SQLite adapter와 기존 권위 컴포넌트를 사용한다. `-ProjectJLocalProfile=<name>` Development 단독 실행에서 P/Q·인벤토리·장비의 전체 snapshot v2를 복원하고, 보상·아이템·직업·전직 변경은 상태/lease/receipt가 영속 확정된 뒤 전체 상태를 설치하고 게시한다. 초기 로드도 첫 알림 전에 전체 상태를 설치한다. worker에는 값만 전달하며 종료 시 수락한 I/O를 drain한다. 이 계약은 초기 P/Q 메모리 변경 후 체크포인트 단계에서 확장된 것으로, 현재 경제 명령을 메모리 선반영 방식으로 설명하지 않는다.
+
+DB container2는 이전 writer의 오해석을 거부한다. 현재 세션의 경제 명령은 최근64 순번 범위, checkpoint 결과는 최신1개를 보존하며 이전 세션/순번은 신규 명령으로 처리하지 않는다. 일반 `IRepository`의 기존 opaque-key 계약과 MemoryRepository는 유지한다. v1 이관 commandlet은 원형 read-only 검사·dry-run·명시적 소유물 입력·별도 결과/rollback 복사본을 지원한다. 실제 사용자 DB 전환, 운영 인증·소유권 서비스, 네트워크/Shipping 저장은 별도 범위다. 정책·한도·실측·검증·백업의 기준은 [현재 잔여 작업 기록](../../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)이다.
 
 `FAggregateKey`는 Kind와 기존 안정 ID로 구성한다. 예를 들어 Wallet/AccountId, Inventory/CharacterId, Guild/GuildId는 다른 소유 단위다. 모든 변이 명령은 서버에서 인증된 주체·대상 소유권·권한을 확인한 뒤 이 기반으로 들어와야 한다. 클라이언트가 보낸 account ID를 그대로 권한 근거로 신뢰하지 않는다. 카탈로그의 StateOwner는 이 검증을 대신하지 않는다.
 

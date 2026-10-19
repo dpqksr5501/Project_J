@@ -8,13 +8,16 @@
 #include "Net/UnrealNetwork.h"
 #include "Components/Project_JInventoryComponent.h"
 #include "Components/Project_JEquipmentManagerComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "Project_JAbilitySystemComponent.h"
 #include "Project_JAttributeSet.h"
 #include "Social/Project_JSocialSubsystem.h"
 #include "UObject/StrongObjectPtr.h"
+#include "Backend/Project_JLocalProfileSubsystem.h"
 
 AProject_JPlayerState::AProject_JPlayerState()
 {
+	CreateDefaultSubobject<UProject_JCommandBudgetComponent>(TEXT("CommandBudget"));
 	SetNetUpdateFrequency(100.0f);
 	QuestComponent = CreateDefaultSubobject<UProject_JQuestComponent>(TEXT("Quests"));
 	ProgressionComponent = CreateDefaultSubobject<UProject_JProgressionComponent>(TEXT("Progression"));
@@ -76,12 +79,14 @@ void AProject_JPlayerState::BeginPlay()
 			{
 				SocialSubsystem->BindPlayerState(this);
 			}
+			if (auto* Profiles = GameInstance->GetSubsystem<UProject_JLocalProfileSubsystem>()) Profiles->PlayerBegunPlay(this);
 		}
 	}
 }
 
 void AProject_JPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (auto* GI = GetGameInstance()) if (auto* Profiles = GI->GetSubsystem<UProject_JLocalProfileSubsystem>()) Profiles->Detach(this);
 	ProgressionComponent->OnChanged.RemoveAll(this);
 	if (HasAuthority())
 	{

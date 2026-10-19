@@ -265,7 +265,7 @@ void AProject_JNetworkLoadController::PlayerTick(float DeltaSeconds)
 		const bool bMine = *It == PlayerState;
 		const FString Inventory = It->GetInventoryComponent()->GetReplicationDiagnosticSummary();
 		if (bMine) { bOwn = It->GetInventoryComponent()->HasItemInstance(ItemId) == bItemsExpected; }
-		else { bForeignEmpty &= Inventory.Contains(TEXT("Items=0")); }
+		else { bForeignEmpty &= Inventory.Contains(TEXT("Items=0")) && It->GetEquipmentManagerComponent()->GetPrivateEquipmentCount() == 0; }
 		bEquipment &= It->GetEquipmentManagerComponent()->GetAllEquippedItems().Num() == (bItemsExpected ? 1 : 0);
 	}
 	ServerObserve(CurrentStage, Seen, bOwn, bForeignEmpty && States == FixtureClients(), bEquipment && States == FixtureClients(), MinPulse, ObserveAnimation());

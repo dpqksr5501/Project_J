@@ -27,26 +27,34 @@ enum class EProject_JRuntimeStateOwnership : uint8
 };
 
 UCLASS(Abstract)
-class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter, public IAbilitySystemInterface, public IProject_JCombatInterface
+class PROJECT_JCHARACTER_API AProject_JBaseCharacter : public ACharacter,
+													   public IAbilitySystemInterface,
+													   public IProject_JCombatInterface
 {
 	GENERATED_BODY()
+	// Progression publishes first-class attribute initialization only after durable confirmation.
+	friend class UProject_JProgressionComponent;
 
-public:
+  public:
 	// Sets default values for this character's properties
-	AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	AProject_JBaseCharacter(const FObjectInitializer &ObjectInitializer = FObjectInitializer::Get());
 
 	// Implement IAbilitySystemInterface
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UAbilitySystemComponent *GetAbilitySystemComponent() const override;
 
-	// IProject_JCombatInterface implementations (can be overridden in BP if NativeEvent is used, or implemented in CPP here)
+	// IProject_JCombatInterface implementations (can be overridden in BP if NativeEvent is used, or implemented in CPP
+	// here)
 	virtual int32 GetCharacterLevel_Implementation() const override;
-	virtual FVector GetCombatSocketLocation_Implementation(const FName& SocketName) override;
+	virtual FVector GetCombatSocketLocation_Implementation(const FName &SocketName) override;
 	virtual bool IsDead_Implementation() const override;
 
-	virtual UProject_JAttributeSet* GetAttributeSet() const;
+	virtual UProject_JAttributeSet *GetAttributeSet() const;
 
 	UFUNCTION(BlueprintPure, Category = "Foley")
-	UProject_JFoleyComponent* GetFoleyComponent() const { return FoleyComponent; }
+	UProject_JFoleyComponent *GetFoleyComponent() const
+	{
+		return FoleyComponent;
+	}
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
 	FName GetCharacterClassId() const;
@@ -55,41 +63,47 @@ public:
 	FName GetAdvancementId() const;
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
-	const UProject_JCharacterClassDefinition* GetCharacterClassDefinition() const;
+	const UProject_JCharacterClassDefinition *GetCharacterClassDefinition() const;
 
 	UFUNCTION(BlueprintPure, Category = "Character Class")
-	const UProject_JCharacterAdvancementDefinition* GetAdvancementDefinition() const;
-	const UProject_JCombatStyleDefinition* GetClassCombatStyleDefinition() const;
-	UProject_JProgressionComponent* GetProgressionComponent() const;
+	const UProject_JCharacterAdvancementDefinition *GetAdvancementDefinition() const;
+	const UProject_JCombatStyleDefinition *GetClassCombatStyleDefinition() const;
+	UProject_JProgressionComponent *GetProgressionComponent() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
-	bool InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition);
+	bool InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition *NewClassDefinition);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
-	bool CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const;
+	bool CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition *NewAdvancementDefinition) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Character Class")
-	bool ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition);
+	bool ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition *NewAdvancementDefinition);
 
 	UFUNCTION(BlueprintPure, Category = "Runtime State")
-	EProject_JRuntimeStateOwnership GetRuntimeStateOwnership() const { return RuntimeStateOwnership; }
+	EProject_JRuntimeStateOwnership GetRuntimeStateOwnership() const
+	{
+		return RuntimeStateOwnership;
+	}
 
-protected:
+  protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Foley")
 	TObjectPtr<UProject_JFoleyComponent> FoleyComponent;
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void PossessedBy(AController* NewController) override;
+	virtual void PossessedBy(AController *NewController) override;
 	virtual void UnPossessed() override;
 	virtual void OnRep_PlayerState() override;
 	virtual void OnRep_Controller() override;
 
-public:
+  public:
 	UFUNCTION(BlueprintPure, Category = "Significance")
-	float GetSignificance() const { return CurrentSignificance; }
+	float GetSignificance() const
+	{
+		return CurrentSignificance;
+	}
 
-protected:
+  protected:
 	UPROPERTY(Transient)
 	float CurrentSignificance = 0.0f;
 
@@ -104,18 +118,18 @@ protected:
 
 	// The Ability System Component for this character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
-	UProject_JAbilitySystemComponent* AbilitySystemComponent;
+	UProject_JAbilitySystemComponent *AbilitySystemComponent;
 
 	// The Attribute Set for this character
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities", meta = (AllowPrivateAccess = "true"))
-	UProject_JAttributeSet* AttributeSet;
+	UProject_JAttributeSet *AttributeSet;
 
 	// Character-local equipment manager. Created by NPC subclasses; players resolve the PlayerState manager.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	class UProject_JEquipmentManagerComponent* EquipmentManager;
+	class UProject_JEquipmentManagerComponent *EquipmentManager;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
-	UProject_JEquipmentRuntimeComponent* EquipmentRuntime;
+	UProject_JEquipmentRuntimeComponent *EquipmentRuntime;
 
 	// Character Level
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
@@ -153,8 +167,8 @@ protected:
 	bool CanApplyCharacterLevelExactly(int32 NewLevel) const;
 	virtual void InitializeDefaultAttributes(bool bForceReset = false) const;
 	void InitializeAbilitySystem();
-	const UProject_JDefaultAttributeSetData* GetEffectiveDefaultAttributeData() const;
-	UProject_JEquipmentManagerComponent* ResolveEquipmentManagerForRuntime() const;
+	const UProject_JDefaultAttributeSetData *GetEffectiveDefaultAttributeData() const;
+	UProject_JEquipmentManagerComponent *ResolveEquipmentManagerForRuntime() const;
 	void BindEquipmentRuntimeToResolvedEquipmentManager();
-	virtual AActor* GetAbilitySystemOwnerActor() const;
+	virtual AActor *GetAbilitySystemOwnerActor() const;
 };

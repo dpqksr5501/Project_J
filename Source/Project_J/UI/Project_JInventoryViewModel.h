@@ -76,6 +76,7 @@ class PROJECT_J_API UProject_JInventoryViewModel : public UObject
 	friend class FProjectJUIRequestLifetimeTest;
 	enum class ERequestKind : uint8 { None, Equipment, Use, Bag };
 	ERequestKind PendingKind = ERequestKind::None;
+	bool bDurablePending=false;
 	TMap<FName, FProject_JInventoryItemSummary> ItemSummaries;
 	TWeakObjectPtr<UWorld> RequestWorld;
 	TWeakObjectPtr<UWorld> RefreshWorld;

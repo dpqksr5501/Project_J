@@ -1,5 +1,9 @@
 # 네트워크
 
+2026-10-19 장비 복제는 owner-only 상세 FastArray와 관찰자용 슬롯/정의 FastArray로 분리했다. 관찰자에게 인스턴스 ID·수량·잠금·가방 순서를 보내지 않으며, 두 표현의 변경 권위는 서버의 기존 장착/해제 commit 하나다. PS의 공통 명령 예산은 장비·가방·소모품·퀘스트·SSR 입장에서 공유하고 도메인 제한은 별도로 유지한다. [현재 전체 권고 판정과 검증](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)을 참고한다. 이 변경을 custom Iris 파티/길드 adapter나 계정 인증 구현으로 해석하지 않는다.
+
+같은 작업의 로컬 영속 저장은 Windows Development 단독 opt-in 범위다. 순번 창64·checkpoint 최신1과 원자적 확정, v1 이관 도구가 구현돼 있어도 네트워크/Shipping 저장을 활성화한 것은 아니다. 최종 기본2clients/NPC100·LagLoss/ReorderLoss와 저장/재시작 결과는 [공유 검증 요약](../Review/Architecture/Project_J_MMO_Validation_2026-10-19.json)에 있으며, Editor-host 서버 모드를 독립 Server 바이너리나 운영 CCU 검증으로 세지 않는다.
+
 [200명 전원 표시·로컬 품질 보존 계획](../Performance/Planning/ProjectJ_200_Player_Optimization_Plan_2026-10-15.md)은 시각 예산과 복제 필요성을 별도로 판단하고, 서버 판정·예측·SSR·재관련 검증을 포함한다. 200개 몸체 표시와 실제 200개 연결은 별도 목표/측정이며, 현재 Iris 정책 계산기를 live adapter로 해석하지 않는다.
 
 같은 계획의6차는 원격 시각 몸체LOD와 에셋 호환 경계만 바꾸고 canonical 판정 pose/socket·CMC/SavedMove·GAS/SSR·복제 빈도/AOI를 유지했다. 최종 서버+client2/NPC200/lag50ms/loss3%의 기존 animation/combat 회귀를 새로 통과했다. 200표시 몸체 GPU 절감은 서버 성능/200소켓 달성의 근거로 사용하지 않는다.

@@ -1,4 +1,5 @@
 #include "Game/Project_JQuestComponent.h"
+#include "Components/Project_JCommandBudgetComponent.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Pawn.h"
@@ -43,32 +44,42 @@ void UProject_JQuestComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 }
 bool UProject_JQuestComponent::CanPublish() const
 {
-	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) &&
-		!GetOwner()->IsActorBeingDestroyed() && GetWorld() && !GetWorld()->bIsTearingDown;
+	return !bEnding && !IsBeingDestroyed() && IsValid(GetOwner()) && !GetOwner()->IsActorBeingDestroyed() &&
+		   GetWorld() && !GetWorld()->bIsTearingDown;
 }
 bool UProject_JQuestComponent::CanMutate() const
 {
 	check(IsInGameThread());
-	return CanPublish() && GetOwner()->HasAuthority() && !bChanging;
+	return CanPublish() && GetOwner()->HasAuthority() && !bChanging && (!PersistentAdmission || PersistentAdmission());
 }
 void UProject_JQuestComponent::Retire()
 {
 	bEnding = true;
-	if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
-	TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
+	if (auto *World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TravelTimer);
+	}
+	TravelTimer.Invalidate();
+	TravelPawn.Reset();
+	TravelRemainder = 0;
 	OnChanged.Clear();
 }
 void UProject_JQuestComponent::ReconcileTravelSampling()
 {
 	const bool bActive = CanPublish() && GetOwner()->HasAuthority() &&
-		States.ContainsByPredicate([this](const FProject_JQuestState& State) {
-			const auto* Def = FindDefinition(State.QuestId);
-			return Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount;
-		});
+						 States.ContainsByPredicate([this](const FProject_JQuestState &State) {
+							 const auto *Def = FindDefinition(State.QuestId);
+							 return Def && Def->bTravelObjective && !State.bClaimed && State.Count < Def->RequiredCount;
+						 });
 	if (!bActive)
 	{
-		if (auto* World = GetWorld()) { World->GetTimerManager().ClearTimer(TravelTimer); }
-		TravelTimer.Invalidate(); TravelPawn.Reset(); TravelRemainder = 0;
+		if (auto *World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(TravelTimer);
+		}
+		TravelTimer.Invalidate();
+		TravelPawn.Reset();
+		TravelRemainder = 0;
 	}
 	else if (!GetWorld()->GetTimerManager().TimerExists(TravelTimer))
 	{
@@ -85,21 +96,27 @@ UProject_JQuestDefinition *UProject_JQuestComponent::FindDefinition(FName Id) co
 				return nullptr;
 			Match = Def;
 		}
-	return Match && !Id.IsNone() && Match->RequiredCount > 0 && Match->RequiredCount <= 1000000 &&
-				   !Match->ObjectiveEvent.IsNone() && Match->RewardExperience >= 0
+	return Match && !Id.IsNone() && Match->SchemaVersion > 0 && Match->RequiredCount > 0 &&
+				   Match->RequiredCount <= 1000000 && !Match->ObjectiveEvent.IsNone() && Match->RewardExperience >= 0
 			   ? Match
 			   : nullptr;
 }
 void UProject_JQuestComponent::Publish()
 {
-	if (!CanPublish()) { return; }
+	if (!CanPublish())
+	{
+		return;
+	}
 	ReconcileTravelSampling();
 	GetOwner()->ForceNetUpdate();
 	OnChanged.Broadcast();
 }
 void UProject_JQuestComponent::OnRep_States()
 {
-	if (CanPublish()) { OnChanged.Broadcast(); }
+	if (CanPublish())
+	{
+		OnChanged.Broadcast();
+	}
 }
 bool UProject_JQuestComponent::Accept(FName Id)
 {
@@ -129,6 +146,19 @@ void UProject_JQuestComponent::RecordObjective(FName Event, int32 Count)
 }
 bool UProject_JQuestComponent::Claim(FName Id)
 {
+	if (SubmitPersistentEdit)
+	{
+		if (!CanMutate())
+			return false;
+		if (const auto *Existing = States.FindByPredicate([Id](const auto &S) { return S.QuestId == Id; });
+			Existing && Existing->bClaimed)
+			return true;
+		FProject_JPersistentEdit Edit;
+		Edit.Kind = EProject_JPersistentEdit::Claim;
+		Edit.Quest = Id;
+		Edit.Request = CreatePersistentRequest ? CreatePersistentRequest() : FGuid();
+		return SubmitPersistentEdit(Edit, {});
+	}
 	if (!CanMutate())
 		return false;
 	auto *State = States.FindByPredicate([Id](const auto &Value) { return Value.QuestId == Id; });
@@ -153,7 +183,14 @@ bool UProject_JQuestComponent::Claim(FName Id)
 }
 bool UProject_JQuestComponent::AllowRequest()
 {
-	if (!CanMutate()) { return false; }
+	if (!CanMutate())
+	{
+		return false;
+	}
+	if (!UProject_JCommandBudgetComponent::AdmitClientCommand(GetOwner()))
+	{
+		return false;
+	}
 	const double Now = GetWorld()->GetTimeSeconds();
 	if (RequestWindow < 0 || Now - RequestWindow >= 1)
 	{
@@ -164,7 +201,10 @@ bool UProject_JQuestComponent::AllowRequest()
 }
 void UProject_JQuestComponent::RequestClaim(FName Id)
 {
-	if (CanPublish()) { ServerClaim(Id); }
+	if (CanPublish())
+	{
+		ServerClaim(Id);
+	}
 }
 void UProject_JQuestComponent::ServerClaim_Implementation(FName Id)
 {
@@ -173,7 +213,10 @@ void UProject_JQuestComponent::ServerClaim_Implementation(FName Id)
 }
 void UProject_JQuestComponent::RequestTracking(FName Id, bool bTracked)
 {
-	if (CanPublish()) { ServerTracking(Id, bTracked); }
+	if (CanPublish())
+	{
+		ServerTracking(Id, bTracked);
+	}
 }
 void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTracked)
 {
@@ -188,7 +231,10 @@ void UProject_JQuestComponent::ServerTracking_Implementation(FName Id, bool bTra
 }
 void UProject_JQuestComponent::SampleTravel()
 {
-	if (!CanMutate()) { return; }
+	if (!CanMutate())
+	{
+		return;
+	}
 	bool bActive = false;
 	for (const auto &State : States)
 		if (const auto *Def = FindDefinition(State.QuestId);
@@ -225,7 +271,10 @@ void UProject_JQuestComponent::SampleTravel()
 				for (FName Event : Events)
 				{
 					RecordObjective(Event, Count);
-					if (!CanPublish() || !TravelTimer.IsValid()) { return; }
+					if (!CanPublish() || !TravelTimer.IsValid())
+					{
+						return;
+					}
 				}
 			}
 		}
@@ -241,10 +290,14 @@ FProject_JQuestSnapshot UProject_JQuestComponent::CaptureSnapshot() const
 	Snapshot.States = States;
 	return Snapshot;
 }
-bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot)
+bool UProject_JQuestComponent::CanRestoreSnapshot(const FProject_JQuestSnapshot &Snapshot,
+												  bool bReplacePristineDefaults) const
 {
-	if (!CanMutate() || !States.IsEmpty() || Snapshot.Version != 1 ||
-		Snapshot.States.Num() > 128)
+	const auto *StateOwner = Cast<APlayerState>(GetOwner());
+	const bool bPristine = bReplacePristineDefaults && StateOwner && !StateOwner->GetPawn() &&
+						   !States.ContainsByPredicate(
+							   [](const auto &State) { return State.Count != 0 || State.bClaimed || !State.bTracked; });
+	if (!CanMutate() || (!States.IsEmpty() && !bPristine) || Snapshot.Version != 1 || Snapshot.States.Num() > 128)
 		return false;
 	TSet<FName> Seen;
 	for (const auto &State : Snapshot.States)
@@ -255,7 +308,30 @@ bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Sn
 			return false;
 		Seen.Add(State.QuestId);
 	}
+	return true;
+}
+bool UProject_JQuestComponent::RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults)
+{
+	if (!CanRestoreSnapshot(Snapshot, bReplacePristineDefaults))
+		return false;
 	States = Snapshot.States;
 	Publish();
+	return true;
+}
+bool UProject_JQuestComponent::ValidateCommittedQuests(const FProject_JQuestSnapshot &Snapshot,
+													   bool bTrustedApply) const
+{
+	const bool Admitted = bTrustedApply ? (CanPublish() && GetOwner()->HasAuthority() && !bChanging) : CanMutate();
+	if (!Admitted || Snapshot.Version != 1 || Snapshot.States.Num() > 128)
+		return false;
+	TSet<FName> Ids;
+	for (const auto &S : Snapshot.States)
+	{
+		const auto *D = FindDefinition(S.QuestId);
+		if (!D || Ids.Contains(S.QuestId) || S.Count < 0 || S.Count > D->RequiredCount ||
+			(S.bClaimed && S.Count < D->RequiredCount))
+			return false;
+		Ids.Add(S.QuestId);
+	}
 	return true;
 }

@@ -2,6 +2,8 @@
 
 | 문서 | 읽는 범위 |
 | --- | --- |
+| [2026-10-19 현재 아키텍처 상태](Project_J_MMO_Remaining_2026-10-19.md) · [검증 요약](Project_J_MMO_Validation_2026-10-19.json) | ZIP40항목 판정, 장기 저장·이관·직업/전직의 내부 완료와 외부 차단, 최종117개 회귀·빌드·네트워크·패키지·정리. 앞 단계 보고는 이력 |
+| [2026-10-19 MMORPG 아키텍처 대조](Project_J_MMO_Architecture_2026-10-19.md) | 앞 단계 ZIP 6문서 대조 이력·구현/유지/유보, 장비 복제·명령 입장·소셜 접속·Gateway 경계와 실제 검증 |
 | [2026-10-05 이동 중 하차 정리](Project_J_Mount_Dismount_Motion_2026-10-05.md) / [검증 결과](Project_J_Mount_Dismount_Motion_Validation_2026-10-05.json) | 성공한 하차의 탈것 입력·속도 정리, 거부 시 이동 유지, Editor/Game 빌드·회귀 112개 통과 |
 | [2026-10-05 재탑승 입력 복구](Project_J_Mount_Remount_Input_2026-10-05.md) / [검증 결과](Project_J_Mount_Remount_Input_Validation_2026-10-05.json) | 클라이언트 InputComponent 재사용 시 F·비행 이동 입력 복원, 중복/타 바인딩 보존, Editor/Game 빌드·회귀 111개 통과 |
 | [2026-10-05 Pivot 입력·F 하차 후속 수정](Project_J_Pivot_Mount_Followup_2026-10-05.md) / [검증 결과](Project_J_Pivot_Mount_Followup_Validation_2026-10-05.json) | Pivot 입력 중단·재진입 억제·하차 캡슐/바닥 높이·이벤트 진단, Editor/Game 빌드·회귀 110개 통과 |

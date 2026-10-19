@@ -804,6 +804,7 @@ void AProject_JPlayerController::ServerUIPrototypeTest_Implementation(const FStr
 	if (!PS) { return; }
 	auto* Inventory = PS->GetInventoryComponent();
 	auto* ASC = PS->GetProjectJAbilitySystemComponent();
+	if(Inventory&&Inventory->SubmitPersistentEdit){UE_LOG(LogTemp,Warning,TEXT("UI prototype mint/fill fixture is disabled for persistent profiles; use an isolated persistence validation run."));return;}
 	auto* Quests = PS->FindComponentByClass<UProject_JQuestComponent>();
 	auto* Progression = PS->FindComponentByClass<UProject_JProgressionComponent>();
 	if (Action == TEXT("prepare") && UIPrototypeItems.IsEmpty())

@@ -7,11 +7,18 @@ DEFINE_LOG_CATEGORY_STATIC(LogProjectJSocial, Log, All);
 void UProject_JSocialSubsystem::BindPlayerState(AProject_JPlayerState* PlayerState)
 {
 	FGuid CharacterId;
-	if (ResolveAuthoritativeCharacter(PlayerState, CharacterId) != EProject_JSocialOperationFailure::None)
+	if (ResolveAuthoritativeCharacter(PlayerState, CharacterId, false) != EProject_JSocialOperationFailure::None)
 	{
 		return;
 	}
 
+	for (auto It = RevokedPlayers.CreateIterator(); It; ++It) if (!It->IsValid()) It.RemoveCurrent();
+	if (const auto Previous = OnlinePlayers.FindRef(CharacterId); Previous.IsValid() && Previous.Get() != PlayerState)
+	{
+		RevokedPlayers.Add(Previous);
+		Previous->SetSocialState(NAME_None, NAME_None, FGuid(), FGuid());
+	}
+	RevokedPlayers.Remove(PlayerState);
 	OnlinePlayers.Add(CharacterId, PlayerState);
 	SynchronizePlayerSnapshot(PlayerState);
 }
@@ -28,6 +35,8 @@ void UProject_JSocialSubsystem::UnbindPlayerState(AProject_JPlayerState* PlayerS
 		BoundPlayer && BoundPlayer->Get() == PlayerState)
 	{
 		OnlinePlayers.Remove(CharacterId);
+		RevokedPlayers.Add(PlayerState);
+		PlayerState->SetSocialState(NAME_None, NAME_None, FGuid(), FGuid());
 	}
 }
 
@@ -160,7 +169,7 @@ FName UProject_JSocialSubsystem::CreateGroupId(const TCHAR* Prefix)
 
 EProject_JSocialOperationFailure UProject_JSocialSubsystem::ResolveAuthoritativeCharacter(
 	AProject_JPlayerState* Player,
-	FGuid& OutCharacterId) const
+	FGuid& OutCharacterId, bool bCheckSession) const
 {
 	if (!IsValid(Player) || Player->IsActorBeingDestroyed() || !Player->HasAuthority())
 	{
@@ -168,6 +177,9 @@ EProject_JSocialOperationFailure UProject_JSocialSubsystem::ResolveAuthoritative
 	}
 
 	OutCharacterId = Player->GetCharacterId().Value;
+	if (bCheckSession && (RevokedPlayers.Contains(Player) ||
+		(OnlinePlayers.FindRef(OutCharacterId).IsValid() && OnlinePlayers.FindRef(OutCharacterId).Get() != Player)))
+		return EProject_JSocialOperationFailure::StaleSession;
 	return OutCharacterId.IsValid() ? EProject_JSocialOperationFailure::None : EProject_JSocialOperationFailure::InvalidCharacterId;
 }
 
@@ -380,6 +392,8 @@ FGuid UProject_JSocialSubsystem::ResolveGroupLeader(FName GroupId, const FGroupM
 
 bool UProject_JSocialSubsystem::GetGroupSnapshot(EProject_JSocialGroupKind Kind, FName GroupId, FProject_JSocialGroupSnapshot& OutSnapshot) const
 {
+	OutSnapshot = {};
+	if (Kind != EProject_JSocialGroupKind::Party && Kind != EProject_JSocialGroupKind::Guild) return false;
 	const auto& Groups = Kind == EProject_JSocialGroupKind::Party ? Parties : Guilds;
 	if (const auto* Group = Groups.Find(GroupId)) { OutSnapshot = *Group; return true; }
 	return false;
@@ -388,6 +402,7 @@ bool UProject_JSocialSubsystem::GetGroupSnapshot(EProject_JSocialGroupKind Kind,
 bool UProject_JSocialSubsystem::RestoreGroupSnapshot(EProject_JSocialGroupKind Kind, const FProject_JSocialGroupSnapshot& Snapshot)
 {
 	check(IsInGameThread());
+	if (Kind != EProject_JSocialGroupKind::Party && Kind != EProject_JSocialGroupKind::Guild) return false;
 	auto& Groups = Kind == EProject_JSocialGroupKind::Party ? Parties : Guilds;
 	auto& Memberships = Kind == EProject_JSocialGroupKind::Party ? CharacterParties : CharacterGuilds;
 	const int32 Capacity = FMath::Max(2, Kind == EProject_JSocialGroupKind::Party ? MaxPartyMembers : MaxGuildMembers);

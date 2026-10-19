@@ -21,7 +21,8 @@ enum class EProject_JBackendFailureKind : uint8
 	Overloaded,
 	Unavailable,
 	InvalidRequest,
-	UnknownOutcome
+	UnknownOutcome,
+	ResponseTooLarge
 };
 
 UENUM(BlueprintType)
@@ -47,7 +48,8 @@ struct PROJECT_J_API FProject_JBackendRequestContext
 	bool HasRequestId() const { return RequestId.IsValid(); }
 	bool HasIdempotencyKey() const { return IdempotencyKey.IsValid(); }
 	bool HasTransactionId() const { return TransactionId.IsValid(); }
-	bool IsValidForDispatch() const { return Intent != EProject_JBackendRequestIntent::Mutation || HasIdempotencyKey(); }
+	bool IsValidForDispatch() const { return Intent == EProject_JBackendRequestIntent::Query ||
+		(Intent == EProject_JBackendRequestIntent::Mutation && HasIdempotencyKey()); }
 };
 
 USTRUCT(BlueprintType)
@@ -82,7 +84,8 @@ struct PROJECT_J_API FProject_JBackendResponseEnvelope
 inline void ApplyProjectJBackendOutcomePolicy(FProject_JBackendResponseEnvelope& Response, bool bDispatched)
 {
 	if (!Response.bSucceeded && bDispatched && Response.RequestContext.Intent == EProject_JBackendRequestIntent::Mutation &&
-		(Response.FailureKind == EProject_JBackendFailureKind::ConnectionFailed || Response.HttpStatusCode == 408 || Response.HttpStatusCode >= 500))
+		(Response.FailureKind == EProject_JBackendFailureKind::ConnectionFailed ||
+		 Response.FailureKind == EProject_JBackendFailureKind::ResponseTooLarge || Response.HttpStatusCode == 408 || Response.HttpStatusCode >= 500))
 	{
 		Response.FailureKind = EProject_JBackendFailureKind::UnknownOutcome;
 		Response.bRequiresReconciliation = true;

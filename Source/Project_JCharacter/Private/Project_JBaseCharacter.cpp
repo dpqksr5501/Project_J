@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Project_JBaseCharacter.h"
 #include "CharacterClass/Project_JProgressionComponent.h"
 #include "Project_JAbilitySystemComponent.h"
@@ -21,12 +20,12 @@
 #include "Components/Project_JFoleyComponent.h"
 #include "UObject/StrongObjectPtr.h"
 
-
-AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JBudgetedSkeletalMeshComponent>(ACharacter::MeshComponentName))
+AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer &ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UProject_JBudgetedSkeletalMeshComponent>(
+		  ACharacter::MeshComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
-	
+
 	CharacterLevel = 1;
 
 	// ASC, AttributeSet, and EquipmentManager are NOT created as default subobjects on the base.
@@ -39,13 +38,14 @@ AProject_JBaseCharacter::AProject_JBaseCharacter(const FObjectInitializer& Objec
 	FoleyComponent = CreateDefaultSubobject<UProject_JFoleyComponent>(TEXT("Foley"));
 }
 
-UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() const
+UAbilitySystemComponent *AProject_JBaseCharacter::GetAbilitySystemComponent() const
 {
-	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+	if (AActor *OwnerActor = GetAbilitySystemOwnerActor())
 	{
-		if (IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
+		if (IProject_JAbilitySystemOwnerInterface *OwnerInterface =
+				Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
 		{
-			if (UAbilitySystemComponent* OwnerASC = OwnerInterface->GetProjectJAbilitySystemComponent())
+			if (UAbilitySystemComponent *OwnerASC = OwnerInterface->GetProjectJAbilitySystemComponent())
 			{
 				return OwnerASC;
 			}
@@ -54,13 +54,14 @@ UAbilitySystemComponent* AProject_JBaseCharacter::GetAbilitySystemComponent() co
 	return AbilitySystemComponent;
 }
 
-UProject_JAttributeSet* AProject_JBaseCharacter::GetAttributeSet() const
+UProject_JAttributeSet *AProject_JBaseCharacter::GetAttributeSet() const
 {
-	if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+	if (AActor *OwnerActor = GetAbilitySystemOwnerActor())
 	{
-		if (IProject_JAbilitySystemOwnerInterface* OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
+		if (IProject_JAbilitySystemOwnerInterface *OwnerInterface =
+				Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor))
 		{
-			if (UProject_JAttributeSet* OwnerAttr = OwnerInterface->GetProjectJAttributeSet())
+			if (UProject_JAttributeSet *OwnerAttr = OwnerInterface->GetProjectJAttributeSet())
 			{
 				return OwnerAttr;
 			}
@@ -75,26 +76,31 @@ void AProject_JBaseCharacter::BeginPlay()
 	InitializeAbilitySystem();
 	InitializeDefaultAttributes();
 	BindEquipmentRuntimeToResolvedEquipmentManager();
-	
-	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
+
+	if (USignificanceManager *SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
-		auto SignificanceFunc = [](USignificanceManager::FManagedObjectInfo* ObjectInfo, const FTransform& Viewpoint) -> float
-		{
-			AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
-			if (!Character) return 0.0f;
+		auto SignificanceFunc = [](USignificanceManager::FManagedObjectInfo *ObjectInfo,
+								   const FTransform &Viewpoint) -> float {
+			AProject_JBaseCharacter *Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
+			if (!Character)
+				return 0.0f;
 
 			const float DistanceSquared = FVector::DistSquared(Character->GetActorLocation(), Viewpoint.GetLocation());
 
-			if (DistanceSquared < FMath::Square(Character->SignificanceNearDistance)) return 0.0f;
-			if (DistanceSquared < FMath::Square(Character->SignificanceMidDistance)) return 1.0f;
-			if (DistanceSquared < FMath::Square(Character->SignificanceFarDistance)) return 2.0f;
+			if (DistanceSquared < FMath::Square(Character->SignificanceNearDistance))
+				return 0.0f;
+			if (DistanceSquared < FMath::Square(Character->SignificanceMidDistance))
+				return 1.0f;
+			if (DistanceSquared < FMath::Square(Character->SignificanceFarDistance))
+				return 2.0f;
 			return 3.0f;
 		};
 
-		auto PostSignificanceFunc = [](USignificanceManager::FManagedObjectInfo* ObjectInfo, float OldSignificance, float Significance, bool bFinal)
-		{
-			AProject_JBaseCharacter* Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
-			if (!Character) return;
+		auto PostSignificanceFunc = [](USignificanceManager::FManagedObjectInfo *ObjectInfo, float OldSignificance,
+									   float Significance, bool bFinal) {
+			AProject_JBaseCharacter *Character = Cast<AProject_JBaseCharacter>(ObjectInfo->GetObject());
+			if (!Character)
+				return;
 
 			Character->CurrentSignificance = Significance;
 
@@ -104,15 +110,18 @@ void AProject_JBaseCharacter::BeginPlay()
 			// their own budget policy rather than silently slowing every character.
 		};
 
-		SignificanceManager->RegisterObject(this, FName("Character"), SignificanceFunc, USignificanceManager::EPostSignificanceType::Sequential, PostSignificanceFunc);
+		SignificanceManager->RegisterObject(this, FName("Character"), SignificanceFunc,
+											USignificanceManager::EPostSignificanceType::Sequential,
+											PostSignificanceFunc);
 	}
 }
 
 void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+	if (BoundProgression.IsValid())
+		BoundProgression->OnChanged.RemoveAll(this);
 	BoundProgression.Reset();
-	if (USignificanceManager* SignificanceManager = USignificanceManager::Get(GetWorld()))
+	if (USignificanceManager *SignificanceManager = USignificanceManager::Get(GetWorld()))
 	{
 		SignificanceManager->UnregisterObject(this);
 	}
@@ -120,7 +129,7 @@ void AProject_JBaseCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AProject_JBaseCharacter::PossessedBy(AController* NewController)
+void AProject_JBaseCharacter::PossessedBy(AController *NewController)
 {
 	Super::PossessedBy(NewController);
 	InitializeAbilitySystem();
@@ -130,7 +139,8 @@ void AProject_JBaseCharacter::PossessedBy(AController* NewController)
 
 void AProject_JBaseCharacter::UnPossessed()
 {
-	if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+	if (BoundProgression.IsValid())
+		BoundProgression->OnChanged.RemoveAll(this);
 	BoundProgression.Reset();
 	Super::UnPossessed();
 }
@@ -145,21 +155,21 @@ void AProject_JBaseCharacter::OnRep_PlayerState()
 void AProject_JBaseCharacter::OnRep_Controller()
 {
 	Super::OnRep_Controller();
-	if (auto* ASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()))
-	{ ASC->RefreshActorInfoForCurrentActor(this); }
+	if (auto *ASC = Cast<UProject_JAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		ASC->RefreshActorInfoForCurrentActor(this);
+	}
 }
-
-
 
 int32 AProject_JBaseCharacter::GetCharacterLevel_Implementation() const
 {
-	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	if (const auto *Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
 		return Progression->GetState().Level;
-	const auto* Class = GetCharacterClassDefinition();
+	const auto *Class = GetCharacterClassDefinition();
 	return FMath::Max(CharacterLevel, Class ? Class->StartingLevel : 1);
 }
 
-FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FName& SocketName)
+FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FName &SocketName)
 {
 	// Default implementation returns the location of the specified socket on the mesh
 	if (GetMesh() && GetMesh()->DoesSocketExist(SocketName))
@@ -172,89 +182,98 @@ FVector AProject_JBaseCharacter::GetCombatSocketLocation_Implementation(const FN
 
 bool AProject_JBaseCharacter::IsDead_Implementation() const
 {
-	if (const UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet())
+	if (const UProject_JAttributeSet *CurrentAttributeSet = GetAttributeSet())
 	{
 		return CurrentAttributeSet->GetHealth() <= 0.0f;
 	}
 	return false;
 }
 
-UProject_JProgressionComponent* AProject_JBaseCharacter::GetProgressionComponent() const
+UProject_JProgressionComponent *AProject_JBaseCharacter::GetProgressionComponent() const
 {
-	AActor* StateOwner = GetAbilitySystemOwnerActor();
+	AActor *StateOwner = GetAbilitySystemOwnerActor();
 	return StateOwner ? StateOwner->FindComponentByClass<UProject_JProgressionComponent>() : nullptr;
 }
 
-const UProject_JCharacterClassDefinition* AProject_JBaseCharacter::GetCharacterClassDefinition() const
+const UProject_JCharacterClassDefinition *AProject_JBaseCharacter::GetCharacterClassDefinition() const
 {
-	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	if (const auto *Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
 		return Progression->GetState().ClassDefinition;
 	return CharacterClassDefinition;
 }
 
-const UProject_JCharacterAdvancementDefinition* AProject_JBaseCharacter::GetAdvancementDefinition() const
+const UProject_JCharacterAdvancementDefinition *AProject_JBaseCharacter::GetAdvancementDefinition() const
 {
-	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	if (const auto *Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
 		return Progression->GetState().Advancement;
 	return AdvancementDefinition;
 }
 
-void AProject_JBaseCharacter::OnProgressionChanged() {}
-
-bool AProject_JBaseCharacter::InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition* NewClassDefinition)
+void AProject_JBaseCharacter::OnProgressionChanged()
 {
-	if (!HasAuthority() || !NewClassDefinition) return false;
+}
+
+bool AProject_JBaseCharacter::InitializeCharacterClassDefinition(UProject_JCharacterClassDefinition *NewClassDefinition)
+{
+	if (!HasAuthority() || !NewClassDefinition)
+		return false;
 	InitializeAbilitySystem();
-	auto* Progression = GetProgressionComponent();
+	auto *Progression = GetProgressionComponent();
 	const bool bHadClass = GetCharacterClassDefinition() != nullptr;
-	if (!Progression || !Progression->InitializeClass(NewClassDefinition)) return false;
-	if (!bHadClass) InitializeDefaultAttributes(true);
+	if (!Progression || !Progression->InitializeClass(NewClassDefinition))
+		return false;
+	if (!bHadClass && !Progression->SubmitPersistentEdit)
+		InitializeDefaultAttributes(true);
 	return true;
 }
 
 FName AProject_JBaseCharacter::GetCharacterClassId() const
 {
-	const auto* Class = GetCharacterClassDefinition();
+	const auto *Class = GetCharacterClassDefinition();
 	return Class ? Class->ClassId : NAME_None;
 }
 
 FName AProject_JBaseCharacter::GetAdvancementId() const
 {
-	const auto* Advancement = GetAdvancementDefinition();
+	const auto *Advancement = GetAdvancementDefinition();
 	return Advancement ? Advancement->AdvancementId : NAME_None;
 }
 
-const UProject_JCombatStyleDefinition* AProject_JBaseCharacter::GetClassCombatStyleDefinition() const
+const UProject_JCombatStyleDefinition *AProject_JBaseCharacter::GetClassCombatStyleDefinition() const
 {
-	const auto* Advancement = GetAdvancementDefinition();
-	if (Advancement && Advancement->CombatStyleOverride) return Advancement->CombatStyleOverride;
-	const auto* Class = GetCharacterClassDefinition();
+	const auto *Advancement = GetAdvancementDefinition();
+	if (Advancement && Advancement->CombatStyleOverride)
+		return Advancement->CombatStyleOverride;
+	const auto *Class = GetCharacterClassDefinition();
 	return Class ? Class->DefaultCombatStyle.Get() : nullptr;
 }
 
-bool AProject_JBaseCharacter::CanApplyAdvancementDefinition(const UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition) const
+bool AProject_JBaseCharacter::CanApplyAdvancementDefinition(
+	const UProject_JCharacterAdvancementDefinition *NewAdvancementDefinition) const
 {
-	const auto* Progression = GetProgressionComponent();
+	const auto *Progression = GetProgressionComponent();
 	return HasAuthority() && Progression && Progression->CanApplyAdvancement(NewAdvancementDefinition);
 }
 
-bool AProject_JBaseCharacter::ApplyAdvancementDefinition(UProject_JCharacterAdvancementDefinition* NewAdvancementDefinition)
+bool AProject_JBaseCharacter::ApplyAdvancementDefinition(
+	UProject_JCharacterAdvancementDefinition *NewAdvancementDefinition)
 {
-	auto* Progression = GetProgressionComponent();
+	auto *Progression = GetProgressionComponent();
 	return HasAuthority() && Progression && Progression->ApplyAdvancement(NewAdvancementDefinition);
 }
 
 void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) const
 {
-	UProject_JAttributeSet* CurrentAttributeSet = GetAttributeSet();
+	UProject_JAttributeSet *CurrentAttributeSet = GetAttributeSet();
 	if (!HasAuthority() || !CurrentAttributeSet)
 	{
 		return;
 	}
 
-	const UProject_JDefaultAttributeSetData* EffectiveDefaultAttributeData = GetEffectiveDefaultAttributeData();
+	const UProject_JDefaultAttributeSetData *EffectiveDefaultAttributeData = GetEffectiveDefaultAttributeData();
 	const float DefaultMaxHealth = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->MaxHealth : 100.0f;
-	const float DefaultHealth = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Health : DefaultMaxHealth;
+	const float DefaultHealth =
+		EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Health : DefaultMaxHealth;
 	const float DefaultMaxMana = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->MaxMana : 100.0f;
 	const float DefaultMana = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->Mana : DefaultMaxMana;
 	const float DefaultAttackPower = EffectiveDefaultAttributeData ? EffectiveDefaultAttributeData->AttackPower : 10.0f;
@@ -293,17 +312,18 @@ void AProject_JBaseCharacter::InitializeDefaultAttributes(bool bForceReset) cons
 
 void AProject_JBaseCharacter::InitializeAbilitySystem()
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	UAbilitySystemComponent *ASC = GetAbilitySystemComponent();
 	if (!ASC)
 	{
 		// PlayerState can replicate away before the old avatar is destroyed.
-		if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+		if (BoundProgression.IsValid())
+			BoundProgression->OnChanged.RemoveAll(this);
 		BoundProgression.Reset();
 		return;
 	}
 
 	ASC->InitAbilityActorInfo(GetAbilitySystemOwnerActor(), this);
-	auto* Progression = GetProgressionComponent();
+	auto *Progression = GetProgressionComponent();
 	if (!Progression && HasAuthority())
 	{
 		// Compatibility adapter for custom character subclasses with a local ASC.
@@ -313,41 +333,50 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 	}
 	if (BoundProgression.Get() != Progression)
 	{
-		if (BoundProgression.IsValid()) BoundProgression->OnChanged.RemoveAll(this);
+		if (BoundProgression.IsValid())
+			BoundProgression->OnChanged.RemoveAll(this);
 		BoundProgression = Progression;
-		if (Progression) Progression->OnChanged.AddUObject(this, &ThisClass::OnProgressionChanged);
+		if (Progression)
+			Progression->OnChanged.AddUObject(this, &ThisClass::OnProgressionChanged);
 	}
-	if (Progression) Progression->InitializeDefaults(CharacterClassDefinition, AdvancementDefinition, CharacterLevel);
+	if (Progression)
+		Progression->InitializeDefaults(CharacterClassDefinition, AdvancementDefinition, CharacterLevel);
 	OnProgressionChanged();
 
 	if (HasAuthority())
 	{
-		UObject* AbilitySourceObject = GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
-		IProject_JAbilitySystemOwnerInterface* OwnerInterface = nullptr;
-		if (AActor* OwnerActor = GetAbilitySystemOwnerActor())
+		UObject *AbilitySourceObject =
+			GetAbilitySystemOwnerActor() ? Cast<UObject>(GetAbilitySystemOwnerActor()) : this;
+		IProject_JAbilitySystemOwnerInterface *OwnerInterface = nullptr;
+		if (AActor *OwnerActor = GetAbilitySystemOwnerActor())
 		{
 			OwnerInterface = Cast<IProject_JAbilitySystemOwnerInterface>(OwnerActor);
 		}
 
-		const bool bAlreadyGranted = OwnerInterface ? OwnerInterface->HasGrantedDefaultAbilities() : bDefaultAbilitiesGranted;
+		const bool bAlreadyGranted =
+			OwnerInterface ? OwnerInterface->HasGrantedDefaultAbilities() : bDefaultAbilitiesGranted;
 		const bool bHasGrantContent = !DefaultAbilities.IsEmpty();
 		if (!bAlreadyGranted && bHasGrantContent)
 		{
-			for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultAbilities)
+			for (const TSubclassOf<UGameplayAbility> &AbilityClass : DefaultAbilities)
 			{
 				if (AbilityClass)
 				{
 					const FName GrantSource(*FString::Printf(TEXT("Default.%s"), *AbilityClass->GetName()));
-					if (UProject_JAbilitySystemComponent* ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
+					if (UProject_JAbilitySystemComponent *ProjectJASC = Cast<UProject_JAbilitySystemComponent>(ASC))
 					{
 						uint64 GrantGeneration = 0;
 						if (!ProjectJASC->ReserveAbilityGrantSource(GrantSource, GrantGeneration))
 						{
 							continue;
 						}
-						const FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
+						const FGameplayAbilitySpecHandle Handle =
+							ASC->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, AbilitySourceObject));
 						if (!ProjectJASC->RegisterGrantedAbility(GrantSource, GrantGeneration, Handle))
-						{ ASC->CancelAbilityHandle(Handle); ASC->ClearAbility(Handle); }
+						{
+							ASC->CancelAbilityHandle(Handle);
+							ASC->ClearAbility(Handle);
+						}
 					}
 					else
 					{
@@ -355,7 +384,6 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 					}
 				}
 			}
-
 
 			if (OwnerInterface)
 			{
@@ -369,20 +397,23 @@ void AProject_JBaseCharacter::InitializeAbilitySystem()
 	}
 }
 
-const UProject_JDefaultAttributeSetData* AProject_JBaseCharacter::GetEffectiveDefaultAttributeData() const
+const UProject_JDefaultAttributeSetData *AProject_JBaseCharacter::GetEffectiveDefaultAttributeData() const
 {
-	const auto* Advancement = GetAdvancementDefinition();
-	if (Advancement && Advancement->OverrideAttributeData) return Advancement->OverrideAttributeData;
-	const auto* Class = GetCharacterClassDefinition();
-	if (Class && Class->DefaultAttributeData) return Class->DefaultAttributeData;
+	const auto *Advancement = GetAdvancementDefinition();
+	if (Advancement && Advancement->OverrideAttributeData)
+		return Advancement->OverrideAttributeData;
+	const auto *Class = GetCharacterClassDefinition();
+	if (Class && Class->DefaultAttributeData)
+		return Class->DefaultAttributeData;
 	return DefaultAttributeData;
 }
 
-UProject_JEquipmentManagerComponent* AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const
+UProject_JEquipmentManagerComponent *AProject_JBaseCharacter::ResolveEquipmentManagerForRuntime() const
 {
-	if (APlayerState* OwningPlayerState = GetPlayerState())
+	if (APlayerState *OwningPlayerState = GetPlayerState())
 	{
-		if (UProject_JEquipmentManagerComponent* PlayerStateEquipmentManager = OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>())
+		if (UProject_JEquipmentManagerComponent *PlayerStateEquipmentManager =
+				OwningPlayerState->FindComponentByClass<UProject_JEquipmentManagerComponent>())
 		{
 			return PlayerStateEquipmentManager;
 		}
@@ -401,9 +432,9 @@ void AProject_JBaseCharacter::BindEquipmentRuntimeToResolvedEquipmentManager()
 	EquipmentRuntime->BindToEquipmentManager(ResolveEquipmentManagerForRuntime());
 }
 
-AActor* AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
+AActor *AProject_JBaseCharacter::GetAbilitySystemOwnerActor() const
 {
-	return const_cast<AProject_JBaseCharacter*>(this);
+	return const_cast<AProject_JBaseCharacter *>(this);
 }
 
 void AProject_JBaseCharacter::SetCharacterLevel(int32 NewLevel)
@@ -413,39 +444,48 @@ void AProject_JBaseCharacter::SetCharacterLevel(int32 NewLevel)
 
 bool AProject_JBaseCharacter::CanApplyCharacterLevelExactly(int32 NewLevel) const
 {
-	if (!HasAuthority() || IsActorBeingDestroyed()) { return false; }
-	if (const auto* Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
+	if (!HasAuthority() || IsActorBeingDestroyed())
+	{
+		return false;
+	}
+	if (const auto *Progression = GetProgressionComponent(); Progression && Progression->GetState().Revision > 0)
 	{
 		int32 ResolvedLevel;
 		return Progression->CanSetLevel(NewLevel, ResolvedLevel) && ResolvedLevel == NewLevel;
 	}
-	const auto* Class = GetCharacterClassDefinition();
+	const auto *Class = GetCharacterClassDefinition();
 	return NewLevel >= FMath::Max(1, Class ? Class->StartingLevel : 1);
 }
 
 bool AProject_JBaseCharacter::TrySetCharacterLevel(int32 NewLevel)
 {
-	if (!HasAuthority() || IsActorBeingDestroyed()) return false;
+	if (!HasAuthority() || IsActorBeingDestroyed())
+		return false;
 	const TStrongObjectPtr<AProject_JBaseCharacter> PinnedThis(this);
 	const TStrongObjectPtr<AActor> StateOwner(GetAbilitySystemOwnerActor());
 	const TStrongObjectPtr<UProject_JProgressionComponent> PinnedProgression(GetProgressionComponent());
 	const TStrongObjectPtr<UAbilitySystemComponent> PinnedASC(GetAbilitySystemComponent());
-	const auto IsCurrent = [&]()
-	{
-		return !IsActorBeingDestroyed() && HasAuthority() && IsValid(StateOwner.Get()) && !StateOwner->IsActorBeingDestroyed()
-			&& GetAbilitySystemOwnerActor() == StateOwner.Get() && GetProgressionComponent() == PinnedProgression.Get()
-			&& (!PinnedProgression.Get() || !PinnedProgression->IsBeingDestroyed())
-			&& GetAbilitySystemComponent() == PinnedASC.Get();
+	const auto IsCurrent = [&]() {
+		return !IsActorBeingDestroyed() && HasAuthority() && IsValid(StateOwner.Get()) &&
+			   !StateOwner->IsActorBeingDestroyed() && GetAbilitySystemOwnerActor() == StateOwner.Get() &&
+			   GetProgressionComponent() == PinnedProgression.Get() &&
+			   (!PinnedProgression.Get() || !PinnedProgression->IsBeingDestroyed()) &&
+			   GetAbilitySystemComponent() == PinnedASC.Get();
 	};
 	const int32 PreviousLevel = GetCharacterLevel_Implementation();
 	int32 GuardedLevel = FMath::Max(1, NewLevel);
-	if (auto* Progression = PinnedProgression.Get(); Progression && Progression->GetState().Revision > 0)
+	if (auto *Progression = PinnedProgression.Get(); Progression && Progression->GetState().Revision > 0)
 	{
-		if (!Progression->SetLevel(NewLevel) || !IsCurrent()) return false;
+		if (!Progression->SetLevel(NewLevel) || !IsCurrent())
+			return false;
 		GuardedLevel = Progression->GetState().Level;
 	}
-	if (!IsCurrent()) { return false; }
+	if (!IsCurrent())
+	{
+		return false;
+	}
 	CharacterLevel = GuardedLevel;
-	if (PreviousLevel != GuardedLevel) InitializeDefaultAttributes(true);
+	if (PreviousLevel != GuardedLevel)
+		InitializeDefaultAttributes(true);
 	return IsCurrent();
 }

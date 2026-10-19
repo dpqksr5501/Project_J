@@ -6,6 +6,7 @@
 
 | 확인할 내용 | 기준 기록 |
 | --- | --- |
+| MMORPG 구조 권고와 현재 실행 경계 | [현재40항목 상태표](Architecture/Project_J_MMO_Remaining_2026-10-19.md) · [최종 검증 요약](Architecture/Project_J_MMO_Validation_2026-10-19.json). 장기 저장·이관·직업/전직의 내부 완료와 운영 인증/서비스·Server 환경 차단을 구분한다. [앞 단계 ZIP 대조](Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 이력이다. |
 | 6850ed45 소스 감사 1·2·3차 마감 | [28개 항목의 수정·회귀·지원 범위와 제한](Audits/Project_J_Source_Audit_6850ed45_Closure_2026-10-19.md). 실제 socket SSR·복구, 최종 빌드·Cook·패키지, Server 환경 차단과 산출물 정리를 구분한다. |
 | main 통합 범위와 사용자 변경 보존 | [2026-10-15 main 통합](Audits/Project_J_Main_Integration_2026-10-15.md). 리타깃·구조 정리·R19/R20과 Mirror 판단을 문서 커밋 `6d6713f4`까지 통합했다. |
 | Mirror 도입 여부 | [도입 보류 결정](../Animation/Planning/Mirror_Data_Adoption_Decision_2026-10-15.md). 현재 locomotion을 유지하고 특정 연결 문제가 확인될 때만 국소 재검토한다. |

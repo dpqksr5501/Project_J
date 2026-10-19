@@ -7,7 +7,6 @@ SOURCE=ROOT/'Content/World/MainWorld/Source'
 plan=json.loads((SOURCE/'MainWorld.plan.json').read_text(encoding='utf-8'))
 manifest=json.loads((SOURCE/'MainWorld.manifest.json').read_text(encoding='utf-8'))
 MAP=manifest['world_asset']
-MAP=manifest['world_asset']
 CONTRACT=runpy.run_path(str(ROOT/'Scripts/World/Starter-WorldDefinitionContract.py'))
 unreal.EditorPythonScripting.set_keep_python_script_alive(True)
 levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)

@@ -10,7 +10,10 @@ CSV_DECLARE_CATEGORY_EXTERN(ProjectJUI);
 
 void UProject_JInventoryViewModel::SetLocalStatus(FText Message)
 {
-	if (bPending) { return; }
+	if (bPending)
+	{
+		return;
+	}
 	Status = MoveTemp(Message);
 	OnChanged.Broadcast();
 }
@@ -44,7 +47,8 @@ void UProject_JInventoryViewModel::Unbind()
 {
 	++SourceRevision;
 	ClearRequest();
-	if (RefreshWorld.IsValid()) RefreshWorld->GetTimerManager().ClearTimer(RefreshTimer);
+	if (RefreshWorld.IsValid())
+		RefreshWorld->GetTimerManager().ClearTimer(RefreshTimer);
 	RefreshTimer.Invalidate();
 	RefreshWorld.Reset();
 	if (Inventory.IsValid())
@@ -109,17 +113,23 @@ void UProject_JInventoryViewModel::Refresh()
 			Entry->Slot = Definition ? Definition->EquipmentSlot : EProject_JEquipmentSlot::None;
 			InventoryEntries.Add(Entry);
 		}
-	InventoryEntries.Sort([](const UProject_JInventoryEntry &A, const UProject_JInventoryEntry &B)
-		{ return A.Item.BagOrder == B.Item.BagOrder ? A.Item.InstanceId < B.Item.InstanceId : A.Item.BagOrder < B.Item.BagOrder; });
+	InventoryEntries.Sort([](const UProject_JInventoryEntry &A, const UProject_JInventoryEntry &B) {
+		return A.Item.BagOrder == B.Item.BagOrder ? A.Item.InstanceId < B.Item.InstanceId
+												  : A.Item.BagOrder < B.Item.BagOrder;
+	});
 	ItemSummaries.Reset();
 	for (const UProject_JInventoryEntry *Entry : InventoryEntries)
 	{
 		const auto &Item = Entry->Item;
-		if (!Item.IsValid() || Item.ItemDef->ItemId.IsNone()) continue;
+		if (!Item.IsValid() || Item.ItemDef->ItemId.IsNone())
+			continue;
 		auto &Summary = ItemSummaries.FindOrAdd(Item.ItemDef->ItemId);
-		if (!Summary.Definition.IsValid()) Summary.Definition = Item.ItemDef.Get();
-		Summary.Quantity = static_cast<int32>(FMath::Min<int64>(MAX_int32, static_cast<int64>(Summary.Quantity) + Item.StackCount));
-		if (!Summary.UsableInstance.IsValid() && !Item.bIsLocked && !Item.bIsEquipped && Cast<UProject_JConsumableDefinition>(Item.ItemDef))
+		if (!Summary.Definition.IsValid())
+			Summary.Definition = Item.ItemDef.Get();
+		Summary.Quantity =
+			static_cast<int32>(FMath::Min<int64>(MAX_int32, static_cast<int64>(Summary.Quantity) + Item.StackCount));
+		if (!Summary.UsableInstance.IsValid() && !Item.bIsLocked && !Item.bIsEquipped &&
+			Cast<UProject_JConsumableDefinition>(Item.ItemDef))
 			Summary.UsableInstance = Item.InstanceId;
 	}
 	if (EquipmentEntries.IsEmpty())
@@ -153,11 +163,11 @@ void UProject_JInventoryViewModel::QueueRefresh()
 		RefreshWorld = World;
 		const uint32 Revision = SourceRevision;
 		RefreshTimer = World->GetTimerManager().SetTimerForNextTick(
-			[WeakThis = TWeakObjectPtr<UProject_JInventoryViewModel>(this), Revision]()
-			{
+			[WeakThis = TWeakObjectPtr<UProject_JInventoryViewModel>(this), Revision]() {
 				if (auto *Self = WeakThis.Get())
 				{
-					if (Self->SourceRevision != Revision) return;
+					if (Self->SourceRevision != Revision)
+						return;
 					Self->RefreshTimer.Invalidate();
 					Self->Refresh();
 				}
@@ -166,9 +176,14 @@ void UProject_JInventoryViewModel::QueueRefresh()
 }
 void UProject_JInventoryViewModel::ClearRequest()
 {
-	if (RequestWorld.IsValid()) RequestWorld->GetTimerManager().ClearTimer(RequestTimer);
-	RequestWorld.Reset(); RequestTimer.Invalidate();
-	bPending = false; PendingRequest.Invalidate(); PendingKind = ERequestKind::None;
+	if (RequestWorld.IsValid())
+		RequestWorld->GetTimerManager().ClearTimer(RequestTimer);
+	RequestWorld.Reset();
+	RequestTimer.Invalidate();
+	bPending = false;
+	bDurablePending = false;
+	PendingRequest.Invalidate();
+	PendingKind = ERequestKind::None;
 }
 bool UProject_JInventoryViewModel::IsCurrentEntry(const UProject_JInventoryEntry *Entry) const
 {
@@ -177,10 +192,12 @@ bool UProject_JInventoryViewModel::IsCurrentEntry(const UProject_JInventoryEntry
 bool UProject_JInventoryViewModel::Activate(const UProject_JInventoryEntry *Entry)
 {
 	if (!IsCurrentEntry(Entry) || bPending || !Entry->Item.IsValid() ||
-		(Entry->Item.bIsLocked && !Entry->bEquipmentEntry)) return false;
+		(Entry->Item.bIsLocked && !Entry->bEquipmentEntry))
+		return false;
 	if (Entry->bEquipmentEntry)
 		return CanDrop(Entry, EProject_JEquipmentSlot::None, true) && Unequip(Entry->Item.InstanceId, Entry->Slot);
-	if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef)) return Use(Entry->Item.InstanceId);
+	if (Cast<UProject_JConsumableDefinition>(Entry->Item.ItemDef))
+		return Use(Entry->Item.InstanceId);
 	return CanDrop(Entry, Entry->Slot, false) && Equip(Entry->Item.InstanceId, Entry->Slot);
 }
 void UProject_JInventoryViewModel::ArmRequestTimer(UWorld *World, ERequestKind Kind)
@@ -189,11 +206,15 @@ void UProject_JInventoryViewModel::ArmRequestTimer(UWorld *World, ERequestKind K
 	RequestWorld = World;
 	const FGuid Id = PendingRequest;
 	const uint32 Revision = SourceRevision;
-	if (World) World->GetTimerManager().SetTimer(RequestTimer,
-		FTimerDelegate::CreateWeakLambda(this, [this, Id, Revision]()
-		{
-			if (bPending && PendingRequest == Id && SourceRevision == Revision) RequestTimedOut();
-		}), 5.f, false);
+	if (World)
+		World->GetTimerManager().SetTimer(RequestTimer,
+										  FTimerDelegate::CreateWeakLambda(this,
+																		   [this, Id, Revision]() {
+																			   if (bPending && PendingRequest == Id &&
+																				   SourceRevision == Revision)
+																				   RequestTimedOut();
+																		   }),
+										  5.f, false);
 }
 bool UProject_JInventoryViewModel::UseByItemId(FName ItemId)
 {
@@ -229,7 +250,14 @@ bool UProject_JInventoryViewModel::Submit(FGuid InstanceId, EProject_JEquipmentS
 {
 	if (bPending || !Equipment.IsValid() || !InstanceId.IsValid())
 		return false;
-	PendingRequest = FGuid::NewGuid();
+	PendingRequest = Equipment->NewRequestId();
+	if (!PendingRequest.IsValid())
+	{
+		Status = NSLOCTEXT("ProjectJUI", "ProfileRequestUnavailable",
+						   "요청을 만들 수 없습니다. 저장 상태를 확인하고 재입장하세요.");
+		OnChanged.Broadcast();
+		return false;
+	}
 	bPending = true;
 	const FGuid SubmittedRequest = PendingRequest;
 	const TWeakObjectPtr<UProject_JEquipmentManagerComponent> SubmittedEquipment = Equipment;
@@ -255,6 +283,13 @@ void UProject_JInventoryViewModel::OnCompleted(FGuid Id, const FProject_JEquipme
 {
 	if (!bPending || PendingKind != ERequestKind::Equipment || Id != PendingRequest)
 		return;
+	if (Result.Failure == EProject_JEquipmentOperationFailure::Pending)
+	{
+		bDurablePending = true;
+		Status = NSLOCTEXT("ProjectJUI", "EquipmentSaving", "장비 변경 저장 중");
+		Refresh();
+		return;
+	}
 	ClearRequest();
 	if (Result.bSucceeded)
 		Status = NSLOCTEXT("ProjectJUI", "Confirmed", "장비 변경 완료");
@@ -290,7 +325,16 @@ void UProject_JInventoryViewModel::OnCompleted(FGuid Id, const FProject_JEquipme
 
 void UProject_JInventoryViewModel::RequestTimedOut()
 {
-	if (!bPending) return;
+	if (!bPending)
+		return;
+	if (bDurablePending)
+	{
+		Status = NSLOCTEXT("ProjectJUI", "DurableTimeout",
+						   "저장 결과 확인 대기 중입니다. 늦은 응답 또는 재입장으로 결과를 확인하세요. 새 요청으로 "
+						   "반복 실행하지 않습니다.");
+		Refresh();
+		return;
+	}
 	ClearRequest();
 	Status = NSLOCTEXT("ProjectJUI", "Timeout", "응답이 지연됩니다. 현재 서버 상태를 확인한 후 다시 시도하세요.");
 	Refresh();
@@ -315,12 +359,10 @@ void UProject_JInventoryViewModel::RebuildVisible()
 		VisibleEntries.Add(Entry);
 	}
 	if (bNameSort)
-		VisibleEntries.Sort(
-			[](const UProject_JInventoryEntry &A, const UProject_JInventoryEntry &B)
-			{
-				const int32 Compare = A.Item.ItemDef->ItemName.CompareTo(B.Item.ItemDef->ItemName);
-				return Compare == 0 ? A.Item.InstanceId < B.Item.InstanceId : Compare < 0;
-			});
+		VisibleEntries.Sort([](const UProject_JInventoryEntry &A, const UProject_JInventoryEntry &B) {
+			const int32 Compare = A.Item.ItemDef->ItemName.CompareTo(B.Item.ItemDef->ItemName);
+			return Compare == 0 ? A.Item.InstanceId < B.Item.InstanceId : Compare < 0;
+		});
 }
 void UProject_JInventoryViewModel::SetFilter(const FString &Query, int32 Kind, bool bSortByName)
 {
@@ -334,7 +376,14 @@ bool UProject_JInventoryViewModel::Use(FGuid InstanceId)
 {
 	if (bPending || !Inventory.IsValid() || !InstanceId.IsValid())
 		return false;
-	PendingRequest = FGuid::NewGuid();
+	PendingRequest = Inventory->NewRequestId();
+	if (!PendingRequest.IsValid())
+	{
+		Status = NSLOCTEXT("ProjectJUI", "ProfileRequestUnavailable",
+						   "요청을 만들 수 없습니다. 저장 상태를 확인하고 재입장하세요.");
+		OnChanged.Broadcast();
+		return false;
+	}
 	bPending = true;
 	Status = NSLOCTEXT("ProjectJUI", "UsePending", "사용 확인 중…");
 	const auto Request = PendingRequest;
@@ -349,6 +398,13 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 {
 	if (!bPending || PendingKind != ERequestKind::Use || Id != PendingRequest)
 		return;
+	if (Result == EProject_JItemUseResult::Pending)
+	{
+		bDurablePending = true;
+		Status = NSLOCTEXT("ProjectJUI", "UseSaving", "아이템 사용 저장 중");
+		Refresh();
+		return;
+	}
 	ClearRequest();
 	switch (Result)
 	{
@@ -358,6 +414,11 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 	case EProject_JItemUseResult::NoEffect:
 		Status = NSLOCTEXT("ProjectJUI", "NoRecovery", "회복할 자원이 없습니다.");
 		break;
+	case EProject_JItemUseResult::Reconciled:
+		Status = NSLOCTEXT("ProjectJUI", "UseReconciled",
+						   "이미 저장된 소모 요청을 확인했습니다. 회복을 다시 적용하지 않습니다. 현재 수량과 캐릭터 "
+						   "상태를 확인하세요.");
+		break;
 	case EProject_JItemUseResult::Cooldown:
 		Status = NSLOCTEXT("ProjectJUI", "UseCooldown", "재사용 대기 중입니다.");
 		break;
@@ -365,7 +426,8 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 		Status = NSLOCTEXT("ProjectJUI", "UseLocked", "잠긴 아이템입니다.");
 		break;
 	case EProject_JItemUseResult::Unavailable:
-		Status = NSLOCTEXT("ProjectJUI", "UseUnavailableCheckQuantity", "사용을 완료하지 못했습니다. 아이템이 이미 소모되었을 수 있으니 현재 수량을 확인하세요.");
+		Status = NSLOCTEXT("ProjectJUI", "UseUnavailableCheckQuantity",
+						   "사용을 완료하지 못했습니다. 아이템이 이미 소모되었을 수 있으니 현재 수량을 확인하세요.");
 		break;
 	default:
 		Status = NSLOCTEXT("ProjectJUI", "UseUnavailable", "현재 사용할 수 없습니다.");
@@ -373,9 +435,11 @@ void UProject_JInventoryViewModel::OnUseCompleted(FGuid Id, EProject_JItemUseRes
 	}
 	Refresh();
 }
-FProject_JEquipmentComparison UProject_JInventoryViewModel::BuildEquipmentComparison(const UProject_JInventoryEntry *Entry) const
+FProject_JEquipmentComparison UProject_JInventoryViewModel::BuildEquipmentComparison(
+	const UProject_JInventoryEntry *Entry) const
 {
-	const auto* Candidate = IsCurrentEntry(Entry) ? Cast<UProject_JEquipmentItemDefinition>(Entry->Item.ItemDef) : nullptr;
+	const auto *Candidate =
+		IsCurrentEntry(Entry) ? Cast<UProject_JEquipmentItemDefinition>(Entry->Item.ItemDef) : nullptr;
 	if (!Candidate || (!Entry->bEquipmentEntry && !Equipment.IsValid()))
 	{
 		FProject_JEquipmentComparison Result;
@@ -385,15 +449,15 @@ FProject_JEquipmentComparison UProject_JInventoryViewModel::BuildEquipmentCompar
 	}
 	FProject_JItemInstanceData Current;
 	const UProject_JEquipmentItemDefinition *Equipped = nullptr;
-	if (!Entry->bEquipmentEntry &&
-		Equipment->GetEquippedItemInstance(Candidate->EquipmentSlot, Current))
+	if (!Entry->bEquipmentEntry && Equipment->GetEquippedItemInstance(Candidate->EquipmentSlot, Current))
 		Equipped = Cast<UProject_JEquipmentItemDefinition>(Current.ItemDef);
 	return FProject_JEquipmentComparison::Build(Candidate, Equipped);
 }
 FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry *Entry) const
 {
 	if (!IsCurrentEntry(Entry))
-		return NSLOCTEXT("ProjectJUI", "DetachedEntryTooltip", "아이템 정보가 변경되었습니다. 현재 목록에서 다시 선택하세요.");
+		return NSLOCTEXT("ProjectJUI", "DetachedEntryTooltip",
+						 "아이템 정보가 변경되었습니다. 현재 목록에서 다시 선택하세요.");
 	if (!Entry->Item.ItemDef)
 		return NSLOCTEXT("ProjectJUI", "EmptyEquipmentTooltip", "비어 있는 장비 슬롯 · 호환 장비를 드래그하세요");
 	const UProject_JItemDefinition *Def = Entry->Item.ItemDef;
@@ -414,13 +478,16 @@ FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry 
 		for (const auto &Row : Comparison.Rows)
 		{
 			if (Comparison.bCanCompare)
-				Lines.Add(FText::Format(NSLOCTEXT("ProjectJUI", "AdditiveStatCompare", "{0}: {1} (고정 보너스 차이 {2})"),
-					FProject_JEquipmentComparison::StatName(Row.Stat), FText::AsNumber(Row.Candidate), FText::AsNumber(Row.Difference)));
+				Lines.Add(
+					FText::Format(NSLOCTEXT("ProjectJUI", "AdditiveStatCompare", "{0}: {1} (고정 보너스 차이 {2})"),
+								  FProject_JEquipmentComparison::StatName(Row.Stat), FText::AsNumber(Row.Candidate),
+								  FText::AsNumber(Row.Difference)));
 			else if (Row.Candidate != 0 && Comparison.CandidateMode != EProject_JEquipmentBonusPreview::GameplayEffects)
 				Lines.Add(FText::Format(Comparison.CandidateMode == EProject_JEquipmentBonusPreview::ConditionalFallback
-					? NSLOCTEXT("ProjectJUI", "FallbackStat", "효과 미적용 시 대체 {0}: {1}")
-					: NSLOCTEXT("ProjectJUI", "AuthoredStat", "고정 보너스 {0}: {1}"),
-					FProject_JEquipmentComparison::StatName(Row.Stat), FText::AsNumber(Row.Candidate)));
+											? NSLOCTEXT("ProjectJUI", "FallbackStat", "효과 미적용 시 대체 {0}: {1}")
+											: NSLOCTEXT("ProjectJUI", "AuthoredStat", "고정 보너스 {0}: {1}"),
+										FProject_JEquipmentComparison::StatName(Row.Stat),
+										FText::AsNumber(Row.Candidate)));
 		}
 		Lines.Add(Comparison.Explanation);
 		if (!Entry->bEquipmentEntry && Equipment.IsValid() &&
@@ -431,17 +498,20 @@ FText UProject_JInventoryViewModel::BuildTooltip(const UProject_JInventoryEntry 
 	}
 	if (Entry->Item.bIsLocked)
 		Lines.Add(NSLOCTEXT("ProjectJUI", "LockedTooltip", "잠김 · 장착·사용·이동 불가"));
-	if (Entry->Item.bIsEquipped) Lines.Add(NSLOCTEXT("ProjectJUI", "EquippedTooltip", "현재 장착 중"));
-	if (bPending) Lines.Add(NSLOCTEXT("ProjectJUI", "PendingTooltip", "서버 확인 중 · 응답 후 조작 가능"));
+	if (Entry->Item.bIsEquipped)
+		Lines.Add(NSLOCTEXT("ProjectJUI", "EquippedTooltip", "현재 장착 중"));
+	if (bPending)
+		Lines.Add(NSLOCTEXT("ProjectJUI", "PendingTooltip", "서버 확인 중 · 응답 후 조작 가능"));
 	Lines.Add(NSLOCTEXT("ProjectJUI", "ItemControlsTooltip",
-						"우클릭/더블클릭: 장착·해제·사용\nShift+클릭: 수량 분할\n가방 드래그: 위치 교환 · Ctrl+드래그: 합치기\n장비 슬롯 또는 잠금 해제한 퀵슬롯으로 드래그"));
+						"우클릭/더블클릭: 장착·해제·사용\nShift+클릭: 수량 분할\n가방 드래그: 위치 교환 · Ctrl+드래그: "
+						"합치기\n장비 슬롯 또는 잠금 해제한 퀵슬롯으로 드래그"));
 	return FText::Join(FText::FromString(TEXT("\n")), Lines);
 }
 
 namespace
 {
 FProject_JBagRequest BagRequest(EProject_JBagOperation Operation, const UProject_JInventoryEntry *Source,
-	const UProject_JInventoryEntry *Target = nullptr)
+								const UProject_JInventoryEntry *Target = nullptr)
 {
 	FProject_JBagRequest Request;
 	Request.Operation = Operation;
@@ -456,7 +526,7 @@ FProject_JBagRequest BagRequest(EProject_JBagOperation Operation, const UProject
 	}
 	return Request;
 }
-}
+} // namespace
 bool UProject_JInventoryViewModel::Split(const UProject_JInventoryEntry *Entry, int32 Count)
 {
 	if (!IsCurrentEntry(Entry) || Entry->bEquipmentEntry || Count <= 0 || Count >= Entry->Item.StackCount)
@@ -466,33 +536,46 @@ bool UProject_JInventoryViewModel::Split(const UProject_JInventoryEntry *Entry, 
 	return SubmitBag(Request);
 }
 bool UProject_JInventoryViewModel::CanDropInBag(const UProject_JInventoryEntry *Source,
-	const UProject_JInventoryEntry *Target, bool bMerge) const
+												const UProject_JInventoryEntry *Target, bool bMerge) const
 {
-	if (bPending || !IsCurrentEntry(Source) || !IsCurrentEntry(Target) ||
-		Source->bEquipmentEntry || Target->bEquipmentEntry || Source->Item.InstanceId == Target->Item.InstanceId ||
-		!Source->Item.IsValid() || !Target->Item.IsValid() || Source->Item.bIsLocked || Target->Item.bIsLocked ||
-		Source->Item.bIsEquipped || Target->Item.bIsEquipped) return false;
-	if (!bMerge) return !bNameSort && FilterKind == 0 && SearchQuery.IsEmpty();
+	if (bPending || !IsCurrentEntry(Source) || !IsCurrentEntry(Target) || Source->bEquipmentEntry ||
+		Target->bEquipmentEntry || Source->Item.InstanceId == Target->Item.InstanceId || !Source->Item.IsValid() ||
+		!Target->Item.IsValid() || Source->Item.bIsLocked || Target->Item.bIsLocked || Source->Item.bIsEquipped ||
+		Target->Item.bIsEquipped)
+		return false;
+	if (!bMerge)
+		return !bNameSort && FilterKind == 0 && SearchQuery.IsEmpty();
 	return Source->Item.ItemDef == Target->Item.ItemDef && Source->Item.ItemLevel == Target->Item.ItemLevel &&
-		Target->Item.StackCount < Target->Item.ItemDef->MaxStackCount;
+		   Target->Item.StackCount < Target->Item.ItemDef->MaxStackCount;
 }
 bool UProject_JInventoryViewModel::DropInBag(const UProject_JInventoryEntry *Source,
-	const UProject_JInventoryEntry *Target, bool bMerge)
+											 const UProject_JInventoryEntry *Target, bool bMerge)
 {
 	if (!CanDropInBag(Source, Target, bMerge))
 	{
-		Status = NSLOCTEXT("ProjectJUI", "BagDropInvalid", "합칠 수 없는 항목입니다. 위치 교환은 검색·분류·정렬을 해제한 전체 가방에서 가능합니다.");
+		Status = NSLOCTEXT("ProjectJUI", "BagDropInvalid",
+						   "합칠 수 없는 항목입니다. 위치 교환은 검색·분류·정렬을 해제한 전체 가방에서 가능합니다.");
 		OnChanged.Broadcast();
 		return false;
 	}
 	auto Request = BagRequest(bMerge ? EProject_JBagOperation::Merge : EProject_JBagOperation::Swap, Source, Target);
-	if (bMerge) Request.Count = FMath::Min(Source->Item.StackCount, Target->Item.ItemDef->MaxStackCount - Target->Item.StackCount);
+	if (bMerge)
+		Request.Count =
+			FMath::Min(Source->Item.StackCount, Target->Item.ItemDef->MaxStackCount - Target->Item.StackCount);
 	return SubmitBag(Request);
 }
 bool UProject_JInventoryViewModel::SubmitBag(const FProject_JBagRequest &Request)
 {
-	if (bPending || !Inventory.IsValid()) return false;
-	PendingRequest = FGuid::NewGuid();
+	if (bPending || !Inventory.IsValid())
+		return false;
+	PendingRequest = Inventory->NewRequestId();
+	if (!PendingRequest.IsValid())
+	{
+		Status = NSLOCTEXT("ProjectJUI", "ProfileRequestUnavailable",
+						   "요청을 만들 수 없습니다. 저장 상태를 확인하고 재입장하세요.");
+		OnChanged.Broadcast();
+		return false;
+	}
 	bPending = true;
 	Status = NSLOCTEXT("ProjectJUI", "BagPending", "가방 변경 확인 중…");
 	const auto Id = PendingRequest;
@@ -505,17 +588,39 @@ bool UProject_JInventoryViewModel::SubmitBag(const FProject_JBagRequest &Request
 }
 void UProject_JInventoryViewModel::OnBagCompleted(FGuid Id, EProject_JBagResult Result)
 {
-	if (!bPending || PendingKind != ERequestKind::Bag || Id != PendingRequest) return;
+	if (!bPending || PendingKind != ERequestKind::Bag || Id != PendingRequest)
+		return;
+	if (Result == EProject_JBagResult::Pending)
+	{
+		bDurablePending = true;
+		Status = NSLOCTEXT("ProjectJUI", "BagSaving", "가방 변경 저장 중");
+		Refresh();
+		return;
+	}
 	ClearRequest();
 	switch (Result)
 	{
-	case EProject_JBagResult::Success: Status = NSLOCTEXT("ProjectJUI", "BagChanged", "가방 변경 완료"); break;
-	case EProject_JBagResult::Locked: Status = NSLOCTEXT("ProjectJUI", "BagLocked", "잠긴 아이템이나 장착한 아이템은 이동할 수 없습니다."); break;
-	case EProject_JBagResult::Changed: Status = NSLOCTEXT("ProjectJUI", "BagStale", "아이템 수량이나 위치가 바뀌었습니다. 다시 선택하세요."); break;
-	case EProject_JBagResult::Full: Status = NSLOCTEXT("ProjectJUI", "BagFull", "스택 또는 가방 변경 한도에 도달했습니다."); break;
-	case EProject_JBagResult::Incompatible: Status = NSLOCTEXT("ProjectJUI", "BagIncompatible", "종류와 아이템 레벨이 같은 스택만 합칠 수 있습니다."); break;
-	case EProject_JBagResult::RateLimited: Status = NSLOCTEXT("ProjectJUI", "BagRateLimited", "조작이 너무 빠릅니다. 잠시 후 다시 시도하세요."); break;
-	default: Status = NSLOCTEXT("ProjectJUI", "BagUnavailable", "현재 가방을 변경할 수 없습니다."); break;
+	case EProject_JBagResult::Success:
+		Status = NSLOCTEXT("ProjectJUI", "BagChanged", "가방 변경 완료");
+		break;
+	case EProject_JBagResult::Locked:
+		Status = NSLOCTEXT("ProjectJUI", "BagLocked", "잠긴 아이템이나 장착한 아이템은 이동할 수 없습니다.");
+		break;
+	case EProject_JBagResult::Changed:
+		Status = NSLOCTEXT("ProjectJUI", "BagStale", "아이템 수량이나 위치가 바뀌었습니다. 다시 선택하세요.");
+		break;
+	case EProject_JBagResult::Full:
+		Status = NSLOCTEXT("ProjectJUI", "BagFull", "스택 또는 가방 변경 한도에 도달했습니다.");
+		break;
+	case EProject_JBagResult::Incompatible:
+		Status = NSLOCTEXT("ProjectJUI", "BagIncompatible", "종류와 아이템 레벨이 같은 스택만 합칠 수 있습니다.");
+		break;
+	case EProject_JBagResult::RateLimited:
+		Status = NSLOCTEXT("ProjectJUI", "BagRateLimited", "조작이 너무 빠릅니다. 잠시 후 다시 시도하세요.");
+		break;
+	default:
+		Status = NSLOCTEXT("ProjectJUI", "BagUnavailable", "현재 가방을 변경할 수 없습니다.");
+		break;
 	}
 	Refresh();
 }

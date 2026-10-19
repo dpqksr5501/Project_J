@@ -14,67 +14,96 @@ namespace ProjectJUITests
 {
 struct FWorld
 {
-	UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-	AActor* Owner;
-	UProject_JInventoryComponent* Inventory;
-	UProject_JEquipmentManagerComponent* Equipment;
+	UWorld *World = UWorld::CreateWorld(EWorldType::Game, false);
+	AActor *Owner;
+	UProject_JInventoryComponent *Inventory;
+	UProject_JEquipmentManagerComponent *Equipment;
 	FWorld()
 	{
 		GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 		Owner = World->SpawnActor<AActor>();
-		Inventory = NewObject<UProject_JInventoryComponent>(Owner); Inventory->RegisterComponent();
-		Equipment = NewObject<UProject_JEquipmentManagerComponent>(Owner); Equipment->RegisterComponent();
+		Inventory = NewObject<UProject_JInventoryComponent>(Owner);
+		Inventory->RegisterComponent();
+		Equipment = NewObject<UProject_JEquipmentManagerComponent>(Owner);
+		Equipment->RegisterComponent();
 	}
-	~FWorld() { World->DestroyWorld(false); GEngine->DestroyWorldContext(World); }
+	~FWorld()
+	{
+		World->DestroyWorld(false);
+		GEngine->DestroyWorldContext(World);
+	}
 	FProject_JItemInstanceData AddHelmet()
 	{
-		auto* Definition = NewObject<UProject_JEquipmentItemDefinition>(Owner);
+		auto *Definition = NewObject<UProject_JEquipmentItemDefinition>(Owner);
 		Definition->ItemId = FName(*FGuid::NewGuid().ToString());
 		Definition->EquipmentSlot = EProject_JEquipmentSlot::Head;
 		return Inventory->AddItemDefinition(Definition);
 	}
 };
-}
+} // namespace ProjectJUITests
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIDragIdentityTest, "ProjectJ.UI.Inventory.StaleDragAndSlotValidation",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJUIDragIdentityTest::RunTest(const FString&)
+								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUIDragIdentityTest::RunTest(const FString &)
 {
 	ProjectJUITests::FWorld W;
-	const auto First = W.AddHelmet(); const auto Second = W.AddHelmet();
-	auto* Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
-	auto* Row = Model->InventoryEntries.FindByPredicate([&](const auto& Entry) { return Entry->Item.InstanceId == First.InstanceId; })->Get();
+	const auto First = W.AddHelmet();
+	const auto Second = W.AddHelmet();
+	auto *Model = NewObject<UProject_JInventoryViewModel>();
+	Model->Bind(W.Inventory, W.Equipment);
+	auto *Row = Model->InventoryEntries
+					.FindByPredicate([&](const auto &Entry) { return Entry->Item.InstanceId == First.InstanceId; })
+					->Get();
 	TestTrue(TEXT("Owned head item accepts its slot"), Model->CanDrop(Row, EProject_JEquipmentSlot::Head, false));
 	TestFalse(TEXT("Incompatible drop rejected"), Model->CanDrop(Row, EProject_JEquipmentSlot::Mount, false));
+
+	W.Equipment->CreatePersistentRequest = []() { return FGuid(); };
+	TestFalse(TEXT("Failed ticket issuance rejects equipment before pending"),
+			  Model->Equip(First.InstanceId, EProject_JEquipmentSlot::Head));
+	TestFalse(TEXT("Invalid ticket cannot strand durable UI pending"), Model->bPending);
+	W.Equipment->CreatePersistentRequest = {};
 	TestTrue(TEXT("Request uses server owned instance"), Model->Equip(First.InstanceId, EProject_JEquipmentSlot::Head));
 	TestFalse(TEXT("Standalone response clears pending synchronously"), Model->bPending);
 	FProject_JItemInstanceData Equipped;
-	TestTrue(TEXT("Authority equipped first item"), W.Equipment->GetEquippedItemInstance(EProject_JEquipmentSlot::Head, Equipped));
+	TestTrue(TEXT("Authority equipped first item"),
+			 W.Equipment->GetEquippedItemInstance(EProject_JEquipmentSlot::Head, Equipped));
 	TestEqual(TEXT("Equipped identity"), Equipped.InstanceId, First.InstanceId);
-	auto* EquipmentRow = Model->EquipmentEntries.FindByPredicate([](const auto& Entry) { return Entry->Slot == EProject_JEquipmentSlot::Head; })->Get();
-	auto* Drag = DuplicateObject<UProject_JInventoryEntry>(EquipmentRow, Model);
+	auto *EquipmentRow =
+		Model->EquipmentEntries
+			.FindByPredicate([](const auto &Entry) { return Entry->Slot == EProject_JEquipmentSlot::Head; })
+			->Get();
+	auto *Drag = DuplicateObject<UProject_JInventoryEntry>(EquipmentRow, Model);
 	TestTrue(TEXT("Second item replaces slot"), Model->Equip(Second.InstanceId, EProject_JEquipmentSlot::Head));
 	TestFalse(TEXT("Frozen drag cannot remove replacement"), Model->CanDrop(Drag, EProject_JEquipmentSlot::None, true));
 	Model->Unequip(First.InstanceId, EProject_JEquipmentSlot::Head);
 	W.Equipment->GetEquippedItemInstance(EProject_JEquipmentSlot::Head, Equipped);
-	TestEqual(TEXT("Server rejects stale identity even bypassing local validation"), Equipped.InstanceId, Second.InstanceId);
+	TestEqual(TEXT("Server rejects stale identity even bypassing local validation"), Equipped.InstanceId,
+			  Second.InstanceId);
 	Model->Unequip(Second.InstanceId, EProject_JEquipmentSlot::Head);
-	TestFalse(TEXT("Correct identity unequips"), W.Equipment->GetEquippedItemInstance(EProject_JEquipmentSlot::Head, Equipped));
-	FProject_JItemInstanceData Returned; W.Inventory->FindItemInstance(Second.InstanceId, Returned);
+	TestFalse(TEXT("Correct identity unequips"),
+			  W.Equipment->GetEquippedItemInstance(EProject_JEquipmentSlot::Head, Equipped));
+	FProject_JItemInstanceData Returned;
+	W.Inventory->FindItemInstance(Second.InstanceId, Returned);
 	TestFalse(TEXT("Unequip releases inventory lock"), Returned.bIsLocked);
-	Model->Unbind(); return true;
+	Model->Unbind();
+	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIProjectionLifetimeTest, "ProjectJ.UI.Inventory.ProjectionLifetime",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool FProjectJUIProjectionLifetimeTest::RunTest(const FString&)
+								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FProjectJUIProjectionLifetimeTest::RunTest(const FString &)
 {
-	ProjectJUITests::FWorld W; const auto Item = W.AddHelmet();
-	auto* Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
-	auto* Row = Model->InventoryEntries[0].Get();
-	Model->Refresh(); TestEqual(TEXT("Refresh preserves row identity"), Model->InventoryEntries[0].Get(), Row);
-	auto* OtherModel = NewObject<UProject_JInventoryViewModel>(); OtherModel->Bind(W.Inventory, W.Equipment);
-	TestFalse(TEXT("Cross model drag cannot cross player screen"), OtherModel->CanDrop(Row, EProject_JEquipmentSlot::Head, false));
+	ProjectJUITests::FWorld W;
+	const auto Item = W.AddHelmet();
+	auto *Model = NewObject<UProject_JInventoryViewModel>();
+	Model->Bind(W.Inventory, W.Equipment);
+	auto *Row = Model->InventoryEntries[0].Get();
+	Model->Refresh();
+	TestEqual(TEXT("Refresh preserves row identity"), Model->InventoryEntries[0].Get(), Row);
+	auto *OtherModel = NewObject<UProject_JInventoryViewModel>();
+	OtherModel->Bind(W.Inventory, W.Equipment);
+	TestFalse(TEXT("Cross model drag cannot cross player screen"),
+			  OtherModel->CanDrop(Row, EProject_JEquipmentSlot::Head, false));
 	Model->Unbind();
 	W.Inventory->SetItemInstanceLocked(Item.InstanceId, true, false);
 	W.World->GetTimerManager().Tick(0.1f);
@@ -82,17 +111,22 @@ bool FProjectJUIProjectionLifetimeTest::RunTest(const FString&)
 	TestFalse(TEXT("Closed menu clears pending"), Model->bPending);
 	Model->Bind(W.Inventory, W.Equipment);
 	TestTrue(TEXT("Reopen reads final lock state"), Model->InventoryEntries[0]->Item.bIsLocked);
-	Model->Unbind(); OtherModel->Unbind(); return true;
+	Model->Unbind();
+	OtherModel->Unbind();
+	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIRequestLifetimeTest, "ProjectJ.UI.Inventory.DelayedReplyTimeoutAndRebind",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJUIRequestLifetimeTest::RunTest(const FString &)
 {
 	TGuardValue<uint64> FrameGuard(GFrameCounter, GFrameCounter);
-	ProjectJUITests::FWorld Old; ProjectJUITests::FWorld New;
-	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(Old.Inventory, Old.Equipment);
+	ProjectJUITests::FWorld Old;
+	ProjectJUITests::FWorld New;
+	auto *Model = NewObject<UProject_JInventoryViewModel>();
+	Model->Bind(Old.Inventory, Old.Equipment);
 	const FGuid OldRequest = FGuid::NewGuid();
-	Model->PendingRequest = OldRequest; Model->bPending = true;
+	Model->PendingRequest = OldRequest;
+	Model->bPending = true;
 	Model->ArmRequestTimer(Old.World, UProject_JInventoryViewModel::ERequestKind::Bag);
 	Old.Inventory->OnUseCompleted.Broadcast(OldRequest, EProject_JItemUseResult::Success);
 	TestTrue(TEXT("Wrong operation reply cannot unlock pending bag request"), Model->bPending);
@@ -105,56 +139,90 @@ bool FProjectJUIRequestLifetimeTest::RunTest(const FString &)
 	const FText TimeoutStatus = Model->Status;
 	Old.Inventory->OnBagCompleted.Broadcast(OldRequest, EProject_JBagResult::Success);
 	TestTrue(TEXT("Late ack cannot replace timeout status"), Model->Status.EqualTo(TimeoutStatus));
-	Model->PendingRequest = FGuid::NewGuid(); Model->bPending = true;
+	Model->PendingRequest = FGuid::NewGuid();
+	Model->bPending = true;
 	Model->ArmRequestTimer(Old.World, UProject_JInventoryViewModel::ERequestKind::Equipment);
 	const FTimerHandle OldTimer = Model->RequestTimer;
 	Model->Bind(New.Inventory, New.Equipment);
-	TestFalse(TEXT("Character/source switch clears old-world timer"), Old.World->GetTimerManager().TimerExists(OldTimer));
-	const FGuid NewRequest = FGuid::NewGuid(); Model->PendingRequest = NewRequest; Model->bPending = true;
+	TestFalse(TEXT("Character/source switch clears old-world timer"),
+			  Old.World->GetTimerManager().TimerExists(OldTimer));
+	const FGuid NewRequest = FGuid::NewGuid();
+	Model->PendingRequest = NewRequest;
+	Model->bPending = true;
 	Model->ArmRequestTimer(New.World, UProject_JInventoryViewModel::ERequestKind::Bag);
 	Old.Inventory->OnBagCompleted.Broadcast(NewRequest, EProject_JBagResult::Success);
 	TestTrue(TEXT("Detached source cannot affect current player even with matching ID"), Model->bPending);
 	New.Inventory->OnBagCompleted.Broadcast(NewRequest, EProject_JBagResult::Success);
 	TestFalse(TEXT("Current reply unlocks correctly"), Model->bPending);
-	Model->Unbind(); return true;
+	const FGuid DurableRequest = FGuid::NewGuid();
+	Model->PendingRequest = DurableRequest;
+	Model->bPending = true;
+	Model->ArmRequestTimer(New.World, UProject_JInventoryViewModel::ERequestKind::Use);
+	New.Inventory->OnUseCompleted.Broadcast(DurableRequest, EProject_JItemUseResult::Pending);
+	Model->RequestTimedOut();
+	TestTrue(TEXT("Durable timeout retains original key while outcome is unresolved"),
+			 Model->bPending && Model->PendingRequest == DurableRequest);
+	New.Inventory->OnUseCompleted.Broadcast(DurableRequest, EProject_JItemUseResult::Success);
+	TestFalse(TEXT("Late confirmed durable result completes the same request"), Model->bPending);
+	Model->Unbind();
+	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIItemAggregateTest, "ProjectJ.UI.Inventory.QuickSlotAggregateProjection",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJUIItemAggregateTest::RunTest(const FString &)
 {
 	ProjectJUITests::FWorld W;
 	auto *Potion = NewObject<UProject_JConsumableDefinition>(W.Owner);
-	Potion->ItemId = TEXT("UITestPotion"); Potion->MaxStackCount = 99;
+	Potion->ItemId = TEXT("UITestPotion");
+	Potion->MaxStackCount = 99;
 	const auto Locked = W.Inventory->AddItemDefinition(Potion, 10);
 	W.Inventory->SetItemInstanceLocked(Locked.InstanceId, true, false);
 	const auto Usable = W.Inventory->AddItemDefinition(Potion, 4);
-	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
+	auto *Model = NewObject<UProject_JInventoryViewModel>();
+	Model->Bind(W.Inventory, W.Equipment);
 	const auto *Summary = Model->FindItemSummary(Potion->ItemId);
 	TestTrue(TEXT("Summary exists"), Summary != nullptr);
-	if (!Summary) { Model->Unbind(); return false; }
+	if (!Summary)
+	{
+		Model->Unbind();
+		return false;
+	}
 	TestEqual(TEXT("Quantity includes locked owned stacks"), Summary->Quantity, 14);
 	TestEqual(TEXT("Quick slot chooses an unlocked instance"), Summary->UsableInstance, Usable.InstanceId);
+	W.Inventory->CreatePersistentRequest = []() { return FGuid(); };
+	TestFalse(TEXT("Failed ticket issuance rejects use before pending"), Model->Use(Usable.InstanceId));
+	auto *UsableRow = Model->InventoryEntries
+						  .FindByPredicate([&](const auto &Row) { return Row->Item.InstanceId == Usable.InstanceId; })
+						  ->Get();
+	TestFalse(TEXT("Failed ticket issuance rejects bag change before pending"), Model->Split(UsableRow, 2));
+	TestFalse(TEXT("Unissued item/bag request never becomes pending"), Model->bPending);
+	W.Inventory->CreatePersistentRequest = {};
+
 	Model->SetFilter(TEXT("HiddenBySearch"), 1, true);
 	TestTrue(TEXT("Search hides visible rows"), Model->VisibleEntries.IsEmpty());
-	TestEqual(TEXT("Search does not change quick-slot ownership projection"), Model->FindItemSummary(Potion->ItemId)->Quantity, 14);
+	TestEqual(TEXT("Search does not change quick-slot ownership projection"),
+			  Model->FindItemSummary(Potion->ItemId)->Quantity, 14);
 	W.Inventory->SetItemStackCount(Usable.InstanceId, 3);
 	W.Inventory->RemoveItemInstance(Usable.InstanceId);
 	W.World->GetTimerManager().Tick(.1f);
 	Summary = Model->FindItemSummary(Potion->ItemId);
 	TestEqual(TEXT("Coalesced delta reads final quantity"), Summary->Quantity, 10);
 	TestFalse(TEXT("Removed item cannot remain actionable in cache"), Summary->UsableInstance.IsValid());
-	Model->Unbind(); TestNull(TEXT("Unbind releases aggregation"), Model->FindItemSummary(Potion->ItemId));
+	Model->Unbind();
+	TestNull(TEXT("Unbind releases aggregation"), Model->FindItemSummary(Potion->ItemId));
 	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJUIEntryGenerationTest, "ProjectJ.UI.Inventory.DetachedEntryGeneration",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+								 EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FProjectJUIEntryGenerationTest::RunTest(const FString &)
 {
 	ProjectJUITests::FWorld W;
 	auto *Potion = NewObject<UProject_JConsumableDefinition>(W.Owner);
-	Potion->ItemId = TEXT("GenerationPotion"); Potion->MaxStackCount = 99;
+	Potion->ItemId = TEXT("GenerationPotion");
+	Potion->MaxStackCount = 99;
 	const auto Item = W.Inventory->AddItemDefinition(Potion, 10);
-	auto *Model = NewObject<UProject_JInventoryViewModel>(); Model->Bind(W.Inventory, W.Equipment);
+	auto *Model = NewObject<UProject_JInventoryViewModel>();
+	Model->Bind(W.Inventory, W.Equipment);
 	auto *Snapshot = DuplicateObject<UProject_JInventoryEntry>(Model->InventoryEntries[0], Model);
 	TStrongObjectPtr<UProject_JInventoryViewModel> KeepModel(Model);
 	TWeakObjectPtr<UProject_JInventoryEntry> OldEntry(Snapshot);
@@ -167,11 +235,13 @@ bool FProjectJUIEntryGenerationTest::RunTest(const FString &)
 	TestFalse(TEXT("Old keyboard/mouse activation rejected"), Model->Activate(Snapshot));
 	TestFalse(TEXT("Old merge rejected"), Model->CanDropInBag(Snapshot, Model->InventoryEntries[0], true));
 	TestTrue(TEXT("Rebound row is current"), Model->IsCurrentEntry(Model->InventoryEntries[0]));
-	FProject_JItemInstanceData Current; W.Inventory->FindItemInstance(Item.InstanceId, Current);
+	FProject_JItemInstanceData Current;
+	W.Inventory->FindItemInstance(Item.InstanceId, Current);
 	TestEqual(TEXT("Rejected actions preserve authority count"), Current.StackCount, 10);
 	for (int32 Index = 0; Index < 100; ++Index)
 	{
-		Model->Unbind(); Model->Bind(W.Inventory, W.Equipment);
+		Model->Unbind();
+		Model->Bind(W.Inventory, W.Equipment);
 		TestEqual(TEXT("Repeated binding does not accumulate rows"), Model->InventoryEntries.Num(), 1);
 	}
 	Model->Unbind();

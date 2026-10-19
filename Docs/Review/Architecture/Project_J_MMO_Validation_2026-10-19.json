@@ -1,0 +1,944 @@
+{
+  "schemaVersion": 1,
+  "validationDate": "2026-10-19",
+  "validationBaseHead": "45f55444c9ca764386b8867a1063d7ee6025a5f3",
+  "basis": "Previously completed native validation; this documentation update did not rerun builds/tests.",
+  "scope": "Windows Development, standalone opt-in; network/Shipping persistence disabled",
+  "internalRemainingA": 0,
+  "source": {
+    "files": 880,
+    "manifestSha256": "1126049e8408915f18168b0caabdd7715654635713075bf1b1702da4f769c5fa",
+    "manifestEncoding": "UTF-8 of sorted path + NUL + lowercase raw-file SHA256 + LF; paths relative to repository; Windows checkout bytes",
+    "matchesAtDocumentationUpdate": true,
+    "latestChangedSourceFiles": [
+      "Source/Project_J/Backend/Project_JLocalProfileSubsystem.cpp",
+      "Source/Project_J/Backend/Project_JLocalProfileSubsystem.h",
+      "Source/Project_J/Backend/Project_JProfileDatabase.cpp",
+      "Source/Project_J/Backend/Project_JProfileDatabase.h",
+      "Source/Project_J/Backend/Project_JProfileMigration.cpp",
+      "Source/Project_J/Backend/Project_JProfileMigration.h",
+      "Source/Project_J/Backend/Project_JSQLiteRepository.cpp",
+      "Source/Project_J/Backend/Project_JSQLiteRepository.h",
+      "Source/Project_J/Game/Project_JQuestComponent.cpp",
+      "Source/Project_J/Game/Project_JQuestComponent.h",
+      "Source/Project_J/UI/Project_JInventoryViewModel.cpp",
+      "Source/Project_J/Private/Tests/Project_JInventoryUITests.cpp",
+      "Source/Project_J/Private/Tests/Project_JMMOArchitectureReceiver.h",
+      "Source/Project_J/Private/Tests/Project_JPersistenceTests.cpp",
+      "Source/Project_J/Private/Tests/Project_JProfileBoundedRecoveryTests.cpp",
+      "Source/Project_J/Private/Tests/Project_JProfileGameRetentionTests.cpp",
+      "Source/Project_J/Private/Tests/Project_JProfileMigrationTests.cpp",
+      "Source/Project_J/Private/Tests/Project_JProfileRetentionTests.cpp",
+      "Source/Project_J/Private/Tests/Project_JProfileRuntimeCoverageTests.cpp",
+      "Source/Project_JCharacter/Private/Project_JBaseCharacter.cpp",
+      "Source/Project_JCharacter/Public/Project_JBaseCharacter.h",
+      "Source/Project_JCharacter/Private/CharacterClass/Project_JProgressionComponent.cpp",
+      "Source/Project_JCharacter/Private/Components/Project_JEquipmentManagerComponent.cpp",
+      "Source/Project_JCharacter/Private/Components/Project_JInventoryComponent.cpp",
+      "Source/Project_JCharacter/Public/CharacterClass/Project_JCharacterDataSubsystem.h",
+      "Source/Project_JCharacter/Public/CharacterClass/Project_JProgressionComponent.h",
+      "Source/Project_JCharacter/Public/Components/Project_JEquipmentManagerComponent.h",
+      "Source/Project_JCharacter/Public/Components/Project_JInventoryComponent.h",
+      "Source/Project_JCharacter/Public/Inventory/Project_JPersistentEdit.h",
+      "Source/Project_JCharacterEditor/Private/Animation/Project_JProfileConsumerDiagnostics.cpp",
+      "Source/Project_JMMO/Public/MMO/Repository.h"
+    ]
+  },
+  "directBuilds": {
+    "Editor7": {
+      "exitCode": 0,
+      "elapsedSeconds": 285.0659735,
+      "directUBT": true,
+      "fullTarget": true,
+      "target": "Project_JEditor"
+    },
+    "GameBuild1": {
+      "exitCode": 0,
+      "elapsedSeconds": 212.4351633,
+      "directUBT": true,
+      "fullTarget": true,
+      "target": "Project_J"
+    },
+    "ServerBuild1": {
+      "exitCode": 6,
+      "elapsedSeconds": 0.7854075,
+      "directUBT": true,
+      "fullTarget": true,
+      "target": "Project_JServer"
+    }
+  },
+  "serverBuild": "Blocked: Server targets are not currently supported from this engine distribution.",
+  "integration": {
+    "unique": 117,
+    "succeeded": 114,
+    "succeededWithWarnings": 3,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "name": "ProjectJ.Animation.Naturalness.AirLoopOutput",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotReturn.CommandOwnership",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Animation.StateOwnership.GroundModeSource",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Animation.StateOwnership.RemoteJumpFreshness",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Animation.OneShotModeContinuity",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.EnvelopeValidation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.NotificationReentrancy",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.PlayerCharacterSerialization",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.StateMachine",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Architecture.Handover.TransportReentrancy",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Combat.MeleeLifetime",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHistoricalSweepInterpolation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Combat.SSRHitWindowProductionTransition",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Components.LocomotionCadence",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.AbilitySetEffectLevel",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.ActiveMoveReentry",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.EquipmentGrantIdentity",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.EquipmentStatLease",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.EquipmentStatTuple",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.HandoverConfiguration",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.LoopbackFiniteClock",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.MountAttachRetired",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.MountControllerReassigned",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.MountPhaseSuperseded",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.MountReplicatedReplacement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.PlayerHandoverLevelAdmission",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.ProgressionLevelAdmission",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.ProgressionRestoreRetirement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.QuestRewardRollback",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.QueuedInputOrigin",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.RouterCancelReentry",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Continuation.UISkillReleaseOwnership",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.BranchesAndGrants",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.GraphValidation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Extension.Progression.PlayerStateRespawn",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Input.MouseChordLifecycle",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Integrated.PresentationRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Input.CommandAliasRelease",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Input.Rebinding",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.AnimationOwnerLoss",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.FlightTickLifecycle",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.HealthSingleSource",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Internal.Mount.InputBindingOwnership",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Maturity.Backend.MutationOutcome",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Maturity.Mount.LandingRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.Maturity.Social.GroupSnapshot",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.EquipmentProjection",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.GatewayBounds",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.GatewayRealHTTP",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.InventoryCommandIdentity",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.SharedCommandBudget",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Architecture.SocialSessionRevocation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.MultiOwner",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Coordination.RequestLifetime",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Gateway.AdmissionAndShutdown",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.ActualInventoryLongRun",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.BoundedProfileStream",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.BoundedRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.FailureAndLateCompletion",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.LocalProfileLifecycle",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.Migration",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.ProcessRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.ProfileCodec",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.RuntimeFrequencyAndProgression",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Persistence.SQLiteContract",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.AtomicReplay",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.BoundsAndTombstones",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Repository.ConcurrentWriters",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MMO.Catalog",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MountDismountMotion.SuccessAndRejection",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.MountRemount.RetainedInputRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.PCStructure.AuthoredClassGrantOwnership",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.PCStructure.IdentityProjectionDetach",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.PCStructure.IdentityRetirement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.PivotMountFollowup.Mount.UnequalCapsuleFloorExit",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.Equipment",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.EquipmentProvider",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.AggregateRetirement.Inventory",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.DestroyedCombatBinding",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.EquipmentCommitLifetime",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.InputBindingReentry",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.InputRetirement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.LocomotionTagLease",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.ProgressionRetirement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.RuntimeOwnership.QuestRetirement",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit.BagUnequip",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit.ConsumableContinuation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit.EquipmentNetwork",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit.SSRExecution",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit.TIPBudget",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.AirReselectionCommand",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.ConsumedUnavailableUI",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.ReadOnlyAssetUsage",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.RejectedComboStart",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.RemoteJumpDeadline",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit2.SharedSkillHold",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.BegunMountComponentDestroy",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.BudgetAuthoringContract",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.CueDeltaRecovery",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.DismountPossession",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.ExternalActorPackageOwnership",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.HandoverReplayLifetime",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.MovementOwnerAndTimers",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.RetainedAvatarEquipment",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.SourceAudit3.SharedMontageRate",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.StrafePivot.CardinalSelection",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.StrafePivot.ConsecutiveReversals",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.StrafePivot.RedirectBasis",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.ConsumableAuthorityAndCooldown",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.ExperienceRewardsAndSnapshots",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.InventoryFiltering",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.LargeProjectionStability",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.MapCoordinates",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.PreferencesSaveValidation",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Compact.QuestRewardReplayAndRestore",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Inventory.DelayedReplyTimeoutAndRebind",
+        "state": "Success"
+      },
+      {
+        "name": "ProjectJ.UI.Inventory.QuickSlotAggregateProjection",
+        "state": "Success"
+      }
+    ]
+  },
+  "warningTests": [
+    "ProjectJ.Input.MouseChordLifecycle",
+    "ProjectJ.MMO.Architecture.GatewayRealHTTP",
+    "ProjectJ.SourceAudit3.RetainedAvatarEquipment"
+  ],
+  "freshValidationSteps": [
+    {
+      "name": "Integration2",
+      "seconds": 436.7874607,
+      "passed": true
+    },
+    {
+      "name": "MainWorldLoad2",
+      "seconds": 15.4461049,
+      "passed": true
+    },
+    {
+      "name": "Assets1",
+      "seconds": 85.0377616,
+      "passed": true
+    },
+    {
+      "name": "NativeCrashRecoveryFinal",
+      "seconds": 174.255736,
+      "passed": true
+    },
+    {
+      "name": "BoundedCrashRecovery",
+      "seconds": 170.3023598,
+      "passed": true
+    },
+    {
+      "name": "RetentionProcessWrite",
+      "seconds": 166.1445811,
+      "passed": true
+    },
+    {
+      "name": "RetentionProcessRead",
+      "seconds": 15.868722,
+      "passed": true
+    },
+    {
+      "name": "ActualInventoryProcessWrite",
+      "seconds": 152.538084,
+      "passed": true
+    },
+    {
+      "name": "ActualInventoryProcessRead",
+      "seconds": 15.9765466,
+      "passed": true
+    },
+    {
+      "name": "MigrationCLI",
+      "seconds": 215.8986186,
+      "passed": true
+    },
+    {
+      "name": "BlueprintConsumers",
+      "seconds": 24.9030327,
+      "passed": true
+    },
+    {
+      "name": "EditorStandaloneFirst",
+      "seconds": 37.4990995,
+      "passed": true
+    },
+    {
+      "name": "EditorStandaloneSecond",
+      "seconds": 29.5181262,
+      "passed": true
+    },
+    {
+      "name": "DefaultNetwork",
+      "seconds": 70.4429539,
+      "passed": true
+    },
+    {
+      "name": "PrepareNetwork1",
+      "seconds": 29.5252642,
+      "passed": true
+    },
+    {
+      "name": "LagLossNetwork2",
+      "seconds": 67.3944576,
+      "passed": true
+    },
+    {
+      "name": "ReorderLossNetwork",
+      "seconds": 54.8456687,
+      "passed": true
+    },
+    {
+      "name": "RetireNetworkFixtures",
+      "seconds": 0.0866002,
+      "passed": true
+    },
+    {
+      "name": "GameBuild1",
+      "seconds": 213.0319795,
+      "passed": true
+    },
+    {
+      "name": "ServerEnvironment",
+      "seconds": 1.3538079,
+      "passed": true
+    },
+    {
+      "name": "MainWorldCook",
+      "seconds": 67.8344518,
+      "passed": true
+    },
+    {
+      "name": "MainWorldStage",
+      "seconds": 46.6148283,
+      "passed": true
+    },
+    {
+      "name": "PackagedFirst",
+      "seconds": 14.5246552,
+      "passed": true
+    },
+    {
+      "name": "PackagedSecond",
+      "seconds": 13.9950858,
+      "passed": true
+    },
+    {
+      "name": "PackagedMainWorld",
+      "seconds": 14.0040822,
+      "passed": true
+    },
+    {
+      "name": "EditorToPackage",
+      "seconds": 13.9967427,
+      "passed": true
+    },
+    {
+      "name": "PackageToEditor",
+      "seconds": 43.8877113,
+      "passed": true
+    }
+  ],
+  "recovery": [
+    {
+      "kind": "Final",
+      "nativeProcesses": 12,
+      "ownedSelfExit99": 4,
+      "normalExit0": 8,
+      "passed": true
+    },
+    {
+      "kind": "Bounded",
+      "nativeProcesses": 12,
+      "ownedSelfExit99": 4,
+      "normalExit0": 8,
+      "passed": true
+    }
+  ],
+  "migration": {
+    "nativeCommandlets": 16,
+    "originalSha256Before": "2C7C6A23E737E389B19E229F432668104EDFBE36CB4B9CA90F02196C230A047A",
+    "originalSha256After": "2C7C6A23E737E389B19E229F432668104EDFBE36CB4B9CA90F02196C230A047A",
+    "liveUserDataSwitch": false,
+    "actualUserDatabase": "No target at inspected normal project/user locations"
+  },
+  "storage": {
+    "containerVersion": 2,
+    "snapshotVersion": 2,
+    "recordSchemaVersion": 1,
+    "economicSequenceWindow": 64,
+    "checkpointResultsPerCharacter": 1,
+    "nativeWriteIterations": 16384,
+    "actualInventoryCommands": 12289,
+    "backupLimit": 8,
+    "wallClockBasedExpiry": false
+  },
+  "measurements": [
+    "[2026.10.19-11.28.13:733][595]LogTemp: Display: Actual inventory command soak confirmed=4096 profileRevision=4098 nativeJobs=1 seconds=41.230",
+    "[2026.10.19-11.28.55:503][494]LogTemp: Display: Actual inventory command soak confirmed=8192 profileRevision=8194 nativeJobs=1 seconds=83.000",
+    "[2026.10.19-11.29.37:164][390]LogTemp: Display: Actual inventory command soak confirmed=12288 profileRevision=12290 nativeJobs=1 seconds=124.660",
+    "[2026.10.19-11.29.46:041][456]LogTemp: Display: Retention synthetic native: sequence=1024 records=2 receipts=65 bytes=380928 seconds=8.790",
+    "[2026.10.19-11.29.59:882][117]LogTemp: Display: Retention synthetic native: sequence=2048 records=2 receipts=65 bytes=380928 seconds=22.631",
+    "[2026.10.19-11.30.13:457][746]LogTemp: Display: Retention synthetic native: sequence=3072 records=2 receipts=65 bytes=380928 seconds=36.206",
+    "[2026.10.19-11.30.27:210][397]LogTemp: Display: Retention synthetic native: sequence=4096 records=2 receipts=65 bytes=380928 seconds=49.960",
+    "[2026.10.19-11.30.41:510][113]LogTemp: Display: Retention synthetic native: sequence=5120 records=2 receipts=65 bytes=380928 seconds=64.259",
+    "[2026.10.19-11.30.55:587][802]LogTemp: Display: Retention synthetic native: sequence=6144 records=2 receipts=65 bytes=380928 seconds=78.336",
+    "[2026.10.19-11.31.10:169][552]LogTemp: Display: Retention synthetic native: sequence=7168 records=2 receipts=65 bytes=380928 seconds=92.919",
+    "[2026.10.19-11.31.24:366][255]LogTemp: Display: Retention synthetic native: sequence=8192 records=2 receipts=65 bytes=380928 seconds=107.116",
+    "[2026.10.19-11.31.38:944][  5]LogTemp: Display: Retention synthetic native: sequence=9216 records=2 receipts=65 bytes=380928 seconds=121.693",
+    "[2026.10.19-11.31.53:152][710]LogTemp: Display: Retention synthetic native: sequence=10240 records=2 receipts=65 bytes=380928 seconds=135.901",
+    "[2026.10.19-11.32.08:045][497]LogTemp: Display: Retention synthetic native: sequence=11264 records=2 receipts=65 bytes=380928 seconds=150.794",
+    "[2026.10.19-11.32.22:888][278]LogTemp: Display: Retention synthetic native: sequence=12288 records=2 receipts=65 bytes=380928 seconds=165.638",
+    "[2026.10.19-11.32.37:047][977]LogTemp: Display: Retention synthetic native: sequence=13312 records=2 receipts=65 bytes=380928 seconds=179.797",
+    "[2026.10.19-11.32.51:646][729]LogTemp: Display: Retention synthetic native: sequence=14336 records=2 receipts=65 bytes=380928 seconds=194.395",
+    "[2026.10.19-11.33.05:964][447]LogTemp: Display: Retention synthetic native: sequence=15360 records=2 receipts=65 bytes=380928 seconds=208.714",
+    "[2026.10.19-11.33.20:733][219]LogTemp: Display: Retention synthetic native: sequence=16384 records=2 receipts=65 bytes=380928 seconds=223.482",
+    "[2026.10.19-11.34.15:503][790]LogTemp: Display: Actual wall-clock profile measurement seconds=50.010 records=2 receipts=46 revisionDelta=79 xp=20 stack=20 travel=39 unchangedCalls=1199 (controlled movement, not an extrapolated 34-minute lifetime)",
+    "[2026.10.19-11.34.15:537][794]LogTemp: Display: Actual category delta: finalObjective+claim records=0 receipts=1 profileRevisions=2 claimXP=7"
+  ],
+  "blueprintConsumers": {
+    "assets": 10,
+    "graphs": 18,
+    "functionNodes": 8,
+    "hits": [],
+    "saves": 0
+  },
+  "assets": {
+    "validated": 94,
+    "failed": 0,
+    "skipped": 0,
+    "unable": 0,
+    "equipment": 1,
+    "quest": 1,
+    "locomotion": 1,
+    "montages": 91
+  },
+  "world": {
+    "passed": true,
+    "map": "/Game/World/MainWorld/Maps/L_MainWorld.L_MainWorld",
+    "places": 20,
+    "source_plan_sha256": "566d3e859cfa597312ad64bb2d259c3561573eadc8e212fd176387c036c178c2",
+    "height_sha256": "bc3a7957a44629beb807d4a453443e9d02e48981be0cfb93d5054432c077f8c8",
+    "loaded_actors": 16,
+    "world_state_count": 1,
+    "game_dependency_closure": 3581,
+    "missing": [],
+    "dirty_content": [],
+    "dirty_maps": [],
+    "packages_saved": 0,
+    "all_streaming_cells_loaded": false,
+    "visual_quality_verified": false
+  },
+  "originalContentAtValidation": {
+    "files": 14409,
+    "modifiedOrMissing": 0,
+    "trackedAssetsPresent": 14310,
+    "lfsPointerPlaceholders": 0
+  },
+  "runtimeFingerprint": [
+    {
+      "path": "Binaries/Win64/Project_J.exe",
+      "bytes": 347118592,
+      "sha256": "170d437ac9481d13cc0d59d32fd4aaf58a6246eca2ec15f6174ed0e3254271cc"
+    },
+    {
+      "path": "Saved/Validation/Continuation_20261014/MMOFinish_20261019_MainWorldStage/Package/Windows/Project_J/Binaries/Win64/Project_J.exe",
+      "bytes": 347118592,
+      "sha256": "170d437ac9481d13cc0d59d32fd4aaf58a6246eca2ec15f6174ed0e3254271cc"
+    }
+  ],
+  "editorDLLFingerprints": [
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J (1).dll",
+      "bytes": 987136,
+      "sha256": "c4ca1541a2afc45a9b39e18fcc96f9bd9f21bf458d5356a020c1f9e075f2308b"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J-Win64-DebugGame.dll",
+      "bytes": 1708544,
+      "sha256": "df9925edbe16a83797d47d28abc1866b4607f9a5c94c1f04fa55d4da5e8e5bad"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_J.dll",
+      "bytes": 3888640,
+      "sha256": "ed023a6777f55adc3b6f9c58d8160ead4e9926985cbfc6a3a9e1b169a7309db6"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JAnimationNodes.dll",
+      "bytes": 200704,
+      "sha256": "f8dcd96a3f47027f293c338ccf5203e5e31b4c06deab2466837556d59d3ae2cc"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter (1).dll",
+      "bytes": 3468800,
+      "sha256": "a579efc8fdf7cd4032d8a650b71c17bb1d769a7eb7c019faf2336231ded18804"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter-Win64-DebugGame.dll",
+      "bytes": 5561856,
+      "sha256": "7fb26796b79bae3a660f10656151652922176432a05cfa9365fde2f969950848"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacter.dll",
+      "bytes": 5774848,
+      "sha256": "ddfc008f2989da2f4af2b8e5ef265c0c3769df1fb462a4ecfdc8456f88c57836"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacterEditor-Win64-DebugGame.dll",
+      "bytes": 487936,
+      "sha256": "4f68aa270d42ebc73dbf42912917e849880d1b8b415525fca5f79aa8e7acf508"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCharacterEditor.dll",
+      "bytes": 1008640,
+      "sha256": "a78958b32facf5723b3125e1d487a4a6ff76b59ea9c3e00f70028aa936064b96"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCore-Win64-DebugGame.dll",
+      "bytes": 878080,
+      "sha256": "f7b43b55ff5f77033c6713bd9fa56c82848ffa56f39ec53876ccfc9b9b81d57c"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JCore.dll",
+      "bytes": 494080,
+      "sha256": "acda57c5ae8f100dac1d7fbc48e544f9089c5889ef90103da8eb42fd5b8d085f"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JGAS-Win64-DebugGame.dll",
+      "bytes": 252928,
+      "sha256": "87be94c5085979d78d8b6b9412d3e4ceb8de8a8cfb93b2815e9644dc6663db67"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JGAS.dll",
+      "bytes": 200704,
+      "sha256": "2af54aecc37566f2cd93c47f6819996b591528d2e3ad67020d3c9353936efc67"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JMMO-Win64-DebugGame.dll",
+      "bytes": 396288,
+      "sha256": "3a6f68beaee3656916ec16cd7e61396a0ab730c2137c4450b966c2b46cadcd54"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JMMO.dll",
+      "bytes": 199168,
+      "sha256": "e0c06bbd44f3db15c64f525fdde164397e27db4966d5ce363a699654279462ac"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JMount-Win64-DebugGame.dll",
+      "bytes": 564224,
+      "sha256": "ecae617b503e8d3c9be11df0d15501dacaf6c609997a364dc0b04660212bb28e"
+    },
+    {
+      "path": "Binaries/Win64/UnrealEditor-Project_JMount.dll",
+      "bytes": 531968,
+      "sha256": "44a838245efdc2a1cf4454c4d0856e764255bbc380897f3876438fcfbe46fe3f"
+    }
+  ],
+  "cleanup": {
+    "targets": 70,
+    "logicalRemovedBytes": 5626996406,
+    "observedDriveFreeDelta": 3170107392,
+    "retainedFiles": 114,
+    "retainedBytes": 36358402,
+    "causes": [
+      {
+        "cause": "owned build diagnostics",
+        "bytes": 98,
+        "targets": 1
+      },
+      {
+        "cause": "isolated user caches and fixtures",
+        "bytes": 1782031753,
+        "targets": 50
+      },
+      {
+        "cause": "one-shot patch staging",
+        "bytes": 88871,
+        "targets": 14
+      },
+      {
+        "cause": "network trace",
+        "bytes": 18137421,
+        "targets": 3
+      },
+      {
+        "cause": "Cook outputs",
+        "bytes": 536046117,
+        "targets": 1
+      },
+      {
+        "cause": "stage/package/debug copies",
+        "bytes": 3290692146,
+        "targets": 1
+      }
+    ]
+  },
+  "externalRequirements": [
+    "HTTPS service DTO/endpoints and UnknownOutcome reconciliation",
+    "Token issuer/audience/key supply/rotation and account-character/group ownership authority",
+    "Server directory/reservation/one-use ticket/destination and ownership epoch contract",
+    "Engine distribution supporting Server target",
+    "Windows/UE5.8/toolchain/LFS CI runner and repository gate permissions"
+  ],
+  "limits": [
+    "Windows Development standalone opt-in; network/Shipping profile persistence disabled",
+    "No production authentication/backend/real server migration completion claim",
+    "No physical power-loss/disk-hardware/other-platform or manual visual-quality validation",
+    "Full streaming-cell load was not asserted"
+  ],
+  "localEvidence": {
+    "root": "Saved/MMOArchitectureFinish_20261019",
+    "availability": "Ignored local evidence; not part of this shared summary. See retained manifest for retired User/package paths.",
+    "approvedIdleInspectionStop": true,
+    "finalBlueprintCommandletExit": 0,
+    "finalNativeProcesses": 0
+  }
+}

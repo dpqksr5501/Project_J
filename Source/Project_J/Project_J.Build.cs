@@ -29,6 +29,7 @@ public class Project_J : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
+			"SQLiteCore",
 			"HTTP",
 			"Json",
 			"JsonUtilities",
@@ -39,6 +40,7 @@ public class Project_J : ModuleRules
 
 		if (Target.bBuildEditor)
 		{
+			PrivateDependencyModuleNames.Add("Sockets"); // Local HTTP integration fixture, compiled only WITH_EDITOR.
 			PrivateDependencyModuleNames.Add("AnimationBudgetAllocator");
 			PrivateDependencyModuleNames.Add("Project_JMount");
 			PrivateDependencyModuleNames.Add("Project_JAnimationNodes");

@@ -42,6 +42,8 @@ public:
 
 private:
 	friend class FProjectJGatewayAdmissionTest;
+	friend class FProjectJGatewayBoundsTest;
+	friend class FProjectJGatewayHTTPTest;
 	void DispatchTrackedRequest(const FString& Endpoint, const FString& Payload,
 		const FProject_JBackendRequestContext& RequestContext,
 		TFunction<void(const FProject_JBackendResponseEnvelope&)> Completion);
@@ -51,6 +53,10 @@ private:
 	int32 MaxInFlightRequests = 128;
 	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend", meta = (ClampMin = "1.0"))
 	float RequestTimeoutSeconds = 15.0f;
+	UPROPERTY(Config, EditDefaultsOnly, Category="Backend", meta=(ClampMin="1", ClampMax="16777216"))
+	int32 MaxRequestBytes = 262144;
+	UPROPERTY(Config, EditDefaultsOnly, Category="Backend", meta=(ClampMin="1", ClampMax="16777216"))
+	int32 MaxResponseBytes = 1048576;
 	/** Remote telemetry is opt-in. Do not enable it without a production HTTPS endpoint and a server-side redaction policy. */
 	UPROPERTY(Config, EditDefaultsOnly, Category = "Backend|Telemetry")
 	bool bEnableRemoteTelemetry = false;

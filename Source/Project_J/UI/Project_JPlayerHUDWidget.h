@@ -243,6 +243,9 @@ class PROJECT_J_API UProject_JPlayerHUDWidget : public UUserWidget
 	UPROPERTY() TObjectPtr<UTextBlock> BagSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SettingsSummary;
 	UPROPERTY() TObjectPtr<UTextBlock> SaveStatus;
+	UPROPERTY() TObjectPtr<UTextBlock> ProfileSaveStatus;
+	FText LastProfileSaveStatus;
+	float ProfileStatusElapsed=0.f;
 	UPROPERTY() TObjectPtr<class UProject_JUICommandButton> SaveRetry;
 	TWeakObjectPtr<class UProject_JUILayoutSettings> LayoutSettings;
 	void RefreshSaveStatus();

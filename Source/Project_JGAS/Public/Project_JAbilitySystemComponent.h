@@ -27,6 +27,10 @@ public:
 	/** Refresh cached controller/component metadata only for the current owner/avatar. */
 	bool RefreshActorInfoForCurrentActor(AActor* Requester);
 	UProject_JAbilitySystemComponent();
+	virtual void InitAbilityActorInfo(AActor* InOwnerActor,AActor* InAvatarActor) override;
+	virtual void ClearActorInfo() override;
+	/** Runtime recipient epoch, separate from ability grant leases. Not persisted. */
+	uint64 GetActorInfoRevision() const { return ActorInfoRevision; }
 
 	void AddProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
 	void RemoveProjectJLooseGameplayTag(const FGameplayTag& GameplayTag, bool bReplicateOnAuthority = true);
@@ -48,4 +52,5 @@ private:
 	bool HasGameplayTagReplicationAuthority() const;
 	TMap<FName, FProject_JAbilityGrantRecord> AbilityGrantRecords;
 	uint64 NextAbilityGrantGeneration = 0;
+	uint64 ActorInfoRevision=0;
 };

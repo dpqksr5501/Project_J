@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3307개, Markdown 256개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3310개, Markdown 258개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -207,6 +207,8 @@
 | [MMORPG Architecture Review](../Review/Architecture/MMORPGArchitectureReview.md) | 검토 기록 | Review/Architecture/MMORPGArchitectureReview.md |
 | [잔여 소스 아키텍처 고도화 적용 기록](../Review/Architecture/Project_J_Architecture_Maturity_Implementation_2026-10-03.md) | 검토 기록 | Review/Architecture/Project_J_Architecture_Maturity_Implementation_2026-10-03.md |
 | [캐릭터 컴포넌트·DA·아키텍처 고도화 점검](../Review/Architecture/Project_J_Character_Architecture_Maturity_Audit_2026-10-03.md) | 검토 기록 | Review/Architecture/Project_J_Character_Architecture_Maturity_Audit_2026-10-03.md |
+| [MMORPG 아키텍처 검토와 현재 실행 경계](../Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md) | 검토 기록 | Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md |
+| [MMO 아키텍처 잔여 작업 — 현재 단일 상태표](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md) | 검토 기록 | Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md |
 | [이동 중 하차 후 탈것 이동 정리 — 2026-10-05](../Review/Architecture/Project_J_Mount_Dismount_Motion_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Dismount_Motion_2026-10-05.md |
 | [재탑승 후 F·이동 입력 복구 — 2026-10-05](../Review/Architecture/Project_J_Mount_Remount_Input_2026-10-05.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Remount_Input_2026-10-05.md |
 | [F 하차·TAB Strafe 방향 전환 수정](../Review/Architecture/Project_J_Mount_Strafe_Fix_2026-10-04.md) | 검토 기록 | Review/Architecture/Project_J_Mount_Strafe_Fix_2026-10-04.md |
@@ -352,7 +354,7 @@
 | [Maintenance]() | 3 | 문서 이동·보존 기록 |
 | [Performance/Reports](../Performance/Reports) | 1 | 문서 이동·보존 기록 |
 | [Reference](../Reference) | 2 | 참고 TXT 원문 |
-| [Review/Architecture](../Review/Architecture) | 11 | 문서 이동·보존 기록 |
+| [Review/Architecture](../Review/Architecture) | 12 | 문서 이동·보존 기록 |
 | [Review/Audits](../Review/Audits) | 1 | 문서 이동·보존 기록 |
 | [Review/Audits/AssetArchitectureEvidence_2026-10-15](../Review/Audits/AssetArchitectureEvidence_2026-10-15) | 4 | 문서 이동·보존 기록 |
 | [Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015](../Review/Audits/AssetArchitectureEvidence_2026-10-15/Receipts/Validation/AssetCleanup_20261015) | 2 | 문서 이동·보존 기록 |

@@ -5,6 +5,17 @@
 #include "GameFramework/Actor.h"
 #include "Project_JCombatInterface.h"
 
+void UProject_JAbilitySystemComponent::InitAbilityActorInfo(AActor* Owner,AActor* Avatar)
+{
+	check(IsInGameThread());if(++ActorInfoRevision==0)++ActorInfoRevision;
+	Super::InitAbilityActorInfo(Owner,Avatar);
+}
+void UProject_JAbilitySystemComponent::ClearActorInfo()
+{
+	check(IsInGameThread());if(++ActorInfoRevision==0)++ActorInfoRevision;
+	Super::ClearActorInfo();
+}
+
 UProject_JAbilitySystemComponent::UProject_JAbilitySystemComponent()
 {
 	// Preserve GAS/GameplayTasks tick capability. The engine's GetShouldTick /

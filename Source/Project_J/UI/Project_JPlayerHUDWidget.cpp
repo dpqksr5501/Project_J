@@ -4,6 +4,9 @@
 #include "UI/Project_JHUDWindow.h"
 #include "UI/Project_JMinimapWidget.h"
 #include "Game/Project_JQuestComponent.h"
+#include "Game/Project_JPlayerState.h"
+#include "Backend/Project_JLocalProfileSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Inventory/Project_JConsumableDefinition.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
@@ -271,6 +274,9 @@ void UProject_JPlayerHUDWidget::BuildDefaultScreen()
 	Settings->BodyBox->AddChildToVerticalBox(SaveStatus);
 	SaveRetry = Command(TEXT("RetrySave"), NSLOCTEXT("ProjectJUI", "RetrySave", "저장 다시 시도"));
 	Settings->BodyBox->AddChildToVerticalBox(SaveRetry);
+	ProfileSaveStatus=Text(FText::GetEmpty(),10);
+	ProfileSaveStatus->SetAutoWrapText(true);
+	Settings->BodyBox->AddChildToVerticalBox(ProfileSaveStatus);
 	auto *KeysWindow = AddWindow(TEXT("Keys"), NSLOCTEXT("ProjectJUI", "KeysTitle", "단축키 설정"), FVector2D(310, 410));
 	KeysStatus = Text(NSLOCTEXT("ProjectJUI", "KeysHelp", "변경할 항목 클릭 · 숫자/I/K/O/U/F1~F12"), 11);
 	KeysStatus->SetAutoWrapText(true);
@@ -474,6 +480,15 @@ void UProject_JPlayerHUDWidget::ApplyMenuLayout()
 void UProject_JPlayerHUDWidget::NativeTick(const FGeometry &Geometry, float DeltaTime)
 {
 	Super::NativeTick(Geometry, DeltaTime);
+	ProfileStatusElapsed+=DeltaTime;
+	if(ProfileSaveStatus&&ProfileStatusElapsed>=.25f)
+	{
+		ProfileStatusElapsed=0.f;
+		auto* Profiles=GetGameInstance()?GetGameInstance()->GetSubsystem<UProject_JLocalProfileSubsystem>():nullptr;
+		auto* PC=GetOwningPlayer();
+		const FText Current=Profiles?Profiles->GetStatusText(PC?PC->GetPlayerState<AProject_JPlayerState>():nullptr):FText::GetEmpty();
+		if(!Current.EqualTo(LastProfileSaveStatus)){LastProfileSaveStatus=Current;ProfileSaveStatus->SetText(Current);}
+	}
 	// Geometry/DPI only; gameplay presentation stays delegate driven.
 	if (ScreenCanvas && !ScreenCanvas->GetCachedGeometry().GetLocalSize().Equals(LastCanvasExtent))
 		ApplyMenuLayout();

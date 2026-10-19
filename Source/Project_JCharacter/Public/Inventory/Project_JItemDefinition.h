@@ -19,6 +19,9 @@ public:
 	// Unique identifier for items of this type
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FName ItemId;
+	/** Persisted semantic definition version, independent of UObject/package GUID. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta=(ClampMin="1"))
+	int32 SchemaVersion = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText ItemName;

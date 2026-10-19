@@ -1,6 +1,8 @@
 #include "CharacterClass/Project_JCharacterDataSubsystem.h"
 #include "CharacterClass/Project_JCharacterClassDefinition.h"
 #include "Project_JBaseCharacter.h"
+#include "Engine/AssetManager.h"
+#include "Inventory/Project_JItemDefinition.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectJCharacterData, Log, All);
 
@@ -18,6 +20,7 @@ void UProject_JCharacterDataSubsystem::Deinitialize()
 {
 	ClassMap.Empty();
 	AdvancementMap.Empty();
+	ItemMap.Empty();
 	Super::Deinitialize();
 }
 
@@ -89,6 +92,57 @@ void UProject_JCharacterDataSubsystem::PopulateRegistry()
 		AdvancementMap.Reset();
 	}
 
+}
+
+bool UProject_JCharacterDataSubsystem::LoadPrimaryAssetDefinitions()
+{
+	check(IsInGameThread());
+	auto* Assets = UAssetManager::GetIfInitialized();
+	if (!Assets) return false;
+	TArray<FPrimaryAssetId> ClassIds, AdvancementIds;
+	Assets->GetPrimaryAssetIdList(TEXT("Project_JCharacterClassDefinition"), ClassIds);
+	Assets->GetPrimaryAssetIdList(TEXT("Project_JCharacterAdvancementDefinition"), AdvancementIds);
+	if (ClassIds.Num() + AdvancementIds.Num() > 1024) return false;
+	auto Classes = ClassMap; auto Advancements = AdvancementMap;
+	for (const auto& Id : ClassIds)
+	{
+		auto* Definition = Cast<UProject_JCharacterClassDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
+		if (!Definition || Definition->ClassId.IsNone() || Definition->SchemaVersion < 1) return false;
+		if (const auto* Existing = Classes.Find(Definition->ClassId); Existing && Existing->Get() != Definition) return false;
+		Classes.Add(Definition->ClassId, Definition);
+	}
+	for (const auto& Id : AdvancementIds)
+	{
+		auto* Definition = Cast<UProject_JCharacterAdvancementDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
+		if (!Definition || Definition->AdvancementId.IsNone() || Definition->SchemaVersion < 1) return false;
+		if (const auto* Existing = Advancements.Find(Definition->AdvancementId); Existing && Existing->Get() != Definition) return false;
+		Advancements.Add(Definition->AdvancementId, Definition);
+	}
+	TArray<UProject_JCharacterClassDefinition*> ClassValues;
+	TArray<UProject_JCharacterAdvancementDefinition*> AdvancementValues;
+	for (const auto& Pair : Classes) ClassValues.Add(Pair.Value);
+	for (const auto& Pair : Advancements) AdvancementValues.Add(Pair.Value);
+	TArray<FText> Errors;
+	if (!ProjectJ::ValidateAdvancementGraph(ClassValues, AdvancementValues, Errors)) return false;
+	TMap<FName,TObjectPtr<UProject_JItemDefinition>> Items;
+	for(const FName Type : {FName(TEXT("Project_JEquipmentItemDefinition")), FName(TEXT("Project_JConsumableDefinition"))})
+	{
+		TArray<FPrimaryAssetId> Ids;Assets->GetPrimaryAssetIdList(Type,Ids);
+		if(Items.Num()+Ids.Num()>1024)return false;
+		for(const auto& Id:Ids)
+		{
+			auto* Def=Cast<UProject_JItemDefinition>(Assets->GetPrimaryAssetPath(Id).TryLoad());
+			if(!Def||Def->ItemId.IsNone()||Def->SchemaVersion<1||Def->MaxStackCount<1)return false;
+			if(Items.Contains(Def->ItemId)&&Items[Def->ItemId]!=Def)return false;
+			Items.Add(Def->ItemId,Def);
+		}
+	}
+	ClassMap = MoveTemp(Classes); AdvancementMap = MoveTemp(Advancements);ItemMap=MoveTemp(Items);
+	return true;
+}
+UProject_JItemDefinition* UProject_JCharacterDataSubsystem::GetItemDefinition(FName Id,int32 Version) const
+{
+	const auto* Found=ItemMap.Find(Id);return Found&&*Found&&(*Found)->SchemaVersion==Version?Found->Get():nullptr;
 }
 
 UProject_JCharacterClassDefinition* UProject_JCharacterDataSubsystem::GetClassDefinition(FName ClassId) const

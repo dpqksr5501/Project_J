@@ -1,4 +1,5 @@
 #include "Backend/Project_JGatewaySubsystem.h"
+#include "Backend/Project_JGatewayResponseBuffer.h"
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
@@ -73,11 +74,23 @@ FProject_JBackendResponseEnvelope BuildResponseEnvelope(
 	return Envelope;
 }
 
-TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
+bool IsGatewayRouteValid(const FString& Route)
+{
+	if (Route.IsEmpty() || Route.Len() > 512 || Route.StartsWith(TEXT("//"))) return false;
+	for (TCHAR Ch : Route)
+		if (!((Ch >= 'a' && Ch <= 'z') || (Ch >= 'A' && Ch <= 'Z') || (Ch >= '0' && Ch <= '9') ||
+			Ch == '/' || Ch == '_' || Ch == '-' || Ch == '.')) return false;
+	TArray<FString> Segments;
+	Route.ParseIntoArray(Segments, TEXT("/"));
+	return !Segments.Contains(TEXT("..")) && !Segments.Contains(TEXT("."));
+}
+
+TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	const FString& GatewayUrl,
 	const FString& Endpoint,
 	const FString& Payload,
 	const FProject_JBackendRequestContext& RequestContext,
+	int32 MaxResponseBytes,
 	TFunction<void(const FProject_JBackendResponseEnvelope&)> OnEnvelope)
 {
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
@@ -96,10 +109,22 @@ TSharedRef<IHttpRequest, ESPMode::ThreadSafe> CreateGatewayRequest(
 	}
 	Request->SetContentAsString(Payload);
 	Request->SetDelegateThreadPolicy(EHttpRequestDelegateThreadPolicy::CompleteOnGameThread);
+	const auto Buffer = MakeShared<FProject_JGatewayResponseBuffer, ESPMode::ThreadSafe>(MaxResponseBytes);
+	if (!Request->SetResponseBodyReceiveStreamDelegateV2(FHttpRequestStreamDelegateV2::CreateLambda(
+		[Buffer](void* Data, int64& Length) { Buffer->Receive(Data, Length); }))) return nullptr;
 
-	Request->OnProcessRequestComplete().BindLambda([RequestContext, OnEnvelope](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
+	Request->OnProcessRequestComplete().BindLambda([RequestContext, OnEnvelope, Buffer](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
 	{
-		OnEnvelope(BuildResponseEnvelope(RequestContext, ResponsePtr, bConnectedSuccessfully, false));
+		auto Envelope = BuildResponseEnvelope(RequestContext, ResponsePtr, bConnectedSuccessfully, false);
+		if (!Buffer->Read(Envelope.ResponseData))
+		{
+			Envelope.bSucceeded = false;
+			Envelope.bRetryable = false;
+			Envelope.FailureKind = EProject_JBackendFailureKind::ResponseTooLarge;
+			Envelope.ResponseData = TEXT("Gateway response exceeded byte limit");
+			ApplyProjectJBackendOutcomePolicy(Envelope, true);
+		}
+		OnEnvelope(Envelope);
 	});
 
 	return Request;
@@ -129,6 +154,15 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 		Response.ResponseData = TEXT("Mutation requires a stable idempotency key");
 		Completion(Response); return;
 	}
+	const int32 ByteLimit = FMath::Clamp(MaxRequestBytes, 1, 16777216);
+	if (!IsGatewayRouteValid(Endpoint) || Payload.Len() > ByteLimit || FTCHARToUTF8(*Payload, Payload.Len()).Length() > ByteLimit)
+	{
+		FProject_JBackendResponseEnvelope Response;
+		Response.RequestContext = Context;
+		Response.FailureKind = EProject_JBackendFailureKind::InvalidRequest;
+		Response.ResponseData = TEXT("Invalid gateway route or request byte limit exceeded");
+		Completion(Response); return;
+	}
 	const auto Tracker = RequestTracker;
 	FGuid Ticket;
 	const auto Admission = Tracker ? Tracker->Begin(Ticket) : ProjectJ::MMO::EAdmission::Closed;
@@ -154,7 +188,13 @@ void UProject_JGatewaySubsystem::DispatchTrackedRequest(const FString& Endpoint,
 			Completion(Response);
 		}
 	};
-	auto Request = CreateGatewayRequest(GatewayUrl, Endpoint, Payload, Context, Finish);
+	auto Request = CreateGatewayRequest(GatewayUrl, Endpoint, Payload, Context, MaxResponseBytes, Finish);
+	if (!Request)
+	{
+		auto Response = BuildResponseEnvelope(Context, nullptr, false, true);
+		Response.ResponseData = TEXT("Bounded gateway response streaming unavailable");
+		Finish(Response); return;
+	}
 	Request->SetTimeout(FMath::Max(1.0f, RequestTimeoutSeconds));
 	ActiveRequests.Add(Ticket, Request);
 	if (!Request->ProcessRequest())

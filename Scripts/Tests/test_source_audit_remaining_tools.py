@@ -53,6 +53,9 @@ class WorldPlanTests(unittest.TestCase):
         self.validate_actual_prefix(plan,self.native(plan))
     def test_missing_or_extra_place_is_rejected(self):
         with self.assertRaises(AssertionError): self.validate_actual_prefix(self.plan,self.native(self.plan)[:-1])
+    def test_equal_count_wrong_stable_id_is_rejected(self):
+        places=self.native(self.plan);places[0].properties['place_id']='Unknown.Place'
+        with self.assertRaises(AssertionError): self.validate_actual_prefix(self.plan,places)
     def test_equal_vertex_count_with_wrong_shape_is_rejected(self):
         plan=copy.deepcopy(self.plan);plan['places']=plan['places'][:18]
         places=self.native(plan);places[0].properties['boundary'][0].v=(0,0,0)

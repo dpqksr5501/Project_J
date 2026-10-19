@@ -24,6 +24,8 @@ public:
 
 	virtual void InitGameState() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 
 protected:
 	virtual FProject_JWorldInstanceId CreatePrototypeWorldInstanceId() const;

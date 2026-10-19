@@ -16,10 +16,10 @@ bool FMemoryRepository::Read(const FAggregateKey& Key, FRecord& OutRecord) const
     if (!Record) { return false; }
     OutRecord = *Record; return true; // Includes tombstones for revision checks.
 }
-FCommitResult FMemoryRepository::Commit(const FCommitRequest& Request)
+bool IsValidCommitRequest(const FCommitRequest& Request)
 {
     if (!Request.IdempotencyKey.IsValid() || Request.Operation.IsNone() ||
-        Request.Mutations.IsEmpty() || Request.Mutations.Num() > 64) { return {}; }
+        Request.Mutations.IsEmpty() || Request.Mutations.Num() > 64) { return false; }
     TSet<FAggregateKey> Keys;
     int64 Bytes = 0;
     for (const auto& Mutation : Request.Mutations)
@@ -27,9 +27,14 @@ FCommitResult FMemoryRepository::Commit(const FCommitRequest& Request)
         Bytes += Mutation.Payload.Num();
         if (!Mutation.Key.IsValid() || Keys.Contains(Mutation.Key) || Mutation.ExpectedRevision < 0 ||
             Mutation.ExpectedRevision == MAX_int64 || Mutation.SchemaVersion < 1 || Mutation.Payload.Num() > 65536 ||
-            (Mutation.bDelete && !Mutation.Payload.IsEmpty()) || Bytes > 262144) { return {}; }
+            (Mutation.bDelete && !Mutation.Payload.IsEmpty()) || Bytes > 262144) { return false; }
         Keys.Add(Mutation.Key);
     }
+    return true;
+}
+FCommitResult FMemoryRepository::Commit(const FCommitRequest& Request)
+{
+    if (!IsValidCommitRequest(Request)) { return {}; }
     FScopeLock Lock(&Mutex);
     if (const auto* Receipt = Receipts.Find(Request.IdempotencyKey))
     {

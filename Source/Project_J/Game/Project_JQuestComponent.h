@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Engine/DataAsset.h"
+#include "Inventory/Project_JPersistentEdit.h"
 #include "Project_JQuestComponent.generated.h"
 
 UCLASS(BlueprintType)
@@ -10,6 +11,8 @@ class PROJECT_J_API UProject_JQuestDefinition : public UDataAsset
 	GENERATED_BODY()
   public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FName QuestId;
+	/** Bump when changing the meaning of persisted progress or rewards. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = "1")) int32 SchemaVersion = 1;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Title;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Description;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FName ObjectiveEvent;
@@ -45,6 +48,18 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	GENERATED_BODY()
   public:
 	UProject_JQuestComponent();
+	FProject_JPersistentSubmit SubmitPersistentEdit;
+	TFunction<FGuid()> CreatePersistentRequest;
+	TFunction<bool()> PersistentAdmission;
+	bool ValidateCommittedQuests(const FProject_JQuestSnapshot &Snapshot, bool bTrustedApply = false) const;
+	void InstallCommittedQuests(const FProject_JQuestSnapshot &Snapshot)
+	{
+		States = Snapshot.States;
+	}
+	void PublishCommittedQuests()
+	{
+		Publish();
+	}
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
@@ -59,7 +74,9 @@ class PROJECT_J_API UProject_JQuestComponent : public UActorComponent
 	UFUNCTION(BlueprintCallable) void RequestTracking(FName Id, bool bTracked);
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) bool Claim(FName Id);
 	FProject_JQuestSnapshot CaptureSnapshot() const;
-	bool RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot);
+	bool CanRestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults = false) const;
+	/** Replacement is restricted to fresh, unpossessed owners with untouched automatic defaults. */
+	bool RestoreSnapshot(const FProject_JQuestSnapshot &Snapshot, bool bReplacePristineDefaults = false);
 	DECLARE_MULTICAST_DELEGATE(FChanged);
 	FChanged OnChanged;
 

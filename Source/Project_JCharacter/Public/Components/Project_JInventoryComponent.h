@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Inventory/Project_JItemInstanceTypes.h"
 #include "Net/Serialization/FastArraySerializer.h"
+#include "Inventory/Project_JPersistentEdit.h"
 #include "Project_JInventoryComponent.generated.h"
 
 class UProject_JItemDefinition;
@@ -11,13 +12,41 @@ class UProject_JEquipmentItemDefinition;
 class UProject_JInventoryComponent;
 
 UENUM(BlueprintType)
-enum class EProject_JItemUseResult : uint8 { Success, Invalid, Locked, Cooldown, NoEffect, Unavailable, RateLimited };
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JItemUseCompleted, FGuid, RequestId, EProject_JItemUseResult, Result);
+enum class EProject_JItemUseResult : uint8
+{
+	Success,
+	Invalid,
+	Locked,
+	Cooldown,
+	NoEffect,
+	Unavailable,
+	RateLimited,
+	Pending,
+	Reconciled
+};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JItemUseCompleted, FGuid, RequestId, EProject_JItemUseResult,
+											 Result);
 
 UENUM(BlueprintType)
-enum class EProject_JBagOperation : uint8 { Split, Merge, Swap };
+enum class EProject_JBagOperation : uint8
+{
+	Split,
+	Merge,
+	Swap
+};
 UENUM(BlueprintType)
-enum class EProject_JBagResult : uint8 { Success, Invalid, Locked, Changed, Incompatible, Full, Unavailable, RateLimited };
+enum class EProject_JBagResult : uint8
+{
+	Success,
+	Invalid,
+	Locked,
+	Changed,
+	Incompatible,
+	Full,
+	Unavailable,
+	RateLimited,
+	Pending
+};
 USTRUCT(BlueprintType)
 struct FProject_JBagRequest
 {
@@ -30,10 +59,18 @@ struct FProject_JBagRequest
 	UPROPERTY() int32 ExpectedTargetCount = 0;
 	UPROPERTY() int32 ExpectedSourceOrder = INDEX_NONE;
 	UPROPERTY() int32 ExpectedTargetOrder = INDEX_NONE;
+	bool operator==(const FProject_JBagRequest &Other) const
+	{
+		return Operation == Other.Operation && Source == Other.Source && Target == Other.Target &&
+			   Count == Other.Count && ExpectedSourceCount == Other.ExpectedSourceCount &&
+			   ExpectedTargetCount == Other.ExpectedTargetCount && ExpectedSourceOrder == Other.ExpectedSourceOrder &&
+			   ExpectedTargetOrder == Other.ExpectedTargetOrder;
+	}
 };
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FProject_JBagCompleted, FGuid, RequestId, EProject_JBagResult, Result);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FProject_JInventoryItemChangedSignature, const FProject_JItemInstanceData&, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FProject_JInventoryItemChangedSignature, const FProject_JItemInstanceData &,
+											ItemInstance);
 
 USTRUCT(BlueprintType)
 struct FProject_JInventoryArrayItem : public FFastArraySerializerItem
@@ -55,17 +92,18 @@ struct FProject_JInventoryArray : public FFastArraySerializer
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UProject_JInventoryComponent> OwnerComponent = nullptr;
 
-	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
-	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
-	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32> &AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32> &ChangedIndices, int32 FinalSize);
+	void PreReplicatedRemove(const TArrayView<int32> &RemovedIndices, int32 FinalSize);
 
-	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo &DeltaParms)
 	{
-		return FFastArraySerializer::FastArrayDeltaSerialize<FProject_JInventoryArrayItem, FProject_JInventoryArray>(Items, DeltaParms, *this);
+		return FFastArraySerializer::FastArrayDeltaSerialize<FProject_JInventoryArrayItem, FProject_JInventoryArray>(
+			Items, DeltaParms, *this);
 	}
 };
 
-template<>
+template <>
 struct TStructOpsTypeTraits<FProject_JInventoryArray> : public TStructOpsTypeTraitsBase2<FProject_JInventoryArray>
 {
 	enum
@@ -74,14 +112,26 @@ struct TStructOpsTypeTraits<FProject_JInventoryArray> : public TStructOpsTypeTra
 	};
 };
 
-UCLASS(ClassGroup=(Inventory), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Inventory), meta = (BlueprintSpawnableComponent))
 class PROJECT_JCHARACTER_API UProject_JInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	UProject_JInventoryComponent();
-	bool IsAcceptingRequests() const { return CanPublishState(); }
+	FProject_JPersistentSubmit SubmitPersistentEdit;
+	TFunction<FGuid()> CreatePersistentRequest;
+	/** Keep the returned ID unchanged until completion. Old sessions expire. */
+	UFUNCTION(BlueprintCallable, Category = "Requests")
+	FGuid NewRequestId() const
+	{
+		return CreatePersistentRequest ? CreatePersistentRequest() : FGuid::NewGuid();
+	}
+	TFunction<bool()> PersistentAdmission;
+	bool IsAcceptingRequests() const
+	{
+		return CanPublishState();
+	}
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 	UFUNCTION(BlueprintCallable) void RequestUseItem(FGuid RequestId, FGuid InstanceId);
@@ -96,8 +146,13 @@ public:
 	/** Read-only value snapshot for owner UI; no second inventory state is maintained. */
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	TArray<FProject_JItemInstanceData> GetItemInstances() const;
+	/** Trusted persistence adapter: validate the whole batch before any replacement. */
+	bool ValidatePersistentItems(const TArray<FProject_JItemInstanceData> &Items, bool bTrustedApply = false) const;
+	void InstallPersistentItems(const TArray<FProject_JItemInstanceData> &Items);
+	void PublishPersistentItems(const TArray<FProject_JItemInstanceData> &Before);
+	bool CanUsePersistentItem(FGuid Instance) const;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> &OutLifetimeProps) const override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FProject_JInventoryItemChangedSignature OnItemAdded;
@@ -109,7 +164,8 @@ public:
 	FProject_JInventoryItemChangedSignature OnItemRemoved;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
-	FProject_JItemInstanceData AddItemDefinition(UProject_JItemDefinition* ItemDef, int32 StackCount = 1, int32 ItemLevel = 1);
+	FProject_JItemInstanceData AddItemDefinition(UProject_JItemDefinition *ItemDef, int32 StackCount = 1,
+												 int32 ItemLevel = 1);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
 	bool RemoveItemInstance(FGuid InstanceId);
@@ -139,7 +195,7 @@ public:
 	bool CanMoveItemInstance(FGuid InstanceId, int32 Count = 1) const;
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
-	bool FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData& OutItemInstance) const;
+	bool FindItemInstance(FGuid InstanceId, FProject_JItemInstanceData &OutItemInstance) const;
 
 	/** Development diagnostics: compact state identity for verifying FastArray replication across PIE worlds. */
 	FString GetReplicationDiagnosticSummary() const;
@@ -148,21 +204,29 @@ public:
 	FString GetReplicationDiagnosticDeltaSummary() const;
 	void ResetReplicationDiagnosticDeltaCounters();
 
-	void HandleReplicatedItemAdded(const FProject_JInventoryArrayItem& Item);
-	void HandleReplicatedItemChanged(const FProject_JInventoryArrayItem& Item);
-	void HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem& Item);
+	void HandleReplicatedItemAdded(const FProject_JInventoryArrayItem &Item);
+	void HandleReplicatedItemChanged(const FProject_JInventoryArrayItem &Item);
+	void HandleReplicatedItemRemoved(const FProject_JInventoryArrayItem &Item);
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
-private:
+  private:
+	friend class FProjectJCommandReplayTest;
 	bool bEnding = false;
+	EProject_JBagResult SubmitPersistentBag(FGuid RequestId, const FProject_JBagRequest &Request);
+	EProject_JItemUseResult SubmitPersistentUse(FGuid RequestId, FGuid InstanceId);
 	bool CanPublishState() const;
 	bool HasMutationAuthority() const;
 	void Retire();
 	UFUNCTION(Server, Reliable) void ServerBagChange(FGuid RequestId, FProject_JBagRequest Request);
 	UFUNCTION(Client, Reliable) void ClientBagCompleted(FGuid RequestId, EProject_JBagResult Result);
-	TMap<FGuid, EProject_JBagResult> BagReceipts;
+	struct FBagReceipt
+	{
+		FProject_JBagRequest Request;
+		EProject_JBagResult Result;
+	};
+	TMap<FGuid, FBagReceipt> BagReceipts;
 	TArray<FGuid> BagReceiptOrder;
 	double BagRequestWindow = -1;
 	int32 BagRequestCount = 0;
@@ -171,13 +235,18 @@ private:
 	UFUNCTION(Server, Reliable) void ServerUseItem(FGuid RequestId, FGuid InstanceId);
 	UFUNCTION(Client, Reliable) void ClientUseCompleted(FGuid RequestId, EProject_JItemUseResult Result);
 	UFUNCTION() void OnRep_NextUseTime();
-	UPROPERTY(ReplicatedUsing=OnRep_NextUseTime) double NextUseTime = 0;
-	TMap<FGuid, EProject_JItemUseResult> UseReceipts;
+	UPROPERTY(ReplicatedUsing = OnRep_NextUseTime) double NextUseTime = 0;
+	struct FUseReceipt
+	{
+		FGuid InstanceId;
+		EProject_JItemUseResult Result;
+	};
+	TMap<FGuid, FUseReceipt> UseReceipts;
 	TArray<FGuid> UseReceiptOrder;
 	double UseRequestWindow = -1;
 	int32 UseRequestCount = 0;
 	bool bUsingItem = false;
-	bool CanCommitItemInstance(const FProject_JItemInstanceData& ItemInstance) const;
+	bool CanCommitItemInstance(const FProject_JItemInstanceData &ItemInstance) const;
 	int32 FindItemIndex(FGuid InstanceId) const;
 
 	UPROPERTY(Replicated)

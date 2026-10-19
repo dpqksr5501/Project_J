@@ -325,7 +325,7 @@ void AProject_JPlayerCharacter::ApplyPrototypeStartingEquipment()
 		return;
 	}
 
-	if (ResolvedEquipmentManager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon))
+	if (ResolvedEquipmentManager->bPersistentProfileBound || ResolvedEquipmentManager->GetEquippedItemInSlot(EProject_JEquipmentSlot::Weapon))
 	{
 		return;
 	}

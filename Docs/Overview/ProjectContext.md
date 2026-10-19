@@ -4,6 +4,8 @@
 
 > 상세한 구현 규칙은 각 전문 문서가 기준이다. 이 문서는 현재 구조를 빠르게 파악하기 위한 진입점이며, 에셋의 정확한 할당값은 에디터에서 최종 확인한다.
 
+2026-10-19의 [MMORPG 아키텍처 대조](../Review/Architecture/Project_J_MMO_Architecture_2026-10-19.md)는 앞 단계 이력이며, [현재 잔여 작업 상태](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)가 ZIP 전체 권고와 후속 구현·검증의 현재 판정 기준이다. 장비 상세/공개 복제 분리, PS 명령 예산, 요청 payload와 receipt 결합, 소셜 접속 교체 후 쓰기 철회와 Gateway byte 경계를 적용했다. 운영 인증·네트워크/Shipping 영속 저장·실제 존 이전·미래 카탈로그 기능은 구현 완료와 구분한다.
+
 2026-10-15의 main 통합·R19/R20·소스/BP/DA 정리와 보류 범위는 [검토 목차](../Review/README.md)를 따른다. 애니메이션의 현재 계약은 [주제 목차](../Animation/README.md)에 모으며, Mirror Data는 새로 도입하지 않고 특정 연결 문제가 확인될 때만 재검토한다. 이전 인계의 전체 감사 요청을 현재 작업 지시로 자동 재개하지 않는다.
 
 2026-09-19의 기반 변경은 [갱신·수명 정리](../Architecture/Runtime/Reports/Internal_Polish_2026-09-19.md)에 기록했다. GAS Tick은 엔진의 필요 기반 정책을 사용하고, 탈것 체력은 GAS가 원천이며 기존 Actor 필드는 호환 조회값이다. 콘텐츠 작성은 기존 DA 구조와 [직업·전직 묶음 제작 도구](../Gameplay/Authoring/Content_Authoring_System.md#tool)를 함께 사용한다.
@@ -21,7 +23,9 @@
 - 아직 실제 백엔드/메가서버/거래소/길드/대규모 군중을 완성한 상태가 아니다. 관련 타입과 경계는 장래 확장을 위해 존재한다.
 - NPC 타깃 후보는 중앙 스케줄러의 공간 질의를 사용하며, 장비 메시 스트리밍은 `VisualAssetSubsystem`의 요청·수명 관리를 사용한다. 전투/탑승 애니메이션 레이어에는 컴포넌트 로컬 `FStreamableHandle` 경로도 남아 있다. 이를 모든 전투 질의·표현 로딩의 단일 서비스로 일반화하지 않는다. 서버 간 이동은 handover envelope/상태 머신/transport 계약이며 실제 라이브 서버 연결 완료를 의미하지 않는다.
 
-직업·전직·능력 부여 및 DA 작성의 최신 계약은 [2026-09-19 확장 기반](../Architecture/Extensions/Extension_Foundation_2026-09-19.md)을 참고한다. 같은 PlayerState 안의 아바타 교체를 지원하며, 저장 계약이 실제 DB/재접속/handover 연결 완료를 의미하지는 않는다.
+직업·전직·능력 부여 및 DA 작성의 최신 계약은 [2026-09-19 확장 기반](../Architecture/Extensions/Extension_Foundation_2026-09-19.md)을 참고한다. 같은 PlayerState 안의 아바타 교체를 지원한다. 후속 로컬 개발 저장은 `-ProjectJLocalProfile=<name>` Development 단독 실행에서 Progression/Quest와 실제 인벤토리·장비를 함께 다룬다. 기존 AssetManager 레지스트리가 안정적인 ItemId/version을 해석하고, 로컬 보상·소비·장착과 기존 직업·전직 변경은 worker의 lease+상태+receipt 커밋이 확정된 뒤 전체 상태를 설치하고 기존 권위 컴포넌트에 게시한다. 초기 로드도 첫 알림 전에 P/Q/소유물/슬롯을 함께 설치한다. 정상 레벨 상승은 XP 경로를 사용하고 동기 개발/hand-over override setter의 저장 우회는 거부한다.
+
+프로젝트 전용 Windows rollback VFS와 전체 snapshot v2를 유지하며, DB container는 구형 writer의 오해석을 막는 version2다. 현재 세션의 경제 명령은 순번 창64개, checkpoint는 최신 결과1개를 보존하고 이전 세션/순번은 만료로 거부한다. 상태·receipt·순번/정리를 같은 transaction에 확정하므로 기존4096회 누적 한도로 정상 저장이 멈추지 않는다. 입장·큐·백업의 유한 한도와 실패 상태, 실측·재시작 검증은 [현재 잔여 작업 기록](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)을 따른다. `Project_JProfileMigration` commandlet은 원본 read-only 검사·dry-run·별도 결과/rollback 복사본을 지원한다. snapshot v1의 누락된 소유물을 추측하지 않고 명시적 입력으로만 이관한다. 실제 사용자 DB 전환과 운영 인증·네트워크/Shipping 저장·실제 handover는 별도 범위다.
 
 ## 2. 모듈 경계
 
