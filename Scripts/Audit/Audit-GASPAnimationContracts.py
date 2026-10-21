@@ -1,4 +1,4 @@
-"""Read-only GASP clip contracts. Run in an editor; never saves or modifies assets.
+"""Read-only upstream clip comparison. Run in an editor; never saves/modifies assets.
 
 Project: traces authored hard/soft locomotion roots. Reference: reads only the
 explicit counterpart request written by the project pass. Exports one temporary
@@ -8,7 +8,8 @@ Dependency closure includes authoring references; it does not prove selection.
 import hashlib,json,re,traceback
 from pathlib import Path
 import unreal
-OUT=Path(__file__).resolve().parents[2]/'Saved/GASP58Upgrade_20261020/AnimationParity'
+OUT=Path(__file__).resolve().parents[2]/'Saved/Validation/PlayerAnimationContracts'
+OUT.mkdir(parents=True,exist_ok=True)
 reference=unreal.Paths.get_project_file_path().endswith('GameAnimationSample.uproject')
 label=globals().get('AUDIT_LABEL','Reference' if reference else 'Project')
 receipt=OUT/(label+'.json')
@@ -33,14 +34,16 @@ else:
   seen.add(p);pending.extend(str(x)for x in registry.get_dependencies(p,opts))
  r['roots']=roots;r['closure']=sorted(seen)
  inventory=[]
- for folder in ['/Game/Characters/UEFN_Mannequin/Animations','/Game/GASP58Native/Characters/UEFN_Mannequin/Animations']:
+ for folder in ['/Game/Characters/Mannequins/Animations/Locomotion','/Game/Characters/Mannequins/Animations/ProjectJump']:
   for d in registry.get_assets_by_path(folder,True):
    if str(d.asset_class_path.asset_name) not in ['AnimSequence','AnimMontage','BlendSpace','BlendSpace1D']:continue
    p=str(d.package_name)
    inventory.append({'path':p,'class':str(d.asset_class_path.asset_name),'in_authored_closure':p in seen,'referencers':[str(x)for x in registry.get_referencers(p,opts)]})
  r['inventory']=inventory
  paths=sorted(x['path']for x in inventory if x['in_authored_closure'] and x['class']=='AnimSequence')
- request=sorted(set(p.replace('/Game/GASP58Native/Characters/','/Game/Characters/')for p in paths))
+ catalog=json.loads((Path(__file__).resolve().parents[2]/'Scripts/Authoring/Data/PlayerAnimationLibrary.json').read_text(encoding='utf-8-sig'))
+ sources={row['target_package']:row['source_package']for row in catalog['entries']}
+ request=sorted(set(sources[p].replace('/Game/GASP58Native/Characters/','/Game/Characters/')for p in paths))
  (OUT/'ReferenceRequest.json').write_text(json.dumps(request,indent=2))
 paths=globals().get('AUDIT_PATHS',paths)
 for p in paths:

@@ -31,3 +31,7 @@ Docs/Review/Audits/AssetArchitectureEvidence_2026-10-15/** -text
 Docs/Review/Audits/PCStructureEvidence_2026-10-15/** -text
 Docs/Archive/Navigation/2026-10-15/** -text
 Docs/Archive/Requests/2026-10-15/** -text
+
+# Preserved animation source packages live outside Unreal Content.
+# ZIP payloads are binary; review their companion manifests instead of text diffs.
+/Archives/AnimationSources/**/*.zip filter=lfs -diff merge=lfs -text

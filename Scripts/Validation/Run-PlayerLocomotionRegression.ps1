@@ -19,6 +19,6 @@ $nativeHandle=$process.Handle
 $process.WaitForExit()
 if($null -eq $process.ExitCode -or $process.ExitCode -ne 0){throw "Automation process failed; inspect $out/Run.log"}
 $report=Get-Content -LiteralPath "$out/Automation/index.json" -Raw | ConvertFrom-Json
-if($report.failed -or $report.notRun -or ($report.succeeded+$report.succeededWithWarnings) -lt 61){throw "Incomplete or failed regression: $out"}
+if($report.failed -or $report.notRun -or ($report.succeeded+$report.succeededWithWarnings) -lt 62){throw "Incomplete or failed regression: $out"}
 $report.tests | Select-Object fullTestPath,state
 Write-Output "Player locomotion regression passed. Actual pose, live input and network fixtures are documented separately: $out"

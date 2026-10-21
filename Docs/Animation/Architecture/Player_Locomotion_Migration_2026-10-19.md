@@ -1,5 +1,8 @@
 # 플레이어 로코모션 전환·검증 기록
 
+
+현재 원본 보관 위치와 원본 뱅크 없는 회귀·추가 수입 기준은 [원본 퇴역 결과](../../Maintenance/Animation_Source_Archive_2026-10-21.md)와 [라이브러리 제작](../Authoring/Player_Animation_Library.md)을 따른다. 아래 각 단계의 원본 보존 상태·검증 수는 해당 시점의 기록이다.
+
 현재 구조를 처음 읽을 때는 [플레이어 로코모션 아키텍처](Player_Locomotion_Architecture.md)를 우선한다. 이 문서는 외부 샘플 비교·단계별 이관·실패·복구·검증의 시점별 기록이다. 과거 이름과 당시 수치를 현재 실행 계약이나 새 성능 측정으로 해석하지 않는다. 2026-10-21에 문서 제목과 경로를 정리했으며 이전 경로는 안내 문서로 유지한다.
 
 **2026-10-21 현재 제작 이름은 `ABP_Player_Master` / `UProject_JPlayerAnimInstance`다.** 아래 이전 작업의 GASP 이름은 이력이다. 현행 Manny 변환본과 제작·회귀 경로는 문서 마지막의 2026-10-21 항목과 [스켈레톤 제작 기준](../Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다.

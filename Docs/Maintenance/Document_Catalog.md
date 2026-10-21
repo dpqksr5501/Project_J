@@ -4,7 +4,7 @@
 
 목록은 파일 위치와 문서 종류를 안내한다. 구현 완료·현재 성능을 판정하는 표가 아니며, 각 문서의 날짜·범위·후속 기록을 함께 읽는다. 통합 문서 안내는 이전 링크를 이어주는 진입점이고 상세 본문은 통합 가이드에 있다.
 
-문서 폴더 파일 3338개, Markdown 263개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
+문서 폴더 파일 3340개, Markdown 265개. 목록 갱신: `node Scripts/Documentation/Update-DocumentCatalog.mjs`.
 
 ## 주제별 목록
 
@@ -77,6 +77,7 @@
 | [손바닥 접촉 기준과 Guided Hand IK](../Animation/Authoring/Guided_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Guided_Hand_Contact.md |
 | [인간형 스켈레톤과 추가 뼈 제작 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md) | 제작 가이드 | Animation/Authoring/HumanoidSkeletonRetargetingStandards.md |
 | [캐릭터·의상·장비 LOD 제작](../Animation/Authoring/Mesh_LOD_Authoring.md) | 제작 가이드 | Animation/Authoring/Mesh_LOD_Authoring.md |
+| [플레이어 애니메이션 라이브러리와 추가 수입](../Animation/Authoring/Player_Animation_Library.md) | 제작 가이드 | Animation/Authoring/Player_Animation_Library.md |
 | [애니메이션 제작 가이드](../Animation/Authoring/README.md) | 목차·문서 관리 | Animation/Authoring/README.md |
 | [보조 손 접촉과 직업별 파지 설정](../Animation/Authoring/Secondary_Hand_Contact.md) | 통합 문서 안내 | Animation/Authoring/Secondary_Hand_Contact.md |
 | [무기 파지와 손 접촉 통합 가이드](../Animation/Authoring/Weapon_Hand_Contact_System.md) | 통합 상세 가이드 | Animation/Authoring/Weapon_Hand_Contact_System.md |
@@ -325,6 +326,7 @@
 
 | 문서 | 종류 | 경로 |
 | --- | --- | --- |
+| [애니메이션 원본 보관과 Manny 제작·회귀 전환](Animation_Source_Archive_2026-10-21.md) | 목차·문서 관리 | Maintenance/Animation_Source_Archive_2026-10-21.md |
 | [변경 마감·중복과 레거시 관리](Change_Completion_Policy.md) | 목차·문서 관리 | Maintenance/Change_Completion_Policy.md |
 | [전체 문서 목록](Document_Catalog.md) | 목차·문서 관리 | Maintenance/Document_Catalog.md |
 | [문서 분류·본문 통합 결과 — 2026-10-03](Organization_Result_2026-10-03.md) | 목차·문서 관리 | Maintenance/Organization_Result_2026-10-03.md |

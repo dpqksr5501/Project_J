@@ -6,13 +6,19 @@ At fractional frames, independently interpolated local FK rotations and helper
 translations need not produce identical component positions; report that error
 separately instead of treating it as a missing helper track.
 Selection/Slot tests alone cannot detect these conversion defects.
+The independent source samples were captured before archival; runtime tests do
+not require loading the retired UEFN animation bank.
 """
 import datetime
 import json
 import math
 import traceback
+import sys
 from pathlib import Path
 import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Authoring'))
+from player_animation_library import load_catalog, motion_fingerprint, sequence_contract
 
 directory=Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_saved_dir()))/'Validation/PlayerLocomotion'
 directory.mkdir(parents=True,exist_ok=True)
@@ -33,14 +39,18 @@ def options(mesh):
 
 try:
     target=unreal.load_asset('/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple')
-    source=unreal.load_asset('/Game/GASP58Native/Characters/UEFN_Mannequin/Meshes/SKM_UEFN_Mannequin')
-    target_options=options(target);source_options=options(source)
+    catalog=load_catalog()
+    expected={r['target_package']:r for r in catalog['entries'] if r['class']=='AnimSequence'}
+    target_options=options(target)
     registry=unreal.AssetRegistryHelpers.get_asset_registry();registry.wait_for_completion()
     for data in registry.get_assets_by_path('/Game/Characters/Mannequins/Animations',True):
         if str(data.asset_class_path.asset_name)!='AnimSequence':continue
         path=str(data.package_name)
         if not any(path.startswith('/Game/Characters/Mannequins/Animations/'+p)for p in ['Locomotion/','ProjectJump/']):continue
         seq=data.get_asset();report['sequences']+=1
+        assert path in expected, 'Uncataloged animation: '+path
+        assert motion_fingerprint(seq)==expected[path]['target_motion_fingerprint'], 'Raw motion/bind-pose contract drift: '+path
+        assert sequence_contract(seq)==expected[path]['target_contract'], 'Playback/notify contract drift: '+path
         model=seq.get_editor_property('data_model_interface');rate=model.get_frame_rate()
         frames_per_second=rate.numerator/rate.denominator
         for phase in [0.,.25,.5,.75,1.]:
@@ -60,17 +70,15 @@ try:
                     report['worst_interpolated_sample']={'asset':path,'helper':ik,'phase':phase,'time':time,'nearest_authored_frame':frame,'additive':str(seq.get_editor_property('additive_anim_type'))}
                 if error>.2:
                     report['errors'].append({'asset':path,'phase':phase,'helper':ik,'error_cm':error})
-    assert report['sequences']==448,'Unexpected converted library size: '+str(report['sequences'])
-    for clip in ['Walk/M_Relaxed_Walk_Loop_F','Run/M_Relaxed_Run_Loop_F','Sprint/M_Relaxed_Sprint_Loop_F','Walk/M_Relaxed_Walk_Start_F_Lfoot']:
-        original=unreal.load_asset('/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/'+clip)
-        converted=unreal.load_asset('/Game/Characters/Mannequins/Animations/Locomotion/'+clip)
-        row={'clip':clip,'max_knee_difference_degrees':0.,'minimum_source_flex':180.,'minimum_target_flex':180.}
-        for i in range(61):
-            phase=i/60.
-            a=unreal.AnimPoseExtensions.get_anim_pose_at_time(original,unreal.AnimationLibrary.get_sequence_length(original)*phase,source_options)
-            b=unreal.AnimPoseExtensions.get_anim_pose_at_time(converted,unreal.AnimationLibrary.get_sequence_length(converted)*phase,target_options)
-            for side in ['l','r']:
-                source_flex=flex(a,side);target_flex=flex(b,side);delta=abs(source_flex-target_flex)
+    assert report['sequences']==len(expected),'Unexpected cataloged library size: '+str(report['sequences'])
+    for baseline in catalog['reference_cycles']:
+        converted=unreal.load_asset(baseline['target_package'])
+        row={'clip':baseline['clip'],'source_package_sha256':baseline['source_package_sha256'],
+             'max_knee_difference_degrees':0.,'minimum_source_flex':180.,'minimum_target_flex':180.}
+        for sample in baseline['samples']:
+            b=unreal.AnimPoseExtensions.get_anim_pose_at_time(converted,unreal.AnimationLibrary.get_sequence_length(converted)*sample['phase'],target_options)
+            for side,label in [('l','left'),('r','right')]:
+                source_flex=sample[label];target_flex=flex(b,side);delta=abs(source_flex-target_flex)
                 row['max_knee_difference_degrees']=max(row['max_knee_difference_degrees'],delta)
                 row['minimum_source_flex']=min(row['minimum_source_flex'],source_flex)
                 row['minimum_target_flex']=min(row['minimum_target_flex'],target_flex)

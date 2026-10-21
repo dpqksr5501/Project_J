@@ -48,7 +48,7 @@ AnimGraph 노드는 엔진의 포즈 평가·스레드·디버깅·제작 경계
 
 ## 공용 모션과 몸체 확장
 
-공통 Skeleton은 `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, 생산 source mesh는 `SKM_Manny_Simple`이다. 외부 UEFN 라이브러리 448개 시퀀스와 BlendSpace 10개를 Manny용으로 변환해 Chooser·PSD·가산 base·Branch In 연결까지 이주했다. 원본은 재제작 자료로 보존한다. 변환본에 원본 FBX를 직접 재임포트하거나 Skeleton만 바꾸어 덮지 않는다.
+공통 Skeleton은 `/Game/Characters/Mannequins/Meshes/SK_Mannequin`, 생산 source mesh는 `SKM_Manny_Simple`이다. 외부 UEFN 라이브러리 448개 시퀀스와 BlendSpace 10개를 Manny용으로 변환해 Chooser·PSD·가산 base·Branch In 연결까지 이주했다. 원본 뱅크는 Content 밖의 압축 보관본으로 보존하고, 실제 필요한 최소 retarget kit만 제작 자원으로 남긴다. 추가 수입과 중복 판별은 [라이브러리 제작 기준](../Authoring/Player_Animation_Library.md)을 따른다. 변환본에 원본 FBX를 직접 재임포트하거나 Skeleton만 바꾸어 덮지 않는다.
 
 같은 Skeleton을 사용하는 `SKM_Quinn_Simple`도 모션을 직접 공유한다. 실제 6클립·두 시점·두 메시의 포즈 평가 24표본을 확인했다. 체형이 다르면 관절 위치와 발·손 접촉은 달라질 수 있다. 현재 Manny 발 Rig의 초기 길이·접지·무기 접촉을 Quinn 플레이에서도 검수하기 전까지 외형 품질까지 검증 완료로 표시하지 않는다.
 
@@ -73,6 +73,8 @@ UE5 호환 몸체에 추가 망토 뼈만 있다는 이유로 실시간 리타�
 ## 검증과 남은 범위
 
 2026-10-21 IK 수정 기준 direct UBT 빌드와 집중 native 회귀 **61개**가 통과했다. 변환본 448개의 **2,240 authored-frame 표본**, 대표 주기의 원본 대비 무릎 굽힘, 실제 OTM/Strafe 지상·Sprint 급회전·공중/착지·전신 몽타주도 확인했다. 자동화는 연결·소유권·수치 계약의 근거이며 전체 클립의 주관적 외형 승인이나 현재 구조의 200명 성능 측정을 대신하지 않는다.
+
+원본 보관·퇴역 이후 별도 native 회귀 62개가 경고·실패 없이 통과했다. 생산 모션/그래프/리그 해시와 원본 없는 로드를 확인했고, 실제 입력 재실행 여부는 [보관·검증 결과](../../Maintenance/Animation_Source_Archive_2026-10-21.md)에서 구분한다.
 
 ```powershell
 ./Scripts/Validation/Run-PlayerLocomotionRegression.ps1 -RunName <새로운_실행명>

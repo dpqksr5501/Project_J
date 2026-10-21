@@ -178,6 +178,8 @@ Mass의 간격 계산을 포함한 CPU 구간은 스냅샷 생성과 join 비용
 
 Manny 공용 라이브러리·Chooser/PSD/BlendSpace 연결과 비표준 Bip01 몸체의 실제 IK를 점검했습니다. direct UBT Editor 빌드와 집중 native 회귀 **61개 통과**, 변환 시퀀스 **448개·2,240개 키프레임 표본**, 실제 OTM/Strafe 이동·Sprint 급회전·공중/착지·전신 몽타주 검증을 확인했습니다. 골격 호환·선택·실제 포즈·화면 품질의 근거를 구분하고, 재임포트 대신 원인이 확인된 리타깃 기준·Goal/시작 본·실행 연결을 수정했습니다. [조건·실패·복구·최종 결과](Docs/Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)
 
+이후 원본 모션 뱅크는 별도 압축 보관하고 참조 없는 2,192개 패키지를 퇴역했습니다. Manny 기준 native 회귀 **62개**와 원본 없는 로드를 확인했으며, 추가 수입의 ID·실제 모션·가산 기준·변환 recipe를 비교하는 사전 검사를 마련했습니다. [보관·검증 범위](Docs/Maintenance/Animation_Source_Archive_2026-10-21.md) · [수입 제작 기준](Docs/Animation/Authoring/Player_Animation_Library.md)
+
 이 결과는 모든 애니메이션 프레임의 외형 승인이나 현재 Mover 구조의 200명 CPU/GPU·새 네트워크 부하·Cook/Shipping 검증을 의미하지 않습니다. 10월 12–15일의 CMC/MM·성능 실험은 [이전 구현 기록](Docs/Animation/Planning/README.md)으로 보존하며 현재 수치와 합산하지 않습니다.
 
 ### 이전 기능·수명 검증 — 2026-10-08

@@ -273,11 +273,11 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJFoleyLocomotionAssetTest, "ProjectJ.Fo
 bool FProjectJFoleyLocomotionAssetTest::RunTest(const FString&)
 {
 	// A stripped notify has no BP dependency, so a referencer-only migration audit misses it.
-	// Cover the current GASP 5.8 ground chooser's straight locomotion loops.
+	// Cover the actual Manny ground chooser's straight locomotion loops.
 	for (const TCHAR* Relative : {TEXT("Run/M_Relaxed_Run_Loop_F"),
 		TEXT("Walk/M_Relaxed_Walk_Loop_F"), TEXT("Sprint/M_Relaxed_Sprint_Loop_F")})
 	{
-		const FString Path = FString(TEXT("/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/")) + Relative;
+		const FString Path = FString(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/")) + Relative;
 		const UAnimSequence* Sequence = LoadObject<UAnimSequence>(nullptr, *Path);
 		if (!TestNotNull(*Path, Sequence)) { continue; }
 		int32 Contacts = 0;

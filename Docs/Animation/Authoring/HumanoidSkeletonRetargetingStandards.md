@@ -40,6 +40,8 @@ UEFN 호환 직접 재생은 Idle에서 상완 벌어짐을 좁게 만들었고,
 
 호환 재생 실험에서 바뀐 팔 8개는 이관 전 Manny 정책(clavicle/upperarm/lowerarm=Skeleton, hand=AnimationScaled)으로 되돌린다. 다리나 다른 뼈의 정책은 일괄 변경하지 않는다. `Use Retarget Modes From Compatible Skeleton`은 끈 상태를 유지한다. 팔 벌어짐 보정은 원본에 대한 Skeleton 설정 예외가 아니라 변환된 Manny 모션 자체가 소유한다. UEFN과 Manny의 실험용 호환 등록은 양방향에서 해제했다. 원본 비교는 각 원본 메시/골격으로 평가하고, Manny 재생은 변환본을 사용한다. `ConfigureCompatibleFoundation`도 이전 Skeleton을 자동으로 호환 등록하지 않는다. 새 UE5 호환 몸체는 별도로 검증·명시 등록한다.
 
+원본 뱅크의 현재 [보관·복원·중복 검사](Player_Animation_Library.md)를 먼저 확인한다. 실제 필요한 source rig/mesh는 변환 도구의 역할로 유지하며, Manny 회귀는 원본 뱅크를 다시 로드하지 않는다.
+
 ## 몸체별 IK와 같은 Skeleton의 체형 차이
 
 공통 이름이나 호환 등록보다 실제 부모 관계·관절 위치·기준 회전을 먼저 확인한다. 현재 Bip01 대검은 팔 `Bip01-L/R-UpperArm → Forearm → Hand`, 다리 `Bip01-L/R-Thigh → Calf → Foot`의 3관절을 사용한다. Limb Solver의 시작·끝·Goal을 모두 지정하고 실제로 목표에 도달하는지 검사한다. Processor 전체 initialized 또는 체인 이름 일치만으로 솔버 작동을 판정하지 않는다. Bip01 축을 Manny와 같다고 보고 Hinge Z를 일괄 적용하지 않는다. 얼굴·망토·장식 뼈와 실제 손가락 마디도 별도로 구분한다.

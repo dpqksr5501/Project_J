@@ -21,6 +21,11 @@
 #include "BlendStack/AnimNode_BlendStack.h"
 #include "AnimGraphNode_BlendStack.h"
 #include "Animation/AnimNodeBase.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Dom/JsonObject.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMannyFoundation,"ProjectJ.PlayerLocomotion.MannyFoundation",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
 bool FProjectJMannyFoundation::RunTest(const FString&)
@@ -53,12 +58,8 @@ bool FProjectJMannyFoundation::RunTest(const FString&)
   TestTrue(TEXT("Avatar evaluates on the canonical Manny skeleton"),Mesh && Mesh->GetSkeleton()==Manny);
   TestEqual(TEXT("One shared master class"),Pawn->GetMesh()->GetAnimClass(),BP->GeneratedClass.Get());
  }
- for(const TCHAR* Path:{TEXT("/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/Run/M_Relaxed_Run_Loop_F.M_Relaxed_Run_Loop_F"),TEXT("/Game/Characters/UEFN_Mannequin/Animations/Jump/M_Neutral_Jump_F_Start_Stand_Lfoot.M_Neutral_Jump_F_Start_Stand_Lfoot")})
- {
-  const auto* Sequence=LoadObject<UAnimSequence>(nullptr,Path);if(!TestNotNull(TEXT("Original locomotion sequence"),Sequence))continue;
-  TestNotEqual(TEXT("UEFN source association stays intact"),Sequence->GetSkeleton(),Manny);
-  TestFalse(TEXT("Retained UEFN sources cannot bypass canonical Manny conversion"),Manny->IsCompatibleForEditor(Sequence->GetSkeleton()));
- }
+ for(const auto& Compatible:Manny->GetCompatibleSkeletons())
+  TestFalse(TEXT("Canonical playback cannot bypass conversion through UEFN compatibility"),Compatible.ToSoftObjectPath().ToString().Contains(TEXT("UEFN_Mannequin")));
  return true;
 }
 
@@ -160,38 +161,55 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJMannyConvertedLibrary,"ProjectJ.Player
 bool FProjectJMannyConvertedLibrary::RunTest(const FString&)
 {
  auto* Manny=LoadObject<USkeleton>(nullptr,TEXT("/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin"));
+ if(!TestNotNull(TEXT("Canonical skeleton"),Manny))return false;
+ FString Text;
+ TSharedPtr<FJsonObject> Catalog;
+ const FString Filename=FPaths::ProjectDir()/TEXT("Scripts/Authoring/Data/PlayerAnimationLibrary.json");
+ if(!TestTrue(TEXT("Portable animation catalog exists"),FFileHelper::LoadFileToString(Text,*Filename)) ||
+    !TestTrue(TEXT("Animation catalog parses"),FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Catalog)))return false;
+ if(!TestEqual(TEXT("Supported animation catalog schema"),int32(Catalog->GetNumberField(TEXT("schema_version"))),1))return false;
+ TMap<FString,TSharedPtr<FJsonObject>> Entries;
+ int32 ExpectedSequences=0,ExpectedSpaces=0;
+ for(const auto& Value:Catalog->GetArrayField(TEXT("entries")))
+ {
+  const auto Row=Value->AsObject();const FString Path=Row->GetStringField(TEXT("target_package"));
+  TestFalse(TEXT("Catalog target is unique"),Entries.Contains(Path));Entries.Add(Path,Row);
+  if(Row->GetStringField(TEXT("class"))==TEXT("AnimSequence"))++ExpectedSequences;else ++ExpectedSpaces;
+ }
  auto& Registry=FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
  TArray<FAssetData> Assets;Registry.GetAssetsByPath(TEXT("/Game/Characters/Mannequins/Animations"),Assets,true);
  int32 Sequences=0,BlendSpaces=0;
  for(const auto& Data:Assets)
  {
-  FString Path=Data.PackageName.ToString(),SourcePath;
-  if(Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/")))SourcePath=Path.Replace(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/"),TEXT("/Game/GASP58Native/Characters/UEFN_Mannequin/Animations/"));
-  else if(Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/ProjectJump/")))SourcePath=Path.Replace(TEXT("/Game/Characters/Mannequins/Animations/ProjectJump/"),TEXT("/Game/Characters/UEFN_Mannequin/Animations/"));
-  else continue;
+  const FString Path=Data.PackageName.ToString();
+  if(!Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/")) &&
+     !Path.StartsWith(TEXT("/Game/Characters/Mannequins/Animations/ProjectJump/")))continue;
   auto* Animation=Cast<UAnimationAsset>(Data.GetAsset());if(!Animation)continue;
   TestEqual(TEXT("Every converted asset uses Manny"),Animation->GetSkeleton(),Manny);
+  const auto* Found=Entries.Find(Path);
+  if(!TestTrue(TEXT("Every authored library asset has an import/provenance contract: ")+Path,Found!=nullptr))continue;
+  const auto Row=*Found;
   if(auto* Sequence=Cast<UAnimSequence>(Animation))
   {
-   ++Sequences;auto* Source=LoadObject<UAnimSequence>(nullptr,*SourcePath);
-   if(!TestNotNull(TEXT("Retained UEFN source"),Source))continue;
-   TestNotEqual(TEXT("Retargeting did not reassign the original skeleton"),Source->GetSkeleton(),Manny);
-   TestEqual(TEXT("Clip duration is preserved"),Sequence->GetPlayLength(),Source->GetPlayLength());
-   TestEqual(TEXT("Additive semantics are preserved"),Sequence->AdditiveAnimType,Source->AdditiveAnimType);
-   TestEqual(TEXT("Additive base mode is preserved"),Sequence->RefPoseType,Source->RefPoseType);
-   TestEqual(TEXT("Root-motion extraction contract is preserved"),Sequence->bEnableRootMotion,Source->bEnableRootMotion);
-   TestEqual(TEXT("Root-lock contract is preserved"),Sequence->RootMotionRootLock,Source->RootMotionRootLock);
-   TestEqual(TEXT("Notify event count is preserved"),Sequence->Notifies.Num(),Source->Notifies.Num());
-   if(Sequence->RefPoseSeq)TestEqual(TEXT("Additive references no longer depend on UEFN playback"),Sequence->RefPoseSeq->GetSkeleton(),Manny);
-   for(int32 Index=0;Index<FMath::Min(Sequence->Notifies.Num(),Source->Notifies.Num());++Index)
+   ++Sequences;const auto Contract=Row->GetObjectField(TEXT("target_contract"));
+   TestEqual(TEXT("Clip duration is preserved"),double(Sequence->GetPlayLength()),Contract->GetNumberField(TEXT("length")));
+   TestEqual(TEXT("Additive semantics are preserved"),int32(Sequence->AdditiveAnimType),int32(Contract->GetNumberField(TEXT("additive_type"))));
+   TestEqual(TEXT("Additive base mode is preserved"),int32(Sequence->RefPoseType),int32(Contract->GetNumberField(TEXT("ref_pose_type"))));
+   TestEqual(TEXT("Root-motion extraction contract is preserved"),Sequence->bEnableRootMotion,Contract->GetBoolField(TEXT("enable_root_motion")));
+   TestEqual(TEXT("Root-lock contract is preserved"),int32(Sequence->RootMotionRootLock),int32(Contract->GetNumberField(TEXT("root_lock"))));
+   TestEqual(TEXT("Forced root lock is preserved"),Sequence->bForceRootLock,Contract->GetBoolField(TEXT("force_root_lock")));
+   const auto& Notifies=Contract->GetArrayField(TEXT("notifies"));
+   TestEqual(TEXT("Notify event count is preserved"),Sequence->Notifies.Num(),Notifies.Num());
+   if(Sequence->RefPoseSeq)TestEqual(TEXT("Additive references remain native Manny"),Sequence->RefPoseSeq->GetSkeleton(),Manny);
+   for(int32 Index=0;Index<FMath::Min(Sequence->Notifies.Num(),Notifies.Num());++Index)
    {
-    const auto& A=Sequence->Notifies[Index];const auto& B=Source->Notifies[Index];
-    TestEqual(TEXT("Notify name"),A.NotifyName,B.NotifyName);
-    TestEqual(TEXT("Notify timing"),A.GetTime(),B.GetTime());
-    TestEqual(TEXT("Notify duration"),A.GetDuration(),B.GetDuration());
-    TestEqual(TEXT("Notify dedicated-server policy"),A.bTriggerOnDedicatedServer,B.bTriggerOnDedicatedServer);
-    TestEqual(TEXT("Notify class"),A.Notify?A.Notify->GetClass():nullptr,B.Notify?B.Notify->GetClass():nullptr);
-    TestEqual(TEXT("Notify-state class"),A.NotifyStateClass?A.NotifyStateClass->GetClass():nullptr,B.NotifyStateClass?B.NotifyStateClass->GetClass():nullptr);
+    const auto& A=Sequence->Notifies[Index];const auto B=Notifies[Index]->AsObject();
+    TestEqual(TEXT("Notify name"),A.NotifyName.ToString(),B->GetStringField(TEXT("name")));
+    TestEqual(TEXT("Notify trigger timing including authored offset"),double(A.GetTriggerTime()),B->GetNumberField(TEXT("time")));
+    TestEqual(TEXT("Notify duration"),double(A.GetDuration()),B->GetNumberField(TEXT("duration")));
+    TestEqual(TEXT("Notify server policy"),A.bTriggerOnDedicatedServer,B->GetBoolField(TEXT("server")));
+    TestEqual(TEXT("Notify class"),A.Notify?A.Notify->GetClass()->GetPathName():FString(),B->GetStringField(TEXT("class")));
+    TestEqual(TEXT("Notify-state class"),A.NotifyStateClass?A.NotifyStateClass->GetClass()->GetPathName():FString(),B->GetStringField(TEXT("state_class")));
    }
   }
   else if(auto* Space=Cast<UBlendSpace>(Animation))
@@ -200,8 +218,9 @@ bool FProjectJMannyConvertedLibrary::RunTest(const FString&)
    for(const auto& Sample:Space->GetBlendSamples())TestTrue(TEXT("BlendSpace samples use converted Manny clips"),Sample.Animation && Sample.Animation->GetSkeleton()==Manny);
   }
  }
- TestEqual(TEXT("Complete converted sequence library"),Sequences,448);
- TestEqual(TEXT("Complete converted BlendSpace library"),BlendSpaces,10);
+ TestTrue(TEXT("Original complete library remains represented"),ExpectedSequences>=448 && ExpectedSpaces>=10);
+ TestEqual(TEXT("Complete cataloged sequence library"),Sequences,ExpectedSequences);
+ TestEqual(TEXT("Complete cataloged BlendSpace library"),BlendSpaces,ExpectedSpaces);
  return true;
 }
 #endif

@@ -4,9 +4,11 @@
 
 공통 생산 경로는 Mover + `UProject_JPlayerAnimInstance` + `ABP_Player_Master`다. 상태·전환·Chooser 호출·핀 계산은 C++가 소유하고, 포즈 연결과 노드별 실행 시점은 ABP가 소유한다. OTM/Strafe, 전방 세 방향 Strafe Sprint, 공중 방향 재선택·playhead 연속성과 수평 관성을 유지한다. 구형 CMC·독립 MM/단발 경로는 현재 제작 기준이 아니다.
 
-공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 448개 시퀀스·BlendSpace 10개를 생산 Chooser/PSD에 연결하며 원본은 재제작용으로 보존한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
+공통 Skeleton은 Manny `SK_Mannequin`이다. UEFN 원본에서 변환한 448개 시퀀스·BlendSpace 10개를 생산 Chooser/PSD에 연결하며 원본 뱅크는 Content 밖에 압축 보관하고 최소 변환 kit만 유지한다. [추가 수입·중복 검사](../Animation/Authoring/Player_Animation_Library.md)는 원본 ID·실제 모션·재생 계약·recipe로 기존 Manny 결과를 재사용한다. UE5 호환 몸체는 직접 재생하고, 현재 Bip01 대검 몸체는 Family RTG와 몸체별 손 보정을 사용한다. 추가 망토 뼈의 처리는 [스켈레톤·추가 뼈 기준](../Animation/Authoring/HumanoidSkeletonRetargetingStandards.md)을 따른다. Quinn Simple은 같은 Skeleton의 직접 재생을 확인했지만, 체형별 접지·무기 접촉의 실제 플레이 검수는 별개다.
 
 2026-10-21 마지막 IK 수정 기준 direct UBT와 집중 native 회귀 61개, 실제 지상·Sprint 회전·공중/착지·전신 몽타주 검증이 통과했다. 이전 빌드·성능·네트워크 수치를 이 결과에 합산하지 않는다. 팔 기준 포즈, 손가락 마디, Bip01 limb 시작점 누락의 원인·수정·실패 자료는 [전환·검증 기록](../Animation/Architecture/Player_Locomotion_Migration_2026-10-19.md)에 남겼다. 전체 클립 외형·새 군중 성능·Cook/Shipping 완료를 뜻하지 않는다.
+
+원본 보관·퇴역 이후 별도 native 회귀 62개가 경고·실패 없이 통과했다. 생산 모션/그래프/리그 해시와 원본 없는 로드를 확인했고, 실제 입력 재실행 여부는 [보관·검증 결과](../Maintenance/Animation_Source_Archive_2026-10-21.md)에서 구분한다.
 
 MMORPG의 운영 인증·영속 저장·실제 존 이전 등 구현/보류 경계는 [현재 잔여 작업 상태](../Review/Architecture/Project_J_MMO_Remaining_2026-10-19.md)를 따른다. 이전 인계 요청을 새 작업 지시로 자동 재개하지 않는다. 작업 종료 시 정리·검증·사용자 변경 보존은 [변경 마감 기준](../Maintenance/Change_Completion_Policy.md)을 따른다.
 

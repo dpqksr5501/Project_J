@@ -21,6 +21,12 @@ class PROJECT_JCHARACTEREDITOR_API UProject_JPlayerLocomotionLibrary : public UB
 {
 	GENERATED_BODY()
 public:
+ /** Versioned raw motion/bind-pose fingerprint, independent of asset name, package path and generated GUIDs. Editor-only; never mutates or saves. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString GetAnimationMotionFingerprint(UAnimSequence* Sequence);
+ /** Authored notify properties/payloads without generated event GUIDs or the owning sequence path. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static FString GetAnimationNotifyFingerprint(UAnimSequence* Sequence);
  /** Read-only comparison of the runtime retarget output, final body pose and a fresh processor using the same source pose. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Diagnostics")
  static FString InspectVisualRetargetPose(UAnimInstance* Instance);

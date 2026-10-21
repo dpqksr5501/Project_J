@@ -23,7 +23,7 @@
 5. **출력 소비 확인:** Chooser의 `Player_FastFeet*` 같은 이름 출력은 실제 Manny BlendProfile과 연결해야 한다. 같은 이름처럼 보이는 기존 프로필을 덮거나 런타임 문자열 fallback을 추가하지 않는다.
 6. **실제 평가 확인:** 후보 존재·선택 성공·최종 포즈를 따로 확인한다. 미러 메타데이터만 연결했다고 mirrored 검색/재생을 켜지 않는다.
 
-원본 UEFN 모션을 재제작할 때에는 `RTG_Player_UEFN_to_Manny`와 명시된 source/target mesh를 사용한다. 사용 중인 변환본을 batch overwrite로 강제 삭제하지 않는다. 임시 변환본에서 `UpdateRetargetedAnimationData`로 기존 타임라인과 트랙 계약을 검증하고 뼈 트랙만 갱신한다. 자세한 절차는 [스켈레톤 제작](HumanoidSkeletonRetargetingStandards.md)을 따른다.
+새 모션의 수입 전에는 [라이브러리·중복 검사](Player_Animation_Library.md)로 기존 결과의 재사용·revision·recipe·동명 충돌을 판별한다. 원본 뱅크는 별도 보관되어 있으므로 재제작에 필요하면 명시적으로 복원한다. 원본 UEFN 모션을 재제작할 때에는 `RTG_Player_UEFN_to_Manny`와 명시된 source/target mesh를 사용한다. 사용 중인 변환본을 batch overwrite로 강제 삭제하지 않는다. 임시 변환본에서 `UpdateRetargetedAnimationData`로 기존 타임라인과 트랙 계약을 검증하고 뼈 트랙만 갱신한다. 자세한 절차는 [스켈레톤 제작](HumanoidSkeletonRetargetingStandards.md)을 따른다.
 
 ## 유지해야 하는 동작
 
