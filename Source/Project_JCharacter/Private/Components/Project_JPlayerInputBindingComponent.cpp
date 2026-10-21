@@ -121,7 +121,7 @@ bool UProject_JPlayerInputBindingComponent::BindInput(UInputComponent* PlayerInp
 	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Completed, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
 	BindOwnedAction(ActionSet.SprintAction, ETriggerEvent::Canceled, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::StopSprint);
 	BindOwnedAction(ActionSet.ToggleCombatAction, ETriggerEvent::Started, BoundPlayerCharacter.Get(), &AProject_JPlayerCharacter::ToggleCombatMode);
- BindOwnedAction(ActionSet.WalkAction,ETriggerEvent::Started,BoundPlayerCharacter.Get(),&AProject_JPlayerCharacter::ToggleWalk);
+ BindOwnedAction(ActionSet.WalkAction,ETriggerEvent::Triggered,this,&ThisClass::HandleWalkToggle);
 	if (ActionSet.AttackAction)
 	{
 		BindOwnedAction(ActionSet.AttackAction, ETriggerEvent::Started, this, &UProject_JPlayerInputBindingComponent::HandlePrimarySkillPressed);
@@ -470,6 +470,14 @@ void UProject_JPlayerInputBindingComponent::HandleJumpStarted()
 	}
 
 	BoundPlayerCharacter->Jump();
+}
+
+void UProject_JPlayerInputBindingComponent::HandleWalkToggle()
+{
+	if (!BoundPlayerCharacter) return;
+	if (const auto* Mount = BoundPlayerCharacter->GetMountComponent(); Mount && Mount->IsMounted()) return;
+	if (const auto* PC = Cast<APlayerController>(BoundPlayerCharacter->GetController()); PC && PC->IsMoveInputIgnored()) return;
+	BoundPlayerCharacter->ToggleWalk();
 }
 
 void UProject_JPlayerInputBindingComponent::HandleJumpStopped()

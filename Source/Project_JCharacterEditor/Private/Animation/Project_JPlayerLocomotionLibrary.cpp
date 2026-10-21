@@ -43,8 +43,103 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/BlendSpace.h"
 #include "Animation/AnimData/IAnimationDataController.h"
 #include "Animation/AnimData/IAnimationDataModel.h"
+
+bool UProject_JPlayerLocomotionLibrary::UseNativeRotationOffsetQuery(UChooserTable* Table)
+{
+ if (!Table || (GEditor && GEditor->PlayWorld) || Table->ContextData.Num()!=1 || Table->ColumnsStructs.Num()!=2) return false;
+ auto* Context=Table->ContextData[0].GetMutablePtr<FContextObjectTypeStruct>();
+ if (!Context || !Context->Struct) return false;
+ if (Context->Struct==FProject_JPlayerRotationOffsetQuery::StaticStruct()) return true;
+ const FByteProperty* Mode=nullptr; const FByteProperty* Direction=nullptr;
+ for (TFieldIterator<FByteProperty> P(Context->Struct);P;++P)
+ {
+  if (P->GetName().StartsWith(TEXT("MovementMode_"))) Mode=*P;
+  if (P->GetName().StartsWith(TEXT("MovementDirection_"))) Direction=*P;
+ }
+ if (!Mode || !Direction) return false;
+ TArray<FName> Fields;
+ for (const auto& Struct:Table->ColumnsStructs)
+ {
+  const auto* Column=Struct.GetPtr<FEnumColumn>();
+  const auto* Parameter=Column?Column->InputValue.GetPtr<FEnumContextProperty>():nullptr;
+  if (!Parameter || Parameter->Binding.ContextIndex!=0 || Parameter->Binding.PropertyBindingChain.Num()!=1) return false;
+  const FName Field=Parameter->Binding.PropertyBindingChain[0];
+  const UEnum* Enum=Field==Mode->GetFName()?StaticEnum<EProject_JPlayerMovementMode>():Field==Direction->GetFName()?StaticEnum<EProject_JPlayerMovementDirection>():nullptr;
+  if (!Enum) return false;
+  for (const auto& Row:Column->RowValues)
+   if (Row.Comparison!=EEnumColumnCellValueComparison::MatchAny && !Enum->IsValidEnumValue(Row.Value)) return false;
+  Fields.Add(Field==Mode->GetFName()?GET_MEMBER_NAME_CHECKED(FProject_JPlayerRotationOffsetQuery,MovementMode):GET_MEMBER_NAME_CHECKED(FProject_JPlayerRotationOffsetQuery,MovementDirection));
+ }
+ if (Fields[0]==Fields[1]) return false;
+ auto Select=[&](int32 MovementMode,int32 MovementDirection,bool bNative)->UObject*
+ {
+  FProject_JPlayerRotationOffsetQuery Query;
+  Query.MovementMode=static_cast<EProject_JPlayerMovementMode>(MovementMode);
+  Query.MovementDirection=static_cast<EProject_JPlayerMovementDirection>(MovementDirection);
+  FInstancedStruct Legacy;
+  FChooserEvaluationContext Evaluation;
+  if (bNative) Evaluation.AddStructParam(Query);
+  else
+  {
+   Legacy.InitializeAs(Context->Struct);
+   Mode->SetPropertyValue_InContainer(Legacy.GetMutableMemory(),MovementMode);
+   Direction->SetPropertyValue_InContainer(Legacy.GetMutableMemory(),MovementDirection);
+   Evaluation.AddStructViewParam(FStructView(Legacy.GetScriptStruct(),Legacy.GetMutableMemory()));
+  }
+  UObject* Selected=nullptr;
+  UChooserTable::EvaluateChooser(Evaluation,Table,FObjectChooserBase::FObjectChooserIteratorCallback::CreateLambda([&](UObject* Object)
+  {Selected=Object;return Object?FObjectChooserBase::EIteratorStatus::Stop:FObjectChooserBase::EIteratorStatus::Failed;}));
+  return Selected;
+ };
+ TArray<UObject*> Before;
+ for (int32 M=0;M<6;++M) for (int32 D=0;D<6;++D) Before.Add(Select(M,D,false));
+ if (!Before.ContainsByPredicate([](const UObject* Object){return Object!=nullptr;})) return false;
+ const auto OldContext=Table->ContextData;
+ const auto OldColumns=Table->ColumnsStructs;
+ Table->Modify();
+ Context->Struct=FProject_JPlayerRotationOffsetQuery::StaticStruct();
+ for (int32 Index=0;Index<2;++Index)
+ {
+  auto* Column=Table->ColumnsStructs[Index].GetMutablePtr<FEnumColumn>();
+  auto* Parameter=Column->InputValue.GetMutablePtr<FEnumContextProperty>();
+  const UEnum* Enum=Fields[Index]==GET_MEMBER_NAME_CHECKED(FProject_JPlayerRotationOffsetQuery,MovementMode)?StaticEnum<EProject_JPlayerMovementMode>():StaticEnum<EProject_JPlayerMovementDirection>();
+  Parameter->Binding.PropertyBindingChain={Fields[Index]};
+  Parameter->Binding.Enum=Enum;
+  Parameter->Binding.DisplayName=Fields[Index].ToString();
+  for (auto& Row:Column->RowValues) Row.ValueName=Enum->GetNameByValue(Row.Value);
+  Column->DefaultRowValue.ValueName=Enum->GetNameByValue(Column->DefaultRowValue.Value);
+ }
+ Table->Compile(true);
+ for (int32 M=0;M<6;++M) for (int32 D=0;D<6;++D)
+ {
+  if (Select(M,D,true)!=Before[M*6+D])
+  {
+   Table->ContextData=OldContext;Table->ColumnsStructs=OldColumns;Table->Compile(true);
+   return false;
+  }
+  UE_LOG(LogTemp,Display,TEXT("RotationOffset query preserved: Mode=%d Direction=%d Curve=%s"),M,D,*GetPathNameSafe(Before[M*6+D]));
+ }
+ Table->MarkPackageDirty();
+ return true;
+}
+
+bool UProject_JPlayerLocomotionLibrary::ConfigureNormalizedLocomotionSync(UBlendSpace* BlendSpace)
+{
+	if (!IsValid(BlendSpace) || !BlendSpace->bLoop || BlendSpace->IsValidAdditive() || BlendSpace->GetBlendSamples().IsEmpty()) return false;
+	// UE 5.8's marker phase reset also resets the leader's PreviousTime. Its
+	// per-sample root-motion delta then becomes zero, starving Steering and
+	// OffsetRootBone. Normalized sample time is shared by search and playback;
+	// retain Pose Search's phase contract and the source clips' contact markers.
+	BlendSpace->Modify();
+	BlendSpace->bShouldMatchSyncPhases = true;
+	BlendSpace->bAllowMarkerBasedSync = false;
+	BlendSpace->ValidateSampleData();
+	BlendSpace->MarkPackageDirty();
+	return true;
+}
 
 bool UProject_JPlayerLocomotionLibrary::UpdateRetargetedAnimationData(UAnimSequence* Target, UAnimSequence* Converted)
 {

@@ -3,14 +3,14 @@ import sys
 import unreal,json,traceback
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).parent))
-from PlayerLocomotionRegression import output_file,check_ground
+from PlayerLocomotionRegression import output_file,check_ground,local_inputs,local_world
 output=output_file('Ground')
-world=unreal.EditorLevelLibrary.get_pie_worlds(False)[0]
+world=local_world()
 pawn=unreal.GameplayStatics.get_player_pawn(world,0);assert pawn and pawn.get_source_mesh()
 mover=pawn.get_component_by_class(unreal.CharacterMoverComponent)
 anim=pawn.get_source_mesh().get_anim_instance()
 controller=unreal.GameplayStatics.get_player_controller(world,0)
-inputs=next(s for s in unreal.ObjectIterator(unreal.EnhancedInputLocalPlayerSubsystem)if not s.get_path_name().startswith('/Script/'))
+inputs=local_inputs(world)
 actions={n:unreal.load_asset('/Game/Input/Actions/IA_'+('ToggleCombat'if n=='Strafe'else n))for n in ['Move','Strafe','Sprint','Walk','MoveIntent_Forward','MoveIntent_Backward','MoveIntent_Left','MoveIntent_Right']}
 assert all(actions.values())
 report={'project':unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()),'samples':[]}
@@ -18,7 +18,6 @@ report['foot_rigs']=[rig.get_class().get_path_name()for rig in unreal.ObjectIter
 assert report['foot_rigs']==['/Game/Animation_Logic/Rigs/CR_ProjectJ_Manny_FootPlacement.CR_ProjectJ_Manny_FootPlacement_C'],report['foot_rigs']
 original_combat=pawn.is_combat_mode_active()
 original_rotation=controller.get_control_rotation()
-if original_combat:pawn.toggle_combat_mode()
 pawn.set_walk(False)
 start=unreal.GameplayStatics.get_time_seconds(world);handle=None
 def value(o,n):
@@ -30,7 +29,7 @@ def finish(error=None):
     for a in actions.values():inputs.inject_input_vector_for_action(a,unreal.Vector(),[],[])
     unreal.unregister_slate_post_tick_callback(handle)
     controller.set_control_rotation(original_rotation)
-    if pawn.is_combat_mode_active()!=original_combat:pawn.toggle_combat_mode()
+    if pawn.is_combat_mode_active()!=original_combat:inputs.inject_input_vector_for_action(actions['Strafe'],unreal.Vector(1,0,0),[],[])
     pawn.set_walk(False)
     if error is None:
         try:report['checks']=check_ground(report)
@@ -47,7 +46,7 @@ def tick(dt):
         forward=1<=t<4 or 8<=t<14 or 16<=t<19 or 28<=t<31 or 33<=t<37
         back=4<=t<7 or 19<=t<22;left=22<=t<24;right=24<=t<26
         vals={'Move':unreal.Vector(-1 if left else 1 if right else 0,1 if forward else -1 if back else 0,0),
-              'Strafe':unreal.Vector(1 if 15.<=t<15.12 else 0,0,0),'Walk':unreal.Vector(1 if 32.<=t<32.12 or 34.<=t<34.12 else 0,0,0),
+              'Strafe':unreal.Vector(1 if .2<=t<.35 and pawn.is_combat_mode_active() or 15.<=t<15.12 else 0,0,0),'Walk':unreal.Vector(1 if 32.<=t<32.12 or 34.<=t<34.12 else 0,0,0),
               'Sprint':unreal.Vector(1 if 35.<=t<37 else 0,0,0)}
         vals.update({'MoveIntent_'+n:unreal.Vector(1 if v else 0,0,0)for n,v in [('Forward',forward),('Backward',back),('Left',left),('Right',right)]})
         for n,a in actions.items():inputs.inject_input_vector_for_action(a,vals[n],[],[])

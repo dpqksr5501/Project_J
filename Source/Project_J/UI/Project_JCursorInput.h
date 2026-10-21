@@ -1,18 +1,18 @@
 #pragma once
 #include "InputCoreTypes.h"
 
-/** Bare Left Ctrl toggles on release; modifier chords and focus loss cancel it. */
+/** Bare Left Alt toggles on release; modifier chords and focus loss cancel it. */
 struct FProject_JCursorGesture
 {
-	void KeyDown(FKey Key, bool bRepeat)
+	void KeyDown(FKey Key, bool bRepeat, bool bOtherModifierDown = false)
 	{
-		if (Key == EKeys::LeftControl) { if (!bRepeat) { bHeld = true; bChord = false; } }
+		if (Key == EKeys::LeftAlt) { if (!bRepeat) { bHeld = true; bChord = bOtherModifierDown; } }
 		else if (bHeld && !bRepeat) bChord = true;
 	}
 	void MouseDown() { if (bHeld) bChord = true; }
 	bool KeyUp(FKey Key)
 	{
-		if (Key != EKeys::LeftControl) return false;
+		if (Key != EKeys::LeftAlt) return false;
 		const bool bToggle = bHeld && !bChord;
 		Reset();
 		return bToggle;

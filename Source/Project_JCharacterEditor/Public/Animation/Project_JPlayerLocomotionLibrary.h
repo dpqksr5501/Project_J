@@ -15,12 +15,19 @@ class USkeleton;
 class UAnimSequence;
 class UMirrorDataTable;
 class UPoseSearchDatabase;
+class UBlendSpace;
 
 UCLASS()
 class PROJECT_JCHARACTEREDITOR_API UProject_JPlayerLocomotionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
+ /** Migrate the reviewed rotation-curve Chooser input; keep every row and curve result. No save. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool UseNativeRotationOffsetQuery(UChooserTable* Table);
+ /** Use the same normalized timeline for search and playback, rebuilding the serialized marker cache. */
+ UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
+ static bool ConfigureNormalizedLocomotionSync(UBlendSpace* BlendSpace);
  /** Versioned raw motion/bind-pose fingerprint, independent of asset name, package path and generated GUIDs. Editor-only; never mutates or saves. */
  UFUNCTION(BlueprintCallable, Category="Project J|Player Locomotion Authoring")
  static FString GetAnimationMotionFingerprint(UAnimSequence* Sequence);

@@ -1,0 +1,2433 @@
+{
+  "schema": 1,
+  "reference": {
+    "project": "Epic Game Animation Sample 5.8",
+    "engine": "5.8.3",
+    "blueprint": "/Game/Blueprints/SandboxCharacter_Mover_ABP",
+    "package_sha256": "c4d374224a8030a5b4454eabac26c36e9eeaf4cd094ac459dafc296b06e1a701",
+    "capture": "Actual Blueprint query calls, defaults reset between cases; independent of native implementation. No source package saved."
+  },
+  "defaults": {
+    "Speed2D": 0.0,
+    "FutureFacingDelta": 0.0,
+    "SlopeAngle": [
+      0.0,
+      0.0
+    ],
+    "MovementMode": "ON_GROUND",
+    "MovementMode_LastFrame": "ON_GROUND",
+    "MovementState": "IDLE",
+    "OffsetRootBoneEnabled": false,
+    "CharacterTransform": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "CharacterTransform_LastFrame": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Velocity_LastFrame": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "HeavyLandSpeedThreshold": -500.0,
+    "LastNonZeroVelocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Trj_NearFutureVelocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Trj_CurrentAngularVelocity": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "cases": [
+    {
+      "case": "default",
+      "inputs": {},
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_49.9",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_50.0",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_129.9",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_130.0",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_179.0",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_0.0_-179.0",
+      "inputs": {
+        "Speed2D": 0.0,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_49.9",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_50.0",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_129.9",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_130.0",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_179.0",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_49.9_-179.0",
+      "inputs": {
+        "Speed2D": 49.9,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": true,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_49.9",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_50.0",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_129.9",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_130.0",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_179.0",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_50.0_-179.0",
+      "inputs": {
+        "Speed2D": 50.0,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_49.9",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_50.0",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_129.9",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_130.0",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_179.0",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_100.0_-179.0",
+      "inputs": {
+        "Speed2D": 100.0,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_49.9",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_50.0",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_129.9",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_130.0",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_179.0",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_149.9_-179.0",
+      "inputs": {
+        "Speed2D": 149.9,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_49.9",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_50.0",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_129.9",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_130.0",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_179.0",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_150.0_-179.0",
+      "inputs": {
+        "Speed2D": 150.0,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_49.9",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": 49.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_50.0",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": 50.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_129.9",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": 129.9
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_130.0",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": 130.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_179.0",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": 179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "turn_300.0_-179.0",
+      "inputs": {
+        "Speed2D": 300.0,
+        "FutureFacingDelta": -179.0
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": true,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_0_-500.1",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_0_-500.0",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_0_-499.9",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_1_-500.1",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": true,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_1_-500.0",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": true,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_0_1_-499.9",
+      "inputs": {
+        "MovementMode": 0,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": true,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_0_-500.1",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_0_-500.0",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_0_-499.9",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_1_-500.1",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_1_-500.0",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_1_1_-499.9",
+      "inputs": {
+        "MovementMode": 1,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_0_-500.1",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_0_-500.0",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_0_-499.9",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_1_-500.1",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_1_-500.0",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_2_1_-499.9",
+      "inputs": {
+        "MovementMode": 2,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_0_-500.1",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_0_-500.0",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_0_-499.9",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_1_-500.1",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_1_-500.0",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_3_1_-499.9",
+      "inputs": {
+        "MovementMode": 3,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_0_-500.1",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_0_-500.0",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_0_-499.9",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_1_-500.1",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_1_-500.0",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_4_1_-499.9",
+      "inputs": {
+        "MovementMode": 4,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_0_-500.1",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_0_-500.0",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_0_-499.9",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 0,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_1_-500.1",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.1
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_1_-500.0",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -500.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "mode_5_1_-499.9",
+      "inputs": {
+        "MovementMode": 5,
+        "MovementMode_LastFrame": 1,
+        "Velocity_LastFrame": [
+          0.0,
+          0.0,
+          -499.9
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": false,
+        "AllowSlopeWarping": false,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "root_False",
+      "inputs": {
+        "OffsetRootBoneEnabled": false
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "root_True",
+      "inputs": {
+        "OffsetRootBoneEnabled": true
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "ROOT_BONE_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "teleport_49.9",
+      "inputs": {
+        "CharacterTransform": [
+          49.9,
+          0.0,
+          0.0
+        ],
+        "CharacterTransform_LastFrame": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "teleport_50.0",
+      "inputs": {
+        "CharacterTransform": [
+          50.0,
+          0.0,
+          0.0
+        ],
+        "CharacterTransform_LastFrame": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "teleport_50.1",
+      "inputs": {
+        "CharacterTransform": [
+          50.1,
+          0.0,
+          0.0
+        ],
+        "CharacterTransform_LastFrame": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": true,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "teleport_100.0",
+      "inputs": {
+        "CharacterTransform": [
+          100.0,
+          0.0,
+          0.0
+        ],
+        "CharacterTransform_LastFrame": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": true,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_0.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          300.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_20.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          20.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          300.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_60.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          60.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          150.0,
+          150.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_100.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          100.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          300.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_200.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          200.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          300.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "case": "warp_-200.0",
+      "inputs": {
+        "LastNonZeroVelocity": [
+          300.0,
+          0.0,
+          0.0
+        ],
+        "Trj_NearFutureVelocity": [
+          0.0,
+          300.0,
+          0.0
+        ],
+        "Trj_CurrentAngularVelocity": [
+          0.0,
+          0.0,
+          -200.0
+        ]
+      },
+      "queries": {
+        "ShouldTurnInPlace": false,
+        "ShouldSpinTransition": false,
+        "JustLanded_Light": false,
+        "JustLanded_Heavy": false,
+        "Get_OffsetRootTranslationHalfLife": 0.1,
+        "AllowFootPinning": true,
+        "AllowSlopeWarping": true,
+        "Get_OrientationWarpingWarpingSpace": "COMPONENT_TRANSFORM",
+        "JustTeleported": false,
+        "Get_StrafeWarpDirection": [
+          0.0,
+          300.0,
+          0.0
+        ]
+      }
+    }
+  ]
+}

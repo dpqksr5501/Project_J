@@ -425,6 +425,10 @@ bool UProject_JWeaponPresentationComponent::AttachWeaponToSocket(FName SourceSoc
 	const TCHAR* Context, bool bDrawn)
 {
 	CancelContactRecovery();
+	// Replicated combat exits and montage callbacks also run without a cosmetic
+	// world (dedicated server / teardown). Reuse the spawn admission contract
+	// before resolving sockets; absence of a weapon there is intentional.
+	if (!CanCreatePresentation()) { return false; }
 	APawn* OwnerCharacter = Cast<APawn>(GetOwner());
 	const UProject_JWeaponPresentationProfile* Profile = GetCurrentPresentationProfile();
 	const FProject_JResolvedWeaponAttachment Attachment = ResolveAttachment(bDrawn);

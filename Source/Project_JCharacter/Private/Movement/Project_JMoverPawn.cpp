@@ -13,9 +13,9 @@
 #include "GameFramework/Controller.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/Project_JPlayerLocomotionTypes.h"
 #include "Chooser.h"
 #include "Curves/CurveFloat.h"
-#include "UObject/UnrealType.h"
 #include "Engine/World.h"
 #include "HAL/IConsoleManager.h"
 #include "DefaultMovementSet/LayeredMoves/AnimRootMotionLayeredMove.h"
@@ -31,7 +31,6 @@ AProject_JMoverPawn::AProject_JMoverPawn(const FObjectInitializer& OI):Super(OI)
  Mover=CreateDefaultSubobject<UProject_JMoverComponent>(TEXT("CharacterMover")); Mover->bGatherInputFromAllInputProducerComponents=false; Mover->bSyncInputsForSimProxy=true; Mover->SetHandleStanceChanges(false);
  NavMover=CreateDefaultSubobject<UNavMoverComponent>(TEXT("NavMover"));
  RotationOffsetChooser=LoadObject<UChooserTable>(nullptr,TEXT("/Game/Animation_Logic/PlayerMovement/CHT_RotationOffsetCurve.CHT_RotationOffsetCurve"));
- RotationOffsetInputType=LoadObject<UScriptStruct>(nullptr,TEXT("/Game/Animation_Logic/PlayerMovement/S_RotationOffsetCurveChooser_Inputs.S_RotationOffsetCurveChooser_Inputs"));
 }
 void AProject_JMoverPawn::PostInitializeComponents()
 {
@@ -198,7 +197,7 @@ void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVe
  Intent.bWalk=bWalk || (!bUseVelocityInput && (!AnalogStyle || AnalogStyle->GetInt()==1) && SmoothedAnalogInputAmount<=.7f);
  Intent.ControlRotationRate=ControlYawRate;
  const FVector Direction=Mover->IsAirborne()?GetVelocity().GetSafeNormal2D():WorldIntent;
- if(bUseStrafe && !Direction.IsNearlyZero() && RotationOffsetChooser && RotationOffsetInputType)
+ if(bUseStrafe && !Direction.IsNearlyZero() && RotationOffsetChooser)
  {
   float Angle=FMath::FindDeltaAngleDegrees(LastOrientation.Rotation().Yaw,Direction.Rotation().Yaw);
   // Source ClampAngleToPreventConstantFlippingAt180, only while previously forward.
@@ -215,13 +214,10 @@ void AProject_JMoverPawn::PopulateMoverInput(FMoverInputCmdContext& InputCmd,FVe
   const float Front=Style==0?(bSide?40.f:60.f):Style==1?(LastMovementDirection==1?120.f:140.f):180.f;
   const float Back=Style==0?(bSide?140.f:120.f):Front;
   Intent.MovementDirection=bUseSprint || FMath::Abs(Angle)<=Front?0:Angle>=-Back && Angle<=-Front?2:Angle>=Front && Angle<=Back?4:1;
-  FInstancedStruct Query;Query.InitializeAs(RotationOffsetInputType);
-  for(TFieldIterator<FByteProperty> It(RotationOffsetInputType);It;++It)
-  {
-   if(It->GetName().StartsWith(TEXT("MovementMode_"))) It->SetPropertyValue_InContainer(Query.GetMutableMemory(),Mover->IsAirborne()?1:0);
-   if(It->GetName().StartsWith(TEXT("MovementDirection_"))) It->SetPropertyValue_InContainer(Query.GetMutableMemory(),Intent.MovementDirection);
-  }
-  FChooserEvaluationContext Context;Context.AddStructViewParam(FStructView(RotationOffsetInputType,Query.GetMutableMemory()));
+  FProject_JPlayerRotationOffsetQuery Query;
+  Query.MovementMode=Mover->IsAirborne()?EProject_JPlayerMovementMode::InAir:EProject_JPlayerMovementMode::OnGround;
+  Query.MovementDirection=static_cast<EProject_JPlayerMovementDirection>(Intent.MovementDirection);
+  FChooserEvaluationContext Context;Context.AddStructParam(Query);
   UChooserTable::EvaluateChooser(Context,RotationOffsetChooser,FObjectChooserBase::FObjectChooserIteratorCallback::CreateLambda([&](UObject* Object)
   {
    if(const auto* Curve=Cast<UCurveFloat>(Object)) {Intent.RotationOffset=Curve->GetFloatValue(Angle);return FObjectChooserBase::EIteratorStatus::Stop;}

@@ -12,9 +12,15 @@
 #include "PoseSearch/PoseSearchTrajectoryLibrary.h"
 #include "Animation/AnimClassInterface.h"
 #include "BlendStack/AnimNode_BlendStack.h"
+#include "BoneControllers/AnimNode_Steering.h"
+#include "Animation/AnimRootMotionProvider.h"
+#include "Animation/BuiltInAttributeTypes.h"
 
 void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
 {
+ // A retained anim instance must wait for this owner's first completed source
+ // frame. Proxy reinitialization alone does not clear these graph admission flags.
+ PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
  if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
  BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
 	ActiveAirEpisode=0; bAirEntryPending=bAirLoop=false;
@@ -29,6 +35,7 @@ void UProject_JPlayerAnimInstance::NativeInitializeAnimation()
 
 void UProject_JPlayerAnimInstance::NativeUninitializeAnimation()
 {
+ PlayerHasOwningActor = PlayerHasLocomotionSource = PlayerUseThreadSafeUpdateAnimation = false;
  if(auto* Previous=BasedMovementSource.Get()) Previous->OnBasedMovementApplied.RemoveAll(this);
  BasedMovementSource.Reset(); PendingBasedMovementDelta=FTransform::Identity;
  Super::NativeUninitializeAnimation();
@@ -126,6 +133,14 @@ void UProject_JPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 FString UProject_JPlayerAnimInstance::InspectFoundationPlayback() const
 {
 	FString Result;
+	const auto* Mesh = GetSkelMeshComponent();
+	if (Mesh && !Mesh->IsRunningParallelEvaluation())
+	{
+		const auto* Attribute = Mesh->GetCustomAttributes().Find<FTransformAnimationAttribute>(
+			UE::Anim::FAttributeId(UE::Anim::IAnimRootMotionProvider::AttributeName, FCompactPoseBoneIndex(0)));
+		Result += Attribute ? FString::Printf(TEXT("RootDelta=%s Yaw=%.6f; "),
+			*Attribute->Value.GetTranslation().ToCompactString(), Attribute->Value.Rotator().Yaw) : TEXT("RootDelta=Missing; ");
+	}
 	const auto& Proxy = GetProxyOnGameThread<FProject_JCharacterAnimInstanceProxy>();
 	const auto& Air=Proxy.GetThreadSafeData().PlayerLocomotionAir;
 	Result+=FString::Printf(TEXT("AirEpisode=%llu FallOff=%d Jumping=%d LiveAngle=%.2f Gait=%d AirEntries=%d/%d QueryMode=%d QueryDir=%d AirAsset=%s; "),Air.Episode,Air.Query.bFallOff,Proxy.GetThreadSafeData().Air.bIsJumping,Air.LiveDirectionDegrees,int32(Air.Query.Gait),AirTransitionEntryCount,AirLoopEntryCount,int32(CommittedAirQuery.RotationMode),int32(CommittedAirQuery.Direction),*GetNameSafe(AirSelectedAsset));
@@ -138,6 +153,13 @@ FString UProject_JPlayerAnimInstance::InspectFoundationPlayback() const
 		Result += FString::Printf(TEXT("Index=%d Asset=%s Time=%.3f Length=%.3f Weight=%.3f Players=%d Rate=%.3f; "),
 			Index, *GetPathNameSafe(Node->GetAnimAsset()), Node->GetCurrentAssetTime(), Node->GetCurrentAssetLength(),
 			Node->GetCachedBlendWeight(), Node->AnimPlayers.Num(), Node->AnimPlayers.IsEmpty() ? 0.f : Node->AnimPlayers[0].GetPlayRate());
+	}
+	for (int32 Index = 0; Index < Interface->GetAnimNodeProperties().Num(); ++Index)
+	{
+		if (const auto* Steering = Proxy.GetNodeFromIndex<FAnimNode_Steering>(Index))
+			Result += FString::Printf(TEXT("Steering=%d Alpha=%.3f Actual=%.3f Enabled=%d Target=%.3f Asset=%s SpeedGate=%.3f; "),
+				Index, Steering->Alpha, Steering->ActualAlpha, Steering->bAlphaBoolEnabled, Steering->TargetOrientation.Rotator().Yaw,
+				*GetNameSafe(Steering->CurrentAnimAsset), Steering->DisableSteeringBelowSpeed);
 	}
 	return Result;
 }

@@ -43,7 +43,12 @@ class FProject_JCursorInputProcessor final : public IInputProcessor
 {
 public:
 	explicit FProject_JCursorInputProcessor(UProject_JPlayerUIComponent* InOwner) : Owner(InOwner) {}
-	void Tick(float, FSlateApplication&, TSharedRef<ICursor>) override {}
+	void Tick(float, FSlateApplication& App, TSharedRef<ICursor>) override
+	{
+		auto* PC = Owner.IsValid() ? Cast<APlayerController>(Owner->GetOwner()) : nullptr;
+		auto* Local = PC ? PC->GetLocalPlayer() : nullptr;
+		if (!Local || !Local->GetSlateUser() || !IsOurViewport(App, Local->GetSlateUser()->GetUserIndex())) Gesture.Reset();
+	}
 	bool IsOurViewport(FSlateApplication& App, int32 UserIndex) const
 	{
 		auto* UI = Owner.Get();
@@ -57,7 +62,8 @@ public:
 	}
 	bool HandleKeyDownEvent(FSlateApplication& App, const FKeyEvent& Event) override
 	{
-		if (IsOurViewport(App, Event.GetUserIndex())) Gesture.KeyDown(Event.GetKey(), Event.IsRepeat());
+		if (IsOurViewport(App, Event.GetUserIndex()))
+			Gesture.KeyDown(Event.GetKey(), Event.IsRepeat(), Event.IsControlDown() || Event.IsShiftDown() || Event.IsCommandDown() || Event.IsRightAltDown());
 		else Gesture.Reset();
 		return false; // Enhanced Input and widget modifier shortcuts still receive the event.
 	}

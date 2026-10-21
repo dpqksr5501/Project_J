@@ -1,9 +1,27 @@
-"""Shared evidence checks for the live GASP PIE fixtures; no asset mutation."""
+"""Shared evidence checks for the live player PIE fixtures; no asset mutation."""
 import datetime
 import math
 import re
 from pathlib import Path
 import unreal
+
+
+def local_world():
+    worlds = [w for w in unreal.EditorLevelLibrary.get_pie_worlds(False)
+              if unreal.GameplayStatics.get_player_pawn(w, 0)
+              and unreal.GameplayStatics.get_player_pawn(w, 0).is_locally_controlled()]
+    assert len(worlds) == 1, 'Expected one local player world'
+    return worlds[0]
+
+
+def local_inputs(world):
+    """Resolve inputs in the tested PIE world, never another client's subsystem."""
+    pawn = unreal.GameplayStatics.get_player_pawn(world, 0)
+    assert pawn and pawn.is_locally_controlled(), 'The fixture needs a local pawn'
+    systems = [s for s in unreal.ObjectIterator(unreal.EnhancedInputLocalPlayerSubsystem)
+               if not s.get_path_name().startswith('/Script/') and s.get_world() == world]
+    assert len(systems) == 1, 'Expected one local input subsystem in the tested world'
+    return systems[0]
 
 
 def output_file(scenario):
@@ -22,6 +40,8 @@ def check_air(report):
         frames = [s for s in samples if s['case'] == case]
         assert len(frames) >= 20, 'Insufficient samples for case ' + str(case)
         assert any('Falling' in s['mode'] for s in frames), 'Jump did not physically enter air: ' + str(case)
+        expected = 'STRAFE' if report['rotation_modes_expected'][case] == 'Strafe' else 'ORIENT_TO_MOVEMENT'
+        assert any('Falling' in s['mode'] and expected in s['PlayerRotationMode'] for s in frames), 'Expected rotation mode was not exercised in air: ' + str(case)
         assert any('Walking' in s['mode'] and s['u'] > 3.5 for s in frames), 'Jump did not return to ground: ' + str(case)
     counts = [s['AirReselectionCount'] for s in samples]
     assert max(counts) > min(counts), 'No live air reselection was exercised'
@@ -69,6 +89,7 @@ def check_sprint_turn(report):
         assert len(frames) >= 30, 'Missing turn case ' + str(case)
         settled = [s for s in frames if 4.5 <= s['u'] < 4.9]
         assert settled and min(s['speed'] for s in settled) > 450., 'Sprint failed to resume after turn ' + str(case)
+        assert all(('STRAFE' if case >= 4 else 'ORIENT_TO_MOVEMENT') in s['PlayerRotationMode'] for s in settled), 'Expected turn mode was not evaluated: ' + str(case)
         error = max(abs((s['control'] - s['yaw'] + 180.) % 360. - 180.) for s in settled)
         assert error < 5., 'Facing failed to settle after turn ' + str(case)
         assert any('Weight=1.000' in s['played'] for s in settled), 'No active GASP player after turn'

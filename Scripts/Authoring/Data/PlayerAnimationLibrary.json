@@ -35068,7 +35068,7 @@
       "class": "BlendSpace1D",
       "profile_fingerprint": "9bdc217be7ae3e7486670fffad421bc56b448613f8d63bbfaccc09a654d8a6dd",
       "source_signature": "123bd569412cd80a2b5db12255e3a7853bb977b12764674d7c23a451f453c329",
-      "target_package_sha256": "3ae6af59339f3403a21481b5998c0c3120155d69dcc7bb11777c05b0ff7d3d70"
+      "target_package_sha256": "2bed8c34ed4d337554b7a263d9456aaa2ca18e125cc7199b18988b9854c1837f"
     },
     {
       "source_id": "Epic.GameAnimationSample.UEFN/Run/M_Relaxed_Run_Box_B_LL_Lfoot",
@@ -55528,8 +55528,10 @@
         "normalized_root_motion_scale": true,
         "rate_scale": 1.0,
         "interpolation": 0,
-        "notify_payload_fingerprint": "d3ee8f89974bd6f05758564813afce8b2e2f5c483032106521c6aae038b5b1d4",
-        "notify_class_files": {},
+        "notify_payload_fingerprint": "6aedf82ec92751eb916ab8f33cbe4d927aa98b6be5c7a700c508004a1a9df033",
+        "notify_class_files": {
+          "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition": "7c0a00b741d956048334fe16c581448dc00b7097103b0cf9834228bb9791961f"
+        },
         "notifies": [
           {
             "name": "PoseSearchExcludeFromDatabase",
@@ -55562,6 +55564,14 @@
             "server": false,
             "class": "/Script/Project_JCharacter.Project_JAnimNotify_FoleyEvent",
             "state_class": ""
+          },
+          {
+            "name": "BP_NotifyState_EarlyTransition_C",
+            "time": 0.8250563144683838,
+            "duration": 2.8416104316711426,
+            "server": true,
+            "class": "",
+            "state_class": "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition.BP_NotifyState_EarlyTransition_C"
           },
           {
             "name": "PoseSearchBlockTransition",
@@ -55632,7 +55642,7 @@
         "ref_pose_motion_fingerprint": ""
       },
       "target_motion_fingerprint": "1f6a740af91b748f2e2d0cef45fbfdf8b81544cfa2c8606f2226034ea7ba2e78",
-      "target_package_sha256": "dce88cbce83f0266840e8a181e7174144da5da9e8b036eec99804e77f345727b"
+      "target_package_sha256": "d5dc1c5acd184614a2dd3bb6ef845a806cfcc92c94f25c93397f8135cea24cfb"
     },
     {
       "source_id": "Epic.GameAnimationSample.UEFN/Run/M_Relaxed_Transition_Sprint_to_Run_Rfoot",
@@ -55780,8 +55790,10 @@
         "normalized_root_motion_scale": true,
         "rate_scale": 1.0,
         "interpolation": 0,
-        "notify_payload_fingerprint": "78b2ad180ee598f5de1da209d6f0a4b57edc54c502f75bf8e459f5ab1e94356e",
-        "notify_class_files": {},
+        "notify_payload_fingerprint": "6291f206144d75d7f3c11683da786f26c5a5f378a00d00a7486ba29162dd03c7",
+        "notify_class_files": {
+          "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition": "7c0a00b741d956048334fe16c581448dc00b7097103b0cf9834228bb9791961f"
+        },
         "notifies": [
           {
             "name": "PoseSearchExcludeFromDatabase",
@@ -55822,6 +55834,14 @@
             "server": true,
             "class": "",
             "state_class": "/Script/PoseSearch.AnimNotifyState_PoseSearchBlockTransition"
+          },
+          {
+            "name": "BP_NotifyState_EarlyTransition_C",
+            "time": 0.8320348858833313,
+            "duration": 2.8012988567352295,
+            "server": true,
+            "class": "",
+            "state_class": "/Game/GASP58Native/AnimNotifies/BP_NotifyState_EarlyTransition.BP_NotifyState_EarlyTransition_C"
           },
           {
             "name": "FoleyEvent: Run",
@@ -55884,7 +55904,7 @@
         "ref_pose_motion_fingerprint": ""
       },
       "target_motion_fingerprint": "84e411c3109ce80ac4e0a979167e45135ce6dafc45a96233ea771a0ed4732ea2",
-      "target_package_sha256": "3a34c4c336781bdd6835c89fe5b451bbef4b5e5040b3093279527c992f1071c6"
+      "target_package_sha256": "7cfe68faf1e86ac5a8226b1ee9e799feac30ce5123e0816797137a3dda564107"
     },
     {
       "source_id": "Epic.GameAnimationSample.UEFN/Run/M_Relaxed_Transition_Walk_to_Run_Lfoot",

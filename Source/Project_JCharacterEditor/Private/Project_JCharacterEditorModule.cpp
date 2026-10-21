@@ -26,6 +26,8 @@
 #include "Editor/Transactor.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
+#include "Internationalization/Internationalization.h"
+#include "Misc/EngineVersion.h"
 class FProjectJWeaponMotionCancelContractTest;
 #endif
 
@@ -459,6 +461,17 @@ class FProject_JCharacterEditorModule final : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
+#if WITH_DEV_AUTOMATION_TESTS
+		// UE 5.8.3's three Core formatting tests compare localized FText output
+		// with English literals. Run their source-language contract in isolation;
+		// never skip assertions, suppress errors, or change the user's settings.
+		if (FEngineVersion::Current().GetMajor()==5 && FEngineVersion::Current().GetMinor()==8 && FEngineVersion::Current().GetPatch()==3)
+		{
+			auto& Tests=FAutomationTestFramework::Get();
+			TestCultureStartHandle=Tests.OnTestStartEvent.AddRaw(this,&FProject_JCharacterEditorModule::BeginEngineFormatTest);
+			TestCultureEndHandle=Tests.OnTestEndEvent.AddRaw(this,&FProject_JCharacterEditorModule::EndEngineFormatTest);
+		}
+#endif
 		if (!IsRunningCommandlet())
 			ContentMenuHandle = UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateStatic(&ProjectJ::ContentAuthoring::RegisterMenus));
 		FEditorModeRegistry::Get().RegisterMode<Project_J::WeaponMotionEditor::FWeaponMotionEditMode>(Project_J::WeaponMotionEditor::WeaponMotionEditModeId, LOCTEXT("WeaponMotionEditMode", "Weapon Motion Key"), FSlateIcon(), false);
@@ -475,6 +488,11 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+#if WITH_DEV_AUTOMATION_TESTS
+		FAutomationTestFramework::Get().OnTestStartEvent.Remove(TestCultureStartHandle);
+		FAutomationTestFramework::Get().OnTestEndEvent.Remove(TestCultureEndHandle);
+		RestoreTestCulture();
+#endif
 		UToolMenus::UnRegisterStartupCallback(ContentMenuHandle);
 		UToolMenus::UnregisterOwner(TEXT("ProjectJContentAuthoring"));
 		if (NotifyNodeFactoryHandle.IsValid()) FAnimNotifyNodeFactory::UnregisterFactory(NotifyNodeFactoryHandle);
@@ -491,6 +509,30 @@ public:
 	}
 
 private:
+#if WITH_DEV_AUTOMATION_TESTS
+	void BeginEngineFormatTest(FAutomationTestBase* Test)
+	{
+		const FString Name=Test->GetTestName();
+		if (Name!=TEXT("FUnifiedErrorTest_CreateErrorMessage") && Name!=TEXT("FUnifiedErrorTest_CreateErrorMessageWithContext") && Name!=TEXT("FStructuredLogFormatTest")) return;
+		check(IsInGameThread() && !TestCulture.IsSet());
+		auto& I18N=FInternationalization::Get();
+		TestCulture.Emplace();I18N.BackupCultureState(TestCulture.GetValue());
+		ActiveCultureTest=Test;
+		if (!I18N.SetCurrentLanguageAndLocale(TEXT("en"))) Test->AddError(TEXT("Cannot establish the engine formatting test's English source-language contract"));
+	}
+	void EndEngineFormatTest(FAutomationTestBase* Test)
+	{
+		if (Test==ActiveCultureTest) RestoreTestCulture();
+	}
+	void RestoreTestCulture()
+	{
+		if (TestCulture.IsSet() && FInternationalization::IsAvailable()) FInternationalization::Get().RestoreCultureState(TestCulture.GetValue());
+		TestCulture.Reset();ActiveCultureTest=nullptr;
+	}
+	TOptional<FInternationalization::FCultureStateSnapshot> TestCulture;
+	FAutomationTestBase* ActiveCultureTest=nullptr;
+	FDelegateHandle TestCultureStartHandle,TestCultureEndHandle;
+#endif
 	bool TickMontageWeaponPreview(float DeltaTime)
 	{
 		TSet<TWeakObjectPtr<UDebugSkelMeshComponent>> ActivePreviewMeshes;

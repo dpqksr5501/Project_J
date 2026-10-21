@@ -63,6 +63,15 @@ enum class EProject_JPlayerMovementDirection : uint8
  RightRightFootForward = 5,
 };
 
+/** Presentation curve query shared by Mover input production and its authored Chooser. */
+USTRUCT(BlueprintType)
+struct PROJECT_JCHARACTER_API FProject_JPlayerRotationOffsetQuery
+{
+ GENERATED_BODY()
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") EProject_JPlayerMovementMode MovementMode = EProject_JPlayerMovementMode::OnGround;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player Locomotion") EProject_JPlayerMovementDirection MovementDirection = EProject_JPlayerMovementDirection::Forward;
+};
+
 UENUM(BlueprintType)
 enum class EProject_JPlayerRagdollInjuryState : uint8
 {

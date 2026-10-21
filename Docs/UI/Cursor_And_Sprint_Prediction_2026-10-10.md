@@ -1,5 +1,7 @@
 # 좌측 Ctrl 커서 전환과 달리기 이동 예측 수정
 
+이 문서는 2026-10-10 당시 구현·검증 기록이다. 2026-10-21에 커서 키는 왼쪽 Alt, 걷기 토글은 왼쪽 Ctrl로 변경했다. 현재 조작·입력 구조와 검증 범위는 [플레이어 UI](README.md)를 따른다. 아래 Ctrl 시나리오와 CMC 수치는 당시 결과로 보존한다.
+
 > **이동 경로 갱신 — 2026-10-21:** 아래 `SavedMove`/전용 CharacterMovement 수정은 이전 CMC 구현 이력이다. 현재 Sprint 승인·예측은 [Mover 로코모션](../Animation/Architecture/Player_Locomotion_Architecture.md)의 명령/상태 계약을 사용하며 퇴역 CMC 클래스를 복원하지 않는다. 커서 전환과 당시 UI/입력 검증 기록은 별개로 보존한다.
 
 기준 커밋은 `4deae970`이다. Shift 달리기 중 이동이 끊기는 제보와 HUD를 마우스로 조작할 수 없는 문제를 수정했다.

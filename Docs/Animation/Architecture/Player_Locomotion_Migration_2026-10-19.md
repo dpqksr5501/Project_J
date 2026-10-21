@@ -885,3 +885,31 @@ UEFN→Manny 변환, Manny 마스터의 FootPlacement/Stride/LegIK, Manny→대�
 자료는 `Saved/IKMappingAudit_20261021`의 `Audit.json`, `SolverRootControlProbe.json`, `BeforeSolverRoots.zip`, `Applied.json`, `FinalAudit.json`과 `Saved/Validation/PlayerLocomotion/IKMapping_20261021/Automation/index.json`에 있다. 복제 probe는 저장하지 않았고 변환본·원본 애니메이션의 파일은 수정하지 않았다. Rig 전후 export의 전체 차이는 StartBone 네 필드뿐이다. 실제 body HandGrip의 primary는 Bip01-R-UpperArm/Forearm/Hand, secondary는 Bip01-L-UpperArm/Forearm/Hand였다. Manny FootPlacement hierarchy는 corrective/control용 뼈를 포함해 161개이며, 실제 source Simple의 89개와 개수만 같도록 삭제하지 않았다. root/pelvis·양다리·발가락·발 IK 보조 뼈 13개의 기준 global 위치/회전을 canonical Manny와 비교해 최대 약 3.83e-14cm/0.00000242도였다.
 
 최종 실제 PIE의 지상 2,399 frame, SprintTurn 2,879 frame(OTM/Strafe × 170/179/181/190도), 공중·착지 2,399 frame, Sprint 공중 1,920 frame이 통과했다. 공중 재선택 증가 2/8, 잘못된 선택과 playhead 역행은 0이었다. 전신 몽타주 6개·281표본의 하체 포함 최대 오차는 약 0.0533도였다. Manny/대검 포즈 5,863표본은 유한값을 유지했고 이동 지상·몽타주 제외 표본은 3,742개였다. 이를 모든 동작의 외형 승인이나 모든 프레임의 접촉 품질 보장으로 확대하지 않는다. OTM/Strafe·현재 점프·몽타주 소유권은 유지했다. 임시 floor/start 2개를 제거하고 Play/FPS/background throttle 설정 복원, dirty content/map 0을 확인한 뒤 11:52:17 KST에 GUI 에디터를 정상 종료했다. 종료 직후 MCP Unobserve의 연결 해제는 정상 종료 로그와 구분해 확인했다. 추가 멀티플레이 부하·군중 성능·Cook/Shipping은 실행하지 않았다.
+
+## 전방 Run 루프의 표시 방향 고정 수정 (2026-10-21)
+
+사용자가 W를 누른 채 마우스를 돌리는 실제 입력을 관찰했다. 카메라·캡슐·물리 속도는 회전했으나 Run 루프의 표시 root는 이전 방향에 남았고 root/actor 차이가 약 109도까지 커졌다. 과거의 170~190도 급회전 검사는 전환 클립과 actor yaw를 중심으로 판정해 이 완만 회전의 시각적 고정을 놓쳤다. 이 기록 앞부분의 Run `bShouldMatchSyncPhases` 활성화는 PoseSearch 경고 제거를 위한 변경이었으나, 런타임 루트 델타 검증이 부족했다.
+
+UE 5.8 `BlendSpace.cpp`의 마커 위상 맞춤은 `ResetBlendSamples`로 leader의 PreviousTime까지 재설정하는 경로가 있다. 이때 sample root-motion delta가 0이 되고, Steering은 루트 이동 속도 게이트를 통과하지 못한다. phase 옵션만 해제하는 대조 시험은 회전을 복구했으나 PoseSearch 경고가 생겨 최종 정책으로 채택하지 않았다. 검색과 재생의 일관성을 위해 phase=true는 유지하고 Run의 marker sync=false로 기존 Walk와 동일한 정규화 시간 경로를 사용했다. 플래그만 바꾸면 로드된 내부 marker cache가 남을 수 있어 editor native `ConfigureNormalizedLocomotionSync`에서 `ValidateSampleData`까지 수행한 뒤 Run BlendSpace 한 개만 저장했다. 샘플·Manny skeleton·원본 모션·접촉 마커·커브·Foley는 보존했다. AimOffset/Lean/Ragdoll 등 다른 목적의 BlendSpace는 변경하지 않았다. 카탈로그의 해당 타깃 패키지 해시도 갱신했다.
+
+`InspectFoundationPlayback`에는 명시적으로 호출할 때만 읽는 root delta와 Steering 진단을 추가했다. 매 프레임 생산 회전 writer나 강제 reset, 키/클립별 예외는 추가하지 않았다. `GroundLoopRootMotion` 회귀는 실제 엔진 TickAssetPlayer를 통해 Walk/Run 6개 경사 샘플을 각각 300 frame 재생하고 루프 경계의 루트 델타도 확인한다. 최소 회귀 개수는 63으로 갱신했다. Direct UBT 빌드와 native 63개는 모두 성공했고 경고 동반·실패·미실행은 0이었다.
+
+새 GUI PIE에서 연속 전방 입력과 5초간 120도 카메라 회전을 Walk/Run/Sprint/Sprint→Run/Strafe Run에 적용했다. 총 1,378표본 중 실제 해당 루프가 재생되는 측정 구간 509표본을 검사했고, 각 모드의 root/actor 최대 차이는 1.732/1.871/1.667/2.944/1.660도였다. 실제 BlendStack 에셋과 가중치를 확인해 전환 클립이 루프 결함을 가리지 않게 했다. 잘못된 애니메이션 선택은 0이었다. 이는 카메라 제어/Enhanced Input으로 구동한 최종 PIE 결과다. 사용자의 실제 W/마우스 입력은 수정 전 원인 관찰에 사용했으며, 수정 후 사용자 실입력을 다시 검수했다고 주장하지 않는다.
+
+중간 테스트의 Slate callback에서 client 전투 능력을 직접 호출해 Deep PredictionKey Chain과 응답 없음이 발생했다. 저장 전 dirty content가 없었고 Run 수정이 디스크에 보존된 것을 확인했다. 사용자 승인으로 해당 테스트 PID 25976만 강제 종료했다. 새 fixture는 전투 전환을 해당 world의 입력 tick으로 보내며 재진입 방지와 구간별 중간 기록을 추가했다. 새 프로세스에서는 일반 입력 경로의 Strafe 전환과 종료가 성공했고 같은 예측 키 오류가 없었다. 별도 생산 전투 로직 변경으로 문제를 가리지 않았다.
+
+사용자가 추가한 Sprint→Run L/R의 `Transition To Loop / Always` 노티파이 구간은 그대로 보존했다. 각 타깃의 raw 모션 지문과 기존 12개 notify가 모두 유지되고 조기 전환 state 하나만 추가됐음을 확인한 뒤 타깃 계약만 갱신했다. 원본 보관 계약은 바꾸지 않았다. 대검 runtime ABP·retarget family·RTG 경로 이동과 이전 입력 키 변경 등 기존 사용자 변경을 덮어쓰지 않았다. OTM/Strafe·현재 점프·노드 실행 순서와 Root Offset/FootPlacement 보정은 유지했다.
+
+자료는 `Saved/Validation/OTMRunLoop_20261021`의 `ActualInput.json`, `Before/BS_Relaxed_Run_Loop_F_Slopes.uasset`, `AppliedSync.json`, `AuthoredContractUpdate.json`, `FinalLoopChecks.json`, `BuildFinal.log` 및 `Saved/Validation/PlayerLocomotion/OTMRunLoopComplete_20261021/Automation/index.json`, `LoopTurning_20261021_180325_804005.json`에 있다. 중간 실패 자료는 최종 성공 자료와 구분해 보존한다. 최종 PIE를 종료하고 dirty content 0을 확인한 뒤 18:05:05 KST에 에디터를 정상 종료했다. 종료 직후 MCP Unobserve 연결 해제는 정상 종료 로그로 확인했다. 최종 GUI 실행에서는 PoseSearch 위상 경고·예측 키 재귀가 없었으나 엔진 초기화/종료 안내나 Epic 텔레메트리 HTTP 종료 경고까지 모두 없다고 주장하지 않는다. 전체 라이브러리 전 프레임 외형·Cook/Shipping·새 네트워크 부하 검사는 수행하지 않았다. 커밋·push는 실행하지 않았다.
+
+
+## 2026-10-21 원본 실행 흐름 재검토와 native 경계 보강
+
+원본 Mover BP/ABP의 노드·핀·함수·변수 갱신 순서와 현재 생산 자산을 비교했다. 동적 경계 질의 91개 × 10함수의 반환값을 독립 fixture로 보존했고, 이전 owner의 AnimInstance source 유효성 잔류와 전용 서버/종료 중 무기 부착 콜백을 수정했다. 매 입력의 BP 구조체 필드 이름 탐색을 native 회전 query로 교체하면서 실제 Chooser binding과 36개 조합의 커브 선택도 검증했다. 최종 direct UBT와 native 회귀 67개는 경고·실패·미실행 없이 통과했다.
+
+OTM/Strafe·프로젝트 공중 재선택과 재생 연속성·사용자 Sprint→Run notify를 보존했다. 기존 Run 수정은 원본 Run 설정 복제가 아니라 원본 Walk의 정규화 시간 정책을 적용한 것이며 근거를 명시했다. 원본 디스크 에셋은 변경하지 않았다. 비교 함수군, 실제 writer/consumer, 프로젝트 고유 차이, PIE 성공/중간 실패와 한계는 [실행 흐름 검토](Player_Animation_Flow_Review_2026-10-21.md)에 모았다.
+
+
+### 후속 초기화/Iris 최종 점검
+
+동일 원본과 현재 생산 BP/ABP 7개의 계약을 다시 대조했고, 활성 로코모션 경로의 추가 누락을 찾지 못했다. 엔진 5.8.3의 고정 영문 기대값 검사 3개는 한국어 번역 때문에 실패했으며 프로젝트 에디터 테스트 경계에서 언어 상태를 격리·복원해 assertion을 실행한다. 첫 연결의 Voice 지연 로드는 client-capable target의 게임 모듈 초기화로 앞당겼고 Build.cs에도 의존성을 선언했다. Editor/Game direct UBT가 성공했고, native 67개와 엔진 검사 3개를 포함한 70개 회귀와 새 네트워크 PIE의 루프/공중 검증을 확인했다. 원인·호환 처리의 적용 버전·관측 비용·자료·종료 상태는 [흐름 검토의 후속 최종 점검](Player_Animation_Flow_Review_2026-10-21.md#후속-최종-재점검-초기화와-iris)을 따른다.

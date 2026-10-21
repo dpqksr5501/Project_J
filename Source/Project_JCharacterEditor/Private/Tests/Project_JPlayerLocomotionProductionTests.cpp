@@ -33,6 +33,7 @@
 #include "KismetCompiler.h"
 #include "K2Node_VariableGet.h"
 #include "Animation/Project_JRetargetAnimInstance.h"
+#include "Animation/AnimNotifyQueue.h"
 
 namespace
 {
@@ -126,7 +127,7 @@ bool FProjectJPlayerLocomotionGroundCandidates::RunTest(const FString&)
    const auto* Entry=DB->GetDatabaseAnimationAsset(Index);if(!Entry || !Entry->IsEnabled())continue;
    ++EnabledEntries;TestNotNull(TEXT("Enabled candidate retains its animation"),Entry->GetAnimationAsset());
    if(const auto* BlendSpace=Cast<UBlendSpace>(Entry->GetAnimationAsset()))
-    TestTrue(TEXT("Pose matching keeps BlendSpace samples at the same marker phase"),BlendSpace->bShouldMatchSyncPhases);
+    TestTrue(TEXT("Pose matching retains its normalized phase sampling contract"),BlendSpace->bShouldMatchSyncPhases);
    TestTrue(TEXT("Authored candidate range stays ordered"),Entry->GetSamplingRange().Max>=Entry->GetSamplingRange().Min);
   }
   if(DB->GetNumAnimationAssets()==0)continue;
@@ -135,6 +136,41 @@ bool FProjectJPlayerLocomotionGroundCandidates::RunTest(const FString&)
   TestTrue(TEXT("Nonempty candidate database has searchable poses"),DB->GetSearchIndex().GetNumPoses()>0);
  }
  TestTrue(TEXT("GASP owns embedded candidate databases"),Databases>=5);TestTrue(TEXT("Actual GASP candidate inventory is populated"),EnabledEntries>0);
+ return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FProjectJGroundLoopRootMotion,"ProjectJ.PlayerLocomotion.GroundLoopRootMotion",PlayerLocomotionTestFlags)
+bool FProjectJGroundLoopRootMotion::RunTest(const FString&)
+{
+ // Exercise the engine's actual sample tick, not just the author's checkbox.
+ // Steering needs nonzero root deltas even when the capsule is already facing
+ // its target. Repeat across loop wraps and every authored slope sample.
+ for (const TCHAR* Gait : {TEXT("Walk"), TEXT("Run")})
+ {
+  const FString Path=FString::Printf(TEXT("/Game/Characters/Mannequins/Animations/Locomotion/%s/BS_Relaxed_%s_Loop_F_Slopes"),Gait,Gait);
+  auto* BlendSpace=LoadObject<UBlendSpace>(nullptr,*Path);
+  if (!TestNotNull(TEXT("Production ground loop"),BlendSpace)) continue;
+  for (const FBlendSample& Sample : BlendSpace->GetBlendSamples())
+  {
+   TArray<FBlendSampleData> Cache; FBlendFilter Filter; BlendSpace->InitializeFilter(&Filter);
+   FMarkerTickRecord Markers; FDeltaTimeRecord Delta; float Time=.125f;
+   int32 MissingDeltas=0; double Distance=0.;
+   for (int32 Frame=0; Frame<300; ++Frame)
+   {
+    FAnimTickRecord Record(BlendSpace,Sample.SampleValue,Cache,Filter,true,1.f,false,false,1.f,Time,Markers);
+    Record.DeltaTimeRecord=&Delta;
+    const TArray<FName> EmptyMarkers;
+    const auto* ValidMarkers=BlendSpace->GetUniqueMarkerNames();
+    FAnimAssetTickContext Context(1.f/60.f,ERootMotionMode::RootMotionFromEverything,true,ValidMarkers?*ValidMarkers:EmptyMarkers);
+    FAnimNotifyQueue Notifies;
+    BlendSpace->TickAssetPlayer(Record,Notifies,Context);
+    const double Step=Context.RootMotionMovementParams.GetRootMotionTransform().GetTranslation().Size();
+    if (Frame>=2) { MissingDeltas+=!FMath::IsFinite(Step) || Step<=UE_KINDA_SMALL_NUMBER; Distance+=Step; }
+   }
+   TestEqual(FString::Printf(TEXT("%s slope %.1f retains every root delta through loop wraps"),Gait,Sample.SampleValue.X),MissingDeltas,0);
+   TestTrue(TEXT("Loop provides animated translation for steering and stride warping"),Distance>100.);
+  }
+ }
  return true;
 }
 

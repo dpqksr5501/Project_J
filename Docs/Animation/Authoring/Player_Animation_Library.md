@@ -58,6 +58,16 @@ runpy.run_path(str(root / 'Scripts/Authoring/Plan-PlayerAnimationImport.py'),
 
 ## 회귀와 복원
 
+`CHT_RotationOffsetCurve`의 context는 native `FProject_JPlayerRotationOffsetQuery`다. MovementMode/MovementDirection 열은 native enum에 바인딩하고 기존 방향 커브·행 우선순위를 편집한다. BP UserDefinedStruct의 생성 필드명 접두사에 런타임 코드를 의존시키지 않는다. 구형 제작 table의 명시적 이주가 필요할 때는 `unreal.Project_JPlayerLocomotionLibrary.use_native_rotation_offset_query(table)`를 사용한다. 이 도구는 PIE 밖에서 구조를 확인하고 전체 36개 mode/direction의 결과를 비교하며, 성공 후 제작자가 해당 table만 저장한다. 현재 table에 다시 적용하면 변경하지 않는다. 함수 반환 성공만으로 임의의 다른 table을 자동 저장하거나 기존 참조 자산을 삭제하지 않는다.
+
+지상 Walk/Run slopes BlendSpace는 `bShouldMatchSyncPhases=true`, `bAllowMarkerBasedSync=false`로 검색과 실제 재생의 정규화 시각을 맞춘다. UE 5.8의 마커 위상 맞춤 경로는 실제 재생의 sample delta를 0으로 만들어 Steering이 멈출 수 있으므로, 검색 경고를 없애려고 마커 기반 동기화를 함께 켜지 않는다. 신규 지상 루프는 `unreal.Project_JPlayerLocomotionLibrary.configure_normalized_locomotion_sync(asset)`를 호출해 캐시까지 갱신한 뒤 해당 에셋만 저장하고, `ProjectJ.PlayerLocomotion.GroundLoopRootMotion` 및 [실제 루프 회전](../../../Scripts/Validation/Validate-PlayerLocomotionLoopTurning.py)을 검사한다. 다른 용도의 BlendSpace는 각 계약을 유지한다.
+
+루프 회전 PIE 검사는 넓고 비어 있는 바닥의 새 세션에서 실행한다. 카메라 yaw와 전방 입력을 유지하며 실제 BlendStack 플레이어·표시 root·물리 yaw를 함께 기록한다. 전투 전환은 해당 PIE world의 Enhanced Input 액션으로 보내며, 에디터 Python에서 client의 GAS 능력을 직접 호출하지 않는다. 직접 호출은 다중 PIE의 RPC world 문맥에서 재귀를 일으킬 수 있다. 각 구간 시작에 중간 기록을 저장하고 종료 시 입력·카메라·걷기·background throttle을 복원한다. 테스트용 세션은 기록 후 종료하며 생산 에셋을 저장하지 않는다.
+
+Strafe Sprint 공중 8방향 검사는 32초 연속 경로를 사용하므로 최소 40,000-unit 정방형의 비어 있는 바닥을 준비한다. 기본 맵 바닥은 약 16,335-unit으로 마지막 구간을 수용하지 못한다. 네트워크 PIE에서는 클라이언트뿐 아니라 authority에도 같은 임시 바닥이 있어야 한다. PIE 밖 생산 레벨을 수정·저장하거나 바닥 밖 추락을 착지 로직 실패로 판정하지 않는다.
+
+2026-10-21 사용자가 저작한 Sprint→Run 왼발·오른발의 `Transition To Loop / Always` 구간은 Manny 타깃 계약에 반영했다. 원본 변환 계약과 모션 지문은 보존하고 기존 12개 노티파이의 이름·시각·기간·클래스·서버 정책이 그대로인 것을 확인했다. 추가 구간의 현행 서버 정책도 사용자 저장값을 유지한다. 새로운 저작 변경은 의도와 보존 항목을 확인한 뒤 타깃 계약만 갱신하며, 예상과 다른 모션·notify 전체를 무조건 새 baseline으로 덮지 않는다.
+
 - [Manny 데이터·노티파이·손발 검증](../../../Scripts/Validation/Validate-MannyRetargetedKinematics.py)은 카탈로그의 독립 baseline과 현재 결과를 비교한다. 원본 뱅크를 로드하지 않는다.
 - `ProjectJ.PlayerLocomotion.MannyConvertedLibrary`는 실제 에셋 registry와 카탈로그의 양방향 완전성, Manny skeleton, 재생/notify와 BlendSpace sample을 검사한다.
 - `ProjectJ.PlayerLocomotion.AnimationSourceFingerprint`는 실제 모션 트랙을 임시 모델에 넣고 이름/경로 변경의 동일성, raw key/notify 변경의 구별, 원본 불변을 검사한다.

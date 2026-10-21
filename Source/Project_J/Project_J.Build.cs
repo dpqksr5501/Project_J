@@ -53,6 +53,10 @@ public class Project_J : ModuleRules
 		{
 			DynamicallyLoadedModuleNames.Add("PerfCounters");
 		}
+		if (Target.Type != TargetType.Server)
+		{
+			DynamicallyLoadedModuleNames.Add("Voice");
+		}
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Project_J",

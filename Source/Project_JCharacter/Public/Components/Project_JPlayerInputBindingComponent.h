@@ -102,6 +102,7 @@ private:
 	void QueueSemanticMoveIntentRefresh();
 	void RefreshSemanticMoveIntent();
 	void HandleJumpStarted();
+	void HandleWalkToggle();
 	void HandleJumpStopped();
 	void HandlePrimarySkillPressed();
 	void HandlePrimarySkillReleased();

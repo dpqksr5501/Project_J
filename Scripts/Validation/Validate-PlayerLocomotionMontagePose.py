@@ -1,4 +1,4 @@
-"""Run in a single-player PIE with BP_GreatSword on an open, flat test floor.
+"""Run in a PIE with a local BP_GreatSword on an open, flat test floor.
 
 Measures the evaluated source mesh, not just Slot connectivity. Does not save assets.
 The callback restores combat/walk state and stops its montage on success or failure.
@@ -10,9 +10,14 @@ import re
 from pathlib import Path
 import traceback
 import unreal
+import sys
+sys.path.insert(0,str(Path(__file__).parent))
+from PlayerLocomotionRegression import local_inputs
 
 worlds = unreal.EditorLevelLibrary.get_pie_worlds(False)
-assert len(worlds) == 1, 'A single-player PIE is required'
+worlds = [w for w in worlds if unreal.GameplayStatics.get_player_pawn(w, 0)
+          and unreal.GameplayStatics.get_player_pawn(w, 0).is_locally_controlled()]
+assert len(worlds) == 1, 'Expected one local player world'
 world = worlds[0]
 pawn = unreal.GameplayStatics.get_player_pawn(world, 0)
 mesh = pawn.get_source_mesh()
@@ -20,8 +25,8 @@ anim = mesh.get_anim_instance()
 assert isinstance(anim, unreal.Project_JPlayerAnimInstance)
 assert not pawn.get_current_montage(), 'Finish the current action first'
 was_combat = pawn.is_combat_mode_active()
-if not was_combat:
-    pawn.toggle_combat_mode()
+inputs=local_inputs(world)
+combat_action=unreal.load_asset('/Game/Input/Actions/IA_ToggleCombat')
 
 names = ['LMB1', 'LMB2', 'Q1_or_LR2', 'Q2', 'R', 'T']
 montages = [unreal.load_asset('/Game/Anim_Assets/Great_Sword/Animations/Sword/Montage/AM_Greatsword_' + n) for n in names]
@@ -45,7 +50,7 @@ def finish(error=None):
     unreal.unregister_slate_post_tick_callback(handle)
     pawn.stop_anim_montage()
     if pawn.is_combat_mode_active() != was_combat:
-        pawn.toggle_combat_mode()
+        inputs.inject_input_vector_for_action(combat_action,unreal.Vector(1,0,0),[],[])
     report['completed'] = error is None
     if error:
         report['error'] = error
@@ -60,6 +65,7 @@ def tick(_):
     global last_case
     try:
         elapsed = unreal.GameplayStatics.get_time_seconds(world) - start
+        inputs.inject_input_vector_for_action(combat_action,unreal.Vector(float(.2<=elapsed<.35 and not pawn.is_combat_mode_active()),0,0),[],[])
         if elapsed >= 28.:
             for montage in montages:
                 samples = [s for s in report['samples'] if s['asset'] == montage.get_name()]

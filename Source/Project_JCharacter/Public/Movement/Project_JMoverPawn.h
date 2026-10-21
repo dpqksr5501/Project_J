@@ -70,7 +70,6 @@ private:
  FVector NavIntent=FVector::ZeroVector;
  FVector NavVelocity=FVector::ZeroVector;
  UPROPERTY() TObjectPtr<class UChooserTable> RotationOffsetChooser;
- UPROPERTY() TObjectPtr<UScriptStruct> RotationOffsetInputType;
  uint64 LastControlFrame=MAX_uint64;
  float LastControlYaw=0.f;
  float ControlYawRate=0.f;
